@@ -110,6 +110,6 @@ export const KC_CLUBS = [
 ];
 
 export const LEAGUES = {
-  1: { level: 1, name: LEAGUE_NAME, referee: false, format: null, humanVenue: 'hinterhof', clubs: AI_CLUBS, squadShape: 'small', maxSquad: 12 },
-  2: { level: 2, name: 'Kreisklasse C Kanalbezirk', referee: true, format: 7, humanVenue: 'rasenplatz', clubs: KC_CLUBS, squadShape: 'large', maxSquad: 16 },
+  1: { level: 1, name: LEAGUE_NAME, referee: false, format: null, humanVenue: 'hinterhof', clubs: AI_CLUBS, squadShape: 'small', maxSquad: 12, derby: { club: 'kanal', name: 'Kanal-Derby' } },
+  2: { level: 2, name: 'Kreisklasse C Kanalbezirk', referee: true, format: 7, humanVenue: 'rasenplatz', clubs: KC_CLUBS, squadShape: 'large', maxSquad: 16, derby: { club: 'bwk', name: 'Bezirks-Derby' } },
 };

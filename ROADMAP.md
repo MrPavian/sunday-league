@@ -534,3 +534,9 @@ Kraft) macht den Spieler treu (weniger Absagen) und landet in der Chronik. Neue 
 Elfmeterschießen, 5 gegen 5 mit Schiri auf dem Sportplatz Am Kanal. Selbst spielen oder simulieren,
 Preisgeld, Pokal in der Vitrine, Chronik-Eintrag, Stadtmeister haben es bei Transfers leichter.
 Offen: Hallenturnier im Winter (neuer Spielort).
+
+**Lebendiger:** Ereignisse würfeln jetzt aus mehreren Ausgängen (`src/career/outcomes.js`): 3–7 Folgen pro Antwort,
+gewichtet nach Stimmung, Eigenschaften und Kadergröße – bis hin zu „Spieler verlässt das Team", „fliegt raus"
+oder „wechselt zum Derby-Rivalen". **Derbys** (`src/career/derby.js`): Kanal-Derby bzw. Bezirks-Derby mit
+Derby-Woche, doppelten Zuschauern, mehr Karten, härteren Grätschen und Derby-Bilanz. **Dramen:** Einer spannt
+dem anderen die Freundin/Frau aus; Neuzugänge kennen jemanden von früher (Schulfreund oder Mobber → Erzfeinde).

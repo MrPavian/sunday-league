@@ -10,7 +10,8 @@ import { gradePlayers } from '../sim/stats.js';
 import { absenceChance, DECLINE_TEXT, FAREWELL, INJURED, JOIN_TEXT, LATE, noReasons, NUDGE_NO, NUDGE_YES, RUMOR_SOURCES, YES } from './chat.js';
 import { HUMAN_CLUB_DEFAULT, LEAGUES } from './clubs.js';
 import { applyPubToTeam } from './pub.js';
-import { applyChemistry } from './relations.js';
+import { derbyResult, isDerbyFixture } from './derby.js';
+import { applyChemistry, pastLink, setRelation } from './relations.js';
 import { applyFusion, initSagas, sagaChat, sagaSeasonEnd, sagaWeek } from './sagas.js';
 import { childrenGrowUp, coachAway, initCoach, isCoach, personalWeek, seasonPersonal, weeklyPersonal } from './personal.js';
 import { absenceFactor, advanceArcs, applyForm, autoResolve, resultMood, rollWeekEvent, weeklyMood } from './events.js';
@@ -332,6 +333,7 @@ export function startWeek(career) {
   }
   career.week = { availability, chat, nudges: NUDGES_PER_WEEK, nudged: [], lineup: null, training: null, event: null };
   career.flags ??= {};
+  career.flags.derbyRival = leagueOf(career).derby?.club ?? null;
   advanceArcs(career);
   personalWeek(career);
   rollWeekEvent(career);
@@ -506,6 +508,14 @@ export function joinSquad(career, idx, text) {
     career.week.availability[idx] = 'yes';
     career.week.chat.push({ from: idx, text: `(neu in der Gruppe) ${text}`, time: 'Sa 18:03' });
   }
+  // Man kennt sich von früher – im Guten oder im Schlechten.
+  const past = pastLink(career, idx);
+  if (past) {
+    setRelation(career, idx, past.other, past.kind === 'mobber' ? 'feinde' : 'schulfreunde');
+    career.flags ??= {};
+    career.flags.pastLink = { a: idx, b: past.other, kind: past.kind, round: career.round };
+    career.week?.chat.push({ from: past.other, text: past.kind === 'mobber' ? '…' : 'Ey! Wir waren zusammen auf der Gesamtschule!', time: 'Sa 18:10' });
+  }
   return true;
 }
 
@@ -659,6 +669,8 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   const humanIsAway = human && away.human;
   const teams = humanIsAway ? [teamAway, teamHome] : [teamHome, teamAway];
   const match = createMatch({ seed: rng.int(1, 1e9), pitch, teams, human, duration, incidents: true });
+  // Derby: hitziger, mehr Karten – außer man hat sich aufs faire Grillen geeinigt.
+  match.derby = isDerbyFixture(career, fixture) && !career.week?.derbyFair;
   return { match, humanIsAway, pitch, home, away, helpers: [...teamHome.helpers, ...teamAway.helpers] };
 }
 
@@ -710,6 +722,10 @@ export function recordResult(career, fixture, prepared) {
   const human = humanClub(career).id;
   if (fixture.home === human) resultMood(career, fixture.result.home, fixture.result.away);
   else if (fixture.away === human) resultMood(career, fixture.result.away, fixture.result.home);
+  if (isDerbyFixture(career, fixture)) {
+    const homeHuman = fixture.home === human;
+    derbyResult(career, homeHuman ? fixture.result.home : fixture.result.away, homeHuman ? fixture.result.away : fixture.result.home);
+  }
   return fixture.result;
 }
 

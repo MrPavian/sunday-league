@@ -9,6 +9,8 @@ export const REL = {
   schwager: { name: 'Schwager', plural: 'Schwager', mods: { passing: 0.015, stamina: 0.01 } },
   kollegen: { name: 'Arbeitskollege', plural: 'Arbeitskollegen', mods: { passing: 0.01 } },
   rivalen: { name: 'Rivale', plural: 'Rivalen', mods: { passing: -0.03, technique: -0.01 } },
+  feinde: { name: 'Erzfeind', plural: 'Erzfeinde', mods: { passing: -0.05, technique: -0.02, stamina: -0.01 } },
+  schulfreunde: { name: 'Schulfreund', plural: 'Schulfreunde', mods: { passing: 0.03, technique: 0.01 } },
 };
 const GENERIC_JOBS = /^(Schüler|Student|Azubi|Arbeitssuchend)/;
 const CAP = 0.06;
@@ -71,7 +73,7 @@ export function chemistry(c, lineup) {
       mods[idx] ??= {};
       for (const [k, v] of Object.entries(REL[type].mods)) mods[idx][k] = Math.max(-CAP, Math.min(CAP, (mods[idx][k] ?? 0) + v));
     }
-  const score = pairs.reduce((s, p) => s + (p.type === 'rivalen' ? -1 : 1), 0);
+  const score = pairs.reduce((s, p) => s + (p.type === 'rivalen' ? -1 : p.type === 'feinde' ? -2 : 1), 0);
   return { pairs, mods, score };
 }
 
@@ -89,4 +91,15 @@ export function relationLabel(c, idx) {
   return relationsOfPlayer(c, idx)
     .map((r) => `${REL[r.type].name}: ${shortName(c, r.other)}`)
     .join(' · ');
+}
+
+// Neuzugang: Kennt er jemanden von früher? Schulfreund – oder der Mobber von damals.
+export function pastLink(c, newcomer) {
+  for (const other of humanClub(c).squad) {
+    if (other === newcomer || relationOf(c, newcomer, other)) continue;
+    const r = hash(newcomer * 7 + 3, other) % 100;
+    if (r < 4) return { other, kind: 'mobber' };
+    if (r < 9) return { other, kind: 'schulfreund' };
+  }
+  return null;
 }

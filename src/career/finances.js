@@ -81,7 +81,7 @@ export function matchFinances(career, fixture, prepared, level) {
 
   if (homeHuman) {
     const rng = createRng(career.seed + career.season * 97 + career.round * 13);
-    const press = career.flags?.pressWeeks > 0 ? 1.4 : 1; // nach dem Kreisblatt-Porträt kommen mehr
+    const press = (career.flags?.pressWeeks > 0 ? 1.4 : 1) * (m.derby ? 1.8 : 1); // Kreisblatt-Porträt, Derby
     const fans = Math.round((level > 1 ? rng.int(20, 45) : rng.int(5, 14)) * press);
     career.flags ??= {};
     career.flags.fans = { round: career.round, n: fans }; // für die Unterschriftenlisten

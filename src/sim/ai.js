@@ -202,6 +202,7 @@ function chooseTackle(m, p, dBall) {
 
   const tough = hasTrait(p, 'hart_im_nehmen');
   let slideChance = surface.hard ? (p.injury ? 0 : tough ? 0.25 : 0.04) : 0.06 + 0.14 * p.attrs.tackling;
+  if (m.derby) slideChance *= 1.4; // im Derby geht man dazwischen
   if (p.yellow) slideChance *= 0.3; // mit Gelb vorbelastet lieber vorsichtig
   if (dBall > 0.9 && rng.chance(slideChance)) return 'slide';
   if (dBall < 1.4 && rng.chance(0.2 + 0.3 * p.attrs.tackling)) return 'poke';

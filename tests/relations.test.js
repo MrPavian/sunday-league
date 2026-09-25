@@ -56,6 +56,7 @@ describe('relations and player stories', () => {
         c.round = 3;
         const [a, b] = humanClub(c).squad.filter((i) => i !== c.coach.idx);
         if (id === 'rivalen_zoff') setRelation(c, a, b, 'rivalen');
+        if (id === 'alte_geschichte') c.flags.pastLink = { a, b, kind: choice % 2 ? 'schulfreund' : 'mobber', round: 0 };
         const ctx = def.needs(c, createRng(choice + 1));
         expect(ctx, id).toBeTruthy();
         c.week.event = { id, ctx, text: def.text(c, ctx), options: def.options.map((o) => o.label), choice: null, result: null };
@@ -63,5 +64,23 @@ describe('relations and player stories', () => {
         expect(typeof resolveEvent(c, choice), `${id}/${choice}`).toBe('string');
       }
     }
+  });
+
+  it('decisions have many possible outcomes – up to players leaving the club', () => {
+    const results = new Set();
+    let left = 0;
+    for (let seed = 1; seed <= 40; seed++) {
+      const c = createCareer({ seed: 200 + seed });
+      c.round = 3;
+      const [a, b] = humanClub(c).squad.filter((i) => i !== c.coach.idx);
+      const def = SOCIAL_EVENTS.freundin_ausgespannt;
+      const size = humanClub(c).squad.length;
+      c.week.event = { id: 'freundin_ausgespannt', ctx: { a, b }, text: def.text(c, { a, b }), options: def.options.map((o) => o.label), choice: null, result: null };
+      c.round = 3 + seed; // anderer Zufall je Durchlauf
+      results.add(resolveEvent(c, 0).slice(0, 30));
+      if (humanClub(c).squad.length < size) left++;
+    }
+    expect(results.size).toBeGreaterThanOrEqual(4);
+    expect(left).toBeGreaterThan(0);
   });
 });

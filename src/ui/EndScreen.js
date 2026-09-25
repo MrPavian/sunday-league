@@ -48,7 +48,7 @@ export class EndScreen {
     this.root.innerHTML = `
       <div class="paper">
         <div class="masthead">KREISBLATT <small>Sport am Montag</small></div>
-        <h2>${headline(m, grades)}</h2>
+        <h2>${m.derby ? 'Derby: ' : ''}${headline(m, grades)}</h2>
         <div class="result">
           <span>${t0.name}</span><b>${m.score[0]} : ${m.score[1]}</b><span>${t1.name}</span>
         </div>

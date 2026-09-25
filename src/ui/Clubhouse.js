@@ -29,6 +29,7 @@ import { storyLabels } from '../career/stories.js';
 import { chronicleData, yearOf } from '../career/sagas.js';
 import { askWirt, buyRound, dossier, playDart, PUB_ACTIONS, PUB_NAME, pubOpen, pubState, ROUND_PRICE, setTactic, TACTICS, talk, wirtName } from '../career/pub.js';
 import { DOSSIER_LABELS } from '../data/backstories.js';
+import { derbyOf, isDerbyFixture } from '../career/derby.js';
 import { CUP_NAME, cupClub, cupOf, groupTable, humanCupMatch, PRIZES, stageName, tournamentOpen } from '../career/tournament.js';
 import { canSupportDream, DREAM_COST, supportDream } from '../career/pub.js';
 import { chemistry, REL, relationLabel, relationsOfPlayer, shortName } from '../career/relations.js';
@@ -242,7 +243,7 @@ export class Clubhouse {
     const count = (s) => avail.filter((a) => a === s).length;
     return `
       <div class="fixture-card">
-        <p class="label">Sonntag, 10:30 Uhr</p>
+        <p class="label">Sonntag, 10:30 Uhr${isDerbyFixture(c, f) ? ` · <b class="derby">${derbyOf(c).name}</b>` : ''}</p>
         <h3>${home ? club.short : opp.short} – ${home ? opp.short : club.short}</h3>
         <p>${home ? 'Heimspiel' : 'Auswärts'} gegen <b>${opp.name}</b></p>
         <p class="venue-line">${venue.name} · ${venue.surface.name} · ${venue.format} gegen ${venue.format}</p>

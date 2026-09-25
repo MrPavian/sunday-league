@@ -60,7 +60,7 @@ export function judgeFoul(m, offender, severity) {
   const r = m.referee;
   if (!r) return;
   const t = REF_TRAITS[r.trait];
-  if (m.rng.chance(clamp(severity * t.cards, 0, 0.95))) book(m, offender, 'foul');
+  if (m.rng.chance(clamp(severity * t.cards * (m.derby ? 1.3 : 1), 0, 0.95))) book(m, offender, 'foul');
 }
 
 // Meckern beim Schiri kann teuer werden.

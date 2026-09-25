@@ -45,7 +45,7 @@ export class Hud {
 
   init(match) {
     const r = match.referee;
-    this.introPending = r ? `Schiri heute: ${r.name} (${REF_TRAITS[r.trait].name})` : null;
+    this.introPending = match.derby ? `DERBY! ${r ? `Schiri: ${r.name}` : 'Heute wird es heiß.'}` : r ? `Schiri heute: ${r.name} (${REF_TRAITS[r.trait].name})` : null;
     match.teams.forEach((t, i) => {
       const el = this.root.querySelector(`.team[data-t="${i}"]`);
       el.textContent = t.name;
