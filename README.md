@@ -115,6 +115,7 @@ Rechte Hand läuft, linke Hand spielt.
 | Tempo (ruhig / normal / schnell) | C | – |
 | Hilfe ein/aus | H | – |
 | Ton an/aus | N | – |
+| Grafikeffekte an/aus | G | – |
 | Zurück zur Platzwahl | Esc / M | – |
 | Spielerpool (im Menü) | P | – |
 | Revanche nach Abpfiff | Enter | – |

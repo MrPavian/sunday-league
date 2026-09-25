@@ -24,6 +24,7 @@ import { Input } from './input/Input.js';
 import { CameraRig } from './render/CameraRig.js';
 import { MatchView } from './render/MatchView.js';
 import { PixelRenderer } from './render/PixelRenderer.js';
+import { setLightMood } from './render/props.js';
 import { VENUES, venueById } from './render/venues/index.js';
 import { createMatch, stepMatch } from './sim/match.js';
 import { SURFACES } from './sim/surfaces.js';
@@ -57,6 +58,12 @@ const testDuration = Number(params.get('dauer')) || undefined; // Testschalter: 
 
 const canvas = document.getElementById('game');
 const pixel = new PixelRenderer(canvas, { targetHeight: 320 });
+let lightMood = null;
+try {
+  if (localStorage.getItem('sunday-league:fx') === '0') pixel.setEffects(false);
+} catch {
+  // egal
+}
 const rig = new CameraRig();
 const scene = new THREE.Scene();
 const input = new Input();
@@ -88,6 +95,7 @@ function loadVenue(id) {
   // Testschalter: ?surface=grass|ash|… spielt den Platz mit anderer Physik.
   pitch = { ...venue.pitch, surface: SURFACES[params.get('surface')] ?? venue.pitch.surface };
   venueRoot = new THREE.Group();
+  lightMood = null;
   venueInfo = venue.build(venueRoot, pitch, createRng(venue.id.length * 7919), scene);
   scene.add(venueRoot);
   sound.setVenue(venue.id);
@@ -379,6 +387,15 @@ function frame(now) {
     if (mode === 'play') {
       if (intent.help) hud.toggleHelp();
       if (intent.mute) hud.toast(sound.toggleMute() ? 'Ton aus' : 'Ton an', 1);
+      if (intent.fx) {
+        pixel.setEffects(!pixel.effects);
+        hud.toast(pixel.effects ? 'Effekte an' : 'Effekte aus (schneller)', 1.2);
+        try {
+          localStorage.setItem('sunday-league:fx', pixel.effects ? '1' : '0');
+        } catch {
+          // egal
+        }
+      }
       if (intent.tempo) {
         tempo = (tempo + 1) % TEMPOS.length;
         hud.toast(TEMPOS[tempo].label, 1.2, 2);
@@ -414,6 +431,12 @@ function frame(now) {
   hud.update(match, dt);
   sound.update(dt);
   rig.follow(match.ball.pos.x, match.ball.pos.z, dt, venueInfo.bounds);
+  const look = venue?.id === 'halle' ? 'halle' : match.weather ?? ((match.pitch?.heat ?? 1) > 1 ? 'hitze' : 'klar');
+  if (look !== lightMood) {
+    lightMood = look;
+    setLightMood(venueRoot, look === 'halle' ? 'klar' : look);
+  }
+  pixel.setLook(look);
   pixel.render(scene, rig.camera);
   requestAnimationFrame(frame);
 }

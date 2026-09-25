@@ -591,3 +591,10 @@ Nebenkosten pro Woche.
 Wette gegen den Kegelclub, Brockenwanderung, Beachsoccer gegen Castrop, Rettungsmission um 3 Uhr). Die Fahrt
 knüpft Freundschaften und Rivalitäten, kostet mal Geld oder einen Sonnenstich, landet in der Chronik und
 entscheidet, wie die Mannschaft in die neue Saison startet.
+
+**Grafik** (`src/render/PixelRenderer.js`, `src/render/props.js`): Der Nachbearbeitungs-Shader bekommt
+Kontaktschatten aus der Tiefe (SSAO light), ein leichtes Glühen heller Flächen, Farbkorrektur (Tönung, Sättigung,
+Kontrast), Dunst mit der Entfernung, Vignette und geordnetes Bayer-Dithering im Pixelraster. Jedes Wetter hat
+einen eigenen Look (Regen kühl und gedämpft, Nebel dicht, Hitze warm und hell, Schneedecke und Raureif auf dem
+Boden) und eine eigene Lichtstimmung; ein kühles Gegenlicht hebt die Spieler vom Rasen ab. Taste G schaltet die
+teuren Effekte für langsame Rechner ab.

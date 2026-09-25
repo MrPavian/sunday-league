@@ -587,9 +587,6 @@ body.in-menu .edge { display: none; }
 .winter-cup { border: 2px solid #000; border-left: 6px solid #6fa8dc; background: #1f2a33; padding: 8px 10px; margin: 8px 0; display: grid; gap: 6px; }
 .winter-cup p { margin: 0; }
 hr { border: 0; border-top: 2px dashed #3a3a30; margin: 14px 0; }
-body.weather-fog #game { filter: contrast(0.72) brightness(1.08) saturate(0.7); }
-body.weather-snow #game { filter: brightness(1.14) saturate(0.55) contrast(0.9); }
-body.weather-frost #game { filter: saturate(0.75) hue-rotate(-8deg) brightness(1.04); }
 .venue-line.weather { color: #9fc4e0; }
 
 /* Karriereende & Nachfolge */

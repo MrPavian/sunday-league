@@ -15,6 +15,7 @@ const KEYS = {
   sub: ['KeyX'],
   tempo: ['KeyC'],
   mute: ['KeyN'],
+  fx: ['KeyG'],
   restart: ['Enter'],
   menu: ['Escape', 'KeyM'],
   help: ['KeyH'],
@@ -60,6 +61,7 @@ export class Input {
     let switchPlayer = this.wasPressed('switchPlayer');
     let sub = this.wasPressed('sub');
     const mute = this.wasPressed('mute');
+    const fx = this.wasPressed('fx');
     const restart = this.wasPressed('restart');
     const menu = this.wasPressed('menu');
     const help = this.wasPressed('help');
@@ -91,6 +93,6 @@ export class Input {
       x /= l;
       z /= l;
     }
-    return { move: { x, z }, sprint, shootHeld, pass, loft, hold, tackle, poke, switchPlayer, sub, tempo, restart, menu, mute, help };
+    return { move: { x, z }, sprint, shootHeld, pass, loft, hold, tackle, poke, switchPlayer, sub, tempo, restart, menu, mute, fx, help };
   }
 }

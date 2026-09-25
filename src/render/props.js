@@ -203,5 +203,33 @@ export function addLights(scene, { sky = 0xa9bccb, sun = 0xfff0d8, sunIntensity 
   light.shadow.mapSize.set(2048, 2048);
   Object.assign(light.shadow.camera, { left: -span, right: span, top: span * 0.8, bottom: -span * 0.8, near: 1, far: 90 });
   light.shadow.bias = -0.0008;
-  return group(hemiLight, light);
+  light.shadow.normalBias = 0.02;
+  // Kühles Gegenlicht von hinten: Spieler heben sich besser vom Rasen ab.
+  const rim = new THREE.DirectionalLight(0xbcd4ff, sunIntensity * 0.22);
+  rim.position.set(-sunPos[0] * 0.8, sunPos[1] * 0.6, -Math.abs(sunPos[2]) - 10);
+  for (const l of [hemiLight, light, rim]) l.userData.base = { intensity: l.intensity, color: l.color.getHex() };
+  light.userData.sun = true;
+  return group(hemiLight, light, rim);
+}
+
+// Lichtstimmung fürs Wetter: Regen dämpft die Sonne, Hitze macht sie gelb und hart.
+const MOODS = {
+  klar: { sun: 1, hemi: 1, tint: null },
+  hitze: { sun: 1.15, hemi: 0.95, tint: 0xffe2a8 },
+  rain: { sun: 0.45, hemi: 1.15, tint: 0xc8d4e6 },
+  fog: { sun: 0.35, hemi: 1.25, tint: 0xdfe4e8 },
+  snow: { sun: 0.55, hemi: 1.3, tint: 0xe8f0ff },
+  frost: { sun: 0.85, hemi: 1.05, tint: 0xdce8ff },
+  leaves: { sun: 0.95, hemi: 1, tint: 0xffd9a8 },
+};
+export function setLightMood(root, id = 'klar') {
+  const m = MOODS[id] ?? MOODS.klar;
+  root.traverse((o) => {
+    const base = o.isLight && o.userData.base;
+    if (!base) return;
+    const sun = o.userData.sun;
+    o.intensity = base.intensity * (o.isHemisphereLight ? m.hemi : m.sun);
+    o.color.setHex(base.color);
+    if (sun && m.tint) o.color.setHex(m.tint);
+  });
 }
