@@ -106,6 +106,13 @@ function step(m, input, dt) {
     return;
   }
   if (m.phase === 'setpiece') {
+    // Drückt der Mensch als Schütze schon während der kurzen Pause, wird der Druck
+    // gemerkt und die Pause verkürzt – sonst verpufft die Taste einfach.
+    const taker = m.setPiece && getPlayer(m, m.setPiece.takerId);
+    if (taker && taker.id === m.controlledId && (input.pass || input.loft)) {
+      m.queuedAction = { pass: !!input.pass, loft: !!input.loft };
+      m.phaseTimer = Math.min(m.phaseTimer, 0.15);
+    }
     if ((m.phaseTimer -= dt) <= 0) m.phase = 'play';
     return;
   }
@@ -195,6 +202,20 @@ function step(m, input, dt) {
   if (ev) handleBallEvent(m, ev);
 
   updatePendingSwitch(m);
+  autoSwitch(m);
+}
+
+// Wer aus dem eigenen Team den Ball erobert (Dribbling, Kopfball, Zweikampf,
+// Abpraller), wird automatisch gesteuert – sonst steht der Mitspieler mit dem
+// Ball da und wartet auf Anweisungen.
+function autoSwitch(m) {
+  const { ball } = m;
+  if (m.humanTeam === null || ball.holder || ball.lastTouch === m.controlledId || m.lastTouchTeam !== m.humanTeam) return;
+  const p = getPlayer(m, ball.lastTouch);
+  if (!p || p.role === 'gk' || p.state !== 'normal' || dist2d(p.pos, ball.pos) > 1.2) return;
+  const me = getPlayer(m, m.controlledId);
+  if (me && dist2d(me.pos, ball.pos) < 1.5) return;
+  setControlled(m, p.id);
 }
 
 function handleBallEvent(m, ev) {
@@ -209,11 +230,15 @@ function handleBallEvent(m, ev) {
 
 function humanIntent(m, p, input, dt) {
   const { ball } = m;
+  if (m.queuedAction) {
+    input = { ...input, pass: input.pass || m.queuedAction.pass, loft: input.loft || m.queuedAction.loft };
+    m.queuedAction = null;
+  }
   if (ball.holder === p.id) {
     // Einwurf: mit dem Stick zielen, Pass- oder Schusstaste wirft.
     const mv = input.move;
     if (Math.hypot(mv.x, mv.z) > 0.3) p.facing = { x: mv.x / Math.hypot(mv.x, mv.z), z: mv.z / Math.hypot(mv.x, mv.z) };
-    if (input.pass || input.loft || input.shootHeld) p.pending = { type: 'pass', ttl: 0.3, cone: 0.2 };
+    if (input.pass || input.loft || input.shootHeld) p.pending = { type: 'pass', ttl: 0.45, cone: 0.2 };
     return { move: { x: 0, z: 0 }, sprint: false };
   }
   // D = Grätsche (auf hartem Boden mit Schürfwunden-Risiko), Y = Stochern im Stehen.
@@ -226,11 +251,11 @@ function humanIntent(m, p, input, dt) {
     p.charge = Math.min(1, p.charge + dt * 1.25);
   } else if (p.charging) {
     p.charging = false;
-    p.pending = { type: 'shoot', power: Math.max(0.15, p.charge), ttl: 0.3 };
+    p.pending = { type: 'shoot', power: Math.max(0.15, p.charge), ttl: 0.45 };
     p.charge = 0;
   }
   // S = flacher Pass, E = hoher Ball; bei der Ecke wird daraus automatisch eine Flanke.
-  if (input.pass || input.loft) p.pending = { type: 'pass', ttl: 0.3, lofted: p.setPieceAction === 'cross' ? 'cross' : !!input.loft };
+  if (input.pass || input.loft) p.pending = { type: 'pass', ttl: 0.45, lofted: p.setPieceAction === 'cross' ? 'cross' : !!input.loft };
   p.dribbleDir = null;
   return { move: input.move, sprint: input.sprint };
 }

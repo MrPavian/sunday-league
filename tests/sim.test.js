@@ -581,3 +581,58 @@ describe('live ticker', () => {
     expect(c.lines.every((l) => l.minute >= 1 && l.minute <= 90 && l.text.length > 5)).toBe(true);
   });
 });
+
+describe('feel: parries, corners, set pieces', () => {
+  const NONE = { move: { x: 0, z: 0 }, sprint: false, shootHeld: false, pass: false, loft: false, hold: false, tackle: false, poke: false, switchPlayer: false, sub: false };
+
+  it('a parry goes out low and wide, not up over the keeper', () => {
+    let parries = 0;
+    let maxY = 0;
+    for (const seed of [1, 2, 3]) {
+      const m = createMatch({ seed, pitch: PARKING_LOT, human: false });
+      let watch = 0;
+      for (let i = 0; i < 60 * 600 && m.phase !== 'ended'; i++) {
+        stepMatch(m, undefined, DT);
+        if (m.events.some((e) => e.type === 'save')) {
+          parries++;
+          watch = 30;
+        }
+        if (watch-- > 0 && !m.ball.holder) maxY = Math.max(maxY, m.ball.pos.y);
+        m.events.length = 0;
+      }
+    }
+    expect(parries).toBeGreaterThan(5);
+    expect(maxY).toBeLessThan(1.9);
+  });
+
+  it('nobody gets stuck in the corners of a walled pitch', () => {
+    const pitch = PITCHES.hinterhof;
+    const inCorner = (p) => Math.abs(p.x) > pitch.halfLength - 2.5 && Math.abs(p.z) > pitch.halfWidth - 2.5;
+    let longest = 0;
+    for (const seed of [1, 2, 3]) {
+      const m = createMatch({ seed, pitch, human: false });
+      let run = 0;
+      for (let i = 0; i < 60 * 600 && m.phase !== 'ended'; i++) {
+        stepMatch(m, undefined, DT);
+        m.events.length = 0;
+        run = m.phase === 'play' && inCorner(m.ball.pos) ? run + 1 : 0;
+        longest = Math.max(longest, run);
+      }
+    }
+    expect(longest / 60).toBeLessThan(8);
+  });
+
+  it('pressing pass during the set-piece pause is not swallowed', () => {
+    const m = createMatch({ seed: 5, pitch: PARKING_LOT });
+    expect(m.phase).toBe('setpiece');
+    const taker = getPlayer(m, m.setPiece.takerId);
+    expect(taker.id).toBe(m.controlledId);
+    let passed = false;
+    for (let i = 0; i < 60 && !passed; i++) {
+      stepMatch(m, i === 1 ? { ...NONE, pass: true } : NONE, DT);
+      passed = m.events.some((e) => e.type === 'pass' && e.playerId === taker.id);
+      m.events.length = 0;
+    }
+    expect(passed).toBe(true);
+  });
+});

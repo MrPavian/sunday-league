@@ -2,7 +2,7 @@
 import { clamp, dist2d, len, norm, rotate } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
 import { ballSpeed } from './ball.js';
-import { attackDir, distToSegment, setControlled } from './players.js';
+import { attackDir, distToSegment, setControlled, wallPush } from './players.js';
 
 export const REACH = 0.75;
 
@@ -83,8 +83,12 @@ export function tryExecute(m, p) {
   const holds = ball.holder === p.id;
   if (p.state !== 'normal') return;
   if (!holds) {
-    if (ball.holder || p.kickCooldown > 0) return;
-    if (dist2d(p.pos, ball.pos) > REACH || ball.pos.y > 1.1) return;
+    // Die kurze Sperre nach einer Dribbel-Berührung gilt nicht für einen gewollten
+    // Schuss oder Pass – sonst verfällt die Aktion, bevor sie ausgeführt wird.
+    const ownDribble = p.id === m.controlledId && ball.lastTouch === p.id && ball.lastAction === 'dribble';
+    if (ball.holder || (p.kickCooldown > 0 && !ownDribble)) return;
+    // Der gesteuerte Spieler kommt etwas weiter an den Ball – Taste gedrückt, Ball gespielt.
+    if (dist2d(p.pos, ball.pos) > (p.id === m.controlledId ? REACH * 1.3 : REACH) || ball.pos.y > 1.1) return;
     if (shielded(m, p)) {
       p.pending = null;
       return;
@@ -102,7 +106,7 @@ export function tryExecute(m, p) {
     if (p.role === 'gk') m.keeperRelease = { id: p.id, team: p.team, time: m.time };
   } else {
     // Luftloch – gehört in der Kreisklasse dazu.
-    const whiff = (0.05 * (1 - p.attrs.technique) + 0.04 * fatigue) * (hasTrait(p, 'ballsicher') ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.3 : 1);
+    const whiff = (0.05 * (1 - p.attrs.technique) + 0.04 * fatigue) * (hasTrait(p, 'ballsicher') ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.3 : 1) * (p.id === m.controlledId ? 0.5 : 1);
     if (m.rng.chance(whiff)) {
       m.events.push({ type: 'whiff', playerId: p.id });
       return;
@@ -226,7 +230,7 @@ export function keeperSaves(m) {
     // Kreisklasse-Keeper: Scharfe, platzierte Schüsse sind oft einfach drin.
     if (bs >= 6 && ball.lastAction !== 'pass') {
       const corner = Math.abs(ball.pos.z) > pitch.goalHalfWidth * 0.55 ? 0.15 : 0;
-      const beaten = clamp(0.08 + (bs - 8) * 0.03 + corner - 0.3 * p.attrs.keeping - (dist2d(p.pos, ball.pos) < 0.45 ? 0.15 : 0), 0.03, 0.6);
+      const beaten = clamp(0.05 + (bs - 8) * 0.03 + corner - 0.3 * p.attrs.keeping - (dist2d(p.pos, ball.pos) < 0.45 ? 0.15 : 0), 0.03, 0.6);
       if (rng.chance(beaten)) {
         p.catchCooldown = 0.7; // zu spät – der Ball ist vorbei
         p.diveAnim = 0.5;
@@ -249,11 +253,14 @@ export function keeperSaves(m) {
       m.pendingSwitch = null;
       if (bs >= 4) m.events.push({ type: 'catch', playerId: p.id });
     } else {
-      // Zur Seite abwehren, nicht zurück vors eigene Tor.
+      // Zur Seite abwehren, flach und zügig – nicht zurück vors eigene Tor und
+      // nicht als Kerze über den Keeper.
       const side = Math.sign(ball.pos.z - p.pos.z) || (rng.chance(0.5) ? 1 : -1);
-      ball.vel.x = -ball.vel.x * 0.25;
-      ball.vel.z = side * (4 + rng.next() * 4);
-      ball.vel.y = Math.abs(ball.vel.y) * 0.5 + 1;
+      ball.vel.x = s * rng.range(3, 5);
+      ball.vel.z = side * rng.range(4, 7);
+      ball.vel.y = rng.range(0.3, 1.4);
+      ball.pos.y = Math.min(ball.pos.y, 1.2);
+      p.catchCooldown = 0.6; // den eigenen Abpraller nicht sofort wieder fangen
       ball.lastTouch = p.id;
       ball.lastAction = 'save';
       m.lastTouchTeam = p.team;
@@ -409,6 +416,15 @@ export function dribbleTouch(m) {
   }
   let dir = p.dribbleDir ?? p.facing;
   if (p.dribbleDir && dir.x * p.facing.x + dir.z * p.facing.z < 0) dir = p.facing;
+  // An Wand und Auto dribbelt die KI entlang oder weg, statt sich in der Ecke festzulaufen.
+  const wall = wallPush(pitch, ball.pos);
+  if (wall.near && p.id !== m.controlledId) {
+    let dx = dir.x;
+    let dz = dir.z;
+    if (wall.x && dx * wall.x < 0.3) dx = wall.x * 0.8;
+    if (wall.z && dz * wall.z < 0.3) dz = wall.z * 0.8;
+    dir = norm(dx, dz);
+  }
   // Die KI führt den Ball an der Seitenlinie nach innen statt ins Aus.
   if (pitch.boundary === 'lines' && p.id !== m.controlledId && Math.abs(ball.pos.z) > pitch.halfWidth - 2.5 && dir.z * ball.pos.z > 0) {
     dir = norm(dir.x || attackDir(m, p.team), -Math.sign(ball.pos.z) * 0.4);

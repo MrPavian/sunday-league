@@ -50,3 +50,14 @@ export function clampToPitch(pitch, x, z, margin = 0.5) {
     z: clamp(z, -pitch.halfWidth + margin, pitch.halfWidth - margin),
   };
 }
+
+// Wie nah ist eine Position an Wand oder Zaun? Liefert die Richtung weg von der
+// Wand (0, wenn frei). Nur bei 'walls'-Plätzen – dort gibt es kein Aus.
+export function wallPush(pitch, pos, range = 1.6) {
+  if (pitch.boundary !== 'walls') return { x: 0, z: 0, near: false };
+  const xMax = pitch.wallX - 0.3;
+  const zMax = pitch.halfWidth - 0.3;
+  const px = pos.x > xMax - range ? -1 : pos.x < -xMax + range ? 1 : 0;
+  const pz = pos.z > zMax - range ? -1 : pos.z < -zMax + range ? 1 : 0;
+  return { x: px, z: pz, near: px !== 0 || pz !== 0, corner: px !== 0 && pz !== 0 };
+}

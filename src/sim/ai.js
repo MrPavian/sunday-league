@@ -2,7 +2,7 @@
 import { clamp, dist2d, len, norm } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
 import { ballSpeed } from './ball.js';
-import { attackDir, clampToPitch, distToSegment, getPlayer } from './players.js';
+import { attackDir, clampToPitch, distToSegment, getPlayer, wallPush } from './players.js';
 
 // Einmal pro Schritt: Rollen für beide Teams verteilen.
 //   chaser – geht auf den Ball
@@ -31,7 +31,7 @@ export function updateTactics(m, dt) {
     const oppKeeper = holder && holder.team !== team && holder.role === 'gk' ? holder : fresh;
     let chaser = oppKeeper ? null : pool[0] ?? null;
     // Im eigenen Team läuft die KI nur an, wenn der gesteuerte Spieler weit weg ist.
-    if (human && team === m.humanTeam && chaser && !(dist2d(chaser.pos, target) < dist2d(human.pos, target) - 6)) chaser = null;
+    if (human && team === m.humanTeam && chaser && !(dist2d(chaser.pos, target) < dist2d(human.pos, target) - 2.5)) chaser = null;
     if (holder && holder.team === team) chaser = null;
     m.chasers[team] = chaser?.id ?? null;
     const rest = pool.filter((p) => p !== chaser);
@@ -94,13 +94,17 @@ function supportSpot(m, p, dt) {
   const s = attackDir(m, p.team);
   // Mit Auslinien nicht direkt an der Linie anbieten.
   const margin = pitch.boundary === 'lines' ? 2.5 : 1.2;
-  const base = clampToPitch(pitch, p.home.x * 0.5 + ball.pos.x * 0.7 + s * 2.5, p.home.z + ball.pos.z * 0.3, margin);
-  const offsets = [[0, 0], [3, 0], [-3, 0], [0, 3], [0, -3], [2.5, 2.5], [2.5, -2.5], [-2.5, 2.5], [-2.5, -2.5]];
+  // Bei Ballbesitz rücken alle auf: Stürmer laufen in die Tiefe, das Mittelfeld
+  // bietet sich davor an, die Abwehr schiebt nach.
+  const push = p.role === 'fwd' ? 4.5 : p.role === 'mid' ? 3 : 1;
+  const base = clampToPitch(pitch, p.home.x * 0.4 + ball.pos.x * 0.7 + s * push, p.home.z + ball.pos.z * 0.3, margin);
+  const deep = p.role === 'fwd' ? [[5, 0], [5, 3], [5, -3]] : [];
+  const offsets = [[0, 0], [3, 0], [-3, 0], [0, 3], [0, -3], [2.5, 2.5], [2.5, -2.5], [-2.5, 2.5], [-2.5, -2.5], ...deep];
   let best = base;
   let bestScore = -Infinity;
   for (const [ox, oz] of offsets) {
-    const c = clampToPitch(pitch, base.x + ox, base.z + oz, margin);
-    let score = s * c.x * 0.05 - len(c.x - base.x, c.z - base.z) * 0.15;
+    const c = clampToPitch(pitch, base.x + ox * s, base.z + oz, margin);
+    let score = s * c.x * 0.07 - len(c.x - base.x, c.z - base.z) * 0.13;
     for (const o of m.players) {
       if (o.team === p.team) continue;
       const d = dist2d(o.pos, c);
@@ -145,6 +149,12 @@ export function outfieldIntent(m, p, dt) {
       ax = ball.pos.x - toGoal.x * 0.9 - toGoal.z * side * 0.9;
       az = ball.pos.z - toGoal.z * 0.9 + toGoal.x * side * 0.9;
     }
+    // Ball an der Wand: nicht dahinter klemmen, sondern von der Feldseite kommen.
+    const wall = wallPush(pitch, ball.pos);
+    if (wall.near) {
+      ax = ball.pos.x + wall.x * 0.45;
+      az = ball.pos.z + wall.z * 0.45;
+    }
     const dBall = dist2d(p.pos, ball.pos);
     if (p.setPieceAction === 'cross' && dBall < 1.3) {
       p.setPieceAction = null;
@@ -153,6 +163,8 @@ export function outfieldIntent(m, p, dt) {
     const tackle = chooseTackle(m, p, dBall);
     if (tackle) return { tackle };
     p.dribbleDir = norm(oppGoal.x - p.pos.x, p.aimZ - p.pos.z);
+    // In der Ecke nicht lange fackeln: abspielen oder raus Richtung Mitte.
+    if (wall.corner && dBall < 1.3 && !p.pending && !ball.holder && p.decideTimer > 0.15) p.decideTimer = 0.15;
     if (dBall < 1.3 && p.decideTimer <= 0 && !p.pending && !ball.holder) {
       // Amateure brauchen einen Moment, bis sie sich entscheiden.
       p.decideTimer = 0.4 + (1 - p.attrs.technique) * 0.4 + m.rng.next() * 0.25;
@@ -175,6 +187,10 @@ export function outfieldIntent(m, p, dt) {
 
 function aiDecide(m, p, oppGoal) {
   const { rng, pitch } = m;
+  if (wallPush(pitch, m.ball.pos, 1.2).corner) {
+    p.pending = { type: 'pass', ttl: 0.4, cone: -0.9 };
+    return;
+  }
   const dGoal = dist2d(p.pos, oppGoal);
   const toG = norm(oppGoal.x - p.pos.x, oppGoal.z - p.pos.z);
   const facingDot = p.facing.x * toG.x + p.facing.z * toG.z;
