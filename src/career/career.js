@@ -1,5 +1,6 @@
 // Karriere: eine Saison in der Freizeitliga. Der Zustand ist reines JSON
 // (speicherbar); Spieler werden nur über ihre Pool-Nummer referenziert.
+import { logGrade, logSeason, monthlyAward, seasonAward } from './awards.js';
 import { tr } from '../core/i18n.js';
 import { legacySeasonEnd } from './legacy.js';
 import { sponsorResult } from './sponsors.js';
@@ -186,6 +187,10 @@ export function nextSeason(career) {
   const topScorer = scorer?.goals ? { name: playerOf(career, scorer.idx).name, goals: scorer.goals } : null;
   career.history = [...(career.history ?? []), { season: career.season, league: career.league, pos, champion: rows[0].club.name, topScorer, promoted, relegated }];
 
+  // Spieler der Saison und Saisonbilanz je Spieler, bevor die Zahlen zurückgesetzt werden.
+  const bestOfSeason = seasonAward(career, awardDeps(career));
+  for (const idx of humanClub(career).squad) logSeason(career, idx, playerOf(career, idx).rating);
+
   // Entwicklung zuerst – die Einsätze dieser Saison zählen als Spielpraxis.
   const development = developPlayers(career);
   developYouth(career);
@@ -243,6 +248,7 @@ export function nextSeason(career) {
   const intake = youthIntake(career, youthDeps());
   startWeek(career);
   const note = (text) => career.week?.chat.splice(1, 0, { from: null, text, time: 'Mo 09:00' });
+  if (bestOfSeason) note(bestOfSeason.text);
   for (const n of sagaNotes) note(n);
   for (const n of legacyNotes) note(n);
   for (const n of career.sponsorNotes ?? []) note(n);
@@ -740,6 +746,7 @@ export function recordResult(career, fixture, prepared) {
     if (grades[p.id] !== undefined) {
       rec.gradeSum += grades[p.id];
       rec.graded++;
+      logGrade(rec, career.round, grades[p.id]);
     }
     // Schürfwunden ab ×2 brauchen eine Woche.
     if (p.injury && p.injury.severity >= 2) rec.injuryWeeks = Math.max(rec.injuryWeeks, 1);
@@ -774,7 +781,10 @@ export function finishRound(career) {
   }
   career.round++;
   startWeek(career);
+  monthlyAward(career, awardDeps(career));
 }
+
+const awardDeps = (career) => ({ playerOf: (idx) => playerOf(career, idx), clubOfIdx: (idx) => career.clubs.find((c) => c.squad.includes(idx)) ?? null });
 
 export function table(career) {
   const rows = Object.fromEntries(career.clubs.map((c) => [c.id, { club: c, played: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 }]));

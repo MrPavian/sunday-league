@@ -3,6 +3,8 @@ import {
   buildLineup,
   createCareer,
   finishRound,
+  currentFixtures,
+  nextSeason,
   humanClub,
   humanFixture,
   loadCareer,
@@ -507,5 +509,30 @@ describe('youth & retirement', () => {
     c.staff.wirt = { idx: 1, name: 'Uwe Wirt' };
     matchFinances(c, f, prepared, 1);
     expect(drinks()).toBeGreaterThan(normal);
+  });
+});
+
+describe('player development and awards', () => {
+  it('logs form and season history and names a player of the month every four matchdays', () => {
+    const c = createCareer({ seed: 21 });
+    while (!seasonOver(c)) {
+      for (const f of currentFixtures(c)) {
+        const p = prepareMatch(c, f, { duration: 90 });
+        simulateSync(p);
+        recordResult(c, f, p);
+      }
+      finishRound(c);
+    }
+    const months = (c.awards ?? []).filter((a) => a.kind === 'month');
+    expect(months.map((a) => a.round)).toEqual([4, 8]);
+    const winner = c.players[months[0].idx];
+    expect(winner.awards[0]).toMatchObject({ kind: 'month', round: 4 });
+    const own = humanClub(c).squad.map((i) => c.players[i]).find((r) => r.recent?.length);
+    expect(own.recent.length).toBeLessThanOrEqual(8);
+    nextSeason(c);
+    expect(c.awards.some((a) => a.kind === 'season')).toBe(true);
+    const logged = humanClub(c).squad.map((i) => c.players[i]).filter((r) => r.seasons?.length);
+    expect(logged.length).toBeGreaterThan(3);
+    expect(logged[0].seasons[0]).toMatchObject({ season: 1 });
   });
 });

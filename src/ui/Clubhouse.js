@@ -1,4 +1,5 @@
 import { plural, tr } from '../core/i18n.js';
+import { awardLabel } from '../career/awards.js';
 import {
   clubById,
   currentLineup,
@@ -70,6 +71,7 @@ export class Clubhouse {
       if (!t || this.busy) return;
       const { action, value } = t.dataset;
       if (action === 'tab') this.tab = value;
+      else if (action === 'playerCard') this.openPlayer = this.openPlayer === Number(value) ? null : Number(value);
       else if (action === 'poachKid') {
         poachKid(this.career, value);
         this.h.onChange();
@@ -662,12 +664,12 @@ export class Clubhouse {
         const avg = r.graded ? tr((r.gradeSum / r.graded).toFixed(1).replace('.', ','), (r.gradeSum / r.graded).toFixed(1)) : '–';
         return `<tr style="--c:${tier.color}">
           <td><span class="badge">${tier.name}</span></td>
-          <td><b>${p.name}</b>${isCoach(c, idx) ? ` <span class="me-tag">${tr('Du', 'You')}</span>` : ''}${p.title ? ` <em>${p.title}</em>` : ''}${formArrow(r.form)}${r.absenceMul > 1.2 ? tr(' <span class="grumpy" title="hat gerade wenig Zeit – sagt öfter ab">selten da</span>', ' <span class="grumpy" title="short of time at the moment – drops out more often">rarely around</span>') : ''}${r.grumpy ? tr(' <span class="grumpy" title="angefressen – sagt öfter ab">grummelt</span>', ' <span class="grumpy" title="sulking – drops out more often">sulking</span>') : ''}<small>${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)}</small>${relationLabel(c, idx) ? `<small class="rel">${relationLabel(c, idx)}</small>` : ''}</td>
+          <td><button class="linkish" data-action="playerCard" data-value="${idx}" title="${tr('Formkurve und Verlauf', 'Form and history')}"><b>${p.name}</b></button>${r.awards?.length ? ` <span class="award" title="${r.awards.map(awardLabel).join(' · ')}">★${r.awards.length > 1 ? r.awards.length : ''}</span>` : ''}${isCoach(c, idx) ? ` <span class="me-tag">${tr('Du', 'You')}</span>` : ''}${p.title ? ` <em>${p.title}</em>` : ''}${formArrow(r.form)}${r.absenceMul > 1.2 ? tr(' <span class="grumpy" title="hat gerade wenig Zeit – sagt öfter ab">selten da</span>', ' <span class="grumpy" title="short of time at the moment – drops out more often">rarely around</span>') : ''}${r.grumpy ? tr(' <span class="grumpy" title="angefressen – sagt öfter ab">grummelt</span>', ' <span class="grumpy" title="sulking – drops out more often">sulking</span>') : ''}<small>${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)}</small>${relationLabel(c, idx) ? `<small class="rel">${relationLabel(c, idx)}</small>` : ''}</td>
           <td>${POSITIONS[p.position]}</td><td class="num">${p.rating}</td>
           <td>${r.injuryWeeks ? `<span class="st-text no" title="${r.injury?.label ?? tr('verletzt', 'injured')}">${r.injury ? `${r.injury.label} · ${r.injuryWeeks} ${tr('Wo.', 'wks')}` : tr('verletzt', 'injured')}</span>` : st ? `<span class="st-text ${st[1]}">${st[0]}</span>` : ''}</td>
           <td class="num">${r.apps}</td><td class="num">${r.goals}</td><td class="num">${r.assists}</td><td class="num">${avg}</td>
           <td>${canRelease && !isCoach(c, idx) ? (this.confirmRelease === idx ? `<button class="tiny danger" data-action="release" data-value="${idx}">${tr('Wirklich?', 'Sure?')}</button>` : `<button class="tiny" data-action="release" data-value="${idx}" title="${tr('Verabschieden', 'Release')}">×</button>`) : ''}</td>
-        </tr>`;
+        </tr>${this.openPlayer === idx ? `<tr class="player-card"><td colspan="10">${playerCard(c, idx, p, r)}</td></tr>` : ''}`;
       })
       .join('');
     return `<table class="squad"><thead><tr><th></th><th>${tr('Spieler', 'Player')}</th><th>${tr('Pos.', 'Pos.')}</th><th>${tr('Stärke', 'Rating')}</th><th>${tr('Sonntag', 'Sunday')}</th><th>${tr('Sp.', 'Apps')}</th><th>${tr('Tore', 'Goals')}</th><th>${tr('Vorl.', 'Ast.')}</th><th>${tr('Ø Note', 'Avg.')}</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
@@ -963,3 +965,29 @@ export class Clubhouse {
   }
 }
 
+
+// Spielerkarte im Kader: Formkurve der letzten Noten, Stärke über die Saisons,
+// Auszeichnungen vom Kreisblatt.
+function playerCard(c, idx, p, r) {
+  const gradeTxt = (g) => tr(g.toFixed(1).replace('.', ','), g.toFixed(1));
+  const recent = r.recent ?? [];
+  // Note 1 = sehr gut → hoher Balken, 6 = schwach → niedriger Balken.
+  const bars = recent.length
+    ? `<div class="form-bars">${recent.map((g) => `<span style="--h:${Math.round(((6 - g.grade) / 5) * 100)}%" class="${g.grade <= 2 ? 'good' : g.grade >= 4 ? 'bad' : ''}" title="${tr('Spieltag', 'Matchday')} ${g.round + 1}: ${gradeTxt(g.grade)}"><i></i><b>${gradeTxt(g.grade)}</b></span>`).join('')}</div>`
+    : `<p class="hint">${tr('Noch keine Noten – erst ein paar Spiele machen.', 'No grades yet – play a few matches first.')}</p>`;
+  const seasons = [...(r.seasons ?? []), { season: c.season, rating: p.rating, apps: r.apps, goals: r.goals, assists: r.assists, avg: r.graded ? r.gradeSum / r.graded : null, now: true }];
+  const rows = seasons
+    .map((x, i) => {
+      const prev = seasons[i - 1]?.rating;
+      const delta = prev == null ? '' : x.rating > prev ? ` <span class="up">+${x.rating - prev}</span>` : x.rating < prev ? ` <span class="down">${x.rating - prev}</span>` : '';
+      return `<tr><td>${x.now ? tr('jetzt', 'now') : `S${x.season}`}</td><td class="num">${x.rating}${delta}</td><td class="num">${x.apps}</td><td class="num">${x.goals}</td><td class="num">${x.assists}</td><td class="num">${x.avg != null ? gradeTxt(x.avg) : '–'}</td></tr>`;
+    })
+    .join('');
+  const awards = (r.awards ?? []).map((a) => `<li>★ ${awardLabel(a)}</li>`).join('');
+  const total = r.total ? tr(`Karriere bei uns: ${r.total.apps + r.apps} Spiele, ${r.total.goals + r.goals} Tore, ${r.total.assists + r.assists} Vorlagen.`, `Career with us: ${r.total.apps + r.apps} games, ${r.total.goals + r.goals} goals, ${r.total.assists + r.assists} assists.`) : '';
+  return `<div class="card-grid">
+    <div><h4>${tr('Formkurve', 'Form')} <small>${tr('letzte Noten', 'recent grades')}</small></h4>${bars}</div>
+    <div><h4>${tr('Verlauf', 'History')}</h4><table class="mini"><thead><tr><th></th><th>${tr('Stärke', 'Rating')}</th><th>${tr('Sp.', 'Apps')}</th><th>${tr('Tore', 'Goals')}</th><th>${tr('Vorl.', 'Ast.')}</th><th>Ø</th></tr></thead><tbody>${rows}</tbody></table><p class="hint">${total}</p></div>
+    ${awards ? `<div><h4>${tr('Auszeichnungen', 'Awards')}</h4><ul class="awards">${awards}</ul></div>` : ''}
+  </div>`;
+}

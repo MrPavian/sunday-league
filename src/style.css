@@ -680,3 +680,23 @@ li.sponsor .rel i { display: block; height: 100%; background: #c9a227; }
 .saves-panel button.danger { background: #8c2f2f; }
 .saves-panel .hint { opacity: 0.7; font-size: 0.85em; }
 .saves-panel .message { margin-top: 10px; color: var(--accent); }
+
+/* Spielerkarte im Kader */
+.squad .linkish { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-shadow: inherit; text-align: left; }
+.squad .linkish:hover b, .squad .linkish:focus-visible b { color: var(--accent); }
+.squad .award { color: var(--accent); }
+.squad tr.player-card td { background: rgba(0, 0, 0, 0.35); padding: 10px 12px; }
+.card-grid { display: flex; flex-wrap: wrap; gap: 18px 28px; }
+.card-grid h4 { margin: 0 0 6px; }
+.card-grid h4 small { opacity: 0.7; font-weight: 400; }
+.form-bars { display: flex; align-items: flex-end; gap: 4px; height: 70px; }
+.form-bars span { position: relative; width: 26px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+.form-bars span i { display: block; width: 100%; height: var(--h); min-height: 4px; background: #9aa3ab; border: 1px solid #000; }
+.form-bars span.good i { background: #4caf50; }
+.form-bars span.bad i { background: #c0504d; }
+.form-bars span b { font-size: 10px; font-weight: 400; margin-top: 2px; }
+.card-grid table.mini { border-collapse: collapse; font-size: 13px; }
+.card-grid table.mini td, .card-grid table.mini th { padding: 1px 8px; }
+.card-grid .up { color: #6fcf73; }
+.card-grid .down { color: #e07b6f; }
+.card-grid ul.awards { margin: 0; padding-left: 0; list-style: none; }
