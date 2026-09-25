@@ -214,10 +214,10 @@ export function successionCandidates(c) {
     .slice(0, 2);
   for (const v of vets) {
     const p = playerOf(c, v.idx);
-    out.push({ type: 'kapitaen', idx: v.idx, name: p.name, age: p.age, desc: `Spielt seit ${totalApps(c, v.idx)} Spielen für den Verein${hasTrait(p, 'anfuehrer') ? ', geborener Anführer' : ''}. Wird Spielertrainer.` });
+    out.push({ type: 'kapitaen', idx: v.idx, name: p.name, age: p.age, desc: `${totalApps(c, v.idx) ? `${totalApps(c, v.idx)} Spiele für den Verein` : 'Gehört seit Jahren zum Kader'}${hasTrait(p, 'anfuehrer') ? ', geborener Anführer' : ''}. Wird Spielertrainer.` });
   }
   const alum = [...(c.alumni ?? [])].reverse().find((a) => a.idx !== co?.idx && a.idx !== k?.idx && a.idx != null && (c.custom?.[a.idx] || a.idx < 900000));
-  if (alum) out.push({ type: 'ehemaliger', idx: alum.idx, name: alum.name, age: alum.age + (c.season - alum.season), desc: `Vereinslegende (${alum.apps} Spiele, ${alum.goals} Tore), heute ${alum.role}.` });
+  if (alum) out.push({ type: 'ehemaliger', idx: alum.idx, name: alum.name, age: alum.age + (c.season - alum.season), desc: `Vereinslegende${alum.apps ? ` (${alum.apps} Spiele, ${alum.goals} Tore)` : ''}, heute ${alum.role}.` });
   out.push({ type: 'neu', name: 'Neuen Trainer anlegen', desc: 'Jemand ganz Neues übernimmt – du legst Namen, Alter, Familie und Spielertyp fest.' });
   return out;
 }

@@ -1,7 +1,7 @@
 # Sunday League – Game Design, Featureliste & Roadmap
 
 > Arbeitstitel: **Sunday League** (Alternativen: *Kreisklasse*, *Asche & Ehre*, *Dritte Halbzeit*)
-> Status: Karriere-Minimalversion spielbar · Stand: 2026-09-25
+> Status: spielbarer Prototyp mit vollständiger Karriere · Stand: 2026-09-25 · Überblick: [docs/OVERVIEW.md](docs/OVERVIEW.md)
 
 ---
 
