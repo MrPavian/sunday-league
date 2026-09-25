@@ -167,7 +167,7 @@ Rechte Hand läuft, linke Hand spielt.
 | Einstellungen (Sprache, Ton, Effekte, Tempo) | O | – |
 | Zurück zur Platzwahl | Esc / M | – |
 
-Im Menü: **K** Karriere, **C** Challenges, **P** Spielerpool, **O** Einstellungen.
+Im Menü: **K** Karriere, **C** Challenges, **P** Spielerpool, **L** Spielstände (3 Plätze, Export/Import), **O** Einstellungen (Sprache, Ton, Lautstärke, Effekte, Tempo, Trikots, Tastenbelegung).
 
 **Sprache:** Deutsch oder Englisch – Auswahl beim ersten Start und jederzeit in den Einstellungen.
 Auf englischen Tastaturen liegt „Stochern“ auf **Z** (gleiche Taste).

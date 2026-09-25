@@ -809,31 +809,82 @@ export function table(career) {
 
 // --- Speichern ---------------------------------------------------------------------
 
-const SAVE_KEY = 'sunday-league:career';
+// Drei Speicherplätze. Platz 1 nutzt den alten Schlüssel – bestehende Spielstände bleiben.
+export const SLOTS = [1, 2, 3];
+const SLOT_KEY = 'sunday-league:slot';
+const slotKey = (slot) => (slot === 1 ? 'sunday-league:career' : `sunday-league:career:${slot}`);
 
-export function saveCareer(career, storage = globalThis.localStorage) {
+export function activeSlot(storage = globalThis.localStorage) {
   try {
-    storage?.setItem(SAVE_KEY, JSON.stringify(career));
+    const n = Number(storage?.getItem(SLOT_KEY));
+    return SLOTS.includes(n) ? n : 1;
+  } catch {
+    return 1;
+  }
+}
+
+export function setActiveSlot(slot, storage = globalThis.localStorage) {
+  try {
+    storage?.setItem(SLOT_KEY, String(slot));
+  } catch {
+    // egal
+  }
+}
+
+export function saveCareer(career, storage = globalThis.localStorage, slot = activeSlot(storage)) {
+  try {
+    career.savedAt = Date.now();
+    storage?.setItem(slotKey(slot), JSON.stringify(career));
     return true;
   } catch {
     return false;
   }
 }
 
-export function loadCareer(storage = globalThis.localStorage) {
+function parseCareer(raw) {
+  const c = JSON.parse(raw);
+  return c && c.version === SAVE_VERSION && Array.isArray(c.clubs) ? migrateCareer(c) : null;
+}
+
+export function loadCareer(storage = globalThis.localStorage, slot = activeSlot(storage)) {
   try {
-    const raw = storage?.getItem(SAVE_KEY);
-    if (!raw) return null;
-    const c = JSON.parse(raw);
-    return c.version === SAVE_VERSION ? migrateCareer(c) : null;
+    const raw = storage?.getItem(slotKey(slot));
+    return raw ? parseCareer(raw) : null;
   } catch {
     return null;
   }
 }
 
-export function deleteCareer(storage = globalThis.localStorage) {
+// Kurzinfo je Platz für die Übersicht: Verein, Saison, Spieltag, gespeichert am.
+export function slotSummaries(storage = globalThis.localStorage) {
+  return SLOTS.map((slot) => {
+    const c = loadCareer(storage, slot);
+    if (!c) return { slot, empty: true };
+    const club = c.clubs.find((x) => x.human);
+    return { slot, club: club?.name ?? '?', season: c.season, round: Math.min(c.round + 1, c.fixtures.length), rounds: c.fixtures.length, coach: c.coach ? `${c.coach.first ?? ''} ${c.coach.last ?? ''}`.trim() : '', savedAt: c.savedAt ?? null };
+  });
+}
+
+// Export als Datei: mit Kennung, damit beim Import nichts Fremdes durchrutscht.
+export function exportCareer(career) {
+  return JSON.stringify({ game: 'sunday-league', version: SAVE_VERSION, exportedAt: new Date().toISOString(), career }, null, 1);
+}
+
+export function importCareer(text) {
+  let data;
   try {
-    storage?.removeItem(SAVE_KEY);
+    data = JSON.parse(text);
+  } catch {
+    throw new Error('json');
+  }
+  const raw = data?.game === 'sunday-league' ? data.career : data;
+  if (!raw || raw.version !== SAVE_VERSION || !Array.isArray(raw.clubs)) throw new Error('format');
+  return parseCareer(JSON.stringify(raw));
+}
+
+export function deleteCareer(storage = globalThis.localStorage, slot = activeSlot(storage)) {
+  try {
+    storage?.removeItem(slotKey(slot));
   } catch {
     // egal
   }

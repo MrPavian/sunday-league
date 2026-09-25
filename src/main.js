@@ -11,6 +11,12 @@ import {
   humanClub,
   humanFixture,
   loadCareer,
+  activeSlot,
+  setActiveSlot,
+  slotSummaries,
+  exportCareer,
+  importCareer,
+  deleteCareer,
   nextSeason,
   prepareMatch,
   recordResult,
@@ -42,6 +48,7 @@ import { Menu } from './ui/Menu.js';
 import { PoolBrowser } from './ui/PoolBrowser.js';
 import { Settings } from './ui/Settings.js';
 import { Ticker } from './ui/Ticker.js';
+import { SaveSlots } from './ui/SaveSlots.js';
 import './style.css';
 
 const STEP = 1 / 60;
@@ -79,6 +86,7 @@ const endScreen = new EndScreen(document.getElementById('end'));
 const sound = new Sound();
 const poolBrowser = new PoolBrowser(document.getElementById('pool'));
 const settings = new Settings(document.getElementById('settings'));
+const saveSlots = new SaveSlots(document.getElementById('saves'));
 
 let colorSafe = false;
 try {
@@ -213,6 +221,64 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
       },
       onBack() {
         settings.hide();
+        setTimeout(() => (menu.paused = false), 0);
+      },
+    });
+  },
+  onSaves() {
+    menu.paused = true;
+    saveSlots.show({
+      summaries: () => slotSummaries(),
+      active: () => activeSlot(),
+      onLoad(slot) {
+        setActiveSlot(slot);
+        career = loadCareer();
+        saveSlots.hide();
+        menu.paused = false;
+        menu.setCareer(saveInfo());
+        if (career) {
+          menu.hide();
+          openClubhouse();
+        }
+      },
+      onNew(slot) {
+        setActiveSlot(slot);
+        career = loadCareer();
+        saveSlots.hide();
+        menu.paused = false;
+        menu.onCareerNew();
+      },
+      onDelete(slot) {
+        deleteCareer(undefined, slot);
+        if (slot === activeSlot()) career = null;
+        menu.setCareer(saveInfo());
+      },
+      onExport(slot) {
+        const c = loadCareer(undefined, slot);
+        if (!c) return;
+        const club = humanClub(c).short ?? 'verein';
+        const blob = new Blob([exportCareer(c)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `sunday-league-${club}-saison-${c.season}.json`.toLowerCase().replace(/[^a-z0-9.-]+/g, '-');
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      },
+      onImport(slot, text) {
+        try {
+          const c = importCareer(text);
+          saveCareer(c, undefined, slot);
+          if (slot === activeSlot()) career = c;
+          menu.setCareer(saveInfo());
+          return true;
+        } catch (err) {
+          return err.message === 'json'
+            ? tr('Die Datei ist kein gültiger Spielstand (kein JSON).', 'The file is not a valid save (not JSON).')
+            : tr('Das ist kein Sunday-League-Spielstand dieser Version.', 'This is not a Sunday League save for this version.');
+        }
+      },
+      onBack() {
+        saveSlots.hide();
         setTimeout(() => (menu.paused = false), 0);
       },
     });

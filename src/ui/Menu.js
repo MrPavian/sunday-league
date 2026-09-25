@@ -4,7 +4,7 @@ import { FORMATIONS } from '../sim/formation.js';
 // Platzwahl. Pfeiltasten/Klick wählen, Enter startet. Im Hintergrund läuft
 // auf dem gewählten Platz ein KI-Spiel als Vorschau.
 export class Menu {
-  constructor(root, venues, { onSelect, onStart, onPool, onCareer, onCareerNew, onChallenges, onSettings }) {
+  constructor(root, venues, { onSelect, onStart, onPool, onCareer, onCareerNew, onChallenges, onSettings, onSaves }) {
     this.root = root;
     this.venues = venues;
     this.onSelect = onSelect;
@@ -14,6 +14,7 @@ export class Menu {
     this.onCareerNew = onCareerNew;
     this.onChallenges = onChallenges;
     this.onSettings = onSettings;
+    this.onSaves = onSaves;
     this.index = 0;
     root.innerHTML = `
       <div class="menu-panel">
@@ -31,14 +32,16 @@ export class Menu {
           </button>`,
           )
           .join('')}</div>
-        <p class="hint">${tr('← → Platz wählen · <b>Enter</b> Anstoß · <b>K</b> Karriere · <b>C</b> Challenges · <b>P</b> Spielerpool · <b>O</b> Einstellungen', '← → pick a pitch · <b>Enter</b> kick off · <b>K</b> career · <b>C</b> challenges · <b>P</b> player pool · <b>O</b> settings')}</p>
+        <p class="hint">${tr('← → Platz wählen · <b>Enter</b> Anstoß · <b>K</b> Karriere · <b>C</b> Challenges · <b>P</b> Spielerpool · <b>L</b> Spielstände · <b>O</b> Einstellungen', '← → pick a pitch · <b>Enter</b> kick off · <b>K</b> career · <b>C</b> challenges · <b>P</b> player pool · <b>L</b> saves · <b>O</b> settings')}</p>
         <button class="pool-link">${tr('Spielerpool ansehen', 'Browse player pool')}</button>
         <button class="pool-link challenges-link">Challenges</button>
+        <button class="pool-link saves-link">${tr('Spielstände', 'Saves')}</button>
         <button class="pool-link settings-link">${tr('Einstellungen', 'Settings')}</button>
       </div>`;
     root.querySelector('.pool-link').addEventListener('click', () => this.onPool());
     root.querySelector('.challenges-link').addEventListener('click', () => this.onChallenges());
     root.querySelector('.settings-link').addEventListener('click', () => this.onSettings());
+    root.querySelector('.saves-link').addEventListener('click', () => this.onSaves());
     root.querySelectorAll('.venue-card').forEach((el) => {
       el.addEventListener('mouseenter', () => this.select(Number(el.dataset.i)));
       el.addEventListener('click', () => this.start());
@@ -46,10 +49,11 @@ export class Menu {
     window.addEventListener('keydown', (e) => {
       if (!this.visible || this.paused) return;
       // Hotkeys öffnen Formulare – der Buchstabe soll nicht im ersten Eingabefeld landen.
-      if (['KeyP', 'KeyC', 'KeyO', 'KeyK'].includes(e.code)) e.preventDefault();
+      if (['KeyP', 'KeyC', 'KeyO', 'KeyK', 'KeyL'].includes(e.code)) e.preventDefault();
       if (e.code === 'KeyP') this.onPool();
       else if (e.code === 'KeyC') this.onChallenges();
       else if (e.code === 'KeyO') this.onSettings();
+      else if (e.code === 'KeyL') this.onSaves();
       else if (e.code === 'KeyK') (this.saveInfo ? this.onCareer : this.onCareerNew)();
       else if (e.code === 'ArrowLeft' || e.code === 'KeyA') this.select(this.index - 1);
       else if (e.code === 'ArrowRight' || e.code === 'KeyD') this.select(this.index + 1);

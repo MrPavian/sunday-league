@@ -31,3 +31,40 @@ describe('colour-blind safe kits', () => {
     expect(m.teams[0].kit.shirt).toBe(0xc8352f);
   });
 });
+
+describe('save slots, export and import', () => {
+  const memory = () => {
+    const d = {};
+    return { getItem: (k) => d[k] ?? null, setItem: (k, v) => (d[k] = String(v)), removeItem: (k) => delete d[k], d };
+  };
+  const coach = { first: 'Sam', last: 'Baker', age: 40, relation: 'single', profession: 'Elektriker', style: 'libero', children: [] };
+
+  it('keeps three independent slots; slot 1 uses the old key', async () => {
+    const { createCareer, saveCareer, loadCareer, setActiveSlot, slotSummaries, deleteCareer } = await import('../src/career/career.js');
+    const st = memory();
+    const a = createCareer({ seed: 1, coach });
+    const b = createCareer({ seed: 2, coach });
+    saveCareer(a, st, 1);
+    saveCareer(b, st, 3);
+    expect(st.d['sunday-league:career']).toBeTruthy();
+    expect(loadCareer(st, 3).seed).toBe(2);
+    expect(loadCareer(st, 2)).toBeNull();
+    setActiveSlot(3, st);
+    expect(loadCareer(st).seed).toBe(2);
+    const sums = slotSummaries(st);
+    expect(sums.map((x) => !!x.empty)).toEqual([false, true, false]);
+    expect(sums[0].club).toBeTruthy();
+    deleteCareer(st, 3);
+    expect(loadCareer(st, 3)).toBeNull();
+  });
+
+  it('exports to a file and imports it back; rejects foreign files', async () => {
+    const { createCareer, exportCareer, importCareer } = await import('../src/career/career.js');
+    const c = createCareer({ seed: 5, coach });
+    const back = importCareer(exportCareer(c));
+    expect(back.seed).toBe(5);
+    expect(back.clubs.length).toBe(c.clubs.length);
+    expect(() => importCareer('kein json')).toThrow('json');
+    expect(() => importCareer('{"hallo": 1}')).toThrow('format');
+  });
+});
