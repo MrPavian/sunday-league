@@ -8,13 +8,16 @@ import { PITCHES } from '../sim/pitch.js';
 import { allPlayers } from '../sim/squad.js';
 import { gradePlayers } from '../sim/stats.js';
 import { absenceChance, DECLINE_TEXT, FAREWELL, INJURED, JOIN_TEXT, LATE, noReasons, NUDGE_NO, NUDGE_YES, RUMOR_SOURCES, YES } from './chat.js';
-import { AI_CLUBS, HUMAN_CLUB_DEFAULT, LEAGUE_NAME } from './clubs.js';
+import { HUMAN_CLUB_DEFAULT, LEAGUES } from './clubs.js';
 
 export const SAVE_VERSION = 1;
 export const POOL_SEED = 1921;
-const SQUAD_SHAPE = ['gk', 'def', 'def', 'def', 'mid', 'mid', 'mid', 'fwd', 'fwd'];
+const SQUAD_SHAPES = {
+  small: ['gk', 'def', 'def', 'def', 'mid', 'mid', 'mid', 'fwd', 'fwd'],
+  large: ['gk', 'gk', 'def', 'def', 'def', 'def', 'mid', 'mid', 'mid', 'mid', 'fwd', 'fwd', 'fwd'],
+};
 const NUDGES_PER_WEEK = 3;
-export const MAX_SQUAD = 12;
+export const MAX_SQUAD = 12; // Freizeitliga; in der Kreisklasse mehr (siehe maxSquad)
 export const MIN_SQUAD = 7;
 const SCOUT_ACTIONS = 2;
 const RUMOR_TIERS = { ok: 0.44, gut: 0.33, stark: 0.15, dorfstar: 0.06, superstar: 0.014, legende: 0.006 };
@@ -29,31 +32,37 @@ const hashSeed = (...parts) => parts.reduce((h, p) => (Math.imul(h ^ p, 0x9e3779
 
 // --- Neue Saison ----------------------------------------------------------------
 
-export function createCareer({ seed = Date.now() % 1e9, club = {} } = {}) {
-  const rng = createRng(seed);
+export const leagueOf = (career) => LEAGUES[career.level ?? 1];
+export const maxSquad = (career) => leagueOf(career).maxSquad;
+
+// Kader aus dem Pool ziehen – nach Klassen-Gewichten und Positionen.
+function squadPicker(rng, used) {
   const pool = getPool();
   const byTierPos = {};
   for (const p of pool.everyone()) (byTierPos[`${p.tier}:${p.position}`] ??= []).push(p.poolIndex);
-  const used = new Set();
-
-  const pick = (tiers, position) => {
-    for (let attempt = 0; attempt < 50; attempt++) {
-      const tier = weighted(rng, tiers);
-      const list = byTierPos[`${tier}:${position}`];
-      if (!list?.length) continue;
-      const idx = rng.pick(list);
-      if (!used.has(idx)) {
-        used.add(idx);
-        return idx;
+  return (tiers, shape) =>
+    shape.map((position) => {
+      for (let attempt = 0; attempt < 60; attempt++) {
+        const list = byTierPos[`${weighted(rng, tiers)}:${position}`];
+        if (!list?.length) continue;
+        const idx = rng.pick(list);
+        if (!used.has(idx)) {
+          used.add(idx);
+          return idx;
+        }
       }
-    }
-    throw new Error('Pool erschöpft');
-  };
+      throw new Error('Pool erschöpft');
+    });
+}
 
-  const human = { ...HUMAN_CLUB_DEFAULT, ...club, human: true };
-  const clubs = [human, ...AI_CLUBS.map((c) => ({ ...c, human: false }))].map((c) => ({
+export function createCareer({ seed = Date.now() % 1e9, club = {} } = {}) {
+  const rng = createRng(seed);
+  const league = LEAGUES[1];
+  const pick = squadPicker(rng, new Set());
+  const human = { ...HUMAN_CLUB_DEFAULT, ...club, human: true, venue: league.humanVenue };
+  const clubs = [human, ...league.clubs.map((c) => ({ ...c, human: false }))].map((c) => ({
     ...c,
-    squad: SQUAD_SHAPE.map((pos) => pick(c.tiers, pos)),
+    squad: pick(c.tiers, SQUAD_SHAPES[league.squadShape]),
   }));
 
   const players = {};
@@ -62,16 +71,63 @@ export function createCareer({ seed = Date.now() % 1e9, club = {} } = {}) {
   const career = {
     version: SAVE_VERSION,
     seed,
-    league: LEAGUE_NAME,
+    level: 1,
+    league: league.name,
     season: 1,
     round: 0,
     clubs,
     players,
     fixtures: roundRobin(clubs.map((c) => c.id), rng),
+    history: [],
     week: null,
   };
   startWeek(career);
   return career;
+}
+
+// Saisonwechsel: Tabelle auswerten, auf- oder absteigen, Kader behalten.
+export function nextSeason(career) {
+  const rows = table(career);
+  const pos = rows.findIndex((r) => r.club.human) + 1;
+  const level = career.level ?? 1;
+  const promoted = pos === 1 && level < 2;
+  const relegated = level > 1 && pos === rows.length;
+  career.history = [...(career.history ?? []), { season: career.season, league: career.league, pos, champion: rows[0].club.name }];
+
+  // Saisonwerte in die Karriere-Gesamtstatistik übernehmen.
+  for (const rec of Object.values(career.players)) {
+    rec.total = {
+      apps: (rec.total?.apps ?? 0) + rec.apps,
+      goals: (rec.total?.goals ?? 0) + rec.goals,
+      assists: (rec.total?.assists ?? 0) + rec.assists,
+    };
+    Object.assign(rec, { apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0 });
+  }
+
+  const newLevel = promoted ? level + 1 : relegated ? level - 1 : level;
+  const league = LEAGUES[newLevel];
+  const rng = createRng(hashSeed(career.seed, career.season, 99));
+  const human = humanClub(career);
+  human.venue = league.humanVenue;
+  let clubs = career.clubs;
+  if (newLevel !== level) {
+    // Neue Liga, neue Gegner. Die alten Gegner verlassen den Spielstand.
+    const used = new Set(human.squad);
+    const pick = squadPicker(rng, used);
+    for (const c of career.clubs) if (!c.human) for (const idx of c.squad) delete career.players[idx];
+    clubs = [human, ...league.clubs.map((c) => ({ ...c, human: false, squad: pick(c.tiers, SQUAD_SHAPES[league.squadShape]) }))];
+    for (const c of clubs) for (const idx of c.squad) career.players[idx] ??= freshRecord();
+  }
+  Object.assign(career, {
+    level: newLevel,
+    league: league.name,
+    season: career.season + 1,
+    round: 0,
+    clubs,
+    fixtures: roundRobin(clubs.map((c) => c.id), rng),
+  });
+  startWeek(career);
+  return { pos, promoted, relegated };
 }
 
 const freshRecord = () => ({ apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 });
@@ -248,6 +304,8 @@ function makeRumors(career, rng) {
 
 // Alte Spielstände ohne Gerüchteküche nachrüsten.
 export function migrateCareer(career) {
+  career.level ??= 1;
+  career.history ??= [];
   if (career.week && !career.week.rumors) {
     career.week.rumors = makeRumors(career, createRng(hashSeed(career.seed, career.season, career.round, 3)));
     career.week.actions = SCOUT_ACTIONS;
@@ -288,7 +346,7 @@ export function recruit(career, i) {
   const r = w?.rumors[i];
   const club = humanClub(career);
   if (!r || r.status !== 'open' || w.actions <= 0) return null;
-  if (club.squad.length >= MAX_SQUAD) return 'full';
+  if (club.squad.length >= maxSquad(career)) return 'full';
   const p = poolPlayer(r.idx);
   const rng = createRng(hashSeed(career.seed, career.season, career.round, r.idx, 13));
   w.actions--;
@@ -386,7 +444,9 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   const rng = createRng(hashSeed(career.seed, career.season, career.round, index(fixture.home), index(fixture.away)));
   const home = clubById(career, fixture.home);
   const away = clubById(career, fixture.away);
-  const pitch = PITCHES[home.venue];
+  const league = leagueOf(career);
+  const base = PITCHES[home.venue];
+  const pitch = { ...base, format: league.format ?? base.format, referee: league.referee || !!base.referee };
   const avail = (c) => (c.human ? career.week.availability : aiAvailability(c, rng));
   const teamHome = teamForMatch(career, home, pitch.format, avail(home), rng);
   const teamAway = teamForMatch(career, away, pitch.format, avail(away), rng);

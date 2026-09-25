@@ -2,7 +2,8 @@ import {
   clubById,
   currentLineup,
   humanClub,
-  MAX_SQUAD,
+  maxSquad,
+  leagueOf,
   MIN_SQUAD,
   recruit,
   recruitChance,
@@ -164,14 +165,18 @@ export class Clubhouse {
     const t = table(c);
     const pos = t.findIndex((r) => r.club.human) + 1;
     const champ = t[0].club;
-    const msg =
-      pos === 1
-        ? 'MEISTER! Aufstieg in die Kreisklasse C – und die Runde im Vereinsheim geht aufs Haus.'
-        : pos <= 2
-          ? 'Vizemeister! Nächstes Jahr greifen wir an.'
-          : pos >= 5
-            ? 'Rote Laterne in Sicht. Aber die Stimmung stimmt.'
-            : 'Solides Mittelfeld. Die Mannschaftsfahrt ist trotzdem gebucht.';
+    const level = leagueOf(c).level;
+    const last = pos === t.length;
+    let msg;
+    if (pos === 1 && level === 1) msg = 'MEISTER! Aufstieg in die Kreisklasse C – eigener Rasenplatz, Schiri, 7 gegen 7. Die Runde im Vereinsheim geht aufs Haus.';
+    else if (pos === 1) msg = 'MEISTER der Kreisklasse C! Die Kreisklasse B kommt in einem späteren Update – bis dahin wird die Schale jede Woche poliert.';
+    else if (last && level > 1) msg = 'Letzter Platz – Abstieg in die Freizeitliga. Kopf hoch, der Hinterhof wartet.';
+    else if (pos === 2) msg = 'Vizemeister! Nächstes Jahr greifen wir an.';
+    else if (last) msg = 'Rote Laterne. Aber die Stimmung stimmt.';
+    else msg = 'Solides Mittelfeld. Die Mannschaftsfahrt ist trotzdem gebucht.';
+    const chronicle = (c.history ?? []).length
+      ? `<p class="label">Vereinschronik</p><ul class="chronicle">${c.history.map((h) => `<li>Saison ${h.season}: ${h.pos}. Platz · ${h.league}</li>`).join('')}</ul>`
+      : '';
     return `
       <div class="fixture-card">
         <p class="label">Saisonende</p>
@@ -179,7 +184,8 @@ export class Clubhouse {
         <p>${msg}</p>
         <p>Meister: <b>${champ.name}</b></p>
         ${this.miniTable()}
-        <button class="primary" data-action="onNewSeason">Neue Saison starten</button>
+        ${chronicle}
+        <button class="primary" data-action="onNewSeason">Nächste Saison</button>
       </div>`;
   }
 
@@ -277,7 +283,7 @@ export class Clubhouse {
     const w = c.week;
     if (!w || this.results) return '<p class="empty">Die Gerüchteküche meldet sich nach dem Wochenstart.</p>';
     const club = humanClub(c);
-    const full = club.squad.length >= MAX_SQUAD;
+    const full = club.squad.length >= maxSquad(c);
     const cards = w.rumors
       .map((r, i) => {
         const p = poolPlayer(r.idx);
@@ -305,7 +311,7 @@ export class Clubhouse {
       })
       .join('');
     return `
-      <p class="chat-head">Kader ${club.squad.length}/${MAX_SQUAD} · noch ${w.actions} Aktion${w.actions === 1 ? '' : 'en'} diese Woche${full ? ' · Kader voll – erst jemanden verabschieden' : ''}</p>
+      <p class="chat-head">Kader ${club.squad.length}/${maxSquad(c)} · noch ${w.actions} Aktion${w.actions === 1 ? '' : 'en'} diese Woche${full ? ' · Kader voll – erst jemanden verabschieden' : ''}</p>
       <div class="rumors">${cards}</div>`;
   }
 

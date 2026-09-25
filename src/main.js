@@ -10,6 +10,7 @@ import {
   humanClub,
   humanFixture,
   loadCareer,
+  nextSeason,
   prepareMatch,
   recordResult,
   saveCareer,
@@ -144,7 +145,7 @@ const clubhouse = new Clubhouse(document.getElementById('club'), {
     openClubhouse();
   },
   onNewSeason() {
-    career = createCareer({ seed: seed++, club: { name: humanClub(career).name } });
+    nextSeason(career);
     saveCareer(career);
     openClubhouse();
   },

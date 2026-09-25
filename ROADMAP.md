@@ -429,7 +429,8 @@ Gleichzeitig hat das Match noch Lücken, die man beim Spielen sofort merkt.
    Spielplan, Saisonstatistik je Spieler (Einsätze, Tore, Vorlagen, Ø-Note), Speichern im Browser.
    ✅ Aufstellung selbst wählen · ✅ Transfers über die Gerüchteküche (3 Gerüchte/Woche, zuschauen deckt
    Stärke & Eigenschaften auf, Ansprechen mit Zusagechance, Ex-Profis meiden Rummel, Kader 7–12).
-   Offen: Aufstieg in eine echte zweite Liga.
+   ✅ Aufstieg in die Kreisklasse C (7 gegen 7, Schiri, Sportplatz Waldesruh), Abstieg zurück,
+   Kader & Karriere-Gesamtstatistik bleiben, Vereinschronik. Offen: Kreisklasse B und höher, Spieler altern.
 3. **Verein**: Trikot-Editor, Sponsoren, Mannschaftskasse & Strafenkatalog
 4. **Transfers & Scouting**: Open Training, Bolzplatz-Scouting
 5. **Schiri, Wetter, 7v7/11v11** für den Aufstieg in die höheren Ligen

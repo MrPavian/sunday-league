@@ -191,3 +191,62 @@ describe('transfers', () => {
     expect(recruitChance(c, legend)).toBeGreaterThan(base);
   });
 });
+
+describe('seasons', () => {
+  const finishSeason = async (c, humanWins) => {
+    const { currentFixtures } = await import('../src/career/career.js');
+    while (!seasonOver(c)) {
+      for (const f of currentFixtures(c)) {
+        const h = c.clubs.find((cl) => cl.id === f.home);
+        const a = c.clubs.find((cl) => cl.id === f.away);
+        if (h.human) f.result = humanWins ? { home: 3, away: 0 } : { home: 0, away: 5 };
+        else if (a.human) f.result = humanWins ? { home: 0, away: 3 } : { home: 5, away: 0 };
+        else f.result = { home: 1, away: 1 };
+      }
+      finishRound(c);
+    }
+  };
+
+  it('the champion goes up to Kreisklasse C: 7v7, referee, own lawn, squad kept', async () => {
+    const { nextSeason, leagueOf, maxSquad } = await import('../src/career/career.js');
+    const c = createCareer({ seed: 61 });
+    const squad = [...humanClub(c).squad];
+    const firstIdx = squad[0];
+    c.players[firstIdx].goals = 7;
+    await finishSeason(c, true);
+    const res = nextSeason(c);
+    expect(res).toMatchObject({ pos: 1, promoted: true });
+    expect(leagueOf(c).level).toBe(2);
+    expect(c.league).toBe('Kreisklasse C Kanalbezirk');
+    expect(c.season).toBe(2);
+    expect(c.round).toBe(0);
+    expect(humanClub(c).squad).toEqual(squad);
+    expect(humanClub(c).venue).toBe('rasenplatz');
+    expect(c.players[firstIdx].total.goals).toBe(7);
+    expect(c.players[firstIdx].goals).toBe(0);
+    expect(maxSquad(c)).toBe(16);
+    expect(c.history).toHaveLength(1);
+    const ai = c.clubs.filter((cl) => !cl.human);
+    expect(ai.map((cl) => cl.id)).toContain('eichenkamp');
+    for (const cl of ai) expect(cl.squad).toHaveLength(13);
+    const prepared = prepareMatch(c, humanFixture(c), { human: true, duration: 5 });
+    expect(prepared.match.pitch.format).toBe(7);
+    expect(prepared.match.referee).not.toBeNull();
+    expect(prepared.match.players.filter((p) => p.team === 0)).toHaveLength(7);
+  });
+
+  it('last place in Kreisklasse C goes back down, mid-table stays', async () => {
+    const { nextSeason, leagueOf } = await import('../src/career/career.js');
+    const c = createCareer({ seed: 62 });
+    await finishSeason(c, true);
+    nextSeason(c);
+    await finishSeason(c, false);
+    expect(nextSeason(c)).toMatchObject({ relegated: true });
+    expect(leagueOf(c).level).toBe(1);
+    expect(humanClub(c).venue).toBe('hinterhof');
+    const stay = createCareer({ seed: 63 });
+    await finishSeason(stay, false);
+    expect(nextSeason(stay)).toMatchObject({ promoted: false, relegated: false });
+    expect(leagueOf(stay).level).toBe(1);
+  });
+});
