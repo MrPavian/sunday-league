@@ -2,6 +2,7 @@
 // Stationen auf und liest aus den Ergebnissen, wer etwas kann.
 import { createRng } from '../core/rng.js';
 import { book } from './finances.js';
+import { trainingLocked } from './personal.js';
 import { getPool, humanClub, joinSquad, maxSquad, playerOf, RECRUIT_BASE } from './career.js';
 
 export const TRAINING_COST = 5;
@@ -68,7 +69,7 @@ const seedOf = (career, extra) => (career.seed * 31 + career.season * 997 + care
 
 export function startTraining(career) {
   const w = career.week;
-  if (!w || w.training || career.cash < TRAINING_COST) return false;
+  if (!w || w.training || career.cash < TRAINING_COST || trainingLocked(career)) return false;
   const rng = createRng(seedOf(career, 5));
   const pool = getPool();
   const taken = new Set([...career.clubs.flatMap((c) => c.squad), ...(career.youth?.prospects ?? []), ...(career.alumni ?? []).map((a) => a.idx)]);

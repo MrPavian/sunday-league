@@ -27,6 +27,10 @@ Auch im Spiel kann etwas passieren: Ein Hund klaut den Ball, der Ball fliegt zum
 ein Autoalarm heult, die Polizei kommt wegen Lärm, ein Gewitter macht den Platz rutschig, der
 Rasensprenger springt an, oder der Schiri verletzt sich und ein Zuschauer pfeift weiter.
 
+Du selbst bist **Spielertrainer** – mit Job, Familie und begrenzter Energie. Training, Scouting
+und Spieltage kosten Familienzeit, unbesetzte Posten im Verein kosten Kraft. Wer beides verheizt,
+fällt zwei Wochen aus und darf nur zuschauen, wie der Kapitän aufstellt.
+
 | Vereinsheim | Kader |
 |---|---|
 | ![Vereinsheim](docs/screenshot-vereinsheim.png) | ![Kader](docs/screenshot-kader.png) |

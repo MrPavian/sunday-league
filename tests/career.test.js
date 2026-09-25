@@ -27,8 +27,9 @@ describe('career', () => {
   it('builds six clubs with nine unique pool players each', () => {
     expect(career.clubs).toHaveLength(6);
     const all = career.clubs.flatMap((c) => c.squad);
-    expect(new Set(all).size).toBe(54);
-    for (const c of career.clubs) expect(c.squad).toHaveLength(9);
+    expect(new Set(all).size).toBe(55); // 6 × 9 + du als Spielertrainer
+    for (const c of career.clubs) expect(c.squad).toHaveLength(c.human ? 10 : 9);
+    expect(humanClub(career).squad).toContain(career.coach.idx);
   });
 
   it('schedules a double round robin: everyone plays everyone home and away', () => {
@@ -174,8 +175,10 @@ describe('transfers', () => {
     expect(recruit(c, 0)).toBe('full');
     const c2 = createCareer({ seed: 9 });
     const club2 = humanClub(c2);
-    while (club2.squad.length > MIN_SQUAD) expect(releasePlayer(c2, club2.squad[club2.squad.length - 1])).toBe(true);
-    expect(releasePlayer(c2, club2.squad[0])).toBe(false);
+    const others = () => club2.squad.filter((i) => i !== c2.coach.idx);
+    expect(releasePlayer(c2, c2.coach.idx)).toBe(false); // dich selbst wirfst du nicht raus
+    while (club2.squad.length > MIN_SQUAD) expect(releasePlayer(c2, others().at(-1))).toBe(true);
+    expect(releasePlayer(c2, others()[0])).toBe(false);
   });
 
   it('ex-pros are shy of hype but like a good dressing room', async () => {

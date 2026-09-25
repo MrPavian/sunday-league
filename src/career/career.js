@@ -9,6 +9,7 @@ import { allPlayers } from '../sim/squad.js';
 import { gradePlayers } from '../sim/stats.js';
 import { absenceChance, DECLINE_TEXT, FAREWELL, INJURED, JOIN_TEXT, LATE, noReasons, NUDGE_NO, NUDGE_YES, RUMOR_SOURCES, YES } from './chat.js';
 import { HUMAN_CLUB_DEFAULT, LEAGUES } from './clubs.js';
+import { coachAway, initCoach, isCoach, personalWeek, seasonPersonal, weeklyPersonal } from './personal.js';
 import { absenceFactor, advanceArcs, applyForm, autoResolve, resultMood, rollWeekEvent, weeklyMood } from './events.js';
 import { developYouth, expireYouth, initYouth, retirements, youthIntake } from './youth.js';
 import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFinances, weeklyFinances } from './finances.js';
@@ -135,6 +136,7 @@ export function createCareer({ seed = Date.now() % 1e9, club = {} } = {}) {
   initFinances(career);
   initYouth(career);
   youthIntake(career, youthDeps());
+  initCoach(career);
   startWeek(career);
   return career;
 }
@@ -180,7 +182,8 @@ export function nextSeason(career) {
     clubs = [human, ...league.clubs.map((c) => ({ ...c, human: false, squad: pick(c.tiers, SQUAD_SHAPES[league.squadShape]) }))];
     for (const c of clubs) for (const idx of c.squad) career.players[idx] ??= freshRecord();
   }
-  if (career.flags) career.flags.summerfest = false;
+  if (career.flags) Object.assign(career.flags, { summerfest: false, anniversary: false });
+  seasonPersonal(career, pos);
   if (career.arcs) career.arcs = career.arcs.filter((a) => a.id !== 'bruder'); // neuer Spielplan
   Object.assign(career, {
     level: newLevel,
@@ -273,6 +276,11 @@ export function startWeek(career) {
     const rec = career.players[idx];
     let status = 'yes';
     let text;
+    if (isCoach(career, idx)) {
+      // Du selbst: kein Chat-Eintrag, du bist da – außer du fällst aus.
+      availability[idx] = coachAway(career) ? 'no' : 'yes';
+      continue;
+    }
     if (rec.injuryWeeks > 0) {
       status = 'no';
       text = rng.pick(INJURED);
@@ -291,6 +299,7 @@ export function startWeek(career) {
   career.week = { availability, chat, nudges: NUDGES_PER_WEEK, nudged: [], lineup: null, training: null, event: null };
   career.flags ??= {};
   advanceArcs(career);
+  personalWeek(career);
   rollWeekEvent(career);
   if (career.round === 0 && !career.offers?.length && (career.sponsors?.length ?? 0) < 2) makeOffers(career, career.level ?? 1);
   career.week.rumors = makeRumors(career, createRng(hashSeed(career.seed, career.season, career.round, 3)));
@@ -300,7 +309,7 @@ export function startWeek(career) {
 // Nachhaken bei einer Absage – klappt ungefähr jedes zweite Mal.
 export function nudge(career, idx) {
   const w = career.week;
-  if (!w || w.nudges <= 0 || w.availability[idx] !== 'no' || w.nudged.includes(idx)) return null;
+  if (!w || w.nudges <= 0 || w.availability[idx] !== 'no' || w.nudged.includes(idx) || isCoach(career, idx)) return null;
   if (career.players[idx].injuryWeeks > 0) return null;
   const rng = createRng(hashSeed(career.seed, career.round, idx, 7));
   w.nudges--;
@@ -391,6 +400,7 @@ export function migrateCareer(career) {
   career.flags ??= {};
   initFinances(career);
   initYouth(career);
+  initCoach(career);
   career.history ??= [];
   if (career.week && !career.week.rumors) {
     career.week.rumors = makeRumors(career, createRng(hashSeed(career.seed, career.season, career.round, 3)));
@@ -423,7 +433,7 @@ export function recruitChance(career, rumor) {
 export function scoutRumor(career, i) {
   const w = career.week;
   const r = w?.rumors[i];
-  if (!r || r.scouted || r.status !== 'open' || w.actions <= 0) return false;
+  if (!r || r.scouted || r.status !== 'open' || w.actions <= 0 || coachAway(career)) return false;
   w.actions--;
   r.scouted = true;
   return true;
@@ -446,7 +456,7 @@ export function recruit(career, i) {
   const w = career.week;
   const r = w?.rumors[i];
   const club = humanClub(career);
-  if (!r || r.status !== 'open' || w.actions <= 0) return null;
+  if (!r || r.status !== 'open' || w.actions <= 0 || coachAway(career)) return null;
   if (club.squad.length >= maxSquad(career)) return 'full';
   const p = poolPlayer(r.idx);
   const rng = createRng(hashSeed(career.seed, career.season, career.round, r.idx, 13));
@@ -465,7 +475,7 @@ export function recruit(career, i) {
 
 export function releasePlayer(career, idx) {
   const club = humanClub(career);
-  if (club.squad.length <= MIN_SQUAD || !club.squad.includes(idx)) return false;
+  if (club.squad.length <= MIN_SQUAD || !club.squad.includes(idx) || isCoach(career, idx)) return false;
   club.squad = club.squad.filter((x) => x !== idx);
   delete career.players[idx];
   if (career.week) {
@@ -536,6 +546,7 @@ export function currentLineup(career) {
 
 // Spieler auf eine Position setzen; steht er schon woanders, wird getauscht.
 export function setLineupSlot(career, slot, idx) {
+  if (coachAway(career)) return; // der Kapitän stellt auf
   const { lineup } = currentLineup(career);
   const next = [...lineup];
   const from = next.indexOf(idx);
@@ -647,6 +658,7 @@ export function finishRound(career) {
   autoResolve(career);
   weeklyFinances(career);
   weeklyMood(career);
+  weeklyPersonal(career);
   for (const rec of Object.values(career.players)) if (rec.injuryWeeks > 0) rec.injuryWeeks--;
   career.round++;
   startWeek(career);

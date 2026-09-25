@@ -99,6 +99,7 @@ export function retirements(career, deps, minSquad, rng = createRng(career.seed 
   const out = [];
   for (const idx of [...club.squad]) {
     if (club.squad.length <= minSquad) break;
+    if (career.coach?.idx === idx) continue; // du hörst nicht einfach auf
     const p = playerOf(career, idx);
     const rec = career.players[idx];
     if (!rng.chance(retirementChance(p, rec))) continue;

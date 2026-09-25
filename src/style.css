@@ -473,3 +473,14 @@ body.in-club #hud { display: none; }
 @keyframes lightning { 0% { opacity: 0.85; } 25% { opacity: 0.1; } 50% { opacity: 0.6; } 100% { opacity: 0; } }
 body.weather-rain #game { filter: brightness(0.78) saturate(0.75) contrast(1.05); }
 .paper .incident { font-style: italic; margin: 4px 0; font-size: 14px; }
+
+/* Spielertrainer */
+.me-tag { font-size: 11px; padding: 0 5px; background: var(--accent); color: #111; border: 1px solid #000; text-shadow: none; }
+.me-bars { display: grid; gap: 4px; margin: 6px 0; }
+.me-bar { display: grid; grid-template-columns: 62px 1fr auto; align-items: center; gap: 6px; font-size: 12px; }
+.me-bar i { height: 8px; border: 1px solid #000; background: linear-gradient(90deg, #5cc46a var(--v), #2a2a2a var(--v)); }
+.me-bar.mid i { background: linear-gradient(90deg, #e0a050 var(--v), #2a2a2a var(--v)); }
+.me-bar.low i { background: linear-gradient(90deg, #d9534f var(--v), #2a2a2a var(--v)); }
+.me-bar small { opacity: 0.75; }
+.me-card { border: 2px solid #000; background: #23231c; padding: 8px 12px; margin-bottom: 12px; }
+.me-card p { margin: 4px 0; }

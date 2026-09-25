@@ -497,3 +497,10 @@ den Ball, Ball über den Zaun (Nachbar behält ihn → 15 € Ersatzball), Autoa
 Polizei wegen Lärmbeschwerde, Gewitter (danach nasser, rutschiger Boden, Regen), Rasensprenger,
 verletzter Schiri → Zuschauer pfeift weiter. Die Uhr steht währenddessen; Bericht im Kreisblatt.
 Testschalter: `?venue=park&incident=hund`.
+
+(5) umgesetzt – Spielertrainer (`src/career/personal.js`): Du stehst als eigener Spieler im Kader (Job, Familie),
+mit zwei Ressourcen: **Familien-Geduld** (Spieltage, Training, Scouting kosten Zeit) und **Ehrenamts-Energie**
+(unbesetzte Posten, Vereinskasse, Kreisklassen-Papierkram ziehen). Leer → Familienkrise bzw. Burnout: zwei
+Wochen weg, der Kapitän stellt auf, kein Training/Scouting, nicht selbst spielen. Persönliche Ereignisse:
+Familienwochenende, Hochzeitstag, Chef will Samstag Inventur (später Spende), Müdigkeit, Kassenwart-Posten,
+Kind will kicken (Familie kommt mit), Trainerangebot nach dem Titel. Sommerpause lädt auf.

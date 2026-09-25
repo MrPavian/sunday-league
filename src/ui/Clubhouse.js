@@ -26,6 +26,7 @@ import { inviteChance, inviteTrialist, isRawDiamond, MAX_STATIONS, runStation, s
 import { promoteProspect, STAFF_ROLES } from '../career/youth.js';
 import { moodLabel, resolveEvent } from '../career/events.js';
 import { storyLabels } from '../career/stories.js';
+import { coachAway, coachName, energyLabel, isCoach, patienceLabel, trainingLocked } from '../career/personal.js';
 import { TRAITS } from '../data/traits.js';
 import { tierById } from '../data/tiers.js';
 import { POSITIONS } from '../sim/generator.js';
@@ -198,10 +199,19 @@ export class Clubhouse {
         ${w.event && w.event.choice === null ? '<p class="warn">In der Gruppe wartet eine Entscheidung auf dich.</p>' : ''}
         ${storyLabels(c).length ? `<ul class="stories">${storyLabels(c).map((s) => `<li>${s}</li>`).join('')}</ul>` : ''}
         ${count('yes') < venue.format ? '<p class="warn">Zu wenige Zusagen – es hilft jemand aus dem Bekanntenkreis aus.</p>' : ''}
+        ${this.meBars()}
         ${this.busy ? `<p class="busy">${this.busy}</p>` : `
-        <button class="primary" data-action="onPlay">Selbst spielen</button>
-        <button data-action="onSimulate">Simulieren</button>`}
+        ${coachAway(c) ? '<p class="warn">Du bist diese Woche nicht da – der Kapitän stellt auf, du bekommst nur das Ergebnis.</p>' : '<button class="primary" data-action="onPlay">Selbst spielen</button>'}
+        <button data-action="onSimulate">${coachAway(c) ? 'Ergebnis abwarten' : 'Simulieren'}</button>`}
       </div>`;
+  }
+
+  // Familie & Energie des Spielertrainers als kleine Balken.
+  meBars() {
+    const k = this.career.coach;
+    if (!k) return '';
+    const bar = (label, v, text) => `<div class="me-bar ${v < 25 ? 'low' : v < 50 ? 'mid' : ''}"><span>${label}</span><i style="--v:${v}%"></i><small>${text}</small></div>`;
+    return `<div class="me-bars">${bar('Familie', k.patience, patienceLabel(k.patience))}${bar('Energie', k.energy, energyLabel(k.energy))}</div>`;
   }
 
   roundResults() {
@@ -274,15 +284,17 @@ export class Clubhouse {
         return `<div class="bubble"><b>${p.name}</b>${msg.text}<time>${msg.time}</time>${status ? `<i class="st ${status[1]}"></i>` : ''}</div>`;
       })
       .join('');
-    const declined = club.squad.filter((idx) => w.availability[idx] === 'no' && !w.nudged.includes(idx) && !c.players[idx].injuryWeeks);
+    const declined = club.squad.filter((idx) => w.availability[idx] === 'no' && !w.nudged.includes(idx) && !c.players[idx].injuryWeeks).filter((idx) => !isCoach(c, idx));
     const ev = w.event;
     const eventCard = ev
       ? `<div class="event-card">
           <p class="label">${ev.story ? `Geschichte · ${ev.story}` : 'Diese Woche im Verein'}</p>
           <p>${ev.text}</p>
-          ${ev.choice === null && !this.results
-            ? `<div class="actions">${ev.options.map((o, i) => `<button ${i === 0 ? 'class="primary"' : ''} data-action="event" data-value="${i}">${o}</button>`).join('')}</div>`
-            : `<p class="reply ok">➜ ${ev.options[ev.choice] ?? ''}: ${ev.result ?? ''}</p>`}
+          ${ev.choice !== null
+            ? `<p class="reply ok">➜ ${ev.options[ev.choice] ?? ''}: ${ev.result ?? ''}</p>`
+            : this.results
+              ? ''
+              : `<div class="actions">${ev.options.map((o, i) => `<button ${i === 0 ? 'class="primary"' : ''} data-action="event" data-value="${i}">${o}</button>`).join('')}</div>`}
         </div>`
       : '';
     return `
@@ -310,11 +322,11 @@ export class Clubhouse {
         const avg = r.graded ? (r.gradeSum / r.graded).toFixed(1).replace('.', ',') : '–';
         return `<tr style="--c:${tier.color}">
           <td><span class="badge">${tier.name}</span></td>
-          <td><b>${p.name}</b>${p.title ? ` <em>${p.title}</em>` : ''}${formArrow(r.form)}${r.absenceMul > 1.2 ? ' <span class="grumpy" title="hat gerade wenig Zeit – sagt öfter ab">selten da</span>' : ''}${r.grumpy ? ' <span class="grumpy" title="angefressen – sagt öfter ab">grummelt</span>' : ''}<small>${p.age} J. · ${p.profession}</small></td>
+          <td><b>${p.name}</b>${isCoach(c, idx) ? ' <span class="me-tag">Du</span>' : ''}${p.title ? ` <em>${p.title}</em>` : ''}${formArrow(r.form)}${r.absenceMul > 1.2 ? ' <span class="grumpy" title="hat gerade wenig Zeit – sagt öfter ab">selten da</span>' : ''}${r.grumpy ? ' <span class="grumpy" title="angefressen – sagt öfter ab">grummelt</span>' : ''}<small>${p.age} J. · ${p.profession}</small></td>
           <td>${POSITIONS[p.position]}</td><td class="num">${p.rating}</td>
           <td>${r.injuryWeeks ? '<span class="st-text no">verletzt</span>' : st ? `<span class="st-text ${st[1]}">${st[0]}</span>` : ''}</td>
           <td class="num">${r.apps}</td><td class="num">${r.goals}</td><td class="num">${r.assists}</td><td class="num">${avg}</td>
-          <td>${canRelease ? `<button class="tiny" data-action="release" data-value="${idx}" title="Verabschieden">×</button>` : ''}</td>
+          <td>${canRelease && !isCoach(c, idx) ? `<button class="tiny" data-action="release" data-value="${idx}" title="Verabschieden">×</button>` : ''}</td>
         </tr>`;
       })
       .join('');
@@ -347,6 +359,7 @@ export class Clubhouse {
     const benchList = bench.length
       ? bench.map((idx) => `<li>${this.p(idx).name}${c.week.availability[idx] === 'late' ? ' <em>(kommt zur 2. HZ)</em>' : ''}</li>`).join('')
       : '<li><em>niemand</em></li>';
+    if (coachAway(c)) return `<p class="warn">Du bist diese Woche nicht da. Der Kapitän stellt auf – nach bestem Wissen und Gewissen.</p><h4>Bank</h4><ul class="bench">${benchList}</ul>`;
     return `
       <p class="chat-head">${formation.length} gegen ${formation.length} · ${c.week.lineup ? 'eigene Aufstellung' : 'automatisch aufgestellt'}</p>
       <div class="lineup">${slots}</div>
@@ -376,8 +389,8 @@ export class Clubhouse {
         else if (r.status === 'declined') footer = `<p class="reply no">„${r.reply}"</p>`;
         else
           footer = `<div class="actions">
-            <button data-action="scout" data-value="${i}" ${known || w.actions <= 0 ? 'disabled' : ''}>Beim Kick zuschauen</button>
-            <button class="primary" data-action="recruit" data-value="${i}" ${w.actions <= 0 || full ? 'disabled' : ''}>Ansprechen <small>(~${chance} %)</small></button>
+            <button data-action="scout" data-value="${i}" ${known || w.actions <= 0 || coachAway(c) ? 'disabled' : ''}>Beim Kick zuschauen</button>
+            <button class="primary" data-action="recruit" data-value="${i}" ${w.actions <= 0 || full || coachAway(c) ? 'disabled' : ''}>Ansprechen <small>(~${chance} %)</small></button>
           </div>`;
         return `<article class="rumor ${p.tier === 'legende' ? 'legend' : ''}" style="--c:${known ? tier.color : '#666'}">
           <p class="source">${r.source}</p>
@@ -388,6 +401,7 @@ export class Clubhouse {
       })
       .join('');
     return `
+      ${coachAway(c) ? '<p class="warn">Du bist diese Woche nicht da – Gespräche mit neuen Leuten müssen warten.</p>' : ''}
       <p class="chat-head">Kader ${club.squad.length}/${maxSquad(c)} · noch ${w.actions} Aktion${w.actions === 1 ? '' : 'en'} diese Woche${full ? ' · Kader voll – erst jemanden verabschieden' : ''}</p>
       <div class="rumors">${cards}</div>`;
   }
@@ -409,7 +423,18 @@ export class Clubhouse {
       <div class="swatch-row"><span>${label}</span>${KIT_COLORS.map(
         (col) => `<button class="swatch ${d.kit[part] === col ? 'on' : ''}" style="background:${hex(col)}" data-action="kitColor" data-value="${part}:${col}" ${editable ? '' : 'disabled'}></button>`,
       ).join('')}</div>`;
+    const k = c.coach;
+    const me = k?.idx != null ? this.p(k.idx) : null;
+    const profile = k
+      ? `<div class="me-card"><h4>Du – Spielertrainer</h4>
+          <p><b>${coachName(c)}</b>${me ? ` · ${me.age} J. · ${me.profession} · ${POSITIONS[me.position]} · Stärke ${me.rating}` : ''}</p>
+          <p>${k.family}${k.flags.kasse ? ' · machst nebenbei die Vereinskasse' : ''}${k.flags.familyAtGames ? ' · die Familie kommt sonntags mit' : ''}</p>
+          ${this.meBars()}
+          <p class="empty">Training, Scouting und Spieltage kosten Zeit mit der Familie. Unbesetzte Posten (Co-Trainer, Wirt, Platzwart) und Zusatzämter ziehen Energie. Ist einer der beiden Werte leer, fällst du zwei Wochen aus.</p>
+        </div>`
+      : '';
     return `
+      ${profile}
       <div class="club-form">
         <div class="kit-preview">
           <div class="shirt" style="background:${shirtCss(d.kit)}"></div>
@@ -440,6 +465,8 @@ export class Clubhouse {
     const w = c.week;
     if (!w || this.results) return '<p class="empty">Das nächste Open Training gibt es nach dem Wochenstart.</p>';
     const tr = w.training;
+    if (!tr && trainingLocked(c))
+      return `<p class="warn">${coachAway(c) ? 'Du bist diese Woche nicht da.' : 'Du hast das Training abgegeben, um durchzuschnaufen.'} Kein Open Training in dieser Woche.</p>`;
     if (!tr)
       return `
         <p>Einmal pro Woche kannst du ein <b>Open Training</b> ausrichten: Aushang beim Bäcker, ein paar Hütchen, Bälle aufpumpen.
