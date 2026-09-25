@@ -128,7 +128,6 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
     openChallenges();
   },
   onCareerNew() {
-    if (career && !confirm('Neue Karriere starten? Der alte Spielstand wird überschrieben.')) return;
     career = createCareer({ seed: seed++ });
     saveCareer(career);
     menu.hide();

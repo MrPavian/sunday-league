@@ -89,8 +89,13 @@ export class Clubhouse {
         recruit(this.career, Number(value));
         this.h.onChange();
       } else if (action === 'release') {
-        const p = this.p(Number(value));
-        if (!confirm(`${p.name} wirklich verabschieden?`)) return;
+        // Zweiter Klick bestätigt (Browser-Dialoge sind nicht überall erlaubt).
+        if (this.confirmRelease !== Number(value)) {
+          this.confirmRelease = Number(value);
+          this.render();
+          return;
+        }
+        this.confirmRelease = null;
         releasePlayer(this.career, Number(value));
         this.h.onChange();
       } else if (action === 'autoLineup') {
@@ -352,7 +357,7 @@ export class Clubhouse {
           <td>${POSITIONS[p.position]}</td><td class="num">${p.rating}</td>
           <td>${r.injuryWeeks ? '<span class="st-text no">verletzt</span>' : st ? `<span class="st-text ${st[1]}">${st[0]}</span>` : ''}</td>
           <td class="num">${r.apps}</td><td class="num">${r.goals}</td><td class="num">${r.assists}</td><td class="num">${avg}</td>
-          <td>${canRelease && !isCoach(c, idx) ? `<button class="tiny" data-action="release" data-value="${idx}" title="Verabschieden">×</button>` : ''}</td>
+          <td>${canRelease && !isCoach(c, idx) ? (this.confirmRelease === idx ? `<button class="tiny danger" data-action="release" data-value="${idx}">Wirklich?</button>` : `<button class="tiny" data-action="release" data-value="${idx}" title="Verabschieden">×</button>`) : ''}</td>
         </tr>`;
       })
       .join('');

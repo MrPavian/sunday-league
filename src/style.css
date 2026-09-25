@@ -495,3 +495,4 @@ body.weather-rain #game { filter: brightness(0.78) saturate(0.75) contrast(1.05)
 .chronicle-paper .records { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .chronicle-paper ul { margin: 0; padding-left: 18px; }
 .season-table td, .season-table th { text-align: left; padding: 1px 8px 1px 0; }
+button.danger { background: #b0302c; color: #f2efe6; }

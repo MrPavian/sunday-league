@@ -61,7 +61,17 @@ export class Menu {
       ? `<button data-c="continue">Karriere fortsetzen · ${saveInfo}</button><button data-c="new" class="secondary">Neue Karriere</button>`
       : '<button data-c="new">Karriere starten</button>';
     el.querySelectorAll('button').forEach((b) =>
-      b.addEventListener('click', () => (b.dataset.c === 'continue' ? this.onCareer() : this.onCareerNew())),
+      b.addEventListener('click', () => {
+        if (b.dataset.c === 'continue') return this.onCareer();
+        // Mit Spielstand erst nachfragen – direkt im Button, ohne Browser-Dialog.
+        if (saveInfo && b.dataset.c === 'new') {
+          b.dataset.c = 'new-confirm';
+          b.textContent = 'Wirklich? Alter Spielstand wird überschrieben';
+          b.classList.add('danger');
+          return;
+        }
+        this.onCareerNew();
+      }),
     );
   }
 

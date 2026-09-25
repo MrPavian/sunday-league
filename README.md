@@ -59,6 +59,12 @@ oder ein neuer Spieler).
 
 Design, Featureliste und Roadmap: [ROADMAP.md](ROADMAP.md)
 
+## Spielen im Browser
+
+Jeder Push auf `main` baut das Spiel und veröffentlicht es über GitHub Pages
+(`.github/workflows/pages.yml`). Einmalig im Repo aktivieren: *Settings → Pages → Source: GitHub Actions*.
+Danach läuft es unter `https://mrpavian.github.io/sunday-league/`.
+
 ## Starten
 
 ```bash
