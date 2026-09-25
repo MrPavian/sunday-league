@@ -264,8 +264,8 @@ Vorschläge in sinnvoller Reihenfolge (Details in [ROADMAP.md](../ROADMAP.md)):
 | README mit Screenshots, Steuerung, Schnellstart | erledigt |
 | Projektüberblick | dieses Dokument |
 | CI grün | ja (Tests und Build) |
-| GitHub Pages eingeschaltet | *offen:* Settings → Pages → Source: GitHub Actions |
-| Lizenz festlegen und `LICENSE` anlegen | *offen* – z. B. MIT (frei), GPL-3.0 (Änderungen bleiben offen) oder „alle Rechte vorbehalten“ |
-| Repository öffentlich schalten | *offen:* Settings → General → Danger Zone → Change visibility |
+| GitHub Pages eingeschaltet | erledigt |
+| Lizenz | erledigt: alle Rechte vorbehalten (`LICENSE`) |
+| Repository öffentlich | erledigt |
 | Name prüfen | *offen:* „Sunday League“ ist ein Arbeitstitel; vor einer kommerziellen Veröffentlichung auf bestehende Spiele und Marken prüfen |
 | Beschreibung und Themen im Repository | *offen:* z. B. `threejs`, `football`, `pixel-art`, `browser-game`, `management-game` |

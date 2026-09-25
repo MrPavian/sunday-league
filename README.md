@@ -218,12 +218,13 @@ weitere Ligen und ein Desktop-Build. Details im [Projektüberblick](docs/OVERVIE
 
 ## Mitmachen
 
-Ideen, Fehlerberichte und Pull Requests sind willkommen. Vor einem Pull Request bitte `npm test` und
+Ideen und Fehlerberichte sind als Issue willkommen. Vor einem Pull Request bitte `npm test` und
 `npm run build` laufen lassen. Neue Ereignisse folgen dem Muster in `src/career/outcomes.js`: jede Antwort
 mit mehreren gewichteten Ausgängen, die passive Antwort zuletzt.
 
 ## Lizenz
 
-Noch nicht festgelegt. Verwendete Bibliotheken: [three.js](https://github.com/mrdoob/three.js) (MIT) und
+© 2026 MrPavian – **alle Rechte vorbehalten** (siehe [LICENSE](LICENSE)). Den Code ansehen und das Spiel
+spielen ist erlaubt; kopieren, verändern oder weiterverwenden nur mit Erlaubnis. Verwendete Bibliotheken: [three.js](https://github.com/mrdoob/three.js) (MIT) und
 die Schrift [Pixelify Sans](https://fonts.google.com/specimen/Pixelify+Sans) (SIL Open Font License 1.1).
 Alle Vereine, Personen und Orte sind frei erfunden.

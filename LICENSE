@@ -1,0 +1,19 @@
+Copyright (c) 2026 MrPavian. Alle Rechte vorbehalten. / All rights reserved.
+
+Der Quellcode, die Texte, Grafiken und alle übrigen Inhalte dieses Repositorys
+sind urheberrechtlich geschützt. Ohne vorherige schriftliche Erlaubnis des
+Rechteinhabers ist es nicht gestattet, sie ganz oder teilweise zu kopieren,
+zu verändern, zu veröffentlichen, weiterzugeben, zu verkaufen oder in anderen
+Projekten zu verwenden. Das Ansehen des Codes auf GitHub und das Spielen der
+veröffentlichten Version sind erlaubt.
+
+The source code, texts, graphics and all other contents of this repository are
+protected by copyright. Without prior written permission from the copyright
+holder you may not copy, modify, publish, distribute, sell or use them, in whole
+or in part, in other projects. Viewing the code on GitHub and playing the
+published version are permitted.
+
+Ausgenommen sind die verwendeten Bibliotheken Dritter, die ihren eigenen Lizenzen
+unterliegen / Third-party libraries are excluded and remain under their own licenses:
+- three.js – MIT License
+- Pixelify Sans (via @fontsource/pixelify-sans) – SIL Open Font License 1.1
