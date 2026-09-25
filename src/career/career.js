@@ -1,6 +1,7 @@
 // Karriere: eine Saison in der Freizeitliga. Der Zustand ist reines JSON
 // (speicherbar); Spieler werden nur über ihre Pool-Nummer referenziert.
 import { legacySeasonEnd } from './legacy.js';
+import { sponsorResult } from './sponsors.js';
 import { createRng } from '../core/rng.js';
 import { FORMATIONS } from '../sim/formation.js';
 import { createPlayerPool, ratePlayer } from '../sim/generator.js';
@@ -240,6 +241,8 @@ export function nextSeason(career) {
   const note = (text) => career.week?.chat.splice(1, 0, { from: null, text, time: 'Mo 09:00' });
   for (const n of sagaNotes) note(n);
   for (const n of legacyNotes) note(n);
+  for (const n of career.sponsorNotes ?? []) note(n);
+  career.sponsorNotes = [];
   for (const r of retired) note(`Abschied: ${r.name} (${r.age}) hört auf – ${r.apps} Spiele, ${r.goals} Tore. Bleibt uns erhalten als ${r.role}.`);
   for (const idx of leaving) note(`${poolPlayer(idx).name} war zu alt für die A-Jugend und ist zum Nachbarn gewechselt.`);
   if (intake.length) note(`Neuer Jahrgang in der A-Jugend: ${intake.map((idx) => playerOf(career, idx).name).join(', ')}.`);
@@ -354,7 +357,7 @@ export function startWeek(career) {
   personalWeek(career);
   rollWeekEvent(career);
   sagaChat(career);
-  if (career.round === 0 && !career.offers?.length && (career.sponsors?.length ?? 0) < 2) makeOffers(career, career.level ?? 1);
+  if (career.round === 0 && career.offersSeason !== career.season) makeOffers(career, career.level ?? 1);
   career.week.rumors = makeRumors(career, createRng(hashSeed(career.seed, career.season, career.round, 3)));
   career.week.actions = SCOUT_ACTIONS;
 }
@@ -742,6 +745,8 @@ export function recordResult(career, fixture, prepared) {
   const human = humanClub(career).id;
   if (fixture.home === human) resultMood(career, fixture.result.home, fixture.result.away);
   else if (fixture.away === human) resultMood(career, fixture.result.away, fixture.result.home);
+  if (fixture.home === human) sponsorResult(career, fixture.result.home, fixture.result.away);
+  else if (fixture.away === human) sponsorResult(career, fixture.result.away, fixture.result.home);
   if (isDerbyFixture(career, fixture)) {
     const homeHuman = fixture.home === human;
     derbyResult(career, homeHuman ? fixture.result.home : fixture.result.away, homeHuman ? fixture.result.away : fixture.result.home);

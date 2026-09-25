@@ -1,5 +1,6 @@
 // Mannschaftskasse, Strafenkatalog, Sponsoren und die Saisonabschlussfahrt.
 import { createRng } from '../core/rng.js';
+import { closeSponsors, paySponsors } from './sponsors.js';
 
 export const START_CASH = 100;
 export const KIT_COST = 60;
@@ -17,26 +18,7 @@ export const FINES = [
 ];
 const FINE = Object.fromEntries(FINES.map((f) => [f.id, f.amount]));
 
-export const SPONSORS = [
-  { id: 'krume', name: 'Bäckerei Krume', line: 'Frische Brötchen nach dem Spiel inklusive.' },
-  { id: 'vollgas', name: 'Fahrschule Vollgas', line: 'Wer einen Führerschein braucht, weiß Bescheid.' },
-  { id: 'sultan', name: 'Döner Sultan', line: 'Mannschaftsdöner nach jedem Heimsieg.' },
-  { id: 'brenner', name: 'Autohaus Brenner', line: 'Fährt auch mal den Bus zum Auswärtsspiel.' },
-  { id: 'physio', name: 'Physio am Markt', line: 'Tapen vor dem Spiel zum Vereinspreis.' },
-  { id: 'schnittig', name: 'Friseur Schnittig', line: 'Frisur sitzt, auch nach 90 Minuten.' },
-  { id: 'kowalski', name: 'Dachdeckerei Kowalski', line: 'Hält dicht – wie unsere Abwehr (hoffentlich).' },
-  { id: 'hoffmann', name: 'Getränke Hoffmann', line: 'Die Kiste nach dem Spiel geht aufs Haus.' },
-];
-
-// Saisonziele der Sponsoren mit Bonus bei Erfüllung.
-const GOALS = [
-  { type: 'wins', n: [3, 5], text: (n) => `mindestens ${n} Siege` },
-  { type: 'goals', n: [12, 20], text: (n) => `mindestens ${n} eigene Tore` },
-  { type: 'rank', n: [2, 3], text: (n) => `am Ende unter den ersten ${n}` },
-  { type: 'fair', n: [6, 10], text: (n) => `höchstens ${n} Gelbe Karten` },
-];
-
-export const SLOTS = { trikot: 'Trikotsponsor', bande: 'Bandenpartner' };
+export { acceptSponsor, goalReached, makeOffers, SLOTS, SPONSORS } from './sponsors.js';
 
 export function initFinances(career) {
   career.cash ??= START_CASH;
@@ -99,54 +81,12 @@ export function matchFinances(career, fixture, prepared, level) {
 export function weeklyFinances(career) {
   const human = career.clubs.find((c) => c.human);
   book(career, `Mitgliedsbeiträge (${human.squad.length} × ${MEMBER_FEE} €)`, human.squad.length * MEMBER_FEE);
-  for (const s of career.sponsors) book(career, `${s.name} (${SLOTS[s.slot]})`, s.weekly);
-}
-
-// Angebote vor Saisonbeginn für freie Plätze.
-export function makeOffers(career, level) {
-  const rng = createRng(career.seed + career.season * 31 + 5);
-  const taken = new Set(career.sponsors.map((s) => s.slot));
-  const used = new Set(career.sponsors.map((s) => s.id));
-  const offers = [];
-  for (const slot of Object.keys(SLOTS)) {
-    if (taken.has(slot)) continue;
-    for (let k = 0; k < 2; k++) {
-      const pool = SPONSORS.filter((s) => !used.has(s.id));
-      const sp = rng.pick(pool);
-      used.add(sp.id);
-      const goal = rng.pick(GOALS);
-      const n = rng.int(goal.n[0], goal.n[1]);
-      const scale = level > 1 ? 2 : 1;
-      const weekly = (slot === 'trikot' ? rng.int(8, 14) : rng.int(4, 8)) * scale;
-      offers.push({ ...sp, slot, weekly, goal: { type: goal.type, n, text: goal.text(n) }, bonus: rng.int(4, 8) * 10 * scale });
-    }
-  }
-  career.offers = offers;
-}
-
-export function acceptSponsor(career, i) {
-  const o = career.offers[i];
-  if (!o || career.round !== 0 || career.sponsors.some((s) => s.slot === o.slot)) return false;
-  career.sponsors.push(o);
-  career.offers = career.offers.filter((x) => x.slot !== o.slot);
-  return true;
-}
-
-export function goalReached(goal, { wins, goals, rank, cards }) {
-  if (goal.type === 'wins') return wins >= goal.n;
-  if (goal.type === 'goals') return goals >= goal.n;
-  if (goal.type === 'rank') return rank <= goal.n;
-  if (goal.type === 'fair') return cards <= goal.n;
-  return false;
+  paySponsors(career);
 }
 
 // Saisonende: Boni auszahlen, Verträge laufen aus, Stimmung aus der Fahrt übernehmen.
 export function closeSeasonFinances(career, summary) {
-  for (const s of career.sponsors) {
-    if (goalReached(s.goal, summary)) book(career, `Bonus ${s.name}: ${s.goal.text}`, s.bonus);
-  }
-  career.sponsors = [];
-  career.offers = [];
+  closeSponsors(career, summary);
   career.fines = {};
   career.seasonCards = 0;
   career.spirit = career.tripBooked ? 1 : 0;

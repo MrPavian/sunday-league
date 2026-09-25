@@ -22,6 +22,7 @@ import {
   table,
 } from '../career/career.js';
 import { acceptSponsor, bookTrip, FINES, KIT_COST, SLOTS, TRIP_COST } from '../career/finances.js';
+import { goalProgress, negotiate, relLabel, TRAITS as SPONSOR_TRAITS } from '../career/sponsors.js';
 import { inviteChance, inviteTrialist, isRawDiamond, MAX_STATIONS, runStation, startTraining, STATIONS, TRAINING_COST, trainingDone } from '../career/training.js';
 import { promoteProspect, STAFF_ROLES } from '../career/youth.js';
 import { moodLabel, resolveEvent } from '../career/events.js';
@@ -78,6 +79,9 @@ export class Clubhouse {
         const res = updateClub(this.career, this.draft);
         this.clubNote = res === 'nocash' ? `Zu wenig in der Kasse – ein neuer Trikotsatz kostet ${KIT_COST} €.` : 'Bestellt!';
         if (res !== 'nocash') this.draft = null;
+        this.h.onChange();
+      } else if (action === 'negotiate') {
+        negotiate(this.career, Number(value));
         this.h.onChange();
       } else if (action === 'sponsor') {
         acceptSponsor(this.career, Number(value));
@@ -836,15 +840,21 @@ export class Clubhouse {
     const offers = c.round === 0 && c.offers.length
       ? c.offers
           .map(
-            (o, i) => `<article class="rumor" style="--c:#c9a227"><div class="who"><b>${o.name}</b> <em>${SLOTS[o.slot]}</em>
-              <small>${o.line}</small></div>
+            (o, i) => `<article class="rumor" style="--c:${o.renew ? '#5cc46a' : '#c9a227'}"><div class="who"><b>${o.name}</b> <em>${SLOTS[o.slot]}${o.renew ? ' · Verlängerung' : ''}</em>
+              <small>${o.line} · ${o.boss ?? ''}, ${SPONSOR_TRAITS[o.trait]?.name ?? 'treu'}</small></div>
               <p>${euro(o.weekly)} pro Spieltag · Bonus ${euro(o.bonus)} bei: ${o.goal.text}</p>
-              <div class="actions"><button class="primary" data-action="sponsor" data-value="${i}">Unterschreiben</button></div></article>`,
+              <div class="actions"><button class="primary" data-action="sponsor" data-value="${i}">Unterschreiben</button>${o.negotiated ? '' : `<button data-action="negotiate" data-value="${i}">Nachverhandeln</button>`}</div></article>`,
           )
           .join('')
       : '';
     const active = c.sponsors.length
-      ? c.sponsors.map((s) => `<li><b>${s.name}</b> (${SLOTS[s.slot]}) – ${euro(s.weekly)}/Spieltag, Bonus ${euro(s.bonus)} bei ${s.goal.text}</li>`).join('')
+      ? c.sponsors
+          .map(
+            (s) => `<li class="sponsor"><b>${s.name}</b> <small>${SLOTS[s.slot]}${s.seasons ? ` · ${s.seasons + 1}. Saison` : ''}</small><br>
+              ${euro(s.weekly)}/Spieltag${s.pause > 0 ? ` <em>(setzt ${s.pause} Wochen aus)</em>` : s.owed ? ` <em>(schuldet ${euro(s.owed)})</em>` : ''} · Bonus ${euro(s.bonus)} bei ${s.goal.text} <small>(${goalProgress(c, s.goal)})</small>
+              <span class="rel"><i style="width:${s.rel ?? 50}%"></i></span><small>${s.boss ?? ''} ist ${relLabel(s.rel ?? 50)}</small></li>`,
+          )
+          .join('')
       : '<li><em>noch keine Sponsoren</em></li>';
     const sinners = Object.entries(c.fines)
       .filter(([idx]) => club.squad.includes(Number(idx)))
@@ -862,7 +872,7 @@ export class Clubhouse {
         <small>Ziel: Saisonabschlussfahrt für ${euro(TRIP_COST)}${c.spirit ? ' · Stimmung nach der letzten Fahrt: bestens (weniger Absagen)' : ''}</small></div>
       <div class="cash-grid">
         <section><h4>Sponsoren</h4><ul class="plain">${active}</ul>
-          ${offers ? `<h4>Angebote für diese Saison</h4><div class="rumors">${offers}</div>` : c.round === 0 ? '' : '<p class="empty">Neue Angebote gibt es vor der nächsten Saison.</p>'}</section>
+          ${c.sponsorNote && c.round === 0 ? `<p class="reply ok">${c.sponsorNote}</p>` : ''}${offers ? `<h4>Angebote für diese Saison</h4><div class="rumors">${offers}</div>` : c.round === 0 ? '' : '<p class="empty">Neue Angebote gibt es vor der nächsten Saison.</p>'}</section>
         <section><h4>Strafenkatalog</h4><ul class="plain fines">${FINES.map((f) => `<li>${f.label} <b>${euro(f.amount)}</b></li>`).join('')}</ul>
           <h4>Sünderkartei</h4><ol class="plain">${sinners || '<li><em>alle brav</em></li>'}</ol></section>
         <section><h4>Kassenbuch</h4><ul class="plain ledger">${ledger || '<li><em>noch keine Buchungen</em></li>'}</ul></section>

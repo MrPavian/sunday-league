@@ -598,3 +598,8 @@ body.weather-frost #game { filter: saturate(0.75) hue-rotate(-8deg) brightness(1
 button.successor { display: flex; flex-direction: column; gap: 2px; }
 button.successor small { opacity: 0.75; font-size: 0.85em; line-height: 1.3; }
 button.successor.new { border-style: dashed; }
+
+/* Sponsoren */
+li.sponsor { margin-bottom: 8px; }
+li.sponsor .rel { display: block; height: 5px; background: #2a2f33; margin: 4px 0 2px; }
+li.sponsor .rel i { display: block; height: 100%; background: #c9a227; }

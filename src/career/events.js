@@ -11,6 +11,7 @@ import { DERBY_EVENTS, derbyThisWeek } from './derby.js';
 import { INJURY_EVENTS } from './injuries.js';
 import { LIFE_EVENTS } from './life.js';
 import { ACADEMY_EVENTS } from './academy.js';
+import { SPONSOR_EVENTS } from './sponsors.js';
 import { applyTwist } from './twists.js';
 import { canLose, joinRival, leaveTeam, outcome, sitOut } from './outcomes.js';
 import { isCoach } from './personal.js';
@@ -584,7 +585,7 @@ export function rollWeekEvent(career) {
   const candidates = [];
   const storySeason = new Set(career.eventLog.filter((e) => e.season === career.season).map((e) => e.id));
   const storiesFull = arcsOf(career).length >= 3;
-  for (const [id, ev] of [...Object.entries(EVENTS), ...Object.entries(STORY_STARTS), ...Object.entries(PERSONAL_EVENTS), ...Object.entries(SAGA_EVENTS), ...Object.entries(SOCIAL_EVENTS), ...Object.entries(DERBY_EVENTS), ...Object.entries(INJURY_EVENTS), ...Object.entries(LIFE_EVENTS), ...Object.entries(ACADEMY_EVENTS)]) {
+  for (const [id, ev] of [...Object.entries(EVENTS), ...Object.entries(STORY_STARTS), ...Object.entries(PERSONAL_EVENTS), ...Object.entries(SAGA_EVENTS), ...Object.entries(SOCIAL_EVENTS), ...Object.entries(DERBY_EVENTS), ...Object.entries(INJURY_EVENTS), ...Object.entries(LIFE_EVENTS), ...Object.entries(ACADEMY_EVENTS), ...Object.entries(SPONSOR_EVENTS)]) {
     if (recent.has(id)) continue;
     if (STORY_STARTS[id] && (storiesFull || storySeason.has(id))) continue; // jede Geschichte höchstens einmal pro Saison
     const ctx = ev.needs(career, rng);
@@ -603,7 +604,7 @@ export function rollWeekEvent(career) {
 export function resolveEvent(career, choice) {
   const e = career.week?.event;
   if (!e || e.choice !== null) return null;
-  const def = EVENTS[e.id] ?? STORY_STARTS[e.id] ?? PERSONAL_EVENTS[e.id] ?? SAGA_EVENTS[e.id] ?? SOCIAL_EVENTS[e.id] ?? DERBY_EVENTS[e.id] ?? INJURY_EVENTS[e.id] ?? LIFE_EVENTS[e.id] ?? ACADEMY_EVENTS[e.id] ?? CRISES[e.id] ?? storyDecision(career, e.id);
+  const def = EVENTS[e.id] ?? STORY_STARTS[e.id] ?? PERSONAL_EVENTS[e.id] ?? SAGA_EVENTS[e.id] ?? SOCIAL_EVENTS[e.id] ?? DERBY_EVENTS[e.id] ?? INJURY_EVENTS[e.id] ?? LIFE_EVENTS[e.id] ?? ACADEMY_EVENTS[e.id] ?? SPONSOR_EVENTS[e.id] ?? CRISES[e.id] ?? storyDecision(career, e.id);
   const option = def?.options[choice];
   if (!option) return null;
   const rng = createRng((career.seed * 13 + career.round * 7 + choice + e.id.length) >>> 0);

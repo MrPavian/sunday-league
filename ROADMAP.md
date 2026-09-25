@@ -572,3 +572,10 @@ mit 80 ist Schluss. Der Spielstand endet nie: Nachfolger werden dein Kind (ab 23
 bekommt eine eigene Familie, die Dynastie geht weiter), der Co-Trainer, ein verdienter Kapitän, eine
 Vereinslegende oder ein neu angelegter Trainer. Der alte Trainer wird Ehrenpräsident, die Chronik führt die
 Trainer-Ären. Abtreten geht ab 50 auch freiwillig.
+
+**Sponsoring** (`src/career/sponsors.js`): 16 lokale Sponsoren mit Chef und Eigenart (treu, ehrgeizig,
+knauserig, großzügig), vier Werbeplätze (Trikot, Bande, Spielballpate, in der Kreisklasse Ärmel). Vor der Saison
+nachverhandeln – mehr Geld, mehr Bonus oder das Angebot ist weg. Die Beziehung (0–100) steigt mit Siegen,
+erfüllten Zielen und guten Entscheidungen; verärgerte Sponsoren zahlen schleppend und kündigen irgendwann.
+Zufriedene bieten die Verlängerung mit Aufschlag an. Ereignisse: Fototermin, der Sohn vom Chef will spielen,
+Konkurrenzangebot fürs Trikot, Sponsor in Not, Siegprämie (auch doppelt oder nichts), Werbespot, Firmenjubiläum.

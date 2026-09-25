@@ -287,7 +287,7 @@ describe('club finances', () => {
     const { FINES, START_CASH } = await import('../src/career/finances.js');
     const c = createCareer({ seed: 80 });
     expect(c.cash).toBe(START_CASH);
-    expect(c.offers.length).toBe(4); // je 2 für Trikot und Bande
+    expect(c.offers.length).toBe(6); // je 2 für Trikot, Bande und Spielball
     expect(FINES.find((f) => f.id === 'whiff').amount).toBe(1);
   });
 
@@ -312,19 +312,23 @@ describe('club finances', () => {
     const { acceptSponsor, closeSeasonFinances, weeklyFinances } = await import('../src/career/finances.js');
     const c = createCareer({ seed: 82 });
     expect(acceptSponsor(c, 0)).toBe(true); // Trikot
-    expect(c.offers.every((o) => o.slot === 'bande')).toBe(true);
+    expect(c.offers.some((o) => o.slot === 'trikot')).toBe(false);
     expect(acceptSponsor(c, 0)).toBe(true); // Bande
+    expect(acceptSponsor(c, 0)).toBe(true); // Spielball
     expect(acceptSponsor(c, 0)).toBe(false); // alles vergeben
-    const [sponsor, second] = c.sponsors;
+    const [sponsor, second, third] = c.sponsors;
     const cash = c.cash;
     weeklyFinances(c);
-    expect(c.cash).toBe(cash + humanClub(c).squad.length * 3 + sponsor.weekly + second.weekly);
+    expect(c.cash).toBe(cash + humanClub(c).squad.length * 3 + sponsor.weekly + second.weekly + third.weekly);
     second.goal = { type: 'goals', n: 99, text: 'unerreichbar' };
+    third.goal = { type: 'goals', n: 99, text: 'unerreichbar' };
     sponsor.goal = { type: 'wins', n: 1, text: 'mindestens 1 Sieg' };
     const beforeBonus = c.cash;
     closeSeasonFinances(c, { wins: 3, goals: 10, rank: 2, cards: 4 });
     expect(c.cash).toBe(beforeBonus + sponsor.bonus);
     expect(c.sponsors).toHaveLength(0);
+    // Zufrieden mit Ziel erreicht → bietet die Verlängerung an.
+    expect(c.renewals.map((r) => r.id)).toContain(sponsor.id);
   });
 
   it('the season trip costs money and lifts spirits next season', async () => {
