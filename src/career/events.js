@@ -3,6 +3,7 @@
 import { createRng } from '../core/rng.js';
 import { book } from './finances.js';
 import { getPool, humanClub, joinSquad, playerOf, releasePlayer } from './career.js';
+import { advanceStories, arcsOf, STORY_STARTS, storyDecision } from './stories.js';
 
 const EVENT_CHANCE = 0.65; // pro Woche
 const NO_REPEAT = 4; // Wochen, bevor dasselbe Ereignis wiederkommen darf
@@ -59,7 +60,7 @@ export function resultMood(career, goalsFor, goalsAgainst) {
 // Absage-Faktor aus Stimmung und Frust eines Spielers.
 export function absenceFactor(career, idx) {
   const rec = career.players[idx];
-  return (1 - mood(career) * 0.3) * (rec?.grumpy > 0 ? 1.8 : 1) * (rec?.movedAway ? 3 : 1);
+  return (1 - mood(career) * 0.3) * (rec?.grumpy > 0 ? 1.8 : 1) * (rec?.absenceMul ?? (rec?.movedAway ? 3 : 1));
 }
 
 // --- Hilfen für die Ereignisse -----------------------------------------------------
@@ -287,7 +288,7 @@ export const EVENTS = {
     ],
   },
   sommerfest: {
-    weight: 2,
+    weight: 30, // nur an Spieltag 4 möglich – dann fast immer
     needs: (c) => (c.round === 4 && !c.flags.summerfest ? {} : null),
     text: () => 'Sommerfest steht an! Wie groß soll es werden?',
     options: [
@@ -331,36 +332,6 @@ export const EVENTS = {
       { label: 'Absagen – Sonntag ist wichtiger', effect: () => 'Der Sponsor ist etwas enttäuscht.' },
     ],
   },
-  vater: {
-    weight: 1,
-    needs: (c, rng) => {
-      if (c.flags.arcVater) return null;
-      const s = pickSubject(c, rng, (idx, p) => p.age >= 24 && p.age <= 40);
-      return s == null ? null : { s };
-    },
-    text: (c, ctx) => `${first(c, ctx.s)} hat eine Nachricht mit Ultraschallbild geschickt: „Ich werde Papa!!"`,
-    options: [
-      {
-        label: 'Blumen und eine Karte vom Team (15 €)',
-        effect: (c, ctx) => {
-          book(c, 'Blumen für den werdenden Papa', -15);
-          adjustMood(c, 0.1);
-          c.flags.arcVater = { idx: ctx.s, step: 0, round: c.round };
-          return 'Alle freuen sich mit. In ein paar Wochen ist es so weit.';
-        },
-      },
-      {
-        label: 'Spontane Party im Vereinsheim (30 €)',
-        effect: (c, ctx) => {
-          book(c, 'Party für den werdenden Papa', -30);
-          adjustMood(c, 0.15);
-          adjustForm(c, ctx.s, -0.4);
-          c.flags.arcVater = { idx: ctx.s, step: 0, round: c.round };
-          return 'Große Sause. Der werdende Papa hat danach sicherheitshalber Wasser getrunken. Ab Runde drei.';
-        },
-      },
-    ],
-  },
   schiri_beschwerde: {
     weight: 1,
     needs: (c) => ((c.level ?? 1) > 1 ? {} : null),
@@ -376,20 +347,7 @@ export const EVENTS = {
 
 // Läuft zu Wochenbeginn: bringt laufende Geschichten weiter.
 export function advanceArcs(career) {
-  const v = career.flags?.arcVater;
-  if (v && squad(career).includes(v.idx)) {
-    const weeks = career.round - v.round;
-    if (v.step === 0 && weeks >= 2) {
-      v.step = 1;
-      career.week.availability[v.idx] = 'no';
-      say(career, v.idx, 'Es ist ein Mädchen!!! 3.480 g, alle gesund. Bin Sonntag natürlich raus.', 'Mi 04:12');
-      adjustMood(career, 0.1);
-    } else if (v.step === 1 && weeks >= 3) {
-      v.step = 2;
-      adjustForm(career, v.idx, -0.4);
-      say(career, v.idx, 'Bin wieder dabei. Habe seit einer Woche nicht geschlafen, aber egal. Kinderwagen steht am Spielfeldrand.', 'Do 22:40');
-    }
-  }
+  advanceStories(career, createRng((career.seed * 5 + career.season * 71 + career.round * 29 + 1) >>> 0));
   // Gebrochenes Versprechen aus dem Bankfrust?
   const pr = career.flags?.promise;
   if (pr && career.round > pr.round) {
@@ -407,18 +365,22 @@ export function rollWeekEvent(career) {
   career.flags ??= {};
   career.eventLog ??= [];
   const rng = createRng((career.seed * 7 + career.season * 131 + career.round * 17 + 3) >>> 0);
+  if (career.week.event) return null; // eine Geschichte verlangt schon eine Entscheidung
   if (!rng.chance(EVENT_CHANCE)) return null;
   const recent = new Set(career.eventLog.filter((e) => e.season === career.season && career.round - e.round < NO_REPEAT).map((e) => e.id));
   const candidates = [];
-  for (const [id, ev] of Object.entries(EVENTS)) {
+  const storySeason = new Set(career.eventLog.filter((e) => e.season === career.season).map((e) => e.id));
+  const storiesFull = arcsOf(career).length >= 3;
+  for (const [id, ev] of [...Object.entries(EVENTS), ...Object.entries(STORY_STARTS)]) {
     if (recent.has(id)) continue;
+    if (STORY_STARTS[id] && (storiesFull || storySeason.has(id))) continue; // jede Geschichte höchstens einmal pro Saison
     const ctx = ev.needs(career, rng);
     if (ctx) candidates.push({ id, ev, ctx });
   }
   if (!candidates.length) return null;
   let r = rng.next() * candidates.reduce((s, c) => s + c.ev.weight, 0);
   const chosen = candidates.find((c) => (r -= c.ev.weight) < 0) ?? candidates[0];
-  const event = { id: chosen.id, ctx: chosen.ctx, text: chosen.ev.text(career, chosen.ctx), options: chosen.ev.options.map((o) => o.label), choice: null, result: null };
+  const event = { id: chosen.id, ctx: chosen.ctx, text: chosen.ev.text(career, chosen.ctx), options: chosen.ev.options.map((o) => o.label), choice: null, result: null, story: STORY_STARTS[chosen.id] ? 'Neue Geschichte' : null };
   career.week.event = event;
   career.eventLog.push({ id: chosen.id, season: career.season, round: career.round });
   if (career.eventLog.length > 40) career.eventLog.shift();
@@ -428,8 +390,8 @@ export function rollWeekEvent(career) {
 export function resolveEvent(career, choice) {
   const e = career.week?.event;
   if (!e || e.choice !== null) return null;
-  const def = EVENTS[e.id];
-  const option = def.options[choice];
+  const def = EVENTS[e.id] ?? STORY_STARTS[e.id] ?? storyDecision(career, e.id);
+  const option = def?.options[choice];
   if (!option) return null;
   const rng = createRng((career.seed * 13 + career.round * 7 + choice + e.id.length) >>> 0);
   e.choice = choice;

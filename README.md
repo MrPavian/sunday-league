@@ -19,7 +19,9 @@ die anderen Partien laufen im Hintergrund. Der Spielstand wird im Browser gespei
 
 Fast jede Woche passiert etwas im Verein: Freibier-Abend, Streit in der Gruppe, Kater am Spieltag,
 ein Porträt im Kreisblatt oder ein Spieler, der Vater wird. Deine Antwort wirkt sich auf Kasse,
-**Teamstimmung** und **Form** der Spieler aus. Gute Stimmung heißt weniger Absagen und leichtere Transfers.
+**Teamstimmung** und **Form** der Spieler aus. Gute Stimmung heißt weniger Absagen und leichtere Transfers. Manche Ereignisse sind der Anfang
+einer **Lebensgeschichte** über mehrere Wochen: Umzug und Pendeln, Jobverlust, Hochzeit mit
+Polterabend, Comeback nach Kreuzbandriss oder das Bruderduell gegen den Ligarivalen.
 
 | Vereinsheim | Kader |
 |---|---|

@@ -39,12 +39,13 @@ export function playerOf(career, idx) {
   const base = poolPlayer(idx);
   const delta = career.players[idx]?.delta;
   const years = (career.season ?? 1) - 1;
-  if (!delta && years === 0) return base;
+  if (!delta && years === 0 && !career.players[idx]?.job) return base;
   const attrs = { ...base.attrs };
   if (delta) for (const k of ATTR_KEYS) attrs[k] = Math.max(0.05, Math.min(0.98, attrs[k] + (delta[k] ?? 0)));
   const age = base.age + years;
   // Aus Schülern werden mit der Zeit Studenten oder Azubis.
-  const profession = base.profession.startsWith('Schüler') && age >= 19 ? (base.poolIndex % 2 ? 'Student (1. Semester)' : 'Azubi Bürokaufmann') : base.profession;
+  const job = career.players[idx]?.job; // Jobwechsel aus einer Lebensgeschichte
+  const profession = job ? job : base.profession.startsWith('Schüler') && age >= 19 ? (base.poolIndex % 2 ? 'Student (1. Semester)' : 'Azubi Bürokaufmann') : base.profession;
   const p = { ...base, attrs, age, profession };
   p.rating = ratePlayer(p);
   return p;
@@ -128,6 +129,7 @@ export function createCareer({ seed = Date.now() % 1e9, club = {} } = {}) {
     history: [],
     mood: 0,
     flags: {},
+    arcs: [],
     week: null,
   };
   initFinances(career);
@@ -179,6 +181,7 @@ export function nextSeason(career) {
     for (const c of clubs) for (const idx of c.squad) career.players[idx] ??= freshRecord();
   }
   if (career.flags) career.flags.summerfest = false;
+  if (career.arcs) career.arcs = career.arcs.filter((a) => a.id !== 'bruder'); // neuer Spielplan
   Object.assign(career, {
     level: newLevel,
     league: league.name,

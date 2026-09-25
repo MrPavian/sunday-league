@@ -461,3 +461,7 @@ body.in-club #hud { display: none; }
 .form.up { color: #7fd48b; font-size: 11px; }
 .form.down { color: #e07a6f; font-size: 11px; }
 .grumpy { font-size: 11px; padding: 0 4px; background: #5a3a3a; border: 1px solid #000; }
+.stories { margin: 0; padding-left: 16px; font-size: 12px; opacity: 0.85; }
+.stories li::marker { content: '» '; }
+.stories { margin: 0; padding-left: 16px; font-size: 12px; opacity: 0.85; }
+.stories li::marker { content: '» '; }

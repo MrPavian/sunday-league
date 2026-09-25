@@ -485,3 +485,9 @@ Streit, Nachbar, Kreisblatt-Porträt, Kater, Bankfrust, eingelaufene Trikots, To
 Allüren, Sommerfest, Firmenturnier, Schiri-Beschwerde, „wird Vater“ als erste mehrwöchige Geschichte),
 Teamstimmung (beeinflusst Absagen und Zusagen bei Transfers), Spielerform (±8 % Attribute), „grummelt“ nach
 gebrochenen Versprechen. Unbeantwortete Ereignisse entscheidet die Gruppe am Spieltag selbst.
+
+(3) umgesetzt – Geschichten-System (`src/career/stories.js`) mit 7 mehrwöchigen Lebensgeschichten:
+wird Vater, Umzug & Pendeln (Fahrgeld, Fahrgemeinschaft, Rückversetzung), Jobverlust (Beitrag erlassen,
+Job beim Sponsor vermitteln), Comeback nach Kreuzbandriss (Reha oder zu früh rein), Abschlussarbeit
+(danach neuer Job – manchmal weit weg), Hochzeit mit Polterabend, Bruderduell gegen einen Ligarivalen.
+Höchstens drei laufende Geschichten, jede einmal pro Saison; laufende Geschichten stehen im Vereinsheim.

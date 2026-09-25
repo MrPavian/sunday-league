@@ -25,6 +25,7 @@ import { acceptSponsor, bookTrip, FINES, KIT_COST, SLOTS, TRIP_COST } from '../c
 import { inviteChance, inviteTrialist, isRawDiamond, MAX_STATIONS, runStation, startTraining, STATIONS, TRAINING_COST, trainingDone } from '../career/training.js';
 import { promoteProspect, STAFF_ROLES } from '../career/youth.js';
 import { moodLabel, resolveEvent } from '../career/events.js';
+import { storyLabels } from '../career/stories.js';
 import { TRAITS } from '../data/traits.js';
 import { tierById } from '../data/tiers.js';
 import { POSITIONS } from '../sim/generator.js';
@@ -195,6 +196,7 @@ export class Clubhouse {
         <p class="avail">${count('yes')} Zusagen · ${count('late')} später · ${count('no')} Absagen</p>
         <p class="mood-line">Stimmung im Team: <b class="mood mood-${moodLabel(c.mood ?? 0)}">${moodLabel(c.mood ?? 0)}</b></p>
         ${w.event && w.event.choice === null ? '<p class="warn">In der Gruppe wartet eine Entscheidung auf dich.</p>' : ''}
+        ${storyLabels(c).length ? `<ul class="stories">${storyLabels(c).map((s) => `<li>${s}</li>`).join('')}</ul>` : ''}
         ${count('yes') < venue.format ? '<p class="warn">Zu wenige Zusagen – es hilft jemand aus dem Bekanntenkreis aus.</p>' : ''}
         ${this.busy ? `<p class="busy">${this.busy}</p>` : `
         <button class="primary" data-action="onPlay">Selbst spielen</button>
@@ -276,7 +278,7 @@ export class Clubhouse {
     const ev = w.event;
     const eventCard = ev
       ? `<div class="event-card">
-          <p class="label">Diese Woche im Verein</p>
+          <p class="label">${ev.story ? `Geschichte · ${ev.story}` : 'Diese Woche im Verein'}</p>
           <p>${ev.text}</p>
           ${ev.choice === null && !this.results
             ? `<div class="actions">${ev.options.map((o, i) => `<button ${i === 0 ? 'class="primary"' : ''} data-action="event" data-value="${i}">${o}</button>`).join('')}</div>`
@@ -308,7 +310,7 @@ export class Clubhouse {
         const avg = r.graded ? (r.gradeSum / r.graded).toFixed(1).replace('.', ',') : '–';
         return `<tr style="--c:${tier.color}">
           <td><span class="badge">${tier.name}</span></td>
-          <td><b>${p.name}</b>${p.title ? ` <em>${p.title}</em>` : ''}${formArrow(r.form)}${r.grumpy ? ' <span class="grumpy" title="angefressen – sagt öfter ab">grummelt</span>' : ''}<small>${p.age} J. · ${p.profession}</small></td>
+          <td><b>${p.name}</b>${p.title ? ` <em>${p.title}</em>` : ''}${formArrow(r.form)}${r.absenceMul > 1.2 ? ' <span class="grumpy" title="hat gerade wenig Zeit – sagt öfter ab">selten da</span>' : ''}${r.grumpy ? ' <span class="grumpy" title="angefressen – sagt öfter ab">grummelt</span>' : ''}<small>${p.age} J. · ${p.profession}</small></td>
           <td>${POSITIONS[p.position]}</td><td class="num">${p.rating}</td>
           <td>${r.injuryWeeks ? '<span class="st-text no">verletzt</span>' : st ? `<span class="st-text ${st[1]}">${st[0]}</span>` : ''}</td>
           <td class="num">${r.apps}</td><td class="num">${r.goals}</td><td class="num">${r.assists}</td><td class="num">${avg}</td>

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { createCareer, finishRound, humanClub, humanFixture, prepareMatch } from '../src/career/career.js';
+import { createCareer, finishRound, humanClub, humanFixture, playerOf, prepareMatch } from '../src/career/career.js';
+import { startStory, STORIES } from '../src/career/stories.js';
+import { createRng } from '../src/core/rng.js';
 import { absenceFactor, adjustForm, advanceArcs, EVENTS, moodLabel, resolveEvent, rollWeekEvent } from '../src/career/events.js';
 
 describe('club life events', () => {
@@ -61,15 +63,58 @@ describe('club life events', () => {
   it('the "becoming a dad" story runs over several weeks', () => {
     const c = createCareer({ seed: 6 });
     const idx = humanClub(c).squad[2];
-    c.flags.arcVater = { idx, step: 0, round: c.round };
-    c.round += 2;
-    advanceArcs(c);
-    expect(c.flags.arcVater.step).toBe(1);
+    startStory(c, 'vater', idx);
+    for (let i = 0; i < 2; i++) advanceArcs(c);
     expect(c.week.availability[idx]).toBe('no');
-    expect(c.week.chat.at(-1).text).toContain('Mädchen');
-    c.round += 1;
+    expect(c.week.chat.at(-1).text).toMatch(/Mädchen|Junge|ZWILLINGE/);
     advanceArcs(c);
-    expect(c.flags.arcVater.step).toBe(2);
+    expect(c.arcs.find((a) => a.id === 'vater')).toBeUndefined(); // zu Ende erzählt
+  });
+
+  it('old saves with the dad story in the flags keep running', () => {
+    const c = createCareer({ seed: 6 });
+    const idx = humanClub(c).squad[2];
+    c.flags.arcVater = { idx, step: 0, round: c.round };
+    advanceArcs(c);
+    expect(c.flags.arcVater).toBeUndefined();
+    expect(c.arcs.some((a) => a.id === 'vater' && a.idx === idx)).toBe(true);
+  });
+
+  it('every life story can start and runs to its end with every choice', () => {
+    for (const [id, story] of Object.entries(STORIES)) {
+      for (let choice = 0; choice < story.start.options.length; choice++) {
+        const c = createCareer({ seed: 21 });
+        c.round = 3;
+        if (id === 'abschluss') humanClub(c).squad.forEach((idx) => (c.players[idx].job = 'Student (5. Semester)'));
+        const ctx = story.start.needs(c, createRng(choice + 5));
+        expect(ctx, id).toBeTruthy();
+        c.week.event = { id, ctx, text: story.start.text(c, ctx), options: story.start.options.map((o) => o.label), choice: null, result: null };
+        expect(typeof resolveEvent(c, choice)).toBe('string');
+        // Ein paar Wochen weiterspielen; Entscheidungen unterwegs nimmt die Gruppe automatisch.
+        for (let w = 0; w < 8 && c.week; w++) {
+          c.week.event = null;
+          advanceArcs(c);
+          if (c.week.event?.id.startsWith('story:')) {
+            expect(c.week.event.text.length).toBeGreaterThan(10);
+            expect(typeof resolveEvent(c, 0)).toBe('string');
+          }
+          if (id === 'bruder') c.round = Math.min(c.round + 1, c.fixtures.length - 1);
+        }
+        expect(c.arcs.filter((a) => a.id === id && a.id !== 'bruder').length, `${id}/${choice}`).toBe(0);
+      }
+    }
+  });
+
+  it('losing the job changes the profession, a commute means more absences', () => {
+    const c = createCareer({ seed: 22 });
+    const idx = humanClub(c).squad.find((i) => !/^(Schüler|Student|Azubi|Frührentner)/.test(playerOf(c, i).profession));
+    const before = absenceFactor(c, idx);
+    c.players[idx].job = 'Arbeitssuchend';
+    c.players[idx].absenceMul = 0.3;
+    expect(playerOf(c, idx).profession).toBe('Arbeitssuchend');
+    expect(absenceFactor(c, idx)).toBeLessThan(before);
+    c.players[idx].absenceMul = 3;
+    expect(absenceFactor(c, idx)).toBeGreaterThan(before);
   });
 
   it('a broken promise to a bench player backfires', () => {
