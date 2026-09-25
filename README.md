@@ -59,6 +59,9 @@ die Komik entsteht aus dem Alltag.
   kommentierter **Liveticker** im Zeitraffer (oder direkt zum Ergebnis)
 - **Faire Torhüter-Regeln**: Hält der Keeper den Ball, gibt es eine Schutzzone – niemand lauert beim Abwurf
 - **Ballführung mit Gefühl**: Der Ball bleibt am Fuß, wer ihn will, muss stochern oder grätschen
+- **Echtes Passspiel**: Mitspieler laufen dem Ball entgegen, rücken bei Ballbesitz auf und sichern hinten ab
+- **Torhüter mit Reaktionszeit**: Platzierte Schüsse sind oft drin, im Eins gegen eins kommt der Keeper raus
+  und wirft sich in die Füße – klappt mal, mal nicht
 - **Sechs Spielorte** mit eigener Physik: Betonplatten, Asphalt, Parkwiese, Asche, Rasen, Hallenparkett
 - **Amateurfußball, der sich so anfühlt**: Ausdauer, verspringende Bälle, Schürfwunden auf hartem Boden,
   „Ans Auto“-Regel auf dem Parkplatz
@@ -175,7 +178,7 @@ Auf englischen Tastaturen liegt „Stochern“ auf **Z** (gleiche Taste).
 
 ```bash
 npm run dev      # Entwicklungsserver mit Hot Reload
-npm test         # 140 Tests (Simulation und Karriere)
+npm test         # 146 Tests (Simulation und Karriere)
 npm run build    # Produktions-Build nach dist/
 npm run preview  # Build lokal ansehen
 ```

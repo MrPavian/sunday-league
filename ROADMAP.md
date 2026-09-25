@@ -261,6 +261,8 @@ Liga- und Vereinsnamen bleiben fiktiv (keine Lizenzen nötig); regionale Variant
 - [x] Modus KI gegen KI (Grundlage für simulierte Ligaspiele)
 - [x] Liveticker für simulierte Spiele (Kommentator auf Deutsch und Englisch)
 - [x] Balance: Schutzzone für den Torwart, Ballführung am Fuß, schlagbare Kreisklasse-Keeper
+- [x] Gameplay-Überarbeitung: Ballannahme und Passauswahl, Zielhilfe, Torwart-Reaktionszeit, Eins gegen eins,
+  Distanzschüsse, Restverteidigung, keine Ecken-Hänger, aktive Mitspieler
 - [x] Pixelschrift im Projekt statt Google Fonts
 - [ ] Minimal-UI: Halbzeit, Endstand-Screen
 

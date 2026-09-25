@@ -309,7 +309,7 @@ describe('venues', () => {
     }
     expect(m.phase).toBe('ended');
     expect(goals).toBeGreaterThan(0);
-    expect(m.players.length).toBe(pitch.format * 2);
+    expect(m.players.length + m.sentOff.length).toBe(pitch.format * 2); // Platzverweise zählen mit
   });
 });
 
@@ -675,5 +675,29 @@ describe('passing and shooting', () => {
     stepMatch(m, undefined, DT);
     stepMatch(m, undefined, DT);
     expect(Math.abs(gk.pos.z - z0)).toBeLessThan(0.15);
+  });
+});
+
+describe('defending', () => {
+  it('the defence stays behind the ball while the own team attacks', () => {
+    let samples = 0;
+    let behind = 0;
+    for (const seed of [1, 2]) {
+      const m = createMatch({ seed, pitch: PITCHES.rasenplatz, human: false });
+      for (let i = 0; i < 60 * 300 && m.phase !== 'ended'; i++) {
+        stepMatch(m, undefined, DT);
+        m.events.length = 0;
+        const team = m.lastTouchTeam;
+        if (m.phase !== 'play' || team === null || i % 20) continue;
+        const s = team === 0 ? (m.sidesSwapped ? -1 : 1) : m.sidesSwapped ? 1 : -1;
+        for (const p of m.players) {
+          if (p.team !== team || p.role !== 'def' || !m.tactics[p.id] || m.tactics[p.id].type !== 'support') continue;
+          samples++;
+          if ((m.ball.pos.x - p.pos.x) * s > 0) behind++;
+        }
+      }
+    }
+    expect(samples).toBeGreaterThan(50);
+    expect(behind / samples).toBeGreaterThan(0.65); // vorher 0,56 – beim Zurücklaufen hinken sie etwas hinterher
   });
 });

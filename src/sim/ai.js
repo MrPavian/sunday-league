@@ -40,6 +40,12 @@ export function updateTactics(m, dt) {
     const rest = pool.filter((p) => p !== chaser);
 
     if (possession !== null && possession !== team) {
+      // Absichern: Wer am schnellsten zwischen Ball und Tor kommt, macht das –
+      // nicht einfach der Nächste am Ball.
+      const dirG = norm(ownGoal.x - ball.pos.x, ownGoal.z - ball.pos.z);
+      const dG = Math.min(3.5, dist2d(ball.pos, ownGoal) * 0.5);
+      const coverPt = { x: ball.pos.x + dirG.x * dG, z: ball.pos.z + dirG.z * dG };
+      rest.sort((a, b) => dist2d(a.pos, coverPt) - dist2d(b.pos, coverPt));
       const cover = rest.shift();
       if (cover) {
         const dir = norm(ownGoal.x - ball.pos.x, ownGoal.z - ball.pos.z);
@@ -66,7 +72,13 @@ export function updateTactics(m, dt) {
         m.tactics[p.id] = { type: 'mark', ...clampToPitch(pitch, best.pos.x + dir.x * 1.5, best.pos.z + dir.z * 1.5) };
       }
     } else {
-      for (const p of rest) m.tactics[p.id] = { type: 'support', ...supportSpot(m, p, dt) };
+      for (const p of rest) {
+        const spot = supportSpot(m, p, dt);
+        // Absicherung: Abwehrspieler bleiben immer ein Stück hinter dem Ball – auch
+        // wenn der Ball schneller wandert, als sie ihren Laufweg neu planen.
+        if (p.role === 'def') spot.x = Math.min(spot.x * s, ball.pos.x * s - 5, pitch.halfLength * 0.35) * s;
+        m.tactics[p.id] = { type: 'support', ...clampToPitch(pitch, spot.x, spot.z, 0.5) };
+      }
     }
     if (receiver && receiver.id !== m.controlledId) m.tactics[receiver.id] = { type: 'receive', ...receiveSpot(m, receiver) };
     if (oppKeeper) {
@@ -121,22 +133,25 @@ export const keeperZone = (pitch) => Math.min(9, pitch.halfLength * 0.45);
 function supportSpot(m, p, dt) {
   const { ball, pitch, rng } = m;
   p.supportTimer = (p.supportTimer ?? 0) - dt;
-  if (p.supportSpot && p.supportTimer > 0) return p.supportSpot;
+  if (p.supportSpot && p.supportTimer > 0) return { ...p.supportSpot };
 
   const s = attackDir(m, p.team);
   // Mit Auslinien nicht direkt an der Linie anbieten.
   const margin = pitch.boundary === 'lines' ? 2.5 : 1.2;
   // Bei Ballbesitz rücken alle auf: Stürmer laufen in die Tiefe, das Mittelfeld
-  // bietet sich davor an, die Abwehr schiebt nach.
+  // bietet sich davor an. Die Abwehr bleibt als Absicherung hinter dem Ball.
   const push = p.role === 'fwd' ? 4.5 : p.role === 'mid' ? 3 : 1;
-  const base = clampToPitch(pitch, p.home.x * 0.4 + ball.pos.x * 0.7 + s * push, p.home.z + ball.pos.z * 0.3, margin);
+  let bx = p.home.x * 0.4 + ball.pos.x * 0.7 + s * push;
+  if (p.role === 'def') bx = Math.min(bx * s, ball.pos.x * s - 5.5, pitch.halfLength * 0.35) * s;
+  const base = clampToPitch(pitch, bx, p.home.z + ball.pos.z * 0.3, margin);
   const deep = p.role === 'fwd' ? [[5, 0], [5, 3], [5, -3]] : [];
+  const back = p.role === 'def';
   const offsets = [[0, 0], [3, 0], [-3, 0], [0, 3], [0, -3], [2.5, 2.5], [2.5, -2.5], [-2.5, 2.5], [-2.5, -2.5], ...deep];
   let best = base;
   let bestScore = -Infinity;
   for (const [ox, oz] of offsets) {
     const c = clampToPitch(pitch, base.x + ox * s, base.z + oz, margin);
-    let score = s * c.x * 0.07 - len(c.x - base.x, c.z - base.z) * 0.13;
+    let score = (back ? 0 : s * c.x * 0.07) - len(c.x - base.x, c.z - base.z) * 0.13;
     for (const o of m.players) {
       if (o.team === p.team) continue;
       const d = dist2d(o.pos, c);
@@ -151,7 +166,7 @@ function supportSpot(m, p, dt) {
       best = c;
     }
   }
-  p.supportSpot = best;
+  p.supportSpot = { ...best };
   p.supportTimer = 1.0 + rng.next() * 0.4; // seltener umentscheiden = ruhigeres Bild
   return best;
 }
