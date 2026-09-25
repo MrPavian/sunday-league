@@ -3,6 +3,7 @@
 import { createRng } from '../core/rng.js';
 import { getPool, humanClub, joinSquad, maxSquad, playerOf } from './career.js';
 import { book } from './finances.js';
+import { tr } from '../core/i18n.js';
 
 export function applyChallengeRewards(career, progress) {
   const applied = [];
@@ -10,7 +11,7 @@ export function applyChallengeRewards(career, progress) {
   const taken = new Set([...career.clubs.flatMap((c) => c.squad), ...(career.youth?.prospects ?? []), ...(career.alumni ?? []).map((a) => a.idx)]);
   for (const r of progress.pendingRewards ?? []) {
     if (r.cash) {
-      book(career, `Challenge „${r.id}": ${r.text}`, r.cash);
+      book(career, tr(`Challenge „${r.id}": ${r.text}`, `Challenge "${r.id}": ${r.text}`), r.cash);
       applied.push(r);
       continue;
     }
@@ -25,7 +26,7 @@ export function applyChallengeRewards(career, progress) {
         .filter((p) => !taken.has(p.poolIndex) && (!r.player.position || p.position === r.player.position) && (!r.player.minAge || playerOf(career, p.poolIndex).age >= r.player.minAge));
       const p = rng.pick(list);
       if (!p) continue;
-      joinSquad(career, p.poolIndex, 'Hab euch bei der Challenge gesehen – ich will mitspielen!');
+      joinSquad(career, p.poolIndex, tr('Hab euch bei der Challenge gesehen – ich will mitspielen!', 'Saw you at the challenge – I want to play too!'));
       taken.add(p.poolIndex);
       applied.push({ ...r, playerName: p.name });
     }

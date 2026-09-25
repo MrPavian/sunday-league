@@ -45,6 +45,8 @@ export class Menu {
     });
     window.addEventListener('keydown', (e) => {
       if (!this.visible || this.paused) return;
+      // Hotkeys öffnen Formulare – der Buchstabe soll nicht im ersten Eingabefeld landen.
+      if (['KeyP', 'KeyC', 'KeyO', 'KeyK'].includes(e.code)) e.preventDefault();
       if (e.code === 'KeyP') this.onPool();
       else if (e.code === 'KeyC') this.onChallenges();
       else if (e.code === 'KeyO') this.onSettings();

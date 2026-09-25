@@ -8,10 +8,11 @@ import { book } from './finances.js';
 import { clubById, humanClub, playerOf, resolveKitClash, seasonOver, squadPicker, SQUAD_SHAPES, takenIndices, teamForMatch } from './career.js';
 import { adjustMood } from './events.js';
 import { chronicle, yearOf } from './sagas.js';
+import { tr, euroFmt } from '../core/i18n.js';
 
 export const CUPS = {
-  stadt: { name: 'Stadtmeisterschaft', title: 'Stadtmeister', venue: 'ascheplatz', place: 'Sportplatz Am Kanal', duration: 300, prizes: { winner: 150, final: 60, semi: 25 }, absent: 0.12, absentWhy: 'Sommer: wer im Urlaub ist, fehlt' },
-  halle: { name: 'Hallen-Stadtmeisterschaft', title: 'Hallenmeister', venue: 'halle', place: 'Sporthalle Kanalschule', duration: 240, prizes: { winner: 100, final: 40, semi: 15 }, absent: 0.08, absentWhy: 'Winter: wer erkältet ist, fehlt' },
+  stadt: { name: tr('Stadtmeisterschaft', 'City Championship'), title: tr('Stadtmeister', 'City champions'), venue: 'ascheplatz', place: 'Sportplatz Am Kanal', duration: 300, prizes: { winner: 150, final: 60, semi: 25 }, absent: 0.12, absentWhy: tr('Sommer: wer im Urlaub ist, fehlt', 'Summer: whoever is on holiday is out') },
+  halle: { name: tr('Hallen-Stadtmeisterschaft', 'Indoor City Championship'), title: tr('Hallenmeister', 'Indoor champions'), venue: 'halle', place: 'Sporthalle Kanalschule', duration: 240, prizes: { winner: 100, final: 40, semi: 15 }, absent: 0.08, absentWhy: tr('Winter: wer erkältet ist, fehlt', 'Winter: whoever has a cold is out') },
 };
 export const CUP_NAME = CUPS.stadt.name;
 export const CUP_DURATION = CUPS.stadt.duration;
@@ -162,11 +163,11 @@ export function recordCupResult(c, m, prepared) {
   m.result = prepared.humanIsAway ? { home: s1, away: s0 } : { home: s0, away: s1 };
   if (m.stage !== 'A' && m.stage !== 'B' && m.result.home === m.result.away) m.pens = penalties(c, m, prepared);
   const human = humanClub(c).id;
-  if (m.home === human || m.away === human) cupOf(c, m.kind ?? 'stadt').log.push(`${stageName(m)}: ${cupClub(c, m.home).short} ${m.result.home}:${m.result.away}${m.pens ? ` (${m.pens.home}:${m.pens.away} i. E.)` : ''} ${cupClub(c, m.away).short}`);
+  if (m.home === human || m.away === human) cupOf(c, m.kind ?? 'stadt').log.push(`${stageName(m)}: ${cupClub(c, m.home).short} ${m.result.home}:${m.result.away}${m.pens ? ` (${m.pens.home}:${m.pens.away} ${tr('i. E.', 'on pens')})` : ''} ${cupClub(c, m.away).short}`);
 }
 
 export const winnerOf = (m) => (m.result.home + (m.pens?.home ?? 0) * 0.01 > m.result.away + (m.pens?.away ?? 0) * 0.01 ? m.home : m.away);
-export const stageName = (m) => ({ A: 'Gruppe A', B: 'Gruppe B', SF: 'Halbfinale', F: 'Finale' })[m.stage];
+export const stageName = (m) => tr({ A: 'Gruppe A', B: 'Gruppe B', SF: 'Halbfinale', F: 'Finale' }, { A: 'Group A', B: 'Group B', SF: 'Semi-final', F: 'Final' })[m.stage];
 
 // Runde fertig? Dann weiter: nächste Gruppenrunde, Halbfinale, Finale, Siegerehrung.
 export function advanceCup(c, kind = 'stadt') {
@@ -179,7 +180,7 @@ export function advanceCup(c, kind = 'stadt') {
     t.stage = 'sf';
     t.matches.push({ kind, stage: 'SF', round: 3, home: a[0].id, away: b[1].id, result: null }, { kind, stage: 'SF', round: 3, home: b[0].id, away: a[1].id, result: null });
     const human = humanClub(c).id;
-    if (![a[0].id, a[1].id, b[0].id, b[1].id].includes(human)) t.log.push(kind === 'halle' ? 'In der Gruppe raus. Ihr schaut von der Tribüne zu und esst Waffeln.' : 'In der Gruppe ausgeschieden. Die anderen spielen weiter – ihr grillt.');
+    if (![a[0].id, a[1].id, b[0].id, b[1].id].includes(human)) t.log.push(kind === 'halle' ? tr('In der Gruppe raus. Ihr schaut von der Tribüne zu und esst Waffeln.', 'Out in the group stage. You watch from the stands and eat waffles.') : tr('In der Gruppe ausgeschieden. Die anderen spielen weiter – ihr grillt.', 'Out in the group stage. The others play on – you fire up the barbecue.'));
   } else if (t.stage === 'sf') {
     const sfs = t.matches.filter((m) => m.stage === 'SF');
     t.round = 4;
@@ -201,21 +202,21 @@ function finishTournament(c, kind) {
   const sfTeams = t.matches.filter((m) => m.stage === 'SF').flatMap((m) => [m.home, m.away]);
   const winnerName = cupClub(c, t.winner).name;
   if (t.winner === me) {
-    book(c, `Preisgeld ${cfg.name}`, cfg.prizes.winner);
+    book(c, tr(`Preisgeld ${cfg.name}`, `Prize money ${cfg.name}`), cfg.prizes.winner);
     adjustMood(c, kind === 'halle' ? 0.15 : 0.2);
     c.trophies = [...(c.trophies ?? []), { name: `${cfg.name} ${t.year}`, season: c.season }];
     if (kind === 'stadt') c.flags.cityChamp = c.season;
-    chronicle(c, `${cfg.title} ${t.year}! Finale gegen ${cupClub(c, final.home === me ? final.away : final.home).name}.`);
-    t.log.push(`${cfg.title.toUpperCase()}! Der Pokal steht jetzt in der Vitrine im Vereinsheim. ${cfg.prizes.winner} € Preisgeld.`);
+    chronicle(c, tr(`${cfg.title} ${t.year}! Finale gegen ${cupClub(c, final.home === me ? final.away : final.home).name}.`, `${cfg.title} ${t.year}! Final against ${cupClub(c, final.home === me ? final.away : final.home).name}.`));
+    t.log.push(tr(`${cfg.title.toUpperCase()}! Der Pokal steht jetzt in der Vitrine im Vereinsheim. ${cfg.prizes.winner} € Preisgeld.`, `${cfg.title.toUpperCase()}! The cup now sits in the clubhouse cabinet. ${euroFmt(cfg.prizes.winner)} prize money.`));
   } else if (final.home === me || final.away === me) {
-    book(c, `Preisgeld ${cfg.name} (Finale)`, cfg.prizes.final);
+    book(c, tr(`Preisgeld ${cfg.name} (Finale)`, `Prize money ${cfg.name} (final)`), cfg.prizes.final);
     adjustMood(c, 0.06);
-    chronicle(c, `Finale der ${cfg.name} ${t.year}, knapp verloren gegen ${winnerName}.`);
-    t.log.push(`Im Finale verloren. ${cfg.prizes.final} € für den Zweiten und ein Kasten vom Veranstalter.`);
+    chronicle(c, tr(`Finale der ${cfg.name} ${t.year}, knapp verloren gegen ${winnerName}.`, `Final of the ${cfg.name} ${t.year}, lost narrowly to ${winnerName}.`));
+    t.log.push(tr(`Im Finale verloren. ${cfg.prizes.final} € für den Zweiten und ein Kasten vom Veranstalter.`, `Lost in the final. ${euroFmt(cfg.prizes.final)} for the runners-up and a crate of beer from the organisers.`));
   } else if (sfTeams.includes(me)) {
-    book(c, `Preisgeld ${cfg.name} (Halbfinale)`, cfg.prizes.semi);
-    t.log.push(`Im Halbfinale raus. ${cfg.prizes.semi} € und ${kind === 'halle' ? 'eine Waffel' : 'eine Bratwurst'} für jeden. ${cfg.title}: ${winnerName}.`);
-  } else t.log.push(`${cfg.title} wird ${winnerName}.`);
+    book(c, tr(`Preisgeld ${cfg.name} (Halbfinale)`, `Prize money ${cfg.name} (semi-final)`), cfg.prizes.semi);
+    t.log.push(tr(`Im Halbfinale raus. ${cfg.prizes.semi} € und ${kind === 'halle' ? 'eine Waffel' : 'eine Bratwurst'} für jeden. ${cfg.title}: ${winnerName}.`, `Out in the semi-final. ${euroFmt(cfg.prizes.semi)} and ${kind === 'halle' ? 'a waffle' : 'a sausage'} for everyone. ${cfg.title}: ${winnerName}.`));
+  } else t.log.push(tr(`${cfg.title} wird ${winnerName}.`, `${cfg.title}: ${winnerName}.`));
   cleanup(c, kind);
 }
 

@@ -6,12 +6,13 @@ Sonntag, 10:30 Uhr, Nieselregen, sieben Zuschauer, zwei davon Hunde.
 
 [![CI](https://github.com/MrPavian/sunday-league/actions/workflows/ci.yml/badge.svg)](https://github.com/MrPavian/sunday-league/actions/workflows/ci.yml)
 ![three.js](https://img.shields.io/badge/three.js-0.186-black)
-![Sprache](https://img.shields.io/badge/Sprache-Deutsch-yellow)
+![Sprache](https://img.shields.io/badge/Sprache-Deutsch%20%7C%20English-yellow)
 ![Status](https://img.shields.io/badge/Status-spielbarer%20Prototyp-orange)
 
 > *English:* A cosy amateur-football game in 3D pixel art. Manage a Sunday-league club full of
 > dentists, bus drivers and apprentices, play the matches yourself, and live through job stress,
-> derbies, pub nights and season trips – across generations. Currently German only.
+> derbies, pub nights and season trips – across generations. Fully playable in English:
+> pick the language on first start or any time in the settings (key **O**).
 
 ![Stadtpark](docs/screenshot-park.png)
 
@@ -156,9 +157,13 @@ Rechte Hand läuft, linke Hand spielt.
 | Hilfe ein/aus | H | – |
 | Ton an/aus | N | – |
 | Grafikeffekte an/aus | G | – |
+| Einstellungen (Sprache, Ton, Effekte, Tempo) | O | – |
 | Zurück zur Platzwahl | Esc / M | – |
 
-Im Menü: **K** Karriere, **C** Challenges, **P** Spielerpool.
+Im Menü: **K** Karriere, **C** Challenges, **P** Spielerpool, **O** Einstellungen.
+
+**Sprache:** Deutsch oder Englisch – Auswahl beim ersten Start und jederzeit in den Einstellungen.
+Auf englischen Tastaturen liegt „Stochern“ auf **Z** (gleiche Taste).
 
 ---
 
@@ -213,7 +218,7 @@ veröffentlicht (`.github/workflows/pages.yml`). Einmalig im Repository einschal
 ## Stand
 
 Spielbarer Prototyp: Das Match, eine vollständige Karriere mit zwei Ligen und die meisten Vereins- und
-Lebenssysteme sind fertig. Offen sind unter anderem Tutorial, Einstellungsmenü, englische Übersetzung,
+Lebenssysteme sind fertig. Das Spiel ist komplett auf Deutsch und Englisch spielbar. Offen sind unter anderem Tutorial, Tastenbelegung,
 weitere Ligen und ein Desktop-Build. Details im [Projektüberblick](docs/OVERVIEW.md#8-stand-und-grenzen).
 
 ## Mitmachen

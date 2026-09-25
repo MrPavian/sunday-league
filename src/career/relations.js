@@ -3,14 +3,15 @@
 // Beziehungen entstehen deterministisch aus den Pool-Nummern und können sich
 // durch Ereignisse ändern (career.relations speichert nur die Änderungen).
 import { humanClub, playerOf } from './career.js';
+import { tr } from '../core/i18n.js';
 
 export const REL = {
-  kumpel: { name: 'Kumpel', plural: 'Kumpels', mods: { passing: 0.02, technique: 0.01 } },
-  schwager: { name: 'Schwager', plural: 'Schwager', mods: { passing: 0.015, stamina: 0.01 } },
-  kollegen: { name: 'Arbeitskollege', plural: 'Arbeitskollegen', mods: { passing: 0.01 } },
-  rivalen: { name: 'Rivale', plural: 'Rivalen', mods: { passing: -0.03, technique: -0.01 } },
-  feinde: { name: 'Erzfeind', plural: 'Erzfeinde', mods: { passing: -0.05, technique: -0.02, stamina: -0.01 } },
-  schulfreunde: { name: 'Schulfreund', plural: 'Schulfreunde', mods: { passing: 0.03, technique: 0.01 } },
+  kumpel: { name: tr('Kumpel', 'Mate'), plural: tr('Kumpels', 'Mates'), mods: { passing: 0.02, technique: 0.01 } },
+  schwager: { name: tr('Schwager', 'Brother-in-law'), plural: tr('Schwager', 'Brothers-in-law'), mods: { passing: 0.015, stamina: 0.01 } },
+  kollegen: { name: tr('Arbeitskollege', 'Workmate'), plural: tr('Arbeitskollegen', 'Workmates'), mods: { passing: 0.01 } },
+  rivalen: { name: tr('Rivale', 'Rival'), plural: tr('Rivalen', 'Rivals'), mods: { passing: -0.03, technique: -0.01 } },
+  feinde: { name: tr('Erzfeind', 'Arch-enemy'), plural: tr('Erzfeinde', 'Arch-enemies'), mods: { passing: -0.05, technique: -0.02, stamina: -0.01 } },
+  schulfreunde: { name: tr('Schulfreund', 'Old school friend'), plural: tr('Schulfreunde', 'Old school friends'), mods: { passing: 0.03, technique: 0.01 } },
 };
 const GENERIC_JOBS = /^(Schüler|Student|Azubi|Arbeitssuchend)/;
 const CAP = 0.06;

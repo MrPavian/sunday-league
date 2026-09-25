@@ -366,8 +366,8 @@ Gleichzeitig hat das Match noch Lücken, die man beim Spielen sofort merkt.
 | 6 | **Speichern/Laden** | Voraussetzung für alles Weitere. Versioniertes Format. |
 | 7 | **Saison-Loop (Minimalversion)** | Woche → Chatgruppe → Spieltag → Tabelle. Die KI-gegen-KI-Simulation ist schon da. |
 | 8 | **Tutorial** | Als Story: Du ziehst neu in die Stadt, kickst im Hinterhof mit und gründest mit den Leuten einen Verein. |
-| 9 | **Einstellungen** | Tasten frei belegen, Lautstärke, Spielgeschwindigkeit, farbenblind-sichere Trikots. |
-| 10 | **Mehrsprachigkeit** | Alle Texte sind gerade fest auf Deutsch – i18n-Gerüst mit DE/EN. |
+| 9 | **Einstellungen** | ✅ Menü mit Sprache, Ton, Effekten und Tempo (Taste O). Offen: Tasten frei belegen, Lautstärke, farbenblind-sichere Trikots. |
+| 10 | **Mehrsprachigkeit** | ✅ Komplett auf Deutsch und Englisch, Wahl beim ersten Start und in den Einstellungen (`src/core/i18n.js`). |
 | 11 | **Desktop-Build** | Tauri oder Electron + Steamworks (Achievements, Cloud-Saves). |
 
 ### 8.2 Match: sinnvolle Erweiterungen

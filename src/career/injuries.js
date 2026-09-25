@@ -9,15 +9,17 @@ import { adjustForm, adjustMood } from './events.js';
 import { first, outcome } from './outcomes.js';
 import { isCoach } from './personal.js';
 import { chronicle } from './sagas.js';
+import { roleName } from './youth.js';
+import { tr, plural, euroFmt } from '../core/i18n.js';
 
 export const INJURIES = {
-  zerrung: { label: 'Zerrung', weeks: [1, 2], w: 40 },
-  prellung: { label: 'Prellung', weeks: [1, 1], w: 25 },
-  baender: { label: 'Bänderdehnung im Sprunggelenk', weeks: [2, 4], w: 16 },
-  muskelfaser: { label: 'Muskelfaserriss', weeks: [3, 5], w: 10 },
-  meniskus: { label: 'Meniskusschaden', weeks: [5, 8], w: 5 },
-  kreuzband: { label: 'Kreuzbandriss', weeks: [18, 30], w: 2.5 },
-  achilles: { label: 'Achillessehnenriss', weeks: [20, 32], w: 1.5 },
+  zerrung: { label: tr('Zerrung', 'strain'), weeks: [1, 2], w: 40 },
+  prellung: { label: tr('Prellung', 'bruise'), weeks: [1, 1], w: 25 },
+  baender: { label: tr('Bänderdehnung im Sprunggelenk', 'sprained ankle ligaments'), weeks: [2, 4], w: 16 },
+  muskelfaser: { label: tr('Muskelfaserriss', 'torn muscle fibre'), weeks: [3, 5], w: 10 },
+  meniskus: { label: tr('Meniskusschaden', 'meniscus damage'), weeks: [5, 8], w: 5 },
+  kreuzband: { label: tr('Kreuzbandriss', 'torn cruciate ligament'), weeks: [18, 30], w: 2.5 },
+  achilles: { label: tr('Achillessehnenriss', 'ruptured Achilles tendon'), weeks: [20, 32], w: 1.5 },
 };
 export const SEVERE = 5; // ab so vielen Wochen gibt es eine Diagnose mit Entscheidung
 const BASE_CHANCE = 0.018; // pro Spieler und Spiel
@@ -59,9 +61,16 @@ export function rollInjuries(c, prepared, fixtureRound = c.round) {
   return news;
 }
 
-export const injuryText = (rec) => (rec?.injuryWeeks > 0 ? `${rec.injury?.label ?? 'verletzt'}, noch ${rec.injuryWeeks} ${rec.injuryWeeks === 1 ? 'Woche' : 'Wochen'}` : null);
+export const injuryText = (rec) => {
+  if (!(rec?.injuryWeeks > 0)) return null;
+  const label = rec.injury?.label ?? tr('verletzt', 'injured');
+  const weeks = plural(rec.injuryWeeks, 'Woche', 'Wochen', 'week', 'weeks');
+  return tr(`${label}, noch ${rec.injuryWeeks} ${weeks}`, `${label}, ${rec.injuryWeeks} ${weeks} left`);
+};
 
 // Laufbahn beendet: Er verlässt den Kader und bekommt ein Amt – oder wird Ehrenmitglied.
+// Der Titel wird in c.alumni immer auf Deutsch gespeichert (wie bei den Jugend-Ämtern) und
+// erst bei der Anzeige über roleName() übersetzt.
 export function endCareer(c, idx, role) {
   const club = humanClub(c);
   const p = playerOf(c, idx);
@@ -91,34 +100,34 @@ export const INJURY_EVENTS = {
       if (!n || !humanClub(c).squad.includes(n.idx) || isCoach(c, n.idx)) return null;
       return { ...n };
     },
-    text: (c, ctx) => `Diagnose vom Orthopäden: ${first(c, ctx.s ?? ctx.idx)} hat einen ${INJURIES[ctx.type].label}. Mindestens ${ctx.weeks} Wochen Pause.`,
+    text: (c, ctx) => tr(`Diagnose vom Orthopäden: ${first(c, ctx.s ?? ctx.idx)} hat einen ${INJURIES[ctx.type].label}. Mindestens ${ctx.weeks} Wochen Pause.`, `Diagnosis from the orthopaedist: ${first(c, ctx.s ?? ctx.idx)} has a ${INJURIES[ctx.type].label}. At least ${ctx.weeks} weeks out.`),
     options: [
       {
-        label: 'Beste Behandlung beim Physio am Markt (60 €)',
+        label: tr(`Beste Behandlung beim Physio am Markt (${euroFmt(60)})`, `Best treatment at the physio in town (${euroFmt(60)})`),
         effect: outcome([
-          { w: 4, run: (c, ctx) => (clear(c), book(c, 'Physio: Reha', -60), shorten(c, ctx.idx, 0.7), `Die Reha schlägt an. ${first(c, ctx.idx)} ist schneller zurück als gedacht: noch ${c.players[ctx.idx].injuryWeeks} Wochen.`) },
-          { w: 2, run: (c, ctx) => (clear(c), book(c, 'Physio: Reha', -60), (c.players[ctx.idx].loyal = true), `Der Physio ist gut – und ${first(c, ctx.idx)} weiß, dass der Verein für ihn da war. Er wird dir das nie vergessen.`) },
-          { w: 1, run: (c, ctx) => (clear(c), book(c, 'Physio: Reha', -60), shorten(c, ctx.idx, 1.3), `Komplikationen. Die Pause wird länger: noch ${c.players[ctx.idx].injuryWeeks} Wochen.`) },
-          { w: 1, run: (c, ctx) => (clear(c), book(c, 'Physio: Reha (Sponsor zahlt die Hälfte)', -30), shorten(c, ctx.idx, 0.75), 'Der Physio ist Sponsor-Kunde und rechnet nur die Hälfte ab.') },
+          { w: 4, run: (c, ctx) => (clear(c), book(c, tr('Physio: Reha', 'Physio: rehab'), -60), shorten(c, ctx.idx, 0.7), tr(`Die Reha schlägt an. ${first(c, ctx.idx)} ist schneller zurück als gedacht: noch ${c.players[ctx.idx].injuryWeeks} Wochen.`, `The rehab works. ${first(c, ctx.idx)} is back sooner than expected: ${c.players[ctx.idx].injuryWeeks} weeks left.`)) },
+          { w: 2, run: (c, ctx) => (clear(c), book(c, tr('Physio: Reha', 'Physio: rehab'), -60), (c.players[ctx.idx].loyal = true), tr(`Der Physio ist gut – und ${first(c, ctx.idx)} weiß, dass der Verein für ihn da war. Er wird dir das nie vergessen.`, `The physio is good – and ${first(c, ctx.idx)} knows the club was there for him. He'll never forget it.`)) },
+          { w: 1, run: (c, ctx) => (clear(c), book(c, tr('Physio: Reha', 'Physio: rehab'), -60), shorten(c, ctx.idx, 1.3), tr(`Komplikationen. Die Pause wird länger: noch ${c.players[ctx.idx].injuryWeeks} Wochen.`, `Complications. The lay-off gets longer: ${c.players[ctx.idx].injuryWeeks} weeks left.`)) },
+          { w: 1, run: (c, ctx) => (clear(c), book(c, tr('Physio: Reha (Sponsor zahlt die Hälfte)', 'Physio: rehab (sponsor pays half)'), -30), shorten(c, ctx.idx, 0.75), tr('Der Physio ist Sponsor-Kunde und rechnet nur die Hälfte ab.', 'The physio is a sponsor customer and only charges half price.')) },
           { w: (c, ctx) => (isSevere(ctx) && canEnd(c) ? 0.5 : 0), run: (c, ctx) => invalid(c, ctx) },
         ]),
       },
       {
-        label: 'Schnell zurück – wir brauchen ihn',
+        label: tr('Schnell zurück – wir brauchen ihn', 'Back quickly – we need him'),
         effect: outcome([
-          { w: 2, run: (c, ctx) => (clear(c), shorten(c, ctx.idx, 0.6), adjustForm(c, ctx.idx, -0.5), `${first(c, ctx.idx)} beißt auf die Zähne und ist früher zurück. Ganz fit ist er nicht.`) },
-          { w: 2, run: (c, ctx) => (clear(c), shorten(c, ctx.idx, 1.6), `Zu früh belastet. Rückschlag – jetzt ist er noch ${c.players[ctx.idx].injuryWeeks} Wochen raus.`) },
-          { w: 1, run: (c, ctx) => (clear(c), (c.players[ctx.idx].grumpy = 3), `${first(c, ctx.idx)} fühlt sich unter Druck gesetzt. „Ich bin doch kein Profi."`) },
+          { w: 2, run: (c, ctx) => (clear(c), shorten(c, ctx.idx, 0.6), adjustForm(c, ctx.idx, -0.5), tr(`${first(c, ctx.idx)} beißt auf die Zähne und ist früher zurück. Ganz fit ist er nicht.`, `${first(c, ctx.idx)} grits his teeth and returns early. He's not fully fit.`)) },
+          { w: 2, run: (c, ctx) => (clear(c), shorten(c, ctx.idx, 1.6), tr(`Zu früh belastet. Rückschlag – jetzt ist er noch ${c.players[ctx.idx].injuryWeeks} Wochen raus.`, `Came back too soon. Setback – now he's out for ${c.players[ctx.idx].injuryWeeks} more weeks.`)) },
+          { w: 1, run: (c, ctx) => (clear(c), (c.players[ctx.idx].grumpy = 3), tr(`${first(c, ctx.idx)} fühlt sich unter Druck gesetzt. „Ich bin doch kein Profi."`, `${first(c, ctx.idx)} feels under pressure. "I'm not a pro, you know."`)) },
           { w: (c, ctx) => (isSevere(ctx) && canEnd(c) ? 1.2 : 0), run: (c, ctx) => invalid(c, ctx) },
         ]),
       },
       {
-        label: 'Er soll sich Zeit lassen – Hauptsache gesund',
+        label: tr('Er soll sich Zeit lassen – Hauptsache gesund', 'Let him take his time – health comes first'),
         effect: outcome([
-          { w: 3, run: (c, ctx) => (clear(c), `${first(c, ctx.idx)} kuriert sich in Ruhe aus. Er kommt regelmäßig zum Zuschauen.`) },
-          { w: 1.5, run: (c, ctx) => (clear(c), (c.players[ctx.idx].loyal = true), adjustMood(c, 0.04), `Die Mannschaft schickt ihm ein Trikot mit allen Unterschriften ins Krankenhaus. Er weint ein bisschen.`) },
-          { w: 1, run: (c, ctx) => (clear(c), shorten(c, ctx.idx, 1.2), adjustForm(c, ctx.idx, -0.4), `Die Heilung dauert. Und die Motivation leidet.`) },
-          { w: (c, ctx) => (playerOf(c, ctx.idx).age >= 32 && canEnd(c) ? 1.5 : 0), run: (c, ctx) => { clear(c); const role = endCareer(c, ctx.idx, freeRole(c)); chronicle(c, `${playerOf(c, ctx.idx)?.name ?? 'Ein Spieler'} beendet nach Verletzung die Laufbahn und wird ${role}.`); return `Mit über 30 und dieser Verletzung? ${first(c, ctx.idx)} hört auf. Er bleibt dem Verein aber erhalten – als ${role}.`; } },
+          { w: 3, run: (c, ctx) => (clear(c), tr(`${first(c, ctx.idx)} kuriert sich in Ruhe aus. Er kommt regelmäßig zum Zuschauen.`, `${first(c, ctx.idx)} takes his time to heal. He comes to watch regularly.`)) },
+          { w: 1.5, run: (c, ctx) => (clear(c), (c.players[ctx.idx].loyal = true), adjustMood(c, 0.04), tr(`Die Mannschaft schickt ihm ein Trikot mit allen Unterschriften ins Krankenhaus. Er weint ein bisschen.`, `The team sends him a shirt to hospital, signed by everyone. He tears up a little.`)) },
+          { w: 1, run: (c, ctx) => (clear(c), shorten(c, ctx.idx, 1.2), adjustForm(c, ctx.idx, -0.4), tr(`Die Heilung dauert. Und die Motivation leidet.`, `Healing takes its time. And motivation suffers.`)) },
+          { w: (c, ctx) => (playerOf(c, ctx.idx).age >= 32 && canEnd(c) ? 1.5 : 0), run: (c, ctx) => { clear(c); const name = playerOf(c, ctx.idx)?.name; const role = roleName(endCareer(c, ctx.idx, freeRole(c))); chronicle(c, tr(`${name ?? 'Ein Spieler'} beendet nach Verletzung die Laufbahn und wird ${role}.`, `${name ?? 'A player'} ends his career after the injury and becomes ${role}.`)); return tr(`Mit über 30 und dieser Verletzung? ${first(c, ctx.idx)} hört auf. Er bleibt dem Verein aber erhalten – als ${role}.`, `Over 30 with an injury like this? ${first(c, ctx.idx)} calls it a day. But he stays with the club – as ${role}.`); } },
           { w: (c, ctx) => (isSevere(ctx) && canEnd(c) ? 0.6 : 0), run: (c, ctx) => invalid(c, ctx) },
         ]),
       },
@@ -131,22 +140,22 @@ export const INJURY_EVENTS = {
       const n = c.flags?.invalid;
       return n && humanClub(c).squad.includes(n.idx) ? { ...n } : null;
     },
-    text: (c, ctx) => `Der Arzt ist deutlich: ${first(c, ctx.idx)} wird nie wieder Fußball spielen können. Sportinvalidität. Er sitzt im Vereinsheim und schaut ins Leere.`,
+    text: (c, ctx) => tr(`Der Arzt ist deutlich: ${first(c, ctx.idx)} wird nie wieder Fußball spielen können. Sportinvalidität. Er sitzt im Vereinsheim und schaut ins Leere.`, `The doctor is clear: ${first(c, ctx.idx)} will never play football again. Career-ending injury. He sits in the clubhouse, staring into space.`),
     options: [
       ...['cotrainer', 'platzwart', 'wirt'].map((role) => ({
-        label: `Als ${{ cotrainer: 'Co-Trainer', platzwart: 'Platzwart', wirt: 'Wirt' }[role]} dabeibleiben`,
+        label: tr(`Als ${{ cotrainer: 'Co-Trainer', platzwart: 'Platzwart', wirt: 'Wirt' }[role]} dabeibleiben`, `Stay on as ${{ cotrainer: 'assistant coach', platzwart: 'groundskeeper', wirt: 'landlord' }[role]}`),
         effect: outcome([
-          { w: 3, run: (c, ctx) => farewell(c, ctx, role, 'Er nimmt das Amt an. „Ohne den Verein wäre ich jetzt ganz allein."') },
-          { w: 1, run: (c, ctx) => farewell(c, ctx, role, 'Er braucht ein paar Wochen, dann ist er jeden Tag auf dem Platz. Engagierter als je zuvor.') },
-          { w: 1, run: (c, ctx) => farewell(c, ctx, role, 'Er macht es – aber man sieht, wie es ihn schmerzt, am Rand zu stehen.', -0.04) },
+          { w: 3, run: (c, ctx) => farewell(c, ctx, role, tr('Er nimmt das Amt an. „Ohne den Verein wäre ich jetzt ganz allein."', 'He accepts the role. "Without the club I\'d be all on my own now."')) },
+          { w: 1, run: (c, ctx) => farewell(c, ctx, role, tr('Er braucht ein paar Wochen, dann ist er jeden Tag auf dem Platz. Engagierter als je zuvor.', 'It takes him a few weeks, then he\'s at the pitch every day. More committed than ever.')) },
+          { w: 1, run: (c, ctx) => farewell(c, ctx, role, tr('Er macht es – aber man sieht, wie es ihn schmerzt, am Rand zu stehen.', 'He does it – but you can see how much it hurts him to stand on the sidelines.'), -0.04) },
         ]),
       })),
       {
-        label: 'Ehrenmitglied – und einfach da sein',
+        label: tr('Ehrenmitglied – und einfach da sein', 'Honorary member – just being there'),
         effect: outcome([
-          { w: 3, run: (c, ctx) => farewell(c, ctx, null, 'Er bekommt die goldene Nadel und einen festen Platz am Stammtisch.') },
-          { w: 1, run: (c, ctx) => farewell(c, ctx, 'betreuer', 'Er übernimmt von selbst das Trikotwaschen und die Getränke. Alle nennen ihn jetzt „den Betreuer".') },
-          { w: 1, run: (c, ctx) => farewell(c, ctx, null, 'Er zieht sich zurück. Manchmal sieht man ihn am Zaun stehen.', -0.06) },
+          { w: 3, run: (c, ctx) => farewell(c, ctx, null, tr('Er bekommt die goldene Nadel und einen festen Platz am Stammtisch.', 'He gets the golden pin and a permanent seat at the regulars\' table.')) },
+          { w: 1, run: (c, ctx) => farewell(c, ctx, 'betreuer', tr('Er übernimmt von selbst das Trikotwaschen und die Getränke. Alle nennen ihn jetzt „den Betreuer".', 'He takes over washing the kit and sorting the drinks, unasked. Everyone now calls him "the kit man".')) },
+          { w: 1, run: (c, ctx) => farewell(c, ctx, null, tr('Er zieht sich zurück. Manchmal sieht man ihn am Zaun stehen.', 'He withdraws. Sometimes you see him standing by the fence.'), -0.06) },
         ]),
       },
     ],
@@ -164,13 +173,13 @@ function invalid(c, ctx) {
   c.flags.invalid = { idx: ctx.idx, type: ctx.type };
   c.players[ctx.idx].injuryWeeks = 99;
   adjustMood(c, -0.12);
-  return `Schlimmste Nachricht: Die Verletzung ist irreparabel. ${first(c, ctx.idx)} wird nie wieder spielen können.`;
+  return tr(`Schlimmste Nachricht: Die Verletzung ist irreparabel. ${first(c, ctx.idx)} wird nie wieder spielen können.`, `The worst news: the injury is irreparable. ${first(c, ctx.idx)} will never play again.`);
 }
 function farewell(c, ctx, role, text, mood = 0.05) {
   const name = playerOf(c, ctx.idx).name;
   c.flags.invalid = null;
-  const title = endCareer(c, ctx.idx, role);
+  const title = roleName(endCareer(c, ctx.idx, role));
   adjustMood(c, mood);
-  chronicle(c, `${name} muss nach einer schweren Verletzung aufhören und bleibt als ${title} im Verein.`);
+  chronicle(c, tr(`${name} muss nach einer schweren Verletzung aufhören und bleibt als ${title} im Verein.`, `${name} has to retire after a serious injury and stays with the club as ${title}.`));
   return `${text} (${title})`;
 }

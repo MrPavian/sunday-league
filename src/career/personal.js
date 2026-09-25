@@ -22,7 +22,7 @@ export const partnerOf = (c) => {
   const p = c.coach?.partner;
   return p ? tr(p, PARTNER_EN[p] ?? p) : null;
 };
-const OFFER_CLUBS = ['TuS Grünwald 1911 (Kreisliga A)', 'SpVgg Eichenhain (Bezirksliga)', 'FC Viktoria Oststadt (Kreisliga A)'];
+const OFFER_CLUBS = tr(['TuS Grünwald 1911 (Kreisliga A)', 'SpVgg Eichenhain (Bezirksliga)', 'FC Viktoria Oststadt (Kreisliga A)'], ['TuS Grünwald 1911 (district league A)', 'SpVgg Eichenhain (regional league)', 'FC Viktoria Oststadt (district league A)']);
 const MONEY_JOBS = /Steuer|Bank|Versicherung|Buchhalt|Sachbearbeit|Controller/;
 
 const clamp100 = (v) => Math.max(0, Math.min(100, Math.round(v)));

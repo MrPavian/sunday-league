@@ -26,7 +26,7 @@ Die ausführliche Ideensammlung und Roadmap steht in [ROADMAP.md](../ROADMAP.md)
 | **Perspektive** | Seitenansicht (TV-Kamera, orthografisch), 3D-Modelle im Pixelart-Look |
 | **Plattform** | Browser auf dem PC (Tastatur und Gamepad); Desktop-Build geplant |
 | **Technik** | JavaScript (ES-Module), three.js 0.186, Vite 8, Vitest |
-| **Sprache** | Deutsch |
+| **Sprache** | Deutsch, Englisch (wählbar beim Start und in den Einstellungen) |
 | **Umfang** | ca. 14 000 Zeilen Spielcode, 2 200 Zeilen Tests (133 Tests) |
 | **Status** | Spielbarer Prototyp mit vollständiger Karriere |
 
@@ -235,7 +235,7 @@ teuren Effekte für langsame Rechner abschalten.
 **Bekannte Grenzen**
 - **Nur Deutsch** – alle Texte stehen direkt im Code, ein Übersetzungsgerüst fehlt noch.
 - **Zwei Ligen** – über der Kreisklasse C geht es noch nicht weiter.
-- **Kein Tutorial, kein Einstellungsmenü** (Tastenbelegung, Lautstärke).
+- **Kein Tutorial**, Einstellungen noch ohne Tastenbelegung und Lautstärke.
 - **Spielstand nur im Browser** – er geht verloren, wenn man die Browserdaten löscht; es gibt keinen Export.
 - **Ein Spielstand** gleichzeitig.
 - **Große JavaScript-Datei** (knapp 1 MB, gut 280 KB komprimiert) – noch ohne Aufteilung.
@@ -248,12 +248,11 @@ teuren Effekte für langsame Rechner abschalten.
 Vorschläge in sinnvoller Reihenfolge (Details in [ROADMAP.md](../ROADMAP.md)):
 
 1. **Tutorial als Geschichte** – du ziehst neu in die Stadt, kickst im Hinterhof mit und gründest den Verein.
-2. **Einstellungen** – Tasten, Lautstärke, farbenblind-sichere Trikots.
+2. **Mehr Einstellungen** – Tastenbelegung, Lautstärke, farbenblind-sichere Trikots.
 3. **Spielstand exportieren und importieren**, mehrere Speicherplätze.
-4. **Übersetzung** – Gerüst für Deutsch und Englisch.
-5. **Weitere Ligen und Spielorte** – Kunstrasen, Kleinstadion.
-6. **Flutlicht und Abendspiele** – der Ausbau wird auch im Match sichtbar.
-7. **Desktop-Build** mit Tauri oder Electron.
+4. **Weitere Ligen und Spielorte** – Kunstrasen, Kleinstadion.
+5. **Flutlicht und Abendspiele** – der Ausbau wird auch im Match sichtbar.
+6. **Desktop-Build** mit Tauri oder Electron.
 
 ---
 
