@@ -4,6 +4,7 @@
 import { clamp, dist2d, len, norm } from '../core/math.js';
 import { attackDir, clampToPitch, getPlayer, setControlled, teamAttacking } from './players.js';
 import { processSubs } from './squad.js';
+import { keeperZone } from './ai.js';
 
 const FREEZE = { kickoff: 0.8, freekick: 1.3, throwin: 1.0, corner: 1.3, goalkick: 1.0 };
 const DISTANCE = 3.5;
@@ -49,7 +50,8 @@ export function startSetPiece(m, { type, team, spot = { x: 0, z: 0 }, takerId = 
     ball.holder = taker.id;
   } else {
     const back = type === 'kickoff' ? 0.4 : 0.5;
-    taker.pos.x = spot.x - toGoal.x * back;
+    // Nicht hinter die Wand stellen, wenn der Freistoß direkt davor liegt.
+    taker.pos.x = clamp(spot.x - toGoal.x * back, -pitch.wallX + 0.3, pitch.wallX - 0.3);
     taker.pos.z = spot.z - toGoal.z * back;
     taker.facing = toGoal;
   }
@@ -65,11 +67,13 @@ export function startSetPiece(m, { type, team, spot = { x: 0, z: 0 }, takerId = 
     const dx = p.pos.x - spot.x;
     const dz = p.pos.z - spot.z;
     const d = len(dx, dz);
-    if (d < DISTANCE) {
+    // Beim Abstoß müssen alle Gegner raus aus dem Strafraum.
+    const keep = type === 'goalkick' ? keeperZone(pitch) : DISTANCE;
+    if (d < keep) {
       const n = d > 0.01 ? { x: dx / d, z: dz / d } : { x: -toGoal.x, z: -toGoal.z };
       const zMax = pitch.boundary === 'lines' ? pitch.halfWidth + 1 : pitch.halfWidth - 0.3;
-      p.pos.x = clamp(spot.x + n.x * DISTANCE, -pitch.wallX + 0.3, pitch.wallX - 0.3);
-      p.pos.z = clamp(spot.z + n.z * DISTANCE, -zMax, zMax);
+      p.pos.x = clamp(spot.x + n.x * keep, -pitch.wallX + 0.3, pitch.wallX - 0.3);
+      p.pos.z = clamp(spot.z + n.z * keep, -zMax, zMax);
     }
   }
 

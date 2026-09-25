@@ -24,7 +24,12 @@ export function updateTactics(m, dt) {
       .filter((p) => p.team === team && p.role !== 'gk' && p.id !== m.controlledId)
       .sort((a, b) => dist2d(a.pos, target) - dist2d(b.pos, target));
 
-    let chaser = pool[0] ?? null;
+    // Hält der gegnerische Torwart den Ball, zieht sich das Team aus seinem Raum zurück.
+    // Kurz nach dem Abwurf gilt die Zone noch – sonst wird der kurze Wurf sofort abgefangen.
+    const rel = m.keeperRelease;
+    const fresh = rel && rel.team !== team && m.time - rel.time < 0.8 ? getPlayer(m, rel.id) : null;
+    const oppKeeper = holder && holder.team !== team && holder.role === 'gk' ? holder : fresh;
+    let chaser = oppKeeper ? null : pool[0] ?? null;
     // Im eigenen Team läuft die KI nur an, wenn der gesteuerte Spieler weit weg ist.
     if (human && team === m.humanTeam && chaser && !(dist2d(chaser.pos, target) < dist2d(human.pos, target) - 6)) chaser = null;
     if (holder && holder.team === team) chaser = null;
@@ -60,8 +65,24 @@ export function updateTactics(m, dt) {
     } else {
       for (const p of rest) m.tactics[p.id] = { type: 'support', ...supportSpot(m, p, dt) };
     }
+    if (oppKeeper) {
+      const r = keeperZone(pitch);
+      for (const p of pool) {
+        const t = m.tactics[p.id] ?? { type: 'mark', x: p.pos.x, z: p.pos.z };
+        const d = dist2d(t, oppKeeper.pos);
+        if (d >= r) continue;
+        // Nach vorne aus der Zone heraus (Richtung Mittellinie), seitlich bleibt er, wo er ist.
+        const ks = attackDir(m, oppKeeper.team);
+        const dz = clamp(t.z - oppKeeper.pos.z, -r * 0.9, r * 0.9);
+        const x = oppKeeper.pos.x + ks * (Math.sqrt(r * r - dz * dz) + 0.5);
+        m.tactics[p.id] = { type: 'mark', ...clampToPitch(pitch, x, oppKeeper.pos.z + dz) };
+      }
+    }
   }
 }
+
+// Hält der Torwart den Ball, bleiben Gegner so weit weg (wie beim Abstoß).
+export const keeperZone = (pitch) => Math.min(9, pitch.halfLength * 0.45);
 
 // Freilaufen: Kandidaten rund um die Grundposition bewerten – Abstand zu
 // Gegnern, freie Passlinie vom Ball, Richtung Tor. Alle ~0.7 s neu überlegt.
@@ -201,12 +222,33 @@ function chooseTackle(m, p, dBall) {
   p.decideTimer = 1.3; // nicht im Sekundentakt reingehen
 
   const tough = hasTrait(p, 'hart_im_nehmen');
-  let slideChance = surface.hard ? (p.injury ? 0 : tough ? 0.25 : 0.04) : 0.06 + 0.14 * p.attrs.tackling;
+  let slideChance = surface.hard ? (p.injury ? 0 : tough ? 0.2 : 0.03) : 0.06 + 0.14 * p.attrs.tackling;
   if (m.derby) slideChance *= 1.4; // im Derby geht man dazwischen
   if (p.yellow) slideChance *= 0.3; // mit Gelb vorbelastet lieber vorsichtig
   if (dBall > 0.9 && rng.chance(slideChance)) return 'slide';
-  if (dBall < 1.4 && rng.chance(0.2 + 0.3 * p.attrs.tackling)) return 'poke';
+  if (dBall < 1.4 && rng.chance(0.15 + 0.25 * p.attrs.tackling)) return 'poke';
   return null;
+}
+
+// Mitspieler in Wurfweite, um den im Umkreis von 4 m kein Gegner steht.
+function openMate(m, gk) {
+  const s = attackDir(m, gk.team);
+  let best = null;
+  let bestScore = -Infinity;
+  for (const t of m.players) {
+    if (t.team !== gk.team || t === gk || t.state !== 'normal') continue;
+    const d = dist2d(t.pos, gk.pos);
+    if (d < 4 || d > 16 || (t.pos.x - gk.pos.x) * s < -1) continue;
+    const near = Math.min(...m.players.filter((o) => o.team !== gk.team).map((o) => dist2d(o.pos, t.pos)));
+    const lane = m.players.some((o) => o.team !== gk.team && distToSegment(o.pos, gk.pos, t.pos) < 1.5);
+    if (near < 4 || lane) continue;
+    const score = near - d * 0.1;
+    if (score > bestScore) {
+      bestScore = score;
+      best = t;
+    }
+  }
+  return best;
 }
 
 export function keeperIntent(m, p, dt) {
@@ -219,8 +261,13 @@ export function keeperIntent(m, p, dt) {
   if (ball.holder === p.id) {
     p.holdTimer += dt;
     p.facing = { x: s, z: 0 };
-    // Abschlag weit nach vorne – kurze Würfe werden vorm eigenen Tor abgefangen.
-    if (p.holdTimer > 1.2 && !p.pending) p.pending = { type: 'pass', ttl: 0.5, cone: -0.2, lofted: true, minDist: 9 };
+    // Erst abwerfen, wenn die Gegner aus dem Strafraum sind (spätestens nach 3 s).
+    // Ist ein Mitspieler frei, wirft er kurz – sonst Abschlag weit nach vorne.
+    const crowded = m.players.some((o) => o.team !== p.team && dist2d(o.pos, p.pos) < keeperZone(pitch) * 0.6);
+    if (!p.pending && (p.holdTimer > 3 || (p.holdTimer > 1.0 && !crowded))) {
+      const free = openMate(m, p);
+      p.pending = free ? { type: 'pass', ttl: 0.5, cone: -0.2, targetId: free.id } : { type: 'pass', ttl: 0.5, cone: -0.2, lofted: true, minDist: 9 };
+    }
     return { move: { x: 0, z: 0 }, sprint: false };
   }
   p.holdTimer = 0;

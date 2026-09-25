@@ -4,7 +4,7 @@ import { createRng } from '../core/rng.js';
 import { dist2d, norm } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
 import { TEAM_PRESETS } from '../data/teams.js';
-import { bodyBlock, dribbleTouch, headerTouch, keeperSaves, movePlayer, separatePlayers, tryExecute } from './actions.js';
+import { bodyBlock, carryBall, dribbleTouch, headerTouch, keeperSaves, movePlayer, separatePlayers, tryExecute } from './actions.js';
 import { keeperIntent, outfieldIntent, updateTactics } from './ai.js';
 import { createBall, stepBall } from './ball.js';
 import { FORMATIONS, formationSpot } from './formation.js';
@@ -189,6 +189,7 @@ function step(m, input, dt) {
   headerTouch(m);
   bodyBlock(m);
   dribbleTouch(m);
+  carryBall(m, dt);
 
   const ev = stepBall(ball, pitch, dt);
   if (ev) handleBallEvent(m, ev);

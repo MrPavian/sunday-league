@@ -116,7 +116,7 @@ export function resolveTackles(m) {
         m.events.push({ type: 'tackle', playerId: p.id });
       } else {
         const win = contested
-          ? clamp(0.4 + 0.5 * p.attrs.tackling - 0.3 * opp.attrs.technique - (hasTrait(opp, 'ballsicher') ? 0.1 : 0) - (opp.shielding ? 0.25 : 0), 0.1, 0.9)
+          ? clamp(0.32 + 0.45 * p.attrs.tackling - 0.35 * opp.attrs.technique - (hasTrait(opp, 'ballsicher') ? 0.1 : 0) - (opp.shielding ? 0.25 : 0), 0.1, 0.9)
           : 0.95;
         p.tackleWon = rng.chance(win) ? true : 'missed';
         if (p.tackleWon === true) {

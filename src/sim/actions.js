@@ -85,6 +85,10 @@ export function tryExecute(m, p) {
   if (!holds) {
     if (ball.holder || p.kickCooldown > 0) return;
     if (dist2d(p.pos, ball.pos) > REACH || ball.pos.y > 1.1) return;
+    if (shielded(m, p)) {
+      p.pending = null;
+      return;
+    }
   }
   p.pending = null;
   p.setPieceAction = null;
@@ -95,6 +99,7 @@ export function tryExecute(m, p) {
   if (holds) {
     ball.holder = null;
     p.catchCooldown = 0.3;
+    if (p.role === 'gk') m.keeperRelease = { id: p.id, team: p.team, time: m.time };
   } else {
     // Luftloch – gehört in der Kreisklasse dazu.
     const whiff = (0.05 * (1 - p.attrs.technique) + 0.04 * fatigue) * (hasTrait(p, 'ballsicher') ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.3 : 1);
@@ -137,6 +142,7 @@ function pass(m, p, a, fatigue, fromHands) {
   let bestScore = -Infinity;
   for (const t of m.players) {
     if (t.team !== p.team || t === p || t.state === 'down') continue;
+    if (a.targetId && t.id !== a.targetId) continue;
     const dx = t.pos.x - p.pos.x;
     const dz = t.pos.z - p.pos.z;
     const d = len(dx, dz);
@@ -149,6 +155,9 @@ function pass(m, p, a, fatigue, fromHands) {
     for (const o of m.players) {
       if (o.team === p.team) continue;
       if (!a.lofted && distToSegment(o.pos, p.pos, t.pos) < 1.2) score -= 0.6;
+      // Wer eng gedeckt ist, bekommt den Ball ungern – vor allem nicht vom Torwart.
+      const near = dist2d(o.pos, t.pos);
+      if (near < 2.5) score -= (2.5 - near) * (p.role === 'gk' ? 0.5 : 0.2);
     }
     if (score > bestScore) {
       bestScore = score;
@@ -214,6 +223,18 @@ export function keeperSaves(m) {
     const towardGoal = ball.vel.x * -s > 0;
     if (bs >= 4 && !towardGoal) continue;
     p.catchCooldown = 0.25;
+    // Kreisklasse-Keeper: Scharfe, platzierte Schüsse sind oft einfach drin.
+    if (bs >= 6 && ball.lastAction !== 'pass') {
+      const corner = Math.abs(ball.pos.z) > pitch.goalHalfWidth * 0.55 ? 0.15 : 0;
+      const beaten = clamp(0.08 + (bs - 8) * 0.03 + corner - 0.3 * p.attrs.keeping - (dist2d(p.pos, ball.pos) < 0.45 ? 0.15 : 0), 0.03, 0.6);
+      if (rng.chance(beaten)) {
+        p.catchCooldown = 0.7; // zu spät – der Ball ist vorbei
+        p.diveAnim = 0.5;
+        p.diveSide = Math.sign(ball.pos.z - p.pos.z) || 1;
+        m.events.push({ type: 'beaten', playerId: p.id });
+        return;
+      }
+    }
     // Hechtsprung, wenn der Ball nicht direkt auf den Mann kommt.
     if (dist2d(p.pos, ball.pos) > 0.45) {
       p.diveAnim = 0.5;
@@ -303,13 +324,51 @@ export function bodyBlock(m) {
   }
 }
 
+// Ball am Fuß: Wer gerade dribbelt und dicht dran ist, behält den Ball. Ein Gegner,
+// der nur hinläuft (oder blind draufhält), kommt selten dran – dafür gibt es
+// Stochern und Grätsche. Gibt true zurück, wenn der Gegner leer ausgeht.
+function shielded(m, p) {
+  const { ball, rng } = m;
+  if (ball.lastAction !== 'dribble' || ball.lastTouch === p.id) return false;
+  const carrier = m.players.find((c) => c.id === ball.lastTouch);
+  if (!carrier || carrier.team === p.team || carrier.state !== 'normal' || dist2d(carrier.pos, ball.pos) > REACH * 1.5) return false;
+  const steal = clamp(0.3 + 0.3 * p.attrs.tackling - 0.3 * carrier.attrs.technique - (carrier.shielding ? 0.2 : 0) - (carrier.id === m.controlledId ? 0.08 : 0), 0.05, 0.5);
+  if (rng.chance(steal)) return false;
+  p.kickCooldown = 0.35;
+  return true;
+}
+
+// Ballführung: Wer dribbelt und dicht dran ist, zieht den Ball sanft vor den eigenen
+// Fuß – auch in Kurven. Technik entscheidet, wie eng; der gesteuerte Spieler bekommt
+// etwas Hilfe. Gegner kommen nur über Stochern, Grätsche oder einen Fehler dran.
+export function carryBall(m, dt) {
+  const { ball } = m;
+  if (ball.holder || ball.pos.y > 0.5 || ball.lastAction !== 'dribble') return;
+  const c = m.players.find((p) => p.id === ball.lastTouch);
+  if (!c || c.state !== 'normal' || c.role === 'gk' || c.shooting) return;
+  const d = dist2d(c.pos, ball.pos);
+  if (d > 1.1 || ballSpeed(ball) > 11) return;
+  const human = c.id === m.controlledId;
+  const grip = clamp(0.35 + 0.5 * c.attrs.technique + (human ? 0.3 : 0) + (hasTrait(c, 'ballsicher') ? 0.15 : 0) - 0.2 * (1 - c.stamina), 0.2, 1.1);
+  const ahead = 0.4 + 0.08 * len(c.vel.x, c.vel.z) / 6;
+  const tx = c.pos.x + c.facing.x * ahead;
+  const tz = c.pos.z + c.facing.z * ahead;
+  const wantX = c.vel.x + (tx - ball.pos.x) * 4;
+  const wantZ = c.vel.z + (tz - ball.pos.z) * 4;
+  const k = 1 - Math.exp(-grip * 7 * dt);
+  ball.vel.x += (wantX - ball.vel.x) * k;
+  ball.vel.z += (wantZ - ball.vel.z) * k;
+}
+
 export function dribbleTouch(m) {
   const { ball, rng, pitch } = m;
   if (ball.holder || ball.pos.y > 0.7) return;
   let p = null;
   let best = REACH * 0.8;
   for (const c of m.players) {
-    if (c.kickCooldown > 0 || c.state !== 'normal') continue;
+    // Den eigenen Ball, den man gerade überläuft, darf man auch direkt wieder berühren.
+    const catching = c.id === ball.lastTouch && ball.lastAction === 'dribble' && ballSpeed(ball) < len(c.vel.x, c.vel.z);
+    if ((c.kickCooldown > 0 && !catching) || c.state !== 'normal') continue;
     const d = dist2d(c.pos, ball.pos);
     if (d < best) {
       best = d;
@@ -317,6 +376,8 @@ export function dribbleTouch(m) {
     }
   }
   if (!p) return;
+
+  if (shielded(m, p)) return;
 
   const tech = p.attrs.technique;
   const fatigue = 1 - p.stamina;
@@ -352,8 +413,11 @@ export function dribbleTouch(m) {
   if (pitch.boundary === 'lines' && p.id !== m.controlledId && Math.abs(ball.pos.z) > pitch.halfWidth - 2.5 && dir.z * ball.pos.z > 0) {
     dir = norm(dir.x || attackDir(m, p.team), -Math.sign(ball.pos.z) * 0.4);
   }
-  dir = rotate(dir, rng.gauss() * (0.04 + 0.22 * (1 - tech) + 0.1 * fatigue) * calm);
-  const touch = speed * 1.25 + 1.0;
+  // Der gesteuerte Spieler führt den Ball etwas enger (Spielhilfe für den Menschen).
+  const assist = p.id === m.controlledId ? 0.6 : 1;
+  dir = rotate(dir, rng.gauss() * (0.04 + 0.18 * (1 - tech) + 0.08 * fatigue) * calm * assist);
+  // Kurze Ballberührungen: der Ball läuft nur knapp vor dem Spieler her.
+  const touch = speed * (1.0 + 0.1 * (1 - tech) * assist) + 0.3 + 0.4 * (1 - tech) * assist;
   ball.vel.x = dir.x * touch;
   ball.vel.z = dir.z * touch;
   ball.vel.y = rng.chance(pitch.surface.bumpiness) ? 1 + rng.next() * 1.5 : 0;

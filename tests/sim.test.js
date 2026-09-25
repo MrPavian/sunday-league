@@ -6,6 +6,7 @@ import { SURFACES } from '../src/sim/surfaces.js';
 import { createMatch, getPlayer, startTackle, stepMatch } from '../src/sim/match.js';
 import { createPlayerPool } from '../src/sim/generator.js';
 import { gradePlayers, headline } from '../src/sim/stats.js';
+import { keeperZone } from '../src/sim/ai.js';
 
 const DT = 1 / 60;
 
@@ -503,5 +504,57 @@ describe('professions fit the age', () => {
       if (p.profession === 'Student (12. Semester)') expect(p.age).toBeGreaterThanOrEqual(23);
       if (p.age <= 18) expect(/Schüler|Azubi|FSJ/.test(p.profession)).toBe(true);
     }
+  });
+});
+
+describe('keeper safe zone and ball control', () => {
+  const near = (m, gk) => Math.min(...m.players.filter((o) => o.team !== gk.team).map((o) => Math.hypot(o.pos.x - gk.pos.x, o.pos.z - gk.pos.z)));
+
+  it('goal kick: every opponent starts outside the keeper zone', () => {
+    const pitch = PITCHES.rasenplatz;
+    const m = createMatch({ seed: 4, pitch, kickoff: false, human: false });
+    const gk = m.players.find((p) => p.team === 1 && p.role === 'gk');
+    m.players.filter((p) => p.team === 0).forEach((p, i) => Object.assign(p.pos, { x: pitch.halfLength - 4, z: -2 + i }));
+    m.lastTouchTeam = 0;
+    m.ball.lastTouch = '0-4';
+    Object.assign(m.ball.pos, { x: pitch.halfLength - 0.05, z: pitch.goalHalfWidth + 2 });
+    Object.assign(m.ball.vel, { x: 6, y: 0, z: 0 });
+    for (let i = 0; i < 10 && m.phase === 'play'; i++) stepMatch(m, undefined, DT);
+    expect(m.setPiece).toMatchObject({ type: 'goalkick', team: 1 });
+    expect(near(m, gk)).toBeGreaterThanOrEqual(keeperZone(pitch) - 0.01);
+  });
+
+  it('after a catch nobody camps in front of the keeper, and he waits for space', () => {
+    const m = createMatch({ seed: 4, pitch: PARKING_LOT, kickoff: false, human: false });
+    const gk = m.players.find((p) => p.team === 1 && p.role === 'gk');
+    // Alle Gegner drängen sich direkt vor dem Keeper, der den Ball gerade gefangen hat.
+    m.players.filter((p) => p.team === 0).forEach((p, i) => Object.assign(p.pos, { x: gk.pos.x - 1.2, z: -1 + i * 0.5 }));
+    Object.assign(m.ball, { holder: gk.id, lastTouch: gk.id });
+    m.lastTouchTeam = 1;
+    let released = null;
+    for (let i = 0; i < 60 * 3.5 && released === null; i++) {
+      stepMatch(m, undefined, DT);
+      if (m.ball.holder !== gk.id) released = near(m, gk);
+      m.events.length = 0;
+    }
+    expect(released).toBeGreaterThan(keeperZone(PARKING_LOT) * 0.5);
+  });
+
+  it('the ball sticks to the foot of a dribbling player, even through a turn', () => {
+    const m = createMatch({ seed: 3, pitch: PITCHES.rasenplatz, kickoff: false });
+    const me = getPlayer(m, m.controlledId);
+    for (const p of m.players) if (p !== me) Object.assign(p.pos, { x: -24, z: 12 });
+    Object.assign(me.pos, { x: -15, z: 0 });
+    Object.assign(m.ball.pos, { x: -14.5, z: 0 });
+    m.ball.lastTouch = me.id;
+    let maxGap = 0;
+    for (let i = 0; i < 240; i++) {
+      const move = i < 120 ? { x: 1, z: 0 } : { x: 0.3, z: 1 };
+      stepMatch(m, { move, sprint: i > 60, shootHeld: false, pass: false, loft: false, hold: false, tackle: false, poke: false, switchPlayer: false, sub: false }, DT);
+      if (i > 30) maxGap = Math.max(maxGap, Math.hypot(m.ball.pos.x - me.pos.x, m.ball.pos.z - me.pos.z));
+      m.events.length = 0;
+    }
+    expect(m.ball.lastTouch).toBe(me.id);
+    expect(maxGap).toBeLessThan(1.1);
   });
 });
