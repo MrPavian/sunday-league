@@ -23,7 +23,7 @@ export const MATCH_DURATION = 600; // Sekunden Spielzeit (Prototyp: 10 Minuten)
 
 const NO_INPUT = { move: { x: 0, z: 0 }, sprint: false, shootHeld: false, pass: false, tackle: false, switchPlayer: false, sub: false };
 
-const BENCH_ROLES = { 4: ['mid', 'fwd'], 5: ['def', 'mid', 'fwd'] };
+const BENCH_ROLES = { 4: ['mid', 'fwd'], 5: ['def', 'mid', 'fwd'], 7: ['def', 'mid', 'fwd'] };
 
 // human: false → beide Teams von der KI gesteuert (Simulation ungespielter Partien).
 export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = true, human = true, duration = MATCH_DURATION } = {}) {

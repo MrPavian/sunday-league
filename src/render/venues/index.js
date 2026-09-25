@@ -1,6 +1,7 @@
 import { PITCHES } from '../../sim/pitch.js';
 import { buildAshPitch } from './ashPitch.js';
 import { buildBackyard } from './backyard.js';
+import { buildLawn } from './lawn.js';
 import { buildPark } from './park.js';
 import { buildParkingLot } from './parkingLot.js';
 
@@ -29,6 +30,12 @@ export const VENUES = [
     pitch: PITCHES.ascheplatz,
     build: buildAshPitch,
     tagline: 'Richtige Tore mit Netz. Asche im Knie inklusive.',
+  },
+  {
+    id: 'rasenplatz',
+    pitch: PITCHES.rasenplatz,
+    build: buildLawn,
+    tagline: 'Kreisklasse! Rasen, Tribüne, Banden – und ein Schiri.',
   },
 ];
 

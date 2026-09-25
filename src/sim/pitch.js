@@ -69,4 +69,21 @@ export const ASH_PITCH = {
   surface: SURFACES.ash,
 };
 
-export const PITCHES = { parkplatz: PARKING_LOT, hinterhof: BACKYARD, park: PARK, ascheplatz: ASH_PITCH };
+export const LAWN_PITCH = {
+  id: 'rasenplatz',
+  name: 'Sportplatz Waldesruh',
+  format: 7,
+  halfLength: 26, // 7er-Feld quer auf dem Großfeld
+  halfWidth: 17,
+  wallX: 30,
+  fenceZ: 21,
+  goalHalfWidth: 2.5, // 5 × 2 m
+  goalHeight: 2.0,
+  goalType: 'frame',
+  boundary: 'lines',
+  carRule: false,
+  referee: true,
+  surface: SURFACES.grass,
+};
+
+export const PITCHES = { parkplatz: PARKING_LOT, hinterhof: BACKYARD, park: PARK, ascheplatz: ASH_PITCH, rasenplatz: LAWN_PITCH };

@@ -219,23 +219,43 @@ export function makeAshTexture(rng, { width, depth, pitch }) {
   const p = painter(rng, { width, depth, base: [150, 82, 58], noise: 26 });
   for (let k = 0; k < 900; k++) p.blob(rng.range(-width / 2, width / 2), rng.range(-depth / 2, depth / 2), 0.05, rng.pick([[176, 104, 76], [120, 64, 46], [96, 88, 84]]), 0.9, 1);
   for (let k = 0; k < 7; k++) p.blob(rng.range(-pitch.halfLength, pitch.halfLength), rng.range(-pitch.halfWidth, pitch.halfWidth), rng.range(0.5, 1.2), [96, 58, 46], 0.7, 0.95);
+  drawPitchLines(p, pitch, [124, 70, 52]);
+  return p.finish();
+}
+
+// Kreidelinien eines Kleinfelds; worn = Farbe für den ausgetretenen Torraum.
+function drawPitchLines(p, pitch, worn) {
   const chalk = [236, 232, 222];
   const { halfLength: hl, halfWidth: hw } = pitch;
+  const box = Math.min(8, pitch.goalHalfWidth * 2.4 + 2);
+  const depth = Math.min(8, hl * 0.3);
   p.line(-hl, -hw, hl, -hw, chalk, 0.8, 0.03, 3);
   p.line(-hl, hw, hl, hw, chalk, 0.8, 0.03, 3);
   p.line(-hl, -hw, -hl, hw, chalk, 0.8, 0.03, 3);
   p.line(hl, -hw, hl, hw, chalk, 0.8, 0.03, 3);
   p.line(0, -hw, 0, hw, chalk, 0.75, 0.03, 3);
-  p.circle(0, 0, 4, chalk, 0.75);
+  p.circle(0, 0, Math.min(5, hw * 0.3), chalk, 0.75);
   for (const s of [-1, 1]) {
     const x = s * hl;
-    p.line(x, -6, x - s * 6, -6, chalk, 0.75, 0.03, 3);
-    p.line(x, 6, x - s * 6, 6, chalk, 0.75, 0.03, 3);
-    p.line(x - s * 6, -6, x - s * 6, 6, chalk, 0.75, 0.03, 3);
-    p.blob(x - s * 7, 0, 0.12, chalk, 0.9, 1);
-    // ausgetretener Torraum
-    p.blob(x - s * 0.8, 0, 1.4, [124, 70, 52], 0.5, 0.7);
+    p.line(x, -box, x - s * depth, -box, chalk, 0.75, 0.03, 3);
+    p.line(x, box, x - s * depth, box, chalk, 0.75, 0.03, 3);
+    p.line(x - s * depth, -box, x - s * depth, box, chalk, 0.75, 0.03, 3);
+    p.blob(x - s * (depth + 1), 0, 0.12, chalk, 0.9, 1);
+    if (worn) p.blob(x - s * 0.8, 0, 1.4, worn, 0.5, 0.7);
   }
+}
+
+// Gepflegter Rasen mit Mähstreifen – der erste "richtige" Platz.
+export function makeLawnTexture(rng, { width, depth, pitch }) {
+  const p = painter(rng, { width, depth, base: [78, 128, 60], noise: 14 });
+  for (let x = -width / 2; x < width / 2; x += 3) {
+    if (Math.round((x + width / 2) / 3) % 2) continue;
+    for (let z = -depth / 2; z < depth / 2; z += 0.25) p.line(x, z, x + 3, z, [88, 142, 68], 0.55, 0, 3);
+  }
+  // Abgenutzt vor den Toren und am Anstoßpunkt.
+  for (const s of [-1, 1]) for (let k = 0; k < 5; k++) p.blob(s * (pitch.halfLength - 1) + rng.range(-1, 1), rng.range(-1.5, 1.5), rng.range(0.5, 1), [112, 102, 66], 0.55, 0.7);
+  p.blob(0, 0, 0.8, [100, 110, 62], 0.5, 0.7);
+  drawPitchLines(p, pitch, null);
   return p.finish();
 }
 
