@@ -2,6 +2,7 @@
 // Autoalarm, Polizei wegen Lärm, Gewitter, Rasensprenger, Schiri verletzt.
 // Die Uhr steht, solange ein Vorfall läuft. Alles deterministisch über einen
 // eigenen Zufallsstrom, damit Spiele ohne Vorfall unverändert bleiben.
+import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { clamp, dist2d, norm } from '../core/math.js';
 import { FIRST_NAMES, LAST_NAMES, SKIN_TONES } from '../data/names.js';
@@ -21,14 +22,14 @@ export const VENUE_INCIDENTS = {
 
 // Kurzbericht fürs Kreisblatt ({min} = Spielminute).
 const REPORTS = {
-  hund: 'In der {min}. Minute holte sich ein Hund den Ball und drehte eine Ehrenrunde.',
-  zaun: 'In der {min}. Minute landete der Ball beim Nachbarn.',
-  zaun_weg: 'In der {min}. Minute flog der Ball zum Nachbarn – der rückte ihn nicht mehr raus.',
-  autoalarm: 'Nach einem Treffer ans Auto heulte in der {min}. Minute die Alarmanlage.',
-  polizei: 'In der {min}. Minute schaute wegen Lärmbeschwerde die Polizei vorbei.',
-  gewitter: 'Ab der {min}. Minute ging ein Gewitter nieder, danach ging es auf nassem Boden weiter.',
-  sprenger: 'In der {min}. Minute sprang die Beregnungsanlage an.',
-  ersatzschiri: 'Der Schiri musste in der {min}. Minute verletzt raus, ein Zuschauer pfiff zu Ende.',
+  hund: tr('In der {min}. Minute holte sich ein Hund den Ball und drehte eine Ehrenrunde.', 'In minute {min} a dog grabbed the ball and did a lap of honour.'),
+  zaun: tr('In der {min}. Minute landete der Ball beim Nachbarn.', 'In minute {min} the ball ended up in the neighbour\'s garden.'),
+  zaun_weg: tr('In der {min}. Minute flog der Ball zum Nachbarn – der rückte ihn nicht mehr raus.', 'In minute {min} the ball flew into the neighbour\'s garden – and he kept it.'),
+  autoalarm: tr('Nach einem Treffer ans Auto heulte in der {min}. Minute die Alarmanlage.', 'In minute {min} a shot hit a car and the alarm went off.'),
+  polizei: tr('In der {min}. Minute schaute wegen Lärmbeschwerde die Polizei vorbei.', 'In minute {min} the police dropped by after a noise complaint.'),
+  gewitter: tr('Ab der {min}. Minute ging ein Gewitter nieder, danach ging es auf nassem Boden weiter.', 'From minute {min} a thunderstorm broke; play went on on a wet pitch.'),
+  sprenger: tr('In der {min}. Minute sprang die Beregnungsanlage an.', 'In minute {min} the sprinklers came on.'),
+  ersatzschiri: tr('Der Schiri musste in der {min}. Minute verletzt raus, ein Zuschauer pfiff zu Ende.', 'The referee went off injured in minute {min}; a spectator finished the game.'),
 };
 
 const DURATION = { hund: 8, zaun: 6, autoalarm: 6, polizei: 9, gewitter: 8, sprenger: 5, ersatzschiri: 6 };
@@ -91,29 +92,29 @@ function beginIncident(m, type, info = {}) {
     ball.pos.y = 0.11;
     ball.vel.x = ball.vel.y = ball.vel.z = 0;
     m.dog = { pos: { x: clamp(ball.pos.x + side * 8, -pitch.halfLength, pitch.halfLength), z: pitch.halfWidth + 3 }, facing: { x: -side, z: -1 }, speed: 0, hasBall: false, leaving: false, target: null, retarget: 0 };
-    text = r.pick(['Ein Hund! Er schnappt sich den Ball …', 'Hund auf dem Platz! „BELLO! HIER!"', 'Ein Dackel stürmt aufs Feld und will mitspielen.']);
+    text = r.pick(tr(['Ein Hund! Er schnappt sich den Ball …', 'Hund auf dem Platz! „BELLO! HIER!"', 'Ein Dackel stürmt aufs Feld und will mitspielen.'], ['A dog! He grabs the ball …', 'Dog on the pitch! "REX! HERE, BOY!"', 'A dachshund storms the pitch and wants to join in.']));
   } else if (type === 'zaun') {
     const lost = r.chance(0.5);
     inc.lost = lost;
     m.ballHidden = true;
-    text = lost ? 'Ball über den Zaun. Der Nachbar: „Den kriegt ihr nicht wieder!"' : 'Ball über den Zaun! Einer klettert rüber …';
+    text = lost ? tr('Ball über den Zaun. Der Nachbar: „Den kriegt ihr nicht wieder!"', 'Ball over the fence. The neighbour: "You\'re not getting that back!"') : tr('Ball über den Zaun! Einer klettert rüber …', 'Ball over the fence! Someone climbs over …');
   } else if (type === 'autoalarm') {
     const z = Math.sign(info.z || 1) * (pitch.halfWidth + 6);
     m.visitors.push({ id: 'besitzer', look: look(r), kit: CIVIL_KIT, pos: { x: clamp(info.x ?? 0, -pitch.halfLength, pitch.halfLength) + 6, z }, target: { x: info.x ?? 0, z: Math.sign(info.z || 1) * (pitch.halfWidth + 1.2) }, speed: 3.2 });
-    text = 'Autoalarm! Der Besitzer kommt aus dem Getränkemarkt gerannt.';
+    text = tr('Autoalarm! Der Besitzer kommt aus dem Getränkemarkt gerannt.', 'Car alarm! The owner comes running out of the drinks market.');
   } else if (type === 'polizei') {
     const x0 = -pitch.wallX + 1;
     for (const [i, dz] of [[0, -0.7], [1, 0.7]]) m.visitors.push({ id: `polizei${i}`, look: look(r, { bald: false, beard: false }), kit: POLICE_KIT, pos: { x: x0, z: dz }, target: { x: x0 + 7, z: dz * 2 }, speed: 1.6 });
-    text = 'Die Nachbarin hat die Polizei gerufen. Zwei Beamte schauen vorbei …';
+    text = tr('Die Nachbarin hat die Polizei gerufen. Zwei Beamte schauen vorbei …', 'The neighbour has called the police. Two officers wander over …');
   } else if (type === 'gewitter') {
     m.weather = 'rain';
-    text = 'Gewitter! Alle unter das Vordach, bis es nachlässt.';
+    text = tr('Gewitter! Alle unter das Vordach, bis es nachlässt.', 'Thunderstorm! Everyone under the canopy until it eases off.');
     m.events.push({ type: 'lightning' });
   } else if (type === 'sprenger') {
     m.sprinklers = true;
-    text = 'Die Beregnungsanlage springt an! Der Platzwart hat die Zeitschaltuhr vergessen.';
+    text = tr('Die Beregnungsanlage springt an! Der Platzwart hat die Zeitschaltuhr vergessen.', 'The sprinklers come on! The groundsman forgot the timer.');
   } else if (type === 'ersatzschiri') {
-    text = `${m.referee.name} greift sich an die Wade – Zerrung. Wer kann pfeifen?`;
+    text = tr(`${m.referee.name} greift sich an die Wade – Zerrung. Wer kann pfeifen?`, `${m.referee.name} clutches his calf – a strain. Who can referee?`);
   }
   inc.text = text;
   m.events.push({ type: 'incident', kind: type, stage: 'start', text });
@@ -166,33 +167,33 @@ function endIncident(m, r) {
     ball.pos.x = spot.x;
     ball.pos.z = spot.z;
     restart = () => startSetPiece(m, { type: 'freekick', team: other, spot });
-    text = 'Der Hund lässt den Ball fallen. Herrchen entschuldigt sich. Weiter!';
+    text = tr('Der Hund lässt den Ball fallen. Herrchen entschuldigt sich. Weiter!', 'The dog drops the ball. The owner apologises. Play on!');
   } else if (inc.type === 'zaun') {
     m.ballHidden = false;
-    text = inc.lost ? 'Ersatzball aus dem Kofferraum. Weiter!' : 'Ball ist wieder da – mit Kratzern vom Rosenbusch.';
+    text = inc.lost ? tr('Ersatzball aus dem Kofferraum. Weiter!', 'Spare ball from someone\'s boot. Play on!') : tr('Ball ist wieder da – mit Kratzern vom Rosenbusch.', 'The ball is back – with scratches from the rose bush.');
     if (pitch.boundary === 'walls') {
       const x = inc.info.side * (pitch.halfLength - 2);
       restart = () => startSetPiece(m, { type: 'freekick', team: other, spot: { x, z: 0 } });
     }
   } else if (inc.type === 'autoalarm') {
-    text = '„Wer war das?!" Alle zeigen auf irgendwen. Weiter.';
+    text = tr('„Wer war das?!" Alle zeigen auf irgendwen. Weiter.', '"Who did that?!" Everyone points at someone. Play on.');
     for (const v of m.visitors) v.target = { x: v.pos.x + 8, z: v.pos.z + Math.sign(v.pos.z) * 6 };
   } else if (inc.type === 'polizei') {
-    text = r.pick(['„Aber nicht mehr so laut, Jungs." Weiter geht\'s.', 'Die Beamten gucken noch ein bisschen zu. Einer nickt anerkennend.']);
+    text = r.pick(tr(['„Aber nicht mehr so laut, Jungs." Weiter geht\'s.', 'Die Beamten gucken noch ein bisschen zu. Einer nickt anerkennend.'], ['"Keep it down a bit, lads." Play on.', 'The officers watch for a while. One of them nods approvingly.']));
     for (const v of m.visitors) v.target = { x: -pitch.wallX - 2, z: v.pos.z };
   } else if (inc.type === 'gewitter') {
     m.pitch = { ...pitch, surface: wetSurface(pitch.surface, 0.72) };
     restart = () => startSetPiece(m, { type: 'kickoff', team: other });
-    text = 'Es regnet noch, aber es wird weitergespielt. Der Boden ist jetzt rutschig.';
+    text = tr('Es regnet noch, aber es wird weitergespielt. Der Boden ist jetzt rutschig.', 'It is still raining, but play goes on. The ground is slippery now.');
   } else if (inc.type === 'sprenger') {
     m.sprinklers = false;
     m.pitch = { ...pitch, surface: wetSurface(pitch.surface, 0.85) };
     restart = () => startSetPiece(m, { type: 'kickoff', team: other });
-    text = 'Wasser ist aus. Der Rasen ist jetzt schön schnell.';
+    text = tr('Wasser ist aus. Der Rasen ist jetzt schön schnell.', 'The water is off. The grass is nice and quick now.');
   } else if (inc.type === 'ersatzschiri') {
     const name = `${r.pick(FIRST_NAMES)} ${r.pick(LAST_NAMES)}`;
     m.referee = { ...m.referee, name, trait: 'zuschauer', kit: STAND_IN_KIT, look: look(r, { belly: r.range(0.5, 1) }), pos: { x: 0, z: -pitch.halfWidth - 1 }, vel: { x: 0, z: 0 } };
-    text = `Zuschauer ${name} übernimmt die Pfeife. Das kann ja was werden.`;
+    text = tr(`Zuschauer ${name} übernimmt die Pfeife. Das kann ja was werden.`, `Spectator ${name} takes the whistle. This should be interesting.`);
   }
   m.incidents.push({ type: inc.type, time: inc.time, report: REPORTS[inc.type === 'zaun' && inc.lost ? 'zaun_weg' : inc.type], cost: inc.type === 'zaun' && inc.lost ? 15 : 0 });
   m.incident = null;
@@ -208,7 +209,7 @@ function endIncident(m, r) {
 
 export function wetSurface(s, grip) {
   if (s.wet) return s;
-  return { ...s, wet: true, name: `${s.name} (nass)`, rollFriction: s.rollFriction * grip, rollDecel: s.rollDecel * grip, bumpiness: s.bumpiness * 1.3, slideDamp: s.slideDamp * 0.75, scrapeChance: s.scrapeChance * 0.6 };
+  return { ...s, wet: true, name: `${s.name} (${tr('nass', 'wet')})`, rollFriction: s.rollFriction * grip, rollDecel: s.rollDecel * grip, bumpiness: s.bumpiness * 1.3, slideDamp: s.slideDamp * 0.75, scrapeChance: s.scrapeChance * 0.6 };
 }
 
 function walk(e, target, speed, dt) {

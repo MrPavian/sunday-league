@@ -1,4 +1,5 @@
 // Grätschen, Stochern, Fouls, Schürfwunden – und wer danach meckert.
+import { tr } from '../core/i18n.js';
 import { clamp, dist2d, len, rotate } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
 import { clampPlayer } from './actions.js';
@@ -7,10 +8,10 @@ import { startSetPiece } from './setpieces.js';
 import { judgeDissent, judgeFoul, refereeSees } from './referee.js';
 
 const COMPLAINTS = {
-  lost: ['Foul! Das war doch Foul!', 'Schiri! Ach, gibt ja keinen…', 'Hallo?! Mann gespielt!'],
-  offender: ['War doch Ball!', 'Den hab ich gar nicht berührt!', 'Der fällt ja schon beim Hingucken!'],
-  lostRef: ['Schiri, das ist doch Foul!', 'Hast du Tomaten auf den Augen?!', 'Pfeif doch mal!'],
-  offenderRef: ['Schiri, das war Ball!', 'Was soll das denn?!', 'Der schauspielert doch!'],
+  lost: tr(['Foul! Das war doch Foul!', 'Schiri! Ach, gibt ja keinen…', 'Hallo?! Mann gespielt!'], ['Foul! That was a foul!', 'Ref! Oh wait, there isn\'t one…', 'Hello?! You went for the man!']),
+  offender: tr(['War doch Ball!', 'Den hab ich gar nicht berührt!', 'Der fällt ja schon beim Hingucken!'], ['I got the ball!', 'I never touched him!', 'He goes down if you look at him!']),
+  lostRef: tr(['Schiri, das ist doch Foul!', 'Hast du Tomaten auf den Augen?!', 'Pfeif doch mal!'], ['Ref, that\'s a foul!', 'Are you blind?!', 'Blow your whistle for once!']),
+  offenderRef: tr(['Schiri, das war Ball!', 'Was soll das denn?!', 'Der schauspielert doch!'], ['Ref, I got the ball!', 'What was that for?!', 'He\'s diving!']),
 };
 
 export function startTackle(m, p) {

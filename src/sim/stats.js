@@ -1,5 +1,6 @@
 // Spielstatistik, Kreisblatt-Noten (1 = sehr gut … 6 = ungenügend) und die
 // Schlagzeile für den Montag. Alles wird aus den Spielereignissen abgeleitet.
+import { tr } from '../core/i18n.js';
 import { findAnyPlayer } from './squad.js';
 
 const blank = () => ({ goals: 0, ownGoals: 0, assists: 0, shots: 0, passes: 0, tackles: 0, saves: 0, fouls: 0, whiffs: 0, headers: 0, blocks: 0, cars: 0, yellow: 0, red: 0, slides: 0, seconds: 0 });
@@ -121,15 +122,15 @@ export function headline(m, grades) {
   const whiffs = Object.values(m.stats.players).reduce((s, p) => s + p.whiffs, 0);
   const potm = playerOfTheMatch(m, grades);
 
-  if (top?.tier === 'legende') return `Ex-Profi ${surname(top)} zaubert – ${names[top.team]} staunt mit`;
-  if (topGoals >= 3) return `${surname(top)} schnürt den Dreierpack${winner === top.team ? ` – ${names[top.team]} siegt ${Math.max(a, b)}:${Math.min(a, b)}` : ', hilft aber nicht'}`;
-  if (winner === null && a === 0) return `Nullnummer: ${names[0]} und ${names[1]} ohne Tore, aber mit Leidenschaft`;
-  if (winner === null) return `Remis-Krimi ${a}:${b} – ${names[0]} und ${names[1]} teilen die Punkte`;
+  if (top?.tier === 'legende') return tr(`Ex-Profi ${surname(top)} zaubert – ${names[top.team]} staunt mit`, `Ex-pro ${surname(top)} works his magic – ${names[top.team]} can only watch in awe`);
+  if (topGoals >= 3) return tr(`${surname(top)} schnürt den Dreierpack${winner === top.team ? ` – ${names[top.team]} siegt ${Math.max(a, b)}:${Math.min(a, b)}` : ', hilft aber nicht'}`, `Hat-trick for ${surname(top)}${winner === top.team ? ` – ${names[top.team]} win ${Math.max(a, b)}-${Math.min(a, b)}` : ', but it does not help'}`);
+  if (winner === null && a === 0) return tr(`Nullnummer: ${names[0]} und ${names[1]} ohne Tore, aber mit Leidenschaft`, `Goalless: ${names[0]} and ${names[1]} without goals, but with passion`);
+  if (winner === null) return tr(`Remis-Krimi ${a}:${b} – ${names[0]} und ${names[1]} teilen die Punkte`, `${a}-${b} thriller – ${names[0]} and ${names[1]} share the points`);
   const w = names[winner];
   const l = names[1 - winner];
-  if (cars >= 5) return `Parkplatz-Chaos: ${w} gewinnt, die Autos leiden`;
-  if (diff >= 4) return `${w} überrollt ${l} mit ${Math.max(a, b)}:${Math.min(a, b)}`;
-  if (whiffs >= 8) return `Luftlöcher und Leidenschaft – ${w} gewinnt das Stolperduell`;
-  if (diff === 1) return `${w} zittert sich zum ${Math.max(a, b)}:${Math.min(a, b)}${potm ? ` – ${surname(potm)} überragt` : ''}`;
-  return `Verdienter Sieg für ${w}${top ? ` – ${surname(top)} trifft ${topGoals === 2 ? 'doppelt' : ''}`.trimEnd() : ''}`;
+  if (cars >= 5) return tr(`Parkplatz-Chaos: ${w} gewinnt, die Autos leiden`, `Car park chaos: ${w} win, the cars suffer`);
+  if (diff >= 4) return tr(`${w} überrollt ${l} mit ${Math.max(a, b)}:${Math.min(a, b)}`, `${w} flatten ${l} ${Math.max(a, b)}-${Math.min(a, b)}`);
+  if (whiffs >= 8) return tr(`Luftlöcher und Leidenschaft – ${w} gewinnt das Stolperduell`, `Air shots and passion – ${w} win the stumble-fest`);
+  if (diff === 1) return tr(`${w} zittert sich zum ${Math.max(a, b)}:${Math.min(a, b)}${potm ? ` – ${surname(potm)} überragt` : ''}`, `${w} scrape a nervy ${Math.max(a, b)}-${Math.min(a, b)}${potm ? ` – ${surname(potm)} outstanding` : ''}`);
+  return tr(`Verdienter Sieg für ${w}${top ? ` – ${surname(top)} trifft ${topGoals === 2 ? 'doppelt' : ''}`.trimEnd() : ''}`, `Deserved win for ${w}${top ? ` – ${surname(top)} scores${topGoals === 2 ? ' twice' : ''}` : ''}`);
 }

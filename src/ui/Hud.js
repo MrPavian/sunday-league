@@ -1,6 +1,8 @@
+import { tr } from '../core/i18n.js';
 import { TRAITS } from '../data/traits.js';
 import { tierById } from '../data/tiers.js';
 import { POSITIONS } from '../sim/generator.js';
+import { jobName } from '../data/names.js';
 import { findAnyPlayer } from '../sim/squad.js';
 import { REF_TRAITS } from '../sim/referee.js';
 import { attackDir, getPlayer } from '../sim/match.js';
@@ -30,12 +32,13 @@ export class Hud {
         <div class="tierline"></div>
         <div class="traits"></div>
         <div class="injury"></div>
-        <div class="bar stamina"><i></i><span>Puste</span></div>
-        <div class="bar charge"><i></i><span>Schuss</span></div>
+        <div class="bar stamina"><i></i><span>${tr('Puste', 'Stamina')}</span></div>
+        <div class="bar charge"><i></i><span>${tr('Schuss', 'Shot')}</span></div>
       </div>
       <div class="help">
-        <b>Pfeile</b> laufen · <b>Shift</b> sprinten · <b>W</b> Schuss (halten = fester) · <b>S</b> Pass · <b>E</b> hoher Ball ·
-        <b>A</b> halten (abschirmen / festhalten) · <b>D</b> Grätsche · <b>Y</b> stochern · <b>Q</b> Spieler wechseln · <b>X</b> Auswechseln · <b>C</b> Tempo · <b>N</b> Ton · <b>G</b> Effekte · <b>H</b> Hilfe
+        ${tr(`<b>Pfeile</b> laufen · <b>Shift</b> sprinten · <b>W</b> Schuss (halten = fester) · <b>S</b> Pass · <b>E</b> hoher Ball ·
+        <b>A</b> halten (abschirmen / festhalten) · <b>D</b> Grätsche · <b>Y</b> stochern · <b>Q</b> Spieler wechseln · <b>X</b> Auswechseln · <b>C</b> Tempo · <b>N</b> Ton · <b>G</b> Effekte · <b>H</b> Hilfe`, `<b>Arrows</b> run · <b>Shift</b> sprint · <b>W</b> shoot (hold = harder) · <b>S</b> pass · <b>E</b> lofted ball ·
+        <b>A</b> hold (shield / grab) · <b>D</b> slide tackle · <b>Z</b> poke · <b>Q</b> switch player · <b>X</b> substitute · <b>C</b> tempo · <b>N</b> sound · <b>G</b> effects · <b>H</b> help`)}
       </div>`;
     this.root = root;
     this.$ = (sel) => root.querySelector(sel);
@@ -45,13 +48,13 @@ export class Hud {
 
   init(match) {
     const r = match.referee;
-    this.introPending = match.derby ? `DERBY! ${r ? `Schiri: ${r.name}` : 'Heute wird es heiß.'}` : r ? `Schiri heute: ${r.name} (${REF_TRAITS[r.trait].name})` : null;
+    this.introPending = match.derby ? `DERBY! ${r ? `${tr('Schiri', 'Referee')}: ${r.name}` : tr('Heute wird es heiß.', 'It is going to get heated.')}` : r ? `${tr('Schiri heute', 'Referee today')}: ${r.name} (${REF_TRAITS[r.trait].name})` : null;
     match.teams.forEach((t, i) => {
       const el = this.root.querySelector(`.team[data-t="${i}"]`);
       el.textContent = t.name;
       el.style.setProperty('--kit', hex(t.kit.shirt));
     });
-    this.$('.venue').textContent = `${match.pitch.name} · ${match.pitch.surface.name}${r ? ` · Schiri: ${r.name}` : ''}`;
+    this.$('.venue').textContent = `${match.pitch.name} · ${match.pitch.surface.name}${r ? ` · ${tr('Schiri', 'Referee')}: ${r.name}` : ''}`;
     this.hideToast();
     this.refName = r?.name ?? null;
     this.edgeKey = null;
@@ -70,8 +73,8 @@ export class Hud {
     l.hidden = r.hidden = !show;
     if (!show) return;
     const kit = hex(match.teams[team].kit.shirt);
-    const attack = `<span>ANGRIFF</span><b>${s > 0 ? '▶' : '◀'}</b>`;
-    const own = `<span>EIGENES TOR</span>`;
+    const attack = `<span>${tr('ANGRIFF', 'ATTACK')}</span><b>${s > 0 ? '▶' : '◀'}</b>`;
+    const own = `<span>${tr('EIGENES TOR', 'OWN GOAL')}</span>`;
     l.innerHTML = s > 0 ? own : attack;
     r.innerHTML = s > 0 ? attack : own;
     l.className = `edge left ${s > 0 ? 'own' : 'attack'}`;
@@ -114,38 +117,38 @@ export class Hud {
       const first = p ? p.name.split(' ')[0] : '';
       if (e.type === 'goal') {
         const scorer = e.scorerId && findAnyPlayer(match, e.scorerId);
-        const kind = e.ownGoal ? 'EIGENTOR!' : e.via === 'header' ? 'KOPFBALLTOR!' : 'TOR!';
+        const kind = e.ownGoal ? tr('EIGENTOR!', 'OWN GOAL!') : e.via === 'header' ? tr('KOPFBALLTOR!', 'HEADED GOAL!') : tr('TOR!', 'GOAL!');
         this.toast(`${kind} ${scorer?.name ?? ''}`, 2.4, 3);
-      } else if (e.type === 'grab') this.toast(`${first} hält am Trikot fest …`, 0.9);
-      else if (e.type === 'whiff') this.toast(`Luftloch von ${first}!`, 1.4);
+      } else if (e.type === 'grab') this.toast(tr(`${first} hält am Trikot fest …`, `${first} grabs a shirt …`), 0.9);
+      else if (e.type === 'whiff') this.toast(tr(`Luftloch von ${first}!`, `Air shot from ${first}!`), 1.4);
       else if (e.type === 'foul') {
         const victim = findAnyPlayer(match, e.victimId);
-        this.toast(`${e.kind === 'hold' ? 'Festhalten' : 'Foul'} von ${first}! Freistoß für ${short(victim.team)}`, 1.8, 2);
-      } else if (e.type === 'car') this.toast(`Ans Auto, ${first}! Ball für ${short(e.team)}`, 1.8, 2);
+        this.toast(tr(`${e.kind === 'hold' ? 'Festhalten' : 'Foul'} von ${first}! Freistoß für ${short(victim.team)}`, `${e.kind === 'hold' ? 'Holding' : 'Foul'} by ${first}! Free kick to ${short(victim.team)}`), 1.8, 2);
+      } else if (e.type === 'car') this.toast(tr(`Ans Auto, ${first}! Ball für ${short(e.team)}`, `Off a car, ${first}! Ball to ${short(e.team)}`), 1.8, 2);
       else if (e.type === 'out') {
-        const text = { throwin: 'Einwurf', corner: 'Ecke', goalkick: 'Abstoß' }[e.restart];
+        const text = tr({ throwin: 'Einwurf', corner: 'Ecke', goalkick: 'Abstoß' }, { throwin: 'Throw-in', corner: 'Corner', goalkick: 'Goal kick' })[e.restart];
         this.toast(`${text} ${short(e.team)}`, 1.2);
       } else if (e.type === 'complain') this.toast(`${first}: „${e.line}“`, 1.6, 2);
       else if (e.type === 'card') {
-        const text = e.color === 'yellow' ? `Gelb für ${p.name}${e.reason === 'meckern' ? ' – wegen Meckern' : ''}` : `GELB-ROT! ${p.name} muss runter`;
+        const text = e.color === 'yellow' ? tr(`Gelb für ${p.name}${e.reason === 'meckern' ? ' – wegen Meckern' : ''}`, `Yellow for ${p.name}${e.reason === 'meckern' ? ' – for dissent' : ''}`) : tr(`GELB-ROT! ${p.name} muss runter`, `SECOND YELLOW! ${p.name} is off`);
         this.toast(text, 2, 3);
-      } else if (e.type === 'no_call') this.toast('Schiri lässt laufen!', 1.2, 2);
-      else if (e.type === 'post') this.toast('Pfosten!', 1.2);
-      else if (e.type === 'bar') this.toast('Latte!', 1.2);
-      else if (e.type === 'header' && e.onGoal) this.toast(`Kopfball ${first}!`, 0.9);
-      else if (e.type === 'tackle') this.toast(`Saubere Grätsche, ${first}!`, 1.1);
-      else if (e.type === 'scrape') this.toast(`Autsch! ${e.label} für ${first}`, 1.8);
-      else if (e.type === 'save') this.toast(`${first} pariert!`, 1.2);
-      else if (e.type === 'miscontrol') this.toast(`Verspringt ${first}…`, 1);
-      else if (e.type === 'halftime') this.toast(`HALBZEIT ${match.score[0]}:${match.score[1]} – Seitenwechsel, jetzt Angriff nach ${match.humanTeam !== null && attackDir(match, match.humanTeam) > 0 ? 'links' : 'rechts'}`, 3.5, 4);
-      else if (e.type === 'sub_requested') this.toast('Wechsel angemeldet – beim nächsten Stopp', 1.4, 2);
+      } else if (e.type === 'no_call') this.toast(tr('Schiri lässt laufen!', 'Ref waves play on!'), 1.2, 2);
+      else if (e.type === 'post') this.toast(tr('Pfosten!', 'Off the post!'), 1.2);
+      else if (e.type === 'bar') this.toast(tr('Latte!', 'Off the bar!'), 1.2);
+      else if (e.type === 'header' && e.onGoal) this.toast(tr(`Kopfball ${first}!`, `Header from ${first}!`), 0.9);
+      else if (e.type === 'tackle') this.toast(tr(`Saubere Grätsche, ${first}!`, `Clean tackle, ${first}!`), 1.1);
+      else if (e.type === 'scrape') this.toast(tr(`Autsch! ${e.label} für ${first}`, `Ouch! ${e.label} for ${first}`), 1.8);
+      else if (e.type === 'save') this.toast(tr(`${first} pariert!`, `Saved by ${first}!`), 1.2);
+      else if (e.type === 'miscontrol') this.toast(tr(`Verspringt ${first}…`, `Bad touch, ${first}…`), 1);
+      else if (e.type === 'halftime') this.toast(tr(`HALBZEIT ${match.score[0]}:${match.score[1]} – Seitenwechsel, jetzt Angriff nach ${match.humanTeam !== null && attackDir(match, match.humanTeam) > 0 ? 'links' : 'rechts'}`, `HALF-TIME ${match.score[0]}-${match.score[1]} – switching ends, now attacking to the ${match.humanTeam !== null && attackDir(match, match.humanTeam) > 0 ? 'left' : 'right'}`), 3.5, 4);
+      else if (e.type === 'sub_requested') this.toast(tr('Wechsel angemeldet – beim nächsten Stopp', 'Substitution requested – at the next stoppage'), 1.4, 2);
       else if (e.type === 'sub') {
         const out = findAnyPlayer(match, e.outId);
         const inn = findAnyPlayer(match, e.inId);
-        this.toast(`Wechsel ${short(e.team)}: ${inn.name.split(' ')[0]} für ${out.name.split(' ')[0]}`, 1.6, 2);
+        this.toast(tr(`Wechsel ${short(e.team)}: ${inn.name.split(' ')[0]} für ${out.name.split(' ')[0]}`, `Sub ${short(e.team)}: ${inn.name.split(' ')[0]} for ${out.name.split(' ')[0]}`), 1.6, 2);
       } else if (e.type === 'incident') this.toast(e.text, e.stage === 'start' ? 3.5 : 2.5, 5);
       else if (e.type === 'lightning') this.lightning();
-      else if (e.type === 'end') this.toast('ABPFIFF', 2, 9);
+      else if (e.type === 'end') this.toast(tr('ABPFIFF', 'FULL TIME'), 2, 9);
     }
   }
 
@@ -158,13 +161,13 @@ export class Hud {
     const r = match.referee;
     if (r && r.name !== this.refName) {
       // Ersatzschiri übernimmt: Kopfzeile nachziehen.
-      if (this.refName) this.$('.venue').textContent = `${match.pitch.name} · ${match.pitch.surface.name} · Schiri: ${r.name}`;
+      if (this.refName) this.$('.venue').textContent = `${match.pitch.name} · ${match.pitch.surface.name} · ${tr('Schiri', 'Referee')}: ${r.name}`;
       this.refName = r.name;
     }
     this.updateEdges(match);
     const [a, b] = match.score;
     this.$('.score').textContent = `${a} : ${b}`;
-    this.$('.clock').textContent = `${match.half}. HZ · ${matchMinute(match, match.time)}'`;
+    this.$('.clock').textContent = `${match.half}${tr('. HZ', 'H')} · ${matchMinute(match, match.time)}'`;
 
     if (this.toastTimer > 0 && (this.toastTimer -= dt) <= 0) this.hideToast();
 
@@ -174,14 +177,14 @@ export class Hud {
     if (p.id !== this.lastControlled) {
       this.lastControlled = p.id;
       this.$('.name').textContent = p.name;
-      this.$('.meta').textContent = `${p.age} J. · ${p.profession}`;
+      this.$('.meta').textContent = `${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)}`;
       const tier = tierById(p.tier);
       const line = this.$('.tierline');
       line.style.setProperty('--c', tier.color);
-      line.innerHTML = `<span class="badge">${tier.name}</span> Stärke ${p.rating} · ${POSITIONS[p.position] ?? ''}${p.title ? ` · <b>${p.title}</b>` : ''}`;
+      line.innerHTML = `<span class="badge">${tier.name}</span> ${tr('Stärke', 'Rating')} ${p.rating} · ${POSITIONS[p.position] ?? ''}${p.title ? ` · <b>${p.title}</b>` : ''}`;
       this.$('.traits').innerHTML = p.traits.length
         ? p.traits.map((id) => `<span title="${TRAITS[id].desc}">${TRAITS[id].name}</span>`).join('')
-        : '<em>keine Besonderheiten</em>';
+        : `<em>${tr('keine Besonderheiten', 'no special traits')}</em>`;
     }
     const injury = p.injury ? `${p.injury.label}${p.injury.severity > 1 ? ` ×${p.injury.severity}` : ''}` : '';
     if (this.$('.injury').textContent !== injury) this.$('.injury').textContent = injury;

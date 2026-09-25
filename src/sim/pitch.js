@@ -1,3 +1,4 @@
+import { tr } from '../core/i18n.js';
 import { SURFACES } from './surfaces.js';
 
 // Spielstätten (Simulationsteil). Koordinaten in Metern: x = Längsrichtung
@@ -9,7 +10,7 @@ import { SURFACES } from './surfaces.js';
 //           'frame' – echtes Tor mit Pfosten und Latte
 export const PARKING_LOT = {
   id: 'parkplatz',
-  name: 'Parkplatz am Getränkemarkt',
+  name: tr('Parkplatz am Getränkemarkt', 'Drinks Market Car Park'),
   format: 5,
   halfLength: 18,
   halfWidth: 11, // Stoßstangen der parkenden Autos
@@ -24,7 +25,7 @@ export const PARKING_LOT = {
 
 export const BACKYARD = {
   id: 'hinterhof',
-  name: 'Hinterhof Lindenstraße',
+  name: tr('Hinterhof Lindenstraße', 'Lindenstraße Backyard'),
   format: 4,
   halfLength: 12,
   halfWidth: 7, // Hauswände
@@ -39,7 +40,7 @@ export const BACKYARD = {
 
 export const PARK = {
   id: 'park',
-  name: 'Stadtpark an der Kastanienallee',
+  name: tr('Stadtpark an der Kastanienallee', 'Kastanienallee Park'),
   format: 5,
   halfLength: 17,
   halfWidth: 11, // gedachte Linie zwischen den Hütchen
@@ -55,7 +56,7 @@ export const PARK = {
 
 export const ASH_PITCH = {
   id: 'ascheplatz',
-  name: 'Sportplatz Am Kanal',
+  name: tr('Sportplatz Am Kanal', 'Am Kanal Ground'),
   format: 5,
   halfLength: 20, // Kleinfeld quer auf dem großen Platz
   halfWidth: 13,
@@ -71,7 +72,7 @@ export const ASH_PITCH = {
 
 export const LAWN_PITCH = {
   id: 'rasenplatz',
-  name: 'Sportplatz Waldesruh',
+  name: tr('Sportplatz Waldesruh', 'Waldesruh Ground'),
   format: 7,
   halfLength: 26, // 7er-Feld quer auf dem Großfeld
   halfWidth: 17,
@@ -88,7 +89,7 @@ export const LAWN_PITCH = {
 
 export const HALL = {
   id: 'halle',
-  name: 'Sporthalle Kanalschule',
+  name: tr('Sporthalle Kanalschule', 'Kanalschule Sports Hall'),
   format: 5,
   halfLength: 18,
   halfWidth: 9.5, // Bande

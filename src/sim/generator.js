@@ -1,3 +1,4 @@
+import { tr } from '../core/i18n.js';
 import { clamp } from '../core/math.js';
 import { createRng } from '../core/rng.js';
 import { HIGHER_AMATEUR_CLUBS, LOWER_LEAGUES, PRO_CLUBS } from '../data/clubs.js';
@@ -6,7 +7,7 @@ import { FIRST_NAMES, HAIR_COLORS, LAST_NAMES, PROFESSIONS, SKIN_TONES } from '.
 import { RANDOM_TRAIT_IDS } from '../data/traits.js';
 import { rollTier, tierById } from '../data/tiers.js';
 
-export const POSITIONS = { gk: 'Torwart', def: 'Abwehr', mid: 'Mittelfeld', fwd: 'Sturm', fan: 'Zuschauer' };
+export const POSITIONS = tr({ gk: 'Torwart', def: 'Abwehr', mid: 'Mittelfeld', fwd: 'Sturm', fan: 'Zuschauer' }, { gk: 'Goalkeeper', def: 'Defence', mid: 'Midfield', fwd: 'Attack', fan: 'Spectator' });
 
 // Freizeitkick-Mischung für Schnellspiele: meist OK/Gut, Stars sind selten,
 // ein Ex-Profi ist ein kleines Wunder.
@@ -24,16 +25,16 @@ const ATTRS = ['pace', 'stamina', 'technique', 'passing', 'shooting', 'tackling'
 
 const STORIES = {
   superstar: [
-    (c) => `Spielte ${c.years} Jahre ${c.league} beim ${c.amateur}. Dann kamen Job, Haus und Kinder – aber das Kicken lässt er sich nicht nehmen.`,
-    (c) => `Stand mal im erweiterten Profikader von ${c.club}. Kreuzband, zweimal. Jetzt spielt er zum Spaß – und immer noch besser als alle anderen.`,
-    (c) => `Aus der A-Jugend von ${c.club}. Hat sich damals fürs Studium entschieden. Bereut es nur sonntags ein bisschen.`,
-    (c) => `${c.years} Jahre ${c.league}, Kapitän beim ${c.amateur}. Ist wegen der Schwiegereltern hergezogen.`,
+    (c) => tr(`Spielte ${c.years} Jahre ${c.league} beim ${c.amateur}. Dann kamen Job, Haus und Kinder – aber das Kicken lässt er sich nicht nehmen.`, `Played ${c.years} years of ${c.league} football at ${c.amateur}. Then came job, house and kids – but nobody is taking his Sunday kickabout away.`),
+    (c) => tr(`Stand mal im erweiterten Profikader von ${c.club}. Kreuzband, zweimal. Jetzt spielt er zum Spaß – und immer noch besser als alle anderen.`, `Was once on the fringes of the ${c.club} first team. Cruciate ligament, twice. Now he plays for fun – and still better than everyone else.`),
+    (c) => tr(`Aus der A-Jugend von ${c.club}. Hat sich damals fürs Studium entschieden. Bereut es nur sonntags ein bisschen.`, `Came through the ${c.club} U19s. Chose university instead. Only regrets it a little, on Sundays.`),
+    (c) => tr(`${c.years} Jahre ${c.league}, Kapitän beim ${c.amateur}. Ist wegen der Schwiegereltern hergezogen.`, `${c.years} years of ${c.league}, captain at ${c.amateur}. Moved here because of the in-laws.`),
   ],
   dorfstar: [
-    (c) => `Torschützenkönig der Kreisliga ${c.year}. Im Ort kennt ihn jeder, im Vereinsheim hat er einen Stammplatz.`,
-    (c) => `War mal Landesliga beim ${c.amateur}. Kam für die Liebe zurück ins Dorf.`,
-    () => 'Macht seit 15 Jahren jedes Tor, das zählt. Behauptet er zumindest.',
-    () => 'Hat als Einziger im Team eigene Schienbeinschoner. Und einen Spitznamen, den alle benutzen.',
+    (c) => tr(`Torschützenkönig der Kreisliga ${c.year}. Im Ort kennt ihn jeder, im Vereinsheim hat er einen Stammplatz.`, `Top scorer of the district league in ${c.year}. Everyone in town knows him, and he has his own stool at the clubhouse bar.`),
+    (c) => tr(`War mal Landesliga beim ${c.amateur}. Kam für die Liebe zurück ins Dorf.`, `Played Landesliga at ${c.amateur}. Came back to the village for love.`),
+    () => tr('Macht seit 15 Jahren jedes Tor, das zählt. Behauptet er zumindest.', 'Has scored every goal that mattered for 15 years. Or so he claims.'),
+    () => tr('Hat als Einziger im Team eigene Schienbeinschoner. Und einen Spitznamen, den alle benutzen.', 'The only one in the team with his own shin pads. And a nickname everyone uses.'),
   ],
 };
 

@@ -1,8 +1,9 @@
+import { tr } from '../core/i18n.js';
 import { PITCHES } from '../sim/pitch.js';
 
 const starRow = (n) => '★'.repeat(n) + '☆'.repeat(3 - n);
 // Angezeigt wird, ab welcher Fußballminute es losgeht, und wie lange real gespielt wird.
-const timing = (s) => `ab der ${90 - Math.round((s / 600) * 90) + 1}. Minute · ${Math.round(s / 60)} Min. Spielzeit`;
+const timing = (s) => tr(`ab der ${90 - Math.round((s / 600) * 90) + 1}. Minute · ${Math.round(s / 60)} Min. Spielzeit`, `from minute ${90 - Math.round((s / 600) * 90) + 1} · ${Math.round(s / 60)} min of play`);
 
 // Challenge-Liste und Ergebnis nach dem Abpfiff.
 export class ChallengeScreen {
@@ -36,18 +37,18 @@ export class ChallengeScreen {
     const total = Object.values(progress.stars).reduce((a, b) => a + b, 0);
     this.root.innerHTML = `
       <div class="pool-panel challenge-panel">
-        <header><h2>Challenges <small>${total} / ${challenges.length * 3} Sterne</small></h2><button data-action="back">Zurück (Esc)</button></header>
-        <p class="tier-desc" style="--c:var(--accent)">Kurze Szenarien mit festem Spielstand. Beim ersten Abschluss gibt es eine Belohnung für deine Karriere.</p>
+        <header><h2>Challenges <small>${total} / ${challenges.length * 3} ${tr('Sterne', 'stars')}</small></h2><button data-action="back">${tr('Zurück (Esc)', 'Back (Esc)')}</button></header>
+        <p class="tier-desc" style="--c:var(--accent)">${tr('Kurze Szenarien mit festem Spielstand. Beim ersten Abschluss gibt es eine Belohnung für deine Karriere.', 'Short scenarios with a fixed scoreline. Clear one for the first time and your career gets a reward.')}</p>
         <div class="challenge-grid">${challenges
           .map((c) => {
             const stars = progress.stars[c.id] ?? 0;
             return `<article class="challenge ${stars ? 'done' : ''}">
               <h3>${c.title} <span class="stars">${starRow(stars)}</span></h3>
-              <p class="facts">${PITCHES[c.venue].name} · Stand ${c.score[0]}:${c.score[1]} · ${timing(c.seconds)}${c.handicap ? ` · ${c.handicap} Mann weniger` : ''}</p>
+              <p class="facts">${PITCHES[c.venue].name} · ${tr('Stand', 'Score')} ${c.score[0]}:${c.score[1]} · ${timing(c.seconds)}${c.handicap ? tr(` · ${c.handicap} Mann weniger`, ` · ${c.handicap} player${c.handicap > 1 ? 's' : ''} down`) : ''}</p>
               <p>${c.story}</p>
               <ol>${c.goals.map((g) => `<li>${g.text}</li>`).join('')}</ol>
-              <p class="reward">Belohnung: ${c.reward.text}${stars ? ' <em>(erhalten)</em>' : ''}</p>
-              <button class="primary" data-action="start" data-value="${c.id}">${stars ? 'Nochmal' : 'Anstoß'}</button>
+              <p class="reward">${tr('Belohnung', 'Reward')}: ${c.reward.text}${stars ? tr(' <em>(erhalten)</em>', ' <em>(received)</em>') : ''}</p>
+              <button class="primary" data-action="start" data-value="${c.id}">${stars ? tr('Nochmal', 'Again') : tr('Anstoß', 'Kick off')}</button>
             </article>`;
           })
           .join('')}</div>
@@ -66,18 +67,18 @@ export class ChallengeScreen {
     if (firstClear) {
       const player = applied.find((a) => a.playerName);
       reward = hasCareer
-        ? `<p class="reward ok">Belohnung eingelöst: ${def.reward.text}${player ? ` – <b>${player.playerName}</b> steht jetzt in deinem Kader.` : '.'}</p>`
-        : '<p class="reward ok">Belohnung vorgemerkt – sie wird gutgeschrieben, sobald du eine Karriere startest.</p>';
+        ? `<p class="reward ok">${tr('Belohnung eingelöst', 'Reward claimed')}: ${def.reward.text}${player ? tr(` – <b>${player.playerName}</b> steht jetzt in deinem Kader.`, ` – <b>${player.playerName}</b> is now in your squad.`) : '.'}</p>`
+        : `<p class="reward ok">${tr('Belohnung vorgemerkt – sie wird gutgeschrieben, sobald du eine Karriere startest.', 'Reward saved – it will be credited as soon as you start a career.')}</p>`;
     }
     this.root.innerHTML = `
       <div class="pool-panel challenge-panel result">
-        <h2>${stars ? 'Challenge geschafft!' : 'Leider nicht geschafft'}</h2>
+        <h2>${stars ? tr('Challenge geschafft!', 'Challenge complete!') : tr('Leider nicht geschafft', 'Not this time')}</h2>
         <p class="big-stars">${starRow(stars)}</p>
         <p class="score">${m.teams[0].name} ${m.score[0]} : ${m.score[1]} ${m.teams[1].name}</p>
         <ul class="goals">${def.goals.map((g, i) => `<li class="${results[i] ? 'ok' : 'no'}">${results[i] ? '✔' : '✘'} ${g.text}</li>`).join('')}</ul>
         ${reward}
-        <p class="keys"><b>R</b> nochmal · <b>Enter</b> zur Challenge-Liste · <b>Esc</b> Hauptmenü</p>
-        <div class="actions"><button data-action="retry">Nochmal</button><button class="primary" data-action="list">Zur Liste</button></div>
+        <p class="keys">${tr('<b>R</b> nochmal · <b>Enter</b> zur Challenge-Liste · <b>Esc</b> Hauptmenü', '<b>R</b> retry · <b>Enter</b> challenge list · <b>Esc</b> main menu')}</p>
+        <div class="actions"><button data-action="retry">${tr('Nochmal', 'Again')}</button><button class="primary" data-action="list">${tr('Zur Liste', 'To the list')}</button></div>
       </div>`;
     this.root.hidden = false;
   }

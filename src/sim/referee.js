@@ -1,16 +1,17 @@
 // Hobby-Schiri: läuft dem Spiel hinterher, sieht nicht alles und hat so
 // seine Eigenheiten. Ohne Schiri (Parkplatz & Co.) entscheiden die Spieler.
+import { tr } from '../core/i18n.js';
 import { clamp, dist2d, len, norm } from '../core/math.js';
 import { FIRST_NAMES, LAST_NAMES, SKIN_TONES } from '../data/names.js';
 import { hasTrait } from '../data/traits.js';
 import { switchToNearestOnTeam } from './players.js';
 
 export const REF_TRAITS = {
-  pingelig: { name: 'pingelig', sees: 0.97, cards: 1.5, dissent: 0.25 },
-  laesst_laufen: { name: 'lässt gern laufen', sees: 0.7, cards: 0.5, dissent: 0.05 },
-  kurzsichtig: { name: 'kurzsichtig', sees: 0.55, cards: 1, dissent: 0.1 },
-  souveraen: { name: 'souverän', sees: 0.9, cards: 1, dissent: 0.12 },
-  zuschauer: { name: 'Zuschauer mit Pfeife', sees: 0.6, cards: 0.7, dissent: 0.3 }, // springt nur ein
+  pingelig: { name: tr('pingelig', 'fussy'), sees: 0.97, cards: 1.5, dissent: 0.25 },
+  laesst_laufen: { name: tr('lässt gern laufen', 'lets it flow'), sees: 0.7, cards: 0.5, dissent: 0.05 },
+  kurzsichtig: { name: tr('kurzsichtig', 'short-sighted'), sees: 0.55, cards: 1, dissent: 0.1 },
+  souveraen: { name: tr('souverän', 'in control'), sees: 0.9, cards: 1, dissent: 0.12 },
+  zuschauer: { name: tr('Zuschauer mit Pfeife', 'spectator with a whistle'), sees: 0.6, cards: 0.7, dissent: 0.3 }, // springt nur ein
 };
 
 export function createReferee(rng) {

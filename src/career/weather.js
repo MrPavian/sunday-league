@@ -1,19 +1,20 @@
 // Wetter und Jahreszeiten: Jeder Spieltag hat einen Monat (Saison August bis Mai,
 // Winterpause zur Saisonmitte) und jede Woche ein Wetter. Das wirkt auf Boden und
 // Ball, Ausdauer, Zuschauer – und darauf, wer sonntags lieber im Bett bleibt.
+import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 
-export const MONTHS = ['', 'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+export const MONTHS = tr(['', 'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'], ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']);
 const TEMP = [0, 1, 2, 6, 10, 15, 19, 21, 21, 16, 11, 6, 3];
 
 export const WEATHER = {
-  sonne: { name: 'Sonne', fans: 1.2, absence: 0.95 },
-  hitze: { name: 'Hitze', fans: 0.9, absence: 1.15, heat: 1.35 },
-  regen: { name: 'Regen', fans: 0.6, absence: 1.15, grip: 0.75, visual: 'rain' },
-  wind: { name: 'Sturmböen', fans: 0.85, absence: 1, wind: 3.2 },
-  nebel: { name: 'Nebel', fans: 0.8, absence: 1, visual: 'fog' },
-  frost: { name: 'Frost', fans: 0.7, absence: 1.1, frost: true, visual: 'frost' },
-  schnee: { name: 'Schnee', fans: 0.5, absence: 1.3, snow: true, visual: 'snow' },
+  sonne: { name: tr('Sonne', 'Sunshine'), fans: 1.2, absence: 0.95 },
+  hitze: { name: tr('Hitze', 'Heatwave'), fans: 0.9, absence: 1.15, heat: 1.35 },
+  regen: { name: tr('Regen', 'Rain'), fans: 0.6, absence: 1.15, grip: 0.75, visual: 'rain' },
+  wind: { name: tr('Sturmböen', 'Gales'), fans: 0.85, absence: 1, wind: 3.2 },
+  nebel: { name: tr('Nebel', 'Fog'), fans: 0.8, absence: 1, visual: 'fog' },
+  frost: { name: tr('Frost', 'Frost'), fans: 0.7, absence: 1.1, frost: true, visual: 'frost' },
+  schnee: { name: tr('Schnee', 'Snow'), fans: 0.5, absence: 1.3, snow: true, visual: 'snow' },
 };
 
 // Wahrscheinlichkeiten je Jahreszeit.
@@ -50,16 +51,16 @@ export function rollWeather(c, round = c.round) {
   return { id, name: WEATHER[id].name, month, monthName: MONTHS[month], temp, leaves, windDir };
 }
 
-export const weatherLine = (w) => (w ? `${w.monthName} · ${w.name}, ${w.temp} °C${w.leaves ? ' · Herbstlaub' : ''}` : '');
+export const weatherLine = (w) => (w ? `${MONTHS[w.month] ?? w.monthName} · ${WEATHER[w.id]?.name ?? w.name}, ${w.temp} °C${w.leaves ? tr(' · Herbstlaub', ' · autumn leaves') : ''}` : '');
 
 // Wetter auf den Platz anwenden (in der Halle gibt es kein Wetter).
 export function applyWeather(pitch, w) {
   if (!w || pitch.id === 'halle') return pitch;
   const def = WEATHER[w.id];
   let s = pitch.surface;
-  if (def.grip) s = { ...s, wet: true, name: `${s.name} (nass)`, rollFriction: s.rollFriction * def.grip, rollDecel: s.rollDecel * def.grip, bumpiness: s.bumpiness * 1.3, slideDamp: s.slideDamp * 0.75, scrapeChance: s.scrapeChance * 0.6 };
-  if (def.frost) s = { ...s, name: `${s.name} (gefroren)`, bounce: Math.min(0.8, s.bounce * 1.25), bumpiness: s.bumpiness * 1.7, scrapeChance: Math.min(0.9, s.scrapeChance + 0.3), slideDamp: s.slideDamp * 1.3 };
-  if (def.snow) s = { ...s, name: `${s.name} (Schnee)`, rollFriction: s.rollFriction * 1.9, rollDecel: s.rollDecel * 1.6, bounce: s.bounce * 0.6, bumpiness: s.bumpiness * 1.4, scrapeChance: s.scrapeChance * 0.3 };
+  if (def.grip) s = { ...s, wet: true, name: `${s.name} (${tr('nass', 'wet')})`, rollFriction: s.rollFriction * def.grip, rollDecel: s.rollDecel * def.grip, bumpiness: s.bumpiness * 1.3, slideDamp: s.slideDamp * 0.75, scrapeChance: s.scrapeChance * 0.6 };
+  if (def.frost) s = { ...s, name: `${s.name} (${tr('gefroren', 'frozen')})`, bounce: Math.min(0.8, s.bounce * 1.25), bumpiness: s.bumpiness * 1.7, scrapeChance: Math.min(0.9, s.scrapeChance + 0.3), slideDamp: s.slideDamp * 1.3 };
+  if (def.snow) s = { ...s, name: `${s.name} (${tr('Schnee', 'snow')})`, rollFriction: s.rollFriction * 1.9, rollDecel: s.rollDecel * 1.6, bounce: s.bounce * 0.6, bumpiness: s.bumpiness * 1.4, scrapeChance: s.scrapeChance * 0.3 };
   return {
     ...pitch,
     surface: s,
@@ -71,11 +72,11 @@ export function applyWeather(pitch, w) {
 
 // Chat: einer muss das Wetter kommentieren.
 export const WEATHER_CHAT = {
-  sonne: ['Sonne satt! Endlich kein Schlamm.', 'Kurze Hosen, Sonnencreme, los geht’s.'],
-  hitze: ['32 Grad am Sonntag? Ich bring zwei Kästen Wasser mit.', 'Bei der Hitze spiel ich nur im Schatten.'],
-  regen: ['Regen angesagt. Wer hat noch Stollen übrig?', 'Schlammschlacht! Ich freu mich wie ein Kind.'],
-  wind: ['Sturm! Hohe Bälle landen heute in der Nachbarstadt.', 'Bei dem Wind brauch ich keinen Anlauf.'],
-  nebel: ['Nebel wie in London. Man sieht das andere Tor nicht.', 'Wenn ich im Nebel verschwinde: Ich bin am Pfosten.'],
-  frost: ['Platz ist steinhart gefroren. Heute wird nicht gegrätscht.', 'Lange Unterhose ist Pflicht!'],
-  schnee: ['SCHNEE! Wer bringt den orangen Ball mit?', 'Schneeballschlacht in der Halbzeit, wer ist dabei?'],
+  sonne: tr(['Sonne satt! Endlich kein Schlamm.', 'Kurze Hosen, Sonnencreme, los geht’s.'], ['Sunshine all day! Finally no mud.', 'Shorts, sun cream, let’s go.']),
+  hitze: tr(['32 Grad am Sonntag? Ich bring zwei Kästen Wasser mit.', 'Bei der Hitze spiel ich nur im Schatten.'], ['32 degrees on Sunday? I’ll bring two crates of water.', 'In this heat I’m only playing in the shade.']),
+  regen: tr(['Regen angesagt. Wer hat noch Stollen übrig?', 'Schlammschlacht! Ich freu mich wie ein Kind.'], ['Rain forecast. Anyone got spare studs?', 'Mud bath! I’m as excited as a kid.']),
+  wind: tr(['Sturm! Hohe Bälle landen heute in der Nachbarstadt.', 'Bei dem Wind brauch ich keinen Anlauf.'], ['Gale warning! High balls will land in the next town today.', 'With this wind I don’t need a run-up.']),
+  nebel: tr(['Nebel wie in London. Man sieht das andere Tor nicht.', 'Wenn ich im Nebel verschwinde: Ich bin am Pfosten.'], ['Fog like London. You can’t see the other goal.', 'If I vanish in the fog: I’m at the far post.']),
+  frost: tr(['Platz ist steinhart gefroren. Heute wird nicht gegrätscht.', 'Lange Unterhose ist Pflicht!'], ['Pitch is frozen solid. No slide tackles today.', 'Long johns are compulsory!']),
+  schnee: tr(['SCHNEE! Wer bringt den orangen Ball mit?', 'Schneeballschlacht in der Halbzeit, wer ist dabei?'], ['SNOW! Who’s bringing the orange ball?', 'Snowball fight at half-time, who’s in?']),
 };

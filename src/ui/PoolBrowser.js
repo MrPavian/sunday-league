@@ -1,11 +1,13 @@
+import { tr } from '../core/i18n.js';
 import { TRAITS } from '../data/traits.js';
+import { jobName } from '../data/names.js';
 import { TIERS, tierById } from '../data/tiers.js';
 import { POSITIONS, createPlayerPool } from '../sim/generator.js';
 
 const PAGE = 12;
 const ATTR_LABELS = {
-  pace: 'Tempo', stamina: 'Ausdauer', technique: 'Technik', passing: 'Passen',
-  shooting: 'Schuss', tackling: 'Zweikampf', heading: 'Kopfball', keeping: 'Torwart',
+  pace: tr('Tempo', 'Pace'), stamina: tr('Ausdauer', 'Stamina'), technique: tr('Technik', 'Technique'), passing: tr('Passen', 'Passing'),
+  shooting: tr('Schuss', 'Shooting'), tackling: tr('Zweikampf', 'Tackling'), heading: tr('Kopfball', 'Heading'), keeping: tr('Torwart', 'Goalkeeping'),
 };
 
 // Stöbern im großen Spielerpool – nach Klassen sortiert, beste zuerst.
@@ -58,18 +60,18 @@ export class PoolBrowser {
     this.root.innerHTML = `
       <div class="pool-panel">
         <header>
-          <h2>Spielerpool <small>${this.pool.size.toLocaleString('de-DE')} Spieler in der Region</small></h2>
-          <button data-action="close">Zurück (Esc)</button>
+          <h2>${tr('Spielerpool', 'Player pool')} <small>${this.pool.size.toLocaleString(tr('de-DE', 'en-GB'))} ${tr('Spieler in der Region', 'players in the region')}</small></h2>
+          <button data-action="close">${tr('Zurück (Esc)', 'Back (Esc)')}</button>
         </header>
         <nav>${TIERS.map(
           (t) => `<button data-action="tier" data-value="${t.id}" class="${t.id === this.tier ? 'active' : ''}" style="--c:${t.color}">
-            ${t.name} <span>${(this.counts[t.id] ?? 0).toLocaleString('de-DE')}</span></button>`,
+            ${t.name} <span>${(this.counts[t.id] ?? 0).toLocaleString(tr('de-DE', 'en-GB'))}</span></button>`,
         ).join('')}</nav>
         <p class="tier-desc" style="--c:${tier.color}">${tier.desc}</p>
         <ul>${rows.map((p) => this.row(p, tier)).join('')}</ul>
         <footer>
           <button data-action="page" data-value="-1" ${this.page === 0 ? 'disabled' : ''}>◀</button>
-          Seite ${this.page + 1} / ${pages}
+          ${tr('Seite', 'Page')} ${this.page + 1} / ${pages}
           <button data-action="page" data-value="1" ${this.page >= pages - 1 ? 'disabled' : ''}>▶</button>
         </footer>
       </div>`;
@@ -86,7 +88,7 @@ export class PoolBrowser {
       <div class="line">
         <span class="rating">${p.rating}</span>
         <span class="who"><b>${p.name}</b> ${p.title ? `<em>${p.title}</em>` : ''}
-          <small>${p.age} J. · ${POSITIONS[p.position]} · ${p.profession}</small></span>
+          <small>${p.age}${tr(' J.', ' yrs')} · ${POSITIONS[p.position]} · ${jobName(p.profession)}</small></span>
         <span class="traits">${traits}</span>
       </div>
       ${open ? `<div class="detail">${p.backstory ? `<p>${p.backstory}</p>` : ''}<div class="attrs">${bars}</div></div>` : ''}

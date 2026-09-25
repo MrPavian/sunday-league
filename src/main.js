@@ -1,3 +1,4 @@
+import { langChosen, setLang, tr } from './core/i18n.js';
 import * as THREE from 'three';
 import '@fontsource/pixelify-sans/400.css';
 import '@fontsource/pixelify-sans/600.css';
@@ -37,14 +38,15 @@ import { EndScreen } from './ui/EndScreen.js';
 import { Hud } from './ui/Hud.js';
 import { Menu } from './ui/Menu.js';
 import { PoolBrowser } from './ui/PoolBrowser.js';
+import { Settings } from './ui/Settings.js';
 import './style.css';
 
 const STEP = 1 / 60;
 // Spieltempo (Taste C): Die Simulation bleibt gleich, sie läuft nur langsamer ab.
 const TEMPOS = [
-  { id: 'ruhig', label: 'Tempo: ruhig', factor: 0.72 },
-  { id: 'normal', label: 'Tempo: normal', factor: 0.86 },
-  { id: 'schnell', label: 'Tempo: schnell', factor: 1 },
+  { id: 'ruhig', label: tr('Tempo: ruhig', 'Tempo: calm'), factor: 0.72 },
+  { id: 'normal', label: tr('Tempo: normal', 'Tempo: normal'), factor: 0.86 },
+  { id: 'schnell', label: tr('Tempo: schnell', 'Tempo: fast'), factor: 1 },
 ];
 let tempo = 0;
 try {
@@ -71,6 +73,22 @@ const hud = new Hud(document.getElementById('hud'));
 const endScreen = new EndScreen(document.getElementById('end'));
 const sound = new Sound();
 const poolBrowser = new PoolBrowser(document.getElementById('pool'));
+const settings = new Settings(document.getElementById('settings'));
+
+function remember(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // egal
+  }
+}
+
+// Sprache wechseln: Die Seite lädt neu, damit alle Texte in der neuen Sprache entstehen.
+function switchLanguage(lang) {
+  setLang(lang);
+  if (career) saveCareer(career);
+  location.reload();
+}
 
 let venue = null;
 let venueRoot = null;
@@ -129,7 +147,7 @@ function setMode(next) {
 
 // --- Menü & Freundschaftsspiel -------------------------------------------------
 
-const saveInfo = () => (career ? `${humanClub(career).name}, Spieltag ${Math.min(career.round + 1, career.fixtures.length)}` : null);
+const saveInfo = () => (career ? `${humanClub(career).name}, ${tr('Spieltag', 'matchday')} ${Math.min(career.round + 1, career.fixtures.length)}` : null);
 
 const menu = new Menu(document.getElementById('menu'), VENUES, {
   onSelect(id) {
@@ -154,6 +172,28 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
   onChallenges() {
     menu.paused = true;
     openChallenges();
+  },
+  onSettings() {
+    menu.paused = true;
+    settings.show({
+      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS }),
+      onLang: switchLanguage,
+      onChange(key, value) {
+        if (key === 'sound' && sound.muted !== (value === 'off')) sound.toggleMute();
+        if (key === 'effects') {
+          pixel.setEffects(value === 'on');
+          remember('sunday-league:fx', pixel.effects ? '1' : '0');
+        }
+        if (key === 'tempo') {
+          tempo = Number(value);
+          remember('sunday-league:tempo', TEMPOS[tempo].id);
+        }
+      },
+      onBack() {
+        settings.hide();
+        setTimeout(() => (menu.paused = false), 0);
+      },
+    });
   },
   onCareerNew() {
     // Erst dich selbst anlegen, dann geht es ins Vereinsheim.
@@ -300,7 +340,7 @@ function playCareerMatch() {
   showMatch(prepared.match);
   for (const h of prepared.helpers) {
     const p = prepared.match.players.find((q) => q.poolIndex === h) ?? prepared.match.bench.flat().find((q) => q.poolIndex === h);
-    if (p?.helperFor) hud.toast(`${p.name} (Schwager von ${p.helperFor}) hilft aus`, 2.5, 2);
+    if (p?.helperFor) hud.toast(tr(`${p.name} (Schwager von ${p.helperFor}) hilft aus`, `${p.name} (${p.helperFor}'s brother-in-law) is helping out`), 2.5, 2);
   }
 }
 
@@ -314,11 +354,11 @@ function playCupMatch(kind) {
   clubhouse.hide();
   setMode('play');
   showMatch(prepared.match);
-  hud.toast(kind === 'halle' ? 'Hallen-Stadtmeisterschaft – Sporthalle Kanalschule' : 'Stadtmeisterschaft – Sportplatz Am Kanal', 2.5, 2);
+  hud.toast(kind === 'halle' ? tr('Hallen-Stadtmeisterschaft – Sporthalle Kanalschule', 'Indoor City Cup – Kanalschule Sports Hall') : tr('Stadtmeisterschaft – Sportplatz Am Kanal', 'City Cup – Am Kanal Ground'), 2.5, 2);
 }
 
 async function runCupRound(played, kind = played?.kind ?? 'stadt') {
-  clubhouse.setBusy(kind === 'halle' ? 'Turnier läuft … auf dem anderen Hallendrittel wird auch gespielt.' : 'Turnier läuft … auf dem Nebenplatz wird auch gekickt.');
+  clubhouse.setBusy(kind === 'halle' ? tr('Turnier läuft … auf dem anderen Hallendrittel wird auch gespielt.', 'Tournament under way … the other end of the hall is playing too.') : tr('Turnier läuft … auf dem Nebenplatz wird auch gekickt.', 'Tournament under way … they are playing on the next pitch too.'));
   for (const m of currentCupMatches(career, kind)) {
     if (m === played) continue;
     const prepared = prepareCupMatch(career, m, { duration: testDuration });
@@ -333,7 +373,7 @@ async function runCupRound(played, kind = played?.kind ?? 'stadt') {
 
 // Restliche Partien des Spieltags simulieren (und ggf. das eigene Spiel).
 async function runRound(playedFixture) {
-  clubhouse.setBusy('Spieltag läuft … die anderen Plätze melden sich gleich.');
+  clubhouse.setBusy(tr('Spieltag läuft … die anderen Plätze melden sich gleich.', 'Matchday under way … the other grounds will report in shortly.'));
   for (const f of currentFixtures(career)) {
     if (f === playedFixture) continue;
     const prepared = prepareMatch(career, f, { duration: testDuration });
@@ -373,6 +413,11 @@ if (params.get('venue')) {
   menu.onStart(venue.id);
 } else {
   openMenu();
+  // Allererster Start: erst die Sprache wählen.
+  if (!langChosen() && !params.get('lang')) {
+    menu.paused = true;
+    settings.show({ onLang: switchLanguage }, { firstRun: true });
+  }
 }
 
 let last = performance.now();
@@ -386,10 +431,10 @@ function frame(now) {
     const intent = mode === 'play' ? raw : undefined;
     if (mode === 'play') {
       if (intent.help) hud.toggleHelp();
-      if (intent.mute) hud.toast(sound.toggleMute() ? 'Ton aus' : 'Ton an', 1);
+      if (intent.mute) hud.toast(sound.toggleMute() ? tr('Ton aus', 'Sound off') : tr('Ton an', 'Sound on'), 1);
       if (intent.fx) {
         pixel.setEffects(!pixel.effects);
-        hud.toast(pixel.effects ? 'Effekte an' : 'Effekte aus (schneller)', 1.2);
+        hud.toast(pixel.effects ? tr('Effekte an', 'Effects on') : tr('Effekte aus (schneller)', 'Effects off (faster)'), 1.2);
         try {
           localStorage.setItem('sunday-league:fx', pixel.effects ? '1' : '0');
         } catch {
@@ -421,7 +466,7 @@ function frame(now) {
       setTimeout(() => ended === match && challengeRun && finishChallenge(ended), 1200);
     } else if (mode === 'play' && match.events.some((e) => e.type === 'end')) {
       const ended = match;
-      const keys = careerMatch ? '<b>Enter</b> weiter ins Vereinsheim' : undefined;
+      const keys = careerMatch ? tr('<b>Enter</b> weiter ins Vereinsheim', '<b>Enter</b> back to the clubhouse') : undefined;
       setTimeout(() => ended === match && mode === 'play' && endScreen.show(ended, { keys }), 1200);
     }
     match.events.length = 0;

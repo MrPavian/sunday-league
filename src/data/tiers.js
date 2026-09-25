@@ -1,10 +1,11 @@
 // Spielerklassen im Pool. weight = relative Häufigkeit, range = Bereich der
 // Grundattribute, traits = Wahrscheinlichkeiten für 0/1/2/3 Besonderheiten.
+import { tr } from '../core/i18n.js';
 export const TIERS = [
   {
     id: 'ok',
     name: 'OK',
-    desc: 'Kickt halt mit. Solide, wenn er nicht gerade Spätschicht hat.',
+    desc: tr('Kickt halt mit. Solide, wenn er nicht gerade Spätschicht hat.', 'Just plays along. Solid, unless he is on the late shift.'),
     color: '#9aa3ab',
     weight: 0.55,
     range: [0.22, 0.5],
@@ -13,8 +14,8 @@ export const TIERS = [
   },
   {
     id: 'gut',
-    name: 'Gut',
-    desc: 'Stammspieler in jeder Kreisklasse.',
+    name: tr('Gut', 'Good'),
+    desc: tr('Stammspieler in jeder Kreisklasse.', 'A regular in any district league.'),
     color: '#6fbf73',
     weight: 0.28,
     range: [0.34, 0.6],
@@ -23,8 +24,8 @@ export const TIERS = [
   },
   {
     id: 'stark',
-    name: 'Stark',
-    desc: 'Leistungsträger. Um den bauen andere Teams ihr Spiel.',
+    name: tr('Stark', 'Strong'),
+    desc: tr('Leistungsträger. Um den bauen andere Teams ihr Spiel.', 'Key player. Other teams build their game around him.'),
     color: '#4fa3e0',
     weight: 0.12,
     range: [0.45, 0.7],
@@ -33,8 +34,8 @@ export const TIERS = [
   },
   {
     id: 'dorfstar',
-    name: 'Dorfstar',
-    desc: 'Den kennt im Ort jeder. Torschützenkönig, Vereinsikone, Stammgast im Vereinsheim.',
+    name: tr('Dorfstar', 'Village star'),
+    desc: tr('Den kennt im Ort jeder. Torschützenkönig, Vereinsikone, Stammgast im Vereinsheim.', 'Everyone in town knows him. Top scorer, club icon, regular at the clubhouse bar.'),
     color: '#b57be0',
     weight: 0.042,
     range: [0.56, 0.78],
@@ -44,7 +45,7 @@ export const TIERS = [
   {
     id: 'superstar',
     name: 'Superstar',
-    desc: 'Hat mal höher gespielt – Oberliga, Regionalliga, Jugend eines Profivereins.',
+    desc: tr('Hat mal höher gespielt – Oberliga, Regionalliga, Jugend eines Profivereins.', 'Used to play higher up – semi-pro leagues or a pro club academy.'),
     color: '#f0b429',
     weight: 0.0076,
     range: [0.66, 0.86],
@@ -53,8 +54,8 @@ export const TIERS = [
   },
   {
     id: 'legende',
-    name: 'Ex-Profi',
-    desc: 'Karriere vorbei, will einfach nur kicken. Superselten.',
+    name: tr('Ex-Profi', 'Ex-pro'),
+    desc: tr('Karriere vorbei, will einfach nur kicken. Superselten.', 'Career over, just wants to play. Super rare.'),
     color: '#ff6b5a',
     weight: 0.0004,
     range: null, // kommt aus dem Archetyp

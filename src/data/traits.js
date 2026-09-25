@@ -1,17 +1,18 @@
 // Besondere Fähigkeiten – bewusst bodenständig, nie überzeichnet.
+import { tr } from '../core/i18n.js';
 export const TRAITS = {
-  schnell: { name: 'Sehr schneller Läufer', desc: 'Höheres Grundtempo.' },
-  pferdelunge: { name: 'Pferdelunge', desc: 'Ermüdet deutlich langsamer.' },
-  gutes_auge: { name: 'Gutes Auge für Mitspieler', desc: 'Sieht Anspielstationen auch im Augenwinkel, präzisere Pässe.' },
-  anfuehrer: { name: 'Anführer', desc: 'Mitspieler in der Nähe ermüden langsamer.' },
-  teamchemie: { name: 'Steigert die Teamchemie', desc: 'Hält die Truppe zusammen (wirkt ab der Saison-Phase).' },
-  ballsicher: { name: 'Ruhe am Ball', desc: 'Weniger verunglückte Ballkontakte.' },
-  kopfball: { name: 'Kopfballungeheuer', desc: 'Kommt an hohe Bälle ran und köpft sie gezielt.' },
-  hammer: { name: 'Strammer Schuss', desc: 'Zieht aus der Distanz ab – nicht immer genau.' },
-  meckerer: { name: 'Meckerer', desc: 'Beschwert sich nach jedem Zweikampf – und steht dabei rum.' },
-  raucher: { name: 'Raucher', desc: 'In der Halbzeit an der Eckfahne. Geht schneller die Puste aus.' },
-  hart_im_nehmen: { name: 'Hart im Nehmen', desc: 'Schürfwunden stören kaum – grätscht auch mal auf Asche.' },
-  ex_profi: { name: 'Ex-Profi', desc: 'Hat ganz oben gespielt. Kaum Fehler am Ball, die Mitspieler laufen neben ihm mehr.' },
+  schnell: { name: tr('Sehr schneller Läufer', 'Very quick runner'), desc: tr('Höheres Grundtempo.', 'Higher base pace.') },
+  pferdelunge: { name: tr('Pferdelunge', 'Engine of a horse'), desc: tr('Ermüdet deutlich langsamer.', 'Tires much more slowly.') },
+  gutes_auge: { name: tr('Gutes Auge für Mitspieler', 'Good eye for a pass'), desc: tr('Sieht Anspielstationen auch im Augenwinkel, präzisere Pässe.', 'Spots team-mates out of the corner of his eye, more accurate passes.') },
+  anfuehrer: { name: tr('Anführer', 'Leader'), desc: tr('Mitspieler in der Nähe ermüden langsamer.', 'Nearby team-mates tire more slowly.') },
+  teamchemie: { name: tr('Steigert die Teamchemie', 'Boosts team spirit'), desc: tr('Hält die Truppe zusammen (wirkt ab der Saison-Phase).', 'Keeps the squad together (works in career mode).') },
+  ballsicher: { name: tr('Ruhe am Ball', 'Calm on the ball'), desc: tr('Weniger verunglückte Ballkontakte.', 'Fewer botched touches.') },
+  kopfball: { name: tr('Kopfballungeheuer', 'Aerial monster'), desc: tr('Kommt an hohe Bälle ran und köpft sie gezielt.', 'Wins high balls and heads them with purpose.') },
+  hammer: { name: tr('Strammer Schuss', 'Thunderous shot'), desc: tr('Zieht aus der Distanz ab – nicht immer genau.', 'Shoots from distance – not always on target.') },
+  meckerer: { name: tr('Meckerer', 'Moaner'), desc: tr('Beschwert sich nach jedem Zweikampf – und steht dabei rum.', 'Complains after every challenge – and stands around doing it.') },
+  raucher: { name: tr('Raucher', 'Smoker'), desc: tr('In der Halbzeit an der Eckfahne. Geht schneller die Puste aus.', 'Spends half-time at the corner flag. Runs out of breath sooner.') },
+  hart_im_nehmen: { name: tr('Hart im Nehmen', 'Tough as nails'), desc: tr('Schürfwunden stören kaum – grätscht auch mal auf Asche.', 'Grazes barely bother him – will even slide on cinders.') },
+  ex_profi: { name: tr('Ex-Profi', 'Ex-pro'), desc: tr('Hat ganz oben gespielt. Kaum Fehler am Ball, die Mitspieler laufen neben ihm mehr.', 'Played at the very top. Hardly ever misplaces the ball, and team-mates run more alongside him.') },
 };
 
 export const TRAIT_IDS = Object.keys(TRAITS);
