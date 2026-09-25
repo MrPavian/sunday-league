@@ -68,7 +68,9 @@ export function processSubs(m) {
     // Die KI wechselt erst, wenn jemand wirklich platt ist.
     if (!human && (tired.stamina > 0.45 || m.rng.next() < 0.3)) continue;
     // Wer selbst wechselt, entscheidet selbst – die KI nur für echte Frische.
-    const fresh = human ? bench : bench.filter((b) => b.stamina > tired.stamina + 0.2);
+    // Wer erst zur zweiten Halbzeit kommt, sitzt vorher noch im Auto.
+    const ready = bench.filter((b) => !(b.late && m.half === 1));
+    const fresh = human ? ready : ready.filter((b) => b.stamina > tired.stamina + 0.2);
     if (!fresh.length) continue;
     const incoming = fresh.find((b) => b.position === tired.role) ?? fresh.reduce((a, b) => (b.stamina > a.stamina ? b : a));
     substitute(m, tired, incoming);

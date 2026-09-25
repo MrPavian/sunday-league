@@ -3,17 +3,21 @@ import { FORMATIONS } from '../sim/formation.js';
 // Platzwahl. Pfeiltasten/Klick wählen, Enter startet. Im Hintergrund läuft
 // auf dem gewählten Platz ein KI-Spiel als Vorschau.
 export class Menu {
-  constructor(root, venues, { onSelect, onStart, onPool }) {
+  constructor(root, venues, { onSelect, onStart, onPool, onCareer, onCareerNew }) {
     this.root = root;
     this.venues = venues;
     this.onSelect = onSelect;
     this.onStart = onStart;
     this.onPool = onPool;
+    this.onCareer = onCareer;
+    this.onCareerNew = onCareerNew;
     this.index = 0;
     root.innerHTML = `
       <div class="menu-panel">
         <h1>Sunday League</h1>
         <p class="sub">Kreisklasse-Fußball mit Vollamateuren</p>
+        <div class="career"></div>
+        <p class="section">Freundschaftsspiel – Platz wählen:</p>
         <div class="venues">${venues
           .map(
             (v, i) => `
@@ -24,7 +28,7 @@ export class Menu {
           </button>`,
           )
           .join('')}</div>
-        <p class="hint">← → Platz wählen · <b>Enter</b> Anstoß · <b>P</b> Spielerpool</p>
+        <p class="hint">← → Platz wählen · <b>Enter</b> Anstoß · <b>K</b> Karriere · <b>P</b> Spielerpool</p>
         <button class="pool-link">Spielerpool ansehen</button>
       </div>`;
     root.querySelector('.pool-link').addEventListener('click', () => this.onPool());
@@ -35,6 +39,7 @@ export class Menu {
     window.addEventListener('keydown', (e) => {
       if (!this.visible || this.paused) return;
       if (e.code === 'KeyP') this.onPool();
+      else if (e.code === 'KeyK') (this.saveInfo ? this.onCareer : this.onCareerNew)();
       else if (e.code === 'ArrowLeft' || e.code === 'KeyA') this.select(this.index - 1);
       else if (e.code === 'ArrowRight' || e.code === 'KeyD') this.select(this.index + 1);
       else if (e.code === 'Enter' || e.code === 'Space') {
@@ -42,6 +47,18 @@ export class Menu {
         this.start();
       }
     });
+  }
+
+  // Karriere-Buttons: fortsetzen (wenn gespeichert) oder neu anfangen.
+  setCareer(saveInfo) {
+    this.saveInfo = saveInfo;
+    const el = this.root.querySelector('.career');
+    el.innerHTML = saveInfo
+      ? `<button data-c="continue">Karriere fortsetzen · ${saveInfo}</button><button data-c="new" class="secondary">Neue Karriere</button>`
+      : '<button data-c="new">Karriere starten</button>';
+    el.querySelectorAll('button').forEach((b) =>
+      b.addEventListener('click', () => (b.dataset.c === 'continue' ? this.onCareer() : this.onCareerNew())),
+    );
   }
 
   get visible() {

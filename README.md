@@ -9,6 +9,18 @@ Gebaut mit [three.js](https://github.com/mrdoob/three.js) im Stil „3D-Pixelart
 |---|---|---|
 | ![Hinterhof](docs/screenshot-hinterhof.png) | ![Park](docs/screenshot-park.png) | ![Ascheplatz](docs/screenshot-ascheplatz.png) |
 
+## Karriere (Saison-Minimalversion)
+
+Im Menü mit **K**: Du übernimmst den SV Sonntagsschuss in der *Freizeitliga Kanalbezirk*
+(6 Vereine, Hin- und Rückrunde). Jede Woche fragt die Chatgruppe „Wer kann Sonntag?“ –
+Spieler sagen passend zu ihrem Beruf zu oder ab, du kannst dreimal nachhaken. Fehlen Leute,
+springt „der Schwager von …“ ein. Den Spieltag spielst du selbst oder simulierst ihn;
+die anderen Partien laufen im Hintergrund. Der Spielstand wird im Browser gespeichert.
+
+| Vereinsheim | Kader |
+|---|---|
+| ![Vereinsheim](docs/screenshot-vereinsheim.png) | ![Kader](docs/screenshot-kader.png) |
+
 ## Spielorte
 
 | Platz | Format | Boden | Besonderheit |

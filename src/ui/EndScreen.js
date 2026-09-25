@@ -16,7 +16,7 @@ export class EndScreen {
     this.root.hidden = true;
   }
 
-  show(m) {
+  show(m, { keys = '<b>Enter</b> Revanche · <b>M</b> anderer Platz' } = {}) {
     const grades = gradePlayers(m);
     const potm = playerOfTheMatch(m, grades);
     const [t0, t1] = m.teams;
@@ -65,7 +65,7 @@ export class EndScreen {
           <div><h3>${t0.short}</h3><ol>${lineup(0)}</ol></div>
           <div><h3>${t1.short}</h3><ol>${lineup(1)}</ol></div>
         </div>
-        <p class="keys"><b>Enter</b> Revanche · <b>M</b> anderer Platz</p>
+        <p class="keys">${keys}</p>
       </div>`;
     this.root.hidden = false;
   }
