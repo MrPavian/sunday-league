@@ -1,7 +1,7 @@
 # Sunday League
 
 Kreisklasse-Fußball mit Vollamateuren – vom Parkplatz bis ins Amateurstadion.
-Gebaut mit [three.js](https://github.com/mrdoob/three.js) im Stil „3D-Pixelart“.
+Gebaut mit [three.js](https://github.com/mrdoob/three.js) im Stil „3D-Pixelart“ – Seitenansicht, PC-first (Tastatur & Gamepad).
 
 ![Prototyp: Parkplatz am Getränkemarkt](docs/screenshot-parkplatz.png)
 
@@ -26,6 +26,7 @@ npm run build    # Produktions-Build nach dist/
 | Sprinten | Shift | RB / RT |
 | Schuss (halten = Kraft) | Leertaste / K | X / B |
 | Pass | J / E | A |
+| Grätsche | L / Strg | Y |
 | Spieler wechseln | Q / L | LB |
 | Hilfe ein/aus | H | – |
 | Revanche nach Abpfiff | Enter | – |

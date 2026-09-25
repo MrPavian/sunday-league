@@ -20,7 +20,7 @@ const FORMATION = [
   { role: 'fwd', x: -3, z: 4 },
 ];
 
-const NO_INPUT = { move: { x: 0, z: 0 }, sprint: false, shootHeld: false, pass: false, switchPlayer: false };
+const NO_INPUT = { move: { x: 0, z: 0 }, sprint: false, shootHeld: false, pass: false, tackle: false, switchPlayer: false };
 
 export const attackDir = (team) => (team === 0 ? 1 : -1);
 
@@ -54,6 +54,10 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams } = {}) {
         decideTimer: 0,
         dribbleDir: null,
         aimZ: 0,
+        state: 'normal', // normal | tackle | recover | down
+        stateTimer: 0,
+        tackleWon: false,
+        tackleHits: [],
       });
     });
   });
@@ -96,6 +100,10 @@ export function stepMatch(m, input = NO_INPUT, dt) {
     if (m.phaseTimer <= 0) kickoff(m);
     return;
   }
+  if (m.phase === 'freekick') {
+    if ((m.phaseTimer -= dt) <= 0) m.phase = 'play';
+    return;
+  }
 
   m.time += dt;
   if (m.time >= m.duration) {
@@ -113,13 +121,18 @@ export function stepMatch(m, input = NO_INPUT, dt) {
     p.kickAnim = Math.max(0, p.kickAnim - dt);
     p.catchCooldown = Math.max(0, p.catchCooldown - dt);
     p.decideTimer -= dt;
+    if (p.state !== 'normal') {
+      stateMove(m, p, dt);
+      continue;
+    }
     let intent;
-    if (p.id === m.controlledId) intent = humanIntent(p, input, dt);
+    if (p.id === m.controlledId) intent = humanIntent(m, p, input, dt);
     else if (p.role === 'gk') intent = keeperIntent(m, p, dt);
     else intent = outfieldIntent(m, p);
-    movePlayer(m, p, intent, dt, leaders);
+    if (p.state === 'normal') movePlayer(m, p, intent, dt, leaders);
   }
   separatePlayers(m);
+  if (resolveTackles(m)) return;
 
   if (ball.holder) {
     const h = getPlayer(m, ball.holder);
@@ -147,7 +160,11 @@ export function stepMatch(m, input = NO_INPUT, dt) {
 // ---------------------------------------------------------------------------
 // Steuerung & KI
 
-function humanIntent(p, input, dt) {
+function humanIntent(m, p, input, dt) {
+  if (input.tackle) {
+    startTackle(m, p);
+    return null;
+  }
   if (input.shootHeld) {
     p.charging = true;
     p.charge = Math.min(1, p.charge + dt * 1.25);
@@ -202,6 +219,10 @@ function outfieldIntent(m, p) {
       az = ball.pos.z - toGoal.z * 0.9 + toGoal.x * side * 0.9;
     }
     const dBall = dist2d(p.pos, ball.pos);
+    if (shouldTackle(m, p, dBall)) {
+      startTackle(m, p);
+      return null;
+    }
     p.dribbleDir = norm(oppGoal.x - p.pos.x, p.aimZ - p.pos.z);
     if (dBall < 1.3 && p.decideTimer <= 0 && !p.pending && !ball.holder) {
       // Amateure brauchen einen Moment, bis sie sich entscheiden.
@@ -356,6 +377,7 @@ function tryExecute(m, p) {
   const { ball } = m;
   const a = p.pending;
   const holds = ball.holder === p.id;
+  if (p.state !== 'normal') return;
   if (!holds) {
     if (ball.holder || p.kickCooldown > 0) return;
     if (dist2d(p.pos, ball.pos) > REACH || ball.pos.y > 1.1) return;
@@ -501,7 +523,7 @@ function dribbleTouch(m) {
   let p = null;
   let best = REACH * 0.8;
   for (const c of m.players) {
-    if (c.kickCooldown > 0) continue;
+    if (c.kickCooldown > 0 || c.state !== 'normal') continue;
     const d = dist2d(c.pos, ball.pos);
     if (d < best) {
       best = d;
@@ -546,6 +568,134 @@ function dribbleTouch(m) {
 }
 
 // ---------------------------------------------------------------------------
+// Grätschen & Fouls
+
+export function startTackle(m, p) {
+  if (p.state !== 'normal' || p.role === 'gk') return;
+  const speed = Math.max(len(p.vel.x, p.vel.z) + 1.5, 6.5);
+  p.state = 'tackle';
+  p.stateTimer = 0.45;
+  p.vel.x = p.facing.x * speed;
+  p.vel.z = p.facing.z * speed;
+  p.tackleWon = false;
+  p.tackleHits = [];
+  p.pending = null;
+  p.charging = false;
+  p.charge = 0;
+  p.stamina = Math.max(0, p.stamina - 0.03);
+  m.events.push({ type: 'slide', playerId: p.id });
+}
+
+// Die KI grätscht, wenn ein Gegner den Ball am Fuß hat und sie gut steht.
+function shouldTackle(m, p, dBall) {
+  const { ball, rng } = m;
+  if (p.decideTimer > 0 || dBall < 0.9 || dBall > 2.2 || ball.holder) return false;
+  const opp = ball.lastTouch && getPlayer(m, ball.lastTouch);
+  if (!opp || opp.team === p.team || opp.role === 'gk' || dist2d(opp.pos, ball.pos) > 1.2) return false;
+  const tb = norm(ball.pos.x - p.pos.x, ball.pos.z - p.pos.z);
+  if (tb.x * p.facing.x + tb.z * p.facing.z < 0.8) return false;
+  p.decideTimer = 0.8;
+  return rng.chance(0.12 + 0.25 * p.attrs.tackling);
+}
+
+function stateMove(m, p, dt) {
+  const { pitch } = m;
+  const damp = Math.exp(-(p.state === 'tackle' ? 2.5 : 8) * dt);
+  p.vel.x *= damp;
+  p.vel.z *= damp;
+  p.pos.x = clamp(p.pos.x + p.vel.x * dt, -pitch.wallX + 0.3, pitch.wallX - 0.3);
+  p.pos.z = clamp(p.pos.z + p.vel.z * dt, -pitch.halfWidth + 0.3, pitch.halfWidth - 0.3);
+  if ((p.stateTimer -= dt) > 0) return;
+  if (p.state === 'tackle') {
+    p.state = 'recover';
+    p.stateTimer = 0.55;
+  } else {
+    p.state = 'normal';
+  }
+}
+
+// Ball zuerst gespielt → saubere Grätsche. Mann zuerst getroffen → Foul.
+// Returns true when a foul interrupted play.
+function resolveTackles(m) {
+  const { ball, rng } = m;
+  for (const p of m.players) {
+    if (p.state !== 'tackle') continue;
+    if (!p.tackleWon && !ball.holder && ball.pos.y < 0.6 && dist2d(p.pos, ball.pos) < 0.95) {
+      const dir = rotate(p.facing, rng.gauss() * 0.4 * (1 - p.attrs.tackling));
+      const speed = 4 + rng.next() * 3;
+      ball.vel.x = dir.x * speed;
+      ball.vel.y = 0.3;
+      ball.vel.z = dir.z * speed;
+      ball.lastTouch = p.id;
+      m.lastTouchTeam = p.team;
+      p.tackleWon = true;
+      m.events.push({ type: 'tackle', playerId: p.id });
+    }
+    for (const o of m.players) {
+      if (o.team === p.team || o.state === 'down' || p.tackleHits.includes(o.id)) continue;
+      if (dist2d(p.pos, o.pos) > 0.7) continue;
+      p.tackleHits.push(o.id);
+      const fromBehind = o.facing.x * p.facing.x + o.facing.z * p.facing.z > 0.5;
+      const foul = !p.tackleWon || rng.chance(0.12 * (1 - p.attrs.tackling) + (fromBehind ? 0.2 : 0));
+      o.state = 'down';
+      o.stateTimer = foul ? 1.4 : 0.7;
+      o.pending = null;
+      o.charging = false;
+      o.charge = 0;
+      if (foul) {
+        m.events.push({ type: 'foul', playerId: p.id, victimId: o.id });
+        startFreeKick(m, o);
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+// Ohne Schiri gilt die Parkplatzregel: Wer gefoult wurde, legt sich den Ball hin.
+function startFreeKick(m, victim) {
+  const { ball, pitch } = m;
+  const s = attackDir(victim.team);
+  const spot = {
+    x: clamp(victim.pos.x, -pitch.halfLength + 1, pitch.halfLength - 1),
+    z: clamp(victim.pos.z, -pitch.halfWidth + 0.8, pitch.halfWidth - 0.8),
+  };
+  const toGoal = norm(s * pitch.halfLength - spot.x, -spot.z);
+  ball.pos.x = spot.x;
+  ball.pos.y = 0.11;
+  ball.pos.z = spot.z;
+  ball.vel.x = ball.vel.y = ball.vel.z = 0;
+  ball.holder = null;
+  ball.lastTouch = victim.id;
+  m.lastTouchTeam = victim.team;
+
+  victim.state = 'normal';
+  victim.stateTimer = 0;
+  victim.pos.x = spot.x - toGoal.x * 0.5;
+  victim.pos.z = spot.z - toGoal.z * 0.5;
+  victim.facing = toGoal;
+  victim.decideTimer = 0;
+  for (const p of m.players) {
+    p.vel.x = p.vel.z = 0;
+    p.pending = null;
+    if (p.team === victim.team) continue;
+    const dx = p.pos.x - spot.x;
+    const dz = p.pos.z - spot.z;
+    const d = len(dx, dz);
+    if (d < 3.5) {
+      const n = d > 0.01 ? { x: dx / d, z: dz / d } : { x: -toGoal.x, z: -toGoal.z };
+      p.pos.x = clamp(spot.x + n.x * 3.5, -pitch.wallX + 0.3, pitch.wallX - 0.3);
+      p.pos.z = clamp(spot.z + n.z * 3.5, -pitch.halfWidth + 0.3, pitch.halfWidth - 0.3);
+    }
+  }
+  m.pendingSwitch = null;
+  if (victim.team === m.humanTeam && victim.role !== 'gk') setControlled(m, victim.id);
+  m.phase = 'freekick';
+  m.phaseTimer = 1.3;
+  m.events.push({ type: 'freekick', team: victim.team, playerId: victim.id });
+}
+
+// ---------------------------------------------------------------------------
 // Spielablauf
 
 function onGoal(m, team) {
@@ -582,6 +732,8 @@ export function kickoff(m) {
     p.pos.z = p.home.z;
     p.vel.x = p.vel.z = 0;
     p.facing = { x: attackDir(p.team), z: 0 };
+    p.state = 'normal';
+    p.stateTimer = 0;
   }
   m.events.push({ type: 'kickoff' });
 }

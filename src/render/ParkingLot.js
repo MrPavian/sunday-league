@@ -147,16 +147,16 @@ export function buildParkingLot(scene, pitch, rng) {
     t.position.set(rng.range(-34, -24), 0, rng.range(-22, 22));
     scene.add(t);
   }
-  for (let i = 0; i < 16; i++) {
+  // Nur hinter dem Spielfeld – auf der Kameraseite würden sie die Sicht verdecken.
+  for (let i = 0; i < 10; i++) {
     const t = makeTree(rng);
-    const side = i % 2 ? 1 : -1;
-    t.position.set(rng.range(-26, 18), 0, side * rng.range(22, 30));
+    t.position.set(rng.range(-26, 18), 0, -rng.range(22, 30));
     scene.add(t);
   }
   for (const s of [-1, 1]) scene.add(box(LOT_W - 8, 1.0, 1.0, 0x3f6436, -2, 0.5, s * (LOT_D / 2 + 1.2)));
 
   // Laternen
-  for (const [x, z] of [[-14, -16.5], [0, -16.5], [14, -16.5], [-14, 16.5], [0, 16.5], [14, 16.5]]) {
+  for (const [x, z] of [[-14, -18.6], [0, -18.6], [14, -18.6]]) {
     scene.add(cylinder(0.08, 5.5, 0x4d5358, x, 2.75, z, 6));
     scene.add(box(0.9, 0.18, 0.3, 0x4d5358, x, 5.5, z - Math.sign(z) * 0.35));
   }

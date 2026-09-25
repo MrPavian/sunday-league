@@ -23,7 +23,7 @@ export class Hud {
       </div>
       <div class="help">
         <b>WASD/Pfeile</b> laufen · <b>Shift</b> sprinten · <b>Leertaste</b> halten = Schuss ·
-        <b>J</b> Pass · <b>Q</b> Spieler wechseln · <b>H</b> Hilfe
+        <b>J</b> Pass · <b>L</b> Grätsche · <b>Q</b> Spieler wechseln · <b>H</b> Hilfe
       </div>`;
     this.root = root;
     this.$ = (sel) => root.querySelector(sel);
@@ -65,6 +65,10 @@ export class Hud {
         const scorer = e.scorerId && getPlayer(match, e.scorerId);
         this.toast(e.ownGoal ? `EIGENTOR! ${scorer?.name ?? ''}` : `TOR! ${scorer?.name ?? ''}`, 2.4);
       } else if (e.type === 'whiff') this.toast(`Luftloch von ${first}!`, 1.4);
+      else if (e.type === 'foul') {
+        const victim = getPlayer(match, e.victimId);
+        this.toast(`Foul von ${first}! Freistoß für ${match.teams[victim.team].short}`, 1.8);
+      } else if (e.type === 'tackle') this.toast(`Saubere Grätsche, ${first}!`, 1.1);
       else if (e.type === 'save') this.toast(`${first} pariert!`, 1.2);
       else if (e.type === 'miscontrol') this.toast(`Verspringt ${first}…`, 1);
       else if (e.type === 'end') this.toast('ABPFIFF – Enter für Revanche', 999);

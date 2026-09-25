@@ -1,7 +1,7 @@
 # Sunday League – Game Design, Featureliste & Roadmap
 
 > Arbeitstitel: **Sunday League** (Alternativen: *Kreisklasse*, *Asche & Ehre*, *Dritte Halbzeit*)
-> Status: Phase 0 (Prototyp) · Stand: 2026-09-25
+> Status: Phase 0 abgeschlossen → Phase 1 · Stand: 2026-09-25
 
 ---
 
@@ -196,9 +196,9 @@ Liga- und Vereinsnamen bleiben fiktiv (keine Lizenzen nötig); regionale Variant
 - [x] Art-Style-Prototyp: prozedurale Spielermodelle, Parkplatz-Szene, Pixel-/Outline-Shader, Kamera
 - [x] Steuerungs-Prototyp: Laufen, Sprinten, Dribbeln, Passen, Schuss mit Aufladen, Spielerwechsel
 - [x] Deterministische Match-Simulation 4v4 mit einfacher KI und Torhütern
-- [ ] Grätschen & Fouls
-- [ ] CI (Tests + Build bei jedem Push)
-- [ ] Entscheidung Kernfrage: Wie viel Action vs. Management (siehe Offene Fragen)
+- [x] Grätschen & Fouls (Ball zuerst = sauber, Mann zuerst = Foul → Freistoß nach Parkplatzregel)
+- [x] CI (Tests + Build bei jedem Push)
+- [x] Kernentscheidungen getroffen (siehe Abschnitt 7)
 
 **Meilenstein M0:** „Es fühlt sich gut an, auf dem Parkplatz gegen einen Ball zu treten.“
 
@@ -277,14 +277,14 @@ Phase 0–3 + Trikot-Editor + 3 Spielstätten (Parkplatz, Ascheplatz, Rasenplatz
 
 ---
 
-## 7. Offene Fragen / Entscheidungen
+## 7. Entscheidungen
 
-1. **Spielgefühl**: Actionfußball (selbst steuern, à la *Sensible Soccer* / *Rematch*),
-   reine Manager-Sim (à la *Football Manager*) oder Hybrid (Management + spielbare Matches
-   mit Option „simulieren“)? → Empfehlung: **Hybrid**.
-2. **Kamera**: Klassische Seitenansicht, isometrisch/schräg von oben oder dynamisch?
-3. **Plattformen**: PC (Steam) zuerst? Konsole/Switch? Mobile?
-4. ~~**Engine**~~ → three.js (entschieden)
-5. **Ton**: Eher warmherzig-humorvoll (*Ted Lasso*) oder trocken-realistisch?
-6. **Setting**: Fiktive deutsche Region, oder bewusst international/„generisch europäisch“?
-7. **Repo**: Eigenes Repository für das Spiel anlegen (empfohlen) statt Unterordner hier.
+| Thema | Entscheidung |
+|---|---|
+| Spielgefühl | **Hybrid**: Vereinsmanagement + selbst gespielte Matches (jede Partie optional simulierbar) |
+| Kamera | **Seitenansicht** (TV-Perspektive, orthografisch, ~20° Neigung) |
+| Plattform | **PC** zuerst (Steam). Entwicklung im Browser, Desktop-Build per Tauri/Electron; Fokus auf Tastatur + Gamepad |
+| Engine | **three.js** + Vite |
+| Ton | **Warmherzig mit trockenem Humor** – liebevoll über die Figuren, nie über sie lustig machen; Komik entsteht aus Alltag und Situation, nicht aus Slapstick |
+| Setting | **Mischung**: Herz ist eine fiktive deutsche Region (Kreisklasse, Vereinsheim, Getränkemarkt), Inhalte bleiben international lesbar; Lokalisierung DE/EN, später Sunday-League-UK-Paket |
+| Repository | Eigenes Repository `sunday-league` |

@@ -61,7 +61,7 @@ export function createPlayerModel(look, kit) {
 }
 
 // Prozedurale Animation: Laufzyklus, Schuss, Torwart hält den Ball.
-export function animatePlayer(model, { speed, dt, kickAnim, holding }) {
+export function animatePlayer(model, { speed, dt, kickAnim, holding, state }) {
   const s = Math.min(1, speed / 6);
   model.phase += dt * (3 + speed * 1.7);
   const swing = Math.sin(model.phase) * 0.9 * s;
@@ -82,5 +82,19 @@ export function animatePlayer(model, { speed, dt, kickAnim, holding }) {
   if (holding) {
     armL.rotation.x = -1.3;
     armR.rotation.x = -1.3;
+  }
+
+  // Grätsche: Füße voran, Oberkörper nach hinten. Gefoult: bäuchlings hin.
+  if (state === 'tackle') {
+    model.body.rotation.x = -1.15;
+    model.body.position.y = 0.12;
+    legL.rotation.x = -1.3;
+    legR.rotation.x = -0.9;
+    armL.rotation.x = armR.rotation.x = 0.8;
+  } else if (state === 'down') {
+    model.body.rotation.x = 1.45;
+    model.body.position.y = 0.12;
+    legL.rotation.x = legR.rotation.x = 0.1;
+    armL.rotation.x = armR.rotation.x = -2.6;
   }
 }

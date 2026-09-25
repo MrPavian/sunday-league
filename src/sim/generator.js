@@ -12,6 +12,7 @@ export function generatePlayer(rng, { role = 'mid' } = {}) {
     technique: attr(),
     passing: attr(),
     shooting: attr(),
+    tackling: attr(),
     keeping: role === 'gk' ? clamp(0.4 + rng.next() * 0.35, 0, 0.9) : 0.15 + rng.next() * 0.2,
   };
   if (age > 32) {

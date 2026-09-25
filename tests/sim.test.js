@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createRng } from '../src/core/rng.js';
 import { BALL_RADIUS, createBall, stepBall } from '../src/sim/ball.js';
 import { PARKING_LOT } from '../src/sim/pitch.js';
-import { createMatch, stepMatch } from '../src/sim/match.js';
+import { createMatch, getPlayer, startTackle, stepMatch } from '../src/sim/match.js';
 
 const DT = 1 / 60;
 
@@ -81,5 +81,56 @@ describe('match', () => {
       total += m.score[0] + m.score[1];
     }
     expect(total).toBeGreaterThan(0);
+  });
+});
+
+describe('tackles', () => {
+  const setup = () => {
+    const m = createMatch({ seed: 11 });
+    const tackler = getPlayer(m, '0-1');
+    const victim = getPlayer(m, '1-1');
+    Object.assign(tackler.pos, { x: -1, z: 0 });
+    tackler.facing = { x: 1, z: 0 };
+    tackler.attrs.tackling = 1;
+    Object.assign(victim.pos, { x: 0.3, z: 0 });
+    victim.facing = { x: -1, z: 0 };
+    return { m, tackler, victim };
+  };
+  const runUntil = (m, type) => {
+    const seen = [];
+    for (let i = 0; i < 60 && !seen.includes(type); i++) {
+      stepMatch(m, undefined, DT);
+      seen.push(...m.events.map((e) => e.type));
+      m.events.length = 0;
+    }
+    return seen;
+  };
+
+  it('takes the man without the ball: foul and free kick for the victim', () => {
+    const { m, tackler, victim } = setup();
+    Object.assign(m.ball.pos, { x: 12, z: 8 });
+    startTackle(m, tackler);
+    const seen = runUntil(m, 'foul');
+    expect(seen).toContain('foul');
+    expect(m.phase).toBe('freekick');
+    expect(m.ball.lastTouch).toBe(victim.id);
+    for (const p of m.players) {
+      if (p.team !== victim.team) expect(Math.hypot(p.pos.x - m.ball.pos.x, p.pos.z - m.ball.pos.z)).toBeGreaterThanOrEqual(3.49);
+    }
+  });
+
+  it('plays the ball first: clean tackle, no free kick', () => {
+    const { m, tackler } = setup();
+    Object.assign(m.ball.pos, { x: -0.4, z: 0 });
+    startTackle(m, tackler);
+    const seen = runUntil(m, 'tackle');
+    for (let i = 0; i < 30; i++) {
+      stepMatch(m, undefined, DT);
+      seen.push(...m.events.map((e) => e.type));
+      m.events.length = 0;
+    }
+    expect(seen).toContain('tackle');
+    expect(seen).not.toContain('foul');
+    expect(m.phase).toBe('play');
   });
 });

@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 
-// Orthografische Schrägansicht. Die Kameraposition wird im Kameraraum auf das
+// Orthografische Seitenansicht (~20° Neigung, TV-Perspektive). Die Kameraposition wird im Kameraraum auf das
 // Texelraster gerastet, damit die Pixel beim Scrollen nicht flimmern.
 export class CameraRig {
-  constructor({ viewHeight = 15, offset = new THREE.Vector3(0, 13, 21) } = {}) {
+  constructor({ viewHeight = 12.5, offset = new THREE.Vector3(0, 8, 22) } = {}) {
     this.viewHeight = viewHeight;
     this.offset = offset;
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 120);

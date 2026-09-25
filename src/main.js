@@ -58,7 +58,7 @@ function frame(now) {
   }
   view.sync(match, dt);
   hud.update(match, dt);
-  rig.follow(match.ball.pos.x, match.ball.pos.z, dt, { x: PARKING_LOT.wallX + 3, z: 5 });
+  rig.follow(match.ball.pos.x, match.ball.pos.z, dt, { x: PARKING_LOT.wallX + 3, z: 3 });
   pixel.render(scene, rig.camera);
   requestAnimationFrame(frame);
 }

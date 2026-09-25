@@ -7,7 +7,8 @@ const KEYS = {
   sprint: ['ShiftLeft', 'ShiftRight'],
   shoot: ['Space', 'KeyK'],
   pass: ['KeyJ', 'KeyE'],
-  switchPlayer: ['KeyQ', 'KeyL'],
+  tackle: ['KeyL', 'ControlLeft'],
+  switchPlayer: ['KeyQ'],
   restart: ['Enter'],
   help: ['KeyH'],
 };
@@ -44,6 +45,7 @@ export class Input {
     let sprint = this.held('sprint');
     let shootHeld = this.held('shoot');
     let pass = this.wasPressed('pass');
+    let tackle = this.wasPressed('tackle');
     let switchPlayer = this.wasPressed('switchPlayer');
     const restart = this.wasPressed('restart');
     const help = this.wasPressed('help');
@@ -59,6 +61,7 @@ export class Input {
       const edge = (i) => b(i) && !this.padPrev[i];
       shootHeld ||= b(2) || b(1); // X / B
       pass ||= edge(0); // A
+      tackle ||= edge(3); // Y
       switchPlayer ||= edge(4); // LB
       sprint ||= b(5) || b(7); // RB / RT
       this.padPrev = pad.buttons.map((btn) => btn.pressed);
@@ -70,6 +73,6 @@ export class Input {
       x /= l;
       z /= l;
     }
-    return { move: { x, z }, sprint, shootHeld, pass, switchPlayer, restart, help };
+    return { move: { x, z }, sprint, shootHeld, pass, tackle, switchPlayer, restart, help };
   }
 }
