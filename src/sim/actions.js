@@ -251,13 +251,26 @@ export function keeperSaves(m) {
     const s = attackDir(m, p.team);
     const goalX = -s * pitch.halfLength;
     if (Math.abs(ball.pos.x - goalX) > 6) continue;
-    const reach = 0.85 + 0.75 * p.attrs.keeping; // inkl. Hechtsprung
+    // Inkl. Hechtsprung. Vor großen Toren (Asche, Rasen) streckt er sich weiter –
+    // sonst deckt er dort anteilig viel weniger ab als vor dem Jackentor.
+    const reach = (0.85 + 0.75 * p.attrs.keeping) * clamp(pitch.goalHalfWidth / 1.6, 1, 1.3);
     if (dist2d(p.pos, ball.pos) > reach || ball.pos.y > 2.3) continue;
 
     const bs = ballSpeed(ball);
     const towardGoal = ball.vel.x * -s > 0;
     if (bs >= 4 && !towardGoal) continue;
-    p.catchCooldown = 0.25;
+    // Ball am Fuß eines Gegners: Der Keeper muss sich in die Füße werfen. Klappt
+    // mal, sonst liegt er und das Tor ist offen.
+    const carrier = ball.lastAction === 'dribble' ? m.players.find((c) => c.id === ball.lastTouch) : null;
+    if (carrier && carrier.team !== p.team && dist2d(carrier.pos, ball.pos) < 0.9) {
+      p.catchCooldown = 0.9;
+      p.diveAnim = 0.5;
+      p.diveSide = Math.sign(ball.pos.z - p.pos.z) || 1;
+      if (!rng.chance(0.52 + 0.35 * p.attrs.keeping - 0.15 * carrier.attrs.technique)) {
+        m.events.push({ type: 'beaten', playerId: p.id });
+        return;
+      }
+    } else p.catchCooldown = 0.25;
     // Kreisklasse-Keeper: Scharfe, platzierte Schüsse sind oft einfach drin.
     if (bs >= 6 && ball.lastAction !== 'pass') {
       // Platzierung zählt: Wo kreuzt der Ball die Linie – wie weit weg vom Keeper?
@@ -267,7 +280,12 @@ export function keeperSaves(m) {
       const away = Math.abs(lineZ - p.pos.z);
       const gw = pitch.goalHalfWidth;
       const corner = clamp((away / gw - 0.35) * 0.45, 0, 0.3) + (Math.abs(lineZ) > gw * 0.65 ? 0.06 : 0);
-      const beaten = clamp((bs - 8) * 0.028 + corner - 0.3 * p.attrs.keeping - (dist2d(p.pos, ball.pos) < 0.45 ? 0.15 : 0), 0.02, 0.65);
+      // Aus kurzer Distanz bleibt kaum Zeit zu reagieren: Nur was direkt auf den Mann
+      // kommt, hält er sicher.
+      const since = m.time - (m.shotTime ?? -9);
+      const reaction = 0.14 + (1 - p.attrs.keeping) * 0.14;
+      const pointBlank = since < reaction + 0.12 ? clamp((dist2d(p.pos, ball.pos) - 0.35) * 0.3, 0, 0.25) : 0;
+      const beaten = clamp((bs - 8) * 0.02 + corner * 0.85 + pointBlank - 0.3 * p.attrs.keeping - (dist2d(p.pos, ball.pos) < 0.45 ? 0.15 : 0), 0.02, 0.65);
       if (rng.chance(beaten)) {
         p.catchCooldown = 0.7; // zu spät – der Ball ist vorbei
         p.diveAnim = 0.5;

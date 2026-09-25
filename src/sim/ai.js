@@ -245,6 +245,14 @@ function aiDecide(m, p, oppGoal) {
     };
     return;
   }
+  // Distanzschuss: Wer schießen kann und Platz hat, versucht es auch mal von weiter weg.
+  const longRange = range + 7;
+  const space = !m.players.some((o) => o.team !== p.team && o.role !== 'gk' && dist2d(o.pos, p.pos) < 3 && (o.pos.x - p.pos.x) * toG.x + (o.pos.z - p.pos.z) * toG.z > 0);
+  if (dGoal >= range && dGoal < longRange && facingDot > 0.5 && space && (p.attrs.shooting > 0.55 || hasTrait(p, 'hammer')) && rng.chance(0.18)) {
+    const gw = pitch.goalHalfWidth;
+    p.pending = { type: 'shoot', power: 0.95, target: { x: oppGoal.x, z: (rng.chance(0.5) ? 1 : -1) * rng.range(gw * 0.4, gw * 1.0) }, ttl: 0.3 };
+    return;
+  }
   // Außen an der Grundlinie: Flanke in die Mitte.
   const wide = Math.abs(p.pos.z) > pitch.halfWidth * 0.55 && Math.abs(p.pos.x - oppGoal.x) < pitch.halfLength * 0.4;
   if (wide && rng.chance(0.5)) {
@@ -354,6 +362,19 @@ export function keeperIntent(m, p, dt) {
     if (t > 0 && t < 2) tz = clamp(ball.pos.z + ball.vel.z * t, -gw - 0.6, gw + 0.6);
   }
   p.keeperTz = tz;
+  // Eins gegen eins: Kommt ein Gegner mit Ball frei aufs Tor, geht der Keeper raus
+  // und verkürzt den Winkel – auf der Linie zwischen Ball und Tormitte.
+  const carrier = ball.lastTouch && getPlayer(m, ball.lastTouch);
+  if (!reacting && carrier && carrier.team !== p.team && ball.pos.y < 0.6 && dist2d(carrier.pos, ball.pos) < 1.3) {
+    const dGoal = Math.hypot(ball.pos.x - goalX, ball.pos.z);
+    const covered = m.players.some((o) => o.team === p.team && o !== p && o.state === 'normal' && distToSegment(o.pos, ball.pos, { x: goalX, z: 0 }) < 1 && dist2d(o.pos, { x: goalX, z: 0 }) < dGoal);
+    if (dGoal < 11 && !covered) {
+      const out = clamp(dGoal * 0.35, 0.8, 3.2) * (0.7 + 0.3 * p.attrs.keeping);
+      const dir = norm(ball.pos.x - goalX, ball.pos.z);
+      tx = goalX + dir.x * out;
+      tz = dir.z * out;
+    }
+  }
   // Freie Bälle im Fünfer holt er sich.
   const dMe = dist2d(p.pos, ball.pos);
   const beaten = m.players.some((o) => o.team !== p.team && dist2d(o.pos, ball.pos) < dMe - 0.5);
