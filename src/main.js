@@ -49,6 +49,7 @@ import { PoolBrowser } from './ui/PoolBrowser.js';
 import { Settings } from './ui/Settings.js';
 import { Ticker } from './ui/Ticker.js';
 import { SaveSlots } from './ui/SaveSlots.js';
+import { prepareRelegationMatch, recordRelegationLeg, startRelegation } from './career/relegation.js';
 import './style.css';
 
 const STEP = 1 / 60;
@@ -355,6 +356,8 @@ const clubhouse = new Clubhouse(document.getElementById('club'), {
     openClubhouse();
   },
   onCupPlay: (kind = 'stadt') => playCupMatch(kind),
+  onRelPlay: () => playRelegationMatch(),
+  onRelSimulate: () => tickerRelegation(),
   onCupSimulate: (kind = 'stadt') => tickerCup(kind),
   onNewCoach() {
     creator.show({
@@ -525,9 +528,42 @@ async function runRound(playedFixture) {
   openClubhouse(currentFixtures(career));
 }
 
+// Relegation: Hin- oder Rückspiel selbst spielen.
+function playRelegationMatch() {
+  startRelegation(career);
+  const prepared = prepareRelegationMatch(career, { human: true, duration: testDuration });
+  careerMatch = { prepared, relegation: true };
+  loadVenue(prepared.pitch.id);
+  clubhouse.hide();
+  setMode('play');
+  showMatch(prepared.match);
+  const r = career.relegation;
+  hud.toast(r.leg === 0 ? tr(`Relegation, Hinspiel gegen ${r.opponent.name}`, `Play-off, first leg against ${r.opponent.name}`) : tr(`Relegation, Rückspiel – Hinspiel ${r.legs[0].result.ours}:${r.legs[0].result.theirs}`, `Play-off, second leg – first leg ${r.legs[0].result.ours}-${r.legs[0].result.theirs}`), 3, 2);
+}
+
+function tickerRelegation() {
+  startRelegation(career);
+  const prepared = prepareRelegationMatch(career, { duration: testDuration });
+  clubhouse.hide();
+  ticker.show(prepared, {
+    title: tr(`Relegation · ${prepared.pitch.name}`, `Play-off · ${prepared.pitch.name}`),
+    onDone() {
+      recordRelegationLeg(career, prepared);
+      saveCareer(career);
+      openClubhouse();
+    },
+  });
+}
+
 function finishCareerMatch() {
-  const { prepared, fixture, cup } = careerMatch;
+  const { prepared, fixture, cup, relegation } = careerMatch;
   careerMatch = null;
+  if (relegation) {
+    recordRelegationLeg(career, prepared);
+    saveCareer(career);
+    openClubhouse();
+    return;
+  }
   if (cup) {
     recordCupResult(career, cup, prepared);
     saveCareer(career);

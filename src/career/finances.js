@@ -69,7 +69,7 @@ export function matchFinances(career, fixture, prepared, level) {
     const rng = createRng(career.seed + career.season * 97 + career.round * 13);
     const press = (career.flags?.pressWeeks > 0 ? 1.4 : 1) * (m.derby ? 1.8 : 1); // Kreisblatt-Porträt, Derby
     const weatherFans = { sonne: 1.2, hitze: 0.9, regen: 0.6, wind: 0.85, nebel: 0.8, frost: 0.7, schnee: 0.5 }[career.week?.weather?.id] ?? 1;
-    const fans = Math.round((level > 1 ? rng.int(20, 45) : rng.int(5, 14)) * press * weatherFans * fansMul(career));
+    const fans = Math.round((level > 2 ? rng.int(40, 80) : level > 1 ? rng.int(20, 45) : rng.int(5, 14)) * press * weatherFans * fansMul(career));
     career.flags ??= {};
     career.flags.fans = { round: career.round, n: fans }; // für die Unterschriftenlisten
     const wirt = (career.staff?.wirt ? 1.3 : 1) * salesMul(career); // Wirt, Grill & Theke

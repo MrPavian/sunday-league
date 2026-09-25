@@ -536,3 +536,51 @@ describe('player development and awards', () => {
     expect(logged[0].seasons[0]).toMatchObject({ season: 1 });
   });
 });
+
+describe('leagues and relegation play-offs', () => {
+  // Saison so ausgehen lassen, dass der eigene Verein Zweiter wird.
+  const finishAsRunnerUp = (c) => {
+    const me = humanClub(c).id;
+    const leader = c.clubs.find((x) => !x.human).id;
+    for (const round of c.fixtures) {
+      for (const f of round) {
+        const involves = (id) => f.home === id || f.away === id;
+        if (involves(leader)) f.result = f.home === leader ? { home: 3, away: 0 } : { home: 0, away: 3 };
+        else if (involves(me)) f.result = f.home === me ? { home: 2, away: 0 } : { home: 0, away: 2 };
+        else f.result = { home: 1, away: 1 };
+      }
+    }
+    c.round = c.fixtures.length;
+  };
+
+  it('the runner-up plays a two-legged play-off against a club from the league above', async () => {
+    const { relegationNeeded, startRelegation, prepareRelegationMatch, recordRelegationLeg } = await import('../src/career/relegation.js');
+    const c = createCareer({ seed: 31 });
+    finishAsRunnerUp(c);
+    expect(relegationNeeded(c)).toMatchObject({ kind: 'up', level: 1, other: 2 });
+    const r = startRelegation(c);
+    expect(r.opponent.squad.length).toBeGreaterThan(8);
+    for (let leg = 0; leg < 2; leg++) {
+      const prepared = prepareRelegationMatch(c, { duration: 60 });
+      simulateSync(prepared);
+      recordRelegationLeg(c, prepared);
+    }
+    expect(r.done).toBe(true);
+    expect(r.legs.every((l) => l.result)).toBe(true);
+    const before = c.level ?? 1;
+    nextSeason(c);
+    expect(c.level).toBe(r.won ? before + 1 : before);
+    for (const idx of r.opponent.squad) expect(c.players[idx]).toBeUndefined();
+  });
+
+  it('there is a third league and its champion stays at the top', async () => {
+    const { LEAGUES, MAX_LEVEL } = await import('../src/career/clubs.js');
+    expect(MAX_LEVEL).toBe(3);
+    expect(LEAGUES[3].clubs.length).toBe(5);
+    const c = createCareer({ seed: 32 });
+    c.level = 3;
+    const { relegationNeeded } = await import('../src/career/relegation.js');
+    finishAsRunnerUp(c);
+    expect(relegationNeeded(c)).toBeNull(); // von ganz oben gibt es keinen Aufstieg
+  });
+});

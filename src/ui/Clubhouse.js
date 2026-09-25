@@ -1,5 +1,7 @@
 import { plural, tr } from '../core/i18n.js';
 import { awardLabel } from '../career/awards.js';
+import { relegationNeeded, relegationOf } from '../career/relegation.js';
+import { LEAGUES } from '../career/clubs.js';
 import {
   clubById,
   currentLineup,
@@ -497,9 +499,16 @@ export class Clubhouse {
     const level = leagueOf(c).level;
     const last = pos === t.length;
     let msg;
+    const rel = relegationOf(c);
     if (pos === 1 && level === 1) msg = tr('MEISTER! Aufstieg in die Kreisklasse C – eigener Rasenplatz, Schiri, 7 gegen 7. Die Runde im Vereinsheim geht aufs Haus.', 'CHAMPIONS! Promotion to District League C – your own grass pitch, a referee, 7-a-side. The round at the clubhouse is on the house.');
-    else if (pos === 1) msg = tr('MEISTER der Kreisklasse C! Die Kreisklasse B kommt in einem späteren Update – bis dahin wird die Schale jede Woche poliert.', 'District League C CHAMPIONS! League B comes in a later update – until then the trophy gets polished every week.');
-    else if (last && level > 1) msg = tr('Letzter Platz – Abstieg in die Freizeitliga. Kopf hoch, der Hinterhof wartet.', 'Bottom of the table – relegated to the rec league. Chin up, the backyard awaits.');
+    else if (pos === 1 && level === 2) msg = tr('MEISTER der Kreisklasse C! Aufstieg in die Kreisklasse B – stärkere Gegner, mehr Zuschauer, mehr Geld.', 'District League C CHAMPIONS! Promotion to District League B – tougher opponents, bigger crowds, more money.');
+    else if (pos === 1) msg = tr('MEISTER der Kreisklasse B! Ganz oben im Kanalbezirk. Die Schale bekommt einen Ehrenplatz im Vereinsheim.', 'District League B CHAMPIONS! The top of the Kanalbezirk. The trophy gets pride of place in the clubhouse.');
+    else if (last && level > 1) msg = tr(`Letzter Platz – Abstieg in die ${LEAGUES[level - 1].name}. Kopf hoch, nächstes Jahr geht's wieder rauf.`, `Bottom of the table – relegated to the ${LEAGUES[level - 1].name}. Chin up, next year we go again.`);
+    else if (rel?.done) msg = rel.kind === 'up'
+      ? rel.won ? tr(`Vizemeister – und über die Relegation aufgestiegen (${rel.agg[0]}:${rel.agg[1]}${rel.pens ? `, i. E. ${rel.pens.ours}:${rel.pens.theirs}` : ''})! Ab jetzt ${LEAGUES[level + 1].name}.`, `Runners-up – and promoted via the play-off (${rel.agg[0]}-${rel.agg[1]}${rel.pens ? `, ${rel.pens.ours}-${rel.pens.theirs} on pens` : ''})! ${LEAGUES[level + 1].name} from now on.`) : tr(`Vizemeister, aber die Relegation verloren (${rel.agg[0]}:${rel.agg[1]}${rel.pens ? `, i. E. ${rel.pens.ours}:${rel.pens.theirs}` : ''}). Nächstes Jahr.`, `Runners-up, but lost the play-off (${rel.agg[0]}-${rel.agg[1]}${rel.pens ? `, ${rel.pens.ours}-${rel.pens.theirs} on pens` : ''}). Next year.`)
+      : rel.won ? tr(`Klassenerhalt in der Relegation (${rel.agg[0]}:${rel.agg[1]}${rel.pens ? `, i. E. ${rel.pens.ours}:${rel.pens.theirs}` : ''}). Durchatmen!`, `Survived in the play-off (${rel.agg[0]}-${rel.agg[1]}${rel.pens ? `, ${rel.pens.ours}-${rel.pens.theirs} on pens` : ''}). Deep breath!`) : tr(`Relegation verloren (${rel.agg[0]}:${rel.agg[1]}${rel.pens ? `, i. E. ${rel.pens.ours}:${rel.pens.theirs}` : ''}) – Abstieg in die ${LEAGUES[level - 1].name}.`, `Lost the play-off (${rel.agg[0]}-${rel.agg[1]}${rel.pens ? `, ${rel.pens.ours}-${rel.pens.theirs} on pens` : ''}) – relegated to the ${LEAGUES[level - 1].name}.`);
+    else if (pos === 2 && relegationNeeded(c)) msg = tr('Vizemeister! Jetzt noch die Relegation – zwei Spiele um den Aufstieg.', 'Runners-up! Now the play-off – two games for promotion.');
+    else if (relegationNeeded(c)) msg = tr('Vorletzter. Jetzt zählt es: Relegation um den Klassenerhalt.', 'Second from bottom. Now it counts: a play-off to stay up.');
     else if (pos === 2) msg = tr('Vizemeister! Nächstes Jahr greifen wir an.', 'Runners-up! Next year we go for it.');
     else if (last) msg = tr('Rote Laterne. Aber die Stimmung stimmt.', 'Wooden spoon. But the spirit is right.');
     else msg = tr('Solides Mittelfeld. Die Mannschaftsfahrt ist trotzdem gebucht.', 'Solid mid-table. The team trip is still booked.');
@@ -515,8 +524,32 @@ export class Clubhouse {
         ${this.miniTable()}
         ${chronicle}
         ${this.tripBlock()}
-        ${this.legacyAside() ?? this.cupAside()}
+        ${this.legacyAside() ?? this.relegationAside() ?? this.cupAside()}
       </div>`;
+  }
+
+  // Relegation: Hin- und Rückspiel, bevor es in den Sommer geht.
+  relegationAside() {
+    const c = this.career;
+    const need = relegationNeeded(c);
+    const r = relegationOf(c);
+    if (!need || r?.done) return null;
+    const target = LEAGUES[need.kind === 'up' ? need.other : need.level].name;
+    const opp = r?.opponent ?? { name: tr(`ein Verein aus der ${LEAGUES[need.other].name}`, `a club from the ${LEAGUES[need.other].name}`) };
+    const legs = r
+      ? r.legs.map((l, i) => `<li>${i === 0 ? tr('Hinspiel', 'First leg') : tr('Rückspiel', 'Second leg')} ${l.home === 'relegation' ? tr('auswärts', 'away') : tr('zu Hause', 'at home')}: ${l.result ? `<b>${l.result.ours}:${l.result.theirs}</b>` : '–'}</li>`).join('')
+      : '';
+    const intro =
+      need.kind === 'up'
+        ? tr(`Vizemeister – jetzt geht es in der Relegation um den Aufstieg in die ${target}. Gegner: <b>${opp.name}</b>.`, `Runners-up – now the play-off decides promotion to the ${target}. Opponent: <b>${opp.name}</b>.`)
+        : tr(`Vorletzter – in der Relegation geht es um den Klassenerhalt in der ${target}. Gegner: <b>${opp.name}</b>.`, `Second from bottom – the play-off decides whether we stay in the ${target}. Opponent: <b>${opp.name}</b>.`);
+    const leg = r ? r.leg : 0;
+    return `<p class="label">${tr('Relegation', 'Play-off')}</p><p>${intro}</p>
+      <p class="hint">${tr('Hin- und Rückspiel, es zählt das Gesamtergebnis. Steht es danach gleich: Elfmeterschießen.', 'Two legs, aggregate score counts. Level after both: penalties.')}</p>
+      ${legs ? `<ul class="legs">${legs}</ul>` : ''}
+      ${r && r.leg === 1 ? `<p>${tr('Gesamt bisher', 'Aggregate so far')}: <b>${r.agg[0]}:${r.agg[1]}</b></p>` : ''}
+      <button class="primary" data-action="onRelPlay">${leg === 0 ? tr('Hinspiel selbst spielen', 'Play the first leg') : tr('Rückspiel selbst spielen', 'Play the second leg')}</button>
+      <button data-action="onRelSimulate">${tr('Simulieren · Liveticker', 'Simulate · live ticker')}</button>`;
   }
 
   // Saisonabschlussfahrt: Ziel wählen, dann drei Etappen mit Entscheidungen.
@@ -555,7 +588,7 @@ export class Clubhouse {
         ? `<button data-action="stepDown" class="danger">${tr('Wirklich abtreten? Nochmal klicken', 'Really step down? Click again')}</button>`
         : `<button data-action="stepDown">${tr(`Amt übergeben (du bist ${age})`, `Hand over the job (you are ${age})`)}</button>`
       : '';
-    return last || step ? `${last}${step}${this.cupAside()}` : null;
+    return last || step ? `${last}${step}${this.relegationAside() ?? this.cupAside()}` : null;
   }
 
   // Saisonende: erst Stadtmeisterschaft (oder absagen), dann die neue Saison.

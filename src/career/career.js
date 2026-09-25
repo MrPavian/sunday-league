@@ -14,7 +14,8 @@ import { PITCHES } from '../sim/pitch.js';
 import { allPlayers } from '../sim/squad.js';
 import { gradePlayers } from '../sim/stats.js';
 import { absenceChance, DECLINE_TEXT, FAREWELL, INJURED, JOIN_TEXT, LATE, noReasons, NUDGE_NO, NUDGE_YES, RUMOR_SOURCES, YES } from './chat.js';
-import { HUMAN_CLUB_DEFAULT, LEAGUES } from './clubs.js';
+import { HUMAN_CLUB_DEFAULT, LEAGUES, MAX_LEVEL } from './clubs.js';
+import { autoRelegation, relegationOutcome } from './relegation.js';
 import { applyPubToTeam } from './pub.js';
 import { rollInjuries } from './injuries.js';
 import { initAcademy, seasonAcademy, weeklyAcademy } from './academy.js';
@@ -181,8 +182,11 @@ export function nextSeason(career) {
   const rows = table(career);
   const pos = rows.findIndex((r) => r.club.human) + 1;
   const level = career.level ?? 1;
-  const promoted = pos === 1 && level < 2;
-  const relegated = level > 1 && pos === rows.length;
+  // Direkt rauf als Meister, direkt runter als Letzter – dazwischen entscheidet die Relegation.
+  autoRelegation(career);
+  const rel = relegationOutcome(career);
+  const promoted = (pos === 1 && level < MAX_LEVEL) || !!rel?.promoted;
+  const relegated = (level > 1 && pos === rows.length) || !!rel?.relegated;
   const scorer = humanClub(career).squad.map((idx) => ({ idx, goals: career.players[idx]?.goals ?? 0 })).sort((a, b) => b.goals - a.goals)[0];
   const topScorer = scorer?.goals ? { name: playerOf(career, scorer.idx).name, goals: scorer.goals } : null;
   career.history = [...(career.history ?? []), { season: career.season, league: career.league, pos, champion: rows[0].club.name, topScorer, promoted, relegated }];
@@ -231,6 +235,8 @@ export function nextSeason(career) {
     clubs = [human, ...league.clubs.map((c) => ({ ...c, human: false, squad: pick(c.tiers, SQUAD_SHAPES[league.squadShape]) }))];
     for (const c of clubs) for (const idx of c.squad) career.players[idx] ??= freshRecord();
   }
+  // Der Relegationsgegner verlässt den Spielstand wieder.
+  if (career.relegation) for (const idx of career.relegation.opponent.squad) if (!clubs.some((c) => c.squad.includes(idx))) delete career.players[idx];
   if (career.flags) Object.assign(career.flags, { summerfest: false, anniversary: false });
   seasonPersonal(career, pos);
   if (career.arcs) career.arcs = career.arcs.filter((a) => a.id !== 'bruder'); // neuer Spielplan

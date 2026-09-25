@@ -59,6 +59,9 @@ die Komik entsteht aus dem Alltag.
   kommentierter **Liveticker** im Zeitraffer (oder direkt zum Ergebnis)
 - **Faire Torhüter-Regeln**: Hält der Keeper den Ball, gibt es eine Schutzzone – niemand lauert beim Abwurf
 - **Ballführung mit Gefühl**: Der Ball bleibt am Fuß, wer ihn will, muss stochern oder grätschen
+- **Standards selbst gestalten**: Freistoß mit Mauer und eigener Richtung, Ecken kurz, an den ersten oder
+  den langen Pfosten, **Elfmeterschießen** im Turnier und in der Relegation
+- **Schwierigkeitsgrad** (locker, normal, Kreisliga-hart) und optionaler Auto-Wechsel in der Abwehr
 - **Echtes Passspiel**: Mitspieler laufen dem Ball entgegen, rücken bei Ballbesitz auf und sichern hinten ab
 - **Torhüter mit Reaktionszeit**: Platzierte Schüsse sind oft drin, im Eins gegen eins kommt der Keeper raus
   und wirft sich in die Füße – klappt mal, mal nicht
@@ -74,6 +77,8 @@ die Komik entsteht aus dem Alltag.
 
 ### Karriere & Verein
 - **Wochenrhythmus**: Chatgruppe, Open Training, Stammkneipe, Ereignis, Spieltag
+- **Drei Ligen mit Relegation**: Freizeitliga, Kreisklasse C und B – der Zweite spielt in Hin- und Rückspiel um den Aufstieg
+- **Spielerentwicklung sichtbar**: Formkurve, Stärke-Verlauf über die Saisons, Spieler des Monats im Kreisblatt
 - **Eigener Spielertrainer**: Name, Alter, Beruf, Beziehung, Kinder und Spielertyp selbst festlegen
 - **Kasse & Strafenkatalog**: Luftloch 1 €, Eigentor eine Runde für alle
 - **Sponsoren mit Eigenarten**: nachverhandeln, bei Laune halten, verlängern – oder verärgern
@@ -178,7 +183,7 @@ Auf englischen Tastaturen liegt „Stochern“ auf **Z** (gleiche Taste).
 
 ```bash
 npm run dev      # Entwicklungsserver mit Hot Reload
-npm test         # 146 Tests (Simulation und Karriere)
+npm test         # 161 Tests (Simulation und Karriere)
 npm run build    # Produktions-Build nach dist/
 npm run preview  # Build lokal ansehen
 ```
@@ -224,7 +229,7 @@ veröffentlicht (`.github/workflows/pages.yml`). Einmalig im Repository einschal
 
 ## Stand
 
-Spielbarer Prototyp: Das Match, eine vollständige Karriere mit zwei Ligen und die meisten Vereins- und
+Spielbarer Prototyp: Das Match, eine vollständige Karriere mit drei Ligen samt Relegation und die meisten Vereins- und
 Lebenssysteme sind fertig. Das Spiel ist komplett auf Deutsch und Englisch spielbar. Offen sind unter anderem Tutorial, Tastenbelegung,
 weitere Ligen und ein Desktop-Build. Details im [Projektüberblick](docs/OVERVIEW.md#8-stand-und-grenzen).
 

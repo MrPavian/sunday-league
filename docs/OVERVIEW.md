@@ -104,7 +104,7 @@ Sponsorenangebote und einen Eintrag in der Chronik.
 |---|---|---|
 | **Match-Simulation** | Spieler, Ball, KI, Zweikämpfe, Fouls, Standards, Untergründe, Vorfälle | `src/sim/` |
 | **Spielorte** | Sechs Plätze mit eigener Physik, Regeln und Kulisse | `src/sim/pitch.js`, `src/render/venues/` |
-| **Saison & Liga** | Spielplan, Tabelle, zwei Ligen mit Auf- und Abstieg | `src/career/career.js`, `clubs.js` |
+| **Saison & Liga** | Spielplan, Tabelle, drei Ligen mit Auf- und Abstieg und Relegation (Hin- und Rückspiel) | `src/career/career.js`, `clubs.js`, `relegation.js` |
 | **Chatgruppe** | Zu- und Absagen nach Beruf, Nachhaken, Aushilfen | `career.js`, `chat.js` |
 | **Ereignisse** | 67 Ereignisse, jede Antwort mit 3–10 gewichteten Ausgängen | `events.js`, `outcomes.js` |
 | **Geschichten** | Mehrwöchige Lebensgeschichten und Vereinsgeschichte, mit Wendungen | `stories.js`, `sagas.js`, `twists.js` |
@@ -227,7 +227,7 @@ teuren Effekte für langsame Rechner abschalten.
 
 **Fertig und spielbar**
 - Match mit sechs Spielorten, Wetter, Vorfällen, Schiri, Auswechslungen, Standards
-- Karriere über beliebig viele Saisons mit zwei Ligen, Turnieren und Derbys
+- Karriere über beliebig viele Saisons mit drei Ligen, Relegation, Turnieren und Derbys
 - Alle Vereins-, Lebens- und Geschichtensysteme aus der Tabelle oben
 - Nachfolge über Generationen
 - Sechs Challenges

@@ -144,7 +144,9 @@ function step(m, input, dt) {
   }
   if (m.time >= m.duration) {
     // K.-o.-Spiel unentschieden und der Mensch spielt mit: Elfmeterschießen.
-    if (m.knockout && m.humanTeam !== null && m.score[0] === m.score[1]) {
+    // Mit Hinspiel (Relegation) zählt das Gesamtergebnis.
+    const agg = m.aggregate ?? [0, 0];
+    if (m.knockout && m.humanTeam !== null && m.score[0] + agg[0] === m.score[1] + agg[1]) {
       m.events.push({ type: 'fulltime_draw' });
       startShootout(m);
       return;

@@ -110,7 +110,59 @@ export const KC_CLUBS = [
   },
 ];
 
+// Kreisklasse B: 7 gegen 7, stärkere Gegner, mehr Zuschauer – hier wird's ernst.
+export const KB_CLUBS = [
+  {
+    id: 'viktoria',
+    name: 'SC Viktoria Oststadt',
+    short: 'VIK',
+    venue: 'rasenplatz',
+    kit: { shirt: 0x6a2c8c, shorts: 0xf2efe6, socks: 0x6a2c8c },
+    keeperKit: { shirt: 0xe0b020, shorts: 0x1c1c1c, socks: 0xe0b020 },
+    tiers: { ok: 0.25, gut: 0.4, stark: 0.26, dorfstar: 0.08, superstar: 0.01 },
+  },
+  {
+    id: 'eintracht',
+    name: 'Eintracht Weserau',
+    short: 'EWE',
+    venue: 'rasenplatz',
+    kit: { shirt: 0xc8352f, shorts: 0xf2efe6, socks: 0xc8352f },
+    keeperKit: { shirt: 0x2e8b57, shorts: 0x1c1c1c, socks: 0x2e8b57 },
+    tiers: { ok: 0.28, gut: 0.4, stark: 0.24, dorfstar: 0.07, superstar: 0.01 },
+  },
+  {
+    id: 'grunwald',
+    name: 'TuS Grünwald 1911',
+    short: 'TGW',
+    venue: 'ascheplatz',
+    kit: { shirt: 0x2e8b57, shorts: 0x1c1c1c, socks: 0x2e8b57 },
+    keeperKit: { shirt: 0xe8742a, shorts: 0x1c1c1c, socks: 0xe8742a },
+    tiers: { ok: 0.3, gut: 0.42, stark: 0.21, dorfstar: 0.07 },
+  },
+  {
+    id: 'hansa',
+    name: 'SV Hansa Möwenkap',
+    short: 'HMK',
+    venue: 'rasenplatz',
+    kit: { shirt: 0x1d3b6e, shorts: 0x1d3b6e, socks: 0xf2efe6 },
+    keeperKit: { shirt: 0xd8d0c0, shorts: 0x1c1c1c, socks: 0xd8d0c0 },
+    tiers: { ok: 0.32, gut: 0.4, stark: 0.21, dorfstar: 0.06, superstar: 0.01 },
+  },
+  {
+    id: 'reserve',
+    name: 'Borussia Nordhafen III',
+    short: 'BN3',
+    venue: 'rasenplatz',
+    kit: { shirt: 0xe0c020, shorts: 0x1c1c1c, socks: 0xe0c020 },
+    keeperKit: { shirt: 0x4fa3e0, shorts: 0x1c1c1c, socks: 0x4fa3e0 },
+    tiers: { ok: 0.35, gut: 0.4, stark: 0.2, dorfstar: 0.05 },
+  },
+];
+
+export const MAX_LEVEL = 3;
+
 export const LEAGUES = {
   1: { level: 1, name: LEAGUE_NAME, referee: false, format: null, humanVenue: 'hinterhof', clubs: AI_CLUBS, squadShape: 'small', maxSquad: 12, derby: { club: 'kanal', name: tr('Kanal-Derby', 'Canal Derby') } },
   2: { level: 2, name: tr('Kreisklasse C Kanalbezirk', 'Kanalbezirk District League C'), referee: true, format: 7, humanVenue: 'rasenplatz', clubs: KC_CLUBS, squadShape: 'large', maxSquad: 16, derby: { club: 'bwk', name: tr('Bezirks-Derby', 'District Derby') } },
+  3: { level: 3, name: tr('Kreisklasse B Kanalbezirk', 'Kanalbezirk District League B'), referee: true, format: 7, humanVenue: 'rasenplatz', clubs: KB_CLUBS, squadShape: 'large', maxSquad: 16, derby: { club: 'viktoria', name: tr('Stadtderby', 'City Derby') } },
 };
