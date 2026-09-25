@@ -558,3 +558,26 @@ describe('keeper safe zone and ball control', () => {
     expect(maxGap).toBeLessThan(1.1);
   });
 });
+
+describe('live ticker', () => {
+  it('comments every goal and does not change the result', async () => {
+    const { createCommentator } = await import('../src/sim/commentary.js');
+    const plain = createMatch({ seed: 9, pitch: PITCHES.park, human: false, incidents: true });
+    while (plain.phase !== 'ended') {
+      stepMatch(plain, undefined, DT);
+      plain.events.length = 0;
+    }
+    const m = createMatch({ seed: 9, pitch: PITCHES.park, human: false, incidents: true });
+    const c = createCommentator(m, 3);
+    while (m.phase !== 'ended') {
+      stepMatch(m, undefined, DT);
+      c.feed(m.events);
+      m.events.length = 0;
+    }
+    expect(m.score).toEqual(plain.score);
+    expect(c.lines.filter((l) => l.kind === 'goal').length).toBe(m.score[0] + m.score[1]);
+    expect(c.lines[0].kind).toBe('whistle');
+    expect(c.lines.at(-1).text).toMatch(/Abpfiff/);
+    expect(c.lines.every((l) => l.minute >= 1 && l.minute <= 90 && l.text.length > 5)).toBe(true);
+  });
+});

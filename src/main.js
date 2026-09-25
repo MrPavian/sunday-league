@@ -39,6 +39,7 @@ import { Hud } from './ui/Hud.js';
 import { Menu } from './ui/Menu.js';
 import { PoolBrowser } from './ui/PoolBrowser.js';
 import { Settings } from './ui/Settings.js';
+import { Ticker } from './ui/Ticker.js';
 import './style.css';
 
 const STEP = 1 / 60;
@@ -233,7 +234,7 @@ const clubhouse = new Clubhouse(document.getElementById('club'), {
   onMenu: openMenu,
   onChange: () => saveCareer(career),
   onPlay: playCareerMatch,
-  onSimulate: () => runRound(null),
+  onSimulate: () => tickerRound(),
   onNextWeek() {
     finishRound(career);
     saveCareer(career);
@@ -251,7 +252,7 @@ const clubhouse = new Clubhouse(document.getElementById('club'), {
     openClubhouse();
   },
   onCupPlay: (kind = 'stadt') => playCupMatch(kind),
-  onCupSimulate: (kind = 'stadt') => runCupRound(null, kind),
+  onCupSimulate: (kind = 'stadt') => tickerCup(kind),
   onNewCoach() {
     creator.show({
       seed: career.seed + career.season,
@@ -369,6 +370,43 @@ async function runCupRound(played, kind = played?.kind ?? 'stadt') {
   saveCareer(career);
   clubhouse.tab = 'cup';
   openClubhouse();
+}
+
+// Simulieren mit Liveticker: Das eigene Spiel läuft als kommentierter Text im
+// Zeitraffer, danach werden die übrigen Partien wie gewohnt gerechnet.
+const ticker = new Ticker(document.getElementById('ticker'));
+const tickerTitle = (prepared) => tr(`Liveticker · ${prepared.pitch.name}`, `Live ticker · ${prepared.pitch.name}`);
+
+function tickerRound() {
+  const fixture = humanFixture(career);
+  if (!fixture) return runRound(null);
+  const prepared = prepareMatch(career, fixture, { duration: testDuration });
+  clubhouse.hide();
+  ticker.show(prepared, {
+    title: tickerTitle(prepared),
+    onDone() {
+      recordResult(career, fixture, prepared);
+      saveCareer(career);
+      openClubhouse();
+      runRound(fixture);
+    },
+  });
+}
+
+function tickerCup(kind) {
+  const m = humanCupMatch(career, kind);
+  if (!m) return runCupRound(null, kind);
+  const prepared = prepareCupMatch(career, m, { duration: testDuration });
+  clubhouse.hide();
+  ticker.show(prepared, {
+    title: tickerTitle(prepared),
+    onDone() {
+      recordCupResult(career, m, prepared);
+      saveCareer(career);
+      openClubhouse();
+      runCupRound(m);
+    },
+  });
 }
 
 // Restliche Partien des Spieltags simulieren (und ggf. das eigene Spiel).

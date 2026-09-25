@@ -259,6 +259,8 @@ Liga- und Vereinsnamen bleiben fiktiv (keine Lizenzen nötig); regionale Variant
 - [x] Regeln: Anstoß durch das Team, das das Tor kassiert hat; Einwurf, Ecke, Abstoß; Parkplatzregel „Ans Auto“
 - [x] Pfosten & Latte bei echten Toren
 - [x] Modus KI gegen KI (Grundlage für simulierte Ligaspiele)
+- [x] Liveticker für simulierte Spiele (Kommentator auf Deutsch und Englisch)
+- [x] Balance: Schutzzone für den Torwart, Ballführung am Fuß, schlagbare Kreisklasse-Keeper
 - [x] Pixelschrift im Projekt statt Google Fonts
 - [ ] Minimal-UI: Halbzeit, Endstand-Screen
 

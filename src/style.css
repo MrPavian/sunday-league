@@ -627,3 +627,31 @@ li.sponsor .rel i { display: block; height: 100%; background: #c9a227; }
 .settings-panel.first-run h1 { font-size: 44px; color: var(--accent, #ffe14d); margin: 0 0 12px; }
 .settings-panel .choice.big { justify-content: center; margin: 18px 0; }
 .settings-panel .choice.big button { font-size: 22px; padding: 12px 28px; }
+
+/* Liveticker für simulierte Spiele */
+#ticker { position: absolute; inset: 0; display: flex; justify-content: center; align-items: flex-start; padding: 16px; overflow-y: auto; background: rgba(10, 12, 14, 0.92); z-index: 3; text-shadow: var(--shadow); }
+#ticker[hidden] { display: none; }
+.ticker-panel { width: min(760px, 100%); display: flex; flex-direction: column; gap: 10px; max-height: calc(100vh - 32px); }
+.ticker-panel header { text-align: center; background: var(--panel); border: 2px solid #000; padding: 10px 12px; }
+.ticker-panel header small { opacity: 0.75; }
+.ticker-panel .board { display: flex; justify-content: center; align-items: center; gap: 16px; margin: 6px 0 2px; font-size: 20px; flex-wrap: wrap; }
+.ticker-panel .team { display: inline-flex; align-items: center; gap: 8px; }
+.ticker-panel .team i { width: 14px; height: 18px; background: var(--kit); border: 2px solid #000; border-radius: 0 0 7px 7px; }
+.ticker-panel .score { font-size: 34px; color: var(--accent); min-width: 110px; }
+.ticker-panel .clock { opacity: 0.85; }
+.ticker-panel .lines { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; min-height: 200px; display: flex; flex-direction: column; gap: 4px; }
+.ticker-panel .lines li { display: flex; gap: 10px; background: var(--panel); border: 2px solid #000; border-left: 6px solid #555; padding: 6px 10px; line-height: 1.35; animation: tick-in 0.25s ease-out; }
+.ticker-panel .lines .min { min-width: 34px; color: var(--accent); }
+.ticker-panel .lines .goal { border-left-color: var(--accent); background: rgba(80, 70, 10, 0.85); font-weight: 600; }
+.ticker-panel .lines .chance { border-left-color: #6fb3ff; }
+.ticker-panel .lines .foul { border-left-color: #d9822b; }
+.ticker-panel .lines .card { border-left-color: #f2d024; }
+.ticker-panel .lines .red { border-left-color: #d23a3a; }
+.ticker-panel .lines .incident { border-left-color: #b57bff; font-style: italic; }
+.ticker-panel .lines .whistle { border-left-color: #f6f1e4; }
+.ticker-panel footer { display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ticker-panel footer .stats { width: 100%; text-align: center; margin: 0; opacity: 0.85; }
+.ticker-panel footer button { font: inherit; color: var(--ink); background: var(--panel); border: 2px solid #000; padding: 8px 16px; cursor: pointer; text-shadow: var(--shadow); }
+.ticker-panel footer button.go { background: #2f7d3a; }
+@keyframes tick-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ticker-panel .lines li { animation: none; } }
