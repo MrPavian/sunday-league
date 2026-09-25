@@ -120,7 +120,7 @@ export function stepMatch(m, input = NO_INPUT, dt) {
   if (input.switchPlayer) switchToNearest(m);
   updateTactics(m, dt);
 
-  const leaders = m.players.filter((p) => hasTrait(p, 'anfuehrer'));
+  const leaders = m.players.filter((p) => hasTrait(p, 'anfuehrer') || hasTrait(p, 'ex_profi'));
   for (const p of m.players) {
     p.kickCooldown = Math.max(0, p.kickCooldown - dt);
     p.kickAnim = Math.max(0, p.kickAnim - dt);

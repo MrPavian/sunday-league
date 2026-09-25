@@ -1,4 +1,6 @@
 import { TRAITS } from '../data/traits.js';
+import { tierById } from '../data/tiers.js';
+import { POSITIONS } from '../sim/generator.js';
 import { getPlayer } from '../sim/match.js';
 
 const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
@@ -17,6 +19,7 @@ export class Hud {
       <div class="card">
         <div class="name"></div>
         <div class="meta"></div>
+        <div class="tierline"></div>
         <div class="traits"></div>
         <div class="injury"></div>
         <div class="bar stamina"><i></i><span>Puste</span></div>
@@ -107,6 +110,10 @@ export class Hud {
       this.lastControlled = p.id;
       this.$('.name').textContent = p.name;
       this.$('.meta').textContent = `${p.age} J. · ${p.profession}`;
+      const tier = tierById(p.tier);
+      const line = this.$('.tierline');
+      line.style.setProperty('--c', tier.color);
+      line.innerHTML = `<span class="badge">${tier.name}</span> Stärke ${p.rating} · ${POSITIONS[p.position] ?? ''}${p.title ? ` · <b>${p.title}</b>` : ''}`;
       this.$('.traits').innerHTML = p.traits.length
         ? p.traits.map((id) => `<span title="${TRAITS[id].desc}">${TRAITS[id].name}</span>`).join('')
         : '<em>keine Besonderheiten</em>';

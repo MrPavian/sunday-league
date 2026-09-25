@@ -115,6 +115,37 @@ zu einem Verein auf, der sich vom Parkplatz bis ins Amateurstadion hocharbeitet.
 - Transfers laufen selten über Geld: eine Kiste Bier, ein Trikotsatz, ein Gefallen, ein Job-Tipp.
 - Sponsoren haben lokale Ziele („Mind. 30 Zuschauer beim Heimspiel“, „Spieler besucht Laden“).
 
+**Spielerpool & Klassen** *(umgesetzt als Grundlage)*
+- Ein Pool von 25.000 Spielern in der Region, deterministisch aus einem Seed erzeugt – jeder Spieler ist
+  über seine Nummer reproduzierbar, gespeichert werden muss nur, was sich ändert.
+- Sechs Klassen mit Seltenheit:
+
+  | Klasse | Anteil | Ø Stärke | Wer ist das? |
+  |---|---|---|---|
+  | OK | ~55 % | 40 | Kickt halt mit. |
+  | Gut | ~28 % | 51 | Stammspieler in jeder Kreisklasse. |
+  | Stark | ~12 % | 62 | Leistungsträger. |
+  | Dorfstar | ~4 % | 71 | Kennt im Ort jeder, Torschützenkönig, Vereinsikone. |
+  | Superstar | ~0,8 % | 80 | Hat mal höher gespielt: Oberliga, Regionalliga, Jugend eines Profivereins. |
+  | Ex-Profi | ~0,04 % (≈10 im Pool) | 87 | Karriere vorbei, will einfach nur kicken. |
+
+- **Ex-Profis** sind fiktive Archetypen – bewusst **keine echten Namen oder erkennbaren Personen**
+  (Persönlichkeits- und Namensrechte): Der Abwehrturm, Der Zehner, Der Knipser, Die Torwartlegende,
+  Der Staubsauger, Der Flügelflitzer. Weltklasse am Ball, aber Tempo und Puste sind im Ruhestand.
+  Eigene Eigenschaft „Ex-Profi“: kaum Fehlkontakte, präzise Pässe, Mitspieler in der Nähe laufen mehr.
+- Superstars und Dorfstars haben einen Lebenslauf mit fiktiven Vereinen; Karrierejahre passen zum Alter.
+- Stärke (1–99) nach Position gewichtet, Besonderheiten zählen mit.
+
+**Ideen für die Anwerbung (Saison-Phase)**
+- Gerüchte statt Transferliste: „Beim Bäcker erzählen sie, dass der ehemalige Abwehrchef von Borussia
+  Nordhafen ins Neubaugebiet gezogen ist.“ → Event-Kette.
+- Ex-Profis wollen **keinen Rummel**: Sie gehen lieber zum kleinen Verein mit guter Teamchemie als zum
+  ambitionierten Nachbarn. Presse und Social Media des Vereins schrecken sie eher ab.
+- Überzeugen über die Dritte Halbzeit, ein Open Training, einen gemeinsamen Kumpel im Team.
+- Superstars haben Bedingungen: „Nur, wenn ich sonntags um 15 Uhr wieder zu Hause bin.“
+- Scouting deckt Klasse und verborgene Eigenschaften erst nach und nach auf – im Pool-Browser später
+  mit „???“ statt Werten, bis man den Spieler gesehen hat.
+
 ### 3.2 Vereins- & Meta-Systeme
 
 - **Vereinsheim-Ausbau**: Bauwagen → Container → Vereinsheim mit Theke → Clubhaus mit Terrasse.

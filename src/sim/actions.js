@@ -94,7 +94,7 @@ export function tryExecute(m, p) {
     p.catchCooldown = 0.3;
   } else {
     // Luftloch – gehört in der Kreisklasse dazu.
-    const whiff = (0.05 * (1 - p.attrs.technique) + 0.04 * fatigue) * (hasTrait(p, 'ballsicher') ? 0.5 : 1);
+    const whiff = (0.05 * (1 - p.attrs.technique) + 0.04 * fatigue) * (hasTrait(p, 'ballsicher') ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.3 : 1);
     if (m.rng.chance(whiff)) {
       m.events.push({ type: 'whiff', playerId: p.id });
       return;
@@ -181,7 +181,7 @@ function pass(m, p, a, fatigue, fromHands) {
       speed = clamp(2.5 + d * 0.6, 4.5, 15);
       vy = d > 16 ? 3.5 : 0.2;
     }
-    const sigma = (0.02 + 0.12 * (1 - p.attrs.passing) + 0.05 * fatigue) * (eye ? 0.5 : 1);
+    const sigma = (0.02 + 0.12 * (1 - p.attrs.passing) + 0.05 * fatigue) * (eye ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.6 : 1);
     dir = rotate(dir, rng.gauss() * sigma);
     speed *= 1 + rng.gauss() * 0.08 * (1 - p.attrs.passing);
     if (p.id === m.controlledId) m.pendingSwitch = { receiver: target.id, kicker: p.id };
@@ -311,7 +311,7 @@ export function dribbleTouch(m) {
 
   const tech = p.attrs.technique;
   const fatigue = 1 - p.stamina;
-  const calm = hasTrait(p, 'ballsicher') ? 0.5 : 1;
+  const calm = hasTrait(p, 'ballsicher') || hasTrait(p, 'ex_profi') ? 0.5 : 1;
   const bs = ballSpeed(ball);
   p.kickCooldown = 0.2 + rng.next() * 0.12;
   ball.lastTouch = p.id;

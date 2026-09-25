@@ -11,8 +11,12 @@ export const TRAITS = {
   meckerer: { name: 'Meckerer', desc: 'Beschwert sich nach jedem Zweikampf – und steht dabei rum.' },
   raucher: { name: 'Raucher', desc: 'In der Halbzeit an der Eckfahne. Geht schneller die Puste aus.' },
   hart_im_nehmen: { name: 'Hart im Nehmen', desc: 'Schürfwunden stören kaum – grätscht auch mal auf Asche.' },
+  ex_profi: { name: 'Ex-Profi', desc: 'Hat ganz oben gespielt. Kaum Fehler am Ball, die Mitspieler laufen neben ihm mehr.' },
 };
 
 export const TRAIT_IDS = Object.keys(TRAITS);
+
+// Was zufällig vergeben werden kann – "Ex-Profi" gibt es nur mit Lebenslauf.
+export const RANDOM_TRAIT_IDS = TRAIT_IDS.filter((id) => id !== 'ex_profi');
 
 export const hasTrait = (player, id) => player.traits.includes(id);

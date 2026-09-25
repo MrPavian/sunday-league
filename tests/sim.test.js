@@ -4,6 +4,7 @@ import { BALL_RADIUS, createBall, stepBall } from '../src/sim/ball.js';
 import { PARKING_LOT, PITCHES } from '../src/sim/pitch.js';
 import { SURFACES } from '../src/sim/surfaces.js';
 import { createMatch, getPlayer, startTackle, stepMatch } from '../src/sim/match.js';
+import { createPlayerPool } from '../src/sim/generator.js';
 
 const DT = 1 / 60;
 
@@ -294,5 +295,65 @@ describe('venues', () => {
     expect(m.phase).toBe('ended');
     expect(goals).toBeGreaterThan(0);
     expect(m.players.length).toBe(pitch.format * 2);
+  });
+});
+
+describe('player pool', () => {
+  const pool = createPlayerPool({ seed: 1921, size: 25000 });
+
+  it('is deterministic: the same number is always the same player', () => {
+    const again = createPlayerPool({ seed: 1921, size: 25000 });
+    for (const i of [0, 42, 1234, 24999]) expect(again.get(i)).toEqual(pool.get(i));
+  });
+
+  it('has the right rarity: many OK players, very few ex-pros', () => {
+    const c = pool.countByTier();
+    expect(c.ok).toBeGreaterThan(c.gut);
+    expect(c.gut).toBeGreaterThan(c.stark);
+    expect(c.stark).toBeGreaterThan(c.dorfstar);
+    expect(c.dorfstar).toBeGreaterThan(c.superstar);
+    expect(c.superstar).toBeGreaterThan(50);
+    expect(c.legende).toBeGreaterThanOrEqual(1);
+    expect(c.legende).toBeLessThan(40);
+  });
+
+  it('gets stronger with every tier, ex-pros on top', () => {
+    const avg = (tier) => {
+      const ps = pool.byTier(tier);
+      return ps.reduce((s, p) => s + p.rating, 0) / ps.length;
+    };
+    const order = ['ok', 'gut', 'stark', 'dorfstar', 'superstar', 'legende'].map(avg);
+    for (let i = 1; i < order.length; i++) expect(order[i]).toBeGreaterThan(order[i - 1]);
+  });
+
+  it('ex-pros and superstars come with a backstory, ex-pros with the trait', () => {
+    for (const p of pool.byTier('legende')) {
+      expect(p.traits).toContain('ex_profi');
+      expect(p.backstory.length).toBeGreaterThan(40);
+      expect(p.title).toBeTruthy();
+    }
+    for (const p of pool.byTier('superstar')) expect(p.backstory).toBeTruthy();
+    expect(pool.byTier('ok').some((p) => p.traits.includes('ex_profi'))).toBe(false);
+  });
+
+  it('an ex-pro can play in a match', () => {
+    const legend = pool.byTier('legende').find((p) => p.position !== 'gk');
+    const m = createMatch({ seed: 3, human: false });
+    Object.assign(m.players[4], { ...legend, id: m.players[4].id, role: m.players[4].role, team: 0 });
+    for (let i = 0; i < 60 * 30; i++) {
+      stepMatch(m, undefined, DT);
+      m.events.length = 0;
+    }
+    expect(Number.isFinite(m.ball.pos.x)).toBe(true);
+  });
+});
+
+describe('backstories', () => {
+  it('career years fit the age', () => {
+    const pool = createPlayerPool({ seed: 7, size: 25000 });
+    for (const p of [...pool.byTier('superstar'), ...pool.byTier('legende')]) {
+      const years = Number(/(\d+) Jahre/.exec(p.backstory)?.[1] ?? 0);
+      expect(years).toBeLessThanOrEqual(p.age - 18);
+    }
   });
 });

@@ -11,6 +11,7 @@ import { createMatch, stepMatch } from './sim/match.js';
 import { SURFACES } from './sim/surfaces.js';
 import { Hud } from './ui/Hud.js';
 import { Menu } from './ui/Menu.js';
+import { PoolBrowser } from './ui/PoolBrowser.js';
 import './style.css';
 
 const STEP = 1 / 60;
@@ -55,7 +56,13 @@ function startMatch(human) {
   hud.init(match);
 }
 
+const poolBrowser = new PoolBrowser(document.getElementById('pool'));
+
 const menu = new Menu(document.getElementById('menu'), VENUES, {
+  onPool() {
+    menu.paused = true;
+    poolBrowser.show(() => setTimeout(() => (menu.paused = false), 0));
+  },
   onSelect(id) {
     loadVenue(id);
     startMatch(false); // KI-Vorschau im Hintergrund

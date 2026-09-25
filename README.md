@@ -47,6 +47,7 @@ npm run build    # Produktions-Build nach dist/
 | Spieler wechseln | Q / L | LB |
 | Hilfe ein/aus | H | – |
 | Zurück zur Platzwahl | Esc / M | – |
+| Spielerpool (im Menü) | P | – |
 | Revanche nach Abpfiff | Enter | – |
 
 ## Aufbau

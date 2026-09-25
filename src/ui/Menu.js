@@ -3,11 +3,12 @@ import { FORMATIONS } from '../sim/formation.js';
 // Platzwahl. Pfeiltasten/Klick wählen, Enter startet. Im Hintergrund läuft
 // auf dem gewählten Platz ein KI-Spiel als Vorschau.
 export class Menu {
-  constructor(root, venues, { onSelect, onStart }) {
+  constructor(root, venues, { onSelect, onStart, onPool }) {
     this.root = root;
     this.venues = venues;
     this.onSelect = onSelect;
     this.onStart = onStart;
+    this.onPool = onPool;
     this.index = 0;
     root.innerHTML = `
       <div class="menu-panel">
@@ -23,15 +24,18 @@ export class Menu {
           </button>`,
           )
           .join('')}</div>
-        <p class="hint">← → Platz wählen · <b>Enter</b> Anstoß</p>
+        <p class="hint">← → Platz wählen · <b>Enter</b> Anstoß · <b>P</b> Spielerpool</p>
+        <button class="pool-link">Spielerpool ansehen</button>
       </div>`;
+    root.querySelector('.pool-link').addEventListener('click', () => this.onPool());
     root.querySelectorAll('.venue-card').forEach((el) => {
       el.addEventListener('mouseenter', () => this.select(Number(el.dataset.i)));
       el.addEventListener('click', () => this.start());
     });
     window.addEventListener('keydown', (e) => {
-      if (!this.visible) return;
-      if (e.code === 'ArrowLeft' || e.code === 'KeyA') this.select(this.index - 1);
+      if (!this.visible || this.paused) return;
+      if (e.code === 'KeyP') this.onPool();
+      else if (e.code === 'ArrowLeft' || e.code === 'KeyA') this.select(this.index - 1);
       else if (e.code === 'ArrowRight' || e.code === 'KeyD') this.select(this.index + 1);
       else if (e.code === 'Enter' || e.code === 'Space') {
         e.preventDefault();
