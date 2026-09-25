@@ -579,3 +579,9 @@ nachverhandeln – mehr Geld, mehr Bonus oder das Angebot ist weg. Die Beziehung
 erfüllten Zielen und guten Entscheidungen; verärgerte Sponsoren zahlen schleppend und kündigen irgendwann.
 Zufriedene bieten die Verlängerung mit Aufschlag an. Ereignisse: Fototermin, der Sohn vom Chef will spielen,
 Konkurrenzangebot fürs Trikot, Sponsor in Not, Siegprämie (auch doppelt oder nichts), Werbespot, Firmenjubiläum.
+
+**Vereinsheim ausbauen** (`src/career/facilities.js`, Tab „Verein"): Warme Duschen (weniger Absagen), Grill & Theke
+(mehr Verkauf), Ballmaschine (Junge entwickeln sich schneller), neue Kabine (Stimmung, Transfers), Flutlicht
+(Training kostet weniger Familienzeit), Tribüne (mehr Zuschauer, braucht die Theke). Mit Handwerkern oder als
+Arbeitseinsatz zum halben Preis – mit Maurer-Glück, Hammer auf dem Daumen oder angebohrter Wasserleitung.
+Nebenkosten pro Woche.

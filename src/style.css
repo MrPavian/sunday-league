@@ -603,3 +603,11 @@ button.successor.new { border-style: dashed; }
 li.sponsor { margin-bottom: 8px; }
 li.sponsor .rel { display: block; height: 5px; background: #2a2f33; margin: 4px 0 2px; }
 li.sponsor .rel i { display: block; height: 100%; background: #c9a227; }
+
+/* Vereinsheim-Ausbau */
+.facilities { margin: 12px 0; }
+.facilities li.facility { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid #2a2f33; }
+.facilities li.facility.built b { color: #5cc46a; }
+.facilities .state { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; min-width: 180px; }
+.facilities .state .ok { color: #5cc46a; }
+@media (max-width: 640px) { .facilities li.facility { flex-direction: column; align-items: flex-start; } .facilities .state { justify-content: flex-start; } }

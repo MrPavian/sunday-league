@@ -22,13 +22,14 @@ import {
   table,
 } from '../career/career.js';
 import { acceptSponsor, bookTrip, FINES, KIT_COST, SLOTS, TRIP_COST } from '../career/finances.js';
+import { build, canBuild, facilities, FACILITIES } from '../career/facilities.js';
 import { goalProgress, negotiate, relLabel, TRAITS as SPONSOR_TRAITS } from '../career/sponsors.js';
 import { inviteChance, inviteTrialist, isRawDiamond, MAX_STATIONS, runStation, startTraining, STATIONS, TRAINING_COST, trainingDone } from '../career/training.js';
 import { promoteProspect, STAFF_ROLES } from '../career/youth.js';
 import { moodLabel, resolveEvent } from '../career/events.js';
 import { storyLabels } from '../career/stories.js';
 import { chronicleData, yearOf } from '../career/sagas.js';
-import { coachAge, legacy, legacyPrompt, resolveLegacy, stepDown, succeed, successionCandidates } from '../career/legacy.js';
+import { coachAge, coachPlaying, legacy, legacyPrompt, resolveLegacy, stepDown, succeed, successionCandidates } from '../career/legacy.js';
 import { askWirt, buyRound, dossier, playDart, PUB_ACTIONS, PUB_NAME, pubOpen, pubState, ROUND_PRICE, setTactic, TACTICS, talk, wirtName } from '../career/pub.js';
 import { DOSSIER_LABELS } from '../data/backstories.js';
 import { weatherLine } from '../career/weather.js';
@@ -82,6 +83,10 @@ export class Clubhouse {
         this.h.onChange();
       } else if (action === 'negotiate') {
         negotiate(this.career, Number(value));
+        this.h.onChange();
+      } else if (action === 'build') {
+        const [id, mode] = value.split(':');
+        build(this.career, id, mode);
         this.h.onChange();
       } else if (action === 'sponsor') {
         acceptSponsor(this.career, Number(value));
@@ -410,6 +415,32 @@ export class Clubhouse {
       </div>`;
   }
 
+  // Vereinsheim ausbauen: Handwerker oder Arbeitseinsatz.
+  facilityBlock() {
+    const c = this.career;
+    const f = facilities(c);
+    const rows = Object.entries(FACILITIES)
+      .map(([id, def]) => {
+        const built = f.built[id];
+        const building = f.building?.id === id;
+        const locked = (def.needs ?? []).some((n) => !f.built[n]);
+        const state = built
+          ? `<span class="ok">steht seit Saison ${built}</span>`
+          : building
+            ? `<span class="warn">im Bau, noch ${f.building.weeks} ${f.building.weeks === 1 ? 'Woche' : 'Wochen'}</span>`
+            : locked
+              ? `<small>braucht erst: ${def.needs.map((n) => FACILITIES[n].name).join(', ')}</small>`
+              : canBuild(c, id)
+                ? `<button data-action="build" data-value="${id}:handwerker" ${c.cash < def.cost ? 'disabled' : ''}>Handwerker (${euro(def.cost)})</button>
+                   <button data-action="build" data-value="${id}:einsatz" ${c.cash < def.cost / 2 ? 'disabled' : ''}>Arbeitseinsatz (${euro(def.cost / 2)}, ${def.weeks * 2} Wo.)</button>`
+                : '<small>erst die laufende Baustelle fertig machen</small>';
+        return `<li class="facility${built ? ' built' : ''}"><div><b>${def.name}</b> <small>${def.weeks} ${def.weeks === 1 ? 'Woche' : 'Wochen'}${def.upkeep ? ` · ${euro(def.upkeep)}/Woche Nebenkosten` : ''}</small><br><small>${def.desc}</small></div><div class="state">${state}</div></li>`;
+      })
+      .join('');
+    return `<div class="facilities"><h4>Vereinsheim ausbauen <small>Kasse: ${euro(c.cash)}</small></h4>
+      ${f.note ? `<p class="reply ok">${f.note}</p>` : ''}<ul class="plain">${rows}</ul></div>`;
+  }
+
   // Trainer-Ären: Wer saß wann an der Seitenlinie?
   erasBlock() {
     const c = this.career;
@@ -716,7 +747,7 @@ export class Clubhouse {
     const k = c.coach;
     const me = k?.idx != null ? this.p(k.idx) : null;
     const profile = k
-      ? `<div class="me-card"><h4>Du – Spielertrainer</h4>
+      ? `<div class="me-card"><h4>Du – ${coachPlaying(c) ? 'Spielertrainer' : 'Trainer'}${k.generation > 1 ? ` <small>(${k.generation}. Trainer-Ära)</small>` : ''}</h4>
           <p><b>${coachName(c)}</b>${me ? ` · ${me.age} J. · ${me.profession} · ${POSITIONS[me.position]} · Stärke ${me.rating}` : ''}</p>
           ${k.style ? `<p>Spielertyp: ${STYLES[k.style]?.name ?? ''}</p>` : ''}
           <p>${k.family}${k.flags.kasse ? ' · machst nebenbei die Vereinskasse' : ''}${k.flags.familyAtGames ? ' · die Familie kommt sonntags mit' : ''}</p>
@@ -731,6 +762,7 @@ export class Clubhouse {
       : '';
     return `
       ${profile}
+      ${this.facilityBlock()}
       ${this.chronicleBlock()}
       <div class="club-form">
         <div class="kit-preview">

@@ -1,6 +1,7 @@
 // Mannschaftskasse, Strafenkatalog, Sponsoren und die Saisonabschlussfahrt.
 import { createRng } from '../core/rng.js';
 import { closeSponsors, paySponsors } from './sponsors.js';
+import { fansMul, salesMul } from './facilities.js';
 
 export const START_CASH = 100;
 export const KIT_COST = 60;
@@ -65,11 +66,11 @@ export function matchFinances(career, fixture, prepared, level) {
     const rng = createRng(career.seed + career.season * 97 + career.round * 13);
     const press = (career.flags?.pressWeeks > 0 ? 1.4 : 1) * (m.derby ? 1.8 : 1); // Kreisblatt-Porträt, Derby
     const weatherFans = { sonne: 1.2, hitze: 0.9, regen: 0.6, wind: 0.85, nebel: 0.8, frost: 0.7, schnee: 0.5 }[career.week?.weather?.id] ?? 1;
-    const fans = Math.round((level > 1 ? rng.int(20, 45) : rng.int(5, 14)) * press * weatherFans);
+    const fans = Math.round((level > 1 ? rng.int(20, 45) : rng.int(5, 14)) * press * weatherFans * fansMul(career));
     career.flags ??= {};
     career.flags.fans = { round: career.round, n: fans }; // für die Unterschriftenlisten
-    const wirt = career.staff?.wirt ? 1.3 : 1;
-    book(career, `Getränkeverkauf (${fans} Zuschauer)${wirt > 1 ? ` – Wirt ${career.staff.wirt.name.split(' ')[0]}` : ''}`, Math.round(fans * 2.5 * wirt));
+    const wirt = (career.staff?.wirt ? 1.3 : 1) * salesMul(career); // Wirt, Grill & Theke
+    book(career, `Getränkeverkauf (${fans} Zuschauer)${career.staff?.wirt ? ` – Wirt ${career.staff.wirt.name.split(' ')[0]}` : ''}${salesMul(career) > 1 ? ' – mit Grill' : ''}`, Math.round(fans * 2.5 * wirt));
     if (level > 1) {
       book(career, 'Schiri-Gebühr', -20);
       book(career, career.staff?.platzwart ? 'Platzmiete (Platzwart macht vieles selbst)' : 'Platzmiete Waldesruh', career.staff?.platzwart ? -7.5 : -15);

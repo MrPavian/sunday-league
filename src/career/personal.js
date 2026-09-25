@@ -6,6 +6,7 @@ import { book } from './finances.js';
 import { addCustomPlayer, getPool, humanClub, maxSquad, playerOf } from './career.js';
 import { generatePlayer, ratePlayer } from '../sim/generator.js';
 import { adjustMood } from './events.js';
+import { trainingRelief } from './facilities.js';
 
 const FAMILIES = [
   { text: 'verheiratet, zwei Kinder', kids: 2, partner: 'Deine Frau' },
@@ -225,7 +226,7 @@ export function weeklyPersonal(c) {
   } else {
     const scouting = Math.max(0, 2 - (w?.actions ?? 2));
     const sunday = k.flags.familyAtGames ? 1.5 : 3;
-    adjustPatience(c, 4 - sunday - (w?.training ? 2 : 0) - scouting);
+    adjustPatience(c, 4 - sunday - (w?.training ? 2 - trainingRelief(c) : 0) - scouting); // Flutlicht: Training nach Feierabend
     // In der Kreisklasse kommt Papierkram dazu: Spielberichte, Passwesen, Schiri-Ansetzung.
     adjustEnergy(c, 1 - 1.5 - missingStaff(c) - (w?.training ? 1.5 : 0) - (k.flags.kasse ? 2 : 0) - ((c.level ?? 1) > 1 ? 1 : 0));
   }

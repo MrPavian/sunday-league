@@ -2,6 +2,7 @@
 // (speicherbar); Spieler werden nur über ihre Pool-Nummer referenziert.
 import { legacySeasonEnd } from './legacy.js';
 import { sponsorResult } from './sponsors.js';
+import { absenceMul as facilityAbsence, recruitBonus, weeklyFacilities, youthGrowthMul } from './facilities.js';
 import { createRng } from '../core/rng.js';
 import { FORMATIONS } from '../sim/formation.js';
 import { createPlayerPool, ratePlayer } from '../sim/generator.js';
@@ -89,7 +90,7 @@ export function developPlayers(career) {
     const age = before.age;
     const practice = rec.apps >= 5 ? 1.3 : rec.apps >= 2 ? 1 : 0.6;
     const coach = career.staff?.cotrainer ? 1.15 : 1;
-    const growth = (age <= 20 ? 0.045 : age <= 23 ? 0.025 : age <= 29 ? 0.006 : 0) * coach;
+    const growth = (age <= 20 ? 0.045 : age <= 23 ? 0.025 : age <= 29 ? 0.006 : 0) * coach * (age <= 23 ? youthGrowthMul(career) : 1);
     rec.delta ??= {};
     for (const k of ATTR_KEYS) {
       let d = growth * practice * (0.5 + rng.next());
@@ -335,7 +336,7 @@ export function startWeek(career) {
     } else if (rec.awayWeeks > 0) {
       status = 'no';
       text = rec.awayReason ?? 'Bin diese Woche nicht da.';
-    } else if (rng.chance(absenceChance(p.profession) * (career.spirit ? 0.75 : 1) * absenceFactor(career, idx) * weatherAbsence)) {
+    } else if (rng.chance(absenceChance(p.profession) * (career.spirit ? 0.75 : 1) * absenceFactor(career, idx) * weatherAbsence * facilityAbsence(career))) {
       status = 'no';
       text = rng.pick(noReasons(p.profession));
     } else if (rng.chance(0.07)) {
@@ -498,6 +499,7 @@ export function recruitChance(career, rumor) {
   if (played && rank <= 2) chance += 0.08;
   if (played && rank >= rows.length - 1) chance -= 0.05;
   chance += (career.mood ?? 0) * 0.08; // gute Stimmung spricht sich rum
+  chance += recruitBonus(career); // warme Duschen, neue Kabine
   if (career.flags?.cityChamp === career.season - 1) chance += 0.05; // Stadtmeister!
   if (p.tier === 'legende') {
     // Ex-Profis wollen keinen Rummel, aber eine gute Truppe.
@@ -761,6 +763,7 @@ export function finishRound(career) {
   weeklyPersonal(career);
   sagaWeek(career);
   weeklyAcademy(career);
+  weeklyFacilities(career);
   for (const rec of Object.values(career.players)) {
     if (rec.injuryWeeks > 0) rec.injuryWeeks--;
     if (rec.injuryWeeks === 0) rec.injury = null;
