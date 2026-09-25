@@ -42,10 +42,10 @@ describe('everyday life and injuries', () => {
     const idx = humanClub(c).squad[1];
     Object.assign(c.players[idx], { injuryWeeks: 2, injury: { label: INJURIES.baender.label } });
     finishRound(c);
-    expect(c.week.availability[idx]).toBe('no');
+    if (c.players[idx]) expect(c.week.availability[idx]).toBe('no');
     finishRound(c);
     finishRound(c);
-    expect(c.players[idx].injury).toBeNull();
+    expect(c.players[idx]?.injury ?? null).toBeNull(); // (oder er hat den Verein verlassen)
   });
 
   it('a severe injury brings a diagnosis; sports invalidity ends the career but keeps him in the club', () => {

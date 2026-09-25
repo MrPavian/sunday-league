@@ -568,3 +568,19 @@ body.in-menu .edge { display: none; }
 .trophies li { font-size: 15px; }
 @media (max-width: 760px) { .cup-groups { grid-template-columns: 1fr; } }
 .derby { color: #111; background: #e0a050; padding: 0 6px; border: 1px solid #000; text-shadow: none; }
+
+/* Jugend-Jahrgänge */
+.youth-teams { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+.youth-team { border: 2px solid #000; background: #23231c; padding: 6px 10px; }
+.youth-team h5 { margin: 0 0 4px; font-size: 14px; }
+.youth-team li { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; padding: 3px 0; border-bottom: 1px solid #2f2f26; }
+.youth-team li small { grid-column: 1 / -1; opacity: 0.75; }
+.youth-team li.own b { color: var(--accent); }
+.youth-team .stars { color: #e0b020; font-size: 12px; }
+.me-bar.mini { grid-column: 1 / -1; grid-template-columns: 1fr auto; }
+.me-bar.mini i { height: 5px; }
+.youth-team li { grid-template-columns: 1fr auto 64px; align-items: center; }
+.youth-team li small { grid-column: 1 / -1; grid-row: 2; }
+.me-bar.mini { grid-column: auto; grid-template-columns: 1fr; }
+.me-bar.mini small { display: none; }
+.scout-kids li { margin: 3px 0; }

@@ -11,6 +11,7 @@ import { absenceChance, DECLINE_TEXT, FAREWELL, INJURED, JOIN_TEXT, LATE, noReas
 import { HUMAN_CLUB_DEFAULT, LEAGUES } from './clubs.js';
 import { applyPubToTeam } from './pub.js';
 import { rollInjuries } from './injuries.js';
+import { initAcademy, seasonAcademy, weeklyAcademy } from './academy.js';
 import { derbyResult, isDerbyFixture } from './derby.js';
 import { applyChemistry, pastLink, setRelation } from './relations.js';
 import { applyFusion, initSagas, sagaChat, sagaSeasonEnd, sagaWeek } from './sagas.js';
@@ -160,6 +161,7 @@ export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null 
   youthIntake(career, youthDeps());
   registerCustomPlayers(career);
   initCoach(career, coach);
+  initAcademy(career);
   initSagas(career);
   startWeek(career);
   return career;
@@ -229,6 +231,7 @@ export function nextSeason(career) {
   });
   const leaving = expireYouth(career, playerOf);
   sagaNotes.push(...childrenGrowUp(career));
+  sagaNotes.push(...seasonAcademy(career));
   const intake = youthIntake(career, youthDeps());
   startWeek(career);
   const note = (text) => career.week?.chat.splice(1, 0, { from: null, text, time: 'Mo 09:00' });
@@ -463,6 +466,7 @@ export function migrateCareer(career) {
   initYouth(career);
   initCoach(career);
   initSagas(career);
+  initAcademy(career);
   career.history ??= [];
   if (career.week && !career.week.rumors) {
     career.week.rumors = makeRumors(career, createRng(hashSeed(career.seed, career.season, career.round, 3)));
@@ -741,6 +745,7 @@ export function finishRound(career) {
   weeklyMood(career);
   weeklyPersonal(career);
   sagaWeek(career);
+  weeklyAcademy(career);
   for (const rec of Object.values(career.players)) {
     if (rec.injuryWeeks > 0) rec.injuryWeeks--;
     if (rec.injuryWeeks === 0) rec.injury = null;

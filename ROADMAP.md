@@ -546,3 +546,11 @@ Achillessehnenriss, Risiko nach Alter, Boden, Derby und Eigenschaften; schwere F
 Entscheidung (Physio, Zeit lassen, schnell zurück), seltener Extremfall Sportinvalidität mit Amt im Verein
 (Co-Trainer, Platzwart, Wirt, Betreuer). Alltag (`src/career/life.js`), gewichtet nach Beruf und Lebenslage:
 Schichttausch, Montage, Job-Stress, Beförderung, kranke Kinder, Elternzeit, Nebenjob, Trennung.
+
+(4) umgesetzt – Jugend mit Jahrgängen (`src/career/academy.js`): E-, D-, C-, B-Jugend mit Kindern (Talent, Spaß,
+Eltern), eigene Kinder spielen mit; wöchentlicher Trainingsschwerpunkt (Spaß, Technik, Kondition,
+Turniervorbereitung) – Drill bringt Talent, kostet Spaß, wer keinen Spaß mehr hat, hört auf. Mit 16 in die
+A-Jugend (Talent bestimmt die Stufe), Mädchen ins Frauenteam. Saisonergebnisse der Jugendteams, Schnuppertraining
+im Sommer, Talentsichtung über eine Schul-AG. Abwerben in beide Richtungen: Derby-Rivale oder NLZ wollen deine
+Talente, du kannst selbst Talente anderer Vereine ansprechen. Eltern-Ereignisse: ehrgeiziger Vater,
+Kuchenbasar, Fahrgemeinschaft.

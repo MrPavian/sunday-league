@@ -95,7 +95,8 @@ export function createCoachPlayer(input, seed = 1) {
 // Ein Kind, das irgendwann selbst kickt: ein bisschen Talent vom Papa, der Rest ist Glück.
 function createKidPlayer(child, coach, parent, age, seed) {
   const rng = createRng((seed * 977 + child.name.length * 31 + age) >>> 0);
-  const tier = rng.pick(['ok', 'gut', 'gut', 'stark']);
+  // Wer in der eigenen Jugend gut gefördert wurde, bringt das Talent mit.
+  const tier = child.talent != null ? (child.talent >= 0.9 ? 'dorfstar' : child.talent >= 0.72 ? 'stark' : child.talent >= 0.5 ? 'gut' : 'ok') : rng.pick(['ok', 'gut', 'gut', 'stark']);
   const role = rng.chance(0.5) ? STYLES[coach.style]?.role ?? 'mid' : rng.pick(['def', 'mid', 'fwd']);
   const p = generatePlayer(rng, { role: role === 'gk' ? 'gk' : role, tier });
   const player = {

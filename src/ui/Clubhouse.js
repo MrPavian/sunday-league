@@ -29,6 +29,7 @@ import { storyLabels } from '../career/stories.js';
 import { chronicleData, yearOf } from '../career/sagas.js';
 import { askWirt, buyRound, dossier, playDart, PUB_ACTIONS, PUB_NAME, pubOpen, pubState, ROUND_PRICE, setTactic, TACTICS, talk, wirtName } from '../career/pub.js';
 import { DOSSIER_LABELS } from '../data/backstories.js';
+import { FOCUS, ownKids, poachChance, poachKid, scoutList, setYouthFocus, talentGuess, TEAMS, teamOfAge } from '../career/academy.js';
 import { derbyOf, isDerbyFixture } from '../career/derby.js';
 import { CUP_NAME, cupClub, cupOf, groupTable, humanCupMatch, PRIZES, stageName, tournamentOpen } from '../career/tournament.js';
 import { canSupportDream, DREAM_COST, supportDream } from '../career/pub.js';
@@ -59,6 +60,13 @@ export class Clubhouse {
       if (!t || this.busy) return;
       const { action, value } = t.dataset;
       if (action === 'tab') this.tab = value;
+      else if (action === 'poachKid') {
+        poachKid(this.career, value);
+        this.h.onChange();
+      } else if (action === 'youthFocus') {
+        setYouthFocus(this.career, value);
+        this.h.onChange();
+      }
       else if (action === 'chronicle') this.showChronicle = !this.showChronicle;
       else if (action === 'kitColor') {
         const [part, color] = value.split(':');
@@ -257,6 +265,38 @@ export class Clubhouse {
         ${coachAway(c) ? '<p class="warn">Du bist diese Woche nicht da – der Kapitän stellt auf, du bekommst nur das Ergebnis.</p>' : '<button class="primary" data-action="onPlay">Selbst spielen</button>'}
         <button data-action="onSimulate">${coachAway(c) ? 'Ergebnis abwarten' : 'Simulieren'}</button>`}
       </div>`;
+  }
+
+  // Jahrgänge E bis B mit Trainingsschwerpunkt der Woche.
+  academyBlock() {
+    const c = this.career;
+    const kids = [...(c.youth.kids ?? []), ...ownKids(c)];
+    const focus = c.week?.youthFocus ?? 'spass';
+    const stars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n);
+    const focusButtons = Object.entries(FOCUS)
+      .map(([id, f]) => `<button class="${focus === id ? 'active' : ''}" data-action="youthFocus" data-value="${id}" ${!c.week || this.results ? 'disabled' : ''} title="${f.desc}">${f.name}</button>`)
+      .join('');
+    const teams = TEAMS.map((t) => {
+      const list = kids.filter((k) => teamOfAge(k.age)?.id === t.id).sort((a, b) => b.age - a.age);
+      if (!list.length) return '';
+      const rows = list
+        .map((k) => `<li class="${k.own ? 'own' : ''}"><b>${k.name}</b>${k.own ? ` <span class="me-tag">${k.girl ? 'Tochter' : 'Sohn'}</span>` : ''} <small>${k.age} J. · ${POSITIONS[k.position]}${k.girl ? ' · Mädchen' : ''}${k.parent === 'ehrgeizig' ? ' · ehrgeiziger Vater' : k.parent === 'engagiert' ? ' · Eltern helfen mit' : ''}</small>
+          <span class="stars" title="Einschätzung des Jugendtrainers">${stars(talentGuess(c, k))}</span><span class="me-bar mini"><i style="--v:${Math.round(k.joy * 100)}%"></i><small>Spaß</small></span></li>`)
+        .join('');
+      return `<article class="youth-team"><h5>${t.name} <small>(${t.ages[0]}–${t.ages[1]} J.)</small></h5><ul class="plain">${rows}</ul></article>`;
+    }).join('');
+    const last = c.youth.results?.at(-1);
+    return `<h4>Jugendtraining diese Woche</h4>
+      <div class="actions">${focusButtons}</div>
+      <p class="empty">${FOCUS[focus].desc} Mit 16 wechseln die Kinder in die A-Jugend – Mädchen ins Frauenteam, sobald es eins gibt.</p>
+      <div class="youth-teams">${teams || '<p class="empty">Keine Kinder in der Jugend.</p>'}</div>
+      ${last ? `<p>Letzte Saison: ${last.results.map((r) => `${r.team}-Jugend ${r.pos}.`).join(' · ')}</p>` : ''}
+      <h4>Talente bei anderen Vereinen</h4>
+      <p class="empty">Einmal pro Woche kannst du die Eltern eines Talents ansprechen. Kostet Kraft – und die anderen Vereine mögen das gar nicht.</p>
+      <ul class="plain scout-kids">${scoutList(c)
+        .map((k) => `<li><b>${k.name}</b> <small>${k.age} J. · ${POSITIONS[k.position]} · ${k.club}</small> <span class="stars">${stars(talentGuess(c, k))}</span>
+          ${k.status === 'open' ? `<button class="tiny" data-action="poachKid" data-value="${k.id}" ${!c.week || c.week.poached || this.results ? 'disabled' : ''}>Ansprechen (~${Math.round(poachChance(c, k) * 100)} %)</button>` : `<small class="reply ${k.status === 'joined' ? 'ok' : 'no'}">${k.reply}</small>`}</li>`)
+        .join('')}</ul>`;
   }
 
   // Stammkneipe: zwei Aktionen pro Woche.
@@ -718,7 +758,8 @@ export class Clubhouse {
     return `
       <h4>Ehrenamt</h4>
       <ul class="plain staff"><li><b>Jugendtrainer:</b> ${c.youth.coach.name} <span class="stars">${stars(c.youth.coach.quality)}</span> <small>– je besser, desto mehr Talente</small></li>${staff}</ul>
-      <h4>A-Jugend</h4>
+      ${this.academyBlock()}
+      <h4>A-Jugend (16–19)</h4>
       ${prospects
         ? `<table class="squad"><thead><tr><th>Talent</th><th>Pos.</th><th>Stärke</th><th>Einschätzung</th><th></th></tr></thead><tbody>${prospects}</tbody></table>
            <p class="empty">Talente entwickeln sich auch in der Jugend. Mit 20 wechseln sie zum Nachbarn, wenn du sie nicht hochziehst.${full ? ' Kader voll – erst Platz schaffen.' : ''}</p>`
