@@ -273,3 +273,30 @@ export function makeSignTextureWide(text, { bg = '#1f5e3a', fg = '#f4e9c8', widt
   ctx.fillText(text, width / 2, 11);
   return pixelTexture(canvas);
 }
+
+// Hallenboden: helles Parkett in Bahnen, bunte Linien für Handball, Basketball, Volleyball.
+export function makeHallTexture(rng, { width, depth, pitch }) {
+  const p = painter(rng, { width, depth, base: [206, 164, 108], noise: 10 });
+  for (let z = -depth / 2; z < depth / 2; z += 0.8) p.line(-width / 2, z, width / 2, z, [188, 146, 92], 0.5, 0, 2);
+  for (let k = 0; k < 40; k++) p.blob(rng.range(-width / 2, width / 2), rng.range(-depth / 2, depth / 2), rng.range(0.3, 0.8), [196, 150, 96], 0.35, 0.6);
+  const { halfLength: hl, halfWidth: hw } = pitch;
+  const blue = [40, 90, 170];
+  const yellow = [230, 190, 40];
+  const red = [190, 50, 40];
+  for (const [z0, z1] of [[-hw, -hw], [hw, hw]]) p.line(-hl, z0, hl, z1, blue, 0.9, 0.03, 3);
+  for (const s of [-1, 1]) {
+    p.line(s * hl, -hw, s * hl, hw, blue, 0.9, 0.03, 3);
+    // Torraum: Halbkreis wie beim Handball
+    for (let a = -Math.PI / 2; a <= Math.PI / 2; a += 0.08) {
+      const x0 = s * hl - s * Math.cos(a) * 6;
+      const z0 = Math.sin(a) * 6;
+      const x1 = s * hl - s * Math.cos(a + 0.08) * 6;
+      const z1 = Math.sin(a + 0.08) * 6;
+      p.line(x0, z0, x1, z1, blue, 0.9, 0.03, 3);
+    }
+    p.line(s * (hl - 9), -hw, s * (hl - 9), hw, yellow, 0.6, 0.02, 2);
+  }
+  p.line(0, -hw, 0, hw, blue, 0.9, 0.03, 3);
+  p.circle(0, 0, 3, red, 0.8);
+  return p.finish();
+}

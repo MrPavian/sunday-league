@@ -86,4 +86,20 @@ export const LAWN_PITCH = {
   surface: SURFACES.grass,
 };
 
-export const PITCHES = { parkplatz: PARKING_LOT, hinterhof: BACKYARD, park: PARK, ascheplatz: ASH_PITCH, rasenplatz: LAWN_PITCH };
+export const HALL = {
+  id: 'halle',
+  name: 'Sporthalle Kanalschule',
+  format: 5,
+  halfLength: 18,
+  halfWidth: 9.5, // Bande
+  wallX: 19.3, // Bande hinter den Toren
+  goalHalfWidth: 1.5, // Handballtor 3 × 2 m
+  goalHeight: 2.0,
+  goalType: 'frame',
+  boundary: 'walls',
+  carRule: false,
+  referee: true,
+  surface: SURFACES.hall,
+};
+
+export const PITCHES = { parkplatz: PARKING_LOT, hinterhof: BACKYARD, park: PARK, ascheplatz: ASH_PITCH, rasenplatz: LAWN_PITCH, halle: HALL };

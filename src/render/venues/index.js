@@ -4,6 +4,7 @@ import { buildBackyard } from './backyard.js';
 import { buildLawn } from './lawn.js';
 import { buildPark } from './park.js';
 import { buildParkingLot } from './parkingLot.js';
+import { buildHall } from './hall.js';
 
 // Spielorte: Simulationsdaten + Szenenaufbau + Text fürs Auswahlmenü.
 export const VENUES = [
@@ -36,6 +37,12 @@ export const VENUES = [
     pitch: PITCHES.rasenplatz,
     build: buildLawn,
     tagline: 'Kreisklasse! Rasen, Tribüne, Banden – und ein Schiri.',
+  },
+  {
+    id: 'halle',
+    pitch: PITCHES.halle,
+    build: buildHall,
+    tagline: 'Winter in der Sporthalle: Bande, Handballtore, glatter Boden. Grätschen brennt.',
   },
 ];
 

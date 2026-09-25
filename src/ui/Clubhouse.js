@@ -31,7 +31,7 @@ import { askWirt, buyRound, dossier, playDart, PUB_ACTIONS, PUB_NAME, pubOpen, p
 import { DOSSIER_LABELS } from '../data/backstories.js';
 import { FOCUS, ownKids, poachChance, poachKid, scoutList, setYouthFocus, talentGuess, TEAMS, teamOfAge } from '../career/academy.js';
 import { derbyOf, isDerbyFixture } from '../career/derby.js';
-import { CUP_NAME, cupClub, cupOf, groupTable, humanCupMatch, PRIZES, stageName, tournamentOpen } from '../career/tournament.js';
+import { CUP_NAME, CUPS, cupClub, cupOf, groupTable, humanCupMatch, PRIZES, stageName, tournamentOpen, winterCupDue, winterCupRunning } from '../career/tournament.js';
 import { canSupportDream, DREAM_COST, supportDream } from '../career/pub.js';
 import { chemistry, REL, relationLabel, relationsOfPlayer, shortName } from '../career/relations.js';
 import { childAge, coachAway, coachName, energyLabel, isCoach, patienceLabel, STYLES, trainingLocked } from '../career/personal.js';
@@ -147,7 +147,7 @@ export class Clubhouse {
       } else if (action === 'nudge') {
         nudge(this.career, Number(value));
         this.h.onChange();
-      } else if (action in this.h) return this.h[action]();
+      } else if (action in this.h) return this.h[action](value);
       this.render();
     });
   }
@@ -261,7 +261,9 @@ export class Clubhouse {
         ${storyLabels(c).length ? `<ul class="stories">${storyLabels(c).map((s) => `<li>${s}</li>`).join('')}</ul>` : ''}
         ${count('yes') < venue.format ? '<p class="warn">Zu wenige Zusagen – es hilft jemand aus dem Bekanntenkreis aus.</p>' : ''}
         ${this.meBars()}
-        ${this.busy ? `<p class="busy">${this.busy}</p>` : `
+        ${winterCupDue(c) ? `<div class="winter-cup"><p class="label">Winterpause</p><p>Am Wochenende: <b>${CUPS.halle.name}</b> in der ${CUPS.halle.place}. Acht Teams, Bande, Handballtore – ${CUPS.halle.prizes.winner} € für den Sieger.</p>
+          <button class="primary" data-action="onCupStart" data-value="halle">Anmelden</button> <button data-action="onCupSkip" data-value="halle">Diesmal nicht</button></div>` : ''}
+        ${this.busy ? `<p class="busy">${this.busy}</p>` : winterCupDue(c) ? '<p class="empty">Erst entscheiden: Hallenturnier ja oder nein? Danach geht die Liga weiter.</p>' : winterCupRunning(c) ? '<button class="primary" data-action="tab" data-value="cup">Zum Hallenturnier</button><p class="empty">Der nächste Ligaspieltag steigt nach dem Turnier.</p>' : `
         ${coachAway(c) ? '<p class="warn">Du bist diese Woche nicht da – der Kapitän stellt auf, du bekommst nur das Ergebnis.</p>' : '<button class="primary" data-action="onPlay">Selbst spielen</button>'}
         <button data-action="onSimulate">${coachAway(c) ? 'Ergebnis abwarten' : 'Simulieren'}</button>`}
       </div>`;
@@ -455,33 +457,39 @@ export class Clubhouse {
 
   tab_cup() {
     const c = this.career;
-    const t = cupOf(c);
     const trophies = (c.trophies ?? []).length ? `<h4>Vitrine</h4><ul class="plain trophies">${c.trophies.map((tr) => `<li>Pokal: ${tr.name}</li>`).join('')}</ul>` : '';
-    if (!t || t.skipped) return `<p class="empty">Die ${CUP_NAME} steigt im Sommer, nach dem letzten Spieltag: acht Vereine auf dem Sportplatz Am Kanal, 5 gegen 5 mit Schiri.</p>${trophies}`;
+    const running = ['halle', 'stadt'].filter((k) => cupOf(c, k) && !cupOf(c, k).skipped);
+    const intro = `<p class="empty">Zwei Turniere pro Saison: die ${CUPS.halle.name} in der Winterpause (Saisonmitte, ${CUPS.halle.place}, Bande und Handballtore) und die ${CUPS.stadt.name} im Sommer nach dem letzten Spieltag (${CUPS.stadt.place}).</p>`;
+    return `${running.length ? running.map((k) => this.cupSection(k)).join('<hr>') : intro}${trophies}`;
+  }
+
+  cupSection(kind) {
+    const c = this.career;
+    const t = cupOf(c, kind);
+    const cfg = CUPS[kind];
     const me = humanClub(c).id;
-    const table = (g) => `<table class="squad cup-table"><thead><tr><th>Gruppe ${g === 0 ? 'A' : 'B'}</th><th>Sp.</th><th>Tore</th><th>Pkt.</th></tr></thead><tbody>${groupTable(c, g)
+    const table = (g) => `<table class="squad cup-table"><thead><tr><th>Gruppe ${g === 0 ? 'A' : 'B'}</th><th>Sp.</th><th>Tore</th><th>Pkt.</th></tr></thead><tbody>${groupTable(c, g, kind)
       .map((r, i) => `<tr class="${r.id === me ? 'mine' : ''} ${i < 2 ? 'through' : ''}"><td>${r.club.name}</td><td class="num">${r.p}</td><td class="num">${r.gf}:${r.ga}</td><td class="num">${r.pts}</td></tr>`)
       .join('')}</tbody></table>`;
     const line = (m) =>
       `<li class="${m.home === me || m.away === me ? 'mine' : ''}"><small>${stageName(m)}</small> ${cupClub(c, m.home).short} ${m.result ? `<b>${m.result.home}:${m.result.away}</b>${m.pens ? ` <small>(${m.pens.home}:${m.pens.away} i. E.)</small>` : ''}` : '–:–'} ${cupClub(c, m.away).short}</li>`;
     const ko = t.matches.filter((m) => m.stage === 'SF' || m.stage === 'F');
-    const next = humanCupMatch(c);
+    const next = humanCupMatch(c, kind);
     let action = '';
     if (t.stage === 'done') action = `<p class="reply ok">${t.log.at(-1) ?? ''}</p>`;
     else if (this.busy) action = `<p class="busy">${this.busy}</p>`;
     else if (next) {
       const opp = cupClub(c, next.home === me ? next.away : next.home);
       action = `<div class="fixture-card"><p class="label">${stageName(next)}</p><h3>${humanClub(c).short} – ${opp.short}</h3><p>gegen <b>${opp.name}</b>${next.stage !== 'A' && next.stage !== 'B' ? ' · bei Unentschieden Elfmeterschießen' : ''}</p>
-        <button class="primary" data-action="onCupPlay">Selbst spielen</button> <button data-action="onCupSimulate">Simulieren</button></div>`;
-    } else action = `<p>Ihr seid raus – die anderen spielen noch.</p><button data-action="onCupSimulate">Nächste Runde anschauen</button>`;
+        <button class="primary" data-action="onCupPlay" data-value="${kind}">Selbst spielen</button> <button data-action="onCupSimulate" data-value="${kind}">Simulieren</button></div>`;
+    } else action = `<p>Ihr seid raus – die anderen spielen noch.</p><button data-action="onCupSimulate" data-value="${kind}">Nächste Runde anschauen</button>`;
     return `
-      <p class="chat-head">${CUP_NAME} ${t.year} · Sportplatz Am Kanal · Sieger ${PRIZES.winner} €, Finale ${PRIZES.final} €, Halbfinale ${PRIZES.semi} €</p>
+      <p class="chat-head">${cfg.name} ${t.year} · ${cfg.place} · Sieger ${cfg.prizes.winner} €, Finale ${cfg.prizes.final} €, Halbfinale ${cfg.prizes.semi} €</p>
       ${action}
       <div class="cup-groups">${table(0)}${table(1)}</div>
       ${ko.length ? `<h4>K.-o.-Runde</h4><ul class="plain cup-list">${ko.map(line).join('')}</ul>` : ''}
       <h4>Alle Spiele</h4><ul class="plain cup-list">${t.matches.filter((m) => m.result).map(line).join('') || '<li><em>Gleich geht es los.</em></li>'}</ul>
-      ${t.log.length ? `<h4>Eure Ergebnisse</h4><ul class="plain">${t.log.map((l) => `<li>${l}</li>`).join('')}</ul>` : ''}
-      ${trophies}`;
+      ${t.log.length ? `<h4>Eure Ergebnisse</h4><ul class="plain">${t.log.map((l) => `<li>${l}</li>`).join('')}</ul>` : ''}`;
   }
 
   miniTable() {

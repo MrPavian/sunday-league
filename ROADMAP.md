@@ -533,7 +533,8 @@ Kraft) macht den Spieler treu (weniger Absagen) und landet in der Chronik. Neue 
 8 Vereine (Liga + 2 Gäste wie Polizei-SV oder Feuerwehr), zwei Vierergruppen, Halbfinale, Finale mit
 Elfmeterschießen, 5 gegen 5 mit Schiri auf dem Sportplatz Am Kanal. Selbst spielen oder simulieren,
 Preisgeld, Pokal in der Vitrine, Chronik-Eintrag, Stadtmeister haben es bei Transfers leichter.
-Offen: Hallenturnier im Winter (neuer Spielort).
+Hallen-Stadtmeisterschaft in der Winterpause (Saisonmitte) in der neuen Sporthalle Kanalschule: Parkett,
+Bande, Handballtore, glatter Boden (Grätschen gibt Hallenbrand). Auch als Freundschaftsspiel-Ort wählbar.
 
 **Lebendiger:** Ereignisse würfeln jetzt aus mehreren Ausgängen (`src/career/outcomes.js`): 3–7 Folgen pro Antwort,
 gewichtet nach Stimmung, Eigenschaften und Kadergröße – bis hin zu „Spieler verlässt das Team", „fliegt raus"
@@ -554,3 +555,6 @@ A-Jugend (Talent bestimmt die Stufe), Mädchen ins Frauenteam. Saisonergebnisse 
 im Sommer, Talentsichtung über eine Schul-AG. Abwerben in beide Richtungen: Derby-Rivale oder NLZ wollen deine
 Talente, du kannst selbst Talente anderer Vereine ansprechen. Eltern-Ereignisse: ehrgeiziger Vater,
 Kuchenbasar, Fahrgemeinschaft.
+
+**Wendungen** (`src/career/twists.js`): Lebensgeschichten, Vereinsgeschichte und private Entscheidungen behalten
+ihre Grundwirkung und bekommen je Antwort eine zufällige Zusatzwendung – vom Glücksfall bis zum Austritt.

@@ -61,6 +61,18 @@ export const SURFACES = {
     scrapeChance: 0,
     scrapeLabel: null,
   },
+  hall: {
+    id: 'hall',
+    name: 'Hallenboden',
+    hard: true,
+    rollFriction: 0.42, // glatt – der Ball läuft und läuft
+    rollDecel: 0.35,
+    bounce: 0.68,
+    bumpiness: 0.005,
+    slideDamp: 3.2, // man rutscht weit – und verbrennt sich
+    scrapeChance: 0.45,
+    scrapeLabel: 'Hallenbrand',
+  },
   artificial: {
     id: 'artificial',
     name: 'Kunstrasen',

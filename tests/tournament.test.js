@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createCareer, finishRound, humanClub, nextSeason, seasonOver, simulateSync } from '../src/career/career.js';
-import { advanceCup, cupOf, currentCupMatches, groupTable, humanCupMatch, prepareCupMatch, recordCupResult, skipTournament, startTournament } from '../src/career/tournament.js';
+import { advanceCup, cupOf, currentCupMatches, groupTable, humanCupMatch, prepareCupMatch, recordCupResult, skipTournament, startTournament, winterCupDue, winterRound } from '../src/career/tournament.js';
 
 const endSeason = (c) => {
   while (!seasonOver(c)) finishRound(c);
@@ -40,5 +40,33 @@ describe('Stadtmeisterschaft', () => {
     skipTournament(c);
     expect(cupOf(c).stage).toBe('done');
     expect(humanCupMatch(c)).toBeNull();
+  });
+
+  it('the indoor cup takes place in the winter break, in the sports hall', () => {
+    const c = createCareer({ seed: 93 });
+    while (c.round < winterRound(c)) finishRound(c);
+    expect(winterCupDue(c)).toBe(true);
+    const t = startTournament(c, 'halle');
+    expect(winterCupDue(c)).toBe(false);
+    const m = humanCupMatch(c, 'halle');
+    expect(prepareCupMatch(c, m, { duration: 10 }).pitch.id).toBe('halle');
+    let guard = 0;
+    while (cupOf(c, 'halle').stage !== 'done' && guard++ < 10) {
+      for (const x of currentCupMatches(c, 'halle')) {
+        const prepared = prepareCupMatch(c, x, { duration: 20 });
+        simulateSync(prepared);
+        recordCupResult(c, x, prepared);
+      }
+      advanceCup(c, 'halle');
+    }
+    expect(t.winner).toBeTruthy();
+    expect(cupOf(c, 'stadt')).toBeNull(); // Sommerturnier ist unabhängig
+  }, 60000);
+
+  it('old saves keep their summer cup', () => {
+    const c = createCareer({ seed: 94 });
+    c.tournament = { season: c.season, stage: 'done', matches: [], guests: [], groups: [[], []], log: [] };
+    expect(cupOf(c, 'stadt').stage).toBe('done');
+    expect(c.tournament).toBeUndefined();
   });
 });

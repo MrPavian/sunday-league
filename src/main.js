@@ -17,7 +17,7 @@ import {
   simulate,
 } from './career/career.js';
 import { applyChallengeRewards } from './career/rewards.js';
-import { advanceCup, CUP_DURATION, currentCupMatches, humanCupMatch, prepareCupMatch, recordCupResult, skipTournament, startTournament } from './career/tournament.js';
+import { advanceCup, currentCupMatches, humanCupMatch, prepareCupMatch, recordCupResult, skipTournament, startTournament } from './career/tournament.js';
 import { CHALLENGES, challengeById, createChallengeMatch, evaluateChallenge, loadProgress, recordChallenge, saveProgress } from './challenges/challenges.js';
 import { createRng } from './core/rng.js';
 import { Input } from './input/Input.js';
@@ -186,18 +186,19 @@ const clubhouse = new Clubhouse(document.getElementById('club'), {
     saveCareer(career);
     openClubhouse();
   },
-  onCupStart() {
-    startTournament(career);
+  onCupStart(kind = 'stadt') {
+    startTournament(career, kind);
+    saveCareer(career);
+    clubhouse.tab = 'cup';
+    openClubhouse();
+  },
+  onCupSkip(kind = 'stadt') {
+    skipTournament(career, kind);
     saveCareer(career);
     openClubhouse();
   },
-  onCupSkip() {
-    skipTournament(career);
-    saveCareer(career);
-    openClubhouse();
-  },
-  onCupPlay: playCupMatch,
-  onCupSimulate: () => runCupRound(null),
+  onCupPlay: (kind = 'stadt') => playCupMatch(kind),
+  onCupSimulate: (kind = 'stadt') => runCupRound(null, kind),
   onNewSeason() {
     nextSeason(career);
     saveCareer(career);
@@ -275,27 +276,27 @@ function playCareerMatch() {
 }
 
 // Stadtmeisterschaft: eigenes Spiel selbst spielen, der Rest läuft im Hintergrund.
-function playCupMatch() {
-  const m = humanCupMatch(career);
-  if (!m) return runCupRound(null);
-  const prepared = prepareCupMatch(career, m, { human: true, duration: testDuration ?? CUP_DURATION });
+function playCupMatch(kind) {
+  const m = humanCupMatch(career, kind);
+  if (!m) return runCupRound(null, kind);
+  const prepared = prepareCupMatch(career, m, { human: true, duration: testDuration });
   careerMatch = { prepared, cup: m };
   loadVenue(prepared.pitch.id);
   clubhouse.hide();
   setMode('play');
   showMatch(prepared.match);
-  hud.toast('Stadtmeisterschaft – Sportplatz Am Kanal', 2.5, 2);
+  hud.toast(kind === 'halle' ? 'Hallen-Stadtmeisterschaft – Sporthalle Kanalschule' : 'Stadtmeisterschaft – Sportplatz Am Kanal', 2.5, 2);
 }
 
-async function runCupRound(played) {
-  clubhouse.setBusy('Turnier läuft … auf dem Nebenplatz wird auch gekickt.');
-  for (const m of currentCupMatches(career)) {
+async function runCupRound(played, kind = played?.kind ?? 'stadt') {
+  clubhouse.setBusy(kind === 'halle' ? 'Turnier läuft … auf dem anderen Hallendrittel wird auch gespielt.' : 'Turnier läuft … auf dem Nebenplatz wird auch gekickt.');
+  for (const m of currentCupMatches(career, kind)) {
     if (m === played) continue;
-    const prepared = prepareCupMatch(career, m, { duration: testDuration ?? CUP_DURATION });
+    const prepared = prepareCupMatch(career, m, { duration: testDuration });
     await simulate(prepared);
     recordCupResult(career, m, prepared);
   }
-  advanceCup(career);
+  advanceCup(career, kind);
   saveCareer(career);
   clubhouse.tab = 'cup';
   openClubhouse();
