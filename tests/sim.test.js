@@ -636,3 +636,44 @@ describe('feel: parries, corners, set pieces', () => {
     expect(passed).toBe(true);
   });
 });
+
+describe('passing and shooting', () => {
+  it('the receiver runs to meet the pass', () => {
+    let reached = 0;
+    let passes = 0;
+    for (const seed of [1, 2, 3]) {
+      const m = createMatch({ seed, pitch: PITCHES.rasenplatz, human: false });
+      let open = null;
+      for (let i = 0; i < 60 * 300 && m.phase !== 'ended'; i++) {
+        stepMatch(m, undefined, DT);
+        for (const e of m.events) {
+          const p = e.playerId && getPlayer(m, e.playerId);
+          if (e.type === 'pass' && p && p.role !== 'gk' && e.targetId) {
+            open = { target: e.targetId, t: m.time };
+            passes++;
+          } else if (open && e.type === 'touch' && m.time - open.t > 0.1) {
+            if (e.playerId === open.target) reached++;
+            open = null;
+          }
+        }
+        m.events.length = 0;
+      }
+    }
+    expect(passes).toBeGreaterThan(50);
+    expect(reached / passes).toBeGreaterThan(0.4);
+  });
+
+  it('the keeper needs a moment to react to a shot', () => {
+    const m = createMatch({ seed: 2, pitch: PARKING_LOT, human: false, kickoff: false });
+    const gk = m.players.find((p) => p.team === 1 && p.role === 'gk');
+    for (const p of m.players) if (p !== gk) Object.assign(p.pos, { x: -15, z: 8 });
+    const z0 = gk.pos.z;
+    Object.assign(m.ball.pos, { x: 8, y: 0.3, z: 0 });
+    Object.assign(m.ball.vel, { x: 18, y: 0.5, z: 1.4 });
+    m.ball.lastAction = 'shoot';
+    m.shotTime = m.time;
+    stepMatch(m, undefined, DT);
+    stepMatch(m, undefined, DT);
+    expect(Math.abs(gk.pos.z - z0)).toBeLessThan(0.15);
+  });
+});

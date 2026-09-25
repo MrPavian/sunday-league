@@ -114,7 +114,11 @@ export function tryExecute(m, p) {
   }
 
   if (a.type === 'shoot' && !holds) shoot(m, p, a, fatigue);
-  else pass(m, p, a, fatigue, holds);
+  else if (pass(m, p, a, fatigue, holds) === false) {
+    p.kickCooldown = 0;
+    p.kickAnim = 0;
+    return;
+  }
   ball.lastAction = a.type === 'shoot' && !holds ? 'shoot' : 'pass';
   ball.lastTouch = p.id;
   m.lastTouchTeam = p.team;
@@ -124,8 +128,13 @@ function shoot(m, p, a, fatigue) {
   const { ball, rng } = m;
   const hammer = hasTrait(p, 'hammer');
   let dir = a.target ? norm(a.target.x - p.pos.x, a.target.z - p.pos.z) : { ...p.facing };
+  // Zielhilfe für den Menschen: Wer grob aufs Tor zielt, wird in den Rahmen gezogen –
+  // die Ecke bestimmt er weiter selbst über die Laufrichtung.
+  if (!a.target && p.id === m.controlledId) dir = aimAssist(m, p, dir);
   const power = clamp(a.power ?? 0.5, 0.1, 1);
-  const sigma = 0.025 + 0.16 * (1 - p.attrs.shooting) + 0.08 * fatigue + 0.05 * power + (hammer ? 0.03 : 0);
+  // Streuung: Technik, Müdigkeit, Wucht. Die KI streut etwas mehr als der Mensch,
+  // der selbst zielt – sonst treffen Amateure wie Profis.
+  const sigma = 0.025 + 0.16 * (1 - p.attrs.shooting) + 0.08 * fatigue + 0.05 * power + (hammer ? 0.03 : 0) + (p.id === m.controlledId ? 0 : 0.03);
   dir = rotate(dir, rng.gauss() * sigma);
   const speed = (8 + 18 * power) * (0.85 + 0.15 * p.attrs.shooting) * (hammer ? 1.15 : 1);
   const vy = 0.8 + 5 * power * power + Math.abs(rng.gauss()) * 1.2 * (1 - p.attrs.shooting) * power;
@@ -134,6 +143,20 @@ function shoot(m, p, a, fatigue) {
   ball.vel.z = dir.z * speed;
   p.facing = dir;
   m.events.push({ type: 'shot', playerId: p.id, power });
+  m.shotTime = m.time; // Der Torwart braucht einen Moment, bis er die Richtung erkennt.
+}
+
+function aimAssist(m, p, dir) {
+  const { pitch } = m;
+  const gx = attackDir(m, p.team) * pitch.halfLength;
+  const dx = gx - p.pos.x;
+  if (dx * dir.x <= 0 || Math.abs(dx) > 26) return dir;
+  // Wo würde der Schuss die Torlinie kreuzen?
+  const hitZ = p.pos.z + (dir.z / dir.x) * dx;
+  const gw = pitch.goalHalfWidth;
+  if (Math.abs(hitZ) > gw + 2.5) return dir; // klar vorbeigezielt bleibt vorbei
+  const z = clamp(hitZ, -gw * 0.88, gw * 0.88);
+  return norm(dx, z - p.pos.z);
 }
 
 function pass(m, p, a, fatigue, fromHands) {
@@ -153,12 +176,14 @@ function pass(m, p, a, fatigue, fromHands) {
     if (d < (a.minDist ?? 2) || (outfieldThrow && d > 16)) continue;
     const dot = (dx * p.facing.x + dz * p.facing.z) / d;
     if (dot < cone) continue;
-    let score = dot - d * 0.035 - (t.role === 'gk' ? 0.8 : 0);
+    // Lieber nach vorn als quer, lieber frei als zugestellt.
+    let score = dot - d * 0.035 - (t.role === 'gk' ? 0.8 : 0) + (t.pos.x - p.pos.x) * attackDir(m, p.team) * 0.025;
     // Flanken sollen in Tornähe landen.
     if (a.lofted) score -= Math.abs(t.pos.x - attackDir(m, p.team) * pitch.halfLength) * 0.08;
     for (const o of m.players) {
       if (o.team === p.team) continue;
-      if (!a.lofted && distToSegment(o.pos, p.pos, t.pos) < 1.2) score -= 0.6;
+      const lane = distToSegment(o.pos, p.pos, t.pos);
+      if (!a.lofted && lane < 1.4) score -= 0.9 - lane * 0.3;
       // Wer eng gedeckt ist, bekommt den Ball ungern – vor allem nicht vom Torwart.
       const near = dist2d(o.pos, t.pos);
       if (near < 2.5) score -= (2.5 - near) * (p.role === 'gk' ? 0.5 : 0.2);
@@ -168,6 +193,9 @@ function pass(m, p, a, fatigue, fromHands) {
       target = t;
     }
   }
+
+  // Freiwilliger Pass der KI, aber keiner wirklich frei? Dann lieber weiterdribbeln.
+  if (a.optional && (!target || bestScore < 0.35)) return false;
 
   let dir;
   let speed;
@@ -194,7 +222,8 @@ function pass(m, p, a, fatigue, fromHands) {
       const flight = (vy + Math.sqrt(Math.max(0, vy * vy - 2 * 9.81 * (arrive - 0.11)))) / 9.81;
       speed = d / Math.max(0.4, flight);
     } else {
-      speed = clamp(2.5 + d * 0.6, 4.5, 15);
+      // Flache Pässe mit Zug – ein lahmer Pass wird in der Kreisklasse abgefangen.
+      speed = clamp(3.5 + d * 0.75, 5.5, 16);
       vy = d > 16 ? 3.5 : 0.2;
     }
     const sigma = (0.02 + 0.12 * (1 - p.attrs.passing) + 0.05 * fatigue) * (eye ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.6 : 1);
@@ -209,6 +238,8 @@ function pass(m, p, a, fatigue, fromHands) {
   ball.vel.z = dir.z * speed;
   p.facing = { x: dir.x, z: dir.z };
   m.lastPass = { playerId: p.id, team: p.team, time: m.time };
+  // Offener Pass: Der Adressat läuft dem Ball entgegen (siehe ai.js, receiveSpot).
+  m.pass = target ? { targetId: target.id, kicker: p.id, team: p.team, time: m.time } : null;
   m.events.push({ type: 'pass', playerId: p.id, targetId: target?.id ?? null, lofted: !!a.lofted });
 }
 
@@ -229,8 +260,14 @@ export function keeperSaves(m) {
     p.catchCooldown = 0.25;
     // Kreisklasse-Keeper: Scharfe, platzierte Schüsse sind oft einfach drin.
     if (bs >= 6 && ball.lastAction !== 'pass') {
-      const corner = Math.abs(ball.pos.z) > pitch.goalHalfWidth * 0.55 ? 0.15 : 0;
-      const beaten = clamp(0.05 + (bs - 8) * 0.03 + corner - 0.3 * p.attrs.keeping - (dist2d(p.pos, ball.pos) < 0.45 ? 0.15 : 0), 0.03, 0.6);
+      // Platzierung zählt: Wo kreuzt der Ball die Linie – wie weit weg vom Keeper?
+      const goalX = -s * pitch.halfLength;
+      const tLine = Math.abs(ball.vel.x) > 0.1 ? (goalX - ball.pos.x) / ball.vel.x : 0;
+      const lineZ = ball.pos.z + ball.vel.z * Math.max(0, tLine);
+      const away = Math.abs(lineZ - p.pos.z);
+      const gw = pitch.goalHalfWidth;
+      const corner = clamp((away / gw - 0.35) * 0.45, 0, 0.3) + (Math.abs(lineZ) > gw * 0.65 ? 0.06 : 0);
+      const beaten = clamp((bs - 8) * 0.028 + corner - 0.3 * p.attrs.keeping - (dist2d(p.pos, ball.pos) < 0.45 ? 0.15 : 0), 0.02, 0.65);
       if (rng.chance(beaten)) {
         p.catchCooldown = 0.7; // zu spät – der Ball ist vorbei
         p.diveAnim = 0.5;

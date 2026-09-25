@@ -30,6 +30,9 @@ export function updateTactics(m, dt) {
     const fresh = rel && rel.team !== team && m.time - rel.time < 0.8 ? getPlayer(m, rel.id) : null;
     const oppKeeper = holder && holder.team !== team && holder.role === 'gk' ? holder : fresh;
     let chaser = oppKeeper ? null : pool[0] ?? null;
+    // Offener Pass ans eigene Team: Der Adressat holt sich den Ball, kein anderer rennt dazwischen.
+    const receiver = incomingPass(m, team);
+    if (receiver) chaser = null;
     // Im eigenen Team läuft die KI nur an, wenn der gesteuerte Spieler weit weg ist.
     if (human && team === m.humanTeam && chaser && !(dist2d(chaser.pos, target) < dist2d(human.pos, target) - 2.5)) chaser = null;
     if (holder && holder.team === team) chaser = null;
@@ -65,6 +68,7 @@ export function updateTactics(m, dt) {
     } else {
       for (const p of rest) m.tactics[p.id] = { type: 'support', ...supportSpot(m, p, dt) };
     }
+    if (receiver && receiver.id !== m.controlledId) m.tactics[receiver.id] = { type: 'receive', ...receiveSpot(m, receiver) };
     if (oppKeeper) {
       const r = keeperZone(pitch);
       for (const p of pool) {
@@ -79,6 +83,34 @@ export function updateTactics(m, dt) {
       }
     }
   }
+}
+
+// Läuft gerade ein Pass zu einem Mitspieler dieses Teams? Dann gilt er, bis jemand
+// anderes den Ball berührt oder nach drei Sekunden.
+function incomingPass(m, team) {
+  const ps = m.pass;
+  if (!ps || ps.team !== team) return null;
+  if (m.ball.lastTouch !== ps.kicker || m.time - ps.time > 3 || m.ball.holder) {
+    m.pass = null;
+    return null;
+  }
+  const r = getPlayer(m, ps.targetId);
+  return r && r.state === 'normal' ? r : null;
+}
+
+// Wo erreicht der Adressat den rollenden Ball am frühesten? Der Ball wird mit
+// grober Reibung vorausberechnet; der Spieler läuft zum ersten erreichbaren Punkt.
+function receiveSpot(m, p) {
+  const { ball, pitch } = m;
+  const k = pitch.surface?.rollFriction ?? 0.7;
+  const speed = 4.6 + 2.6 * p.attrs.pace;
+  let spot = { x: ball.pos.x, z: ball.pos.z };
+  for (let t = 0.1; t <= 2.5; t += 0.1) {
+    const f = (1 - Math.exp(-k * t)) / k;
+    spot = { x: ball.pos.x + ball.vel.x * f, z: ball.pos.z + ball.vel.z * f };
+    if (dist2d(p.pos, spot) <= speed * t + 0.4) break;
+  }
+  return clampToPitch(pitch, spot.x, spot.z, 0.3);
 }
 
 // Hält der Torwart den Ball, bleiben Gegner so weit weg (wie beim Abstoß).
@@ -180,7 +212,12 @@ export function outfieldIntent(m, p, dt) {
   const d = len(dx, dz);
   if (d < 0.4) return { move: { x: 0, z: 0 }, sprint: false };
   const n = norm(dx, dz);
-  const urgent = t.type === 'cover' || t.type === 'mark';
+  const urgent = t.type === 'cover' || t.type === 'mark' || t.type === 'receive';
+  if (t.type === 'receive') {
+    // Dem Ball entgegen: volle Kraft bis zum Treffpunkt, dann abbremsen und annehmen.
+    p.dribbleDir = norm(oppGoal.x - p.pos.x, -p.pos.z * 0.3);
+    return { move: d < 0.3 ? { x: 0, z: 0 } : norm(dx, dz), sprint: d > 3 && p.stamina > 0.25 };
+  }
   const k = urgent ? Math.min(1, d / 2) : Math.min(1, d / 3) * 0.75;
   return { move: { x: n.x * k, z: n.z * k }, sprint: d > (urgent ? 5 : 9) && p.stamina > 0.35 };
 }
@@ -202,7 +239,8 @@ function aiDecide(m, p, oppGoal) {
     p.pending = {
       type: 'shoot',
       power: clamp(0.3 + dGoal / 20, 0.35, 0.95),
-      target: { x: oppGoal.x, z: rng.range(-gw * 0.8, gw * 0.8) },
+      // Die KI zielt auf die Ecken – mal drin, mal knapp daneben.
+      target: { x: oppGoal.x, z: (rng.chance(0.5) ? 1 : -1) * rng.range(gw * 0.45, gw * 1.05) },
       ttl: 0.3,
     };
     return;
@@ -220,9 +258,25 @@ function aiDecide(m, p, oppGoal) {
     const d = len(dx, dz);
     return d < 2.2 && (dx * toG.x + dz * toG.z) / (d || 1) > 0.2;
   });
-  if ((underPressure && rng.chance(0.45 + 0.4 * p.attrs.passing)) || rng.chance(0.03)) {
+  if (underPressure && rng.chance(0.45 + 0.4 * p.attrs.passing)) {
     p.pending = { type: 'pass', ttl: 0.3, cone: -0.2 };
+    return;
   }
+  if (rng.chance(0.05)) {
+    p.pending = { type: 'pass', ttl: 0.3, cone: -0.2, optional: true };
+    return;
+  }
+  // Ein Mitspieler steht weiter vorn frei? Dann den Ball laufen lassen, statt allein
+  // durch drei Leute zu dribbeln – wie oft, hängt vom Passspiel ab.
+  const s = attackDir(m, p.team);
+  const open = m.players.find((t) => {
+    if (t.team !== p.team || t === p || t.role === 'gk' || t.state !== 'normal') return false;
+    const ahead = (t.pos.x - p.pos.x) * s;
+    const d = dist2d(t.pos, p.pos);
+    if (ahead < 3 || d > 16) return false;
+    return !m.players.some((o) => o.team !== p.team && (dist2d(o.pos, t.pos) < 2.5 || distToSegment(o.pos, p.pos, t.pos) < 1.3));
+  });
+  if (open && rng.chance(0.25 + 0.35 * p.attrs.passing)) p.pending = { type: 'pass', ttl: 0.3, cone: -0.3, optional: true };
 }
 
 // Die KI geht in den Zweikampf, wenn ein Gegner den Ball am Fuß hat. Auf
@@ -290,10 +344,16 @@ export function keeperIntent(m, p, dt) {
 
   let tx = goalX + s * 0.8;
   let tz = clamp(ball.pos.z * 0.4, -gw - 0.2, gw + 0.2);
-  if (ball.vel.x * -s > 2) {
+  // Reaktionszeit: Erst nach einem Moment erkennt der Keeper die Schussrichtung –
+  // bis dahin bleibt er, wo er war. Gute Keeper sind schneller.
+  const reaction = 0.14 + (1 - p.attrs.keeping) * 0.14;
+  const reacting = m.shotTime != null && m.time - m.shotTime < reaction;
+  if (reacting && p.keeperTz != null) tz = p.keeperTz;
+  else if (ball.vel.x * -s > 2) {
     const t = (tx - ball.pos.x) / ball.vel.x;
     if (t > 0 && t < 2) tz = clamp(ball.pos.z + ball.vel.z * t, -gw - 0.6, gw + 0.6);
   }
+  p.keeperTz = tz;
   // Freie Bälle im Fünfer holt er sich.
   const dMe = dist2d(p.pos, ball.pos);
   const beaten = m.players.some((o) => o.team !== p.team && dist2d(o.pos, ball.pos) < dMe - 0.5);
