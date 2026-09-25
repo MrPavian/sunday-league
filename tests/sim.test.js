@@ -32,7 +32,7 @@ describe('ball', () => {
     ball.vel.x = 15;
     let goal = null;
     for (let i = 0; i < 60 && !goal; i++) goal = stepBall(ball, PARKING_LOT, DT);
-    expect(goal).toEqual({ team: 0 });
+    expect(goal).toEqual({ type: 'goal', team: 0 });
   });
 
   it('bounces off the parked cars instead of scoring wide', () => {
@@ -77,7 +77,11 @@ describe('match', () => {
   it('produces goals over a full AI-only match', () => {
     let total = 0;
     for (const seed of [1, 2, 3]) {
-      const m = run(seed, 700);
+      const m = createMatch({ seed });
+      for (let i = 0; i < 60 * 1200 && m.phase !== 'ended'; i++) {
+        stepMatch(m, undefined, DT);
+        m.events.length = 0;
+      }
       expect(m.phase).toBe('ended');
       total += m.score[0] + m.score[1];
     }
@@ -87,7 +91,7 @@ describe('match', () => {
 
 describe('tackles', () => {
   const setup = (surface = 'grass') => {
-    const m = createMatch({ seed: 11, pitch: { ...PARKING_LOT, surface: SURFACES[surface] } });
+    const m = createMatch({ seed: 11, pitch: { ...PARKING_LOT, surface: SURFACES[surface] }, kickoff: false });
     const tackler = getPlayer(m, '0-1');
     const victim = getPlayer(m, '1-1');
     Object.assign(tackler.pos, { x: -1, z: 0 });
@@ -113,7 +117,8 @@ describe('tackles', () => {
     startTackle(m, tackler);
     const seen = runUntil(m, 'foul');
     expect(seen).toContain('foul');
-    expect(m.phase).toBe('freekick');
+    expect(m.phase).toBe('setpiece');
+    expect(m.setPiece.type).toBe('freekick');
     expect(m.ball.lastTouch).toBe(victim.id);
     for (const p of m.players) {
       if (p.team !== victim.team) expect(Math.hypot(p.pos.x - m.ball.pos.x, p.pos.z - m.ball.pos.z)).toBeGreaterThanOrEqual(3.49);
@@ -158,16 +163,16 @@ describe('surfaces', () => {
   };
 
   it('on asphalt the tackle button pokes instead of sliding, sprint forces the slide', () => {
-    const m = createMatch({ seed: 4 });
+    const m = createMatch({ seed: 4, kickoff: false });
     const human = getPlayer(m, m.controlledId);
     stepMatch(m, { move: { x: 0, z: 0 }, tackle: true }, DT);
     expect(human.state).toBe('poke');
 
-    const g = createMatch({ seed: 4, pitch: onSurface('grass') });
+    const g = createMatch({ seed: 4, pitch: onSurface('grass'), kickoff: false });
     stepMatch(g, { move: { x: 0, z: 0 }, tackle: true }, DT);
     expect(getPlayer(g, g.controlledId).state).toBe('tackle');
 
-    const f = createMatch({ seed: 4 });
+    const f = createMatch({ seed: 4, kickoff: false });
     stepMatch(f, { move: { x: 1, z: 0 }, sprint: true, tackle: true }, DT);
     expect(getPlayer(f, f.controlledId).state).toBe('tackle');
   });
@@ -176,7 +181,7 @@ describe('surfaces', () => {
     const scrapes = (id) => {
       let n = 0;
       for (let seed = 1; seed <= 20; seed++) {
-        const m = createMatch({ seed, pitch: onSurface(id) });
+        const m = createMatch({ seed, pitch: onSurface(id), kickoff: false });
         const p = getPlayer(m, '0-1');
         p.traits = [];
         Object.assign(m.ball.pos, { x: 12, z: 8 });
@@ -197,5 +202,75 @@ describe('surfaces', () => {
       return n;
     };
     expect(slides('asphalt') * 3).toBeLessThan(slides('grass'));
+  });
+});
+
+describe('rules & set pieces', () => {
+  const lines = { ...PARKING_LOT, boundary: 'lines', carRule: false };
+  const stepN = (m, n, seen = []) => {
+    for (let i = 0; i < n; i++) {
+      stepMatch(m, undefined, DT);
+      seen.push(...m.events);
+      m.events.length = 0;
+    }
+    return seen;
+  };
+  const kick = (m, playerId, action, pos, vel) => {
+    Object.assign(m.ball.pos, pos);
+    Object.assign(m.ball.vel, vel);
+    m.ball.lastTouch = playerId;
+    m.ball.lastAction = action;
+    m.lastTouchTeam = getPlayer(m, playerId).team;
+    for (const p of m.players) p.kickCooldown = p.catchCooldown = 5; // niemand fängt den Ball ab
+  };
+
+  it('the team that conceded kicks off', () => {
+    const m = createMatch({ seed: 2, kickoff: false, human: false });
+    kick(m, '0-4', 'shoot', { x: 17, y: 0.5, z: 0 }, { x: 15, y: 0, z: 0 });
+    const seen = stepN(m, 60 * 4);
+    expect(seen.some((e) => e.type === 'goal' && e.team === 0)).toBe(true);
+    expect(m.setPiece).toMatchObject({ type: 'kickoff', team: 1 });
+  });
+
+  it('a hard shot against a parked car hands the ball to the other team', () => {
+    const m = createMatch({ seed: 2, kickoff: false, human: false });
+    kick(m, '0-3', 'shoot', { x: 0, y: 0.5, z: 9 }, { x: 0, y: 0, z: 14 });
+    const seen = stepN(m, 30);
+    expect(seen.map((e) => e.type)).toContain('car');
+    expect(m.setPiece).toMatchObject({ type: 'freekick', team: 1 });
+  });
+
+  it('side line: throw-in for the other team, taken from the hands', () => {
+    const m = createMatch({ seed: 2, pitch: lines, kickoff: false, human: false });
+    kick(m, '1-2', 'pass', { x: 3, y: 0.11, z: 10 }, { x: 0, y: 0, z: 8 });
+    stepN(m, 30);
+    expect(m.setPiece).toMatchObject({ type: 'throwin', team: 0 });
+    const taker = getPlayer(m, m.setPiece.takerId);
+    expect(m.ball.holder).toBe(taker.id);
+    expect(Math.abs(taker.pos.z)).toBeCloseTo(lines.halfWidth);
+    const seen = stepN(m, 60 * 3);
+    expect(seen.some((e) => e.type === 'pass' && e.playerId === taker.id)).toBe(true);
+  });
+
+  it('end line: corner if the defenders touched it last, goal kick otherwise', () => {
+    const corner = createMatch({ seed: 2, pitch: lines, kickoff: false, human: false });
+    kick(corner, '1-1', 'dribble', { x: 17, y: 0.11, z: 5 }, { x: 8, y: 0, z: 0 });
+    stepN(corner, 30);
+    expect(corner.setPiece).toMatchObject({ type: 'corner', team: 0 });
+
+    const goalKick = createMatch({ seed: 2, pitch: lines, kickoff: false, human: false });
+    kick(goalKick, '0-4', 'shoot', { x: 17, y: 0.11, z: 5 }, { x: 8, y: 0, z: 0 });
+    stepN(goalKick, 30);
+    expect(goalKick.setPiece).toMatchObject({ type: 'goalkick', team: 1 });
+    expect(getPlayer(goalKick, goalKick.ball.holder).role).toBe('gk');
+  });
+
+  it('frame goals: off the top of the bar goes over, not in', () => {
+    const framed = { ...PARKING_LOT, goalType: 'frame' };
+    const m = createMatch({ seed: 2, pitch: framed, kickoff: false, human: false });
+    kick(m, '0-4', 'shoot', { x: 16, y: framed.goalHeight + 0.12, z: 0 }, { x: 12, y: 0.2, z: 0 });
+    const seen = stepN(m, 20);
+    expect(seen.map((e) => e.type)).toContain('bar');
+    expect(seen.map((e) => e.type)).not.toContain('goal');
   });
 });

@@ -1,7 +1,7 @@
 # Sunday League – Game Design, Featureliste & Roadmap
 
 > Arbeitstitel: **Sunday League** (Alternativen: *Kreisklasse*, *Asche & Ehre*, *Dritte Halbzeit*)
-> Status: Phase 0 abgeschlossen → Phase 1 · Stand: 2026-09-25
+> Status: Phase 1 weitgehend abgeschlossen · Stand: 2026-09-25
 
 ---
 
@@ -220,12 +220,16 @@ Liga- und Vereinsnamen bleiben fiktiv (keine Lizenzen nötig); regionale Variant
 **Meilenstein M0:** „Es fühlt sich gut an, auf dem Parkplatz gegen einen Ball zu treten.“
 
 ### Phase 1 – Core Match / Vertical Slice (ca. 6–8 Wochen)
-- [ ] 5v5-Match auf dem Parkplatz, komplette Steuerung
-- [ ] Basis-KI (Positionsspiel, Pressing, Torwart)
-- [ ] Attribute (Tempo, Ausdauer, Technik, Passen, Schuss, Zweikampf, Übersicht)
-- [ ] Amateur-Physik: Fehlerquote abhängig von Attributen & Müdigkeit
-- [ ] Erste 5 Traits funktionsfähig
-- [ ] Minimal-UI: Anstoß, Spielstand, Halbzeit, Ende
+- [x] 5v5-Match auf dem Parkplatz, komplette Steuerung (inkl. hoher Ball, Einwurf)
+- [x] KI mit Rollen: Anlaufen, Absichern, Manndeckung, Freilaufen; Torwart mit weitem Abschlag
+- [x] Attribute (Tempo, Ausdauer, Technik, Passen, Schuss, Zweikampf, Kopfball)
+- [x] Amateur-Physik: Fehlerquote abhängig von Attributen & Müdigkeit; Kopfbälle, Blocks mit dem Körper
+- [x] 11 Traits funktionsfähig (u. a. Kopfballungeheuer, Strammer Schuss, Meckerer, Raucher)
+- [x] Regeln: Anstoß durch das Team, das das Tor kassiert hat; Einwurf, Ecke, Abstoß; Parkplatzregel „Ans Auto“
+- [x] Pfosten & Latte bei echten Toren
+- [x] Modus KI gegen KI (Grundlage für simulierte Ligaspiele)
+- [x] Pixelschrift im Projekt statt Google Fonts
+- [ ] Minimal-UI: Halbzeit, Endstand-Screen
 
 **Meilenstein M1:** Spielbare Vertical Slice – ein Match von Anfang bis Ende, das Spaß macht.
 

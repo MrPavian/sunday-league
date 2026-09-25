@@ -26,7 +26,8 @@ npm run build    # Produktions-Build nach dist/
 | Laufen | WASD / Pfeiltasten | linker Stick |
 | Sprinten | Shift | RB / RT |
 | Schuss (halten = Kraft) | Leertaste / K | X / B |
-| Pass | J / E | A |
+| Pass (Shift + J = hoher Ball / Flanke) | J / E | A |
+| Einwurf (Richtung mit Laufen wählen) | J oder Leertaste | A |
 | Zweikampf (auf hartem Boden: stochern, sonst Grätsche) | L / Strg | Y |
 | Grätsche erzwingen (Schürfwunden-Gefahr!) | Shift + L | RB + Y |
 | Spieler wechseln | Q / L | LB |

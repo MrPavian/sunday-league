@@ -9,6 +9,8 @@ import { createMatch, stepMatch } from './sim/match.js';
 import { PARKING_LOT } from './sim/pitch.js';
 import { SURFACES } from './sim/surfaces.js';
 import { Hud } from './ui/Hud.js';
+import '@fontsource/pixelify-sans/400.css';
+import '@fontsource/pixelify-sans/600.css';
 import './style.css';
 
 const STEP = 1 / 60;

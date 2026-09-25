@@ -24,7 +24,7 @@ export class Hud {
       </div>
       <div class="help">
         <b>WASD/Pfeile</b> laufen · <b>Shift</b> sprinten · <b>Leertaste</b> halten = Schuss ·
-        <b>J</b> Pass · <b>L</b> Zweikampf (Shift+L Grätsche) · <b>Q</b> Spieler wechseln · <b>H</b> Hilfe
+        <b>J</b> Pass (Shift+J hoch) · <b>L</b> Zweikampf (Shift+L Grätsche) · <b>Q</b> Spieler wechseln · <b>H</b> Hilfe
       </div>`;
     this.root = root;
     this.$ = (sel) => root.querySelector(sel);
@@ -46,7 +46,10 @@ export class Hud {
     this.$('.help').classList.toggle('hidden');
   }
 
-  toast(text, seconds = 2) {
+  // Wichtige Meldungen (Tor) werden nicht von Kleinkram überschrieben.
+  toast(text, seconds = 2, priority = 1) {
+    if (this.toastTimer > 0 && priority < this.toastPriority) return;
+    this.toastPriority = priority;
     const el = this.$('.toast');
     el.textContent = text;
     el.hidden = false;
@@ -59,21 +62,31 @@ export class Hud {
   }
 
   handleEvents(match) {
+    const short = (team) => match.teams[team].short;
     for (const e of match.events) {
       const p = e.playerId && getPlayer(match, e.playerId);
       const first = p ? p.name.split(' ')[0] : '';
       if (e.type === 'goal') {
         const scorer = e.scorerId && getPlayer(match, e.scorerId);
-        this.toast(e.ownGoal ? `EIGENTOR! ${scorer?.name ?? ''}` : `TOR! ${scorer?.name ?? ''}`, 2.4);
+        const kind = e.ownGoal ? 'EIGENTOR!' : e.via === 'header' ? 'KOPFBALLTOR!' : 'TOR!';
+        this.toast(`${kind} ${scorer?.name ?? ''}`, 2.4, 3);
       } else if (e.type === 'whiff') this.toast(`Luftloch von ${first}!`, 1.4);
       else if (e.type === 'foul') {
         const victim = getPlayer(match, e.victimId);
-        this.toast(`Foul von ${first}! Freistoß für ${match.teams[victim.team].short}`, 1.8);
-      } else if (e.type === 'tackle') this.toast(`Saubere Grätsche, ${first}!`, 1.1);
+        this.toast(`Foul von ${first}! Freistoß für ${short(victim.team)}`, 1.8, 2);
+      } else if (e.type === 'car') this.toast(`Ans Auto, ${first}! Ball für ${short(e.team)}`, 1.8, 2);
+      else if (e.type === 'out') {
+        const text = { throwin: 'Einwurf', corner: 'Ecke', goalkick: 'Abstoß' }[e.restart];
+        this.toast(`${text} ${short(e.team)}`, 1.2);
+      } else if (e.type === 'complain') this.toast(`${first}: „${e.line}“`, 1.6, 2);
+      else if (e.type === 'post') this.toast('Pfosten!', 1.2);
+      else if (e.type === 'bar') this.toast('Latte!', 1.2);
+      else if (e.type === 'header' && e.onGoal) this.toast(`Kopfball ${first}!`, 0.9);
+      else if (e.type === 'tackle') this.toast(`Saubere Grätsche, ${first}!`, 1.1);
       else if (e.type === 'scrape') this.toast(`Autsch! ${e.label} für ${first}`, 1.8);
       else if (e.type === 'save') this.toast(`${first} pariert!`, 1.2);
       else if (e.type === 'miscontrol') this.toast(`Verspringt ${first}…`, 1);
-      else if (e.type === 'end') this.toast('ABPFIFF – Enter für Revanche', 999);
+      else if (e.type === 'end') this.toast('ABPFIFF – Enter für Revanche', 999, 9);
     }
   }
 
@@ -88,6 +101,8 @@ export class Hud {
     if (this.toastTimer > 0 && (this.toastTimer -= dt) <= 0) this.hideToast();
 
     const p = getPlayer(match, match.controlledId);
+    this.$('.card').hidden = !p;
+    if (!p) return;
     if (p.id !== this.lastControlled) {
       this.lastControlled = p.id;
       this.$('.name').textContent = p.name;

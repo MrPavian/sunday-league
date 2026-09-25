@@ -45,7 +45,8 @@ export class MatchView {
         speed: len(p.vel.x, p.vel.z),
         dt,
         kickAnim: p.kickAnim,
-        holding: match.ball.holder === p.id,
+        holding: match.ball.holder === p.id ? (p.role === 'gk' ? 'chest' : 'overhead') : null,
+        headAnim: p.headAnim,
         state: p.state,
         injured: !!p.injury,
       });
@@ -55,6 +56,8 @@ export class MatchView {
     rollBall(this.ball, b.vel, dt);
 
     const c = match.players.find((p) => p.id === match.controlledId);
+    this.marker.visible = !!c;
+    if (!c) return;
     this.marker.position.set(c.pos.x, 0.03, c.pos.z);
     this.marker.scale.setScalar(1 + Math.sin(this.time * 6) * 0.08);
   }

@@ -6,6 +6,10 @@ export const TRAITS = {
   anfuehrer: { name: 'Anführer', desc: 'Mitspieler in der Nähe ermüden langsamer.' },
   teamchemie: { name: 'Steigert die Teamchemie', desc: 'Hält die Truppe zusammen (wirkt ab der Saison-Phase).' },
   ballsicher: { name: 'Ruhe am Ball', desc: 'Weniger verunglückte Ballkontakte.' },
+  kopfball: { name: 'Kopfballungeheuer', desc: 'Kommt an hohe Bälle ran und köpft sie gezielt.' },
+  hammer: { name: 'Strammer Schuss', desc: 'Zieht aus der Distanz ab – nicht immer genau.' },
+  meckerer: { name: 'Meckerer', desc: 'Beschwert sich nach jedem Zweikampf – und steht dabei rum.' },
+  raucher: { name: 'Raucher', desc: 'In der Halbzeit an der Eckfahne. Geht schneller die Puste aus.' },
   hart_im_nehmen: { name: 'Hart im Nehmen', desc: 'Schürfwunden stören kaum – grätscht auch mal auf Asche.' },
 };
 
