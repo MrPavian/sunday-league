@@ -27,6 +27,7 @@ import { PixelRenderer } from './render/PixelRenderer.js';
 import { VENUES, venueById } from './render/venues/index.js';
 import { createMatch, stepMatch } from './sim/match.js';
 import { SURFACES } from './sim/surfaces.js';
+import { applyWeather, WEATHER } from './career/weather.js';
 import { ChallengeScreen } from './ui/Challenges.js';
 import { Clubhouse } from './ui/Clubhouse.js';
 import { CoachCreator } from './ui/CoachCreator.js';
@@ -102,7 +103,10 @@ function showMatch(m) {
 }
 
 function startMatch(human) {
-  const m = createMatch({ seed: seed++, pitch, human, duration: testDuration, incidents: true });
+  // Testschalter: ?wetter=regen|schnee|nebel|frost|wind|hitze|laub
+  const w = params.get('wetter');
+  const matchPitch = w ? applyWeather(pitch, { id: WEATHER[w] ? w : 'sonne', leaves: w === 'laub', windDir: 1 }) : pitch;
+  const m = createMatch({ seed: seed++, pitch: matchPitch, human, duration: testDuration, incidents: true });
   // Testschalter: ?incident=hund|gewitter|… löst den Vorfall nach 3 Sekunden aus.
   if (human && params.get('incident')) m.incidentPlan = { type: params.get('incident'), at: 3 };
   showMatch(m);

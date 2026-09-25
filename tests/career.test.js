@@ -48,7 +48,8 @@ describe('career', () => {
   it('opens each week with a chat: announcement plus an answer from every player', () => {
     const w = career.week;
     expect(w.chat[0].from).toBeNull();
-    expect(w.chat).toHaveLength(10);
+    expect(w.chat.length).toBeGreaterThanOrEqual(10); // Ankündigung + 9 Antworten (+ Wetterkommentar)
+    expect(w.weather.monthName).toBe('August');
     for (const idx of humanClub(career).squad) expect(['yes', 'no', 'late']).toContain(w.availability[idx]);
   });
 

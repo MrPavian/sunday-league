@@ -558,3 +558,9 @@ Kuchenbasar, Fahrgemeinschaft.
 
 **Wendungen** (`src/career/twists.js`): Lebensgeschichten, Vereinsgeschichte und private Entscheidungen behalten
 ihre Grundwirkung und bekommen je Antwort eine zufällige Zusatzwendung – vom Glücksfall bis zum Austritt.
+
+**Wetter & Jahreszeiten** (`src/career/weather.js`): Die Saison läuft von August bis Mai, jeder Spieltag hat
+seinen Monat und würfelt ein Wetter nach Jahreszeit – Sonne, Hitze (Ausdauer schwindet schneller), Regen (nasser
+Rasen, lange Grätschen), Sturmböen (hohe Bälle driften), Nebel, Frost (harter Boden, springende Bälle) und Schnee
+(Ball bleibt liegen). Wetter wirkt auf Zuschauer und Absagen, im Herbst fällt Laub, einer im Chat kommentiert
+es immer. In der Halle gibt es kein Wetter.

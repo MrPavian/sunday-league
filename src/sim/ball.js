@@ -29,6 +29,11 @@ export function stepBall(ball, pitch, dt) {
   const prevX = pos.x;
 
   vel.y -= G * dt;
+  // Wind drückt hohe Bälle ab.
+  if (pitch.wind && pos.y > 0.5) {
+    vel.x += pitch.wind.x * dt * 0.6;
+    vel.z += pitch.wind.z * dt * 0.6;
+  }
   pos.x += vel.x * dt;
   pos.y += vel.y * dt;
   pos.z += vel.z * dt;

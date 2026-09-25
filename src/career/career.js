@@ -12,6 +12,7 @@ import { HUMAN_CLUB_DEFAULT, LEAGUES } from './clubs.js';
 import { applyPubToTeam } from './pub.js';
 import { rollInjuries } from './injuries.js';
 import { initAcademy, seasonAcademy, weeklyAcademy } from './academy.js';
+import { applyWeather, rollWeather, WEATHER, WEATHER_CHAT } from './weather.js';
 import { derbyResult, isDerbyFixture } from './derby.js';
 import { applyChemistry, pastLink, setRelation } from './relations.js';
 import { applyFusion, initSagas, sagaChat, sagaSeasonEnd, sagaWeek } from './sagas.js';
@@ -297,6 +298,8 @@ export function startWeek(career) {
   }
   const rng = createRng(hashSeed(career.seed, career.season, career.round, 1));
   const club = humanClub(career);
+  const weather = rollWeather(career);
+  const weatherAbsence = WEATHER[weather.id].absence;
   const availability = {};
   const chat = [];
   let minute = 0;
@@ -326,7 +329,7 @@ export function startWeek(career) {
     } else if (rec.awayWeeks > 0) {
       status = 'no';
       text = rec.awayReason ?? 'Bin diese Woche nicht da.';
-    } else if (rng.chance(absenceChance(p.profession) * (career.spirit ? 0.75 : 1) * absenceFactor(career, idx))) {
+    } else if (rng.chance(absenceChance(p.profession) * (career.spirit ? 0.75 : 1) * absenceFactor(career, idx) * weatherAbsence)) {
       status = 'no';
       text = rng.pick(noReasons(p.profession));
     } else if (rng.chance(0.07)) {
@@ -338,7 +341,10 @@ export function startWeek(career) {
     availability[idx] = status;
     chat.push({ from: idx, text, time: time() });
   }
-  career.week = { availability, chat, nudges: NUDGES_PER_WEEK, nudged: [], lineup: null, training: null, event: null };
+  // Einer kommentiert das Wetter.
+  const talker = club.squad.find((idx) => availability[idx] === 'yes' && !isCoach(career, idx));
+  if (talker != null) chat.push({ from: talker, text: rng.pick(WEATHER_CHAT[weather.id]), time: 'Sa 09:40' });
+  career.week = { availability, chat, nudges: NUDGES_PER_WEEK, nudged: [], lineup: null, training: null, event: null, weather };
   career.flags ??= {};
   career.flags.derbyRival = leagueOf(career).derby?.club ?? null;
   advanceArcs(career);
@@ -669,7 +675,8 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   const away = clubById(career, fixture.away);
   const league = leagueOf(career);
   const base = PITCHES[home.venue];
-  const pitch = { ...base, format: league.format ?? base.format, referee: league.referee || !!base.referee };
+  // Das Wetter der Woche gilt auf allen Plätzen der Liga.
+  const pitch = applyWeather({ ...base, format: league.format ?? base.format, referee: league.referee || !!base.referee }, career.week?.weather);
   const avail = (c) => (c.human ? career.week.availability : aiAvailability(c, rng));
   const teamHome = teamForMatch(career, home, pitch.format, avail(home), rng);
   const teamAway = teamForMatch(career, resolveKitClash(home, away), pitch.format, avail(away), rng);

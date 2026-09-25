@@ -55,7 +55,7 @@ export class Hud {
     this.hideToast();
     this.refName = r?.name ?? null;
     this.edgeKey = null;
-    document.body.classList.remove('weather-rain');
+    for (const w of ['rain', 'fog', 'snow', 'frost']) document.body.classList.remove(`weather-${w}`);
   }
 
   // Links und rechts am Bildschirmrand: wo ist unser Tor, wohin greifen wir an?
@@ -154,7 +154,7 @@ export class Hud {
       this.toast(this.introPending, 2.5, 2);
       this.introPending = null;
     }
-    document.body.classList.toggle('weather-rain', match.weather === 'rain');
+    for (const w of ['rain', 'fog', 'snow', 'frost']) document.body.classList.toggle(`weather-${w}`, match.weather === w);
     const r = match.referee;
     if (r && r.name !== this.refName) {
       // Ersatzschiri übernimmt: Kopfzeile nachziehen.

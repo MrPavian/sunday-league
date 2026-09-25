@@ -79,7 +79,7 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = tr
     lastTouchTeam: null,
     incident: null,
     incidents: [],
-    weather: null,
+    weather: pitch.visual ?? null, // rain | snow | fog | frost | leaves
   };
   m.incidentPlan = incidents ? planIncident(m, seed) : null;
   if (kickoff) startSetPiece(m, { type: 'kickoff', team: 0 });

@@ -23,7 +23,7 @@ export function movePlayer(m, p, intent, dt, leaders) {
   const speed = len(p.vel.x, p.vel.z);
   let drain = sprint ? 0.02 : speed > 2 ? 0.0012 : -0.008;
   if (drain > 0) {
-    drain *= 1.3 - 0.6 * p.attrs.stamina;
+    drain *= (1.3 - 0.6 * p.attrs.stamina) * (m.pitch.heat ?? 1); // Hitze kostet Kraft
     if (hasTrait(p, 'pferdelunge')) drain *= 0.5;
     if (hasTrait(p, 'raucher')) drain *= 1.3;
     if (p.injury) drain *= 1 + 0.1 * p.injury.severity;

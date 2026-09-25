@@ -29,6 +29,7 @@ import { storyLabels } from '../career/stories.js';
 import { chronicleData, yearOf } from '../career/sagas.js';
 import { askWirt, buyRound, dossier, playDart, PUB_ACTIONS, PUB_NAME, pubOpen, pubState, ROUND_PRICE, setTactic, TACTICS, talk, wirtName } from '../career/pub.js';
 import { DOSSIER_LABELS } from '../data/backstories.js';
+import { weatherLine } from '../career/weather.js';
 import { FOCUS, ownKids, poachChance, poachKid, scoutList, setYouthFocus, talentGuess, TEAMS, teamOfAge } from '../career/academy.js';
 import { derbyOf, isDerbyFixture } from '../career/derby.js';
 import { CUP_NAME, CUPS, cupClub, cupOf, groupTable, humanCupMatch, PRIZES, stageName, tournamentOpen, winterCupDue, winterCupRunning } from '../career/tournament.js';
@@ -255,6 +256,7 @@ export class Clubhouse {
         <h3>${home ? club.short : opp.short} – ${home ? opp.short : club.short}</h3>
         <p>${home ? 'Heimspiel' : 'Auswärts'} gegen <b>${opp.name}</b></p>
         <p class="venue-line">${venue.name} · ${venue.surface.name} · ${venue.format} gegen ${venue.format}</p>
+        <p class="venue-line weather">${weatherLine(c.week?.weather)}</p>
         <p class="avail">${count('yes')} Zusagen · ${count('late')} später · ${count('no')} Absagen</p>
         <p class="mood-line">Stimmung im Team: <b class="mood mood-${moodLabel(c.mood ?? 0)}">${moodLabel(c.mood ?? 0)}</b></p>
         ${w.event && w.event.choice === null ? '<p class="warn">In der Gruppe wartet eine Entscheidung auf dich.</p>' : ''}

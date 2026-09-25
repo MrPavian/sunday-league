@@ -60,11 +60,25 @@ export class IncidentView {
     this.drops = Array.from({ length: RAIN_DROPS }, (_, i) => ({ x: ((i * 7919) % 1000) / 1000, z: ((i * 104729) % 1000) / 1000, y: ((i * 1301) % 1000) / 100 }));
     root.add(this.rain);
 
+    // Schneeflocken und Herbstlaub: langsam fallende Punkte.
+    this.flakes = Array.from({ length: 500 }, (_, i) => ({ x: ((i * 7919) % 1000) / 1000, z: ((i * 3571) % 1000) / 1000, y: ((i * 911) % 1000) / 100, p: (i % 17) / 17 }));
+    const mk = (color, size) => {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(this.flakes.length * 3), 3));
+      const pts = new THREE.Points(g, new THREE.PointsMaterial({ color, size, sizeAttenuation: false, transparent: true, opacity: 0.9 }));
+      pts.frustumCulled = false;
+      pts.visible = false;
+      root.add(pts);
+      return pts;
+    };
+    this.snow = mk(0xffffff, 3);
+    this.leaves = mk(0xd9822b, 4);
+
     // Vier Sprenger am Rand, jeder mit einer sich drehenden Wasserfontäne.
     this.sprinklers = new THREE.Group();
     this.sprinklers.visible = false;
     this.jets = [];
-    const water = new THREE.PointsMaterial({ color: 0xcfe8ff, size: 0.3, transparent: true, opacity: 0.85 });
+    const water = new THREE.PointsMaterial({ color: 0xcfe8ff, size: 3, sizeAttenuation: false, transparent: true, opacity: 0.85 });
     for (const [sx, sz] of [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]]) {
       const g = new THREE.BufferGeometry();
       g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(90 * 3), 3));
@@ -82,6 +96,8 @@ export class IncidentView {
     this.syncDog(match.dog, dt);
     this.syncVisitors(match.visitors ?? [], dt);
     this.syncRain(match.weather === 'rain', dt);
+    this.syncFlakes(this.snow, match.weather === 'snow', dt, 1.1, 0.4);
+    this.syncFlakes(this.leaves, match.weather === 'leaves', dt, 0.8, 1.2);
     this.syncSprinklers(!!match.sprinklers);
   }
 
@@ -133,6 +149,27 @@ export class IncidentView {
       const z = (d.z * 2 - 1) * az;
       a.setXYZ(i * 2, x, d.y, z);
       a.setXYZ(i * 2 + 1, x + 0.05, d.y + 0.45, z);
+    }
+    a.needsUpdate = true;
+  }
+
+  // Fallende Punkte: Schnee rieselt senkrecht, Laub trudelt seitlich.
+  syncFlakes(pts, on, dt, fall, sway) {
+    pts.visible = on;
+    if (!on) return;
+    const a = pts.geometry.attributes.position;
+    const { x: ax, z: az } = this.area;
+    const n = pts === this.leaves ? 220 : this.flakes.length;
+    for (let i = 0; i < this.flakes.length; i++) {
+      const d = this.flakes[i];
+      if (i >= n) {
+        a.setXYZ(i, 0, -50, 0);
+        continue;
+      }
+      d.y -= dt * fall * (0.6 + d.p);
+      if (d.y < 0) d.y += pts === this.leaves ? 7 : 10;
+      const x = (d.x * 2 - 1) * ax + Math.sin(this.time * (0.8 + d.p) + i) * sway;
+      a.setXYZ(i, x, d.y, (d.z * 2 - 1) * az + Math.cos(this.time * 0.7 + i) * sway * 0.5);
     }
     a.needsUpdate = true;
   }

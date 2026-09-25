@@ -38,6 +38,10 @@ Profi wird und irgendwann zurückkommt. Die Chronik steht im Verein-Tab.
 In der Stammkneipe „Zum Anstoß" gibst du Runden aus, hörst deinen Spielern zu (jeder hat eine
 Geschichte), malst die Taktik auf den Bierdeckel, fragst den Wirt aus und spielst Dart gegen Opa Heinz.
 
+Die Saison läuft von August bis Mai, jeder Spieltag hat sein Wetter: Hitze zehrt an der Puste, Regen
+macht Grätschen lang, Sturmböen verwehen hohe Bälle, Frost macht den Boden hart, im Schnee bleibt der
+Ball liegen, und im Herbst fällt Laub.
+
 | Vereinsheim | Kader |
 |---|---|
 | ![Vereinsheim](docs/screenshot-vereinsheim.png) | ![Kader](docs/screenshot-kader.png) |
