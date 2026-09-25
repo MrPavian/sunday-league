@@ -378,6 +378,40 @@ export function releasePlayer(career, idx) {
   return true;
 }
 
+// --- Verein & Trikots -------------------------------------------------------------
+
+export const KIT_COLORS = [0xf2efe6, 0x1c1c1c, 0xc8352f, 0x8c2f2f, 0xe8742a, 0xe0b020, 0x2e6b3a, 0x5cc46a, 0x2f6fb5, 0x1d2b44, 0x4fa3e0, 0x6b4f8c, 0x9a6b4f, 0x8a9096];
+export const KIT_PATTERNS = { uni: 'Uni', streifen: 'Längsstreifen', ringel: 'Ringel' };
+
+// Trikots werden vor Saisonbeginn bestellt – danach ist die Saison gelaufen.
+export const kitEditable = (career) => career.round === 0;
+
+export function updateClub(career, { name, short, kit }) {
+  if (!kitEditable(career)) return false;
+  const club = humanClub(career);
+  if (name?.trim()) club.name = name.trim().slice(0, 32);
+  if (short?.trim()) club.short = short.trim().toUpperCase().slice(0, 4);
+  if (kit) {
+    club.kit = { ...club.kit, ...kit };
+    // Torwart immer in einer Kontrastfarbe.
+    const keeper = [0xe8742a, 0x5cc46a, 0xe0b020, 0x6b4f8c].find((c) => colorDistance(c, club.kit.shirt) > 150) ?? 0xe8742a;
+    club.keeperKit = { shirt: keeper, shorts: 0x1c1c1c, socks: keeper };
+  }
+  return true;
+}
+
+export function colorDistance(a, b) {
+  const ch = (n, s) => (n >> s) & 255;
+  return Math.hypot(ch(a, 16) - ch(b, 16), ch(a, 8) - ch(b, 8), ch(a, 0) - ch(b, 0));
+}
+
+// Bei ähnlichen Trikots läuft der Gast im Ausweichtrikot auf.
+function resolveKitClash(home, away) {
+  if (colorDistance(home.kit.shirt, away.kit.shirt) > 110) return away;
+  const alt = [0xf2efe6, 0x1c1c1c, 0xe0b020].find((c) => colorDistance(c, home.kit.shirt) > 150);
+  return { ...away, kit: { shirt: alt, shorts: alt === 0x1c1c1c ? 0xf2efe6 : 0x1c1c1c, socks: alt } };
+}
+
 // --- Aufstellung durch den Trainer ------------------------------------------------
 
 export function matchFormat(career) {
@@ -449,7 +483,7 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   const pitch = { ...base, format: league.format ?? base.format, referee: league.referee || !!base.referee };
   const avail = (c) => (c.human ? career.week.availability : aiAvailability(c, rng));
   const teamHome = teamForMatch(career, home, pitch.format, avail(home), rng);
-  const teamAway = teamForMatch(career, away, pitch.format, avail(away), rng);
+  const teamAway = teamForMatch(career, resolveKitClash(home, away), pitch.format, avail(away), rng);
   // Der menschliche Verein ist in der Simulation immer Team 0.
   const humanIsAway = human && away.human;
   const teams = humanIsAway ? [teamAway, teamHome] : [teamHome, teamAway];

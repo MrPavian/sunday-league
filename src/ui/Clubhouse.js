@@ -2,6 +2,10 @@ import {
   clubById,
   currentLineup,
   humanClub,
+  KIT_COLORS,
+  KIT_PATTERNS,
+  kitEditable,
+  updateClub,
   maxSquad,
   leagueOf,
   MIN_SQUAD,
@@ -38,7 +42,15 @@ export class Clubhouse {
       if (!t || this.busy) return;
       const { action, value } = t.dataset;
       if (action === 'tab') this.tab = value;
-      else if (action === 'scout') {
+      else if (action === 'kitColor') {
+        const [part, color] = value.split(':');
+        this.draft.kit[part] = Number(color);
+      } else if (action === 'kitPattern') this.draft.kit.pattern = value;
+      else if (action === 'saveClub') {
+        updateClub(this.career, this.draft);
+        this.draft = null;
+        this.h.onChange();
+      } else if (action === 'scout') {
         scoutRumor(this.career, Number(value));
         this.h.onChange();
       } else if (action === 'recruit') {
@@ -58,6 +70,14 @@ export class Clubhouse {
       } else if (action in this.h) return this.h[action]();
       this.render();
     });
+  }
+
+  bindClubForm() {
+    this.root.querySelectorAll('input[data-field]').forEach((el) =>
+      el.addEventListener('input', () => {
+        this.draft[el.dataset.field] = el.value;
+      }),
+    );
   }
 
   bindLineup() {
@@ -98,6 +118,7 @@ export class Clubhouse {
       ['lineup', 'Aufstellung'],
       ['transfers', 'Transfers'],
       ['table', 'Tabelle'],
+      ['club', 'Verein'],
       ['fixtures', 'Spielplan'],
     ];
     this.root.innerHTML = `
@@ -116,6 +137,7 @@ export class Clubhouse {
         </div>
       </div>`;
     this.bindLineup();
+    this.bindClubForm();
   }
 
   nextMatch() {
@@ -313,6 +335,48 @@ export class Clubhouse {
     return `
       <p class="chat-head">Kader ${club.squad.length}/${maxSquad(c)} · noch ${w.actions} Aktion${w.actions === 1 ? '' : 'en'} diese Woche${full ? ' · Kader voll – erst jemanden verabschieden' : ''}</p>
       <div class="rumors">${cards}</div>`;
+  }
+
+  tab_club() {
+    const c = this.career;
+    const club = humanClub(c);
+    const editable = kitEditable(c);
+    this.draft ??= { name: club.name, short: club.short, kit: { pattern: 'uni', second: 0xf2efe6, ...club.kit } };
+    const d = this.draft;
+    const shirtCss = (k) => {
+      const a = hex(k.shirt);
+      const b = hex(k.second ?? k.shirt);
+      if (k.pattern === 'streifen') return `repeating-linear-gradient(90deg, ${a} 0 8px, ${b} 8px 16px)`;
+      if (k.pattern === 'ringel') return `repeating-linear-gradient(0deg, ${a} 0 8px, ${b} 8px 16px)`;
+      return a;
+    };
+    const swatches = (part, label) => `
+      <div class="swatch-row"><span>${label}</span>${KIT_COLORS.map(
+        (col) => `<button class="swatch ${d.kit[part] === col ? 'on' : ''}" style="background:${hex(col)}" data-action="kitColor" data-value="${part}:${col}" ${editable ? '' : 'disabled'}></button>`,
+      ).join('')}</div>`;
+    return `
+      <div class="club-form">
+        <div class="kit-preview">
+          <div class="shirt" style="background:${shirtCss(d.kit)}"></div>
+          <div class="shorts" style="background:${hex(d.kit.shorts)}"></div>
+          <div class="socks"><i style="background:${hex(d.kit.socks)}"></i><i style="background:${hex(d.kit.socks)}"></i></div>
+          <b>${d.short}</b>
+        </div>
+        <div class="fields">
+          <label>Vereinsname <input data-field="name" value="${d.name}" maxlength="32" ${editable ? '' : 'disabled'}></label>
+          <label>Kürzel <input data-field="short" value="${d.short}" maxlength="4" ${editable ? '' : 'disabled'}></label>
+          <div class="swatch-row"><span>Muster</span>${Object.entries(KIT_PATTERNS)
+            .map(([id, label]) => `<button class="${d.kit.pattern === id ? 'active' : ''}" data-action="kitPattern" data-value="${id}" ${editable ? '' : 'disabled'}>${label}</button>`)
+            .join('')}</div>
+          ${swatches('shirt', 'Trikot')}
+          ${d.kit.pattern !== 'uni' ? swatches('second', '2. Farbe') : ''}
+          ${swatches('shorts', 'Hose')}
+          ${swatches('socks', 'Stutzen')}
+          ${editable
+            ? '<button class="primary" data-action="saveClub">Trikots bestellen</button>'
+            : '<p class="warn">Die Trikots für diese Saison sind bestellt. Änderungen wieder vor dem ersten Spieltag der nächsten Saison.</p>'}
+        </div>
+      </div>`;
   }
 
   tab_table() {

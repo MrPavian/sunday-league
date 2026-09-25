@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { toon } from './materials.js';
+import { kitMaterial, toon } from './materials.js';
 
 function part(w, h, d, mat, x, y, z) {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
@@ -12,7 +12,7 @@ function part(w, h, d, mat, x, y, z) {
 // generierten Aussehen – keine zwei Spieler sehen gleich aus.
 export function createPlayerModel(look, kit) {
   const skin = toon(look.skin);
-  const shirt = toon(kit.shirt);
+  const shirt = kitMaterial(kit);
   const shorts = toon(kit.shorts);
   const socks = toon(kit.socks);
   const shoes = toon(0x1f1f1f);

@@ -250,3 +250,26 @@ describe('seasons', () => {
     expect(leagueOf(stay).level).toBe(1);
   });
 });
+
+describe('club & kits', () => {
+  it('kits can be ordered before the season only, and clashes switch the away kit', async () => {
+    const { updateClub, kitEditable, colorDistance } = await import('../src/career/career.js');
+    const c = createCareer({ seed: 70 });
+    expect(kitEditable(c)).toBe(true);
+    expect(updateClub(c, { name: 'Rot-Weiß Pfütze', short: 'rwp', kit: { shirt: 0xc8352f, pattern: 'streifen', second: 0xf2efe6 } })).toBe(true);
+    const club = humanClub(c);
+    expect(club.name).toBe('Rot-Weiß Pfütze');
+    expect(club.short).toBe('RWP');
+    expect(club.kit.pattern).toBe('streifen');
+    expect(colorDistance(club.keeperKit.shirt, club.kit.shirt)).toBeGreaterThan(150);
+    // Dynamo Döner spielt in Rot – bei einem Duell muss jemand ausweichen.
+    let f = null;
+    for (let r = 0; r < c.fixtures.length && !f; r++) f = c.fixtures[r].find((x) => [x.home, x.away].includes('doener') && [x.home, x.away].includes(club.id));
+    c.round = c.fixtures.findIndex((round) => round.includes(f));
+    const prepared = prepareMatch(c, f, { duration: 5 });
+    const [a, b] = prepared.match.teams;
+    expect(colorDistance(a.kit.shirt, b.kit.shirt)).toBeGreaterThan(110);
+    c.round = 1;
+    expect(updateClub(c, { name: 'Zu spät' })).toBe(false);
+  });
+});
