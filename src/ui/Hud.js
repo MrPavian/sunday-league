@@ -1,4 +1,5 @@
 import { tr } from '../core/i18n.js';
+import { keyLabel } from '../input/Input.js';
 import { TRAITS } from '../data/traits.js';
 import { tierById } from '../data/tiers.js';
 import { POSITIONS } from '../sim/generator.js';
@@ -35,14 +36,11 @@ export class Hud {
         <div class="bar stamina"><i></i><span>${tr('Puste', 'Stamina')}</span></div>
         <div class="bar charge"><i></i><span>${tr('Schuss', 'Shot')}</span></div>
       </div>
-      <div class="help">
-        ${tr(`<b>Pfeile</b> laufen · <b>Shift</b> sprinten · <b>W</b> Schuss (halten = fester) · <b>S</b> Pass · <b>E</b> hoher Ball ·
-        <b>A</b> halten (abschirmen / festhalten) · <b>D</b> Grätsche · <b>Y</b> stochern · <b>Q</b> Spieler wechseln · <b>X</b> Auswechseln · <b>C</b> Tempo · <b>N</b> Ton · <b>G</b> Effekte · <b>F2</b> Screenshot · <b>H</b> Hilfe`, `<b>Arrows</b> run · <b>Shift</b> sprint · <b>W</b> shoot (hold = harder) · <b>S</b> pass · <b>E</b> lofted ball ·
-        <b>A</b> hold (shield / grab) · <b>D</b> slide tackle · <b>Z</b> poke · <b>Q</b> switch player · <b>X</b> substitute · <b>C</b> tempo · <b>N</b> sound · <b>G</b> effects · <b>F2</b> screenshot · <b>H</b> help`)}
-      </div>`;
+      <div class="help">${helpText()}      </div>`;
     this.root = root;
     this.$ = (sel) => root.querySelector(sel);
     this.toastTimer = 0;
+    this.refreshHelp = () => (this.$('.help').innerHTML = helpText());
     this.lastControlled = null;
   }
 
@@ -191,4 +189,16 @@ export class Hud {
     this.$('.stamina i').style.width = `${Math.round(p.stamina * 100)}%`;
     this.$('.charge i').style.width = `${Math.round(p.charge * 100)}%`;
   }
+}
+
+// Tastenhilfe aus der aktuellen Belegung (Einstellungen → Tastenbelegung).
+function helpText() {
+  const k = (a) => `<b>${keyLabel(a)}</b>`;
+  const arrows = ['up', 'down', 'left', 'right'].map(keyLabel).join('') === '↑↓←→' ? tr('<b>Pfeile</b>', '<b>Arrows</b>') : `<b>${['up', 'left', 'down', 'right'].map(keyLabel).join('')}</b>`;
+  return tr(
+    `${arrows} laufen · ${k('sprint')} sprinten · ${k('shoot')} Schuss (halten = fester) · ${k('pass')} Pass · ${k('loft')} hoher Ball ·
+        ${k('hold')} halten (abschirmen / festhalten) · ${k('tackle')} Grätsche · ${k('poke')} stochern · ${k('switchPlayer')} Spieler wechseln · ${k('sub')} Auswechseln · <b>C</b> Tempo · <b>N</b> Ton · <b>G</b> Effekte · <b>F2</b> Screenshot · <b>H</b> Hilfe`,
+    `${arrows} run · ${k('sprint')} sprint · ${k('shoot')} shoot (hold = harder) · ${k('pass')} pass · ${k('loft')} lofted ball ·
+        ${k('hold')} hold (shield / grab) · ${k('tackle')} slide tackle · ${k('poke')} poke · ${k('switchPlayer')} switch player · ${k('sub')} substitute · <b>C</b> tempo · <b>N</b> sound · <b>G</b> effects · <b>F2</b> screenshot · <b>H</b> help`,
+  );
 }

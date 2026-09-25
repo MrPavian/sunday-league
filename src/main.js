@@ -27,6 +27,7 @@ import { MatchView } from './render/MatchView.js';
 import { PixelRenderer } from './render/PixelRenderer.js';
 import { setLightMood } from './render/props.js';
 import { disposeTree, mergeStatic } from './render/merge.js';
+import { applyColorSafeKits } from './render/colorSafe.js';
 import { VENUES, venueById } from './render/venues/index.js';
 import { createMatch, stepMatch } from './sim/match.js';
 import { SURFACES } from './sim/surfaces.js';
@@ -79,6 +80,13 @@ const sound = new Sound();
 const poolBrowser = new PoolBrowser(document.getElementById('pool'));
 const settings = new Settings(document.getElementById('settings'));
 
+let colorSafe = false;
+try {
+  colorSafe = localStorage.getItem('sunday-league:safekits') === '1';
+} catch {
+  // egal
+}
+
 function remember(key, value) {
   try {
     localStorage.setItem(key, value);
@@ -130,6 +138,7 @@ function loadVenue(id) {
 function showMatch(m) {
   endScreen.hide();
   view?.dispose();
+  applyColorSafeKits(m, colorSafe);
   match = m;
   view = new MatchView(scene, match);
   hud.init(match);
@@ -182,7 +191,7 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
   onSettings() {
     menu.paused = true;
     settings.show({
-      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS }),
+      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe }),
       onLang: switchLanguage,
       onChange(key, value) {
         if (key === 'sound' && sound.muted !== (value === 'off')) sound.toggleMute();
@@ -194,6 +203,13 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
           tempo = Number(value);
           remember('sunday-league:tempo', TEMPOS[tempo].id);
         }
+        if (key === 'volume') sound.setVolume(value / 100);
+        if (key === 'safekits') {
+          colorSafe = value === 'off'; // „aus" = nicht Vereinsfarben
+          remember('sunday-league:safekits', colorSafe ? '1' : '0');
+          if (match) showMatch(match); // Kulisse im Menü sofort umfärben
+        }
+        if (key === 'keys') hud.refreshHelp();
       },
       onBack() {
         settings.hide();

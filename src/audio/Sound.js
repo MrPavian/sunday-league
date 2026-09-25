@@ -3,13 +3,17 @@
 // eigene Geräuschkulisse (Verkehr, Vögel, Hunde, Kirchenglocke).
 
 const STORAGE_KEY = 'sunday-league:muted';
+const VOLUME_KEY = 'sunday-league:volume';
 
 export class Sound {
   constructor() {
     this.ctx = null;
     this.muted = false;
+    this.volume = 0.8; // 0…1, Regler in den Einstellungen
     try {
       this.muted = localStorage.getItem(STORAGE_KEY) === '1';
+      const v = Number(localStorage.getItem(VOLUME_KEY));
+      if (localStorage.getItem(VOLUME_KEY) !== null && Number.isFinite(v)) this.volume = Math.min(1, Math.max(0, v));
     } catch {
       // Ohne Speicher bleibt der Ton an.
     }
@@ -27,7 +31,7 @@ export class Sound {
     if (!Ctx) return;
     this.ctx = new Ctx();
     this.master = this.ctx.createGain();
-    this.master.gain.value = this.muted ? 0 : 0.6;
+    this.master.gain.value = this.gain();
     this.master.connect(this.ctx.destination);
     this.noiseBuffer = this.makeNoise();
     if (this.venue) this.setVenue(this.venue, true);
@@ -40,8 +44,22 @@ export class Sound {
     } catch {
       // egal
     }
-    if (this.master) this.master.gain.value = this.muted ? 0 : 0.6;
+    if (this.master) this.master.gain.value = this.gain();
     return this.muted;
+  }
+
+  gain() {
+    return this.muted ? 0 : 0.75 * this.volume;
+  }
+
+  setVolume(v) {
+    this.volume = Math.min(1, Math.max(0, v));
+    try {
+      localStorage.setItem(VOLUME_KEY, String(this.volume));
+    } catch {
+      // egal
+    }
+    if (this.master) this.master.gain.value = this.gain();
   }
 
   makeNoise() {

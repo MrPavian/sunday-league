@@ -1,5 +1,7 @@
 // Tastatur + Gamepad → Intent. Bildschirm-oben entspricht -z in der Welt.
-const KEYS = {
+import { tr } from '../core/i18n.js';
+
+const DEFAULT_KEYS = {
   up: ['ArrowUp'],
   down: ['ArrowDown'],
   left: ['ArrowLeft'],
@@ -20,6 +22,76 @@ const KEYS = {
   menu: ['Escape', 'KeyM'],
   help: ['KeyH'],
 };
+
+// Frei belegbar sind die Tasten fürs Spielen; Menü-, Hilfe- und Sondertasten bleiben fest.
+export const REBINDABLE = ['up', 'down', 'left', 'right', 'sprint', 'shoot', 'pass', 'loft', 'hold', 'tackle', 'poke', 'switchPlayer', 'sub'];
+export const ACTION_LABELS = tr(
+  { up: 'Hoch', down: 'Runter', left: 'Links', right: 'Rechts', sprint: 'Sprinten', shoot: 'Schuss', pass: 'Pass', loft: 'Hoher Ball', hold: 'Halten', tackle: 'Grätsche', poke: 'Stochern', switchPlayer: 'Spieler wechseln', sub: 'Auswechseln' },
+  { up: 'Up', down: 'Down', left: 'Left', right: 'Right', sprint: 'Sprint', shoot: 'Shoot', pass: 'Pass', loft: 'Lofted ball', hold: 'Hold', tackle: 'Slide tackle', poke: 'Poke', switchPlayer: 'Switch player', sub: 'Substitute' },
+);
+const BIND_KEY = 'sunday-league:keys';
+
+function loadBindings() {
+  try {
+    const saved = JSON.parse(globalThis.localStorage?.getItem(BIND_KEY) ?? 'null');
+    if (saved && typeof saved === 'object') return saved;
+  } catch {
+    // kaputter Eintrag – Standard nehmen
+  }
+  return {};
+}
+
+// Aktuelle Belegung: gespeicherte Änderungen über den Standard gelegt.
+const KEYS = { ...DEFAULT_KEYS };
+for (const [action, codes] of Object.entries(loadBindings())) if (REBINDABLE.includes(action) && Array.isArray(codes) && codes.length) KEYS[action] = codes;
+
+export const bindingOf = (action) => KEYS[action];
+
+// Neue Taste für eine Aktion. Liegt sie schon auf einer anderen Aktion, tauschen
+// beide – so bleibt nichts unbelegt.
+export function setBinding(action, code) {
+  if (!REBINDABLE.includes(action)) return;
+  const old = KEYS[action];
+  for (const other of REBINDABLE) {
+    if (other !== action && KEYS[other].includes(code)) KEYS[other] = KEYS[other].map((c) => (c === code ? old[0] : c));
+  }
+  KEYS[action] = [code];
+  saveBindings();
+}
+
+export function resetBindings() {
+  for (const a of REBINDABLE) KEYS[a] = DEFAULT_KEYS[a];
+  try {
+    globalThis.localStorage?.removeItem(BIND_KEY);
+  } catch {
+    // egal
+  }
+}
+
+function saveBindings() {
+  const changed = Object.fromEntries(REBINDABLE.filter((a) => KEYS[a].join() !== DEFAULT_KEYS[a].join()).map((a) => [a, KEYS[a]]));
+  try {
+    globalThis.localStorage?.setItem(BIND_KEY, JSON.stringify(changed));
+  } catch {
+    // dann gilt die Belegung nur bis zum Neuladen
+  }
+}
+
+// Anzeigename einer Taste („KeyW" → „W", „ArrowUp" → „↑").
+export function keyName(code) {
+  if (!code) return '?';
+  if (code.startsWith('Key')) return code.slice(3);
+  if (code.startsWith('Digit')) return code.slice(5);
+  const names = { ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', ShiftLeft: 'Shift', ShiftRight: 'Shift', Space: tr('Leertaste', 'Space'), ControlLeft: 'Strg', ControlRight: 'Strg', AltLeft: 'Alt', Enter: 'Enter', Tab: 'Tab', Backspace: '⌫' };
+  return names[code] ?? code.replace(/^Numpad/, 'Num ');
+}
+
+// Anzeige für die Hilfe: erste belegte Taste; für Y/Z je nach Sprache die passende.
+export function keyLabel(action) {
+  const codes = KEYS[action];
+  if (action === 'poke' && codes.join() === DEFAULT_KEYS.poke.join()) return tr('Y', 'Z');
+  return keyName(codes[0]);
+}
 
 const PREVENT = new Set(['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
 
