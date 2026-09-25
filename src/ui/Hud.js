@@ -7,6 +7,7 @@ import { jobName } from '../data/names.js';
 import { findAnyPlayer } from '../sim/squad.js';
 import { REF_TRAITS } from '../sim/referee.js';
 import { attackDir, getPlayer } from '../sim/match.js';
+import { shootoutScore } from '../sim/shootout.js';
 
 const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
 
@@ -146,7 +147,16 @@ export class Hud {
         this.toast(tr(`Wechsel ${short(e.team)}: ${inn.name.split(' ')[0]} für ${out.name.split(' ')[0]}`, `Sub ${short(e.team)}: ${inn.name.split(' ')[0]} for ${out.name.split(' ')[0]}`), 1.6, 2);
       } else if (e.type === 'incident') this.toast(e.text, e.stage === 'start' ? 3.5 : 2.5, 5);
       else if (e.type === 'lightning') this.lightning();
-      else if (e.type === 'end') this.toast(tr('ABPFIFF', 'FULL TIME'), 2, 9);
+      else if (e.type === 'end') this.toast(match.shootout?.done ? tr(`ENTSCHIEDEN – ${short(shootoutScore(match.shootout)[0] > shootoutScore(match.shootout)[1] ? 0 : 1)} gewinnt im Elfmeterschießen`, `DECIDED – ${short(shootoutScore(match.shootout)[0] > shootoutScore(match.shootout)[1] ? 0 : 1)} win on penalties`) : tr('ABPFIFF', 'FULL TIME'), 3, 9);
+      else if (e.type === 'fulltime_draw') this.toast(tr(`Unentschieden – ${match.pitch.id === 'halle' ? 'Siebenmeterschießen' : 'Elfmeterschießen'}!`, 'All square – penalties!'), 2.5, 6);
+      else if (e.type === 'shootout_kick') {
+        const shooter = findAnyPlayer(match, e.shooterId);
+        const mine = e.team === match.humanTeam;
+        const up = keyLabel('up');
+        const down = keyLabel('down');
+        this.toast(mine ? tr(`${shooter.name} läuft an – ${up}/${down} zielen, ${keyLabel('shoot')} halten und loslassen`, `${shooter.name} steps up – ${up}/${down} to aim, hold and release ${keyLabel('shoot')}`) : tr(`${shooter.name} schießt – ${up}/${down}: wohin springt dein Keeper?`, `${shooter.name} to shoot – ${up}/${down}: which way does your keeper dive?`), 3, 5);
+      } else if (e.type === 'pen_goal') this.toast(tr(`Drin! ${p?.name ?? ''}`, `Scored! ${p?.name ?? ''}`), 1.4, 6);
+      else if (e.type === 'pen_miss') this.toast(tr(`Nicht drin! ${p?.name ?? ''}`, `Missed! ${p?.name ?? ''}`), 1.4, 6);
     }
   }
 
@@ -165,7 +175,13 @@ export class Hud {
     this.updateEdges(match);
     const [a, b] = match.score;
     this.$('.score').textContent = `${a} : ${b}`;
-    this.$('.clock').textContent = `${match.half}${tr('. HZ', 'H')} · ${matchMinute(match, match.time)}'`;
+    const so = match.shootout;
+    if (so) {
+      // Elfmeterschießen: Punkte je Schütze (● drin, ○ vorbei) statt Uhr.
+      const dots = (t) => so.kicks[t].map((k) => (k ? '●' : '○')).join('') || '–';
+      const [pa, pb] = shootoutScore(so);
+      this.$('.clock').textContent = `${tr('i. E.', 'pens')} ${pa}:${pb} · ${dots(0)} | ${dots(1)}`;
+    } else this.$('.clock').textContent = `${match.half}${tr('. HZ', 'H')} · ${matchMinute(match, match.time)}'`;
 
     if (this.toastTimer > 0 && (this.toastTimer -= dt) <= 0) this.hideToast();
 

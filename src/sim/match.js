@@ -18,6 +18,7 @@ import { carRule, restartFromOut, startSetPiece } from './setpieces.js';
 import { applyHold } from './holding.js';
 import { checkIncident, incidentOnBall, planIncident, stepIncident } from './incidents.js';
 import { resolveTackles, startPoke, startTackle, stateMove } from './tackles.js';
+import { startShootout, stepShootout } from './shootout.js';
 
 export { attackDir, getPlayer } from './players.js';
 export { startPoke, startTackle } from './tackles.js';
@@ -97,6 +98,10 @@ export function stepMatch(m, input = NO_INPUT, dt) {
 
 function step(m, input, dt) {
   const { ball, pitch } = m;
+  if (m.phase === 'shootout') {
+    stepShootout(m, input, dt);
+    return;
+  }
 
   if (m.phase === 'goal') {
     m.phaseTimer -= dt;
@@ -138,6 +143,12 @@ function step(m, input, dt) {
     return;
   }
   if (m.time >= m.duration) {
+    // K.-o.-Spiel unentschieden und der Mensch spielt mit: Elfmeterschießen.
+    if (m.knockout && m.humanTeam !== null && m.score[0] === m.score[1]) {
+      m.events.push({ type: 'fulltime_draw' });
+      startShootout(m);
+      return;
+    }
     m.phase = 'ended';
     m.events.push({ type: 'end' });
     return;

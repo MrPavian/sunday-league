@@ -734,3 +734,39 @@ describe('difficulty and auto-switch', () => {
     expect(m.controlledId).not.toBe(me.id);
   });
 });
+
+describe('penalty shootout', () => {
+  const NONE = { move: { x: 0, z: 0 }, sprint: false, shootHeld: false, pass: false, loft: false, hold: false, tackle: false, poke: false, switchPlayer: false, sub: false };
+  it('a drawn knockout match the human plays ends in a decided shootout', async () => {
+    const { shootoutScore } = await import('../src/sim/shootout.js');
+    for (const seed of [1, 2, 3]) {
+      const m = createMatch({ seed, pitch: PITCHES.halle, duration: 3 });
+      m.knockout = true;
+      let steps = 0;
+      while (m.phase !== 'ended' && steps++ < 60 * 300) {
+        if (m.phase !== 'shootout') m.score[1] = m.score[0];
+        const so = m.shootout;
+        const aiming = so?.state === 'aim' && so.team === m.humanTeam;
+        stepMatch(m, aiming ? { ...NONE, shootHeld: so.timer < 0.6, move: { x: 0, z: so.timer < 0.3 ? 1 : 0 } } : NONE, DT);
+        m.events.length = 0;
+      }
+      expect(m.phase).toBe('ended');
+      expect(m.shootout.done).toBe(true);
+      const [a, b] = shootoutScore(m.shootout);
+      expect(a).not.toBe(b);
+      expect(m.shootout.kicks[0].length).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('simulated matches never go to an interactive shootout', () => {
+    const m = createMatch({ seed: 1, pitch: PITCHES.halle, human: false, duration: 3 });
+    m.knockout = true;
+    for (let i = 0; i < 60 * 10 && m.phase !== 'ended'; i++) {
+      m.score = [0, 0];
+      stepMatch(m, undefined, DT);
+      m.events.length = 0;
+    }
+    expect(m.shootout).toBeUndefined();
+    expect(m.phase).toBe('ended');
+  });
+});

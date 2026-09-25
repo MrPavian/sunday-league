@@ -108,7 +108,7 @@ export function tryExecute(m, p) {
   } else {
     // Luftloch – gehört in der Kreisklasse dazu.
     const whiff = (0.05 * (1 - p.attrs.technique) + 0.04 * fatigue) * (hasTrait(p, 'ballsicher') ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.3 : 1) * (p.id === m.controlledId ? 0.5 : 1);
-    if (m.rng.chance(whiff)) {
+    if (!a.placed && m.rng.chance(whiff)) {
       m.events.push({ type: 'whiff', playerId: p.id });
       return;
     }
@@ -136,7 +136,8 @@ function shoot(m, p, a, fatigue) {
   // Streuung: Technik, Müdigkeit, Wucht. Die KI streut etwas mehr als der Mensch,
   // der selbst zielt – sonst treffen Amateure wie Profis.
   const sigma = 0.025 + 0.16 * (1 - p.attrs.shooting) + 0.08 * fatigue + 0.05 * power + (hammer ? 0.03 : 0) + (p.id === m.controlledId ? 0 : 0.03 + (aiSkill(m, p) < 1 ? 0.05 : aiSkill(m, p) > 1 ? -0.015 : 0));
-  dir = rotate(dir, rng.gauss() * sigma);
+  // Elfmeter: in Ruhe platziert, ohne Gegner am Fuß – deutlich weniger Streuung.
+  dir = rotate(dir, rng.gauss() * sigma * (a.placed ? 0.35 : 1));
   const speed = (8 + 18 * power) * (0.85 + 0.15 * p.attrs.shooting) * (hammer ? 1.15 : 1);
   const vy = 0.8 + 5 * power * power + Math.abs(rng.gauss()) * 1.2 * (1 - p.attrs.shooting) * power;
   ball.vel.x = dir.x * speed;
@@ -254,7 +255,8 @@ export function keeperSaves(m) {
     if (Math.abs(ball.pos.x - goalX) > 6) continue;
     // Inkl. Hechtsprung. Vor großen Toren (Asche, Rasen) streckt er sich weiter –
     // sonst deckt er dort anteilig viel weniger ab als vor dem Jackentor.
-    const reach = (0.85 + 0.75 * p.attrs.keeping) * clamp(pitch.goalHalfWidth / 1.6, 1, 1.3);
+    // Beim Elfmeter steht er fest auf der Linie – ohne Anlauf reicht der Sprung weniger weit.
+    const reach = (0.85 + 0.75 * p.attrs.keeping) * clamp(pitch.goalHalfWidth / 1.6, 1, 1.3) * (m.phase === 'shootout' ? 0.62 : 1);
     if (dist2d(p.pos, ball.pos) > reach || ball.pos.y > 2.3) continue;
 
     const bs = ballSpeed(ball);
@@ -286,7 +288,9 @@ export function keeperSaves(m) {
       const since = m.time - (m.shotTime ?? -9);
       const reaction = keeperReaction(m, p);
       const pointBlank = since < reaction + 0.12 ? clamp((dist2d(p.pos, ball.pos) - 0.35) * 0.3, 0, 0.25) : 0;
-      const beaten = clamp((bs - 8) * 0.02 + corner * 0.85 + pointBlank - 0.3 * p.attrs.keeping - (dist2d(p.pos, ball.pos) < 0.45 ? 0.15 : 0), 0.02, 0.65);
+      // Elfmeter an den Pfosten: selbst bei richtiger Ecke schwer zu halten.
+      const postShot = m.phase === 'shootout' ? clamp(Math.abs(lineZ) / gw, 0, 1) * 0.5 : 0;
+      const beaten = clamp((bs - 8) * 0.02 + corner * 0.85 + pointBlank + postShot - 0.3 * p.attrs.keeping - (dist2d(p.pos, ball.pos) < 0.45 ? 0.15 : 0), 0.02, 0.65);
       if (rng.chance(beaten)) {
         p.catchCooldown = 0.7; // zu spät – der Ball ist vorbei
         p.diveAnim = 0.5;

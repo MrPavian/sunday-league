@@ -3,6 +3,7 @@ import { tierById } from '../data/tiers.js';
 import { gradePlayers, headline, playerOfTheMatch } from '../sim/stats.js';
 import { allPlayers, findAnyPlayer } from '../sim/squad.js';
 import { matchMinute } from './Hud.js';
+import { shootoutScore } from '../sim/shootout.js';
 
 const surname = (p) => p.name.split(' ').slice(1).join(' ');
 const gradeText = (g) => tr(g.toFixed(1).replace('.', ','), g.toFixed(1));
@@ -53,6 +54,7 @@ export class EndScreen {
         <div class="result">
           <span>${t0.name}</span><b>${m.score[0]} : ${m.score[1]}</b><span>${t1.name}</span>
         </div>
+        ${m.shootout?.done ? `<p class="place"><b>${tr(`${m.pitch.id === 'halle' ? 'Siebenmeterschießen' : 'Elfmeterschießen'}: ${shootoutScore(m.shootout).join(':')}`, `Penalties: ${shootoutScore(m.shootout).join('-')}`)}</b> · ${m.shootout.kicks.map((k) => k.map((x) => (x ? '●' : '○')).join('')).join(' | ')}</p>` : ''}
         <p class="place">${m.pitch.name} · ${m.pitch.surface.name}${m.referee ? ` · ${tr('Schiedsrichter', 'Referee')}: ${m.referee.name}` : ''}</p>
         ${(m.incidents ?? []).map((i) => `<p class="incident">${i.report.replace('{min}', matchMinute(m, i.time))}</p>`).join('')}
         <ul class="goals">${goals || `<li>${tr('Keine Tore – aber viel Einsatz.', 'No goals – but plenty of effort.')}</li>`}</ul>

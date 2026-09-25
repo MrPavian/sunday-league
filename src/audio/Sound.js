@@ -342,6 +342,17 @@ export class Sound {
         case 'foul':
           this.whistle('sharp');
           break;
+        case 'pen_goal':
+          if (e.team === match.humanTeam || match.humanTeam === null) this.cheer(1);
+          else this.groan();
+          break;
+        case 'pen_miss':
+          if (e.team === match.humanTeam) this.groan();
+          else this.cheer(1);
+          break;
+        case 'shootout_kick':
+          this.whistle('short');
+          break;
         case 'setpiece':
           if (e.kind === 'kickoff') this.whistle('short');
           break;

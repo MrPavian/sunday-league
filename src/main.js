@@ -165,6 +165,8 @@ function startMatch(human) {
   const m = createMatch({ seed: seed++, pitch: matchPitch, human, duration: testDuration, incidents: true });
   // Testschalter: ?incident=hund|gewitter|… löst den Vorfall nach 3 Sekunden aus.
   if (human && params.get('incident')) m.incidentPlan = { type: params.get('incident'), at: 3 };
+  // Testschalter: ?elfmeter (mit ?dauer=2) – Freundschaftsspiel als K.-o.-Spiel, bei Remis Elfmeterschießen.
+  if (human && params.has('elfmeter')) m.knockout = true;
   showMatch(m);
 }
 

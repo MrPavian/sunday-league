@@ -8,6 +8,7 @@ import { book } from './finances.js';
 import { clubById, humanClub, playerOf, resolveKitClash, seasonOver, squadPicker, SQUAD_SHAPES, takenIndices, teamForMatch } from './career.js';
 import { adjustMood } from './events.js';
 import { chronicle, yearOf } from './sagas.js';
+import { shootoutScore } from '../sim/shootout.js';
 import { tr, euroFmt } from '../core/i18n.js';
 
 export const CUPS = {
@@ -129,6 +130,7 @@ export function prepareCupMatch(c, m, { human = false, duration } = {}) {
   const humanIsAway = human && away.human;
   const teams = humanIsAway ? [teamAway, teamHome] : [teamHome, teamAway];
   const match = createMatch({ seed: rng.int(1, 1e9), pitch, teams, human, duration: duration ?? cfg.duration, incidents: true });
+  match.knockout = m.stage !== 'A' && m.stage !== 'B';
   return { match, humanIsAway, pitch, home, away, cup: m };
 }
 
@@ -161,7 +163,14 @@ function penalties(c, m, prepared) {
 export function recordCupResult(c, m, prepared) {
   const [s0, s1] = prepared.match.score;
   m.result = prepared.humanIsAway ? { home: s1, away: s0 } : { home: s0, away: s1 };
-  if (m.stage !== 'A' && m.stage !== 'B' && m.result.home === m.result.away) m.pens = penalties(c, m, prepared);
+  if (m.stage !== 'A' && m.stage !== 'B' && m.result.home === m.result.away) {
+    // Selbst geschossen? Dann zählt das echte Elfmeterschießen, sonst wird gewürfelt.
+    const so = prepared.match.shootout;
+    if (so?.done) {
+      const [a, b] = shootoutScore(so);
+      m.pens = prepared.humanIsAway ? { home: b, away: a } : { home: a, away: b };
+    } else m.pens = penalties(c, m, prepared);
+  }
   const human = humanClub(c).id;
   if (m.home === human || m.away === human) cupOf(c, m.kind ?? 'stadt').log.push(`${stageName(m)}: ${cupClub(c, m.home).short} ${m.result.home}:${m.result.away}${m.pens ? ` (${m.pens.home}:${m.pens.away} ${tr('i. E.', 'on pens')})` : ''} ${cupClub(c, m.away).short}`);
 }
