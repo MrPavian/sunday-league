@@ -19,7 +19,7 @@ import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFin
 
 export const SAVE_VERSION = 1;
 export const POOL_SEED = 1921;
-const SQUAD_SHAPES = {
+export const SQUAD_SHAPES = {
   small: ['gk', 'def', 'def', 'def', 'mid', 'mid', 'mid', 'fwd', 'fwd'],
   large: ['gk', 'gk', 'def', 'def', 'def', 'def', 'mid', 'mid', 'mid', 'mid', 'fwd', 'fwd', 'fwd'],
 };
@@ -105,7 +105,7 @@ const youthDeps = () => ({ getPool, playerOf, freshRecord, book });
 export const maxSquad = (career) => leagueOf(career).maxSquad;
 
 // Kader aus dem Pool ziehen – nach Klassen-Gewichten und Positionen.
-function squadPicker(rng, used) {
+export function squadPicker(rng, used) {
   const pool = getPool();
   const byTierPos = {};
   for (const p of pool.everyone()) (byTierPos[`${p.tier}:${p.position}`] ??= []).push(p.poolIndex);
@@ -401,7 +401,7 @@ export function buildLineup(career, club, format, availability, rng, manual = nu
 
 // --- Gerüchteküche & Transfers -------------------------------------------------------
 
-const takenIndices = (career) =>
+export const takenIndices = (career) =>
   new Set([...career.clubs.flatMap((c) => c.squad), ...(career.youth?.prospects ?? []), ...(career.alumni ?? []).map((a) => a.idx)]);
 
 function makeRumors(career, rng) {
@@ -476,6 +476,7 @@ export function recruitChance(career, rumor) {
   if (played && rank <= 2) chance += 0.08;
   if (played && rank >= rows.length - 1) chance -= 0.05;
   chance += (career.mood ?? 0) * 0.08; // gute Stimmung spricht sich rum
+  if (career.flags?.cityChamp === career.season - 1) chance += 0.05; // Stadtmeister!
   if (p.tier === 'legende') {
     // Ex-Profis wollen keinen Rummel, aber eine gute Truppe.
     if (played && rank === 1) chance -= 0.15;
@@ -573,7 +574,7 @@ export function colorDistance(a, b) {
 }
 
 // Bei ähnlichen Trikots läuft der Gast im Ausweichtrikot auf.
-function resolveKitClash(home, away) {
+export function resolveKitClash(home, away) {
   if (colorDistance(home.kit.shirt, away.kit.shirt) > 110) return away;
   const alt = [0xf2efe6, 0x1c1c1c, 0xe0b020].find((c) => colorDistance(c, home.kit.shirt) > 150);
   return { ...away, kit: { shirt: alt, shorts: alt === 0x1c1c1c ? 0xf2efe6 : 0x1c1c1c, socks: alt } };

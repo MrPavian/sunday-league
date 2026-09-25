@@ -29,6 +29,7 @@ import { storyLabels } from '../career/stories.js';
 import { chronicleData, yearOf } from '../career/sagas.js';
 import { askWirt, buyRound, dossier, playDart, PUB_ACTIONS, PUB_NAME, pubOpen, pubState, ROUND_PRICE, setTactic, TACTICS, talk, wirtName } from '../career/pub.js';
 import { DOSSIER_LABELS } from '../data/backstories.js';
+import { CUP_NAME, cupClub, cupOf, groupTable, humanCupMatch, PRIZES, stageName, tournamentOpen } from '../career/tournament.js';
 import { canSupportDream, DREAM_COST, supportDream } from '../career/pub.js';
 import { chemistry, REL, relationLabel, relationsOfPlayer, shortName } from '../career/relations.js';
 import { childAge, coachAway, coachName, energyLabel, isCoach, patienceLabel, STYLES, trainingLocked } from '../career/personal.js';
@@ -204,6 +205,7 @@ export class Clubhouse {
       ['training', 'Training'],
       ['youth', 'Jugend'],
       ['table', 'Tabelle'],
+      ['cup', 'Turnier'],
       ['club', 'Verein'],
       ['cash', 'Kasse'],
       ['fixtures', 'Spielplan'],
@@ -395,8 +397,50 @@ export class Clubhouse {
         ${c.tripBooked
           ? '<p class="reply ok">Mannschaftsfahrt gebucht! Die Stimmung nächste Saison: bestens.</p>'
           : `<button data-action="trip" ${c.cash < TRIP_COST ? 'disabled' : ''}>Saisonabschlussfahrt buchen (${TRIP_COST} €, Kasse: ${euro(c.cash)})</button>`}
-        <button class="primary" data-action="onNewSeason">Nächste Saison</button>
+        ${this.cupAside()}
       </div>`;
+  }
+
+  // Saisonende: erst Stadtmeisterschaft (oder absagen), dann die neue Saison.
+  cupAside() {
+    const c = this.career;
+    const t = cupOf(c);
+    if (!t) return `<p class="label">Sommer: ${CUP_NAME}</p><p>Acht Vereine, ein Pokal, ${PRIZES.winner} € für den Sieger.</p>
+      <button class="primary" data-action="onCupStart">Zur ${CUP_NAME} anmelden</button>
+      <button data-action="onCupSkip">Diesmal nicht – direkt in die neue Saison</button>`;
+    if (tournamentOpen(c)) return `<p class="label">${CUP_NAME} läuft</p><button class="primary" data-action="tab" data-value="cup">Zum Turnier</button>`;
+    return `${t.log.length && !t.skipped ? `<p class="reply ok">${t.log.at(-1)}</p>` : ''}<button class="primary" data-action="onNewSeason">Nächste Saison</button>`;
+  }
+
+  tab_cup() {
+    const c = this.career;
+    const t = cupOf(c);
+    const trophies = (c.trophies ?? []).length ? `<h4>Vitrine</h4><ul class="plain trophies">${c.trophies.map((tr) => `<li>Pokal: ${tr.name}</li>`).join('')}</ul>` : '';
+    if (!t || t.skipped) return `<p class="empty">Die ${CUP_NAME} steigt im Sommer, nach dem letzten Spieltag: acht Vereine auf dem Sportplatz Am Kanal, 5 gegen 5 mit Schiri.</p>${trophies}`;
+    const me = humanClub(c).id;
+    const table = (g) => `<table class="squad cup-table"><thead><tr><th>Gruppe ${g === 0 ? 'A' : 'B'}</th><th>Sp.</th><th>Tore</th><th>Pkt.</th></tr></thead><tbody>${groupTable(c, g)
+      .map((r, i) => `<tr class="${r.id === me ? 'mine' : ''} ${i < 2 ? 'through' : ''}"><td>${r.club.name}</td><td class="num">${r.p}</td><td class="num">${r.gf}:${r.ga}</td><td class="num">${r.pts}</td></tr>`)
+      .join('')}</tbody></table>`;
+    const line = (m) =>
+      `<li class="${m.home === me || m.away === me ? 'mine' : ''}"><small>${stageName(m)}</small> ${cupClub(c, m.home).short} ${m.result ? `<b>${m.result.home}:${m.result.away}</b>${m.pens ? ` <small>(${m.pens.home}:${m.pens.away} i. E.)</small>` : ''}` : '–:–'} ${cupClub(c, m.away).short}</li>`;
+    const ko = t.matches.filter((m) => m.stage === 'SF' || m.stage === 'F');
+    const next = humanCupMatch(c);
+    let action = '';
+    if (t.stage === 'done') action = `<p class="reply ok">${t.log.at(-1) ?? ''}</p>`;
+    else if (this.busy) action = `<p class="busy">${this.busy}</p>`;
+    else if (next) {
+      const opp = cupClub(c, next.home === me ? next.away : next.home);
+      action = `<div class="fixture-card"><p class="label">${stageName(next)}</p><h3>${humanClub(c).short} – ${opp.short}</h3><p>gegen <b>${opp.name}</b>${next.stage !== 'A' && next.stage !== 'B' ? ' · bei Unentschieden Elfmeterschießen' : ''}</p>
+        <button class="primary" data-action="onCupPlay">Selbst spielen</button> <button data-action="onCupSimulate">Simulieren</button></div>`;
+    } else action = `<p>Ihr seid raus – die anderen spielen noch.</p><button data-action="onCupSimulate">Nächste Runde anschauen</button>`;
+    return `
+      <p class="chat-head">${CUP_NAME} ${t.year} · Sportplatz Am Kanal · Sieger ${PRIZES.winner} €, Finale ${PRIZES.final} €, Halbfinale ${PRIZES.semi} €</p>
+      ${action}
+      <div class="cup-groups">${table(0)}${table(1)}</div>
+      ${ko.length ? `<h4>K.-o.-Runde</h4><ul class="plain cup-list">${ko.map(line).join('')}</ul>` : ''}
+      <h4>Alle Spiele</h4><ul class="plain cup-list">${t.matches.filter((m) => m.result).map(line).join('') || '<li><em>Gleich geht es los.</em></li>'}</ul>
+      ${t.log.length ? `<h4>Eure Ergebnisse</h4><ul class="plain">${t.log.map((l) => `<li>${l}</li>`).join('')}</ul>` : ''}
+      ${trophies}`;
   }
 
   miniTable() {

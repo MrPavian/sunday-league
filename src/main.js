@@ -17,6 +17,7 @@ import {
   simulate,
 } from './career/career.js';
 import { applyChallengeRewards } from './career/rewards.js';
+import { advanceCup, CUP_DURATION, currentCupMatches, humanCupMatch, prepareCupMatch, recordCupResult, skipTournament, startTournament } from './career/tournament.js';
 import { CHALLENGES, challengeById, createChallengeMatch, evaluateChallenge, loadProgress, recordChallenge, saveProgress } from './challenges/challenges.js';
 import { createRng } from './core/rng.js';
 import { Input } from './input/Input.js';
@@ -185,6 +186,18 @@ const clubhouse = new Clubhouse(document.getElementById('club'), {
     saveCareer(career);
     openClubhouse();
   },
+  onCupStart() {
+    startTournament(career);
+    saveCareer(career);
+    openClubhouse();
+  },
+  onCupSkip() {
+    skipTournament(career);
+    saveCareer(career);
+    openClubhouse();
+  },
+  onCupPlay: playCupMatch,
+  onCupSimulate: () => runCupRound(null),
   onNewSeason() {
     nextSeason(career);
     saveCareer(career);
@@ -261,6 +274,33 @@ function playCareerMatch() {
   }
 }
 
+// Stadtmeisterschaft: eigenes Spiel selbst spielen, der Rest läuft im Hintergrund.
+function playCupMatch() {
+  const m = humanCupMatch(career);
+  if (!m) return runCupRound(null);
+  const prepared = prepareCupMatch(career, m, { human: true, duration: testDuration ?? CUP_DURATION });
+  careerMatch = { prepared, cup: m };
+  loadVenue(prepared.pitch.id);
+  clubhouse.hide();
+  setMode('play');
+  showMatch(prepared.match);
+  hud.toast('Stadtmeisterschaft – Sportplatz Am Kanal', 2.5, 2);
+}
+
+async function runCupRound(played) {
+  clubhouse.setBusy('Turnier läuft … auf dem Nebenplatz wird auch gekickt.');
+  for (const m of currentCupMatches(career)) {
+    if (m === played) continue;
+    const prepared = prepareCupMatch(career, m, { duration: testDuration ?? CUP_DURATION });
+    await simulate(prepared);
+    recordCupResult(career, m, prepared);
+  }
+  advanceCup(career);
+  saveCareer(career);
+  clubhouse.tab = 'cup';
+  openClubhouse();
+}
+
 // Restliche Partien des Spieltags simulieren (und ggf. das eigene Spiel).
 async function runRound(playedFixture) {
   clubhouse.setBusy('Spieltag läuft … die anderen Plätze melden sich gleich.');
@@ -275,8 +315,15 @@ async function runRound(playedFixture) {
 }
 
 function finishCareerMatch() {
-  const { prepared, fixture } = careerMatch;
+  const { prepared, fixture, cup } = careerMatch;
   careerMatch = null;
+  if (cup) {
+    recordCupResult(career, cup, prepared);
+    saveCareer(career);
+    openClubhouse();
+    runCupRound(cup);
+    return;
+  }
   recordResult(career, fixture, prepared);
   saveCareer(career);
   openClubhouse();

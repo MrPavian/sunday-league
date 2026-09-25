@@ -528,3 +528,9 @@ und Rivalen, deterministisch aus dem Pool und durch Ereignisse veränderbar. In 
 Teamchemie auf Passen/Technik (Rivalen bremsen). Dossiers mit Folgen: bekannten Traum unterstützen (30 €,
 Kraft) macht den Spieler treu (weniger Absagen) und landet in der Chronik. Neue Ereignisse
 (`src/career/social.js`): Zoff unter Rivalen, ein Geheimnis macht die Runde, zwei Mitspieler werden Kumpels.
+
+(3) umgesetzt – Stadtmeisterschaft (`src/career/tournament.js`, Tab „Turnier"): nach dem letzten Spieltag,
+8 Vereine (Liga + 2 Gäste wie Polizei-SV oder Feuerwehr), zwei Vierergruppen, Halbfinale, Finale mit
+Elfmeterschießen, 5 gegen 5 mit Schiri auf dem Sportplatz Am Kanal. Selbst spielen oder simulieren,
+Preisgeld, Pokal in der Vitrine, Chronik-Eintrag, Stadtmeister haben es bei Transfers leichter.
+Offen: Hallenturnier im Winter (neuer Spielort).
