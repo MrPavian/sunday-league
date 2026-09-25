@@ -2,7 +2,7 @@
 // Schlagzeile für den Montag. Alles wird aus den Spielereignissen abgeleitet.
 import { findAnyPlayer } from './squad.js';
 
-const blank = () => ({ goals: 0, ownGoals: 0, assists: 0, shots: 0, passes: 0, tackles: 0, saves: 0, fouls: 0, whiffs: 0, headers: 0, blocks: 0, cars: 0, yellow: 0, red: 0, seconds: 0 });
+const blank = () => ({ goals: 0, ownGoals: 0, assists: 0, shots: 0, passes: 0, tackles: 0, saves: 0, fouls: 0, whiffs: 0, headers: 0, blocks: 0, cars: 0, yellow: 0, red: 0, slides: 0, seconds: 0 });
 
 export function createStats() {
   return { players: {}, teams: [teamBlank(), teamBlank()], goals: [] };
@@ -42,6 +42,9 @@ export function trackStep(m, dt) {
         break;
       case 'whiff':
         ps(stats, id).whiffs++;
+        break;
+      case 'slide':
+        ps(stats, id).slides++;
         break;
       case 'header':
         ps(stats, id).headers++;

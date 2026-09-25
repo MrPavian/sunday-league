@@ -440,4 +440,4 @@ Gleichzeitig hat das Match noch Lücken, die man beim Spielen sofort merkt.
    ✅ Jugendabteilung (Jugendtrainer, Jahrgänge, hochziehen, Abgang mit 20) · ✅ Karriereende mit
    Abschiedsparty und Ehrenamt (Co-Trainer, Jugendtrainer, Wirt, Platzwart – jeweils mit Wirkung) ·
    offen: Bolzplatz-Scouting
-5. **Schiri, Wetter, 7v7/11v11** für den Aufstieg in die höheren Ligen
+5. ✅ Schiri & 7v7 · ✅ Challenges (6 Szenarien, Sterne, Karriere-Belohnungen) · offen: Wetter, 11v11, Kreisklasse B+

@@ -21,6 +21,15 @@ die anderen Partien laufen im Hintergrund. Der Spielstand wird im Browser gespei
 |---|---|
 | ![Vereinsheim](docs/screenshot-vereinsheim.png) | ![Kader](docs/screenshot-kader.png) |
 
+## Challenges
+
+Im Menü mit **C**: sechs Szenarien mit festem Spielstand und Restzeit – „Einer weniger“,
+„Halt die Null“, „Aufholjagd“, „Parkplatz-Derby“, „Alte Herren“, „Der Knipser“. Bis zu drei Sterne
+je Challenge; beim ersten Abschluss gibt es eine Belohnung für die Karriere (Geld für die Kasse
+oder ein neuer Spieler).
+
+![Challenges](docs/screenshot-challenges.png)
+
 ## Spielorte
 
 | Platz | Format | Boden | Besonderheit |

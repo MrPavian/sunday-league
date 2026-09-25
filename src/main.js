@@ -16,6 +16,8 @@ import {
   saveCareer,
   simulate,
 } from './career/career.js';
+import { applyChallengeRewards } from './career/rewards.js';
+import { CHALLENGES, challengeById, createChallengeMatch, evaluateChallenge, loadProgress, recordChallenge, saveProgress } from './challenges/challenges.js';
 import { createRng } from './core/rng.js';
 import { Input } from './input/Input.js';
 import { CameraRig } from './render/CameraRig.js';
@@ -24,6 +26,7 @@ import { PixelRenderer } from './render/PixelRenderer.js';
 import { VENUES, venueById } from './render/venues/index.js';
 import { createMatch, stepMatch } from './sim/match.js';
 import { SURFACES } from './sim/surfaces.js';
+import { ChallengeScreen } from './ui/Challenges.js';
 import { Clubhouse } from './ui/Clubhouse.js';
 import { EndScreen } from './ui/EndScreen.js';
 import { Hud } from './ui/Hud.js';
@@ -55,6 +58,8 @@ let view = null;
 let mode = 'menu'; // menu | play | club
 let career = loadCareer();
 let careerMatch = null; // { prepared, fixture } während eines Karrierespiels
+let challengeRun = null; // { def, ctx } während einer Challenge
+const challengeScreen = new ChallengeScreen(document.getElementById('challenges'));
 
 function loadVenue(id) {
   if (venue?.id === id) return;
@@ -115,6 +120,10 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
     menu.hide();
     openClubhouse();
   },
+  onChallenges() {
+    menu.paused = true;
+    openChallenges();
+  },
   onCareerNew() {
     if (career && !confirm('Neue Karriere starten? Der alte Spielstand wird überschrieben.')) return;
     career = createCareer({ seed: seed++ });
@@ -128,6 +137,9 @@ function openMenu() {
   setMode('menu');
   endScreen.hide();
   clubhouse.hide();
+  challengeScreen.hide();
+  challengeRun = null;
+  setTimeout(() => (menu.paused = false), 0);
   menu.setCareer(saveInfo());
   menu.show(venue?.id ?? params.get('venue') ?? 'parkplatz');
 }
@@ -151,7 +163,53 @@ const clubhouse = new Clubhouse(document.getElementById('club'), {
   },
 });
 
+// Offene Challenge-Belohnungen landen in der Karriere, sobald es eine gibt.
+function redeemRewards() {
+  if (!career) return [];
+  const progress = loadProgress();
+  const applied = applyChallengeRewards(career, progress);
+  if (applied.length) {
+    saveCareer(career);
+    saveProgress(progress);
+  }
+  return applied;
+}
+
+// --- Challenges ------------------------------------------------------------------
+
+function openChallenges() {
+  setMode('menu');
+  menu.hide();
+  endScreen.hide();
+  challengeRun = null;
+  challengeScreen.showList(CHALLENGES, loadProgress(), { onStart: startChallenge, onBack: openMenu });
+}
+
+function startChallenge(id) {
+  const def = challengeById(id);
+  challengeScreen.hide();
+  loadVenue(def.venue);
+  const { match: m, ctx } = createChallengeMatch(def, seed++);
+  challengeRun = { def, ctx };
+  careerMatch = null;
+  setMode('play');
+  showMatch(m);
+  hud.toast(`${def.title}: ${def.goals[0].text}`, 3, 3);
+}
+
+function finishChallenge(m) {
+  const { def, ctx } = challengeRun;
+  const evaluation = evaluateChallenge(def, m, ctx);
+  const progress = loadProgress();
+  const { firstClear } = recordChallenge(progress, def, evaluation.stars);
+  saveProgress(progress);
+  const applied = redeemRewards();
+  setMode('menu');
+  challengeScreen.showResult(def, m, evaluation, { firstClear, applied, hasCareer: !!career }, { onStart: startChallenge, onList: openChallenges, onBack: openMenu });
+}
+
 function openClubhouse(results = null) {
+  redeemRewards();
   setMode('club');
   endScreen.hide();
   // Im Hintergrund kickt irgendwer auf dem eigenen Platz.
@@ -223,17 +281,21 @@ function frame(now) {
     if (mode === 'play') {
       if (intent.help) hud.toggleHelp();
       if (intent.mute) hud.toast(sound.toggleMute() ? 'Ton aus' : 'Ton an', 1);
-      if (match.phase === 'ended' && intent.restart) {
+      if (match.phase === 'ended' && intent.restart && !challengeRun) {
         if (careerMatch) finishCareerMatch();
         else startMatch(true);
-      } else if (intent.menu && !careerMatch) openMenu();
+      } else if (intent.menu && challengeRun) openChallenges();
+      else if (intent.menu && !careerMatch) openMenu();
     } else if (match.phase === 'ended') {
       startMatch(false);
     }
     stepMatch(match, intent, STEP);
     hud.handleEvents(match);
     if (mode === 'play') sound.handle(match, rig.target.x);
-    if (mode === 'play' && match.events.some((e) => e.type === 'end')) {
+    if (mode === 'play' && challengeRun && match.events.some((e) => e.type === 'end')) {
+      const ended = match;
+      setTimeout(() => ended === match && challengeRun && finishChallenge(ended), 1200);
+    } else if (mode === 'play' && match.events.some((e) => e.type === 'end')) {
       const ended = match;
       const keys = careerMatch ? '<b>Enter</b> weiter ins Vereinsheim' : undefined;
       setTimeout(() => ended === match && mode === 'play' && endScreen.show(ended, { keys }), 1200);
