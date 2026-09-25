@@ -24,6 +24,7 @@ import {
 import { acceptSponsor, bookTrip, FINES, KIT_COST, SLOTS, TRIP_COST } from '../career/finances.js';
 import { inviteChance, inviteTrialist, isRawDiamond, MAX_STATIONS, runStation, startTraining, STATIONS, TRAINING_COST, trainingDone } from '../career/training.js';
 import { promoteProspect, STAFF_ROLES } from '../career/youth.js';
+import { moodLabel, resolveEvent } from '../career/events.js';
 import { TRAITS } from '../data/traits.js';
 import { tierById } from '../data/tiers.js';
 import { POSITIONS } from '../sim/generator.js';
@@ -32,6 +33,7 @@ import { PITCHES } from '../sim/pitch.js';
 const STATUS = { yes: ['Zusage', 'yes'], no: ['Absage', 'no'], late: ['Kommt später', 'late'] };
 const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
 const first = (name) => name.split(' ')[0];
+const formArrow = (f = 0) => (f >= 0.25 ? ' <span class="form up" title="gut drauf">▲</span>' : f <= -0.25 ? ' <span class="form down" title="nicht in Form">▼</span>' : '');
 const euro = (n) => `${n.toLocaleString('de-DE', { maximumFractionDigits: 2 })} €`;
 
 // Vereinsheim: Chatgruppe, Kader, Tabelle, Spielplan – und der nächste Spieltag.
@@ -66,6 +68,9 @@ export class Clubhouse {
         this.h.onChange();
       } else if (action === 'invite') {
         inviteTrialist(this.career, Number(value));
+        this.h.onChange();
+      } else if (action === 'event') {
+        resolveEvent(this.career, Number(value));
         this.h.onChange();
       } else if (action === 'promote') {
         promoteProspect(this.career, Number(value), maxSquad(this.career));
@@ -178,6 +183,7 @@ export class Clubhouse {
     const home = f.home === club.id;
     const opp = clubById(c, home ? f.away : f.home);
     const venue = PITCHES[clubById(c, f.home).venue];
+    const w = c.week;
     const avail = Object.values(c.week.availability);
     const count = (s) => avail.filter((a) => a === s).length;
     return `
@@ -187,6 +193,8 @@ export class Clubhouse {
         <p>${home ? 'Heimspiel' : 'Auswärts'} gegen <b>${opp.name}</b></p>
         <p class="venue-line">${venue.name} · ${venue.surface.name} · ${venue.format} gegen ${venue.format}</p>
         <p class="avail">${count('yes')} Zusagen · ${count('late')} später · ${count('no')} Absagen</p>
+        <p class="mood-line">Stimmung im Team: <b class="mood mood-${moodLabel(c.mood ?? 0)}">${moodLabel(c.mood ?? 0)}</b></p>
+        ${w.event && w.event.choice === null ? '<p class="warn">In der Gruppe wartet eine Entscheidung auf dich.</p>' : ''}
         ${count('yes') < venue.format ? '<p class="warn">Zu wenige Zusagen – es hilft jemand aus dem Bekanntenkreis aus.</p>' : ''}
         ${this.busy ? `<p class="busy">${this.busy}</p>` : `
         <button class="primary" data-action="onPlay">Selbst spielen</button>
@@ -265,7 +273,18 @@ export class Clubhouse {
       })
       .join('');
     const declined = club.squad.filter((idx) => w.availability[idx] === 'no' && !w.nudged.includes(idx) && !c.players[idx].injuryWeeks);
+    const ev = w.event;
+    const eventCard = ev
+      ? `<div class="event-card">
+          <p class="label">Diese Woche im Verein</p>
+          <p>${ev.text}</p>
+          ${ev.choice === null && !this.results
+            ? `<div class="actions">${ev.options.map((o, i) => `<button ${i === 0 ? 'class="primary"' : ''} data-action="event" data-value="${i}">${o}</button>`).join('')}</div>`
+            : `<p class="reply ok">➜ ${ev.options[ev.choice] ?? ''}: ${ev.result ?? ''}</p>`}
+        </div>`
+      : '';
     return `
+      ${eventCard}
       <div class="chat-head">„Wer kann Sonntag?" · ${club.squad.length} Mitglieder</div>
       <div class="chat">${bubbles}</div>
       <div class="nudge">
@@ -289,7 +308,7 @@ export class Clubhouse {
         const avg = r.graded ? (r.gradeSum / r.graded).toFixed(1).replace('.', ',') : '–';
         return `<tr style="--c:${tier.color}">
           <td><span class="badge">${tier.name}</span></td>
-          <td><b>${p.name}</b>${p.title ? ` <em>${p.title}</em>` : ''}<small>${p.age} J. · ${p.profession}</small></td>
+          <td><b>${p.name}</b>${p.title ? ` <em>${p.title}</em>` : ''}${formArrow(r.form)}${r.grumpy ? ' <span class="grumpy" title="angefressen – sagt öfter ab">grummelt</span>' : ''}<small>${p.age} J. · ${p.profession}</small></td>
           <td>${POSITIONS[p.position]}</td><td class="num">${p.rating}</td>
           <td>${r.injuryWeeks ? '<span class="st-text no">verletzt</span>' : st ? `<span class="st-text ${st[1]}">${st[0]}</span>` : ''}</td>
           <td class="num">${r.apps}</td><td class="num">${r.goals}</td><td class="num">${r.assists}</td><td class="num">${avg}</td>

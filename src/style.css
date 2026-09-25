@@ -447,3 +447,17 @@ body.in-club #hud { display: none; }
 .challenge-panel .reward.ok { color: #7fd48b; }
 .challenge-panel .actions { display: flex; justify-content: center; gap: 10px; }
 .challenge-panel li { background: none; border: none; padding: 1px 0; cursor: default; }
+.event-card { border: 2px solid #000; border-left: 6px solid var(--accent); background: #2a2a1f; padding: 8px 12px; margin-bottom: 10px; display: grid; gap: 6px; }
+.event-card p { margin: 0; }
+.event-card .label { font-size: 12px; opacity: 0.7; }
+.event-card .actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.mood-line { font-size: 13px; }
+.mood { padding: 0 6px; border: 1px solid #000; color: #111; text-shadow: none; }
+.mood-super { background: #5cc46a; }
+.mood-gut { background: #a7d86b; }
+.mood-okay { background: #d8d0a0; }
+.mood-angespannt { background: #e0a050; }
+.mood-mies { background: #d9534f; }
+.form.up { color: #7fd48b; font-size: 11px; }
+.form.down { color: #e07a6f; font-size: 11px; }
+.grumpy { font-size: 11px; padding: 0 4px; background: #5a3a3a; border: 1px solid #000; }

@@ -441,3 +441,47 @@ Gleichzeitig hat das Match noch Lücken, die man beim Spielen sofort merkt.
    Abschiedsparty und Ehrenamt (Co-Trainer, Jugendtrainer, Wirt, Platzwart – jeweils mit Wirkung) ·
    offen: Bolzplatz-Scouting
 5. ✅ Schiri & 7v7 · ✅ Challenges (6 Szenarien, Sterne, Karriere-Belohnungen) · offen: Wetter, 11v11, Kreisklasse B+
+
+---
+
+## 9. Geschichten, Vorfälle & Entscheidungen (Brainstorming, Ausbaustufe „Leben")
+
+Grundbaustein: ein **Ereignis-System** – jedes Ereignis ist ein Datensatz mit Bedingung, Text in der
+Chatgruppe, 2–3 Antworten und Folgen (Kasse, Verfügbarkeit, Stimmung, Form, Spieler kommen/gehen).
+Mehrwöchige Geschichten sind Ketten solcher Ereignisse.
+
+**Match-Vorfälle (selten):** Ball über den Zaun (Nachbar behält ihn ein), Hund klaut den Ball,
+Autoalarm → Parkplatzsperre, Gewitter-Abbruch mit Nachholspiel, Rasensprenger springen an, verletzter
+Schiri wird durch einen Zuschauer ersetzt, eingelaufene Trikots → Leibchen, Torwart kommt nicht,
+Oma ruft wegen Lärm die Polizei, ein Promi kickt im Park mit.
+
+**Vereinsleben:** Arbeitseinsatz am Platz, Freibier-Abend im Vereinsheim (Stimmung vs. Kater),
+Streit in der Gruppe (schlichten / bestrafen / raushalten), Beschwerden der Nachbarn, Sommerfest mit
+Tombola, Firmenturnier des Sponsors, Jahreshauptversammlung (Beiträge, „wollen wir aufsteigen?"),
+Porträt im Kreisblatt (Zuschauer ↑, Ex-Profis ↓).
+
+**Lebensgeschichten (mehrwöchig):** wird Vater, Jobverlust, Umzug & Pendeln, ewiger Student mit
+Abschluss, Comeback nach langer Verletzung, Vater & Sohn im selben Team, Ex-Profi mit Geheimnis,
+Hochzeit am Spieltag, Bruder beim Rivalen, der Aushilfsschwager will fest dabei sein.
+
+**Trainer-Dilemmata:** Stammspieler vs. Jugend (Bankfrust), Superstar mit Allüren, Kumpel vs.
+Leistung, Sponsor mit Haken (Name im Vereinsnamen), Aufstieg ablehnen, Fairplay-Geständnis,
+Spieler beim Gegner abwerben, Strafenkatalog verschärfen.
+
+**Persönliche Ebene (Spielertrainer):** eigener Avatar mit Job & Familie, selbst spielen oder
+coachen, Familien-Geduld als Ressource, Angebot eines größeren Vereins, Ehrenamts-Burnout.
+
+**Teamchemie:** Beziehungsnetz (Kumpels, Kollegen, Schwager, Rivalen), Stimmungswert, Cliquen
+(Raucherecke, Junge, Alte Herren) bis hin zur Abspaltung.
+
+**Langzeit:** Platz wird verkauft, Jubiläum mit Festschrift aus der echten Chronik, Fusion mit dem
+Nachbarn, erste Frauenmannschaft, ehemaliger Jugendspieler wird Profi und kommt zurück.
+
+Reihenfolge: (1) Ereignis-System + Wochen-Ereignisse · (2) Teamstimmung & Form · (3) Lebensgeschichten ·
+(4) Match-Vorfälle · (5) persönliche Ebene · (6) Langzeit-Geschichten
+
+**Stand:** (1) und (2) umgesetzt – 15 Wochen-Ereignisse mit 2–3 Antworten (Vereinsheim-Abend, Arbeitseinsatz,
+Streit, Nachbar, Kreisblatt-Porträt, Kater, Bankfrust, eingelaufene Trikots, Tombola, Kind im Park,
+Allüren, Sommerfest, Firmenturnier, Schiri-Beschwerde, „wird Vater“ als erste mehrwöchige Geschichte),
+Teamstimmung (beeinflusst Absagen und Zusagen bei Transfers), Spielerform (±8 % Attribute), „grummelt“ nach
+gebrochenen Versprechen. Unbeantwortete Ereignisse entscheidet die Gruppe am Spieltag selbst.

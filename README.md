@@ -17,6 +17,10 @@ Spieler sagen passend zu ihrem Beruf zu oder ab, du kannst dreimal nachhaken. Fe
 springt „der Schwager von …“ ein. Den Spieltag spielst du selbst oder simulierst ihn;
 die anderen Partien laufen im Hintergrund. Der Spielstand wird im Browser gespeichert.
 
+Fast jede Woche passiert etwas im Verein: Freibier-Abend, Streit in der Gruppe, Kater am Spieltag,
+ein Porträt im Kreisblatt oder ein Spieler, der Vater wird. Deine Antwort wirkt sich auf Kasse,
+**Teamstimmung** und **Form** der Spieler aus. Gute Stimmung heißt weniger Absagen und leichtere Transfers.
+
 | Vereinsheim | Kader |
 |---|---|
 | ![Vereinsheim](docs/screenshot-vereinsheim.png) | ![Kader](docs/screenshot-kader.png) |

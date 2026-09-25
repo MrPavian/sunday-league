@@ -9,6 +9,7 @@ import { allPlayers } from '../sim/squad.js';
 import { gradePlayers } from '../sim/stats.js';
 import { absenceChance, DECLINE_TEXT, FAREWELL, INJURED, JOIN_TEXT, LATE, noReasons, NUDGE_NO, NUDGE_YES, RUMOR_SOURCES, YES } from './chat.js';
 import { HUMAN_CLUB_DEFAULT, LEAGUES } from './clubs.js';
+import { absenceFactor, advanceArcs, applyForm, autoResolve, resultMood, rollWeekEvent, weeklyMood } from './events.js';
 import { developYouth, expireYouth, initYouth, retirements, youthIntake } from './youth.js';
 import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFinances, weeklyFinances } from './finances.js';
 
@@ -125,6 +126,8 @@ export function createCareer({ seed = Date.now() % 1e9, club = {} } = {}) {
     players,
     fixtures: roundRobin(clubs.map((c) => c.id), rng),
     history: [],
+    mood: 0,
+    flags: {},
     week: null,
   };
   initFinances(career);
@@ -175,6 +178,7 @@ export function nextSeason(career) {
     clubs = [human, ...league.clubs.map((c) => ({ ...c, human: false, squad: pick(c.tiers, SQUAD_SHAPES[league.squadShape]) }))];
     for (const c of clubs) for (const idx of c.squad) career.players[idx] ??= freshRecord();
   }
+  if (career.flags) career.flags.summerfest = false;
   Object.assign(career, {
     level: newLevel,
     league: league.name,
@@ -269,7 +273,7 @@ export function startWeek(career) {
     if (rec.injuryWeeks > 0) {
       status = 'no';
       text = rng.pick(INJURED);
-    } else if (rng.chance(absenceChance(p.profession) * (career.spirit ? 0.75 : 1))) {
+    } else if (rng.chance(absenceChance(p.profession) * (career.spirit ? 0.75 : 1) * absenceFactor(career, idx))) {
       status = 'no';
       text = rng.pick(noReasons(p.profession));
     } else if (rng.chance(0.07)) {
@@ -281,7 +285,10 @@ export function startWeek(career) {
     availability[idx] = status;
     chat.push({ from: idx, text, time: time() });
   }
-  career.week = { availability, chat, nudges: NUDGES_PER_WEEK, nudged: [], lineup: null, training: null };
+  career.week = { availability, chat, nudges: NUDGES_PER_WEEK, nudged: [], lineup: null, training: null, event: null };
+  career.flags ??= {};
+  advanceArcs(career);
+  rollWeekEvent(career);
   if (career.round === 0 && !career.offers?.length && (career.sponsors?.length ?? 0) < 2) makeOffers(career, career.level ?? 1);
   career.week.rumors = makeRumors(career, createRng(hashSeed(career.seed, career.season, career.round, 3)));
   career.week.actions = SCOUT_ACTIONS;
@@ -377,6 +384,8 @@ function makeRumors(career, rng) {
 // Alte Spielstände ohne Gerüchteküche nachrüsten.
 export function migrateCareer(career) {
   career.level ??= 1;
+  career.mood ??= 0;
+  career.flags ??= {};
   initFinances(career);
   initYouth(career);
   career.history ??= [];
@@ -397,9 +406,11 @@ export function recruitChance(career, rumor) {
   let chance = RECRUIT_BASE[p.tier] + (rumor.scouted ? 0.1 : 0);
   if (played && rank <= 2) chance += 0.08;
   if (played && rank >= rows.length - 1) chance -= 0.05;
+  chance += (career.mood ?? 0) * 0.08; // gute Stimmung spricht sich rum
   if (p.tier === 'legende') {
     // Ex-Profis wollen keinen Rummel, aber eine gute Truppe.
     if (played && rank === 1) chance -= 0.15;
+    if (career.flags?.pressWeeks > 0) chance -= 0.15; // Kreisblatt-Rummel
     const goodVibes = club.squad.some((idx) => ['teamchemie', 'anfuehrer'].some((t) => poolPlayer(idx).traits.includes(t)));
     if (goodVibes) chance += 0.12;
   }
@@ -546,7 +557,7 @@ export function teamForMatch(career, club, format, availability, rng) {
   const manual = club.human ? career.week?.lineup : null;
   const { lineup, bench, late, helpers } = buildLineup(career, club, format, availability, rng, manual);
   const players = [...lineup, ...bench].map((idx) => {
-    const p = helpers.includes(idx) ? helperOf(career, club, idx) : copyPlayer(playerOf(career, idx));
+    const p = helpers.includes(idx) ? helperOf(career, club, idx) : applyForm(copyPlayer(playerOf(career, idx)), career.players[idx], club.human ? career.mood ?? 0 : 0);
     if (late.includes(idx)) p.late = true;
     return p;
   });
@@ -612,6 +623,7 @@ export function recordResult(career, fixture, prepared) {
     const st = m.stats.players[p.id];
     if (!rec || !st || st.seconds <= 0) continue;
     rec.apps++;
+    rec.lastApp = career.round;
     rec.goals += st.goals;
     rec.assists += st.assists;
     if (grades[p.id] !== undefined) {
@@ -622,11 +634,16 @@ export function recordResult(career, fixture, prepared) {
     if (p.injury && p.injury.severity >= 2) rec.injuryWeeks = 1;
   }
   matchFinances(career, fixture, prepared, career.level ?? 1);
+  const human = humanClub(career).id;
+  if (fixture.home === human) resultMood(career, fixture.result.home, fixture.result.away);
+  else if (fixture.away === human) resultMood(career, fixture.result.away, fixture.result.home);
   return fixture.result;
 }
 
 export function finishRound(career) {
+  autoResolve(career);
   weeklyFinances(career);
+  weeklyMood(career);
   for (const rec of Object.values(career.players)) if (rec.injuryWeeks > 0) rec.injuryWeeks--;
   career.round++;
   startWeek(career);
