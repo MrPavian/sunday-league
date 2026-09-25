@@ -76,6 +76,8 @@ export function matchFinances(career, fixture, prepared, level) {
   }
   career.seasonCards += m.stats.teams[team].yellow;
   if (fines > 0) book(career, 'Strafen eingesammelt', fines);
+  // Vorfälle: Wer Gastgeber ist, zahlt den Ersatzball.
+  if (homeHuman) for (const inc of m.incidents ?? []) if (inc.cost) book(career, 'Neuer Ball (Nachbar gibt ihn nicht raus)', -inc.cost);
 
   if (homeHuman) {
     const rng = createRng(career.seed + career.season * 97 + career.round * 13);

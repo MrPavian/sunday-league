@@ -15,6 +15,7 @@ import { makeEntity, requestSub, restBench, swapSides } from './squad.js';
 import { createStats, trackStep } from './stats.js';
 import { createReferee, stepReferee } from './referee.js';
 import { carRule, restartFromOut, startSetPiece } from './setpieces.js';
+import { checkIncident, incidentOnBall, planIncident, stepIncident } from './incidents.js';
 import { resolveTackles, startPoke, startTackle, stateMove } from './tackles.js';
 
 export { attackDir, getPlayer } from './players.js';
@@ -27,7 +28,7 @@ const NO_INPUT = { move: { x: 0, z: 0 }, sprint: false, shootHeld: false, pass: 
 const BENCH_ROLES = { 4: ['mid', 'fwd'], 5: ['def', 'mid', 'fwd'], 7: ['def', 'mid', 'fwd'] };
 
 // human: false → beide Teams von der KI gesteuert (Simulation ungespielter Partien).
-export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = true, human = true, duration = MATCH_DURATION } = {}) {
+export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = true, human = true, duration = MATCH_DURATION, incidents = false } = {}) {
   const rng = createRng(seed);
   const formation = FORMATIONS[pitch.format ?? 5];
   const roles = formation.map((f) => f.role);
@@ -75,7 +76,11 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = tr
     tactics: {},
     pendingSwitch: null,
     lastTouchTeam: null,
+    incident: null,
+    incidents: [],
+    weather: null,
   };
+  m.incidentPlan = incidents ? planIncident(m, seed) : null;
   if (kickoff) startSetPiece(m, { type: 'kickoff', team: 0 });
   return m;
 }
@@ -103,6 +108,10 @@ function step(m, input, dt) {
     if ((m.phaseTimer -= dt) <= 0) m.phase = 'play';
     return;
   }
+  if (m.phase === 'incident') {
+    stepIncident(m, dt);
+    return;
+  }
   if (m.phase === 'halftime') {
     if ((m.phaseTimer -= dt) > 0) return;
     // Seitenwechsel, kurz durchschnaufen, die andere Mannschaft stößt an.
@@ -126,6 +135,7 @@ function step(m, input, dt) {
     return;
   }
 
+  if (checkIncident(m, dt)) return;
   if (input.switchPlayer) switchToNearest(m);
   updateTactics(m, dt);
 
@@ -179,10 +189,13 @@ function step(m, input, dt) {
 }
 
 function handleBallEvent(m, ev) {
+  // Flog der Ball hoch oder scharf ins Aus? (Für „Ball über den Zaun".)
+  if (ev.type === 'out') ev.flying = m.ball.pos.y > 0.6 || Math.hypot(m.ball.vel.x, m.ball.vel.z) > 9;
   if (ev.type === 'goal') onGoal(m, teamAttacking(m, ev.side));
   else if (ev.type === 'out') restartFromOut(m, ev);
   else if (ev.type === 'car') carRule(m, ev);
   else m.events.push(ev); // post, bar
+  if (ev.type === 'out' || ev.type === 'car') incidentOnBall(m, ev);
 }
 
 function humanIntent(m, p, input, dt) {

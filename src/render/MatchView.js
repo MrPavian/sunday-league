@@ -4,6 +4,7 @@ import { BALL_RADIUS } from '../sim/ball.js';
 import { allPlayers } from '../sim/squad.js';
 import { BALL_VISUAL_RADIUS, createBallModel, rollBall } from './BallModel.js';
 import { animatePlayer, createPlayerModel } from './PlayerModel.js';
+import { IncidentView } from './IncidentView.js';
 
 const CELEBRATIONS = ['flugzeug', 'faust', 'tanz', 'rutscher'];
 
@@ -31,11 +32,8 @@ export class MatchView {
       this.models.set(p.id, model);
       this.root.add(model.group);
     }
-    if (match.referee) {
-      // Schiri ganz in Schwarz, wie es sich gehört.
-      this.referee = createPlayerModel(match.referee.look, { shirt: 0x1c1c1c, shorts: 0x1c1c1c, socks: 0x1c1c1c });
-      this.root.add(this.referee.group);
-    }
+    if (match.referee) this.buildReferee(match.referee);
+    this.incidents = new IncidentView(this.root, match);
     this.ball = createBallModel();
     this.root.add(this.ball);
 
@@ -46,6 +44,14 @@ export class MatchView {
     this.marker.rotation.x = -Math.PI / 2;
     this.root.add(this.marker);
     this.time = 0;
+  }
+
+  // Schiri ganz in Schwarz, wie es sich gehört – der Ersatzschiri in Straßenkleidung.
+  buildReferee(r) {
+    if (this.referee) this.root.remove(this.referee.group);
+    this.referee = createPlayerModel(r.look, r.kit ?? { shirt: 0x1c1c1c, shorts: 0x1c1c1c, socks: 0x1c1c1c });
+    this.refereeName = r.name;
+    this.root.add(this.referee.group);
   }
 
   dispose() {
@@ -79,13 +85,16 @@ export class MatchView {
       });
     }
     const r = match.referee;
+    if (r && this.referee && r.name !== this.refereeName) this.buildReferee(r);
     if (r && this.referee) {
       this.referee.group.position.set(r.pos.x, 0, r.pos.z);
       this.referee.group.rotation.y = Math.atan2(r.facing.x, r.facing.z);
       animatePlayer(this.referee, { speed: len(r.vel.x, r.vel.z), dt, kickAnim: 0, headAnim: 0, holding: null, state: 'normal' });
       if (r.cardAnim > 0) this.referee.arms[1].rotation.x = -2.9; // Karte hoch
     }
+    this.incidents.sync(match, dt);
     const b = match.ball;
+    this.ball.visible = !match.ballHidden;
     this.ball.position.set(b.pos.x, b.pos.y - BALL_RADIUS + BALL_VISUAL_RADIUS, b.pos.z);
     rollBall(this.ball, b.vel, dt);
 

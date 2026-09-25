@@ -212,6 +212,23 @@ export class Sound {
     }
   }
 
+  thunder() {
+    const d = this.out(Math.random() - 0.5);
+    const t = this.ctx.currentTime;
+    this.noise('lowpass', 900, 0.5, 0.25, 0.3, d, t);
+    this.noise('lowpass', 160, 0.7, 2.6, 0.35, d, t + 0.15, 0.3);
+  }
+
+  siren() {
+    const d = this.out(-0.7);
+    const t = this.ctx.currentTime;
+    for (let i = 0; i < 4; i++) this.tone('triangle', i % 2 ? 590 : 440, i % 2 ? 590 : 440, 0.4, 0.04, d, t + i * 0.42);
+  }
+
+  hiss() {
+    this.noise('highpass', 3500, 0.7, 3, 0.05, this.out(0), undefined, 0.3);
+  }
+
   bird(pan = 0) {
     const d = this.out(pan);
     const t = this.ctx.currentTime;
@@ -309,6 +326,22 @@ export class Sound {
           break;
         case 'setpiece':
           if (e.kind === 'kickoff') this.whistle('short');
+          break;
+        case 'incident':
+          if (e.stage !== 'start') break;
+          if (e.kind === 'hund') this.bark(pan);
+          else if (e.kind === 'polizei') this.siren();
+          else if (e.kind === 'sprenger') this.hiss();
+          else if (e.kind === 'ersatzschiri' || e.kind === 'zaun') this.grumble(pan);
+          break;
+        case 'bark':
+          this.bark(pan);
+          break;
+        case 'alarm':
+          this.carAlarm(pan);
+          break;
+        case 'lightning':
+          this.thunder();
           break;
         case 'halftime':
           this.whistle('long');

@@ -53,6 +53,7 @@ export class EndScreen {
           <span>${t0.name}</span><b>${m.score[0]} : ${m.score[1]}</b><span>${t1.name}</span>
         </div>
         <p class="place">${m.pitch.name} · ${m.pitch.surface.name}${m.referee ? ` · Schiedsrichter: ${m.referee.name}` : ''}</p>
+        ${(m.incidents ?? []).map((i) => `<p class="incident">${i.report.replace('{min}', matchMinute(m, i.time))}</p>`).join('')}
         <ul class="goals">${goals || '<li>Keine Tore – aber viel Einsatz.</li>'}</ul>
         <table class="stats">
           ${row('Schüsse', st.teams[0].shots, st.teams[1].shots)}

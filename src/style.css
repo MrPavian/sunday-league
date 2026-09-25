@@ -465,3 +465,11 @@ body.in-club #hud { display: none; }
 .stories li::marker { content: '» '; }
 .stories { margin: 0; padding-left: 16px; font-size: 12px; opacity: 0.85; }
 .stories li::marker { content: '» '; }
+
+/* Vorfälle im Spiel */
+.toast.long { font-size: 22px; white-space: normal; width: min(760px, 86vw); text-align: center; line-height: 1.25; }
+.flash { position: absolute; inset: 0; background: #eef4ff; opacity: 0; pointer-events: none; }
+.flash.on { animation: lightning 0.7s steps(4) forwards; }
+@keyframes lightning { 0% { opacity: 0.85; } 25% { opacity: 0.1; } 50% { opacity: 0.6; } 100% { opacity: 0; } }
+body.weather-rain #game { filter: brightness(0.78) saturate(0.75) contrast(1.05); }
+.paper .incident { font-style: italic; margin: 4px 0; font-size: 14px; }

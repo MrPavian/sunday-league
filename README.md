@@ -23,6 +23,10 @@ ein Porträt im Kreisblatt oder ein Spieler, der Vater wird. Deine Antwort wirkt
 einer **Lebensgeschichte** über mehrere Wochen: Umzug und Pendeln, Jobverlust, Hochzeit mit
 Polterabend, Comeback nach Kreuzbandriss oder das Bruderduell gegen den Ligarivalen.
 
+Auch im Spiel kann etwas passieren: Ein Hund klaut den Ball, der Ball fliegt zum Nachbarn,
+ein Autoalarm heult, die Polizei kommt wegen Lärm, ein Gewitter macht den Platz rutschig, der
+Rasensprenger springt an, oder der Schiri verletzt sich und ein Zuschauer pfeift weiter.
+
 | Vereinsheim | Kader |
 |---|---|
 | ![Vereinsheim](docs/screenshot-vereinsheim.png) | ![Kader](docs/screenshot-kader.png) |

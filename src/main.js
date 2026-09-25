@@ -87,7 +87,10 @@ function showMatch(m) {
 }
 
 function startMatch(human) {
-  showMatch(createMatch({ seed: seed++, pitch, human, duration: testDuration }));
+  const m = createMatch({ seed: seed++, pitch, human, duration: testDuration, incidents: true });
+  // Testschalter: ?incident=hund|gewitter|… löst den Vorfall nach 3 Sekunden aus.
+  if (human && params.get('incident')) m.incidentPlan = { type: params.get('incident'), at: 3 };
+  showMatch(m);
 }
 
 function setMode(next) {

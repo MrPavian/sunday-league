@@ -588,7 +588,7 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   // Der menschliche Verein ist in der Simulation immer Team 0.
   const humanIsAway = human && away.human;
   const teams = humanIsAway ? [teamAway, teamHome] : [teamHome, teamAway];
-  const match = createMatch({ seed: rng.int(1, 1e9), pitch, teams, human, duration });
+  const match = createMatch({ seed: rng.int(1, 1e9), pitch, teams, human, duration, incidents: true });
   return { match, humanIsAway, pitch, home, away, helpers: [...teamHome.helpers, ...teamAway.helpers] };
 }
 

@@ -491,3 +491,9 @@ wird Vater, Umzug & Pendeln (Fahrgeld, Fahrgemeinschaft, Rückversetzung), Jobve
 Job beim Sponsor vermitteln), Comeback nach Kreuzbandriss (Reha oder zu früh rein), Abschlussarbeit
 (danach neuer Job – manchmal weit weg), Hochzeit mit Polterabend, Bruderduell gegen einen Ligarivalen.
 Höchstens drei laufende Geschichten, jede einmal pro Saison; laufende Geschichten stehen im Vereinsheim.
+
+(4) umgesetzt – Match-Vorfälle (`src/sim/incidents.js`, ca. jedes 2.–3. Spiel, passend zum Platz): Hund klaut
+den Ball, Ball über den Zaun (Nachbar behält ihn → 15 € Ersatzball), Autoalarm nach Treffer ans Auto,
+Polizei wegen Lärmbeschwerde, Gewitter (danach nasser, rutschiger Boden, Regen), Rasensprenger,
+verletzter Schiri → Zuschauer pfeift weiter. Die Uhr steht währenddessen; Bericht im Kreisblatt.
+Testschalter: `?venue=park&incident=hund`.

@@ -10,10 +10,11 @@ export const REF_TRAITS = {
   laesst_laufen: { name: 'lässt gern laufen', sees: 0.7, cards: 0.5, dissent: 0.05 },
   kurzsichtig: { name: 'kurzsichtig', sees: 0.55, cards: 1, dissent: 0.1 },
   souveraen: { name: 'souverän', sees: 0.9, cards: 1, dissent: 0.12 },
+  zuschauer: { name: 'Zuschauer mit Pfeife', sees: 0.6, cards: 0.7, dissent: 0.3 }, // springt nur ein
 };
 
 export function createReferee(rng) {
-  const trait = rng.pick(Object.keys(REF_TRAITS));
+  const trait = rng.pick(Object.keys(REF_TRAITS).filter((k) => k !== 'zuschauer'));
   return {
     name: `${rng.pick(FIRST_NAMES)} ${rng.pick(LAST_NAMES)}`,
     trait,

@@ -21,6 +21,7 @@ export class Hud {
       </div>
       <div class="venue"></div>
       <div class="toast" hidden></div>
+      <div class="flash"></div>
       <div class="card">
         <div class="name"></div>
         <div class="meta"></div>
@@ -50,6 +51,15 @@ export class Hud {
     });
     this.$('.venue').textContent = `${match.pitch.name} · ${match.pitch.surface.name}${r ? ` · Schiri: ${r.name}` : ''}`;
     this.hideToast();
+    this.refName = r?.name ?? null;
+    document.body.classList.remove('weather-rain');
+  }
+
+  lightning() {
+    const el = this.$('.flash');
+    el.classList.remove('on');
+    void el.offsetWidth; // Animation neu starten
+    el.classList.add('on');
   }
 
   toggleHelp() {
@@ -62,6 +72,7 @@ export class Hud {
     this.toastPriority = priority;
     const el = this.$('.toast');
     el.textContent = text;
+    el.classList.toggle('long', text.length > 40);
     el.hidden = false;
     this.toastTimer = seconds;
   }
@@ -106,7 +117,9 @@ export class Hud {
         const out = findAnyPlayer(match, e.outId);
         const inn = findAnyPlayer(match, e.inId);
         this.toast(`Wechsel ${short(e.team)}: ${inn.name.split(' ')[0]} für ${out.name.split(' ')[0]}`, 1.6, 2);
-      } else if (e.type === 'end') this.toast('ABPFIFF', 2, 9);
+      } else if (e.type === 'incident') this.toast(e.text, e.stage === 'start' ? 3.5 : 2.5, 5);
+      else if (e.type === 'lightning') this.lightning();
+      else if (e.type === 'end') this.toast('ABPFIFF', 2, 9);
     }
   }
 
@@ -114,6 +127,13 @@ export class Hud {
     if (this.introPending) {
       this.toast(this.introPending, 2.5, 2);
       this.introPending = null;
+    }
+    document.body.classList.toggle('weather-rain', match.weather === 'rain');
+    const r = match.referee;
+    if (r && r.name !== this.refName) {
+      // Ersatzschiri übernimmt: Kopfzeile nachziehen.
+      if (this.refName) this.$('.venue').textContent = `${match.pitch.name} · ${match.pitch.surface.name} · Schiri: ${r.name}`;
+      this.refName = r.name;
     }
     const [a, b] = match.score;
     this.$('.score').textContent = `${a} : ${b}`;
