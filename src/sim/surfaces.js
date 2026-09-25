@@ -13,6 +13,18 @@ export const SURFACES = {
     scrapeChance: 0.7,
     scrapeLabel: 'Schürfwunde',
   },
+  concrete: {
+    id: 'concrete',
+    name: 'Betonplatten',
+    hard: true,
+    rollFriction: 0.5,
+    rollDecel: 0.4,
+    bounce: 0.6,
+    bumpiness: 0.06, // Fugen
+    slideDamp: 7.5,
+    scrapeChance: 0.75,
+    scrapeLabel: 'Schürfwunde',
+  },
   ash: {
     id: 'ash',
     name: 'Asche',
@@ -34,6 +46,18 @@ export const SURFACES = {
     bounce: 0.5,
     bumpiness: 0.07,
     slideDamp: 2.5,
+    scrapeChance: 0,
+    scrapeLabel: null,
+  },
+  parkGrass: {
+    id: 'parkGrass',
+    name: 'Parkwiese',
+    hard: false,
+    rollFriction: 0.95, // langes Gras bremst
+    rollDecel: 0.8,
+    bounce: 0.45,
+    bumpiness: 0.14, // Maulwurfshügel & Buckel
+    slideDamp: 2.8,
     scrapeChance: 0,
     scrapeLabel: null,
   },

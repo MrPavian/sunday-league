@@ -10,6 +10,7 @@ const KEYS = {
   tackle: ['KeyL', 'ControlLeft'],
   switchPlayer: ['KeyQ'],
   restart: ['Enter'],
+  menu: ['Escape', 'KeyM'],
   help: ['KeyH'],
 };
 
@@ -48,6 +49,7 @@ export class Input {
     let tackle = this.wasPressed('tackle');
     let switchPlayer = this.wasPressed('switchPlayer');
     const restart = this.wasPressed('restart');
+    const menu = this.wasPressed('menu');
     const help = this.wasPressed('help');
 
     const pad = navigator.getGamepads?.()[0];
@@ -73,6 +75,6 @@ export class Input {
       x /= l;
       z /= l;
     }
-    return { move: { x, z }, sprint, shootHeld, pass, tackle, switchPlayer, restart, help };
+    return { move: { x, z }, sprint, shootHeld, pass, tackle, switchPlayer, restart, menu, help };
   }
 }

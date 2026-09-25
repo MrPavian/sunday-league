@@ -86,7 +86,7 @@ export class Hud {
       else if (e.type === 'scrape') this.toast(`Autsch! ${e.label} für ${first}`, 1.8);
       else if (e.type === 'save') this.toast(`${first} pariert!`, 1.2);
       else if (e.type === 'miscontrol') this.toast(`Verspringt ${first}…`, 1);
-      else if (e.type === 'end') this.toast('ABPFIFF – Enter für Revanche', 999, 9);
+      else if (e.type === 'end') this.toast('ABPFIFF – Enter: Revanche · M: anderer Platz', 999, 9);
     }
   }
 

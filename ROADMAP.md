@@ -233,6 +233,12 @@ Liga- und Vereinsnamen bleiben fiktiv (keine Lizenzen nötig); regionale Variant
 
 **Meilenstein M1:** Spielbare Vertical Slice – ein Match von Anfang bis Ende, das Spaß macht.
 
+### Phase 1b – Spielorte (erledigt)
+- [x] Venue-System: Simulationsdaten (Größe, Format, Untergrund, Begrenzung, Torart) + Szenenaufbau je Platz
+- [x] Hinterhof (4v4, Beton, Wände, Garagentor), Parkplatz, Stadtpark (Linien ohne Kreide), Ascheplatz (echte Tore)
+- [x] Zuschauer aus dem Spielergenerator (Oma am Fenster, Hundebesitzer, Bankdrücker)
+- [x] Platzwahl-Menü mit KI-Vorschau im Hintergrund
+
 ### Phase 2 – Team & Kader (ca. 4–6 Wochen)
 - [ ] 11v11 auf Rasen/Asche, Formationen & Taktik-Grundeinstellungen
 - [ ] Prozeduraler Spielergenerator (Aussehen, Name, Beruf, Traits)

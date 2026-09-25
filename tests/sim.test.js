@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createRng } from '../src/core/rng.js';
 import { BALL_RADIUS, createBall, stepBall } from '../src/sim/ball.js';
-import { PARKING_LOT } from '../src/sim/pitch.js';
+import { PARKING_LOT, PITCHES } from '../src/sim/pitch.js';
 import { SURFACES } from '../src/sim/surfaces.js';
 import { createMatch, getPlayer, startTackle, stepMatch } from '../src/sim/match.js';
 
@@ -272,5 +272,27 @@ describe('rules & set pieces', () => {
     const seen = stepN(m, 20);
     expect(seen.map((e) => e.type)).toContain('bar');
     expect(seen.map((e) => e.type)).not.toContain('goal');
+  });
+});
+
+describe('venues', () => {
+  it.each(Object.entries(PITCHES))('%s: a full AI match runs, stays in bounds and sees goals', (id, pitch) => {
+    const m = createMatch({ seed: 5, pitch, human: false });
+    let goals = 0;
+    for (let i = 0; i < 60 * 1200 && m.phase !== 'ended'; i++) {
+      stepMatch(m, undefined, DT);
+      goals += m.events.filter((e) => e.type === 'goal').length;
+      m.events.length = 0;
+      if (i % 600 === 0) {
+        for (const p of m.players) {
+          expect(Math.abs(p.pos.x)).toBeLessThanOrEqual(pitch.wallX);
+          expect(Number.isFinite(p.pos.z)).toBe(true);
+        }
+        expect(Math.abs(m.ball.pos.x)).toBeLessThanOrEqual(pitch.wallX);
+      }
+    }
+    expect(m.phase).toBe('ended');
+    expect(goals).toBeGreaterThan(0);
+    expect(m.players.length).toBe(pitch.format * 2);
   });
 });

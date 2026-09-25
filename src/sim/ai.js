@@ -71,12 +71,14 @@ function supportSpot(m, p, dt) {
   if (p.supportSpot && p.supportTimer > 0) return p.supportSpot;
 
   const s = attackDir(p.team);
-  const base = clampToPitch(pitch, p.home.x * 0.5 + ball.pos.x * 0.7 + s * 2.5, p.home.z + ball.pos.z * 0.3, 1.2);
+  // Mit Auslinien nicht direkt an der Linie anbieten.
+  const margin = pitch.boundary === 'lines' ? 2.5 : 1.2;
+  const base = clampToPitch(pitch, p.home.x * 0.5 + ball.pos.x * 0.7 + s * 2.5, p.home.z + ball.pos.z * 0.3, margin);
   const offsets = [[0, 0], [3, 0], [-3, 0], [0, 3], [0, -3], [2.5, 2.5], [2.5, -2.5], [-2.5, 2.5], [-2.5, -2.5]];
   let best = base;
   let bestScore = -Infinity;
   for (const [ox, oz] of offsets) {
-    const c = clampToPitch(pitch, base.x + ox, base.z + oz, 1.2);
+    const c = clampToPitch(pitch, base.x + ox, base.z + oz, margin);
     let score = s * c.x * 0.05 - len(c.x - base.x, c.z - base.z) * 0.15;
     for (const o of m.players) {
       if (o.team === p.team) continue;
@@ -125,7 +127,7 @@ export function outfieldIntent(m, p, dt) {
     const dBall = dist2d(p.pos, ball.pos);
     if (p.setPieceAction === 'cross' && dBall < 1.3) {
       p.setPieceAction = null;
-      p.pending = { type: 'pass', lofted: true, cone: -0.8, ttl: 0.4 };
+      p.pending = { type: 'pass', lofted: 'cross', cone: -0.8, ttl: 0.4 };
     }
     const tackle = chooseTackle(m, p, dBall);
     if (tackle) return { tackle };
@@ -171,7 +173,7 @@ function aiDecide(m, p, oppGoal) {
   // Außen an der Grundlinie: Flanke in die Mitte.
   const wide = Math.abs(p.pos.z) > pitch.halfWidth * 0.55 && Math.abs(p.pos.x - oppGoal.x) < pitch.halfLength * 0.4;
   if (wide && rng.chance(0.5)) {
-    p.pending = { type: 'pass', lofted: true, cone: -0.3, ttl: 0.3 };
+    p.pending = { type: 'pass', lofted: 'cross', cone: -0.3, ttl: 0.3 };
     return;
   }
   const underPressure = m.players.some((o) => {
@@ -199,7 +201,7 @@ function chooseTackle(m, p, dBall) {
   p.decideTimer = 0.8;
 
   const tough = hasTrait(p, 'hart_im_nehmen');
-  const slideChance = surface.hard ? (p.injury ? 0 : tough ? 0.25 : 0.04) : 0.12 + 0.25 * p.attrs.tackling;
+  const slideChance = surface.hard ? (p.injury ? 0 : tough ? 0.25 : 0.04) : 0.08 + 0.18 * p.attrs.tackling;
   if (dBall > 0.9 && rng.chance(slideChance)) return 'slide';
   if (dBall < 1.4 && rng.chance(0.3 + 0.35 * p.attrs.tackling)) return 'poke';
   return null;

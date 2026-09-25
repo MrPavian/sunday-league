@@ -198,7 +198,7 @@ function humanIntent(m, p, input, dt) {
     p.charge = 0;
   }
   // Shift + Pass = hoher Ball; bei der Ecke automatisch als Flanke.
-  if (input.pass) p.pending = { type: 'pass', ttl: 0.3, lofted: !!input.sprint || p.setPieceAction === 'cross' };
+  if (input.pass) p.pending = { type: 'pass', ttl: 0.3, lofted: p.setPieceAction === 'cross' ? 'cross' : !!input.sprint };
   p.dribbleDir = null;
   return { move: input.move, sprint: input.sprint };
 }

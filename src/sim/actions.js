@@ -70,6 +70,8 @@ export function separatePlayers(m) {
       }
     }
   }
+  // Wegschieben darf niemanden durch die Wand drücken.
+  for (const p of ps) clampPlayer(m.pitch, p, p.pos.x, p.pos.z);
 }
 
 export function tryExecute(m, p) {
@@ -155,19 +157,25 @@ function pass(m, p, a, fatigue, fromHands) {
   let speed;
   let vy;
   if (!target) {
-    // Keiner frei? Dann eben nach vorne gebolzt.
-    dir = { ...p.facing };
-    speed = outfieldThrow ? 9 : 11;
-    vy = 2;
+    // Keiner frei? Dann eben nach vorne gebolzt – grob Richtung Tor.
+    // Aus der eigenen Hälfte weit nach vorne, in der gegnerischen in die Mitte.
+    const s = attackDir(p.team);
+    const ownHalf = p.pos.x * s < 0;
+    const aim = ownHalf ? { x: s * pitch.halfLength * 0.5, z: 0 } : { x: p.pos.x + s * 4, z: -p.pos.z * 0.5 };
+    dir = p.id === m.controlledId ? { ...p.facing } : rotate(norm(aim.x - p.pos.x, aim.z - p.pos.z), rng.gauss() * 0.25);
+    speed = outfieldThrow ? 9 : ownHalf ? 11 : 7;
+    vy = ownHalf ? 2 : 0.5;
   } else {
     const lx = clamp(target.pos.x + target.vel.x * 0.35, -pitch.halfLength, pitch.halfLength);
-    const lz = clamp(target.pos.z + target.vel.z * 0.35, -pitch.halfWidth + 0.5, pitch.halfWidth - 0.5);
+    const edge = pitch.boundary === 'lines' ? 1.5 : 0.5;
+    const lz = clamp(target.pos.z + target.vel.z * 0.35, -pitch.halfWidth + edge, pitch.halfWidth - edge);
     const d = len(lx - p.pos.x, lz - p.pos.z);
     dir = norm(lx - p.pos.x, lz - p.pos.z);
     if (a.lofted) {
-      // Hoher Ball: Flugzeit so wählen, dass er etwa auf Kopfhöhe ankommt.
+      // Hoher Ball: Flanken kommen auf Kopfhöhe, sonst landet er vor den Füßen.
+      const arrive = a.lofted === 'cross' ? 1.4 : 0.3;
       vy = clamp(3 + d * 0.22, 4, 8);
-      const flight = (vy + Math.sqrt(Math.max(0, vy * vy - 2 * 9.81 * 1.4))) / 9.81;
+      const flight = (vy + Math.sqrt(Math.max(0, vy * vy - 2 * 9.81 * (arrive - 0.11)))) / 9.81;
       speed = d / Math.max(0.4, flight);
     } else {
       speed = clamp(2.5 + d * 0.6, 4.5, 15);
@@ -330,6 +338,10 @@ export function dribbleTouch(m) {
   }
   let dir = p.dribbleDir ?? p.facing;
   if (p.dribbleDir && dir.x * p.facing.x + dir.z * p.facing.z < 0) dir = p.facing;
+  // Die KI führt den Ball an der Seitenlinie nach innen statt ins Aus.
+  if (pitch.boundary === 'lines' && p.id !== m.controlledId && Math.abs(ball.pos.z) > pitch.halfWidth - 2.5 && dir.z * ball.pos.z > 0) {
+    dir = norm(dir.x || attackDir(p.team), -Math.sign(ball.pos.z) * 0.4);
+  }
   dir = rotate(dir, rng.gauss() * (0.04 + 0.22 * (1 - tech) + 0.1 * fatigue) * calm);
   const touch = speed * 1.25 + 1.0;
   ball.vel.x = dir.x * touch;

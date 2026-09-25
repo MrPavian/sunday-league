@@ -3,7 +3,20 @@
 Kreisklasse-Fußball mit Vollamateuren – vom Parkplatz bis ins Amateurstadion.
 Gebaut mit [three.js](https://github.com/mrdoob/three.js) im Stil „3D-Pixelart“ – Seitenansicht, PC-first (Tastatur & Gamepad).
 
-![Prototyp: Parkplatz am Getränkemarkt](docs/screenshot-parkplatz.png)
+![Platzwahl](docs/screenshot-menu.png)
+
+| Hinterhof | Stadtpark | Ascheplatz |
+|---|---|---|
+| ![Hinterhof](docs/screenshot-hinterhof.png) | ![Park](docs/screenshot-park.png) | ![Ascheplatz](docs/screenshot-ascheplatz.png) |
+
+## Spielorte
+
+| Platz | Format | Boden | Besonderheit |
+|---|---|---|---|
+| Hinterhof Lindenstraße | 4 gegen 4 | Betonplatten | Garagentor vs. Kreidetor, Hauswände als Bande |
+| Parkplatz am Getränkemarkt | 5 gegen 5 | Asphalt | Jackentore, „Ans Auto“-Regel |
+| Stadtpark | 5 gegen 5 | Parkwiese | Rucksack-Tore, Einwurf an der gedachten Linie |
+| Sportplatz Am Kanal | 5 gegen 5 | Asche | Jugendtore mit Pfosten & Latte, Ecken, Abstöße |
 
 Design, Featureliste und Roadmap: [ROADMAP.md](ROADMAP.md)
 
@@ -17,6 +30,7 @@ npm run build    # Produktions-Build nach dist/
 ```
 
 `?seed=123` in der URL erzeugt reproduzierbar dieselben Teams und denselben Spielverlauf.
+`?venue=hinterhof|parkplatz|park|ascheplatz` überspringt die Platzwahl.
 `?surface=grass` (bzw. `ash`, `artificial`) spielt den Parkplatz testweise mit anderer Untergrund-Physik.
 
 ## Steuerung (Prototyp)
@@ -32,6 +46,7 @@ npm run build    # Produktions-Build nach dist/
 | Grätsche erzwingen (Schürfwunden-Gefahr!) | Shift + L | RB + Y |
 | Spieler wechseln | Q / L | LB |
 | Hilfe ein/aus | H | – |
+| Zurück zur Platzwahl | Esc / M | – |
 | Revanche nach Abpfiff | Enter | – |
 
 ## Aufbau
