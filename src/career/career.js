@@ -7,13 +7,18 @@ import { createMatch, stepMatch } from '../sim/match.js';
 import { PITCHES } from '../sim/pitch.js';
 import { allPlayers } from '../sim/squad.js';
 import { gradePlayers } from '../sim/stats.js';
-import { absenceChance, INJURED, LATE, noReasons, NUDGE_NO, NUDGE_YES, YES } from './chat.js';
+import { absenceChance, DECLINE_TEXT, FAREWELL, INJURED, JOIN_TEXT, LATE, noReasons, NUDGE_NO, NUDGE_YES, RUMOR_SOURCES, YES } from './chat.js';
 import { AI_CLUBS, HUMAN_CLUB_DEFAULT, LEAGUE_NAME } from './clubs.js';
 
 export const SAVE_VERSION = 1;
 export const POOL_SEED = 1921;
 const SQUAD_SHAPE = ['gk', 'def', 'def', 'def', 'mid', 'mid', 'mid', 'fwd', 'fwd'];
 const NUDGES_PER_WEEK = 3;
+export const MAX_SQUAD = 12;
+export const MIN_SQUAD = 7;
+const SCOUT_ACTIONS = 2;
+const RUMOR_TIERS = { ok: 0.44, gut: 0.33, stark: 0.15, dorfstar: 0.06, superstar: 0.014, legende: 0.006 };
+const RECRUIT_BASE = { ok: 0.85, gut: 0.65, stark: 0.45, dorfstar: 0.3, superstar: 0.2, legende: 0.15 };
 const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 
 let poolCache = null;
@@ -151,6 +156,8 @@ export function startWeek(career) {
     chat.push({ from: idx, text, time: time() });
   }
   career.week = { availability, chat, nudges: NUDGES_PER_WEEK, nudged: [], lineup: null };
+  career.week.rumors = makeRumors(career, createRng(hashSeed(career.seed, career.season, career.round, 3)));
+  career.week.actions = SCOUT_ACTIONS;
 }
 
 // Nachhaken bei einer Absage – klappt ungefähr jedes zweite Mal.
@@ -209,6 +216,108 @@ export function buildLineup(career, club, format, availability, rng, manual = nu
     lineup[i] = free.shift();
   });
   return { lineup, bench: [...free, ...late], late, helpers };
+}
+
+// --- Gerüchteküche & Transfers -------------------------------------------------------
+
+const takenIndices = (career) => new Set(career.clubs.flatMap((c) => c.squad));
+
+function makeRumors(career, rng) {
+  const pool = getPool();
+  const taken = takenIndices(career);
+  const rumors = [];
+  for (let n = 0; n < 3; n++) {
+    const tier = weighted(rng, RUMOR_TIERS);
+    const list = pool.byTier(tier);
+    for (let attempt = 0; attempt < 30; attempt++) {
+      const p = rng.pick(list);
+      if (taken.has(p.poolIndex) || rumors.some((r) => r.idx === p.poolIndex)) continue;
+      const spread = 6 + Math.floor(rng.next() * 6);
+      const shift = Math.floor(rng.next() * spread);
+      // Pro Woche keine zwei gleichen Gerüchte.
+      const templates = RUMOR_SOURCES[tier];
+      const offset = Math.floor(rng.next() * templates.length);
+      const texts = templates.map((_, k) => templates[(offset + k) % templates.length]({ ...p, first: p.name.split(' ')[0] }));
+      const source = texts.find((t) => !rumors.some((r) => r.source.slice(0, 25) === t.slice(0, 25))) ?? texts[0];
+      rumors.push({ idx: p.poolIndex, source, scouted: false, status: 'open', range: [p.rating - shift, p.rating - shift + spread], reply: null });
+      break;
+    }
+  }
+  return rumors;
+}
+
+// Alte Spielstände ohne Gerüchteküche nachrüsten.
+export function migrateCareer(career) {
+  if (career.week && !career.week.rumors) {
+    career.week.rumors = makeRumors(career, createRng(hashSeed(career.seed, career.season, career.round, 3)));
+    career.week.actions = SCOUT_ACTIONS;
+  }
+  return career;
+}
+
+// Wie hoch sind die Chancen, dass jemand zusagt?
+export function recruitChance(career, rumor) {
+  const p = poolPlayer(rumor.idx);
+  const club = humanClub(career);
+  const rows = table(career);
+  const rank = rows.findIndex((r) => r.club.human) + 1;
+  const played = rows[0].played > 0;
+  let chance = RECRUIT_BASE[p.tier] + (rumor.scouted ? 0.1 : 0);
+  if (played && rank <= 2) chance += 0.08;
+  if (played && rank >= rows.length - 1) chance -= 0.05;
+  if (p.tier === 'legende') {
+    // Ex-Profis wollen keinen Rummel, aber eine gute Truppe.
+    if (played && rank === 1) chance -= 0.15;
+    const goodVibes = club.squad.some((idx) => ['teamchemie', 'anfuehrer'].some((t) => poolPlayer(idx).traits.includes(t)));
+    if (goodVibes) chance += 0.12;
+  }
+  return Math.max(0.05, Math.min(0.95, chance));
+}
+
+export function scoutRumor(career, i) {
+  const w = career.week;
+  const r = w?.rumors[i];
+  if (!r || r.scouted || r.status !== 'open' || w.actions <= 0) return false;
+  w.actions--;
+  r.scouted = true;
+  return true;
+}
+
+export function recruit(career, i) {
+  const w = career.week;
+  const r = w?.rumors[i];
+  const club = humanClub(career);
+  if (!r || r.status !== 'open' || w.actions <= 0) return null;
+  if (club.squad.length >= MAX_SQUAD) return 'full';
+  const p = poolPlayer(r.idx);
+  const rng = createRng(hashSeed(career.seed, career.season, career.round, r.idx, 13));
+  w.actions--;
+  if (rng.chance(recruitChance(career, r))) {
+    r.status = 'joined';
+    r.scouted = true;
+    r.reply = rng.pick(JOIN_TEXT);
+    club.squad.push(r.idx);
+    career.players[r.idx] = freshRecord();
+    w.availability[r.idx] = 'yes';
+    w.chat.push({ from: r.idx, text: `(neu in der Gruppe) ${r.reply}`, time: 'Sa 18:03' });
+    return 'joined';
+  }
+  r.status = 'declined';
+  r.reply = rng.pick(DECLINE_TEXT[p.tier] ?? DECLINE_TEXT.default);
+  return 'declined';
+}
+
+export function releasePlayer(career, idx) {
+  const club = humanClub(career);
+  if (club.squad.length <= MIN_SQUAD || !club.squad.includes(idx)) return false;
+  club.squad = club.squad.filter((x) => x !== idx);
+  delete career.players[idx];
+  if (career.week) {
+    delete career.week.availability[idx];
+    if (career.week.lineup) career.week.lineup = career.week.lineup.map((x) => (x === idx ? null : x));
+    career.week.chat.push({ from: idx, text: `${FAREWELL[idx % FAREWELL.length]} (hat die Gruppe verlassen)`, time: 'Sa 20:30' });
+  }
+  return true;
 }
 
 // --- Aufstellung durch den Trainer ------------------------------------------------
@@ -389,7 +498,7 @@ export function loadCareer(storage = globalThis.localStorage) {
     const raw = storage?.getItem(SAVE_KEY);
     if (!raw) return null;
     const c = JSON.parse(raw);
-    return c.version === SAVE_VERSION ? c : null;
+    return c.version === SAVE_VERSION ? migrateCareer(c) : null;
   } catch {
     return null;
   }

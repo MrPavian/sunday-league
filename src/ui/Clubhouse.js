@@ -2,6 +2,12 @@ import {
   clubById,
   currentLineup,
   humanClub,
+  MAX_SQUAD,
+  MIN_SQUAD,
+  recruit,
+  recruitChance,
+  releasePlayer,
+  scoutRumor,
   humanFixture,
   nudge,
   poolPlayer,
@@ -10,6 +16,7 @@ import {
   seasonOver,
   table,
 } from '../career/career.js';
+import { TRAITS } from '../data/traits.js';
 import { tierById } from '../data/tiers.js';
 import { POSITIONS } from '../sim/generator.js';
 import { PITCHES } from '../sim/pitch.js';
@@ -30,7 +37,18 @@ export class Clubhouse {
       if (!t || this.busy) return;
       const { action, value } = t.dataset;
       if (action === 'tab') this.tab = value;
-      else if (action === 'autoLineup') {
+      else if (action === 'scout') {
+        scoutRumor(this.career, Number(value));
+        this.h.onChange();
+      } else if (action === 'recruit') {
+        recruit(this.career, Number(value));
+        this.h.onChange();
+      } else if (action === 'release') {
+        const p = poolPlayer(Number(value));
+        if (!confirm(`${p.name} wirklich verabschieden?`)) return;
+        releasePlayer(this.career, Number(value));
+        this.h.onChange();
+      } else if (action === 'autoLineup') {
         resetLineup(this.career);
         this.h.onChange();
       } else if (action === 'nudge') {
@@ -77,6 +95,7 @@ export class Clubhouse {
       ['chat', 'Chatgruppe'],
       ['squad', 'Kader'],
       ['lineup', 'Aufstellung'],
+      ['transfers', 'Transfers'],
       ['table', 'Tabelle'],
       ['fixtures', 'Spielplan'],
     ];
@@ -198,6 +217,7 @@ export class Clubhouse {
   tab_squad() {
     const c = this.career;
     const club = humanClub(c);
+    const canRelease = club.squad.length > MIN_SQUAD && !this.results;
     const rows = club.squad
       .map((idx) => ({ idx, p: poolPlayer(idx), r: c.players[idx] }))
       .sort((a, b) => b.p.rating - a.p.rating)
@@ -211,10 +231,11 @@ export class Clubhouse {
           <td>${POSITIONS[p.position]}</td><td class="num">${p.rating}</td>
           <td>${r.injuryWeeks ? '<span class="st-text no">verletzt</span>' : st ? `<span class="st-text ${st[1]}">${st[0]}</span>` : ''}</td>
           <td class="num">${r.apps}</td><td class="num">${r.goals}</td><td class="num">${r.assists}</td><td class="num">${avg}</td>
+          <td>${canRelease ? `<button class="tiny" data-action="release" data-value="${idx}" title="Verabschieden">×</button>` : ''}</td>
         </tr>`;
       })
       .join('');
-    return `<table class="squad"><thead><tr><th></th><th>Spieler</th><th>Pos.</th><th>Stärke</th><th>Sonntag</th><th>Sp.</th><th>Tore</th><th>Vorl.</th><th>Ø Note</th></tr></thead><tbody>${rows}</tbody></table>`;
+    return `<table class="squad"><thead><tr><th></th><th>Spieler</th><th>Pos.</th><th>Stärke</th><th>Sonntag</th><th>Sp.</th><th>Tore</th><th>Vorl.</th><th>Ø Note</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
   }
 
   tab_lineup() {
@@ -249,6 +270,43 @@ export class Clubhouse {
       ${keeperNote}
       <h4>Bank</h4><ul class="bench">${benchList}</ul>
       <button data-action="autoLineup">Automatisch aufstellen</button>`;
+  }
+
+  tab_transfers() {
+    const c = this.career;
+    const w = c.week;
+    if (!w || this.results) return '<p class="empty">Die Gerüchteküche meldet sich nach dem Wochenstart.</p>';
+    const club = humanClub(c);
+    const full = club.squad.length >= MAX_SQUAD;
+    const cards = w.rumors
+      .map((r, i) => {
+        const p = poolPlayer(r.idx);
+        const tier = tierById(p.tier);
+        const known = r.scouted;
+        const badge = known ? `<span class="badge" style="--c:${tier.color}">${tier.name}</span>` : '<span class="badge unknown">?</span>';
+        const rating = known ? `Stärke ${p.rating}` : `Stärke ca. ${r.range[0]}–${r.range[1]}`;
+        const traits = known && p.traits.length ? `<p class="traits">${p.traits.map((t) => `<i title="${TRAITS[t].desc}">${TRAITS[t].name}</i>`).join('')}</p>` : '';
+        const story = known && p.backstory ? `<p class="story">${p.backstory}</p>` : '';
+        const chance = Math.round(recruitChance(c, r) * 100);
+        let footer;
+        if (r.status === 'joined') footer = `<p class="reply ok">„${r.reply}" – ist jetzt im Kader!</p>`;
+        else if (r.status === 'declined') footer = `<p class="reply no">„${r.reply}"</p>`;
+        else
+          footer = `<div class="actions">
+            <button data-action="scout" data-value="${i}" ${known || w.actions <= 0 ? 'disabled' : ''}>Beim Kick zuschauen</button>
+            <button class="primary" data-action="recruit" data-value="${i}" ${w.actions <= 0 || full ? 'disabled' : ''}>Ansprechen <small>(~${chance} %)</small></button>
+          </div>`;
+        return `<article class="rumor ${p.tier === 'legende' ? 'legend' : ''}" style="--c:${known ? tier.color : '#666'}">
+          <p class="source">${r.source}</p>
+          <div class="who">${badge} <b>${p.name}</b>${known && p.title ? ` <em>${p.title}</em>` : ''}
+            <small>${p.age} J. · ${p.profession} · ${POSITIONS[p.position]} · ${rating}</small></div>
+          ${traits}${story}${footer}
+        </article>`;
+      })
+      .join('');
+    return `
+      <p class="chat-head">Kader ${club.squad.length}/${MAX_SQUAD} · noch ${w.actions} Aktion${w.actions === 1 ? '' : 'en'} diese Woche${full ? ' · Kader voll – erst jemanden verabschieden' : ''}</p>
+      <div class="rumors">${cards}</div>`;
   }
 
   tab_table() {

@@ -130,3 +130,64 @@ describe('lineup', () => {
     expect(currentLineup(c).lineup).toEqual(auto.lineup);
   });
 });
+
+describe('transfers', () => {
+  it('brings three rumors a week about players without a club', async () => {
+    const { MAX_SQUAD } = await import('../src/career/career.js');
+    const c = createCareer({ seed: 44 });
+    const taken = new Set(c.clubs.flatMap((cl) => cl.squad));
+    expect(c.week.rumors).toHaveLength(3);
+    for (const r of c.week.rumors) {
+      expect(taken.has(r.idx)).toBe(false);
+      expect(r.source.length).toBeGreaterThan(20);
+      expect(r.range[1]).toBeGreaterThan(r.range[0]);
+    }
+    expect(MAX_SQUAD).toBe(12);
+  });
+
+  it('scouting and recruiting cost actions; a signing joins squad, chat and lineup pool', async () => {
+    const { scoutRumor, recruit } = await import('../src/career/career.js');
+    let joined = null;
+    for (let seed = 1; seed < 40 && !joined; seed++) {
+      const c = createCareer({ seed });
+      expect(scoutRumor(c, 0)).toBe(true);
+      expect(scoutRumor(c, 0)).toBe(false); // schon beobachtet
+      const res = recruit(c, 0);
+      expect(['joined', 'declined']).toContain(res);
+      expect(c.week.actions).toBe(0);
+      expect(recruit(c, 1)).toBeNull(); // keine Aktion mehr übrig
+      if (res === 'joined') joined = c;
+    }
+    expect(joined).not.toBeNull();
+    const idx = joined.week.rumors[0].idx;
+    expect(humanClub(joined).squad).toContain(idx);
+    expect(joined.players[idx].apps).toBe(0);
+    expect(joined.week.availability[idx]).toBe('yes');
+  });
+
+  it('respects the squad limits', async () => {
+    const { recruit, releasePlayer, MIN_SQUAD, MAX_SQUAD } = await import('../src/career/career.js');
+    const c = createCareer({ seed: 8 });
+    const club = humanClub(c);
+    while (club.squad.length < MAX_SQUAD) club.squad.push(100000 + club.squad.length);
+    c.week.actions = 2;
+    expect(recruit(c, 0)).toBe('full');
+    const c2 = createCareer({ seed: 9 });
+    const club2 = humanClub(c2);
+    while (club2.squad.length > MIN_SQUAD) expect(releasePlayer(c2, club2.squad[club2.squad.length - 1])).toBe(true);
+    expect(releasePlayer(c2, club2.squad[0])).toBe(false);
+  });
+
+  it('ex-pros are shy of hype but like a good dressing room', async () => {
+    const { recruitChance } = await import('../src/career/career.js');
+    const c = createCareer({ seed: 12 });
+    const legend = { idx: (await import('../src/career/career.js')).getPool().byTier('legende')[0].poolIndex, scouted: false };
+    const club = humanClub(c);
+    const { poolPlayer } = await import('../src/career/career.js');
+    club.squad = club.squad.filter((idx) => !['teamchemie', 'anfuehrer'].some((t) => poolPlayer(idx).traits.includes(t)));
+    const base = recruitChance(c, legend);
+    const leader = (await import('../src/career/career.js')).getPool().everyone().find((p) => p.traits.includes('anfuehrer') && p.tier === 'ok');
+    club.squad.push(leader.poolIndex);
+    expect(recruitChance(c, legend)).toBeGreaterThan(base);
+  });
+});

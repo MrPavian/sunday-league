@@ -427,7 +427,9 @@ Gleichzeitig hat das Match noch Lücken, die man beim Spielen sofort merkt.
 2. ~~**Saison-Minimalversion**~~ ✅ Freizeitliga mit 6 Vereinen, Chatgruppe mit Zu-/Absagen je Beruf und
    Nachhaken, Aushilfen aus dem Pool, Auto-Aufstellung, selbst spielen oder simulieren, Tabelle,
    Spielplan, Saisonstatistik je Spieler (Einsätze, Tore, Vorlagen, Ø-Note), Speichern im Browser.
-   Offen: Aufstellung selbst wählen, Aufstieg in eine echte zweite Liga, Transfers.
+   ✅ Aufstellung selbst wählen · ✅ Transfers über die Gerüchteküche (3 Gerüchte/Woche, zuschauen deckt
+   Stärke & Eigenschaften auf, Ansprechen mit Zusagechance, Ex-Profis meiden Rummel, Kader 7–12).
+   Offen: Aufstieg in eine echte zweite Liga.
 3. **Verein**: Trikot-Editor, Sponsoren, Mannschaftskasse & Strafenkatalog
 4. **Transfers & Scouting**: Open Training, Bolzplatz-Scouting
 5. **Schiri, Wetter, 7v7/11v11** für den Aufstieg in die höheren Ligen

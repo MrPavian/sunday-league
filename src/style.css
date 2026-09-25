@@ -362,3 +362,20 @@ body.in-club #hud { display: none; }
 .lineup select { font: inherit; font-size: 14px; color: var(--ink); background: #1d2126; border: 2px solid #000; padding: 3px 6px; }
 .bench { margin: 0 0 10px; padding-left: 18px; font-size: 14px; }
 .club-panel h4 { margin: 6px 0 4px; }
+.rumors { display: grid; gap: 10px; }
+.rumor { border: 2px solid #000; border-left: 6px solid var(--c); padding: 8px 10px; background: rgba(255, 255, 255, 0.04); display: grid; gap: 6px; }
+.rumor.legend { box-shadow: 0 0 0 2px #ff6b5a inset; }
+.rumor .source { margin: 0; font-style: italic; opacity: 0.9; }
+.rumor .who small { display: block; opacity: 0.75; font-size: 12px; }
+.rumor .who em { color: var(--c); font-style: normal; }
+.rumor .badge { padding: 0 6px; color: #111; background: var(--c); border: 1px solid #000; text-shadow: none; font-size: 12px; }
+.rumor .badge.unknown { background: #666; color: #eee; }
+.rumor .traits { margin: 0; display: flex; gap: 4px; flex-wrap: wrap; }
+.rumor .traits i { font-style: normal; font-size: 12px; padding: 1px 6px; background: #2f4f3a; border: 1px solid #000; }
+.rumor .story { margin: 0; font-size: 13px; opacity: 0.85; }
+.rumor .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.rumor .reply { margin: 0; }
+.rumor .reply.ok { color: #5cc46a; }
+.rumor .reply.no { color: #d9a04f; }
+.club-panel button:disabled { opacity: 0.45; cursor: default; }
+.club-panel button.tiny { padding: 0 6px; font-size: 12px; }
