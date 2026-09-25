@@ -315,3 +315,84 @@ Phase 0–3 + Trikot-Editor + 3 Spielstätten (Parkplatz, Ascheplatz, Rasenplatz
 | Ton | **Warmherzig mit trockenem Humor** – liebevoll über die Figuren, nie über sie lustig machen; Komik entsteht aus Alltag und Situation, nicht aus Slapstick |
 | Setting | **Mischung**: Herz ist eine fiktive deutsche Region (Kreisklasse, Vereinsheim, Getränkemarkt), Inhalte bleiben international lesbar; Lokalisierung DE/EN, später Sunday-League-UK-Paket |
 | Repository | Eigenes Repository `sunday-league` |
+
+---
+
+## 8. Brainstorming: Was noch fehlt (Stand nach Phase 1b)
+
+Das Spiel auf dem Platz steht, alles drumherum (Verein, Saison, Leben) fehlt noch komplett.
+Gleichzeitig hat das Match noch Lücken, die man beim Spielen sofort merkt.
+
+### 8.1 Pflicht vor einem öffentlichen Test (Early Access)
+
+| # | Thema | Warum |
+|---|---|---|
+| 1 | **Sound** | Aktuell komplett stumm. Ballkontakt, Pfiff, Rufe („Hintermann!“, „Leo!“), Kirchenglocken, Hundebellen – ohne Ton fühlt sich nichts nach Sonntag an. |
+| 2 | **Halbzeit, Seitenwechsel, Endscreen** | Mit Spielstatistik und Kreisblatt-Noten (1–6) für jeden Spieler. |
+| 3 | **Auswechslungen** | Ausdauer ist ein Kernsystem – ohne Wechsel läuft sie ins Leere. Rollende Wechsel wie im Hobbyfußball. |
+| 4 | **Torwart-Animationen** | Hechtsprung, Faustabwehr, Abschlag – der Keeper rettet gerade „unsichtbar“. |
+| 5 | **Torjubel** | Individuell & amateurhaft: Flugzeug, Bierbauch-Rutscher auf Rasen (auf Asphalt lieber nicht), Trikot über den Kopf, Stolperer. |
+| 6 | **Speichern/Laden** | Voraussetzung für alles Weitere. Versioniertes Format. |
+| 7 | **Saison-Loop (Minimalversion)** | Woche → Chatgruppe → Spieltag → Tabelle. Die KI-gegen-KI-Simulation ist schon da. |
+| 8 | **Tutorial** | Als Story: Du ziehst neu in die Stadt, kickst im Hinterhof mit und gründest mit den Leuten einen Verein. |
+| 9 | **Einstellungen** | Tasten frei belegen, Lautstärke, Spielgeschwindigkeit, farbenblind-sichere Trikots. |
+| 10 | **Mehrsprachigkeit** | Alle Texte sind gerade fest auf Deutsch – i18n-Gerüst mit DE/EN. |
+| 11 | **Desktop-Build** | Tauri oder Electron + Steamworks (Achievements, Cloud-Saves). |
+
+### 8.2 Match: sinnvolle Erweiterungen
+
+- **Schiedsrichter ab dem Ascheplatz**: Hobby-Schiri mit Persönlichkeit, Karten, Vorteil. Linienrichter stellt
+  der Heimverein (parteiisch!). Meckerer sammeln hier ihre Gelben.
+- **Elfmeter & Elfmeterschießen** (Pokal) als Nerven-Minispiel.
+- **Wetter & Tageszeit**: Regen (Pfützen stoppen den Ball), Wind, Frost (Asche wird zu Beton), Hitze (mehr
+  Ausdauerverbrauch), Flutlichtspiele am Freitagabend.
+- **7 gegen 7 und 11 gegen 11** für die höheren Ligen, mit Abseits (ab 11 gegen 11).
+- **Taktik light**: „Hinten dicht“, „Alle nach vorne“, „Lange Bälle“, „Kurzpass“ – keine Taktiktafel wie im
+  Profi-Manager, eher Kabinenansage.
+- **Zu spät kommende Spieler**: „Bin in 10 Minuten da“ – man spielt in Unterzahl, bis er am Spielfeldrand
+  auftaucht und reinläuft. Passt perfekt zur Chatgruppe.
+- **Wiederholungen & Fotomodus**: Die Simulation ist deterministisch. Seed plus Eingaben reichen für
+  Wiederholungen, Highlights und „Tor des Monats“ im Kreisblatt, ganz ohne Videoaufnahme.
+- **Kamera-Juice**: leichtes Wackeln bei Pfosten und Latte, Zoom beim Elfmeter, Zeitlupe beim Siegtor.
+- **Schwierigkeitsstufen** für die KI (Reaktionszeit, Fehlerquote).
+
+### 8.3 Verein & Meta (der eigentliche Kern, noch nicht begonnen)
+
+- **Mannschaftskasse & Strafenkatalog**: Zu spät: 5 €, Gelb wegen Meckern: 10 €, Handy in der Kabine: 2 €.
+  Das Geld finanziert die **Saisonabschlussfahrt** (großes Teamchemie-Event). Urdeutsch und ein schöner
+  Kreislauf aus Disziplin und Belohnung.
+- **Sammelalbum**: Jeder Spieler bekommt eine Karte fürs Kreisblatt-Album, Legenden bekommen eine glänzende.
+- **Spieler altern & hören auf**: Karriereende mit Abschiedsspiel, danach Co-Trainer, Platzwart oder Wirt im
+  Vereinsheim.
+- **Motivation statt Gehalt**: Amateure spielen für Spaß, Freunde und Einsatzzeit. Wer dauernd auf der Bank
+  sitzt, sagt irgendwann ab oder wechselt zum Nachbarverein.
+- **Gemischte Teams in der Hobbyrunde**: Freizeitligen sind oft gemischt. Spielerinnen als ganz normaler Teil
+  der Hobbyrunde, dazu eine eigene Frauen-Mannschaft als späterer Vereinsausbau.
+- **Vereinsleben-Events**: Sommerfest, Weihnachtsfeier, Arbeitseinsatz am Platz (Platzausbau gegen Ausdauer),
+  Jahreshauptversammlung (Vorstandswahl, Beitragserhöhung).
+- **Lokalzeitung „Kreisblatt“** als zentrale Bühne: Spielberichte, Noten, Gerüchte, Leserbriefe.
+
+### 8.4 Online & Community (nach Release)
+
+- **Geister-Spiele**: Das Team eines Freundes als Gegner, wahlweise simuliert oder selbst gespielt.
+- **Asynchrone Freundes-Liga**: jede Woche ein Spieltag, alle Partien simuliert, das eigene Spiel optional live.
+- **Trikot- und Wappen-Codes** zum Teilen, Steam Workshop für Liga- und Namenspakete.
+- **Achievements** mit Augenzwinkern: „Luftloch-König“, „Asche im Knie ×3“, „Ans Auto – 5× in einem Spiel“.
+
+### 8.5 Technik
+
+- **Simulation im Web Worker** für schnelle Hintergrund-Simulation ganzer Spieltage.
+- **Eingaben aufzeichnen** (Seed + Input-Stream) → Replays, Desync-Tests, später Online.
+- **Asset-Pipeline**: Blender → glTF für detailliertere Modelle; Animationen weiter prozedural plus ein paar
+  handgemachte Keyframe-Clips (Jubel, Hechtsprung).
+- **Instancing** für Zuschauer, Autos und Bäume, sobald die Plätze voller werden.
+- **Browser-Smoke-Test in der CI** (Playwright: Menü → Anstoß → 10 s spielen, keine Fehler).
+- **Balancing-Werkzeug**: Das KI-Statistik-Skript aus der Entwicklung als `npm run balance` ins Repo.
+
+### 8.6 Vorschlag für die Reihenfolge
+
+1. **Match-Abrundung**: Sound, Halbzeit/Endscreen mit Noten, Auswechslungen, Keeper- und Jubel-Animationen
+2. **Saison-Minimalversion**: Speichern, Kader, Chatgruppe, Spielplan, Tabelle, simulierte Spiele
+3. **Verein**: Trikot-Editor, Sponsoren, Mannschaftskasse & Strafenkatalog
+4. **Transfers & Scouting**: Open Training, Bolzplatz-Scouting
+5. **Schiri, Wetter, 7v7/11v11** für den Aufstieg in die höheren Ligen
