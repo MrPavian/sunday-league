@@ -27,6 +27,8 @@ import { promoteProspect, STAFF_ROLES } from '../career/youth.js';
 import { moodLabel, resolveEvent } from '../career/events.js';
 import { storyLabels } from '../career/stories.js';
 import { chronicleData, yearOf } from '../career/sagas.js';
+import { askWirt, buyRound, dossier, playDart, PUB_ACTIONS, PUB_NAME, pubOpen, pubState, ROUND_PRICE, setTactic, TACTICS, talk, wirtName } from '../career/pub.js';
+import { DOSSIER_LABELS } from '../data/backstories.js';
 import { childAge, coachAway, coachName, energyLabel, isCoach, patienceLabel, STYLES, trainingLocked } from '../career/personal.js';
 import { TRAITS } from '../data/traits.js';
 import { tierById } from '../data/tiers.js';
@@ -36,6 +38,8 @@ import { PITCHES } from '../sim/pitch.js';
 const STATUS = { yes: ['Zusage', 'yes'], no: ['Absage', 'no'], late: ['Kommt später', 'late'] };
 const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
 const first = (name) => name.split(' ')[0];
+// Dart: je näher an der Mitte, desto mehr Punkte (max. 60 pro Wurf).
+const dartPoints = (x) => Math.round(60 * Math.max(0, 1 - Math.abs(x)) ** 1.4);
 const formArrow = (f = 0) => (f >= 0.25 ? ' <span class="form up" title="gut drauf">▲</span>' : f <= -0.25 ? ' <span class="form down" title="nicht in Form">▼</span>' : '');
 const euro = (n) => `${n.toLocaleString('de-DE', { maximumFractionDigits: 2 })} €`;
 
@@ -73,6 +77,30 @@ export class Clubhouse {
       } else if (action === 'invite') {
         inviteTrialist(this.career, Number(value));
         this.h.onChange();
+      } else if (action === 'pubRound') {
+        buyRound(this.career);
+        this.h.onChange();
+      } else if (action === 'pubTalk') {
+        talk(this.career, Number(this.pubPick), value);
+        this.h.onChange();
+      } else if (action === 'pubTactic') {
+        setTactic(this.career, value);
+        this.h.onChange();
+      } else if (action === 'pubWirt') {
+        askWirt(this.career);
+        this.h.onChange();
+      } else if (action === 'dartStart') {
+        this.dart = { throws: [], t0: performance.now() };
+        this.render();
+        this.animateDart();
+      } else if (action === 'dartThrow' && this.dart) {
+        this.dart.throws.push(dartPoints(this.dartPos()));
+        if (this.dart.throws.length >= 3) {
+          const sum = this.dart.throws.reduce((a, b) => a + b, 0);
+          this.dart = null;
+          playDart(this.career, sum);
+          this.h.onChange();
+        } else this.render(), this.animateDart();
       } else if (action === 'event') {
         resolveEvent(this.career, Number(value));
         this.h.onChange();
@@ -117,6 +145,14 @@ export class Clubhouse {
     );
   }
 
+  bindPub() {
+    const sel = this.root.querySelector('select[data-pub-pick]');
+    sel?.addEventListener('change', () => {
+      this.pubPick = Number(sel.value);
+      this.render();
+    });
+  }
+
   bindLineup() {
     this.root.querySelectorAll('select[data-slot]').forEach((sel) =>
       sel.addEventListener('change', () => {
@@ -156,6 +192,7 @@ export class Clubhouse {
     const roundNo = Math.min(c.round + 1, c.fixtures.length);
     const tabs = [
       ['chat', 'Chatgruppe'],
+      ['pub', 'Kneipe'],
       ['squad', 'Kader'],
       ['lineup', 'Aufstellung'],
       ['transfers', 'Transfers'],
@@ -182,6 +219,7 @@ export class Clubhouse {
         </div>
       </div>`;
     this.bindLineup();
+    this.bindPub();
     this.bindClubForm();
   }
 
@@ -211,6 +249,63 @@ export class Clubhouse {
         ${coachAway(c) ? '<p class="warn">Du bist diese Woche nicht da – der Kapitän stellt auf, du bekommst nur das Ergebnis.</p>' : '<button class="primary" data-action="onPlay">Selbst spielen</button>'}
         <button data-action="onSimulate">${coachAway(c) ? 'Ergebnis abwarten' : 'Simulieren'}</button>`}
       </div>`;
+  }
+
+  // Stammkneipe: zwei Aktionen pro Woche.
+  tab_pub() {
+    const c = this.career;
+    if (!c.week || this.results) return `<p class="empty">Die „${PUB_NAME}" macht nach dem Spieltag wieder auf.</p>`;
+    if (!pubOpen(c)) return '<p class="warn">Du bist diese Woche nicht da. Die Jungs gehen ohne dich – und erzählen dir hinterher nur die Hälfte.</p>';
+    const pub = pubState(c);
+    const club = humanClub(c);
+    const left = pub.actions;
+    const dis = left <= 0 ? 'disabled' : '';
+    const mates = club.squad.filter((idx) => !isCoach(c, idx));
+    if (this.pubPick == null || !mates.includes(Number(this.pubPick))) this.pubPick = mates[0];
+    const pick = Number(this.pubPick);
+    const facts = pick != null ? dossier(c, pick) : [];
+    const cost = Math.round(club.squad.length * ROUND_PRICE);
+    const tactics = Object.entries(TACTICS)
+      .map(([id, t]) => `<button class="${pub.tactic === id ? 'active' : ''}" data-action="pubTactic" data-value="${id}" ${dis} title="${t.desc}">${t.name}</button>`)
+      .join('');
+    const dart = this.dart
+      ? `<div class="dart"><div class="board"><i class="zone z1"></i><i class="zone z2"></i><i class="zone z3"></i><b class="pin"></b></div>
+          <p>Wurf ${this.dart.throws.length + 1} von 3 ${this.dart.throws.length ? `· bisher ${this.dart.throws.join(' + ')}` : ''}</p>
+          <button class="primary" data-action="dartThrow">Werfen!</button></div>`
+      : `<button data-action="dartStart" ${dis}>Dart gegen Opa Heinz – Verlierer zahlt die Runde</button>`;
+    return `
+      <div class="pub">
+        <p class="chat-head">„${PUB_NAME}" · Wirt ${wirtName(c)} · noch ${left} von ${PUB_ACTIONS} Aktionen diese Woche <small>(jede kostet etwas Familienzeit)</small></p>
+        <blockquote class="heinz">Opa Heinz am Stammtisch: ${pub.heinz}</blockquote>
+        ${pub.log.length ? `<ul class="pub-log">${pub.log.map((l) => `<li>${l}</li>`).join('')}</ul>` : ''}
+        <div class="pub-grid">
+          <article><h4>Runde ausgeben</h4><p>Für alle ${club.squad.length}: ${cost} €. Hebt die Stimmung.</p><button data-action="pubRound" ${dis}>Runde bestellen</button></article>
+          <article><h4>Wirt ausfragen</h4><p>${wirtName(c)} kennt jeden. Mal ein Name für die Transfers, mal ein Tipp zum nächsten Gegner.</p><button data-action="pubWirt" ${dis}>„Und, was gibt's Neues?"</button>${pub.intel ? '<p class="reply ok">Tipp zum Gegner notiert – wirkt am Sonntag.</p>' : ''}</article>
+          <article class="wide"><h4>Einzelgespräch</h4>
+            <select data-pub-pick>${mates.map((idx) => `<option value="${idx}" ${idx === pick ? 'selected' : ''}>${this.p(idx).name}</option>`).join('')}</select>
+            <ul class="dossier">${facts.map((f) => `<li><b>${DOSSIER_LABELS[f.kind]}:</b> ${f.known ? f.text : '<em>noch unbekannt</em>'}</li>`).join('')}</ul>
+            <div class="actions">
+              <button data-action="pubTalk" data-value="listen" ${dis}>Zuhören</button>
+              <button data-action="pubTalk" data-value="cheer" ${dis}>Aufmuntern</button>
+              <button data-action="pubTalk" data-value="straight" ${dis}>Klartext reden</button>
+            </div></article>
+          <article class="wide"><h4>Taktik auf dem Bierdeckel</h4><p>Gilt fürs nächste Spiel.${pub.tactic ? ` Gewählt: <b>${TACTICS[pub.tactic].name}</b>.` : ''}</p><div class="actions">${tactics}</div></article>
+          <article class="wide"><h4>Dart</h4>${dart}${pub.dart ? `<p class="reply">Letztes Duell: ${pub.dart.you} zu ${pub.dart.heinz}</p>` : ''}</article>
+        </div>
+      </div>`;
+  }
+
+  dartPos() {
+    const t = (performance.now() - this.dart.t0) / 1000;
+    const speed = 1.6 + this.dart.throws.length * 0.35; // jeder Wurf etwas wackliger
+    return Math.sin(t * speed * Math.PI) * (0.92 + 0.08 * Math.sin(t * 7.3));
+  }
+
+  animateDart() {
+    const pin = this.root.querySelector('.dart .pin');
+    if (!pin || !this.dart) return;
+    pin.style.left = `${50 + this.dartPos() * 48}%`;
+    requestAnimationFrame(() => this.animateDart());
   }
 
   // Vereinschronik – zum Jubiläum als Festschrift.

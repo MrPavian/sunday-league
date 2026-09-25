@@ -511,3 +511,14 @@ Jubiläum alle 5 Jahre (25 Jahre in Saison 4) mit Festschrift aus der echten Chr
 Rekordspieler, Meilensteine), Fusion mit dem Tabellenletzten (die Besten wechseln, ein neuer Verein rückt nach),
 erste Frauenmannschaft mit eigener Saisonbilanz, Jugendspieler wird Profi (Ausbildungsentschädigung) und kehrt
 Jahre später als Ex-Profi zurück.
+
+## 10. Vereinsleben vertiefen (Ausbaustufe „Stammtisch")
+
+Reihenfolge: (1) Stammkneipe mit Einzelgesprächen · (2) Spielergeschichten & Beziehungsnetz ·
+(3) Stadtturniere (Stadtmeisterschaft, Hallenturnier) · (4) Jugendarbeit mit Jahrgängen.
+
+(1) umgesetzt – Stammkneipe „Zum Anstoß" (`src/career/pub.js`, Tab „Kneipe"): zwei Aktionen pro Woche,
+jede kostet etwas Familienzeit. Runde ausgeben (Stimmung), Einzelgespräch (Zuhören deckt das Dossier auf:
+Herkunft, Familie, Traum, Geheimnis · Aufmuntern · Klartext mit Risiko), Taktik auf dem Bierdeckel für das
+nächste Spiel, Wirt ausfragen (neuer Transfer-Tipp oder Schwäche des nächsten Gegners), Dart-Minispiel gegen
+Opa Heinz um die nächste Runde. Opa Heinz hat jede Woche eine neue Weisheit.

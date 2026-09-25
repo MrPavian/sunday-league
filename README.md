@@ -35,6 +35,9 @@ fällt zwei Wochen aus und darf nur zuschauen, wie der Kapitän aufstellt.
 mit Festschrift, eine Fusion mit dem Nachbarn, das erste Frauenteam – und das Jugendtalent, das
 Profi wird und irgendwann zurückkommt. Die Chronik steht im Verein-Tab.
 
+In der Stammkneipe „Zum Anstoß" gibst du Runden aus, hörst deinen Spielern zu (jeder hat eine
+Geschichte), malst die Taktik auf den Bierdeckel, fragst den Wirt aus und spielst Dart gegen Opa Heinz.
+
 | Vereinsheim | Kader |
 |---|---|
 | ![Vereinsheim](docs/screenshot-vereinsheim.png) | ![Kader](docs/screenshot-kader.png) |

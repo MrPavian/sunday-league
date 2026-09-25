@@ -535,3 +535,23 @@ body.in-menu .edge { display: none; }
 .creator .preview p { margin: 2px 0 6px; }
 .creator .actions { display: flex; justify-content: flex-end; gap: 10px; }
 @media (max-width: 760px) { .creator-grid { grid-template-columns: 1fr; } }
+
+/* Stammkneipe */
+.pub { display: grid; gap: 10px; }
+.pub .heinz { margin: 0; padding: 8px 12px; border-left: 4px solid #b0762c; background: #2a241b; font-style: italic; }
+.pub-log { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.pub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pub-grid article { border: 2px solid #000; background: #23231c; padding: 8px 12px; display: grid; gap: 6px; align-content: start; }
+.pub-grid article.wide { grid-column: 1 / -1; }
+.pub-grid h4 { margin: 0; }
+.pub-grid p { margin: 0; }
+.pub select { font: inherit; padding: 4px 6px; color: var(--ink); background: #1b1d1a; border: 2px solid #000; justify-self: start; }
+.dossier { margin: 0; padding-left: 18px; display: grid; gap: 3px; font-size: 13px; }
+.dart { display: grid; gap: 6px; }
+.dart .board { position: relative; height: 34px; border: 2px solid #000; background: linear-gradient(90deg, #1f3a26, #2f6f3a 50%, #1f3a26); }
+.dart .zone { position: absolute; top: 0; bottom: 0; left: 50%; transform: translateX(-50%); border-left: 2px solid #000; border-right: 2px solid #000; }
+.dart .z1 { width: 50%; background: rgba(224, 160, 80, 0.35); }
+.dart .z2 { width: 22%; background: rgba(217, 83, 79, 0.55); }
+.dart .z3 { width: 6%; background: #ffe14d; }
+.dart .pin { position: absolute; top: -6px; bottom: -6px; width: 4px; margin-left: -2px; background: #f2efe6; box-shadow: 0 0 0 2px #000; }
+@media (max-width: 760px) { .pub-grid { grid-template-columns: 1fr; } }

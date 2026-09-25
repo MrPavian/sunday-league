@@ -9,6 +9,7 @@ import { allPlayers } from '../sim/squad.js';
 import { gradePlayers } from '../sim/stats.js';
 import { absenceChance, DECLINE_TEXT, FAREWELL, INJURED, JOIN_TEXT, LATE, noReasons, NUDGE_NO, NUDGE_YES, RUMOR_SOURCES, YES } from './chat.js';
 import { HUMAN_CLUB_DEFAULT, LEAGUES } from './clubs.js';
+import { applyPubToTeam } from './pub.js';
 import { applyFusion, initSagas, sagaChat, sagaSeasonEnd, sagaWeek } from './sagas.js';
 import { childrenGrowUp, coachAway, initCoach, isCoach, personalWeek, seasonPersonal, weeklyPersonal } from './personal.js';
 import { absenceFactor, advanceArcs, applyForm, autoResolve, resultMood, rollWeekEvent, weeklyMood } from './events.js';
@@ -426,6 +427,25 @@ function makeRumors(career, rng) {
   return rumors;
 }
 
+// Ein zusätzliches Gerücht (z. B. vom Wirt): eher die Besseren, die keiner auf dem Zettel hat.
+export function addRumor(career, rng, source) {
+  const w = career.week;
+  if (!w) return null;
+  const pool = getPool();
+  const taken = takenIndices(career);
+  const list = pool.byTier(rng.pick(['gut', 'gut', 'stark', 'dorfstar']));
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const p = rng.pick(list);
+    if (taken.has(p.poolIndex) || w.rumors.some((r) => r.idx === p.poolIndex)) continue;
+    const spread = 5 + Math.floor(rng.next() * 4);
+    const shift = Math.floor(rng.next() * spread);
+    const rumor = { idx: p.poolIndex, source: source.replace('{first}', p.name.split(' ')[0]), scouted: false, status: 'open', range: [p.rating - shift, p.rating - shift + spread], reply: null };
+    w.rumors.push(rumor);
+    return rumor;
+  }
+  return null;
+}
+
 // Alte Spielstände ohne Gerüchteküche nachrüsten.
 export function migrateCareer(career) {
   registerCustomPlayers(career);
@@ -610,6 +630,7 @@ export function teamForMatch(career, club, format, availability, rng) {
     if (late.includes(idx)) p.late = true;
     return p;
   });
+  applyPubToTeam(career, club, players); // Bierdeckel-Taktik bzw. Tipp vom Wirt
   return { name: club.name, short: club.short, kit: club.kit, keeperKit: club.keeperKit, players, helpers };
 }
 
