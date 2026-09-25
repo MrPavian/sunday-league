@@ -21,6 +21,7 @@ import {
   seasonOver,
   table,
 } from '../career/career.js';
+import { acceptSponsor, bookTrip, FINES, KIT_COST, SLOTS, TRIP_COST } from '../career/finances.js';
 import { TRAITS } from '../data/traits.js';
 import { tierById } from '../data/tiers.js';
 import { POSITIONS } from '../sim/generator.js';
@@ -29,6 +30,7 @@ import { PITCHES } from '../sim/pitch.js';
 const STATUS = { yes: ['Zusage', 'yes'], no: ['Absage', 'no'], late: ['Kommt später', 'late'] };
 const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
 const first = (name) => name.split(' ')[0];
+const euro = (n) => `${n.toLocaleString('de-DE', { maximumFractionDigits: 2 })} €`;
 
 // Vereinsheim: Chatgruppe, Kader, Tabelle, Spielplan – und der nächste Spieltag.
 export class Clubhouse {
@@ -47,8 +49,15 @@ export class Clubhouse {
         this.draft.kit[part] = Number(color);
       } else if (action === 'kitPattern') this.draft.kit.pattern = value;
       else if (action === 'saveClub') {
-        updateClub(this.career, this.draft);
-        this.draft = null;
+        const res = updateClub(this.career, this.draft);
+        this.clubNote = res === 'nocash' ? `Zu wenig in der Kasse – ein neuer Trikotsatz kostet ${KIT_COST} €.` : 'Bestellt!';
+        if (res !== 'nocash') this.draft = null;
+        this.h.onChange();
+      } else if (action === 'sponsor') {
+        acceptSponsor(this.career, Number(value));
+        this.h.onChange();
+      } else if (action === 'trip') {
+        bookTrip(this.career);
         this.h.onChange();
       } else if (action === 'scout') {
         scoutRumor(this.career, Number(value));
@@ -119,6 +128,7 @@ export class Clubhouse {
       ['transfers', 'Transfers'],
       ['table', 'Tabelle'],
       ['club', 'Verein'],
+      ['cash', 'Kasse'],
       ['fixtures', 'Spielplan'],
     ];
     this.root.innerHTML = `
@@ -207,6 +217,9 @@ export class Clubhouse {
         <p>Meister: <b>${champ.name}</b></p>
         ${this.miniTable()}
         ${chronicle}
+        ${c.tripBooked
+          ? '<p class="reply ok">Mannschaftsfahrt gebucht! Die Stimmung nächste Saison: bestens.</p>'
+          : `<button data-action="trip" ${c.cash < TRIP_COST ? 'disabled' : ''}>Saisonabschlussfahrt buchen (${TRIP_COST} €, Kasse: ${euro(c.cash)})</button>`}
         <button class="primary" data-action="onNewSeason">Nächste Saison</button>
       </div>`;
   }
@@ -372,10 +385,50 @@ export class Clubhouse {
           ${d.kit.pattern !== 'uni' ? swatches('second', '2. Farbe') : ''}
           ${swatches('shorts', 'Hose')}
           ${swatches('socks', 'Stutzen')}
+          ${this.clubNote ? `<p class="warn">${this.clubNote}</p>` : ''}
           ${editable
-            ? '<button class="primary" data-action="saveClub">Trikots bestellen</button>'
+            ? `<button class="primary" data-action="saveClub">Trikots bestellen <small>(neuer Satz ${KIT_COST} €, Name gratis)</small></button>`
             : '<p class="warn">Die Trikots für diese Saison sind bestellt. Änderungen wieder vor dem ersten Spieltag der nächsten Saison.</p>'}
         </div>
+      </div>`;
+  }
+
+  tab_cash() {
+    const c = this.career;
+    const club = humanClub(c);
+    const offers = c.round === 0 && c.offers.length
+      ? c.offers
+          .map(
+            (o, i) => `<article class="rumor" style="--c:#c9a227"><div class="who"><b>${o.name}</b> <em>${SLOTS[o.slot]}</em>
+              <small>${o.line}</small></div>
+              <p>${euro(o.weekly)} pro Spieltag · Bonus ${euro(o.bonus)} bei: ${o.goal.text}</p>
+              <div class="actions"><button class="primary" data-action="sponsor" data-value="${i}">Unterschreiben</button></div></article>`,
+          )
+          .join('')
+      : '';
+    const active = c.sponsors.length
+      ? c.sponsors.map((s) => `<li><b>${s.name}</b> (${SLOTS[s.slot]}) – ${euro(s.weekly)}/Spieltag, Bonus ${euro(s.bonus)} bei ${s.goal.text}</li>`).join('')
+      : '<li><em>noch keine Sponsoren</em></li>';
+    const sinners = Object.entries(c.fines)
+      .filter(([idx]) => club.squad.includes(Number(idx)))
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([idx, amount]) => `<li>${poolPlayer(Number(idx)).name} <b>${euro(amount)}</b></li>`)
+      .join('');
+    const ledger = c.ledger
+      .slice(-12)
+      .reverse()
+      .map((e) => `<li><span>ST ${e.round} · ${e.text}</span><b class="${e.amount < 0 ? 'minus' : 'plus'}">${e.amount > 0 ? '+' : ''}${euro(e.amount)}</b></li>`)
+      .join('');
+    return `
+      <div class="cash-head"><span>Mannschaftskasse</span><b class="${c.cash < 0 ? 'minus' : ''}">${euro(c.cash)}</b>
+        <small>Ziel: Saisonabschlussfahrt für ${euro(TRIP_COST)}${c.spirit ? ' · Stimmung nach der letzten Fahrt: bestens (weniger Absagen)' : ''}</small></div>
+      <div class="cash-grid">
+        <section><h4>Sponsoren</h4><ul class="plain">${active}</ul>
+          ${offers ? `<h4>Angebote für diese Saison</h4><div class="rumors">${offers}</div>` : c.round === 0 ? '' : '<p class="empty">Neue Angebote gibt es vor der nächsten Saison.</p>'}</section>
+        <section><h4>Strafenkatalog</h4><ul class="plain fines">${FINES.map((f) => `<li>${f.label} <b>${euro(f.amount)}</b></li>`).join('')}</ul>
+          <h4>Sünderkartei</h4><ol class="plain">${sinners || '<li><em>alle brav</em></li>'}</ol></section>
+        <section><h4>Kassenbuch</h4><ul class="plain ledger">${ledger || '<li><em>noch keine Buchungen</em></li>'}</ul></section>
       </div>`;
   }
 

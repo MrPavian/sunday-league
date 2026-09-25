@@ -273,3 +273,78 @@ describe('club & kits', () => {
     expect(updateClub(c, { name: 'Zu spät' })).toBe(false);
   });
 });
+
+describe('club finances', () => {
+  it('starts with a cash box, sponsor offers before the season and a fines catalogue', async () => {
+    const { FINES, START_CASH } = await import('../src/career/finances.js');
+    const c = createCareer({ seed: 80 });
+    expect(c.cash).toBe(START_CASH);
+    expect(c.offers.length).toBe(4); // je 2 für Trikot und Bande
+    expect(FINES.find((f) => f.id === 'whiff').amount).toBe(1);
+  });
+
+  it('fines come from what really happened in the match', async () => {
+    const c = createCareer({ seed: 81 });
+    const f = humanFixture(c);
+    const prepared = prepareMatch(c, f, { human: true, duration: 5 });
+    simulateSync(prepared);
+    const me = prepared.match.players.find((p) => p.team === 0 && p.role !== 'gk');
+    const st = prepared.match.stats.players[me.id];
+    st.whiffs = 3;
+    st.yellow = 1;
+    const before = c.cash;
+    recordResult(c, f, prepared);
+    expect(c.fines[me.poolIndex]).toBeGreaterThanOrEqual(8); // 3 × 1 € + 5 €
+    const fineEntry = c.ledger.find((e) => e.text.startsWith('Strafen eingesammelt'));
+    expect(fineEntry.amount).toBeGreaterThanOrEqual(8);
+    expect(c.cash).toBeGreaterThan(before); // plus Getränkeverkauf, falls Heimspiel
+  });
+
+  it('sponsors pay every week and a bonus when the goal is reached', async () => {
+    const { acceptSponsor, closeSeasonFinances, weeklyFinances } = await import('../src/career/finances.js');
+    const c = createCareer({ seed: 82 });
+    expect(acceptSponsor(c, 0)).toBe(true); // Trikot
+    expect(c.offers.every((o) => o.slot === 'bande')).toBe(true);
+    expect(acceptSponsor(c, 0)).toBe(true); // Bande
+    expect(acceptSponsor(c, 0)).toBe(false); // alles vergeben
+    const [sponsor, second] = c.sponsors;
+    const cash = c.cash;
+    weeklyFinances(c);
+    expect(c.cash).toBe(cash + humanClub(c).squad.length * 3 + sponsor.weekly + second.weekly);
+    second.goal = { type: 'goals', n: 99, text: 'unerreichbar' };
+    sponsor.goal = { type: 'wins', n: 1, text: 'mindestens 1 Sieg' };
+    const beforeBonus = c.cash;
+    closeSeasonFinances(c, { wins: 3, goals: 10, rank: 2, cards: 4 });
+    expect(c.cash).toBe(beforeBonus + sponsor.bonus);
+    expect(c.sponsors).toHaveLength(0);
+  });
+
+  it('the season trip costs money and lifts spirits next season', async () => {
+    const { bookTrip, TRIP_COST } = await import('../src/career/finances.js');
+    const { nextSeason, currentFixtures } = await import('../src/career/career.js');
+    const c = createCareer({ seed: 83 });
+    expect(bookTrip(c)).toBe(false); // zu wenig Geld
+    c.cash = 400;
+    expect(bookTrip(c)).toBe(true);
+    expect(c.cash).toBe(400 - TRIP_COST);
+    while (!seasonOver(c)) {
+      for (const f of currentFixtures(c)) f.result = { home: 1, away: 1 };
+      finishRound(c);
+    }
+    nextSeason(c);
+    expect(c.spirit).toBe(1);
+    expect(c.tripBooked).toBe(false);
+  });
+
+  it('a new kit costs money', async () => {
+    const { updateClub } = await import('../src/career/career.js');
+    const c = createCareer({ seed: 84 });
+    c.cash = 10;
+    expect(updateClub(c, { kit: { shirt: 0x2e6b3a } })).toBe('nocash');
+    c.cash = 100;
+    expect(updateClub(c, { kit: { shirt: 0x2e6b3a } })).toBe(true);
+    expect(c.cash).toBe(40);
+    expect(updateClub(c, { name: 'Nur der Name' })).toBe(true);
+    expect(c.cash).toBe(40);
+  });
+});

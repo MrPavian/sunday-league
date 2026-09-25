@@ -9,6 +9,7 @@ import { allPlayers } from '../sim/squad.js';
 import { gradePlayers } from '../sim/stats.js';
 import { absenceChance, DECLINE_TEXT, FAREWELL, INJURED, JOIN_TEXT, LATE, noReasons, NUDGE_NO, NUDGE_YES, RUMOR_SOURCES, YES } from './chat.js';
 import { HUMAN_CLUB_DEFAULT, LEAGUES } from './clubs.js';
+import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFinances, weeklyFinances } from './finances.js';
 
 export const SAVE_VERSION = 1;
 export const POOL_SEED = 1921;
@@ -81,6 +82,7 @@ export function createCareer({ seed = Date.now() % 1e9, club = {} } = {}) {
     history: [],
     week: null,
   };
+  initFinances(career);
   startWeek(career);
   return career;
 }
@@ -103,6 +105,9 @@ export function nextSeason(career) {
     };
     Object.assign(rec, { apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0 });
   }
+
+  const own = rows[pos - 1];
+  closeSeasonFinances(career, { wins: own.w, goals: own.gf, rank: pos, cards: career.seasonCards });
 
   const newLevel = promoted ? level + 1 : relegated ? level - 1 : level;
   const league = LEAGUES[newLevel];
@@ -199,7 +204,7 @@ export function startWeek(career) {
     if (rec.injuryWeeks > 0) {
       status = 'no';
       text = rng.pick(INJURED);
-    } else if (rng.chance(absenceChance(p.profession))) {
+    } else if (rng.chance(absenceChance(p.profession) * (career.spirit ? 0.75 : 1))) {
       status = 'no';
       text = rng.pick(noReasons(p.profession));
     } else if (rng.chance(0.07)) {
@@ -212,6 +217,7 @@ export function startWeek(career) {
     chat.push({ from: idx, text, time: time() });
   }
   career.week = { availability, chat, nudges: NUDGES_PER_WEEK, nudged: [], lineup: null };
+  if (career.round === 0 && !career.offers?.length && (career.sponsors?.length ?? 0) < 2) makeOffers(career, career.level ?? 1);
   career.week.rumors = makeRumors(career, createRng(hashSeed(career.seed, career.season, career.round, 3)));
   career.week.actions = SCOUT_ACTIONS;
 }
@@ -305,6 +311,7 @@ function makeRumors(career, rng) {
 // Alte Spielstände ohne Gerüchteküche nachrüsten.
 export function migrateCareer(career) {
   career.level ??= 1;
+  initFinances(career);
   career.history ??= [];
   if (career.week && !career.week.rumors) {
     career.week.rumors = makeRumors(career, createRng(hashSeed(career.seed, career.season, career.round, 3)));
@@ -391,7 +398,10 @@ export function updateClub(career, { name, short, kit }) {
   const club = humanClub(career);
   if (name?.trim()) club.name = name.trim().slice(0, 32);
   if (short?.trim()) club.short = short.trim().toUpperCase().slice(0, 4);
-  if (kit) {
+  if (kit && JSON.stringify({ ...club.kit, ...kit }) !== JSON.stringify(club.kit)) {
+    // Neue Trikots kosten – ohne Geld in der Kasse bleibt's beim alten Satz.
+    if (career.cash < KIT_COST) return 'nocash';
+    book(career, 'Neuer Trikotsatz', -KIT_COST);
     club.kit = { ...club.kit, ...kit };
     // Torwart immer in einer Kontrastfarbe.
     const keeper = [0xe8742a, 0x5cc46a, 0xe0b020, 0x6b4f8c].find((c) => colorDistance(c, club.kit.shirt) > 150) ?? 0xe8742a;
@@ -534,10 +544,12 @@ export function recordResult(career, fixture, prepared) {
     // Schürfwunden ab ×2 brauchen eine Woche.
     if (p.injury && p.injury.severity >= 2) rec.injuryWeeks = 1;
   }
+  matchFinances(career, fixture, prepared, career.level ?? 1);
   return fixture.result;
 }
 
 export function finishRound(career) {
+  weeklyFinances(career);
   for (const rec of Object.values(career.players)) if (rec.injuryWeeks > 0) rec.injuryWeeks--;
   career.round++;
   startWeek(career);

@@ -432,6 +432,8 @@ Gleichzeitig hat das Match noch Lücken, die man beim Spielen sofort merkt.
    ✅ Aufstieg in die Kreisklasse C (7 gegen 7, Schiri, Sportplatz Waldesruh), Abstieg zurück,
    Kader & Karriere-Gesamtstatistik bleiben, Vereinschronik. Offen: Kreisklasse B und höher, Spieler altern.
 3. **Verein**: ✅ Trikot-Editor (Name, Kürzel, Farben, Uni/Streifen/Ringel, Bestellung vor Saisonbeginn,
-   Ausweichtrikots bei Farbkonflikt) · offen: Sponsoren, Mannschaftskasse & Strafenkatalog
+   Ausweichtrikots bei Farbkonflikt) · ✅ Mannschaftskasse mit Strafenkatalog aus echten Spielszenen,
+   lokale Sponsoren (Trikot/Bande, Saisonziel mit Bonus), Heimspiel-Einnahmen & -Kosten,
+   Saisonabschlussfahrt (weniger Absagen in der nächsten Saison)
 4. **Transfers & Scouting**: Open Training, Bolzplatz-Scouting
 5. **Schiri, Wetter, 7v7/11v11** für den Aufstieg in die höheren Ligen
