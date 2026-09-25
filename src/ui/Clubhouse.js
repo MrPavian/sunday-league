@@ -23,6 +23,7 @@ import {
 } from '../career/career.js';
 import { acceptSponsor, bookTrip, FINES, KIT_COST, SLOTS, TRIP_COST } from '../career/finances.js';
 import { inviteChance, inviteTrialist, isRawDiamond, MAX_STATIONS, runStation, startTraining, STATIONS, TRAINING_COST, trainingDone } from '../career/training.js';
+import { promoteProspect, STAFF_ROLES } from '../career/youth.js';
 import { TRAITS } from '../data/traits.js';
 import { tierById } from '../data/tiers.js';
 import { POSITIONS } from '../sim/generator.js';
@@ -65,6 +66,9 @@ export class Clubhouse {
         this.h.onChange();
       } else if (action === 'invite') {
         inviteTrialist(this.career, Number(value));
+        this.h.onChange();
+      } else if (action === 'promote') {
+        promoteProspect(this.career, Number(value), maxSquad(this.career));
         this.h.onChange();
       } else if (action === 'trip') {
         bookTrip(this.career);
@@ -142,6 +146,7 @@ export class Clubhouse {
       ['lineup', 'Aufstellung'],
       ['transfers', 'Transfers'],
       ['training', 'Training'],
+      ['youth', 'Jugend'],
       ['table', 'Tabelle'],
       ['club', 'Verein'],
       ['cash', 'Kasse'],
@@ -448,6 +453,39 @@ export class Clubhouse {
       <p class="chat-head">Stationen ${tr.stations.length}/${MAX_STATIONS}${done ? ` · noch ${tr.invites} Einladung${tr.invites === 1 ? '' : 'en'}` : ' · wähle, was du sehen willst'}</p>
       <div class="stations">${stationButtons}</div>
       <table class="squad training"><thead><tr><th>Teilnehmer</th>${tr.stations.map((id) => `<th class="num">${STATIONS[id].name}<small>${STATIONS[id].unit}</small></th>`).join('')}<th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  tab_youth() {
+    const c = this.career;
+    const club = humanClub(c);
+    const full = club.squad.length >= maxSquad(c);
+    const stars = (q) => '★'.repeat(Math.max(1, Math.round(q * 5))) + '☆'.repeat(5 - Math.max(1, Math.round(q * 5)));
+    const staff = Object.entries(STAFF_ROLES)
+      .map(([id, r]) => `<li><b>${r.name}:</b> ${c.staff[id] ? `${c.staff[id].name} <small>– ${r.effect}</small>` : '<em>unbesetzt – vielleicht übernimmt das mal ein Ehemaliger</em>'}</li>`)
+      .join('');
+    const prospects = c.youth.prospects
+      .map((idx) => ({ idx, p: this.p(idx) }))
+      .sort((a, b) => b.p.rating - a.p.rating)
+      .map(({ idx, p }) => {
+        const talent = p.rating >= 50 ? 'großes Talent' : p.rating >= 40 ? 'solide' : 'noch roh';
+        return `<tr><td><b>${p.name}</b><small>${p.age} J. · ${p.profession}</small></td><td>${POSITIONS[p.position]}</td>
+          <td class="num">${p.rating}</td><td><em>${talent}</em></td>
+          <td><button class="primary tiny" data-action="promote" data-value="${idx}" ${full ? 'disabled' : ''}>Hochziehen</button></td></tr>`;
+      })
+      .join('');
+    const alumni = c.alumni.length
+      ? c.alumni.map((a) => `<li>${a.name} – ${a.apps} Spiele, ${a.goals} Tore · ${a.role} (seit Saison ${a.season + 1})</li>`).join('')
+      : '<li><em>noch niemand – der Verein ist jung</em></li>';
+    return `
+      <h4>Ehrenamt</h4>
+      <ul class="plain staff"><li><b>Jugendtrainer:</b> ${c.youth.coach.name} <span class="stars">${stars(c.youth.coach.quality)}</span> <small>– je besser, desto mehr Talente</small></li>${staff}</ul>
+      <h4>A-Jugend</h4>
+      ${prospects
+        ? `<table class="squad"><thead><tr><th>Talent</th><th>Pos.</th><th>Stärke</th><th>Einschätzung</th><th></th></tr></thead><tbody>${prospects}</tbody></table>
+           <p class="empty">Talente entwickeln sich auch in der Jugend. Mit 20 wechseln sie zum Nachbarn, wenn du sie nicht hochziehst.${full ? ' Kader voll – erst Platz schaffen.' : ''}</p>`
+        : '<p class="empty">Kein Talent in der A-Jugend. Der nächste Jahrgang kommt zur neuen Saison.</p>'}
+      <h4>Ehemalige</h4>
+      <ul class="plain">${alumni}</ul>`;
   }
 
   tab_cash() {

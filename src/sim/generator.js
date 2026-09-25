@@ -38,6 +38,17 @@ const STORIES = {
 };
 
 // Karrierejahre passen zum Alter: frühestens mit 18 bei den Herren.
+// Berufe passend zum Alter – kein 17-jähriger Frührentner. Ersetzt nur den
+// gezogenen Beruf, damit die Zufallsfolge (und damit der Pool) gleich bleibt.
+const MIN_AGE = { Frührentner: 38, 'Student (12. Semester)': 23, Zahnarzt: 26, Steuerberater: 26, Grundschullehrer: 25, Versicherungsmakler: 22 };
+const YOUNG_JOBS = ['Schüler (Abi-Jahrgang)', 'Azubi Kfz-Mechatroniker', 'Azubi Elektriker', 'FSJ im Altenheim', 'Schüler'];
+
+export function fitProfession(job, age) {
+  if (age <= 18 && !job.startsWith('Azubi')) return YOUNG_JOBS[(job.length + age) % YOUNG_JOBS.length];
+  if (age < (MIN_AGE[job] ?? 0)) return YOUNG_JOBS[(job.length + age) % 3];
+  return job;
+}
+
 function careerFacts(rng, age) {
   return {
     years: rng.int(Math.min(3, age - 18), Math.max(3, Math.min(16, age - 19))),
@@ -117,7 +128,7 @@ export function generatePlayer(rng, { role = 'mid', tier = null, tierWeights = n
     player = {
       name: `${rng.pick(FIRST_NAMES)} ${rng.pick(LAST_NAMES)}`,
       age,
-      profession: rng.pick(PROFESSIONS),
+      profession: fitProfession(rng.pick(PROFESSIONS), age),
       tier: t.id,
       position: role,
       backstory: stories ? rng.pick(stories)(careerFacts(rng, age)) : null,

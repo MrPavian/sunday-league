@@ -416,3 +416,84 @@ describe('player development', () => {
     expect(pool.get(young.poolIndex).rating).toBe(y0.rating);
   });
 });
+
+describe('youth & retirement', () => {
+  const endSeason = async (c) => {
+    const { currentFixtures } = await import('../src/career/career.js');
+    while (!seasonOver(c)) {
+      for (const f of currentFixtures(c)) f.result = { home: 1, away: 1 };
+      finishRound(c);
+    }
+  };
+
+  it('starts with a youth coach and a first A-youth year group', async () => {
+    const { playerOf } = await import('../src/career/career.js');
+    const c = createCareer({ seed: 120 });
+    expect(c.youth.coach.name).toBe('Heinz Brückner');
+    expect(c.youth.prospects.length).toBeGreaterThanOrEqual(2);
+    for (const idx of c.youth.prospects) {
+      expect(playerOf(c, idx).age).toBeLessThanOrEqual(18);
+      expect(humanClub(c).squad).not.toContain(idx);
+    }
+  });
+
+  it('prospects grow in the youth team, can be promoted, and leave at 20', async () => {
+    const { nextSeason, playerOf, maxSquad } = await import('../src/career/career.js');
+    const { promoteProspect } = await import('../src/career/youth.js');
+    const c = createCareer({ seed: 121 });
+    const [a, b] = c.youth.prospects;
+    const before = playerOf(c, a).rating;
+    expect(promoteProspect(c, b, maxSquad(c))).toBe(true);
+    expect(humanClub(c).squad).toContain(b);
+    await endSeason(c);
+    nextSeason(c);
+    if (c.youth.prospects.includes(a)) expect(playerOf(c, a).rating).toBeGreaterThan(before);
+    // Nach ein paar Jahren ist jeder aus der Jugend raus – hochgezogen oder weg.
+    for (let s = 0; s < 3; s++) {
+      await endSeason(c);
+      nextSeason(c);
+    }
+    for (const idx of c.youth.prospects) expect(playerOf(c, idx).age).toBeLessThanOrEqual(19);
+  });
+
+  it('old players retire, get a farewell and take up an honorary post', async () => {
+    const { nextSeason, getPool } = await import('../src/career/career.js');
+    const c = createCareer({ seed: 122 });
+    const club = humanClub(c);
+    const veterans = getPool()
+      .everyone()
+      .filter((p) => p.age >= 41 && !c.clubs.some((cl) => cl.squad.includes(p.poolIndex)))
+      .slice(0, 3);
+    for (const v of veterans) {
+      club.squad.push(v.poolIndex);
+      c.players[v.poolIndex] = { apps: 5, goals: 1, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 };
+    }
+    await endSeason(c);
+    const res = nextSeason(c);
+    expect(res.retired.length).toBeGreaterThanOrEqual(1);
+    const r = res.retired[0];
+    expect(club.squad).not.toContain(r.idx);
+    expect(c.alumni.map((x) => x.idx)).toContain(r.idx);
+    expect(c.staff.cotrainer?.idx).toBe(res.retired[0].idx);
+    expect(c.ledger.some((e) => e.text.startsWith('Abschiedsparty'))).toBe(true);
+    expect(c.week.chat.some((m) => m.text.startsWith('Abschied:'))).toBe(true);
+  });
+
+  it('the landlord sells more drinks', async () => {
+    const { matchFinances } = await import('../src/career/finances.js');
+    const c = createCareer({ seed: 123 });
+    let f = humanFixture(c);
+    while (f.home !== humanClub(c).id) {
+      finishRound(c);
+      f = humanFixture(c);
+    }
+    const prepared = prepareMatch(c, f, { human: true, duration: 5 });
+    simulateSync(prepared);
+    const drinks = () => c.ledger.filter((e) => e.text.startsWith('Getränkeverkauf')).at(-1).amount;
+    matchFinances(c, f, prepared, 1);
+    const normal = drinks();
+    c.staff.wirt = { idx: 1, name: 'Uwe Wirt' };
+    matchFinances(c, f, prepared, 1);
+    expect(drinks()).toBeGreaterThan(normal);
+  });
+});

@@ -80,10 +80,11 @@ export function matchFinances(career, fixture, prepared, level) {
   if (homeHuman) {
     const rng = createRng(career.seed + career.season * 97 + career.round * 13);
     const fans = level > 1 ? rng.int(20, 45) : rng.int(5, 14);
-    book(career, `Getränkeverkauf (${fans} Zuschauer)`, Math.round(fans * 2.5));
+    const wirt = career.staff?.wirt ? 1.3 : 1;
+    book(career, `Getränkeverkauf (${fans} Zuschauer)${wirt > 1 ? ` – Wirt ${career.staff.wirt.name.split(' ')[0]}` : ''}`, Math.round(fans * 2.5 * wirt));
     if (level > 1) {
       book(career, 'Schiri-Gebühr', -20);
-      book(career, 'Platzmiete Waldesruh', -15);
+      book(career, career.staff?.platzwart ? 'Platzmiete (Platzwart macht vieles selbst)' : 'Platzmiete Waldesruh', career.staff?.platzwart ? -7.5 : -15);
     }
   }
 }

@@ -480,3 +480,15 @@ describe('referee', () => {
     expect(m.controlledId).not.toBe(p.id);
   });
 });
+
+describe('professions fit the age', () => {
+  it('no teenage early retirees or 12th-semester students', async () => {
+    const { createPlayerPool } = await import('../src/sim/generator.js');
+    const pool = createPlayerPool({ seed: 1921, size: 25000 });
+    for (const p of pool.everyone()) {
+      if (p.profession === 'Frührentner') expect(p.age).toBeGreaterThanOrEqual(38);
+      if (p.profession === 'Student (12. Semester)') expect(p.age).toBeGreaterThanOrEqual(23);
+      if (p.age <= 18) expect(/Schüler|Azubi|FSJ/.test(p.profession)).toBe(true);
+    }
+  });
+});

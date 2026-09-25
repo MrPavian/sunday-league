@@ -437,5 +437,7 @@ Gleichzeitig hat das Match noch Lücken, die man beim Spielen sofort merkt.
    Saisonabschlussfahrt (weniger Absagen in der nächsten Saison)
 4. **Transfers & Scouting**: ✅ Gerüchteküche · ✅ Open Training (6 Stationen, 3 wählbar, Messwerte deuten,
    Eigenschafts-Hinweise, Rohdiamanten, Einladungen) · ✅ Spielerentwicklung & Altern je Saison ·
-   offen: Bolzplatz-Scouting, Jugendabteilung
+   ✅ Jugendabteilung (Jugendtrainer, Jahrgänge, hochziehen, Abgang mit 20) · ✅ Karriereende mit
+   Abschiedsparty und Ehrenamt (Co-Trainer, Jugendtrainer, Wirt, Platzwart – jeweils mit Wirkung) ·
+   offen: Bolzplatz-Scouting
 5. **Schiri, Wetter, 7v7/11v11** für den Aufstieg in die höheren Ligen

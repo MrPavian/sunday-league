@@ -71,7 +71,7 @@ export function startTraining(career) {
   if (!w || w.training || career.cash < TRAINING_COST) return false;
   const rng = createRng(seedOf(career, 5));
   const pool = getPool();
-  const taken = new Set(career.clubs.flatMap((c) => c.squad));
+  const taken = new Set([...career.clubs.flatMap((c) => c.squad), ...(career.youth?.prospects ?? []), ...(career.alumni ?? []).map((a) => a.idx)]);
   const rumored = new Set((w.rumors ?? []).map((r) => r.idx));
   const trialists = [];
   const pick = (filter) => {

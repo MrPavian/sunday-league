@@ -412,3 +412,5 @@ body.in-club #hud { display: none; }
 .training td.best { color: #7fd48b; font-weight: 600; }
 .training .note { color: #e0c070; font-style: italic; }
 .diamond { padding: 0 6px; font-size: 11px; color: #111; background: linear-gradient(90deg, #8fe3ff, #d8b4ff); border: 1px solid #000; text-shadow: none; }
+.staff small { opacity: 0.7; }
+.stars { color: var(--accent); letter-spacing: 1px; }
