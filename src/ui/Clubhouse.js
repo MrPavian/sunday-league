@@ -29,6 +29,8 @@ import { storyLabels } from '../career/stories.js';
 import { chronicleData, yearOf } from '../career/sagas.js';
 import { askWirt, buyRound, dossier, playDart, PUB_ACTIONS, PUB_NAME, pubOpen, pubState, ROUND_PRICE, setTactic, TACTICS, talk, wirtName } from '../career/pub.js';
 import { DOSSIER_LABELS } from '../data/backstories.js';
+import { canSupportDream, DREAM_COST, supportDream } from '../career/pub.js';
+import { chemistry, REL, relationLabel, relationsOfPlayer, shortName } from '../career/relations.js';
 import { childAge, coachAway, coachName, energyLabel, isCoach, patienceLabel, STYLES, trainingLocked } from '../career/personal.js';
 import { TRAITS } from '../data/traits.js';
 import { tierById } from '../data/tiers.js';
@@ -82,6 +84,9 @@ export class Clubhouse {
         this.h.onChange();
       } else if (action === 'pubTalk') {
         talk(this.career, Number(this.pubPick), value);
+        this.h.onChange();
+      } else if (action === 'pubDream') {
+        supportDream(this.career, Number(this.pubPick));
         this.h.onChange();
       } else if (action === 'pubTactic') {
         setTactic(this.career, value);
@@ -283,7 +288,10 @@ export class Clubhouse {
           <article><h4>Wirt ausfragen</h4><p>${wirtName(c)} kennt jeden. Mal ein Name für die Transfers, mal ein Tipp zum nächsten Gegner.</p><button data-action="pubWirt" ${dis}>„Und, was gibt's Neues?"</button>${pub.intel ? '<p class="reply ok">Tipp zum Gegner notiert – wirkt am Sonntag.</p>' : ''}</article>
           <article class="wide"><h4>Einzelgespräch</h4>
             <select data-pub-pick>${mates.map((idx) => `<option value="${idx}" ${idx === pick ? 'selected' : ''}>${this.p(idx).name}</option>`).join('')}</select>
-            <ul class="dossier">${facts.map((f) => `<li><b>${DOSSIER_LABELS[f.kind]}:</b> ${f.known ? f.text : '<em>noch unbekannt</em>'}</li>`).join('')}</ul>
+            <ul class="dossier">${facts.map((f) => `<li><b>${DOSSIER_LABELS[f.kind]}:</b> ${f.known ? f.text : '<em>noch unbekannt</em>'}</li>`).join('')}
+              ${pick != null && relationsOfPlayer(c, pick).length ? `<li><b>Im Team:</b> ${relationLabel(c, pick)}</li>` : ''}
+              ${pick != null && c.players[pick]?.dreamDone ? '<li><b>Traum:</b> <em>unterstützt – er ist dir dankbar und sagt seltener ab</em></li>' : ''}</ul>
+            ${pick != null && canSupportDream(c, pick) ? `<button data-action="pubDream" ${c.cash < DREAM_COST ? 'disabled' : ''}>Seinen Traum unterstützen (${DREAM_COST} €, kostet Kraft)</button>` : ''}
             <div class="actions">
               <button data-action="pubTalk" data-value="listen" ${dis}>Zuhören</button>
               <button data-action="pubTalk" data-value="cheer" ${dis}>Aufmuntern</button>
@@ -448,7 +456,7 @@ export class Clubhouse {
         const avg = r.graded ? (r.gradeSum / r.graded).toFixed(1).replace('.', ',') : '–';
         return `<tr style="--c:${tier.color}">
           <td><span class="badge">${tier.name}</span></td>
-          <td><b>${p.name}</b>${isCoach(c, idx) ? ' <span class="me-tag">Du</span>' : ''}${p.title ? ` <em>${p.title}</em>` : ''}${formArrow(r.form)}${r.absenceMul > 1.2 ? ' <span class="grumpy" title="hat gerade wenig Zeit – sagt öfter ab">selten da</span>' : ''}${r.grumpy ? ' <span class="grumpy" title="angefressen – sagt öfter ab">grummelt</span>' : ''}<small>${p.age} J. · ${p.profession}</small></td>
+          <td><b>${p.name}</b>${isCoach(c, idx) ? ' <span class="me-tag">Du</span>' : ''}${p.title ? ` <em>${p.title}</em>` : ''}${formArrow(r.form)}${r.absenceMul > 1.2 ? ' <span class="grumpy" title="hat gerade wenig Zeit – sagt öfter ab">selten da</span>' : ''}${r.grumpy ? ' <span class="grumpy" title="angefressen – sagt öfter ab">grummelt</span>' : ''}<small>${p.age} J. · ${p.profession}</small>${relationLabel(c, idx) ? `<small class="rel">${relationLabel(c, idx)}</small>` : ''}</td>
           <td>${POSITIONS[p.position]}</td><td class="num">${p.rating}</td>
           <td>${r.injuryWeeks ? '<span class="st-text no">verletzt</span>' : st ? `<span class="st-text ${st[1]}">${st[0]}</span>` : ''}</td>
           <td class="num">${r.apps}</td><td class="num">${r.goals}</td><td class="num">${r.assists}</td><td class="num">${avg}</td>
@@ -482,6 +490,10 @@ export class Clubhouse {
     const gkIdx = formation.findIndex((f) => f.role === 'gk');
     const keeper = lineup[gkIdx] != null ? this.p(lineup[gkIdx]) : null;
     const keeperNote = keeper && keeper.position !== 'gk' ? `<p class="warn">Kein Torwart da – ${keeper.name.split(' ')[0]} muss ran. Handschuhe liegen im Kofferraum.</p>` : '';
+    const chem = chemistry(c, lineup);
+    const chemLine = chem.pairs.length
+      ? `<p class="chem ${chem.score < 0 ? 'bad' : 'good'}">Teamchemie ${chem.score > 0 ? '+' : ''}${chem.score}: ${chem.pairs.map((pr) => `${shortName(c, pr.a)} & ${shortName(c, pr.b)} (${REL[pr.type].plural})`).join(' · ')}</p>`
+      : '<p class="chem">Teamchemie: In dieser Aufstellung kennt sich keiner näher.</p>';
     const benchList = bench.length
       ? bench.map((idx) => `<li>${this.p(idx).name}${c.week.availability[idx] === 'late' ? ' <em>(kommt zur 2. HZ)</em>' : ''}</li>`).join('')
       : '<li><em>niemand</em></li>';
@@ -489,6 +501,7 @@ export class Clubhouse {
     return `
       <p class="chat-head">${formation.length} gegen ${formation.length} · ${c.week.lineup ? 'eigene Aufstellung' : 'automatisch aufgestellt'}</p>
       <div class="lineup">${slots}</div>
+      ${chemLine}
       ${keeperNote}
       <h4>Bank</h4><ul class="bench">${benchList}</ul>
       <button data-action="autoLineup">Automatisch aufstellen</button>`;

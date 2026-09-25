@@ -3,11 +3,12 @@
 // Geschichten der Leute), Taktik auf dem Bierdeckel, den Wirt ausfragen oder
 // eine Runde Dart um die nächste Runde.
 import { createRng } from '../core/rng.js';
-import { DOSSIER, DOSSIER_ORDER, HEINZ, INTEL } from '../data/backstories.js';
+import { DOSSIER, DOSSIER_ORDER, dossierIndex, DREAM_SUPPORT, HEINZ, INTEL } from '../data/backstories.js';
 import { book } from './finances.js';
 import { addRumor, clubById, humanClub, humanFixture, playerOf } from './career.js';
 import { adjustForm, adjustMood } from './events.js';
-import { adjustPatience, coachAway, isCoach } from './personal.js';
+import { adjustEnergy, adjustPatience, coachAway, isCoach } from './personal.js';
+import { chronicle } from './sagas.js';
 
 export const PUB_NAME = 'Zum Anstoß';
 export const PUB_ACTIONS = 2;
@@ -49,9 +50,28 @@ export function dossier(c, idx) {
   const known = c.players[idx]?.dossier ?? 0;
   return DOSSIER_ORDER.map((kind, i) => {
     const list = DOSSIER[kind];
-    const text = list[(idx * (i + 3) + i * 7) % list.length](facts);
+    const text = list[dossierIndex(idx, i, list.length)](facts);
     return { kind, text, known: i < known };
   });
+}
+
+// Wer seinen Traum kennt, kann ihm helfen. Kostet Geld und Kraft, bindet ihn an den Verein.
+export const DREAM_COST = 30;
+export const canSupportDream = (c, idx) => pubOpen(c) && (c.players[idx]?.dossier ?? 0) >= 3 && !c.players[idx]?.dreamDone;
+export function supportDream(c, idx) {
+  if (!canSupportDream(c, idx) || c.cash < DREAM_COST) return null;
+  const rec = c.players[idx];
+  const name = first(c, idx);
+  book(c, `Traum von ${name} unterstützt`, -DREAM_COST);
+  adjustEnergy(c, -5);
+  adjustForm(c, idx, 0.6);
+  adjustMood(c, 0.05);
+  rec.dreamDone = true;
+  rec.loyal = true;
+  const text = DREAM_SUPPORT[dossierIndex(idx, 2, DREAM_SUPPORT.length)](name);
+  chronicle(c, `${playerOf(c, idx).name}: ein Traum wird wahr. ${text}`);
+  pubState(c).log.push(text);
+  return text;
 }
 
 export function buyRound(c) {

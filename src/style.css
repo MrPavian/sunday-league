@@ -555,3 +555,7 @@ body.in-menu .edge { display: none; }
 .dart .z3 { width: 6%; background: #ffe14d; }
 .dart .pin { position: absolute; top: -6px; bottom: -6px; width: 4px; margin-left: -2px; background: #f2efe6; box-shadow: 0 0 0 2px #000; }
 @media (max-width: 760px) { .pub-grid { grid-template-columns: 1fr; } }
+.squad small.rel { display: block; color: #c9b27a; }
+.chem { margin: 6px 0; font-size: 13px; }
+.chem.good { color: #9bd49f; }
+.chem.bad { color: #e8958d; }

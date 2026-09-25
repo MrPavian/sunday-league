@@ -3,6 +3,8 @@
 // Herkunft, Familie, Traum und Geheimnis. p = { first, age, profession }.
 
 export const DOSSIER_ORDER = ['herkunft', 'familie', 'traum', 'geheimnis'];
+// Welcher Satz eines Kapitels zu welchem Spieler gehört.
+export const dossierIndex = (idx, i, len = 10) => (idx * (i + 3) + i * 7) % len;
 export const DOSSIER_LABELS = { herkunft: 'Herkunft', familie: 'Familie', traum: 'Traum', geheimnis: 'Geheimnis' };
 
 export const DOSSIER = {
@@ -78,4 +80,23 @@ export const INTEL = [
   { text: (o) => `„Beim ${o} haben sie diese Woche nur einmal trainiert. Die pumpen nach 20 Minuten."`, mods: { stamina: -0.06 } },
   { text: (o) => `„Der Stürmer vom ${o} hat Stress mit der Freundin. Der trifft gerade nicht mal das Klo."`, mods: { shooting: -0.06 } },
   { text: (o) => `„Beim ${o} fehlt der Abwehrchef, Hochzeit vom Cousin. Hinten ist da alles offen."`, mods: { tackling: -0.06 } },
+];
+
+// Traum unterstützen: passend zum jeweiligen Traum (gleiche Reihenfolge wie DOSSIER.traum).
+export const DREAM_SUPPORT = [
+  (n) => `Ihr übt zwei Abende Fallrückzieher auf der Weitsprunggrube. ${n} landet dreimal im Sand – beim vierten Mal sitzt er.`,
+  (n) => `Du nimmst ${n} mit zur Vorstandssitzung. Er sagt dreimal was Kluges und bekommt einen Schlüssel fürs Vereinsheim.`,
+  (n) => `Du legst schon mal eine Mallorca-Kasse an. ${n} wirft als Erster 20 € rein und grinst seitdem.`,
+  (n) => `Du stellst ${n} dem Sponsor vor. Der hat noch eine alte Werkbank übrig – der erste Schritt.`,
+  (n) => `Du schreibst die Reserve vom großen Stadtverein an. Im Sommer gibt's ein Testspiel – ${n} hat schon Gänsehaut.`,
+  (n) => `Ihr malt das Aufstiegsbanner zusammen fertig. Es hängt jetzt in der Kabine. ${n} schaut jedes Training drauf.`,
+  (n) => `${n} darf ab jetzt beim Jugendtraining mithelfen. Die Kleinen lieben ihn.`,
+  (n) => `Du bastelst ${n} einen „Fairplay-Pokal" aus einer Kaffeetasse. Er steht jetzt auf seinem Schreibtisch.`,
+  (n) => `Ihr schaut zusammen Flüge nach Kanada. ${n} bucht natürlich nicht – aber er weiß jetzt, dass ihr ihn vermissen würdet.`,
+  (n) => `Du versprichst ${n} einen Einsatz im Spiel nach seinem 40. Geburtstag. Egal gegen wen, egal wie es steht.`,
+];
+
+export const RUMOR_CHAT = [
+  (n, s) => `Jemand hat was in die Gruppe geschrieben. Über ${n}: „${s}"`,
+  (n, s) => `In der Kabine wird getuschelt. Angeblich: ${s} Gemeint ist ${n}.`,
 ];

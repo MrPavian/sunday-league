@@ -10,6 +10,7 @@ import { gradePlayers } from '../sim/stats.js';
 import { absenceChance, DECLINE_TEXT, FAREWELL, INJURED, JOIN_TEXT, LATE, noReasons, NUDGE_NO, NUDGE_YES, RUMOR_SOURCES, YES } from './chat.js';
 import { HUMAN_CLUB_DEFAULT, LEAGUES } from './clubs.js';
 import { applyPubToTeam } from './pub.js';
+import { applyChemistry } from './relations.js';
 import { applyFusion, initSagas, sagaChat, sagaSeasonEnd, sagaWeek } from './sagas.js';
 import { childrenGrowUp, coachAway, initCoach, isCoach, personalWeek, seasonPersonal, weeklyPersonal } from './personal.js';
 import { absenceFactor, advanceArcs, applyForm, autoResolve, resultMood, rollWeekEvent, weeklyMood } from './events.js';
@@ -631,6 +632,7 @@ export function teamForMatch(career, club, format, availability, rng) {
     return p;
   });
   applyPubToTeam(career, club, players); // Bierdeckel-Taktik bzw. Tipp vom Wirt
+  if (club.human) applyChemistry(career, lineup.filter((idx) => !helpers.includes(idx)), players); // Kumpels & Rivalen
   return { name: club.name, short: club.short, kit: club.kit, keeperKit: club.keeperKit, players, helpers };
 }
 

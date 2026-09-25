@@ -522,3 +522,9 @@ jede kostet etwas Familienzeit. Runde ausgeben (Stimmung), Einzelgespräch (Zuh�
 Herkunft, Familie, Traum, Geheimnis · Aufmuntern · Klartext mit Risiko), Taktik auf dem Bierdeckel für das
 nächste Spiel, Wirt ausfragen (neuer Transfer-Tipp oder Schwäche des nächsten Gegners), Dart-Minispiel gegen
 Opa Heinz um die nächste Runde. Opa Heinz hat jede Woche eine neue Weisheit.
+
+(2) umgesetzt – Beziehungsnetz (`src/career/relations.js`): Kumpels, Schwager, Arbeitskollegen (gleicher Beruf)
+und Rivalen, deterministisch aus dem Pool und durch Ereignisse veränderbar. In der Aufstellung wirkt die
+Teamchemie auf Passen/Technik (Rivalen bremsen). Dossiers mit Folgen: bekannten Traum unterstützen (30 €,
+Kraft) macht den Spieler treu (weniger Absagen) und landet in der Chronik. Neue Ereignisse
+(`src/career/social.js`): Zoff unter Rivalen, ein Geheimnis macht die Runde, zwei Mitspieler werden Kumpels.
