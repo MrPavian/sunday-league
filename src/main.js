@@ -526,6 +526,28 @@ function frame(now) {
   }
   pixel.setLook(look);
   pixel.render(scene, rig.camera);
+  if (screenshotWanted) saveScreenshot();
   requestAnimationFrame(frame);
+}
+
+// F2: Screenshot als PNG. Wie im three.js-Manual („Taking a Screenshot of the
+// Canvas") direkt nach dem Rendern abgreifen – danach ist der Puffer leer.
+let screenshotWanted = false;
+window.addEventListener('keydown', (e) => {
+  if (e.code !== 'F2') return;
+  e.preventDefault();
+  screenshotWanted = true;
+});
+function saveScreenshot() {
+  screenshotWanted = false;
+  canvas.toBlob((blob) => {
+    if (!blob) return;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `sunday-league-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.png`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    if (mode === 'play') hud.toast(tr('Screenshot gespeichert', 'Screenshot saved'), 1.2, 2);
+  });
 }
 requestAnimationFrame(frame);

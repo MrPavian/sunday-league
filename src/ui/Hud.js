@@ -37,8 +37,8 @@ export class Hud {
       </div>
       <div class="help">
         ${tr(`<b>Pfeile</b> laufen · <b>Shift</b> sprinten · <b>W</b> Schuss (halten = fester) · <b>S</b> Pass · <b>E</b> hoher Ball ·
-        <b>A</b> halten (abschirmen / festhalten) · <b>D</b> Grätsche · <b>Y</b> stochern · <b>Q</b> Spieler wechseln · <b>X</b> Auswechseln · <b>C</b> Tempo · <b>N</b> Ton · <b>G</b> Effekte · <b>H</b> Hilfe`, `<b>Arrows</b> run · <b>Shift</b> sprint · <b>W</b> shoot (hold = harder) · <b>S</b> pass · <b>E</b> lofted ball ·
-        <b>A</b> hold (shield / grab) · <b>D</b> slide tackle · <b>Z</b> poke · <b>Q</b> switch player · <b>X</b> substitute · <b>C</b> tempo · <b>N</b> sound · <b>G</b> effects · <b>H</b> help`)}
+        <b>A</b> halten (abschirmen / festhalten) · <b>D</b> Grätsche · <b>Y</b> stochern · <b>Q</b> Spieler wechseln · <b>X</b> Auswechseln · <b>C</b> Tempo · <b>N</b> Ton · <b>G</b> Effekte · <b>F2</b> Screenshot · <b>H</b> Hilfe`, `<b>Arrows</b> run · <b>Shift</b> sprint · <b>W</b> shoot (hold = harder) · <b>S</b> pass · <b>E</b> lofted ball ·
+        <b>A</b> hold (shield / grab) · <b>D</b> slide tackle · <b>Z</b> poke · <b>Q</b> switch player · <b>X</b> substitute · <b>C</b> tempo · <b>N</b> sound · <b>G</b> effects · <b>F2</b> screenshot · <b>H</b> help`)}
       </div>`;
     this.root = root;
     this.$ = (sel) => root.querySelector(sel);

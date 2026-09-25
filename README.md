@@ -160,6 +160,7 @@ Rechte Hand läuft, linke Hand spielt.
 | Hilfe ein/aus | H | – |
 | Ton an/aus | N | – |
 | Grafikeffekte an/aus | G | – |
+| Screenshot (PNG) | F2 | – |
 | Einstellungen (Sprache, Ton, Effekte, Tempo) | O | – |
 | Zurück zur Platzwahl | Esc / M | – |
 
