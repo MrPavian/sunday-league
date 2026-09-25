@@ -6,6 +6,7 @@ export const TRAITS = {
   anfuehrer: { name: 'Anführer', desc: 'Mitspieler in der Nähe ermüden langsamer.' },
   teamchemie: { name: 'Steigert die Teamchemie', desc: 'Hält die Truppe zusammen (wirkt ab der Saison-Phase).' },
   ballsicher: { name: 'Ruhe am Ball', desc: 'Weniger verunglückte Ballkontakte.' },
+  hart_im_nehmen: { name: 'Hart im Nehmen', desc: 'Schürfwunden stören kaum – grätscht auch mal auf Asche.' },
 };
 
 export const TRAIT_IDS = Object.keys(TRAITS);

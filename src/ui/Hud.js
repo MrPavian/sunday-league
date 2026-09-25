@@ -18,12 +18,13 @@ export class Hud {
         <div class="name"></div>
         <div class="meta"></div>
         <div class="traits"></div>
+        <div class="injury"></div>
         <div class="bar stamina"><i></i><span>Puste</span></div>
         <div class="bar charge"><i></i><span>Schuss</span></div>
       </div>
       <div class="help">
         <b>WASD/Pfeile</b> laufen · <b>Shift</b> sprinten · <b>Leertaste</b> halten = Schuss ·
-        <b>J</b> Pass · <b>L</b> Grätsche · <b>Q</b> Spieler wechseln · <b>H</b> Hilfe
+        <b>J</b> Pass · <b>L</b> Zweikampf (Shift+L Grätsche) · <b>Q</b> Spieler wechseln · <b>H</b> Hilfe
       </div>`;
     this.root = root;
     this.$ = (sel) => root.querySelector(sel);
@@ -37,7 +38,7 @@ export class Hud {
       el.textContent = t.name;
       el.style.setProperty('--kit', hex(t.kit.shirt));
     });
-    this.$('.venue').textContent = match.pitch.name;
+    this.$('.venue').textContent = `${match.pitch.name} · ${match.pitch.surface.name}`;
     this.hideToast();
   }
 
@@ -69,6 +70,7 @@ export class Hud {
         const victim = getPlayer(match, e.victimId);
         this.toast(`Foul von ${first}! Freistoß für ${match.teams[victim.team].short}`, 1.8);
       } else if (e.type === 'tackle') this.toast(`Saubere Grätsche, ${first}!`, 1.1);
+      else if (e.type === 'scrape') this.toast(`Autsch! ${e.label} für ${first}`, 1.8);
       else if (e.type === 'save') this.toast(`${first} pariert!`, 1.2);
       else if (e.type === 'miscontrol') this.toast(`Verspringt ${first}…`, 1);
       else if (e.type === 'end') this.toast('ABPFIFF – Enter für Revanche', 999);
@@ -94,6 +96,8 @@ export class Hud {
         ? p.traits.map((id) => `<span title="${TRAITS[id].desc}">${TRAITS[id].name}</span>`).join('')
         : '<em>keine Besonderheiten</em>';
     }
+    const injury = p.injury ? `${p.injury.label}${p.injury.severity > 1 ? ` ×${p.injury.severity}` : ''}` : '';
+    if (this.$('.injury').textContent !== injury) this.$('.injury').textContent = injury;
     this.$('.stamina i').style.width = `${Math.round(p.stamina * 100)}%`;
     this.$('.charge i').style.width = `${Math.round(p.charge * 100)}%`;
   }

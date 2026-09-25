@@ -80,6 +80,22 @@ zu einem Verein auf, der sich vom Parkplatz bis ins Amateurstadion hocharbeitet.
 - Wetter: Regen (rutschig, Grätschen weiter), Wind (Flanken/Abstöße), Hitze, Frost,
   Schlammschlacht.
 
+**Untergrund bestimmt den Zweikampf**
+- Jede Spielstätte hat einen Untergrund mit eigener Ballphysik *und* eigener Zweikampfkultur:
+  | Untergrund | Ball | Zweikampf | Risiko |
+  |---|---|---|---|
+  | Asphalt / Beton | schnell, springt | Stochern im Stehen, Grätsche kommt kaum ins Rutschen | Schürfwunde sehr wahrscheinlich |
+  | Asche | bremst, verspringt oft | Stochern, Grätsche nur von Hitzköpfen | „Asche im Knie“ |
+  | Rasen | mittel, holprig | Grätschen normal | keins |
+  | Kunstrasen | schnell, sauber | Grätschen, lange Rutschwege | Kunstrasen-Verbrennung |
+- Auf hartem Boden ist die Zweikampftaste Stochern; Sprint + Zweikampf erzwingt die Grätsche –
+  bewusste Entscheidung mit Konsequenz.
+- Schürfwunden: Pflaster am Knie, leichtes Humpeln, etwas weniger Tempo und mehr Ermüdung;
+  stapeln sich bis ×3. Die KI grätscht verletzt nicht mehr auf hartem Boden.
+- Trait **Hart im Nehmen**: grätscht auch mal auf Asche, Wunden stören kaum.
+- Später: Verletzungen wirken in die Woche hinein (Chatgruppe: „Knie ist offen, spiel lieber nicht“),
+  Wetter verändert den Untergrund (nasser Rasen = lange Grätschen, gefrorene Asche = Beton).
+
 **Schiedsrichter & Regeln**
 - Hobby-Schiris mit eigenen Eigenschaften (pingelig, lässt laufen, schlechte Sicht, parteiisch).
 - Linienrichter werden von den Vereinen gestellt – dein Ersatzspieler mit der Fahne.
@@ -197,6 +213,7 @@ Liga- und Vereinsnamen bleiben fiktiv (keine Lizenzen nötig); regionale Variant
 - [x] Steuerungs-Prototyp: Laufen, Sprinten, Dribbeln, Passen, Schuss mit Aufladen, Spielerwechsel
 - [x] Deterministische Match-Simulation 4v4 mit einfacher KI und Torhütern
 - [x] Grätschen & Fouls (Ball zuerst = sauber, Mann zuerst = Foul → Freistoß nach Parkplatzregel)
+- [x] Untergründe (Asphalt, Asche, Rasen, Kunstrasen): Stochern vs. Grätsche, Schürfwunden
 - [x] CI (Tests + Build bei jedem Push)
 - [x] Kernentscheidungen getroffen (siehe Abschnitt 7)
 

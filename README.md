@@ -17,6 +17,7 @@ npm run build    # Produktions-Build nach dist/
 ```
 
 `?seed=123` in der URL erzeugt reproduzierbar dieselben Teams und denselben Spielverlauf.
+`?surface=grass` (bzw. `ash`, `artificial`) spielt den Parkplatz testweise mit anderer Untergrund-Physik.
 
 ## Steuerung (Prototyp)
 
@@ -26,7 +27,8 @@ npm run build    # Produktions-Build nach dist/
 | Sprinten | Shift | RB / RT |
 | Schuss (halten = Kraft) | Leertaste / K | X / B |
 | Pass | J / E | A |
-| Grätsche | L / Strg | Y |
+| Zweikampf (auf hartem Boden: stochern, sonst Grätsche) | L / Strg | Y |
+| Grätsche erzwingen (Schürfwunden-Gefahr!) | Shift + L | RB + Y |
 | Spieler wechseln | Q / L | LB |
 | Hilfe ein/aus | H | – |
 | Revanche nach Abpfiff | Enter | – |

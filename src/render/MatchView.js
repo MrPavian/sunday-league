@@ -47,6 +47,7 @@ export class MatchView {
         kickAnim: p.kickAnim,
         holding: match.ball.holder === p.id,
         state: p.state,
+        injured: !!p.injury,
       });
     }
     const b = match.ball;

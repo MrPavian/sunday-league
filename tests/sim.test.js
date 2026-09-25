@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createRng } from '../src/core/rng.js';
 import { BALL_RADIUS, createBall, stepBall } from '../src/sim/ball.js';
 import { PARKING_LOT } from '../src/sim/pitch.js';
+import { SURFACES } from '../src/sim/surfaces.js';
 import { createMatch, getPlayer, startTackle, stepMatch } from '../src/sim/match.js';
 
 const DT = 1 / 60;
@@ -85,8 +86,8 @@ describe('match', () => {
 });
 
 describe('tackles', () => {
-  const setup = () => {
-    const m = createMatch({ seed: 11 });
+  const setup = (surface = 'grass') => {
+    const m = createMatch({ seed: 11, pitch: { ...PARKING_LOT, surface: SURFACES[surface] } });
     const tackler = getPlayer(m, '0-1');
     const victim = getPlayer(m, '1-1');
     Object.assign(tackler.pos, { x: -1, z: 0 });
@@ -119,6 +120,16 @@ describe('tackles', () => {
     }
   });
 
+  it('barely slides on asphalt, so the same tackle falls short', () => {
+    const { m, tackler } = setup('asphalt');
+    Object.assign(m.ball.pos, { x: 12, z: 8 });
+    const startX = tackler.pos.x;
+    startTackle(m, tackler);
+    const seen = runUntil(m, 'foul');
+    expect(seen).not.toContain('foul');
+    expect(tackler.pos.x - startX).toBeLessThan(1.2);
+  });
+
   it('plays the ball first: clean tackle, no free kick', () => {
     const { m, tackler } = setup();
     Object.assign(m.ball.pos, { x: -0.4, z: 0 });
@@ -132,5 +143,59 @@ describe('tackles', () => {
     expect(seen).toContain('tackle');
     expect(seen).not.toContain('foul');
     expect(m.phase).toBe('play');
+  });
+});
+
+describe('surfaces', () => {
+  const onSurface = (id) => ({ ...PARKING_LOT, surface: SURFACES[id] });
+  const drain = (m, seconds, seen = []) => {
+    for (let i = 0; i < seconds * 60; i++) {
+      stepMatch(m, undefined, DT);
+      seen.push(...m.events.map((e) => e.type));
+      m.events.length = 0;
+    }
+    return seen;
+  };
+
+  it('on asphalt the tackle button pokes instead of sliding, sprint forces the slide', () => {
+    const m = createMatch({ seed: 4 });
+    const human = getPlayer(m, m.controlledId);
+    stepMatch(m, { move: { x: 0, z: 0 }, tackle: true }, DT);
+    expect(human.state).toBe('poke');
+
+    const g = createMatch({ seed: 4, pitch: onSurface('grass') });
+    stepMatch(g, { move: { x: 0, z: 0 }, tackle: true }, DT);
+    expect(getPlayer(g, g.controlledId).state).toBe('tackle');
+
+    const f = createMatch({ seed: 4 });
+    stepMatch(f, { move: { x: 1, z: 0 }, sprint: true, tackle: true }, DT);
+    expect(getPlayer(f, f.controlledId).state).toBe('tackle');
+  });
+
+  it('sliding on asphalt scrapes knees, sliding on grass does not', () => {
+    const scrapes = (id) => {
+      let n = 0;
+      for (let seed = 1; seed <= 20; seed++) {
+        const m = createMatch({ seed, pitch: onSurface(id) });
+        const p = getPlayer(m, '0-1');
+        p.traits = [];
+        Object.assign(m.ball.pos, { x: 12, z: 8 });
+        startTackle(m, p);
+        drain(m, 1.2);
+        if (p.injury) n++;
+      }
+      return n;
+    };
+    expect(scrapes('asphalt')).toBeGreaterThan(8);
+    expect(scrapes('grass')).toBe(0);
+  });
+
+  it('the AI rarely slides on hard ground', () => {
+    const slides = (id) => {
+      let n = 0;
+      for (const seed of [1, 2, 3]) n += drain(createMatch({ seed, pitch: onSurface(id) }), 300).filter((t) => t === 'slide').length;
+      return n;
+    };
+    expect(slides('asphalt') * 3).toBeLessThan(slides('grass'));
   });
 });

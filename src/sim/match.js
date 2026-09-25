@@ -58,6 +58,7 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams } = {}) {
         stateTimer: 0,
         tackleWon: false,
         tackleHits: [],
+        injury: null,
       });
     });
   });
@@ -162,7 +163,10 @@ export function stepMatch(m, input = NO_INPUT, dt) {
 
 function humanIntent(m, p, input, dt) {
   if (input.tackle) {
-    startTackle(m, p);
+    // Auf hartem Boden wird im Stehen gestochert – Sprint + Grätsche erzwingt
+    // die Grätsche trotzdem.
+    if (m.pitch.surface.hard && !input.sprint) startPoke(m, p);
+    else startTackle(m, p);
     return null;
   }
   if (input.shootHeld) {
@@ -219,8 +223,10 @@ function outfieldIntent(m, p) {
       az = ball.pos.z - toGoal.z * 0.9 + toGoal.x * side * 0.9;
     }
     const dBall = dist2d(p.pos, ball.pos);
-    if (shouldTackle(m, p, dBall)) {
-      startTackle(m, p);
+    const tackle = chooseTackle(m, p, dBall);
+    if (tackle) {
+      if (tackle === 'slide') startTackle(m, p);
+      else startPoke(m, p);
       return null;
     }
     p.dribbleDir = norm(oppGoal.x - p.pos.x, p.aimZ - p.pos.z);
@@ -321,12 +327,14 @@ function movePlayer(m, p, intent, dt, leaders) {
 
   let maxSpeed = (4.6 + 2.6 * p.attrs.pace + (hasTrait(p, 'schnell') ? 0.6 : 0)) * (0.72 + 0.28 * p.stamina);
   if (sprint) maxSpeed *= 1.28;
+  if (p.injury) maxSpeed *= 1 - 0.03 * p.injury.severity * (hasTrait(p, 'hart_im_nehmen') ? 0.3 : 1);
 
   const speed = len(p.vel.x, p.vel.z);
   let drain = sprint ? 0.02 : speed > 2 ? 0.0012 : -0.008;
   if (drain > 0) {
     drain *= 1.3 - 0.6 * p.attrs.stamina;
     if (hasTrait(p, 'pferdelunge')) drain *= 0.5;
+    if (p.injury) drain *= 1 + 0.1 * p.injury.severity;
     if (leaders.some((l) => l !== p && l.team === p.team && dist2d(l.pos, p.pos) < 8)) drain *= 0.85;
   }
   p.stamina = clamp(p.stamina - drain * dt, 0, 1);
@@ -586,21 +594,44 @@ export function startTackle(m, p) {
   m.events.push({ type: 'slide', playerId: p.id });
 }
 
-// Die KI grätscht, wenn ein Gegner den Ball am Fuß hat und sie gut steht.
-function shouldTackle(m, p, dBall) {
+// Zweikampf im Stehen: kurzer Ausfallschritt, Fuß dazwischen.
+export function startPoke(m, p) {
+  if (p.state !== 'normal' || p.role === 'gk') return;
+  p.state = 'poke';
+  p.stateTimer = 0.28;
+  p.vel.x += p.facing.x * 1.5;
+  p.vel.z += p.facing.z * 1.5;
+  p.tackleWon = false;
+  p.tackleHits = [];
+  p.pending = null;
+  p.charging = false;
+  p.charge = 0;
+  p.kickAnim = 0.3;
+  m.events.push({ type: 'poke', playerId: p.id });
+}
+
+// Die KI geht in den Zweikampf, wenn ein Gegner den Ball am Fuß hat. Auf
+// hartem Boden stochert sie – gegrätscht wird dort nur von Hitzköpfen.
+function chooseTackle(m, p, dBall) {
   const { ball, rng } = m;
-  if (p.decideTimer > 0 || dBall < 0.9 || dBall > 2.2 || ball.holder) return false;
+  const surface = m.pitch.surface;
+  if (p.decideTimer > 0 || dBall < 0.6 || dBall > 2.2 || ball.holder) return null;
   const opp = ball.lastTouch && getPlayer(m, ball.lastTouch);
-  if (!opp || opp.team === p.team || opp.role === 'gk' || dist2d(opp.pos, ball.pos) > 1.2) return false;
+  if (!opp || opp.team === p.team || opp.role === 'gk' || dist2d(opp.pos, ball.pos) > 1.2) return null;
   const tb = norm(ball.pos.x - p.pos.x, ball.pos.z - p.pos.z);
-  if (tb.x * p.facing.x + tb.z * p.facing.z < 0.8) return false;
+  if (tb.x * p.facing.x + tb.z * p.facing.z < 0.8) return null;
   p.decideTimer = 0.8;
-  return rng.chance(0.12 + 0.25 * p.attrs.tackling);
+
+  const tough = hasTrait(p, 'hart_im_nehmen');
+  const slideChance = surface.hard ? (p.injury ? 0 : tough ? 0.25 : 0.04) : 0.12 + 0.25 * p.attrs.tackling;
+  if (dBall > 0.9 && rng.chance(slideChance)) return 'slide';
+  if (dBall < 1.4 && rng.chance(0.3 + 0.35 * p.attrs.tackling)) return 'poke';
+  return null;
 }
 
 function stateMove(m, p, dt) {
-  const { pitch } = m;
-  const damp = Math.exp(-(p.state === 'tackle' ? 2.5 : 8) * dt);
+  const { pitch, rng } = m;
+  const damp = Math.exp(-(p.state === 'tackle' ? pitch.surface.slideDamp : 8) * dt);
   p.vel.x *= damp;
   p.vel.z *= damp;
   p.pos.x = clamp(p.pos.x + p.vel.x * dt, -pitch.wallX + 0.3, pitch.wallX - 0.3);
@@ -609,39 +640,81 @@ function stateMove(m, p, dt) {
   if (p.state === 'tackle') {
     p.state = 'recover';
     p.stateTimer = 0.55;
+    const risk = pitch.surface.scrapeChance * (hasTrait(p, 'hart_im_nehmen') ? 0.5 : 1);
+    if (rng.chance(risk)) injure(m, p);
+  } else if (p.state === 'poke') {
+    p.state = 'recover';
+    p.stateTimer = 0.25;
   } else {
     p.state = 'normal';
   }
 }
 
-// Ball zuerst gespielt → saubere Grätsche. Mann zuerst getroffen → Foul.
+function injure(m, p) {
+  const label = m.pitch.surface.scrapeLabel;
+  if (!label) return;
+  if (p.injury) p.injury.severity = Math.min(3, p.injury.severity + 1);
+  else p.injury = { type: 'scrape', label, severity: 1 };
+  m.events.push({ type: 'scrape', playerId: p.id, label });
+}
+
+function knockBall(m, p, spread, minSpeed, maxSpeed) {
+  const { ball, rng } = m;
+  const dir = rotate(p.facing, rng.gauss() * spread * (1 - p.attrs.tackling));
+  const speed = rng.range(minSpeed, maxSpeed);
+  ball.vel.x = dir.x * speed;
+  ball.vel.y = 0.3;
+  ball.vel.z = dir.z * speed;
+  ball.lastTouch = p.id;
+  m.lastTouchTeam = p.team;
+}
+
+// Grätsche: Ball zuerst gespielt → sauber, Mann zuerst → Foul.
+// Stochern: gewinnt den Ball je nach Zweikampf gegen Technik; wer nur den
+// Gegner erwischt, riskiert ein Foul (Tritt, Schubser).
 // Returns true when a foul interrupted play.
 function resolveTackles(m) {
-  const { ball, rng } = m;
+  const { ball, rng, pitch } = m;
   for (const p of m.players) {
-    if (p.state !== 'tackle') continue;
-    if (!p.tackleWon && !ball.holder && ball.pos.y < 0.6 && dist2d(p.pos, ball.pos) < 0.95) {
-      const dir = rotate(p.facing, rng.gauss() * 0.4 * (1 - p.attrs.tackling));
-      const speed = 4 + rng.next() * 3;
-      ball.vel.x = dir.x * speed;
-      ball.vel.y = 0.3;
-      ball.vel.z = dir.z * speed;
-      ball.lastTouch = p.id;
-      m.lastTouchTeam = p.team;
-      p.tackleWon = true;
-      m.events.push({ type: 'tackle', playerId: p.id });
+    const slide = p.state === 'tackle';
+    if (!slide && p.state !== 'poke') continue;
+    const reach = slide ? 0.95 : 1.0;
+    if (!p.tackleWon && !ball.holder && ball.pos.y < 0.6 && dist2d(p.pos, ball.pos) < reach) {
+      if (slide) {
+        knockBall(m, p, 0.4, 4, 7);
+        p.tackleWon = true;
+        m.events.push({ type: 'tackle', playerId: p.id });
+      } else {
+        const opp = ball.lastTouch && getPlayer(m, ball.lastTouch);
+        const contested = opp && opp.team !== p.team && dist2d(opp.pos, ball.pos) < 1.0;
+        const win = contested
+          ? clamp(0.4 + 0.5 * p.attrs.tackling - 0.3 * opp.attrs.technique - (hasTrait(opp, 'ballsicher') ? 0.1 : 0), 0.15, 0.9)
+          : 0.95;
+        p.tackleWon = rng.chance(win) ? true : 'missed';
+        if (p.tackleWon === true) {
+          knockBall(m, p, 0.5, 3, 5);
+          m.events.push({ type: 'poke_won', playerId: p.id });
+        }
+      }
     }
     for (const o of m.players) {
       if (o.team === p.team || o.state === 'down' || p.tackleHits.includes(o.id)) continue;
-      if (dist2d(p.pos, o.pos) > 0.7) continue;
+      if (dist2d(p.pos, o.pos) > (slide ? 0.7 : 0.6)) continue;
       p.tackleHits.push(o.id);
-      const fromBehind = o.facing.x * p.facing.x + o.facing.z * p.facing.z > 0.5;
-      const foul = !p.tackleWon || rng.chance(0.12 * (1 - p.attrs.tackling) + (fromBehind ? 0.2 : 0));
-      o.state = 'down';
-      o.stateTimer = foul ? 1.4 : 0.7;
-      o.pending = null;
-      o.charging = false;
-      o.charge = 0;
+      let foul;
+      if (slide) {
+        const fromBehind = o.facing.x * p.facing.x + o.facing.z * p.facing.z > 0.5;
+        foul = p.tackleWon !== true || rng.chance(0.12 * (1 - p.attrs.tackling) + (fromBehind ? 0.2 : 0));
+        o.state = 'down';
+        o.stateTimer = foul ? 1.4 : 0.7;
+        o.pending = null;
+        o.charging = false;
+        o.charge = 0;
+        // Wer auf Beton umgesäbelt wird, steht auch nicht unversehrt auf.
+        if (foul && rng.chance(pitch.surface.scrapeChance * 0.4)) injure(m, o);
+      } else {
+        foul = p.tackleWon !== true && rng.chance(0.3);
+      }
       if (foul) {
         m.events.push({ type: 'foul', playerId: p.id, victimId: o.id });
         startFreeKick(m, o);

@@ -7,12 +7,15 @@ import { addLights, buildParkingLot } from './render/ParkingLot.js';
 import { PixelRenderer } from './render/PixelRenderer.js';
 import { createMatch, stepMatch } from './sim/match.js';
 import { PARKING_LOT } from './sim/pitch.js';
+import { SURFACES } from './sim/surfaces.js';
 import { Hud } from './ui/Hud.js';
 import './style.css';
 
 const STEP = 1 / 60;
 const params = new URLSearchParams(location.search);
 let seed = Number(params.get('seed')) || Math.floor(Math.random() * 1e9);
+// Testschalter: ?surface=grass|ash|artificial spielt den Parkplatz mit anderer Physik.
+const pitch = { ...PARKING_LOT, surface: SURFACES[params.get('surface')] ?? PARKING_LOT.surface };
 
 const canvas = document.getElementById('game');
 const pixel = new PixelRenderer(canvas, { targetHeight: 320 });
@@ -28,7 +31,7 @@ let match;
 let view;
 function newMatch() {
   view?.dispose();
-  match = createMatch({ seed: seed++, pitch: PARKING_LOT });
+  match = createMatch({ seed: seed++, pitch });
   view = new MatchView(scene, match);
   hud.init(match);
 }

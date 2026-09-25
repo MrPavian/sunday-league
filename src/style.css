@@ -98,6 +98,9 @@ html, body {
   font-size: 12px;
 }
 .card .traits em { opacity: 0.6; font-size: 12px; }
+.card .injury:empty { display: none; }
+.card .injury { margin: -2px 0 6px; color: #ff9a8a; font-size: 12px; }
+.card .injury::before { content: '+ '; color: #fff; background: #c0392b; padding: 0 3px; margin-right: 4px; }
 
 .bar {
   position: relative;
