@@ -1,0 +1,20 @@
+{
+  "name": "sunday-league",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Sunday League – Kreisklasse-Fußball mit Vollamateuren (three.js, HD-Pixelart)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "vite": "^8.3.1",
+    "vitest": "^5.0.1"
+  }
+}

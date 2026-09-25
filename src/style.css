@@ -1,0 +1,136 @@
+:root {
+  --ink: #f6f1e4;
+  --panel: rgba(22, 24, 28, 0.78);
+  --accent: #ffe14d;
+  --shadow: 2px 2px 0 #111;
+  font-family: 'Pixelify Sans', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #111;
+  color: var(--ink);
+}
+
+#game {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  image-rendering: pixelated;
+}
+
+#hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  text-shadow: var(--shadow);
+}
+
+.scoreboard {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 14px;
+  background: var(--panel);
+  border: 2px solid #000;
+  font-size: 20px;
+  white-space: nowrap;
+}
+.scoreboard .team::before {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 6px;
+  background: var(--kit);
+  border: 2px solid #000;
+  vertical-align: -1px;
+}
+.scoreboard .score { font-weight: 600; font-size: 24px; color: var(--accent); }
+.scoreboard .clock { opacity: 0.8; font-size: 16px; }
+
+.venue {
+  position: absolute;
+  top: 58px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.toast {
+  position: absolute;
+  top: 34%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 40px;
+  font-weight: 600;
+  color: var(--accent);
+  text-shadow: 3px 3px 0 #000;
+  white-space: nowrap;
+}
+
+.card {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  width: 260px;
+  padding: 10px 12px;
+  background: var(--panel);
+  border: 2px solid #000;
+  font-size: 14px;
+}
+.card .name { font-size: 18px; font-weight: 600; }
+.card .meta { opacity: 0.8; margin-bottom: 6px; }
+.card .traits { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.card .traits span {
+  padding: 1px 6px;
+  background: #2f4f3a;
+  border: 1px solid #000;
+  font-size: 12px;
+}
+.card .traits em { opacity: 0.6; font-size: 12px; }
+
+.bar {
+  position: relative;
+  height: 12px;
+  margin-top: 4px;
+  background: #000;
+  border: 1px solid #000;
+}
+.bar i { position: absolute; inset: 0 auto 0 0; width: 0; }
+.bar.stamina i { background: #5cc46a; }
+.bar.charge i { background: #e8743b; }
+.bar span {
+  position: relative;
+  padding-left: 4px;
+  font-size: 10px;
+  line-height: 12px;
+}
+
+.help {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  max-width: 340px;
+  padding: 8px 10px;
+  background: var(--panel);
+  border: 2px solid #000;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.help.hidden { display: none; }
+
+@media (max-width: 720px) {
+  .scoreboard { font-size: 14px; gap: 8px; }
+  .help { display: none; }
+  .card { width: 200px; font-size: 12px; }
+}

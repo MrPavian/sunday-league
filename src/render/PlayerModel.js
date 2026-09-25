@@ -1,0 +1,86 @@
+import * as THREE from 'three';
+import { toon } from './materials.js';
+
+function part(w, h, d, mat, x, y, z) {
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  mesh.position.set(x, y, z);
+  mesh.castShadow = true;
+  return mesh;
+}
+
+// Low-Poly-Normalo aus Quadern. Bauch, Glatze, Bart und Größe kommen aus dem
+// generierten Aussehen – keine zwei Spieler sehen gleich aus.
+export function createPlayerModel(look, kit) {
+  const skin = toon(look.skin);
+  const shirt = toon(kit.shirt);
+  const shorts = toon(kit.shorts);
+  const socks = toon(kit.socks);
+  const shoes = toon(0x1f1f1f);
+  const hair = toon(look.hair);
+  const belly = look.belly;
+
+  const group = new THREE.Group();
+  const body = new THREE.Group();
+  group.add(body);
+  group.scale.setScalar(look.height);
+
+  const legs = [];
+  for (const side of [-1, 1]) {
+    const pivot = new THREE.Group();
+    pivot.position.set(side * 0.11, 0.85, 0);
+    pivot.add(part(0.17, 0.3, 0.19, shorts, 0, -0.15, 0));
+    pivot.add(part(0.13, 0.25, 0.14, skin, 0, -0.42, 0));
+    pivot.add(part(0.14, 0.3, 0.15, socks, 0, -0.65, 0));
+    pivot.add(part(0.15, 0.1, 0.27, shoes, 0, -0.8, 0.04));
+    body.add(pivot);
+    legs.push(pivot);
+  }
+
+  body.add(part(0.4 + belly * 0.1, 0.18, 0.24 + belly * 0.08, shorts, 0, 0.87, 0));
+  const torso = part(0.42 + belly * 0.12, 0.55, 0.24 + belly * 0.16, shirt, 0, 1.18, belly * 0.03);
+  body.add(torso);
+
+  const arms = [];
+  for (const side of [-1, 1]) {
+    const pivot = new THREE.Group();
+    pivot.position.set(side * (0.27 + belly * 0.06), 1.4, 0);
+    pivot.add(part(0.13, 0.2, 0.14, shirt, 0, -0.1, 0));
+    pivot.add(part(0.11, 0.32, 0.12, skin, 0, -0.35, 0));
+    body.add(pivot);
+    arms.push(pivot);
+  }
+
+  body.add(part(0.26, 0.28, 0.26, skin, 0, 1.63, 0));
+  if (!look.bald) {
+    body.add(part(0.28, 0.08, 0.28, hair, 0, 1.8, 0));
+    body.add(part(0.28, 0.16, 0.06, hair, 0, 1.7, -0.13));
+  }
+  if (look.beard) body.add(part(0.24, 0.1, 0.06, hair, 0, 1.53, 0.12));
+
+  return { group, body, legs, arms, phase: Math.random() * 6 };
+}
+
+// Prozedurale Animation: Laufzyklus, Schuss, Torwart hält den Ball.
+export function animatePlayer(model, { speed, dt, kickAnim, holding }) {
+  const s = Math.min(1, speed / 6);
+  model.phase += dt * (3 + speed * 1.7);
+  const swing = Math.sin(model.phase) * 0.9 * s;
+  const [legL, legR] = model.legs;
+  const [armL, armR] = model.arms;
+  legL.rotation.x = swing;
+  legR.rotation.x = -swing;
+  armL.rotation.x = -swing * 0.8;
+  armR.rotation.x = swing * 0.8;
+  model.body.position.y = Math.abs(Math.sin(model.phase)) * 0.05 * s;
+  model.body.rotation.x = s * 0.12;
+
+  if (kickAnim > 0) {
+    const t = 1 - kickAnim / 0.3;
+    legR.rotation.x = t < 0.4 ? (t / 0.4) * 0.9 : 0.9 - ((t - 0.4) / 0.6) * 2.3;
+    armL.rotation.x = -0.6;
+  }
+  if (holding) {
+    armL.rotation.x = -1.3;
+    armR.rotation.x = -1.3;
+  }
+}

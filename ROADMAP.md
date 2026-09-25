@@ -1,7 +1,7 @@
 # Sunday League – Game Design, Featureliste & Roadmap
 
 > Arbeitstitel: **Sunday League** (Alternativen: *Kreisklasse*, *Asche & Ehre*, *Dritte Halbzeit*)
-> Status: Konzeptphase · Stand: 2026-09-25
+> Status: Phase 0 (Prototyp) · Stand: 2026-09-25
 
 ---
 
@@ -170,29 +170,34 @@ Liga- und Vereinsnamen bleiben fiktiv (keine Lizenzen nötig); regionale Variant
 
 ---
 
-## 5. Technik & Art-Style (Vorschlag)
+## 5. Technik & Art-Style
 
-- **Engine: Godot 4** (Empfehlung) – kostenlos, schlank, gute 3D-Pipeline für „3D-Pixelart“
-  (niedrige interne Auflösung + Pixel-Snapping + Outline-/Toon-Shader), GDScript oder C#.
-  Alternative: Unity (größeres Ökosystem, Lizenzmodell beachten).
-- **Art-Pipeline**: Low-Poly-Modelle (Blender) → Rendering in reduzierter Auflösung →
-  Nearest-Neighbour-Upscaling, Pixel-perfekte Kamera, handgemalte Pixel-Texturen,
-  Echtzeit-Licht und Schatten.
-- **Architektur**: Spiellogik (Match-Simulation, Liga, Wirtschaft) strikt getrennt vom Rendering.
-  Deterministische, tick-basierte Match-Engine → dieselbe Engine für gespielte und
+- **Engine: [three.js](https://github.com/mrdoob/three.js)** (entschieden) – läuft im Browser,
+  Build mit **Vite**, Tests mit **Vitest**. Desktop-Builds später per Electron/Tauri möglich.
+- **Pixelart-Pipeline** (`src/render/PixelRenderer.js`): Die Szene wird in niedriger Auflösung
+  (~320 px Höhe) in ein Render-Target gerendert, zusätzlich ein Normalen-Pass. Ein Post-Shader
+  erkennt Kanten über Tiefe (dunkle Silhouetten) und Normalen (helle Innenkanten) und skaliert
+  pixelgenau hoch. Toon-Materialien mit 3-stufigem Verlauf, Echtzeit-Schatten.
+- **Kamera**: Orthografische Schrägansicht, im Kameraraum auf das Texelraster gerastet
+  (kein Pixel-Flimmern beim Scrollen).
+- **Modelle**: Prozedurale Low-Poly-Normalos aus Quadern (Bauch, Glatze, Bart, Größe
+  variieren). Später Blender → glTF mit gleicher Pipeline.
+- **Architektur**: Spiellogik (`src/sim/`) kennt kein three.js. Deterministische,
+  tick-basierte Simulation (60 Hz, geseedeter Zufall) → dieselbe Engine für gespielte und
   simulierte Partien, testbar und später online-fähig.
-- **Daten**: Spieler, Traits, Events, Sponsoren als datengetriebene Ressourcen (JSON/Godot-Resources),
-  damit Content ohne Code erweitert werden kann (Modding-freundlich).
-- **Prozedurale Generierung**: Spieler (Name, Aussehen, Beruf, Traits), Gegnervereine, Events.
-
----
+- **Daten**: Spieler, Traits, Teams, Events als datengetriebene JS-/JSON-Module (Modding-freundlich).
+- **Prozedurale Generierung**: Spieler (Name, Aussehen, Beruf, Traits), Texturen (Asphalt,
+  Schilder), Gegnervereine.
 
 ## 6. Roadmap
 
 ### Phase 0 – Pre-Production (ca. 3–4 Wochen)
-- [ ] Engine-Entscheidung & Projekt-Setup (Repo, CI, Build-Pipeline)
-- [ ] Art-Style-Prototyp: 1 Spielermodell, 1 Parkplatz-Szene, Pixel-Shader, Kamera
-- [ ] Steuerungs-Prototyp: Laufen, Passen, Schießen, Grätschen mit einem Spieler
+- [x] Engine-Entscheidung (three.js) & Projekt-Setup (Vite, Vitest)
+- [x] Art-Style-Prototyp: prozedurale Spielermodelle, Parkplatz-Szene, Pixel-/Outline-Shader, Kamera
+- [x] Steuerungs-Prototyp: Laufen, Sprinten, Dribbeln, Passen, Schuss mit Aufladen, Spielerwechsel
+- [x] Deterministische Match-Simulation 4v4 mit einfacher KI und Torhütern
+- [ ] Grätschen & Fouls
+- [ ] CI (Tests + Build bei jedem Push)
 - [ ] Entscheidung Kernfrage: Wie viel Action vs. Management (siehe Offene Fragen)
 
 **Meilenstein M0:** „Es fühlt sich gut an, auf dem Parkplatz gegen einen Ball zu treten.“
@@ -279,7 +284,7 @@ Phase 0–3 + Trikot-Editor + 3 Spielstätten (Parkplatz, Ascheplatz, Rasenplatz
    mit Option „simulieren“)? → Empfehlung: **Hybrid**.
 2. **Kamera**: Klassische Seitenansicht, isometrisch/schräg von oben oder dynamisch?
 3. **Plattformen**: PC (Steam) zuerst? Konsole/Switch? Mobile?
-4. **Engine**: Godot 4 (Empfehlung) oder Unity?
+4. ~~**Engine**~~ → three.js (entschieden)
 5. **Ton**: Eher warmherzig-humorvoll (*Ted Lasso*) oder trocken-realistisch?
 6. **Setting**: Fiktive deutsche Region, oder bewusst international/„generisch europäisch“?
 7. **Repo**: Eigenes Repository für das Spiel anlegen (empfohlen) statt Unterordner hier.
