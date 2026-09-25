@@ -170,6 +170,11 @@ function step(m, input, dt) {
       stateMove(m, p, dt);
       continue;
     }
+    // Die Mauer steht, bis der Freistoß ausgeführt ist.
+    if (m.wallIds?.includes(p.id) && m.setPiece && !m.setPiece.taken && m.time - m.setPiece.time < 6) {
+      p.vel.x = p.vel.z = 0;
+      continue;
+    }
     let intent;
     if (p.id !== m.controlledId) {
       p.shielding = false;
@@ -276,6 +281,27 @@ function humanIntent(m, p, input, dt) {
     if (input.pass || input.loft || input.shootHeld) p.pending = { type: 'pass', ttl: 0.45, cone: 0.2 };
     return { move: { x: 0, z: 0 }, sprint: false };
   }
+  // Freistoß oder Ecke als Schütze: Stehen bleiben und mit dem Stick nur die
+  // Richtung drehen (der gelbe Pfeil zeigt sie). Nach 6 s geht es normal weiter.
+  const sp = m.setPiece;
+  if (sp && sp.takerId === p.id && !sp.taken && (sp.type === 'freekick' || sp.type === 'corner') && m.time - sp.time < 6) {
+    const mv = input.move;
+    const l = Math.hypot(mv.x, mv.z);
+    if (l > 0.3) {
+      const t = { x: mv.x / l, z: mv.z / l };
+      const k = Math.min(1, dt * 5);
+      p.facing = norm(p.facing.x + (t.x - p.facing.x) * k, p.facing.z + (t.z - p.facing.z) * k);
+    }
+    if (sp.type === 'corner') {
+      // S kurz, E hoch an den langen Pfosten, Schusstaste scharf an den ersten Pfosten.
+      if (input.pass) p.pending = { type: 'pass', ttl: 0.5, zone: 'short' };
+      else if (input.loft) p.pending = { type: 'pass', ttl: 0.5, lofted: 'cross', zone: 'far' };
+      else if (input.shootHeld) p.pending = { type: 'pass', ttl: 0.5, lofted: 'cross', driven: true, zone: 'near' };
+      p.dribbleDir = null;
+      return { move: { x: 0, z: 0 }, sprint: false };
+    }
+    input = { ...input, move: { x: 0, z: 0 } };
+  }
   // D = Grätsche (auf hartem Boden mit Schürfwunden-Risiko), Y = Stochern im Stehen.
   if (input.tackle) return { tackle: 'slide' };
   if (input.poke) return { tackle: 'poke' };
@@ -290,7 +316,7 @@ function humanIntent(m, p, input, dt) {
     p.charge = 0;
   }
   // S = flacher Pass, E = hoher Ball; bei der Ecke wird daraus automatisch eine Flanke.
-  if (input.pass || input.loft) p.pending = { type: 'pass', ttl: 0.45, lofted: p.setPieceAction === 'cross' ? 'cross' : !!input.loft };
+  if (input.pass || input.loft) p.pending = { type: 'pass', ttl: 0.45, lofted: !!input.loft };
   p.dribbleDir = null;
   return { move: input.move, sprint: input.sprint };
 }

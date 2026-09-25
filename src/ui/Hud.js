@@ -148,7 +148,16 @@ export class Hud {
       } else if (e.type === 'incident') this.toast(e.text, e.stage === 'start' ? 3.5 : 2.5, 5);
       else if (e.type === 'lightning') this.lightning();
       else if (e.type === 'end') this.toast(match.shootout?.done ? tr(`ENTSCHIEDEN – ${short(shootoutScore(match.shootout)[0] > shootoutScore(match.shootout)[1] ? 0 : 1)} gewinnt im Elfmeterschießen`, `DECIDED – ${short(shootoutScore(match.shootout)[0] > shootoutScore(match.shootout)[1] ? 0 : 1)} win on penalties`) : tr('ABPFIFF', 'FULL TIME'), 3, 9);
-      else if (e.type === 'fulltime_draw') this.toast(tr(`Unentschieden – ${match.pitch.id === 'halle' ? 'Siebenmeterschießen' : 'Elfmeterschießen'}!`, 'All square – penalties!'), 2.5, 6);
+      else if (e.type === 'setpiece' && e.playerId === match.controlledId && (e.kind === 'freekick' || e.kind === 'corner')) {
+        const k = (a) => keyLabel(a);
+        this.toast(
+          e.kind === 'corner'
+            ? tr(`Ecke: ${k('pass')} kurz · ${k('loft')} hoch an den langen Pfosten · ${k('shoot')} scharf an den ersten`, `Corner: ${k('pass')} short · ${k('loft')} high to the far post · ${k('shoot')} driven to the near post`)
+            : tr(`Freistoß: Richtung mit den Pfeilen · ${k('shoot')} Schuss (halten = fester) · ${k('pass')} Pass · ${k('loft')} hoch`, `Free kick: aim with the arrows · ${k('shoot')} shoot (hold = harder) · ${k('pass')} pass · ${k('loft')} lofted`),
+          2.8,
+          3,
+        );
+      } else if (e.type === 'fulltime_draw') this.toast(tr(`Unentschieden – ${match.pitch.id === 'halle' ? 'Siebenmeterschießen' : 'Elfmeterschießen'}!`, 'All square – penalties!'), 2.5, 6);
       else if (e.type === 'shootout_kick') {
         const shooter = findAnyPlayer(match, e.shooterId);
         const mine = e.team === match.humanTeam;

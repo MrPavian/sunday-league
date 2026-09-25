@@ -97,6 +97,7 @@ export function tryExecute(m, p) {
   }
   p.pending = null;
   p.setPieceAction = null;
+  if (m.setPiece && m.setPiece.takerId === p.id) m.setPiece.taken = true;
   p.kickCooldown = 0.35;
   p.kickAnim = 0.3;
   const fatigue = 1 - p.stamina;
@@ -148,6 +149,16 @@ function shoot(m, p, a, fatigue) {
   m.shotTime = m.time; // Der Torwart braucht einen Moment, bis er die Richtung erkennt.
 }
 
+function cornerZone(m, p, kind) {
+  const { pitch } = m;
+  const s = attackDir(m, p.team);
+  const gx = s * pitch.halfLength;
+  const side = Math.sign(p.pos.z) || 1;
+  if (kind === 'short') return { x: p.pos.x - s * 3, z: p.pos.z - side * 3 };
+  if (kind === 'near') return { x: gx - s * 2, z: side * pitch.goalHalfWidth * 1.1 };
+  return { x: gx - s * 3.5, z: -side * pitch.goalHalfWidth * 1.3 }; // langer Pfosten
+}
+
 function aimAssist(m, p, dir) {
   const { pitch } = m;
   const gx = attackDir(m, p.team) * pitch.halfLength;
@@ -169,9 +180,21 @@ function pass(m, p, a, fatigue, fromHands) {
 
   let target = null;
   let bestScore = -Infinity;
+  // Ecke mit Ansage: kurz, erster Pfosten oder langer Pfosten – der Mitspieler,
+  // der der Zielzone am nächsten steht, wird angespielt.
+  const zone = a.zone ? cornerZone(m, p, a.zone) : null;
   for (const t of m.players) {
     if (t.team !== p.team || t === p || t.state === 'down') continue;
     if (a.targetId && t.id !== a.targetId) continue;
+    if (zone) {
+      if (t.role === 'gk') continue;
+      const zs = -dist2d(t.pos, zone);
+      if (zs > bestScore) {
+        bestScore = zs;
+        target = t;
+      }
+      continue;
+    }
     const dx = t.pos.x - p.pos.x;
     const dz = t.pos.z - p.pos.z;
     const d = len(dx, dz);
@@ -219,8 +242,9 @@ function pass(m, p, a, fatigue, fromHands) {
     dir = norm(lx - p.pos.x, lz - p.pos.z);
     if (a.lofted) {
       // Hoher Ball: Flanken kommen auf Kopfhöhe, sonst landet er vor den Füßen.
-      const arrive = a.lofted === 'cross' ? 1.4 : 0.3;
-      vy = clamp(3 + d * 0.22, 4, 8);
+      // Scharf an den ersten Pfosten: flacher und schneller.
+      const arrive = a.lofted === 'cross' ? (a.driven ? 1.1 : 1.4) : 0.3;
+      vy = a.driven ? clamp(1.5 + d * 0.1, 2, 3.2) : clamp(3 + d * 0.22, 4, 8);
       const flight = (vy + Math.sqrt(Math.max(0, vy * vy - 2 * 9.81 * (arrive - 0.11)))) / 9.81;
       speed = d / Math.max(0.4, flight);
     } else {

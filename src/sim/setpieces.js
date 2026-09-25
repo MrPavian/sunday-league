@@ -80,7 +80,8 @@ export function startSetPiece(m, { type, team, spot = { x: 0, z: 0 }, takerId = 
   if (team === m.humanTeam && taker.role !== 'gk') setControlled(m, taker.id);
   m.phase = 'setpiece';
   m.phaseTimer = FREEZE[type];
-  m.setPiece = { type, team, takerId: taker.id };
+  m.setPiece = { type, team, takerId: taker.id, time: m.time, taken: false };
+  m.wallIds = type === 'freekick' ? buildWall(m, team, spot) : null;
   m.events.push({ type: 'setpiece', kind: type, team, playerId: taker.id });
 }
 
@@ -134,4 +135,31 @@ export function carRule(m, ev) {
   m.events.push({ type: 'car', team, playerId: m.ball.lastTouch });
   startSetPiece(m, { type: 'freekick', team, spot });
   return true;
+}
+
+// Direkter Freistoß in Tornähe: Die Verteidiger stellen eine Mauer auf Abstand –
+// zwei Mann, auf dem großen Feld drei. Sie bleibt stehen, bis der Ball gespielt ist.
+function buildWall(m, team, spot) {
+  const { pitch } = m;
+  const defending = 1 - team;
+  const goalX = attackDir(m, team) * pitch.halfLength;
+  const dGoal = Math.hypot(goalX - spot.x, spot.z);
+  if (dGoal > 17 || dGoal < DISTANCE + 1.5 || pitch.format < 5) return null; // im Hinterhof stellt keiner eine Mauer
+  const size = pitch.format >= 7 ? 3 : 2;
+  const dir = norm(goalX - spot.x, -spot.z);
+  const side = { x: -dir.z, z: dir.x };
+  const centre = { x: spot.x + dir.x * DISTANCE, z: spot.z + dir.z * DISTANCE };
+  const men = m.players
+    .filter((p) => p.team === defending && p.role !== 'gk' && p.state === 'normal')
+    .sort((a, b) => dist2d(a.pos, centre) - dist2d(b.pos, centre))
+    .slice(0, size);
+  men.forEach((p, i) => {
+    const off = (i - (men.length - 1) / 2) * 0.6;
+    const zMax = pitch.boundary === 'lines' ? pitch.halfWidth + 1 : pitch.halfWidth - 0.3;
+    p.pos.x = clamp(centre.x + side.x * off, -pitch.wallX + 0.3, pitch.wallX - 0.3);
+    p.pos.z = clamp(centre.z + side.z * off, -zMax, zMax);
+    p.vel.x = p.vel.z = 0;
+    p.facing = { x: -dir.x, z: -dir.z };
+  });
+  return men.map((p) => p.id);
 }

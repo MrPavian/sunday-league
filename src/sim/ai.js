@@ -80,7 +80,17 @@ export function updateTactics(m, dt) {
         m.tactics[p.id] = { type: 'mark', ...clampToPitch(pitch, best.pos.x + dir.x * 1.5, best.pos.z + dir.z * 1.5) };
       }
     } else {
+      // Ecke fürs eigene Team: rein in den Strafraum – erster Pfosten, langer Pfosten,
+      // Elfmeterpunkt, Strafraumkante.
+      const sp = m.setPiece;
+      const cornerRun = sp && sp.type === 'corner' && sp.team === team && !sp.taken && m.time - sp.time < 6;
+      const boxSpots = cornerRun ? cornerSpots(m, team) : null;
       for (const p of rest) {
+        if (boxSpots?.length && p.role !== 'def') {
+          const spot = boxSpots.shift();
+          m.tactics[p.id] = { type: 'support', ...clampToPitch(pitch, spot.x, spot.z, 0.5) };
+          continue;
+        }
         const spot = supportSpot(m, p, dt);
         // Absicherung: Abwehrspieler bleiben immer ein Stück hinter dem Ball – auch
         // wenn der Ball schneller wandert, als sie ihren Laufweg neu planen.
@@ -103,6 +113,20 @@ export function updateTactics(m, dt) {
       }
     }
   }
+}
+
+function cornerSpots(m, team) {
+  const { pitch, ball } = m;
+  const s = attackDir(m, team);
+  const gx = s * pitch.halfLength;
+  const side = Math.sign(ball.pos.z) || 1;
+  const gw = pitch.goalHalfWidth;
+  return [
+    { x: gx - s * 2, z: side * gw * 1.1 }, // erster Pfosten
+    { x: gx - s * 3.5, z: -side * gw * 1.3 }, // langer Pfosten
+    { x: gx - s * Math.min(6, pitch.halfLength * 0.3), z: 0 }, // Elfmeterpunkt
+    { x: gx - s * Math.min(9, pitch.halfLength * 0.45), z: -side * 1.5 }, // Strafraumkante
+  ];
 }
 
 // Läuft gerade ein Pass zu einem Mitspieler dieses Teams? Dann gilt er, bis jemand
@@ -213,7 +237,11 @@ export function outfieldIntent(m, p, dt) {
     const dBall = dist2d(p.pos, ball.pos);
     if (p.setPieceAction === 'cross' && dBall < 1.3) {
       p.setPieceAction = null;
-      p.pending = { type: 'pass', lofted: 'cross', cone: -0.8, ttl: 0.4 };
+      // Ecke der KI: meist hoch an den langen Pfosten, mal scharf an den ersten, mal kurz.
+      const r = m.rng.next();
+      p.pending = m.setPiece?.type === 'corner' && m.setPiece.takerId === p.id
+        ? r < 0.5 ? { type: 'pass', lofted: 'cross', zone: 'far', ttl: 0.4 } : r < 0.8 ? { type: 'pass', lofted: 'cross', driven: true, zone: 'near', ttl: 0.4 } : { type: 'pass', zone: 'short', ttl: 0.4 }
+        : { type: 'pass', lofted: 'cross', cone: -0.8, ttl: 0.4 };
     }
     const tackle = chooseTackle(m, p, dBall);
     if (tackle) return { tackle };

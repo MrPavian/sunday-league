@@ -770,3 +770,54 @@ describe('penalty shootout', () => {
     expect(m.phase).toBe('ended');
   });
 });
+
+describe('free kicks and corners', () => {
+  const NONE = { move: { x: 0, z: 0 }, sprint: false, shootHeld: false, pass: false, loft: false, hold: false, tackle: false, poke: false, switchPlayer: false, sub: false };
+
+  it('a free kick near goal gets a wall that stands until the ball is played', async () => {
+    const { startSetPiece } = await import('../src/sim/setpieces.js');
+    const pitch = PITCHES.rasenplatz;
+    const m = createMatch({ seed: 2, pitch, kickoff: false });
+    startSetPiece(m, { type: 'freekick', team: 0, spot: { x: pitch.halfLength - 12, z: 2 } });
+    expect(m.wallIds?.length).toBe(3);
+    const wall = m.wallIds.map((id) => getPlayer(m, id));
+    for (const w of wall) expect(Math.hypot(w.pos.x - m.ball.pos.x, w.pos.z - m.ball.pos.z)).toBeGreaterThan(3.2);
+    const before = wall.map((w) => ({ ...w.pos }));
+    for (let i = 0; i < 90; i++) stepMatch(m, NONE, DT);
+    wall.forEach((w, i) => expect(Math.hypot(w.pos.x - before[i].x, w.pos.z - before[i].z)).toBeLessThan(0.3));
+  });
+
+  it('the human taker aims a free kick with the stick without walking off', async () => {
+    const { startSetPiece } = await import('../src/sim/setpieces.js');
+    const m = createMatch({ seed: 2, pitch: PITCHES.rasenplatz, kickoff: false });
+    startSetPiece(m, { type: 'freekick', team: 0, spot: { x: 0, z: 0 } });
+    const taker = getPlayer(m, m.setPiece.takerId);
+    expect(taker.id).toBe(m.controlledId);
+    const start = { ...taker.pos };
+    for (let i = 0; i < 120; i++) stepMatch(m, { ...NONE, move: { x: 0, z: 1 } }, DT);
+    expect(Math.hypot(taker.pos.x - start.x, taker.pos.z - start.z)).toBeLessThan(0.2);
+    expect(taker.facing.z).toBeGreaterThan(0.8);
+  });
+
+  it('corner variants pick the team-mate in the chosen zone', async () => {
+    const { startSetPiece } = await import('../src/sim/setpieces.js');
+    const pitch = PITCHES.rasenplatz;
+    for (const [key, zone] of [['shootHeld', 'near'], ['loft', 'far'], ['pass', 'short']]) {
+      const m = createMatch({ seed: 4, pitch, kickoff: false });
+      startSetPiece(m, { type: 'corner', team: 0, spot: { x: pitch.halfLength - 0.3, z: pitch.halfWidth - 0.3 } });
+      for (let i = 0; i < 150; i++) stepMatch(m, NONE, DT); // Mitspieler laufen in den Strafraum
+      let target = null;
+      for (let i = 0; i < 40 && !target; i++) {
+        stepMatch(m, { ...NONE, [key]: true }, DT);
+        const e = m.events.find((x) => x.type === 'pass');
+        if (e) target = getPlayer(m, e.targetId);
+        m.events.length = 0;
+      }
+      expect(target, zone).toBeTruthy();
+      const gx = pitch.halfLength;
+      if (zone === 'near') expect(target.pos.z).toBeGreaterThan(0);
+      if (zone === 'far') expect(target.pos.z).toBeLessThan(0.5);
+      if (zone === 'short') expect(gx - target.pos.x).toBeGreaterThan(1.5);
+    }
+  });
+});
