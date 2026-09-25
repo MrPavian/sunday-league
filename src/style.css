@@ -484,3 +484,14 @@ body.weather-rain #game { filter: brightness(0.78) saturate(0.75) contrast(1.05)
 .me-bar small { opacity: 0.75; }
 .me-card { border: 2px solid #000; background: #23231c; padding: 8px 12px; margin-bottom: 12px; }
 .me-card p { margin: 4px 0; }
+
+/* Chronik / Festschrift */
+.chronicle-paper { margin: 0 0 14px; padding: 14px 18px; color: #2a2620; background: #efe6d2; border: 3px solid #000; box-shadow: 4px 4px 0 #000; text-shadow: none; }
+.chronicle-paper .masthead { font-size: 22px; font-weight: 600; letter-spacing: 1px; border-bottom: 3px double #2a2620; padding-bottom: 4px; }
+.chronicle-paper .masthead small { font-size: 12px; margin-left: 8px; }
+.chronicle-paper button { color: #efe6d2; }
+.chronicle-paper h4 { margin: 10px 0 4px; }
+.chronicle-paper .lead { font-style: italic; }
+.chronicle-paper .records { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.chronicle-paper ul { margin: 0; padding-left: 18px; }
+.season-table td, .season-table th { text-align: left; padding: 1px 8px 1px 0; }

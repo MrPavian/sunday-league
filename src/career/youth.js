@@ -73,6 +73,7 @@ export function promoteProspect(career, idx, maxSquad) {
   if (!career.youth.prospects.includes(idx) || club.squad.length >= maxSquad) return false;
   career.youth.prospects = career.youth.prospects.filter((x) => x !== idx);
   club.squad.push(idx);
+  if (career.players[idx]) career.players[idx].fromYouth = true; // eigenes Gewächs
   if (career.week) career.week.availability[idx] = 'yes';
   return true;
 }

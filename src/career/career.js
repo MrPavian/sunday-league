@@ -9,6 +9,7 @@ import { allPlayers } from '../sim/squad.js';
 import { gradePlayers } from '../sim/stats.js';
 import { absenceChance, DECLINE_TEXT, FAREWELL, INJURED, JOIN_TEXT, LATE, noReasons, NUDGE_NO, NUDGE_YES, RUMOR_SOURCES, YES } from './chat.js';
 import { HUMAN_CLUB_DEFAULT, LEAGUES } from './clubs.js';
+import { applyFusion, initSagas, sagaChat, sagaSeasonEnd, sagaWeek } from './sagas.js';
 import { coachAway, initCoach, isCoach, personalWeek, seasonPersonal, weeklyPersonal } from './personal.js';
 import { absenceFactor, advanceArcs, applyForm, autoResolve, resultMood, rollWeekEvent, weeklyMood } from './events.js';
 import { developYouth, expireYouth, initYouth, retirements, youthIntake } from './youth.js';
@@ -40,14 +41,15 @@ export function playerOf(career, idx) {
   const base = poolPlayer(idx);
   const delta = career.players[idx]?.delta;
   const years = (career.season ?? 1) - 1;
-  if (!delta && years === 0 && !career.players[idx]?.job) return base;
+  const extra = career.players[idx]?.addTraits; // z. B. „Ex-Profi" nach der Rückkehr
+  if (!delta && years === 0 && !career.players[idx]?.job && !extra) return base;
   const attrs = { ...base.attrs };
   if (delta) for (const k of ATTR_KEYS) attrs[k] = Math.max(0.05, Math.min(0.98, attrs[k] + (delta[k] ?? 0)));
   const age = base.age + years;
   // Aus Schülern werden mit der Zeit Studenten oder Azubis.
   const job = career.players[idx]?.job; // Jobwechsel aus einer Lebensgeschichte
   const profession = job ? job : base.profession.startsWith('Schüler') && age >= 19 ? (base.poolIndex % 2 ? 'Student (1. Semester)' : 'Azubi Bürokaufmann') : base.profession;
-  const p = { ...base, attrs, age, profession };
+  const p = { ...base, attrs, age, profession, traits: extra ? [...new Set([...base.traits, ...extra])] : base.traits };
   p.rating = ratePlayer(p);
   return p;
 }
@@ -137,6 +139,7 @@ export function createCareer({ seed = Date.now() % 1e9, club = {} } = {}) {
   initYouth(career);
   youthIntake(career, youthDeps());
   initCoach(career);
+  initSagas(career);
   startWeek(career);
   return career;
 }
@@ -148,7 +151,9 @@ export function nextSeason(career) {
   const level = career.level ?? 1;
   const promoted = pos === 1 && level < 2;
   const relegated = level > 1 && pos === rows.length;
-  career.history = [...(career.history ?? []), { season: career.season, league: career.league, pos, champion: rows[0].club.name }];
+  const scorer = humanClub(career).squad.map((idx) => ({ idx, goals: career.players[idx]?.goals ?? 0 })).sort((a, b) => b.goals - a.goals)[0];
+  const topScorer = scorer?.goals ? { name: playerOf(career, scorer.idx).name, goals: scorer.goals } : null;
+  career.history = [...(career.history ?? []), { season: career.season, league: career.league, pos, champion: rows[0].club.name, topScorer, promoted, relegated }];
 
   // Entwicklung zuerst – die Einsätze dieser Saison zählen als Spielpraxis.
   const development = developPlayers(career);
@@ -172,8 +177,16 @@ export function nextSeason(career) {
   const league = LEAGUES[newLevel];
   const rng = createRng(hashSeed(career.seed, career.season, 99));
   const human = humanClub(career);
-  human.venue = league.humanVenue;
+  const sagaNotes = sagaSeasonEnd(career, { level });
+  human.venue = career.saga.homeLost[newLevel] ?? league.humanVenue;
   let clubs = career.clubs;
+  if (newLevel === level) {
+    const used = new Set([...clubs.flatMap((c) => c.squad), ...(career.youth?.prospects ?? []), ...(career.alumni ?? []).map((a) => a.idx)]);
+    const pickFusion = squadPicker(createRng(hashSeed(career.seed, career.season, 98)), used);
+    const fused = applyFusion(career, clubs, (tiers) => pickFusion(tiers, SQUAD_SHAPES[league.squadShape]), freshRecord);
+    clubs = fused.clubs;
+    sagaNotes.push(...fused.notes);
+  } else if (career.saga.fusion) career.saga.fusion = null; // Liga gewechselt – der Nachbar spielt woanders
   if (newLevel !== level) {
     // Neue Liga, neue Gegner. Die alten Gegner verlassen den Spielstand.
     const used = new Set(human.squad);
@@ -197,6 +210,7 @@ export function nextSeason(career) {
   const intake = youthIntake(career, youthDeps());
   startWeek(career);
   const note = (text) => career.week?.chat.splice(1, 0, { from: null, text, time: 'Mo 09:00' });
+  for (const n of sagaNotes) note(n);
   for (const r of retired) note(`Abschied: ${r.name} (${r.age}) hört auf – ${r.apps} Spiele, ${r.goals} Tore. Bleibt uns erhalten als ${r.role}.`);
   for (const idx of leaving) note(`${poolPlayer(idx).name} war zu alt für die A-Jugend und ist zum Nachbarn gewechselt.`);
   if (intake.length) note(`Neuer Jahrgang in der A-Jugend: ${intake.map((idx) => playerOf(career, idx).name).join(', ')}.`);
@@ -301,6 +315,7 @@ export function startWeek(career) {
   advanceArcs(career);
   personalWeek(career);
   rollWeekEvent(career);
+  sagaChat(career);
   if (career.round === 0 && !career.offers?.length && (career.sponsors?.length ?? 0) < 2) makeOffers(career, career.level ?? 1);
   career.week.rumors = makeRumors(career, createRng(hashSeed(career.seed, career.season, career.round, 3)));
   career.week.actions = SCOUT_ACTIONS;
@@ -401,6 +416,7 @@ export function migrateCareer(career) {
   initFinances(career);
   initYouth(career);
   initCoach(career);
+  initSagas(career);
   career.history ??= [];
   if (career.week && !career.week.rumors) {
     career.week.rumors = makeRumors(career, createRng(hashSeed(career.seed, career.season, career.round, 3)));
@@ -659,6 +675,7 @@ export function finishRound(career) {
   weeklyFinances(career);
   weeklyMood(career);
   weeklyPersonal(career);
+  sagaWeek(career);
   for (const rec of Object.values(career.players)) if (rec.injuryWeeks > 0) rec.injuryWeeks--;
   career.round++;
   startWeek(career);

@@ -31,6 +31,10 @@ Du selbst bist **Spielertrainer** – mit Job, Familie und begrenzter Energie. T
 und Spieltage kosten Familienzeit, unbesetzte Posten im Verein kosten Kraft. Wer beides verheizt,
 fällt zwei Wochen aus und darf nur zuschauen, wie der Kapitän aufstellt.
 
+Über die Jahre schreibt der Verein Geschichte: Der Platz soll verkauft werden, es gibt Jubiläen
+mit Festschrift, eine Fusion mit dem Nachbarn, das erste Frauenteam – und das Jugendtalent, das
+Profi wird und irgendwann zurückkommt. Die Chronik steht im Verein-Tab.
+
 | Vereinsheim | Kader |
 |---|---|
 | ![Vereinsheim](docs/screenshot-vereinsheim.png) | ![Kader](docs/screenshot-kader.png) |

@@ -83,6 +83,8 @@ export function matchFinances(career, fixture, prepared, level) {
     const rng = createRng(career.seed + career.season * 97 + career.round * 13);
     const press = career.flags?.pressWeeks > 0 ? 1.4 : 1; // nach dem Kreisblatt-Porträt kommen mehr
     const fans = Math.round((level > 1 ? rng.int(20, 45) : rng.int(5, 14)) * press);
+    career.flags ??= {};
+    career.flags.fans = { round: career.round, n: fans }; // für die Unterschriftenlisten
     const wirt = career.staff?.wirt ? 1.3 : 1;
     book(career, `Getränkeverkauf (${fans} Zuschauer)${wirt > 1 ? ` – Wirt ${career.staff.wirt.name.split(' ')[0]}` : ''}`, Math.round(fans * 2.5 * wirt));
     if (level > 1) {

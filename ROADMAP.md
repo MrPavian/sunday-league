@@ -504,3 +504,10 @@ mit zwei Ressourcen: **Familien-Geduld** (Spieltage, Training, Scouting kosten Z
 Wochen weg, der Kapitän stellt auf, kein Training/Scouting, nicht selbst spielen. Persönliche Ereignisse:
 Familienwochenende, Hochzeitstag, Chef will Samstag Inventur (später Spende), Müdigkeit, Kassenwart-Posten,
 Kind will kicken (Familie kommt mit), Trainerangebot nach dem Titel. Sommerpause lädt auf.
+
+(6) umgesetzt – Langzeit-Geschichten (`src/career/sagas.js`): Platz soll verkauft werden (Bürgerinitiative mit
+Unterschriften aus Heimspielen, Pacht übernehmen oder abwarten – sonst Umzug auf einen Ausweichplatz),
+Jubiläum alle 5 Jahre (25 Jahre in Saison 4) mit Festschrift aus der echten Chronik (Saisons, Torschützenkönige,
+Rekordspieler, Meilensteine), Fusion mit dem Tabellenletzten (die Besten wechseln, ein neuer Verein rückt nach),
+erste Frauenmannschaft mit eigener Saisonbilanz, Jugendspieler wird Profi (Ausbildungsentschädigung) und kehrt
+Jahre später als Ex-Profi zurück.

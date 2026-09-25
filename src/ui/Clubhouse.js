@@ -26,6 +26,7 @@ import { inviteChance, inviteTrialist, isRawDiamond, MAX_STATIONS, runStation, s
 import { promoteProspect, STAFF_ROLES } from '../career/youth.js';
 import { moodLabel, resolveEvent } from '../career/events.js';
 import { storyLabels } from '../career/stories.js';
+import { chronicleData, yearOf } from '../career/sagas.js';
 import { coachAway, coachName, energyLabel, isCoach, patienceLabel, trainingLocked } from '../career/personal.js';
 import { TRAITS } from '../data/traits.js';
 import { tierById } from '../data/tiers.js';
@@ -50,6 +51,7 @@ export class Clubhouse {
       if (!t || this.busy) return;
       const { action, value } = t.dataset;
       if (action === 'tab') this.tab = value;
+      else if (action === 'chronicle') this.showChronicle = !this.showChronicle;
       else if (action === 'kitColor') {
         const [part, color] = value.split(':');
         this.draft.kit[part] = Number(color);
@@ -203,6 +205,30 @@ export class Clubhouse {
         ${this.busy ? `<p class="busy">${this.busy}</p>` : `
         ${coachAway(c) ? '<p class="warn">Du bist diese Woche nicht da – der Kapitän stellt auf, du bekommst nur das Ergebnis.</p>' : '<button class="primary" data-action="onPlay">Selbst spielen</button>'}
         <button data-action="onSimulate">${coachAway(c) ? 'Ergebnis abwarten' : 'Simulieren'}</button>`}
+      </div>`;
+  }
+
+  // Vereinschronik – zum Jubiläum als Festschrift.
+  chronicleBlock() {
+    const d = chronicleData(this.career);
+    const title = d.festschrift ? `Festschrift: ${d.festschrift.age} Jahre ${d.name}` : `Chronik des ${d.name}`;
+    if (!this.showChronicle) return `<p><button data-action="chronicle">${d.festschrift ? 'Festschrift lesen' : 'Vereinschronik'}</button> <small>gegründet ${d.founded} · ${d.age} Jahre</small></p>`;
+    const seasons = d.seasons.length
+      ? d.seasons.map((h) => `<tr><td>${h.year}</td><td>${h.league}</td><td class="num">${h.pos}.</td><td>${h.pos === 1 ? 'Meister' : h.relegated ? 'Abstieg' : ''}</td><td>${h.topScorer ? `${h.topScorer.name} (${h.topScorer.goals})` : '–'}</td></tr>`).join('')
+      : '<tr><td colspan="5"><em>Die erste Saison läuft noch.</em></td></tr>';
+    const list = (arr, key, unit) => arr.filter((p) => p[key] > 0).map((p) => `<li>${p.name}${p.active ? '' : ' <small>(Ehemaliger)</small>'} – ${p[key]} ${unit}</li>`).join('') || '<li><em>noch keine</em></li>';
+    const events = d.events.length ? d.events.map((e) => `<li><b>${yearOf(this.career, e.season)}</b> ${e.text}</li>`).join('') : '<li><em>Die großen Geschichten kommen noch.</em></li>';
+    const frauen = d.frauen ? `<p>Frauenteam seit Saison ${d.frauen.founded}, Kapitänin ${d.frauen.captain}${d.frauen.seasons.length ? ` · Platzierungen: ${d.frauen.seasons.map((s) => `${s.pos}.`).join(', ')}` : ''}</p>` : '';
+    const pros = d.pros.length ? `<p>Aus der eigenen Jugend zu den Profis: ${d.pros.map((p) => `${p.name} (${p.club})${p.back ? ' – zurück im Verein' : ''}`).join(', ')}</p>` : '';
+    return `<div class="paper chronicle-paper">
+        <div class="masthead">${title} <small>seit ${d.founded}</small></div>
+        <p class="lead">Gegründet ${d.founded} am Stammtisch einer Kneipe am Kanal – mit einem Ball, elf Leuten und keinem Tor.</p>
+        <h4>Saisons</h4>
+        <table class="stats season-table"><thead><tr><th>Jahr</th><th>Liga</th><th>Platz</th><th></th><th>Torschützenkönig</th></tr></thead><tbody>${seasons}</tbody></table>
+        <div class="records"><div><h4>Rekordspieler</h4><ul>${list(d.topApps, 'apps', 'Spiele')}</ul></div><div><h4>Rekordtorschützen</h4><ul>${list(d.topGoals, 'goals', 'Tore')}</ul></div></div>
+        ${frauen}${pros}
+        <h4>Meilensteine</h4><ul class="milestones">${events}</ul>
+        <button data-action="chronicle">Zuklappen</button>
       </div>`;
   }
 
@@ -435,6 +461,7 @@ export class Clubhouse {
       : '';
     return `
       ${profile}
+      ${this.chronicleBlock()}
       <div class="club-form">
         <div class="kit-preview">
           <div class="shirt" style="background:${shirtCss(d.kit)}"></div>
