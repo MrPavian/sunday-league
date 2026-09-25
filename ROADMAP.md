@@ -435,5 +435,7 @@ Gleichzeitig hat das Match noch Lücken, die man beim Spielen sofort merkt.
    Ausweichtrikots bei Farbkonflikt) · ✅ Mannschaftskasse mit Strafenkatalog aus echten Spielszenen,
    lokale Sponsoren (Trikot/Bande, Saisonziel mit Bonus), Heimspiel-Einnahmen & -Kosten,
    Saisonabschlussfahrt (weniger Absagen in der nächsten Saison)
-4. **Transfers & Scouting**: Open Training, Bolzplatz-Scouting
+4. **Transfers & Scouting**: ✅ Gerüchteküche · ✅ Open Training (6 Stationen, 3 wählbar, Messwerte deuten,
+   Eigenschafts-Hinweise, Rohdiamanten, Einladungen) · ✅ Spielerentwicklung & Altern je Saison ·
+   offen: Bolzplatz-Scouting, Jugendabteilung
 5. **Schiri, Wetter, 7v7/11v11** für den Aufstieg in die höheren Ligen

@@ -348,3 +348,71 @@ describe('club finances', () => {
     expect(c.cash).toBe(40);
   });
 });
+
+describe('open training', () => {
+  it('costs a little, brings six strangers incl. a youngster, three stations max', async () => {
+    const { startTraining, runStation, STATIONS, TRAINING_COST } = await import('../src/career/training.js');
+    const { playerOf } = await import('../src/career/career.js');
+    const c = createCareer({ seed: 90 });
+    const cash = c.cash;
+    expect(startTraining(c)).toBe(true);
+    expect(startTraining(c)).toBe(false); // einmal pro Woche
+    expect(c.cash).toBe(cash - TRAINING_COST);
+    const tr = c.week.training;
+    expect(tr.trialists).toHaveLength(6);
+    const taken = new Set(c.clubs.flatMap((cl) => cl.squad));
+    for (const t of tr.trialists) expect(taken.has(t.idx)).toBe(false);
+    expect(tr.trialists.some((t) => playerOf(c, t.idx).age <= 20)).toBe(true);
+    for (const id of ['sprint', 'shooting', 'passing']) expect(runStation(c, id)).toBe(true);
+    expect(runStation(c, 'juggling')).toBe(false);
+    for (const t of tr.trialists) expect(Object.keys(t.results)).toEqual(['sprint', 'shooting', 'passing']);
+    // Schnellere Spieler laufen im Schnitt bessere Zeiten.
+    const byPace = [...tr.trialists].sort((a, b) => playerOf(c, b.idx).attrs.pace - playerOf(c, a.idx).attrs.pace);
+    expect(Number(byPace[0].results.sprint)).toBeLessThan(Number(byPace[byPace.length - 1].results.sprint) + 0.3);
+    expect(STATIONS.sprint.better).toBe('low');
+  });
+
+  it('invites only after the stations, at most two, joining the squad on a yes', async () => {
+    const { startTraining, runStation, inviteTrialist } = await import('../src/career/training.js');
+    let joined = false;
+    for (let seed = 1; seed < 30 && !joined; seed++) {
+      const c = createCareer({ seed: 300 + seed });
+      startTraining(c);
+      expect(inviteTrialist(c, 0)).toBeNull(); // erst trainieren
+      for (const id of ['sprint', 'cooper', 'duels']) runStation(c, id);
+      const results = [inviteTrialist(c, 0), inviteTrialist(c, 1), inviteTrialist(c, 2)];
+      expect(results[2]).toBeNull();
+      if (results.includes('joined')) {
+        const t = c.week.training.trialists[results.indexOf('joined')];
+        expect(humanClub(c).squad).toContain(t.idx);
+        joined = true;
+      }
+    }
+    expect(joined).toBe(true);
+  });
+});
+
+describe('player development', () => {
+  it('young players with minutes improve, veterans slow down, everyone ages', async () => {
+    const { developPlayers, playerOf, getPool } = await import('../src/career/career.js');
+    const c = createCareer({ seed: 95 });
+    const pool = getPool();
+    const young = pool.everyone().find((p) => p.age <= 19 && p.tier === 'gut' && !c.clubs.some((cl) => cl.squad.includes(p.poolIndex)));
+    const old = pool.everyone().find((p) => p.age >= 36 && p.tier === 'gut' && !c.clubs.some((cl) => cl.squad.includes(p.poolIndex)));
+    const club = humanClub(c);
+    club.squad.push(young.poolIndex, old.poolIndex);
+    c.players[young.poolIndex] = { apps: 8, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 };
+    c.players[old.poolIndex] = { apps: 8, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 };
+    const y0 = playerOf(c, young.poolIndex);
+    const o0 = playerOf(c, old.poolIndex);
+    developPlayers(c);
+    c.season = 2;
+    const y1 = playerOf(c, young.poolIndex);
+    const o1 = playerOf(c, old.poolIndex);
+    expect(y1.age).toBe(y0.age + 1);
+    expect(y1.rating).toBeGreaterThan(y0.rating);
+    expect(o1.attrs.pace).toBeLessThan(o0.attrs.pace);
+    // Der Pool selbst bleibt unverändert.
+    expect(pool.get(young.poolIndex).rating).toBe(y0.rating);
+  });
+});

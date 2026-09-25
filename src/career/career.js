@@ -2,7 +2,7 @@
 // (speicherbar); Spieler werden nur über ihre Pool-Nummer referenziert.
 import { createRng } from '../core/rng.js';
 import { FORMATIONS } from '../sim/formation.js';
-import { createPlayerPool } from '../sim/generator.js';
+import { createPlayerPool, ratePlayer } from '../sim/generator.js';
 import { createMatch, stepMatch } from '../sim/match.js';
 import { PITCHES } from '../sim/pitch.js';
 import { allPlayers } from '../sim/squad.js';
@@ -22,12 +22,51 @@ export const MAX_SQUAD = 12; // Freizeitliga; in der Kreisklasse mehr (siehe max
 export const MIN_SQUAD = 7;
 const SCOUT_ACTIONS = 2;
 const RUMOR_TIERS = { ok: 0.44, gut: 0.33, stark: 0.15, dorfstar: 0.06, superstar: 0.014, legende: 0.006 };
-const RECRUIT_BASE = { ok: 0.85, gut: 0.65, stark: 0.45, dorfstar: 0.3, superstar: 0.2, legende: 0.15 };
+export const RECRUIT_BASE = { ok: 0.85, gut: 0.65, stark: 0.45, dorfstar: 0.3, superstar: 0.2, legende: 0.15 };
 const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 
 let poolCache = null;
 export const getPool = () => (poolCache ??= createPlayerPool({ seed: POOL_SEED }));
 export const poolPlayer = (index) => getPool().get(index);
+
+const ATTR_KEYS = ['pace', 'stamina', 'technique', 'passing', 'shooting', 'tackling', 'heading', 'keeping'];
+
+// Spieler, wie er in dieser Karriere gerade ist: Pool-Grundwerte plus
+// Entwicklung, und jede Saison ein Jahr älter.
+export function playerOf(career, idx) {
+  const base = poolPlayer(idx);
+  const delta = career.players[idx]?.delta;
+  const years = (career.season ?? 1) - 1;
+  if (!delta && years === 0) return base;
+  const attrs = { ...base.attrs };
+  if (delta) for (const k of ATTR_KEYS) attrs[k] = Math.max(0.05, Math.min(0.98, attrs[k] + (delta[k] ?? 0)));
+  const p = { ...base, attrs, age: base.age + years };
+  p.rating = ratePlayer(p);
+  return p;
+}
+
+// Saisonwechsel: Junge werden besser (vor allem mit Spielpraxis), Ältere langsamer.
+export function developPlayers(career) {
+  const club = humanClub(career);
+  const rng = createRng(hashSeed(career.seed, career.season, 17));
+  const report = [];
+  for (const idx of club.squad) {
+    const rec = career.players[idx];
+    const before = playerOf(career, idx);
+    const age = before.age;
+    const practice = rec.apps >= 5 ? 1.3 : rec.apps >= 2 ? 1 : 0.6;
+    const growth = age <= 20 ? 0.045 : age <= 23 ? 0.025 : age <= 29 ? 0.006 : 0;
+    rec.delta ??= {};
+    for (const k of ATTR_KEYS) {
+      let d = growth * practice * (0.5 + rng.next());
+      if (age >= 31 && (k === 'pace' || k === 'stamina')) d -= age >= 34 ? 0.035 : 0.015;
+      if (age >= 34 && k !== 'pace' && k !== 'stamina') d -= 0.008;
+      rec.delta[k] = (rec.delta[k] ?? 0) + d;
+    }
+    report.push({ idx, before: before.rating });
+  }
+  return report;
+}
 
 const hashSeed = (...parts) => parts.reduce((h, p) => (Math.imul(h ^ p, 0x9e3779b1) + 0x7f4a7c15) >>> 0, 0x2545f491);
 
@@ -96,6 +135,9 @@ export function nextSeason(career) {
   const relegated = level > 1 && pos === rows.length;
   career.history = [...(career.history ?? []), { season: career.season, league: career.league, pos, champion: rows[0].club.name }];
 
+  // Entwicklung zuerst – die Einsätze dieser Saison zählen als Spielpraxis.
+  const development = developPlayers(career);
+
   // Saisonwerte in die Karriere-Gesamtstatistik übernehmen.
   for (const rec of Object.values(career.players)) {
     rec.total = {
@@ -132,7 +174,14 @@ export function nextSeason(career) {
     fixtures: roundRobin(clubs.map((c) => c.id), rng),
   });
   startWeek(career);
-  return { pos, promoted, relegated };
+  // Trainingsbericht aus der Saisonvorbereitung in die Gruppe.
+  for (const d of development) {
+    const now = playerOf(career, d.idx);
+    const diff = now.rating - d.before;
+    if (diff >= 2) career.week?.chat.splice(1, 0, { from: null, text: `Vorbereitung: ${now.name} (${now.age}) hat richtig zugelegt – Stärke ${d.before} → ${now.rating}.`, time: 'Mo 09:00' });
+    else if (diff <= -2) career.week?.chat.splice(1, 0, { from: null, text: `${now.name} (${now.age}) merkt die Jahre – Stärke ${d.before} → ${now.rating}.`, time: 'Mo 09:00' });
+  }
+  return { pos, promoted, relegated, development };
 }
 
 const freshRecord = () => ({ apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 });
@@ -216,7 +265,7 @@ export function startWeek(career) {
     availability[idx] = status;
     chat.push({ from: idx, text, time: time() });
   }
-  career.week = { availability, chat, nudges: NUDGES_PER_WEEK, nudged: [], lineup: null };
+  career.week = { availability, chat, nudges: NUDGES_PER_WEEK, nudged: [], lineup: null, training: null };
   if (career.round === 0 && !career.offers?.length && (career.sponsors?.length ?? 0) < 2) makeOffers(career, career.level ?? 1);
   career.week.rumors = makeRumors(career, createRng(hashSeed(career.seed, career.season, career.round, 3)));
   career.week.actions = SCOUT_ACTIONS;
@@ -271,7 +320,7 @@ export function buildLineup(career, club, format, availability, rng, manual = nu
     if (lineup[i] != null) return;
     const attr = ROLE_ATTR[slot.role];
     const score = (idx) => {
-      const p = poolPlayer(idx);
+      const p = playerOf(career, idx);
       return p.attrs[attr] + (p.position === slot.role ? 0.25 : 0) + p.rating / 400;
     };
     free.sort((a, b) => score(b) - score(a));
@@ -348,6 +397,19 @@ export function scoutRumor(career, i) {
   return true;
 }
 
+// Neuer Spieler kommt in den Kader, die Gruppe erfährt es sofort.
+export function joinSquad(career, idx, text) {
+  const club = humanClub(career);
+  if (club.squad.length >= maxSquad(career) || club.squad.includes(idx)) return false;
+  club.squad.push(idx);
+  career.players[idx] = freshRecord();
+  if (career.week) {
+    career.week.availability[idx] = 'yes';
+    career.week.chat.push({ from: idx, text: `(neu in der Gruppe) ${text}`, time: 'Sa 18:03' });
+  }
+  return true;
+}
+
 export function recruit(career, i) {
   const w = career.week;
   const r = w?.rumors[i];
@@ -361,10 +423,7 @@ export function recruit(career, i) {
     r.status = 'joined';
     r.scouted = true;
     r.reply = rng.pick(JOIN_TEXT);
-    club.squad.push(r.idx);
-    career.players[r.idx] = freshRecord();
-    w.availability[r.idx] = 'yes';
-    w.chat.push({ from: r.idx, text: `(neu in der Gruppe) ${r.reply}`, time: 'Sa 18:03' });
+    joinSquad(career, r.idx, r.reply);
     return 'joined';
   }
   r.status = 'declined';
@@ -469,7 +528,7 @@ export function teamForMatch(career, club, format, availability, rng) {
   const manual = club.human ? career.week?.lineup : null;
   const { lineup, bench, late, helpers } = buildLineup(career, club, format, availability, rng, manual);
   const players = [...lineup, ...bench].map((idx) => {
-    const p = helpers.includes(idx) ? helperOf(career, club, idx) : copyPlayer(poolPlayer(idx));
+    const p = helpers.includes(idx) ? helperOf(career, club, idx) : copyPlayer(playerOf(career, idx));
     if (late.includes(idx)) p.late = true;
     return p;
   });

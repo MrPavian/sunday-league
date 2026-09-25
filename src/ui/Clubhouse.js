@@ -15,13 +15,14 @@ import {
   scoutRumor,
   humanFixture,
   nudge,
-  poolPlayer,
+  playerOf,
   resetLineup,
   setLineupSlot,
   seasonOver,
   table,
 } from '../career/career.js';
 import { acceptSponsor, bookTrip, FINES, KIT_COST, SLOTS, TRIP_COST } from '../career/finances.js';
+import { inviteChance, inviteTrialist, isRawDiamond, MAX_STATIONS, runStation, startTraining, STATIONS, TRAINING_COST, trainingDone } from '../career/training.js';
 import { TRAITS } from '../data/traits.js';
 import { tierById } from '../data/tiers.js';
 import { POSITIONS } from '../sim/generator.js';
@@ -56,6 +57,15 @@ export class Clubhouse {
       } else if (action === 'sponsor') {
         acceptSponsor(this.career, Number(value));
         this.h.onChange();
+      } else if (action === 'training') {
+        startTraining(this.career);
+        this.h.onChange();
+      } else if (action === 'station') {
+        runStation(this.career, value);
+        this.h.onChange();
+      } else if (action === 'invite') {
+        inviteTrialist(this.career, Number(value));
+        this.h.onChange();
       } else if (action === 'trip') {
         bookTrip(this.career);
         this.h.onChange();
@@ -66,7 +76,7 @@ export class Clubhouse {
         recruit(this.career, Number(value));
         this.h.onChange();
       } else if (action === 'release') {
-        const p = poolPlayer(Number(value));
+        const p = this.p(Number(value));
         if (!confirm(`${p.name} wirklich verabschieden?`)) return;
         releasePlayer(this.career, Number(value));
         this.h.onChange();
@@ -99,6 +109,11 @@ export class Clubhouse {
     );
   }
 
+  // Spieler mit aktueller Entwicklung und Alter.
+  p(idx) {
+    return playerOf(this.career, idx);
+  }
+
   show(career, { results = null } = {}) {
     this.career = career;
     this.results = results;
@@ -126,6 +141,7 @@ export class Clubhouse {
       ['squad', 'Kader'],
       ['lineup', 'Aufstellung'],
       ['transfers', 'Transfers'],
+      ['training', 'Training'],
       ['table', 'Tabelle'],
       ['club', 'Verein'],
       ['cash', 'Kasse'],
@@ -238,7 +254,7 @@ export class Clubhouse {
     const bubbles = w.chat
       .map((msg) => {
         if (msg.from === null) return `<div class="bubble me"><b>Du (Trainer)</b>${msg.text}<time>${msg.time}</time></div>`;
-        const p = poolPlayer(msg.from);
+        const p = this.p(msg.from);
         const status = STATUS[w.availability[msg.from]];
         return `<div class="bubble"><b>${p.name}</b>${msg.text}<time>${msg.time}</time>${status ? `<i class="st ${status[1]}"></i>` : ''}</div>`;
       })
@@ -250,7 +266,7 @@ export class Clubhouse {
       <div class="nudge">
         <span>Nachhaken (${w.nudges} übrig):</span>
         ${declined.length && w.nudges > 0 && !this.results
-          ? declined.map((idx) => `<button data-action="nudge" data-value="${idx}">${first(poolPlayer(idx).name)}</button>`).join('')
+          ? declined.map((idx) => `<button data-action="nudge" data-value="${idx}">${first(this.p(idx).name)}</button>`).join('')
           : '<em>niemand</em>'}
       </div>`;
   }
@@ -260,7 +276,7 @@ export class Clubhouse {
     const club = humanClub(c);
     const canRelease = club.squad.length > MIN_SQUAD && !this.results;
     const rows = club.squad
-      .map((idx) => ({ idx, p: poolPlayer(idx), r: c.players[idx] }))
+      .map((idx) => ({ idx, p: this.p(idx), r: c.players[idx] }))
       .sort((a, b) => b.p.rating - a.p.rating)
       .map(({ idx, p, r }) => {
         const tier = tierById(p.tier);
@@ -287,7 +303,7 @@ export class Clubhouse {
     const ROLE = { gk: 'Tor', def: 'Abwehr', mid: 'Mitte', fwd: 'Sturm' };
     const options = club.squad
       .filter((idx) => c.week.availability[idx] === 'yes')
-      .map((idx) => ({ idx, p: poolPlayer(idx) }))
+      .map((idx) => ({ idx, p: this.p(idx) }))
       .sort((a, b) => b.p.rating - a.p.rating);
     const slots = formation
       .map((slot, i) => {
@@ -300,10 +316,10 @@ export class Clubhouse {
       })
       .join('');
     const gkIdx = formation.findIndex((f) => f.role === 'gk');
-    const keeper = lineup[gkIdx] != null ? poolPlayer(lineup[gkIdx]) : null;
+    const keeper = lineup[gkIdx] != null ? this.p(lineup[gkIdx]) : null;
     const keeperNote = keeper && keeper.position !== 'gk' ? `<p class="warn">Kein Torwart da – ${keeper.name.split(' ')[0]} muss ran. Handschuhe liegen im Kofferraum.</p>` : '';
     const benchList = bench.length
-      ? bench.map((idx) => `<li>${poolPlayer(idx).name}${c.week.availability[idx] === 'late' ? ' <em>(kommt zur 2. HZ)</em>' : ''}</li>`).join('')
+      ? bench.map((idx) => `<li>${this.p(idx).name}${c.week.availability[idx] === 'late' ? ' <em>(kommt zur 2. HZ)</em>' : ''}</li>`).join('')
       : '<li><em>niemand</em></li>';
     return `
       <p class="chat-head">${formation.length} gegen ${formation.length} · ${c.week.lineup ? 'eigene Aufstellung' : 'automatisch aufgestellt'}</p>
@@ -321,7 +337,7 @@ export class Clubhouse {
     const full = club.squad.length >= maxSquad(c);
     const cards = w.rumors
       .map((r, i) => {
-        const p = poolPlayer(r.idx);
+        const p = this.p(r.idx);
         const tier = tierById(p.tier);
         const known = r.scouted;
         const badge = known ? `<span class="badge" style="--c:${tier.color}">${tier.name}</span>` : '<span class="badge unknown">?</span>';
@@ -393,6 +409,47 @@ export class Clubhouse {
       </div>`;
   }
 
+  tab_training() {
+    const c = this.career;
+    const w = c.week;
+    if (!w || this.results) return '<p class="empty">Das nächste Open Training gibt es nach dem Wochenstart.</p>';
+    const tr = w.training;
+    if (!tr)
+      return `
+        <p>Einmal pro Woche kannst du ein <b>Open Training</b> ausrichten: Aushang beim Bäcker, ein paar Hütchen, Bälle aufpumpen.
+        Es kommen sechs Leute aus der Region, die noch keinen Verein haben – meist Hobbykicker, manchmal aber ein <b>Rohdiamant</b>.</p>
+        <p>Du baust <b>${MAX_STATIONS} von ${Object.keys(STATIONS).length} Stationen</b> auf. Die Messwerte musst du selbst deuten – danach darfst du zwei Leute einladen.</p>
+        <button class="primary" data-action="training" ${c.cash < TRAINING_COST ? 'disabled' : ''}>Open Training ausrichten (${TRAINING_COST} €)</button>`;
+    const done = trainingDone(c);
+    const stationButtons = Object.entries(STATIONS)
+      .map(([id, st]) => `<button data-action="station" data-value="${id}" class="${tr.stations.includes(id) ? 'active' : ''}" ${tr.stations.includes(id) || done ? 'disabled' : ''}>${st.name}</button>`)
+      .join('');
+    const best = {};
+    for (const id of tr.stations) {
+      const vals = tr.trialists.map((t) => Number(t.results[id]));
+      best[id] = STATIONS[id].better === 'low' ? Math.min(...vals) : Math.max(...vals);
+    }
+    const rows = tr.trialists
+      .map((t, i) => {
+        const p = this.p(t.idx);
+        const diamond = done && isRawDiamond(p);
+        const cells = tr.stations.map((id) => `<td class="num ${Number(t.results[id]) === best[id] ? 'best' : ''}">${t.results[id]}</td>`).join('');
+        let action = '';
+        if (t.status === 'joined') action = `<span class="reply ok">„${t.reply}"</span>`;
+        else if (t.status === 'declined') action = `<span class="reply no">„${t.reply}"</span>`;
+        else if (done) action = `<button class="primary tiny" data-action="invite" data-value="${i}" ${tr.invites <= 0 ? 'disabled' : ''}>Einladen (~${Math.round(inviteChance(c, t) * 100)} %)</button>`;
+        return `<tr>
+          <td><b>${p.name}</b>${diamond ? ' <span class="diamond">Rohdiamant</span>' : ''}<small>${p.age} J. · ${p.profession} · ${POSITIONS[p.position]}</small>
+            ${t.notes.length ? `<small class="note">${[...new Set(t.notes)].join(' · ')}</small>` : ''}</td>
+          ${cells}<td>${action}</td></tr>`;
+      })
+      .join('');
+    return `
+      <p class="chat-head">Stationen ${tr.stations.length}/${MAX_STATIONS}${done ? ` · noch ${tr.invites} Einladung${tr.invites === 1 ? '' : 'en'}` : ' · wähle, was du sehen willst'}</p>
+      <div class="stations">${stationButtons}</div>
+      <table class="squad training"><thead><tr><th>Teilnehmer</th>${tr.stations.map((id) => `<th class="num">${STATIONS[id].name}<small>${STATIONS[id].unit}</small></th>`).join('')}<th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
   tab_cash() {
     const c = this.career;
     const club = humanClub(c);
@@ -413,7 +470,7 @@ export class Clubhouse {
       .filter(([idx]) => club.squad.includes(Number(idx)))
       .sort((a, b) => b[1] - a[1])
       .slice(0, 6)
-      .map(([idx, amount]) => `<li>${poolPlayer(Number(idx)).name} <b>${euro(amount)}</b></li>`)
+      .map(([idx, amount]) => `<li>${this.p(Number(idx)).name} <b>${euro(amount)}</b></li>`)
       .join('');
     const ledger = c.ledger
       .slice(-12)

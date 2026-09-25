@@ -407,3 +407,8 @@ body.in-club #hud { display: none; }
 .minus { color: #e07a6f !important; }
 .plus { color: #7fd48b; }
 .plain b { white-space: nowrap; }
+.stations { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.training th small { display: block; opacity: 0.6; font-size: 10px; }
+.training td.best { color: #7fd48b; font-weight: 600; }
+.training .note { color: #e0c070; font-style: italic; }
+.diamond { padding: 0 6px; font-size: 11px; color: #111; background: linear-gradient(90deg, #8fe3ff, #d8b4ff); border: 1px solid #000; text-shadow: none; }
