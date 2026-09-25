@@ -1,4 +1,3 @@
-import { attackDir } from './players.js';
 
 // Aufstellungen in normierten Koordinaten (Anteil von halfLength/halfWidth),
 // damit sie auf jede Spielfeldgröße passen. Werte gelten für Team 0.
@@ -18,7 +17,7 @@ export const FORMATIONS = {
   ],
 };
 
-export function formationSpot(pitch, entry, team) {
-  const s = attackDir(team);
+export function formationSpot(pitch, entry, team, swapped = false) {
+  const s = (team === 0 ? 1 : -1) * (swapped ? -1 : 1);
   return { x: entry.x * pitch.halfLength * s, z: entry.z * pitch.halfWidth * s };
 }

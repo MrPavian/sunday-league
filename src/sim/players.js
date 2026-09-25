@@ -1,10 +1,15 @@
 import { clamp, len } from '../core/math.js';
 
-export const attackDir = (team) => (team === 0 ? 1 : -1);
+// Spielrichtung: Team 0 spielt in der 1. Halbzeit Richtung +x, nach dem
+// Seitenwechsel andersherum.
+export const attackDir = (m, team) => (team === 0 ? 1 : -1) * (m.sidesSwapped ? -1 : 1);
+
+// Welches Team greift auf die Torseite side (+1/-1) an?
+export const teamAttacking = (m, side) => (attackDir(m, 0) === side ? 0 : 1);
 
 export const getPlayer = (m, id) => (id == null ? null : m.players.find((p) => p.id === id));
 
-export const ownGoalX = (m, team) => -attackDir(team) * m.pitch.halfLength;
+export const ownGoalX = (m, team) => -attackDir(m, team) * m.pitch.halfLength;
 
 export function setControlled(m, id) {
   const old = getPlayer(m, m.controlledId);

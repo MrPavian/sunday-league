@@ -142,7 +142,7 @@ function pass(m, p, a, fatigue, fromHands) {
     if (dot < cone) continue;
     let score = dot - d * 0.035 - (t.role === 'gk' ? 0.8 : 0);
     // Flanken sollen in Tornähe landen.
-    if (a.lofted) score -= Math.abs(t.pos.x - attackDir(p.team) * pitch.halfLength) * 0.08;
+    if (a.lofted) score -= Math.abs(t.pos.x - attackDir(m, p.team) * pitch.halfLength) * 0.08;
     for (const o of m.players) {
       if (o.team === p.team) continue;
       if (!a.lofted && distToSegment(o.pos, p.pos, t.pos) < 1.2) score -= 0.6;
@@ -159,7 +159,7 @@ function pass(m, p, a, fatigue, fromHands) {
   if (!target) {
     // Keiner frei? Dann eben nach vorne gebolzt – grob Richtung Tor.
     // Aus der eigenen Hälfte weit nach vorne, in der gegnerischen in die Mitte.
-    const s = attackDir(p.team);
+    const s = attackDir(m, p.team);
     const ownHalf = p.pos.x * s < 0;
     const aim = ownHalf ? { x: s * pitch.halfLength * 0.5, z: 0 } : { x: p.pos.x + s * 4, z: -p.pos.z * 0.5 };
     dir = p.id === m.controlledId ? { ...p.facing } : rotate(norm(aim.x - p.pos.x, aim.z - p.pos.z), rng.gauss() * 0.25);
@@ -192,6 +192,7 @@ function pass(m, p, a, fatigue, fromHands) {
   ball.vel.y = vy;
   ball.vel.z = dir.z * speed;
   p.facing = { x: dir.x, z: dir.z };
+  m.lastPass = { playerId: p.id, team: p.team, time: m.time };
   m.events.push({ type: 'pass', playerId: p.id, targetId: target?.id ?? null, lofted: !!a.lofted });
 }
 
@@ -200,7 +201,7 @@ export function keeperSaves(m) {
   if (ball.holder) return;
   for (const p of m.players) {
     if (p.role !== 'gk' || p.catchCooldown > 0 || p.state !== 'normal') continue;
-    const s = attackDir(p.team);
+    const s = attackDir(m, p.team);
     const goalX = -s * pitch.halfLength;
     if (Math.abs(ball.pos.x - goalX) > 6) continue;
     const reach = 0.85 + 0.75 * p.attrs.keeping; // inkl. Hechtsprung
@@ -210,6 +211,11 @@ export function keeperSaves(m) {
     const towardGoal = ball.vel.x * -s > 0;
     if (bs >= 4 && !towardGoal) continue;
     p.catchCooldown = 0.25;
+    // Hechtsprung, wenn der Ball nicht direkt auf den Mann kommt.
+    if (dist2d(p.pos, ball.pos) > 0.45) {
+      p.diveAnim = 0.5;
+      p.diveSide = Math.sign(ball.pos.z - p.pos.z) || 1;
+    }
     const pCatch = bs < 4 ? 0.97 : clamp(0.3 + 0.6 * p.attrs.keeping - (bs - 8) * 0.03, 0.08, 0.95);
     if (rng.chance(pCatch)) {
       ball.holder = p.id;
@@ -258,7 +264,7 @@ export function headerTouch(m) {
   const skill = clamp(p.attrs.heading + (monster ? 0.2 : 0), 0, 1);
   if (!rng.chance(0.35 + 0.4 * skill)) return; // verpasst – Ball fliegt weiter
 
-  const s = attackDir(p.team);
+  const s = attackDir(m, p.team);
   const goal = { x: s * pitch.halfLength, z: rng.range(-pitch.goalHalfWidth * 0.8, pitch.goalHalfWidth * 0.8) };
   const nearGoal = dist2d(p.pos, goal) < 8;
   let dir = nearGoal ? norm(goal.x - p.pos.x, goal.z - p.pos.z) : norm(s * 0.8 + p.facing.x * 0.2, p.facing.z * 0.5);
@@ -316,6 +322,7 @@ export function dribbleTouch(m) {
   p.kickCooldown = 0.2 + rng.next() * 0.12;
   ball.lastTouch = p.id;
   ball.lastAction = 'dribble';
+  m.events.push({ type: 'touch', playerId: p.id });
   m.lastTouchTeam = p.team;
   if (m.pendingSwitch && p.id === m.pendingSwitch.receiver) setControlled(m, p.id);
 
@@ -340,7 +347,7 @@ export function dribbleTouch(m) {
   if (p.dribbleDir && dir.x * p.facing.x + dir.z * p.facing.z < 0) dir = p.facing;
   // Die KI führt den Ball an der Seitenlinie nach innen statt ins Aus.
   if (pitch.boundary === 'lines' && p.id !== m.controlledId && Math.abs(ball.pos.z) > pitch.halfWidth - 2.5 && dir.z * ball.pos.z > 0) {
-    dir = norm(dir.x || attackDir(p.team), -Math.sign(ball.pos.z) * 0.4);
+    dir = norm(dir.x || attackDir(m, p.team), -Math.sign(ball.pos.z) * 0.4);
   }
   dir = rotate(dir, rng.gauss() * (0.04 + 0.22 * (1 - tech) + 0.1 * fatigue) * calm);
   const touch = speed * 1.25 + 1.0;

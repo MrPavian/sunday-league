@@ -18,7 +18,7 @@ export function ballSpeed(ball) {
 }
 
 // Integrates one step. Returns an event or null:
-//   { type: 'goal', team }            – team = scoring side
+//   { type: 'goal', side }            – side = Torlinie, die überquert wurde (±1)
 //   { type: 'out', line: 'side'|'end', x, z }
 //   { type: 'car', x, z }             – hart gegen ein parkendes Auto
 //   { type: 'post' } / { type: 'bar' }
@@ -63,8 +63,8 @@ export function stepBall(ball, pitch, dt) {
 
   const hl = pitch.halfLength;
   const inMouth = Math.abs(pos.z) < pitch.goalHalfWidth && pos.y < pitch.goalHeight;
-  if (inMouth && prevX < hl && pos.x >= hl) event = { type: 'goal', team: 0 };
-  if (inMouth && prevX > -hl && pos.x <= -hl) event = { type: 'goal', team: 1 };
+  if (inMouth && prevX < hl && pos.x >= hl) event = { type: 'goal', side: 1 };
+  if (inMouth && prevX > -hl && pos.x <= -hl) event = { type: 'goal', side: -1 };
 
   const lines = pitch.boundary === 'lines';
   if (lines && (!event || event.type !== 'goal')) {

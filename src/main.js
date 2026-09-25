@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import '@fontsource/pixelify-sans/400.css';
 import '@fontsource/pixelify-sans/600.css';
+import { Sound } from './audio/Sound.js';
 import { createRng } from './core/rng.js';
 import { Input } from './input/Input.js';
 import { CameraRig } from './render/CameraRig.js';
@@ -10,6 +11,7 @@ import { VENUES, venueById } from './render/venues/index.js';
 import { createMatch, stepMatch } from './sim/match.js';
 import { SURFACES } from './sim/surfaces.js';
 import { Hud } from './ui/Hud.js';
+import { EndScreen } from './ui/EndScreen.js';
 import { Menu } from './ui/Menu.js';
 import { PoolBrowser } from './ui/PoolBrowser.js';
 import './style.css';
@@ -24,6 +26,8 @@ const rig = new CameraRig();
 const scene = new THREE.Scene();
 const input = new Input();
 const hud = new Hud(document.getElementById('hud'));
+const endScreen = new EndScreen(document.getElementById('end'));
+const sound = new Sound();
 
 let venue = null;
 let venueRoot = null;
@@ -45,13 +49,16 @@ function loadVenue(id) {
   venueRoot = new THREE.Group();
   venueInfo = venue.build(venueRoot, pitch, createRng(venue.id.length * 7919), scene);
   scene.add(venueRoot);
+  sound.setVenue(venue.id);
   rig.viewHeight = venueInfo.viewHeight;
   resize();
 }
 
 function startMatch(human) {
+  endScreen.hide();
   view?.dispose();
-  match = createMatch({ seed: seed++, pitch, human });
+  // Testschalter: ?dauer=60 spielt eine Minute statt zehn.
+  match = createMatch({ seed: seed++, pitch, human, duration: Number(params.get('dauer')) || undefined });
   view = new MatchView(scene, match);
   hud.init(match);
 }
@@ -78,6 +85,7 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
 
 function openMenu() {
   mode = 'menu';
+  endScreen.hide();
   document.body.classList.add('in-menu');
   menu.show(venue?.id ?? params.get('venue') ?? 'parkplatz');
 }
@@ -106,6 +114,7 @@ function frame(now) {
     const intent = mode === 'play' ? input.poll() : (input.poll(), undefined);
     if (mode === 'play') {
       if (intent.help) hud.toggleHelp();
+      if (intent.mute) hud.toast(sound.toggleMute() ? 'Ton aus' : 'Ton an', 1);
       if (intent.menu) openMenu();
       else if (match.phase === 'ended' && intent.restart) startMatch(true);
     } else if (match.phase === 'ended') {
@@ -113,11 +122,17 @@ function frame(now) {
     }
     stepMatch(match, intent, STEP);
     hud.handleEvents(match);
+    if (mode === 'play') sound.handle(match, rig.target.x);
+    if (mode === 'play' && match.events.some((e) => e.type === 'end')) {
+      const ended = match;
+      setTimeout(() => ended === match && mode === 'play' && endScreen.show(ended), 1200);
+    }
     match.events.length = 0;
     acc -= STEP;
   }
   view.sync(match, dt);
   hud.update(match, dt);
+  sound.update(dt);
   rig.follow(match.ball.pos.x, match.ball.pos.z, dt, venueInfo.bounds);
   pixel.render(scene, rig.camera);
   requestAnimationFrame(frame);

@@ -18,7 +18,7 @@ export function updateTactics(m, dt) {
   m.tactics = {};
 
   for (let team = 0; team < 2; team++) {
-    const s = attackDir(team);
+    const s = attackDir(m, team);
     const ownGoal = { x: -s * pitch.halfLength, z: 0 };
     const pool = m.players
       .filter((p) => p.team === team && p.role !== 'gk' && p.id !== m.controlledId)
@@ -70,7 +70,7 @@ function supportSpot(m, p, dt) {
   p.supportTimer = (p.supportTimer ?? 0) - dt;
   if (p.supportSpot && p.supportTimer > 0) return p.supportSpot;
 
-  const s = attackDir(p.team);
+  const s = attackDir(m, p.team);
   // Mit Auslinien nicht direkt an der Linie anbieten.
   const margin = pitch.boundary === 'lines' ? 2.5 : 1.2;
   const base = clampToPitch(pitch, p.home.x * 0.5 + ball.pos.x * 0.7 + s * 2.5, p.home.z + ball.pos.z * 0.3, margin);
@@ -101,7 +101,7 @@ function supportSpot(m, p, dt) {
 
 export function outfieldIntent(m, p, dt) {
   const { ball, pitch } = m;
-  const s = attackDir(p.team);
+  const s = attackDir(m, p.team);
   const oppGoal = { x: s * pitch.halfLength, z: 0 };
 
   if (ball.holder === p.id) {
@@ -209,7 +209,7 @@ function chooseTackle(m, p, dBall) {
 
 export function keeperIntent(m, p, dt) {
   const { ball, pitch } = m;
-  const s = attackDir(p.team);
+  const s = attackDir(m, p.team);
   const goalX = -s * pitch.halfLength;
   const gw = pitch.goalHalfWidth;
   p.dribbleDir = { x: s, z: 0 };

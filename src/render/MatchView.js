@@ -1,20 +1,33 @@
 import * as THREE from 'three';
 import { len } from '../core/math.js';
 import { BALL_RADIUS } from '../sim/ball.js';
+import { allPlayers } from '../sim/squad.js';
 import { BALL_VISUAL_RADIUS, createBallModel, rollBall } from './BallModel.js';
 import { animatePlayer, createPlayerModel } from './PlayerModel.js';
 
-// Überträgt den Simulationszustand auf die 3D-Modelle.
+const CELEBRATIONS = ['flugzeug', 'faust', 'tanz', 'rutscher'];
+
+// Jeder Spieler hat "seinen" Jubel – fest an der ID, damit er wiedererkennbar ist.
+function celebrationFor(id) {
+  let h = 0;
+  for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return CELEBRATIONS[h % CELEBRATIONS.length];
+}
+
+// Überträgt den Simulationszustand auf die 3D-Modelle. Auch Ersatzspieler
+// bekommen ein Modell – sichtbar ist nur, wer auf dem Platz steht.
 export class MatchView {
   constructor(scene, match) {
     this.scene = scene;
     this.root = new THREE.Group();
     scene.add(this.root);
     this.models = new Map();
-    for (const p of match.players) {
+    this.softGround = !match.pitch.surface.hard;
+    for (const p of allPlayers(match)) {
       const team = match.teams[p.team];
       const kit = p.role === 'gk' ? team.keeperKit : team.kit;
       const model = createPlayerModel(p.look, kit);
+      model.celebration = celebrationFor(p.id);
       this.models.set(p.id, model);
       this.root.add(model.group);
     }
@@ -37,18 +50,27 @@ export class MatchView {
 
   sync(match, dt) {
     this.time += dt;
+    for (const model of this.models.values()) model.group.visible = false;
     for (const p of match.players) {
       const m = this.models.get(p.id);
+      m.group.visible = true;
       m.group.position.set(p.pos.x, 0, p.pos.z);
       m.group.rotation.y = Math.atan2(p.facing.x, p.facing.z);
+      let celebrate = null;
+      if (p.mood === 'scorer' || p.mood === 'celebrate') {
+        celebrate = m.celebration === 'rutscher' && !this.softGround ? 'flugzeug' : m.celebration;
+      }
       animatePlayer(m, {
         speed: len(p.vel.x, p.vel.z),
         dt,
         kickAnim: p.kickAnim,
-        holding: match.ball.holder === p.id ? (p.role === 'gk' ? 'chest' : 'overhead') : null,
         headAnim: p.headAnim,
+        holding: match.ball.holder === p.id ? (p.role === 'gk' ? 'chest' : 'overhead') : null,
         state: p.state,
         injured: !!p.injury,
+        dive: p.diveAnim > 0 ? { t: p.diveAnim, side: p.diveSide * (p.facing.x > 0 ? 1 : -1) } : null,
+        celebrate,
+        sad: p.mood === 'sad',
       });
     }
     const b = match.ball;

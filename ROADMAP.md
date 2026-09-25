@@ -1,7 +1,7 @@
 # Sunday League – Game Design, Featureliste & Roadmap
 
 > Arbeitstitel: **Sunday League** (Alternativen: *Kreisklasse*, *Asche & Ehre*, *Dritte Halbzeit*)
-> Status: Phase 1 weitgehend abgeschlossen · Stand: 2026-09-25
+> Status: Match rund, als Nächstes Saison-Minimalversion · Stand: 2026-09-25
 
 ---
 
@@ -422,7 +422,8 @@ Gleichzeitig hat das Match noch Lücken, die man beim Spielen sofort merkt.
 
 ### 8.6 Vorschlag für die Reihenfolge
 
-1. **Match-Abrundung**: Sound, Halbzeit/Endscreen mit Noten, Auswechslungen, Keeper- und Jubel-Animationen
+1. ~~**Match-Abrundung**~~ ✅ Sound (synthetisch, je Platz eigene Kulisse), Halbzeit mit Seitenwechsel, Endscreen im
+   Kreisblatt-Stil mit Noten/Statistik/Schlagzeile, rollende Wechsel mit Ersatzbank, Hechtsprung, 4 Jubelvarianten
 2. **Saison-Minimalversion**: Speichern, Kader, Chatgruppe, Spielplan, Tabelle, simulierte Spiele
 3. **Verein**: Trikot-Editor, Sponsoren, Mannschaftskasse & Strafenkatalog
 4. **Transfers & Scouting**: Open Training, Bolzplatz-Scouting

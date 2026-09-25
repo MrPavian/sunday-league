@@ -30,7 +30,7 @@ npm run build    # Produktions-Build nach dist/
 ```
 
 `?seed=123` in der URL erzeugt reproduzierbar dieselben Teams und denselben Spielverlauf.
-`?venue=hinterhof|parkplatz|park|ascheplatz` überspringt die Platzwahl.
+`?venue=hinterhof|parkplatz|park|ascheplatz` überspringt die Platzwahl, `?dauer=60` spielt ein Kurzspiel (Sekunden).
 `?surface=grass` (bzw. `ash`, `artificial`) spielt den Parkplatz testweise mit anderer Untergrund-Physik.
 
 ## Steuerung (Prototyp)
@@ -46,6 +46,8 @@ npm run build    # Produktions-Build nach dist/
 | Grätsche erzwingen (Schürfwunden-Gefahr!) | Shift + L | RB + Y |
 | Spieler wechseln | Q / L | LB |
 | Hilfe ein/aus | H | – |
+| Auswechseln (beim nächsten Stopp) | U | Back |
+| Ton an/aus | N | – |
 | Zurück zur Platzwahl | Esc / M | – |
 | Spielerpool (im Menü) | P | – |
 | Revanche nach Abpfiff | Enter | – |

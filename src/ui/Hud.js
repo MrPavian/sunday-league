@@ -1,9 +1,13 @@
 import { TRAITS } from '../data/traits.js';
 import { tierById } from '../data/tiers.js';
 import { POSITIONS } from '../sim/generator.js';
+import { findAnyPlayer } from '../sim/squad.js';
 import { getPlayer } from '../sim/match.js';
 
 const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
+
+// Anzeige in "Fußballminuten": die Spielzeit wird auf 90 Minuten hochgerechnet.
+export const matchMinute = (match, t) => Math.min(90, Math.floor((t / match.duration) * 90) + 1);
 
 export class Hud {
   constructor(root) {
@@ -27,7 +31,7 @@ export class Hud {
       </div>
       <div class="help">
         <b>WASD/Pfeile</b> laufen · <b>Shift</b> sprinten · <b>Leertaste</b> halten = Schuss ·
-        <b>J</b> Pass (Shift+J hoch) · <b>L</b> Zweikampf (Shift+L Grätsche) · <b>Q</b> Spieler wechseln · <b>H</b> Hilfe
+        <b>J</b> Pass (Shift+J hoch) · <b>L</b> Zweikampf (Shift+L Grätsche) · <b>Q</b> Spieler wechseln · <b>U</b> Auswechseln · <b>N</b> Ton · <b>H</b> Hilfe
       </div>`;
     this.root = root;
     this.$ = (sel) => root.querySelector(sel);
@@ -67,15 +71,15 @@ export class Hud {
   handleEvents(match) {
     const short = (team) => match.teams[team].short;
     for (const e of match.events) {
-      const p = e.playerId && getPlayer(match, e.playerId);
+      const p = e.playerId && findAnyPlayer(match, e.playerId);
       const first = p ? p.name.split(' ')[0] : '';
       if (e.type === 'goal') {
-        const scorer = e.scorerId && getPlayer(match, e.scorerId);
+        const scorer = e.scorerId && findAnyPlayer(match, e.scorerId);
         const kind = e.ownGoal ? 'EIGENTOR!' : e.via === 'header' ? 'KOPFBALLTOR!' : 'TOR!';
         this.toast(`${kind} ${scorer?.name ?? ''}`, 2.4, 3);
       } else if (e.type === 'whiff') this.toast(`Luftloch von ${first}!`, 1.4);
       else if (e.type === 'foul') {
-        const victim = getPlayer(match, e.victimId);
+        const victim = findAnyPlayer(match, e.victimId);
         this.toast(`Foul von ${first}! Freistoß für ${short(victim.team)}`, 1.8, 2);
       } else if (e.type === 'car') this.toast(`Ans Auto, ${first}! Ball für ${short(e.team)}`, 1.8, 2);
       else if (e.type === 'out') {
@@ -89,17 +93,20 @@ export class Hud {
       else if (e.type === 'scrape') this.toast(`Autsch! ${e.label} für ${first}`, 1.8);
       else if (e.type === 'save') this.toast(`${first} pariert!`, 1.2);
       else if (e.type === 'miscontrol') this.toast(`Verspringt ${first}…`, 1);
-      else if (e.type === 'end') this.toast('ABPFIFF – Enter: Revanche · M: anderer Platz', 999, 9);
+      else if (e.type === 'halftime') this.toast(`HALBZEIT ${match.score[0]}:${match.score[1]} – Seitenwechsel`, 3, 4);
+      else if (e.type === 'sub_requested') this.toast('Wechsel angemeldet – beim nächsten Stopp', 1.4, 2);
+      else if (e.type === 'sub') {
+        const out = findAnyPlayer(match, e.outId);
+        const inn = findAnyPlayer(match, e.inId);
+        this.toast(`Wechsel ${short(e.team)}: ${inn.name.split(' ')[0]} für ${out.name.split(' ')[0]}`, 1.6, 2);
+      } else if (e.type === 'end') this.toast('ABPFIFF', 2, 9);
     }
   }
 
   update(match, dt) {
     const [a, b] = match.score;
     this.$('.score').textContent = `${a} : ${b}`;
-    const t = Math.min(match.time, match.duration);
-    const mm = String(Math.floor(t / 60)).padStart(2, '0');
-    const ss = String(Math.floor(t % 60)).padStart(2, '0');
-    this.$('.clock').textContent = `${mm}:${ss}`;
+    this.$('.clock').textContent = `${match.half}. HZ · ${matchMinute(match, match.time)}'`;
 
     if (this.toastTimer > 0 && (this.toastTimer -= dt) <= 0) this.hideToast();
 

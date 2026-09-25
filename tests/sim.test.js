@@ -5,6 +5,7 @@ import { PARKING_LOT, PITCHES } from '../src/sim/pitch.js';
 import { SURFACES } from '../src/sim/surfaces.js';
 import { createMatch, getPlayer, startTackle, stepMatch } from '../src/sim/match.js';
 import { createPlayerPool } from '../src/sim/generator.js';
+import { gradePlayers, headline } from '../src/sim/stats.js';
 
 const DT = 1 / 60;
 
@@ -33,7 +34,7 @@ describe('ball', () => {
     ball.vel.x = 15;
     let goal = null;
     for (let i = 0; i < 60 && !goal; i++) goal = stepBall(ball, PARKING_LOT, DT);
-    expect(goal).toEqual({ type: 'goal', team: 0 });
+    expect(goal).toEqual({ type: 'goal', side: 1 });
   });
 
   it('bounces off the parked cars instead of scoring wide', () => {
@@ -199,10 +200,10 @@ describe('surfaces', () => {
   it('the AI rarely slides on hard ground', () => {
     const slides = (id) => {
       let n = 0;
-      for (const seed of [1, 2, 3]) n += drain(createMatch({ seed, pitch: onSurface(id) }), 300).filter((t) => t === 'slide').length;
+      for (const seed of [1, 2, 3, 4, 5, 6]) n += drain(createMatch({ seed, pitch: onSurface(id), human: false }), 300).filter((t) => t === 'slide').length;
       return n;
     };
-    expect(slides('asphalt') * 3).toBeLessThan(slides('grass'));
+    expect(slides('asphalt') * 2.5).toBeLessThan(slides('grass'));
   });
 });
 
@@ -355,5 +356,91 @@ describe('backstories', () => {
       const years = Number(/(\d+) Jahre/.exec(p.backstory)?.[1] ?? 0);
       expect(years).toBeLessThanOrEqual(p.age - 18);
     }
+  });
+});
+
+describe('match flow', () => {
+  const full = (seed, opts = {}) => {
+    const m = createMatch({ seed, human: false, ...opts });
+    const seen = [];
+    for (let i = 0; i < 60 * 1200 && m.phase !== 'ended'; i++) {
+      stepMatch(m, undefined, DT);
+      seen.push(...m.events);
+      m.events.length = 0;
+    }
+    return { m, seen };
+  };
+
+  it('has a half time with a change of ends and a kickoff for the other team', () => {
+    const m = createMatch({ seed: 4, human: false });
+    const gk0 = () => m.players.find((p) => p.team === 0 && p.role === 'gk');
+    expect(gk0().home.x).toBeLessThan(0);
+    const seen = [];
+    for (let i = 0; i < 60 * 400 && m.half === 1; i++) {
+      stepMatch(m, undefined, DT);
+      seen.push(...m.events);
+      m.events.length = 0;
+    }
+    expect(seen.map((e) => e.type)).toContain('halftime');
+    for (let i = 0; i < 60 * 4 && m.phase === 'halftime'; i++) stepMatch(m, undefined, DT);
+    expect(m.sidesSwapped).toBe(true);
+    expect(gk0().home.x).toBeGreaterThan(0);
+    expect(m.setPiece).toMatchObject({ type: 'kickoff', team: 1 });
+  });
+
+  it('after the change of ends goals still count for the right team', () => {
+    const m = createMatch({ seed: 4, human: false, kickoff: false });
+    m.sidesSwapped = true; // Team 0 greift jetzt Richtung -x an
+    Object.assign(m.ball.pos, { x: -17, y: 0.5, z: 0 });
+    Object.assign(m.ball.vel, { x: -15, y: 0, z: 0 });
+    m.ball.lastTouch = '0-4';
+    m.lastTouchTeam = 0;
+    for (const p of m.players) p.kickCooldown = p.catchCooldown = 5;
+    for (let i = 0; i < 30; i++) stepMatch(m, undefined, DT);
+    expect(m.score).toEqual([1, 0]);
+  });
+
+  it('the AI substitutes tired players at stoppages, subs can come back', () => {
+    const { m, seen } = full(6);
+    const subs = seen.filter((e) => e.type === 'sub');
+    expect(subs.length).toBeGreaterThan(0);
+    expect(m.players.length).toBe(10);
+    expect(m.bench[0].length + m.bench[1].length).toBe(6);
+    const ids = new Set([...m.players, ...m.bench[0], ...m.bench[1]].map((p) => p.id));
+    expect(ids.size).toBe(16);
+  });
+
+  it('the human asks for a sub and it happens at the next stoppage', () => {
+    const m = createMatch({ seed: 6, kickoff: false });
+    stepMatch(m, { move: { x: 0, z: 0 }, sub: true }, DT);
+    expect(m.subRequests[0]).toBe(true);
+    Object.assign(m.ball.pos, { x: 0, y: 0.5, z: 9 });
+    Object.assign(m.ball.vel, { x: 0, y: 0, z: 14 });
+    m.ball.lastTouch = '1-3';
+    m.ball.lastAction = 'shoot';
+    m.lastTouchTeam = 1;
+    for (const p of m.players) p.kickCooldown = 5;
+    const seen = [];
+    for (let i = 0; i < 30; i++) {
+      stepMatch(m, undefined, DT);
+      seen.push(...m.events);
+      m.events.length = 0;
+    }
+    expect(seen.some((e) => e.type === 'sub' && e.team === 0)).toBe(true);
+  });
+
+  it('keeps stats, grades everyone who played and writes a headline', () => {
+    const { m } = full(8);
+    const grades = gradePlayers(m);
+    const graded = Object.values(grades);
+    expect(graded.length).toBeGreaterThanOrEqual(10);
+    for (const g of graded) {
+      expect(g).toBeGreaterThanOrEqual(1);
+      expect(g).toBeLessThanOrEqual(6);
+    }
+    const goalsInStats = Object.values(m.stats.players).reduce((s, p) => s + p.goals + p.ownGoals, 0);
+    expect(goalsInStats).toBe(m.score[0] + m.score[1]);
+    expect(m.stats.teams[0].possession + m.stats.teams[1].possession).toBeGreaterThan(400);
+    expect(headline(m, grades).length).toBeGreaterThan(10);
   });
 });

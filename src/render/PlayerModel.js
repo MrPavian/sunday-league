@@ -67,7 +67,7 @@ export function createPlayerModel(look, kit) {
 }
 
 // Prozedurale Animation: Laufzyklus, Schuss, Torwart hält den Ball.
-export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured }) {
+export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad }) {
   const s = Math.min(1, speed / 6);
   model.phase += dt * (3 + speed * 1.7);
   const swing = Math.sin(model.phase) * 0.9 * s;
@@ -78,7 +78,9 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
   armL.rotation.x = -swing * 0.8;
   armR.rotation.x = swing * 0.8;
   model.body.position.y = Math.abs(Math.sin(model.phase)) * 0.05 * s;
+  model.body.position.x = 0;
   model.body.rotation.x = s * 0.12;
+  armL.rotation.z = armR.rotation.z = 0;
   // Mit Schürfwunde humpelt man ein bisschen.
   model.body.rotation.z = injured ? Math.sin(model.phase) * 0.07 * s : 0;
   model.plaster.visible = injured;
@@ -119,5 +121,42 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
     model.body.position.y = 0.12;
     legL.rotation.x = legR.rotation.x = 0.1;
     armL.rotation.x = armR.rotation.x = -2.6;
+  }
+  // Hechtsprung des Torwarts: seitlich flach in die Ecke.
+  if (dive) {
+    const k = Math.sin(Math.min(1, (0.5 - dive.t) / 0.2) * Math.PI * 0.5);
+    model.body.rotation.z = dive.side * 1.35 * k;
+    model.body.position.x = -dive.side * 0.55 * k;
+    model.body.position.y = 0.25 * k;
+    armL.rotation.x = armR.rotation.x = -2.9;
+  }
+
+  // Torjubel – jeder hat seinen eigenen.
+  if (celebrate) {
+    const t = model.phase;
+    if (celebrate === 'flugzeug') {
+      armL.rotation.z = -1.45;
+      armR.rotation.z = 1.45;
+      model.body.rotation.z = Math.sin(t * 0.8) * 0.25;
+    } else if (celebrate === 'faust') {
+      armR.rotation.x = -2.6 + Math.sin(t * 3) * 0.4;
+    } else if (celebrate === 'tanz') {
+      armL.rotation.x = -2.5 + Math.sin(t * 4) * 0.8;
+      armR.rotation.x = -2.5 - Math.sin(t * 4) * 0.8;
+      model.body.position.y = Math.abs(Math.sin(t * 4)) * 0.12;
+    } else if (celebrate === 'rutscher' && speed > 1.5) {
+      // Knierutscher auf Rasen: auf die Knie, Oberkörper zurück, Arme hoch.
+      model.body.position.y = -0.38;
+      model.body.rotation.x = -0.35;
+      legL.rotation.x = legR.rotation.x = -1.4;
+      armL.rotation.x = armR.rotation.x = -2.8;
+    } else if (celebrate === 'rutscher') {
+      armL.rotation.x = armR.rotation.x = -2.8;
+    }
+  } else if (sad) {
+    // Gegentor: Kopf runter, Hände in die Hüften.
+    model.body.rotation.x = 0.14;
+    armL.rotation.z = 0.5;
+    armR.rotation.z = -0.5;
   }
 }

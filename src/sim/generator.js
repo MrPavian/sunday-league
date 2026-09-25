@@ -14,7 +14,7 @@ export const HOBBY_TIER_WEIGHTS = { ok: 0.62, gut: 0.28, stark: 0.08, dorfstar: 
 
 // Schwerpunkte je Position (Aufschlag auf die Grundwerte).
 const FOCUS = {
-  gk: { keeping: 0.12, passing: -0.05, shooting: -0.1 },
+  gk: { keeping: 0.2, passing: -0.05, shooting: -0.1 },
   def: { tackling: 0.08, heading: 0.07, shooting: -0.05 },
   mid: { passing: 0.07, stamina: 0.06, technique: 0.03 },
   fwd: { shooting: 0.08, pace: 0.05, tackling: -0.08 },

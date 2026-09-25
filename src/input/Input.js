@@ -9,6 +9,8 @@ const KEYS = {
   pass: ['KeyJ', 'KeyE'],
   tackle: ['KeyL', 'ControlLeft'],
   switchPlayer: ['KeyQ'],
+  sub: ['KeyU'],
+  mute: ['KeyN'],
   restart: ['Enter'],
   menu: ['Escape', 'KeyM'],
   help: ['KeyH'],
@@ -48,6 +50,8 @@ export class Input {
     let pass = this.wasPressed('pass');
     let tackle = this.wasPressed('tackle');
     let switchPlayer = this.wasPressed('switchPlayer');
+    let sub = this.wasPressed('sub');
+    const mute = this.wasPressed('mute');
     const restart = this.wasPressed('restart');
     const menu = this.wasPressed('menu');
     const help = this.wasPressed('help');
@@ -65,6 +69,7 @@ export class Input {
       pass ||= edge(0); // A
       tackle ||= edge(3); // Y
       switchPlayer ||= edge(4); // LB
+      sub ||= edge(8); // Back/Select
       sprint ||= b(5) || b(7); // RB / RT
       this.padPrev = pad.buttons.map((btn) => btn.pressed);
     }
@@ -75,6 +80,6 @@ export class Input {
       x /= l;
       z /= l;
     }
-    return { move: { x, z }, sprint, shootHeld, pass, tackle, switchPlayer, restart, menu, help };
+    return { move: { x, z }, sprint, shootHeld, pass, tackle, switchPlayer, sub, restart, menu, mute, help };
   }
 }

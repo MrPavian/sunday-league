@@ -2,27 +2,31 @@
 // Ohne Schiri gelten die Hobbyregeln: Wer gefoult wurde, legt sich den Ball
 // hin; wer ans Auto schießt, gibt den Ball ab.
 import { clamp, dist2d, len, norm } from '../core/math.js';
-import { attackDir, clampToPitch, getPlayer, setControlled } from './players.js';
+import { attackDir, clampToPitch, getPlayer, setControlled, teamAttacking } from './players.js';
+import { processSubs } from './squad.js';
 
 const FREEZE = { kickoff: 0.8, freekick: 1.3, throwin: 1.0, corner: 1.3, goalkick: 1.0 };
 const DISTANCE = 3.5;
 
 export function startSetPiece(m, { type, team, spot = { x: 0, z: 0 }, takerId = null }) {
   const { ball, pitch } = m;
-  const s = attackDir(team);
+  const s = attackDir(m, team);
+  processSubs(m); // Wechsel nur bei Unterbrechungen
 
   if (type === 'kickoff') {
     for (const p of m.players) {
       p.pos.x = p.home.x;
       p.pos.z = p.home.z;
-      p.facing = { x: attackDir(p.team), z: 0 };
+      p.facing = { x: attackDir(m, p.team), z: 0 };
       p.state = 'normal';
       p.stateTimer = 0;
       p.complainNext = null;
+      p.mood = null;
     }
   }
 
-  const taker = takerId ? getPlayer(m, takerId) : pickTaker(m, type, team, spot);
+  // Der vorgesehene Schütze kann gerade ausgewechselt worden sein.
+  const taker = (takerId && getPlayer(m, takerId)) || pickTaker(m, type, team, spot);
   const toGoal = norm(s * pitch.halfLength - spot.x, -spot.z);
 
   ball.pos.x = spot.x;
@@ -104,8 +108,7 @@ export function restartFromOut(m, ev) {
     m.events.push({ type: 'out', restart: 'throwin', team: other });
     return;
   }
-  // Das Tor bei x < 0 verteidigt Team 0.
-  const defending = ev.x < 0 ? 0 : 1;
+  const defending = 1 - teamAttacking(m, Math.sign(ev.x));
   const attacking = 1 - defending;
   const sx = Math.sign(ev.x);
   if (lastTeam === defending) {
