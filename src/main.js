@@ -26,6 +26,7 @@ import { CameraRig } from './render/CameraRig.js';
 import { MatchView } from './render/MatchView.js';
 import { PixelRenderer } from './render/PixelRenderer.js';
 import { setLightMood } from './render/props.js';
+import { disposeTree, mergeStatic } from './render/merge.js';
 import { VENUES, venueById } from './render/venues/index.js';
 import { createMatch, stepMatch } from './sim/match.js';
 import { SURFACES } from './sim/surfaces.js';
@@ -69,6 +70,8 @@ try {
 }
 const rig = new CameraRig();
 const scene = new THREE.Scene();
+// ?debug: Renderer und Szene für die Browser-Konsole (Draw Calls, Speicher).
+if (params.has('debug')) globalThis.__sl = { renderer: pixel.renderer, scene, THREE };
 const input = new Input();
 const hud = new Hud(document.getElementById('hud'));
 const endScreen = new EndScreen(document.getElementById('end'));
@@ -109,13 +112,15 @@ function loadVenue(id) {
   venue = venueById(id);
   if (venueRoot) {
     scene.remove(venueRoot);
-    venueRoot.traverse((o) => o.geometry?.dispose());
+    disposeTree(venueRoot);
   }
   // Testschalter: ?surface=grass|ash|… spielt den Platz mit anderer Physik.
   pitch = { ...venue.pitch, surface: SURFACES[params.get('surface')] ?? venue.pitch.surface };
   venueRoot = new THREE.Group();
   lightMood = null;
   venueInfo = venue.build(venueRoot, pitch, createRng(venue.id.length * 7919), scene);
+  // Statische Kulisse zu wenigen Meshes verschmelzen (?nomerge zum Vergleichen).
+  if (!params.has('nomerge')) mergeStatic(venueRoot);
   scene.add(venueRoot);
   sound.setVenue(venue.id);
   rig.viewHeight = venueInfo.viewHeight;

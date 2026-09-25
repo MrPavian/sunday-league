@@ -1,11 +1,39 @@
 import * as THREE from 'three';
-import { kitMaterial, toon } from './materials.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { kitMaterial, toon, vertexToon } from './materials.js';
 
 function part(w, h, d, mat, x, y, z) {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
   mesh.position.set(x, y, z);
   mesh.castShadow = true;
   return mesh;
+}
+
+// Alle einfarbigen Boxen eines starren Körperteils (Bein, Arm, Rumpf mit Kopf)
+// zu einem Mesh mit Eckfarben backen. Texturierte Teile (Trikotmuster) und das
+// Pflaster, das ein- und ausgeblendet wird, bleiben eigene Meshes.
+function bake(node, skip) {
+  const parts = node.children.filter((c) => c.isMesh && !c.material.map && c !== skip);
+  if (parts.length < 2) return;
+  const geos = parts.map((m) => {
+    m.updateMatrix(); // Position steht sonst erst beim Rendern in der Matrix
+    const g = m.geometry.toNonIndexed();
+    g.applyMatrix4(m.matrix);
+    const n = g.attributes.position.count;
+    const col = new Float32Array(n * 3);
+    const { r, g: gr, b } = m.material.color;
+    for (let i = 0; i < n; i++) col.set([r, gr, b], i * 3);
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    return g;
+  });
+  const mesh = new THREE.Mesh(mergeGeometries(geos, false), vertexToon());
+  mesh.castShadow = true;
+  for (const g of geos) g.dispose();
+  for (const m of parts) {
+    node.remove(m);
+    m.geometry.dispose();
+  }
+  node.add(mesh);
 }
 
 // Low-Poly-Normalo aus Quadern. Bauch, Glatze, Bart und Größe kommen aus dem
@@ -62,6 +90,8 @@ export function createPlayerModel(look, kit) {
     body.add(part(0.28, 0.16, 0.06, hair, 0, 1.7, -0.13));
   }
   if (look.beard) body.add(part(0.24, 0.1, 0.06, hair, 0, 1.53, 0.12));
+
+  for (const node of [body, ...legs, ...arms]) bake(node, plaster);
 
   return { group, body, legs, arms, plaster, phase: Math.random() * 6 };
 }

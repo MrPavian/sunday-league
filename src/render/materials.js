@@ -17,6 +17,14 @@ export function toon(color, { map = null } = {}) {
   return mat;
 }
 
+// Ein Material für alle einfarbigen Teile: Die Farbe steckt in den Ecken (vertex
+// colors). So lassen sich viele Boxen zu einem Mesh backen – ein Draw Call statt zwanzig.
+let vertexMat = null;
+export function vertexToon() {
+  vertexMat ??= new THREE.MeshToonMaterial({ color: 0xffffff, vertexColors: true, gradientMap: gradient });
+  return vertexMat;
+}
+
 export function pixelTexture(canvas) {
   const tex = new THREE.CanvasTexture(canvas);
   tex.magFilter = THREE.NearestFilter;
