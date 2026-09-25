@@ -1,5 +1,6 @@
 // Vereinsleben: Ereignisse in der Chatgruppe mit Entscheidungen und Folgen,
 // Teamstimmung, Tagesform und mehrwöchige Geschichten.
+import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { book } from './finances.js';
 import { getPool, humanClub, joinSquad, playerOf, releasePlayer } from './career.js';
@@ -27,6 +28,9 @@ export const mood = (career) => career.mood ?? 0;
 export function adjustMood(career, d) {
   career.mood = clamp1(mood(career) + d);
 }
+// Anzeige der Stimmung (moodLabel bleibt der interne Schlüssel, z. B. für CSS-Klassen).
+export const moodText = (v) => tr({ super: 'super', gut: 'gut', okay: 'okay', angespannt: 'angespannt', mies: 'mies' }, { super: 'great', gut: 'good', okay: 'okay', angespannt: 'tense', mies: 'awful' })[moodLabel(v)];
+
 export function moodLabel(v) {
   if (v >= 0.45) return 'super';
   if (v >= 0.15) return 'gut';

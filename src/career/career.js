@@ -1,5 +1,6 @@
 // Karriere: eine Saison in der Freizeitliga. Der Zustand ist reines JSON
 // (speicherbar); Spieler werden nur über ihre Pool-Nummer referenziert.
+import { tr } from '../core/i18n.js';
 import { legacySeasonEnd } from './legacy.js';
 import { sponsorResult } from './sponsors.js';
 import { autoTrip } from './trip.js';
@@ -246,15 +247,15 @@ export function nextSeason(career) {
   for (const n of legacyNotes) note(n);
   for (const n of career.sponsorNotes ?? []) note(n);
   career.sponsorNotes = [];
-  for (const r of retired) note(`Abschied: ${r.name} (${r.age}) hört auf – ${r.apps} Spiele, ${r.goals} Tore. Bleibt uns erhalten als ${r.role}.`);
-  for (const idx of leaving) note(`${poolPlayer(idx).name} war zu alt für die A-Jugend und ist zum Nachbarn gewechselt.`);
-  if (intake.length) note(`Neuer Jahrgang in der A-Jugend: ${intake.map((idx) => playerOf(career, idx).name).join(', ')}.`);
+  for (const r of retired) note(tr(`Abschied: ${r.name} (${r.age}) hört auf – ${r.apps} Spiele, ${r.goals} Tore. Bleibt uns erhalten als ${r.role}.`, `Farewell: ${r.name} (${r.age}) is retiring – ${r.apps} games, ${r.goals} goals. Staying on as ${r.role}.`));
+  for (const idx of leaving) note(tr(`${poolPlayer(idx).name} war zu alt für die A-Jugend und ist zum Nachbarn gewechselt.`, `${poolPlayer(idx).name} was too old for the U19s and has moved to a neighbouring club.`));
+  if (intake.length) note(tr(`Neuer Jahrgang in der A-Jugend: ${intake.map((idx) => playerOf(career, idx).name).join(', ')}.`, `New intake in the U19s: ${intake.map((idx) => playerOf(career, idx).name).join(', ')}.`));
   // Trainingsbericht aus der Saisonvorbereitung in die Gruppe.
   for (const d of development) {
     const now = playerOf(career, d.idx);
     const diff = now.rating - d.before;
-    if (diff >= 2) career.week?.chat.splice(1, 0, { from: null, text: `Vorbereitung: ${now.name} (${now.age}) hat richtig zugelegt – Stärke ${d.before} → ${now.rating}.`, time: 'Mo 09:00' });
-    else if (diff <= -2) career.week?.chat.splice(1, 0, { from: null, text: `${now.name} (${now.age}) merkt die Jahre – Stärke ${d.before} → ${now.rating}.`, time: 'Mo 09:00' });
+    if (diff >= 2) career.week?.chat.splice(1, 0, { from: null, text: tr(`Vorbereitung: ${now.name} (${now.age}) hat richtig zugelegt – Stärke ${d.before} → ${now.rating}.`, `Pre-season: ${now.name} (${now.age}) has really improved – rating ${d.before} → ${now.rating}.`), time: 'Mo 09:00' });
+    else if (diff <= -2) career.week?.chat.splice(1, 0, { from: null, text: tr(`${now.name} (${now.age}) merkt die Jahre – Stärke ${d.before} → ${now.rating}.`, `${now.name} (${now.age}) is feeling his age – rating ${d.before} → ${now.rating}.`), time: 'Mo 09:00' });
   }
   return { pos, promoted, relegated, development, retired, intake, leaving };
 }
@@ -320,7 +321,7 @@ export function startWeek(career) {
   };
   const fixture = humanFixture(career);
   const opponent = clubById(career, fixture.home === club.id ? fixture.away : fixture.home);
-  chat.push({ from: null, text: `Sonntag gegen ${opponent.name}${fixture.home === club.id ? ' bei uns' : ' auswärts'}. Wer kann?`, time: time() });
+  chat.push({ from: null, text: tr(`Sonntag gegen ${opponent.name}${fixture.home === club.id ? ' bei uns' : ' auswärts'}. Wer kann?`, `Sunday against ${opponent.name}${fixture.home === club.id ? ' at ours' : ' away'}. Who can make it?`), time: time() });
 
   for (const idx of club.squad) {
     const p = rawPlayer(career, idx);
@@ -334,10 +335,10 @@ export function startWeek(career) {
     }
     if (rec.injuryWeeks > 0) {
       status = 'no';
-      text = rec.injury && rec.injuryWeeks > 1 ? `Noch ${rec.injuryWeeks} Wochen raus (${rec.injury.label}). Ich komm aber gucken.` : rng.pick(INJURED);
+      text = rec.injury && rec.injuryWeeks > 1 ? tr(`Noch ${rec.injuryWeeks} Wochen raus (${rec.injury.label}). Ich komm aber gucken.`, `Out for ${rec.injuryWeeks} more weeks (${rec.injury.label}). I'll come and watch though.`) : rng.pick(INJURED);
     } else if (rec.awayWeeks > 0) {
       status = 'no';
-      text = rec.awayReason ?? 'Bin diese Woche nicht da.';
+      text = rec.awayReason ?? tr('Bin diese Woche nicht da.', 'Not around this week.');
     } else if (rng.chance(absenceChance(p.profession) * (career.spirit ? 0.75 : 1) * absenceFactor(career, idx) * weatherAbsence * facilityAbsence(career))) {
       status = 'no';
       text = rng.pick(noReasons(p.profession));
@@ -530,7 +531,7 @@ export function joinSquad(career, idx, text) {
   career.players[idx] = freshRecord();
   if (career.week) {
     career.week.availability[idx] = 'yes';
-    career.week.chat.push({ from: idx, text: `(neu in der Gruppe) ${text}`, time: 'Sa 18:03' });
+    career.week.chat.push({ from: idx, text: `${tr('(neu in der Gruppe)', '(new in the group)')} ${text}`, time: 'Sa 18:03' });
   }
   // Man kennt sich von früher – im Guten oder im Schlechten.
   const past = pastLink(career, idx);
@@ -538,7 +539,7 @@ export function joinSquad(career, idx, text) {
     setRelation(career, idx, past.other, past.kind === 'mobber' ? 'feinde' : 'schulfreunde');
     career.flags ??= {};
     career.flags.pastLink = { a: idx, b: past.other, kind: past.kind, round: career.round };
-    career.week?.chat.push({ from: past.other, text: past.kind === 'mobber' ? '…' : 'Ey! Wir waren zusammen auf der Gesamtschule!', time: 'Sa 18:10' });
+    career.week?.chat.push({ from: past.other, text: past.kind === 'mobber' ? '…' : tr('Ey! Wir waren zusammen auf der Gesamtschule!', 'Hey! We were at school together!'), time: 'Sa 18:10' });
   }
   return true;
 }
@@ -572,7 +573,7 @@ export function releasePlayer(career, idx) {
   if (career.week) {
     delete career.week.availability[idx];
     if (career.week.lineup) career.week.lineup = career.week.lineup.map((x) => (x === idx ? null : x));
-    career.week.chat.push({ from: idx, text: `${FAREWELL[idx % FAREWELL.length]} (hat die Gruppe verlassen)`, time: 'Sa 20:30' });
+    career.week.chat.push({ from: idx, text: `${FAREWELL[idx % FAREWELL.length]} ${tr('(hat die Gruppe verlassen)', '(left the group)')}`, time: 'Sa 20:30' });
   }
   return true;
 }
@@ -580,7 +581,7 @@ export function releasePlayer(career, idx) {
 // --- Verein & Trikots -------------------------------------------------------------
 
 export const KIT_COLORS = [0xf2efe6, 0x1c1c1c, 0xc8352f, 0x8c2f2f, 0xe8742a, 0xe0b020, 0x2e6b3a, 0x5cc46a, 0x2f6fb5, 0x1d2b44, 0x4fa3e0, 0x6b4f8c, 0x9a6b4f, 0x8a9096];
-export const KIT_PATTERNS = { uni: 'Uni', streifen: 'Längsstreifen', ringel: 'Ringel' };
+export const KIT_PATTERNS = tr({ uni: 'Uni', streifen: 'Längsstreifen', ringel: 'Ringel' }, { uni: 'Plain', streifen: 'Stripes', ringel: 'Hoops' });
 
 // Trikots werden vor Saisonbeginn bestellt – danach ist die Saison gelaufen.
 export const kitEditable = (career) => career.round === 0;
@@ -593,7 +594,7 @@ export function updateClub(career, { name, short, kit }) {
   if (kit && JSON.stringify({ ...club.kit, ...kit }) !== JSON.stringify(club.kit)) {
     // Neue Trikots kosten – ohne Geld in der Kasse bleibt's beim alten Satz.
     if (career.cash < KIT_COST) return 'nocash';
-    book(career, 'Neuer Trikotsatz', -KIT_COST);
+    book(career, tr('Neuer Trikotsatz', 'New kit'), -KIT_COST);
     club.kit = { ...club.kit, ...kit };
     // Torwart immer in einer Kontrastfarbe.
     const keeper = [0xe8742a, 0x5cc46a, 0xe0b020, 0x6b4f8c].find((c) => colorDistance(c, club.kit.shirt) > 150) ?? 0xe8742a;

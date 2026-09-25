@@ -1,4 +1,5 @@
 // Mannschaftskasse, Strafenkatalog, Sponsoren und die Saisonabschlussfahrt.
+import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { closeSponsors, paySponsors } from './sponsors.js';
 import { fansMul, salesMul } from './facilities.js';
@@ -12,12 +13,12 @@ export const MEMBER_FEE = 3; // pro Spieler und Spieltag
 
 // Der Strafenkatalog – hängt laminiert in der Kabine.
 export const FINES = [
-  { id: 'whiff', label: 'Luftloch', amount: 1 },
-  { id: 'car', label: 'Ans Auto geschossen', amount: 2 },
-  { id: 'late', label: 'Zu spät / erst zur 2. Halbzeit', amount: 5 },
-  { id: 'yellow', label: 'Gelbe Karte', amount: 5 },
-  { id: 'ownGoal', label: 'Eigentor (Runde für alle)', amount: 10 },
-  { id: 'red', label: 'Gelb-Rot', amount: 15 },
+  { id: 'whiff', label: tr('Luftloch', 'Air shot'), amount: 1 },
+  { id: 'car', label: tr('Ans Auto geschossen', 'Hit a car'), amount: 2 },
+  { id: 'late', label: tr('Zu spät / erst zur 2. Halbzeit', 'Late / only for the 2nd half'), amount: 5 },
+  { id: 'yellow', label: tr('Gelbe Karte', 'Yellow card'), amount: 5 },
+  { id: 'ownGoal', label: tr('Eigentor (Runde für alle)', 'Own goal (round for everyone)'), amount: 10 },
+  { id: 'red', label: tr('Gelb-Rot', 'Second yellow'), amount: 15 },
 ];
 const FINE = Object.fromEntries(FINES.map((f) => [f.id, f.amount]));
 
@@ -60,9 +61,9 @@ export function matchFinances(career, fixture, prepared, level) {
     }
   }
   career.seasonCards += m.stats.teams[team].yellow;
-  if (fines > 0) book(career, 'Strafen eingesammelt', fines);
+  if (fines > 0) book(career, tr('Strafen eingesammelt', 'Fines collected'), fines);
   // Vorfälle: Wer Gastgeber ist, zahlt den Ersatzball.
-  if (homeHuman) for (const inc of m.incidents ?? []) if (inc.cost) book(career, 'Neuer Ball (Nachbar gibt ihn nicht raus)', -inc.cost);
+  if (homeHuman) for (const inc of m.incidents ?? []) if (inc.cost) book(career, tr('Neuer Ball (Nachbar gibt ihn nicht raus)', 'New ball (the neighbour kept the old one)'), -inc.cost);
 
   if (homeHuman) {
     const rng = createRng(career.seed + career.season * 97 + career.round * 13);
@@ -72,10 +73,10 @@ export function matchFinances(career, fixture, prepared, level) {
     career.flags ??= {};
     career.flags.fans = { round: career.round, n: fans }; // für die Unterschriftenlisten
     const wirt = (career.staff?.wirt ? 1.3 : 1) * salesMul(career); // Wirt, Grill & Theke
-    book(career, `Getränkeverkauf (${fans} Zuschauer)${career.staff?.wirt ? ` – Wirt ${career.staff.wirt.name.split(' ')[0]}` : ''}${salesMul(career) > 1 ? ' – mit Grill' : ''}`, Math.round(fans * 2.5 * wirt));
+    book(career, tr(`Getränkeverkauf (${fans} Zuschauer)${career.staff?.wirt ? ` – Wirt ${career.staff.wirt.name.split(' ')[0]}` : ''}${salesMul(career) > 1 ? ' – mit Grill' : ''}`, `Drinks sales (${fans} spectators)${career.staff?.wirt ? ` – bar manager ${career.staff.wirt.name.split(' ')[0]}` : ''}${salesMul(career) > 1 ? ' – with barbecue' : ''}`), Math.round(fans * 2.5 * wirt));
     if (level > 1) {
-      book(career, 'Schiri-Gebühr', -20);
-      book(career, career.staff?.platzwart ? 'Platzmiete (Platzwart macht vieles selbst)' : 'Platzmiete Waldesruh', career.staff?.platzwart ? -7.5 : -15);
+      book(career, tr('Schiri-Gebühr', 'Referee fee'), -20);
+      book(career, career.staff?.platzwart ? tr('Platzmiete (Platzwart macht vieles selbst)', 'Pitch rent (groundsman does a lot himself)') : tr('Platzmiete Waldesruh', 'Pitch rent Waldesruh'), career.staff?.platzwart ? -7.5 : -15);
     }
   }
 }
@@ -83,7 +84,7 @@ export function matchFinances(career, fixture, prepared, level) {
 // Jede Woche: Mitgliedsbeiträge und Sponsorengeld.
 export function weeklyFinances(career) {
   const human = career.clubs.find((c) => c.human);
-  book(career, `Mitgliedsbeiträge (${human.squad.length} × ${MEMBER_FEE} €)`, human.squad.length * MEMBER_FEE);
+  book(career, tr(`Mitgliedsbeiträge (${human.squad.length} × ${MEMBER_FEE} €)`, `Membership fees (${human.squad.length} × €${MEMBER_FEE})`), human.squad.length * MEMBER_FEE);
   paySponsors(career);
 }
 

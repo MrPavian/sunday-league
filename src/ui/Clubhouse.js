@@ -1,3 +1,4 @@
+import { plural, tr } from '../core/i18n.js';
 import {
   clubById,
   currentLineup,
@@ -22,12 +23,12 @@ import {
   table,
 } from '../career/career.js';
 import { acceptSponsor, bookTrip, FINES, KIT_COST, SLOTS, TRIP_COST } from '../career/finances.js';
-import { DESTINATIONS, tripChoose, tripStage, tripState } from '../career/trip.js';
+import { DESTINATIONS, tripChoose, tripStage, tripState, tripVerdict } from '../career/trip.js';
 import { build, canBuild, facilities, FACILITIES } from '../career/facilities.js';
-import { goalProgress, negotiate, relLabel, TRAITS as SPONSOR_TRAITS } from '../career/sponsors.js';
+import { bossOf, goalProgress, goalText, lineOf, negotiate, relLabel, TRAITS as SPONSOR_TRAITS } from '../career/sponsors.js';
 import { inviteChance, inviteTrialist, isRawDiamond, MAX_STATIONS, runStation, startTraining, STATIONS, TRAINING_COST, trainingDone } from '../career/training.js';
-import { promoteProspect, STAFF_ROLES } from '../career/youth.js';
-import { moodLabel, resolveEvent } from '../career/events.js';
+import { promoteProspect, roleName, STAFF_ROLES } from '../career/youth.js';
+import { eventView, moodLabel, moodText, resolveEvent, storyTag } from '../career/events.js';
 import { storyLabels } from '../career/stories.js';
 import { chronicleData, yearOf } from '../career/sagas.js';
 import { coachAge, coachPlaying, legacy, legacyPrompt, resolveLegacy, stepDown, succeed, successionCandidates } from '../career/legacy.js';
@@ -39,19 +40,23 @@ import { derbyOf, isDerbyFixture } from '../career/derby.js';
 import { CUP_NAME, CUPS, cupClub, cupOf, groupTable, humanCupMatch, PRIZES, stageName, tournamentOpen, winterCupDue, winterCupRunning } from '../career/tournament.js';
 import { canSupportDream, DREAM_COST, supportDream } from '../career/pub.js';
 import { chemistry, REL, relationLabel, relationsOfPlayer, shortName } from '../career/relations.js';
-import { childAge, coachAway, coachName, energyLabel, isCoach, patienceLabel, STYLES, trainingLocked } from '../career/personal.js';
+import { childAge, coachAway, coachName, energyLabel, familyText, isCoach, patienceLabel, STYLES, trainingLocked } from '../career/personal.js';
 import { TRAITS } from '../data/traits.js';
+import { jobName } from '../data/names.js';
 import { tierById } from '../data/tiers.js';
 import { POSITIONS } from '../sim/generator.js';
 import { PITCHES } from '../sim/pitch.js';
 
-const STATUS = { yes: ['Zusage', 'yes'], no: ['Absage', 'no'], late: ['Kommt später', 'late'] };
+const STATUS = { yes: [tr('Zusage', 'In'), 'yes'], no: [tr('Absage', 'Out'), 'no'], late: [tr('Kommt später', 'Coming late'), 'late'] };
 const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
 const first = (name) => name.split(' ')[0];
 // Dart: je näher an der Mitte, desto mehr Punkte (max. 60 pro Wurf).
 const dartPoints = (x) => Math.round(60 * Math.max(0, 1 - Math.abs(x)) ** 1.4);
-const formArrow = (f = 0) => (f >= 0.25 ? ' <span class="form up" title="gut drauf">▲</span>' : f <= -0.25 ? ' <span class="form down" title="nicht in Form">▼</span>' : '');
-const euro = (n) => `${n.toLocaleString('de-DE', { maximumFractionDigits: 2 })} €`;
+const formArrow = (f = 0) => (f >= 0.25 ? ` <span class="form up" title="${tr('gut drauf', 'in form')}">▲</span>` : f <= -0.25 ? ` <span class="form down" title="${tr('nicht in Form', 'out of form')}">▼</span>` : '');
+// Chat-Zeit „Mo 09:00" → „Mon 09:00".
+const timeLabel = (t) => tr(t, String(t ?? '').replace(/^(Mo|Di|Mi|Do|Fr|Sa|So)\b/, (d) => ({ Mo: 'Mon', Di: 'Tue', Mi: 'Wed', Do: 'Thu', Fr: 'Fri', Sa: 'Sat', So: 'Sun' })[d]));
+const leagueName = (c) => leagueOf(c)?.name ?? c.league;
+const euro = (n) => tr(`${n.toLocaleString('de-DE', { maximumFractionDigits: 2 })} €`, `€${n.toLocaleString('en-GB', { maximumFractionDigits: 2 })}`);
 
 // Vereinsheim: Chatgruppe, Kader, Tabelle, Spielplan – und der nächste Spieltag.
 export class Clubhouse {
@@ -79,7 +84,7 @@ export class Clubhouse {
       } else if (action === 'kitPattern') this.draft.kit.pattern = value;
       else if (action === 'saveClub') {
         const res = updateClub(this.career, this.draft);
-        this.clubNote = res === 'nocash' ? `Zu wenig in der Kasse – ein neuer Trikotsatz kostet ${KIT_COST} €.` : 'Bestellt!';
+        this.clubNote = res === 'nocash' ? tr(`Zu wenig in der Kasse – ein neuer Trikotsatz kostet ${KIT_COST} €.`, `Not enough in the kitty – a new kit costs €${KIT_COST}.`) : tr('Bestellt!', 'Ordered!');
         if (res !== 'nocash') this.draft = null;
         this.h.onChange();
       } else if (action === 'negotiate') {
@@ -238,25 +243,25 @@ export class Clubhouse {
     const over = seasonOver(c);
     const roundNo = Math.min(c.round + 1, c.fixtures.length);
     const tabs = [
-      ['chat', 'Chatgruppe'],
-      ['pub', 'Kneipe'],
-      ['squad', 'Kader'],
-      ['lineup', 'Aufstellung'],
-      ['transfers', 'Transfers'],
-      ['training', 'Training'],
-      ['youth', 'Jugend'],
-      ['table', 'Tabelle'],
-      ['cup', 'Turnier'],
-      ['club', 'Verein'],
-      ['cash', 'Kasse'],
-      ['fixtures', 'Spielplan'],
+      ['chat', tr('Chatgruppe', 'Group chat')],
+      ['pub', tr('Kneipe', 'Pub')],
+      ['squad', tr('Kader', 'Squad')],
+      ['lineup', tr('Aufstellung', 'Line-up')],
+      ['transfers', tr('Transfers', 'Transfers')],
+      ['training', tr('Training', 'Training')],
+      ['youth', tr('Jugend', 'Youth')],
+      ['table', tr('Tabelle', 'Table')],
+      ['cup', tr('Turnier', 'Cup')],
+      ['club', tr('Verein', 'Club')],
+      ['cash', tr('Kasse', 'Kitty')],
+      ['fixtures', tr('Spielplan', 'Fixtures')],
     ];
     this.root.innerHTML = `
       <div class="club-panel">
         <header style="--kit:${hex(club.kit.shirt)}">
           <div><h2><span class="crest"></span>${club.name}</h2>
-          <small>${c.league} · Saison ${c.season} · ${over ? 'Saison beendet' : `${this.results ? 'Ergebnisse' : 'Woche vor'} Spieltag ${roundNo} / ${c.fixtures.length}`}</small></div>
-          <button data-action="onMenu">Hauptmenü</button>
+          <small>${leagueName(c)} · ${tr('Saison', 'Season')} ${c.season} · ${over ? tr('Saison beendet', 'Season over') : `${this.results ? tr('Ergebnisse', 'Results') : tr('Woche vor', 'Week before')} ${tr('Spieltag', 'matchday')} ${roundNo} / ${c.fixtures.length}`}</small></div>
+          <button data-action="onMenu">${tr('Hauptmenü', 'Main menu')}</button>
         </header>
         <div class="club-grid">
           <section class="main">
@@ -283,22 +288,22 @@ export class Clubhouse {
     const count = (s) => avail.filter((a) => a === s).length;
     return `
       <div class="fixture-card">
-        <p class="label">Sonntag, 10:30 Uhr${isDerbyFixture(c, f) ? ` · <b class="derby">${derbyOf(c).name}</b>` : ''}</p>
+        <p class="label">${tr('Sonntag, 10:30 Uhr', 'Sunday, 10:30')}${isDerbyFixture(c, f) ? ` · <b class="derby">${derbyOf(c).name}</b>` : ''}</p>
         <h3>${home ? club.short : opp.short} – ${home ? opp.short : club.short}</h3>
-        <p>${home ? 'Heimspiel' : 'Auswärts'} gegen <b>${opp.name}</b></p>
-        <p class="venue-line">${venue.name} · ${venue.surface.name} · ${venue.format} gegen ${venue.format}</p>
+        <p>${home ? tr('Heimspiel', 'Home') : tr('Auswärts', 'Away')} ${tr('gegen', 'against')} <b>${opp.name}</b></p>
+        <p class="venue-line">${venue.name} · ${venue.surface.name} · ${venue.format} ${tr('gegen', 'v')} ${venue.format}</p>
         <p class="venue-line weather">${weatherLine(c.week?.weather)}</p>
-        <p class="avail">${count('yes')} Zusagen · ${count('late')} später · ${count('no')} Absagen</p>
-        <p class="mood-line">Stimmung im Team: <b class="mood mood-${moodLabel(c.mood ?? 0)}">${moodLabel(c.mood ?? 0)}</b></p>
-        ${w.event && w.event.choice === null ? '<p class="warn">In der Gruppe wartet eine Entscheidung auf dich.</p>' : ''}
+        <p class="avail">${count('yes')} ${tr('Zusagen', 'in')} · ${count('late')} ${tr('später', 'late')} · ${count('no')} ${tr('Absagen', 'out')}</p>
+        <p class="mood-line">${tr('Stimmung im Team', 'Team spirit')}: <b class="mood mood-${moodLabel(c.mood ?? 0)}">${moodText(c.mood ?? 0)}</b></p>
+        ${w.event && w.event.choice === null ? `<p class="warn">${tr('In der Gruppe wartet eine Entscheidung auf dich.', 'A decision is waiting for you in the group chat.')}</p>` : ''}
         ${storyLabels(c).length ? `<ul class="stories">${storyLabels(c).map((s) => `<li>${s}</li>`).join('')}</ul>` : ''}
-        ${count('yes') < venue.format ? '<p class="warn">Zu wenige Zusagen – es hilft jemand aus dem Bekanntenkreis aus.</p>' : ''}
+        ${count('yes') < venue.format ? `<p class="warn">${tr('Zu wenige Zusagen – es hilft jemand aus dem Bekanntenkreis aus.', 'Not enough players – someone from a mate\'s circle will help out.')}</p>` : ''}
         ${this.meBars()}
-        ${winterCupDue(c) ? `<div class="winter-cup"><p class="label">Winterpause</p><p>Am Wochenende: <b>${CUPS.halle.name}</b> in der ${CUPS.halle.place}. Acht Teams, Bande, Handballtore – ${CUPS.halle.prizes.winner} € für den Sieger.</p>
-          <button class="primary" data-action="onCupStart" data-value="halle">Anmelden</button> <button data-action="onCupSkip" data-value="halle">Diesmal nicht</button></div>` : ''}
-        ${this.busy ? `<p class="busy">${this.busy}</p>` : winterCupDue(c) ? '<p class="empty">Erst entscheiden: Hallenturnier ja oder nein? Danach geht die Liga weiter.</p>' : winterCupRunning(c) ? '<button class="primary" data-action="tab" data-value="cup">Zum Hallenturnier</button><p class="empty">Der nächste Ligaspieltag steigt nach dem Turnier.</p>' : `
-        ${coachAway(c) ? '<p class="warn">Du bist diese Woche nicht da – der Kapitän stellt auf, du bekommst nur das Ergebnis.</p>' : '<button class="primary" data-action="onPlay">Selbst spielen</button>'}
-        <button data-action="onSimulate">${coachAway(c) ? 'Ergebnis abwarten' : 'Simulieren'}</button>`}
+        ${winterCupDue(c) ? `<div class="winter-cup"><p class="label">${tr('Winterpause', 'Winter break')}</p><p>${tr(`Am Wochenende: <b>${CUPS.halle.name}</b> in der ${CUPS.halle.place}. Acht Teams, Bande, Handballtore – ${CUPS.halle.prizes.winner} € für den Sieger.`, `This weekend: <b>${CUPS.halle.name}</b> at ${CUPS.halle.place}. Eight teams, boards, handball goals – €${CUPS.halle.prizes.winner} for the winner.`)}</p>
+          <button class="primary" data-action="onCupStart" data-value="halle">${tr('Anmelden', 'Enter')}</button> <button data-action="onCupSkip" data-value="halle">${tr('Diesmal nicht', 'Not this time')}</button></div>` : ''}
+        ${this.busy ? `<p class="busy">${this.busy}</p>` : winterCupDue(c) ? `<p class="empty">${tr('Erst entscheiden: Hallenturnier ja oder nein? Danach geht die Liga weiter.', 'Decide first: indoor tournament, yes or no? Then the league carries on.')}</p>` : winterCupRunning(c) ? `<button class="primary" data-action="tab" data-value="cup">${tr('Zum Hallenturnier', 'To the indoor tournament')}</button><p class="empty">${tr('Der nächste Ligaspieltag steigt nach dem Turnier.', 'The next league match is after the tournament.')}</p>` : `
+        ${coachAway(c) ? `<p class="warn">${tr('Du bist diese Woche nicht da – der Kapitän stellt auf, du bekommst nur das Ergebnis.', 'You are away this week – the captain picks the team, you just get the result.')}</p>` : `<button class="primary" data-action="onPlay">${tr('Selbst spielen', 'Play it yourself')}</button>`}
+        <button data-action="onSimulate">${coachAway(c) ? tr('Ergebnis abwarten', 'Wait for the result') : tr('Simulieren', 'Simulate')}</button>`}
       </div>`;
   }
 
@@ -315,30 +320,30 @@ export class Clubhouse {
       const list = kids.filter((k) => teamOfAge(k.age)?.id === t.id).sort((a, b) => b.age - a.age);
       if (!list.length) return '';
       const rows = list
-        .map((k) => `<li class="${k.own ? 'own' : ''}"><b>${k.name}</b>${k.own ? ` <span class="me-tag">${k.girl ? 'Tochter' : 'Sohn'}</span>` : ''} <small>${k.age} J. · ${POSITIONS[k.position]}${k.girl ? ' · Mädchen' : ''}${k.parent === 'ehrgeizig' ? ' · ehrgeiziger Vater' : k.parent === 'engagiert' ? ' · Eltern helfen mit' : ''}</small>
-          <span class="stars" title="Einschätzung des Jugendtrainers">${stars(talentGuess(c, k))}</span><span class="me-bar mini"><i style="--v:${Math.round(k.joy * 100)}%"></i><small>Spaß</small></span></li>`)
+        .map((k) => `<li class="${k.own ? 'own' : ''}"><b>${k.name}</b>${k.own ? ` <span class="me-tag">${k.girl ? tr('Tochter', 'daughter') : tr('Sohn', 'son')}</span>` : ''} <small>${k.age}${tr(' J.', ' yrs')} · ${POSITIONS[k.position]}${k.girl ? tr(' · Mädchen', ' · girl') : ''}${k.parent === 'ehrgeizig' ? tr(' · ehrgeiziger Vater', ' · pushy father') : k.parent === 'engagiert' ? tr(' · Eltern helfen mit', ' · parents help out') : ''}</small>
+          <span class="stars" title="${tr('Einschätzung des Jugendtrainers', 'Youth coach\'s assessment')}">${stars(talentGuess(c, k))}</span><span class="me-bar mini"><i style="--v:${Math.round(k.joy * 100)}%"></i><small>${tr('Spaß', 'fun')}</small></span></li>`)
         .join('');
-      return `<article class="youth-team"><h5>${t.name} <small>(${t.ages[0]}–${t.ages[1]} J.)</small></h5><ul class="plain">${rows}</ul></article>`;
+      return `<article class="youth-team"><h5>${t.name} <small>(${t.ages[0]}–${t.ages[1]}${tr(' J.', ' yrs')})</small></h5><ul class="plain">${rows}</ul></article>`;
     }).join('');
     const last = c.youth.results?.at(-1);
-    return `<h4>Jugendtraining diese Woche</h4>
+    return `<h4>${tr('Jugendtraining diese Woche', 'Youth training this week')}</h4>
       <div class="actions">${focusButtons}</div>
-      <p class="empty">${FOCUS[focus].desc} Mit 16 wechseln die Kinder in die A-Jugend – Mädchen ins Frauenteam, sobald es eins gibt.</p>
-      <div class="youth-teams">${teams || '<p class="empty">Keine Kinder in der Jugend.</p>'}</div>
-      ${last ? `<p>Letzte Saison: ${last.results.map((r) => `${r.team}-Jugend ${r.pos}.`).join(' · ')}</p>` : ''}
-      <h4>Talente bei anderen Vereinen</h4>
-      <p class="empty">Einmal pro Woche kannst du die Eltern eines Talents ansprechen. Kostet Kraft – und die anderen Vereine mögen das gar nicht.</p>
+      <p class="empty">${FOCUS[focus].desc} ${tr('Mit 16 wechseln die Kinder in die A-Jugend – Mädchen ins Frauenteam, sobald es eins gibt.', 'At 16 the kids move up to the U19s – girls to the women\'s team once there is one.')}</p>
+      <div class="youth-teams">${teams || `<p class="empty">${tr('Keine Kinder in der Jugend.', 'No kids in the youth section.')}</p>`}</div>
+      ${last ? `<p>${tr('Letzte Saison', 'Last season')}: ${last.results.map((r) => tr(`${r.team}-Jugend ${r.pos}.`, `${r.team} youth: ${r.pos}.`)).join(' · ')}</p>` : ''}
+      <h4>${tr('Talente bei anderen Vereinen', 'Talents at other clubs')}</h4>
+      <p class="empty">${tr('Einmal pro Woche kannst du die Eltern eines Talents ansprechen. Kostet Kraft – und die anderen Vereine mögen das gar nicht.', 'Once a week you can approach a talent\'s parents. It costs energy – and the other clubs really don\'t like it.')}</p>
       <ul class="plain scout-kids">${scoutList(c)
-        .map((k) => `<li><b>${k.name}</b> <small>${k.age} J. · ${POSITIONS[k.position]} · ${k.club}</small> <span class="stars">${stars(talentGuess(c, k))}</span>
-          ${k.status === 'open' ? `<button class="tiny" data-action="poachKid" data-value="${k.id}" ${!c.week || c.week.poached || this.results ? 'disabled' : ''}>Ansprechen (~${Math.round(poachChance(c, k) * 100)} %)</button>` : `<small class="reply ${k.status === 'joined' ? 'ok' : 'no'}">${k.reply}</small>`}</li>`)
+        .map((k) => `<li><b>${k.name}</b> <small>${k.age}${tr(' J.', ' yrs')} · ${POSITIONS[k.position]} · ${k.club}</small> <span class="stars">${stars(talentGuess(c, k))}</span>
+          ${k.status === 'open' ? `<button class="tiny" data-action="poachKid" data-value="${k.id}" ${!c.week || c.week.poached || this.results ? 'disabled' : ''}>${tr('Ansprechen', 'Approach')} (~${Math.round(poachChance(c, k) * 100)} %)</button>` : `<small class="reply ${k.status === 'joined' ? 'ok' : 'no'}">${k.reply}</small>`}</li>`)
         .join('')}</ul>`;
   }
 
   // Stammkneipe: zwei Aktionen pro Woche.
   tab_pub() {
     const c = this.career;
-    if (!c.week || this.results) return `<p class="empty">Die „${PUB_NAME}" macht nach dem Spieltag wieder auf.</p>`;
-    if (!pubOpen(c)) return '<p class="warn">Du bist diese Woche nicht da. Die Jungs gehen ohne dich – und erzählen dir hinterher nur die Hälfte.</p>';
+    if (!c.week || this.results) return `<p class="empty">${tr(`Die „${PUB_NAME}" macht nach dem Spieltag wieder auf.`, `"${PUB_NAME}" opens again after matchday.`)}</p>`;
+    if (!pubOpen(c)) return `<p class="warn">${tr('Du bist diese Woche nicht da. Die Jungs gehen ohne dich – und erzählen dir hinterher nur die Hälfte.', 'You are away this week. The lads go without you – and only tell you half of it afterwards.')}</p>`;
     const pub = pubState(c);
     const club = humanClub(c);
     const left = pub.actions;
@@ -353,30 +358,30 @@ export class Clubhouse {
       .join('');
     const dart = this.dart
       ? `<div class="dart"><div class="board"><i class="zone z1"></i><i class="zone z2"></i><i class="zone z3"></i><b class="pin"></b></div>
-          <p>Wurf ${this.dart.throws.length + 1} von 3 ${this.dart.throws.length ? `· bisher ${this.dart.throws.join(' + ')}` : ''}</p>
-          <button class="primary" data-action="dartThrow">Werfen!</button></div>`
-      : `<button data-action="dartStart" ${dis}>Dart gegen Opa Heinz – Verlierer zahlt die Runde</button>`;
+          <p>${tr('Wurf', 'Throw')} ${this.dart.throws.length + 1} ${tr('von', 'of')} 3 ${this.dart.throws.length ? `· ${tr('bisher', 'so far')} ${this.dart.throws.join(' + ')}` : ''}</p>
+          <button class="primary" data-action="dartThrow">${tr('Werfen!', 'Throw!')}</button></div>`
+      : `<button data-action="dartStart" ${dis}>${tr('Dart gegen Opa Heinz – Verlierer zahlt die Runde', 'Darts against Grandpa Heinz – loser buys the round')}</button>`;
     return `
       <div class="pub">
-        <p class="chat-head">„${PUB_NAME}" · Wirt ${wirtName(c)} · noch ${left} von ${PUB_ACTIONS} Aktionen diese Woche <small>(jede kostet etwas Familienzeit)</small></p>
-        <blockquote class="heinz">Opa Heinz am Stammtisch: ${pub.heinz}</blockquote>
+        <p class="chat-head">${tr(`„${PUB_NAME}" · Wirt ${wirtName(c)} · noch ${left} von ${PUB_ACTIONS} Aktionen diese Woche <small>(jede kostet etwas Familienzeit)</small>`, `"${PUB_NAME}" · landlord ${wirtName(c)} · ${left} of ${PUB_ACTIONS} actions left this week <small>(each costs a little family time)</small>`)}</p>
+        <blockquote class="heinz">${tr('Opa Heinz am Stammtisch', 'Grandpa Heinz at the regulars\' table')}: ${pub.heinz}</blockquote>
         ${pub.log.length ? `<ul class="pub-log">${pub.log.map((l) => `<li>${l}</li>`).join('')}</ul>` : ''}
         <div class="pub-grid">
-          <article><h4>Runde ausgeben</h4><p>Für alle ${club.squad.length}: ${cost} €. Hebt die Stimmung.</p><button data-action="pubRound" ${dis}>Runde bestellen</button></article>
-          <article><h4>Wirt ausfragen</h4><p>${wirtName(c)} kennt jeden. Mal ein Name für die Transfers, mal ein Tipp zum nächsten Gegner.</p><button data-action="pubWirt" ${dis}>„Und, was gibt's Neues?"</button>${pub.intel ? '<p class="reply ok">Tipp zum Gegner notiert – wirkt am Sonntag.</p>' : ''}</article>
-          <article class="wide"><h4>Einzelgespräch</h4>
+          <article><h4>${tr('Runde ausgeben', 'Buy a round')}</h4><p>${tr(`Für alle ${club.squad.length}: ${cost} €. Hebt die Stimmung.`, `For all ${club.squad.length}: €${cost}. Lifts the mood.`)}</p><button data-action="pubRound" ${dis}>${tr('Runde bestellen', 'Order a round')}</button></article>
+          <article><h4>${tr('Wirt ausfragen', 'Pump the landlord')}</h4><p>${tr(`${wirtName(c)} kennt jeden. Mal ein Name für die Transfers, mal ein Tipp zum nächsten Gegner.`, `${wirtName(c)} knows everyone. Sometimes a name for transfers, sometimes a tip on the next opponent.`)}</p><button data-action="pubWirt" ${dis}>${tr('„Und, was gibt\'s Neues?"', '"So, what\'s new?"')}</button>${pub.intel ? `<p class="reply ok">${tr('Tipp zum Gegner notiert – wirkt am Sonntag.', 'Tip on the opponent noted – it counts on Sunday.')}</p>` : ''}</article>
+          <article class="wide"><h4>${tr('Einzelgespräch', 'One-to-one')}</h4>
             <select data-pub-pick>${mates.map((idx) => `<option value="${idx}" ${idx === pick ? 'selected' : ''}>${this.p(idx).name}</option>`).join('')}</select>
-            <ul class="dossier">${facts.map((f) => `<li><b>${DOSSIER_LABELS[f.kind]}:</b> ${f.known ? f.text : '<em>noch unbekannt</em>'}</li>`).join('')}
-              ${pick != null && relationsOfPlayer(c, pick).length ? `<li><b>Im Team:</b> ${relationLabel(c, pick)}</li>` : ''}
-              ${pick != null && c.players[pick]?.dreamDone ? '<li><b>Traum:</b> <em>unterstützt – er ist dir dankbar und sagt seltener ab</em></li>' : ''}</ul>
-            ${pick != null && canSupportDream(c, pick) ? `<button data-action="pubDream" ${c.cash < DREAM_COST ? 'disabled' : ''}>Seinen Traum unterstützen (${DREAM_COST} €, kostet Kraft)</button>` : ''}
+            <ul class="dossier">${facts.map((f) => `<li><b>${DOSSIER_LABELS[f.kind]}:</b> ${f.known ? f.text : `<em>${tr('noch unbekannt', 'not known yet')}</em>`}</li>`).join('')}
+              ${pick != null && relationsOfPlayer(c, pick).length ? `<li><b>${tr('Im Team', 'In the team')}:</b> ${relationLabel(c, pick)}</li>` : ''}
+              ${pick != null && c.players[pick]?.dreamDone ? `<li><b>${tr('Traum', 'Dream')}:</b> <em>${tr('unterstützt – er ist dir dankbar und sagt seltener ab', 'supported – he is grateful and drops out less often')}</em></li>` : ''}</ul>
+            ${pick != null && canSupportDream(c, pick) ? `<button data-action="pubDream" ${c.cash < DREAM_COST ? 'disabled' : ''}>${tr(`Seinen Traum unterstützen (${DREAM_COST} €, kostet Kraft)`, `Support his dream (€${DREAM_COST}, costs energy)`)}</button>` : ''}
             <div class="actions">
-              <button data-action="pubTalk" data-value="listen" ${dis}>Zuhören</button>
-              <button data-action="pubTalk" data-value="cheer" ${dis}>Aufmuntern</button>
-              <button data-action="pubTalk" data-value="straight" ${dis}>Klartext reden</button>
+              <button data-action="pubTalk" data-value="listen" ${dis}>${tr('Zuhören', 'Listen')}</button>
+              <button data-action="pubTalk" data-value="cheer" ${dis}>${tr('Aufmuntern', 'Cheer him up')}</button>
+              <button data-action="pubTalk" data-value="straight" ${dis}>${tr('Klartext reden', 'Give it to him straight')}</button>
             </div></article>
-          <article class="wide"><h4>Taktik auf dem Bierdeckel</h4><p>Gilt fürs nächste Spiel.${pub.tactic ? ` Gewählt: <b>${TACTICS[pub.tactic].name}</b>.` : ''}</p><div class="actions">${tactics}</div></article>
-          <article class="wide"><h4>Dart</h4>${dart}${pub.dart ? `<p class="reply">Letztes Duell: ${pub.dart.you} zu ${pub.dart.heinz}</p>` : ''}</article>
+          <article class="wide"><h4>${tr('Taktik auf dem Bierdeckel', 'Tactics on a beer mat')}</h4><p>${tr('Gilt fürs nächste Spiel.', 'Applies to the next match.')}${pub.tactic ? ` ${tr('Gewählt', 'Chosen')}: <b>${TACTICS[pub.tactic].name}</b>.` : ''}</p><div class="actions">${tactics}</div></article>
+          <article class="wide"><h4>${tr('Dart', 'Darts')}</h4>${dart}${pub.dart ? `<p class="reply">${tr('Letztes Duell', 'Last duel')}: ${pub.dart.you} ${tr('zu', 'to')} ${pub.dart.heinz}</p>` : ''}</article>
         </div>
       </div>`;
   }
@@ -397,25 +402,25 @@ export class Clubhouse {
   // Vereinschronik – zum Jubiläum als Festschrift.
   chronicleBlock() {
     const d = chronicleData(this.career);
-    const title = d.festschrift ? `Festschrift: ${d.festschrift.age} Jahre ${d.name}` : `Chronik des ${d.name}`;
-    if (!this.showChronicle) return `<p><button data-action="chronicle">${d.festschrift ? 'Festschrift lesen' : 'Vereinschronik'}</button> <small>gegründet ${d.founded} · ${d.age} Jahre</small></p>`;
+    const title = d.festschrift ? tr(`Festschrift: ${d.festschrift.age} Jahre ${d.name}`, `Anniversary book: ${d.festschrift.age} years of ${d.name}`) : tr(`Chronik des ${d.name}`, `${d.name} chronicle`);
+    if (!this.showChronicle) return `<p><button data-action="chronicle">${d.festschrift ? tr('Festschrift lesen', 'Read the anniversary book') : tr('Vereinschronik', 'Club chronicle')}</button> <small>${tr('gegründet', 'founded')} ${d.founded} · ${d.age} ${tr('Jahre', 'years')}</small></p>`;
     const seasons = d.seasons.length
-      ? d.seasons.map((h) => `<tr><td>${h.year}</td><td>${h.league}</td><td class="num">${h.pos}.</td><td>${h.pos === 1 ? 'Meister' : h.relegated ? 'Abstieg' : ''}</td><td>${h.topScorer ? `${h.topScorer.name} (${h.topScorer.goals})` : '–'}</td></tr>`).join('')
-      : '<tr><td colspan="5"><em>Die erste Saison läuft noch.</em></td></tr>';
-    const list = (arr, key, unit) => arr.filter((p) => p[key] > 0).map((p) => `<li>${p.name}${p.active ? '' : ' <small>(Ehemaliger)</small>'} – ${p[key]} ${unit}</li>`).join('') || '<li><em>noch keine</em></li>';
-    const events = d.events.length ? d.events.map((e) => `<li><b>${yearOf(this.career, e.season)}</b> ${e.text}</li>`).join('') : '<li><em>Die großen Geschichten kommen noch.</em></li>';
-    const frauen = d.frauen ? `<p>Frauenteam seit Saison ${d.frauen.founded}, Kapitänin ${d.frauen.captain}${d.frauen.seasons.length ? ` · Platzierungen: ${d.frauen.seasons.map((s) => `${s.pos}.`).join(', ')}` : ''}</p>` : '';
-    const pros = d.pros.length ? `<p>Aus der eigenen Jugend zu den Profis: ${d.pros.map((p) => `${p.name} (${p.club})${p.back ? ' – zurück im Verein' : ''}`).join(', ')}</p>` : '';
+      ? d.seasons.map((h) => `<tr><td>${h.year}</td><td>${h.league}</td><td class="num">${h.pos}.</td><td>${h.pos === 1 ? tr('Meister', 'Champions') : h.relegated ? tr('Abstieg', 'Relegated') : ''}</td><td>${h.topScorer ? `${h.topScorer.name} (${h.topScorer.goals})` : '–'}</td></tr>`).join('')
+      : `<tr><td colspan="5"><em>${tr('Die erste Saison läuft noch.', 'The first season is still under way.')}</em></td></tr>`;
+    const list = (arr, key, unit) => arr.filter((p) => p[key] > 0).map((p) => `<li>${p.name}${p.active ? '' : tr(' <small>(Ehemaliger)</small>', ' <small>(former)</small>')} – ${p[key]} ${unit}</li>`).join('') || `<li><em>${tr('noch keine', 'none yet')}</em></li>`;
+    const events = d.events.length ? d.events.map((e) => `<li><b>${yearOf(this.career, e.season)}</b> ${e.text}</li>`).join('') : `<li><em>${tr('Die großen Geschichten kommen noch.', 'The big stories are still to come.')}</em></li>`;
+    const frauen = d.frauen ? `<p>${tr(`Frauenteam seit Saison ${d.frauen.founded}, Kapitänin ${d.frauen.captain}`, `Women's team since season ${d.frauen.founded}, captain ${d.frauen.captain}`)}${d.frauen.seasons.length ? ` · ${tr('Platzierungen', 'Finishes')}: ${d.frauen.seasons.map((s) => `${s.pos}.`).join(', ')}` : ''}</p>` : '';
+    const pros = d.pros.length ? `<p>${tr('Aus der eigenen Jugend zu den Profis', 'From our youth to the pros')}: ${d.pros.map((p) => `${p.name} (${p.club})${p.back ? tr(' – zurück im Verein', ' – back at the club') : ''}`).join(', ')}</p>` : '';
     return `<div class="paper chronicle-paper">
-        <div class="masthead">${title} <small>seit ${d.founded}</small></div>
-        <p class="lead">Gegründet ${d.founded} am Stammtisch einer Kneipe am Kanal – mit einem Ball, elf Leuten und keinem Tor.</p>
-        <h4>Saisons</h4>
-        <table class="stats season-table"><thead><tr><th>Jahr</th><th>Liga</th><th>Platz</th><th></th><th>Torschützenkönig</th></tr></thead><tbody>${seasons}</tbody></table>
-        <div class="records"><div><h4>Rekordspieler</h4><ul>${list(d.topApps, 'apps', 'Spiele')}</ul></div><div><h4>Rekordtorschützen</h4><ul>${list(d.topGoals, 'goals', 'Tore')}</ul></div></div>
+        <div class="masthead">${title} <small>${tr('seit', 'since')} ${d.founded}</small></div>
+        <p class="lead">${tr(`Gegründet ${d.founded} am Stammtisch einer Kneipe am Kanal – mit einem Ball, elf Leuten und keinem Tor.`, `Founded in ${d.founded} at the regulars' table of a pub by the canal – with one ball, eleven people and no goal.`)}</p>
+        <h4>${tr('Saisons', 'Seasons')}</h4>
+        <table class="stats season-table"><thead><tr><th>${tr('Jahr', 'Year')}</th><th>${tr('Liga', 'League')}</th><th>${tr('Platz', 'Pos.')}</th><th></th><th>${tr('Torschützenkönig', 'Top scorer')}</th></tr></thead><tbody>${seasons}</tbody></table>
+        <div class="records"><div><h4>${tr('Rekordspieler', 'Most appearances')}</h4><ul>${list(d.topApps, 'apps', tr('Spiele', 'games'))}</ul></div><div><h4>${tr('Rekordtorschützen', 'Top scorers')}</h4><ul>${list(d.topGoals, 'goals', tr('Tore', 'goals'))}</ul></div></div>
         ${frauen}${pros}
         ${this.erasBlock()}
-        <h4>Meilensteine</h4><ul class="milestones">${events}</ul>
-        <button data-action="chronicle">Zuklappen</button>
+        <h4>${tr('Meilensteine', 'Milestones')}</h4><ul class="milestones">${events}</ul>
+        <button data-action="chronicle">${tr('Zuklappen', 'Close')}</button>
       </div>`;
   }
 
@@ -429,19 +434,19 @@ export class Clubhouse {
         const building = f.building?.id === id;
         const locked = (def.needs ?? []).some((n) => !f.built[n]);
         const state = built
-          ? `<span class="ok">steht seit Saison ${built}</span>`
+          ? `<span class="ok">${tr('steht seit Saison', 'built in season')} ${built}</span>`
           : building
-            ? `<span class="warn">im Bau, noch ${f.building.weeks} ${f.building.weeks === 1 ? 'Woche' : 'Wochen'}</span>`
+            ? `<span class="warn">${tr('im Bau, noch', 'under construction,')} ${f.building.weeks} ${plural(f.building.weeks, 'Woche', 'Wochen', 'week', 'weeks')}${tr('', ' to go')}</span>`
             : locked
-              ? `<small>braucht erst: ${def.needs.map((n) => FACILITIES[n].name).join(', ')}</small>`
+              ? `<small>${tr('braucht erst', 'needs first')}: ${def.needs.map((n) => FACILITIES[n].name).join(', ')}</small>`
               : canBuild(c, id)
-                ? `<button data-action="build" data-value="${id}:handwerker" ${c.cash < def.cost ? 'disabled' : ''}>Handwerker (${euro(def.cost)})</button>
-                   <button data-action="build" data-value="${id}:einsatz" ${c.cash < def.cost / 2 ? 'disabled' : ''}>Arbeitseinsatz (${euro(def.cost / 2)}, ${def.weeks * 2} Wo.)</button>`
-                : '<small>erst die laufende Baustelle fertig machen</small>';
-        return `<li class="facility${built ? ' built' : ''}"><div><b>${def.name}</b> <small>${def.weeks} ${def.weeks === 1 ? 'Woche' : 'Wochen'}${def.upkeep ? ` · ${euro(def.upkeep)}/Woche Nebenkosten` : ''}</small><br><small>${def.desc}</small></div><div class="state">${state}</div></li>`;
+                ? `<button data-action="build" data-value="${id}:handwerker" ${c.cash < def.cost ? 'disabled' : ''}>${tr('Handwerker', 'Builders')} (${euro(def.cost)})</button>
+                   <button data-action="build" data-value="${id}:einsatz" ${c.cash < def.cost / 2 ? 'disabled' : ''}>${tr('Arbeitseinsatz', 'Work party')} (${euro(def.cost / 2)}, ${def.weeks * 2} ${tr('Wo.', 'wks')})</button>`
+                : `<small>${tr('erst die laufende Baustelle fertig machen', 'finish the current building work first')}</small>`;
+        return `<li class="facility${built ? ' built' : ''}"><div><b>${def.name}</b> <small>${def.weeks} ${plural(def.weeks, 'Woche', 'Wochen', 'week', 'weeks')}${def.upkeep ? ` · ${euro(def.upkeep)}${tr('/Woche Nebenkosten', '/week running costs')}` : ''}</small><br><small>${def.desc}</small></div><div class="state">${state}</div></li>`;
       })
       .join('');
-    return `<div class="facilities"><h4>Vereinsheim ausbauen <small>Kasse: ${euro(c.cash)}</small></h4>
+    return `<div class="facilities"><h4>${tr('Vereinsheim ausbauen', 'Upgrade the clubhouse')} <small>${tr('Kasse', 'Kitty')}: ${euro(c.cash)}</small></h4>
       ${f.note ? `<p class="reply ok">${f.note}</p>` : ''}<ul class="plain">${rows}</ul></div>`;
   }
 
@@ -450,9 +455,9 @@ export class Clubhouse {
     const c = this.career;
     const eras = legacy(c).eras;
     const since = c.coach?.since ?? 1;
-    const now = c.coach?.idx != null ? `<li><b>${yearOf(c, since)}–heute</b> ${playerOf(c, c.coach.idx).name}${c.coach.generation > 1 ? ` <small>(${c.coach.generation}. Trainer-Ära)</small>` : ''}</li>` : '';
+    const now = c.coach?.idx != null ? `<li><b>${yearOf(c, since)}–${tr('heute', 'today')}</b> ${playerOf(c, c.coach.idx).name}${c.coach.generation > 1 ? tr(` <small>(${c.coach.generation}. Trainer-Ära)</small>`, ` <small>(manager era no. ${c.coach.generation})</small>`) : ''}</li>` : '';
     if (!eras.length) return '';
-    return `<h4>Trainer</h4><ul class="milestones">${eras.map((e) => `<li><b>${yearOf(c, e.from)}–${yearOf(c, e.to)}</b> ${e.name} – ${e.seasons} ${e.seasons === 1 ? 'Saison' : 'Saisons'}${e.titles ? `, ${e.titles}× Meister` : ''}, heute Ehrenpräsident</li>`).join('')}${now}</ul>`;
+    return `<h4>${tr('Trainer', 'Managers')}</h4><ul class="milestones">${eras.map((e) => `<li><b>${yearOf(c, e.from)}–${yearOf(c, e.to)}</b> ${e.name} – ${e.seasons} ${plural(e.seasons, 'Saison', 'Saisons', 'season', 'seasons')}${e.titles ? tr(`, ${e.titles}× Meister`, `, ${e.titles}× champions`) : ''}${tr(', heute Ehrenpräsident', ', now honorary president')}</li>`).join('')}${now}</ul>`;
   }
 
   // Familie & Energie des Spielertrainers als kleine Balken.
@@ -460,7 +465,7 @@ export class Clubhouse {
     const k = this.career.coach;
     if (!k) return '';
     const bar = (label, v, text) => `<div class="me-bar ${v < 25 ? 'low' : v < 50 ? 'mid' : ''}"><span>${label}</span><i style="--v:${v}%"></i><small>${text}</small></div>`;
-    return `<div class="me-bars">${bar('Familie', k.patience, patienceLabel(k.patience))}${bar('Energie', k.energy, energyLabel(k.energy))}</div>`;
+    return `<div class="me-bars">${bar(tr('Familie', 'Family'), k.patience, patienceLabel(k.patience))}${bar(tr('Energie', 'Energy'), k.energy, energyLabel(k.energy))}</div>`;
   }
 
   roundResults() {
@@ -468,7 +473,7 @@ export class Clubhouse {
     const round = this.results;
     return `
       <div class="fixture-card">
-        <p class="label">Ergebnisse Spieltag ${c.round + 1}</p>
+        <p class="label">${tr('Ergebnisse Spieltag', 'Results, matchday')} ${c.round + 1}</p>
         <ul class="results">${round
           .map((f) => {
             const h = clubById(c, f.home);
@@ -478,7 +483,7 @@ export class Clubhouse {
           })
           .join('')}</ul>
         ${this.miniTable()}
-        <button class="primary" data-action="onNextWeek">Weiter zur nächsten Woche</button>
+        <button class="primary" data-action="onNextWeek">${tr('Weiter zur nächsten Woche', 'On to next week')}</button>
       </div>`;
   }
 
@@ -490,21 +495,21 @@ export class Clubhouse {
     const level = leagueOf(c).level;
     const last = pos === t.length;
     let msg;
-    if (pos === 1 && level === 1) msg = 'MEISTER! Aufstieg in die Kreisklasse C – eigener Rasenplatz, Schiri, 7 gegen 7. Die Runde im Vereinsheim geht aufs Haus.';
-    else if (pos === 1) msg = 'MEISTER der Kreisklasse C! Die Kreisklasse B kommt in einem späteren Update – bis dahin wird die Schale jede Woche poliert.';
-    else if (last && level > 1) msg = 'Letzter Platz – Abstieg in die Freizeitliga. Kopf hoch, der Hinterhof wartet.';
-    else if (pos === 2) msg = 'Vizemeister! Nächstes Jahr greifen wir an.';
-    else if (last) msg = 'Rote Laterne. Aber die Stimmung stimmt.';
-    else msg = 'Solides Mittelfeld. Die Mannschaftsfahrt ist trotzdem gebucht.';
+    if (pos === 1 && level === 1) msg = tr('MEISTER! Aufstieg in die Kreisklasse C – eigener Rasenplatz, Schiri, 7 gegen 7. Die Runde im Vereinsheim geht aufs Haus.', 'CHAMPIONS! Promotion to District League C – your own grass pitch, a referee, 7-a-side. The round at the clubhouse is on the house.');
+    else if (pos === 1) msg = tr('MEISTER der Kreisklasse C! Die Kreisklasse B kommt in einem späteren Update – bis dahin wird die Schale jede Woche poliert.', 'District League C CHAMPIONS! League B comes in a later update – until then the trophy gets polished every week.');
+    else if (last && level > 1) msg = tr('Letzter Platz – Abstieg in die Freizeitliga. Kopf hoch, der Hinterhof wartet.', 'Bottom of the table – relegated to the rec league. Chin up, the backyard awaits.');
+    else if (pos === 2) msg = tr('Vizemeister! Nächstes Jahr greifen wir an.', 'Runners-up! Next year we go for it.');
+    else if (last) msg = tr('Rote Laterne. Aber die Stimmung stimmt.', 'Wooden spoon. But the spirit is right.');
+    else msg = tr('Solides Mittelfeld. Die Mannschaftsfahrt ist trotzdem gebucht.', 'Solid mid-table. The team trip is still booked.');
     const chronicle = (c.history ?? []).length
-      ? `<p class="label">Vereinschronik</p><ul class="chronicle">${c.history.slice(-5).map((h) => `<li>Saison ${h.season}: ${h.pos}. Platz · ${h.league}</li>`).join('')}</ul>`
+      ? `<p class="label">${tr('Vereinschronik', 'Club chronicle')}</p><ul class="chronicle">${c.history.slice(-5).map((h) => tr(`<li>Saison ${h.season}: ${h.pos}. Platz · ${h.league}</li>`, `<li>Season ${h.season}: ${h.pos}. place · ${h.league}</li>`)).join('')}</ul>`
       : '';
     return `
       <div class="fixture-card">
-        <p class="label">Saisonende</p>
-        <h3>Platz ${pos}</h3>
+        <p class="label">${tr('Saisonende', 'End of season')}</p>
+        <h3>${tr('Platz', 'Position')} ${pos}</h3>
         <p>${msg}</p>
-        <p>Meister: <b>${champ.name}</b></p>
+        <p>${tr('Meister', 'Champions')}: <b>${champ.name}</b></p>
         ${this.miniTable()}
         ${chronicle}
         ${this.tripBlock()}
@@ -516,16 +521,16 @@ export class Clubhouse {
   tripBlock() {
     const c = this.career;
     if (!c.tripBooked)
-      return `<div class="trip"><p class="label">Saisonabschlussfahrt</p><p>Kasse: ${euro(c.cash)}. Wohin geht es?</p>
+      return `<div class="trip"><p class="label">${tr('Saisonabschlussfahrt', 'End-of-season trip')}</p><p>${tr('Kasse', 'Kitty')}: ${euro(c.cash)}. ${tr('Wohin geht es?', 'Where to?')}</p>
         ${Object.entries(DESTINATIONS).map(([id, d]) => `<button class="successor" data-action="trip" data-value="${id}" ${c.cash < d.cost ? 'disabled' : ''}><b>${d.name} – ${euro(d.cost)}</b><small>${d.desc}</small></button>`).join('')}</div>`;
     const t = tripState(c);
     const d = DESTINATIONS[t.dest];
     const log = t.log.map((e) => `<p class="trip-log"><small>${e.a}</small><br>${e.text}</p>`).join('');
     const stage = tripStage(c);
     if (stage)
-      return `<div class="trip"><p class="label">${d.name} · Etappe ${stage.n} / 3</p>${log}<p>${stage.text}</p>
+      return `<div class="trip"><p class="label">${d.name} · ${tr('Etappe', 'Stage')} ${stage.n} / 3</p>${log}<p>${stage.text}</p>
         ${stage.options.map((o, i) => `<button data-action="tripChoose" data-value="${i}">${o}</button>`).join('')}</div>`;
-    return `<div class="trip"><p class="label">${d.name} – ${t.verdict}</p>${log}<p class="reply ok">${t.score >= 0 ? 'Die Mannschaft geht mit bester Laune in die neue Saison (weniger Absagen).' : 'Darüber redet man besser nicht. Die Stimmung braucht ein paar Wochen.'}</p></div>`;
+    return `<div class="trip"><p class="label">${d.name} – ${tripVerdict(t.score)}</p>${log}<p class="reply ok">${t.score >= 0 ? tr('Die Mannschaft geht mit bester Laune in die neue Saison (weniger Absagen).', 'The team goes into the new season in the best of moods (fewer drop-outs).') : tr('Darüber redet man besser nicht. Die Stimmung braucht ein paar Wochen.', 'Best not to talk about it. Spirits will take a few weeks to recover.')}</p></div>`;
   }
 
   // Karriereende und Nachfolge: Solange eine Entscheidung offen ist, wartet die neue Saison.
@@ -539,14 +544,14 @@ export class Clubhouse {
         ${prompt.options.map((o, i) => `<button data-action="legacy" data-value="${i}">${o}</button>`).join('')}</div>`;
     if (L.choosing) {
       const list = successionCandidates(c);
-      return `<div class="legacy">${last}<p class="label">Wer übernimmt?</p>
+      return `<div class="legacy">${last}<p class="label">${tr('Wer übernimmt?', 'Who takes over?')}</p>
         ${list.map((x, i) => `<button class="successor${x.type === 'neu' ? ' new' : ''}" data-action="successor" data-value="${i}"><b>${x.name}</b>${x.age ? ` (${x.age})` : ''}<small>${x.desc}</small></button>`).join('')}</div>`;
     }
     const age = coachAge(c);
     const step = c.coach && age != null && age >= 50
       ? this.confirmStepDown
-        ? '<button data-action="stepDown" class="danger">Wirklich abtreten? Nochmal klicken</button>'
-        : `<button data-action="stepDown">Amt übergeben (du bist ${age})</button>`
+        ? `<button data-action="stepDown" class="danger">${tr('Wirklich abtreten? Nochmal klicken', 'Really step down? Click again')}</button>`
+        : `<button data-action="stepDown">${tr(`Amt übergeben (du bist ${age})`, `Hand over the job (you are ${age})`)}</button>`
       : '';
     return last || step ? `${last}${step}${this.cupAside()}` : null;
   }
@@ -555,18 +560,18 @@ export class Clubhouse {
   cupAside() {
     const c = this.career;
     const t = cupOf(c);
-    if (!t) return `<p class="label">Sommer: ${CUP_NAME}</p><p>Acht Vereine, ein Pokal, ${PRIZES.winner} € für den Sieger.</p>
-      <button class="primary" data-action="onCupStart">Zur ${CUP_NAME} anmelden</button>
-      <button data-action="onCupSkip">Diesmal nicht – direkt in die neue Saison</button>`;
-    if (tournamentOpen(c)) return `<p class="label">${CUP_NAME} läuft</p><button class="primary" data-action="tab" data-value="cup">Zum Turnier</button>`;
-    return `${t.log.length && !t.skipped ? `<p class="reply ok">${t.log.at(-1)}</p>` : ''}<button class="primary" data-action="onNewSeason">Nächste Saison</button>`;
+    if (!t) return `<p class="label">${tr('Sommer', 'Summer')}: ${CUP_NAME}</p><p>${tr(`Acht Vereine, ein Pokal, ${PRIZES.winner} € für den Sieger.`, `Eight clubs, one trophy, €${PRIZES.winner} for the winner.`)}</p>
+      <button class="primary" data-action="onCupStart">${tr(`Zur ${CUP_NAME} anmelden`, `Enter the ${CUP_NAME}`)}</button>
+      <button data-action="onCupSkip">${tr('Diesmal nicht – direkt in die neue Saison', 'Not this time – straight into the new season')}</button>`;
+    if (tournamentOpen(c)) return `<p class="label">${tr(`${CUP_NAME} läuft`, `${CUP_NAME} under way`)}</p><button class="primary" data-action="tab" data-value="cup">${tr('Zum Turnier', 'To the tournament')}</button>`;
+    return `${t.log.length && !t.skipped ? `<p class="reply ok">${t.log.at(-1)}</p>` : ''}<button class="primary" data-action="onNewSeason">${tr('Nächste Saison', 'Next season')}</button>`;
   }
 
   tab_cup() {
     const c = this.career;
-    const trophies = (c.trophies ?? []).length ? `<h4>Vitrine</h4><ul class="plain trophies">${c.trophies.map((tr) => `<li>Pokal: ${tr.name}</li>`).join('')}</ul>` : '';
+    const trophies = (c.trophies ?? []).length ? `<h4>${tr('Vitrine', 'Trophy cabinet')}</h4><ul class="plain trophies">${c.trophies.map((t) => `<li>${tr('Pokal', 'Trophy')}: ${t.name}</li>`).join('')}</ul>` : '';
     const running = ['halle', 'stadt'].filter((k) => cupOf(c, k) && !cupOf(c, k).skipped);
-    const intro = `<p class="empty">Zwei Turniere pro Saison: die ${CUPS.halle.name} in der Winterpause (Saisonmitte, ${CUPS.halle.place}, Bande und Handballtore) und die ${CUPS.stadt.name} im Sommer nach dem letzten Spieltag (${CUPS.stadt.place}).</p>`;
+    const intro = `<p class="empty">${tr(`Zwei Turniere pro Saison: die ${CUPS.halle.name} in der Winterpause (Saisonmitte, ${CUPS.halle.place}, Bande und Handballtore) und die ${CUPS.stadt.name} im Sommer nach dem letzten Spieltag (${CUPS.stadt.place}).`, `Two tournaments per season: the ${CUPS.halle.name} in the winter break (mid-season, ${CUPS.halle.place}, boards and handball goals) and the ${CUPS.stadt.name} in summer after the last matchday (${CUPS.stadt.place}).`)}</p>`;
     return `${running.length ? running.map((k) => this.cupSection(k)).join('<hr>') : intro}${trophies}`;
   }
 
@@ -575,11 +580,11 @@ export class Clubhouse {
     const t = cupOf(c, kind);
     const cfg = CUPS[kind];
     const me = humanClub(c).id;
-    const table = (g) => `<table class="squad cup-table"><thead><tr><th>Gruppe ${g === 0 ? 'A' : 'B'}</th><th>Sp.</th><th>Tore</th><th>Pkt.</th></tr></thead><tbody>${groupTable(c, g, kind)
+    const table = (g) => `<table class="squad cup-table"><thead><tr><th>${tr('Gruppe', 'Group')} ${g === 0 ? 'A' : 'B'}</th><th>${tr('Sp.', 'P')}</th><th>${tr('Tore', 'Goals')}</th><th>${tr('Pkt.', 'Pts')}</th></tr></thead><tbody>${groupTable(c, g, kind)
       .map((r, i) => `<tr class="${r.id === me ? 'mine' : ''} ${i < 2 ? 'through' : ''}"><td>${r.club.name}</td><td class="num">${r.p}</td><td class="num">${r.gf}:${r.ga}</td><td class="num">${r.pts}</td></tr>`)
       .join('')}</tbody></table>`;
     const line = (m) =>
-      `<li class="${m.home === me || m.away === me ? 'mine' : ''}"><small>${stageName(m)}</small> ${cupClub(c, m.home).short} ${m.result ? `<b>${m.result.home}:${m.result.away}</b>${m.pens ? ` <small>(${m.pens.home}:${m.pens.away} i. E.)</small>` : ''}` : '–:–'} ${cupClub(c, m.away).short}</li>`;
+      `<li class="${m.home === me || m.away === me ? 'mine' : ''}"><small>${stageName(m)}</small> ${cupClub(c, m.home).short} ${m.result ? `<b>${m.result.home}:${m.result.away}</b>${m.pens ? ` <small>(${m.pens.home}:${m.pens.away} ${tr('i. E.', 'pens')})</small>` : ''}` : '–:–'} ${cupClub(c, m.away).short}</li>`;
     const ko = t.matches.filter((m) => m.stage === 'SF' || m.stage === 'F');
     const next = humanCupMatch(c, kind);
     let action = '';
@@ -587,16 +592,16 @@ export class Clubhouse {
     else if (this.busy) action = `<p class="busy">${this.busy}</p>`;
     else if (next) {
       const opp = cupClub(c, next.home === me ? next.away : next.home);
-      action = `<div class="fixture-card"><p class="label">${stageName(next)}</p><h3>${humanClub(c).short} – ${opp.short}</h3><p>gegen <b>${opp.name}</b>${next.stage !== 'A' && next.stage !== 'B' ? ' · bei Unentschieden Elfmeterschießen' : ''}</p>
-        <button class="primary" data-action="onCupPlay" data-value="${kind}">Selbst spielen</button> <button data-action="onCupSimulate" data-value="${kind}">Simulieren</button></div>`;
-    } else action = `<p>Ihr seid raus – die anderen spielen noch.</p><button data-action="onCupSimulate" data-value="${kind}">Nächste Runde anschauen</button>`;
+      action = `<div class="fixture-card"><p class="label">${stageName(next)}</p><h3>${humanClub(c).short} – ${opp.short}</h3><p>${tr('gegen', 'against')} <b>${opp.name}</b>${next.stage !== 'A' && next.stage !== 'B' ? tr(' · bei Unentschieden Elfmeterschießen', ' · penalties if level') : ''}</p>
+        <button class="primary" data-action="onCupPlay" data-value="${kind}">${tr('Selbst spielen', 'Play it yourself')}</button> <button data-action="onCupSimulate" data-value="${kind}">${tr('Simulieren', 'Simulate')}</button></div>`;
+    } else action = `<p>${tr('Ihr seid raus – die anderen spielen noch.', 'You are out – the others are still playing.')}</p><button data-action="onCupSimulate" data-value="${kind}">${tr('Nächste Runde anschauen', 'Watch the next round')}</button>`;
     return `
-      <p class="chat-head">${cfg.name} ${t.year} · ${cfg.place} · Sieger ${cfg.prizes.winner} €, Finale ${cfg.prizes.final} €, Halbfinale ${cfg.prizes.semi} €</p>
+      <p class="chat-head">${cfg.name} ${t.year} · ${cfg.place} · ${tr(`Sieger ${cfg.prizes.winner} €, Finale ${cfg.prizes.final} €, Halbfinale ${cfg.prizes.semi} €`, `winner €${cfg.prizes.winner}, final €${cfg.prizes.final}, semi-final €${cfg.prizes.semi}`)}</p>
       ${action}
       <div class="cup-groups">${table(0)}${table(1)}</div>
-      ${ko.length ? `<h4>K.-o.-Runde</h4><ul class="plain cup-list">${ko.map(line).join('')}</ul>` : ''}
-      <h4>Alle Spiele</h4><ul class="plain cup-list">${t.matches.filter((m) => m.result).map(line).join('') || '<li><em>Gleich geht es los.</em></li>'}</ul>
-      ${t.log.length ? `<h4>Eure Ergebnisse</h4><ul class="plain">${t.log.map((l) => `<li>${l}</li>`).join('')}</ul>` : ''}`;
+      ${ko.length ? `<h4>${tr('K.-o.-Runde', 'Knockout round')}</h4><ul class="plain cup-list">${ko.map(line).join('')}</ul>` : ''}
+      <h4>${tr('Alle Spiele', 'All matches')}</h4><ul class="plain cup-list">${t.matches.filter((m) => m.result).map(line).join('') || `<li><em>${tr('Gleich geht es los.', 'Kick-off is coming up.')}</em></li>`}</ul>
+      ${t.log.length ? `<h4>${tr('Eure Ergebnisse', 'Your results')}</h4><ul class="plain">${t.log.map((l) => `<li>${l}</li>`).join('')}</ul>` : ''}`;
   }
 
   miniTable() {
@@ -607,39 +612,40 @@ export class Clubhouse {
 
   tab_chat() {
     const c = this.career;
-    if (!c.week) return '<p class="empty">Die Gruppe ist ruhig. Saisonpause.</p>';
+    if (!c.week) return `<p class="empty">${tr('Die Gruppe ist ruhig. Saisonpause.', 'The group is quiet. Off-season.')}</p>`;
     const w = c.week;
     const club = humanClub(c);
     const bubbles = w.chat
       .map((msg) => {
-        if (msg.from === null) return `<div class="bubble me"><b>Du (Trainer)</b>${msg.text}<time>${msg.time}</time></div>`;
+        if (msg.from === null) return `<div class="bubble me"><b>${tr('Du (Trainer)', 'You (manager)')}</b>${msg.text}<time>${timeLabel(msg.time)}</time></div>`;
         const p = this.p(msg.from);
         const status = STATUS[w.availability[msg.from]];
-        return `<div class="bubble"><b>${p.name}</b>${msg.text}<time>${msg.time}</time>${status ? `<i class="st ${status[1]}"></i>` : ''}</div>`;
+        return `<div class="bubble"><b>${p.name}</b>${msg.text}<time>${timeLabel(msg.time)}</time>${status ? `<i class="st ${status[1]}"></i>` : ''}</div>`;
       })
       .join('');
     const declined = club.squad.filter((idx) => w.availability[idx] === 'no' && !w.nudged.includes(idx) && !c.players[idx].injuryWeeks).filter((idx) => !isCoach(c, idx));
     const ev = w.event;
+    const view = ev ? eventView(c, ev) : null;
     const eventCard = ev
       ? `<div class="event-card">
-          <p class="label">${ev.story ? `Geschichte · ${ev.story}` : 'Diese Woche im Verein'}</p>
-          <p>${ev.text}</p>
+          <p class="label">${ev.story ? `${tr('Geschichte', 'Story')} · ${storyTag(ev.story)}` : tr('Diese Woche im Verein', 'This week at the club')}</p>
+          <p>${view.text}</p>
           ${ev.choice !== null
-            ? `<p class="reply ok">➜ ${ev.options[ev.choice] ?? ''}: ${ev.result ?? ''}</p>`
+            ? `<p class="reply ok">➜ ${view.options[ev.choice] ?? ''}: ${ev.result ?? ''}</p>`
             : this.results
               ? ''
-              : `<div class="actions">${ev.options.map((o, i) => `<button ${i === 0 ? 'class="primary"' : ''} data-action="event" data-value="${i}">${o}</button>`).join('')}</div>`}
+              : `<div class="actions">${view.options.map((o, i) => `<button ${i === 0 ? 'class="primary"' : ''} data-action="event" data-value="${i}">${o}</button>`).join('')}</div>`}
         </div>`
       : '';
     return `
       ${eventCard}
-      <div class="chat-head">„Wer kann Sonntag?" · ${club.squad.length} Mitglieder</div>
+      <div class="chat-head">${tr('„Wer kann Sonntag?"', '"Who can play Sunday?"')} · ${club.squad.length} ${tr('Mitglieder', 'members')}</div>
       <div class="chat">${bubbles}</div>
       <div class="nudge">
-        <span>Nachhaken (${w.nudges} übrig):</span>
+        <span>${tr('Nachhaken', 'Chase up')} (${w.nudges} ${tr('übrig', 'left')}):</span>
         ${declined.length && w.nudges > 0 && !this.results
           ? declined.map((idx) => `<button data-action="nudge" data-value="${idx}">${first(this.p(idx).name)}</button>`).join('')
-          : '<em>niemand</em>'}
+          : `<em>${tr('niemand', 'nobody')}</em>`}
       </div>`;
   }
 
@@ -653,26 +659,26 @@ export class Clubhouse {
       .map(({ idx, p, r }) => {
         const tier = tierById(p.tier);
         const st = c.week ? STATUS[c.week.availability[idx]] : null;
-        const avg = r.graded ? (r.gradeSum / r.graded).toFixed(1).replace('.', ',') : '–';
+        const avg = r.graded ? tr((r.gradeSum / r.graded).toFixed(1).replace('.', ','), (r.gradeSum / r.graded).toFixed(1)) : '–';
         return `<tr style="--c:${tier.color}">
           <td><span class="badge">${tier.name}</span></td>
-          <td><b>${p.name}</b>${isCoach(c, idx) ? ' <span class="me-tag">Du</span>' : ''}${p.title ? ` <em>${p.title}</em>` : ''}${formArrow(r.form)}${r.absenceMul > 1.2 ? ' <span class="grumpy" title="hat gerade wenig Zeit – sagt öfter ab">selten da</span>' : ''}${r.grumpy ? ' <span class="grumpy" title="angefressen – sagt öfter ab">grummelt</span>' : ''}<small>${p.age} J. · ${p.profession}</small>${relationLabel(c, idx) ? `<small class="rel">${relationLabel(c, idx)}</small>` : ''}</td>
+          <td><b>${p.name}</b>${isCoach(c, idx) ? ` <span class="me-tag">${tr('Du', 'You')}</span>` : ''}${p.title ? ` <em>${p.title}</em>` : ''}${formArrow(r.form)}${r.absenceMul > 1.2 ? tr(' <span class="grumpy" title="hat gerade wenig Zeit – sagt öfter ab">selten da</span>', ' <span class="grumpy" title="short of time at the moment – drops out more often">rarely around</span>') : ''}${r.grumpy ? tr(' <span class="grumpy" title="angefressen – sagt öfter ab">grummelt</span>', ' <span class="grumpy" title="sulking – drops out more often">sulking</span>') : ''}<small>${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)}</small>${relationLabel(c, idx) ? `<small class="rel">${relationLabel(c, idx)}</small>` : ''}</td>
           <td>${POSITIONS[p.position]}</td><td class="num">${p.rating}</td>
-          <td>${r.injuryWeeks ? `<span class="st-text no" title="${r.injury?.label ?? 'verletzt'}">${r.injury ? `${r.injury.label} · ${r.injuryWeeks} Wo.` : 'verletzt'}</span>` : st ? `<span class="st-text ${st[1]}">${st[0]}</span>` : ''}</td>
+          <td>${r.injuryWeeks ? `<span class="st-text no" title="${r.injury?.label ?? tr('verletzt', 'injured')}">${r.injury ? `${r.injury.label} · ${r.injuryWeeks} ${tr('Wo.', 'wks')}` : tr('verletzt', 'injured')}</span>` : st ? `<span class="st-text ${st[1]}">${st[0]}</span>` : ''}</td>
           <td class="num">${r.apps}</td><td class="num">${r.goals}</td><td class="num">${r.assists}</td><td class="num">${avg}</td>
-          <td>${canRelease && !isCoach(c, idx) ? (this.confirmRelease === idx ? `<button class="tiny danger" data-action="release" data-value="${idx}">Wirklich?</button>` : `<button class="tiny" data-action="release" data-value="${idx}" title="Verabschieden">×</button>`) : ''}</td>
+          <td>${canRelease && !isCoach(c, idx) ? (this.confirmRelease === idx ? `<button class="tiny danger" data-action="release" data-value="${idx}">${tr('Wirklich?', 'Sure?')}</button>` : `<button class="tiny" data-action="release" data-value="${idx}" title="${tr('Verabschieden', 'Release')}">×</button>`) : ''}</td>
         </tr>`;
       })
       .join('');
-    return `<table class="squad"><thead><tr><th></th><th>Spieler</th><th>Pos.</th><th>Stärke</th><th>Sonntag</th><th>Sp.</th><th>Tore</th><th>Vorl.</th><th>Ø Note</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+    return `<table class="squad"><thead><tr><th></th><th>${tr('Spieler', 'Player')}</th><th>${tr('Pos.', 'Pos.')}</th><th>${tr('Stärke', 'Rating')}</th><th>${tr('Sonntag', 'Sunday')}</th><th>${tr('Sp.', 'Apps')}</th><th>${tr('Tore', 'Goals')}</th><th>${tr('Vorl.', 'Ast.')}</th><th>${tr('Ø Note', 'Avg.')}</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
   }
 
   tab_lineup() {
     const c = this.career;
-    if (!c.week || this.results) return '<p class="empty">Die Aufstellung für den nächsten Spieltag gibt es nach dem Wochenstart.</p>';
+    if (!c.week || this.results) return `<p class="empty">${tr('Die Aufstellung für den nächsten Spieltag gibt es nach dem Wochenstart.', 'The line-up for the next matchday is available once the week starts.')}</p>`;
     const { formation, lineup, bench } = currentLineup(c);
     const club = humanClub(c);
-    const ROLE = { gk: 'Tor', def: 'Abwehr', mid: 'Mitte', fwd: 'Sturm' };
+    const ROLE = tr({ gk: 'Tor', def: 'Abwehr', mid: 'Mitte', fwd: 'Sturm' }, { gk: 'GK', def: 'Def', mid: 'Mid', fwd: 'Att' });
     const options = club.squad
       .filter((idx) => c.week.availability[idx] === 'yes')
       .map((idx) => ({ idx, p: this.p(idx) }))
@@ -684,33 +690,33 @@ export class Clubhouse {
           .map(({ idx, p }) => `<option value="${idx}" ${idx === current ? 'selected' : ''}>${p.name} · ${POSITIONS[p.position]} · ${p.rating}</option>`)
           .join('');
         return `<label class="slot slot-${slot.role}"><span>${ROLE[slot.role]}</span>
-          <select data-slot="${i}">${current == null ? '<option selected>Aushilfe aus dem Bekanntenkreis</option>' : ''}${opts}</select></label>`;
+          <select data-slot="${i}">${current == null ? `<option selected>${tr('Aushilfe aus dem Bekanntenkreis', 'Stand-in from a mate\'s circle')}</option>` : ''}${opts}</select></label>`;
       })
       .join('');
     const gkIdx = formation.findIndex((f) => f.role === 'gk');
     const keeper = lineup[gkIdx] != null ? this.p(lineup[gkIdx]) : null;
-    const keeperNote = keeper && keeper.position !== 'gk' ? `<p class="warn">Kein Torwart da – ${keeper.name.split(' ')[0]} muss ran. Handschuhe liegen im Kofferraum.</p>` : '';
+    const keeperNote = keeper && keeper.position !== 'gk' ? `<p class="warn">${tr(`Kein Torwart da – ${keeper.name.split(' ')[0]} muss ran. Handschuhe liegen im Kofferraum.`, `No keeper – ${keeper.name.split(' ')[0]} has to go in goal. The gloves are in the boot.`)}</p>` : '';
     const chem = chemistry(c, lineup);
     const chemLine = chem.pairs.length
-      ? `<p class="chem ${chem.score < 0 ? 'bad' : 'good'}">Teamchemie ${chem.score > 0 ? '+' : ''}${chem.score}: ${chem.pairs.map((pr) => `${shortName(c, pr.a)} & ${shortName(c, pr.b)} (${REL[pr.type].plural})`).join(' · ')}</p>`
-      : '<p class="chem">Teamchemie: In dieser Aufstellung kennt sich keiner näher.</p>';
+      ? `<p class="chem ${chem.score < 0 ? 'bad' : 'good'}">${tr('Teamchemie', 'Chemistry')} ${chem.score > 0 ? '+' : ''}${chem.score}: ${chem.pairs.map((pr) => `${shortName(c, pr.a)} & ${shortName(c, pr.b)} (${REL[pr.type].plural})`).join(' · ')}</p>`
+      : `<p class="chem">${tr('Teamchemie: In dieser Aufstellung kennt sich keiner näher.', 'Chemistry: nobody in this line-up knows each other well.')}</p>`;
     const benchList = bench.length
-      ? bench.map((idx) => `<li>${this.p(idx).name}${c.week.availability[idx] === 'late' ? ' <em>(kommt zur 2. HZ)</em>' : ''}</li>`).join('')
-      : '<li><em>niemand</em></li>';
-    if (coachAway(c)) return `<p class="warn">Du bist diese Woche nicht da. Der Kapitän stellt auf – nach bestem Wissen und Gewissen.</p><h4>Bank</h4><ul class="bench">${benchList}</ul>`;
+      ? bench.map((idx) => `<li>${this.p(idx).name}${c.week.availability[idx] === 'late' ? tr(' <em>(kommt zur 2. HZ)</em>', ' <em>(arrives for the 2nd half)</em>') : ''}</li>`).join('')
+      : `<li><em>${tr('niemand', 'nobody')}</em></li>`;
+    if (coachAway(c)) return `<p class="warn">${tr('Du bist diese Woche nicht da. Der Kapitän stellt auf – nach bestem Wissen und Gewissen.', 'You are away this week. The captain picks the team – to the best of his knowledge.')}</p><h4>${tr('Bank', 'Bench')}</h4><ul class="bench">${benchList}</ul>`;
     return `
-      <p class="chat-head">${formation.length} gegen ${formation.length} · ${c.week.lineup ? 'eigene Aufstellung' : 'automatisch aufgestellt'}</p>
+      <p class="chat-head">${formation.length} ${tr('gegen', 'v')} ${formation.length} · ${c.week.lineup ? tr('eigene Aufstellung', 'your line-up') : tr('automatisch aufgestellt', 'picked automatically')}</p>
       <div class="lineup">${slots}</div>
       ${chemLine}
       ${keeperNote}
-      <h4>Bank</h4><ul class="bench">${benchList}</ul>
-      <button data-action="autoLineup">Automatisch aufstellen</button>`;
+      <h4>${tr('Bank', 'Bench')}</h4><ul class="bench">${benchList}</ul>
+      <button data-action="autoLineup">${tr('Automatisch aufstellen', 'Pick automatically')}</button>`;
   }
 
   tab_transfers() {
     const c = this.career;
     const w = c.week;
-    if (!w || this.results) return '<p class="empty">Die Gerüchteküche meldet sich nach dem Wochenstart.</p>';
+    if (!w || this.results) return `<p class="empty">${tr('Die Gerüchteküche meldet sich nach dem Wochenstart.', 'The rumour mill starts up once the week begins.')}</p>`;
     const club = humanClub(c);
     const full = club.squad.length >= maxSquad(c);
     const cards = w.rumors
@@ -719,29 +725,29 @@ export class Clubhouse {
         const tier = tierById(p.tier);
         const known = r.scouted;
         const badge = known ? `<span class="badge" style="--c:${tier.color}">${tier.name}</span>` : '<span class="badge unknown">?</span>';
-        const rating = known ? `Stärke ${p.rating}` : `Stärke ca. ${r.range[0]}–${r.range[1]}`;
+        const rating = known ? `${tr('Stärke', 'Rating')} ${p.rating}` : `${tr('Stärke ca.', 'Rating approx.')} ${r.range[0]}–${r.range[1]}`;
         const traits = known && p.traits.length ? `<p class="traits">${p.traits.map((t) => `<i title="${TRAITS[t].desc}">${TRAITS[t].name}</i>`).join('')}</p>` : '';
         const story = known && p.backstory ? `<p class="story">${p.backstory}</p>` : '';
         const chance = Math.round(recruitChance(c, r) * 100);
         let footer;
-        if (r.status === 'joined') footer = `<p class="reply ok">„${r.reply}" – ist jetzt im Kader!</p>`;
-        else if (r.status === 'declined') footer = `<p class="reply no">„${r.reply}"</p>`;
+        if (r.status === 'joined') footer = tr(`<p class="reply ok">„${r.reply}" – ist jetzt im Kader!</p>`, `<p class="reply ok">"${r.reply}" – now in the squad!</p>`);
+        else if (r.status === 'declined') footer = tr(`<p class="reply no">„${r.reply}"</p>`, `<p class="reply no">"${r.reply}"</p>`);
         else
           footer = `<div class="actions">
-            <button data-action="scout" data-value="${i}" ${known || w.actions <= 0 || coachAway(c) ? 'disabled' : ''}>Beim Kick zuschauen</button>
-            <button class="primary" data-action="recruit" data-value="${i}" ${w.actions <= 0 || full || coachAway(c) ? 'disabled' : ''}>Ansprechen <small>(~${chance} %)</small></button>
+            <button data-action="scout" data-value="${i}" ${known || w.actions <= 0 || coachAway(c) ? 'disabled' : ''}>${tr('Beim Kick zuschauen', 'Watch him play')}</button>
+            <button class="primary" data-action="recruit" data-value="${i}" ${w.actions <= 0 || full || coachAway(c) ? 'disabled' : ''}>${tr('Ansprechen', 'Approach')} <small>(~${chance} %)</small></button>
           </div>`;
         return `<article class="rumor ${p.tier === 'legende' ? 'legend' : ''}" style="--c:${known ? tier.color : '#666'}">
           <p class="source">${r.source}</p>
           <div class="who">${badge} <b>${p.name}</b>${known && p.title ? ` <em>${p.title}</em>` : ''}
-            <small>${p.age} J. · ${p.profession} · ${POSITIONS[p.position]} · ${rating}</small></div>
+            <small>${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)} · ${POSITIONS[p.position]} · ${rating}</small></div>
           ${traits}${story}${footer}
         </article>`;
       })
       .join('');
     return `
-      ${coachAway(c) ? '<p class="warn">Du bist diese Woche nicht da – Gespräche mit neuen Leuten müssen warten.</p>' : ''}
-      <p class="chat-head">Kader ${club.squad.length}/${maxSquad(c)} · noch ${w.actions} Aktion${w.actions === 1 ? '' : 'en'} diese Woche${full ? ' · Kader voll – erst jemanden verabschieden' : ''}</p>
+      ${coachAway(c) ? `<p class="warn">${tr('Du bist diese Woche nicht da – Gespräche mit neuen Leuten müssen warten.', 'You are away this week – talks with new players will have to wait.')}</p>` : ''}
+      <p class="chat-head">${tr('Kader', 'Squad')} ${club.squad.length}/${maxSquad(c)} · ${tr(`noch ${w.actions} Aktion${w.actions === 1 ? '' : 'en'} diese Woche`, `${w.actions} action${w.actions === 1 ? '' : 's'} left this week`)}${full ? tr(' · Kader voll – erst jemanden verabschieden', ' · squad full – release someone first') : ''}</p>
       <div class="rumors">${cards}</div>`;
   }
 
@@ -765,17 +771,17 @@ export class Clubhouse {
     const k = c.coach;
     const me = k?.idx != null ? this.p(k.idx) : null;
     const profile = k
-      ? `<div class="me-card"><h4>Du – ${coachPlaying(c) ? 'Spielertrainer' : 'Trainer'}${k.generation > 1 ? ` <small>(${k.generation}. Trainer-Ära)</small>` : ''}</h4>
-          <p><b>${coachName(c)}</b>${me ? ` · ${me.age} J. · ${me.profession} · ${POSITIONS[me.position]} · Stärke ${me.rating}` : ''}</p>
-          ${k.style ? `<p>Spielertyp: ${STYLES[k.style]?.name ?? ''}</p>` : ''}
-          <p>${k.family}${k.flags.kasse ? ' · machst nebenbei die Vereinskasse' : ''}${k.flags.familyAtGames ? ' · die Familie kommt sonntags mit' : ''}</p>
+      ? `<div class="me-card"><h4>${tr('Du', 'You')} – ${coachPlaying(c) ? tr('Spielertrainer', 'player-manager') : tr('Trainer', 'manager')}${k.generation > 1 ? tr(` <small>(${k.generation}. Trainer-Ära)</small>`, ` <small>(manager era no. ${k.generation})</small>`) : ''}</h4>
+          <p><b>${coachName(c)}</b>${me ? ` · ${me.age}${tr(' J.', ' yrs')} · ${jobName(me.profession)} · ${POSITIONS[me.position]} · ${tr('Stärke', 'Rating')} ${me.rating}` : ''}</p>
+          ${k.style ? `<p>${tr('Spielertyp', 'Player type')}: ${STYLES[k.style]?.name ?? ''}</p>` : ''}
+          <p>${k.relation ? familyText(k.relation, k.children ?? []) : k.family}${k.flags.kasse ? tr(' · machst nebenbei die Vereinskasse', ' · also keeping the club accounts') : ''}${k.flags.familyAtGames ? tr(' · die Familie kommt sonntags mit', ' · the family comes along on Sundays') : ''}</p>
           ${(k.children ?? []).length ? `<ul class="plain">${k.children.map((ch) => {
             const age = childAge(c, ch);
-            const where = ch.inFrauen ? 'spielt im Frauenteam' : ch.idx != null ? (c.youth.prospects.includes(ch.idx) ? 'in der A-Jugend' : humanClub(c).squad.includes(ch.idx) ? 'im Kader' : 'spielt woanders') : age >= 16 && ch.sex === 'w' ? 'wartet auf ein Frauenteam' : `kickt ab 16 mit (noch ${Math.max(0, 16 - age)} Jahre)`;
-            return `<li>${ch.sex === 'w' ? 'Tochter' : 'Sohn'} ${ch.name}, ${age} J. – ${where}</li>`;
+            const where = ch.inFrauen ? tr('spielt im Frauenteam', 'plays in the women\'s team') : ch.idx != null ? (c.youth.prospects.includes(ch.idx) ? tr('in der A-Jugend', 'in the U19s') : humanClub(c).squad.includes(ch.idx) ? tr('im Kader', 'in the squad') : tr('spielt woanders', 'plays elsewhere')) : age >= 16 && ch.sex === 'w' ? tr('wartet auf ein Frauenteam', 'waiting for a women\'s team') : tr(`kickt ab 16 mit (noch ${Math.max(0, 16 - age)} Jahre)`, `plays from 16 (${Math.max(0, 16 - age)} years to go)`);
+            return `<li>${ch.sex === 'w' ? tr('Tochter', 'Daughter') : tr('Sohn', 'Son')} ${ch.name}, ${age}${tr(' J.', ' yrs')} – ${where}</li>`;
           }).join('')}</ul>` : ''}
           ${this.meBars()}
-          <p class="empty">Training, Scouting und Spieltage kosten Zeit mit der Familie. Unbesetzte Posten (Co-Trainer, Wirt, Platzwart) und Zusatzämter ziehen Energie. Ist einer der beiden Werte leer, fällst du zwei Wochen aus.</p>
+          <p class="empty">${tr('Training, Scouting und Spieltage kosten Zeit mit der Familie. Unbesetzte Posten (Co-Trainer, Wirt, Platzwart) und Zusatzämter ziehen Energie. Ist einer der beiden Werte leer, fällst du zwei Wochen aus.', 'Training, scouting and matchdays cost family time. Empty posts (assistant, bar manager, groundsman) and extra duties drain energy. If either bar runs empty, you are out for two weeks.')}</p>
         </div>`
       : '';
     return `
@@ -790,19 +796,19 @@ export class Clubhouse {
           <b>${d.short}</b>
         </div>
         <div class="fields">
-          <label>Vereinsname <input data-field="name" value="${d.name}" maxlength="32" ${editable ? '' : 'disabled'}></label>
-          <label>Kürzel <input data-field="short" value="${d.short}" maxlength="4" ${editable ? '' : 'disabled'}></label>
-          <div class="swatch-row"><span>Muster</span>${Object.entries(KIT_PATTERNS)
+          <label>${tr('Vereinsname', 'Club name')} <input data-field="name" value="${d.name}" maxlength="32" ${editable ? '' : 'disabled'}></label>
+          <label>${tr('Kürzel', 'Short name')} <input data-field="short" value="${d.short}" maxlength="4" ${editable ? '' : 'disabled'}></label>
+          <div class="swatch-row"><span>${tr('Muster', 'Pattern')}</span>${Object.entries(KIT_PATTERNS)
             .map(([id, label]) => `<button class="${d.kit.pattern === id ? 'active' : ''}" data-action="kitPattern" data-value="${id}" ${editable ? '' : 'disabled'}>${label}</button>`)
             .join('')}</div>
-          ${swatches('shirt', 'Trikot')}
-          ${d.kit.pattern !== 'uni' ? swatches('second', '2. Farbe') : ''}
-          ${swatches('shorts', 'Hose')}
-          ${swatches('socks', 'Stutzen')}
+          ${swatches('shirt', tr('Trikot', 'Shirt'))}
+          ${d.kit.pattern !== 'uni' ? swatches('second', tr('2. Farbe', '2nd colour')) : ''}
+          ${swatches('shorts', tr('Hose', 'Shorts'))}
+          ${swatches('socks', tr('Stutzen', 'Socks'))}
           ${this.clubNote ? `<p class="warn">${this.clubNote}</p>` : ''}
           ${editable
-            ? `<button class="primary" data-action="saveClub">Trikots bestellen <small>(neuer Satz ${KIT_COST} €, Name gratis)</small></button>`
-            : '<p class="warn">Die Trikots für diese Saison sind bestellt. Änderungen wieder vor dem ersten Spieltag der nächsten Saison.</p>'}
+            ? `<button class="primary" data-action="saveClub">${tr(`Trikots bestellen <small>(neuer Satz ${KIT_COST} €, Name gratis)</small>`, `Order kits <small>(new set €${KIT_COST}, name change free)</small>`)}</button>`
+            : `<p class="warn">${tr('Die Trikots für diese Saison sind bestellt. Änderungen wieder vor dem ersten Spieltag der nächsten Saison.', 'This season\'s kits are ordered. Changes again before the first matchday of next season.')}</p>`}
         </div>
       </div>`;
   }
@@ -810,44 +816,46 @@ export class Clubhouse {
   tab_training() {
     const c = this.career;
     const w = c.week;
-    if (!w || this.results) return '<p class="empty">Das nächste Open Training gibt es nach dem Wochenstart.</p>';
-    const tr = w.training;
-    if (!tr && trainingLocked(c))
-      return `<p class="warn">${coachAway(c) ? 'Du bist diese Woche nicht da.' : 'Du hast das Training abgegeben, um durchzuschnaufen.'} Kein Open Training in dieser Woche.</p>`;
-    if (!tr)
+    if (!w || this.results) return `<p class="empty">${tr('Das nächste Open Training gibt es nach dem Wochenstart.', 'The next open training is available once the week starts.')}</p>`;
+    const tt = w.training;
+    if (!tt && trainingLocked(c))
+      return `<p class="warn">${coachAway(c) ? tr('Du bist diese Woche nicht da.', 'You are away this week.') : tr('Du hast das Training abgegeben, um durchzuschnaufen.', 'You handed over training to catch your breath.')} ${tr('Kein Open Training in dieser Woche.', 'No open training this week.')}</p>`;
+    if (!tt)
       return `
-        <p>Einmal pro Woche kannst du ein <b>Open Training</b> ausrichten: Aushang beim Bäcker, ein paar Hütchen, Bälle aufpumpen.
+        ${tr(`<p>Einmal pro Woche kannst du ein <b>Open Training</b> ausrichten: Aushang beim Bäcker, ein paar Hütchen, Bälle aufpumpen.
         Es kommen sechs Leute aus der Region, die noch keinen Verein haben – meist Hobbykicker, manchmal aber ein <b>Rohdiamant</b>.</p>
-        <p>Du baust <b>${MAX_STATIONS} von ${Object.keys(STATIONS).length} Stationen</b> auf. Die Messwerte musst du selbst deuten – danach darfst du zwei Leute einladen.</p>
-        <button class="primary" data-action="training" ${c.cash < TRAINING_COST ? 'disabled' : ''}>Open Training ausrichten (${TRAINING_COST} €)</button>`;
+        <p>Du baust <b>${MAX_STATIONS} von ${Object.keys(STATIONS).length} Stationen</b> auf. Die Messwerte musst du selbst deuten – danach darfst du zwei Leute einladen.</p>`, `<p>Once a week you can hold an <b>open training</b> session: a notice at the bakery, a few cones, pump up the balls.
+        Six people from the area turn up who have no club yet – mostly hobby players, but sometimes a <b>rough diamond</b>.</p>
+        <p>You set up <b>${MAX_STATIONS} of ${Object.keys(STATIONS).length} stations</b>. You have to read the results yourself – then you may invite two people.</p>`)}
+        <button class="primary" data-action="training" ${c.cash < TRAINING_COST ? 'disabled' : ''}>${tr(`Open Training ausrichten (${TRAINING_COST} €)`, `Hold open training (€${TRAINING_COST})`)}</button>`;
     const done = trainingDone(c);
     const stationButtons = Object.entries(STATIONS)
-      .map(([id, st]) => `<button data-action="station" data-value="${id}" class="${tr.stations.includes(id) ? 'active' : ''}" ${tr.stations.includes(id) || done ? 'disabled' : ''}>${st.name}</button>`)
+      .map(([id, st]) => `<button data-action="station" data-value="${id}" class="${tt.stations.includes(id) ? 'active' : ''}" ${tt.stations.includes(id) || done ? 'disabled' : ''}>${st.name}</button>`)
       .join('');
     const best = {};
-    for (const id of tr.stations) {
-      const vals = tr.trialists.map((t) => Number(t.results[id]));
+    for (const id of tt.stations) {
+      const vals = tt.trialists.map((t) => Number(t.results[id]));
       best[id] = STATIONS[id].better === 'low' ? Math.min(...vals) : Math.max(...vals);
     }
-    const rows = tr.trialists
+    const rows = tt.trialists
       .map((t, i) => {
         const p = this.p(t.idx);
         const diamond = done && isRawDiamond(p);
-        const cells = tr.stations.map((id) => `<td class="num ${Number(t.results[id]) === best[id] ? 'best' : ''}">${t.results[id]}</td>`).join('');
+        const cells = tt.stations.map((id) => `<td class="num ${Number(t.results[id]) === best[id] ? 'best' : ''}">${t.results[id]}</td>`).join('');
         let action = '';
-        if (t.status === 'joined') action = `<span class="reply ok">„${t.reply}"</span>`;
-        else if (t.status === 'declined') action = `<span class="reply no">„${t.reply}"</span>`;
-        else if (done) action = `<button class="primary tiny" data-action="invite" data-value="${i}" ${tr.invites <= 0 ? 'disabled' : ''}>Einladen (~${Math.round(inviteChance(c, t) * 100)} %)</button>`;
+        if (t.status === 'joined') action = tr(`<span class="reply ok">„${t.reply}"</span>`, `<span class="reply ok">"${t.reply}"</span>`);
+        else if (t.status === 'declined') action = tr(`<span class="reply no">„${t.reply}"</span>`, `<span class="reply no">"${t.reply}"</span>`);
+        else if (done) action = `<button class="primary tiny" data-action="invite" data-value="${i}" ${tt.invites <= 0 ? 'disabled' : ''}>${tr('Einladen', 'Invite')} (~${Math.round(inviteChance(c, t) * 100)} %)</button>`;
         return `<tr>
-          <td><b>${p.name}</b>${diamond ? ' <span class="diamond">Rohdiamant</span>' : ''}<small>${p.age} J. · ${p.profession} · ${POSITIONS[p.position]}</small>
+          <td><b>${p.name}</b>${diamond ? ` <span class="diamond">${tr('Rohdiamant', 'Rough diamond')}</span>` : ''}<small>${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)} · ${POSITIONS[p.position]}</small>
             ${t.notes.length ? `<small class="note">${[...new Set(t.notes)].join(' · ')}</small>` : ''}</td>
           ${cells}<td>${action}</td></tr>`;
       })
       .join('');
     return `
-      <p class="chat-head">Stationen ${tr.stations.length}/${MAX_STATIONS}${done ? ` · noch ${tr.invites} Einladung${tr.invites === 1 ? '' : 'en'}` : ' · wähle, was du sehen willst'}</p>
+      <p class="chat-head">${tr('Stationen', 'Stations')} ${tt.stations.length}/${MAX_STATIONS}${done ? tr(` · noch ${tt.invites} Einladung${tt.invites === 1 ? '' : 'en'}`, ` · ${tt.invites} invitation${tt.invites === 1 ? '' : 's'} left`) : tr(' · wähle, was du sehen willst', ' · choose what you want to see')}</p>
       <div class="stations">${stationButtons}</div>
-      <table class="squad training"><thead><tr><th>Teilnehmer</th>${tr.stations.map((id) => `<th class="num">${STATIONS[id].name}<small>${STATIONS[id].unit}</small></th>`).join('')}<th></th></tr></thead><tbody>${rows}</tbody></table>`;
+      <table class="squad training"><thead><tr><th>${tr('Teilnehmer', 'Trialist')}</th>${tt.stations.map((id) => `<th class="num">${STATIONS[id].name}<small>${STATIONS[id].unit}</small></th>`).join('')}<th></th></tr></thead><tbody>${rows}</tbody></table>`;
   }
 
   tab_youth() {
@@ -856,31 +864,31 @@ export class Clubhouse {
     const full = club.squad.length >= maxSquad(c);
     const stars = (q) => '★'.repeat(Math.max(1, Math.round(q * 5))) + '☆'.repeat(5 - Math.max(1, Math.round(q * 5)));
     const staff = Object.entries(STAFF_ROLES)
-      .map(([id, r]) => `<li><b>${r.name}:</b> ${c.staff[id] ? `${c.staff[id].name} <small>– ${r.effect}</small>` : '<em>unbesetzt – vielleicht übernimmt das mal ein Ehemaliger</em>'}</li>`)
+      .map(([id, r]) => `<li><b>${r.name}:</b> ${c.staff[id] ? `${c.staff[id].name} <small>– ${r.effect}</small>` : `<em>${tr('unbesetzt – vielleicht übernimmt das mal ein Ehemaliger', 'vacant – maybe a former player will take it on one day')}</em>`}</li>`)
       .join('');
     const prospects = c.youth.prospects
       .map((idx) => ({ idx, p: this.p(idx) }))
       .sort((a, b) => b.p.rating - a.p.rating)
       .map(({ idx, p }) => {
-        const talent = p.rating >= 50 ? 'großes Talent' : p.rating >= 40 ? 'solide' : 'noch roh';
-        return `<tr><td><b>${p.name}</b><small>${p.age} J. · ${p.profession}</small></td><td>${POSITIONS[p.position]}</td>
+        const talent = p.rating >= 50 ? tr('großes Talent', 'big talent') : p.rating >= 40 ? tr('solide', 'solid') : tr('noch roh', 'still raw');
+        return `<tr><td><b>${p.name}</b><small>${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)}</small></td><td>${POSITIONS[p.position]}</td>
           <td class="num">${p.rating}</td><td><em>${talent}</em></td>
-          <td><button class="primary tiny" data-action="promote" data-value="${idx}" ${full ? 'disabled' : ''}>Hochziehen</button></td></tr>`;
+          <td><button class="primary tiny" data-action="promote" data-value="${idx}" ${full ? 'disabled' : ''}>${tr('Hochziehen', 'Promote')}</button></td></tr>`;
       })
       .join('');
     const alumni = c.alumni.length
-      ? c.alumni.map((a) => `<li>${a.name} – ${a.apps} Spiele, ${a.goals} Tore · ${a.role} (seit Saison ${a.season + 1})</li>`).join('')
-      : '<li><em>noch niemand – der Verein ist jung</em></li>';
+      ? c.alumni.map((a) => tr(`<li>${a.name} – ${a.apps} Spiele, ${a.goals} Tore · ${a.role} (seit Saison ${a.season + 1})</li>`, `<li>${a.name} – ${a.apps} games, ${a.goals} goals · ${roleName(a.role)} (since season ${a.season + 1})</li>`)).join('')
+      : `<li><em>${tr('noch niemand – der Verein ist jung', 'nobody yet – the club is young')}</em></li>`;
     return `
-      <h4>Ehrenamt</h4>
-      <ul class="plain staff"><li><b>Jugendtrainer:</b> ${c.youth.coach.name} <span class="stars">${stars(c.youth.coach.quality)}</span> <small>– je besser, desto mehr Talente</small></li>${staff}</ul>
+      <h4>${tr('Ehrenamt', 'Volunteers')}</h4>
+      <ul class="plain staff"><li><b>${tr('Jugendtrainer', 'Youth coach')}:</b> ${c.youth.coach.name} <span class="stars">${stars(c.youth.coach.quality)}</span> <small>${tr('– je besser, desto mehr Talente', '– the better, the more talents')}</small></li>${staff}</ul>
       ${this.academyBlock()}
-      <h4>A-Jugend (16–19)</h4>
+      <h4>${tr('A-Jugend (16–19)', 'U19s (16–19)')}</h4>
       ${prospects
-        ? `<table class="squad"><thead><tr><th>Talent</th><th>Pos.</th><th>Stärke</th><th>Einschätzung</th><th></th></tr></thead><tbody>${prospects}</tbody></table>
-           <p class="empty">Talente entwickeln sich auch in der Jugend. Mit 20 wechseln sie zum Nachbarn, wenn du sie nicht hochziehst.${full ? ' Kader voll – erst Platz schaffen.' : ''}</p>`
-        : '<p class="empty">Kein Talent in der A-Jugend. Der nächste Jahrgang kommt zur neuen Saison.</p>'}
-      <h4>Ehemalige</h4>
+        ? `<table class="squad"><thead><tr><th>${tr('Talent', 'Talent')}</th><th>${tr('Pos.', 'Pos.')}</th><th>${tr('Stärke', 'Rating')}</th><th>${tr('Einschätzung', 'Assessment')}</th><th></th></tr></thead><tbody>${prospects}</tbody></table>
+           <p class="empty">${tr('Talente entwickeln sich auch in der Jugend. Mit 20 wechseln sie zum Nachbarn, wenn du sie nicht hochziehst.', 'Talents develop in the youth team too. At 20 they leave for a neighbouring club if you do not promote them.')}${full ? tr(' Kader voll – erst Platz schaffen.', ' Squad full – make room first.') : ''}</p>`
+        : `<p class="empty">${tr('Kein Talent in der A-Jugend. Der nächste Jahrgang kommt zur neuen Saison.', 'No talent in the U19s. The next intake arrives with the new season.')}</p>`}
+      <h4>${tr('Ehemalige', 'Former players')}</h4>
       <ul class="plain">${alumni}</ul>`;
   }
 
@@ -890,22 +898,22 @@ export class Clubhouse {
     const offers = c.round === 0 && c.offers.length
       ? c.offers
           .map(
-            (o, i) => `<article class="rumor" style="--c:${o.renew ? '#5cc46a' : '#c9a227'}"><div class="who"><b>${o.name}</b> <em>${SLOTS[o.slot]}${o.renew ? ' · Verlängerung' : ''}</em>
-              <small>${o.line} · ${o.boss ?? ''}, ${SPONSOR_TRAITS[o.trait]?.name ?? 'treu'}</small></div>
-              <p>${euro(o.weekly)} pro Spieltag · Bonus ${euro(o.bonus)} bei: ${o.goal.text}</p>
-              <div class="actions"><button class="primary" data-action="sponsor" data-value="${i}">Unterschreiben</button>${o.negotiated ? '' : `<button data-action="negotiate" data-value="${i}">Nachverhandeln</button>`}</div></article>`,
+            (o, i) => `<article class="rumor" style="--c:${o.renew ? '#5cc46a' : '#c9a227'}"><div class="who"><b>${o.name}</b> <em>${SLOTS[o.slot]}${o.renew ? tr(' · Verlängerung', ' · renewal') : ''}</em>
+              <small>${lineOf(o)} · ${bossOf(o)}, ${SPONSOR_TRAITS[o.trait]?.name ?? SPONSOR_TRAITS.treu.name}</small></div>
+              <p>${euro(o.weekly)} ${tr('pro Spieltag', 'per matchday')} · ${tr('Bonus', 'bonus')} ${euro(o.bonus)} ${tr('bei', 'for')}: ${goalText(o.goal)}</p>
+              <div class="actions"><button class="primary" data-action="sponsor" data-value="${i}">${tr('Unterschreiben', 'Sign')}</button>${o.negotiated ? '' : `<button data-action="negotiate" data-value="${i}">${tr('Nachverhandeln', 'Negotiate')}</button>`}</div></article>`,
           )
           .join('')
       : '';
     const active = c.sponsors.length
       ? c.sponsors
           .map(
-            (s) => `<li class="sponsor"><b>${s.name}</b> <small>${SLOTS[s.slot]}${s.seasons ? ` · ${s.seasons + 1}. Saison` : ''}</small><br>
-              ${euro(s.weekly)}/Spieltag${s.pause > 0 ? ` <em>(setzt ${s.pause} Wochen aus)</em>` : s.owed ? ` <em>(schuldet ${euro(s.owed)})</em>` : ''} · Bonus ${euro(s.bonus)} bei ${s.goal.text} <small>(${goalProgress(c, s.goal)})</small>
-              <span class="rel"><i style="width:${s.rel ?? 50}%"></i></span><small>${s.boss ?? ''} ist ${relLabel(s.rel ?? 50)}</small></li>`,
+            (s) => `<li class="sponsor"><b>${s.name}</b> <small>${SLOTS[s.slot]}${s.seasons ? tr(` · ${s.seasons + 1}. Saison`, ` · season ${s.seasons + 1}`) : ''}</small><br>
+              ${euro(s.weekly)}${tr('/Spieltag', '/matchday')}${s.pause > 0 ? tr(` <em>(setzt ${s.pause} Wochen aus)</em>`, ` <em>(pausing for ${s.pause} weeks)</em>`) : s.owed ? tr(` <em>(schuldet ${euro(s.owed)})</em>`, ` <em>(owes ${euro(s.owed)})</em>`) : ''} · ${tr('Bonus', 'bonus')} ${euro(s.bonus)} ${tr('bei', 'for')} ${goalText(s.goal)} <small>(${goalProgress(c, s.goal)})</small>
+              <span class="rel"><i style="width:${s.rel ?? 50}%"></i></span><small>${bossOf(s)} ${tr('ist', 'is')} ${relLabel(s.rel ?? 50)}</small></li>`,
           )
           .join('')
-      : '<li><em>noch keine Sponsoren</em></li>';
+      : `<li><em>${tr('noch keine Sponsoren', 'no sponsors yet')}</em></li>`;
     const sinners = Object.entries(c.fines)
       .filter(([idx]) => club.squad.includes(Number(idx)))
       .sort((a, b) => b[1] - a[1])
@@ -915,17 +923,17 @@ export class Clubhouse {
     const ledger = c.ledger
       .slice(-12)
       .reverse()
-      .map((e) => `<li><span>ST ${e.round} · ${e.text}</span><b class="${e.amount < 0 ? 'minus' : 'plus'}">${e.amount > 0 ? '+' : ''}${euro(e.amount)}</b></li>`)
+      .map((e) => `<li><span>${tr('ST', 'MD')} ${e.round} · ${e.text}</span><b class="${e.amount < 0 ? 'minus' : 'plus'}">${e.amount > 0 ? '+' : ''}${euro(e.amount)}</b></li>`)
       .join('');
     return `
-      <div class="cash-head"><span>Mannschaftskasse</span><b class="${c.cash < 0 ? 'minus' : ''}">${euro(c.cash)}</b>
-        <small>Ziel: Saisonabschlussfahrt (ab ${euro(DESTINATIONS.kegeltour.cost)})${c.spirit ? ' · Stimmung nach der letzten Fahrt: bestens (weniger Absagen)' : ''}</small></div>
+      <div class="cash-head"><span>${tr('Mannschaftskasse', 'Team kitty')}</span><b class="${c.cash < 0 ? 'minus' : ''}">${euro(c.cash)}</b>
+        <small>${tr('Ziel: Saisonabschlussfahrt (ab', 'Goal: end-of-season trip (from')} ${euro(DESTINATIONS.kegeltour.cost)})${c.spirit ? tr(' · Stimmung nach der letzten Fahrt: bestens (weniger Absagen)', ' · spirits after the last trip: excellent (fewer drop-outs)') : ''}</small></div>
       <div class="cash-grid">
-        <section><h4>Sponsoren</h4><ul class="plain">${active}</ul>
-          ${c.sponsorNote && c.round === 0 ? `<p class="reply ok">${c.sponsorNote}</p>` : ''}${offers ? `<h4>Angebote für diese Saison</h4><div class="rumors">${offers}</div>` : c.round === 0 ? '' : '<p class="empty">Neue Angebote gibt es vor der nächsten Saison.</p>'}</section>
-        <section><h4>Strafenkatalog</h4><ul class="plain fines">${FINES.map((f) => `<li>${f.label} <b>${euro(f.amount)}</b></li>`).join('')}</ul>
-          <h4>Sünderkartei</h4><ol class="plain">${sinners || '<li><em>alle brav</em></li>'}</ol></section>
-        <section><h4>Kassenbuch</h4><ul class="plain ledger">${ledger || '<li><em>noch keine Buchungen</em></li>'}</ul></section>
+        <section><h4>${tr('Sponsoren', 'Sponsors')}</h4><ul class="plain">${active}</ul>
+          ${c.sponsorNote && c.round === 0 ? `<p class="reply ok">${c.sponsorNote}</p>` : ''}${offers ? `<h4>${tr('Angebote für diese Saison', 'Offers for this season')}</h4><div class="rumors">${offers}</div>` : c.round === 0 ? '' : `<p class="empty">${tr('Neue Angebote gibt es vor der nächsten Saison.', 'New offers come before next season.')}</p>`}</section>
+        <section><h4>${tr('Strafenkatalog', 'Fines list')}</h4><ul class="plain fines">${FINES.map((f) => `<li>${f.label} <b>${euro(f.amount)}</b></li>`).join('')}</ul>
+          <h4>${tr('Sünderkartei', 'Hall of shame')}</h4><ol class="plain">${sinners || `<li><em>${tr('alle brav', 'all well behaved')}</em></li>`}</ol></section>
+        <section><h4>${tr('Kassenbuch', 'Ledger')}</h4><ul class="plain ledger">${ledger || `<li><em>${tr('noch keine Buchungen', 'no entries yet')}</em></li>`}</ul></section>
       </div>`;
   }
 
@@ -936,14 +944,14 @@ export class Clubhouse {
           <td class="num">${r.w}</td><td class="num">${r.d}</td><td class="num">${r.l}</td><td class="num">${r.gf}:${r.ga}</td><td class="num"><b>${r.pts}</b></td></tr>`,
       )
       .join('');
-    return `<table class="league"><thead><tr><th></th><th>Verein</th><th>Sp.</th><th>S</th><th>U</th><th>N</th><th>Tore</th><th>Pkt.</th></tr></thead><tbody>${rows}</tbody></table>`;
+    return `<table class="league"><thead><tr><th></th><th>${tr('Verein', 'Club')}</th><th>${tr('Sp.', 'P')}</th><th>${tr('S', 'W')}</th><th>${tr('U', 'D')}</th><th>${tr('N', 'L')}</th><th>${tr('Tore', 'Goals')}</th><th>${tr('Pkt.', 'Pts')}</th></tr></thead><tbody>${rows}</tbody></table>`;
   }
 
   tab_fixtures() {
     const c = this.career;
     return c.fixtures
       .map(
-        (round, i) => `<div class="round ${i === c.round ? 'current' : ''}"><h4>Spieltag ${i + 1}</h4>${round
+        (round, i) => `<div class="round ${i === c.round ? 'current' : ''}"><h4>${tr('Spieltag', 'Matchday')} ${i + 1}</h4>${round
           .map((f) => {
             const h = clubById(c, f.home);
             const a = clubById(c, f.away);

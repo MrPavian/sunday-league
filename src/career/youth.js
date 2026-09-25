@@ -1,13 +1,14 @@
 // Jugendabteilung, Karriereende und Ehrenamt: Talente kommen aus der eigenen
 // A-Jugend, Ehemalige bleiben dem Verein als Co-Trainer, Wirt oder Platzwart.
+import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { hasTrait } from '../data/traits.js';
 
 const YOUTH_MAX_AGE = 19;
 export const STAFF_ROLES = {
-  cotrainer: { name: 'Co-Trainer', effect: 'Spieler entwickeln sich schneller (+15 %).' },
-  wirt: { name: 'Wirt im Vereinsheim', effect: 'Mehr Getränkeverkauf bei Heimspielen (+30 %).' },
-  platzwart: { name: 'Platzwart', effect: 'Halbe Platzmiete – er macht den Platz selbst.' },
+  cotrainer: { name: tr('Co-Trainer', 'Assistant manager'), effect: tr('Spieler entwickeln sich schneller (+15 %).', 'Players develop faster (+15 %).') },
+  wirt: { name: tr('Wirt im Vereinsheim', 'Clubhouse bar manager'), effect: tr('Mehr Getränkeverkauf bei Heimspielen (+30 %).', 'More drinks sales at home games (+30 %).') },
+  platzwart: { name: tr('Platzwart', 'Groundsman'), effect: tr('Halbe Platzmiete – er macht den Platz selbst.', 'Half the pitch rent – he looks after the pitch himself.') },
 };
 
 export function initYouth(career) {
@@ -106,13 +107,13 @@ export function retirements(career, deps, minSquad, rng = createRng(career.seed 
     if (!rng.chance(retirementChance(p, rec))) continue;
     club.squad = club.squad.filter((x) => x !== idx);
     const q = coachQuality(p);
-    let role = 'Ehrenmitglied';
+    let role = tr('Ehrenmitglied', 'honorary member');
     if (!career.staff.cotrainer) {
       career.staff.cotrainer = { idx, name: p.name };
       role = STAFF_ROLES.cotrainer.name;
     } else if (q > career.youth.coach.quality) {
       career.youth.coach = { name: p.name, quality: q, from: idx };
-      role = 'Jugendtrainer';
+      role = tr('Jugendtrainer', 'youth coach');
     } else if (!career.staff.wirt) {
       career.staff.wirt = { idx, name: p.name };
       role = STAFF_ROLES.wirt.name;
@@ -123,8 +124,15 @@ export function retirements(career, deps, minSquad, rng = createRng(career.seed 
     const apps = (rec.total?.apps ?? 0) + rec.apps;
     const goals = (rec.total?.goals ?? 0) + rec.goals;
     career.alumni.push({ idx, name: p.name, age: p.age, apps, goals, season: career.season, role });
-    book(career, `Abschiedsparty für ${p.name}`, 30);
+    book(career, tr(`Abschiedsparty für ${p.name}`, `Farewell party for ${p.name}`), 30);
     out.push({ idx, name: p.name, age: p.age, apps, goals, role });
   }
   return out;
 }
+
+// Ämter stehen in der Sprache im Spielstand, in der sie vergeben wurden – für die Anzeige übersetzen.
+const ROLE_EN = {
+  'Co-Trainer': 'assistant manager', 'Wirt im Vereinsheim': 'clubhouse bar manager', Platzwart: 'groundsman', Jugendtrainer: 'youth coach',
+  Ehrenmitglied: 'honorary member', 'Betreuer und Zeugwart': 'kit man and helper', Ehrenpräsident: 'honorary president',
+};
+export const roleName = (role) => tr(role, ROLE_EN[role] ?? role);

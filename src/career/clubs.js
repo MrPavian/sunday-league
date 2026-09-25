@@ -1,6 +1,7 @@
 // Die Freizeitliga Kanalbezirk – fünf Gegner mit typischen Hobbyliga-Namen.
 // tiers verschiebt die Kaderstärke (stärkere Vereine haben mehr "Gute").
-export const LEAGUE_NAME = 'Freizeitliga Kanalbezirk';
+import { tr } from '../core/i18n.js';
+export const LEAGUE_NAME = tr('Freizeitliga Kanalbezirk', 'Kanalbezirk Rec League');
 
 export const AI_CLUBS = [
   {
@@ -110,6 +111,6 @@ export const KC_CLUBS = [
 ];
 
 export const LEAGUES = {
-  1: { level: 1, name: LEAGUE_NAME, referee: false, format: null, humanVenue: 'hinterhof', clubs: AI_CLUBS, squadShape: 'small', maxSquad: 12, derby: { club: 'kanal', name: 'Kanal-Derby' } },
-  2: { level: 2, name: 'Kreisklasse C Kanalbezirk', referee: true, format: 7, humanVenue: 'rasenplatz', clubs: KC_CLUBS, squadShape: 'large', maxSquad: 16, derby: { club: 'bwk', name: 'Bezirks-Derby' } },
+  1: { level: 1, name: LEAGUE_NAME, referee: false, format: null, humanVenue: 'hinterhof', clubs: AI_CLUBS, squadShape: 'small', maxSquad: 12, derby: { club: 'kanal', name: tr('Kanal-Derby', 'Canal Derby') } },
+  2: { level: 2, name: tr('Kreisklasse C Kanalbezirk', 'Kanalbezirk District League C'), referee: true, format: 7, humanVenue: 'rasenplatz', clubs: KC_CLUBS, squadShape: 'large', maxSquad: 16, derby: { club: 'bwk', name: tr('Bezirks-Derby', 'District Derby') } },
 };
