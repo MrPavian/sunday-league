@@ -2,6 +2,8 @@
 import { createRng } from '../core/rng.js';
 import { closeSponsors, paySponsors } from './sponsors.js';
 import { fansMul, salesMul } from './facilities.js';
+import { tripSpirit } from './trip.js';
+export { bookTrip } from './trip.js';
 
 export const START_CASH = 100;
 export const KIT_COST = 60;
@@ -90,13 +92,6 @@ export function closeSeasonFinances(career, summary) {
   closeSponsors(career, summary);
   career.fines = {};
   career.seasonCards = 0;
-  career.spirit = career.tripBooked ? 1 : 0;
+  career.spirit = tripSpirit(career);
   career.tripBooked = false;
-}
-
-export function bookTrip(career) {
-  if (career.tripBooked || career.cash < TRIP_COST) return false;
-  book(career, 'Saisonabschlussfahrt gebucht', -TRIP_COST);
-  career.tripBooked = true;
-  return true;
 }

@@ -30,6 +30,10 @@ Rasensprenger springt an, oder der Schiri verletzt sich und ein Zuschauer pfeift
 Du selbst bist **Spielertrainer** – mit Job, Familie und begrenzter Energie. Training, Scouting
 und Spieltage kosten Familienzeit, unbesetzte Posten im Verein kosten Kraft. Wer beides verheizt,
 fällt zwei Wochen aus und darf nur zuschauen, wie der Kapitän aufstellt.
+Das Vereinsheim wächst mit: warme Duschen, Grill & Theke, Flutlicht, Tribüne – mit Handwerkern oder als
+Arbeitseinsatz. Am Saisonende geht es auf Fahrt: Kegeltour, Harz oder Mallorca, jeweils eine kleine Geschichte
+in drei Etappen.
+
 Sponsoren wie die Bäckerei Krume oder Bestattungen Ruhe haben ihren eigenen Kopf: Du verhandelst nach, hältst
 sie mit Siegen und Fototerminen bei Laune, und zufriedene Sponsoren verlängern mit Aufschlag.
 

@@ -585,3 +585,9 @@ Konkurrenzangebot fürs Trikot, Sponsor in Not, Siegprämie (auch doppelt oder n
 (Training kostet weniger Familienzeit), Tribüne (mehr Zuschauer, braucht die Theke). Mit Handwerkern oder als
 Arbeitseinsatz zum halben Preis – mit Maurer-Glück, Hammer auf dem Daumen oder angebohrter Wasserleitung.
 Nebenkosten pro Woche.
+
+**Saisonabschlussfahrt** (`src/career/trip.js`): Kegeltour ins Sauerland (120 €), Hüttenwochenende im Harz
+(250 €) oder Mallorca (450 €) – je drei Etappen mit Entscheidungen und gewürfelten Ausgängen (Bollerwagen im Zug,
+Wette gegen den Kegelclub, Brockenwanderung, Beachsoccer gegen Castrop, Rettungsmission um 3 Uhr). Die Fahrt
+knüpft Freundschaften und Rivalitäten, kostet mal Geld oder einen Sonnenstich, landet in der Chronik und
+entscheidet, wie die Mannschaft in die neue Saison startet.

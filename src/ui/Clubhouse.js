@@ -22,6 +22,7 @@ import {
   table,
 } from '../career/career.js';
 import { acceptSponsor, bookTrip, FINES, KIT_COST, SLOTS, TRIP_COST } from '../career/finances.js';
+import { DESTINATIONS, tripChoose, tripStage, tripState } from '../career/trip.js';
 import { build, canBuild, facilities, FACILITIES } from '../career/facilities.js';
 import { goalProgress, negotiate, relLabel, TRAITS as SPONSOR_TRAITS } from '../career/sponsors.js';
 import { inviteChance, inviteTrialist, isRawDiamond, MAX_STATIONS, runStation, startTraining, STATIONS, TRAINING_COST, trainingDone } from '../career/training.js';
@@ -150,8 +151,11 @@ export class Clubhouse {
         if (cand?.type === 'neu') return this.h.onNewCoach();
         if (cand) succeed(this.career, cand);
         this.h.onChange();
+      } else if (action === 'tripChoose') {
+        tripChoose(this.career, Number(value));
+        this.h.onChange();
       } else if (action === 'trip') {
-        bookTrip(this.career);
+        bookTrip(this.career, value);
         this.h.onChange();
       } else if (action === 'scout') {
         scoutRumor(this.career, Number(value));
@@ -503,11 +507,25 @@ export class Clubhouse {
         <p>Meister: <b>${champ.name}</b></p>
         ${this.miniTable()}
         ${chronicle}
-        ${c.tripBooked
-          ? '<p class="reply ok">Mannschaftsfahrt gebucht! Die Stimmung nächste Saison: bestens.</p>'
-          : `<button data-action="trip" ${c.cash < TRIP_COST ? 'disabled' : ''}>Saisonabschlussfahrt buchen (${TRIP_COST} €, Kasse: ${euro(c.cash)})</button>`}
+        ${this.tripBlock()}
         ${this.legacyAside() ?? this.cupAside()}
       </div>`;
+  }
+
+  // Saisonabschlussfahrt: Ziel wählen, dann drei Etappen mit Entscheidungen.
+  tripBlock() {
+    const c = this.career;
+    if (!c.tripBooked)
+      return `<div class="trip"><p class="label">Saisonabschlussfahrt</p><p>Kasse: ${euro(c.cash)}. Wohin geht es?</p>
+        ${Object.entries(DESTINATIONS).map(([id, d]) => `<button class="successor" data-action="trip" data-value="${id}" ${c.cash < d.cost ? 'disabled' : ''}><b>${d.name} – ${euro(d.cost)}</b><small>${d.desc}</small></button>`).join('')}</div>`;
+    const t = tripState(c);
+    const d = DESTINATIONS[t.dest];
+    const log = t.log.map((e) => `<p class="trip-log"><small>${e.a}</small><br>${e.text}</p>`).join('');
+    const stage = tripStage(c);
+    if (stage)
+      return `<div class="trip"><p class="label">${d.name} · Etappe ${stage.n} / 3</p>${log}<p>${stage.text}</p>
+        ${stage.options.map((o, i) => `<button data-action="tripChoose" data-value="${i}">${o}</button>`).join('')}</div>`;
+    return `<div class="trip"><p class="label">${d.name} – ${t.verdict}</p>${log}<p class="reply ok">${t.score >= 0 ? 'Die Mannschaft geht mit bester Laune in die neue Saison (weniger Absagen).' : 'Darüber redet man besser nicht. Die Stimmung braucht ein paar Wochen.'}</p></div>`;
   }
 
   // Karriereende und Nachfolge: Solange eine Entscheidung offen ist, wartet die neue Saison.
@@ -901,7 +919,7 @@ export class Clubhouse {
       .join('');
     return `
       <div class="cash-head"><span>Mannschaftskasse</span><b class="${c.cash < 0 ? 'minus' : ''}">${euro(c.cash)}</b>
-        <small>Ziel: Saisonabschlussfahrt für ${euro(TRIP_COST)}${c.spirit ? ' · Stimmung nach der letzten Fahrt: bestens (weniger Absagen)' : ''}</small></div>
+        <small>Ziel: Saisonabschlussfahrt (ab ${euro(DESTINATIONS.kegeltour.cost)})${c.spirit ? ' · Stimmung nach der letzten Fahrt: bestens (weniger Absagen)' : ''}</small></div>
       <div class="cash-grid">
         <section><h4>Sponsoren</h4><ul class="plain">${active}</ul>
           ${c.sponsorNote && c.round === 0 ? `<p class="reply ok">${c.sponsorNote}</p>` : ''}${offers ? `<h4>Angebote für diese Saison</h4><div class="rumors">${offers}</div>` : c.round === 0 ? '' : '<p class="empty">Neue Angebote gibt es vor der nächsten Saison.</p>'}</section>

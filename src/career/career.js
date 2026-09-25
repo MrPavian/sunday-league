@@ -2,6 +2,7 @@
 // (speicherbar); Spieler werden nur über ihre Pool-Nummer referenziert.
 import { legacySeasonEnd } from './legacy.js';
 import { sponsorResult } from './sponsors.js';
+import { autoTrip } from './trip.js';
 import { absenceMul as facilityAbsence, recruitBonus, weeklyFacilities, youthGrowthMul } from './facilities.js';
 import { createRng } from '../core/rng.js';
 import { FORMATIONS } from '../sim/formation.js';
@@ -174,6 +175,7 @@ export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null 
 // Saisonwechsel: Tabelle auswerten, auf- oder absteigen, Kader behalten.
 export function nextSeason(career) {
   const legacyNotes = legacySeasonEnd(career); // Schuhe an den Nagel, Nachfolge
+  autoTrip(career); // nicht zu Ende gefahrene Saisonabschlussfahrt
   const rows = table(career);
   const pos = rows.findIndex((r) => r.club.human) + 1;
   const level = career.level ?? 1;
