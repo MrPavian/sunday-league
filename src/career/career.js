@@ -1,5 +1,6 @@
 // Karriere: eine Saison in der Freizeitliga. Der Zustand ist reines JSON
 // (speicherbar); Spieler werden nur über ihre Pool-Nummer referenziert.
+import { legacySeasonEnd } from './legacy.js';
 import { createRng } from '../core/rng.js';
 import { FORMATIONS } from '../sim/formation.js';
 import { createPlayerPool, ratePlayer } from '../sim/generator.js';
@@ -170,6 +171,7 @@ export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null 
 
 // Saisonwechsel: Tabelle auswerten, auf- oder absteigen, Kader behalten.
 export function nextSeason(career) {
+  const legacyNotes = legacySeasonEnd(career); // Schuhe an den Nagel, Nachfolge
   const rows = table(career);
   const pos = rows.findIndex((r) => r.club.human) + 1;
   const level = career.level ?? 1;
@@ -237,6 +239,7 @@ export function nextSeason(career) {
   startWeek(career);
   const note = (text) => career.week?.chat.splice(1, 0, { from: null, text, time: 'Mo 09:00' });
   for (const n of sagaNotes) note(n);
+  for (const n of legacyNotes) note(n);
   for (const r of retired) note(`Abschied: ${r.name} (${r.age}) hört auf – ${r.apps} Spiele, ${r.goals} Tore. Bleibt uns erhalten als ${r.role}.`);
   for (const idx of leaving) note(`${poolPlayer(idx).name} war zu alt für die A-Jugend und ist zum Nachbarn gewechselt.`);
   if (intake.length) note(`Neuer Jahrgang in der A-Jugend: ${intake.map((idx) => playerOf(career, idx).name).join(', ')}.`);

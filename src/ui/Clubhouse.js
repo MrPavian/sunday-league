@@ -27,6 +27,7 @@ import { promoteProspect, STAFF_ROLES } from '../career/youth.js';
 import { moodLabel, resolveEvent } from '../career/events.js';
 import { storyLabels } from '../career/stories.js';
 import { chronicleData, yearOf } from '../career/sagas.js';
+import { coachAge, legacy, legacyPrompt, resolveLegacy, stepDown, succeed, successionCandidates } from '../career/legacy.js';
 import { askWirt, buyRound, dossier, playDart, PUB_ACTIONS, PUB_NAME, pubOpen, pubState, ROUND_PRICE, setTactic, TACTICS, talk, wirtName } from '../career/pub.js';
 import { DOSSIER_LABELS } from '../data/backstories.js';
 import { weatherLine } from '../career/weather.js';
@@ -122,6 +123,23 @@ export class Clubhouse {
         this.h.onChange();
       } else if (action === 'promote') {
         promoteProspect(this.career, Number(value), maxSquad(this.career));
+        this.h.onChange();
+      } else if (action === 'legacy') {
+        resolveLegacy(this.career, Number(value));
+        this.h.onChange();
+      } else if (action === 'stepDown') {
+        if (!this.confirmStepDown) {
+          this.confirmStepDown = true;
+          this.render();
+          return;
+        }
+        this.confirmStepDown = false;
+        stepDown(this.career);
+        this.h.onChange();
+      } else if (action === 'successor') {
+        const cand = successionCandidates(this.career)[Number(value)];
+        if (cand?.type === 'neu') return this.h.onNewCoach();
+        if (cand) succeed(this.career, cand);
         this.h.onChange();
       } else if (action === 'trip') {
         bookTrip(this.career);
@@ -382,9 +400,20 @@ export class Clubhouse {
         <table class="stats season-table"><thead><tr><th>Jahr</th><th>Liga</th><th>Platz</th><th></th><th>Torschützenkönig</th></tr></thead><tbody>${seasons}</tbody></table>
         <div class="records"><div><h4>Rekordspieler</h4><ul>${list(d.topApps, 'apps', 'Spiele')}</ul></div><div><h4>Rekordtorschützen</h4><ul>${list(d.topGoals, 'goals', 'Tore')}</ul></div></div>
         ${frauen}${pros}
+        ${this.erasBlock()}
         <h4>Meilensteine</h4><ul class="milestones">${events}</ul>
         <button data-action="chronicle">Zuklappen</button>
       </div>`;
+  }
+
+  // Trainer-Ären: Wer saß wann an der Seitenlinie?
+  erasBlock() {
+    const c = this.career;
+    const eras = legacy(c).eras;
+    const since = c.coach?.since ?? 1;
+    const now = c.coach?.idx != null ? `<li><b>${yearOf(c, since)}–heute</b> ${playerOf(c, c.coach.idx).name}${c.coach.generation > 1 ? ` <small>(${c.coach.generation}. Trainer-Ära)</small>` : ''}</li>` : '';
+    if (!eras.length) return '';
+    return `<h4>Trainer</h4><ul class="milestones">${eras.map((e) => `<li><b>${yearOf(c, e.from)}–${yearOf(c, e.to)}</b> ${e.name} – ${e.seasons} ${e.seasons === 1 ? 'Saison' : 'Saisons'}${e.titles ? `, ${e.titles}× Meister` : ''}, heute Ehrenpräsident</li>`).join('')}${now}</ul>`;
   }
 
   // Familie & Energie des Spielertrainers als kleine Balken.
@@ -429,7 +458,7 @@ export class Clubhouse {
     else if (last) msg = 'Rote Laterne. Aber die Stimmung stimmt.';
     else msg = 'Solides Mittelfeld. Die Mannschaftsfahrt ist trotzdem gebucht.';
     const chronicle = (c.history ?? []).length
-      ? `<p class="label">Vereinschronik</p><ul class="chronicle">${c.history.map((h) => `<li>Saison ${h.season}: ${h.pos}. Platz · ${h.league}</li>`).join('')}</ul>`
+      ? `<p class="label">Vereinschronik</p><ul class="chronicle">${c.history.slice(-5).map((h) => `<li>Saison ${h.season}: ${h.pos}. Platz · ${h.league}</li>`).join('')}</ul>`
       : '';
     return `
       <div class="fixture-card">
@@ -442,8 +471,31 @@ export class Clubhouse {
         ${c.tripBooked
           ? '<p class="reply ok">Mannschaftsfahrt gebucht! Die Stimmung nächste Saison: bestens.</p>'
           : `<button data-action="trip" ${c.cash < TRIP_COST ? 'disabled' : ''}>Saisonabschlussfahrt buchen (${TRIP_COST} €, Kasse: ${euro(c.cash)})</button>`}
-        ${this.cupAside()}
+        ${this.legacyAside() ?? this.cupAside()}
       </div>`;
+  }
+
+  // Karriereende und Nachfolge: Solange eine Entscheidung offen ist, wartet die neue Saison.
+  legacyAside() {
+    const c = this.career;
+    const L = legacy(c);
+    const last = L.last?.season === c.season ? `<p class="label">${L.last.title}</p><p class="reply ok">${L.last.text}</p>` : '';
+    const prompt = legacyPrompt(c);
+    if (prompt)
+      return `<div class="legacy"><p class="label">${prompt.title}</p><p>${prompt.text}</p>
+        ${prompt.options.map((o, i) => `<button data-action="legacy" data-value="${i}">${o}</button>`).join('')}</div>`;
+    if (L.choosing) {
+      const list = successionCandidates(c);
+      return `<div class="legacy">${last}<p class="label">Wer übernimmt?</p>
+        ${list.map((x, i) => `<button class="successor${x.type === 'neu' ? ' new' : ''}" data-action="successor" data-value="${i}"><b>${x.name}</b>${x.age ? ` (${x.age})` : ''}<small>${x.desc}</small></button>`).join('')}</div>`;
+    }
+    const age = coachAge(c);
+    const step = c.coach && age != null && age >= 50
+      ? this.confirmStepDown
+        ? '<button data-action="stepDown" class="danger">Wirklich abtreten? Nochmal klicken</button>'
+        : `<button data-action="stepDown">Amt übergeben (du bist ${age})</button>`
+      : '';
+    return last || step ? `${last}${step}${this.cupAside()}` : null;
   }
 
   // Saisonende: erst Stadtmeisterschaft (oder absagen), dann die neue Saison.

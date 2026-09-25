@@ -28,7 +28,8 @@ export class CoachCreator {
     root.addEventListener('keydown', (e) => e.stopPropagation()); // Tippen soll das Spiel nicht steuern
   }
 
-  show({ onDone, onCancel, seed = 7 }) {
+  show({ onDone, onCancel, seed = 7, successor = null }) {
+    this.successor = successor; // Vereinsname, wenn ein Nachfolger angelegt wird
     this.seed = seed; // derselbe Seed wie die neue Karriere: Vorschau = echter Spieler
     this.onDone = onDone;
     this.onCancel = onCancel;
@@ -109,8 +110,8 @@ export class CoachCreator {
       .join('');
     this.root.innerHTML = `
       <div class="club-panel creator">
-        <h2>Dein Spielertrainer</h2>
-        <p class="lead">Du trainierst den SV Sonntagsschuss – und stehst selbst mit auf dem Platz.</p>
+        <h2>${this.successor ? 'Der neue Trainer' : 'Dein Spielertrainer'}</h2>
+        <p class="lead">${this.successor ? `Eine neue Ära beim ${this.successor}. Bis 45 spielt der Neue selbst mit.` : 'Du trainierst den SV Sonntagsschuss – und stehst selbst mit auf dem Platz.'}</p>
         <div class="creator-grid">
           <section>
             <div class="row">
@@ -144,7 +145,7 @@ export class CoachCreator {
         ${this.error ? `<p class="warn">${this.error}</p>` : ''}
         <div class="actions">
           <button type="button" data-action="cancel">Zurück</button>
-          <button type="button" class="primary" data-action="done">Karriere starten</button>
+          <button type="button" class="primary" data-action="done">${this.successor ? 'Amt übernehmen' : 'Karriere starten'}</button>
         </div>
       </div>`;
     this.renderPreview();

@@ -30,6 +30,9 @@ Rasensprenger springt an, oder der Schiri verletzt sich und ein Zuschauer pfeift
 Du selbst bist **Spielertrainer** – mit Job, Familie und begrenzter Energie. Training, Scouting
 und Spieltage kosten Familienzeit, unbesetzte Posten im Verein kosten Kraft. Wer beides verheizt,
 fällt zwei Wochen aus und darf nur zuschauen, wie der Kapitän aufstellt.
+Irgendwann knirschen die Knie: Ab 40 fragt dich das Saisonende, ob du noch selbst spielst, mit 50 hörst
+du auf und bist nur noch Trainer. Mit 60 bis 80 übergibst du das Amt – an dein Kind, den Co-Trainer, den
+alten Kapitän oder einen neuen Trainer. Der Spielstand läuft einfach weiter, über Generationen.
 
 Über die Jahre schreibt der Verein Geschichte: Der Platz soll verkauft werden, es gibt Jubiläen
 mit Festschrift, eine Fusion mit dem Nachbarn, das erste Frauenteam – und das Jugendtalent, das

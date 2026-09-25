@@ -564,3 +564,11 @@ seinen Monat und würfelt ein Wetter nach Jahreszeit – Sonne, Hitze (Ausdauer 
 Rasen, lange Grätschen), Sturmböen (hohe Bälle driften), Nebel, Frost (harter Boden, springende Bälle) und Schnee
 (Ball bleibt liegen). Wetter wirkt auf Zuschauer und Absagen, im Herbst fällt Laub, einer im Chat kommentiert
 es immer. In der Halle gibt es kein Wetter.
+
+**Karriereende & Nachfolge** (`src/career/legacy.js`): Ab 40 fragt dich jedes Saisonende, ob du noch selbst
+spielst (weiterspielen, Abschiedstour, Schuhe an den Nagel), mit 50 entscheidet der Körper. Als reiner Trainer
+kommt ab 62 die Frage nach dem Amt, ab 70 jedes Jahr, mit Gesundheitsschreck und Familien-Ultimatum; spätestens
+mit 80 ist Schluss. Der Spielstand endet nie: Nachfolger werden dein Kind (ab 23 – die nächste Generation
+bekommt eine eigene Familie, die Dynastie geht weiter), der Co-Trainer, ein verdienter Kapitän, eine
+Vereinslegende oder ein neu angelegter Trainer. Der alte Trainer wird Ehrenpräsident, die Chronik führt die
+Trainer-Ären. Abtreten geht ab 50 auch freiwillig.

@@ -30,6 +30,7 @@ import { SURFACES } from './sim/surfaces.js';
 import { applyWeather, WEATHER } from './career/weather.js';
 import { ChallengeScreen } from './ui/Challenges.js';
 import { Clubhouse } from './ui/Clubhouse.js';
+import { succeed } from './career/legacy.js';
 import { CoachCreator } from './ui/CoachCreator.js';
 import { EndScreen } from './ui/EndScreen.js';
 import { Hud } from './ui/Hud.js';
@@ -203,6 +204,22 @@ const clubhouse = new Clubhouse(document.getElementById('club'), {
   },
   onCupPlay: (kind = 'stadt') => playCupMatch(kind),
   onCupSimulate: (kind = 'stadt') => runCupRound(null, kind),
+  onNewCoach() {
+    creator.show({
+      seed: career.seed + career.season,
+      successor: humanClub(career).name,
+      onDone(input) {
+        creator.hide();
+        succeed(career, { type: 'neu', name: `${input.first} ${input.last}` }, input);
+        saveCareer(career);
+        openClubhouse();
+      },
+      onCancel() {
+        creator.hide();
+        openClubhouse();
+      },
+    });
+  },
   onNewSeason() {
     nextSeason(career);
     saveCareer(career);

@@ -508,7 +508,7 @@ button.danger { background: #b0302c; color: #f2efe6; }
 body.in-menu .edge { display: none; }
 
 /* Trainer-Editor */
-#creator { position: absolute; inset: 0; display: flex; justify-content: center; padding: 16px; overflow-y: auto; background: rgba(10, 12, 14, 0.94); z-index: 3; text-shadow: var(--shadow); }
+#creator { position: absolute; inset: 0; display: flex; justify-content: center; padding: 16px; overflow-y: auto; background: rgb(10, 12, 14); z-index: 3; text-shadow: var(--shadow); }
 #creator[hidden] { display: none; }
 .creator { display: grid; gap: 10px; align-content: start; }
 .creator h2 { margin: 0; color: var(--accent); font-size: 30px; }
@@ -591,3 +591,10 @@ body.weather-fog #game { filter: contrast(0.72) brightness(1.08) saturate(0.7); 
 body.weather-snow #game { filter: brightness(1.14) saturate(0.55) contrast(0.9); }
 body.weather-frost #game { filter: saturate(0.75) hue-rotate(-8deg) brightness(1.04); }
 .venue-line.weather { color: #9fc4e0; }
+
+/* Karriereende & Nachfolge */
+.legacy { margin-top: 10px; }
+.legacy > button { display: block; width: 100%; margin: 4px 0; text-align: left; }
+button.successor { display: flex; flex-direction: column; gap: 2px; }
+button.successor small { opacity: 0.75; font-size: 0.85em; line-height: 1.3; }
+button.successor.new { border-style: dashed; }
