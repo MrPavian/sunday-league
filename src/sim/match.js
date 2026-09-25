@@ -210,12 +210,36 @@ function step(m, input, dt) {
 // Ball da und wartet auf Anweisungen.
 function autoSwitch(m) {
   const { ball } = m;
-  if (m.humanTeam === null || ball.holder || ball.lastTouch === m.controlledId || m.lastTouchTeam !== m.humanTeam) return;
+  if (m.humanTeam === null || ball.holder || ball.lastTouch === m.controlledId) return;
+  if (m.lastTouchTeam !== m.humanTeam) return defenceSwitch(m);
   const p = getPlayer(m, ball.lastTouch);
   if (!p || p.role === 'gk' || p.state !== 'normal' || dist2d(p.pos, ball.pos) > 1.2) return;
   const me = getPlayer(m, m.controlledId);
   if (me && dist2d(me.pos, ball.pos) < 1.5) return;
   setControlled(m, p.id);
+}
+
+// Option „Automatisch wechseln (Abwehr)": Hat der Gegner den Ball und ist ein
+// Mitspieler deutlich näher dran, übernimmt man ihn – mit kurzer Sperre, damit
+// die Steuerung nicht hin und her springt.
+function defenceSwitch(m) {
+  if (!m.autoSwitchDefense || m.phase !== 'play' || m.time - (m.lastAutoSwitch ?? -9) < 0.8) return;
+  const me = getPlayer(m, m.controlledId);
+  if (!me) return;
+  const dMe = dist2d(me.pos, m.ball.pos);
+  let best = null;
+  let bestD = dMe - 5;
+  for (const p of m.players) {
+    if (p.team !== m.humanTeam || p.role === 'gk' || p === me || p.state !== 'normal') continue;
+    const d = dist2d(p.pos, m.ball.pos);
+    if (d < bestD) {
+      bestD = d;
+      best = p;
+    }
+  }
+  if (!best) return;
+  setControlled(m, best.id);
+  m.lastAutoSwitch = m.time;
 }
 
 function handleBallEvent(m, ev) {

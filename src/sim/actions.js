@@ -3,6 +3,7 @@ import { clamp, dist2d, len, norm, rotate } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
 import { ballSpeed } from './ball.js';
 import { attackDir, distToSegment, setControlled, wallPush } from './players.js';
+import { aiSkill, keeperReaction } from './ai.js';
 
 export const REACH = 0.75;
 
@@ -134,7 +135,7 @@ function shoot(m, p, a, fatigue) {
   const power = clamp(a.power ?? 0.5, 0.1, 1);
   // Streuung: Technik, Müdigkeit, Wucht. Die KI streut etwas mehr als der Mensch,
   // der selbst zielt – sonst treffen Amateure wie Profis.
-  const sigma = 0.025 + 0.16 * (1 - p.attrs.shooting) + 0.08 * fatigue + 0.05 * power + (hammer ? 0.03 : 0) + (p.id === m.controlledId ? 0 : 0.03);
+  const sigma = 0.025 + 0.16 * (1 - p.attrs.shooting) + 0.08 * fatigue + 0.05 * power + (hammer ? 0.03 : 0) + (p.id === m.controlledId ? 0 : 0.03 + (aiSkill(m, p) < 1 ? 0.05 : aiSkill(m, p) > 1 ? -0.015 : 0));
   dir = rotate(dir, rng.gauss() * sigma);
   const speed = (8 + 18 * power) * (0.85 + 0.15 * p.attrs.shooting) * (hammer ? 1.15 : 1);
   const vy = 0.8 + 5 * power * power + Math.abs(rng.gauss()) * 1.2 * (1 - p.attrs.shooting) * power;
@@ -283,7 +284,7 @@ export function keeperSaves(m) {
       // Aus kurzer Distanz bleibt kaum Zeit zu reagieren: Nur was direkt auf den Mann
       // kommt, hält er sicher.
       const since = m.time - (m.shotTime ?? -9);
-      const reaction = 0.14 + (1 - p.attrs.keeping) * 0.14;
+      const reaction = keeperReaction(m, p);
       const pointBlank = since < reaction + 0.12 ? clamp((dist2d(p.pos, ball.pos) - 0.35) * 0.3, 0, 0.25) : 0;
       const beaten = clamp((bs - 8) * 0.02 + corner * 0.85 + pointBlank - 0.3 * p.attrs.keeping - (dist2d(p.pos, ball.pos) < 0.45 ? 0.15 : 0), 0.02, 0.65);
       if (rng.chance(beaten)) {

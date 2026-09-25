@@ -701,3 +701,36 @@ describe('defending', () => {
     expect(behind / samples).toBeGreaterThan(0.65); // vorher 0,56 – beim Zurücklaufen hinken sie etwas hinterher
   });
 });
+
+describe('difficulty and auto-switch', () => {
+  it('difficulty only changes the opponent of the human', async () => {
+    const { aiSkill } = await import('../src/sim/ai.js');
+    const m = createMatch({ seed: 1, pitch: PARKING_LOT });
+    const mine = m.players.find((p) => p.team === 0);
+    const theirs = m.players.find((p) => p.team === 1);
+    m.difficulty = 'hard';
+    expect(aiSkill(m, theirs)).toBeGreaterThan(1);
+    expect(aiSkill(m, mine)).toBe(1);
+    m.difficulty = 'easy';
+    expect(aiSkill(m, theirs)).toBeLessThan(1);
+    const sim = createMatch({ seed: 1, pitch: PARKING_LOT, human: false });
+    sim.difficulty = 'hard';
+    expect(aiSkill(sim, sim.players[5])).toBe(1); // Simulationen bleiben neutral
+  });
+
+  it('auto-switch hands control to the team-mate near the ball when defending', () => {
+    const m = createMatch({ seed: 3, pitch: PARKING_LOT, kickoff: false });
+    m.autoSwitchDefense = true;
+    const me = getPlayer(m, m.controlledId);
+    const mate = m.players.find((p) => p.team === 0 && p.role !== 'gk' && p !== me);
+    const opp = m.players.find((p) => p.team === 1 && p.role !== 'gk');
+    Object.assign(me.pos, { x: 14, z: 8 });
+    Object.assign(opp.pos, { x: -6, z: 0 });
+    Object.assign(mate.pos, { x: -7.5, z: 0.5 });
+    Object.assign(m.ball.pos, { x: -6.4, z: 0 });
+    m.ball.lastTouch = opp.id;
+    m.lastTouchTeam = 1;
+    stepMatch(m, undefined, DT);
+    expect(m.controlledId).not.toBe(me.id);
+  });
+});

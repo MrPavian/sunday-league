@@ -4,6 +4,14 @@ import { hasTrait } from '../data/traits.js';
 import { ballSpeed } from './ball.js';
 import { attackDir, clampToPitch, distToSegment, getPlayer, wallPush } from './players.js';
 
+// Schwierigkeitsgrad: Nur der Gegner des Menschen spielt klüger oder nachsichtiger –
+// schneller entscheiden, entschlossener in den Zweikampf, öfter der kluge Pass.
+// Werte der Spieler bleiben unangetastet.
+const SKILL = { easy: 0.7, normal: 1, hard: 1.25 };
+// Reaktionszeit des Torwarts: Stärke, dazu der Schwierigkeitsgrad beim Gegner-Keeper.
+export const keeperReaction = (m, p) => (0.14 + (1 - p.attrs.keeping) * 0.14) * (aiSkill(m, p) < 1 ? 1.35 : aiSkill(m, p) > 1 ? 0.85 : 1);
+export const aiSkill = (m, p) => (m.humanTeam !== null && p.team !== m.humanTeam ? SKILL[m.difficulty] ?? 1 : 1);
+
 // Einmal pro Schritt: Rollen für beide Teams verteilen.
 //   chaser – geht auf den Ball
 //   cover  – sichert zwischen Ball und eigenem Tor ab
@@ -214,10 +222,14 @@ export function outfieldIntent(m, p, dt) {
     if (wall.corner && dBall < 1.3 && !p.pending && !ball.holder && p.decideTimer > 0.15) p.decideTimer = 0.15;
     if (dBall < 1.3 && p.decideTimer <= 0 && !p.pending && !ball.holder) {
       // Amateure brauchen einen Moment, bis sie sich entscheiden.
-      p.decideTimer = 0.4 + (1 - p.attrs.technique) * 0.4 + m.rng.next() * 0.25;
+      p.decideTimer = (0.4 + (1 - p.attrs.technique) * 0.4 + m.rng.next() * 0.25) / aiSkill(m, p);
       aiDecide(m, p, oppGoal);
     }
-    return { move: norm(ax - p.pos.x, az - p.pos.z), sprint: dBall > 3 && p.stamina > 0.3 };
+    // Anlaufen: Auf „locker" trabt der Gegner eher hin, auf „hart" sprintet er früh.
+    const k = aiSkill(m, p);
+    const intensity = k < 1 ? 0.8 : 1;
+    const mv = norm(ax - p.pos.x, az - p.pos.z);
+    return { move: { x: mv.x * intensity, z: mv.z * intensity }, sprint: dBall > (k > 1 ? 2 : k < 1 ? 5 : 3) && p.stamina > 0.3 };
   }
 
   p.dribbleDir = null;
@@ -249,7 +261,10 @@ function aiDecide(m, p, oppGoal) {
   p.aimZ = rng.range(-2.5, 2.5);
 
   const range = 10 + p.attrs.shooting * 5 + (hasTrait(p, 'hammer') ? 4 : 0);
-  if (dGoal < range && facingDot > 0.2) {
+  // Schussauswahl: „hart" wartet auf die bessere Lage, „locker" schießt auch mal überhastet.
+  const skill = aiSkill(m, p);
+  const facingNeed = skill > 1 ? 0.45 : skill < 1 ? 0 : 0.2;
+  if (dGoal < range * (skill > 1 ? 0.9 : 1) && facingDot > facingNeed) {
     const gw = pitch.goalHalfWidth;
     p.pending = {
       type: 'shoot',
@@ -281,7 +296,7 @@ function aiDecide(m, p, oppGoal) {
     const d = len(dx, dz);
     return d < 2.2 && (dx * toG.x + dz * toG.z) / (d || 1) > 0.2;
   });
-  if (underPressure && rng.chance(0.45 + 0.4 * p.attrs.passing)) {
+  if (underPressure && rng.chance(Math.min(0.95, (0.45 + 0.4 * p.attrs.passing) * aiSkill(m, p)))) {
     p.pending = { type: 'pass', ttl: 0.3, cone: -0.2 };
     return;
   }
@@ -299,7 +314,7 @@ function aiDecide(m, p, oppGoal) {
     if (ahead < 3 || d > 16) return false;
     return !m.players.some((o) => o.team !== p.team && (dist2d(o.pos, t.pos) < 2.5 || distToSegment(o.pos, p.pos, t.pos) < 1.3));
   });
-  if (open && rng.chance(0.25 + 0.35 * p.attrs.passing)) p.pending = { type: 'pass', ttl: 0.3, cone: -0.3, optional: true };
+  if (open && rng.chance(Math.min(0.9, (0.25 + 0.35 * p.attrs.passing) * aiSkill(m, p)))) p.pending = { type: 'pass', ttl: 0.3, cone: -0.3, optional: true };
 }
 
 // Die KI geht in den Zweikampf, wenn ein Gegner den Ball am Fuß hat. Auf
@@ -312,14 +327,14 @@ function chooseTackle(m, p, dBall) {
   if (!opp || opp.team === p.team || opp.role === 'gk' || dist2d(opp.pos, ball.pos) > 1.2) return null;
   const tb = norm(ball.pos.x - p.pos.x, ball.pos.z - p.pos.z);
   if (tb.x * p.facing.x + tb.z * p.facing.z < 0.8) return null;
-  p.decideTimer = 1.3; // nicht im Sekundentakt reingehen
+  p.decideTimer = 1.3 / aiSkill(m, p); // nicht im Sekundentakt reingehen
 
   const tough = hasTrait(p, 'hart_im_nehmen');
   let slideChance = surface.hard ? (p.injury ? 0 : tough ? 0.2 : 0.03) : 0.06 + 0.14 * p.attrs.tackling;
   if (m.derby) slideChance *= 1.4; // im Derby geht man dazwischen
   if (p.yellow) slideChance *= 0.3; // mit Gelb vorbelastet lieber vorsichtig
   if (dBall > 0.9 && rng.chance(slideChance)) return 'slide';
-  if (dBall < 1.4 && rng.chance(0.15 + 0.25 * p.attrs.tackling)) return 'poke';
+  if (dBall < 1.4 && rng.chance((0.15 + 0.25 * p.attrs.tackling) * aiSkill(m, p))) return 'poke';
   return null;
 }
 
@@ -369,7 +384,7 @@ export function keeperIntent(m, p, dt) {
   let tz = clamp(ball.pos.z * 0.4, -gw - 0.2, gw + 0.2);
   // Reaktionszeit: Erst nach einem Moment erkennt der Keeper die Schussrichtung –
   // bis dahin bleibt er, wo er war. Gute Keeper sind schneller.
-  const reaction = 0.14 + (1 - p.attrs.keeping) * 0.14;
+  const reaction = keeperReaction(m, p);
   const reacting = m.shotTime != null && m.time - m.shotTime < reaction;
   if (reacting && p.keeperTz != null) tz = p.keeperTz;
   else if (ball.vel.x * -s > 2) {

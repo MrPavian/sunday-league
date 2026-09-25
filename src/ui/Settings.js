@@ -92,6 +92,12 @@ export class Settings {
         <h4>${tr('Spieltempo', 'Match tempo')}</h4>
         <div class="choice">${s.tempos.map((t, i) => `<button class="${s.tempo === i ? 'active' : ''}" data-action="tempo" data-value="${i}">${t.label.split(': ')[1] ?? t.label}</button>`).join('')}</div>
         <p class="hint">${tr('Im Spiel: Taste C.', 'In a match: key C.')}</p>
+        <h4>${tr('Schwierigkeit', 'Difficulty')}</h4>
+        <div class="choice">${[['easy', tr('Locker', 'Easy')], ['normal', tr('Normal', 'Normal')], ['hard', tr('Kreisliga-hart', 'Hard')]].map(([id, label]) => `<button class="${s.difficulty === id ? 'active' : ''}" data-action="difficulty" data-value="${id}">${label}</button>`).join('')}</div>
+        <p class="hint">${tr('Ändert, wie klug der Gegner spielt – schneller entscheiden, mehr Zweikämpfe, bessere Pässe. Die Werte der Spieler bleiben gleich, deine Mitspieler auch.', 'Changes how smart the opponent plays – faster decisions, more challenges, better passes. Player ratings stay the same, and so do your team-mates.')}</p>
+        <h4>${tr('Automatisch wechseln in der Abwehr', 'Auto-switch when defending')}</h4>
+        <div class="choice">${toggle('autoswitch', s.autoSwitch, tr('An', 'On'), tr('Aus', 'Off'))}</div>
+        <p class="hint">${tr('Hat der Gegner den Ball, übernimmst du automatisch den Mitspieler, der deutlich näher dran ist. Sonst wechselst du selbst mit Q.', 'When the opponent has the ball you automatically take over the team-mate who is clearly closer. Otherwise you switch yourself with Q.')}</p>
         <h4>${tr('Lautstärke', 'Volume')}</h4>
         <div class="choice"><input type="range" min="0" max="100" step="5" value="${Math.round(s.volume * 100)}" data-action="volume" aria-label="${tr('Lautstärke', 'Volume')}"></div>
         <h4>${tr('Trikots', 'Kits')}</h4>

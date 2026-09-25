@@ -89,8 +89,12 @@ const settings = new Settings(document.getElementById('settings'));
 const saveSlots = new SaveSlots(document.getElementById('saves'));
 
 let colorSafe = false;
+let difficulty = 'normal';
+let autoSwitchDefense = false;
 try {
   colorSafe = localStorage.getItem('sunday-league:safekits') === '1';
+  difficulty = ['easy', 'normal', 'hard'].includes(localStorage.getItem('sunday-league:difficulty')) ? localStorage.getItem('sunday-league:difficulty') : 'normal';
+  autoSwitchDefense = localStorage.getItem('sunday-league:autoswitch') === '1';
 } catch {
   // egal
 }
@@ -147,6 +151,8 @@ function showMatch(m) {
   endScreen.hide();
   view?.dispose();
   applyColorSafeKits(m, colorSafe);
+  m.difficulty = difficulty;
+  m.autoSwitchDefense = autoSwitchDefense;
   match = m;
   view = new MatchView(scene, match);
   hud.init(match);
@@ -199,7 +205,7 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
   onSettings() {
     menu.paused = true;
     settings.show({
-      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe }),
+      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe, difficulty, autoSwitch: autoSwitchDefense }),
       onLang: switchLanguage,
       onChange(key, value) {
         if (key === 'sound' && sound.muted !== (value === 'off')) sound.toggleMute();
@@ -218,6 +224,14 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
           if (match) showMatch(match); // Kulisse im Menü sofort umfärben
         }
         if (key === 'keys') hud.refreshHelp();
+        if (key === 'difficulty') {
+          difficulty = value;
+          remember('sunday-league:difficulty', value);
+        }
+        if (key === 'autoswitch') {
+          autoSwitchDefense = value === 'on';
+          remember('sunday-league:autoswitch', autoSwitchDefense ? '1' : '0');
+        }
       },
       onBack() {
         settings.hide();
