@@ -1,9 +1,12 @@
 import {
   clubById,
+  currentLineup,
   humanClub,
   humanFixture,
   nudge,
   poolPlayer,
+  resetLineup,
+  setLineupSlot,
   seasonOver,
   table,
 } from '../career/career.js';
@@ -27,12 +30,25 @@ export class Clubhouse {
       if (!t || this.busy) return;
       const { action, value } = t.dataset;
       if (action === 'tab') this.tab = value;
-      else if (action === 'nudge') {
+      else if (action === 'autoLineup') {
+        resetLineup(this.career);
+        this.h.onChange();
+      } else if (action === 'nudge') {
         nudge(this.career, Number(value));
         this.h.onChange();
       } else if (action in this.h) return this.h[action]();
       this.render();
     });
+  }
+
+  bindLineup() {
+    this.root.querySelectorAll('select[data-slot]').forEach((sel) =>
+      sel.addEventListener('change', () => {
+        setLineupSlot(this.career, Number(sel.dataset.slot), Number(sel.value));
+        this.h.onChange();
+        this.render();
+      }),
+    );
   }
 
   show(career, { results = null } = {}) {
@@ -60,6 +76,7 @@ export class Clubhouse {
     const tabs = [
       ['chat', 'Chatgruppe'],
       ['squad', 'Kader'],
+      ['lineup', 'Aufstellung'],
       ['table', 'Tabelle'],
       ['fixtures', 'Spielplan'],
     ];
@@ -78,6 +95,7 @@ export class Clubhouse {
           <aside>${over ? this.seasonEnd() : this.results ? this.roundResults() : this.nextMatch()}</aside>
         </div>
       </div>`;
+    this.bindLineup();
   }
 
   nextMatch() {
@@ -197,6 +215,40 @@ export class Clubhouse {
       })
       .join('');
     return `<table class="squad"><thead><tr><th></th><th>Spieler</th><th>Pos.</th><th>Stärke</th><th>Sonntag</th><th>Sp.</th><th>Tore</th><th>Vorl.</th><th>Ø Note</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  tab_lineup() {
+    const c = this.career;
+    if (!c.week || this.results) return '<p class="empty">Die Aufstellung für den nächsten Spieltag gibt es nach dem Wochenstart.</p>';
+    const { formation, lineup, bench } = currentLineup(c);
+    const club = humanClub(c);
+    const ROLE = { gk: 'Tor', def: 'Abwehr', mid: 'Mitte', fwd: 'Sturm' };
+    const options = club.squad
+      .filter((idx) => c.week.availability[idx] === 'yes')
+      .map((idx) => ({ idx, p: poolPlayer(idx) }))
+      .sort((a, b) => b.p.rating - a.p.rating);
+    const slots = formation
+      .map((slot, i) => {
+        const current = lineup[i];
+        const opts = options
+          .map(({ idx, p }) => `<option value="${idx}" ${idx === current ? 'selected' : ''}>${p.name} · ${POSITIONS[p.position]} · ${p.rating}</option>`)
+          .join('');
+        return `<label class="slot slot-${slot.role}"><span>${ROLE[slot.role]}</span>
+          <select data-slot="${i}">${current == null ? '<option selected>Aushilfe aus dem Bekanntenkreis</option>' : ''}${opts}</select></label>`;
+      })
+      .join('');
+    const gkIdx = formation.findIndex((f) => f.role === 'gk');
+    const keeper = lineup[gkIdx] != null ? poolPlayer(lineup[gkIdx]) : null;
+    const keeperNote = keeper && keeper.position !== 'gk' ? `<p class="warn">Kein Torwart da – ${keeper.name.split(' ')[0]} muss ran. Handschuhe liegen im Kofferraum.</p>` : '';
+    const benchList = bench.length
+      ? bench.map((idx) => `<li>${poolPlayer(idx).name}${c.week.availability[idx] === 'late' ? ' <em>(kommt zur 2. HZ)</em>' : ''}</li>`).join('')
+      : '<li><em>niemand</em></li>';
+    return `
+      <p class="chat-head">${formation.length} gegen ${formation.length} · ${c.week.lineup ? 'eigene Aufstellung' : 'automatisch aufgestellt'}</p>
+      <div class="lineup">${slots}</div>
+      ${keeperNote}
+      <h4>Bank</h4><ul class="bench">${benchList}</ul>
+      <button data-action="autoLineup">Automatisch aufstellen</button>`;
   }
 
   tab_table() {

@@ -150,7 +150,7 @@ export function startWeek(career) {
     availability[idx] = status;
     chat.push({ from: idx, text, time: time() });
   }
-  career.week = { availability, chat, nudges: NUDGES_PER_WEEK, nudged: [] };
+  career.week = { availability, chat, nudges: NUDGES_PER_WEEK, nudged: [], lineup: null };
 }
 
 // Nachhaken bei einer Absage – klappt ungefähr jedes zweite Mal.
@@ -174,7 +174,8 @@ const ROLE_ATTR = { gk: 'keeping', def: 'tackling', mid: 'passing', fwd: 'shooti
 
 // Beste verfügbare Elf für das Format des Platzes; fehlen Leute, hilft ein
 // Kumpel aus dem Pool aus ("der Schwager von …").
-export function buildLineup(career, club, format, availability, rng) {
+// manual: vom Trainer gewählte Pool-Nummern je Position (null = automatisch).
+export function buildLineup(career, club, format, availability, rng, manual = null) {
   const formation = FORMATIONS[format];
   const avail = club.squad.filter((idx) => availability[idx] !== 'no');
   const starters = avail.filter((idx) => availability[idx] !== 'late');
@@ -188,18 +189,61 @@ export function buildLineup(career, club, format, availability, rng) {
     helpers.push(idx);
     starters.push(idx);
   }
-  const free = [...starters];
-  const lineup = [];
-  for (const slot of formation) {
+  const lineup = formation.map((_, i) => {
+    const idx = manual?.[i];
+    return idx != null && starters.includes(idx) ? idx : null;
+  });
+  // Doppelt gewählte Spieler nur einmal aufstellen.
+  lineup.forEach((idx, i) => {
+    if (idx != null && lineup.indexOf(idx) !== i) lineup[i] = null;
+  });
+  const free = starters.filter((idx) => !lineup.includes(idx));
+  formation.forEach((slot, i) => {
+    if (lineup[i] != null) return;
     const attr = ROLE_ATTR[slot.role];
     const score = (idx) => {
       const p = poolPlayer(idx);
       return p.attrs[attr] + (p.position === slot.role ? 0.25 : 0) + p.rating / 400;
     };
     free.sort((a, b) => score(b) - score(a));
-    lineup.push(free.shift());
-  }
+    lineup[i] = free.shift();
+  });
   return { lineup, bench: [...free, ...late], late, helpers };
+}
+
+// --- Aufstellung durch den Trainer ------------------------------------------------
+
+export function matchFormat(career) {
+  const f = humanFixture(career);
+  return PITCHES[clubById(career, f.home).venue].format;
+}
+
+// Aktuelle Aufstellung für die Anzeige: gewählte Spieler, Rest automatisch.
+// Aushilfen erscheinen als null ("Aushilfe").
+export function currentLineup(career) {
+  const club = humanClub(career);
+  const format = matchFormat(career);
+  const { lineup, bench, helpers } = buildLineup(career, club, format, career.week.availability, createRng(1), career.week.lineup);
+  return {
+    format,
+    formation: FORMATIONS[format],
+    lineup: lineup.map((idx) => (helpers.includes(idx) ? null : idx)),
+    bench: bench.filter((idx) => !helpers.includes(idx)),
+  };
+}
+
+// Spieler auf eine Position setzen; steht er schon woanders, wird getauscht.
+export function setLineupSlot(career, slot, idx) {
+  const { lineup } = currentLineup(career);
+  const next = [...lineup];
+  const from = next.indexOf(idx);
+  if (from >= 0) next[from] = next[slot];
+  next[slot] = idx;
+  career.week.lineup = next;
+}
+
+export function resetLineup(career) {
+  career.week.lineup = null;
 }
 
 // Tiefe Kopie – das Match verändert seine Spieler, der Pool bleibt unberührt.
@@ -211,7 +255,8 @@ function helperOf(career, club, idx) {
 }
 
 export function teamForMatch(career, club, format, availability, rng) {
-  const { lineup, bench, late, helpers } = buildLineup(career, club, format, availability, rng);
+  const manual = club.human ? career.week?.lineup : null;
+  const { lineup, bench, late, helpers } = buildLineup(career, club, format, availability, rng, manual);
   const players = [...lineup, ...bench].map((idx) => {
     const p = helpers.includes(idx) ? helperOf(career, club, idx) : copyPlayer(poolPlayer(idx));
     if (late.includes(idx)) p.late = true;

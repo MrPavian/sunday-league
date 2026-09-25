@@ -106,3 +106,27 @@ describe('career', () => {
     expect(result.away).toBe(prepared.match.score[0]);
   });
 });
+
+describe('lineup', () => {
+  it("uses the manager's picks and swaps when a player is moved", async () => {
+    const { currentLineup, setLineupSlot, resetLineup } = await import('../src/career/career.js');
+    const c = createCareer({ seed: 21 });
+    const auto = currentLineup(c);
+    const benchGuy = humanClub(c).squad.find((idx) => c.week.availability[idx] === 'yes' && !auto.lineup.includes(idx));
+    const last = auto.lineup.length - 1;
+    if (benchGuy !== undefined) {
+      setLineupSlot(c, last, benchGuy);
+      expect(currentLineup(c).lineup[last]).toBe(benchGuy);
+    }
+    const a = currentLineup(c).lineup[0];
+    const b = currentLineup(c).lineup[1];
+    setLineupSlot(c, 0, b);
+    expect(currentLineup(c).lineup.slice(0, 2)).toEqual([b, a]);
+    // Die gewählte Aufstellung landet auch im Match.
+    const prepared = prepareMatch(c, humanFixture(c), { human: true, duration: 10 });
+    const team0 = prepared.match.players.filter((p) => p.team === 0).map((p) => p.poolIndex);
+    expect(team0).toEqual(currentLineup(c).lineup);
+    resetLineup(c);
+    expect(currentLineup(c).lineup).toEqual(auto.lineup);
+  });
+});
