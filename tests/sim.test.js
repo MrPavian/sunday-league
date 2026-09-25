@@ -164,19 +164,32 @@ describe('surfaces', () => {
     return seen;
   };
 
-  it('on asphalt the tackle button pokes instead of sliding, sprint forces the slide', () => {
+  it('D slides on every surface, Y pokes; A shields the ball or holds an opponent', () => {
     const m = createMatch({ seed: 4, kickoff: false });
-    const human = getPlayer(m, m.controlledId);
     stepMatch(m, { move: { x: 0, z: 0 }, tackle: true }, DT);
-    expect(human.state).toBe('poke');
+    expect(getPlayer(m, m.controlledId).state).toBe('tackle'); // auch auf Asphalt – mit Risiko
 
-    const g = createMatch({ seed: 4, pitch: onSurface('grass'), kickoff: false });
-    stepMatch(g, { move: { x: 0, z: 0 }, tackle: true }, DT);
-    expect(getPlayer(g, g.controlledId).state).toBe('tackle');
+    const g = createMatch({ seed: 4, kickoff: false });
+    stepMatch(g, { move: { x: 0, z: 0 }, poke: true }, DT);
+    expect(getPlayer(g, g.controlledId).state).toBe('poke');
 
-    const f = createMatch({ seed: 4, kickoff: false });
-    stepMatch(f, { move: { x: 1, z: 0 }, sprint: true, tackle: true }, DT);
-    expect(getPlayer(f, f.controlledId).state).toBe('tackle');
+    // Abschirmen: am Ball wird man langsamer, ist aber schwerer zu stellen.
+    const s = createMatch({ seed: 5, kickoff: false });
+    const me = getPlayer(s, s.controlledId);
+    Object.assign(s.ball.pos, { x: me.pos.x + 0.4, y: 0.11, z: me.pos.z });
+    s.ball.lastTouch = me.id;
+    stepMatch(s, { move: { x: 1, z: 0 }, hold: true }, DT);
+    expect(me.shielding).toBe(true);
+
+    // Festhalten: der Gegner wird gebremst.
+    const h = createMatch({ seed: 6, kickoff: false });
+    const p = getPlayer(h, h.controlledId);
+    const opp = h.players.find((o) => o.team === 1 && o.role !== 'gk');
+    Object.assign(opp.pos, { x: p.pos.x + 0.6, z: p.pos.z });
+    Object.assign(h.ball.pos, { x: p.pos.x - 8, z: p.pos.z });
+    stepMatch(h, { move: { x: 0, z: 0 }, hold: true }, DT);
+    expect(p.holdingId).toBe(opp.id);
+    expect(opp.heldUntil).toBeGreaterThan(h.time);
   });
 
   it('sliding on asphalt scrapes knees, sliding on grass does not', () => {

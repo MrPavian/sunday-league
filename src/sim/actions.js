@@ -15,6 +15,9 @@ export function movePlayer(m, p, intent, dt, leaders) {
 
   let maxSpeed = (4.6 + 2.6 * p.attrs.pace + (hasTrait(p, 'schnell') ? 0.6 : 0)) * (0.72 + 0.28 * p.stamina);
   if (sprint) maxSpeed *= 1.28;
+  if (p.shielding) maxSpeed *= 0.55; // Körper zwischen Gegner und Ball
+  if (p.heldUntil > m.time) maxSpeed *= 0.45; // wird am Trikot festgehalten
+  if (p.holdingId != null) maxSpeed *= 0.7;
   if (p.injury) maxSpeed *= 1 - 0.03 * p.injury.severity * (hasTrait(p, 'hart_im_nehmen') ? 0.3 : 1);
 
   const speed = len(p.vel.x, p.vel.z);

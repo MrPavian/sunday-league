@@ -15,6 +15,7 @@ import { makeEntity, requestSub, restBench, swapSides } from './squad.js';
 import { createStats, trackStep } from './stats.js';
 import { createReferee, stepReferee } from './referee.js';
 import { carRule, restartFromOut, startSetPiece } from './setpieces.js';
+import { applyHold } from './holding.js';
 import { checkIncident, incidentOnBall, planIncident, stepIncident } from './incidents.js';
 import { resolveTackles, startPoke, startTackle, stateMove } from './tackles.js';
 
@@ -23,7 +24,7 @@ export { startPoke, startTackle } from './tackles.js';
 
 export const MATCH_DURATION = 600; // Sekunden Spielzeit (Prototyp: 10 Minuten)
 
-const NO_INPUT = { move: { x: 0, z: 0 }, sprint: false, shootHeld: false, pass: false, tackle: false, switchPlayer: false, sub: false };
+const NO_INPUT = { move: { x: 0, z: 0 }, sprint: false, shootHeld: false, pass: false, loft: false, hold: false, tackle: false, poke: false, switchPlayer: false, sub: false };
 
 const BENCH_ROLES = { 4: ['mid', 'fwd'], 5: ['def', 'mid', 'fwd'], 7: ['def', 'mid', 'fwd'] };
 
@@ -152,13 +153,20 @@ function step(m, input, dt) {
       continue;
     }
     let intent;
-    if (p.id === m.controlledId) intent = humanIntent(m, p, input, dt);
-    else if (p.role === 'gk') intent = keeperIntent(m, p, dt);
+    if (p.id !== m.controlledId) {
+      p.shielding = false;
+      p.holdingId = null;
+    }
+    if (p.id === m.controlledId) {
+      intent = humanIntent(m, p, input, dt);
+      if (m.phase !== 'play') break; // Halten wurde als Foul gepfiffen
+    } else if (p.role === 'gk') intent = keeperIntent(m, p, dt);
     else intent = outfieldIntent(m, p, dt);
     if (intent.tackle === 'slide') startTackle(m, p);
     else if (intent.tackle === 'poke') startPoke(m, p);
     else movePlayer(m, p, intent, dt, leaders);
   }
+  if (m.phase !== 'play') return;
   separatePlayers(m);
   if (resolveTackles(m)) return;
 
@@ -204,14 +212,14 @@ function humanIntent(m, p, input, dt) {
     // Einwurf: mit dem Stick zielen, Pass- oder Schusstaste wirft.
     const mv = input.move;
     if (Math.hypot(mv.x, mv.z) > 0.3) p.facing = { x: mv.x / Math.hypot(mv.x, mv.z), z: mv.z / Math.hypot(mv.x, mv.z) };
-    if (input.pass || input.shootHeld) p.pending = { type: 'pass', ttl: 0.3, cone: 0.2 };
+    if (input.pass || input.loft || input.shootHeld) p.pending = { type: 'pass', ttl: 0.3, cone: 0.2 };
     return { move: { x: 0, z: 0 }, sprint: false };
   }
-  if (input.tackle) {
-    // Auf hartem Boden wird im Stehen gestochert – Sprint + Grätsche erzwingt
-    // die Grätsche trotzdem.
-    return { tackle: m.pitch.surface.hard && !input.sprint ? 'poke' : 'slide' };
-  }
+  // D = Grätsche (auf hartem Boden mit Schürfwunden-Risiko), Y = Stochern im Stehen.
+  if (input.tackle) return { tackle: 'slide' };
+  if (input.poke) return { tackle: 'poke' };
+  // A = Halten: mit Ball abschirmen, ohne Ball den Gegner festhalten.
+  if (applyHold(m, p, !!input.hold, dt)) return { move: { x: 0, z: 0 }, sprint: false };
   if (input.shootHeld) {
     p.charging = true;
     p.charge = Math.min(1, p.charge + dt * 1.25);
@@ -220,8 +228,8 @@ function humanIntent(m, p, input, dt) {
     p.pending = { type: 'shoot', power: Math.max(0.15, p.charge), ttl: 0.3 };
     p.charge = 0;
   }
-  // Shift + Pass = hoher Ball; bei der Ecke automatisch als Flanke.
-  if (input.pass) p.pending = { type: 'pass', ttl: 0.3, lofted: p.setPieceAction === 'cross' ? 'cross' : !!input.sprint };
+  // S = flacher Pass, E = hoher Ball; bei der Ecke wird daraus automatisch eine Flanke.
+  if (input.pass || input.loft) p.pending = { type: 'pass', ttl: 0.3, lofted: p.setPieceAction === 'cross' ? 'cross' : !!input.loft };
   p.dribbleDir = null;
   return { move: input.move, sprint: input.sprint };
 }

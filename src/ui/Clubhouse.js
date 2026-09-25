@@ -27,7 +27,7 @@ import { promoteProspect, STAFF_ROLES } from '../career/youth.js';
 import { moodLabel, resolveEvent } from '../career/events.js';
 import { storyLabels } from '../career/stories.js';
 import { chronicleData, yearOf } from '../career/sagas.js';
-import { coachAway, coachName, energyLabel, isCoach, patienceLabel, trainingLocked } from '../career/personal.js';
+import { childAge, coachAway, coachName, energyLabel, isCoach, patienceLabel, STYLES, trainingLocked } from '../career/personal.js';
 import { TRAITS } from '../data/traits.js';
 import { tierById } from '../data/tiers.js';
 import { POSITIONS } from '../sim/generator.js';
@@ -459,7 +459,13 @@ export class Clubhouse {
     const profile = k
       ? `<div class="me-card"><h4>Du – Spielertrainer</h4>
           <p><b>${coachName(c)}</b>${me ? ` · ${me.age} J. · ${me.profession} · ${POSITIONS[me.position]} · Stärke ${me.rating}` : ''}</p>
+          ${k.style ? `<p>Spielertyp: ${STYLES[k.style]?.name ?? ''}</p>` : ''}
           <p>${k.family}${k.flags.kasse ? ' · machst nebenbei die Vereinskasse' : ''}${k.flags.familyAtGames ? ' · die Familie kommt sonntags mit' : ''}</p>
+          ${(k.children ?? []).length ? `<ul class="plain">${k.children.map((ch) => {
+            const age = childAge(c, ch);
+            const where = ch.inFrauen ? 'spielt im Frauenteam' : ch.idx != null ? (c.youth.prospects.includes(ch.idx) ? 'in der A-Jugend' : humanClub(c).squad.includes(ch.idx) ? 'im Kader' : 'spielt woanders') : age >= 16 && ch.sex === 'w' ? 'wartet auf ein Frauenteam' : `kickt ab 16 mit (noch ${Math.max(0, 16 - age)} Jahre)`;
+            return `<li>${ch.sex === 'w' ? 'Tochter' : 'Sohn'} ${ch.name}, ${age} J. – ${where}</li>`;
+          }).join('')}</ul>` : ''}
           ${this.meBars()}
           <p class="empty">Training, Scouting und Spieltage kosten Zeit mit der Familie. Unbesetzte Posten (Co-Trainer, Wirt, Platzwart) und Zusatzämter ziehen Energie. Ist einer der beiden Werte leer, fällst du zwei Wochen aus.</p>
         </div>`

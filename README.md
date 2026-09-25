@@ -78,20 +78,25 @@ npm run build    # Produktions-Build nach dist/
 `?venue=hinterhof|parkplatz|park|ascheplatz` überspringt die Platzwahl, `?dauer=60` spielt ein Kurzspiel (Sekunden).
 `?surface=grass` (bzw. `ash`, `artificial`) spielt den Parkplatz testweise mit anderer Untergrund-Physik.
 
-## Steuerung (Prototyp)
+## Steuerung
+
+Rechte Hand läuft, linke Hand spielt.
 
 | Aktion | Tastatur | Gamepad |
 |---|---|---|
-| Laufen | WASD / Pfeiltasten | linker Stick |
+| Laufen | Pfeiltasten | linker Stick |
 | Sprinten | Shift | RB / RT |
-| Schuss (halten = Kraft) | Leertaste / K | X / B |
-| Pass (Shift + J = hoher Ball / Flanke) | J / E | A |
-| Einwurf (Richtung mit Laufen wählen) | J oder Leertaste | A |
-| Zweikampf (auf hartem Boden: stochern, sonst Grätsche) | L / Strg | Y |
-| Grätsche erzwingen (Schürfwunden-Gefahr!) | Shift + L | RB + Y |
-| Spieler wechseln | Q / L | LB |
+| Schuss (halten = fester) | W | X |
+| Pass flach | S | A |
+| Hoher Ball / Flanke | E | B |
+| Halten: mit Ball abschirmen, ohne Ball Gegner festhalten (Foulgefahr!) | A | LT |
+| Grätsche (auf hartem Boden: Schürfwunden-Gefahr) | D | Y |
+| Stochern (Zweikampf im Stehen) | Y | R3 |
+| Einwurf (Richtung mit Laufen wählen) | S, E oder W | A |
+| Spieler wechseln | Q | LB |
+| Auswechseln (beim nächsten Stopp) | X | Back |
+| Tempo (ruhig / normal / schnell) | C | – |
 | Hilfe ein/aus | H | – |
-| Auswechseln (beim nächsten Stopp) | U | Back |
 | Ton an/aus | N | – |
 | Zurück zur Platzwahl | Esc / M | – |
 | Spielerpool (im Menü) | P | – |

@@ -3,7 +3,7 @@ import { tierById } from '../data/tiers.js';
 import { POSITIONS } from '../sim/generator.js';
 import { findAnyPlayer } from '../sim/squad.js';
 import { REF_TRAITS } from '../sim/referee.js';
-import { getPlayer } from '../sim/match.js';
+import { attackDir, getPlayer } from '../sim/match.js';
 
 const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
 
@@ -22,6 +22,8 @@ export class Hud {
       <div class="venue"></div>
       <div class="toast" hidden></div>
       <div class="flash"></div>
+      <div class="edge left"></div>
+      <div class="edge right"></div>
       <div class="card">
         <div class="name"></div>
         <div class="meta"></div>
@@ -32,8 +34,8 @@ export class Hud {
         <div class="bar charge"><i></i><span>Schuss</span></div>
       </div>
       <div class="help">
-        <b>WASD/Pfeile</b> laufen · <b>Shift</b> sprinten · <b>Leertaste</b> halten = Schuss ·
-        <b>J</b> Pass (Shift+J hoch) · <b>L</b> Zweikampf (Shift+L Grätsche) · <b>Q</b> Spieler wechseln · <b>U</b> Auswechseln · <b>N</b> Ton · <b>H</b> Hilfe
+        <b>Pfeile</b> laufen · <b>Shift</b> sprinten · <b>W</b> Schuss (halten = fester) · <b>S</b> Pass · <b>E</b> hoher Ball ·
+        <b>A</b> halten (abschirmen / festhalten) · <b>D</b> Grätsche · <b>Y</b> stochern · <b>Q</b> Spieler wechseln · <b>X</b> Auswechseln · <b>C</b> Tempo · <b>N</b> Ton · <b>H</b> Hilfe
       </div>`;
     this.root = root;
     this.$ = (sel) => root.querySelector(sel);
@@ -52,7 +54,30 @@ export class Hud {
     this.$('.venue').textContent = `${match.pitch.name} · ${match.pitch.surface.name}${r ? ` · Schiri: ${r.name}` : ''}`;
     this.hideToast();
     this.refName = r?.name ?? null;
+    this.edgeKey = null;
     document.body.classList.remove('weather-rain');
+  }
+
+  // Links und rechts am Bildschirmrand: wo ist unser Tor, wohin greifen wir an?
+  updateEdges(match) {
+    const team = match.humanTeam;
+    const show = team !== null && team !== undefined;
+    const s = show ? attackDir(match, team) : 1;
+    const key = `${show}:${s}`;
+    if (key === this.edgeKey) return;
+    this.edgeKey = key;
+    const [l, r] = [this.$('.edge.left'), this.$('.edge.right')];
+    l.hidden = r.hidden = !show;
+    if (!show) return;
+    const kit = hex(match.teams[team].kit.shirt);
+    const attack = `<span>ANGRIFF</span><b>${s > 0 ? '▶' : '◀'}</b>`;
+    const own = `<span>EIGENES TOR</span>`;
+    l.innerHTML = s > 0 ? own : attack;
+    r.innerHTML = s > 0 ? attack : own;
+    l.className = `edge left ${s > 0 ? 'own' : 'attack'}`;
+    r.className = `edge right ${s > 0 ? 'attack' : 'own'}`;
+    l.style.setProperty('--kit', kit);
+    r.style.setProperty('--kit', kit);
   }
 
   lightning() {
@@ -91,10 +116,11 @@ export class Hud {
         const scorer = e.scorerId && findAnyPlayer(match, e.scorerId);
         const kind = e.ownGoal ? 'EIGENTOR!' : e.via === 'header' ? 'KOPFBALLTOR!' : 'TOR!';
         this.toast(`${kind} ${scorer?.name ?? ''}`, 2.4, 3);
-      } else if (e.type === 'whiff') this.toast(`Luftloch von ${first}!`, 1.4);
+      } else if (e.type === 'grab') this.toast(`${first} hält am Trikot fest …`, 0.9);
+      else if (e.type === 'whiff') this.toast(`Luftloch von ${first}!`, 1.4);
       else if (e.type === 'foul') {
         const victim = findAnyPlayer(match, e.victimId);
-        this.toast(`Foul von ${first}! Freistoß für ${short(victim.team)}`, 1.8, 2);
+        this.toast(`${e.kind === 'hold' ? 'Festhalten' : 'Foul'} von ${first}! Freistoß für ${short(victim.team)}`, 1.8, 2);
       } else if (e.type === 'car') this.toast(`Ans Auto, ${first}! Ball für ${short(e.team)}`, 1.8, 2);
       else if (e.type === 'out') {
         const text = { throwin: 'Einwurf', corner: 'Ecke', goalkick: 'Abstoß' }[e.restart];
@@ -111,7 +137,7 @@ export class Hud {
       else if (e.type === 'scrape') this.toast(`Autsch! ${e.label} für ${first}`, 1.8);
       else if (e.type === 'save') this.toast(`${first} pariert!`, 1.2);
       else if (e.type === 'miscontrol') this.toast(`Verspringt ${first}…`, 1);
-      else if (e.type === 'halftime') this.toast(`HALBZEIT ${match.score[0]}:${match.score[1]} – Seitenwechsel`, 3, 4);
+      else if (e.type === 'halftime') this.toast(`HALBZEIT ${match.score[0]}:${match.score[1]} – Seitenwechsel, jetzt Angriff nach ${match.humanTeam !== null && attackDir(match, match.humanTeam) > 0 ? 'links' : 'rechts'}`, 3.5, 4);
       else if (e.type === 'sub_requested') this.toast('Wechsel angemeldet – beim nächsten Stopp', 1.4, 2);
       else if (e.type === 'sub') {
         const out = findAnyPlayer(match, e.outId);
@@ -135,6 +161,7 @@ export class Hud {
       if (this.refName) this.$('.venue').textContent = `${match.pitch.name} · ${match.pitch.surface.name} · Schiri: ${r.name}`;
       this.refName = r.name;
     }
+    this.updateEdges(match);
     const [a, b] = match.score;
     this.$('.score').textContent = `${a} : ${b}`;
     this.$('.clock').textContent = `${match.half}. HZ · ${matchMinute(match, match.time)}'`;

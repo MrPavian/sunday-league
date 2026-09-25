@@ -10,7 +10,7 @@ import { gradePlayers } from '../sim/stats.js';
 import { absenceChance, DECLINE_TEXT, FAREWELL, INJURED, JOIN_TEXT, LATE, noReasons, NUDGE_NO, NUDGE_YES, RUMOR_SOURCES, YES } from './chat.js';
 import { HUMAN_CLUB_DEFAULT, LEAGUES } from './clubs.js';
 import { applyFusion, initSagas, sagaChat, sagaSeasonEnd, sagaWeek } from './sagas.js';
-import { coachAway, initCoach, isCoach, personalWeek, seasonPersonal, weeklyPersonal } from './personal.js';
+import { childrenGrowUp, coachAway, initCoach, isCoach, personalWeek, seasonPersonal, weeklyPersonal } from './personal.js';
 import { absenceFactor, advanceArcs, applyForm, autoResolve, resultMood, rollWeekEvent, weeklyMood } from './events.js';
 import { developYouth, expireYouth, initYouth, retirements, youthIntake } from './youth.js';
 import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFinances, weeklyFinances } from './finances.js';
@@ -31,14 +31,30 @@ const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 
 let poolCache = null;
 export const getPool = () => (poolCache ??= createPlayerPool({ seed: POOL_SEED }));
-export const poolPlayer = (index) => getPool().get(index);
+// Eigene Spieler (du selbst, deine Kinder) liegen im Spielstand statt im Pool.
+export const CUSTOM_BASE = 900000;
+const CUSTOM = new Map();
+export function registerCustomPlayers(career) {
+  CUSTOM.clear();
+  for (const [k, p] of Object.entries(career.custom ?? {})) CUSTOM.set(Number(k), p);
+}
+export function addCustomPlayer(career, player) {
+  career.custom ??= {};
+  const idx = CUSTOM_BASE + Object.keys(career.custom).length;
+  const p = { ...player, poolIndex: idx };
+  career.custom[idx] = p;
+  CUSTOM.set(idx, p);
+  return idx;
+}
+export const poolPlayer = (index) => CUSTOM.get(index) ?? getPool().get(index);
+const rawPlayer = (career, idx) => career.custom?.[idx] ?? poolPlayer(idx);
 
 const ATTR_KEYS = ['pace', 'stamina', 'technique', 'passing', 'shooting', 'tackling', 'heading', 'keeping'];
 
 // Spieler, wie er in dieser Karriere gerade ist: Pool-Grundwerte plus
 // Entwicklung, und jede Saison ein Jahr älter.
 export function playerOf(career, idx) {
-  const base = poolPlayer(idx);
+  const base = rawPlayer(career, idx);
   const delta = career.players[idx]?.delta;
   const years = (career.season ?? 1) - 1;
   const extra = career.players[idx]?.addTraits; // z. B. „Ex-Profi" nach der Rückkehr
@@ -106,7 +122,7 @@ function squadPicker(rng, used) {
     });
 }
 
-export function createCareer({ seed = Date.now() % 1e9, club = {} } = {}) {
+export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null } = {}) {
   const rng = createRng(seed);
   const league = LEAGUES[1];
   const pick = squadPicker(rng, new Set());
@@ -138,7 +154,8 @@ export function createCareer({ seed = Date.now() % 1e9, club = {} } = {}) {
   initFinances(career);
   initYouth(career);
   youthIntake(career, youthDeps());
-  initCoach(career);
+  registerCustomPlayers(career);
+  initCoach(career, coach);
   initSagas(career);
   startWeek(career);
   return career;
@@ -207,6 +224,7 @@ export function nextSeason(career) {
     fixtures: roundRobin(clubs.map((c) => c.id), rng),
   });
   const leaving = expireYouth(career, playerOf);
+  sagaNotes.push(...childrenGrowUp(career));
   const intake = youthIntake(career, youthDeps());
   startWeek(career);
   const note = (text) => career.week?.chat.splice(1, 0, { from: null, text, time: 'Mo 09:00' });
@@ -286,7 +304,7 @@ export function startWeek(career) {
   chat.push({ from: null, text: `Sonntag gegen ${opponent.name}${fixture.home === club.id ? ' bei uns' : ' auswärts'}. Wer kann?`, time: time() });
 
   for (const idx of club.squad) {
-    const p = poolPlayer(idx);
+    const p = rawPlayer(career, idx);
     const rec = career.players[idx];
     let status = 'yes';
     let text;
@@ -410,6 +428,7 @@ function makeRumors(career, rng) {
 
 // Alte Spielstände ohne Gerüchteküche nachrüsten.
 export function migrateCareer(career) {
+  registerCustomPlayers(career);
   career.level ??= 1;
   career.mood ??= 0;
   career.flags ??= {};
@@ -579,7 +598,7 @@ export function resetLineup(career) {
 const copyPlayer = (p) => ({ ...p, attrs: { ...p.attrs }, traits: [...p.traits], look: { ...p.look } });
 
 function helperOf(career, club, idx) {
-  const mate = poolPlayer(club.squad[idx % club.squad.length]);
+  const mate = rawPlayer(career, club.squad[idx % club.squad.length]);
   return { ...copyPlayer(poolPlayer(idx)), helperFor: mate.name.split(' ')[0] };
 }
 

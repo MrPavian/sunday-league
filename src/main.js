@@ -28,6 +28,7 @@ import { createMatch, stepMatch } from './sim/match.js';
 import { SURFACES } from './sim/surfaces.js';
 import { ChallengeScreen } from './ui/Challenges.js';
 import { Clubhouse } from './ui/Clubhouse.js';
+import { CoachCreator } from './ui/CoachCreator.js';
 import { EndScreen } from './ui/EndScreen.js';
 import { Hud } from './ui/Hud.js';
 import { Menu } from './ui/Menu.js';
@@ -35,6 +36,18 @@ import { PoolBrowser } from './ui/PoolBrowser.js';
 import './style.css';
 
 const STEP = 1 / 60;
+// Spieltempo (Taste C): Die Simulation bleibt gleich, sie läuft nur langsamer ab.
+const TEMPOS = [
+  { id: 'ruhig', label: 'Tempo: ruhig', factor: 0.72 },
+  { id: 'normal', label: 'Tempo: normal', factor: 0.86 },
+  { id: 'schnell', label: 'Tempo: schnell', factor: 1 },
+];
+let tempo = 0;
+try {
+  tempo = Math.max(0, TEMPOS.findIndex((t) => t.id === localStorage.getItem('sunday-league:tempo')));
+} catch {
+  // ohne Speicher: ruhig
+}
 const params = new URLSearchParams(location.search);
 let seed = Number(params.get('seed')) || Math.floor(Math.random() * 1e9);
 const testDuration = Number(params.get('dauer')) || undefined; // Testschalter: ?dauer=60
@@ -60,6 +73,7 @@ let career = loadCareer();
 let careerMatch = null; // { prepared, fixture } während eines Karrierespiels
 let challengeRun = null; // { def, ctx } während einer Challenge
 const challengeScreen = new ChallengeScreen(document.getElementById('challenges'));
+const creator = new CoachCreator(document.getElementById('creator'));
 
 function loadVenue(id) {
   if (venue?.id === id) return;
@@ -128,10 +142,23 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
     openChallenges();
   },
   onCareerNew() {
-    career = createCareer({ seed: seed++ });
-    saveCareer(career);
+    // Erst dich selbst anlegen, dann geht es ins Vereinsheim.
     menu.hide();
-    openClubhouse();
+    setMode('club');
+    const careerSeed = seed++;
+    creator.show({
+      seed: careerSeed,
+      onDone(coach) {
+        creator.hide();
+        career = createCareer({ seed: careerSeed, coach });
+        saveCareer(career);
+        openClubhouse();
+      },
+      onCancel() {
+        creator.hide();
+        openMenu();
+      },
+    });
   },
 });
 
@@ -276,13 +303,22 @@ let acc = 0;
 function frame(now) {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
-  acc += dt;
+  acc += dt * (mode === 'play' ? TEMPOS[tempo].factor : 1);
   while (acc >= STEP) {
     const raw = input.poll();
     const intent = mode === 'play' ? raw : undefined;
     if (mode === 'play') {
       if (intent.help) hud.toggleHelp();
       if (intent.mute) hud.toast(sound.toggleMute() ? 'Ton aus' : 'Ton an', 1);
+      if (intent.tempo) {
+        tempo = (tempo + 1) % TEMPOS.length;
+        hud.toast(TEMPOS[tempo].label, 1.2, 2);
+        try {
+          localStorage.setItem('sunday-league:tempo', TEMPOS[tempo].id);
+        } catch {
+          // egal
+        }
+      }
       if (match.phase === 'ended' && intent.restart && !challengeRun) {
         if (careerMatch) finishCareerMatch();
         else startMatch(true);

@@ -95,7 +95,7 @@ function supportSpot(m, p, dt) {
     }
   }
   p.supportSpot = best;
-  p.supportTimer = 0.6 + rng.next() * 0.3;
+  p.supportTimer = 1.0 + rng.next() * 0.4; // seltener umentscheiden = ruhigeres Bild
   return best;
 }
 
@@ -134,7 +134,7 @@ export function outfieldIntent(m, p, dt) {
     p.dribbleDir = norm(oppGoal.x - p.pos.x, p.aimZ - p.pos.z);
     if (dBall < 1.3 && p.decideTimer <= 0 && !p.pending && !ball.holder) {
       // Amateure brauchen einen Moment, bis sie sich entscheiden.
-      p.decideTimer = 0.25 + (1 - p.attrs.technique) * 0.35 + m.rng.next() * 0.2;
+      p.decideTimer = 0.4 + (1 - p.attrs.technique) * 0.4 + m.rng.next() * 0.25;
       aiDecide(m, p, oppGoal);
     }
     return { move: norm(ax - p.pos.x, az - p.pos.z), sprint: dBall > 3 && p.stamina > 0.3 };
@@ -198,13 +198,13 @@ function chooseTackle(m, p, dBall) {
   if (!opp || opp.team === p.team || opp.role === 'gk' || dist2d(opp.pos, ball.pos) > 1.2) return null;
   const tb = norm(ball.pos.x - p.pos.x, ball.pos.z - p.pos.z);
   if (tb.x * p.facing.x + tb.z * p.facing.z < 0.8) return null;
-  p.decideTimer = 0.8;
+  p.decideTimer = 1.3; // nicht im Sekundentakt reingehen
 
   const tough = hasTrait(p, 'hart_im_nehmen');
   let slideChance = surface.hard ? (p.injury ? 0 : tough ? 0.25 : 0.04) : 0.06 + 0.14 * p.attrs.tackling;
   if (p.yellow) slideChance *= 0.3; // mit Gelb vorbelastet lieber vorsichtig
   if (dBall > 0.9 && rng.chance(slideChance)) return 'slide';
-  if (dBall < 1.4 && rng.chance(0.3 + 0.35 * p.attrs.tackling)) return 'poke';
+  if (dBall < 1.4 && rng.chance(0.2 + 0.3 * p.attrs.tackling)) return 'poke';
   return null;
 }
 

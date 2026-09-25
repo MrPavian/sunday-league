@@ -115,7 +115,7 @@ export function resolveTackles(m) {
         m.events.push({ type: 'tackle', playerId: p.id });
       } else {
         const win = contested
-          ? clamp(0.4 + 0.5 * p.attrs.tackling - 0.3 * opp.attrs.technique - (hasTrait(opp, 'ballsicher') ? 0.1 : 0), 0.15, 0.9)
+          ? clamp(0.4 + 0.5 * p.attrs.tackling - 0.3 * opp.attrs.technique - (hasTrait(opp, 'ballsicher') ? 0.1 : 0) - (opp.shielding ? 0.25 : 0), 0.1, 0.9)
           : 0.95;
         p.tackleWon = rng.chance(win) ? true : 'missed';
         if (p.tackleWon === true) {
@@ -136,7 +136,7 @@ export function resolveTackles(m) {
       let foul;
       if (slide) {
         const fromBehind = o.facing.x * p.facing.x + o.facing.z * p.facing.z > 0.5;
-        foul = p.tackleWon !== true || rng.chance(0.12 * (1 - p.attrs.tackling) + (fromBehind ? 0.2 : 0));
+        foul = p.tackleWon !== true || rng.chance(0.12 * (1 - p.attrs.tackling) + (fromBehind ? 0.2 : 0) + (o.shielding ? 0.25 : 0));
         o.state = 'down';
         o.stateTimer = foul ? 1.4 : 0.7;
         o.pending = null;

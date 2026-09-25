@@ -1,15 +1,19 @@
 // Tastatur + Gamepad → Intent. Bildschirm-oben entspricht -z in der Welt.
 const KEYS = {
-  up: ['KeyW', 'ArrowUp'],
-  down: ['KeyS', 'ArrowDown'],
-  left: ['KeyA', 'ArrowLeft'],
-  right: ['KeyD', 'ArrowRight'],
+  up: ['ArrowUp'],
+  down: ['ArrowDown'],
+  left: ['ArrowLeft'],
+  right: ['ArrowRight'],
   sprint: ['ShiftLeft', 'ShiftRight'],
-  shoot: ['Space', 'KeyK'],
-  pass: ['KeyJ', 'KeyE'],
-  tackle: ['KeyL', 'ControlLeft'],
+  shoot: ['KeyW', 'Space'],
+  pass: ['KeyS'],
+  loft: ['KeyE'], // hoher Ball / Flanke
+  hold: ['KeyA'], // mit Ball abschirmen, ohne Ball Gegner festhalten
+  tackle: ['KeyD'], // Grätsche
+  poke: ['KeyY', 'KeyZ'], // Zweikampf im Stehen – Y auf QWERTZ ist physisch KeyZ
   switchPlayer: ['KeyQ'],
-  sub: ['KeyU'],
+  sub: ['KeyX'],
+  tempo: ['KeyC'],
   mute: ['KeyN'],
   restart: ['Enter'],
   menu: ['Escape', 'KeyM'],
@@ -48,7 +52,11 @@ export class Input {
     let sprint = this.held('sprint');
     let shootHeld = this.held('shoot');
     let pass = this.wasPressed('pass');
+    let loft = this.wasPressed('loft');
+    let hold = this.held('hold');
     let tackle = this.wasPressed('tackle');
+    let poke = this.wasPressed('poke');
+    const tempo = this.wasPressed('tempo');
     let switchPlayer = this.wasPressed('switchPlayer');
     let sub = this.wasPressed('sub');
     const mute = this.wasPressed('mute');
@@ -65,9 +73,12 @@ export class Input {
       }
       const b = (i) => !!pad.buttons[i]?.pressed;
       const edge = (i) => b(i) && !this.padPrev[i];
-      shootHeld ||= b(2) || b(1); // X / B
+      shootHeld ||= b(2); // X
       pass ||= edge(0); // A
+      loft ||= edge(1); // B
       tackle ||= edge(3); // Y
+      hold ||= b(6); // LT
+      poke ||= edge(11); // R3
       switchPlayer ||= edge(4); // LB
       sub ||= edge(8); // Back/Select
       sprint ||= b(5) || b(7); // RB / RT
@@ -80,6 +91,6 @@ export class Input {
       x /= l;
       z /= l;
     }
-    return { move: { x, z }, sprint, shootHeld, pass, tackle, switchPlayer, sub, restart, menu, mute, help };
+    return { move: { x, z }, sprint, shootHeld, pass, loft, hold, tackle, poke, switchPlayer, sub, tempo, restart, menu, mute, help };
   }
 }

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { len } from '../core/math.js';
 import { BALL_RADIUS } from '../sim/ball.js';
 import { allPlayers } from '../sim/squad.js';
+import { attackDir } from '../sim/players.js';
 import { BALL_VISUAL_RADIUS, createBallModel, rollBall } from './BallModel.js';
 import { animatePlayer, createPlayerModel } from './PlayerModel.js';
 import { IncidentView } from './IncidentView.js';
@@ -43,6 +44,17 @@ export class MatchView {
     );
     this.marker.rotation.x = -Math.PI / 2;
     this.root.add(this.marker);
+
+    // Pfeil auf dem Boden: in diese Richtung wird angegriffen.
+    const tri = new THREE.Shape();
+    tri.moveTo(0.55, 0);
+    tri.lineTo(-0.15, 0.38);
+    tri.lineTo(0.05, 0);
+    tri.lineTo(-0.15, -0.38);
+    tri.closePath();
+    this.arrow = new THREE.Mesh(new THREE.ShapeGeometry(tri), new THREE.MeshBasicMaterial({ color: 0xffe14d, side: THREE.DoubleSide }));
+    this.arrow.rotation.x = -Math.PI / 2;
+    this.root.add(this.arrow);
     this.time = 0;
   }
 
@@ -100,8 +112,12 @@ export class MatchView {
 
     const c = match.players.find((p) => p.id === match.controlledId);
     this.marker.visible = !!c;
+    this.arrow.visible = !!c;
     if (!c) return;
     this.marker.position.set(c.pos.x, 0.03, c.pos.z);
     this.marker.scale.setScalar(1 + Math.sin(this.time * 6) * 0.08);
+    const s = attackDir(match, c.team);
+    this.arrow.position.set(c.pos.x + s * (0.95 + Math.sin(this.time * 5) * 0.08), 0.035, c.pos.z);
+    this.arrow.rotation.z = s > 0 ? 0 : Math.PI;
   }
 }

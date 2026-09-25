@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createCareer, finishRound, humanClub, playerOf } from '../src/career/career.js';
 import { resolveEvent } from '../src/career/events.js';
-import { coachAway, CRISES, initCoach, PERSONAL_EVENTS, seasonPersonal, trainingLocked, weeklyPersonal } from '../src/career/personal.js';
+import { childrenGrowUp, coachAway, createCoachPlayer, CRISES, initCoach, PERSONAL_EVENTS, seasonPersonal, STYLES, trainingLocked, weeklyPersonal } from '../src/career/personal.js';
 import { createRng } from '../src/core/rng.js';
 
 describe('player-coach', () => {
@@ -78,6 +78,71 @@ describe('player-coach', () => {
         expect(typeof res, `${id}/${choice}`).toBe('string');
         expect(c.coach.patience).toBeGreaterThanOrEqual(0);
       }
+    }
+  });
+});
+
+describe('create your own player-coach', () => {
+  const input = {
+    first: 'Norman',
+    last: 'Kranz',
+    age: 38,
+    relation: 'verheiratet',
+    profession: 'Elektriker',
+    style: 'knipser',
+    look: { skin: 0xe6b894, hair: 0x4a3222, bald: false, beard: true },
+    children: [
+      { name: 'Paul', age: 14, sex: 'm' },
+      { name: 'Mia', age: 17, sex: 'w' },
+    ],
+  };
+
+  it('builds exactly the player you describe and keeps him through save and load', async () => {
+    const { saveCareer, loadCareer } = await import('../src/career/career.js');
+    const c = createCareer({ seed: 61, coach: input });
+    const me = playerOf(c, c.coach.idx);
+    expect(me.name).toBe('Norman Kranz');
+    expect(me.age).toBe(38);
+    expect(me.profession).toBe('Elektriker');
+    expect(me.position).toBe('fwd');
+    expect(me.traits).toContain('hammer');
+    expect(me.look.beard).toBe(true);
+    expect(c.coach.family).toContain('Verheiratet');
+    expect(humanClub(c).squad).toContain(c.coach.idx);
+
+    const store = new Map();
+    const storage = { setItem: (k, v) => store.set(k, v), getItem: (k) => store.get(k) ?? null };
+    saveCareer(c, storage);
+    createCareer({ seed: 99 }); // andere Karriere dazwischen
+    const back = loadCareer(storage);
+    expect(playerOf(back, back.coach.idx).name).toBe('Norman Kranz');
+  });
+
+  it('your son joins the youth team at 16, your daughter the women once there is a team', () => {
+    const c = createCareer({ seed: 62, coach: input });
+    const paul = c.coach.children.find((k) => k.name === 'Paul');
+    expect(paul.idx).toBeNull();
+    c.season = 3; // Paul ist jetzt 16
+    const notes = childrenGrowUp(c);
+    expect(paul.idx).not.toBeNull();
+    expect(c.youth.prospects).toContain(paul.idx);
+    expect(playerOf(c, paul.idx).name).toBe('Paul Kranz');
+    expect(playerOf(c, paul.idx).age).toBe(16);
+    expect(notes.join(' ')).toContain('A-Jugend');
+
+    const mia = c.coach.children.find((k) => k.name === 'Mia');
+    expect(mia.inFrauen).toBeFalsy();
+    c.saga.frauen = { founded: 2, captain: 'Lena Kaya', strength: 0.4, seasons: [] };
+    childrenGrowUp(c);
+    expect(mia.inFrauen).toBe(true);
+  });
+
+  it('every style makes a sensible player of the right position', () => {
+    for (const [id, st] of Object.entries(STYLES)) {
+      const p = createCoachPlayer({ first: 'A', last: 'B', age: 30, style: id }, 5);
+      expect(p.position).toBe(st.role);
+      expect(p.rating).toBeGreaterThan(25);
+      expect(p.rating).toBeLessThan(80);
     }
   });
 });
