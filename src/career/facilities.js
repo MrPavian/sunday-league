@@ -1,6 +1,7 @@
 // Vereinsheim ausbauen: Aus dem Bauwagen mit kalter Dusche wird Schritt für Schritt
 // ein Vereinsheim mit Theke, Flutlicht und Tribüne. Jeder Ausbau kostet Geld und
 // Bauzeit – oder einen Samstag Arbeitseinsatz, bei dem alles passieren kann.
+import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { humanClub } from './career.js';
 import { adjustMood } from './events.js';
@@ -10,12 +11,12 @@ import { isCoach } from './personal.js';
 import { chronicle } from './sagas.js';
 
 export const FACILITIES = {
-  duschen: { name: 'Warme Duschen', cost: 180, weeks: 2, upkeep: 1, desc: 'Weniger Absagen, und Neue kommen lieber.', done: 'Die erste warme Dusche seit 1987. Einer duscht 40 Minuten.' },
-  grill: { name: 'Grill & Theke', cost: 220, weeks: 2, upkeep: 0, desc: 'Ein Viertel mehr Getränke- und Wurstverkauf bei Heimspielen.', done: 'Die Theke steht! Der erste Kasten ist nach zwölf Minuten leer.' },
-  ballmaschine: { name: 'Ballmaschine', cost: 150, weeks: 1, upkeep: 0, desc: 'Junge Spieler (bis 23) entwickeln sich schneller.', done: 'Die Ballmaschine schießt härter als euer Stürmer. Der Torwart hat Angst.' },
-  kabine: { name: 'Neue Kabine', cost: 350, weeks: 3, upkeep: 1, desc: 'Bessere Stimmung jede Woche, Neuzugänge sagen eher zu.', done: 'Neue Kabine mit Haken für alle. Und einer Bank, die nicht wackelt.' },
-  flutlicht: { name: 'Flutlicht', cost: 500, weeks: 3, upkeep: 3, desc: 'Training nach Feierabend – kostet weniger Familienzeit.', done: 'Das Flutlicht geht an. Die halbe Nachbarschaft kommt gucken.' },
-  tribuene: { name: 'Kleine Tribüne', cost: 700, weeks: 4, upkeep: 2, needs: ['grill'], desc: 'Drei Stufen, ein Dach – ein Drittel mehr Zuschauer.', done: 'Die Tribüne steht! Drei Stufen Beton und ein Dach aus dem Baumarkt.' },
+  duschen: { name: tr('Warme Duschen', 'Hot showers'), cost: 180, weeks: 2, upkeep: 1, desc: tr('Weniger Absagen, und Neue kommen lieber.', 'Fewer drop-outs, and new players are keener to join.'), done: tr('Die erste warme Dusche seit 1987. Einer duscht 40 Minuten.', 'The first hot shower since 1987. Someone stays in for 40 minutes.') },
+  grill: { name: tr('Grill & Theke', 'Barbecue & bar'), cost: 220, weeks: 2, upkeep: 0, desc: tr('Ein Viertel mehr Getränke- und Wurstverkauf bei Heimspielen.', 'A quarter more drinks and sausage sales at home games.'), done: tr('Die Theke steht! Der erste Kasten ist nach zwölf Minuten leer.', 'The bar is up! The first crate is empty after twelve minutes.') },
+  ballmaschine: { name: tr('Ballmaschine', 'Ball machine'), cost: 150, weeks: 1, upkeep: 0, desc: tr('Junge Spieler (bis 23) entwickeln sich schneller.', 'Young players (up to 23) develop faster.'), done: tr('Die Ballmaschine schießt härter als euer Stürmer. Der Torwart hat Angst.', 'The ball machine shoots harder than your striker. The keeper is scared.') },
+  kabine: { name: tr('Neue Kabine', 'New dressing room'), cost: 350, weeks: 3, upkeep: 1, desc: tr('Bessere Stimmung jede Woche, Neuzugänge sagen eher zu.', 'Better spirit every week, new signings say yes more often.'), done: tr('Neue Kabine mit Haken für alle. Und einer Bank, die nicht wackelt.', 'New dressing room with pegs for everyone. And a bench that doesn\'t wobble.') },
+  flutlicht: { name: tr('Flutlicht', 'Floodlights'), cost: 500, weeks: 3, upkeep: 3, desc: tr('Training nach Feierabend – kostet weniger Familienzeit.', 'Training after work – costs less family time.'), done: tr('Das Flutlicht geht an. Die halbe Nachbarschaft kommt gucken.', 'The floodlights come on. Half the neighbourhood comes to look.') },
+  tribuene: { name: tr('Kleine Tribüne', 'Small stand'), cost: 700, weeks: 4, upkeep: 2, needs: ['grill'], desc: tr('Drei Stufen, ein Dach – ein Drittel mehr Zuschauer.', 'Three steps and a roof – a third more spectators.'), done: tr('Die Tribüne steht! Drei Stufen Beton und ein Dach aus dem Baumarkt.', 'The stand is up! Three concrete steps and a roof from the DIY store.') },
 };
 
 export function facilities(c) {
@@ -46,9 +47,9 @@ export function build(c, id, mode = 'handwerker') {
   const def = FACILITIES[id];
   const cost = mode === 'einsatz' ? Math.round(def.cost / 2) : def.cost;
   if (c.cash < cost) return null;
-  book(c, `${def.name}: ${mode === 'einsatz' ? 'Material für den Arbeitseinsatz' : 'Handwerker'}`, -cost);
+  book(c, `${def.name}: ${mode === 'einsatz' ? tr('Material für den Arbeitseinsatz', 'materials for the work party') : tr('Handwerker', 'builders')}`, -cost);
   facilities(c).building = { id, weeks: mode === 'einsatz' ? def.weeks * 2 : def.weeks, mode };
-  let text = mode === 'einsatz' ? 'Samstag, 9 Uhr, Arbeitseinsatz. Wer Werkzeug hat, bringt es mit.' : 'Die Handwerker kommen. Irgendwann. Diese Woche vielleicht.';
+  let text = mode === 'einsatz' ? tr('Samstag, 9 Uhr, Arbeitseinsatz. Wer Werkzeug hat, bringt es mit.', 'Saturday, 9am, work party. Bring tools if you have them.') : tr('Die Handwerker kommen. Irgendwann. Diese Woche vielleicht.', 'The builders are coming. At some point. Maybe this week.');
   if (mode === 'einsatz') text = workParty(c, id);
   facilities(c).note = text;
   return text;
@@ -60,22 +61,22 @@ function workParty(c, id) {
   const rng = createRng((c.seed * 29 + c.season * 7 + c.round * 3 + id.length) >>> 0);
   const b = facilities(c).building;
   const run = outcome([
-    { w: 3, run: () => (adjustMood(c, 0.06), 'Zwölf Leute, drei Bohrmaschinen, ein Grill. Das schweißt zusammen.') },
-    { w: 2, run: () => ((b.weeks = Math.max(1, b.weeks - 2)), adjustMood(c, 0.04), 'Einer ist gelernter Maurer und übernimmt das Kommando. Doppelt so schnell wie gedacht.') },
+    { w: 3, run: () => (adjustMood(c, 0.06), tr('Zwölf Leute, drei Bohrmaschinen, ein Grill. Das schweißt zusammen.', 'Twelve people, three drills, one barbecue. That brings you together.')) },
+    { w: 2, run: () => ((b.weeks = Math.max(1, b.weeks - 2)), adjustMood(c, 0.04), tr('Einer ist gelernter Maurer und übernimmt das Kommando. Doppelt so schnell wie gedacht.', 'One of them is a trained bricklayer and takes charge. Twice as fast as expected.')) },
     {
       w: 1.5,
       run: () => {
         const s = rng.pick(helpers(c));
         c.players[s].injuryWeeks = Math.max(c.players[s].injuryWeeks ?? 0, 2);
-        c.players[s].injury = { label: 'Daumen (Hammer)' };
+        c.players[s].injury = { label: tr('Daumen (Hammer)', 'thumb (hammer)') };
         sitOut(c, s);
-        return `${first(c, s)} haut sich mit dem Hammer auf den Daumen. Zwei Wochen raus – und er muss sich das noch lange anhören.`;
+        return tr(`${first(c, s)} haut sich mit dem Hammer auf den Daumen. Zwei Wochen raus – und er muss sich das noch lange anhören.`, `${first(c, s)} hits his thumb with a hammer. Out for two weeks – and he will be hearing about it for a long time.`);
       },
     },
-    { w: 1, run: () => ((b.weeks += 2), 'Es kommen nur drei. Die anderen haben „was mit der Familie". Das dauert länger.') },
-    { w: 1, run: () => (book(c, 'Materialspende Sanitär Blum', 40), 'Ein Sponsor bringt Material vorbei und will nur ein Schild dafür. 40 € gespart.') },
-    { w: 1, run: () => (adjustMood(c, -0.04), book(c, 'Falsch gebohrt (Wasserleitung)', -30), 'Einer bohrt in die Wasserleitung. 30 € Notdienst und eine nasse Kabine.') },
-    { w: 0.7, run: () => ((c.flags.pressWeeks = 2), adjustMood(c, 0.05), 'Das Kreisblatt kommt vorbei: „Hier packt noch jeder an!" Mehr Zuschauer am Sonntag.') },
+    { w: 1, run: () => ((b.weeks += 2), tr('Es kommen nur drei. Die anderen haben „was mit der Familie". Das dauert länger.', 'Only three show up. The others have "family stuff". It will take longer.')) },
+    { w: 1, run: () => (book(c, tr('Materialspende Sanitär Blum', 'Material donation Sanitär Blum'), 40), tr('Ein Sponsor bringt Material vorbei und will nur ein Schild dafür. 40 € gespart.', 'A sponsor drops off materials and only wants a sign in return. €40 saved.')) },
+    { w: 1, run: () => (adjustMood(c, -0.04), book(c, tr('Falsch gebohrt (Wasserleitung)', 'Drilled in the wrong place (water pipe)'), -30), tr('Einer bohrt in die Wasserleitung. 30 € Notdienst und eine nasse Kabine.', 'Someone drills into the water pipe. €30 emergency plumber and a wet dressing room.')) },
+    { w: 0.7, run: () => ((c.flags.pressWeeks = 2), adjustMood(c, 0.05), tr('Das Kreisblatt kommt vorbei: „Hier packt noch jeder an!" Mehr Zuschauer am Sonntag.', 'The District Gazette drops by: "Everyone still mucks in here!" More spectators on Sunday.')) },
   ]);
   return run(c, {}, rng);
 }
@@ -88,14 +89,14 @@ export function weeklyFacilities(c) {
     if (f.building.weeks <= 0) {
       const def = FACILITIES[f.building.id];
       f.built[f.building.id] = c.season;
-      chronicle(c, `${def.name} fertig${f.building.mode === 'einsatz' ? ' – in Eigenarbeit gebaut' : ''}.`);
-      c.week?.chat.push({ from: null, text: `Fertig: ${def.name}! ${def.done}`, time: 'Fr 18:00' });
+      chronicle(c, tr(`${def.name} fertig${f.building.mode === 'einsatz' ? ' – in Eigenarbeit gebaut' : ''}.`, `${def.name} finished${f.building.mode === 'einsatz' ? ' – built by the members themselves' : ''}.`));
+      c.week?.chat.push({ from: null, text: tr(`Fertig: ${def.name}! ${def.done}`, `Finished: ${def.name}! ${def.done}`), time: 'Fr 18:00' });
       adjustMood(c, 0.05);
       f.building = null;
     }
   }
   const upkeep = Object.keys(f.built).reduce((s, id) => s + (FACILITIES[id]?.upkeep ?? 0), 0);
-  if (upkeep) book(c, 'Nebenkosten Vereinsheim (Strom, Wasser)', -upkeep);
+  if (upkeep) book(c, tr('Nebenkosten Vereinsheim (Strom, Wasser)', 'Clubhouse running costs (power, water)'), -upkeep);
   if (hasFacility(c, 'kabine')) adjustMood(c, 0.01);
 }
 

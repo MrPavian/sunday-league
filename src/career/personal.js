@@ -1,19 +1,27 @@
 // Die persönliche Ebene: Du bist Spielertrainer mit Job und Familie. Zwei Werte
 // halten alles zusammen – die Geduld deiner Familie und deine Ehrenamts-Energie.
 // Wer beides verheizt, fällt ein paar Wochen aus.
+import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { book } from './finances.js';
 import { addCustomPlayer, getPool, humanClub, maxSquad, playerOf } from './career.js';
 import { generatePlayer, ratePlayer } from '../sim/generator.js';
 import { adjustMood } from './events.js';
+import { jobName } from '../data/names.js';
 import { trainingRelief } from './facilities.js';
 
 const FAMILIES = [
-  { text: 'verheiratet, zwei Kinder', kids: 2, partner: 'Deine Frau' },
-  { text: 'verheiratet, ein Kind', kids: 1, partner: 'Deine Frau' },
-  { text: 'in einer Beziehung, ein Kind', kids: 1, partner: 'Deine Partnerin' },
-  { text: 'Freundin, keine Kinder', kids: 0, partner: 'Deine Freundin' },
+  { text: tr('verheiratet, zwei Kinder', 'married, two children'), kids: 2, partner: 'Deine Frau' },
+  { text: tr('verheiratet, ein Kind', 'married, one child'), kids: 1, partner: 'Deine Frau' },
+  { text: tr('in einer Beziehung, ein Kind', 'in a relationship, one child'), kids: 1, partner: 'Deine Partnerin' },
+  { text: tr('Freundin, keine Kinder', 'girlfriend, no children'), kids: 0, partner: 'Deine Freundin' },
 ];
+// Partnerin/Partner steht intern auf Deutsch im Spielstand – für Texte in der aktuellen Sprache.
+const PARTNER_EN = { 'Deine Frau': 'Your wife', 'Deine Partnerin': 'Your partner', 'Deine Freundin': 'Your girlfriend', 'Deine Mutter': 'Your mum' };
+export const partnerOf = (c) => {
+  const p = c.coach?.partner;
+  return p ? tr(p, PARTNER_EN[p] ?? p) : null;
+};
 const OFFER_CLUBS = ['TuS Grünwald 1911 (Kreisliga A)', 'SpVgg Eichenhain (Bezirksliga)', 'FC Viktoria Oststadt (Kreisliga A)'];
 const MONEY_JOBS = /Steuer|Bank|Versicherung|Buchhalt|Sachbearbeit|Controller/;
 
@@ -31,34 +39,34 @@ export function adjustEnergy(c, d) {
 }
 
 export function patienceLabel(v) {
-  if (v >= 70) return 'entspannt';
-  if (v >= 45) return 'geht so';
-  if (v >= 20) return 'angespannt';
-  return 'kurz vorm Knall';
+  if (v >= 70) return tr('entspannt', 'relaxed');
+  if (v >= 45) return tr('geht so', 'so-so');
+  if (v >= 20) return tr('angespannt', 'tense');
+  return tr('kurz vorm Knall', 'about to blow');
 }
 export function energyLabel(v) {
-  if (v >= 70) return 'voller Tatendrang';
-  if (v >= 45) return 'okay';
-  if (v >= 20) return 'müde';
-  return 'ausgebrannt';
+  if (v >= 70) return tr('voller Tatendrang', 'raring to go');
+  if (v >= 45) return tr('okay', 'okay');
+  if (v >= 20) return tr('müde', 'tired');
+  return tr('ausgebrannt', 'burnt out');
 }
 
 // Spielertypen für den eigenen Avatar.
 export const STYLES = {
-  knipser: { role: 'fwd', name: 'Knipser', desc: 'Steht vorne und macht die Dinger rein.', mods: { shooting: 0.12, technique: 0.03, tackling: -0.05, stamina: -0.03 }, trait: 'hammer' },
-  wuehler: { role: 'fwd', name: 'Wühler', desc: 'Schnell, kopfballstark, nervt jeden Verteidiger.', mods: { pace: 0.1, heading: 0.08, technique: -0.04 }, trait: 'kopfball' },
-  spielmacher: { role: 'mid', name: 'Spielmacher', desc: 'Sieht den Pass, den sonst keiner sieht.', mods: { passing: 0.12, technique: 0.08, pace: -0.05 }, trait: 'gutes_auge' },
-  dauerlaeufer: { role: 'mid', name: 'Dauerläufer', desc: 'Läuft 90 Minuten, auch wenn es nur 60 sind.', mods: { stamina: 0.14, tackling: 0.05, shooting: -0.04 }, trait: 'pferdelunge' },
-  ausputzer: { role: 'def', name: 'Ausputzer', desc: 'Klärt alles. Notfalls auf den Parkplatz.', mods: { tackling: 0.12, heading: 0.06, technique: -0.05 }, trait: 'hart_im_nehmen' },
-  libero: { role: 'def', name: 'Libero', desc: 'Organisiert hinten und spielt den ersten Ball.', mods: { passing: 0.08, tackling: 0.06, technique: 0.04, pace: -0.06 }, trait: 'anfuehrer' },
-  torwart: { role: 'gk', name: 'Torwart', desc: 'Einer muss ja. Und du hältst wirklich gern.', mods: { keeping: 0.12 }, trait: null },
+  knipser: { role: 'fwd', name: tr('Knipser', 'Poacher'), desc: tr('Steht vorne und macht die Dinger rein.', 'Stands up front and puts them away.'), mods: { shooting: 0.12, technique: 0.03, tackling: -0.05, stamina: -0.03 }, trait: 'hammer' },
+  wuehler: { role: 'fwd', name: tr('Wühler', 'Grafter'), desc: tr('Schnell, kopfballstark, nervt jeden Verteidiger.', 'Quick, good in the air, annoys every defender.'), mods: { pace: 0.1, heading: 0.08, technique: -0.04 }, trait: 'kopfball' },
+  spielmacher: { role: 'mid', name: tr('Spielmacher', 'Playmaker'), desc: tr('Sieht den Pass, den sonst keiner sieht.', 'Sees the pass nobody else sees.'), mods: { passing: 0.12, technique: 0.08, pace: -0.05 }, trait: 'gutes_auge' },
+  dauerlaeufer: { role: 'mid', name: tr('Dauerläufer', 'Box-to-box'), desc: tr('Läuft 90 Minuten, auch wenn es nur 60 sind.', 'Runs for 90 minutes, even when there are only 60.'), mods: { stamina: 0.14, tackling: 0.05, shooting: -0.04 }, trait: 'pferdelunge' },
+  ausputzer: { role: 'def', name: tr('Ausputzer', 'Stopper'), desc: tr('Klärt alles. Notfalls auf den Parkplatz.', 'Clears everything. Into the car park if need be.'), mods: { tackling: 0.12, heading: 0.06, technique: -0.05 }, trait: 'hart_im_nehmen' },
+  libero: { role: 'def', name: tr('Libero', 'Sweeper'), desc: tr('Organisiert hinten und spielt den ersten Ball.', 'Organises the back line and plays the first pass.'), mods: { passing: 0.08, tackling: 0.06, technique: 0.04, pace: -0.06 }, trait: 'anfuehrer' },
+  torwart: { role: 'gk', name: tr('Torwart', 'Goalkeeper'), desc: tr('Einer muss ja. Und du hältst wirklich gern.', 'Someone has to. And you genuinely like saving shots.'), mods: { keeping: 0.12 }, trait: null },
 };
-export const RELATIONS = { single: 'Single', beziehung: 'In einer Beziehung', verheiratet: 'Verheiratet' };
+export const RELATIONS = tr({ single: 'Single', beziehung: 'In einer Beziehung', verheiratet: 'Verheiratet' }, { single: 'Single', beziehung: 'In a relationship', verheiratet: 'Married' });
 const PARTNER = { single: 'Deine Mutter', beziehung: 'Deine Partnerin', verheiratet: 'Deine Frau' };
 
 export function familyText(relation, children = []) {
   const n = children.length;
-  const kids = n === 0 ? 'keine Kinder' : n === 1 ? `ein Kind (${children[0].name})` : `${n} Kinder (${children.map((k) => k.name).join(', ')})`;
+  const kids = n === 0 ? tr('keine Kinder', 'no children') : n === 1 ? tr(`ein Kind (${children[0].name})`, `one child (${children[0].name})`) : tr(`${n} Kinder (${children.map((k) => k.name).join(', ')})`, `${n} children (${children.map((k) => k.name).join(', ')})`);
   return `${RELATIONS[relation] ?? 'Single'}, ${kids}`;
 }
 
@@ -106,7 +114,7 @@ function createKidPlayer(child, coach, parent, age, seed) {
     age,
     profession: age <= 18 ? 'Schüler' : 'Azubi',
     position: role,
-    backstory: `Hat auf dem Vereinsplatz laufen gelernt. Der Papa ist der Trainer – das hört er oft genug.`,
+    backstory: tr('Hat auf dem Vereinsplatz laufen gelernt. Der Papa ist der Trainer – das hört er oft genug.', 'Learned to walk on the club pitch. His dad is the manager – he hears that often enough.'),
     look: { ...p.look, skin: parent.look.skin, hair: rng.chance(0.6) ? parent.look.hair : p.look.hair, bald: false, beard: false },
     custom: 'kid',
   };
@@ -180,8 +188,8 @@ export function childrenGrowUp(c) {
       if (age >= 16 && !child.inFrauen && c.saga?.frauen) {
         child.inFrauen = true;
         c.saga.frauen.strength = Math.min(0.9, c.saga.frauen.strength + 0.05);
-        c.saga.chronicle?.push({ season: c.season, text: `${child.name} ${k.last ?? ''} (${age}), Tochter des Trainers, spielt jetzt im Frauenteam.` });
-        notes.push(`${child.name} (${age}) spielt ab sofort im Frauenteam. Die Kapitänin ist begeistert.`);
+        c.saga.chronicle?.push({ season: c.season, text: tr(`${child.name} ${k.last ?? ''} (${age}), Tochter des Trainers, spielt jetzt im Frauenteam.`, `${child.name} ${k.last ?? ''} (${age}), the manager's daughter, now plays in the women's team.`) });
+        notes.push(tr(`${child.name} (${age}) spielt ab sofort im Frauenteam. Die Kapitänin ist begeistert.`, `${child.name} (${age}) now plays in the women's team. The captain is thrilled.`));
       }
       continue;
     }
@@ -194,11 +202,11 @@ export function childrenGrowUp(c) {
     c.players[idx] = { apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 };
     if (age <= 19 && c.youth) {
       c.youth.prospects.push(idx);
-      notes.push(`Dein Sohn ${child.name} (${age}) spielt jetzt in der A-Jugend. Stärke ${playerOf(c, idx).rating} – der Jugendtrainer grinst.`);
+      notes.push(tr(`Dein Sohn ${child.name} (${age}) spielt jetzt in der A-Jugend. Stärke ${playerOf(c, idx).rating} – der Jugendtrainer grinst.`, `Your son ${child.name} (${age}) now plays in the U19s. Rating ${playerOf(c, idx).rating} – the youth coach is grinning.`));
     } else if (humanClub(c).squad.length < maxSquad(c)) {
       humanClub(c).squad.push(idx);
       c.players[idx].fromYouth = true;
-      notes.push(`Dein Sohn ${child.name} (${age}) ist jetzt fest im Kader. Vater und Sohn in einer Mannschaft!`);
+      notes.push(tr(`Dein Sohn ${child.name} (${age}) ist jetzt fest im Kader. Vater und Sohn in einer Mannschaft!`, `Your son ${child.name} (${age}) is now a regular in the squad. Father and son in the same team!`));
     }
   }
   return notes;
@@ -206,7 +214,7 @@ export function childrenGrowUp(c) {
 
 export function coachName(c) {
   const k = c.coach;
-  return k?.idx != null ? playerOf(c, k.idx).name : 'Du';
+  return k?.idx != null ? playerOf(c, k.idx).name : tr('Du', 'You');
 }
 
 const missingStaff = (c) => ['cotrainer', 'wirt', 'platzwart'].filter((r) => !c.staff?.[r]).length;
@@ -270,12 +278,12 @@ const sendAway = (c, weeks = 1) => {
 
 export const CRISES = {
   familienkrise: {
-    text: (c) => `${c.coach.partner}: „So geht das nicht weiter. Jedes Wochenende Fußball, jeden Abend WhatsApp mit der Mannschaft." Die nächsten zwei Wochen gehörst du der Familie.`,
-    options: [{ label: 'Verstanden.', effect: () => 'Der Kapitän übernimmt. Du hast das Handy aus – fast immer.' }],
+    text: (c) => tr(`${partnerOf(c)}: „So geht das nicht weiter. Jedes Wochenende Fußball, jeden Abend WhatsApp mit der Mannschaft." Die nächsten zwei Wochen gehörst du der Familie.`, `${partnerOf(c)}: "This can't go on. Football every weekend, WhatsApp with the team every night." The next two weeks belong to your family.`),
+    options: [{ label: tr('Verstanden.', 'Understood.'), effect: () => tr('Der Kapitän übernimmt. Du hast das Handy aus – fast immer.', 'The captain takes over. Your phone stays off – almost always.') }],
   },
   burnout: {
-    text: () => 'Du wachst nachts auf und denkst an Aufstellungen. Der Hausarzt schreibt dich zwei Wochen krank: „Auch vom Ehrenamt."',
-    options: [{ label: 'Okay …', effect: () => 'Zwei Wochen ohne Verein. Der Co-Trainer und der Kapitän halten den Laden am Laufen.' }],
+    text: () => tr('Du wachst nachts auf und denkst an Aufstellungen. Der Hausarzt schreibt dich zwei Wochen krank: „Auch vom Ehrenamt."', 'You wake up at night thinking about line-ups. The GP signs you off for two weeks: "From volunteering too."'),
+    options: [{ label: tr('Okay …', 'Okay …'), effect: () => tr('Zwei Wochen ohne Verein. Der Co-Trainer und der Kapitän halten den Laden am Laufen.', 'Two weeks without the club. The assistant and the captain keep things ticking over.') }],
   },
 };
 
@@ -285,29 +293,29 @@ export const PERSONAL_EVENTS = {
     needs: (c) => (c.coach && !coachAway(c) && c.coach.patience < 60 ? {} : null),
     text: (c) =>
       c.coach.relation === 'single'
-        ? `${c.coach.partner}: „Sonntag ist Omas 80. Geburtstag. Du kommst, und zwar pünktlich."`
+        ? tr(`${partnerOf(c)}: „Sonntag ist Omas 80. Geburtstag. Du kommst, und zwar pünktlich."`, `${partnerOf(c)}: "Sunday is Grandma's 80th birthday. You're coming, and on time."`)
         : c.coach.kids > 0
-          ? `${c.coach.partner}: „Sonntag ist Sommerfest in der Kita. Du hast es versprochen."`
-          : `${c.coach.partner}: „Sonntag hab ich Karten fürs Konzert in der Stadt. Für uns beide."`,
+          ? tr(`${partnerOf(c)}: „Sonntag ist Sommerfest in der Kita. Du hast es versprochen."`, `${partnerOf(c)}: "Sunday is the nursery summer fair. You promised."`)
+          : tr(`${partnerOf(c)}: „Sonntag hab ich Karten fürs Konzert in der Stadt. Für uns beide."`, `${partnerOf(c)}: "I've got tickets for a concert in town on Sunday. For both of us."`),
     options: [
-      { label: 'Familie geht vor – Sonntag bin ich raus', effect: (c) => (sendAway(c, 1), adjustPatience(c, 20), 'Der Kapitän stellt auf. Du machst Fotos und schickst heimlich Nachrichten.') },
-      { label: 'Nur zur 2. Halbzeit kommen', effect: (c) => (adjustPatience(c, 8), c.coach.idx != null && c.week.availability[c.coach.idx] === 'yes' && (c.week.availability[c.coach.idx] = 'late'), 'Kompromiss. Du kommst in der Pause, noch mit Glitzer im Gesicht.') },
-      { label: 'Fußball geht vor', effect: (c) => (adjustPatience(c, -12), 'Die Stimmung zu Hause ist … frostig.') },
+      { label: tr('Familie geht vor – Sonntag bin ich raus', 'Family comes first – I am out on Sunday'), effect: (c) => (sendAway(c, 1), adjustPatience(c, 20), tr('Der Kapitän stellt auf. Du machst Fotos und schickst heimlich Nachrichten.', 'The captain picks the team. You take photos and secretly send messages.')) },
+      { label: tr('Nur zur 2. Halbzeit kommen', 'Only come for the 2nd half'), effect: (c) => (adjustPatience(c, 8), c.coach.idx != null && c.week.availability[c.coach.idx] === 'yes' && (c.week.availability[c.coach.idx] = 'late'), tr('Kompromiss. Du kommst in der Pause, noch mit Glitzer im Gesicht.', 'Compromise. You arrive at half-time, still with glitter on your face.')) },
+      { label: tr('Fußball geht vor', 'Football comes first'), effect: (c) => (adjustPatience(c, -12), tr('Die Stimmung zu Hause ist … frostig.', 'The atmosphere at home is … frosty.')) },
     ],
   },
   hochzeitstag: {
     weight: 1,
     needs: (c) => (c.coach && (c.coach.relation ? c.coach.relation === 'verheiratet' : !c.coach.family.startsWith('Freundin')) && !c.flags.anniversary ? {} : null),
-    text: () => 'Kurzer Blick in den Kalender: Übermorgen ist Hochzeitstag.',
+    text: () => tr('Kurzer Blick in den Kalender: Übermorgen ist Hochzeitstag.', 'A quick look at the calendar: your wedding anniversary is the day after tomorrow.'),
     options: [
-      { label: 'Tisch beim Italiener reservieren', effect: (c) => ((c.flags.anniversary = true), adjustPatience(c, 12), 'Schöner Abend. Du hast nur zweimal aufs Handy geschaut.') },
+      { label: tr('Tisch beim Italiener reservieren', 'Book a table at the Italian'), effect: (c) => ((c.flags.anniversary = true), adjustPatience(c, 12), tr('Schöner Abend. Du hast nur zweimal aufs Handy geschaut.', 'Lovely evening. You only checked your phone twice.')) },
       {
-        label: '„Hab ich natürlich nicht vergessen …"',
+        label: tr('„Hab ich natürlich nicht vergessen …"', '"Of course I didn\'t forget …"'),
         effect: (c, ctx, rng) => {
           c.flags.anniversary = true;
-          if (rng.chance(0.5)) return adjustPatience(c, 4), 'Tankstellen-Blumen. Kam trotzdem gut an.';
+          if (rng.chance(0.5)) return adjustPatience(c, 4), tr('Tankstellen-Blumen. Kam trotzdem gut an.', 'Petrol station flowers. Went down well anyway.');
           adjustPatience(c, -15);
-          return 'Du hast es vergessen. Sie nicht.';
+          return tr('Du hast es vergessen. Sie nicht.', 'You forgot. She did not.');
         },
       },
     ],
@@ -315,46 +323,46 @@ export const PERSONAL_EVENTS = {
   chef_samstag: {
     weight: 2,
     needs: (c) => (c.coach?.idx != null && !c.coach.flags.bossAsked ? {} : null),
-    text: (c) => `Dein Chef (du bist ${playerOf(c, c.coach.idx).profession}): „Kannst du Samstag Inventur machen? Wäre echt wichtig."`,
+    text: (c) => tr(`Dein Chef (du bist ${playerOf(c, c.coach.idx).profession}): „Kannst du Samstag Inventur machen? Wäre echt wichtig."`, `Your boss (you work as ${jobName(playerOf(c, c.coach.idx).profession)}): "Can you do the stocktake on Saturday? It's really important."`),
     options: [
-      { label: 'Klar, Chef', effect: (c) => ((c.coach.flags.bossAsked = true), (c.coach.flags.bossFavor = true), adjustEnergy(c, -8), adjustPatience(c, -4), 'Samstag weg. Aber der Chef ist dir was schuldig.') },
-      { label: 'Samstag ist heilig', effect: (c) => ((c.coach.flags.bossAsked = true), 'Er guckt komisch, sagt aber nichts.') },
+      { label: tr('Klar, Chef', 'Sure, boss'), effect: (c) => ((c.coach.flags.bossAsked = true), (c.coach.flags.bossFavor = true), adjustEnergy(c, -8), adjustPatience(c, -4), tr('Samstag weg. Aber der Chef ist dir was schuldig.', 'Saturday gone. But the boss owes you one.')) },
+      { label: tr('Samstag ist heilig', 'Saturday is sacred'), effect: (c) => ((c.coach.flags.bossAsked = true), tr('Er guckt komisch, sagt aber nichts.', 'He gives you a funny look, but says nothing.')) },
     ],
   },
   chef_sponsor: {
     weight: 3,
     needs: (c) => (c.coach?.flags.bossFavor && !c.coach.flags.bossPaid ? {} : null),
-    text: () => 'Dein Chef: „Ich hab gehört, ihr braucht neue Bälle. Die Firma legt was dazu – für die Inventur neulich."',
-    options: [{ label: 'Danke!', effect: (c) => ((c.coach.flags.bossPaid = true), book(c, 'Spende vom Chef', 40), '40 € für die Kasse. Beziehungen muss man haben.') }],
+    text: () => tr('Dein Chef: „Ich hab gehört, ihr braucht neue Bälle. Die Firma legt was dazu – für die Inventur neulich."', 'Your boss: "I hear you need new balls. The company will chip in – for that stocktake the other day."'),
+    options: [{ label: tr('Danke!', 'Thanks!'), effect: (c) => ((c.coach.flags.bossPaid = true), book(c, tr('Spende vom Chef', 'Donation from the boss'), 40), tr('40 € für die Kasse. Beziehungen muss man haben.', '€40 for the kitty. It pays to have connections.')) }],
   },
   muede: {
     weight: 4,
     needs: (c) => (c.coach && !coachAway(c) && c.coach.energy < 35 ? {} : null),
-    text: (c) => `${c.coach.partner}: „Du siehst müde aus. Du machst da echt alles alleine, oder?"`,
+    text: (c) => tr(`${partnerOf(c)}: „Du siehst müde aus. Du machst da echt alles alleine, oder?"`, `${partnerOf(c)}: "You look tired. You really do everything there on your own, don't you?"`),
     options: [
-      { label: 'Training zwei Wochen abgeben', effect: (c) => ((c.coach.noTraining = 2), adjustEnergy(c, 20), 'Kein Open Training die nächsten zwei Wochen. Tut gut.') },
-      { label: 'Wochenende an der See', effect: (c) => (sendAway(c, 1), adjustEnergy(c, 30), adjustPatience(c, 15), 'Möwen statt Mannschaftschat. Sonntag stellt der Kapitän auf.') },
-      { label: 'Zähne zusammenbeißen', effect: (c) => (adjustEnergy(c, -3), 'Geht schon. Irgendwie.') },
+      { label: tr('Training zwei Wochen abgeben', 'Hand over training for two weeks'), effect: (c) => ((c.coach.noTraining = 2), adjustEnergy(c, 20), tr('Kein Open Training die nächsten zwei Wochen. Tut gut.', 'No open training for the next two weeks. That helps.')) },
+      { label: tr('Wochenende an der See', 'A weekend at the seaside'), effect: (c) => (sendAway(c, 1), adjustEnergy(c, 30), adjustPatience(c, 15), tr('Möwen statt Mannschaftschat. Sonntag stellt der Kapitän auf.', 'Seagulls instead of the team chat. The captain picks the team on Sunday.')) },
+      { label: tr('Zähne zusammenbeißen', 'Grit your teeth'), effect: (c) => (adjustEnergy(c, -3), tr('Geht schon. Irgendwie.', 'It will be fine. Somehow.')) },
     ],
   },
   vorstand_kasse: {
     weight: 1,
     needs: (c) => (c.coach && !c.coach.flags.kasseAsked && c.round >= 2 ? {} : null),
-    text: () => 'Der Kassenwart hört auf. Auf der Vorstandssitzung schauen plötzlich alle dich an.',
+    text: () => tr('Der Kassenwart hört auf. Auf der Vorstandssitzung schauen plötzlich alle dich an.', 'The treasurer is stepping down. At the committee meeting everyone suddenly looks at you.'),
     options: [
       {
-        label: 'Einen Spieler fragen',
+        label: tr('Einen Spieler fragen', 'Ask a player'),
         effect: (c) => {
           c.coach.flags.kasseAsked = true;
           const idx = humanClub(c).squad.find((i) => i !== c.coach.idx && MONEY_JOBS.test(playerOf(c, i).profession));
-          if (idx != null) return `${playerOf(c, idx).name.split(' ')[0]} (${playerOf(c, idx).profession}) macht es. Endlich mal einer vom Fach.`;
+          if (idx != null) return tr(`${playerOf(c, idx).name.split(' ')[0]} (${playerOf(c, idx).profession}) macht es. Endlich mal einer vom Fach.`, `${playerOf(c, idx).name.split(' ')[0]} (${jobName(playerOf(c, idx).profession)}) takes it on. Finally someone who knows the trade.`);
           c.coach.flags.kasse = true;
           adjustEnergy(c, -5);
-          return 'Keiner will. Am Ende landet der Ordner doch bei dir.';
+          return tr('Keiner will. Am Ende landet der Ordner doch bei dir.', 'Nobody wants to. In the end the folder lands with you.');
         },
       },
-      { label: 'Na gut, ich mach das', effect: (c) => ((c.coach.flags.kasseAsked = true), (c.coach.flags.kasse = true), adjustMood(c, 0.03), 'Noch ein Posten. Der Ordner ist dick.') },
-      { label: 'Auf keinen Fall', effect: (c) => ((c.coach.flags.kasseAsked = true), adjustMood(c, -0.02), 'Betretenes Schweigen. Der zweite Vorsitzende macht es widerwillig.') },
+      { label: tr('Na gut, ich mach das', 'Fine, I will do it'), effect: (c) => ((c.coach.flags.kasseAsked = true), (c.coach.flags.kasse = true), adjustMood(c, 0.03), tr('Noch ein Posten. Der Ordner ist dick.', 'Another job. The folder is thick.')) },
+      { label: tr('Auf keinen Fall', 'No way'), effect: (c) => ((c.coach.flags.kasseAsked = true), adjustMood(c, -0.02), tr('Betretenes Schweigen. Der zweite Vorsitzende macht es widerwillig.', 'Awkward silence. The vice-chairman reluctantly takes it on.')) },
     ],
   },
   kind_kickt: {
@@ -364,36 +372,36 @@ export const PERSONAL_EVENTS = {
       if (!k || k.flags.kidAsked || !(k.kids > 0)) return null;
       const child = (k.children ?? []).find((ch) => childAge(c, ch) >= 5 && childAge(c, ch) <= 15);
       if (k.children?.length && !child) return null;
-      return { child: child ? `${child.sex === 'w' ? 'Deine Tochter' : 'Dein Sohn'} ${child.name} (${childAge(c, child)})` : 'Dein Kind' };
+      return { child: child ? `${child.sex === 'w' ? tr('Deine Tochter', 'Your daughter') : tr('Dein Sohn', 'Your son')} ${child.name} (${childAge(c, child)})` : tr('Dein Kind', 'Your child') };
     },
-    text: (c, ctx) => `${ctx?.child ?? 'Dein Kind'} am Frühstückstisch: „Darf ich auch Fußball spielen? Bei euch?"`,
+    text: (c, ctx) => tr(`${ctx?.child ?? 'Dein Kind'} am Frühstückstisch: „Darf ich auch Fußball spielen? Bei euch?"`, `${ctx?.child ?? 'Your child'} at the breakfast table: "Can I play football too? At your club?"`),
     options: [
       {
-        label: 'Klar – ab in die Jugend!',
+        label: tr('Klar – ab in die Jugend!', 'Of course – off to the youth team!'),
         effect: (c) => {
           c.coach.flags.kidAsked = true;
           c.coach.flags.familyAtGames = true;
           adjustPatience(c, 10);
           if (c.youth?.coach) c.youth.coach.quality = Math.min(1, c.youth.coach.quality + 0.05);
-          return 'Jetzt kommt die ganze Familie sonntags mit. Der Jugendtrainer freut sich über Verstärkung beim Aufbauen.';
+          return tr('Jetzt kommt die ganze Familie sonntags mit. Der Jugendtrainer freut sich über Verstärkung beim Aufbauen.', 'Now the whole family comes along on Sundays. The youth coach is glad of the extra hands setting up.');
         },
       },
-      { label: 'Wie wär\'s mit Tennis?', effect: (c) => ((c.coach.flags.kidAsked = true), 'Enttäuschtes Gesicht. Vielleicht nächstes Jahr.') },
+      { label: tr('Wie wär\'s mit Tennis?', 'How about tennis?'), effect: (c) => ((c.coach.flags.kidAsked = true), tr('Enttäuschtes Gesicht. Vielleicht nächstes Jahr.', 'Disappointed face. Maybe next year.')) },
     ],
   },
   angebot: {
     weight: 40,
     needs: (c) => (c.flags.offerFrom && c.round <= 3 ? { club: c.flags.offerFrom } : null),
-    text: (c, ctx) => `Anruf vom ${ctx.club}: Sie suchen einen Trainer und haben von eurem Titel gehört. „Wir zahlen auch was."`,
+    text: (c, ctx) => tr(`Anruf vom ${ctx.club}: Sie suchen einen Trainer und haben von eurem Titel gehört. „Wir zahlen auch was."`, `A call from ${ctx.club}: they are looking for a manager and have heard about your title. "We'd even pay."`),
     options: [
-      { label: 'Bleiben – das ist mein Verein', effect: (c) => ((c.flags.offerFrom = null), adjustMood(c, 0.15), 'Du hast abgesagt. Als es rumgeht, gibt die Mannschaft einen aus.') },
+      { label: tr('Bleiben – das ist mein Verein', 'Stay – this is my club'), effect: (c) => ((c.flags.offerFrom = null), adjustMood(c, 0.15), tr('Du hast abgesagt. Als es rumgeht, gibt die Mannschaft einen aus.', 'You said no. When word gets round, the team buys you a drink.')) },
       {
-        label: 'Beim Vorstand pokern',
+        label: tr('Beim Vorstand pokern', 'Play hardball with the committee'),
         effect: (c) => {
           c.flags.offerFrom = null;
-          book(c, 'Vorstand: Zuschuss, damit der Trainer bleibt', 100);
+          book(c, tr('Vorstand: Zuschuss, damit der Trainer bleibt', 'Committee: bonus to keep the manager'), 100);
           adjustMood(c, -0.05);
-          return 'Der Vorstand legt 100 € in die Kasse. Ein paar Spieler finden das Geschacher uncool.';
+          return tr('Der Vorstand legt 100 € in die Kasse. Ein paar Spieler finden das Geschacher uncool.', 'The committee puts €100 in the kitty. A few players think the haggling is not cool.');
         },
       },
     ],
