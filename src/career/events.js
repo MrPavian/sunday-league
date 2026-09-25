@@ -11,6 +11,7 @@ import { DERBY_EVENTS, derbyThisWeek } from './derby.js';
 import { INJURY_EVENTS } from './injuries.js';
 import { LIFE_EVENTS } from './life.js';
 import { ACADEMY_EVENTS } from './academy.js';
+import { applyTwist } from './twists.js';
 import { canLose, joinRival, leaveTeam, outcome, sitOut } from './outcomes.js';
 import { isCoach } from './personal.js';
 import { setRelation } from './relations.js';
@@ -608,6 +609,12 @@ export function resolveEvent(career, choice) {
   const rng = createRng((career.seed * 13 + career.round * 7 + choice + e.id.length) >>> 0);
   e.choice = choice;
   e.result = option.effect(career, e.ctx, rng);
+  // Geschichten & private Ereignisse: Grundwirkung plus zufällige Wendung.
+  const story = e.id.startsWith('story:') ? e.id.slice(6).split('-') : null;
+  const key = story ? story[0] : e.id;
+  const subject = story ? Number(story[1]) : e.ctx?.s ?? e.ctx?.idx ?? null;
+  const twist = applyTwist(career, key, subject, createRng((career.seed * 31 + career.round * 11 + choice * 5 + career.season) >>> 0));
+  if (twist) e.result = `${e.result} ${twist}`;
   return e.result;
 }
 
