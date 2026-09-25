@@ -2,6 +2,7 @@ import { TRAITS } from '../data/traits.js';
 import { tierById } from '../data/tiers.js';
 import { POSITIONS } from '../sim/generator.js';
 import { findAnyPlayer } from '../sim/squad.js';
+import { REF_TRAITS } from '../sim/referee.js';
 import { getPlayer } from '../sim/match.js';
 
 const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
@@ -40,12 +41,14 @@ export class Hud {
   }
 
   init(match) {
+    const r = match.referee;
+    this.introPending = r ? `Schiri heute: ${r.name} (${REF_TRAITS[r.trait].name})` : null;
     match.teams.forEach((t, i) => {
       const el = this.root.querySelector(`.team[data-t="${i}"]`);
       el.textContent = t.name;
       el.style.setProperty('--kit', hex(t.kit.shirt));
     });
-    this.$('.venue').textContent = `${match.pitch.name} · ${match.pitch.surface.name}`;
+    this.$('.venue').textContent = `${match.pitch.name} · ${match.pitch.surface.name}${r ? ` · Schiri: ${r.name}` : ''}`;
     this.hideToast();
   }
 
@@ -86,6 +89,10 @@ export class Hud {
         const text = { throwin: 'Einwurf', corner: 'Ecke', goalkick: 'Abstoß' }[e.restart];
         this.toast(`${text} ${short(e.team)}`, 1.2);
       } else if (e.type === 'complain') this.toast(`${first}: „${e.line}“`, 1.6, 2);
+      else if (e.type === 'card') {
+        const text = e.color === 'yellow' ? `Gelb für ${p.name}${e.reason === 'meckern' ? ' – wegen Meckern' : ''}` : `GELB-ROT! ${p.name} muss runter`;
+        this.toast(text, 2, 3);
+      } else if (e.type === 'no_call') this.toast('Schiri lässt laufen!', 1.2, 2);
       else if (e.type === 'post') this.toast('Pfosten!', 1.2);
       else if (e.type === 'bar') this.toast('Latte!', 1.2);
       else if (e.type === 'header' && e.onGoal) this.toast(`Kopfball ${first}!`, 0.9);
@@ -104,6 +111,10 @@ export class Hud {
   }
 
   update(match, dt) {
+    if (this.introPending) {
+      this.toast(this.introPending, 2.5, 2);
+      this.introPending = null;
+    }
     const [a, b] = match.score;
     this.$('.score').textContent = `${a} : ${b}`;
     this.$('.clock').textContent = `${match.half}. HZ · ${matchMinute(match, match.time)}'`;

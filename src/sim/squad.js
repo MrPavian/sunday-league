@@ -35,10 +35,11 @@ export function makeEntity(pl, team, index, role, home) {
     setPieceAction: null,
     injury: null,
     mood: null, // Torjubel: scorer | celebrate | sad
+    yellow: 0,
   };
 }
 
-export const allPlayers = (m) => [...m.players, ...m.bench[0], ...m.bench[1]];
+export const allPlayers = (m) => [...m.players, ...m.bench[0], ...m.bench[1], ...(m.sentOff ?? [])];
 export const findAnyPlayer = (m, id) => allPlayers(m).find((p) => p.id === id) ?? null;
 
 // Auf der Bank erholt man sich (Zigarette an der Eckfahne inklusive).

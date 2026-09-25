@@ -379,3 +379,6 @@ body.in-club #hud { display: none; }
 .rumor .reply.no { color: #d9a04f; }
 .club-panel button:disabled { opacity: 0.45; cursor: default; }
 .club-panel button.tiny { padding: 0 6px; font-size: 12px; }
+#end .yc, #end .rc { display: inline-block; width: 8px; height: 11px; border: 1px solid #000; vertical-align: -1px; }
+#end .yc { background: #f0c419; }
+#end .rc { background: #d9342b; }

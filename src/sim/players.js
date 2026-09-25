@@ -21,6 +21,21 @@ export function setControlled(m, id) {
   m.pendingSwitch = null;
 }
 
+// Nach Platzverweis: nächsten Feldspieler des Teams übernehmen.
+export function switchToNearestOnTeam(m, team) {
+  let best = null;
+  let bestD = Infinity;
+  for (const p of m.players) {
+    if (p.team !== team || p.role === 'gk') continue;
+    const d = Math.hypot(p.pos.x - m.ball.pos.x, p.pos.z - m.ball.pos.z);
+    if (d < bestD) {
+      bestD = d;
+      best = p;
+    }
+  }
+  m.controlledId = best?.id ?? null;
+}
+
 export function distToSegment(q, a, b) {
   const abx = b.x - a.x;
   const abz = b.z - a.z;

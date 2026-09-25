@@ -2,12 +2,12 @@
 // Schlagzeile für den Montag. Alles wird aus den Spielereignissen abgeleitet.
 import { findAnyPlayer } from './squad.js';
 
-const blank = () => ({ goals: 0, ownGoals: 0, assists: 0, shots: 0, passes: 0, tackles: 0, saves: 0, fouls: 0, whiffs: 0, headers: 0, blocks: 0, cars: 0, seconds: 0 });
+const blank = () => ({ goals: 0, ownGoals: 0, assists: 0, shots: 0, passes: 0, tackles: 0, saves: 0, fouls: 0, whiffs: 0, headers: 0, blocks: 0, cars: 0, yellow: 0, red: 0, seconds: 0 });
 
 export function createStats() {
   return { players: {}, teams: [teamBlank(), teamBlank()], goals: [] };
 }
-const teamBlank = () => ({ shots: 0, fouls: 0, corners: 0, possession: 0, cars: 0 });
+const teamBlank = () => ({ shots: 0, fouls: 0, corners: 0, possession: 0, cars: 0, yellow: 0, red: 0 });
 
 const ps = (stats, id) => (stats.players[id] ??= blank());
 
@@ -53,6 +53,15 @@ export function trackStep(m, dt) {
         if (id) ps(stats, id).cars++;
         stats.teams[1 - e.team].cars++;
         break;
+      case 'card':
+        if (e.color === 'yellow') {
+          ps(stats, id).yellow++;
+          stats.teams[team].yellow++;
+        } else {
+          ps(stats, id).red++;
+          stats.teams[team].red++;
+        }
+        break;
       case 'out':
         if (e.restart === 'corner') stats.teams[e.team].corners++;
         break;
@@ -68,14 +77,14 @@ export function trackStep(m, dt) {
 export function gradePlayers(m) {
   const { stats, score } = m;
   const grades = {};
-  for (const p of [...m.players, ...m.bench[0], ...m.bench[1]]) {
+  for (const p of [...m.players, ...m.bench[0], ...m.bench[1], ...m.sentOff]) {
     const s = stats.players[p.id];
     if (!s || s.seconds < Math.min(60, m.duration * 0.08)) continue; // Kurzeinsätze bekommen keine Note
     const conceded = score[1 - p.team];
     const result = Math.sign(score[p.team] - conceded);
     let g = p.role === 'gk' ? 3.3 : 3.5;
     g -= s.goals * 1.0 + s.assists * 0.6 + s.tackles * 0.15 + s.saves * 0.25 + s.blocks * 0.1 + s.headers * 0.05;
-    g += s.whiffs * 0.3 + s.fouls * 0.25 + s.ownGoals * 0.5 + s.cars * 0.2;
+    g += s.whiffs * 0.3 + s.fouls * 0.25 + s.ownGoals * 0.5 + s.cars * 0.2 + s.yellow * 0.3 + s.red * 1.2;
     if (p.role === 'gk') g += conceded * 0.3;
     g -= result * 0.3;
     g -= (p.rating - 50) / 100;

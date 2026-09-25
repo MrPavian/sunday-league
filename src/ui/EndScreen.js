@@ -32,6 +32,7 @@ export class EndScreen {
       })
       .join('');
     const row = (label, a, b) => `<tr><td>${a}</td><th>${label}</th><td>${b}</td></tr>`;
+    const cards = (t) => `<span class="yc"></span>${st.teams[t].yellow}${st.teams[t].red ? ` <span class="rc"></span>${st.teams[t].red}` : ''}`;
     const lineup = (team) =>
       allPlayers(m)
         .filter((p) => p.team === team && grades[p.id] !== undefined)
@@ -39,7 +40,7 @@ export class EndScreen {
         .map((p) => {
           const s = st.players[p.id];
           const tier = tierById(p.tier);
-          const marks = '⚽'.repeat(s.goals) + (s.assists ? ` +${s.assists}` : '');
+          const marks = '⚽'.repeat(s.goals) + (s.assists ? ` +${s.assists}` : '') + (s.yellow ? ' <span class="yc"></span>' : '') + (s.red ? ' <span class="rc"></span>' : '');
           return `<li style="--c:${tier.color}"><span class="grade">${gradeText(grades[p.id])}</span> ${p.name} <small>${marks}</small></li>`;
         })
         .join('');
@@ -51,7 +52,7 @@ export class EndScreen {
         <div class="result">
           <span>${t0.name}</span><b>${m.score[0]} : ${m.score[1]}</b><span>${t1.name}</span>
         </div>
-        <p class="place">${m.pitch.name} · ${m.pitch.surface.name}</p>
+        <p class="place">${m.pitch.name} · ${m.pitch.surface.name}${m.referee ? ` · Schiedsrichter: ${m.referee.name}` : ''}</p>
         <ul class="goals">${goals || '<li>Keine Tore – aber viel Einsatz.</li>'}</ul>
         <table class="stats">
           ${row('Schüsse', st.teams[0].shots, st.teams[1].shots)}
@@ -59,6 +60,7 @@ export class EndScreen {
           ${row('Fouls', st.teams[0].fouls, st.teams[1].fouls)}
           ${m.pitch.boundary === 'lines' ? row('Ecken', st.teams[0].corners, st.teams[1].corners) : ''}
           ${m.pitch.carRule ? row('Ans Auto', st.teams[0].cars, st.teams[1].cars) : ''}
+          ${m.referee ? row('Karten', cards(0), cards(1)) : ''}
         </table>
         ${potm ? `<p class="potm">Spieler des Spiels: <b>${potm.name}</b> (${m.teams[potm.team].short}), Note ${gradeText(grades[potm.id])}</p>` : ''}
         <div class="lineups">

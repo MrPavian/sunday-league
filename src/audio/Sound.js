@@ -322,6 +322,10 @@ export class Sound {
         case 'whiff':
           this.whoosh(pan);
           break;
+        case 'card':
+          this.whistle('sharp');
+          break;
+        case 'no_call':
         case 'complain':
           this.grumble(pan);
           break;

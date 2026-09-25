@@ -13,6 +13,7 @@ import { PARKING_LOT } from './pitch.js';
 import { attackDir, getPlayer, setControlled, teamAttacking } from './players.js';
 import { makeEntity, requestSub, restBench, swapSides } from './squad.js';
 import { createStats, trackStep } from './stats.js';
+import { createReferee, stepReferee } from './referee.js';
 import { carRule, restartFromOut, startSetPiece } from './setpieces.js';
 import { resolveTackles, startPoke, startTackle, stateMove } from './tackles.js';
 
@@ -66,6 +67,8 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = tr
     lastPass: null,
     events: [],
     stats: createStats(),
+    referee: pitch.referee ? createReferee(rng) : null,
+    sentOff: [],
     humanTeam: human ? 0 : null,
     controlledId: human ? players.find((p) => p.team === 0 && p.role === 'fwd').id : null,
     chasers: [null, null],
@@ -82,6 +85,7 @@ export function stepMatch(m, input = NO_INPUT, dt) {
   if (input.sub && m.humanTeam !== null) requestSub(m, m.humanTeam);
   restBench(m, dt);
   step(m, input, dt);
+  if (m.phase === 'play' || m.phase === 'setpiece') stepReferee(m, dt);
   trackStep(m, dt);
 }
 

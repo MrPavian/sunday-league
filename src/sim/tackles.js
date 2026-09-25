@@ -4,10 +4,13 @@ import { hasTrait } from '../data/traits.js';
 import { clampPlayer } from './actions.js';
 import { getPlayer } from './players.js';
 import { startSetPiece } from './setpieces.js';
+import { judgeDissent, judgeFoul, refereeSees } from './referee.js';
 
 const COMPLAINTS = {
   lost: ['Foul! Das war doch Foul!', 'Schiri! Ach, gibt ja keinen…', 'Hallo?! Mann gespielt!'],
   offender: ['War doch Ball!', 'Den hab ich gar nicht berührt!', 'Der fällt ja schon beim Hingucken!'],
+  lostRef: ['Schiri, das ist doch Foul!', 'Hast du Tomaten auf den Augen?!', 'Pfeif doch mal!'],
+  offenderRef: ['Schiri, das war Ball!', 'Was soll das denn?!', 'Der schauspielert doch!'],
 };
 
 export function startTackle(m, p) {
@@ -69,7 +72,8 @@ function complain(m, p, kind) {
   p.complainNext = null;
   p.state = 'complain';
   p.stateTimer = 1.3;
-  m.events.push({ type: 'complain', playerId: p.id, line: m.rng.pick(COMPLAINTS[kind]) });
+  m.events.push({ type: 'complain', playerId: p.id, line: m.rng.pick(COMPLAINTS[m.referee ? `${kind}Ref` : kind] ?? COMPLAINTS[kind]) });
+  judgeDissent(m, p);
 }
 
 export function injure(m, p) {
@@ -144,9 +148,19 @@ export function resolveTackles(m) {
       } else {
         foul = p.tackleWon !== true && rng.chance(0.3);
       }
+      if (foul && !refereeSees(m, o.pos)) {
+        // Schiri hat's nicht gesehen – weiterspielen, der Gefoulte beschwert sich.
+        m.events.push({ type: 'no_call', playerId: p.id, victimId: o.id });
+        if (hasTrait(o, 'meckerer') || m.rng.chance(0.4)) o.complainNext = 'lost';
+        continue;
+      }
       if (foul) {
         m.events.push({ type: 'foul', playerId: p.id, victimId: o.id });
         if (hasTrait(p, 'meckerer')) p.complainNext = 'offender';
+        if (slide) {
+          const fromBehind = o.facing.x * p.facing.x + o.facing.z * p.facing.z > 0.5;
+          judgeFoul(m, p, fromBehind ? 0.35 : 0.12);
+        } else judgeFoul(m, p, 0.03);
         const spot = { x: o.pos.x, z: o.pos.z };
         o.state = 'normal';
         o.stateTimer = 0;

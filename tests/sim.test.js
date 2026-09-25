@@ -444,3 +444,39 @@ describe('match flow', () => {
     expect(headline(m, grades).length).toBeGreaterThan(10);
   });
 });
+
+describe('referee', () => {
+  it('only exists where there is one, and follows the ball', () => {
+    expect(createMatch({ seed: 1, human: false }).referee).toBeNull();
+    const m = createMatch({ seed: 1, human: false, pitch: PITCHES.rasenplatz });
+    expect(m.referee.name).toBeTruthy();
+    for (let i = 0; i < 60 * 20; i++) stepMatch(m, undefined, DT);
+    expect(Math.hypot(m.referee.pos.x - m.ball.pos.x, m.referee.pos.z - m.ball.pos.z)).toBeLessThan(25);
+  });
+
+  it('a second yellow sends a player off and the team plays short', () => {
+    const m = createMatch({ seed: 2, human: true, pitch: PITCHES.rasenplatz, kickoff: false });
+    const p = m.players.find((q) => q.id === m.controlledId);
+    p.yellow = 1;
+    m.referee.trait = 'pingelig';
+    m.rng.chance = () => true; // Schiri sieht alles und zückt sofort
+    const victim = m.players.find((q) => q.team === 1 && q.role !== 'gk');
+    Object.assign(p.pos, { x: 0, z: 0 });
+    Object.assign(victim.pos, { x: 0.4, z: 0 });
+    p.facing = { x: 1, z: 0 };
+    victim.facing = { x: 1, z: 0 };
+    Object.assign(m.ball.pos, { x: 10, z: 8 });
+    m.referee.pos = { x: 1, z: -2 };
+    const seen = [];
+    stepMatch(m, { move: { x: 0, z: 0 }, tackle: true, sprint: true }, DT);
+    for (let i = 0; i < 40; i++) {
+      stepMatch(m, undefined, DT);
+      seen.push(...m.events);
+      m.events.length = 0;
+    }
+    expect(seen.some((e) => e.type === 'card' && e.color === 'yellowred' && e.playerId === p.id)).toBe(true);
+    expect(m.players.filter((q) => q.team === 0)).toHaveLength(6);
+    expect(m.players.some((q) => q.id === p.id)).toBe(false);
+    expect(m.controlledId).not.toBe(p.id);
+  });
+});
