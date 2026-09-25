@@ -1,6 +1,6 @@
 // "Wer kann Sonntag?" – Nachrichten in der Mannschaftsgruppe.
-const SHIFT_JOBS = ['Pflegekraft', 'Schichtarbeiter', 'Busfahrer', 'Bäcker', 'Lagerist', 'Paketbote'];
-const TRAVEL_JOBS = ['Elektriker', 'Dachdecker', 'Versicherungsmakler', 'IT-Admin'];
+export const SHIFT_JOBS = ['Pflegekraft', 'Schichtarbeiter', 'Busfahrer', 'Bäcker', 'Lagerist', 'Paketbote'];
+export const TRAVEL_JOBS = ['Elektriker', 'Dachdecker', 'Versicherungsmakler', 'IT-Admin'];
 
 export const YES = [
   'Bin dabei!',

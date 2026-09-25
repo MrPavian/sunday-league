@@ -540,3 +540,9 @@ gewichtet nach Stimmung, Eigenschaften und Kadergröße – bis hin zu „Spiele
 oder „wechselt zum Derby-Rivalen". **Derbys** (`src/career/derby.js`): Kanal-Derby bzw. Bezirks-Derby mit
 Derby-Woche, doppelten Zuschauern, mehr Karten, härteren Grätschen und Derby-Bilanz. **Dramen:** Einer spannt
 dem anderen die Freundin/Frau aus; Neuzugänge kennen jemanden von früher (Schulfreund oder Mobber → Erzfeinde).
+
+**Verletzungen & Alltag:** Verletzungen in sieben Stufen (`src/career/injuries.js`) von Prellung bis Kreuzband- und
+Achillessehnenriss, Risiko nach Alter, Boden, Derby und Eigenschaften; schwere Fälle kommen mit Diagnose und
+Entscheidung (Physio, Zeit lassen, schnell zurück), seltener Extremfall Sportinvalidität mit Amt im Verein
+(Co-Trainer, Platzwart, Wirt, Betreuer). Alltag (`src/career/life.js`), gewichtet nach Beruf und Lebenslage:
+Schichttausch, Montage, Job-Stress, Beförderung, kranke Kinder, Elternzeit, Nebenjob, Trennung.

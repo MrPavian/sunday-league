@@ -217,16 +217,20 @@ describe('seasons', () => {
     const firstIdx = squad[0];
     c.players[firstIdx].goals = 7;
     await finishSeason(c, true);
+    const before = [...humanClub(c).squad]; // unter der Saison können Leute gehen – der Aufstieg behält den Kader
     const res = nextSeason(c);
     expect(res).toMatchObject({ pos: 1, promoted: true });
     expect(leagueOf(c).level).toBe(2);
     expect(c.league).toBe('Kreisklasse C Kanalbezirk');
     expect(c.season).toBe(2);
     expect(c.round).toBe(0);
-    expect(humanClub(c).squad).toEqual(squad);
+    expect(humanClub(c).squad).toEqual(before.filter((i) => !res.retired.some((r) => r.idx === i)));
+    expect(squad.length).toBeGreaterThan(0);
     expect(humanClub(c).venue).toBe('rasenplatz');
-    expect(c.players[firstIdx].total.goals).toBe(7);
-    expect(c.players[firstIdx].goals).toBe(0);
+    if (c.players[firstIdx]) {
+      expect(c.players[firstIdx].total.goals).toBe(7);
+      expect(c.players[firstIdx].goals).toBe(0);
+    }
     expect(maxSquad(c)).toBe(16);
     expect(c.history).toHaveLength(1);
     const ai = c.clubs.filter((cl) => !cl.human);

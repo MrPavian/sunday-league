@@ -10,6 +10,7 @@ import { gradePlayers } from '../sim/stats.js';
 import { absenceChance, DECLINE_TEXT, FAREWELL, INJURED, JOIN_TEXT, LATE, noReasons, NUDGE_NO, NUDGE_YES, RUMOR_SOURCES, YES } from './chat.js';
 import { HUMAN_CLUB_DEFAULT, LEAGUES } from './clubs.js';
 import { applyPubToTeam } from './pub.js';
+import { rollInjuries } from './injuries.js';
 import { derbyResult, isDerbyFixture } from './derby.js';
 import { applyChemistry, pastLink, setRelation } from './relations.js';
 import { applyFusion, initSagas, sagaChat, sagaSeasonEnd, sagaWeek } from './sagas.js';
@@ -318,7 +319,10 @@ export function startWeek(career) {
     }
     if (rec.injuryWeeks > 0) {
       status = 'no';
-      text = rng.pick(INJURED);
+      text = rec.injury && rec.injuryWeeks > 1 ? `Noch ${rec.injuryWeeks} Wochen raus (${rec.injury.label}). Ich komm aber gucken.` : rng.pick(INJURED);
+    } else if (rec.awayWeeks > 0) {
+      status = 'no';
+      text = rec.awayReason ?? 'Bin diese Woche nicht da.';
     } else if (rng.chance(absenceChance(p.profession) * (career.spirit ? 0.75 : 1) * absenceFactor(career, idx))) {
       status = 'no';
       text = rng.pick(noReasons(p.profession));
@@ -716,8 +720,10 @@ export function recordResult(career, fixture, prepared) {
       rec.graded++;
     }
     // Schürfwunden ab ×2 brauchen eine Woche.
-    if (p.injury && p.injury.severity >= 2) rec.injuryWeeks = 1;
+    if (p.injury && p.injury.severity >= 2) rec.injuryWeeks = Math.max(rec.injuryWeeks, 1);
   }
+  const humanId = humanClub(career).id;
+  if (fixture.home === humanId || fixture.away === humanId) rollInjuries(career, prepared); // Zerrung bis Kreuzband
   matchFinances(career, fixture, prepared, career.level ?? 1);
   const human = humanClub(career).id;
   if (fixture.home === human) resultMood(career, fixture.result.home, fixture.result.away);
@@ -735,7 +741,11 @@ export function finishRound(career) {
   weeklyMood(career);
   weeklyPersonal(career);
   sagaWeek(career);
-  for (const rec of Object.values(career.players)) if (rec.injuryWeeks > 0) rec.injuryWeeks--;
+  for (const rec of Object.values(career.players)) {
+    if (rec.injuryWeeks > 0) rec.injuryWeeks--;
+    if (rec.injuryWeeks === 0) rec.injury = null;
+    if (rec.awayWeeks > 0) rec.awayWeeks--;
+  }
   career.round++;
   startWeek(career);
 }

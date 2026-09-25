@@ -503,7 +503,7 @@ export class Clubhouse {
           <td><span class="badge">${tier.name}</span></td>
           <td><b>${p.name}</b>${isCoach(c, idx) ? ' <span class="me-tag">Du</span>' : ''}${p.title ? ` <em>${p.title}</em>` : ''}${formArrow(r.form)}${r.absenceMul > 1.2 ? ' <span class="grumpy" title="hat gerade wenig Zeit – sagt öfter ab">selten da</span>' : ''}${r.grumpy ? ' <span class="grumpy" title="angefressen – sagt öfter ab">grummelt</span>' : ''}<small>${p.age} J. · ${p.profession}</small>${relationLabel(c, idx) ? `<small class="rel">${relationLabel(c, idx)}</small>` : ''}</td>
           <td>${POSITIONS[p.position]}</td><td class="num">${p.rating}</td>
-          <td>${r.injuryWeeks ? '<span class="st-text no">verletzt</span>' : st ? `<span class="st-text ${st[1]}">${st[0]}</span>` : ''}</td>
+          <td>${r.injuryWeeks ? `<span class="st-text no" title="${r.injury?.label ?? 'verletzt'}">${r.injury ? `${r.injury.label} · ${r.injuryWeeks} Wo.` : 'verletzt'}</span>` : st ? `<span class="st-text ${st[1]}">${st[0]}</span>` : ''}</td>
           <td class="num">${r.apps}</td><td class="num">${r.goals}</td><td class="num">${r.assists}</td><td class="num">${avg}</td>
           <td>${canRelease && !isCoach(c, idx) ? (this.confirmRelease === idx ? `<button class="tiny danger" data-action="release" data-value="${idx}">Wirklich?</button>` : `<button class="tiny" data-action="release" data-value="${idx}" title="Verabschieden">×</button>`) : ''}</td>
         </tr>`;
