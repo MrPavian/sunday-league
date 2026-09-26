@@ -637,6 +637,7 @@ function frame(now) {
     }
     stepMatch(match, intent, STEP);
     hud.handleEvents(match);
+    view.handleEvents(match);
     if (mode === 'play') sound.handle(match, rig.target.x);
     if (mode === 'play' && challengeRun && match.events.some((e) => e.type === 'end')) {
       const ended = match;

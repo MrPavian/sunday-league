@@ -5,6 +5,7 @@ import { allPlayers } from '../sim/squad.js';
 import { attackDir } from '../sim/players.js';
 import { BALL_VISUAL_RADIUS, createBallModel, rollBall } from './BallModel.js';
 import { animatePlayer, createPlayerModel } from './PlayerModel.js';
+import { Effects } from './Effects.js';
 import { IncidentView } from './IncidentView.js';
 
 const CELEBRATIONS = ['flugzeug', 'faust', 'tanz', 'rutscher'];
@@ -37,6 +38,7 @@ export class MatchView {
     }
     if (match.referee) this.buildReferee(match.referee);
     this.incidents = new IncidentView(this.root, match);
+    this.effects = new Effects(this.root, match);
     this.ball = createBallModel();
     this.root.add(this.ball);
 
@@ -68,7 +70,13 @@ export class MatchView {
     this.root.add(this.referee.group);
   }
 
+  // Einmalige Effekte zu den Ereignissen dieses Schritts (vor dem Leeren der Liste).
+  handleEvents(match) {
+    this.effects.handle(match);
+  }
+
   dispose() {
+    this.effects.dispose();
     this.scene.remove(this.root);
     this.root.traverse((o) => o.geometry?.dispose());
   }
@@ -107,6 +115,7 @@ export class MatchView {
       if (r.cardAnim > 0) this.referee.arms[1].rotation.x = -2.9; // Karte hoch
     }
     this.incidents.sync(match, dt);
+    this.effects.update(match, dt);
     const b = match.ball;
     this.ball.visible = !match.ballHidden;
     this.ball.position.set(b.pos.x, b.pos.y - BALL_RADIUS + BALL_VISUAL_RADIUS, b.pos.z);
