@@ -26,14 +26,17 @@ import { startShootout, stepShootout } from './shootout.js';
 export { attackDir, getPlayer } from './players.js';
 export { startPoke, startTackle } from './tackles.js';
 
-export const MATCH_DURATION = 600; // Sekunden Spielzeit (Prototyp: 10 Minuten)
+// Spielzeit in Sekunden. Standard 2 × 2 Minuten; in den Einstellungen wählbar.
+export const MATCH_LENGTHS = { kurz: 240, mittel: 360, lang: 600 };
+export const MATCH = { duration: MATCH_LENGTHS.kurz };
+export const MATCH_DURATION = MATCH_LENGTHS.kurz;
 
 const NO_INPUT = { move: { x: 0, z: 0 }, sprint: false, shootHeld: false, pass: false, loft: false, hold: false, tackle: false, poke: false, switchPlayer: false, sub: false };
 
 const BENCH_ROLES = { 4: ['mid', 'fwd'], 5: ['def', 'mid', 'fwd'], 7: ['def', 'mid', 'fwd'] };
 
 // human: false → beide Teams von der KI gesteuert (Simulation ungespielter Partien).
-export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = true, human = true, duration = MATCH_DURATION, incidents = false } = {}) {
+export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = true, human = true, duration = MATCH.duration, incidents = false } = {}) {
   const rng = createRng(seed);
   const format = pitch.format ?? 5;
   // Taktik je Mannschaft: System (Aufstellung) und Spielstil.

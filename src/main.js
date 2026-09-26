@@ -35,7 +35,7 @@ import { setLightMood } from './render/props.js';
 import { disposeTree, mergeStatic } from './render/merge.js';
 import { applyColorSafeKits } from './render/colorSafe.js';
 import { VENUES, venueById } from './render/venues/index.js';
-import { createMatch, stepMatch } from './sim/match.js';
+import { createMatch, MATCH, MATCH_LENGTHS, stepMatch } from './sim/match.js';
 import { SURFACES } from './sim/surfaces.js';
 import { applyWeather, WEATHER } from './career/weather.js';
 import { ChallengeScreen } from './ui/Challenges.js';
@@ -110,6 +110,7 @@ try {
   colorSafe = localStorage.getItem('sunday-league:safekits') === '1';
   difficulty = ['easy', 'normal', 'hard'].includes(localStorage.getItem('sunday-league:difficulty')) ? localStorage.getItem('sunday-league:difficulty') : 'normal';
   autoSwitchDefense = localStorage.getItem('sunday-league:autoswitch') === '1';
+  MATCH.duration = MATCH_LENGTHS[localStorage.getItem('sunday-league:length')] ?? MATCH_LENGTHS.kurz;
   const storedMode = localStorage.getItem('sunday-league:mode');
   if (storedMode) managerMode = storedMode === 'manager';
   if (params.has('trainer')) managerMode = true;
@@ -236,7 +237,7 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
   onSettings() {
     menu.paused = true;
     settings.show({
-      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe, difficulty, autoSwitch: autoSwitchDefense, manager: managerMode, touch: TOUCH }),
+      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe, difficulty, autoSwitch: autoSwitchDefense, manager: managerMode, touch: TOUCH, length: Object.keys(MATCH_LENGTHS).find((k) => MATCH_LENGTHS[k] === MATCH.duration) ?? 'kurz' }),
       onLang: switchLanguage,
       onChange(key, value) {
         if (key === 'sound' && sound.muted !== (value === 'off')) sound.toggleMute();
@@ -258,6 +259,10 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
         if (key === 'difficulty') {
           difficulty = value;
           remember('sunday-league:difficulty', value);
+        }
+        if (key === 'length' && MATCH_LENGTHS[value]) {
+          MATCH.duration = MATCH_LENGTHS[value];
+          remember('sunday-league:length', value);
         }
         if (key === 'mode') {
           managerMode = value === 'manager';

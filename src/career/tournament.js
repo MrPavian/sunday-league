@@ -2,7 +2,7 @@
 // Hallen-Stadtmeisterschaft in der Winterpause (Saisonmitte). Acht Vereine,
 // zwei Vierergruppen, Halbfinale, Finale – Unentschieden im K.-o.: Elfmeterschießen.
 import { createRng } from '../core/rng.js';
-import { createMatch } from '../sim/match.js';
+import { createMatch, MATCH } from '../sim/match.js';
 import { PITCHES } from '../sim/pitch.js';
 import { book } from './finances.js';
 import { clubById, humanClub, playerOf, resolveKitClash, seasonOver, squadPicker, SQUAD_SHAPES, takenIndices, teamForMatch } from './career.js';
@@ -12,11 +12,10 @@ import { shootoutScore } from '../sim/shootout.js';
 import { tr, euroFmt } from '../core/i18n.js';
 
 export const CUPS = {
-  stadt: { name: tr('Stadtmeisterschaft', 'City Championship'), title: tr('Stadtmeister', 'City champions'), venue: 'ascheplatz', place: 'Sportplatz Am Kanal', duration: 300, prizes: { winner: 150, final: 60, semi: 25 }, absent: 0.12, absentWhy: tr('Sommer: wer im Urlaub ist, fehlt', 'Summer: whoever is on holiday is out') },
-  halle: { name: tr('Hallen-Stadtmeisterschaft', 'Indoor City Championship'), title: tr('Hallenmeister', 'Indoor champions'), venue: 'halle', place: 'Sporthalle Kanalschule', duration: 240, prizes: { winner: 100, final: 40, semi: 15 }, absent: 0.08, absentWhy: tr('Winter: wer erkältet ist, fehlt', 'Winter: whoever has a cold is out') },
+  stadt: { name: tr('Stadtmeisterschaft', 'City Championship'), title: tr('Stadtmeister', 'City champions'), venue: 'ascheplatz', place: 'Sportplatz Am Kanal', share: 0.75, prizes: { winner: 150, final: 60, semi: 25 }, absent: 0.12, absentWhy: tr('Sommer: wer im Urlaub ist, fehlt', 'Summer: whoever is on holiday is out') },
+  halle: { name: tr('Hallen-Stadtmeisterschaft', 'Indoor City Championship'), title: tr('Hallenmeister', 'Indoor champions'), venue: 'halle', place: 'Sporthalle Kanalschule', share: 0.75, prizes: { winner: 100, final: 40, semi: 15 }, absent: 0.08, absentWhy: tr('Winter: wer erkältet ist, fehlt', 'Winter: whoever has a cold is out') },
 };
 export const CUP_NAME = CUPS.stadt.name;
-export const CUP_DURATION = CUPS.stadt.duration;
 export const PRIZES = CUPS.stadt.prizes;
 
 // Gäste aus der Stadt, die nicht in eurer Liga spielen.
@@ -129,7 +128,7 @@ export function prepareCupMatch(c, m, { human = false, duration } = {}) {
   const teamAway = teamForMatch(c, resolveKitClash(home, away), 5, avail(away), rng);
   const humanIsAway = human && away.human;
   const teams = humanIsAway ? [teamAway, teamHome] : [teamHome, teamAway];
-  const match = createMatch({ seed: rng.int(1, 1e9), pitch, teams, human, duration: duration ?? cfg.duration, incidents: true });
+  const match = createMatch({ seed: rng.int(1, 1e9), pitch, teams, human, duration: duration ?? Math.round(MATCH.duration * cfg.share), incidents: true });
   match.knockout = m.stage !== 'A' && m.stage !== 'B';
   return { match, humanIsAway, pitch, home, away, cup: m };
 }

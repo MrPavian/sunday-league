@@ -30,6 +30,8 @@ export function movePlayer(m, p, intent, dt, leaders) {
     if (hasTrait(p, 'raucher')) drain *= 1.3;
     if (p.injury) drain *= 1 + 0.1 * p.injury.severity;
     drain *= styleOf(m, p.team).tire ?? 1; // Pressing kostet Puste
+    // Kurze Spiele: Die Kraft reicht trotzdem nur für ein Spiel – sonst wird nie jemand müde.
+    drain *= shortGame(m);
     if (leaders.some((l) => l !== p && l.team === p.team && dist2d(l.pos, p.pos) < 8)) drain *= 0.85;
   }
   p.stamina = clamp(p.stamina - drain * dt, 0, 1);
@@ -277,6 +279,9 @@ function pass(m, p, a, fatigue, fromHands) {
 }
 
 // Strafraum: Nur hier darf der Torwart den Ball in die Hand nehmen.
+// Wie viel kürzer als 2 × 5 Minuten das Spiel ist (1 = volle Länge, bis 2,5).
+export const shortGame = (m) => clamp(600 / (m.duration || 600), 1, 2.5);
+
 export function keeperBox(pitch) {
   const depth = Math.min(6, pitch.halfLength * 0.3);
   return { depth, halfWidth: Math.min(pitch.halfWidth, pitch.goalHalfWidth + depth * 0.9) };
@@ -332,7 +337,9 @@ export function keeperSaves(m) {
       const pointBlank = since < reaction + 0.12 ? clamp((dist2d(p.pos, ball.pos) - 0.35) * 0.3, 0, 0.25) : 0;
       // Elfmeter an den Pfosten: selbst bei richtiger Ecke schwer zu halten.
       const postShot = m.phase === 'shootout' ? clamp(Math.abs(lineZ) / gw, 0, 1) * 0.5 : 0;
-      const beaten = clamp((bs - 8) * 0.02 + corner * 0.85 + pointBlank + postShot - 0.3 * p.attrs.keeping - (dist2d(p.pos, ball.pos) < 0.45 ? 0.15 : 0), 0.02, 0.65);
+      // Kurze Spiele: etwas mehr Tore, sonst endet die Hälfte 0:0.
+      const brisk = m.phase === 'shootout' ? 0 : (shortGame(m) - 1) * 0.1 * (1 + Math.max(0, pitch.halfLength - 20) / 12);
+      const beaten = clamp((bs - 8) * 0.02 + corner * 0.85 + pointBlank + postShot + brisk - 0.3 * p.attrs.keeping - (dist2d(p.pos, ball.pos) < 0.45 ? 0.15 : 0), 0.02, 0.7);
       if (rng.chance(beaten)) {
         p.catchCooldown = 0.7; // zu spät – der Ball ist vorbei
         p.diveAnim = 0.5;

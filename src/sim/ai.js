@@ -4,6 +4,7 @@ import { hasTrait } from '../data/traits.js';
 import { ballSpeed } from './ball.js';
 import { attackDir, clampToPitch, distToSegment, getPlayer, wallPush } from './players.js';
 import { consumeShout, heeds } from './coach.js';
+import { shortGame } from './actions.js';
 import { styleOf } from './tactics.js';
 
 // Schwierigkeitsgrad: Nur der Gegner des Menschen spielt klüger oder nachsichtiger –
@@ -424,7 +425,10 @@ function aiDecide(m, p, oppGoal) {
 
   const st = styleOf(m, p.team);
   // Auf großen Plätzen wird auch von weiter weg abgezogen.
-  const range = 10 + p.attrs.shooting * 5 + (hasTrait(p, 'hammer') ? 4 : 0) + st.shoot + Math.max(0, (pitch.halfLength - 20) * 0.3);
+  // Kurze Spiele: früher abziehen, damit überhaupt was passiert.
+  // Auf dem großen Platz dauert der Weg nach vorn länger – dort noch etwas mehr.
+  const brisk = (shortGame(m) - 1) * (1 + Math.max(0, pitch.halfLength - 20) / 12);
+  const range = 10 + p.attrs.shooting * 5 + (hasTrait(p, 'hammer') ? 4 : 0) + st.shoot + Math.max(0, (pitch.halfLength - 20) * 0.3) + brisk * 2.5;
   // Flügelspiel: Außen in Tornähe wird geflankt, nicht aus spitzem Winkel geschossen.
   if ((st.cross > 0.7 || heeds(m, p, 'wide')) && Math.abs(p.pos.z) > pitch.goalHalfWidth * 2.2 && Math.abs(p.pos.x - oppGoal.x) < pitch.halfLength * 0.45 && rng.chance(0.75)) {
     p.pending = { type: 'pass', lofted: 'cross', cone: -0.4, ttl: 0.3 };
@@ -459,7 +463,7 @@ function aiDecide(m, p, oppGoal) {
   // Distanzschuss: Wer schießen kann und Platz hat, versucht es auch mal von weiter weg.
   const longRange = range + 7;
   const space = !m.players.some((o) => o.team !== p.team && o.role !== 'gk' && dist2d(o.pos, p.pos) < 3 && (o.pos.x - p.pos.x) * toG.x + (o.pos.z - p.pos.z) * toG.z > 0);
-  if (dGoal >= range && dGoal < longRange && facingDot > 0.5 && space && (p.attrs.shooting > 0.55 || hasTrait(p, 'hammer')) && rng.chance(0.18)) {
+  if (dGoal >= range && dGoal < longRange && facingDot > 0.5 && space && (p.attrs.shooting > 0.55 || hasTrait(p, 'hammer')) && rng.chance(0.18 + brisk * 0.12)) {
     const gw = pitch.goalHalfWidth;
     p.pending = { type: 'shoot', power: 0.95, target: { x: oppGoal.x, z: (rng.chance(0.5) ? 1 : -1) * rng.range(gw * 0.4, gw * 1.0) }, ttl: 0.3 };
     return;

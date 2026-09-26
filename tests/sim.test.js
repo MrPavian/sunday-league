@@ -293,7 +293,7 @@ describe('rules & set pieces', () => {
 
 describe('venues', () => {
   it.each(Object.entries(PITCHES))('%s: a full AI match runs, stays in bounds and sees goals', (id, pitch) => {
-    const m = createMatch({ seed: 5, pitch, human: false });
+    const m = createMatch({ seed: 5, pitch, human: false, duration: 600 }); // volle 2 × 5 Minuten
     let goals = 0;
     for (let i = 0; i < 60 * 1200 && m.phase !== 'ended'; i++) {
       stepMatch(m, undefined, DT);
@@ -375,7 +375,7 @@ describe('backstories', () => {
 
 describe('match flow', () => {
   const full = (seed, opts = {}) => {
-    const m = createMatch({ seed, human: false, ...opts });
+    const m = createMatch({ seed, human: false, duration: 600, ...opts });
     const seen = [];
     for (let i = 0; i < 60 * 1200 && m.phase !== 'ended'; i++) {
       stepMatch(m, undefined, DT);
@@ -425,7 +425,7 @@ describe('match flow', () => {
   });
 
   it('the human asks for a sub and it happens at the next stoppage', () => {
-    const m = createMatch({ seed: 6, kickoff: false });
+    const m = createMatch({ seed: 6, kickoff: false, duration: 600 });
     stepMatch(m, { move: { x: 0, z: 0 }, sub: true }, DT);
     expect(m.subRequests[0]).toBe(true);
     Object.assign(m.ball.pos, { x: 0, y: 0.5, z: 9 });

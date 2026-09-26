@@ -34,6 +34,8 @@ Alternativ die Browser-Version in Chrome öffnen und „Zum Startbildschirm hinz
 *Flügelspiel*, *Kurzpassspiel*, *Hohes Pressing* oder *Mauern*. Die Spieler halten ihre Position im System, der Block
 verschiebt sich mit dem Ball, verteidigt wird in Zonen. Jeder Gegner hat seine eigene Handschrift, sie steht beim Anpfiff unter der Anzeigetafel.
 
+**Spieldauer:** 2 × 2 Minuten (Einstellungen: auch 2 × 3 oder 2 × 5). Kraft und Torgefahr sind auf die Länge abgestimmt.
+
 **Drei Arten, ein Spiel zu erleben** – im Vereinsheim vor jedem Anpfiff wählbar:
 1. **Selbst spielen** (PC, Tastatur oder Gamepad).
 2. **Trainer an der Seitenlinie** – in 3D zuschauen und reinrufen (siehe unten).
