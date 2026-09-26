@@ -937,3 +937,8 @@ body.touch .coach-play { background: #2f6f3a; }
 .effects li { padding: 1px 7px; font-size: 12px; background: #2a2e33; border: 1px solid #000; }
 .effects li.good { background: #2f6f3a; }
 .effects li.bad { background: #8c2f2f; }
+.fit { font-style: normal; font-size: 10px; }
+.fit.good, .fit-note .good { color: #7fd88a; }
+.fit.bad, .fit-note .bad { color: #ff8a7a; }
+.fit-note { font-size: 12px; line-height: 1.5; }
+.fit-note span { margin-right: 8px; }

@@ -87,6 +87,10 @@ export function afterMatchVoice(c, prepared, oppId) {
     }
   }
   if (news) (c.pendingNews ??= []).push(news);
+  // Taktik und Bedingungen: Das Kreisblatt lobt den klugen Schachzug – oder wundert sich.
+  const fit = m.fits?.[t];
+  if (fit?.score > 0 && gf > ga) (c.pendingNews ??= []).push(tr(`Kreisblatt: Kluger Schachzug des Trainers. ${fit.reasons.find((r) => r.score > 0)?.text ?? ''}.`, `Kreisblatt: A clever move by the manager. ${fit.reasons.find((r) => r.score > 0)?.text ?? ''}.`));
+  else if (fit?.score < 0 && gf < ga) (c.pendingNews ??= []).push(tr(`Kreisblatt: Man wundert sich über die Taktik. ${fit.reasons.find((r) => r.score < 0)?.text ?? ''}.`, `Kreisblatt: Eyebrows raised at the tactics. ${fit.reasons.find((r) => r.score < 0)?.text ?? ''}.`));
   return news;
 }
 

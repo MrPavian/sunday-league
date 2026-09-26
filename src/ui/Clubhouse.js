@@ -2,6 +2,7 @@ import { plural, tr } from '../core/i18n.js';
 import { kitPreviewURL } from '../render/kitPaint.js';
 import { effectChips } from '../career/consequences.js';
 import { STYLES as PLAY_STYLES, systemsFor } from '../sim/tactics.js';
+import { jobFits, styleFit } from '../sim/fit.js';
 import { jobPerk } from '../data/jobs.js';
 import { CREST_COLORS, CREST_DIVISIONS, CREST_SHAPES, CREST_SYMBOLS, crestOf, crestSVG, defaultCrest, FIGURES } from './crest.js';
 import { awardLabel } from '../career/awards.js';
@@ -17,6 +18,7 @@ import {
   updateClub,
   updateCrest,
   setClubTactic,
+  nextPitch,
   maxSquad,
   leagueOf,
   MIN_SQUAD,
@@ -732,15 +734,25 @@ export class Clubhouse {
     const systems = Object.entries(systemsFor(format))
       .map(([id, sys]) => `<button class="system ${tactic.system === id ? 'active' : ''}" data-action="tacticSystem" data-value="${id}">${board(sys.formation, tactic.system === id)}<b>${sys.label}</b></button>`)
       .join('');
+    // Passt der Stil zum Platz und Wetter am Sonntag? Und zu den Berufen der Jungs?
+    const pitch = nextPitch(c);
+    const fitMark = (id) => {
+      const f = pitch ? styleFit(id, pitch).score : 0;
+      return f > 0 ? ' <i class="fit good">▲</i>' : f < 0 ? ' <i class="fit bad">▼</i>' : '';
+    };
     const styles = Object.entries(PLAY_STYLES)
-      .map(([id, st]) => `<button class="${tactic.style === id ? 'active' : ''}" data-action="tacticStyle" data-value="${id}">${st.label}</button>`)
+      .map(([id, st]) => `<button class="${tactic.style === id ? 'active' : ''}" data-action="tacticStyle" data-value="${id}">${st.label}${fitMark(id)}</button>`)
       .join('');
+    const reasons = pitch ? styleFit(tactic.style, pitch).reasons : [];
+    const fitters = lineup.filter((idx) => idx != null && jobFits(tactic.style, this.p(idx).profession)).map((idx) => this.p(idx).name.split(' ')[0]);
+    const fitNote = `${reasons.map((r) => `<span class="${r.score > 0 ? 'good' : 'bad'}">${r.score > 0 ? '▲' : '▼'} ${r.text}</span>`).join(' ')}${fitters.length ? ` <span class="good">▲ ${tr('Passt zum Stil (Beruf)', 'Suits the style (job)')}: ${fitters.join(', ')}</span>` : ''}`;
     const tacticBlock = `
       <div class="tactic-board">
         <h4>${tr('Taktik', 'Tactics')} <small>${formation.length} ${tr('gegen', 'v')} ${formation.length}</small></h4>
         <div class="systems">${systems}</div>
         <div class="styles">${styles}</div>
         <p class="hint">${PLAY_STYLES[tactic.style].desc}</p>
+        ${fitNote ? `<p class="fit-note">${pitch ? `${tr('Sonntag', 'Sunday')}: ${pitch.name}, ${pitch.surface.name}. ` : ''}${fitNote}</p>` : ''}
       </div>`;
     const ROLE = tr({ gk: 'Tor', def: 'Abwehr', mid: 'Mitte', fwd: 'Sturm' }, { gk: 'GK', def: 'Def', mid: 'Mid', fwd: 'Att' });
     const options = club.squad

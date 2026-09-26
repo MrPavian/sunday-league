@@ -10,6 +10,7 @@ import { keeperIntent, outfieldIntent, updateTactics } from './ai.js';
 import { createBall, stepBall } from './ball.js';
 import { formationSpot } from './formation.js';
 import { normalizeTactic, systemFormation } from './tactics.js';
+import { applyFit } from './fit.js';
 import { generateTeam } from './generator.js';
 import { PARKING_LOT } from './pitch.js';
 import { attackDir, getPlayer, setControlled, teamAttacking } from './players.js';
@@ -47,10 +48,14 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = tr
 
   const players = [];
   const bench = [[], []];
+  const fits = [null, null];
   squads.forEach((team, ti) => {
-    // Berufsboni: der Postbote läuft länger, der Getränkemarkt-Mann hält die Truppe zusammen.
     const formation = formations[ti];
-    applyJobPerks(team.players).forEach((pl, i) => {
+    // Passt der Stil zu Wetter und Platz, passen die Berufe zum Stil?
+    const fitted = applyFit(team, plan[ti].style, pitch);
+    fits[ti] = { ...fitted.fit, matches: fitted.matches };
+    // Berufsboni: der Postbote läuft länger, der Getränkemarkt-Mann hält die Truppe zusammen.
+    applyJobPerks(fitted.players).forEach((pl, i) => {
       const entry = formation[i] ?? formation.find((f) => f.role === pl.position) ?? formation[formation.length - 1];
       const p = makeEntity(pl, ti, i, entry.role, formationSpot(pitch, entry, ti));
       p.formationEntry = entry;
@@ -83,6 +88,7 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = tr
     referee: pitch.referee ? createReferee(rng) : null,
     sentOff: [],
     plan,
+    fits,
     humanTeam: human ? 0 : null,
     controlledId: human ? players.find((p) => p.team === 0 && p.role === 'fwd').id : null,
     chasers: [null, null],

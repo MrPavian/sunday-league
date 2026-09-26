@@ -299,3 +299,19 @@ describe('opponents with a face', async () => {
     expect(news).toBeGreaterThan(0);
   });
 });
+
+describe('tactics meet conditions', async () => {
+  const { styleFit, jobFits, applyFit } = await import('../src/sim/fit.js');
+  it('bus parking suits a wet cinder pitch, short passing does not, and the postman loves pressing', () => {
+    const wetAsh = { ...PITCHES.ascheplatz, surface: { ...PITCHES.ascheplatz.surface, wet: true } };
+    expect(styleFit('mauern', wetAsh).score).toBe(1);
+    expect(styleFit('kurzpass', wetAsh).score).toBe(-1);
+    expect(styleFit('pressing', { ...PITCHES.park, heat: 1.35 }).score).toBe(-1);
+    expect(jobFits('pressing', 'Postbote')).toBe(true);
+    expect(jobFits('kurzpass', 'Postbote')).toBe(false);
+    const team = { players: [{ profession: 'Postbote', attrs: { stamina: 0.5, tackling: 0.5, pace: 0.5 } }] };
+    const out = applyFit(team, 'pressing', PITCHES.park);
+    expect(out.players[0].attrs.stamina).toBeGreaterThan(0.5);
+    expect(out.matches).toBe(1);
+  });
+});

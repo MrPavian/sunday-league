@@ -776,6 +776,16 @@ function aiAvailability(club, rng) {
   return a;
 }
 
+// Platz des nächsten eigenen Spiels (mit Wetter) – für die Taktiktafel.
+export function nextPitch(career) {
+  const f = humanFixture(career);
+  if (!f) return null;
+  const home = clubById(career, f.home);
+  const league = leagueOf(career);
+  const base = PITCHES[home.venue];
+  return applyWeather({ ...base, format: league.format ?? base.format, referee: league.referee || !!base.referee }, career.week?.weather);
+}
+
 export function prepareMatch(career, fixture, { human = false, duration } = {}) {
   const index = (id) => career.clubs.findIndex((c) => c.id === id);
   const rng = createRng(hashSeed(career.seed, career.season, career.round, index(fixture.home), index(fixture.away)));
