@@ -202,7 +202,11 @@ function pass(m, p, a, fatigue, fromHands) {
     const dot = (dx * p.facing.x + dz * p.facing.z) / d;
     if (dot < cone) continue;
     // Lieber nach vorn als quer, lieber frei als zugestellt.
-    let score = dot - d * 0.035 - (t.role === 'gk' ? 0.8 : 0) + (t.pos.x - p.pos.x) * attackDir(m, p.team) * 0.025;
+    // Die KI spielt lieber nach vorne; zum eigenen Torwart nur, wenn es brennt.
+    const ai = p.id !== m.controlledId;
+    const pressed = ai && m.players.some((o) => o.team !== p.team && dist2d(o.pos, p.pos) < 1.8);
+    const gkMalus = t.role === 'gk' ? (ai && !pressed ? 2 : 0.8) : 0;
+    let score = dot - d * 0.035 - gkMalus + (t.pos.x - p.pos.x) * attackDir(m, p.team) * (ai ? 0.05 : 0.025);
     // Flanken sollen in Tornähe landen.
     if (a.lofted) score -= Math.abs(t.pos.x - attackDir(m, p.team) * pitch.halfLength) * 0.08;
     for (const o of m.players) {

@@ -207,7 +207,7 @@ Auf englischen Tastaturen liegt „Stochern“ auf **Z** (gleiche Taste).
 
 ```bash
 npm run dev      # Entwicklungsserver mit Hot Reload
-npm test         # 171 Tests (Simulation und Karriere)
+npm test         # 172 Tests (Simulation und Karriere)
 npm run build    # Produktions-Build nach dist/
 npm run preview  # Build lokal ansehen
 ```

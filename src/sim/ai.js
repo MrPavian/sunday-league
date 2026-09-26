@@ -279,6 +279,10 @@ export function outfieldIntent(m, p, dt) {
       p.decideTimer = (0.4 + (1 - p.attrs.technique) * 0.4 + m.rng.next() * 0.25) / aiSkill(m, p);
       aiDecide(m, p, oppGoal);
     }
+    // Ball am Fuß: mit dem Ball nach vorne, nicht um ihn herumlaufen. Wer vor dem
+    // Ball steht, zog ihn früher mit zurück Richtung eigenes Tor.
+    const carrying = ball.lastTouch === p.id && ball.lastAction === 'dribble' && dBall < 1.1 && !ball.holder;
+    if (carrying) return carryIntent(m, p, oppGoal, wall);
     // Anlaufen: Auf „locker" trabt der Gegner eher hin, auf „hart" sprintet er früh.
     const k = aiSkill(m, p);
     const intensity = k < 1 ? 0.8 : 1;
@@ -302,6 +306,48 @@ export function outfieldIntent(m, p, dt) {
   }
   const k = urgent ? Math.min(1, d / 2) : Math.min(1, d / 3) * 0.75;
   return { move: { x: n.x * k, z: n.z * k }, sprint: d > (urgent ? 5 : 9) && p.stamina > 0.35 };
+}
+
+// Dribbeln: Richtung Tor (leicht versetzt auf die Zielseite), Gegnern vor sich
+// seitlich ausweichen, von Wand und Seitenlinie weg. Freie Bahn → antreten.
+function carryIntent(m, p, oppGoal, wall) {
+  const { pitch } = m;
+  let dir = norm(oppGoal.x - p.pos.x, clamp(p.aimZ ?? 0, -pitch.halfWidth * 0.5, pitch.halfWidth * 0.5) - p.pos.z);
+  let dx = dir.x;
+  let dz = dir.z;
+  let blocked = false;
+  let space = true;
+  for (const o of m.players) {
+    if (o.team === p.team || o.state !== 'normal') continue;
+    const rx = o.pos.x - p.pos.x;
+    const rz = o.pos.z - p.pos.z;
+    const d = len(rx, rz);
+    const ahead = rx * dir.x + rz * dir.z;
+    if (d < 7 && ahead > 0 && o.role !== 'gk') space = false;
+    if (d > 3.2 || ahead < -0.3) continue;
+    if (d < 2.2 && ahead > 0) blocked = true;
+    // Seitlich weg vom Gegner: auf die Seite, auf der er nicht steht.
+    const side = rx * -dir.z + rz * dir.x >= 0 ? -1 : 1;
+    const w = ((3.2 - d) / 3.2) * 0.9;
+    dx += -dir.z * side * w;
+    dz += dir.x * side * w;
+  }
+  if (wall.near) {
+    dx += wall.x * 0.9;
+    dz += wall.z * 0.9;
+  }
+  // Nie nach hinten dribbeln – höchstens quer.
+  const s = attackDir(m, p.team);
+  if (dx * s < 0.15) dx = s * 0.15;
+  dir = norm(dx, dz);
+  p.dribbleDir = dir;
+  // Zugestellt: abbremsen, Ball behaupten und bald abspielen statt durchzulaufen.
+  if (blocked) {
+    if (p.decideTimer > 0.25) p.decideTimer = 0.25;
+    return { move: { x: dir.x * 0.45, z: dir.z * 0.45 }, sprint: false };
+  }
+  const pace = space ? 1 : 0.7;
+  return { move: { x: dir.x * pace, z: dir.z * pace }, sprint: space && p.stamina > 0.5 && Math.abs(p.pos.x - oppGoal.x) > 8 };
 }
 
 function aiDecide(m, p, oppGoal) {

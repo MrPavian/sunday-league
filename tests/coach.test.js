@@ -107,3 +107,32 @@ describe('live ticker with decisions', async () => {
     expect(subbed).toBe(true);
   });
 });
+
+describe('build-up play', () => {
+  it('carriers dribble towards goal and rarely pass back to their own keeper', () => {
+    let fwd = 0;
+    let back = 0;
+    let passes = 0;
+    let toKeeper = 0;
+    for (const seed of [41, 42]) {
+      const m = enableManager(createMatch({ seed, pitch: PITCHES.rasenplatz, human: true, duration: 120 }));
+      for (let i = 0; i < 120 * 60 * 1.3 && m.phase !== 'ended'; i++) {
+        stepMatch(m, undefined, DT);
+        for (const e of m.events) {
+          if (e.type !== 'pass') continue;
+          passes++;
+          if (m.players.find((q) => q.id === e.targetId)?.role === 'gk') toKeeper++;
+        }
+        m.events.length = 0;
+        const c = m.players.find((p) => p.id === m.ball.lastTouch);
+        if (m.phase !== 'play' || !c || c.role === 'gk' || m.ball.lastAction !== 'dribble') continue;
+        if (Math.hypot(c.pos.x - m.ball.pos.x, c.pos.z - m.ball.pos.z) > 1.1) continue;
+        const v = c.vel.x * attackDir(m, c.team);
+        if (v > 0.5) fwd++;
+        else if (v < -0.5) back++;
+      }
+    }
+    expect(fwd / (fwd + back)).toBeGreaterThan(0.75);
+    expect(toKeeper / passes).toBeLessThan(0.05);
+  });
+});
