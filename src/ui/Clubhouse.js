@@ -2,6 +2,8 @@ import { plural, tr } from '../core/i18n.js';
 import { kitPreviewURL } from '../render/kitPaint.js';
 import { effectChips } from '../career/consequences.js';
 import { museum } from '../career/museum.js';
+import { seasonReview } from '../career/review.js';
+import { reviewHTML, shareReview } from './review.js';
 import { GOALS } from '../career/board.js';
 import { STYLES as PLAY_STYLES, systemsFor } from '../sim/tactics.js';
 import { jobFits, styleFit } from '../sim/fit.js';
@@ -149,6 +151,8 @@ export class Clubhouse {
           playDart(this.career, sum);
           this.h.onChange();
         } else this.render(), this.animateDart();
+      } else if (action === 'reviewshare') {
+        shareReview(seasonReview(this.career));
       } else if (action === 'tipsoff') {
         this.career.tipsOff = true;
         this.career.week.chat = this.career.week.chat.filter((m) => !m.tip);
@@ -544,6 +548,7 @@ export class Clubhouse {
         <h3>${tr('Platz', 'Position')} ${pos}</h3>
         <p>${msg}</p>
         <p>${tr('Meister', 'Champions')}: <b>${champ.name}</b></p>
+        ${reviewHTML(seasonReview(c), { share: true })}
         ${this.miniTable()}
         ${chronicle}
         ${this.tripBlock()}
@@ -993,6 +998,7 @@ export class Clubhouse {
       <section><h4>${tr('Rekorde', 'Records')}</h4>${records}</section>
       <section><h4>${tr('Vereinslegenden', 'Club legends')}</h4>${legends}</section>
       <section><h4>${tr('Trikot- und Wappenarchiv', 'Kit and crest archive')}</h4>${kits}${crests}</section>
+      ${(c.reviews ?? []).length ? `<section><h4>${tr('Sonderhefte', 'Season specials')}</h4>${[...c.reviews].reverse().map((r) => `<details><summary>${r.year}/${String(r.year + 1).slice(2)} · ${r.headline}</summary>${reviewHTML(r)}</details>`).join('')}</section>` : ''}
     </div>`;
   }
 

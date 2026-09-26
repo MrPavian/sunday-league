@@ -32,6 +32,7 @@ import { weeklyBanter } from './banter.js';
 import { matchdaySurprise } from './matchday.js';
 import { TIP_IDS, weeklyTip } from './tips.js';
 import { fenceVoice, heirIntake, heirMoments } from './generations.js';
+import { archiveReview } from './review.js';
 import { afterMatchVoice, deliverNews, grudgeMatch, preMatchVoice } from './opponents.js';
 import { midSeasonReport, seasonGoalVerdict, setSeasonGoal } from './board.js';
 import { relsMap } from '../sim/bonds.js';
@@ -200,6 +201,7 @@ export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null 
 
 // Saisonwechsel: Tabelle auswerten, auf- oder absteigen, Kader behalten.
 export function nextSeason(career) {
+  archiveReview(career); // Kreisblatt-Sonderheft ins Archiv, solange die Saisonwerte noch stehen
   const legacyNotes = legacySeasonEnd(career); // Schuhe an den Nagel, Nachfolge
   autoTrip(career); // nicht zu Ende gefahrene Saisonabschlussfahrt
   const rows = table(career);
