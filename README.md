@@ -109,6 +109,15 @@ die Komik entsteht aus dem Alltag.
 - **Die Gruppe lebt**: Sprüche im Teamchat („Du hast jetzt 3x in Folge abgesagt.", „Geiles Spiel letzte Woche!") –
   die Antworten verändern Teamchemie, Form und Zuverlässigkeit; kocht es hoch, musst du als Trainer ran.
   Jede Entscheidung zeigt danach ihre Folgen (Stimmung, Kasse, Beziehungen, Form …).
+- **Der Verein erinnert sich**: Wer im Streit geht, taucht oft bei einem Gegner auf – und trifft dann „ausgerechnet“
+  gegen uns. Angstgegner werden gezählt, Gegnertrainer äußern sich im Kreisblatt, nach dem Spiel gibt es Handschlag
+  oder Rudelbildung (mit Folgen fürs Rückspiel oder einem Wechselwilligen von drüben).
+- **Auf dem Platz sichtbar**: Kumpels spielen sich an, Rivalen übersehen sich („Kalle übersieht Jens – schon wieder“),
+  Spieler in Topform haben eine Flamme über dem Kopf. Am Spieltag kann etwas dazwischenkommen: Schiri fehlt, Stau, Platz doppelt belegt.
+- **Taktik trifft Wetter**: Mauern auf nasser Asche, Kurzpass auf engem Raum, Pressing bei Hitze lieber nicht – die
+  Taktiktafel zeigt, was passt, auch welche Berufe zum Stil passen. Das Kreisblatt lobt den klugen Schachzug.
+- **Vereinsmuseum und Saisonziel**: Vitrine, Ehrentafel, Rekorde, Legenden, Trikot- und Wappenarchiv. Der Vorstand
+  gibt vor der Saison ein Ziel vor, schreibt ein Zwischenzeugnis und zahlt am Ende eine Prämie – oder es wird getuschelt.
 - **Kasse & Strafenkatalog**: Luftloch 1 €, Eigentor eine Runde für alle
 - **Sponsoren mit Eigenarten**: 40 Betriebe aus dem Ort, nachverhandeln, bei Laune halten, verlängern – oder verärgern.
   Der Trikotsponsor steht auf der Brust.
@@ -217,7 +226,7 @@ Auf englischen Tastaturen liegt „Stochern“ auf **Z** (gleiche Taste).
 
 ```bash
 npm run dev      # Entwicklungsserver mit Hot Reload
-npm test         # 176 Tests (Simulation und Karriere)
+npm test         # 183 Tests (Simulation und Karriere)
 npm run build    # Produktions-Build nach dist/
 npm run preview  # Build lokal ansehen
 ```

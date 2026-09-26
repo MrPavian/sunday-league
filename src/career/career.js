@@ -31,6 +31,7 @@ import { NAME_EDITION } from '../data/names.js';
 import { weeklyBanter } from './banter.js';
 import { matchdaySurprise } from './matchday.js';
 import { afterMatchVoice, deliverNews, grudgeMatch, preMatchVoice } from './opponents.js';
+import { midSeasonReport, seasonGoalVerdict, setSeasonGoal } from './board.js';
 import { relsMap } from '../sim/bonds.js';
 import { memoryAfterMatch, placeFormers, preMatchMemories, rememberArrival, rememberDeparture, tagStories } from './memory.js';
 import { defaultCrest } from '../ui/crest.js';
@@ -191,6 +192,7 @@ export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null 
   initAcademy(career);
   initSagas(career);
   startWeek(career);
+  setSeasonGoal(career);
   return career;
 }
 
@@ -209,6 +211,7 @@ export function nextSeason(career) {
   const scorer = humanClub(career).squad.map((idx) => ({ idx, goals: career.players[idx]?.goals ?? 0 })).sort((a, b) => b.goals - a.goals)[0];
   const topScorer = scorer?.goals ? { name: playerOf(career, scorer.idx).name, goals: scorer.goals } : null;
   career.history = [...(career.history ?? []), { season: career.season, league: career.league, pos, champion: rows[0].club.name, topScorer, promoted, relegated }];
+  const goalVerdict = seasonGoalVerdict(career, pos); // hat der Vorstand bekommen, was er wollte?
 
   // Spieler der Saison und Saisonbilanz je Spieler, bevor die Zahlen zurückgesetzt werden.
   const bestOfSeason = seasonAward(career, awardDeps(career));
@@ -274,6 +277,8 @@ export function nextSeason(career) {
   placeFormers(career); // Ehemalige kommen bei der Konkurrenz unter
   startWeek(career);
   const note = (text) => career.week?.chat.splice(1, 0, { from: null, text, time: 'Mo 09:00' });
+  setSeasonGoal(career); // neue Saison, neue Ansage
+  if (goalVerdict) note(goalVerdict);
   if (bestOfSeason) note(bestOfSeason.text);
   for (const n of sagaNotes) note(n);
   for (const n of legacyNotes) note(n);
@@ -381,6 +386,8 @@ export function startWeek(career) {
       text = rng.pick(YES);
     }
     availability[idx] = status;
+    // Nicht zwei Mal derselbe Satz in einer Woche – so einfallslos ist keine Gruppe.
+    if (chat.some((m) => m.text === text) && status === 'yes') text = rng.pick(YES.filter((t) => !chat.some((m) => m.text === t))) ?? text;
     chat.push({ from: idx, text, time: time() });
   }
   // Einer kommentiert das Wetter.
@@ -399,6 +406,7 @@ export function startWeek(career) {
   if (career.round === 0 && career.offersSeason !== career.season) makeOffers(career, career.level ?? 1);
   career.week.rumors = makeRumors(career, createRng(hashSeed(career.seed, career.season, career.round, 3)));
   deliverNews(career, career.week.chat); // Rudelbildung, Handschlag, Wechselwillige
+  midSeasonReport(career); // Zwischenzeugnis vom Vorstand
   career.week.actions = SCOUT_ACTIONS;
 }
 

@@ -2,6 +2,7 @@ import { plural, tr } from '../core/i18n.js';
 import { kitPreviewURL } from '../render/kitPaint.js';
 import { effectChips } from '../career/consequences.js';
 import { museum } from '../career/museum.js';
+import { GOALS } from '../career/board.js';
 import { STYLES as PLAY_STYLES, systemsFor } from '../sim/tactics.js';
 import { jobFits, styleFit } from '../sim/fit.js';
 import { jobPerk } from '../data/jobs.js';
@@ -315,6 +316,7 @@ export class Clubhouse {
         <p class="venue-line weather">${weatherLine(c.week?.weather)}</p>
         <p class="avail">${count('yes')} ${tr('Zusagen', 'in')} · ${count('late')} ${tr('später', 'late')} · ${count('no')} ${tr('Absagen', 'out')}</p>
         <p class="mood-line">${tr('Stimmung im Team', 'Team spirit')}: <b class="mood mood-${moodLabel(c.mood ?? 0)}">${moodText(c.mood ?? 0)}</b></p>
+        ${c.goal?.season === c.season ? `<p class="goal-line">${tr('Saisonziel', 'Season target')}: <b>${GOALS[c.goal.type].name}</b> · ${tr('jetzt', 'now')} ${table(c).findIndex((r) => r.club.human) + 1}. ${tr('Platz', 'place')} <small>(${tr('Ziel', 'target')}: ${tr('bis Platz', 'top')} ${c.goal.target})</small></p>` : ''}
         ${w.event && w.event.choice === null ? `<p class="warn">${tr('In der Gruppe wartet eine Entscheidung auf dich.', 'A decision is waiting for you in the group chat.')}</p>` : ''}
         ${storyLabels(c).length ? `<ul class="stories">${storyLabels(c).map((s) => `<li>${s}</li>`).join('')}</ul>` : ''}
         ${count('yes') < venue.format ? `<p class="warn">${tr('Zu wenige Zusagen – es hilft jemand aus dem Bekanntenkreis aus.', 'Not enough players – someone from a mate\'s circle will help out.')}</p>` : ''}
@@ -963,7 +965,7 @@ export class Clubhouse {
       : empty(tr('Die Vitrine ist noch leer. Der Staublappen liegt bereit.', 'The trophy cabinet is still empty. The duster is ready.'));
     const awards = mu.awards.length ? `<ul class="plain">${mu.awards.map((a) => `<li>★ ${a.name} – ${a.kind === 'season' ? tr('Spieler der Saison', 'Player of the Season') : tr('Spieler des Monats', 'Player of the Month')} (S${a.season})</li>`).join('')}</ul>` : empty(tr('Noch keine Auszeichnung vom Kreisblatt.', 'No Kreisblatt award yet.'));
     const records = mu.records.length ? `<ul class="plain">${mu.records.map((r) => `<li><b>${r.label}:</b> ${r.text}</li>`).join('')}</ul>` : empty(tr('Rekorde entstehen mit der Zeit.', 'Records come with time.'));
-    const legends = mu.legends.length ? `<ol class="plain">${mu.legends.map((l) => `<li><span>${l.name}${l.active ? '' : ` <small>(${tr('ehemalig', 'former')})</small>`}</span><b>${l.goals} ${tr('Tore', 'goals')} · ${l.apps} ${tr('Spiele', 'apps')}</b></li>`).join('')}</ol>` : empty(tr('Noch keine Legenden.', 'No legends yet.'));
+    const legends = mu.legends.length ? `<ol class="plain">${mu.legends.map((l) => `<li><span>${l.name}${l.active ? '' : ` <small>(${tr('ehemalig', 'former')})</small>`}</span><b>${l.goals} ${plural(l.goals, 'Tor', 'Tore', 'goal', 'goals')} · ${l.apps} ${plural(l.apps, 'Spiel', 'Spiele', 'app', 'apps')}</b></li>`).join('')}</ol>` : empty(tr('Noch keine Legenden.', 'No legends yet.'));
     const kits = `<div class="archive">${mu.kits.map((k) => `<figure><span class="kit-mini" style="background:url(${kitPreviewURL(k.kit)}) center/100% 100%"></span><figcaption>S${k.season}${k.now ? tr(' (aktuell)', ' (current)') : ''}</figcaption></figure>`).join('')}</div>`;
     const crests = mu.crests.length ? `<div class="archive">${mu.crests.map((k) => `<figure>${crestSVG(k.crest, { size: 40, short: club.short })}<figcaption>S${k.season}${k.now ? tr(' (aktuell)', ' (current)') : ''}</figcaption></figure>`).join('')}</div>` : '';
     return `<div class="museum">

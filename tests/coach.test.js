@@ -333,3 +333,19 @@ describe('club museum', async () => {
     expect(humanClub(c).kitHistory).toHaveLength(1);
   });
 });
+
+describe('season target', async () => {
+  const { createCareer, finishRound, nextSeason } = await import('../src/career/career.js');
+  it('the board sets a target, writes a half-term report and judges the season', () => {
+    const c = createCareer({ seed: 99 });
+    expect(c.goal?.season).toBe(1);
+    expect(['aufstieg', 'obere', 'erhalt']).toContain(c.goal.type);
+    for (let r = 0; r < c.fixtures.length; r++) finishRound(c);
+    expect(c.goal.mid).toBe(true);
+    const cash = c.cash;
+    nextSeason(c);
+    expect(c.goal.season).toBe(2);
+    expect(c.saga.chronicle.some((e) => /Saisonziel|Season target/.test(e.text))).toBe(true);
+    expect(typeof cash).toBe('number');
+  });
+});
