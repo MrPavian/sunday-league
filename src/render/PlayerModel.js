@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { kitMaterial, toon, vertexToon } from './materials.js';
+import { pixelTexture, toon, vertexToon } from './materials.js';
+import { ATLAS_H, ATLAS_W, makeSplats, paintKit, REGION } from './kitPaint.js';
 
 function part(w, h, d, mat, x, y, z) {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
@@ -36,6 +37,39 @@ function bake(node, skip) {
   node.add(mesh);
 }
 
+// Rumpf-Quader auf den Trikot-Atlas mappen: vorne/hinten/Seiten bekommen ihr
+// Feld, oben und unten die Schulterpartie der linken Seite.
+function atlasBox(w, h, d) {
+  const g = new THREE.BoxGeometry(w, h, d);
+  const uv = g.attributes.uv;
+  // Reihenfolge der Flächen in BoxGeometry: +x, -x, +y, -y, +z, -z.
+  const faces = [
+    [REGION.right, 0, 1],
+    [REGION.left, 0, 1],
+    [REGION.left, 0.75, 1],
+    [REGION.left, 0, 0.25],
+    [REGION.front, 0, 1],
+    [REGION.back, 0, 1],
+  ];
+  faces.forEach(([rx, v0, v1], f) => {
+    for (let i = f * 4; i < f * 4 + 4; i++) {
+      uv.setXY(i, (rx + 0.02 + uv.getX(i) * 15.96) / ATLAS_W, v0 + uv.getY(i) * (v1 - v0));
+    }
+  });
+  return g;
+}
+
+// Trikot eines Spielers: eigener kleiner Atlas, damit Dreck nur ihn trifft.
+function kitSkin(kit, sponsor) {
+  const canvas = document.createElement('canvas');
+  canvas.width = ATLAS_W;
+  canvas.height = ATLAS_H;
+  const ctx = canvas.getContext('2d');
+  paintKit(ctx, kit, { sponsor });
+  const texture = pixelTexture(canvas);
+  return { canvas, ctx, texture, kit, sponsor, splats: makeSplats(), shown: 0 };
+}
+
 // Pixel-Ziffern 3 × 5 für die Rückennummer.
 const DIGITS = ['111101101101111', '010110010010111', '111001111100111', '111001111001111', '101101111001001', '111100111001111', '111100111101111', '111001010010010', '111101111101111', '111101111001111'];
 
@@ -52,9 +86,12 @@ const luminance = (hex) => (0.299 * ((hex >> 16) & 255) + 0.587 * ((hex >> 8) & 
 // Low-Poly-Normalo aus Quadern. Bauch, Glatze, Bart und Größe kommen aus dem
 // generierten Aussehen – keine zwei Spieler sehen gleich aus. Dazu Gesicht,
 // Frisur, Rückennummer, Stutzenring und beim Torwart Handschuhe.
-export function createPlayerModel(look, kit, { number = null, keeper = false } = {}) {
+export function createPlayerModel(look, kit, { number = null, keeper = false, sponsor = null, textured = true } = {}) {
   const skin = toon(look.skin);
-  const shirt = kitMaterial(kit);
+  const cloth = textured && typeof document !== 'undefined' ? kitSkin(kit, sponsor) : null;
+  const shirtTex = cloth ? toon(0xffffff, { map: cloth.texture }) : toon(kit.shirt);
+  // Ärmel bleiben einfarbig (spart Draw Calls); bei Seiten- und Schultermustern in der zweiten Farbe.
+  const shirt = toon(['seiten', 'schulter'].includes(kit.pattern) && kit.second != null ? kit.second : kit.shirt);
   const shorts = toon(kit.shorts);
   const socks = toon(kit.socks);
   const shoes = toon(0x1f1f1f);
@@ -93,7 +130,9 @@ export function createPlayerModel(look, kit, { number = null, keeper = false } =
   body.add(part(0.4 + belly * 0.1, 0.18, 0.24 + belly * 0.08, shorts, 0, 0.87, 0));
   const torsoW = 0.42 + belly * 0.12;
   const torsoD = 0.24 + belly * 0.16;
-  const torso = part(torsoW, 0.55, torsoD, shirt, 0, 1.18, belly * 0.03);
+  const torso = new THREE.Mesh(cloth ? atlasBox(torsoW, 0.55, torsoD) : new THREE.BoxGeometry(torsoW, 0.55, torsoD), shirtTex);
+  torso.position.set(0, 1.18, belly * 0.03);
+  torso.castShadow = true;
   body.add(torso);
   // Kragen und kleines Wappen vorne.
   body.add(part(0.2, 0.04, 0.2, accent, 0, 1.46, belly * 0.02));
@@ -171,8 +210,33 @@ export function createPlayerModel(look, kit, { number = null, keeper = false } =
   }
 
   for (const node of [body, ...legs, ...arms]) bake(node, plaster);
+  // Beine bekommen ein eigenes Material, damit Schlamm sie einfärben kann.
+  let legMat = null;
+  if (cloth) {
+    legMat = vertexToon().clone();
+    for (const leg of legs) for (const c of leg.children) if (c.isMesh && c.material === vertexToon()) c.material = legMat;
+  }
 
-  return { group, body, legs, arms, plaster, phase: Math.random() * 6 };
+  return { group, body, legs, arms, plaster, cloth, legMat, torsoMat: cloth ? shirtTex : null, phase: Math.random() * 6 };
+}
+
+// Dreck aufs Trikot: dirt 0–1. Neu gemalt wird nur, wenn ein Klecks dazukommt.
+const DIRT_TINT = new THREE.Color();
+export function setKitDirt(model, dirt, color) {
+  const c = model.cloth;
+  if (!c) return;
+  const shown = Math.floor(c.splats.length * Math.min(1, dirt));
+  if (shown === c.shown) return;
+  c.shown = shown;
+  paintKit(c.ctx, c.kit, { sponsor: c.sponsor, dirt, splats: c.splats, dirtColor: color });
+  c.texture.needsUpdate = true;
+  if (model.legMat) model.legMat.color.setRGB(1, 1, 1).lerp(DIRT_TINT.setHex(color), Math.min(0.45, dirt * 0.5));
+}
+
+export function disposeKit(model) {
+  model.cloth?.texture.dispose();
+  model.torsoMat?.dispose();
+  model.legMat?.dispose();
 }
 
 // Prozedurale Animation: Laufzyklus, Schuss, Torwart hält den Ball.

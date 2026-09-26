@@ -20,27 +20,61 @@ export const TRAITS = {
 };
 
 export const SPONSORS = [
-  { id: 'krume', name: 'Bäckerei Krume', line: tr('Frische Brötchen nach dem Spiel inklusive.', 'Fresh rolls after the match included.'), trait: 'treu', boss: tr('Bäckermeister Krume', 'Krume the baker') },
-  { id: 'vollgas', name: 'Fahrschule Vollgas', line: tr('Wer einen Führerschein braucht, weiß Bescheid.', 'Anyone needing a driving licence knows where to go.'), trait: 'ehrgeizig', boss: tr('Fahrlehrer Rolf', 'Rolf the driving instructor') },
-  { id: 'sultan', name: 'Döner Sultan', line: tr('Mannschaftsdöner nach jedem Heimsieg.', 'Team kebab after every home win.'), trait: 'grosszuegig', boss: tr('Murat vom Sultan', 'Murat from the Sultan') },
-  { id: 'brenner', name: 'Autohaus Brenner', line: tr('Fährt auch mal den Bus zum Auswärtsspiel.', 'Sometimes drives the minibus to away games.'), trait: 'ehrgeizig', boss: tr('Autohändler Brenner', 'Brenner the car dealer') },
-  { id: 'physio', name: 'Physio am Markt', line: tr('Tapen vor dem Spiel zum Vereinspreis.', 'Pre-match strapping at a club discount.'), trait: 'treu', boss: tr('Physiotherapeutin Sandra', 'Sandra the physio') },
-  { id: 'schnittig', name: 'Friseur Schnittig', line: tr('Frisur sitzt, auch nach 90 Minuten.', 'Hair stays put, even after 90 minutes.'), trait: 'grosszuegig', boss: tr('Friseurin Jacqueline', 'Jacqueline the hairdresser') },
-  { id: 'kowalski', name: 'Dachdeckerei Kowalski', line: tr('Hält dicht – wie unsere Abwehr (hoffentlich).', 'Watertight – like our defence (hopefully).'), trait: 'knauserig', boss: tr('Dachdecker Kowalski', 'Kowalski the roofer') },
-  { id: 'hoffmann', name: 'Getränke Hoffmann', line: tr('Die Kiste nach dem Spiel geht aufs Haus.', 'The crate after the match is on the house.'), trait: 'grosszuegig', boss: tr('Getränke-Hoffmann', 'Hoffmann from the drinks market') },
-  { id: 'enzo', name: 'Pizzeria Da Enzo', line: tr('Nach dem Auswärtssieg eine Familienpizza.', 'A family pizza after every away win.'), trait: 'treu', boss: 'Enzo' },
-  { id: 'blum', name: 'Sanitär Blum', line: tr('Repariert auch die Duschen im Vereinsheim. Irgendwann.', 'Also fixes the clubhouse showers. Eventually.'), trait: 'knauserig', boss: tr('Installateur Blum', 'Blum the plumber') },
-  { id: 'muckibude', name: 'Fitnessstudio Muckibude', line: tr('Für die Bauchmuskeln, die man unter dem Trikot nicht sieht.', 'For the abs nobody can see under the shirt.'), trait: 'ehrgeizig', boss: tr('Studioleiter Dragan', 'Dragan the gym manager') },
-  { id: 'kalle', name: 'Kiosk Kalle', line: tr('Lotto, Zigaretten, Zeitung, Spielberichte.', 'Lottery, cigarettes, papers, match reports.'), trait: 'treu', boss: 'Kalle' },
-  { id: 'ruhe', name: 'Bestattungen Ruhe', line: tr('Wir holen jeden ab. Auch nach dem Abstieg.', 'We collect everyone. Even after relegation.'), trait: 'knauserig', boss: tr('Herr Ruhe', 'Mr Ruhe') },
-  { id: 'funke', name: 'Elektro Funke', line: tr('Macht das Flutlicht an. Wenn es eins gäbe.', 'Turns the floodlights on. If there were any.'), trait: 'treu', boss: tr('Elektromeister Funke', 'Funke the electrician') },
-  { id: 'wolf', name: 'Metzgerei Wurst-Wolf', line: tr('Bratwurst zum Sonderpreis am Grill.', 'Discount bratwurst at the barbecue.'), trait: 'grosszuegig', boss: tr('Metzger Wolf', 'Wolf the butcher') },
-  { id: 'klein', name: 'Versicherungsbüro Klein', line: tr('Versichert alles. Außer Luftlöcher.', 'Insures everything. Except air shots.'), trait: 'ehrgeizig', boss: tr('Versicherungsmakler Klein', 'Klein the insurance broker') },
+  { id: 'krume', color: 0xc98a3a, name: 'Bäckerei Krume', line: tr('Frische Brötchen nach dem Spiel inklusive.', 'Fresh rolls after the match included.'), trait: 'treu', boss: tr('Bäckermeister Krume', 'Krume the baker') },
+  { id: 'vollgas', color: 0xd8322a, name: 'Fahrschule Vollgas', line: tr('Wer einen Führerschein braucht, weiß Bescheid.', 'Anyone needing a driving licence knows where to go.'), trait: 'ehrgeizig', boss: tr('Fahrlehrer Rolf', 'Rolf the driving instructor') },
+  { id: 'sultan', color: 0xe0a020, name: 'Döner Sultan', line: tr('Mannschaftsdöner nach jedem Heimsieg.', 'Team kebab after every home win.'), trait: 'grosszuegig', boss: tr('Murat vom Sultan', 'Murat from the Sultan') },
+  { id: 'brenner', color: 0x1d4f9c, name: 'Autohaus Brenner', line: tr('Fährt auch mal den Bus zum Auswärtsspiel.', 'Sometimes drives the minibus to away games.'), trait: 'ehrgeizig', boss: tr('Autohändler Brenner', 'Brenner the car dealer') },
+  { id: 'physio', color: 0x3aa39a, name: 'Physio am Markt', line: tr('Tapen vor dem Spiel zum Vereinspreis.', 'Pre-match strapping at a club discount.'), trait: 'treu', boss: tr('Physiotherapeutin Sandra', 'Sandra the physio') },
+  { id: 'schnittig', color: 0xc04a8a, name: 'Friseur Schnittig', line: tr('Frisur sitzt, auch nach 90 Minuten.', 'Hair stays put, even after 90 minutes.'), trait: 'grosszuegig', boss: tr('Friseurin Jacqueline', 'Jacqueline the hairdresser') },
+  { id: 'kowalski', color: 0x8c3a2a, name: 'Dachdeckerei Kowalski', line: tr('Hält dicht – wie unsere Abwehr (hoffentlich).', 'Watertight – like our defence (hopefully).'), trait: 'knauserig', boss: tr('Dachdecker Kowalski', 'Kowalski the roofer') },
+  { id: 'hoffmann', color: 0x2e7d3a, name: 'Getränke Hoffmann', line: tr('Die Kiste nach dem Spiel geht aufs Haus.', 'The crate after the match is on the house.'), trait: 'grosszuegig', boss: tr('Getränke-Hoffmann', 'Hoffmann from the drinks market') },
+  { id: 'enzo', color: 0x2f8f3f, name: 'Pizzeria Da Enzo', line: tr('Nach dem Auswärtssieg eine Familienpizza.', 'A family pizza after every away win.'), trait: 'treu', boss: 'Enzo' },
+  { id: 'blum', color: 0x2f6fb5, name: 'Sanitär Blum', line: tr('Repariert auch die Duschen im Vereinsheim. Irgendwann.', 'Also fixes the clubhouse showers. Eventually.'), trait: 'knauserig', boss: tr('Installateur Blum', 'Blum the plumber') },
+  { id: 'muckibude', color: 0x1c1c1c, name: 'Fitnessstudio Muckibude', line: tr('Für die Bauchmuskeln, die man unter dem Trikot nicht sieht.', 'For the abs nobody can see under the shirt.'), trait: 'ehrgeizig', boss: tr('Studioleiter Dragan', 'Dragan the gym manager') },
+  { id: 'kalle', color: 0xe8742a, name: 'Kiosk Kalle', line: tr('Lotto, Zigaretten, Zeitung, Spielberichte.', 'Lottery, cigarettes, papers, match reports.'), trait: 'treu', boss: 'Kalle' },
+  { id: 'ruhe', color: 0x3a3a44, name: 'Bestattungen Ruhe', line: tr('Wir holen jeden ab. Auch nach dem Abstieg.', 'We collect everyone. Even after relegation.'), trait: 'knauserig', boss: tr('Herr Ruhe', 'Mr Ruhe') },
+  { id: 'funke', color: 0xf0c020, name: 'Elektro Funke', line: tr('Macht das Flutlicht an. Wenn es eins gäbe.', 'Turns the floodlights on. If there were any.'), trait: 'treu', boss: tr('Elektromeister Funke', 'Funke the electrician') },
+  { id: 'wolf', color: 0xb0302c, name: 'Metzgerei Wurst-Wolf', line: tr('Bratwurst zum Sonderpreis am Grill.', 'Discount bratwurst at the barbecue.'), trait: 'grosszuegig', boss: tr('Metzger Wolf', 'Wolf the butcher') },
+  { id: 'klein', color: 0x1d3a6b, name: 'Versicherungsbüro Klein', line: tr('Versichert alles. Außer Luftlöcher.', 'Insures everything. Except air shots.'), trait: 'ehrgeizig', boss: tr('Versicherungsmakler Klein', 'Klein the insurance broker') },
+  { id: 'blitzblank', color: 0x4fa3e0, name: 'Autowaschanlage Blitzblank', line: tr('Die Trikots waschen wir nicht. Die Autos schon.', "We don't wash the kits. The cars, yes."), trait: 'treu', boss: tr('Waschanlagen-Uwe', 'Uwe from the car wash') },
+  { id: 'schrauber', color: 0x5a5a58, name: 'Kfz-Werkstatt Schrauber', line: tr('TÜV-Termin nach dem Abpfiff.', 'MOT appointment right after the final whistle.'), trait: 'knauserig', boss: tr('Meister Schrauber', 'Schrauber the mechanic') },
+  { id: 'lindenwirt', color: 0x6b4f2a, name: 'Gasthof Zur Linde', line: tr('Das Schnitzel nach dem Spiel ist größer als der Teller.', 'The post-match schnitzel is bigger than the plate.'), trait: 'grosszuegig', boss: tr('Lindenwirtin Gerda', 'Gerda from the Linde inn') },
+  { id: 'fliesen', color: 0x8a9096, name: 'Fliesen Fugenfrei', line: tr('Sauber verlegt – wie unsere Viererkette.', 'Laid neatly – like our back four.'), trait: 'knauserig', boss: tr('Fliesenleger Norbert', 'Norbert the tiler') },
+  { id: 'optik', color: 0x2a2a6b, name: 'Optik Scharfblick', line: tr('Gratis Sehtest für den Schiri.', 'Free eye test for the referee.'), trait: 'ehrgeizig', boss: tr('Optikerin Frau Weiß', 'Mrs Weiß the optician') },
+  { id: 'eisdiele', color: 0xf09ab0, name: 'Eiscafé Venezia', line: tr('Nach jedem Heimsieg eine Kugel. Nach dem Aufstieg drei.', 'One scoop after every home win. Three after promotion.'), trait: 'grosszuegig', boss: 'Signora Lucia' },
+  { id: 'handy', color: 0x6b4f8c, name: 'Handy-Doktor Çelik', line: tr('Display gesprungen? Grätsche vermasselt? Beides reparierbar.', 'Cracked screen? Botched a slide tackle? Both fixable.'), trait: 'ehrgeizig', boss: tr('Handy-Doktor Emre', 'Emre the phone doctor') },
+  { id: 'gruenzeug', color: 0x5cc46a, name: 'Gartenbau Grünzeug', line: tr('Mäht den Platz. Manchmal sogar vor dem Spiel.', 'Mows the pitch. Sometimes even before kick-off.'), trait: 'treu', boss: tr('Gärtner Hansi', 'Hansi the gardener') },
+  { id: 'taxi', color: 0xe8c020, name: 'Taxi Tempo', line: tr('Heimweg nach der Weihnachtsfeier zum Vereinstarif.', 'Home from the Christmas party at the club rate.'), trait: 'treu', boss: tr('Taxi-Kemal', 'Kemal the cabbie') },
+  { id: 'nagelstudio', color: 0xd06aa0, name: 'Nagelstudio Glamour', line: tr('Die Torwarthandschuhe halten jetzt noch besser.', 'Now the keeper gloves grip even better.'), trait: 'grosszuegig', boss: tr('Studio-Chefin Mandy', 'Mandy from the nail bar') },
+  { id: 'baustoffe', color: 0xc8352f, name: 'Baustoffe Brockmann', line: tr('Sand für den Strafraum liefern wir kostenlos.', 'Free sand for the penalty area.'), trait: 'ehrgeizig', boss: tr('Baustoffhändler Brockmann', 'Brockmann the builders merchant') },
+  { id: 'hofladen', color: 0x9a6b4f, name: 'Hofladen Kuhglück', line: tr('Frische Milch für die Halbzeit. Bitte nicht mischen.', 'Fresh milk at half-time. Please do not mix.'), trait: 'treu', boss: tr('Bäuerin Anke', 'Anke the farmer') },
+  { id: 'tattoo', color: 0x1c1c1c, name: 'Tattoo Nadelwerk', line: tr('Meisterschaft? Wir stechen das Datum.', 'Champions? We will ink the date.'), trait: 'ehrgeizig', boss: tr('Tätowierer Rocco', 'Rocco the tattooist') },
+  { id: 'reisebuero', color: 0x2f9fd0, name: 'Reisebüro Fernweh', line: tr('Die Abschlussfahrt planen wir. Mallorca oder Harz.', 'We plan the end-of-season trip. Majorca or the Harz.'), trait: 'grosszuegig', boss: tr('Reiseberaterin Petra', 'Petra the travel agent') },
+  { id: 'imbiss', color: 0xe0b020, name: 'Imbiss Currywurst-Kalle', line: tr('Pommes Schranke für jeden Torschützen.', 'Chips with mayo and ketchup for every scorer.'), trait: 'grosszuegig', boss: tr('Imbiss-Kalle', 'Kalle from the chip shop') },
+  { id: 'solar', color: 0x2e6b3a, name: 'Solar Sonnenschein', line: tr('Irgendwann bekommt das Vereinsheim Solarzellen. Versprochen.', 'Someday the clubhouse gets solar panels. Promise.'), trait: 'ehrgeizig', boss: tr('Energieberater Dr. Sonne', 'Dr Sonne the energy adviser') },
+  { id: 'zahnarzt', color: 0x8ad0e8, name: 'Zahnarztpraxis Dr. Biss', line: tr('Für die Zahnlücke nach dem Kopfballduell.', 'For the gap after that aerial duel.'), trait: 'knauserig', boss: tr('Dr. Biss', 'Dr Biss') },
+  { id: 'schluessel', color: 0x8c2f2f, name: 'Schlüsseldienst Sesam', line: tr('Wieder den Kabinenschlüssel vergessen? Wir kommen.', 'Forgot the dressing-room key again? We are on our way.'), trait: 'knauserig', boss: tr('Schlüssel-Heinz', 'Heinz the locksmith') },
+  { id: 'fahrrad', color: 0x3a8ad0, name: 'Fahrradladen Speiche', line: tr('Für alle, die ohne Führerschein zum Training kommen.', 'For everyone who cycles to training without a licence.'), trait: 'treu', boss: tr('Fahrradhändlerin Ines', 'Ines from the bike shop') },
+  { id: 'bestpreis', color: 0xe8742a, name: 'Getränkemarkt Bestpreis', line: tr('Zwei Kisten zum Preis von anderthalb.', 'Two crates for the price of one and a half.'), trait: 'knauserig', boss: tr('Marktleiter Jürgen', 'Jürgen the store manager') },
+  { id: 'moebel', color: 0x4a3222, name: 'Möbel Gemütlich', line: tr('Neue Bänke für die Auswechselspieler. Gepolstert.', 'New benches for the subs. Cushioned.'), trait: 'grosszuegig', boss: tr('Möbelhändler Gemütlich', 'Gemütlich the furniture dealer') },
+  { id: 'hundesalon', color: 0xb08850, name: 'Hundesalon Wuff', line: tr('Auch der Vereinshund hat ein Recht auf eine gute Frisur.', 'The club dog deserves a good haircut too.'), trait: 'treu', boss: tr('Hundefriseurin Babsi', 'Babsi the dog groomer') },
+  { id: 'computer', color: 0x1d2b44, name: 'PC-Service Bytefix', line: tr('Richtet die Vereins-Homepage ein. Seit 2019.', 'Setting up the club website. Since 2019.'), trait: 'ehrgeizig', boss: tr('IT-Kevin', 'Kevin from IT') },
+  { id: 'kuechen', color: 0xf2efe6, name: 'Küchenstudio Kochlöffel', line: tr('Die Vereinsheim-Küche wird endlich neu. Irgendwann.', 'The clubhouse kitchen is finally getting redone. Eventually.'), trait: 'knauserig', boss: tr('Küchenplaner Siggi', 'Siggi the kitchen planner') },
 ];
 export const sponsorDef = (id) => SPONSORS.find((s) => s.id === id);
 // Chef und Werbespruch immer in der aktuellen Sprache, auch bei gespeicherten Verträgen.
 export const bossOf = (s) => sponsorDef(s?.id)?.boss ?? s?.boss ?? '';
 export const lineOf = (s) => sponsorDef(s?.id)?.line ?? s?.line ?? '';
+// Markenfarbe für den Trikotaufdruck; unbekannte Sponsoren bekommen eine aus dem Namen.
+export function sponsorColor(s) {
+  const known = sponsorDef(s?.id)?.color ?? s?.color;
+  if (known != null) return known;
+  let h = 0;
+  for (const ch of String(s?.name ?? '')) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return [0xc8352f, 0x2f6fb5, 0x2e7d3a, 0xe0a020, 0x6b4f8c, 0x1c1c1c][h % 6];
+}
+// Der Sponsor, der vorne auf dem Trikot steht (falls es einen gibt).
+export const shirtSponsor = (career) => career?.sponsors?.find((s) => s.slot === 'trikot') ?? null;
 
 export const SLOTS = tr(
   { trikot: 'Trikotsponsor', bande: 'Bandenpartner', ball: 'Spielballpate', aermel: 'Ärmelsponsor' },

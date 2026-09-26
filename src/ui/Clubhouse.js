@@ -1,4 +1,5 @@
 import { plural, tr } from '../core/i18n.js';
+import { kitPreviewURL } from '../render/kitPaint.js';
 import { awardLabel } from '../career/awards.js';
 import { relegationNeeded, relegationOf } from '../career/relegation.js';
 import { LEAGUES } from '../career/clubs.js';
@@ -28,7 +29,7 @@ import {
 import { acceptSponsor, bookTrip, FINES, KIT_COST, SLOTS, TRIP_COST } from '../career/finances.js';
 import { DESTINATIONS, tripChoose, tripStage, tripState, tripVerdict } from '../career/trip.js';
 import { build, canBuild, facilities, FACILITIES } from '../career/facilities.js';
-import { bossOf, goalProgress, goalText, lineOf, negotiate, relLabel, TRAITS as SPONSOR_TRAITS } from '../career/sponsors.js';
+import { bossOf, goalProgress, goalText, lineOf, negotiate, relLabel, shirtSponsor, sponsorColor, TRAITS as SPONSOR_TRAITS } from '../career/sponsors.js';
 import { inviteChance, inviteTrialist, isRawDiamond, MAX_STATIONS, runStation, startTraining, STATIONS, TRAINING_COST, trainingDone } from '../career/training.js';
 import { promoteProspect, roleName, STAFF_ROLES } from '../career/youth.js';
 import { eventView, moodLabel, moodText, resolveEvent, storyTag } from '../career/events.js';
@@ -792,13 +793,9 @@ export class Clubhouse {
     const editable = kitEditable(c);
     this.draft ??= { name: club.name, short: club.short, kit: { pattern: 'uni', second: 0xf2efe6, ...club.kit } };
     const d = this.draft;
-    const shirtCss = (k) => {
-      const a = hex(k.shirt);
-      const b = hex(k.second ?? k.shirt);
-      if (k.pattern === 'streifen') return `repeating-linear-gradient(90deg, ${a} 0 8px, ${b} 8px 16px)`;
-      if (k.pattern === 'ringel') return `repeating-linear-gradient(0deg, ${a} 0 8px, ${b} 8px 16px)`;
-      return a;
-    };
+    const mainSponsor = shirtSponsor(c);
+    const sponsorShown = mainSponsor ? { name: mainSponsor.name, color: sponsorColor(mainSponsor) } : null;
+    const shirtCss = (k) => `url(${kitPreviewURL(k, sponsorShown)}) center / 100% 100%`;
     const swatches = (part, label) => `
       <div class="swatch-row"><span>${label}</span>${KIT_COLORS.map(
         (col) => `<button class="swatch ${d.kit[part] === col ? 'on' : ''}" style="background:${hex(col)}" data-action="kitColor" data-value="${part}:${col}" ${editable ? '' : 'disabled'}></button>`,
@@ -829,6 +826,7 @@ export class Clubhouse {
           <div class="shorts" style="background:${hex(d.kit.shorts)}"></div>
           <div class="socks"><i style="background:${hex(d.kit.socks)}"></i><i style="background:${hex(d.kit.socks)}"></i></div>
           <b>${d.short}</b>
+          <small class="sponsor-note">${sponsorShown ? tr(`Auf der Brust: ${sponsorShown.name}`, `On the chest: ${sponsorShown.name}`) : tr('Noch kein Trikotsponsor', 'No shirt sponsor yet')}</small>
         </div>
         <div class="fields">
           <label>${tr('Vereinsname', 'Club name')} <input data-field="name" value="${d.name}" maxlength="32" ${editable ? '' : 'disabled'}></label>

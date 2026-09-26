@@ -597,7 +597,8 @@ export function rollWeekEvent(career) {
   }
   if (!candidates.length) return null;
   let r = rng.next() * candidates.reduce((s, c) => s + c.ev.weight, 0);
-  const chosen = candidates.find((c) => (r -= c.ev.weight) < 0) ?? candidates[0];
+  // In der Derbywoche geht es um nichts anderes (bisher konnte ein Zufallsereignis dazwischenfunken).
+  const chosen = (derbyThisWeek(career) && candidates.find((c) => c.id === 'derby_woche')) || candidates.find((c) => (r -= c.ev.weight) < 0) || candidates[0];
   const event = { id: chosen.id, ctx: chosen.ctx, text: chosen.ev.text(career, chosen.ctx), options: chosen.ev.options.map((o) => o.label), choice: null, result: null, story: STORY_STARTS[chosen.id] ? 'Neue Geschichte' : PERSONAL_EVENTS[chosen.id] ? 'Privat' : SAGA_EVENTS[chosen.id] ? 'Vereinsgeschichte' : null };
   career.week.event = event;
   career.eventLog.push({ id: chosen.id, season: career.season, round: career.round });

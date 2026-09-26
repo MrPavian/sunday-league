@@ -34,23 +34,3 @@ export function pixelTexture(canvas) {
   return tex;
 }
 
-// Trikotstoff: uni, Längsstreifen oder Ringel – als winzige Pixeltextur.
-const kitCache = new Map();
-export function kitMaterial(kit) {
-  if (!kit.pattern || kit.pattern === 'uni' || kit.second == null) return toon(kit.shirt);
-  const key = `${kit.pattern}:${kit.shirt}:${kit.second}`;
-  if (kitCache.has(key)) return kitCache.get(key);
-  const canvas = document.createElement('canvas');
-  canvas.width = 8;
-  canvas.height = 8;
-  const ctx = canvas.getContext('2d');
-  const css = (n) => `#${n.toString(16).padStart(6, '0')}`;
-  for (let i = 0; i < 8; i++) {
-    ctx.fillStyle = css(Math.floor(i / 2) % 2 ? kit.second : kit.shirt);
-    if (kit.pattern === 'streifen') ctx.fillRect(i, 0, 1, 8);
-    else ctx.fillRect(0, i, 8, 1);
-  }
-  const mat = toon(0xffffff, { map: pixelTexture(canvas) });
-  kitCache.set(key, mat);
-  return mat;
-}

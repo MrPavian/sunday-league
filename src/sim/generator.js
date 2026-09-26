@@ -3,7 +3,7 @@ import { clamp } from '../core/math.js';
 import { createRng } from '../core/rng.js';
 import { HIGHER_AMATEUR_CLUBS, LOWER_LEAGUES, PRO_CLUBS } from '../data/clubs.js';
 import { LEGEND_ARCHETYPES } from '../data/legends.js';
-import { FIRST_NAMES, HAIR_COLORS, LAST_NAMES, PROFESSIONS, SKIN_TONES } from '../data/names.js';
+import { FIRST_NAMES, HAIR_COLORS, LAST_NAMES, NAME_EDITIONS, PROFESSIONS, SKIN_TONES } from '../data/names.js';
 import { RANDOM_TRAIT_IDS } from '../data/traits.js';
 import { rollTier, tierById } from '../data/tiers.js';
 
@@ -41,7 +41,7 @@ const STORIES = {
 // Karrierejahre passen zum Alter: frühestens mit 18 bei den Herren.
 // Berufe passend zum Alter – kein 17-jähriger Frührentner. Ersetzt nur den
 // gezogenen Beruf, damit die Zufallsfolge (und damit der Pool) gleich bleibt.
-const MIN_AGE = { Frührentner: 38, 'Student (12. Semester)': 23, Zahnarzt: 26, Steuerberater: 26, Grundschullehrer: 25, Versicherungsmakler: 22 };
+const MIN_AGE = { Frührentner: 38, 'Student (12. Semester)': 23, Zahnarzt: 26, Steuerberater: 26, Grundschullehrer: 25, Versicherungsmakler: 22, Doktorand: 24, Pfarrer: 28, Immobilienmakler: 23, Winzer: 22, Kioskbesitzer: 24 };
 const YOUNG_JOBS = ['Schüler (Abi-Jahrgang)', 'Azubi Kfz-Mechatroniker', 'Azubi Elektriker', 'FSJ im Altenheim', 'Schüler'];
 
 export function fitProfession(job, age) {
@@ -86,7 +86,7 @@ function pickTraits(rng, dist) {
   return traits;
 }
 
-function generateLegend(rng, role) {
+function generateLegend(rng, role, names) {
   // Passender Archetyp zur gewünschten Position, sonst irgendeiner (außer Torwart).
   const fitting = LEGEND_ARCHETYPES.filter((a) => (role === 'gk' ? a.role === 'gk' : a.role !== 'gk'));
   const arch = rng.pick(fitting.length ? fitting : LEGEND_ARCHETYPES);
@@ -94,7 +94,7 @@ function generateLegend(rng, role) {
   const attrs = {};
   for (const k of ATTRS) attrs[k] = clamp(arch.attrs[k] + rng.gauss() * 0.02, 0.05, 0.98);
   return {
-    name: `${rng.pick(FIRST_NAMES)} ${rng.pick(LAST_NAMES)}`,
+    name: `${rng.pick(names.first)} ${rng.pick(names.last)}`,
     age,
     profession: rng.pick(['Privatier', 'Hat eine Fußballschule', 'Teilhaber im Autohaus', 'Gelegentlich TV-Experte']),
     tier: 'legende',
@@ -108,11 +108,11 @@ function generateLegend(rng, role) {
   };
 }
 
-export function generatePlayer(rng, { role = 'mid', tier = null, tierWeights = null } = {}) {
+export function generatePlayer(rng, { role = 'mid', tier = null, tierWeights = null, names = { first: FIRST_NAMES, last: LAST_NAMES, jobs: PROFESSIONS } } = {}) {
   const t = tier ? tierById(tier) : rollTier(rng, tierWeights);
   let player;
   if (t.id === 'legende') {
-    player = generateLegend(rng, role);
+    player = generateLegend(rng, role, names);
   } else {
     const age = rng.int(t.age[0], t.age[1]);
     const [lo, hi] = t.range;
@@ -127,9 +127,9 @@ export function generatePlayer(rng, { role = 'mid', tier = null, tierWeights = n
     }
     const stories = STORIES[t.id];
     player = {
-      name: `${rng.pick(FIRST_NAMES)} ${rng.pick(LAST_NAMES)}`,
+      name: `${rng.pick(names.first)} ${rng.pick(names.last)}`,
       age,
-      profession: fitProfession(rng.pick(PROFESSIONS), age),
+      profession: fitProfession(rng.pick(names.jobs), age),
       tier: t.id,
       position: role,
       backstory: stories ? rng.pick(stories)(careerFacts(rng, age)) : null,
@@ -174,7 +174,8 @@ const POSITION_ROLL = [
   ['fwd', 0.25],
 ];
 
-export function createPlayerPool({ seed = 1921, size = 25000 } = {}) {
+export function createPlayerPool({ seed = 1921, size = 25000, edition = 2 } = {}) {
+  const names = NAME_EDITIONS[edition] ?? NAME_EDITIONS[2];
   const cache = new Map();
   const get = (index) => {
     if (cache.has(index)) return cache.get(index);
@@ -187,7 +188,7 @@ export function createPlayerPool({ seed = 1921, size = 25000 } = {}) {
         break;
       }
     }
-    const p = { ...generatePlayer(rng, { role }), id: `pool-${index}`, poolIndex: index };
+    const p = { ...generatePlayer(rng, { role, names }), id: `pool-${index}`, poolIndex: index };
     cache.set(index, p);
     return p;
   };

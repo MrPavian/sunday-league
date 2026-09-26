@@ -28,6 +28,9 @@ import { absenceFactor, advanceArcs, applyForm, autoResolve, resultMood, rollWee
 import { developYouth, expireYouth, initYouth, retirements, youthIntake } from './youth.js';
 import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFinances, weeklyFinances } from './finances.js';
 
+import { NAME_EDITION } from '../data/names.js';
+import { shirtSponsor, sponsorColor, SPONSORS } from './sponsors.js';
+
 export const SAVE_VERSION = 1;
 export const POOL_SEED = 1921;
 export const SQUAD_SHAPES = {
@@ -43,11 +46,19 @@ export const RECRUIT_BASE = { ok: 0.85, gut: 0.65, stark: 0.45, dorfstar: 0.3, s
 const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 
 let poolCache = null;
-export const getPool = () => (poolCache ??= createPlayerPool({ seed: POOL_SEED }));
+let poolEdition = NAME_EDITION;
+export const getPool = () => (poolCache ??= createPlayerPool({ seed: POOL_SEED, edition: poolEdition }));
+// Alte Spielstände würfeln ihre Spieler mit der ersten Namensauflage.
+export function setNameEdition(edition = 1) {
+  if (edition === poolEdition) return;
+  poolEdition = edition;
+  poolCache = null;
+}
 // Eigene Spieler (du selbst, deine Kinder) liegen im Spielstand statt im Pool.
 export const CUSTOM_BASE = 900000;
 const CUSTOM = new Map();
 export function registerCustomPlayers(career) {
+  setNameEdition(career.names ?? 1);
   CUSTOM.clear();
   for (const [k, p] of Object.entries(career.custom ?? {})) CUSTOM.set(Number(k), p);
 }
@@ -136,6 +147,7 @@ export function squadPicker(rng, used) {
 }
 
 export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null } = {}) {
+  setNameEdition(NAME_EDITION);
   const rng = createRng(seed);
   const league = LEAGUES[1];
   const pick = squadPicker(rng, new Set());
@@ -150,6 +162,7 @@ export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null 
 
   const career = {
     version: SAVE_VERSION,
+    names: NAME_EDITION,
     seed,
     level: 1,
     league: league.name,
@@ -487,6 +500,12 @@ export function addRumor(career, rng, source) {
 // Alte Spielstände ohne Gerüchteküche nachrüsten.
 export function migrateCareer(career) {
   registerCustomPlayers(career);
+  // Trikotmuster der anderen Vereine nachrüsten (alte Stände kannten nur uni).
+  const defs = Object.values(LEAGUES).flatMap((l) => l.clubs);
+  for (const club of career.clubs ?? []) {
+    const def = !club.human && defs.find((d) => d.id === club.id);
+    if (def && club.kit && club.kit.pattern === undefined && def.kit.pattern) club.kit = { ...club.kit, pattern: def.kit.pattern, second: def.kit.second };
+  }
   career.level ??= 1;
   career.mood ??= 0;
   career.flags ??= {};
@@ -593,7 +612,10 @@ export function releasePlayer(career, idx) {
 // --- Verein & Trikots -------------------------------------------------------------
 
 export const KIT_COLORS = [0xf2efe6, 0x1c1c1c, 0xc8352f, 0x8c2f2f, 0xe8742a, 0xe0b020, 0x2e6b3a, 0x5cc46a, 0x2f6fb5, 0x1d2b44, 0x4fa3e0, 0x6b4f8c, 0x9a6b4f, 0x8a9096];
-export const KIT_PATTERNS = tr({ uni: 'Uni', streifen: 'Längsstreifen', ringel: 'Ringel' }, { uni: 'Plain', streifen: 'Stripes', ringel: 'Hoops' });
+export const KIT_PATTERNS = tr(
+  { uni: 'Uni', streifen: 'Längsstreifen', nadel: 'Nadelstreifen', ringel: 'Ringel', brustring: 'Brustring', haelften: 'Halb/halb', schaerpe: 'Schärpe', karo: 'Karo', chevron: 'Winkel', seiten: 'Seitenbahnen', schulter: 'Schulterpasse' },
+  { uni: 'Plain', streifen: 'Stripes', nadel: 'Pinstripes', ringel: 'Hoops', brustring: 'Chest band', haelften: 'Halves', schaerpe: 'Sash', karo: 'Checks', chevron: 'Chevron', seiten: 'Side panels', schulter: 'Shoulder yoke' },
+);
 
 // Trikots werden vor Saisonbeginn bestellt – danach ist die Saison gelaufen.
 export const kitEditable = (career) => career.round === 0;
@@ -681,7 +703,20 @@ export function teamForMatch(career, club, format, availability, rng) {
   });
   applyPubToTeam(career, club, players); // Bierdeckel-Taktik bzw. Tipp vom Wirt
   if (club.human) applyChemistry(career, lineup.filter((idx) => !helpers.includes(idx)), players); // Kumpels & Rivalen
-  return { name: club.name, short: club.short, kit: club.kit, keeperKit: club.keeperKit, players, helpers };
+  return { name: club.name, short: club.short, kit: club.kit, keeperKit: club.keeperKit, crest: club.crest ?? null, sponsor: clubSponsor(career, club), players, helpers };
+}
+
+// Wer steht vorne auf dem Trikot? Beim eigenen Verein der Trikotsponsor, bei den
+// anderen ein fester Betrieb aus dem Ort (manche haben keinen).
+export function clubSponsor(career, club) {
+  const mine = shirtSponsor(career);
+  if (club.human) return mine ? { name: mine.name, color: sponsorColor(mine) } : null;
+  let h = 7;
+  for (const ch of String(club.id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  if (h % 6 === 0) return null;
+  const pool = SPONSORS.filter((s) => s.id !== mine?.id);
+  const s = pool[h % pool.length];
+  return { name: s.name, color: s.color };
 }
 
 // Gegner: ein, zwei Leute fehlen immer.
@@ -874,8 +909,14 @@ export function loadCareer(storage = globalThis.localStorage, slot = activeSlot(
 // Kurzinfo je Platz für die Übersicht: Verein, Saison, Spieltag, gespeichert am.
 export function slotSummaries(storage = globalThis.localStorage) {
   return SLOTS.map((slot) => {
-    const c = loadCareer(storage, slot);
-    if (!c) return { slot, empty: true };
+    // Nur lesen, nicht laden: Laden würde den Spielerpool auf diesen Stand umstellen.
+    let c = null;
+    try {
+      c = JSON.parse(storage?.getItem(slotKey(slot)) ?? 'null');
+    } catch {
+      c = null;
+    }
+    if (!c || c.version !== SAVE_VERSION || !Array.isArray(c.clubs)) return { slot, empty: true };
     const club = c.clubs.find((x) => x.human);
     return { slot, club: club?.name ?? '?', season: c.season, round: Math.min(c.round + 1, c.fixtures.length), rounds: c.fixtures.length, coach: c.coach ? `${c.coach.first ?? ''} ${c.coach.last ?? ''}`.trim() : '', savedAt: c.savedAt ?? null };
   });

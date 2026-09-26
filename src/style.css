@@ -485,11 +485,12 @@ kbd {
 .club-form { display: grid; grid-template-columns: 140px 1fr; gap: 16px; }
 @media (max-width: 600px) { .club-form { grid-template-columns: 1fr; } }
 .kit-preview { display: flex; flex-direction: column; align-items: center; gap: 2px; padding-top: 6px; }
-.kit-preview .shirt { width: 90px; height: 80px; border: 3px solid #000; clip-path: polygon(20% 0, 80% 0, 100% 22%, 86% 36%, 80% 30%, 80% 100%, 20% 100%, 20% 30%, 14% 36%, 0 22%); }
+.kit-preview .shirt { width: 90px; height: 80px; border: 3px solid #000; image-rendering: pixelated; clip-path: polygon(20% 0, 80% 0, 100% 22%, 86% 36%, 80% 30%, 80% 100%, 20% 100%, 20% 30%, 14% 36%, 0 22%); }
 .kit-preview .shorts { width: 56px; height: 26px; border: 3px solid #000; }
 .kit-preview .socks { display: flex; gap: 14px; }
 .kit-preview .socks i { width: 14px; height: 30px; border: 3px solid #000; }
 .kit-preview b { margin-top: 6px; font-size: 18px; }
+.kit-preview .sponsor-note { max-width: 130px; text-align: center; font-size: 11px; opacity: 0.8; }
 .club-form .fields { display: grid; gap: 8px; }
 .club-form label { display: grid; gap: 2px; font-size: 13px; }
 .club-form input { font: inherit; font-size: 16px; color: var(--ink); background: #1d2126; border: 2px solid #000; padding: 4px 8px; }

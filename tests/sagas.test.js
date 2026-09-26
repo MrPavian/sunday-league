@@ -37,12 +37,13 @@ describe('long-term stories', () => {
     const d = createCareer({ seed: 52 });
     playSeason(d);
     d.round = 1;
-    const home2 = humanClub(d).venue;
+    // Auf- oder Abstieg kann den Platz ohnehin wechseln – entscheidend ist, dass keiner verloren ging.
     force(d, 'platz_verkauf', 0);
     d.saga.platz.signatures = 9999;
     d.round = d.fixtures.length;
     nextSeason(d);
-    expect(humanClub(d).venue).toBe(home2);
+    expect(Object.keys(d.saga.homeLost ?? {})).toHaveLength(0);
+    expect(d.saga.chronicle.some((e) => e.text.includes('gerettet'))).toBe(true);
   });
 
   it('the jubilee comes with a festschrift built from the real history', () => {
