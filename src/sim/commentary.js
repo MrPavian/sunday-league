@@ -88,6 +88,7 @@ export function createCommentator(m, seed = 1) {
       started = true;
       const where = m.pitch?.name ? tr(` – ${m.pitch.name}`, ` – ${m.pitch.name}`) : '';
       add(tr(`Anpfiff! ${m.teams[0].name} gegen ${m.teams[1].name}${where}.`, `Kick-off! ${m.teams[0].name} v ${m.teams[1].name}${where}.`), 'whistle');
+      if (m.surprise) add(m.surprise.text, 'info');
     }
     for (const e of events) {
       switch (e.type) {

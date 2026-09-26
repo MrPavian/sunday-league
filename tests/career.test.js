@@ -242,7 +242,7 @@ describe('seasons', () => {
     const prepared = prepareMatch(c, humanFixture(c), { human: true, duration: 5 });
     expect(prepared.match.pitch.format).toBe(7);
     expect(prepared.match.referee).not.toBeNull();
-    expect(prepared.match.players.filter((p) => p.team === 0)).toHaveLength(7);
+    expect(prepared.match.players.filter((p) => p.team === 0).length + (prepared.match.lateArrival ? 1 : 0)).toBe(7); // einer steckt evtl. im Stau
   });
 
   it('last place in Kreisklasse C goes back down, mid-table stays', async () => {

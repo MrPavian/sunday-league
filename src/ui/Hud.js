@@ -56,7 +56,7 @@ export class Hud {
 
   init(match) {
     const r = match.referee;
-    this.introPending = match.derby ? `DERBY! ${r ? `${tr('Schiri', 'Referee')}: ${r.name}` : tr('Heute wird es heiß.', 'It is going to get heated.')}` : r ? `${tr('Schiri heute', 'Referee today')}: ${r.name} (${REF_TRAITS[r.trait].name})` : null;
+    this.introPending = match.surprise ? match.surprise.text : match.derby ? `DERBY! ${r ? `${tr('Schiri', 'Referee')}: ${r.name}` : tr('Heute wird es heiß.', 'It is going to get heated.')}` : r ? `${tr('Schiri heute', 'Referee today')}: ${r.name} (${REF_TRAITS[r.trait].name})` : null;
     match.teams.forEach((t, i) => {
       const el = this.root.querySelector(`.team[data-t="${i}"]`);
       const crest = t.crest ?? crestOf({ id: t.name, kit: t.clubKits?.kit ?? t.kit });
@@ -148,7 +148,8 @@ export class Hud {
         this.lastSnub = match.time;
         const o = findAnyPlayer(match, e.otherId);
         this.toast(tr(`${first} übersieht ${o?.name.split(' ')[0]} – schon wieder.`, `${first} ignores ${o?.name.split(' ')[0]} – again.`), 1.6, 1);
-      } else if (e.type === 'whiff') this.toast(tr(`Luftloch von ${first}!`, `Air shot from ${first}!`), 1.4);
+      } else if (e.type === 'late_arrival') this.toast(tr(`${first} ist endlich da – der Stau hat sich aufgelöst.`, `${first} has finally arrived – the traffic cleared.`), 2.2, 2);
+      else if (e.type === 'whiff') this.toast(tr(`Luftloch von ${first}!`, `Air shot from ${first}!`), 1.4);
       else if (e.type === 'foul') {
         const victim = findAnyPlayer(match, e.victimId);
         this.toast(tr(`${e.kind === 'hold' ? 'Festhalten' : 'Foul'} von ${first}! Freistoß für ${short(victim.team)}`, `${e.kind === 'hold' ? 'Holding' : 'Foul'} by ${first}! Free kick to ${short(victim.team)}`), 1.8, 2);

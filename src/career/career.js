@@ -29,6 +29,7 @@ import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFin
 
 import { NAME_EDITION } from '../data/names.js';
 import { weeklyBanter } from './banter.js';
+import { matchdaySurprise } from './matchday.js';
 import { relsMap } from '../sim/bonds.js';
 import { memoryAfterMatch, placeFormers, preMatchMemories, rememberArrival, rememberDeparture, tagStories } from './memory.js';
 import { defaultCrest } from '../ui/crest.js';
@@ -790,6 +791,8 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   const match = createMatch({ seed: rng.int(1, 1e9), pitch, teams, human, duration, incidents: true });
   // Derby: hitziger, mehr Karten – außer man hat sich aufs faire Grillen geeinigt.
   match.derby = isDerbyFixture(career, fixture) && !career.week?.derbyFair;
+  // Eigenes Spiel: Manchmal kommt am Spieltag etwas dazwischen.
+  if (home.human || away.human) matchdaySurprise(match, humanIsAway || home.human ? 0 : 1, createRng(hashSeed(career.seed, career.season, career.round, 77)));
   return { match, humanIsAway, pitch, home, away, helpers: [...teamHome.helpers, ...teamAway.helpers] };
 }
 

@@ -254,3 +254,25 @@ describe('bonds on the pitch', async () => {
     if (pa && pb) expect(bondOf(m, pa, pb)).toBe('rivalen');
   });
 });
+
+describe('matchday surprises', async () => {
+  const { matchdaySurprise } = await import('../src/career/matchday.js');
+  const { createRng } = await import('../src/core/rng.js');
+
+  it('the man stuck in traffic joins after a third of the match', () => {
+    let tested = false;
+    for (let seed = 1; seed < 80 && !tested; seed++) {
+      const m = createMatch({ seed: 4, pitch: PITCHES.rasenplatz, human: false, duration: 60 });
+      matchdaySurprise(m, 0, createRng(seed), 1);
+      if (m.surprise?.id !== 'stau') continue;
+      const before = m.players.filter((p) => p.team === 0).length;
+      while (m.time < 25 && m.phase !== 'ended') {
+        stepMatch(m, undefined, DT);
+        m.events.length = 0;
+      }
+      expect(m.players.filter((p) => p.team === 0).length).toBe(before + 1);
+      tested = true;
+    }
+    expect(tested).toBe(true);
+  });
+});

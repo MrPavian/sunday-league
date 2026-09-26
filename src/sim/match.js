@@ -168,6 +168,14 @@ function step(m, input, dt) {
     return;
   }
 
+  // Der Mann aus dem Stau ist da.
+  if (m.lateArrival && m.time >= m.lateArrival.at) {
+    const p = m.lateArrival.player;
+    m.lateArrival = null;
+    Object.assign(p, { pos: { x: 0, z: m.pitch.halfWidth - 0.6 }, vel: { x: 0, z: 0 }, state: 'normal' });
+    m.players.push(p);
+    m.events.push({ type: 'late_arrival', playerId: p.id, team: p.team });
+  }
   if (checkIncident(m, dt)) return;
   if (input.switchPlayer) switchToNearest(m);
   updateTactics(m, dt);
