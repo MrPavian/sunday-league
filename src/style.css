@@ -430,6 +430,7 @@ kbd {
 .bubble.me b { color: var(--accent); }
 .bubble.press { align-self: center; max-width: 92%; background: #efe8d6; color: #1b1b1b; font-family: Georgia, serif; font-size: 13px; }
 .bubble.press time { color: #1b1b1b; }
+.bubble.press.notice { background: #d9d3c2; font-family: inherit; }
 .bubble.alum { background: #3b3a2e; }
 .bubble.alum b small { font-weight: 400; opacity: 0.75; }
 .bubble.tip { align-self: stretch; max-width: none; padding-bottom: 6px; background: #28384a; border-color: #6fb6ff; }
@@ -976,3 +977,17 @@ body.touch .coach-play { background: #2f6f3a; }
 .review button { margin-top: 10px; text-shadow: none; }
 .museum details { margin: 4px 0; }
 .museum summary { cursor: pointer; }
+
+/* Handy: nichts darf die Seite breiter machen als den Bildschirm. Grid-/Flex-Kinder
+   dürfen schrumpfen, breite Tabellen scrollen in sich statt die Seite zu dehnen. */
+.club-panel, .club-panel .main, .club-grid > * { min-width: 0; }
+.club-panel header { flex-wrap: wrap; }
+.club-panel nav { display: flex; flex-wrap: wrap; gap: 6px; }
+@media (max-width: 720px) {
+  #club { padding: 10px; }
+  .club-panel h2 { font-size: 22px; }
+  .club-panel header > button, .club-panel header .actions { margin-left: auto; }
+  .club-panel nav button { padding: 6px 9px; font-size: 13px; }
+  .club-panel table { display: block; max-width: 100%; overflow-x: auto; }
+  .club-panel th, .club-panel td { padding-left: 4px; padding-right: 4px; }
+}

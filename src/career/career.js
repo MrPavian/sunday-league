@@ -393,7 +393,7 @@ export function startWeek(career) {
   };
   const fixture = humanFixture(career);
   const opponent = clubById(career, fixture.home === club.id ? fixture.away : fixture.home);
-  chat.push({ from: null, text: tr(`Sonntag gegen ${opponent.name}${fixture.home === club.id ? ' bei uns' : ' auswärts'}. Wer kann?`, `Sunday against ${opponent.name}${fixture.home === club.id ? ' at ours' : ' away'}. Who can make it?`), time: time() });
+  chat.push({ from: null, text: tr(`Sonntag gegen ${opponent.name}${fixture.home === club.id ? ' bei uns' : ' auswärts'}. Wer kann?`, `Sunday against ${opponent.name}${fixture.home === club.id ? ' at ours' : ' away'}. Who can make it?`), time: time(), me: true });
 
   // Nicht zwei Mal derselbe Satz in einer Woche (und möglichst nicht wie letzte Woche) –
   // so einfallslos ist keine Gruppe.

@@ -709,7 +709,9 @@ export class Clubhouse {
     const bubbles = ordered
       .map((msg) => {
         if (msg.tip) return `<div class="bubble tip"><b>${tr('Tipp', 'Tip')}</b>${msg.text}<button class="link" data-action="tipsoff">${tr('Keine Tipps mehr', 'No more tips')}</button></div>`;
-        if (msg.press) return `<div class="bubble press">${msg.text}<time>${timeLabel(msg.time)}</time></div>`;
+        // Ohne Absender: nur die eigene Frage in die Runde ist „Du", der Rest ist ein Aushang.
+        const mine = msg.from === null && (msg.me || /Wer kann\?$|Who can make it\?$/.test(msg.text));
+        if (msg.press || (msg.from === null && !mine)) return `<div class="bubble press${msg.press ? '' : ' notice'}">${msg.text}<time>${timeLabel(msg.time)}</time></div>`;
         if (msg.from === null) return `<div class="bubble me"><b>${tr('Du (Trainer)', 'You (manager)')}</b>${msg.text}<time>${timeLabel(msg.time)}</time></div>`;
         const p = this.p(msg.from);
         if (msg.alum) return `<div class="bubble alum"><b>${p.name} <small>(${typeof msg.alum === 'string' ? roleName(msg.alum) : tr('Ehemaliger', 'former player')}, ${tr('am Zaun', 'at the fence')})</small></b>${msg.text}<time>${timeLabel(msg.time)}</time></div>`;
@@ -722,7 +724,7 @@ export class Clubhouse {
     const view = ev ? eventView(c, ev) : null;
     const eventCard = ev
       ? `<div class="event-card">
-          <p class="label">${ev.story ? `${tr('Geschichte', 'Story')} · ${storyTag(ev.story)}` : tr('Diese Woche im Verein', 'This week at the club')}</p>
+          <p class="label">${ev.story === 'Vereinsleben' ? storyTag(ev.story) : ev.story ? `${tr('Geschichte', 'Story')} · ${storyTag(ev.story)}` : tr('Diese Woche im Verein', 'This week at the club')}</p>
           <p>${view.text}</p>
           ${ev.choice !== null
             ? `<p class="reply ok">➜ ${view.options[ev.choice] ?? ''}: ${ev.result ?? ''}</p>${effectChips(ev.effects)}`

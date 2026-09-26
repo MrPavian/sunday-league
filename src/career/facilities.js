@@ -97,6 +97,7 @@ export function weeklyFacilities(c) {
       c.week?.chat.push({ from: null, text: tr(`Fertig: ${def.name}! ${def.done}`, `Finished: ${def.name}! ${def.done}`), time: 'Fr 18:00' });
       adjustMood(c, 0.05);
       f.building = null;
+      f.note = null; // „Die Handwerker kommen …" ist erledigt
     }
   }
   const upkeep = Object.keys(f.built).reduce((s, id) => s + (FACILITIES[id]?.upkeep ?? 0), 0);
