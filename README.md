@@ -86,7 +86,8 @@ die Komik entsteht aus dem Alltag.
 - **Faire Torhüter-Regeln**: Hält der Keeper den Ball, gibt es eine Schutzzone – niemand lauert beim Abwurf
 - **Ballführung mit Gefühl**: Der Ball bleibt am Fuß, wer ihn will, muss stochern oder grätschen
 - **Standards selbst gestalten**: Freistoß mit Mauer und eigener Richtung, Ecken kurz, an den ersten oder
-  den langen Pfosten, **Elfmeterschießen** im Turnier und in der Relegation
+  den langen Pfosten, **Elfmeter** nach Fouls im Strafraum (der Torwart muss raten) und **Elfmeterschießen** im
+  Turnier und in der Relegation
 - **Schwierigkeitsgrad** (locker, normal, Kreisliga-hart) und optionaler Auto-Wechsel in der Abwehr
 - **Echtes Passspiel**: Mitspieler laufen dem Ball entgegen, rücken bei Ballbesitz auf und sichern hinten ab
 - **Torhüter mit Reaktionszeit**: Platzierte Schüsse sind oft drin, im Eins gegen eins kommt der Keeper raus
@@ -121,7 +122,11 @@ die Komik entsteht aus dem Alltag.
 - **Kreisblatt-Sonderheft**: Am Saisonende der Rückblick mit Schlagzeile, Torjäger, Spieler der Saison, höchstem Sieg,
   bitterster Pleite und dem Aufreger des Jahres – archiviert im Museum und als Bild zum Teilen.
 - **Einsteiger-Tipps**: Jedes System wird einmal kurz erklärt, genau in der Woche, in der es zum ersten Mal auftaucht.
-- **Kasse & Strafenkatalog**: Luftloch 1 €, Eigentor eine Runde für alle
+- **Vereinsleben**: Jahreshauptversammlung mit Beitragsbeschluss, Förderverein, Kassenprüfung (ist der Kassenwart
+  ehrlich?), Nachbarn und Ordnungsamt, Flohmarkt, Trainingslager und Weihnachtsfeier – mit festen Terminen im
+  Vereinskalender und Folgen, die Woche für Woche mitlaufen
+- **Kasse & Strafenkatalog**: Luftloch 1 €, Eigentor eine Runde für alle. Ab der Kreisklasse kosten Spielbetrieb,
+  Fahrgeld für gute Leute und Auswärtsfahrten – wer oben mitspielen will, muss rechnen
 - **Sponsoren mit Eigenarten**: 40 Betriebe aus dem Ort, nachverhandeln, bei Laune halten, verlängern – oder verärgern.
   Der Trikotsponsor steht auf der Brust.
 - **Berufe mit Boni**: über 100 Berufe. Der Postbote hat mehr Puste, der Dachdecker gewinnt Kopfbälle, der Mann vom
@@ -231,8 +236,10 @@ Auf englischen Tastaturen liegt „Stochern“ auf **Z** (gleiche Taste).
 
 ```bash
 npm run dev      # Entwicklungsserver mit Hot Reload
-npm test         # 191 Tests (Simulation und Karriere)
-npm run longrun -- 8  # acht Saisons am Stück durchspielen und auf Auffälligkeiten prüfen
+npm test         # 198 Tests (Simulation und Karriere)
+npm run longrun -- 8        # acht Saisons am Stück durchspielen und auf Auffälligkeiten prüfen
+npm run longrun -- 10 77 --bot  # dito als aktiver Bot-Manager, mit Kassen-Aufschlüsselung je Liga
+node scripts/engine.mjs 30 240  # Match-Engine vermessen: Tore, Schüsse, Ecken, Elfer … je Platz
 npm run build    # Produktions-Build nach dist/
 npm run preview  # Build lokal ansehen
 ```
