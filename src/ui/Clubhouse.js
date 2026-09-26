@@ -1,6 +1,7 @@
 import { plural, tr } from '../core/i18n.js';
 import { kitPreviewURL } from '../render/kitPaint.js';
 import { effectChips } from '../career/consequences.js';
+import { museum } from '../career/museum.js';
 import { STYLES as PLAY_STYLES, systemsFor } from '../sim/tactics.js';
 import { jobFits, styleFit } from '../sim/fit.js';
 import { jobPerk } from '../data/jobs.js';
@@ -271,6 +272,7 @@ export class Clubhouse {
       ['table', tr('Tabelle', 'Table')],
       ['cup', tr('Turnier', 'Cup')],
       ['club', tr('Verein', 'Club')],
+      ['museum', tr('Museum', 'Museum')],
       ['cash', tr('Kasse', 'Kitty')],
       ['fixtures', tr('Spielplan', 'Fixtures')],
     ];
@@ -948,6 +950,29 @@ export class Clubhouse {
           <div class="swatch-row">${CREST_COLORS.map((col) => `<button class="swatch ${d.colors[slot] === col ? 'on' : ''}" style="background:${hex(col)}" data-action="crestColor" data-value="${slot}:${col}"></button>`).join('')}</div>
         </div>
       </div>`;
+  }
+
+  // Vereinsmuseum: Vitrine, Rekorde, Legenden, Archiv.
+  tab_museum() {
+    const c = this.career;
+    const club = humanClub(c);
+    const mu = museum(c);
+    const empty = (t) => `<p class="empty">${t}</p>`;
+    const trophies = mu.trophies.length
+      ? `<ul class="vitrine">${mu.trophies.map((t) => `<li><span class="cup"></span><b>${t.name}</b><small>${tr('Saison', 'Season')} ${t.season}</small></li>`).join('')}</ul>`
+      : empty(tr('Die Vitrine ist noch leer. Der Staublappen liegt bereit.', 'The trophy cabinet is still empty. The duster is ready.'));
+    const awards = mu.awards.length ? `<ul class="plain">${mu.awards.map((a) => `<li>★ ${a.name} – ${a.kind === 'season' ? tr('Spieler der Saison', 'Player of the Season') : tr('Spieler des Monats', 'Player of the Month')} (S${a.season})</li>`).join('')}</ul>` : empty(tr('Noch keine Auszeichnung vom Kreisblatt.', 'No Kreisblatt award yet.'));
+    const records = mu.records.length ? `<ul class="plain">${mu.records.map((r) => `<li><b>${r.label}:</b> ${r.text}</li>`).join('')}</ul>` : empty(tr('Rekorde entstehen mit der Zeit.', 'Records come with time.'));
+    const legends = mu.legends.length ? `<ol class="plain">${mu.legends.map((l) => `<li><span>${l.name}${l.active ? '' : ` <small>(${tr('ehemalig', 'former')})</small>`}</span><b>${l.goals} ${tr('Tore', 'goals')} · ${l.apps} ${tr('Spiele', 'apps')}</b></li>`).join('')}</ol>` : empty(tr('Noch keine Legenden.', 'No legends yet.'));
+    const kits = `<div class="archive">${mu.kits.map((k) => `<figure><span class="kit-mini" style="background:url(${kitPreviewURL(k.kit)}) center/100% 100%"></span><figcaption>S${k.season}${k.now ? tr(' (aktuell)', ' (current)') : ''}</figcaption></figure>`).join('')}</div>`;
+    const crests = mu.crests.length ? `<div class="archive">${mu.crests.map((k) => `<figure>${crestSVG(k.crest, { size: 40, short: club.short })}<figcaption>S${k.season}${k.now ? tr(' (aktuell)', ' (current)') : ''}</figcaption></figure>`).join('')}</div>` : '';
+    return `<div class="museum">
+      <section><h4>${tr('Vitrine', 'Trophy cabinet')}</h4>${trophies}</section>
+      <section><h4>${tr('Ehrentafel', 'Roll of honour')}</h4>${awards}</section>
+      <section><h4>${tr('Rekorde', 'Records')}</h4>${records}</section>
+      <section><h4>${tr('Vereinslegenden', 'Club legends')}</h4>${legends}</section>
+      <section><h4>${tr('Trikot- und Wappenarchiv', 'Kit and crest archive')}</h4>${kits}${crests}</section>
+    </div>`;
   }
 
   tab_training() {

@@ -13,7 +13,7 @@ const firstName = (c, idx) => playerOf(c, idx)?.name.split(' ')[0] ?? '?';
 export function rememberDeparture(c, idx) {
   c.formers ??= {};
   const rec = c.players[idx] ?? {};
-  c.formers[idx] = { season: c.season, round: c.round, apps: rec.apps ?? 0, goals: rec.goals ?? 0, club: null, grumpy: (rec.grumpy ?? 0) > 0 };
+  c.formers[idx] = { season: c.season, round: c.round, apps: (rec.total?.apps ?? 0) + (rec.apps ?? 0), goals: (rec.total?.goals ?? 0) + (rec.goals ?? 0), club: null, grumpy: (rec.grumpy ?? 0) > 0, name: playerOf(c, idx)?.name };
 }
 
 export function rememberNewClub(c, idx, clubId) {

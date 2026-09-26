@@ -663,6 +663,7 @@ export function updateClub(career, { name, short, kit }) {
     // Neue Trikots kosten – ohne Geld in der Kasse bleibt's beim alten Satz.
     if (career.cash < KIT_COST) return 'nocash';
     book(career, tr('Neuer Trikotsatz', 'New kit'), -KIT_COST);
+    club.kitHistory = [...(club.kitHistory ?? []), { season: career.season, kit: { ...club.kit } }].slice(-12); // fürs Museum
     club.kit = { ...club.kit, ...kit };
     // Torwart immer in einer Kontrastfarbe.
     const keeper = [0xe8742a, 0x5cc46a, 0xe0b020, 0x6b4f8c].find((c) => colorDistance(c, club.kit.shirt) > 150) ?? 0xe8742a;
@@ -675,6 +676,7 @@ export function updateClub(career, { name, short, kit }) {
 export function updateCrest(career, crest) {
   const club = humanClub(career);
   const first = !club.crest;
+  if (club.crest) club.crestHistory = [...(club.crestHistory ?? []), { season: career.season, crest: club.crest }].slice(-12);
   club.crest = structuredClone(crest);
   if (!first) chronicle(career, tr(`Neues Vereinswappen für ${club.name}.`, `A new crest for ${club.name}.`));
   return true;

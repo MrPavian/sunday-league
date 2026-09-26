@@ -315,3 +315,21 @@ describe('tactics meet conditions', async () => {
     expect(out.matches).toBe(1);
   });
 });
+
+describe('club museum', async () => {
+  const { createCareer, humanClub, updateClub } = await import('../src/career/career.js');
+  const { museum } = await import('../src/career/museum.js');
+  it('collects titles, cups, records, legends and the kit archive', () => {
+    const c = createCareer({ seed: 88 });
+    c.history = [{ season: 1, league: 'Freizeitliga', pos: 1, promoted: true }];
+    c.trophies = [{ name: 'Stadtmeisterschaft 2026', season: 1 }];
+    c.meetings = { [c.clubs[1].id]: [{ season: 1, gf: 6, ga: 1 }, { season: 1, gf: 0, ga: 4 }] };
+    c.cash = 500;
+    updateClub(c, { kit: { shirt: 0xc8352f } });
+    const mu = museum(c);
+    expect(mu.trophies).toHaveLength(2);
+    expect(mu.records.map((r) => r.text).join()).toContain('6:1');
+    expect(mu.kits.length).toBe(2);
+    expect(humanClub(c).kitHistory).toHaveLength(1);
+  });
+});
