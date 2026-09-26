@@ -167,11 +167,51 @@ function painter(rng, { width, depth, texelsPerMeter = 12, base, noise = 14 }) {
       line(x + Math.cos(ang) * r, z + Math.sin(ang) * r, x + Math.cos(ang) * r, z + Math.sin(ang) * r, color, a);
     }
   };
+  // Großflächige Farbverläufe: glattes Rauschen auf einem groben Gitter (scale in m).
+  const tint = (scale, colorA, colorB, strength = 0.5) => {
+    const gw = Math.ceil(width / scale) + 2;
+    const gh = Math.ceil(depth / scale) + 2;
+    const grid = Array.from({ length: gw * gh }, () => rng.next());
+    const g = (i, j) => grid[Math.min(gh - 1, j) * gw + Math.min(gw - 1, i)];
+    const smooth = (t) => t * t * (3 - 2 * t);
+    const per = scale * texelsPerMeter;
+    for (let y = 0; y < H; y++) {
+      const fy = y / per;
+      const j = Math.floor(fy);
+      const ty = smooth(fy - j);
+      for (let x = 0; x < W; x++) {
+        const fx = x / per;
+        const i = Math.floor(fx);
+        const tx = smooth(fx - i);
+        const v = (g(i, j) * (1 - tx) + g(i + 1, j) * tx) * (1 - ty) + (g(i, j + 1) * (1 - tx) + g(i + 1, j + 1) * tx) * ty;
+        const c = colorA.map((a, k) => a + (colorB[k] - a) * v);
+        put(x, y, c, strength);
+      }
+    }
+  };
+  // Einzelne Pixel: Gänseblümchen, Steinchen.
+  const speckle = (count, colors, area = null) => {
+    for (let k = 0; k < count; k++) {
+      const x = area ? px(rng.range(area[0], area[1])) : rng.int(0, W - 1);
+      const y = area ? py(rng.range(area[2], area[3])) : rng.int(0, H - 1);
+      put(x, y, colors[k % colors.length], 1);
+    }
+  };
+  // Grasbüschel: kurze senkrechte Striche in dunklerem Grün.
+  const tufts = (count, color, a = 0.7) => {
+    for (let k = 0; k < count; k++) {
+      const x = rng.int(0, W - 1);
+      const y = rng.int(1, H - 1);
+      put(x, y, color, a);
+      put(x, y - 1, color, a * 0.8);
+      if (rng.next() < 0.5) put(x + 1, y, color, a * 0.6);
+    }
+  };
   const finish = () => {
     ctx.putImageData(img, 0, 0);
     return pixelTexture(canvas);
   };
-  return { put, blob, line, circle, finish, W, H, px, py };
+  return { put, blob, line, circle, tint, speckle, tufts, finish, W, H, px, py };
 }
 
 // Betonplatten im Hinterhof: Fugen, Unkraut, Kreide-Hüpfkästchen.
@@ -201,14 +241,25 @@ export function makeConcreteTexture(rng, { width, depth }) {
   return p.finish();
 }
 
-// Parkwiese: ungleichmäßiges Grün, kahle Stellen vor den "Toren", Maulwurfshügel.
+// Parkwiese: ungleichmäßiges Grün, Klee, Gänseblümchen, kahle Stellen vor den
+// "Toren", Maulwurfshügel und ein Trampelpfad.
 export function makeParkGrassTexture(rng, { width, depth, goalX }) {
-  const p = painter(rng, { width, depth, base: [92, 128, 64], noise: 22 });
-  for (let k = 0; k < 60; k++) p.blob(rng.range(-width / 2, width / 2), rng.range(-depth / 2, depth / 2), rng.range(0.5, 2.2), rng.pick([[104, 142, 70], [80, 114, 56], [112, 138, 72]]), 0.5, 0.6);
+  const p = painter(rng, { width, depth, base: [92, 128, 64], noise: 20 });
+  p.tint(7, [80, 118, 56], [112, 148, 74], 0.65);
+  p.tint(2.2, [86, 124, 60], [104, 140, 70], 0.3);
+  for (let k = 0; k < 70; k++) p.blob(rng.range(-width / 2, width / 2), rng.range(-depth / 2, depth / 2), rng.range(0.4, 1.8), rng.pick([[104, 142, 70], [74, 110, 52], [118, 144, 76]]), 0.45, 0.6);
+  for (let k = 0; k < 18; k++) p.blob(rng.range(-width / 2, width / 2), rng.range(-depth / 2, depth / 2), rng.range(0.3, 0.7), [66, 104, 58], 0.6, 0.85); // Klee
+  p.tufts(1400, [62, 96, 44], 0.55);
+  // Kahle Stellen vor den Rucksack-Toren und am Anstoß.
   for (const s of [-1, 1]) {
-    for (let k = 0; k < 6; k++) p.blob(s * goalX + rng.range(-0.8, 0.8), rng.range(-1.5, 1.5), rng.range(0.4, 0.9), [128, 104, 72], 0.8, 0.8);
+    for (let k = 0; k < 9; k++) p.blob(s * (goalX - 0.8) + rng.range(-1.2, 1.2), rng.range(-1.8, 1.8), rng.range(0.4, 1.1), [132, 108, 74], 0.75, 0.75);
+    p.blob(s * (goalX - 0.6), 0, 0.9, [120, 96, 64], 0.8, 0.85);
+    p.speckle(40, [[150, 128, 96]], [s * goalX - 2, s * goalX + 2, -2, 2]);
   }
-  for (let k = 0; k < 8; k++) p.blob(rng.range(-width / 3, width / 3), rng.range(-depth / 3, depth / 3), 0.2, [96, 72, 50], 1, 1);
+  p.blob(0, 0, 0.9, [120, 112, 70], 0.55, 0.7);
+  for (let k = 0; k < 8; k++) p.blob(rng.range(-width / 3, width / 3), rng.range(-depth / 3, depth / 3), 0.2, [96, 72, 50], 1, 1); // Maulwurf
+  // Gänseblümchen und Löwenzahn.
+  p.speckle(520, [[246, 244, 236], [246, 244, 236], [238, 236, 226], [244, 206, 52]]);
   // Trampelpfad hinten
   for (let x = -width / 2; x < width / 2; x += 0.3) p.blob(x, -depth / 2 + 3 + Math.sin(x * 0.2) * 1.2, 0.7, [170, 150, 110], 0.9, 0.9);
   return p.finish();
@@ -217,9 +268,24 @@ export function makeParkGrassTexture(rng, { width, depth, goalX }) {
 // Ascheplatz: rotbraun, gesprenkelt, Pfützen, verwaschene Kreidelinien.
 export function makeAshTexture(rng, { width, depth, pitch }) {
   const p = painter(rng, { width, depth, base: [150, 82, 58], noise: 26 });
+  p.tint(6, [138, 74, 52], [162, 92, 64], 0.5);
+  // Rechenspuren vom Platzwart: feine, leicht geschwungene Bahnen.
+  for (let z = -depth / 2; z < depth / 2; z += 0.5) {
+    const drift = rng.range(-0.3, 0.3);
+    p.line(-width / 2, z, width / 2, z + drift, [164, 96, 70], 0.18, 0.05, 1);
+  }
   for (let k = 0; k < 900; k++) p.blob(rng.range(-width / 2, width / 2), rng.range(-depth / 2, depth / 2), 0.05, rng.pick([[176, 104, 76], [120, 64, 46], [96, 88, 84]]), 0.9, 1);
-  for (let k = 0; k < 7; k++) p.blob(rng.range(-pitch.halfLength, pitch.halfLength), rng.range(-pitch.halfWidth, pitch.halfWidth), rng.range(0.5, 1.2), [96, 58, 46], 0.7, 0.95);
+  // Pfützen: dunkel, mit hellem Rand aus ausgewaschenem Sand.
+  for (let k = 0; k < 7; k++) {
+    const x = rng.range(-pitch.halfLength, pitch.halfLength);
+    const z = rng.range(-pitch.halfWidth, pitch.halfWidth);
+    const r = rng.range(0.35, 0.8);
+    p.blob(x, z, r + 0.15, [170, 104, 78], 0.35, 0.7);
+    p.blob(x, z, r, [112, 66, 52], 0.5, 0.9);
+    p.blob(x - r * 0.3, z - r * 0.3, r * 0.3, [140, 118, 116], 0.3, 0.7); // Himmel spiegelt
+  }
   drawPitchLines(p, pitch, [124, 70, 52]);
+  for (const s of [-1, 1]) p.blob(s * (pitch.halfLength - 1), 0, 1.8, [118, 64, 48], 0.35, 0.8); // feuchter Torraum
   return p.finish();
 }
 
@@ -248,13 +314,21 @@ function drawPitchLines(p, pitch, worn) {
 // Gepflegter Rasen mit Mähstreifen – der erste "richtige" Platz.
 export function makeLawnTexture(rng, { width, depth, pitch }) {
   const p = painter(rng, { width, depth, base: [78, 128, 60], noise: 14 });
+  p.tint(9, [72, 120, 56], [90, 140, 66], 0.45);
   for (let x = -width / 2; x < width / 2; x += 3) {
     if (Math.round((x + width / 2) / 3) % 2) continue;
     for (let z = -depth / 2; z < depth / 2; z += 0.25) p.line(x, z, x + 3, z, [88, 142, 68], 0.55, 0, 3);
   }
-  // Abgenutzt vor den Toren und am Anstoßpunkt.
-  for (const s of [-1, 1]) for (let k = 0; k < 5; k++) p.blob(s * (pitch.halfLength - 1) + rng.range(-1, 1), rng.range(-1.5, 1.5), rng.range(0.5, 1), [112, 102, 66], 0.55, 0.7);
+  p.tufts(900, [62, 104, 48], 0.4);
+  // Abgenutzt vor den Toren, am Elfmeterpunkt und am Anstoßpunkt.
+  for (const s of [-1, 1]) {
+    for (let k = 0; k < 9; k++) p.blob(s * (pitch.halfLength - 1.2) + rng.range(-1.4, 1.4), rng.range(-2, 2), rng.range(0.4, 1.1), [118, 104, 66], 0.6, 0.72);
+    p.blob(s * (pitch.halfLength - 0.7), 0, 0.8, [128, 108, 70], 0.7, 0.85);
+    p.speckle(30, [[140, 120, 84]], [s * pitch.halfLength - 2.5, s * pitch.halfLength + 0.5, -2, 2]);
+  }
   p.blob(0, 0, 0.8, [100, 110, 62], 0.5, 0.7);
+  // Trampelpfad des Linienrichters an der Seitenlinie.
+  for (let x = -pitch.halfLength; x < pitch.halfLength; x += 0.4) p.blob(x, pitch.halfWidth + 0.8, 0.35, [104, 118, 66], 0.4, 0.6);
   drawPitchLines(p, pitch, null);
   return p.finish();
 }
