@@ -149,6 +149,10 @@ export class Clubhouse {
           playDart(this.career, sum);
           this.h.onChange();
         } else this.render(), this.animateDart();
+      } else if (action === 'tipsoff') {
+        this.career.tipsOff = true;
+        this.career.week.chat = this.career.week.chat.filter((m) => !m.tip);
+        this.h.onChange();
       } else if (action === 'event') {
         resolveEvent(this.career, Number(value));
         this.h.onChange();
@@ -670,8 +674,22 @@ export class Clubhouse {
     if (!c.week) return `<p class="empty">${tr('Die Gruppe ist ruhig. Saisonpause.', 'The group is quiet. Off-season.')}</p>`;
     const w = c.week;
     const club = humanClub(c);
-    const bubbles = w.chat
+    // Chronologisch, wie in einer echten Gruppe (Einträge ohne Zeit bleiben an ihrer Stelle).
+    const DAY = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+    const at = (t) => {
+      const m = /^(\w\w) (\d\d):(\d\d)/.exec(t ?? '');
+      return m && DAY.includes(m[1]) ? DAY.indexOf(m[1]) * 1440 + Number(m[2]) * 60 + Number(m[3]) : null;
+    };
+    let lastAt = 0;
+    const ordered = w.chat
+      .map((msg, i) => ({ msg, i, at: at(msg.time) ?? lastAt }))
+      .map((x) => ((lastAt = x.at), x))
+      .sort((a, b) => a.at - b.at || a.i - b.i)
+      .map((x) => x.msg);
+    const bubbles = ordered
       .map((msg) => {
+        if (msg.tip) return `<div class="bubble tip"><b>${tr('Tipp', 'Tip')}</b>${msg.text}<button class="link" data-action="tipsoff">${tr('Keine Tipps mehr', 'No more tips')}</button></div>`;
+        if (msg.press) return `<div class="bubble press">${msg.text}<time>${timeLabel(msg.time)}</time></div>`;
         if (msg.from === null) return `<div class="bubble me"><b>${tr('Du (Trainer)', 'You (manager)')}</b>${msg.text}<time>${timeLabel(msg.time)}</time></div>`;
         const p = this.p(msg.from);
         const status = STATUS[w.availability[msg.from]];

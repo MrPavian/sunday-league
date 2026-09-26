@@ -30,6 +30,7 @@ import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFin
 import { NAME_EDITION } from '../data/names.js';
 import { weeklyBanter } from './banter.js';
 import { matchdaySurprise } from './matchday.js';
+import { TIP_IDS, weeklyTip } from './tips.js';
 import { afterMatchVoice, deliverNews, grudgeMatch, preMatchVoice } from './opponents.js';
 import { midSeasonReport, seasonGoalVerdict, setSeasonGoal } from './board.js';
 import { relsMap } from '../sim/bonds.js';
@@ -415,6 +416,7 @@ export function startWeek(career) {
   deliverNews(career, career.week.chat); // Rudelbildung, Handschlag, Wechselwillige
   midSeasonReport(career); // Zwischenzeugnis vom Vorstand
   career.week.actions = SCOUT_ACTIONS;
+  weeklyTip(career); // Einsteiger-Hinweis, wenn ein System zum ersten Mal auftaucht
 }
 
 // Nachhaken bei einer Absage – klappt ungefähr jedes zweite Mal.
@@ -560,6 +562,8 @@ export function migrateCareer(career) {
   initSagas(career);
   initAcademy(career);
   career.history ??= [];
+  // Laufende Karrieren kennen das Spiel schon – keine Einsteiger-Hinweise nachträglich.
+  if (!career.tipsSeen && ((career.season ?? 1) > 1 || (career.round ?? 0) > 2)) career.tipsSeen = Object.fromEntries(TIP_IDS.map((id) => [id, { old: true }]));
   if (career.week && !career.week.rumors) {
     career.week.rumors = makeRumors(career, createRng(hashSeed(career.seed, career.season, career.round, 3)));
     career.week.actions = SCOUT_ACTIONS;

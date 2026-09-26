@@ -144,13 +144,13 @@ export function weeklyBanter(c) {
     let text;
     if (r < 0.55) {
       adjustForm(c, idx, 0.1);
-      text = tr('War beim Doc. Nur Überlastung, Salbe drauf, weiter geht’s.', 'Saw the doc. Just overuse, rub some cream on it, carry on.');
+      text = w.chat.some((m) => m.banter === 'doctor') ? tr('War auch beim Doc. Bei mir auch nix Schlimmes.', 'Saw the doc too. Nothing serious for me either.') : tr('War beim Doc. Nur Überlastung, Salbe drauf, weiter geht’s.', 'Saw the doc. Just overuse, rub some cream on it, carry on.');
     } else if (r < 0.85) {
       rec.injuryWeeks = Math.max(rec.injuryWeeks ?? 0, 2);
       rec.injury = { type: 'meniskus', label: tr('Reizung im Knie', 'irritated knee'), weeks: 2 };
       w.availability[idx] = 'no';
-      text = tr('Doc sagt: zwei Wochen Pause, sonst ist der Meniskus hin. Gut, dass ich hin bin.', 'Doc says two weeks off or the meniscus goes. Good thing I went.');
-    } else text = tr('Arzt hatte keinen Termin frei. Geht schon so.', 'The doctor had no appointments. It will be fine.');
+      text = w.chat.some((m) => m.banter === 'doctor') ? tr('Mich hat’s erwischt: zwei Wochen Pause, Knie gereizt.', 'Mine is bad news: two weeks off, irritated knee.') : tr('Doc sagt: zwei Wochen Pause, sonst ist der Meniskus hin. Gut, dass ich hin bin.', 'Doc says two weeks off or the meniscus goes. Good thing I went.');
+    } else text = w.chat.some((m) => m.banter === 'doctor') ? tr('Bei mir hat der Arzt erst in drei Wochen was frei. Na toll.', 'My doctor has nothing free for three weeks. Great.') : tr('Arzt hatte keinen Termin frei. Geht schon so.', 'The doctor had no appointments. It will be fine.');
     w.chat.push({ from: idx, text, time: 'Di 18:05', banter: 'doctor' });
   }
   w.banter = said;
