@@ -316,6 +316,14 @@ export function outfieldIntent(m, p, dt) {
       az = ball.pos.z + wall.z * 0.45;
     }
     const dBall = dist2d(p.pos, ball.pos);
+    if (p.setPieceAction === 'penalty' && dBall < 1.3) {
+      // Elfmeter der KI: platziert in eine Ecke, selten halbhoch in die Mitte.
+      p.setPieceAction = null;
+      const gw = pitch.goalHalfWidth;
+      const r = m.rng.next();
+      const z = r < 0.12 ? m.rng.range(-0.3, 0.3) : (m.rng.chance(0.5) ? 1 : -1) * m.rng.range(gw * 0.45, gw * 0.95);
+      p.pending = { type: 'shoot', power: m.rng.range(0.6, 0.85), target: { x: oppGoal.x, z }, ttl: 0.5, placed: true };
+    }
     if (p.setPieceAction === 'cross' && dBall < 1.3) {
       p.setPieceAction = null;
       // Ecke der KI: meist hoch an den langen Pfosten, mal scharf an den ersten, mal kurz.
@@ -428,7 +436,7 @@ function aiDecide(m, p, oppGoal) {
   // Kurze Spiele: früher abziehen, damit überhaupt was passiert.
   // Auf dem großen Platz dauert der Weg nach vorn länger – dort noch etwas mehr.
   const brisk = (shortGame(m) - 1) * (1 + Math.max(0, pitch.halfLength - 20) / 12);
-  const range = 10 + p.attrs.shooting * 5 + (hasTrait(p, 'hammer') ? 4 : 0) + st.shoot + Math.max(0, (pitch.halfLength - 20) * 0.3) + brisk * 2.5;
+  const range = 10 + p.attrs.shooting * 5 + (hasTrait(p, 'hammer') ? 4 : 0) + st.shoot + Math.max(0, (pitch.halfLength - 20) * 0.45) + brisk * 2.5;
   // Flügelspiel: Außen in Tornähe wird geflankt, nicht aus spitzem Winkel geschossen.
   if ((st.cross > 0.7 || heeds(m, p, 'wide')) && Math.abs(p.pos.z) > pitch.goalHalfWidth * 2.2 && Math.abs(p.pos.x - oppGoal.x) < pitch.halfLength * 0.45 && rng.chance(0.75)) {
     p.pending = { type: 'pass', lofted: 'cross', cone: -0.4, ttl: 0.3 };
@@ -449,7 +457,14 @@ function aiDecide(m, p, oppGoal) {
   // Schussauswahl: „hart" wartet auf die bessere Lage, „locker" schießt auch mal überhastet.
   const skill = aiSkill(m, p);
   const facingNeed = skill > 1 ? 0.45 : skill < 1 ? 0 : 0.2;
-  if (dGoal < range * (skill > 1 ? 0.9 : 1) && facingDot > facingNeed) {
+  // Kein Dauerfeuer: Steht einer direkt in der Schussbahn, wird meist lieber quergelegt
+  // oder weitergedribbelt. Und kurz nach dem eigenen Schuss zieht nicht gleich der
+  // Nächste ab – außer beim Abstauber direkt vor dem Tor.
+  const lane = { x: p.pos.x + toG.x * Math.min(5, dGoal), z: p.pos.z + toG.z * Math.min(5, dGoal) };
+  const blockedLane = m.players.some((o) => o.team !== p.team && o.role !== 'gk' && dist2d(o.pos, p.pos) > 0.4 && distToSegment(o.pos, p.pos, lane) < 0.8);
+  const justShot = m.time - (m.lastShotAt?.[p.team] ?? -9) < 0.9 && dGoal > 5;
+  const hold = (blockedLane && rng.chance(0.5)) || (justShot && rng.chance(0.6));
+  if (!hold && dGoal < range * (skill > 1 ? 0.9 : 1) && facingDot > facingNeed) {
     const gw = pitch.goalHalfWidth;
     p.pending = {
       type: 'shoot',
@@ -463,7 +478,7 @@ function aiDecide(m, p, oppGoal) {
   // Distanzschuss: Wer schießen kann und Platz hat, versucht es auch mal von weiter weg.
   const longRange = range + 7;
   const space = !m.players.some((o) => o.team !== p.team && o.role !== 'gk' && dist2d(o.pos, p.pos) < 3 && (o.pos.x - p.pos.x) * toG.x + (o.pos.z - p.pos.z) * toG.z > 0);
-  if (dGoal >= range && dGoal < longRange && facingDot > 0.5 && space && (p.attrs.shooting > 0.55 || hasTrait(p, 'hammer')) && rng.chance(0.18 + brisk * 0.12)) {
+  if (!hold && dGoal >= range && dGoal < longRange && facingDot > 0.5 && space && (p.attrs.shooting > 0.55 || hasTrait(p, 'hammer')) && rng.chance(0.18 + brisk * 0.12)) {
     const gw = pitch.goalHalfWidth;
     p.pending = { type: 'shoot', power: 0.95, target: { x: oppGoal.x, z: (rng.chance(0.5) ? 1 : -1) * rng.range(gw * 0.4, gw * 1.0) }, ttl: 0.3 };
     return;
@@ -573,6 +588,22 @@ export function keeperIntent(m, p, dt) {
     return { move: { x: 0, z: 0 }, sprint: false };
   }
   p.holdTimer = 0;
+
+  // Elfmeter: auf der Linie warten, dann eine Ecke raten – wie im Elfmeterschießen.
+  const sp = m.setPiece;
+  if (sp?.type === 'penalty' && sp.team !== p.team && (!sp.taken || m.time - (m.penaltyKick ?? -9) < 1.2)) {
+    if (!sp.taken) {
+      p.penaltyDive = m.rng.chance(0.2) ? 0 : m.rng.chance(0.5) ? 1 : -1;
+      return { move: { x: 0, z: 0 }, sprint: false };
+    }
+    if (m.time - m.penaltyKick < keeperReaction(m, p) * 0.8) return { move: { x: 0, z: 0 }, sprint: false };
+    const dz = (p.penaltyDive ?? 0) * gw * 0.6 - p.pos.z;
+    if (p.penaltyDive && p.diveAnim <= 0) {
+      p.diveAnim = 0.5;
+      p.diveSide = p.penaltyDive * -s;
+    }
+    return { move: { x: 0, z: Math.abs(dz) < 0.05 ? 0 : Math.sign(dz) }, sprint: true };
+  }
 
   let tx = goalX + s * 0.8;
   let tz = clamp(ball.pos.z * 0.4, -gw - 0.2, gw + 0.2);

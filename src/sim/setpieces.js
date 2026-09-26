@@ -5,8 +5,15 @@ import { clamp, dist2d, len, norm } from '../core/math.js';
 import { attackDir, clampToPitch, getPlayer, setControlled, teamAttacking } from './players.js';
 import { processSubs } from './squad.js';
 import { keeperZone } from './ai.js';
+import { keeperBox } from './actions.js';
 
-const FREEZE = { kickoff: 0.8, freekick: 1.3, throwin: 1.0, corner: 1.3, goalkick: 1.0 };
+// Elfmeterpunkt: im Kleinfeld näher dran als auf dem großen Platz.
+export function penaltySpot(m, team) {
+  const s = attackDir(m, team);
+  return { x: s * (m.pitch.halfLength - Math.min(9, m.pitch.halfLength * 0.38)), z: 0 };
+}
+
+const FREEZE = { kickoff: 0.8, freekick: 1.3, throwin: 1.0, corner: 1.3, goalkick: 1.0, penalty: 1.8 };
 const DISTANCE = 3.5;
 
 export function startSetPiece(m, { type, team, spot = { x: 0, z: 0 }, takerId = null }) {
@@ -55,7 +62,8 @@ export function startSetPiece(m, { type, team, spot = { x: 0, z: 0 }, takerId = 
     taker.pos.z = spot.z - toGoal.z * back;
     taker.facing = toGoal;
   }
-  taker.setPieceAction = type === 'corner' ? 'cross' : null;
+  taker.setPieceAction = type === 'corner' ? 'cross' : type === 'penalty' ? 'penalty' : null;
+  if (type === 'penalty') clearBox(m, team, taker, spot);
 
   for (const p of m.players) {
     p.vel.x = p.vel.z = 0;
@@ -63,7 +71,7 @@ export function startSetPiece(m, { type, team, spot = { x: 0, z: 0 }, takerId = 
     p.charging = false;
     p.charge = 0;
     if (p !== taker) p.setPieceAction = null;
-    if (p.team === team) continue;
+    if (p.team === team || type === 'penalty') continue;
     const dx = p.pos.x - spot.x;
     const dz = p.pos.z - spot.z;
     const d = len(dx, dz);
@@ -85,10 +93,38 @@ export function startSetPiece(m, { type, team, spot = { x: 0, z: 0 }, takerId = 
   m.events.push({ type: 'setpiece', kind: type, team, playerId: taker.id });
 }
 
+// Elfmeter: Alle raus aus dem Strafraum und hinter den Ball, der Torwart auf die Linie.
+function clearBox(m, team, taker, spot) {
+  const { pitch } = m;
+  const s = attackDir(m, team);
+  const goalX = s * pitch.halfLength;
+  const box = keeperBox(pitch);
+  let k = 0;
+  for (const p of m.players) {
+    if (p === taker) continue;
+    if (p.role === 'gk' && p.team !== team) {
+      p.pos.x = goalX - s * 0.3;
+      p.pos.z = 0;
+      p.facing = { x: -s, z: 0 };
+      continue;
+    }
+    if (p.role === 'gk') continue;
+    const inBox = Math.abs(p.pos.x - goalX) <= box.depth + 1 && Math.abs(p.pos.z) <= box.halfWidth + 1;
+    if (!inBox && dist2d(p.pos, spot) >= DISTANCE) continue;
+    const row = Math.floor(k / 2);
+    const side = k % 2 ? 1 : -1;
+    p.pos.x = goalX - s * (box.depth + 1.5 + row * 1.2);
+    p.pos.z = clamp(side * (box.halfWidth * 0.5 + row * 0.8), -pitch.halfWidth + 0.5, pitch.halfWidth - 0.5);
+    p.facing = { x: s, z: 0 };
+    k++;
+  }
+}
+
 function pickTaker(m, type, team, spot) {
   const mates = m.players.filter((p) => p.team === team);
   if (type === 'goalkick') return mates.find((p) => p.role === 'gk');
   if (type === 'kickoff') return mates.find((p) => p.role === 'fwd') ?? mates[mates.length - 1];
+  if (type === 'penalty') return [...mates].filter((p) => p.role !== 'gk' && p.state !== 'down').sort((a, b) => b.attrs.shooting + b.attrs.technique * 0.5 - (a.attrs.shooting + a.attrs.technique * 0.5))[0] ?? mates[0];
   let best = null;
   let bestD = Infinity;
   for (const p of mates) {

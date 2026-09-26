@@ -292,24 +292,27 @@ describe('rules & set pieces', () => {
 });
 
 describe('venues', () => {
-  it.each(Object.entries(PITCHES))('%s: a full AI match runs, stays in bounds and sees goals', (id, pitch) => {
-    const m = createMatch({ seed: 5, pitch, human: false, duration: 600 }); // volle 2 × 5 Minuten
+  it.each(Object.entries(PITCHES))('%s: full AI matches run, stay in bounds and see goals', (id, pitch) => {
+    // Zwei volle Spiele à 2 × 5 Minuten – ein einzelnes 0:0 ist Fußball, zwei am Stück ein Befund.
     let goals = 0;
-    for (let i = 0; i < 60 * 1200 && m.phase !== 'ended'; i++) {
-      stepMatch(m, undefined, DT);
-      goals += m.events.filter((e) => e.type === 'goal').length;
-      m.events.length = 0;
-      if (i % 600 === 0) {
-        for (const p of m.players) {
-          expect(Math.abs(p.pos.x)).toBeLessThanOrEqual(pitch.wallX);
-          expect(Number.isFinite(p.pos.z)).toBe(true);
+    for (const seed of [5, 6]) {
+      const m = createMatch({ seed, pitch, human: false, duration: 600 });
+      for (let i = 0; i < 60 * 1200 && m.phase !== 'ended'; i++) {
+        stepMatch(m, undefined, DT);
+        goals += m.events.filter((e) => e.type === 'goal').length;
+        m.events.length = 0;
+        if (i % 600 === 0) {
+          for (const p of m.players) {
+            expect(Math.abs(p.pos.x)).toBeLessThanOrEqual(pitch.wallX);
+            expect(Number.isFinite(p.pos.z)).toBe(true);
+          }
+          expect(Math.abs(m.ball.pos.x)).toBeLessThanOrEqual(pitch.wallX);
         }
-        expect(Math.abs(m.ball.pos.x)).toBeLessThanOrEqual(pitch.wallX);
       }
+      expect(m.phase).toBe('ended');
+      expect(m.players.length + m.sentOff.length).toBe(pitch.format * 2); // Platzverweise zählen mit
     }
-    expect(m.phase).toBe('ended');
     expect(goals).toBeGreaterThan(0);
-    expect(m.players.length + m.sentOff.length).toBe(pitch.format * 2); // Platzverweise zählen mit
   });
 });
 
@@ -819,5 +822,36 @@ describe('free kicks and corners', () => {
       if (zone === 'far') expect(target.pos.z).toBeLessThan(0.5);
       if (zone === 'short') expect(gx - target.pos.x).toBeGreaterThan(1.5);
     }
+  });
+});
+
+describe('penalties and corners', () => {
+  it('a foul in the box gives a penalty from the spot, with the box cleared', async () => {
+    const { penaltySpot, startSetPiece } = await import('../src/sim/setpieces.js');
+    const { keeperBox } = await import('../src/sim/actions.js');
+    const { attackDir } = await import('../src/sim/players.js');
+    const m = createMatch({ seed: 3, pitch: PITCHES.rasenplatz, human: false, duration: 240 });
+    const spot = penaltySpot(m, 0);
+    startSetPiece(m, { type: 'penalty', team: 0, spot });
+    expect(m.setPiece.type).toBe('penalty');
+    expect(m.ball.pos.x).toBeCloseTo(spot.x);
+    const goalX = attackDir(m, 0) * m.pitch.halfLength;
+    const box = keeperBox(m.pitch);
+    const taker = m.players.find((p) => p.id === m.setPiece.takerId);
+    for (const p of m.players) {
+      if (p === taker || p.role === 'gk') continue;
+      const inBox = Math.abs(p.pos.x - goalX) <= box.depth && Math.abs(p.pos.z) <= box.halfWidth;
+      expect(inBox, p.name).toBe(false);
+    }
+    const keeper = m.players.find((p) => p.team === 1 && p.role === 'gk');
+    expect(Math.abs(keeper.pos.x - goalX)).toBeLessThan(0.5);
+    // Die KI schießt ihn auch: Nach ein paar Sekunden ist er drin oder gehalten.
+    let result = null;
+    for (let i = 0; i < 60 * 6 && !result; i++) {
+      stepMatch(m, undefined, DT);
+      result = m.events.find((e) => ['goal', 'save', 'catch', 'post', 'bar'].includes(e.type) || (e.type === 'setpiece' && e.kind === 'goalkick'))?.type ?? null;
+      m.events.length = 0;
+    }
+    expect(result).not.toBeNull();
   });
 });

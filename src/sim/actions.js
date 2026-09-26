@@ -141,7 +141,7 @@ function shoot(m, p, a, fatigue) {
   const power = clamp(a.power ?? 0.5, 0.1, 1);
   // Streuung: Technik, Müdigkeit, Wucht. Die KI streut etwas mehr als der Mensch,
   // der selbst zielt – sonst treffen Amateure wie Profis.
-  const sigma = 0.025 + 0.16 * (1 - p.attrs.shooting) + 0.08 * fatigue + 0.05 * power + (hammer ? 0.03 : 0) + (p.id === m.controlledId ? 0 : 0.03 + (aiSkill(m, p) < 1 ? 0.05 : aiSkill(m, p) > 1 ? -0.015 : 0));
+  const sigma = 0.025 + 0.16 * (1 - p.attrs.shooting) + 0.08 * fatigue + 0.05 * power + (hammer ? 0.03 : 0) + (p.id === m.controlledId ? 0 : 0.005 + (aiSkill(m, p) < 1 ? 0.05 : aiSkill(m, p) > 1 ? -0.015 : 0));
   // Elfmeter: in Ruhe platziert, ohne Gegner am Fuß – deutlich weniger Streuung.
   dir = rotate(dir, rng.gauss() * sigma * (a.placed ? 0.35 : 1));
   const speed = (8 + 18 * power) * (0.85 + 0.15 * p.attrs.shooting) * (hammer ? 1.15 : 1);
@@ -150,7 +150,9 @@ function shoot(m, p, a, fatigue) {
   ball.vel.y = vy;
   ball.vel.z = dir.z * speed;
   p.facing = dir;
+  if (a.placed && m.setPiece?.type === 'penalty' && m.setPiece.takerId === p.id) m.penaltyKick = m.time;
   m.events.push({ type: 'shot', playerId: p.id, power });
+  (m.lastShotAt ??= [-9, -9])[p.team] = m.time;
   m.shotTime = m.time; // Der Torwart braucht einen Moment, bis er die Richtung erkennt.
 }
 
@@ -292,6 +294,9 @@ function pass(m, p, a, fatigue, fromHands) {
 // Wie viel kürzer als 2 × 5 Minuten das Spiel ist (1 = volle Länge, bis 2,5).
 export const shortGame = (m) => clamp(600 / (m.duration || 600), 1, 2.5);
 
+// Elfmeter – im Elfmeterschießen oder im Spiel: Der Torwart muss raten.
+const spotKick = (m) => m.phase === 'shootout' || m.time - (m.penaltyKick ?? -9) < 1.2;
+
 export function keeperBox(pitch) {
   const depth = Math.min(6, pitch.halfLength * 0.3);
   return { depth, halfWidth: Math.min(pitch.halfWidth, pitch.goalHalfWidth + depth * 0.9) };
@@ -313,7 +318,7 @@ export function keeperSaves(m) {
     // Inkl. Hechtsprung. Vor großen Toren (Asche, Rasen) streckt er sich weiter –
     // sonst deckt er dort anteilig viel weniger ab als vor dem Jackentor.
     // Beim Elfmeter steht er fest auf der Linie – ohne Anlauf reicht der Sprung weniger weit.
-    const reach = (0.85 + 0.75 * p.attrs.keeping) * clamp(pitch.goalHalfWidth / 1.6, 1, 1.3) * (m.phase === 'shootout' ? 0.62 : 1);
+    const reach = (0.85 + 0.75 * p.attrs.keeping) * clamp(pitch.goalHalfWidth / 1.6, 0.85, 1.3) * (spotKick(m) ? 0.62 : 1);
     if (dist2d(p.pos, ball.pos) > reach || ball.pos.y > 2.3) continue;
 
     const bs = ballSpeed(ball);
@@ -346,9 +351,9 @@ export function keeperSaves(m) {
       const reaction = keeperReaction(m, p);
       const pointBlank = since < reaction + 0.12 ? clamp((dist2d(p.pos, ball.pos) - 0.35) * 0.3, 0, 0.25) : 0;
       // Elfmeter an den Pfosten: selbst bei richtiger Ecke schwer zu halten.
-      const postShot = m.phase === 'shootout' ? clamp(Math.abs(lineZ) / gw, 0, 1) * 0.5 : 0;
+      const postShot = spotKick(m) ? clamp(Math.abs(lineZ) / gw, 0, 1) * 0.5 : 0;
       // Kurze Spiele: etwas mehr Tore, sonst endet die Hälfte 0:0.
-      const brisk = m.phase === 'shootout' ? 0 : (shortGame(m) - 1) * 0.1 * (1 + Math.max(0, pitch.halfLength - 20) / 12);
+      const brisk = spotKick(m) ? 0 : (shortGame(m) - 1) * 0.1 * (1 + Math.max(0, pitch.halfLength - 20) / 12);
       const beaten = clamp((bs - 8) * 0.02 + corner * 0.85 + pointBlank + postShot + brisk - 0.3 * p.attrs.keeping - (dist2d(p.pos, ball.pos) < 0.45 ? 0.15 : 0), 0.02, 0.7);
       if (rng.chance(beaten)) {
         p.catchCooldown = 0.7; // zu spät – der Ball ist vorbei
@@ -375,9 +380,18 @@ export function keeperSaves(m) {
       // Zur Seite abwehren, flach und zügig – nicht zurück vors eigene Tor und
       // nicht als Kerze über den Keeper.
       const side = Math.sign(ball.pos.z - p.pos.z) || (rng.chance(0.5) ? 1 : -1);
-      ball.vel.x = s * rng.range(3, 5);
-      ball.vel.z = side * rng.range(4, 7);
-      ball.vel.y = rng.range(0.3, 1.4);
+      // Harte Schüsse lenkt er öfter über die Latte oder ums Tor – dann gibt es Ecke.
+      const tip = pitch.boundary === 'lines' && m.phase !== 'shootout' && rng.chance(clamp(0.15 + (bs - 10) * 0.025, 0.1, 0.45));
+      if (tip) {
+        const over = Math.abs(ball.pos.z) < pitch.goalHalfWidth * 0.6 || rng.chance(0.5); // mittig nur drüber, nie ins eigene Netz
+        ball.vel.x = -s * rng.range(1.5, 3);
+        ball.vel.z = side * (over ? rng.range(1, 2.5) : rng.range(5, 7));
+        ball.vel.y = over ? rng.range(4.5, 6) : rng.range(0.5, 1.5);
+      } else {
+        ball.vel.x = s * rng.range(3, 5);
+        ball.vel.z = side * rng.range(4, 7);
+        ball.vel.y = rng.range(0.3, 1.4);
+      }
       ball.pos.y = Math.min(ball.pos.y, 1.2);
       p.catchCooldown = 0.6; // den eigenen Abpraller nicht sofort wieder fangen
       ball.lastTouch = p.id;

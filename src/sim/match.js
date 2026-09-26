@@ -312,7 +312,7 @@ function humanIntent(m, p, input, dt) {
   // Freistoß oder Ecke als Schütze: Stehen bleiben und mit dem Stick nur die
   // Richtung drehen (der gelbe Pfeil zeigt sie). Nach 6 s geht es normal weiter.
   const sp = m.setPiece;
-  if (sp && sp.takerId === p.id && !sp.taken && (sp.type === 'freekick' || sp.type === 'corner') && m.time - sp.time < 6) {
+  if (sp && sp.takerId === p.id && !sp.taken && (sp.type === 'freekick' || sp.type === 'corner' || sp.type === 'penalty') && m.time - sp.time < 6) {
     const mv = input.move;
     const l = Math.hypot(mv.x, mv.z);
     if (l > 0.3) {
@@ -340,7 +340,7 @@ function humanIntent(m, p, input, dt) {
     p.charge = Math.min(1, p.charge + dt * 1.25);
   } else if (p.charging) {
     p.charging = false;
-    p.pending = { type: 'shoot', power: Math.max(0.15, p.charge), ttl: 0.45 };
+    p.pending = { type: 'shoot', power: Math.max(0.15, p.charge), ttl: 0.45, placed: m.setPiece?.type === 'penalty' && m.setPiece.takerId === p.id && !m.setPiece.taken };
     p.charge = 0;
   }
   // S = flacher Pass, E = hoher Ball; bei der Ecke wird daraus automatisch eine Flanke.

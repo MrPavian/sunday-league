@@ -2,9 +2,9 @@
 import { tr } from '../core/i18n.js';
 import { clamp, dist2d, len, rotate } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
-import { clampPlayer } from './actions.js';
-import { getPlayer } from './players.js';
-import { startSetPiece } from './setpieces.js';
+import { clampPlayer, inKeeperBox } from './actions.js';
+import { attackDir, getPlayer } from './players.js';
+import { penaltySpot, startSetPiece } from './setpieces.js';
 import { judgeDissent, judgeFoul, refereeSees } from './referee.js';
 
 const COMPLAINTS = {
@@ -156,15 +156,22 @@ export function resolveTackles(m) {
         continue;
       }
       if (foul) {
-        m.events.push({ type: 'foul', playerId: p.id, victimId: o.id });
+        // Im Strafraum gibt es Elfmeter – mit Schiri immer, ohne erst ab dem Kleinfeld.
+        const goalX = attackDir(m, o.team) * pitch.halfLength;
+        const penalty = (!!m.referee || pitch.format >= 5) && m.phase === 'play' && inKeeperBox(pitch, o.pos, goalX, 0.3);
+        m.events.push({ type: 'foul', playerId: p.id, victimId: o.id, penalty });
         if (hasTrait(p, 'meckerer')) p.complainNext = 'offender';
         if (slide) {
           const fromBehind = o.facing.x * p.facing.x + o.facing.z * p.facing.z > 0.5;
           judgeFoul(m, p, fromBehind ? 0.35 : 0.12);
         } else judgeFoul(m, p, 0.03);
-        const spot = { x: o.pos.x, z: o.pos.z };
         o.state = 'normal';
         o.stateTimer = 0;
+        if (penalty) {
+          startSetPiece(m, { type: 'penalty', team: o.team, spot: penaltySpot(m, o.team) });
+          return true;
+        }
+        const spot = { x: o.pos.x, z: o.pos.z };
         startSetPiece(m, { type: 'freekick', team: o.team, spot, takerId: o.id });
         return true;
       }

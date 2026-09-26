@@ -178,6 +178,7 @@ export class Hud {
       } else if (e.type === 'incident') this.toast(e.text, e.stage === 'start' ? 3.5 : 2.5, 5);
       else if (e.type === 'lightning') this.lightning();
       else if (e.type === 'end') this.toast(match.shootout?.done ? tr(`ENTSCHIEDEN – ${short(shootoutScore(match.shootout)[0] > shootoutScore(match.shootout)[1] ? 0 : 1)} gewinnt im Elfmeterschießen`, `DECIDED – ${short(shootoutScore(match.shootout)[0] > shootoutScore(match.shootout)[1] ? 0 : 1)} win on penalties`) : tr('ABPFIFF', 'FULL TIME'), 3, 9);
+      else if (e.type === 'setpiece' && e.kind === 'penalty') this.toast(e.playerId === match.controlledId ? tr(`ELFMETER! Richtung mit den Pfeilen · ${keyLabel('shoot')} halten und loslassen`, `PENALTY! Aim with the arrows · hold and release ${keyLabel('shoot')}`) : tr('ELFMETER!', 'PENALTY!'), 2.4, 4);
       else if (e.type === 'setpiece' && e.playerId === match.controlledId && (e.kind === 'freekick' || e.kind === 'corner')) {
         const k = (a) => keyLabel(a);
         this.toast(

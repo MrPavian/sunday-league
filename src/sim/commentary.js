@@ -147,7 +147,8 @@ export function createCommentator(m, seed = 1) {
         case 'foul': {
           const p = who(e.playerId);
           const v = who(e.victimId);
-          if (e.kind === 'hold') add(tr(`${surname(p)} hält ${surname(v)} am Trikot fest – Freistoß.`, `${surname(p)} tugs ${surname(v)}'s shirt – free kick.`), 'foul');
+          if (e.penalty) add(pick(tr(['ELFMETER! {p} legt {v} im Strafraum.', 'Strafstoß! {p} holt {v} von den Beinen.', 'Der Pfiff ist eindeutig: Elfmeter nach Foul von {p} an {v}.'], ['PENALTY! {p} brings down {v} in the box.', 'Spot kick! {p} takes {v}\'s legs away.', 'No doubt about it: penalty after {p} fouls {v}.']), { p: surname(p), v: surname(v) }), 'foul');
+          else if (e.kind === 'hold') add(tr(`${surname(p)} hält ${surname(v)} am Trikot fest – Freistoß.`, `${surname(p)} tugs ${surname(v)}'s shirt – free kick.`), 'foul');
           else add(pick(tr(['Foul von {p} an {v}. Freistoß.', '{p} erwischt {v} am Knöchel. Freistoß.', '{p} geht zu hart rein – {v} liegt.'], ['Foul by {p} on {v}. Free kick.', '{p} catches {v} on the ankle. Free kick.', '{p} goes in too hard – {v} is down.']), { p: surname(p), v: surname(v) }), 'foul');
           break;
         }
