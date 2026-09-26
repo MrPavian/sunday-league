@@ -692,6 +692,7 @@ export class Clubhouse {
         if (msg.press) return `<div class="bubble press">${msg.text}<time>${timeLabel(msg.time)}</time></div>`;
         if (msg.from === null) return `<div class="bubble me"><b>${tr('Du (Trainer)', 'You (manager)')}</b>${msg.text}<time>${timeLabel(msg.time)}</time></div>`;
         const p = this.p(msg.from);
+        if (msg.alum) return `<div class="bubble alum"><b>${p.name} <small>(${typeof msg.alum === 'string' ? roleName(msg.alum) : tr('Ehemaliger', 'former player')}, ${tr('am Zaun', 'at the fence')})</small></b>${msg.text}<time>${timeLabel(msg.time)}</time></div>`;
         const status = STATUS[w.availability[msg.from]];
         return `<div class="bubble"><b>${p.name}</b>${msg.text}<time>${timeLabel(msg.time)}</time>${status ? `<i class="st ${status[1]}"></i>` : ''}</div>`;
       })
@@ -1053,7 +1054,7 @@ export class Clubhouse {
       .sort((a, b) => b.p.rating - a.p.rating)
       .map(({ idx, p }) => {
         const talent = p.rating >= 50 ? tr('großes Talent', 'big talent') : p.rating >= 40 ? tr('solide', 'solid') : tr('noch roh', 'still raw');
-        return `<tr><td><b>${p.name}</b><small>${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)}</small></td><td>${POSITIONS[p.position]}</td>
+        return `<tr><td><b>${p.name}</b><small>${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)}${p.parentName ? ` · ${tr('Sohn von', 'son of')} ${p.parentName}` : ''}</small></td><td>${POSITIONS[p.position]}</td>
           <td class="num">${p.rating}</td><td><em>${talent}</em></td>
           <td><button class="primary tiny" data-action="promote" data-value="${idx}" ${full ? 'disabled' : ''}>${tr('Hochziehen', 'Promote')}</button></td></tr>`;
       })

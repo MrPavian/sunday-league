@@ -31,6 +31,7 @@ import { NAME_EDITION } from '../data/names.js';
 import { weeklyBanter } from './banter.js';
 import { matchdaySurprise } from './matchday.js';
 import { TIP_IDS, weeklyTip } from './tips.js';
+import { fenceVoice, heirIntake, heirMoments } from './generations.js';
 import { afterMatchVoice, deliverNews, grudgeMatch, preMatchVoice } from './opponents.js';
 import { midSeasonReport, seasonGoalVerdict, setSeasonGoal } from './board.js';
 import { relsMap } from '../sim/bonds.js';
@@ -275,6 +276,7 @@ export function nextSeason(career) {
   sagaNotes.push(...childrenGrowUp(career));
   sagaNotes.push(...seasonAcademy(career));
   const intake = youthIntake(career, youthDeps());
+  const heir = heirIntake(career); // „der Sohn von …" meldet sich an
   placeFormers(career); // Ehemalige kommen bei der Konkurrenz unter
   startWeek(career);
   const note = (text) => career.week?.chat.splice(1, 0, { from: null, text, time: 'Mo 09:00' });
@@ -287,6 +289,7 @@ export function nextSeason(career) {
   career.sponsorNotes = [];
   for (const r of retired) note(tr(`Abschied: ${r.name} (${r.age}) hört auf – ${r.apps} Spiele, ${r.goals} Tore. Bleibt uns erhalten als ${r.role}.`, `Farewell: ${r.name} (${r.age}) is retiring – ${r.apps} games, ${r.goals} goals. Staying on as ${r.role}.`));
   for (const idx of leaving) note(tr(`${poolPlayer(idx).name} war zu alt für die A-Jugend und ist zum Nachbarn gewechselt.`, `${poolPlayer(idx).name} was too old for the U19s and has moved to a neighbouring club.`));
+  if (heir) note(heir);
   if (intake.length) note(tr(`Neuer Jahrgang in der A-Jugend: ${intake.map((idx) => playerOf(career, idx).name).join(', ')}.`, `New intake in the U19s: ${intake.map((idx) => playerOf(career, idx).name).join(', ')}.`));
   // Trainingsbericht aus der Saisonvorbereitung in die Gruppe.
   for (const d of development) {
@@ -404,6 +407,8 @@ export function startWeek(career) {
   career.week = { availability, chat, nudges: NUDGES_PER_WEEK, nudged: [], lineup: null, training: null, event: null, weather };
   preMatchMemories(career, opponent, chat); // „Wisst ihr, wer bei denen spielt?"
   preMatchVoice(career, opponent, chat); // der Gegnertrainer im Kreisblatt
+  const prev = career.fixtures[career.round - 1]?.find((f) => (f.home === club.id || f.away === club.id) && f.result);
+  fenceVoice(career, chat, prev && (prev.home === club.id ? [prev.result.home, prev.result.away] : [prev.result.away, prev.result.home])); // die Alten am Zaun
   career.flags ??= {};
   career.flags.derbyRival = leagueOf(career).derby?.club ?? null;
   advanceArcs(career);
@@ -879,6 +884,7 @@ export function recordResult(career, fixture, prepared) {
   if (fixture.home === humanId || fixture.away === humanId) {
     rollInjuries(career, prepared); // Zerrung bis Kreuzband
     memoryAfterMatch(career, prepared); // „ausgerechnet der Ex"
+    heirMoments(career); // erstes Tor des Juniors
     afterMatchVoice(career, prepared, fixture.home === humanId ? fixture.away : fixture.home);
   }
   matchFinances(career, fixture, prepared, career.level ?? 1);

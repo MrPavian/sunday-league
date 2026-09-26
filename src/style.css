@@ -430,6 +430,8 @@ kbd {
 .bubble.me b { color: var(--accent); }
 .bubble.press { align-self: center; max-width: 92%; background: #efe8d6; color: #1b1b1b; font-family: Georgia, serif; font-size: 13px; }
 .bubble.press time { color: #1b1b1b; }
+.bubble.alum { background: #3b3a2e; }
+.bubble.alum b small { font-weight: 400; opacity: 0.75; }
 .bubble.tip { align-self: stretch; max-width: none; padding-bottom: 6px; background: #28384a; border-color: #6fb6ff; }
 .bubble.tip b { color: #9fd0ff; }
 .bubble.tip .link { display: block; margin-top: 4px; padding: 0; font-size: 11px; background: none; border: 0; color: #9fd0ff; text-decoration: underline; cursor: pointer; box-shadow: none; }

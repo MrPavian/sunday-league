@@ -27,7 +27,7 @@ for (let s = 0; s < SEASONS; s++) {
   const res = nextSeason(c);
   const feuds = Object.values(c.feuds ?? {});
   const nem = Object.values(c.nemesis ?? {});
-  perSeason.push({ season: c.season - 1, league: c.league, pos: c.history.at(-1).pos, squad: me.squad.length, gpg: +(goals / games).toFixed(2), chronicle: (c.saga?.chronicle ?? []).length, formers: Object.keys(c.formers ?? {}).length, nemMax: Math.max(0, ...nem), feud: feuds.length ? `${Math.min(...feuds)}..${Math.max(...feuds)}` : '-', otherSquads: c.clubs.filter((x) => !x.human).map((x) => x.squad.length).join(','), kb: Math.round(JSON.stringify(c).length / 1024), goal: c.goal?.type ?? '?', melee: (c.saga?.chronicle ?? []).filter((x) => x.text.startsWith('Rudel')).length });
+  perSeason.push({ season: c.season - 1, league: c.league, pos: c.history.at(-1).pos, squad: me.squad.length, gpg: +(goals / games).toFixed(2), chronicle: (c.saga?.chronicle ?? []).length, formers: Object.keys(c.formers ?? {}).length, nemMax: Math.max(0, ...nem), feud: feuds.length ? `${Math.min(...feuds)}..${Math.max(...feuds)}` : '-', otherSquads: c.clubs.filter((x) => !x.human).map((x) => x.squad.length).join(','), kb: Math.round(JSON.stringify(c).length / 1024), goal: c.goal?.type ?? '?', alumni: (c.alumni ?? []).length, heirs: (c.heirs?.kids ?? []).length, melee: (c.saga?.chronicle ?? []).filter((x) => x.text.startsWith('Rudel')).length });
 }
 console.table(perSeason);
 console.log('chatMax/week', chatMax, 'errors', errors.length); errors.slice(0, 10).forEach((e) => console.log(' ', e));
