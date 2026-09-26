@@ -6,6 +6,23 @@ import { attackDir } from '../sim/players.js';
 import { BALL_VISUAL_RADIUS, createBallModel, rollBall } from './BallModel.js';
 import { animatePlayer, createPlayerModel, disposeKit, setKitDirt } from './PlayerModel.js';
 
+let flameTex = null;
+function flameTexture() {
+  if (flameTex) return flameTex;
+  const rows = ['...r....', '..rr....', '..rro...', '.rroor..', '.rooyor.', 'rooyyor.', 'rooyyoor', '.ooyyoo.', '..oyyo..', '...oo...'];
+  const col = { r: '#c8352f', o: '#e8742a', y: '#ffe14d' };
+  const c = document.createElement('canvas');
+  c.width = 8;
+  c.height = 10;
+  const ctx = c.getContext('2d');
+  rows.forEach((row, y) => [...row].forEach((ch, x) => ch !== '.' && ((ctx.fillStyle = col[ch]), ctx.fillRect(x, y, 1, 1))));
+  flameTex = new THREE.CanvasTexture(c);
+  flameTex.magFilter = THREE.NearestFilter;
+  flameTex.minFilter = THREE.NearestFilter;
+  flameTex.colorSpace = THREE.SRGBColorSpace;
+  return flameTex;
+}
+
 // Wie schnell Trikots auf welchem Boden dreckig werden – und in welcher Farbe.
 const DIRT = {
   ash: { color: 0x7e4028, rate: 1.2 },
@@ -44,6 +61,13 @@ export class MatchView {
       const number = p.role === 'gk' ? 1 : (Number(String(p.id).split('-')[1]) || 0) + 1;
       const model = createPlayerModel(p.look, kit, { number, keeper: p.role === 'gk', sponsor: team.sponsor ?? null });
       model.celebration = celebrationFor(p.id);
+      if (p.hot) {
+        // In Form: eine kleine Pixelflamme über dem Kopf.
+        model.flame = new THREE.Sprite(new THREE.SpriteMaterial({ map: flameTexture(), transparent: true, depthWrite: false }));
+        model.flame.scale.set(0.32, 0.4, 1);
+        model.flame.position.set(0, 2.25, 0);
+        model.group.add(model.flame);
+      }
       this.models.set(p.id, model);
       this.root.add(model.group);
     }
@@ -124,6 +148,7 @@ export class MatchView {
       m.group.visible = true;
       m.group.position.set(p.pos.x, 0, p.pos.z);
       m.group.rotation.y = Math.atan2(p.facing.x, p.facing.z);
+      if (m.flame) m.flame.scale.y = 0.4 + Math.sin(this.time * 12 + p.pos.x) * 0.04; // flackert
       // Hechtsprung des Torwarts und Rutschen am Boden machen dreckig; Laufen ein wenig.
       if (p.diveAnim > 0 && !this.diving.has(p.id)) {
         this.diving.add(p.id);

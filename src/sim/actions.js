@@ -1,4 +1,5 @@
 import { styleOf } from './tactics.js';
+import { bondBonus, bondOf, isBad } from './bonds.js';
 // Bewegung und Ballkontakte: Laufen, Schuss, Pass, Kopfball, Torwart, Dribbling.
 import { clamp, dist2d, len, norm, rotate } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
@@ -184,6 +185,9 @@ function pass(m, p, a, fatigue, fromHands) {
 
   let target = null;
   let bestScore = -Infinity;
+  // Ohne Sympathien wäre der hier dran gewesen – für „Kalle ignoriert Jens".
+  let plainBest = null;
+  let plainScore = -Infinity;
   // Ecke mit Ansage: kurz, erster Pfosten oder langer Pfosten – der Mitspieler,
   // der der Zielzone am nächsten steht, wird angespielt.
   const zone = a.zone ? cornerZone(m, p, a.zone) : null;
@@ -222,11 +226,17 @@ function pass(m, p, a, fatigue, fromHands) {
       const near = dist2d(o.pos, t.pos);
       if (near < 2.5) score -= (2.5 - near) * (p.role === 'gk' ? 0.5 : 0.2);
     }
+    if (score > plainScore) {
+      plainScore = score;
+      plainBest = t;
+    }
+    if (ai) score += bondBonus(bondOf(m, p, t));
     if (score > bestScore) {
       bestScore = score;
       target = t;
     }
   }
+  if (target && plainBest && target !== plainBest && isBad(bondOf(m, p, plainBest))) m.events.push({ type: 'snub', playerId: p.id, otherId: plainBest.id });
 
   // Freiwilliger Pass der KI, aber keiner wirklich frei? Dann lieber weiterdribbeln.
   if (a.optional && (!target || bestScore < 0.35)) return false;

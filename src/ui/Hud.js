@@ -12,6 +12,7 @@ import { shootoutScore } from '../sim/shootout.js';
 import { crestOf, crestSVG } from './crest.js';
 import { SHOUTS } from '../sim/coach.js';
 import { tacticLabel } from '../sim/tactics.js';
+import { bondOf, isBad, isGood } from '../sim/bonds.js';
 
 const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
 
@@ -136,10 +137,18 @@ export class Hud {
       if (e.type === 'goal') {
         const scorer = e.scorerId && findAnyPlayer(match, e.scorerId);
         const kind = e.ownGoal ? tr('EIGENTOR!', 'OWN GOAL!') : e.via === 'header' ? tr('KOPFBALLTOR!', 'HEADED GOAL!') : tr('TOR!', 'GOAL!');
+        const assist = e.assistId && findAnyPlayer(match, e.assistId);
+        const bond = bondOf(match, scorer, assist);
+        if (isGood(bond)) setTimeout(() => this.toast(tr(`Kumpels unter sich: ${assist.name.split(' ')[0]} → ${scorer.name.split(' ')[0]}`, `Mates in tandem: ${assist.name.split(' ')[0]} → ${scorer.name.split(' ')[0]}`), 2, 2), 2500);
+        else if (isBad(bond)) setTimeout(() => this.toast(tr(`Ausgerechnet ${assist.name.split(' ')[0]} legt auf – abgeklatscht wird trotzdem nicht.`, `${assist.name.split(' ')[0]} of all people sets it up – still no high five.`), 2.4, 2), 2500);
         const story = scorer?.story?.former ? tr(' – ausgerechnet der Ex!', ' – the old boy, of all people!') : scorer?.story?.nemesis ? tr(' – schon wieder der!', ' – him again!') : scorer?.story?.exClub ? tr(' – gegen den Ex-Verein!', ' – against his old club!') : '';
         this.toast(`${kind} ${scorer?.name ?? ''}${story}`, 2.4, 3);
       } else if (e.type === 'grab') this.toast(tr(`${first} hält am Trikot fest …`, `${first} grabs a shirt …`), 0.9);
-      else if (e.type === 'whiff') this.toast(tr(`Luftloch von ${first}!`, `Air shot from ${first}!`), 1.4);
+      else if (e.type === 'snub' && p && (p.team === match.humanTeam || p.team === match.coachTeam) && match.time - (this.lastSnub ?? -99) > 15) {
+        this.lastSnub = match.time;
+        const o = findAnyPlayer(match, e.otherId);
+        this.toast(tr(`${first} übersieht ${o?.name.split(' ')[0]} – schon wieder.`, `${first} ignores ${o?.name.split(' ')[0]} – again.`), 1.6, 1);
+      } else if (e.type === 'whiff') this.toast(tr(`Luftloch von ${first}!`, `Air shot from ${first}!`), 1.4);
       else if (e.type === 'foul') {
         const victim = findAnyPlayer(match, e.victimId);
         this.toast(tr(`${e.kind === 'hold' ? 'Festhalten' : 'Foul'} von ${first}! Freistoß für ${short(victim.team)}`, `${e.kind === 'hold' ? 'Holding' : 'Foul'} by ${first}! Free kick to ${short(victim.team)}`), 1.8, 2);

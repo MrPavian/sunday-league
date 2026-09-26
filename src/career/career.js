@@ -20,7 +20,7 @@ import { rollInjuries } from './injuries.js';
 import { initAcademy, seasonAcademy, weeklyAcademy } from './academy.js';
 import { applyWeather, rollWeather, WEATHER, WEATHER_CHAT } from './weather.js';
 import { derbyResult, isDerbyFixture } from './derby.js';
-import { applyChemistry, pastLink, setRelation } from './relations.js';
+import { applyChemistry, pastLink, relationsAmong, setRelation } from './relations.js';
 import { applyFusion, chronicle, initSagas, sagaChat, sagaSeasonEnd, sagaWeek } from './sagas.js';
 import { childrenGrowUp, coachAway, initCoach, isCoach, personalWeek, seasonPersonal, weeklyPersonal } from './personal.js';
 import { absenceFactor, advanceArcs, applyForm, autoResolve, resultMood, rollWeekEvent, weeklyMood } from './events.js';
@@ -29,6 +29,7 @@ import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFin
 
 import { NAME_EDITION } from '../data/names.js';
 import { weeklyBanter } from './banter.js';
+import { relsMap } from '../sim/bonds.js';
 import { memoryAfterMatch, placeFormers, preMatchMemories, rememberArrival, rememberDeparture, tagStories } from './memory.js';
 import { defaultCrest } from '../ui/crest.js';
 import { clubTactic, normalizeTactic, systemFormation } from '../sim/tactics.js';
@@ -744,7 +745,11 @@ export function teamForMatch(career, club, format, availability, rng) {
   applyPubToTeam(career, club, players); // Bierdeckel-Taktik bzw. Tipp vom Wirt
   tagStories(career, club, players); // Ehemalige, Angstgegner
   if (club.human) applyChemistry(career, lineup.filter((idx) => !helpers.includes(idx)), players); // Kumpels & Rivalen
-  return { name: club.name, short: club.short, kit: club.kit, keeperKit: club.keeperKit, crest: club.crest ?? defaultCrest(club), tactic: tacticOf(club, format), sponsor: clubSponsor(career, club), players, helpers };
+  // Beziehungen und Form fürs Spiel: Kumpels spielen sich an, wer in Form ist, brennt.
+  const regular = [...lineup, ...bench].filter((idx) => !helpers.includes(idx));
+  const rels = club.human ? relsMap(relationsAmong(career, regular)) : {};
+  for (const p of players) if ((career.players[p.poolIndex]?.form ?? 0) >= 0.3) p.hot = true;
+  return { rels, name: club.name, short: club.short, kit: club.kit, keeperKit: club.keeperKit, crest: club.crest ?? defaultCrest(club), tactic: tacticOf(club, format), sponsor: clubSponsor(career, club), players, helpers };
 }
 
 // Wer steht vorne auf dem Trikot? Beim eigenen Verein der Trikotsponsor, bei den

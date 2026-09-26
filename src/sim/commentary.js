@@ -1,6 +1,7 @@
 // Liveticker: macht aus den Spielereignissen kurze Kommentarzeilen – für simulierte
 // Partien, die man nicht selbst spielt. Nutzt einen eigenen Zufall, damit der
 // Ticker das Ergebnis nicht verändert.
+import { bondOf, isBad, isGood } from './bonds.js';
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { attackDir } from './players.js';
@@ -132,6 +133,9 @@ export function createCommentator(m, seed = 1) {
                     : '';
             text = tr(`TOOOR für ${team(e.team)}! ${name} trifft${how}. ${scoreText(m)}.`, `GOAL for ${team(e.team)}! ${name} scores${how}. ${scoreText(m)}.`);
             if (a) text += tr(` Vorlage: ${surname(a)}.`, ` Assist: ${surname(a)}.`);
+            const bond = bondOf(m, p, a);
+            if (isGood(bond)) text += tr(' Die beiden sind Kumpels – blind verstanden.', ' Those two are mates – they found each other blindfolded.');
+            else if (isBad(bond)) text += tr(' Ausgerechnet vom Rivalen aufgelegt. Abgeklatscht wird nicht.', ' Set up by his rival, of all people. No high five.');
             if (p?.story?.former) text += tr(' Ausgerechnet der Ex! Er jubelt demonstrativ vor der alten Bank.', ' The old boy, of all people! He celebrates right in front of his old bench.');
             else if (p?.story?.nemesis) text += tr(` Schon wieder ${name} – das ${p.story.nemesis + 1}. Tor gegen dieses Team.`, ` ${name} again – his goal number ${p.story.nemesis + 1} against this lot.`);
             else if (p?.story?.exClub) text += tr(' Gegen den Ex-Verein! Er hält sich den Finger vor den Mund.', ' Against his old club! Finger to the lips.');

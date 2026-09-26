@@ -232,3 +232,25 @@ describe('club memory', async () => {
     if (tagged) expect(tagged.story?.former).toBe(true);
   });
 });
+
+describe('bonds on the pitch', async () => {
+  const { createCareer, humanClub, teamForMatch } = await import('../src/career/career.js');
+  const { setRelation } = await import('../src/career/relations.js');
+  const { bondOf } = await import('../src/sim/bonds.js');
+
+  it('rivals and hot form travel into the match', () => {
+    const c = createCareer({ seed: 66 });
+    const club = humanClub(c);
+    const [a, b] = club.squad.filter((i) => i !== c.coach?.idx);
+    setRelation(c, a, b, 'rivalen');
+    c.players[a].form = 0.5;
+    const avail = Object.fromEntries(club.squad.map((i) => [i, 'yes']));
+    const team = teamForMatch(c, club, 5, avail, { next: () => 0.5, int: (x) => x, chance: () => false, pick: (x) => x[0], range: (x) => x, gauss: () => 0 });
+    expect(Object.values(team.rels)).toContain('rivalen');
+    expect(team.players.find((p) => p.poolIndex === a)?.hot).toBe(true);
+    const m = createMatch({ seed: 1, pitch: PITCHES.park, teams: [team, team], human: false, duration: 30 });
+    const pa = [...m.players, ...m.bench.flat()].find((p) => p.team === 0 && p.poolIndex === a);
+    const pb = [...m.players, ...m.bench.flat()].find((p) => p.team === 0 && p.poolIndex === b);
+    if (pa && pb) expect(bondOf(m, pa, pb)).toBe('rivalen');
+  });
+});
