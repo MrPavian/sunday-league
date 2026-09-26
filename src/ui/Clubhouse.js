@@ -1,5 +1,6 @@
 import { plural, tr } from '../core/i18n.js';
 import { kitPreviewURL } from '../render/kitPaint.js';
+import { effectChips } from '../career/consequences.js';
 import { STYLES as PLAY_STYLES, systemsFor } from '../sim/tactics.js';
 import { jobPerk } from '../data/jobs.js';
 import { CREST_COLORS, CREST_DIVISIONS, CREST_SHAPES, CREST_SYMBOLS, crestOf, crestSVG, defaultCrest, FIGURES } from './crest.js';
@@ -679,7 +680,7 @@ export class Clubhouse {
           <p class="label">${ev.story ? `${tr('Geschichte', 'Story')} · ${storyTag(ev.story)}` : tr('Diese Woche im Verein', 'This week at the club')}</p>
           <p>${view.text}</p>
           ${ev.choice !== null
-            ? `<p class="reply ok">➜ ${view.options[ev.choice] ?? ''}: ${ev.result ?? ''}</p>`
+            ? `<p class="reply ok">➜ ${view.options[ev.choice] ?? ''}: ${ev.result ?? ''}</p>${effectChips(ev.effects)}`
             : this.results
               ? ''
               : `<div class="actions">${view.options.map((o, i) => `<button ${i === 0 ? 'class="primary"' : ''} data-action="event" data-value="${i}">${o}</button>`).join('')}</div>`}

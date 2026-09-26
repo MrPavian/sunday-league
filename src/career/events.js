@@ -8,6 +8,8 @@ import { advanceStories, arcsOf, STORY_STARTS, storyDecision } from './stories.j
 import { CRISES, PERSONAL_EVENTS } from './personal.js';
 import { SAGA_EVENTS } from './sagas.js';
 import { SOCIAL_EVENTS } from './social.js';
+import { consequences, snapshot } from './consequences.js';
+import { BANTER_EVENTS } from './banter.js';
 import { DERBY_EVENTS, derbyThisWeek } from './derby.js';
 import { INJURY_EVENTS } from './injuries.js';
 import { LIFE_EVENTS } from './life.js';
@@ -583,13 +585,15 @@ export function rollWeekEvent(career) {
   career.eventLog ??= [];
   const rng = createRng((career.seed * 7 + career.season * 131 + career.round * 17 + 3) >>> 0);
   if (career.week.event) return null; // eine Geschichte verlangt schon eine Entscheidung
-  const urgent = derbyThisWeek(career) || career.flags?.injuryNews || career.flags?.invalid;
+  // Was im Chat hochkocht, landet diese Woche beim Trainer.
+  const chatHeat = [career.flags?.chatFeud, career.flags?.dauerabsager].some((f) => f && f.round === career.round && f.season === career.season);
+  const urgent = derbyThisWeek(career) || career.flags?.injuryNews || career.flags?.invalid || chatHeat;
   if (!rng.chance(EVENT_CHANCE) && !urgent) return null; // Derby, Diagnose & Co. kommen immer
   const recent = new Set(career.eventLog.filter((e) => e.season === career.season && career.round - e.round < NO_REPEAT).map((e) => e.id));
   const candidates = [];
   const storySeason = new Set(career.eventLog.filter((e) => e.season === career.season).map((e) => e.id));
   const storiesFull = arcsOf(career).length >= 3;
-  for (const [id, ev] of [...Object.entries(EVENTS), ...Object.entries(STORY_STARTS), ...Object.entries(PERSONAL_EVENTS), ...Object.entries(SAGA_EVENTS), ...Object.entries(SOCIAL_EVENTS), ...Object.entries(DERBY_EVENTS), ...Object.entries(INJURY_EVENTS), ...Object.entries(LIFE_EVENTS), ...Object.entries(ACADEMY_EVENTS), ...Object.entries(SPONSOR_EVENTS)]) {
+  for (const [id, ev] of [...Object.entries(EVENTS), ...Object.entries(STORY_STARTS), ...Object.entries(PERSONAL_EVENTS), ...Object.entries(SAGA_EVENTS), ...Object.entries(SOCIAL_EVENTS), ...Object.entries(BANTER_EVENTS), ...Object.entries(DERBY_EVENTS), ...Object.entries(INJURY_EVENTS), ...Object.entries(LIFE_EVENTS), ...Object.entries(ACADEMY_EVENTS), ...Object.entries(SPONSOR_EVENTS)]) {
     if (recent.has(id)) continue;
     if (STORY_STARTS[id] && (storiesFull || storySeason.has(id))) continue; // jede Geschichte höchstens einmal pro Saison
     const ctx = ev.needs(career, rng);
@@ -607,7 +611,7 @@ export function rollWeekEvent(career) {
 }
 
 const eventDef = (career, id) =>
-  EVENTS[id] ?? STORY_STARTS[id] ?? PERSONAL_EVENTS[id] ?? SAGA_EVENTS[id] ?? SOCIAL_EVENTS[id] ?? DERBY_EVENTS[id] ?? INJURY_EVENTS[id] ?? LIFE_EVENTS[id] ?? ACADEMY_EVENTS[id] ?? SPONSOR_EVENTS[id] ?? CRISES[id] ?? storyDecision(career, id);
+  EVENTS[id] ?? STORY_STARTS[id] ?? PERSONAL_EVENTS[id] ?? SAGA_EVENTS[id] ?? SOCIAL_EVENTS[id] ?? BANTER_EVENTS[id] ?? DERBY_EVENTS[id] ?? INJURY_EVENTS[id] ?? LIFE_EVENTS[id] ?? ACADEMY_EVENTS[id] ?? SPONSOR_EVENTS[id] ?? CRISES[id] ?? storyDecision(career, id);
 
 // Feste Etiketten über dem Ereignis (Geschichten haben eigene Namen).
 const STORY_TAGS = { 'Neue Geschichte': 'New story', Privat: 'Private', Vereinsgeschichte: 'Club history' };
@@ -633,6 +637,7 @@ export function resolveEvent(career, choice) {
   if (!option) return null;
   const rng = createRng((career.seed * 13 + career.round * 7 + choice + e.id.length) >>> 0);
   e.choice = choice;
+  const before = snapshot(career);
   e.result = option.effect(career, e.ctx, rng);
   // Geschichten & private Ereignisse: Grundwirkung plus zufällige Wendung.
   const story = e.id.startsWith('story:') ? e.id.slice(6).split('-') : null;
@@ -640,6 +645,7 @@ export function resolveEvent(career, choice) {
   const subject = story ? Number(story[1]) : e.ctx?.s ?? e.ctx?.idx ?? null;
   const twist = applyTwist(career, key, subject, createRng((career.seed * 31 + career.round * 11 + choice * 5 + career.season) >>> 0));
   if (twist) e.result = `${e.result} ${twist}`;
+  e.effects = consequences(career, before); // sichtbar machen, was die Wahl bewirkt hat
   return e.result;
 }
 

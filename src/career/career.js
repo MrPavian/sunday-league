@@ -28,6 +28,7 @@ import { developYouth, expireYouth, initYouth, retirements, youthIntake } from '
 import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFinances, weeklyFinances } from './finances.js';
 
 import { NAME_EDITION } from '../data/names.js';
+import { weeklyBanter } from './banter.js';
 import { defaultCrest } from '../ui/crest.js';
 import { clubTactic, normalizeTactic, systemFormation } from '../sim/tactics.js';
 import { shirtSponsor, sponsorColor, SPONSORS } from './sponsors.js';
@@ -385,6 +386,7 @@ export function startWeek(career) {
   career.flags.derbyRival = leagueOf(career).derby?.club ?? null;
   advanceArcs(career);
   personalWeek(career);
+  weeklyBanter(career); // Sprüche im Chat – mit Folgen
   rollWeekEvent(career);
   sagaChat(career);
   if (career.round === 0 && career.offersSeason !== career.season) makeOffers(career, career.level ?? 1);

@@ -106,6 +106,9 @@ die Komik entsteht aus dem Alltag.
 - **Drei Ligen mit Relegation**: Freizeitliga, Kreisklasse C und B – der Zweite spielt in Hin- und Rückspiel um den Aufstieg
 - **Spielerentwicklung sichtbar**: Formkurve, Stärke-Verlauf über die Saisons, Spieler des Monats im Kreisblatt
 - **Eigener Spielertrainer**: Name, Alter, Beruf, Beziehung, Kinder und Spielertyp selbst festlegen
+- **Die Gruppe lebt**: Sprüche im Teamchat („Du hast jetzt 3x in Folge abgesagt.", „Geiles Spiel letzte Woche!") –
+  die Antworten verändern Teamchemie, Form und Zuverlässigkeit; kocht es hoch, musst du als Trainer ran.
+  Jede Entscheidung zeigt danach ihre Folgen (Stimmung, Kasse, Beziehungen, Form …).
 - **Kasse & Strafenkatalog**: Luftloch 1 €, Eigentor eine Runde für alle
 - **Sponsoren mit Eigenarten**: 40 Betriebe aus dem Ort, nachverhandeln, bei Laune halten, verlängern – oder verärgern.
   Der Trikotsponsor steht auf der Brust.
@@ -214,7 +217,7 @@ Auf englischen Tastaturen liegt „Stochern“ auf **Z** (gleiche Taste).
 
 ```bash
 npm run dev      # Entwicklungsserver mit Hot Reload
-npm test         # 174 Tests (Simulation und Karriere)
+npm test         # 176 Tests (Simulation und Karriere)
 npm run build    # Produktions-Build nach dist/
 npm run preview  # Build lokal ansehen
 ```

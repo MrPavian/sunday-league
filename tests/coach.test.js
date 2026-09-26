@@ -174,3 +174,36 @@ function createRngLocal() {
   let a = 7;
   return { next: () => ((a = (a * 16807) % 2147483647) / 2147483647), int: (lo, hi) => lo, chance: () => false, pick: (arr) => arr[0], range: (lo) => lo, gauss: () => 0 };
 }
+
+describe('team chat banter', async () => {
+  const { createCareer, finishRound, humanClub } = await import('../src/career/career.js');
+  const { weeklyBanter, BANTER_EVENTS } = await import('../src/career/banter.js');
+  const { resolveEvent } = await import('../src/career/events.js');
+
+  it('three no-shows in a row get called out and become a decision with visible effects', () => {
+    const c = createCareer({ seed: 91 });
+    const idx = humanClub(c).squad.find((i) => i !== c.coach?.idx);
+    c.players[idx].noStreak = 2;
+    c.week.availability[idx] = 'no';
+    const said = weeklyBanter(c);
+    expect(c.players[idx].noStreak).toBe(3);
+    expect(c.week.chat.some((m) => m.banter)).toBe(true);
+    if (said.some((s) => s.kind === 'streak' && s.to === idx)) {
+      const ctx = BANTER_EVENTS.dauerabsager.needs(c);
+      expect(ctx?.idx).toBe(idx);
+      c.week.event = { id: 'dauerabsager', ctx, text: 'x', options: ['a', 'b', 'c'], choice: null, result: null };
+      resolveEvent(c, 0);
+      expect(Array.isArray(c.week.event.effects)).toBe(true);
+    }
+  });
+
+  it('a season of weeks produces banter without breaking anything', () => {
+    const c = createCareer({ seed: 92 });
+    let lines = 0;
+    for (let r = 0; r < 8; r++) {
+      lines += c.week.chat.filter((m) => m.banter).length;
+      finishRound(c);
+    }
+    expect(lines).toBeGreaterThan(4);
+  });
+});
