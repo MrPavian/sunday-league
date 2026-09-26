@@ -3,6 +3,7 @@ import { kitPreviewURL } from '../render/kitPaint.js';
 import { effectChips } from '../career/consequences.js';
 import { museum } from '../career/museum.js';
 import { seasonReview } from '../career/review.js';
+import { clubLife, FEE_NAMES, neighborText } from '../career/clublife.js';
 import { reviewHTML, shareReview } from './review.js';
 import { GOALS } from '../career/board.js';
 import { STYLES as PLAY_STYLES, systemsFor } from '../sim/tactics.js';
@@ -38,7 +39,7 @@ import {
   seasonOver,
   table,
 } from '../career/career.js';
-import { acceptSponsor, bookTrip, FINES, KIT_COST, SLOTS, TRIP_COST } from '../career/finances.js';
+import { acceptSponsor, bookTrip, FINES, KIT_COST, MEMBER_FEE, SLOTS, TRIP_COST } from '../career/finances.js';
 import { DESTINATIONS, tripChoose, tripStage, tripState, tripVerdict } from '../career/trip.js';
 import { build, canBuild, facilities, FACILITIES } from '../career/facilities.js';
 import { bossOf, goalProgress, goalText, lineOf, negotiate, relLabel, shirtSponsor, sponsorColor, TRAITS as SPONSOR_TRAITS } from '../career/sponsors.js';
@@ -481,6 +482,20 @@ export class Clubhouse {
       ${f.note ? `<p class="reply ok">${f.note}</p>` : ''}<ul class="plain">${rows}</ul></div>`;
   }
 
+  // Vereinsleben: was die Entscheidungen rund ums Vereinsheim dauerhaft verändert haben.
+  clubLifeBlock() {
+    const c = this.career;
+    const l = clubLife(c);
+    const t = l.treasurer && humanClub(c).squad.includes(l.treasurer.idx) ? this.p(l.treasurer.idx).name : c.coach?.flags?.kasse ? tr('du selbst', 'you') : tr('der zweite Vorsitzende', 'the vice-chairman');
+    const fee = MEMBER_FEE + l.fee;
+    return `<div class="facilities clublife"><h4>${tr('Vereinsleben', 'Club life')}</h4><ul class="plain">
+      <li><b>${tr('Beitrag', 'Membership fee')}:</b> ${euro(fee)} ${tr('pro Spieler und Spieltag', 'per player per matchday')} <small>(${FEE_NAMES[l.fee]} · ${tr('beschließt die Jahreshauptversammlung', 'set at the annual general meeting')})</small></li>
+      <li><b>${tr('Förderverein', 'Supporters\' club')}:</b> ${l.supporters} ${plural(l.supporters, 'Mitglied', 'Mitglieder', 'member', 'members')} <small>(${euro(l.supporters)}${tr('/Woche', '/week')})</small></li>
+      <li><b>${tr('Kassenwart', 'Treasurer')}:</b> ${t}</li>
+      <li><b>${tr('Nachbarschaft', 'Neighbourhood')}:</b> ${neighborText(l.neighbors)}</li>
+    </ul></div>`;
+  }
+
   // Trainer-Ären: Wer saß wann an der Seitenlinie?
   erasBlock() {
     const c = this.career;
@@ -888,6 +903,7 @@ export class Clubhouse {
     return `
       ${profile}
       ${this.facilityBlock()}
+      ${this.clubLifeBlock()}
       ${this.chronicleBlock()}
       <div class="club-form">
         <div class="kit-preview">

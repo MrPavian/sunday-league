@@ -26,6 +26,11 @@ const TIPS = [
     text: () => tr('Oben wartet eine Entscheidung. Danach zeigen kleine Marken, was sie bewirkt hat – Stimmung, Form, Kasse, Beziehungen.', 'A decision is waiting at the top. Afterwards, small tags show what it changed – mood, form, money, relationships.'),
   },
   {
+    id: 'clublife',
+    when: (c) => c.week.event?.story === 'Vereinsleben',
+    text: () => tr('Vereinsleben: Beitrag, Förderverein, Nachbarn und Kassenwart wirken dauerhaft – Woche für Woche in der Kasse und in der Stimmung. Den Stand siehst du im Tab „Verein".', 'Club life: fees, supporters, neighbours and the treasurer have lasting effects – week by week on the kitty and the mood. Check the “Club” tab for the current state.'),
+  },
+  {
     id: 'press',
     when: (c) => c.week.chat.some((m) => m.press && m.text.startsWith('Kreisblatt')),
     text: () => tr('Jeder Gegner hat einen Trainer mit eigener Art. Nach fairen Spielen gibt es Handschlag – manchmal will dann einer zu euch wechseln. Nach Rudelbildung wird das Rückspiel hitzig.', 'Every opponent has a manager with his own ways. Fair games end in handshakes – and sometimes one of their players wants to join you. After a melee, the return fixture gets heated.'),

@@ -21,6 +21,9 @@ export function snapshot(c) {
     energy: c.coach?.energy ?? null,
     patience: c.coach?.patience ?? null,
     sponsors: (c.sponsors ?? []).map((s) => ({ id: s.id, rel: s.rel ?? 50 })),
+    supporters: c.clubLife?.supporters ?? 0,
+    neighbors: c.clubLife?.neighbors ?? 0,
+    fee: c.clubLife?.fee ?? 0,
   };
 }
 
@@ -64,7 +67,12 @@ export function consequences(c, before) {
     const b = before.sponsors.find((x) => x.id === s.id);
     if (b && Math.abs(s.rel - b.rel) >= 3) add(s.rel > b.rel ? tr('Sponsor zufriedener', 'Sponsor happier') : tr('Sponsor verstimmt', 'Sponsor unhappy'), s.rel > b.rel);
   }
-  return out.slice(0, 6);
+  const ds = after.supporters - before.supporters;
+  if (ds) add(tr(`Förderverein ${ds > 0 ? '+' : '−'}${Math.abs(ds)}`, `Supporters ${ds > 0 ? '+' : '−'}${Math.abs(ds)}`), ds > 0);
+  const dn = after.neighbors - before.neighbors;
+  if (dn) add(dn > 0 ? tr('Nachbarn versöhnlicher', 'Neighbours calmer') : tr('Nachbarn verärgert', 'Neighbours annoyed'), dn > 0);
+  if (after.fee !== before.fee) add(after.fee > before.fee ? tr('Beitrag +1 € pro Spieltag', 'Fee +€1 per matchday') : tr('Beitrag −1 € pro Spieltag', 'Fee −€1 per matchday'), null);
+  return out.slice(0, 7);
 }
 
 export const effectChips = (list) =>

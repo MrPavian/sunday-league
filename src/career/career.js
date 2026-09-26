@@ -33,6 +33,7 @@ import { matchdaySurprise } from './matchday.js';
 import { TIP_IDS, weeklyTip } from './tips.js';
 import { fenceVoice, heirIntake, heirMoments } from './generations.js';
 import { archiveReview } from './review.js';
+import { clubLifeWeek } from './clublife.js';
 import { afterMatchVoice, deliverNews, grudgeMatch, preMatchVoice } from './opponents.js';
 import { midSeasonReport, seasonGoalVerdict, setSeasonGoal } from './board.js';
 import { relsMap } from '../sim/bonds.js';
@@ -910,6 +911,7 @@ export function finishRound(career) {
   sagaWeek(career);
   weeklyAcademy(career);
   weeklyFacilities(career);
+  clubLifeWeek(career); // Förderverein, Beitrag, Kassenwart
   for (const rec of Object.values(career.players)) {
     if (rec.injuryWeeks > 0) rec.injuryWeeks--;
     if (rec.injuryWeeks === 0) rec.injury = null;

@@ -9,6 +9,7 @@ import { generatePlayer, ratePlayer } from '../sim/generator.js';
 import { adjustMood } from './events.js';
 import { jobName } from '../data/names.js';
 import { trainingRelief } from './facilities.js';
+import { appointTreasurer } from './clublife.js';
 
 const FAMILIES = [
   { text: tr('verheiratet, zwei Kinder', 'married, two children'), kids: 2, partner: 'Deine Frau' },
@@ -352,9 +353,11 @@ export const PERSONAL_EVENTS = {
     options: [
       {
         label: tr('Einen Spieler fragen', 'Ask a player'),
-        effect: (c) => {
+        effect: (c, ctx, rng) => {
           c.coach.flags.kasseAsked = true;
-          const idx = humanClub(c).squad.find((i) => i !== c.coach.idx && MONEY_JOBS.test(playerOf(c, i).profession));
+          const idx = humanClub(c).squad.find((i) => i !== c.coach.idx && MONEY_JOBS.test(playerOf(c, i).profession)) ?? (rng.chance(0.5) ? humanClub(c).squad.find((i) => i !== c.coach.idx && playerOf(c, i).age >= 30) : undefined);
+          if (idx != null) appointTreasurer(c, idx, rng);
+          if (idx != null && !MONEY_JOBS.test(playerOf(c, idx).profession)) return tr(`${playerOf(c, idx).name.split(' ')[0]} meldet sich. Er hat mal einen Excel-Kurs gemacht, sagt er.`, `${playerOf(c, idx).name.split(' ')[0]} volunteers. He once did an Excel course, he says.`);
           if (idx != null) return tr(`${playerOf(c, idx).name.split(' ')[0]} (${playerOf(c, idx).profession}) macht es. Endlich mal einer vom Fach.`, `${playerOf(c, idx).name.split(' ')[0]} (${jobName(playerOf(c, idx).profession)}) takes it on. Finally someone who knows the trade.`);
           c.coach.flags.kasse = true;
           adjustEnergy(c, -5);

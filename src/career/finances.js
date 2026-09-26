@@ -84,7 +84,8 @@ export function matchFinances(career, fixture, prepared, level) {
 // Jede Woche: Mitgliedsbeiträge und Sponsorengeld.
 export function weeklyFinances(career) {
   const human = career.clubs.find((c) => c.human);
-  book(career, tr(`Mitgliedsbeiträge (${human.squad.length} × ${MEMBER_FEE} €)`, `Membership fees (${human.squad.length} × €${MEMBER_FEE})`), human.squad.length * MEMBER_FEE);
+  const fee = MEMBER_FEE + (career.clubLife?.fee ?? 0); // Beschluss der Jahreshauptversammlung
+  book(career, tr(`Mitgliedsbeiträge (${human.squad.length} × ${fee} €)`, `Membership fees (${human.squad.length} × €${fee})`), human.squad.length * fee);
   paySponsors(career);
 }
 
