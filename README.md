@@ -29,6 +29,11 @@ Der Spielstand wird im Browser gespeichert.
 Versions-Tags am Release. Installieren: APK aufs Handy, öffnen, „Unbekannte Quellen“ für den Browser/Dateimanager erlauben.
 Alternativ die Browser-Version in Chrome öffnen und „Zum Startbildschirm hinzufügen“ – dann läuft sie wie eine App, auch offline.
 
+**Taktik** (Vereinsheim → Aufstellung): Pro Spielformat ein System – etwa 2-1-1, Raute oder 2-2 im Fünfer,
+2-3-1, 3-2-1, 2-2-2 oder 3-1-2 im Siebener – und ein Spielstil: *Ausgewogen*, *Offensiv*, *Auf Konter lauern*,
+*Flügelspiel*, *Kurzpassspiel*, *Hohes Pressing* oder *Mauern*. Die Spieler halten ihre Position im System, der Block
+verschiebt sich mit dem Ball, verteidigt wird in Zonen. Jeder Gegner hat seine eigene Handschrift, sie steht beim Anpfiff unter der Anzeigetafel.
+
 **Drei Arten, ein Spiel zu erleben** – im Vereinsheim vor jedem Anpfiff wählbar:
 1. **Selbst spielen** (PC, Tastatur oder Gamepad).
 2. **Trainer an der Seitenlinie** – in 3D zuschauen und reinrufen (siehe unten).
@@ -207,7 +212,7 @@ Auf englischen Tastaturen liegt „Stochern“ auf **Z** (gleiche Taste).
 
 ```bash
 npm run dev      # Entwicklungsserver mit Hot Reload
-npm test         # 172 Tests (Simulation und Karriere)
+npm test         # 174 Tests (Simulation und Karriere)
 npm run build    # Produktions-Build nach dist/
 npm run preview  # Build lokal ansehen
 ```

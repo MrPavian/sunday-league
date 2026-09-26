@@ -3,6 +3,7 @@ import { stepMatch } from '../sim/match.js';
 import { createCommentator, tickerMinute } from '../sim/commentary.js';
 import { answer, checkDecision, createTouchline, mentalityLabel } from '../sim/touchline.js';
 import { shout, SHOUTS } from '../sim/coach.js';
+import { tacticLabel } from '../sim/tactics.js';
 
 const hex = (n) => `#${(n ?? 0x888888).toString(16).padStart(6, '0')}`;
 // Tempo: Spielsekunden pro echter Sekunde (1× ≈ eine Minute für das ganze Spiel).
@@ -146,6 +147,7 @@ export class Ticker {
           <small>${this.title}</small>
           <div class="board">${side(0)}<b class="score">0 : 0</b>${side(1)}</div>
           <div class="clock"></div>
+          <small class="plans">${m.teams.map((t, i) => `${t.short ?? t.name}: ${tacticLabel(m.plan?.[i], m.pitch.format)}`).join(' – ')}</small>
         </header>
         <ol class="lines" aria-live="polite"></ol>
         <footer></footer>

@@ -136,3 +136,41 @@ describe('build-up play', () => {
     expect(toKeeper / passes).toBeLessThan(0.05);
   });
 });
+
+describe('tactics', async () => {
+  const { SYSTEMS, STYLES, normalizeTactic, systemFormation, clubTactic } = await import('../src/sim/tactics.js');
+  const { createCareer, currentLineup, humanClub, setClubTactic, teamForMatch } = await import('../src/career/career.js');
+
+  it('every system fits its format and every style is complete', () => {
+    for (const [format, systems] of Object.entries(SYSTEMS)) {
+      for (const sys of Object.values(systems)) {
+        expect(sys.formation.length).toBe(Number(format));
+        expect(sys.formation.filter((e) => e.role === 'gk')).toHaveLength(1);
+      }
+    }
+    const keys = Object.keys(STYLES.ausgewogen);
+    for (const st of Object.values(STYLES)) for (const k of keys) expect(st[k], k).not.toBeUndefined();
+    expect(normalizeTactic({ system: 'quatsch', style: 'quatsch' }, 5)).toEqual({ system: '2-1-1', style: 'ausgewogen' });
+    expect(clubTactic('kanal', 7)).toEqual(clubTactic('kanal', 7));
+  });
+
+  it('the chosen system shapes the line-up and the match', () => {
+    const c = createCareer({ seed: 77 });
+    const { format } = currentLineup(c);
+    const other = Object.keys(SYSTEMS[format])[1];
+    setClubTactic(c, format, { system: other, style: 'konter' });
+    const lu = currentLineup(c);
+    expect(lu.tactic).toEqual({ system: other, style: 'konter' });
+    expect(lu.formation.map((e) => e.role)).toEqual(systemFormation(format, other).map((e) => e.role));
+    const club = humanClub(c);
+    const team = teamForMatch(c, club, format, c.week.availability, createRngLocal());
+    const m = createMatch({ seed: 3, pitch: { ...PITCHES.hinterhof, format }, teams: [team, team], human: true, duration: 30 });
+    expect(m.plan[0].style).toBe('konter');
+    expect(m.players.filter((p) => p.team === 0).map((p) => p.role)).toEqual(systemFormation(format, other).map((e) => e.role));
+  });
+});
+
+function createRngLocal() {
+  let a = 7;
+  return { next: () => ((a = (a * 16807) % 2147483647) / 2147483647), int: (lo, hi) => lo, chance: () => false, pick: (arr) => arr[0], range: (lo) => lo, gauss: () => 0 };
+}

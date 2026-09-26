@@ -1,3 +1,4 @@
+import { styleOf } from './tactics.js';
 // Bewegung und Ballkontakte: Laufen, Schuss, Pass, Kopfball, Torwart, Dribbling.
 import { clamp, dist2d, len, norm, rotate } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
@@ -28,6 +29,7 @@ export function movePlayer(m, p, intent, dt, leaders) {
     if (hasTrait(p, 'pferdelunge')) drain *= 0.5;
     if (hasTrait(p, 'raucher')) drain *= 1.3;
     if (p.injury) drain *= 1 + 0.1 * p.injury.severity;
+    drain *= styleOf(m, p.team).tire ?? 1; // Pressing kostet Puste
     if (leaders.some((l) => l !== p && l.team === p.team && dist2d(l.pos, p.pos) < 8)) drain *= 0.85;
   }
   p.stamina = clamp(p.stamina - drain * dt, 0, 1);
@@ -206,7 +208,8 @@ function pass(m, p, a, fatigue, fromHands) {
     const ai = p.id !== m.controlledId;
     const pressed = ai && m.players.some((o) => o.team !== p.team && dist2d(o.pos, p.pos) < 1.8);
     const gkMalus = t.role === 'gk' ? (ai && !pressed ? 2 : 0.8) : 0;
-    let score = dot - d * 0.035 - gkMalus + (t.pos.x - p.pos.x) * attackDir(m, p.team) * (ai ? 0.05 : 0.025);
+    const st = styleOf(m, p.team);
+    let score = dot - d * (ai ? st.shortPass : 0.035) - gkMalus + (t.pos.x - p.pos.x) * attackDir(m, p.team) * (ai ? st.forward : 0.025);
     // Flanken sollen in Tornähe landen.
     if (a.lofted) score -= Math.abs(t.pos.x - attackDir(m, p.team) * pitch.halfLength) * 0.08;
     for (const o of m.players) {

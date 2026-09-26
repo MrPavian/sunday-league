@@ -913,3 +913,21 @@ body.touch .coach-play { background: #2f6f3a; }
 .ticker-panel .calls span { opacity: 0.8; font-size: 13px; }
 .ticker-panel .calls button { padding: 4px 10px !important; font-size: 13px; background: #1d2126 !important; }
 @media (max-width: 720px) { .venue { top: 96px; } }
+
+/* Taktiktafel */
+.tactic-board { margin-bottom: 14px; padding: 10px; background: rgba(0, 0, 0, 0.2); border: 2px solid #000; }
+.tactic-board h4 { margin: 0 0 8px; }
+.tactic-board h4 small { opacity: 0.7; font-weight: normal; }
+.tactic-board .systems, .tactic-board .styles { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.club-panel button.system { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px; }
+.mini-pitch { position: relative; display: block; width: 84px; height: 52px; background: repeating-linear-gradient(90deg, #3f8a3c 0 10px, #4a9645 10px 20px); border: 2px solid #f2efe6; }
+.mini-pitch::after { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; border-left: 1px solid rgba(255, 255, 255, 0.7); }
+.mini-pitch i { position: absolute; width: 8px; height: 8px; margin: -4px 0 0 -4px; border: 1px solid #000; border-radius: 50%; }
+.mini-pitch .dot-gk { background: #e0b020; }
+.mini-pitch .dot-def { background: #2f6fb5; }
+.mini-pitch .dot-mid { background: #f2efe6; }
+.mini-pitch .dot-fwd { background: #c8352f; }
+.club-panel button.system.active { background: #3b4a3a; color: var(--ink); outline: 2px solid var(--accent); text-shadow: var(--shadow); }
+.venue { text-align: center; }
+.venue small { opacity: 0.8; font-size: 11px; }
+.ticker-panel .plans { display: block; margin-top: 4px; opacity: 0.7; }

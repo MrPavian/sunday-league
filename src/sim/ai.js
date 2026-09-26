@@ -4,6 +4,7 @@ import { hasTrait } from '../data/traits.js';
 import { ballSpeed } from './ball.js';
 import { attackDir, clampToPitch, distToSegment, getPlayer, wallPush } from './players.js';
 import { consumeShout, heeds } from './coach.js';
+import { styleOf } from './tactics.js';
 
 // Schwierigkeitsgrad: Nur der Gegner des Menschen spielt klüger oder nachsichtiger –
 // schneller entscheiden, entschlossener in den Zweikampf, öfter der kluge Pass.
@@ -61,21 +62,40 @@ export function updateTactics(m, dt) {
         const d = Math.min(3.5, dist2d(ball.pos, ownGoal) * 0.5);
         m.tactics[cover.id] = { type: 'cover', ...clampToPitch(pitch, ball.pos.x + dir.x * d, ball.pos.z + dir.z * d) };
       }
+      // Zonendeckung: Jeder bleibt in seinem Raum (Ankerpunkt aus dem System) und
+      // übernimmt den Gegner, der dort auftaucht – statt quer über den Platz
+      // seinem Mann hinterherzulaufen.
       const carrier = ball.lastTouch;
       const opponents = m.players.filter((o) => o.team !== team && o.role !== 'gk' && o.id !== carrier);
       const taken = new Set();
-      for (const p of rest) {
+      const st = styleOf(m, team);
+      const zone = clamp(pitch.halfLength * 0.22, 4, 6.5);
+      // Pressing: Der Nächste zum Ball geht zusätzlich drauf.
+      if (st.press && rest.length > 2) {
+        const second = rest.reduce((a, b) => (dist2d(b.pos, ball.pos) < dist2d(a.pos, ball.pos) ? b : a));
+        if (dist2d(second.pos, ball.pos) < 9) {
+          m.tactics[second.id] = { type: 'mark', ...clampToPitch(pitch, ball.pos.x, ball.pos.z) };
+          rest.splice(rest.indexOf(second), 1);
+        }
+      }
+      const order = [...rest].sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role]);
+      for (const p of order) {
+        const a = anchor(m, p, false);
+        const r = heeds(m, p, 'mark') ? zone * 1.5 : zone;
         let best = null;
-        let bestD = Infinity;
+        let bestD = r;
         for (const o of opponents) {
           if (taken.has(o.id)) continue;
-          const d = dist2d(o.pos, p.pos);
+          const d = dist2d(o.pos, a);
           if (d < bestD) {
             bestD = d;
             best = o;
           }
         }
-        if (!best) continue;
+        if (!best) {
+          m.tactics[p.id] = { type: 'zone', ...clampToPitch(pitch, a.x, a.z) };
+          continue;
+        }
         taken.add(best.id);
         const dir = norm(ownGoal.x - best.pos.x, ownGoal.z - best.pos.z);
         // Zuruf „Mann decken!": enger dran am Gegenspieler.
@@ -186,6 +206,41 @@ export const keeperZone = (pitch) => Math.min(9, pitch.halfLength * 0.45);
 
 // Freilaufen: Kandidaten rund um die Grundposition bewerten – Abstand zu
 // Gegnern, freie Passlinie vom Ball, Richtung Tor. Alle ~0.7 s neu überlegt.
+const ROLE_ORDER = { def: 0, mid: 1, fwd: 2, gk: 3 };
+
+// Wo gehört ein Spieler gerade hin? Grundposition aus dem System, verschoben mit
+// dem Ball (der Block wandert mit) und je nach Spielstil höher, tiefer, breiter.
+export function anchor(m, p, possession) {
+  const { pitch, ball } = m;
+  const st = styleOf(m, p.team);
+  const s = attackDir(m, p.team);
+  const e = p.formationEntry ?? { x: -0.4, z: 0 };
+  const adv = clamp((ball.pos.x * s) / pitch.halfLength, -1, 1);
+  const mood = m.manager && p.team === m.coachTeam ? (m.mentality === 'offensive' ? 0.08 : m.mentality === 'defensive' ? -0.1 : 0) : 0;
+  let u;
+  if (possession) u = e.x * 0.95 + st.push * 1.3 + adv * (p.role === 'def' ? 0.6 : 0.45) + st.line * 0.5 + mood + (p.role === 'fwd' ? 0.06 : p.role === 'mid' ? 0.03 : 0);
+  else {
+    u = e.x * st.compact + adv * 0.22 + st.line + mood - 0.04;
+    if (p.role === 'fwd') u += st.fwdHold;
+  }
+  // Nicht auf die eigene Torlinie zurückfallen: Die Abwehr steht höchstens an der
+  // Strafraumkante, das Mittelfeld davor.
+  u = clamp(u, p.role === 'def' ? -0.74 : p.role === 'mid' ? -0.52 : -0.35, 0.82);
+  let x = u * pitch.halfLength * s;
+  // Bei eigenem Ballbesitz: Die Abwehr bleibt hinter dem Ball, Mittelfeld und
+  // Sturm bieten sich davor an – sonst gibt es keinen Pass nach vorne.
+  if (possession) {
+    const bx = ball.pos.x * s;
+    const top = pitch.halfLength - 3;
+    if (p.role === 'def') x = Math.min(x * s, bx - 4, pitch.halfLength * (0.3 + st.line)) * s;
+    else if (p.role === 'mid') x = Math.min(Math.max(x * s, bx + 2), top) * s;
+    else if (p.role === 'fwd') x = Math.min(Math.max(x * s, bx + 6), top) * s;
+  }
+  const width = possession ? st.width : 0.78;
+  const z = clamp(p.home.z * width + ball.pos.z * (possession ? 0.2 : 0.32), -pitch.halfWidth * 0.9, pitch.halfWidth * 0.9);
+  return { x, z };
+}
+
 function supportSpot(m, p, dt) {
   const { ball, pitch, rng } = m;
   p.supportTimer = (p.supportTimer ?? 0) - dt;
@@ -196,18 +251,19 @@ function supportSpot(m, p, dt) {
   const margin = pitch.boundary === 'lines' ? 2.5 : 1.2;
   // Bei Ballbesitz rücken alle auf: Stürmer laufen in die Tiefe, das Mittelfeld
   // bietet sich davor an. Die Abwehr bleibt als Absicherung hinter dem Ball.
-  const push = p.role === 'fwd' ? 4.5 : p.role === 'mid' ? 3 : 1;
-  let bx = p.home.x * 0.4 + ball.pos.x * 0.7 + s * push;
-  if (p.role === 'def') bx = Math.min(bx * s, ball.pos.x * s - 5.5, pitch.halfLength * 0.35) * s;
-  const base = clampToPitch(pitch, bx, p.home.z + ball.pos.z * 0.3, margin);
-  const deep = p.role === 'fwd' ? [[5, 0], [5, 3], [5, -3]] : [];
+  // Ausgangspunkt ist die eigene Position im System; von dort sucht man sich
+  // eine freie Anspielstation in der Nähe – der Raum darf genutzt werden, die
+  // Position bleibt erkennbar.
+  const a = anchor(m, p, true);
+  const base = clampToPitch(pitch, a.x, a.z, margin);
+  const deep = p.role === 'fwd' ? [[4, 0], [4, 2.5], [4, -2.5]] : [];
   const back = p.role === 'def';
   const offsets = [[0, 0], [3, 0], [-3, 0], [0, 3], [0, -3], [2.5, 2.5], [2.5, -2.5], [-2.5, 2.5], [-2.5, -2.5], ...deep];
   let best = base;
   let bestScore = -Infinity;
   for (const [ox, oz] of offsets) {
     const c = clampToPitch(pitch, base.x + ox * s, base.z + oz, margin);
-    let score = (back ? 0 : s * c.x * 0.07) - len(c.x - base.x, c.z - base.z) * 0.13;
+    let score = (back ? 0 : s * c.x * 0.05) - len(c.x - base.x, c.z - base.z) * 0.16;
     for (const o of m.players) {
       if (o.team === p.team) continue;
       const d = dist2d(o.pos, c);
@@ -298,7 +354,8 @@ export function outfieldIntent(m, p, dt) {
   const d = len(dx, dz);
   if (d < 0.4) return { move: { x: 0, z: 0 }, sprint: false };
   const n = norm(dx, dz);
-  const urgent = t.type === 'cover' || t.type === 'mark' || t.type === 'receive';
+  // Weit weg von der eigenen Zone (nach Ballverlust): zurück in die Position, aber zügig.
+  const urgent = t.type === 'cover' || t.type === 'mark' || t.type === 'receive' || (t.type === 'zone' && d > 4);
   if (t.type === 'receive') {
     // Dem Ball entgegen: volle Kraft bis zum Treffpunkt, dann abbremsen und annehmen.
     p.dribbleDir = norm(oppGoal.x - p.pos.x, -p.pos.z * 0.3);
@@ -312,7 +369,11 @@ export function outfieldIntent(m, p, dt) {
 // seitlich ausweichen, von Wand und Seitenlinie weg. Freie Bahn → antreten.
 function carryIntent(m, p, oppGoal, wall) {
   const { pitch } = m;
-  let dir = norm(oppGoal.x - p.pos.x, clamp(p.aimZ ?? 0, -pitch.halfWidth * 0.5, pitch.halfWidth * 0.5) - p.pos.z);
+  const st = styleOf(m, p.team);
+  // Flügelspiel: Wer außen ist, bleibt außen und geht bis zur Grundlinie.
+  const onWing = Math.abs(p.pos.z) > pitch.halfWidth * 0.4 && (st.cross > 0.7 || heeds(m, p, 'wide'));
+  const aimZ = onWing ? p.pos.z * 0.95 : clamp(p.aimZ ?? 0, -pitch.halfWidth * 0.5, pitch.halfWidth * 0.5);
+  let dir = norm(oppGoal.x - p.pos.x, aimZ - p.pos.z);
   let dx = dir.x;
   let dz = dir.z;
   let blocked = false;
@@ -323,7 +384,7 @@ function carryIntent(m, p, oppGoal, wall) {
     const rz = o.pos.z - p.pos.z;
     const d = len(rx, rz);
     const ahead = rx * dir.x + rz * dir.z;
-    if (d < 7 && ahead > 0 && o.role !== 'gk') space = false;
+    if (d < 5 && ahead > 0 && o.role !== 'gk') space = false;
     if (d > 3.2 || ahead < -0.3) continue;
     if (d < 2.2 && ahead > 0) blocked = true;
     // Seitlich weg vom Gegner: auf die Seite, auf der er nicht steht.
@@ -361,7 +422,14 @@ function aiDecide(m, p, oppGoal) {
   const facingDot = p.facing.x * toG.x + p.facing.z * toG.z;
   p.aimZ = rng.range(-2.5, 2.5);
 
-  const range = 10 + p.attrs.shooting * 5 + (hasTrait(p, 'hammer') ? 4 : 0);
+  const st = styleOf(m, p.team);
+  // Auf großen Plätzen wird auch von weiter weg abgezogen.
+  const range = 10 + p.attrs.shooting * 5 + (hasTrait(p, 'hammer') ? 4 : 0) + st.shoot + Math.max(0, (pitch.halfLength - 20) * 0.3);
+  // Flügelspiel: Außen in Tornähe wird geflankt, nicht aus spitzem Winkel geschossen.
+  if ((st.cross > 0.7 || heeds(m, p, 'wide')) && Math.abs(p.pos.z) > pitch.goalHalfWidth * 2.2 && Math.abs(p.pos.x - oppGoal.x) < pitch.halfLength * 0.45 && rng.chance(0.75)) {
+    p.pending = { type: 'pass', lofted: 'cross', cone: -0.4, ttl: 0.3 };
+    return;
+  }
   // Zurufe von der Seitenlinie gehen vor – wenn es halbwegs passt.
   if (heeds(m, p, 'shoot') && dGoal < range + 12 && facingDot > -0.2) {
     consumeShout(m, 'shoot');
@@ -396,9 +464,18 @@ function aiDecide(m, p, oppGoal) {
     p.pending = { type: 'shoot', power: 0.95, target: { x: oppGoal.x, z: (rng.chance(0.5) ? 1 : -1) * rng.range(gw * 0.4, gw * 1.0) }, ttl: 0.3 };
     return;
   }
+  // Konter und Mauern: aus der eigenen Hälfte lang auf die Spitze, die oben lauert.
+  const s0 = attackDir(m, p.team);
+  if (st.long > 0 && p.pos.x * s0 < pitch.halfLength * 0.1) {
+    const striker = m.players.find((t) => t.team === p.team && t.role === 'fwd' && (t.pos.x - p.pos.x) * s0 > 8);
+    if (striker && rng.chance(st.long)) {
+      p.pending = { type: 'pass', lofted: true, targetId: striker.id, ttl: 0.4, cone: -0.3 };
+      return;
+    }
+  }
   // Außen an der Grundlinie: Flanke in die Mitte.
-  const wide = Math.abs(p.pos.z) > pitch.halfWidth * 0.55 && Math.abs(p.pos.x - oppGoal.x) < pitch.halfLength * 0.4;
-  if (wide && rng.chance(heeds(m, p, 'wide') ? 0.85 : 0.5)) {
+  const wide = Math.abs(p.pos.z) > pitch.halfWidth * (st.cross > 0.7 ? 0.45 : 0.55) && Math.abs(p.pos.x - oppGoal.x) < pitch.halfLength * (st.cross > 0.7 ? 0.5 : 0.4);
+  if (wide && rng.chance(heeds(m, p, 'wide') ? 0.85 : st.cross)) {
     p.pending = { type: 'pass', lofted: 'cross', cone: -0.3, ttl: 0.3 };
     return;
   }
@@ -409,11 +486,11 @@ function aiDecide(m, p, oppGoal) {
     const d = len(dx, dz);
     return d < 2.2 && (dx * toG.x + dz * toG.z) / (d || 1) > 0.2;
   });
-  if (underPressure && rng.chance(Math.min(0.95, (0.45 + 0.4 * p.attrs.passing) * aiSkill(m, p)))) {
+  if (underPressure && rng.chance(Math.min(0.95, (0.45 + 0.4 * p.attrs.passing) * aiSkill(m, p) * st.passRate))) {
     p.pending = { type: 'pass', ttl: 0.3, cone: -0.2 };
     return;
   }
-  if (rng.chance(0.05)) {
+  if (rng.chance(0.05 * st.passRate)) {
     p.pending = { type: 'pass', ttl: 0.3, cone: -0.2, optional: true };
     return;
   }
@@ -427,7 +504,7 @@ function aiDecide(m, p, oppGoal) {
     if (ahead < 3 || d > 16) return false;
     return !m.players.some((o) => o.team !== p.team && (dist2d(o.pos, t.pos) < 2.5 || distToSegment(o.pos, p.pos, t.pos) < 1.3));
   });
-  if (open && rng.chance(Math.min(0.9, (0.25 + 0.35 * p.attrs.passing) * aiSkill(m, p)))) p.pending = { type: 'pass', ttl: 0.3, cone: -0.3, optional: true };
+  if (open && rng.chance(Math.min(0.92, (0.25 + 0.35 * p.attrs.passing) * aiSkill(m, p) * st.passRate))) p.pending = { type: 'pass', ttl: 0.3, cone: -0.3, optional: true };
 }
 
 // Die KI geht in den Zweikampf, wenn ein Gegner den Ball am Fuß hat. Auf
@@ -440,7 +517,7 @@ function chooseTackle(m, p, dBall) {
   if (!opp || opp.team === p.team || opp.role === 'gk' || dist2d(opp.pos, ball.pos) > 1.2) return null;
   const tb = norm(ball.pos.x - p.pos.x, ball.pos.z - p.pos.z);
   if (tb.x * p.facing.x + tb.z * p.facing.z < 0.8) return null;
-  p.decideTimer = (heeds(m, p, 'press') ? 0.8 : 1.3) / aiSkill(m, p); // nicht im Sekundentakt reingehen
+  p.decideTimer = (heeds(m, p, 'press') || styleOf(m, p.team).press ? 0.8 : 1.3) / aiSkill(m, p); // nicht im Sekundentakt reingehen
 
   const tough = hasTrait(p, 'hart_im_nehmen');
   let slideChance = surface.hard ? (p.injury ? 0 : tough ? 0.2 : 0.03) : 0.06 + 0.14 * p.attrs.tackling;

@@ -7,7 +7,6 @@ import { sponsorResult } from './sponsors.js';
 import { autoTrip } from './trip.js';
 import { absenceMul as facilityAbsence, recruitBonus, weeklyFacilities, youthGrowthMul } from './facilities.js';
 import { createRng } from '../core/rng.js';
-import { FORMATIONS } from '../sim/formation.js';
 import { createPlayerPool, ratePlayer } from '../sim/generator.js';
 import { createMatch, stepMatch } from '../sim/match.js';
 import { PITCHES } from '../sim/pitch.js';
@@ -30,6 +29,7 @@ import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFin
 
 import { NAME_EDITION } from '../data/names.js';
 import { defaultCrest } from '../ui/crest.js';
+import { clubTactic, normalizeTactic, systemFormation } from '../sim/tactics.js';
 import { shirtSponsor, sponsorColor, SPONSORS } from './sponsors.js';
 
 export const SAVE_VERSION = 1;
@@ -414,8 +414,27 @@ const ROLE_ATTR = { gk: 'keeping', def: 'tackling', mid: 'passing', fwd: 'shooti
 // Beste verfügbare Elf für das Format des Platzes; fehlen Leute, hilft ein
 // Kumpel aus dem Pool aus ("der Schwager von …").
 // manual: vom Trainer gewählte Pool-Nummern je Position (null = automatisch).
+// Taktik eines Vereins für ein Format: Der eigene Verein wählt selbst (System je
+// Format, ein Spielstil), die anderen haben ihre feste Handschrift.
+export function tacticOf(club, format) {
+  if (!club.human) return normalizeTactic(club.tactic ?? clubTactic(club.id, format), format);
+  return normalizeTactic({ style: club.tactic?.style, system: club.tactic?.systems?.[format] }, format);
+}
+
+export function setClubTactic(career, format, { system, style } = {}) {
+  const club = humanClub(career);
+  club.tactic ??= { style: 'ausgewogen', systems: {} };
+  club.tactic.systems ??= {};
+  if (style) club.tactic.style = style;
+  if (system && system !== tacticOf(club, format).system) {
+    club.tactic.systems[format] = system;
+    if (career.week) career.week.lineup = null; // neue Positionen – neu aufstellen
+  }
+  return tacticOf(club, format);
+}
+
 export function buildLineup(career, club, format, availability, rng, manual = null) {
-  const formation = FORMATIONS[format];
+  const formation = systemFormation(format, tacticOf(club, format).system);
   const avail = club.squad.filter((idx) => availability[idx] !== 'no');
   const starters = avail.filter((idx) => availability[idx] !== 'late');
   const late = avail.filter((idx) => availability[idx] === 'late');
@@ -675,7 +694,8 @@ export function currentLineup(career) {
   const { lineup, bench, helpers } = buildLineup(career, club, format, career.week.availability, createRng(1), career.week.lineup);
   return {
     format,
-    formation: FORMATIONS[format],
+    formation: systemFormation(format, tacticOf(club, format).system),
+    tactic: tacticOf(club, format),
     lineup: lineup.map((idx) => (helpers.includes(idx) ? null : idx)),
     bench: bench.filter((idx) => !helpers.includes(idx)),
   };
@@ -714,7 +734,7 @@ export function teamForMatch(career, club, format, availability, rng) {
   });
   applyPubToTeam(career, club, players); // Bierdeckel-Taktik bzw. Tipp vom Wirt
   if (club.human) applyChemistry(career, lineup.filter((idx) => !helpers.includes(idx)), players); // Kumpels & Rivalen
-  return { name: club.name, short: club.short, kit: club.kit, keeperKit: club.keeperKit, crest: club.crest ?? defaultCrest(club), sponsor: clubSponsor(career, club), players, helpers };
+  return { name: club.name, short: club.short, kit: club.kit, keeperKit: club.keeperKit, crest: club.crest ?? defaultCrest(club), tactic: tacticOf(club, format), sponsor: clubSponsor(career, club), players, helpers };
 }
 
 // Wer steht vorne auf dem Trikot? Beim eigenen Verein der Trikotsponsor, bei den

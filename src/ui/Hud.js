@@ -11,6 +11,7 @@ import { attackDir, getPlayer } from '../sim/match.js';
 import { shootoutScore } from '../sim/shootout.js';
 import { crestOf, crestSVG } from './crest.js';
 import { SHOUTS } from '../sim/coach.js';
+import { tacticLabel } from '../sim/tactics.js';
 
 const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
 
@@ -61,7 +62,7 @@ export class Hud {
       el.innerHTML = `${crestSVG(crest, { size: 20, label: t.name })}<span>${t.name}</span>`;
       el.style.setProperty('--kit', hex(t.kit.shirt));
     });
-    this.$('.venue').textContent = `${match.pitch.name} · ${match.pitch.surface.name}${r ? ` · ${tr('Schiri', 'Referee')}: ${r.name}` : ''}`;
+    this.$('.venue').innerHTML = `${match.pitch.name} · ${match.pitch.surface.name}${r ? ` · ${tr('Schiri', 'Referee')}: ${r.name}` : ''}<br><small>${match.teams.map((t, i) => `${t.short ?? t.name}: ${tacticLabel(match.plan?.[i], match.pitch.format)}`).join(' – ')}</small>`;
     this.hideToast();
     this.refName = r?.name ?? null;
     this.edgeKey = null;

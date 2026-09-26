@@ -8,7 +8,8 @@ import { applyJobPerks } from '../data/jobs.js';
 import { bodyBlock, carryBall, dribbleTouch, headerTouch, keeperSaves, movePlayer, separatePlayers, tryExecute } from './actions.js';
 import { keeperIntent, outfieldIntent, updateTactics } from './ai.js';
 import { createBall, stepBall } from './ball.js';
-import { FORMATIONS, formationSpot } from './formation.js';
+import { formationSpot } from './formation.js';
+import { normalizeTactic, systemFormation } from './tactics.js';
 import { generateTeam } from './generator.js';
 import { PARKING_LOT } from './pitch.js';
 import { attackDir, getPlayer, setControlled, teamAttacking } from './players.js';
@@ -34,15 +35,18 @@ const BENCH_ROLES = { 4: ['mid', 'fwd'], 5: ['def', 'mid', 'fwd'], 7: ['def', 'm
 // human: false → beide Teams von der KI gesteuert (Simulation ungespielter Partien).
 export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = true, human = true, duration = MATCH_DURATION, incidents = false } = {}) {
   const rng = createRng(seed);
-  const formation = FORMATIONS[pitch.format ?? 5];
-  const roles = formation.map((f) => f.role);
-  const benchRoles = BENCH_ROLES[pitch.format ?? 5] ?? [];
-  const squads = teams ?? TEAM_PRESETS.map((preset) => generateTeam(rng, preset, [...roles, ...benchRoles]));
+  const format = pitch.format ?? 5;
+  // Taktik je Mannschaft: System (Aufstellung) und Spielstil.
+  const plan = [0, 1].map((i) => normalizeTactic((teams ?? TEAM_PRESETS)[i]?.tactic, format));
+  const formations = plan.map((t) => systemFormation(format, t.system));
+  const benchRoles = BENCH_ROLES[format] ?? [];
+  const squads = teams ?? TEAM_PRESETS.map((preset, i) => generateTeam(rng, preset, [...formations[i].map((f) => f.role), ...benchRoles]));
 
   const players = [];
   const bench = [[], []];
   squads.forEach((team, ti) => {
     // Berufsboni: der Postbote läuft länger, der Getränkemarkt-Mann hält die Truppe zusammen.
+    const formation = formations[ti];
     applyJobPerks(team.players).forEach((pl, i) => {
       const entry = formation[i] ?? formation.find((f) => f.role === pl.position) ?? formation[formation.length - 1];
       const p = makeEntity(pl, ti, i, entry.role, formationSpot(pitch, entry, ti));
@@ -75,6 +79,7 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = tr
     stats: createStats(),
     referee: pitch.referee ? createReferee(rng) : null,
     sentOff: [],
+    plan,
     humanTeam: human ? 0 : null,
     controlledId: human ? players.find((p) => p.team === 0 && p.role === 'fwd').id : null,
     chasers: [null, null],

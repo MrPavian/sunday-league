@@ -1,5 +1,6 @@
 import { plural, tr } from '../core/i18n.js';
 import { kitPreviewURL } from '../render/kitPaint.js';
+import { STYLES as PLAY_STYLES, systemsFor } from '../sim/tactics.js';
 import { jobPerk } from '../data/jobs.js';
 import { CREST_COLORS, CREST_DIVISIONS, CREST_SHAPES, CREST_SYMBOLS, crestOf, crestSVG, defaultCrest, FIGURES } from './crest.js';
 import { awardLabel } from '../career/awards.js';
@@ -14,6 +15,7 @@ import {
   kitEditable,
   updateClub,
   updateCrest,
+  setClubTactic,
   maxSquad,
   leagueOf,
   MIN_SQUAD,
@@ -186,6 +188,10 @@ export class Clubhouse {
         }
         this.confirmRelease = null;
         releasePlayer(this.career, Number(value));
+        this.h.onChange();
+      } else if (action === 'tacticSystem' || action === 'tacticStyle') {
+        const { format } = currentLineup(this.career);
+        setClubTactic(this.career, format, action === 'tacticSystem' ? { system: value } : { style: value });
         this.h.onChange();
       } else if (action === 'autoLineup') {
         resetLineup(this.career);
@@ -718,8 +724,23 @@ export class Clubhouse {
   tab_lineup() {
     const c = this.career;
     if (!c.week || this.results) return `<p class="empty">${tr('Die Aufstellung für den nächsten Spieltag gibt es nach dem Wochenstart.', 'The line-up for the next matchday is available once the week starts.')}</p>`;
-    const { formation, lineup, bench } = currentLineup(c);
+    const { formation, lineup, bench, format, tactic } = currentLineup(c);
     const club = humanClub(c);
+    // Taktiktafel: System als Mini-Spielfeld, dazu der Spielstil.
+    const board = (f, active) => `<span class="mini-pitch ${active ? 'on' : ''}">${f.map((e) => `<i class="dot-${e.role}" style="left:${((e.x + 1) * 100).toFixed(0)}%;top:${((e.z + 1) * 50).toFixed(0)}%"></i>`).join('')}</span>`;
+    const systems = Object.entries(systemsFor(format))
+      .map(([id, sys]) => `<button class="system ${tactic.system === id ? 'active' : ''}" data-action="tacticSystem" data-value="${id}">${board(sys.formation, tactic.system === id)}<b>${sys.label}</b></button>`)
+      .join('');
+    const styles = Object.entries(PLAY_STYLES)
+      .map(([id, st]) => `<button class="${tactic.style === id ? 'active' : ''}" data-action="tacticStyle" data-value="${id}">${st.label}</button>`)
+      .join('');
+    const tacticBlock = `
+      <div class="tactic-board">
+        <h4>${tr('Taktik', 'Tactics')} <small>${formation.length} ${tr('gegen', 'v')} ${formation.length}</small></h4>
+        <div class="systems">${systems}</div>
+        <div class="styles">${styles}</div>
+        <p class="hint">${PLAY_STYLES[tactic.style].desc}</p>
+      </div>`;
     const ROLE = tr({ gk: 'Tor', def: 'Abwehr', mid: 'Mitte', fwd: 'Sturm' }, { gk: 'GK', def: 'Def', mid: 'Mid', fwd: 'Att' });
     const options = club.squad
       .filter((idx) => c.week.availability[idx] === 'yes')
@@ -747,7 +768,8 @@ export class Clubhouse {
       : `<li><em>${tr('niemand', 'nobody')}</em></li>`;
     if (coachAway(c)) return `<p class="warn">${tr('Du bist diese Woche nicht da. Der Kapitän stellt auf – nach bestem Wissen und Gewissen.', 'You are away this week. The captain picks the team – to the best of his knowledge.')}</p><h4>${tr('Bank', 'Bench')}</h4><ul class="bench">${benchList}</ul>`;
     return `
-      <p class="chat-head">${formation.length} ${tr('gegen', 'v')} ${formation.length} · ${c.week.lineup ? tr('eigene Aufstellung', 'your line-up') : tr('automatisch aufgestellt', 'picked automatically')}</p>
+      ${tacticBlock}
+      <p class="chat-head">${c.week.lineup ? tr('Eigene Aufstellung', 'Your line-up') : tr('Automatisch aufgestellt', 'Picked automatically')}</p>
       <div class="lineup">${slots}</div>
       ${chemLine}
       ${keeperNote}
