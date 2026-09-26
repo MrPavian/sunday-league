@@ -70,7 +70,7 @@ let seed = Number(params.get('seed')) || Math.floor(Math.random() * 1e9);
 const testDuration = Number(params.get('dauer')) || undefined; // Testschalter: ?dauer=60
 
 const canvas = document.getElementById('game');
-const pixel = new PixelRenderer(canvas, { targetHeight: 320 });
+const pixel = new PixelRenderer(canvas, { targetHeight: Number(params.get('px')) || 384 });
 let lightMood = null;
 try {
   if (localStorage.getItem('sunday-league:fx') === '0') pixel.setEffects(false);

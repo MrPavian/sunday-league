@@ -36,16 +36,35 @@ function bake(node, skip) {
   node.add(mesh);
 }
 
+// Pixel-Ziffern 3 × 5 für die Rückennummer.
+const DIGITS = ['111101101101111', '010110010010111', '111001111100111', '111001111001111', '101101111001001', '111100111001111', '111100111101111', '111001010010010', '111101111101111', '111101111001111'];
+
+// Aussehen, das nicht im Spielstand steht (Frisur, Bartform), leitet sich
+// deterministisch aus dem Rest ab – der Spielerpool bleibt unverändert.
+function lookHash(look) {
+  let h = (look.skin ?? 0) ^ ((look.hair ?? 0) << 3) ^ Math.round((look.height ?? 1) * 1000) * 2654435761;
+  h = Math.imul(h ^ (h >>> 15), 2246822519);
+  return (h ^ (h >>> 13)) >>> 0;
+}
+
+const luminance = (hex) => (0.299 * ((hex >> 16) & 255) + 0.587 * ((hex >> 8) & 255) + 0.114 * (hex & 255)) / 255;
+
 // Low-Poly-Normalo aus Quadern. Bauch, Glatze, Bart und Größe kommen aus dem
-// generierten Aussehen – keine zwei Spieler sehen gleich aus.
-export function createPlayerModel(look, kit) {
+// generierten Aussehen – keine zwei Spieler sehen gleich aus. Dazu Gesicht,
+// Frisur, Rückennummer, Stutzenring und beim Torwart Handschuhe.
+export function createPlayerModel(look, kit, { number = null, keeper = false } = {}) {
   const skin = toon(look.skin);
   const shirt = kitMaterial(kit);
   const shorts = toon(kit.shorts);
   const socks = toon(kit.socks);
   const shoes = toon(0x1f1f1f);
   const hair = toon(look.hair);
+  const eye = toon(0x1a1716);
   const belly = look.belly;
+  const hash = lookHash(look);
+  // Kontrastfarbe für Nummer und Stutzenring: helles Trikot → dunkel, sonst hell.
+  const accentHex = luminance(kit.shirt) > 0.55 ? 0x1c1c1c : 0xf4f1e8;
+  const accent = toon(accentHex);
 
   const group = new THREE.Group();
   const body = new THREE.Group();
@@ -60,6 +79,7 @@ export function createPlayerModel(look, kit) {
     pivot.add(part(0.17, 0.3, 0.19, shorts, 0, -0.15, 0));
     pivot.add(part(0.13, 0.25, 0.14, skin, 0, -0.42, 0));
     pivot.add(part(0.14, 0.3, 0.15, socks, 0, -0.65, 0));
+    pivot.add(part(0.148, 0.04, 0.158, accent, 0, -0.53, 0)); // Ring am Stutzen
     pivot.add(part(0.15, 0.1, 0.27, shoes, 0, -0.8, 0.04));
     if (side === 1) {
       plaster = part(0.14, 0.09, 0.03, toon(0xf4efe4), 0, -0.4, 0.075);
@@ -71,25 +91,84 @@ export function createPlayerModel(look, kit) {
   }
 
   body.add(part(0.4 + belly * 0.1, 0.18, 0.24 + belly * 0.08, shorts, 0, 0.87, 0));
-  const torso = part(0.42 + belly * 0.12, 0.55, 0.24 + belly * 0.16, shirt, 0, 1.18, belly * 0.03);
+  const torsoW = 0.42 + belly * 0.12;
+  const torsoD = 0.24 + belly * 0.16;
+  const torso = part(torsoW, 0.55, torsoD, shirt, 0, 1.18, belly * 0.03);
   body.add(torso);
+  // Kragen und kleines Wappen vorne.
+  body.add(part(0.2, 0.04, 0.2, accent, 0, 1.46, belly * 0.02));
+  body.add(part(0.06, 0.07, 0.02, accent, -0.1, 1.33, belly * 0.03 + torsoD / 2 + 0.005));
+  // Rückennummer aus Pixeln – von hinten lesbar.
+  if (number != null) {
+    const digits = String(number).slice(0, 2).split('').map(Number);
+    const cell = 0.036;
+    const width = digits.length * 3 * cell + (digits.length - 1) * cell;
+    const zBack = belly * 0.03 - torsoD / 2 - 0.006;
+    digits.forEach((dg, di) => {
+      const bits = DIGITS[dg];
+      for (let row = 0; row < 5; row++) {
+        // Waagerechte Läufe zu einem Quader zusammenfassen.
+        let col = 0;
+        while (col < 3) {
+          if (bits[row * 3 + col] !== '1') {
+            col++;
+            continue;
+          }
+          let run = 1;
+          while (col + run < 3 && bits[row * 3 + col + run] === '1') run++;
+          const left = width / 2 - di * 4 * cell - col * cell; // Blick von hinten: links = +x
+          const x = left - (run * cell) / 2;
+          body.add(part(run * cell, cell, 0.012, accent, x, 1.3 - row * cell, zBack));
+          col += run;
+        }
+      }
+    });
+  }
 
   const arms = [];
   for (const side of [-1, 1]) {
     const pivot = new THREE.Group();
     pivot.position.set(side * (0.27 + belly * 0.06), 1.4, 0);
     pivot.add(part(0.13, 0.2, 0.14, shirt, 0, -0.1, 0));
-    pivot.add(part(0.11, 0.32, 0.12, skin, 0, -0.35, 0));
+    pivot.add(part(0.11, 0.32, 0.12, keeper ? shirt : skin, 0, -0.35, 0));
+    // Hände – der Torwart trägt Handschuhe.
+    pivot.add(part(0.1, 0.08, 0.11, keeper ? toon(0xeeeeea) : skin, 0, -0.54, 0));
     body.add(pivot);
     arms.push(pivot);
   }
 
+  // Kopf mit Ohren und Augen (vorne ist +z).
   body.add(part(0.26, 0.28, 0.26, skin, 0, 1.63, 0));
+  body.add(part(0.03, 0.07, 0.06, skin, 0.14, 1.63, 0));
+  body.add(part(0.03, 0.07, 0.06, skin, -0.14, 1.63, 0));
+  body.add(part(0.045, 0.05, 0.02, eye, 0.06, 1.665, 0.132));
+  body.add(part(0.045, 0.05, 0.02, eye, -0.06, 1.665, 0.132));
+
+  // Frisuren: kurz, lang, Locken, Irokese, Pony, Dutt – bei Glatze mal ein Haarkranz.
+  const style = hash % 6;
   if (!look.bald) {
-    body.add(part(0.28, 0.08, 0.28, hair, 0, 1.8, 0));
-    body.add(part(0.28, 0.16, 0.06, hair, 0, 1.7, -0.13));
+    if (style === 3) {
+      body.add(part(0.08, 0.1, 0.26, hair, 0, 1.82, 0)); // Irokese
+    } else {
+      const big = style === 2;
+      body.add(part(big ? 0.32 : 0.28, big ? 0.12 : 0.08, big ? 0.32 : 0.28, hair, 0, big ? 1.81 : 1.8, 0));
+      if (style === 1) {
+        body.add(part(0.28, 0.3, 0.07, hair, 0, 1.62, -0.13)); // lang über den Nacken
+        body.add(part(0.04, 0.2, 0.2, hair, 0.14, 1.68, -0.02));
+        body.add(part(0.04, 0.2, 0.2, hair, -0.14, 1.68, -0.02));
+      } else body.add(part(0.28, 0.16, 0.06, hair, 0, 1.7, -0.13));
+      if (style === 4) body.add(part(0.26, 0.06, 0.05, hair, 0.02, 1.755, 0.12)); // Pony
+      if (style === 5) body.add(part(0.1, 0.1, 0.1, hair, 0, 1.84, -0.1)); // Dutt
+    }
+  } else if (hash % 2) {
+    body.add(part(0.04, 0.09, 0.22, hair, 0.135, 1.68, -0.02)); // Haarkranz
+    body.add(part(0.04, 0.09, 0.22, hair, -0.135, 1.68, -0.02));
+    body.add(part(0.28, 0.09, 0.05, hair, 0, 1.68, -0.13));
   }
-  if (look.beard) body.add(part(0.24, 0.1, 0.06, hair, 0, 1.53, 0.12));
+  if (look.beard) {
+    if ((hash >> 4) % 3 === 0) body.add(part(0.14, 0.035, 0.03, hair, 0, 1.585, 0.135)); // Schnauzer
+    else body.add(part(0.24, 0.1, 0.06, hair, 0, 1.53, 0.12));
+  }
 
   for (const node of [body, ...legs, ...arms]) bake(node, plaster);
 

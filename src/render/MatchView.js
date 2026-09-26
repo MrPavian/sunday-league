@@ -28,7 +28,9 @@ export class MatchView {
     for (const p of allPlayers(match)) {
       const team = match.teams[p.team];
       const kit = p.role === 'gk' ? team.keeperKit : team.kit;
-      const model = createPlayerModel(p.look, kit);
+      // Rückennummer: Position in der Aufstellung (Torwart die 1).
+      const number = p.role === 'gk' ? 1 : (Number(String(p.id).split('-')[1]) || 0) + 1;
+      const model = createPlayerModel(p.look, kit, { number, keeper: p.role === 'gk' });
       model.celebration = celebrationFor(p.id);
       this.models.set(p.id, model);
       this.root.add(model.group);
