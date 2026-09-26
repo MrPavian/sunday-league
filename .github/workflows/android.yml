@@ -1,0 +1,38 @@
+name: Android
+
+# Baut bei jedem Push auf main eine installierbare Debug-APK (unter „Artifacts“ am Lauf).
+# Bei einem Tag wie v0.2.0 hängt sie zusätzlich an einem GitHub-Release.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm run android:sync
+      - run: cd android && ./gradlew assembleDebug --no-daemon
+      - run: cp android/app/build/outputs/apk/debug/app-debug.apk sunday-league.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sunday-league-apk
+          path: sunday-league.apk
+      - if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: sunday-league.apk

@@ -715,3 +715,10 @@ function saveScreenshot() {
   });
 }
 requestAnimationFrame(frame);
+
+// Als App installierbar und offline spielbar (nicht in der Android-App, die bringt alles mit).
+if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.Capacitor) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {
+    // In eingebetteten Seiten nicht erlaubt – dann eben ohne.
+  });
+}

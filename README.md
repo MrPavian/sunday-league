@@ -25,6 +25,15 @@ Sonntag, 10:30 Uhr, Nieselregen, sieben Zuschauer, zwei davon Hunde.
 **Im Browser:** <https://mrpavian.github.io/sunday-league/> – auf dem PC mit Tastatur oder Gamepad.
 Der Spielstand wird im Browser gespeichert.
 
+**Auf Android:** Die APK hängt an jedem Lauf des Workflows „Android“ (Actions → Android → Artifacts) und bei
+Versions-Tags am Release. Installieren: APK aufs Handy, öffnen, „Unbekannte Quellen“ für den Browser/Dateimanager erlauben.
+Alternativ die Browser-Version in Chrome öffnen und „Zum Startbildschirm hinzufügen“ – dann läuft sie wie eine App, auch offline.
+
+Auf dem Handy bist du **Trainer an der Seitenlinie**: Deine Mannschaft spielt selbst, du rufst rein –
+*Abspielen!*, *Hau drauf!*, *Geht drauf!* (Pressing), *Mann decken!*, *Hinten dicht!*, *Rückt auf!*, *Über die Flügel!* –
+und wechselst aus. Ob die Jungs hören, hängt davon ab, wie gut sie kicken. Am PC gibt es den Modus auch
+(Einstellungen → Spielmodus, Tasten 1–7).
+
 **Lokal:**
 
 ```bash
@@ -32,6 +41,7 @@ git clone https://github.com/MrPavian/sunday-league.git
 cd sunday-league
 npm install
 npm run dev      # http://localhost:5173
+npm run android:apk   # Android-APK bauen (braucht Java 21 und das Android-SDK)
 ```
 
 Voraussetzung: Node.js 20 oder neuer.
@@ -190,7 +200,7 @@ Auf englischen Tastaturen liegt „Stochern“ auf **Z** (gleiche Taste).
 
 ```bash
 npm run dev      # Entwicklungsserver mit Hot Reload
-npm test         # 166 Tests (Simulation und Karriere)
+npm test         # 169 Tests (Simulation und Karriere)
 npm run build    # Produktions-Build nach dist/
 npm run preview  # Build lokal ansehen
 ```
