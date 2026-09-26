@@ -50,11 +50,11 @@ export function midSeasonReport(c) {
   if (pos <= g.target - 2 || (pos === 1 && g.target > 1)) {
     adjustMood(c, 0.06);
     book(c, tr('Vorstand spendiert neue Bälle', 'Board pays for new balls'), 20 * level);
-    text = tr(`Zwischenzeugnis: Platz ${pos} – besser als erwartet! Der Vorstand spendiert neue Bälle.`, `Half-term report: ${pos}. place – better than expected! The board buys new balls.`);
-  } else if (pos <= g.target) text = tr(`Zwischenzeugnis: Platz ${pos}, alles im Plan. Weitermachen.`, `Half-term report: ${pos}. place, on track. Keep going.`);
+    text = tr(`Zwischenzeugnis: Platz ${pos} – besser als erwartet! Der Vorstand spendiert neue Bälle.`, `Half-term report: place ${pos} – better than expected! The board buys new balls.`);
+  } else if (pos <= g.target) text = tr(`Zwischenzeugnis: Platz ${pos}, alles im Plan. Weitermachen.`, `Half-term report: place ${pos}, on track. Keep going.`);
   else {
     adjustMood(c, -0.04);
-    text = tr(`Zwischenzeugnis: Platz ${pos}. Das Ziel war ein anderes. Der Vorstand „macht sich Gedanken".`, `Half-term report: ${pos}. place. That was not the plan. The board is "thinking about things".`);
+    text = tr(`Zwischenzeugnis: Platz ${pos}. Das Ziel war ein anderes. Der Vorstand „macht sich Gedanken".`, `Half-term report: place ${pos}. That was not the plan. The board is "thinking about things".`);
   }
   c.week?.chat.splice(1, 0, { from: null, text: `${BOARD}: ${text}`, time: 'Mo 08:30', press: true });
   return text;
@@ -69,14 +69,14 @@ export function seasonGoalVerdict(c, pos) {
   if (pos <= g.target - 3 || (g.type !== 'aufstieg' && pos <= 2)) {
     adjustMood(c, 0.12);
     book(c, tr('Prämie vom Vorstand', 'Board bonus'), 80 * level);
-    text = tr(`Saisonziel (${GOALS[g.type].name}) weit übertroffen: Platz ${pos}! Der Vorstand zahlt eine Prämie und schmeißt eine Runde.`, `Season target (${GOALS[g.type].name}) smashed: ${pos}. place! The board pays a bonus and buys a round.`);
+    text = tr(`Saisonziel (${GOALS[g.type].name}) weit übertroffen: Platz ${pos}! Der Vorstand zahlt eine Prämie und schmeißt eine Runde.`, `Season target (${GOALS[g.type].name}) smashed: place ${pos}! The board pays a bonus and buys a round.`);
   } else if (pos <= g.target) {
     adjustMood(c, 0.05);
     book(c, tr('Prämie vom Vorstand', 'Board bonus'), 30 * level);
-    text = tr(`Saisonziel (${GOALS[g.type].name}) erreicht: Platz ${pos}. Kleine Prämie.`, `Season target (${GOALS[g.type].name}) reached: ${pos}. place. A small bonus.`);
+    text = tr(`Saisonziel (${GOALS[g.type].name}) erreicht: Platz ${pos}. Kleine Prämie.`, `Season target (${GOALS[g.type].name}) reached: place ${pos}. A small bonus.`);
   } else {
     adjustMood(c, -0.08);
-    text = tr(`Saisonziel (${GOALS[g.type].name}) verfehlt: Platz ${pos}. Beim Sommerfest wird getuschelt.`, `Season target (${GOALS[g.type].name}) missed: ${pos}. place. People whisper at the summer party.`);
+    text = tr(`Saisonziel (${GOALS[g.type].name}) verfehlt: Platz ${pos}. Beim Sommerfest wird getuschelt.`, `Season target (${GOALS[g.type].name}) missed: place ${pos}. People whisper at the summer party.`);
   }
   chronicle(c, text);
   return text;

@@ -9,6 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "longrun": "node scripts/longrun.mjs",
     "android:sync": "vite build && cap sync android",
     "android:apk": "npm run android:sync && cd android && ./gradlew assembleDebug"
   },

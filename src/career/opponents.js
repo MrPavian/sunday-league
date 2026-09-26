@@ -69,16 +69,18 @@ export function afterMatchVoice(c, prepared, oppId) {
   (c.meetings[oppId] ??= []).push({ season: c.season, gf, ga });
   c.feuds ??= {};
   const rng = createRng((c.seed * 71 + c.season * 13 + c.round * 7 + 3) >>> 0);
-  const heat = reds * 2 + yellows * 0.6 + fouls * 0.12 + (Math.abs(gf - ga) <= 1 ? 0.5 : 0) + rng.next();
+  // Kurze Spiele haben weniger Fouls – deshalb pro 4 Minuten gerechnet. Alte Rechnungen heizen nach.
+  const per4 = 240 / Math.max(240, m.duration ?? 240);
+  const heat = reds * 2 + yellows * 0.8 + fouls * 0.3 * per4 + (Math.abs(gf - ga) <= 1 ? 0.5 : 0) + (feudOf(c, oppId) < 0 ? 0.6 : 0) + rng.next() * 1.4;
   const opp = c.clubs.find((x) => x.id === oppId);
   const coach = coachOf(opp);
   let news;
-  if (heat > 3.2) {
-    c.feuds[oppId] = feudOf(c, oppId) - 1;
+  if (heat > 2.8) {
+    c.feuds[oppId] = Math.max(-3, feudOf(c, oppId) - 1);
     news = tr(`Nach dem Abpfiff gegen ${opp.name}: Rudelbildung am Mittelkreis. ${coach.name} brüllt was von „Treter". Das Rückspiel wird heiß.`, `After the final whistle against ${opp.name}: a melee in the centre circle. ${coach.name} shouts something about “thugs”. The return fixture will be spicy.`);
     chronicle(c, tr(`Rudelbildung gegen ${opp.name}.`, `A melee against ${opp.name}.`));
-  } else if (heat < 1.4) {
-    c.feuds[oppId] = feudOf(c, oppId) + 1;
+  } else if (heat < 1.3) {
+    c.feuds[oppId] = Math.min(3, feudOf(c, oppId) + 1);
     news = tr(`Handschlag, Bier am Zaun: ${coach.name} von ${opp.short} lobt eure faire Art.`, `Handshakes and a beer at the fence: ${coach.name} from ${opp.short} praises your fair play.`);
     // Wer fair ist, zieht Leute an: Einer von denen will wechseln.
     if (feudOf(c, oppId) >= 1 && opp.squad.length > 7 && rng.chance(0.35)) {

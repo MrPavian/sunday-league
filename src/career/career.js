@@ -360,6 +360,15 @@ export function startWeek(career) {
   const opponent = clubById(career, fixture.home === club.id ? fixture.away : fixture.home);
   chat.push({ from: null, text: tr(`Sonntag gegen ${opponent.name}${fixture.home === club.id ? ' bei uns' : ' auswärts'}. Wer kann?`, `Sunday against ${opponent.name}${fixture.home === club.id ? ' at ours' : ' away'}. Who can make it?`), time: time() });
 
+  // Nicht zwei Mal derselbe Satz in einer Woche (und möglichst nicht wie letzte Woche) –
+  // so einfallslos ist keine Gruppe.
+  const lastWeek = new Set((career.week?.chat ?? []).map((m) => m.text));
+  const fresh = (list) => {
+    const used = (t) => chat.some((m) => m.text === t);
+    const unused = list.filter((t) => !used(t));
+    const pool = unused.filter((t) => !lastWeek.has(t));
+    return rng.pick(pool.length ? pool : unused.length ? unused : list);
+  };
   for (const idx of club.squad) {
     const p = rawPlayer(career, idx);
     const rec = career.players[idx];
@@ -372,22 +381,20 @@ export function startWeek(career) {
     }
     if (rec.injuryWeeks > 0) {
       status = 'no';
-      text = rec.injury && rec.injuryWeeks > 1 ? tr(`Noch ${rec.injuryWeeks} Wochen raus (${rec.injury.label}). Ich komm aber gucken.`, `Out for ${rec.injuryWeeks} more weeks (${rec.injury.label}). I'll come and watch though.`) : rng.pick(INJURED);
+      text = rec.injury && rec.injuryWeeks > 1 ? tr(`Noch ${rec.injuryWeeks} Wochen raus (${rec.injury.label}). Ich komm aber gucken.`, `Out for ${rec.injuryWeeks} more weeks (${rec.injury.label}). I'll come and watch though.`) : fresh(INJURED);
     } else if (rec.awayWeeks > 0) {
       status = 'no';
       text = rec.awayReason ?? tr('Bin diese Woche nicht da.', 'Not around this week.');
     } else if (rng.chance(absenceChance(p.profession) * (career.spirit ? 0.75 : 1) * absenceFactor(career, idx) * weatherAbsence * facilityAbsence(career))) {
       status = 'no';
-      text = rng.pick(noReasons(p.profession));
+      text = fresh(noReasons(p.profession));
     } else if (rng.chance(0.07)) {
       status = 'late';
-      text = rng.pick(LATE);
+      text = fresh(LATE);
     } else {
-      text = rng.pick(YES);
+      text = fresh(YES);
     }
     availability[idx] = status;
-    // Nicht zwei Mal derselbe Satz in einer Woche – so einfallslos ist keine Gruppe.
-    if (chat.some((m) => m.text === text) && status === 'yes') text = rng.pick(YES.filter((t) => !chat.some((m) => m.text === t))) ?? text;
     chat.push({ from: idx, text, time: time() });
   }
   // Einer kommentiert das Wetter.

@@ -72,6 +72,7 @@ const T = {
 const R = {
   laugh: tr(['Haha, erwischt.', 'Ja ja, ist ja gut 😅', 'Touché.', 'Pass auf, sonst erzähl ich was von dir.'], ['Haha, busted.', 'Yeah yeah, alright 😅', 'Touché.', 'Careful, or I will tell them about you.']),
   annoyed: tr(['Muss das hier sein?', 'Ist gut jetzt.', '…'], ['Does this have to be in here?', 'That will do now.', '…']),
+  thanks: tr(['Danke, Männer! 🙏', 'Hab ich immer gesagt.', 'Nächste Woche wieder.', 'Hört auf, ich werd rot.', 'Das Bier geht Sonntag auf mich.'], ['Cheers, lads! 🙏', 'Always said so.', 'Same again next week.', 'Stop it, I am blushing.', 'Drinks are on me on Sunday.']),
   angry: tr(['Halt einfach die Klappe.', 'Sag mir das Sonntag ins Gesicht.', 'Ich bin raus aus der Gruppe. (war er dann doch nicht)'], ['Just shut it.', 'Say that to my face on Sunday.', 'I am out of this group. (He was not.)']),
 };
 
@@ -126,7 +127,10 @@ export function weeklyBanter(c) {
     const vars = { to: first(c, pick.to), n: c.players[pick.to].noStreak, grade: pick.grade?.toFixed(1).replace('.', ','), score: res ? `${res[0]}:${res[1]}` : '' };
     w.chat.push({ from, text: pickText(rng, T[pick.kind], vars), time: clockAt(day, 20 + k, 10 + rng.int(0, 45)), banter: pick.kind });
     const reaction = pick.kind === 'praise' ? 'laugh' : mood(c, rng, from, pick.to, pick.spicy);
-    const reply = pick.kind === 'praise' ? tr(rng.pick(['Danke, Männer! 🙏', 'Hab ich immer gesagt.', 'Nächste Woche wieder.']), rng.pick(['Cheers, lads! 🙏', 'Always said so.', 'Same again next week.'])) : rng.pick(R[reaction]);
+    // Antworten nicht doppelt in derselben Woche.
+    const replies = pick.kind === 'praise' ? R.thanks : R[reaction];
+    const unused = replies.filter((t) => !w.chat.some((m) => m.text === t));
+    const reply = rng.pick(unused.length ? unused : replies);
     w.chat.push({ from: pick.to, text: reply, time: clockAt(day, 20 + k, 50 + rng.int(0, 9)), banter: pick.kind });
     applyBanter(c, rng, pick, from, reaction, notes);
     said.push({ ...pick, from, reaction });
