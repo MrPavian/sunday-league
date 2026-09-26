@@ -14,6 +14,8 @@ Sonntag, 10:30 Uhr, Nieselregen, sieben Zuschauer, zwei davon Hunde.
 > derbies, pub nights and season trips – across generations. Fully playable in English:
 > pick the language on first start or any time in the settings (key **O**).
 
+![Startbild](docs/startbild.png)
+
 ![Stadtpark](docs/screenshot-park.png)
 
 ---
@@ -81,7 +83,10 @@ die Komik entsteht aus dem Alltag.
 - **Spielerentwicklung sichtbar**: Formkurve, Stärke-Verlauf über die Saisons, Spieler des Monats im Kreisblatt
 - **Eigener Spielertrainer**: Name, Alter, Beruf, Beziehung, Kinder und Spielertyp selbst festlegen
 - **Kasse & Strafenkatalog**: Luftloch 1 €, Eigentor eine Runde für alle
-- **Sponsoren mit Eigenarten**: nachverhandeln, bei Laune halten, verlängern – oder verärgern
+- **Sponsoren mit Eigenarten**: 40 Betriebe aus dem Ort, nachverhandeln, bei Laune halten, verlängern – oder verärgern.
+  Der Trikotsponsor steht auf der Brust.
+- **Trikots und Wappen**: elf Trikotmuster von Längsstreifen bis Schärpe; ein Wappen-Editor mit zehn Formen,
+  elf Teilungen, 15 Symbolen, neun Wappentieren und frei wählbaren Farben. Auf Asche und bei Regen werden die Trikots dreckig.
 - **Vereinsheim ausbauen**: warme Duschen, Grill & Theke, Flutlicht, Tribüne – mit Handwerkern oder
   als Arbeitseinsatz mit Überraschungen
 - **Transfers, Scouting und Jugend** von der E- bis zur A-Jugend; Talente werden auch abgeworben
@@ -183,7 +188,7 @@ Auf englischen Tastaturen liegt „Stochern“ auf **Z** (gleiche Taste).
 
 ```bash
 npm run dev      # Entwicklungsserver mit Hot Reload
-npm test         # 161 Tests (Simulation und Karriere)
+npm test         # 165 Tests (Simulation und Karriere)
 npm run build    # Produktions-Build nach dist/
 npm run preview  # Build lokal ansehen
 ```

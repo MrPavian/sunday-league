@@ -46,6 +46,7 @@ import { EndScreen } from './ui/EndScreen.js';
 import { Hud } from './ui/Hud.js';
 import { Menu } from './ui/Menu.js';
 import { PoolBrowser } from './ui/PoolBrowser.js';
+import { TitleScreen } from './ui/TitleScreen.js';
 import { Settings } from './ui/Settings.js';
 import { Ticker } from './ui/Ticker.js';
 import { SaveSlots } from './ui/SaveSlots.js';
@@ -87,6 +88,9 @@ const endScreen = new EndScreen(document.getElementById('end'));
 const sound = new Sound();
 const poolBrowser = new PoolBrowser(document.getElementById('pool'));
 const settings = new Settings(document.getElementById('settings'));
+// Ältere Einbettungen kennen den Container fürs Startbild noch nicht.
+const titleRoot = document.getElementById('title') ?? document.body.appendChild(Object.assign(document.createElement('div'), { id: 'title', hidden: true }));
+const title = new TitleScreen(titleRoot);
 const saveSlots = new SaveSlots(document.getElementById('saves'));
 
 let colorSafe = false;
@@ -590,11 +594,17 @@ if (params.get('venue')) {
   menu.onStart(venue.id);
 } else {
   openMenu();
-  // Allererster Start: erst die Sprache wählen.
-  if (!langChosen() && !params.get('lang')) {
+  // Allererster Start: erst die Sprache wählen, dann das Startbild.
+  const firstRun = !langChosen() && !params.get('lang');
+  const showTitle = () => {
+    if (params.has('notitle')) return;
     menu.paused = true;
-    settings.show({ onLang: switchLanguage }, { firstRun: true });
-  }
+    title.show(() => setTimeout(() => (menu.paused = false), 0));
+  };
+  if (firstRun) {
+    menu.paused = true;
+    settings.show({ onLang: switchLanguage }, { firstRun: true }); // lädt neu, danach kommt das Startbild
+  } else showTitle();
 }
 
 let last = performance.now();

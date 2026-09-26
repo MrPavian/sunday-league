@@ -833,3 +833,19 @@ li.sponsor .rel i { display: block; height: 100%; background: #c9a227; }
   .scoreboard .score b { font-size: 20px; line-height: 26px; min-width: 22px; }
   .venue { top: 62px; }
 }
+
+/* Startbild: Pixelszene füllt den Schirm, Logo und Hinweis liegen scharf darüber. */
+#title { position: fixed; inset: 0; z-index: 40; overflow: hidden; background: #0c0d0b; cursor: pointer; transition: opacity 0.35s steps(4); }
+#title[hidden] { display: none; }
+#title.leaving { opacity: 0; }
+#title canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 70%; image-rendering: pixelated; }
+#title .title-logo { position: absolute; left: 50%; top: 5%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; text-align: center; text-shadow: var(--shadow); }
+#title .title-logo .crest { filter: drop-shadow(5px 5px 0 #000); }
+#title h1 { margin: 6px 0 0; white-space: nowrap; font-size: clamp(36px, 7vw, 88px); line-height: 1; color: var(--accent); text-shadow: 5px 5px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000; letter-spacing: 2px; }
+#title .sub { margin: 8px 0 0; padding: 3px 12px; font-size: clamp(14px, 1.8vw, 20px); background: rgba(10, 12, 14, 0.6); border: 2px solid #000; }
+#title .title-press { margin: 14px 0 0; padding: 6px 16px; font-size: clamp(16px, 2vw, 24px); color: #111; background: var(--accent); border: 3px solid #000; box-shadow: 4px 4px 0 #000; animation: title-blink 1.1s steps(1) infinite; white-space: nowrap; }
+#title .title-foot { position: absolute; right: 12px; bottom: 8px; margin: 0; font-size: 11px; opacity: 0.75; text-shadow: var(--shadow); }
+#title .title-hint { position: absolute; left: 12px; bottom: 8px; margin: 0; max-width: 60%; font-size: 12px; text-shadow: var(--shadow); }
+#title .title-hint kbd { font-size: 11px; }
+@media (max-width: 720px) { #title .title-hint { display: none; } }
+@keyframes title-blink { 50% { opacity: 0.35; } }
