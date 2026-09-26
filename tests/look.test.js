@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { createCareer, getPool, migrateCareer, setNameEdition, teamForMatch } from '../src/career/career.js';
-import { FIRST_NAMES, LAST_NAMES, NAME_EDITIONS } from '../src/data/names.js';
+import { FIRST_NAMES, LAST_NAMES, NAME_EDITION, NAME_EDITIONS, PROFESSIONS } from '../src/data/names.js';
+import { applyJobPerks, JOB_PERKS, jobPerk } from '../src/data/jobs.js';
+import { JOB_EN } from '../src/data/names.js';
 import { SPONSORS, sponsorColor } from '../src/career/sponsors.js';
 import { crestOf, crestSVG, CREST_SYMBOLS, defaultCrest } from '../src/ui/crest.js';
 import { createRng } from '../src/core/rng.js';
@@ -10,7 +12,7 @@ describe('names, sponsors, kits and crests', () => {
     expect(FIRST_NAMES.length).toBeGreaterThan(100);
     expect(LAST_NAMES.length).toBeGreaterThan(100);
     const c = createCareer({ seed: 5 });
-    expect(c.names).toBe(2);
+    expect(c.names).toBe(NAME_EDITION);
     const idx = c.clubs[0].squad[0];
     const modern = getPool().get(idx).name;
     // Alter Spielstand ohne Namensauflage → erste Auflage, derselbe Spieler heißt wie früher.
@@ -21,7 +23,7 @@ describe('names, sponsors, kits and crests', () => {
     const [first, last] = legacy.name.split(' ');
     expect(NAME_EDITIONS[1].first).toContain(first);
     expect(NAME_EDITIONS[1].last).toContain(last);
-    setNameEdition(2);
+    setNameEdition(NAME_EDITION);
     expect(getPool().get(idx).name).toBe(modern);
   });
 
@@ -53,5 +55,18 @@ describe('names, sponsors, kits and crests', () => {
       if (symbol !== 'keins') expect(svg).toContain('<rect x=');
     }
     expect(crestOf({ crest: { shape: 'rund' } }).shape).toBe('rund');
+  });
+
+  it('jobs bring perks: own attributes and a team bonus that counts once', () => {
+    expect(PROFESSIONS.length).toBeGreaterThan(80);
+    for (const job of Object.keys(JOB_PERKS)) expect(PROFESSIONS.includes(job) || job === 'Fahrer beim Getränkehandel', job).toBe(true);
+    for (const job of PROFESSIONS) expect(JOB_EN[job], job).toBeTruthy();
+    const base = { attrs: { stamina: 0.5, passing: 0.5, technique: 0.5, pace: 0.5, tackling: 0.5 } };
+    const [postie, mate] = applyJobPerks([{ ...base, profession: 'Postbote' }, { ...base, profession: 'Busfahrer' }]);
+    expect(postie.attrs.stamina).toBeGreaterThan(0.5);
+    expect(mate.attrs.stamina).toBe(0.5);
+    const beer = applyJobPerks([{ ...base, profession: 'Verkäufer im Getränkemarkt' }, { ...base, profession: 'Bierbrauer' }, { ...base, profession: 'Busfahrer' }]);
+    expect(beer[2].attrs.passing).toBeCloseTo(0.5 + jobPerk('Bierbrauer').team.bier.passing, 5); // nur einmal
+    expect(base.attrs.stamina).toBe(0.5); // Original bleibt unverändert
   });
 });

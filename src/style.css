@@ -849,3 +849,10 @@ li.sponsor .rel i { display: block; height: 100%; background: #c9a227; }
 #title .title-hint kbd { font-size: 11px; }
 @media (max-width: 720px) { #title .title-hint { display: none; } }
 @keyframes title-blink { 50% { opacity: 0.35; } }
+
+/* Berufsbonus */
+.card .perk:empty { display: none; }
+.card .perk { margin: -4px 0 6px; font-size: 11px; color: #9fd8a8; }
+.card .perk::before { content: '+ '; }
+.perk-tag { margin-left: 4px; padding: 0 4px; font-size: 10px; color: #111; background: #9fd8a8; border: 1px solid #000; text-shadow: none; cursor: help; }
+small.perk { display: block; color: #9fd8a8; }

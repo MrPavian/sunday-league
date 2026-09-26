@@ -4,6 +4,7 @@ import { TRAITS } from '../data/traits.js';
 import { tierById } from '../data/tiers.js';
 import { POSITIONS } from '../sim/generator.js';
 import { jobName } from '../data/names.js';
+import { jobPerk } from '../data/jobs.js';
 import { findAnyPlayer } from '../sim/squad.js';
 import { REF_TRAITS } from '../sim/referee.js';
 import { attackDir, getPlayer } from '../sim/match.js';
@@ -34,6 +35,7 @@ export class Hud {
       <div class="card">
         <div class="name"></div>
         <div class="meta"></div>
+        <div class="perk"></div>
         <div class="tierline"></div>
         <div class="traits"></div>
         <div class="injury"></div>
@@ -208,6 +210,8 @@ export class Hud {
       this.$('.name').textContent = p.name;
       this.$('.card').style.setProperty('--kit', hex(match.teams[p.team].kit.shirt));
       this.$('.meta').textContent = `${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)}`;
+      const perk = jobPerk(p.profession);
+      this.$('.perk').textContent = perk ? perk.label : '';
       const tier = tierById(p.tier);
       const line = this.$('.tierline');
       line.style.setProperty('--c', tier.color);

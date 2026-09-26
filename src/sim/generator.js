@@ -41,7 +41,7 @@ const STORIES = {
 // Karrierejahre passen zum Alter: frühestens mit 18 bei den Herren.
 // Berufe passend zum Alter – kein 17-jähriger Frührentner. Ersetzt nur den
 // gezogenen Beruf, damit die Zufallsfolge (und damit der Pool) gleich bleibt.
-const MIN_AGE = { Frührentner: 38, 'Student (12. Semester)': 23, Zahnarzt: 26, Steuerberater: 26, Grundschullehrer: 25, Versicherungsmakler: 22, Doktorand: 24, Pfarrer: 28, Immobilienmakler: 23, Winzer: 22, Kioskbesitzer: 24 };
+const MIN_AGE = { Frührentner: 38, 'Student (12. Semester)': 23, Zahnarzt: 26, Steuerberater: 26, Grundschullehrer: 25, Versicherungsmakler: 22, Doktorand: 24, Pfarrer: 28, Immobilienmakler: 23, Winzer: 22, Kioskbesitzer: 24, Tierarzt: 26, Fluglotse: 24, Kommunalpolitiker: 25, Physiotherapeut: 21, Sportlehrer: 25, Musiklehrer: 25, Bestatter: 22, Förster: 23, Gerichtsvollzieher: 26, Uhrmacher: 21, Hufschmied: 20 };
 const YOUNG_JOBS = ['Schüler (Abi-Jahrgang)', 'Azubi Kfz-Mechatroniker', 'Azubi Elektriker', 'FSJ im Altenheim', 'Schüler'];
 
 export function fitProfession(job, age) {

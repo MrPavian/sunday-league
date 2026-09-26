@@ -4,6 +4,7 @@ import { createRng } from '../core/rng.js';
 import { dist2d, norm } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
 import { TEAM_PRESETS } from '../data/teams.js';
+import { applyJobPerks } from '../data/jobs.js';
 import { bodyBlock, carryBall, dribbleTouch, headerTouch, keeperSaves, movePlayer, separatePlayers, tryExecute } from './actions.js';
 import { keeperIntent, outfieldIntent, updateTactics } from './ai.js';
 import { createBall, stepBall } from './ball.js';
@@ -40,7 +41,8 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = tr
   const players = [];
   const bench = [[], []];
   squads.forEach((team, ti) => {
-    team.players.forEach((pl, i) => {
+    // Berufsboni: der Postbote läuft länger, der Getränkemarkt-Mann hält die Truppe zusammen.
+    applyJobPerks(team.players).forEach((pl, i) => {
       const entry = formation[i] ?? formation.find((f) => f.role === pl.position) ?? formation[formation.length - 1];
       const p = makeEntity(pl, ti, i, entry.role, formationSpot(pitch, entry, ti));
       p.formationEntry = entry;

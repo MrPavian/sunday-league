@@ -3,6 +3,7 @@
 // erhalten: als Co-Trainer, Platzwart, Wirt oder Betreuer.
 import { createRng } from '../core/rng.js';
 import { hasTrait } from '../data/traits.js';
+import { jobPerk } from '../data/jobs.js';
 import { book } from './finances.js';
 import { humanClub, MIN_SQUAD, playerOf } from './career.js';
 import { adjustForm, adjustMood } from './events.js';
@@ -36,6 +37,8 @@ export function rollInjuries(c, prepared, fixtureRound = c.round) {
   const rng = createRng((c.seed * 613 + c.season * 97 + fixtureRound * 13 + 7) >>> 0);
   const news = [];
   const players = [...m.players, ...m.bench.flat(), ...(m.sentOff ?? [])];
+  // Physio, Sanitäter & Co. im Kader: Verletzte sind ein Viertel schneller zurück.
+  const medic = humanClub(c).squad.some((idx) => jobPerk(playerOf(c, idx)?.profession)?.medic);
   for (const p of players) {
     const rec = c.players[p.poolIndex];
     const st = m.stats.players[p.id];
@@ -48,7 +51,8 @@ export function rollInjuries(c, prepared, fixtureRound = c.round) {
     if (!rng.chance(chance)) continue;
     const type = rollType(rng);
     const def = INJURIES[type];
-    const weeks = rng.int(def.weeks[0], def.weeks[1]);
+    const rolled = rng.int(def.weeks[0], def.weeks[1]);
+    const weeks = medic ? Math.max(1, Math.round(rolled * 0.75)) : rolled;
     rec.injuryWeeks = Math.max(rec.injuryWeeks ?? 0, weeks);
     rec.injury = { type, label: def.label, weeks };
     news.push({ idx: p.poolIndex, type, weeks });

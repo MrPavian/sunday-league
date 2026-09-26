@@ -49,27 +49,37 @@ const JOBS_V1 = [
   'Dachdecker', 'Barista', 'Pflegekraft', 'IT-Admin', 'Busfahrer', 'Bäcker', 'Versicherungsmakler',
   'Lagerist', 'Elektriker', 'Hausmeister', 'Streetworker', 'Friseur', 'Schichtarbeiter', 'Steuerberater',
 ];
-export const PROFESSIONS = [
+const JOBS_V2 = [
   ...JOBS_V1,
   'Metzger', 'Tischler', 'Landwirt', 'Fliesenleger', 'Postbote', 'Rettungssanitäter', 'Feuerwehrmann', 'Taxifahrer',
   'Gebäudereiniger', 'Maurer', 'Bankkaufmann', 'Immobilienmakler', 'Kioskbesitzer', 'Fitnesstrainer', 'Tätowierer',
   'DJ', 'Handyladen-Betreiber', 'Pizzabäcker', 'Sozialarbeiter', 'Doktorand', 'Lokführer', 'Gabelstaplerfahrer',
   'Hochzeitsfotograf', 'Schornsteinfeger', 'Kranführer', 'Winzer', 'Pfarrer', 'Kellner', 'Zugbegleiter', 'Webdesigner',
 ];
+// Dritte Auflage: noch mehr Berufe, viele davon mit Bonus (siehe data/jobs.js).
+export const PROFESSIONS = [
+  ...JOBS_V2,
+  'Fahrradkurier', 'Pizzabote', 'Sportlehrer', 'Förster', 'Gerüstbauer', 'Müllwerker', 'Türsteher', 'Hufschmied',
+  'Uhrmacher', 'Goldschmied', 'Fluglotse', 'Schlagzeuger', 'Bademeister', 'Sicherheitsmann', 'Verkäufer im Getränkemarkt',
+  'Bierbrauer', 'Fahrlehrer', 'Physiotherapeut', 'Tierarzt', 'Orthopädietechniker', 'Glaser', 'Zimmermann', 'Baggerfahrer',
+  'Stuckateur', 'Optiker', 'Straßenbahnfahrer', 'Gemüsehändler', 'Bestatter', 'Influencer', 'Zollbeamter',
+  'Gerichtsvollzieher', 'Soldat', 'Musiklehrer', 'Hörgeräteakustiker', 'Kommunalpolitiker', 'Heizungsbauer', 'Polizist', 'Koch', 'Softwareentwickler',
+];
 
 // Welche Namensauflage eine Karriere benutzt (1 = alte Spielstände).
 export const NAME_EDITIONS = {
   1: { first: FIRST_V1, last: LAST_V1, jobs: JOBS_V1 },
-  2: { first: FIRST_NAMES, last: LAST_NAMES, jobs: PROFESSIONS },
+  2: { first: FIRST_NAMES, last: LAST_NAMES, jobs: JOBS_V2 },
+  3: { first: FIRST_NAMES, last: LAST_NAMES, jobs: PROFESSIONS },
 };
-export const NAME_EDITION = 2;
+export const NAME_EDITION = 3;
 
 export const SKIN_TONES = [0xf1d0b5, 0xe6b894, 0xd29f7a, 0xb57c55, 0x8d5a3b, 0x6b4128];
 export const HAIR_COLORS = [0x2a1d14, 0x4a3222, 0x7a5230, 0xb08850, 0x1a1a1a, 0x8a8a8a, 0xa0522d];
 
 // Berufe bleiben intern deutsch (Absagen, Ereignisse und Geschichten hängen daran)
 // und werden nur für die Anzeige übersetzt.
-const JOB_EN = {
+export const JOB_EN = {
   Paketbote: 'parcel courier', Zahnarzt: 'dentist', 'Azubi Kfz-Mechatroniker': 'apprentice car mechanic', Frührentner: 'early retiree',
   Grundschullehrer: 'primary school teacher', 'Student (12. Semester)': 'student (12th semester)', Dachdecker: 'roofer', Barista: 'barista',
   Pflegekraft: 'care worker', 'IT-Admin': 'IT admin', Busfahrer: 'bus driver', Bäcker: 'baker', Versicherungsmakler: 'insurance broker',
@@ -90,6 +100,13 @@ const JOB_EN = {
   'Handyladen-Betreiber': 'runs a phone shop', Pizzabäcker: 'pizza chef', Sozialarbeiter: 'social worker', Doktorand: 'PhD student',
   Lokführer: 'train driver', Gabelstaplerfahrer: 'forklift driver', Hochzeitsfotograf: 'wedding photographer', Schornsteinfeger: 'chimney sweep',
   Kranführer: 'crane operator', Winzer: 'winemaker', Pfarrer: 'vicar', Kellner: 'waiter', Zugbegleiter: 'train conductor', Webdesigner: 'web designer',
+  Fahrradkurier: 'bike courier', Pizzabote: 'pizza delivery driver', Sportlehrer: 'PE teacher', Förster: 'forester', Gerüstbauer: 'scaffolder',
+  Müllwerker: 'bin man', Türsteher: 'bouncer', Hufschmied: 'farrier', Uhrmacher: 'watchmaker', Goldschmied: 'goldsmith', Fluglotse: 'air traffic controller',
+  Schlagzeuger: 'drummer', Bademeister: 'lifeguard', Sicherheitsmann: 'security guard', 'Verkäufer im Getränkemarkt': 'drinks store clerk',
+  Bierbrauer: 'brewer', Fahrlehrer: 'driving instructor', Physiotherapeut: 'physiotherapist', Tierarzt: 'vet', Orthopädietechniker: 'orthopaedic technician',
+  Glaser: 'glazier', Zimmermann: 'carpenter', Baggerfahrer: 'digger driver', Stuckateur: 'plasterer', Optiker: 'optician', Straßenbahnfahrer: 'tram driver',
+  Gemüsehändler: 'greengrocer', Bestatter: 'undertaker', Influencer: 'influencer', Zollbeamter: 'customs officer', Gerichtsvollzieher: 'bailiff',
+  Soldat: 'soldier', Musiklehrer: 'music teacher', Hörgeräteakustiker: 'hearing aid technician', Kommunalpolitiker: 'local councillor', Heizungsbauer: 'heating engineer',
 };
 
 export function jobName(job) {

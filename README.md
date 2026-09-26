@@ -85,6 +85,8 @@ die Komik entsteht aus dem Alltag.
 - **Kasse & Strafenkatalog**: Luftloch 1 €, Eigentor eine Runde für alle
 - **Sponsoren mit Eigenarten**: 40 Betriebe aus dem Ort, nachverhandeln, bei Laune halten, verlängern – oder verärgern.
   Der Trikotsponsor steht auf der Brust.
+- **Berufe mit Boni**: über 100 Berufe. Der Postbote hat mehr Puste, der Dachdecker gewinnt Kopfbälle, der Mann vom
+  Getränkemarkt bringt günstig Bier mit (bessere Teamchemie), Physio oder Sanitäter im Kader lassen Verletzte schneller zurückkommen.
 - **Trikots und Wappen**: elf Trikotmuster von Längsstreifen bis Schärpe; ein Wappen-Editor mit zehn Formen,
   elf Teilungen, 15 Symbolen, neun Wappentieren und frei wählbaren Farben. Auf Asche und bei Regen werden die Trikots dreckig.
 - **Vereinsheim ausbauen**: warme Duschen, Grill & Theke, Flutlicht, Tribüne – mit Handwerkern oder
@@ -188,7 +190,7 @@ Auf englischen Tastaturen liegt „Stochern“ auf **Z** (gleiche Taste).
 
 ```bash
 npm run dev      # Entwicklungsserver mit Hot Reload
-npm test         # 165 Tests (Simulation und Karriere)
+npm test         # 166 Tests (Simulation und Karriere)
 npm run build    # Produktions-Build nach dist/
 npm run preview  # Build lokal ansehen
 ```

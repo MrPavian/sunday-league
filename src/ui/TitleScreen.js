@@ -2,8 +2,9 @@ import { tr } from '../core/i18n.js';
 import { crestSVG } from './logo.js';
 
 // Startbild: Sonntagmorgen auf dem Dorfplatz, als Pixelbild von Hand gezeichnet
-// (prozedural, 384 × 216). Wolken ziehen, das Flutlicht flackert, der Ball fliegt
-// Richtung Winkel. Irgendeine Taste oder ein Klick – und es geht ins Menü.
+// (prozedural, 384 × 216). Wolken ziehen, das Flutlicht flackert, die Fahne weht.
+// Keine Spieler – nur das Ballnetz liegt schon bereit. Irgendeine Taste oder ein
+// Klick – und es geht ins Menü.
 const W = 384;
 const H = 216;
 const HORIZON = 118;
@@ -31,38 +32,6 @@ const mix = (a, b, t) => {
 
 // Sprites: jedes Zeichen eine Farbe aus der Palette, '.' bleibt frei.
 const PAL = { h: 0x3a2618, s: 0xe6b894, S: 0xc79270, r: 0xc8352f, R: 0x9a2622, w: 0xf2efe6, k: 0x1a1a1a, g: 0xc8352f, y: 0xe0b020, Y: 0xb08818, n: 0x1d2b44, b: 0x6b4f2a, B: 0x4a3222, e: 0x1a1716, t: 0x8a9096 };
-const KICKER = [
-  '......hhhh......',
-  '.....hhhhhh.....',
-  '.....hhsssss....',
-  '.....hssssse....',
-  '......sssss.....',
-  '.......ss.......',
-  '.....rrrrrr.....',
-  '....rrrrrrrr.ss.',
-  '..srrrrwwrrrrs..',
-  '.s..rrrrrrrr....',
-  's...rrrrrrrr....',
-  '....RRRRRRRR....',
-  '....wwwwwwww....',
-  '....wwwwwwwwww..',
-  '...www....wwwss.',
-  '..sss.......ssgg',
-  '..ss.........gkk',
-  '.gg...........kk',
-  '.gg.............',
-  'kkk.............',
-  'kk..............',
-];
-const KEEPER = [
-  '..........................',
-  'ss.....yyyyyyyyyy.hhh.....',
-  'ssyyyyyyyyyyyyyyyyhsss....',
-  '..yyyyyyyyyyyyyyyyysse....',
-  '.....YYYYYYYYYYYYYyss.....',
-  '...kkggnnnnnnnn...........',
-  'kkkggg.nnnnnnn............',
-];
 const FAN = ['.hh.', 'hssh', '.ss.', 'bbbb', 'bbbb', 'bbbb', '.BB.'];
 const DOG = ['......bb', '.....bbb', 'bbbbbbb.', 'bbbbbbb.', 'b.b..b.b'];
 
@@ -305,15 +274,19 @@ function drawFans(ctx) {
   sprite(ctx, DOG, 300, BOARD_Y - 5, 1);
 }
 
+const GOAL_LINE = 150;
+const VP = { x: 336, y: HORIZON - 30 }; // Fluchtpunkt: Blick längs übers Feld aufs Tor
+
+// Punkt auf einer Linie, die vom Fluchtpunkt aus nach vorne läuft: x auf der Torlinie → x bei Höhe y.
+const toward = (xGoal, y) => VP.x + ((xGoal - VP.x) * (y - VP.y)) / (GOAL_LINE - VP.y);
+
 function drawPitch(ctx) {
-  // Mähstreifen in Perspektive: nach vorne breiter.
+  // Mähstreifen parallel zur Torlinie, nach vorne immer breiter.
   const r = rng(3);
   for (let y = PITCH_Y; y < H; y++) {
     const depth = (y - PITCH_Y) / (H - PITCH_Y);
+    const stripe = Math.floor(260 / (y - VP.y)) & 1;
     for (let x = 0; x < W; x++) {
-      // Streifen laufen schräg auf einen Fluchtpunkt zu.
-      const vx = (x - W * 0.55) / (0.35 + depth * 1.6);
-      const stripe = Math.floor(vx / 22) & 1;
       let c = stripe ? 0x5e9f41 : 0x528f37;
       c = mix(c, 0x9fb870, (1 - depth) * 0.25); // Dunst in der Ferne
       const n = r();
@@ -324,31 +297,41 @@ function drawPitch(ctx) {
     }
   }
   // Abgenutzter Torraum vor dem Tor.
-  for (let i = 0; i < 260; i++) {
-    const x = 318 + (r() - 0.5) * 60;
-    const y = 150 + r() * 12;
+  for (let i = 0; i < 320; i++) {
+    const y = GOAL_LINE + r() * 10;
+    const x = 336 + (r() - 0.5) * (50 + (y - GOAL_LINE) * 4);
     ctx.fillStyle = r() < 0.5 ? '#8a7048' : '#6f5a3a';
     ctx.fillRect(Math.round(x), Math.round(y), 2, 1);
   }
-  // Kreidelinien.
+  // Kreidelinien – alle auf denselben Fluchtpunkt ausgerichtet.
   ctx.fillStyle = '#f2efe6';
-  ctx.fillRect(0, PITCH_Y + 3, W, 1);
   const line = (x0, y0, x1, y1) => {
     const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
     for (let i = 0; i <= n; i++) ctx.fillRect(Math.round(x0 + ((x1 - x0) * i) / n), Math.round(y0 + ((y1 - y0) * i) / n), 1, 1);
   };
-  // Strafraum rechts.
-  line(270, PITCH_Y + 3, 232, H);
-  line(270 + 0, 164, 384, 164);
-  line(290, PITCH_Y + 3, 283, 150);
-  line(283, 150, 384, 150);
-  // Mittellinie und Mittelkreis (angeschnitten).
-  line(70, PITCH_Y + 3, 20, H);
-  for (let a = 0; a < Math.PI * 2; a += 0.01) {
-    const x = 48 + Math.cos(a) * 58;
-    const y = 176 + Math.sin(a) * 18;
-    if (y > PITCH_Y + 3) ctx.fillRect(Math.round(x), Math.round(y), 1, 1);
+  const depthLine = (xg, y1) => line(xg, GOAL_LINE, toward(xg, y1), y1);
+  ctx.fillRect(0, GOAL_LINE, W, 1); // Torlinie
+  // Torraum.
+  depthLine(296, 159);
+  depthLine(378, 159);
+  line(toward(296, 159), 159, toward(378, 159), 159);
+  // Strafraum.
+  depthLine(246, 182);
+  depthLine(428, 182);
+  line(toward(246, 182), 182, W, 182);
+  // Elfmeterpunkt und Teilkreis.
+  ctx.fillRect(335, 172, 3, 2);
+  for (let a = 0; a < Math.PI; a += 0.01) {
+    const x = 336 + Math.cos(a) * 46;
+    const y = 174 + Math.sin(a) * 14;
+    if (y > 183) ctx.fillRect(Math.round(x), Math.round(y), 1, 1);
   }
+  // Seitenlinie links mit Eckfahne.
+  depthLine(40, H);
+  ctx.fillStyle = '#e8e2d0';
+  ctx.fillRect(40, GOAL_LINE - 14, 1, 14);
+  ctx.fillStyle = '#e0b020';
+  ctx.fillRect(41, GOAL_LINE - 14, 5, 4);
 }
 
 function drawGoal(ctx) {
@@ -369,33 +352,61 @@ function drawGoal(ctx) {
   ctx.fillRect(x1 + 2, top + 3, 1, base - top - 3);
 }
 
-function drawAction(ctx, t) {
-  // Der Schütze hat gerade abgezogen, der Ball fliegt in den Winkel, der Keeper fliegt hinterher.
-  const shadow = (x, y, w) => {
-    ctx.fillStyle = 'rgba(20, 40, 20, 0.35)';
-    ctx.fillRect(x, y, w, 3);
-  };
-  shadow(206, 202, 40);
-  sprite(ctx, KICKER, 200, 139, 3);
-  // Flugbahn: gestrichelter Kondensstreifen.
-  const f = (Math.sin(t * 1.3) + 1) / 2; // Ball schwebt leicht
-  const bx = 330 + f * 2;
-  const by = 120 - f * 2;
-  for (let i = 4; i < 40; i++) {
-    const u = i / 40;
-    const x = 246 + (bx - 246) * u;
-    const y = 188 + (by - 188) * u - Math.sin(u * Math.PI) * 30;
-    if (i % 3 === 2) continue;
-    ctx.fillStyle = `rgba(255, 255, 255, ${0.25 + u * 0.6})`;
-    ctx.fillRect(Math.round(x), Math.round(y), 2, 2);
-  }
+function drawBall(ctx, x, y) {
+  // 6 × 6 Pixelball mit schwarzen Flecken und Schatten.
+  ctx.fillStyle = 'rgba(20, 40, 20, 0.35)';
+  ctx.fillRect(x - 1, y + 5, 8, 2);
   ctx.fillStyle = '#f8f8f4';
-  ctx.fillRect(Math.round(bx) - 2, Math.round(by) - 1, 5, 3);
-  ctx.fillRect(Math.round(bx) - 1, Math.round(by) - 2, 3, 5);
+  ctx.fillRect(x + 1, y, 4, 6);
+  ctx.fillRect(x, y + 1, 6, 4);
   ctx.fillStyle = '#1a1a1a';
-  ctx.fillRect(Math.round(bx), Math.round(by), 1, 1);
-  shadow(318, 150, 30);
-  sprite(ctx, KEEPER, 318, 122 + Math.round(f), 2, { ...PAL, g: 0xe0b020 });
+  ctx.fillRect(x + 2, y + 2, 2, 2);
+  ctx.fillRect(x, y + 1, 1, 1);
+  ctx.fillRect(x + 5, y + 4, 1, 1);
+  ctx.fillStyle = '#c8c8c0';
+  ctx.fillRect(x + 1, y + 5, 4, 1);
+}
+
+function drawCone(ctx, x, y) {
+  ctx.fillStyle = 'rgba(20, 40, 20, 0.35)';
+  ctx.fillRect(x - 1, y + 5, 8, 1);
+  ctx.fillStyle = '#e8742a';
+  ctx.fillRect(x + 2, y, 2, 2);
+  ctx.fillRect(x + 1, y + 2, 4, 2);
+  ctx.fillRect(x, y + 4, 6, 2);
+  ctx.fillStyle = '#f2efe6';
+  ctx.fillRect(x + 1, y + 3, 4, 1);
+}
+
+function drawStill(ctx) {
+  // Ballnetz: ein Haufen Bälle im Netz, Kordel zum Zuziehen, daneben ein paar lose Bälle.
+  const bx = 150;
+  const by = 176;
+  const balls = [
+    [0, 10], [7, 11], [14, 10], [21, 11], [4, 5], [11, 5], [18, 6], [8, 0], [15, 1],
+  ];
+  ctx.fillStyle = 'rgba(20, 40, 20, 0.35)';
+  ctx.fillRect(bx - 2, by + 16, 34, 3);
+  for (const [dx, dy] of balls) drawBall(ctx, bx + dx, by + dy);
+  // Maschen über den Bällen.
+  ctx.fillStyle = 'rgba(30, 30, 30, 0.55)';
+  for (let y = by - 1; y < by + 17; y++)
+    for (let x = bx - 1; x < bx + 29; x++) {
+      const inside = balls.some(([dx, dy]) => x >= bx + dx - 1 && x <= bx + dx + 6 && y >= by + dy - 1 && y <= by + dy + 6);
+      if (inside && ((x + y) % 4 === 0 || (x - y + 400) % 4 === 0)) ctx.fillRect(x, y, 1, 1);
+    }
+  // Zugekordelter Hals mit Schlaufe.
+  ctx.fillStyle = '#2a2a2a';
+  ctx.fillRect(bx + 11, by - 3, 4, 3);
+  ctx.fillStyle = '#e0b020';
+  ctx.fillRect(bx + 15, by - 3, 6, 1);
+  ctx.fillRect(bx + 20, by - 2, 1, 3);
+  ctx.fillRect(bx + 17, by, 4, 1);
+  // Lose Bälle und Hütchen fürs Aufwärmen.
+  drawBall(ctx, 196, 190);
+  drawBall(ctx, 118, 199);
+  drawBall(ctx, 262, 164);
+  for (const [x, y] of [[214, 166], [236, 174], [258, 184], [280, 196]]) drawCone(ctx, x, y);
   // Kasten Bier am Spielfeldrand – für danach.
   ctx.fillStyle = '#c8962a';
   ctx.fillRect(12, 190, 26, 14);
@@ -486,12 +497,12 @@ export class TitleScreen {
       drawBoards(g);
       drawPitch(g);
       drawGoal(g);
+      drawStill(g);
     });
     ctx.drawImage(this.sky, 0, 0);
     drawClouds(ctx, t);
     ctx.drawImage(this.ground, 0, 0);
     drawFloodlights(ctx, t);
     drawFlag(ctx, t);
-    drawAction(ctx, t);
   }
 }

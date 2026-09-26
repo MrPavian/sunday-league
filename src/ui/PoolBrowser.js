@@ -1,3 +1,4 @@
+import { jobPerk } from '../data/jobs.js';
 import { tr } from '../core/i18n.js';
 import { TRAITS } from '../data/traits.js';
 import { jobName } from '../data/names.js';
@@ -88,7 +89,7 @@ export class PoolBrowser {
       <div class="line">
         <span class="rating">${p.rating}</span>
         <span class="who"><b>${p.name}</b> ${p.title ? `<em>${p.title}</em>` : ''}
-          <small>${p.age}${tr(' J.', ' yrs')} · ${POSITIONS[p.position]} · ${jobName(p.profession)}</small></span>
+          <small>${p.age}${tr(' J.', ' yrs')} · ${POSITIONS[p.position]} · ${jobName(p.profession)}${jobPerk(p.profession) ? ` – ${jobPerk(p.profession).label}` : ''}</small></span>
         <span class="traits">${traits}</span>
       </div>
       ${open ? `<div class="detail">${p.backstory ? `<p>${p.backstory}</p>` : ''}<div class="attrs">${bars}</div></div>` : ''}
