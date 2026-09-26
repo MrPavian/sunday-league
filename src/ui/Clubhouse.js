@@ -311,8 +311,9 @@ export class Clubhouse {
         ${winterCupDue(c) ? `<div class="winter-cup"><p class="label">${tr('Winterpause', 'Winter break')}</p><p>${tr(`Am Wochenende: <b>${CUPS.halle.name}</b> in der ${CUPS.halle.place}. Acht Teams, Bande, Handballtore – ${CUPS.halle.prizes.winner} € für den Sieger.`, `This weekend: <b>${CUPS.halle.name}</b> at ${CUPS.halle.place}. Eight teams, boards, handball goals – €${CUPS.halle.prizes.winner} for the winner.`)}</p>
           <button class="primary" data-action="onCupStart" data-value="halle">${tr('Anmelden', 'Enter')}</button> <button data-action="onCupSkip" data-value="halle">${tr('Diesmal nicht', 'Not this time')}</button></div>` : ''}
         ${this.busy ? `<p class="busy">${this.busy}</p>` : winterCupDue(c) ? `<p class="empty">${tr('Erst entscheiden: Hallenturnier ja oder nein? Danach geht die Liga weiter.', 'Decide first: indoor tournament, yes or no? Then the league carries on.')}</p>` : winterCupRunning(c) ? `<button class="primary" data-action="tab" data-value="cup">${tr('Zum Hallenturnier', 'To the indoor tournament')}</button><p class="empty">${tr('Der nächste Ligaspieltag steigt nach dem Turnier.', 'The next league match is after the tournament.')}</p>` : `
-        ${coachAway(c) ? `<p class="warn">${tr('Du bist diese Woche nicht da – der Kapitän stellt auf, du bekommst nur das Ergebnis.', 'You are away this week – the captain picks the team, you just get the result.')}</p>` : `<button class="primary" data-action="onPlay">${tr('Selbst spielen', 'Play it yourself')}</button>`}
-        <button data-action="onSimulate">${coachAway(c) ? tr('Ergebnis abwarten', 'Wait for the result') : tr('Simulieren · Liveticker', 'Simulate · live ticker')}</button>`}
+        ${coachAway(c) ? `<p class="warn">${tr('Du bist diese Woche nicht da – der Kapitän stellt auf, du bekommst nur das Ergebnis.', 'You are away this week – the captain picks the team, you just get the result.')}</p>` : `<button class="primary self-play" data-action="onPlay">${tr('Selbst spielen', 'Play it yourself')}</button>
+        <button class="coach-play" data-action="onCoach">${tr('Trainer an der Seitenlinie', 'Manager on the touchline')}</button>`}
+        <button data-action="onSimulate">${coachAway(c) ? tr('Ergebnis abwarten', 'Wait for the result') : tr('Liveticker mit Entscheidungen', 'Live ticker with decisions')}</button>`}
       </div>`;
   }
 
@@ -553,8 +554,9 @@ export class Clubhouse {
       <p class="hint">${tr('Hin- und Rückspiel, es zählt das Gesamtergebnis. Steht es danach gleich: Elfmeterschießen.', 'Two legs, aggregate score counts. Level after both: penalties.')}</p>
       ${legs ? `<ul class="legs">${legs}</ul>` : ''}
       ${r && r.leg === 1 ? `<p>${tr('Gesamt bisher', 'Aggregate so far')}: <b>${r.agg[0]}:${r.agg[1]}</b></p>` : ''}
-      <button class="primary" data-action="onRelPlay">${leg === 0 ? tr('Hinspiel selbst spielen', 'Play the first leg') : tr('Rückspiel selbst spielen', 'Play the second leg')}</button>
-      <button data-action="onRelSimulate">${tr('Simulieren · Liveticker', 'Simulate · live ticker')}</button>`;
+      <button class="primary self-play" data-action="onRelPlay">${leg === 0 ? tr('Hinspiel selbst spielen', 'Play the first leg') : tr('Rückspiel selbst spielen', 'Play the second leg')}</button>
+      <button class="coach-play" data-action="onRelCoach">${tr('Trainer an der Seitenlinie', 'Manager on the touchline')}</button>
+      <button data-action="onRelSimulate">${tr('Liveticker mit Entscheidungen', 'Live ticker with decisions')}</button>`;
   }
 
   // Saisonabschlussfahrt: Ziel wählen, dann drei Etappen mit Entscheidungen.
@@ -633,7 +635,7 @@ export class Clubhouse {
     else if (next) {
       const opp = cupClub(c, next.home === me ? next.away : next.home);
       action = `<div class="fixture-card"><p class="label">${stageName(next)}</p><h3>${humanClub(c).short} – ${opp.short}</h3><p>${tr('gegen', 'against')} <b>${opp.name}</b>${next.stage !== 'A' && next.stage !== 'B' ? tr(' · bei Unentschieden Elfmeterschießen', ' · penalties if level') : ''}</p>
-        <button class="primary" data-action="onCupPlay" data-value="${kind}">${tr('Selbst spielen', 'Play it yourself')}</button> <button data-action="onCupSimulate" data-value="${kind}">${tr('Simulieren · Liveticker', 'Simulate · live ticker')}</button></div>`;
+        <button class="primary self-play" data-action="onCupPlay" data-value="${kind}">${tr('Selbst spielen', 'Play it yourself')}</button> <button class="coach-play" data-action="onCupCoach" data-value="${kind}">${tr('Trainer an der Seitenlinie', 'Manager on the touchline')}</button> <button data-action="onCupSimulate" data-value="${kind}">${tr('Liveticker mit Entscheidungen', 'Live ticker with decisions')}</button></div>`;
     } else action = `<p>${tr('Ihr seid raus – die anderen spielen noch.', 'You are out – the others are still playing.')}</p><button data-action="onCupSimulate" data-value="${kind}">${tr('Nächste Runde anschauen', 'Watch the next round')}</button>`;
     return `
       <p class="chat-head">${cfg.name} ${t.year} · ${cfg.place} · ${tr(`Sieger ${cfg.prizes.winner} €, Finale ${cfg.prizes.final} €, Halbfinale ${cfg.prizes.semi} €`, `winner €${cfg.prizes.winner}, final €${cfg.prizes.final}, semi-final €${cfg.prizes.semi}`)}</p>

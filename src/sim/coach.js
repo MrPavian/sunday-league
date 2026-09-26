@@ -16,21 +16,26 @@ export const SHOUTS = {
 export const SHOUT_IDS = Object.keys(SHOUTS);
 const COOLDOWN = 1.5; // Heiser wird man trotzdem
 
-export function enableManager(m) {
-  if (m.humanTeam === null) return m;
+// team: welche Mannschaft man coacht (3D-Trainer: die eigene = Team 0; im Liveticker
+// auch die Gäste). Die Schwierigkeit hängt weiter nur an humanTeam.
+export function enableManager(m, team = m.humanTeam) {
+  if (team === null || team === undefined) return m;
   m.manager = true;
-  m.controlledId = null;
+  m.coachTeam = team;
+  m.mentality ??= 'normal';
+  if (m.humanTeam !== null) m.controlledId = null;
   m.shouts = {};
   m.lastShout = -9;
   return m;
 }
 
 // Reinrufen. Gibt false zurück, wenn man gerade erst gerufen hat.
-export function shout(m, type) {
+// secs/force: der Liveticker ruft länger und ohne Heiserkeitspause.
+export function shout(m, type, { secs = null, force = false } = {}) {
   if (typeof type === 'number') type = SHOUT_IDS[type - 1]; // Zifferntasten 1–7
-  if (!m.manager || !SHOUTS[type] || m.time - m.lastShout < COOLDOWN) return false;
+  if (!m.manager || !SHOUTS[type] || (!force && m.time - m.lastShout < COOLDOWN)) return false;
   m.lastShout = m.time;
-  m.shouts[type] = m.time + SHOUTS[type].secs;
+  m.shouts[type] = m.time + (secs ?? SHOUTS[type].secs);
   // Gegenteile heben sich auf.
   if (type === 'back') delete m.shouts.forward;
   if (type === 'forward') delete m.shouts.back;
@@ -40,7 +45,10 @@ export function shout(m, type) {
 
 // Hört dieser Spieler gerade auf einen Zuruf? Wer gut Fußball spielt, setzt ihn eher um.
 export function heeds(m, p, type) {
-  if (!m.manager || p.team !== m.humanTeam) return false;
+  if (!m.manager || p.team !== m.coachTeam) return false;
+  // Grundausrichtung aus der Kabine gilt das ganze Spiel.
+  if (type === 'back' && m.mentality === 'defensive' && !(m.shouts?.forward > m.time)) return true;
+  if (type === 'forward' && m.mentality === 'offensive' && !(m.shouts?.back > m.time)) return true;
   const until = m.shouts?.[type];
   return until != null && m.time < until;
 }
@@ -51,3 +59,12 @@ export function consumeShout(m, type) {
 }
 
 export const activeShouts = (m) => (m.shouts ? SHOUT_IDS.filter((id) => m.time < (m.shouts[id] ?? -1)) : []);
+
+export const MENTALITIES = {
+  defensive: tr('defensiv', 'defensive'),
+  normal: tr('normal', 'balanced'),
+  offensive: tr('offensiv', 'attacking'),
+};
+export function setMentality(m, value) {
+  if (MENTALITIES[value]) m.mentality = value;
+}

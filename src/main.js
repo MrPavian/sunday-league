@@ -48,6 +48,7 @@ import { Menu } from './ui/Menu.js';
 import { PoolBrowser } from './ui/PoolBrowser.js';
 import { TitleScreen } from './ui/TitleScreen.js';
 import { ShoutBar } from './ui/ShoutBar.js';
+import { coachAway } from './career/personal.js';
 import { enableManager } from './sim/coach.js';
 import { Settings } from './ui/Settings.js';
 import { Ticker } from './ui/Ticker.js';
@@ -102,6 +103,8 @@ let autoSwitchDefense = false;
 // Auf Handy und Tablet gibt es keine Tastatur: dort ist man Trainer an der Seitenlinie.
 const TOUCH = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
 let managerMode = TOUCH;
+// Für das nächste Spiel gewählt (Vereinsheim-Knopf) – sonst gilt die Einstellung.
+let nextStyle = null;
 if (TOUCH) document.body.classList.add('touch');
 try {
   colorSafe = localStorage.getItem('sunday-league:safekits') === '1';
@@ -168,7 +171,9 @@ function showMatch(m) {
   applyColorSafeKits(m, colorSafe);
   m.difficulty = difficulty;
   m.autoSwitchDefense = autoSwitchDefense;
-  if (managerMode && m.humanTeam !== null) enableManager(m);
+  const style = nextStyle ?? (managerMode ? 'manager' : 'player');
+  nextStyle = null;
+  if (style === 'manager' && m.humanTeam !== null) enableManager(m);
   match = m;
   view = new MatchView(scene, match);
   hud.init(match);
@@ -200,6 +205,11 @@ function setMode(next) {
 const saveInfo = () => (career ? `${humanClub(career).name}, ${tr('Spieltag', 'matchday')} ${Math.min(career.round + 1, career.fixtures.length)}` : null);
 
 const menu = new Menu(document.getElementById('menu'), VENUES, {
+  onStyle() {
+    managerMode = !managerMode;
+    remember('sunday-league:mode', managerMode ? 'manager' : 'player');
+    menu.setStyle(managerMode, TOUCH);
+  },
   onSelect(id) {
     loadVenue(id);
     startMatch(false); // KI-Vorschau im Hintergrund
@@ -351,6 +361,7 @@ function openMenu() {
   challengeRun = null;
   setTimeout(() => (menu.paused = false), 0);
   menu.setCareer(saveInfo());
+  menu.setStyle(managerMode, TOUCH);
   menu.show(venue?.id ?? params.get('venue') ?? 'parkplatz');
 }
 
@@ -359,7 +370,8 @@ function openMenu() {
 const clubhouse = new Clubhouse(document.getElementById('club'), {
   onMenu: openMenu,
   onChange: () => saveCareer(career),
-  onPlay: playCareerMatch,
+  onPlay: () => playCareerMatch('player'),
+  onCoach: () => playCareerMatch('manager'),
   onSimulate: () => tickerRound(),
   onNextWeek() {
     finishRound(career);
@@ -377,8 +389,10 @@ const clubhouse = new Clubhouse(document.getElementById('club'), {
     saveCareer(career);
     openClubhouse();
   },
-  onCupPlay: (kind = 'stadt') => playCupMatch(kind),
-  onRelPlay: () => playRelegationMatch(),
+  onCupPlay: (kind = 'stadt') => playCupMatch(kind, 'player'),
+  onCupCoach: (kind = 'stadt') => playCupMatch(kind, 'manager'),
+  onRelPlay: () => playRelegationMatch('player'),
+  onRelCoach: () => playRelegationMatch('manager'),
   onRelSimulate: () => tickerRelegation(),
   onCupSimulate: (kind = 'stadt') => tickerCup(kind),
   onNewCoach() {
@@ -459,7 +473,8 @@ function openClubhouse(results = null) {
   clubhouse.show(career, { results });
 }
 
-function playCareerMatch() {
+function playCareerMatch(style = null) {
+  nextStyle = style;
   const fixture = humanFixture(career);
   const prepared = prepareMatch(career, fixture, { human: true, duration: testDuration });
   careerMatch = { prepared, fixture };
@@ -474,7 +489,8 @@ function playCareerMatch() {
 }
 
 // Stadtmeisterschaft: eigenes Spiel selbst spielen, der Rest läuft im Hintergrund.
-function playCupMatch(kind) {
+function playCupMatch(kind, style = null) {
+  nextStyle = style;
   const m = humanCupMatch(career, kind);
   if (!m) return runCupRound(null, kind);
   const prepared = prepareCupMatch(career, m, { human: true, duration: testDuration });
@@ -503,6 +519,12 @@ async function runCupRound(played, kind = played?.kind ?? 'stadt') {
 // Simulieren mit Liveticker: Das eigene Spiel läuft als kommentierter Text im
 // Zeitraffer, danach werden die übrigen Partien wie gewohnt gerechnet.
 const ticker = new Ticker(document.getElementById('ticker'));
+// Welche Mannschaft im Ticker die eigene ist (nur wenn der Trainer da ist).
+function coachTeamOf(prepared) {
+  if (coachAway(career)) return null;
+  const i = prepared.match.teams.findIndex((t) => t.name === humanClub(career).name);
+  return i < 0 ? null : i;
+}
 const tickerTitle = (prepared) => tr(`Liveticker · ${prepared.pitch.name}`, `Live ticker · ${prepared.pitch.name}`);
 
 function tickerRound() {
@@ -512,6 +534,7 @@ function tickerRound() {
   clubhouse.hide();
   ticker.show(prepared, {
     title: tickerTitle(prepared),
+    coachTeam: coachTeamOf(prepared),
     onDone() {
       recordResult(career, fixture, prepared);
       saveCareer(career);
@@ -528,6 +551,7 @@ function tickerCup(kind) {
   clubhouse.hide();
   ticker.show(prepared, {
     title: tickerTitle(prepared),
+    coachTeam: coachTeamOf(prepared),
     onDone() {
       recordCupResult(career, m, prepared);
       saveCareer(career);
@@ -551,7 +575,8 @@ async function runRound(playedFixture) {
 }
 
 // Relegation: Hin- oder Rückspiel selbst spielen.
-function playRelegationMatch() {
+function playRelegationMatch(style = null) {
+  nextStyle = style;
   startRelegation(career);
   const prepared = prepareRelegationMatch(career, { human: true, duration: testDuration });
   careerMatch = { prepared, relegation: true };
@@ -569,6 +594,7 @@ function tickerRelegation() {
   clubhouse.hide();
   ticker.show(prepared, {
     title: tr(`Relegation · ${prepared.pitch.name}`, `Play-off · ${prepared.pitch.name}`),
+    coachTeam: coachTeamOf(prepared),
     onDone() {
       recordRelegationLeg(career, prepared);
       saveCareer(career);

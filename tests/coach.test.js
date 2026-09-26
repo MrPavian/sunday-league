@@ -58,3 +58,52 @@ describe('manager mode', () => {
     expect(deep).toBeLessThan(base - 4);
   });
 });
+
+describe('live ticker with decisions', async () => {
+  const { answer, checkDecision, createTouchline } = await import('../src/sim/touchline.js');
+
+  function run(seed, pick) {
+    const m = createMatch({ seed, pitch: PITCHES.rasenplatz, human: false, duration: 120 });
+    const tl = createTouchline(m, 1); // die Gäste coachen
+    const asked = [];
+    for (let i = 0; i < 120 * 60 * 1.5 && m.phase !== 'ended'; i++) {
+      stepMatch(m, undefined, DT);
+      const d = checkDecision(tl, m.events);
+      m.events.length = 0;
+      if (d) {
+        asked.push(d.id);
+        answer(tl, pick(d));
+      }
+    }
+    return { m, asked };
+  }
+
+  it('asks at kick-off and half-time and applies the answer', () => {
+    const { m, asked } = run(21, (d) => (d.id === 'start' ? 1 : 0));
+    expect(asked[0]).toBe('start');
+    expect(asked).toContain('halftime');
+    expect(m.mentality).toBe('offensive');
+    expect(m.phase).toBe('ended');
+  });
+
+  it('a substitution choice brings on the bench player', () => {
+    let subbed = false;
+    for (const seed of [31, 32, 33, 34, 35]) {
+      const m = createMatch({ seed, pitch: PITCHES.rasenplatz, human: false, duration: 120 });
+      const tl = createTouchline(m, 0);
+      for (const p of m.players) if (p.team === 0 && p.role !== 'gk') p.stamina = 0.3;
+      m.time = m.duration * 0.62; // 56. Minute
+      m.half = 2;
+      tl.asked.add('start');
+      tl.asked.add('halftime');
+      const d = checkDecision(tl, []);
+      if (d?.id !== 'sub') continue;
+      const incoming = m.bench[0][0];
+      answer(tl, 1);
+      expect(m.players).toContain(incoming);
+      subbed = true;
+      break;
+    }
+    expect(subbed).toBe(true);
+  });
+});

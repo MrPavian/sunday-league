@@ -9,7 +9,8 @@ const kbd = (k) => `<kbd>${k}</kbd>`;
 // Platzwahl. Pfeiltasten/Klick wählen, Enter startet. Im Hintergrund läuft
 // auf dem gewählten Platz ein KI-Spiel als Vorschau.
 export class Menu {
-  constructor(root, venues, { onSelect, onStart, onPool, onCareer, onCareerNew, onChallenges, onSettings, onSaves }) {
+  constructor(root, venues, { onSelect, onStart, onPool, onCareer, onCareerNew, onChallenges, onSettings, onSaves, onStyle }) {
+    this.onStyle = onStyle;
     this.root = root;
     this.venues = venues;
     this.onSelect = onSelect;
@@ -31,7 +32,7 @@ export class Menu {
           </div>
         </header>
         <div class="career"></div>
-        <p class="section">${tr('Freundschaftsspiel – Platz wählen', 'Friendly – pick a pitch')}</p>
+        <p class="section">${tr('Freundschaftsspiel – Platz wählen', 'Friendly – pick a pitch')} <button class="style-toggle"></button></p>
         <div class="venues">${venues
           .map((v, i) => {
             const n = FORMATIONS[v.pitch.format].length;
@@ -45,8 +46,8 @@ export class Menu {
           })
           .join('')}</div>
         <p class="hint">${tr(
-          `${kbd('←')}${kbd('→')} Platz · ${kbd('Enter')} Anstoß · ${kbd('K')} Karriere · ${kbd('C')} Challenges · ${kbd('P')} Spielerpool · ${kbd('L')} Spielstände · ${kbd('O')} Einstellungen`,
-          `${kbd('←')}${kbd('→')} pitch · ${kbd('Enter')} kick off · ${kbd('K')} career · ${kbd('C')} challenges · ${kbd('P')} player pool · ${kbd('L')} saves · ${kbd('O')} settings`,
+          `${kbd('←')}${kbd('→')} Platz · ${kbd('Enter')} Anstoß · ${kbd('K')} Karriere · ${kbd('C')} Challenges · ${kbd('P')} Spielerpool · ${kbd('L')} Spielstände · ${kbd('O')} Einstellungen · ${kbd('T')} Spielmodus`,
+          `${kbd('←')}${kbd('→')} pitch · ${kbd('Enter')} kick off · ${kbd('K')} career · ${kbd('C')} challenges · ${kbd('P')} player pool · ${kbd('L')} saves · ${kbd('O')} settings · ${kbd('T')} play mode`,
         )}</p>
         <nav class="menu-links">
           <button class="pool-link">${tr('Spielerpool', 'Player pool')}</button>
@@ -56,6 +57,7 @@ export class Menu {
         </nav>
       </div>`;
     root.querySelector('.pool-link').addEventListener('click', () => this.onPool());
+    root.querySelector('.style-toggle').addEventListener('click', () => this.onStyle?.());
     root.querySelector('.challenges-link').addEventListener('click', () => this.onChallenges());
     root.querySelector('.settings-link').addEventListener('click', () => this.onSettings());
     root.querySelector('.saves-link').addEventListener('click', () => this.onSaves());
@@ -66,8 +68,9 @@ export class Menu {
     window.addEventListener('keydown', (e) => {
       if (!this.visible || this.paused) return;
       // Hotkeys öffnen Formulare – der Buchstabe soll nicht im ersten Eingabefeld landen.
-      if (['KeyP', 'KeyC', 'KeyO', 'KeyK', 'KeyL'].includes(e.code)) e.preventDefault();
-      if (e.code === 'KeyP') this.onPool();
+      if (['KeyP', 'KeyC', 'KeyO', 'KeyK', 'KeyL', 'KeyT'].includes(e.code)) e.preventDefault();
+      if (e.code === 'KeyT') this.onStyle?.();
+      else if (e.code === 'KeyP') this.onPool();
       else if (e.code === 'KeyC') this.onChallenges();
       else if (e.code === 'KeyO') this.onSettings();
       else if (e.code === 'KeyL') this.onSaves();
@@ -101,6 +104,14 @@ export class Menu {
         this.onCareerNew();
       }),
     );
+  }
+
+  // Selbst spielen oder Trainer – gilt fürs Freundschaftsspiel (Taste T).
+  setStyle(manager, touch = false) {
+    const b = this.root.querySelector('.style-toggle');
+    b.innerHTML = `${manager ? tr('Als Trainer an der Seitenlinie', 'As manager on the touchline') : tr('Selbst spielen', 'Play yourself')}${touch ? '' : ' <kbd>T</kbd>'}`;
+    b.classList.toggle('manager', manager);
+    b.hidden = touch; // auf dem Handy gibt es nur den Trainer
   }
 
   get visible() {

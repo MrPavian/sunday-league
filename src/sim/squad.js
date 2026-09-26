@@ -58,7 +58,8 @@ export function requestSub(m, team) {
 // Wird an jeder Unterbrechung aufgerufen (Standard, Tor, Halbzeit).
 export function processSubs(m) {
   for (let team = 0; team < 2; team++) {
-    const human = team === m.humanTeam;
+    // Wer selbst spielt oder coacht, wechselt selbst.
+    const human = team === m.humanTeam || (m.manager && team === m.coachTeam);
     if (human && !m.subRequests[team]) continue;
     m.subRequests[team] = false;
     const bench = m.bench[team];

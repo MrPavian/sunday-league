@@ -893,3 +893,22 @@ body.touch .menu-panel .hint, body.touch #title .title-hint, body.touch .help { 
 @media (orientation: portrait) and (pointer: coarse) { #shoutbar .rotate-hint { display: block; } }
 @media (orientation: portrait) and (max-width: 720px) { .venue { top: 70px; font-size: 11px; max-width: 90%; text-align: center; } }
 @media (max-width: 720px) { .toast { font-size: clamp(18px, 6.5vw, 40px); white-space: normal; width: 92%; text-align: center; } }
+
+/* Liveticker mit Trainer-Entscheidungen */
+.ticker-panel .decision { width: 100%; padding: 10px 12px; background: #f6f1e4; color: #111; border: 3px solid #000; box-shadow: 4px 4px 0 #000; text-shadow: none; }
+.ticker-panel .decision p { margin: 0 0 8px; line-height: 1.35; }
+.ticker-panel .decision .options { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 6px; }
+.ticker-panel .decision button { text-align: left; font: inherit; color: var(--ink); background: #1d2126; border: 2px solid #000; padding: 8px 10px; cursor: pointer; text-shadow: var(--shadow); min-height: 44px; }
+.ticker-panel .decision button:hover { background: #2f7d3a; }
+.ticker-panel .decision kbd { font-size: 11px; margin-right: 4px; }
+.ticker-panel .lines li.coach .txt { color: var(--accent); font-style: italic; }
+
+/* Auf dem Handy gibt es kein „Selbst spielen" – keine Tastatur. */
+body.touch .self-play { display: none; }
+body.touch .coach-play { background: #2f6f3a; }
+.menu-panel .style-toggle { margin-left: 8px; font: inherit; font-size: 13px; color: var(--ink); background: #1d2126; border: 2px solid #000; padding: 2px 8px; cursor: pointer; text-shadow: var(--shadow); }
+.menu-panel .style-toggle.manager { background: #2f6f3a; }
+.menu-panel .style-toggle kbd { font-size: 10px; }
+.ticker-panel .calls { width: 100%; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; }
+.ticker-panel .calls span { opacity: 0.8; font-size: 13px; }
+.ticker-panel .calls button { padding: 4px 10px !important; font-size: 13px; background: #1d2126 !important; }

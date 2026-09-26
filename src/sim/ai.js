@@ -101,7 +101,7 @@ export function updateTactics(m, dt) {
         m.tactics[p.id] = { type: 'support', ...clampToPitch(pitch, spot.x, spot.z, 0.5) };
       }
     }
-    if (m.manager && team === m.humanTeam) shoutTactics(m, team, rest, possession !== null && possession !== team, ball);
+    if (m.manager && team === m.coachTeam) shoutTactics(m, team, rest, possession !== null && possession !== team, ball);
     if (receiver && receiver.id !== m.controlledId) m.tactics[receiver.id] = { type: 'receive', ...receiveSpot(m, receiver) };
     if (oppKeeper) {
       const r = keeperZone(pitch);

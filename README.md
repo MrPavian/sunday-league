@@ -29,6 +29,13 @@ Der Spielstand wird im Browser gespeichert.
 Versions-Tags am Release. Installieren: APK aufs Handy, öffnen, „Unbekannte Quellen“ für den Browser/Dateimanager erlauben.
 Alternativ die Browser-Version in Chrome öffnen und „Zum Startbildschirm hinzufügen“ – dann läuft sie wie eine App, auch offline.
 
+**Drei Arten, ein Spiel zu erleben** – im Vereinsheim vor jedem Anpfiff wählbar:
+1. **Selbst spielen** (PC, Tastatur oder Gamepad).
+2. **Trainer an der Seitenlinie** – in 3D zuschauen und reinrufen (siehe unten).
+3. **Liveticker mit Entscheidungen** – das Spiel als Text; zwischendurch hält der Ticker an: Grundausrichtung
+   zum Anpfiff, was du nach einem Gegentor reinrufst, Halbzeitansprache, wen du für den Platten bringst,
+   Schlussoffensive oder Bus parken. Dazu freie Zurufe jederzeit. „Zum Ergebnis" nimmt immer die erste Antwort.
+
 Auf dem Handy bist du **Trainer an der Seitenlinie**: Deine Mannschaft spielt selbst, du rufst rein –
 *Abspielen!*, *Hau drauf!*, *Geht drauf!* (Pressing), *Mann decken!*, *Hinten dicht!*, *Rückt auf!*, *Über die Flügel!* –
 und wechselst aus. Ob die Jungs hören, hängt davon ab, wie gut sie kicken. Am PC gibt es den Modus auch
@@ -200,7 +207,7 @@ Auf englischen Tastaturen liegt „Stochern“ auf **Z** (gleiche Taste).
 
 ```bash
 npm run dev      # Entwicklungsserver mit Hot Reload
-npm test         # 169 Tests (Simulation und Karriere)
+npm test         # 171 Tests (Simulation und Karriere)
 npm run build    # Produktions-Build nach dist/
 npm run preview  # Build lokal ansehen
 ```
