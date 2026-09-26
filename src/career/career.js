@@ -22,13 +22,14 @@ import { initAcademy, seasonAcademy, weeklyAcademy } from './academy.js';
 import { applyWeather, rollWeather, WEATHER, WEATHER_CHAT } from './weather.js';
 import { derbyResult, isDerbyFixture } from './derby.js';
 import { applyChemistry, pastLink, setRelation } from './relations.js';
-import { applyFusion, initSagas, sagaChat, sagaSeasonEnd, sagaWeek } from './sagas.js';
+import { applyFusion, chronicle, initSagas, sagaChat, sagaSeasonEnd, sagaWeek } from './sagas.js';
 import { childrenGrowUp, coachAway, initCoach, isCoach, personalWeek, seasonPersonal, weeklyPersonal } from './personal.js';
 import { absenceFactor, advanceArcs, applyForm, autoResolve, resultMood, rollWeekEvent, weeklyMood } from './events.js';
 import { developYouth, expireYouth, initYouth, retirements, youthIntake } from './youth.js';
 import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFinances, weeklyFinances } from './finances.js';
 
 import { NAME_EDITION } from '../data/names.js';
+import { defaultCrest } from '../ui/crest.js';
 import { shirtSponsor, sponsorColor, SPONSORS } from './sponsors.js';
 
 export const SAVE_VERSION = 1;
@@ -637,6 +638,15 @@ export function updateClub(career, { name, short, kit }) {
   return true;
 }
 
+// Wappen darf man jederzeit ändern – kostet nichts, steht aber in der Chronik.
+export function updateCrest(career, crest) {
+  const club = humanClub(career);
+  const first = !club.crest;
+  club.crest = structuredClone(crest);
+  if (!first) chronicle(career, tr(`Neues Vereinswappen für ${club.name}.`, `A new crest for ${club.name}.`));
+  return true;
+}
+
 export function colorDistance(a, b) {
   const ch = (n, s) => (n >> s) & 255;
   return Math.hypot(ch(a, 16) - ch(b, 16), ch(a, 8) - ch(b, 8), ch(a, 0) - ch(b, 0));
@@ -646,7 +656,8 @@ export function colorDistance(a, b) {
 export function resolveKitClash(home, away) {
   if (colorDistance(home.kit.shirt, away.kit.shirt) > 110) return away;
   const alt = [0xf2efe6, 0x1c1c1c, 0xe0b020].find((c) => colorDistance(c, home.kit.shirt) > 150);
-  return { ...away, kit: { shirt: alt, shorts: alt === 0x1c1c1c ? 0xf2efe6 : 0x1c1c1c, socks: alt } };
+  // Das Wappen bleibt, auch wenn das Ausweichtrikot andere Farben hat.
+  return { ...away, crest: away.crest ?? defaultCrest(away), kit: { shirt: alt, shorts: alt === 0x1c1c1c ? 0xf2efe6 : 0x1c1c1c, socks: alt } };
 }
 
 // --- Aufstellung durch den Trainer ------------------------------------------------
@@ -703,7 +714,7 @@ export function teamForMatch(career, club, format, availability, rng) {
   });
   applyPubToTeam(career, club, players); // Bierdeckel-Taktik bzw. Tipp vom Wirt
   if (club.human) applyChemistry(career, lineup.filter((idx) => !helpers.includes(idx)), players); // Kumpels & Rivalen
-  return { name: club.name, short: club.short, kit: club.kit, keeperKit: club.keeperKit, crest: club.crest ?? null, sponsor: clubSponsor(career, club), players, helpers };
+  return { name: club.name, short: club.short, kit: club.kit, keeperKit: club.keeperKit, crest: club.crest ?? defaultCrest(club), sponsor: clubSponsor(career, club), players, helpers };
 }
 
 // Wer steht vorne auf dem Trikot? Beim eigenen Verein der Trikotsponsor, bei den

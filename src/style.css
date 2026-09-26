@@ -391,7 +391,21 @@ kbd {
 .club-panel { width: min(1100px, 100%); }
 .club-panel header { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-bottom: 4px solid var(--kit); padding-bottom: 8px; }
 .club-panel h2 { margin: 0; font-size: 30px; color: var(--accent); display: flex; align-items: center; gap: 10px; }
-.club-panel .crest { width: 22px; height: 26px; background: var(--kit); border: 2px solid #000; border-radius: 0 0 10px 10px; }
+.club-panel h2 .crest-svg { vertical-align: -6px; margin-right: 8px; filter: drop-shadow(2px 2px 0 #000); }
+.club-cell .crest-svg { vertical-align: -4px; margin-right: 6px; }
+.scoreboard .team { gap: 6px; }
+.scoreboard .team .crest-svg { flex: none; }
+.crest-editor { display: grid; grid-template-columns: 190px 1fr; gap: 16px; margin-top: 18px; padding-top: 14px; border-top: 2px dashed rgba(255, 255, 255, 0.15); }
+.crest-preview { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.crest-preview .crest-svg { filter: drop-shadow(4px 4px 0 #000); }
+.crest-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.crest-options h4 { margin: 8px 0 4px; font-size: 13px; opacity: 0.8; }
+.crest-grid { display: flex; flex-wrap: wrap; gap: 4px; }
+.club-panel button.crest-choice { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 62px; padding: 4px 2px; }
+.club-panel button.crest-choice small { font-size: 10px; line-height: 1.1; }
+.club-panel button.crest-choice.active { background: #3b4a3a; color: var(--ink); outline: 2px solid var(--accent); text-shadow: var(--shadow); }
+.swatch-row .dot { display: inline-block; width: 10px; height: 10px; margin-right: 4px; border: 1px solid #000; vertical-align: -1px; }
+@media (max-width: 720px) { .crest-editor { grid-template-columns: 1fr; } }
 .club-panel header small { opacity: 0.8; }
 .club-panel button {
   font: inherit;

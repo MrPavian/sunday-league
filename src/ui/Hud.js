@@ -8,6 +8,7 @@ import { findAnyPlayer } from '../sim/squad.js';
 import { REF_TRAITS } from '../sim/referee.js';
 import { attackDir, getPlayer } from '../sim/match.js';
 import { shootoutScore } from '../sim/shootout.js';
+import { crestOf, crestSVG } from './crest.js';
 
 const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
 
@@ -52,7 +53,8 @@ export class Hud {
     this.introPending = match.derby ? `DERBY! ${r ? `${tr('Schiri', 'Referee')}: ${r.name}` : tr('Heute wird es heiß.', 'It is going to get heated.')}` : r ? `${tr('Schiri heute', 'Referee today')}: ${r.name} (${REF_TRAITS[r.trait].name})` : null;
     match.teams.forEach((t, i) => {
       const el = this.root.querySelector(`.team[data-t="${i}"]`);
-      el.textContent = t.name;
+      const crest = t.crest ?? crestOf({ id: t.name, kit: t.clubKits?.kit ?? t.kit });
+      el.innerHTML = `${crestSVG(crest, { size: 20, label: t.name })}<span>${t.name}</span>`;
       el.style.setProperty('--kit', hex(t.kit.shirt));
     });
     this.$('.venue').textContent = `${match.pitch.name} · ${match.pitch.surface.name}${r ? ` · ${tr('Schiri', 'Referee')}: ${r.name}` : ''}`;
