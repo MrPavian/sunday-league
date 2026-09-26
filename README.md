@@ -118,6 +118,9 @@ die Komik entsteht aus dem Alltag.
   Taktiktafel zeigt, was passt, auch welche Berufe zum Stil passen. Das Kreisblatt lobt den klugen Schachzug.
 - **Vereinsmuseum und Saisonziel**: Vitrine, Ehrentafel, Rekorde, Legenden, Trikot- und Wappenarchiv. Der Vorstand
   gibt vor der Saison ein Ziel vor, schreibt ein Zwischenzeugnis und zahlt am Ende eine Prämie – oder es wird getuschelt.
+- **Kreisblatt-Sonderheft**: Am Saisonende der Rückblick mit Schlagzeile, Torjäger, Spieler der Saison, höchstem Sieg,
+  bitterster Pleite und dem Aufreger des Jahres – archiviert im Museum und als Bild zum Teilen.
+- **Einsteiger-Tipps**: Jedes System wird einmal kurz erklärt, genau in der Woche, in der es zum ersten Mal auftaucht.
 - **Kasse & Strafenkatalog**: Luftloch 1 €, Eigentor eine Runde für alle
 - **Sponsoren mit Eigenarten**: 40 Betriebe aus dem Ort, nachverhandeln, bei Laune halten, verlängern – oder verärgern.
   Der Trikotsponsor steht auf der Brust.
@@ -144,6 +147,8 @@ die Komik entsteht aus dem Alltag.
 - Ab 40 stellt sich die Frage nach den Schuhen, mit 50 bist du nur noch Trainer
 - Mit 60 bis 80 übergibst du das Amt – an **dein Kind**, den Co-Trainer, den Kapitän, eine
   Vereinslegende oder einen neuen Trainer
+- **Die nächste Generation**: Ein paar Jahre nach dem Abschied meldet sich der Sohn der Vereinslegende in der
+  A-Jugend an – und die Alten kommentieren am Zaun jedes Ergebnis
 - **Der Spielstand endet nie**: Die Vereinschronik führt Trainer-Ären, Meisterschaften, Rekordspieler und
   die großen Geschichten
 
@@ -226,7 +231,8 @@ Auf englischen Tastaturen liegt „Stochern“ auf **Z** (gleiche Taste).
 
 ```bash
 npm run dev      # Entwicklungsserver mit Hot Reload
-npm test         # 183 Tests (Simulation und Karriere)
+npm test         # 191 Tests (Simulation und Karriere)
+npm run longrun -- 8  # acht Saisons am Stück durchspielen und auf Auffälligkeiten prüfen
 npm run build    # Produktions-Build nach dist/
 npm run preview  # Build lokal ansehen
 ```
@@ -273,7 +279,7 @@ veröffentlicht (`.github/workflows/pages.yml`). Einmalig im Repository einschal
 ## Stand
 
 Spielbarer Prototyp: Das Match, eine vollständige Karriere mit drei Ligen samt Relegation und die meisten Vereins- und
-Lebenssysteme sind fertig. Das Spiel ist komplett auf Deutsch und Englisch spielbar. Offen sind unter anderem Tutorial, Tastenbelegung,
+Lebenssysteme sind fertig. Das Spiel ist komplett auf Deutsch und Englisch spielbar. Offen sind unter anderem
 weitere Ligen und ein Desktop-Build. Details im [Projektüberblick](docs/OVERVIEW.md#8-stand-und-grenzen).
 
 ## Mitmachen
