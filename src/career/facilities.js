@@ -16,6 +16,8 @@ export const FACILITIES = {
   ballmaschine: { name: tr('Ballmaschine', 'Ball machine'), cost: 150, weeks: 1, upkeep: 0, desc: tr('Junge Spieler (bis 23) entwickeln sich schneller.', 'Young players (up to 23) develop faster.'), done: tr('Die Ballmaschine schießt härter als euer Stürmer. Der Torwart hat Angst.', 'The ball machine shoots harder than your striker. The keeper is scared.') },
   kabine: { name: tr('Neue Kabine', 'New dressing room'), cost: 350, weeks: 3, upkeep: 1, desc: tr('Bessere Stimmung jede Woche, Neuzugänge sagen eher zu.', 'Better spirit every week, new signings say yes more often.'), done: tr('Neue Kabine mit Haken für alle. Und einer Bank, die nicht wackelt.', 'New dressing room with pegs for everyone. And a bench that doesn\'t wobble.') },
   flutlicht: { name: tr('Flutlicht', 'Floodlights'), cost: 500, weeks: 3, upkeep: 3, desc: tr('Training nach Feierabend – kostet weniger Familienzeit.', 'Training after work – costs less family time.'), done: tr('Das Flutlicht geht an. Die halbe Nachbarschaft kommt gucken.', 'The floodlights come on. Half the neighbourhood comes to look.') },
+  vereinsbus: { name: tr('Vereinsbus', 'Club minibus'), cost: 900, weeks: 2, upkeep: 3, needs: ['kabine'], desc: tr('Auswärtsfahrten halb so teuer, etwas weniger Absagen.', 'Away trips cost half, slightly fewer drop-outs.'), done: tr('Der Neunsitzer ist da – gebraucht, mit Vereinswappen auf der Tür. Die Hupe spielt „Oh, wie ist das schön".', 'The nine-seater has arrived – second-hand, with the club crest on the door. The horn plays a football chant.') },
+  jugendhaus: { name: tr('Jugendhaus', 'Youth centre'), cost: 1200, weeks: 4, upkeep: 4, needs: ['ballmaschine'], desc: tr('Ein Talent mehr pro Jahrgang, und die Jugend entwickelt sich schneller.', 'One more talent per intake, and the youth develop faster.'), done: tr('Das Jugendhaus steht: zwei Räume, eine Taktiktafel und ein Kicker. Die A-Jugend zieht praktisch ein.', 'The youth centre is up: two rooms, a tactics board and a table-football table. The U19s practically move in.') },
   tribuene: { name: tr('Kleine Tribüne', 'Small stand'), cost: 700, weeks: 4, upkeep: 2, needs: ['grill'], desc: tr('Drei Stufen, ein Dach – ein Drittel mehr Zuschauer.', 'Three steps and a roof – a third more spectators.'), done: tr('Die Tribüne steht! Drei Stufen Beton und ein Dach aus dem Baumarkt.', 'The stand is up! Three concrete steps and a roof from the DIY store.') },
 };
 
@@ -26,11 +28,13 @@ export function facilities(c) {
 export const hasFacility = (c, id) => !!c.facilities?.built?.[id];
 
 // Wirkung einzelner Ausbauten an den passenden Stellen im Spiel.
-export const absenceMul = (c) => (hasFacility(c, 'duschen') ? 0.92 : 1);
+export const absenceMul = (c) => (hasFacility(c, 'duschen') ? 0.92 : 1) * (hasFacility(c, 'vereinsbus') ? 0.96 : 1);
 export const salesMul = (c) => (hasFacility(c, 'grill') ? 1.25 : 1);
 export const fansMul = (c) => (hasFacility(c, 'tribuene') ? 1.33 : 1);
 export const recruitBonus = (c) => (hasFacility(c, 'duschen') ? 0.03 : 0) + (hasFacility(c, 'kabine') ? 0.06 : 0);
-export const youthGrowthMul = (c) => (hasFacility(c, 'ballmaschine') ? 1.25 : 1);
+export const youthGrowthMul = (c) => (hasFacility(c, 'ballmaschine') ? 1.25 : 1) * (hasFacility(c, 'jugendhaus') ? 1.2 : 1);
+export const travelMul = (c) => (hasFacility(c, 'vereinsbus') ? 0.5 : 1);
+export const youthExtra = (c) => (hasFacility(c, 'jugendhaus') ? 1 : 0);
 export const trainingRelief = (c) => (hasFacility(c, 'flutlicht') ? 1 : 0);
 
 export function canBuild(c, id) {

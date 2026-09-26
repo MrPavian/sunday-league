@@ -26,7 +26,7 @@ export function youthIntake(career, deps, rng = createRng(career.seed + career.s
   const { getPool, playerOf, freshRecord } = deps;
   const pool = getPool();
   const quality = career.youth.coach.quality;
-  const count = 2 + (quality >= 0.6 ? 1 : 0);
+  const count = 2 + (quality >= 0.6 ? 1 : 0) + (deps.extra ?? 0); // Jugendhaus: einer mehr
   const used = taken(career);
   const young = pool.everyone().filter((p) => !used.has(p.poolIndex) && playerOf(career, p.poolIndex).age <= 18 && p.tier !== 'legende');
   // Ein guter Jugendtrainer holt öfter die Talentierten.

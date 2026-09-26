@@ -57,6 +57,7 @@ export function appointTreasurer(c, idx, rng) {
 export const CLUBLIFE_EVENTS = {
   mitgliederversammlung: {
     weight: 6,
+    calendar: (c) => c.round >= 1, // fester Termin im Vereinskalender
     needs: (c) => (c.round >= 1 && c.round <= 3 && !once(c, 'jhv') ? {} : null),
     text: (c) => tr(`Jahreshauptversammlung im Vereinsheim. Punkt 4 der Tagesordnung: der Beitrag (derzeit ${FEE_NAMES[feeDelta(c)]}). Die Kasse zeigt ${Math.round(c.cash)} €.`, `Annual general meeting at the clubhouse. Item 4 on the agenda: membership fees (currently ${FEE_NAMES[feeDelta(c)]}). The kitty shows €${Math.round(c.cash)}.`),
     options: [
@@ -85,8 +86,34 @@ export const CLUBLIFE_EVENTS = {
     ],
   },
 
+  trainingslager: {
+    weight: 5,
+    calendar: () => true,
+    needs: (c) => (c.round === 0 && !once(c, 'lager') ? { cost: 120 * (c.level ?? 1) + 30 } : null),
+    text: (c, ctx) => tr(`Saisonvorbereitung: Die Sportschule hätte am langen Wochenende noch Zimmer frei – Vollpension, Rasenplatz, Kraftraum. ${ctx.cost} € für die ganze Mannschaft.`, `Pre-season: the sports school has rooms free on the long weekend – full board, grass pitch, gym. €${ctx.cost} for the whole squad.`),
+    options: [
+      { label: tr('Ab in die Sportschule', 'Off to the sports school'), effect: (c, ctx, rng) => {
+        mark(c, 'lager');
+        book(c, tr('Trainingslager Sportschule', 'Training camp at the sports school'), -ctx.cost);
+        for (const idx of humanClub(c).squad) {
+          const rec = c.players[idx];
+          if (!rec) continue;
+          rec.delta ??= {};
+          for (const k of ['stamina', 'passing', 'technique']) rec.delta[k] = (rec.delta[k] ?? 0) + 0.008;
+          adjustForm(c, idx, 0.15);
+        }
+        adjustMood(c, 0.08);
+        const s = rng.pick(squad(c));
+        return tr(`Drei Tage Laufen, Taktik, Kartenspielen bis Mitternacht. Alle kommen fitter zurück – ${first(c, s)} mit einem Muskelkater, über den er noch in Wochen redet.`, `Three days of running, tactics and cards until midnight. Everyone comes back fitter – ${first(c, s)} with aching muscles he will talk about for weeks.`);
+      } },
+      { label: tr('Wochenende am Baggersee (40 €)', 'A weekend at the lake (€40)'), effect: (c) => (mark(c, 'lager'), book(c, tr('Mannschaftswochenende am Baggersee', 'Team weekend at the lake'), -40), adjustMood(c, 0.07), tr('Zelte, Grill, ein Ball und viel zu wenig Schlaf. Sportlich null, fürs Team Gold.', 'Tents, a barbecue, one ball and far too little sleep. Nothing for fitness, gold for the team.')) },
+      { label: tr('Kein Trainingslager', 'No training camp'), effect: (c) => (mark(c, 'lager'), tr('Vorbereitung auf dem eigenen Platz. Günstig und ein bisschen öde.', 'Pre-season on your own pitch. Cheap and a bit dull.')) },
+    ],
+  },
+
   kassenpruefung: {
     weight: 3,
+    calendar: (c) => c.round >= (c.fixtures?.length ?? 10) - 3,
     needs: (c) => {
       const t = c.clubLife?.treasurer;
       return t && c.round >= 5 && !once(c, 'pruefung') && humanClub(c).squad.includes(t.idx) ? { idx: t.idx } : null;
@@ -247,6 +274,7 @@ export const CLUBLIFE_EVENTS = {
 
   weihnachtsfeier: {
     weight: 5,
+    calendar: () => true,
     needs: (c) => {
       const half = Math.floor((c.fixtures?.length ?? 10) / 2);
       return c.round >= half - 1 && c.round <= half && !once(c, 'xmas') ? {} : null;

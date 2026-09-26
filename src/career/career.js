@@ -5,7 +5,7 @@ import { tr } from '../core/i18n.js';
 import { legacySeasonEnd } from './legacy.js';
 import { sponsorResult } from './sponsors.js';
 import { autoTrip } from './trip.js';
-import { absenceMul as facilityAbsence, recruitBonus, weeklyFacilities, youthGrowthMul } from './facilities.js';
+import { absenceMul as facilityAbsence, recruitBonus, weeklyFacilities, youthExtra, youthGrowthMul } from './facilities.js';
 import { createRng } from '../core/rng.js';
 import { createPlayerPool, ratePlayer } from '../sim/generator.js';
 import { createMatch, stepMatch } from '../sim/match.js';
@@ -253,6 +253,7 @@ export function nextSeason(career) {
     const fused = applyFusion(career, clubs, (tiers) => pickFusion(tiers, SQUAD_SHAPES[league.squadShape]), freshRecord);
     clubs = fused.clubs;
     sagaNotes.push(...fused.notes);
+    sagaNotes.push(...aiTurnover(career, clubs, pickFusion)); // die Konkurrenz bleibt nicht stehen
   } else if (career.saga.fusion) career.saga.fusion = null; // Liga gewechselt – der Nachbar spielt woanders
   if (newLevel !== level) {
     // Neue Liga, neue Gegner. Die alten Gegner verlassen den Spielstand.
@@ -278,7 +279,7 @@ export function nextSeason(career) {
   const leaving = expireYouth(career, playerOf);
   sagaNotes.push(...childrenGrowUp(career));
   sagaNotes.push(...seasonAcademy(career));
-  const intake = youthIntake(career, youthDeps());
+  const intake = youthIntake(career, { ...youthDeps(), extra: youthExtra(career) });
   const heir = heirIntake(career); // „der Sohn von …" meldet sich an
   placeFormers(career); // Ehemalige kommen bei der Konkurrenz unter
   startWeek(career);
@@ -302,6 +303,33 @@ export function nextSeason(career) {
     else if (diff <= -2) career.week?.chat.splice(1, 0, { from: null, text: tr(`${now.name} (${now.age}) merkt die Jahre – Stärke ${d.before} → ${now.rating}.`, `${now.name} (${now.age}) is feeling his age – rating ${d.before} → ${now.rating}.`), time: 'Mo 09:00' });
   }
   return { pos, promoted, relegated, development, retired, intake, leaving };
+}
+
+// Sommerpause bei der Konkurrenz: Jeder Verein verliert ein, zwei Leute (gern die
+// Älteren) und holt Ersatz aus dem Pool – so bleibt die Liga in Bewegung. Wer uns
+// besonders wehgetan hat (Angstgegner) oder ein Ehemaliger ist, bleibt eher.
+function aiTurnover(career, clubs, pick) {
+  const rng = createRng(hashSeed(career.seed, career.season, 97));
+  for (const club of clubs) {
+    if (club.human || !club.tiers) continue;
+    const n = rng.chance(0.35) ? 2 : 1;
+    const sticky = (idx) => (career.nemesis?.[idx] ?? 0) >= 2 || career.formers?.[idx];
+    const byAge = [...club.squad].filter((idx) => !sticky(idx)).sort((a, b) => playerOf(career, b).age - playerOf(career, a).age);
+    for (let k = 0; k < n && byAge.length; k++) {
+      const out = rng.chance(0.6) ? byAge.shift() : byAge.splice(rng.int(0, byAge.length - 1), 1)[0];
+      const pos = playerOf(career, out).position;
+      let inn = null;
+      try {
+        [inn] = pick(club.tiers, [pos]);
+      } catch {
+        continue; // Pool für diese Position erschöpft – dann bleibt er halt
+      }
+      club.squad = club.squad.map((x) => (x === out ? inn : x));
+      delete career.players[out];
+      career.players[inn] ??= freshRecord();
+    }
+  }
+  return [];
 }
 
 const freshRecord = () => ({ apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 });

@@ -230,7 +230,8 @@ describe('seasons', () => {
     expect(humanClub(c).squad).toEqual(before.filter((i) => !res.retired.some((r) => r.idx === i)));
     expect(squad.length).toBeGreaterThan(0);
     expect(humanClub(c).venue).toBe('rasenplatz');
-    if (c.players[firstIdx]) {
+    if (humanClub(c).squad.includes(firstIdx)) {
+      // Nur wenn er noch bei uns ist – wer unter der Saison geht, spielt bald woanders.
       expect(c.players[firstIdx].total.goals).toBe(7);
       expect(c.players[firstIdx].goals).toBe(0);
     }

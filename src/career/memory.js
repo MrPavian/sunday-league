@@ -38,7 +38,14 @@ export function placeFormers(c) {
     if (c.clubs.some((cl) => cl.squad.includes(idx))) continue;
     if (!others.length || !rng.chance(0.45)) continue;
     const club = rng.pick(others);
-    club.squad.push(idx);
+    // Er verdrängt dort einen – bevorzugt auf seiner Position –, damit die Kader nicht wachsen.
+    const pos = playerOf(c, idx)?.position;
+    const same = club.squad.filter((x) => playerOf(c, x)?.position === pos && !c.formers?.[x]);
+    const out = rng.pick(same.length ? same : club.squad.filter((x) => !c.formers?.[x]));
+    if (out != null) {
+      club.squad = club.squad.map((x) => (x === out ? idx : x));
+      delete c.players[out];
+    } else club.squad.push(idx);
     c.players[idx] ??= { apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 };
     f.club = club.id;
   }

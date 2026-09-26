@@ -26,6 +26,7 @@ describe('club life', () => {
           const c = prepared(900 + seed * 10 + choice);
           if (id === 'mitgliederversammlung') c.round = 2;
           if (id === 'weihnachtsfeier') c.round = Math.floor(c.fixtures.length / 2);
+          if (id === 'trainingslager') c.round = 0;
           const ctx = def.needs(c, createRng(choice + 2));
           expect(ctx, id).toBeTruthy();
           c.week.event = { id, ctx, text: def.text(c, ctx), options: def.options.map((o) => o.label), choice: null, result: null };

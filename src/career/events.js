@@ -588,7 +588,8 @@ export function rollWeekEvent(career) {
   if (career.week.event) return null; // eine Geschichte verlangt schon eine Entscheidung
   // Was im Chat hochkocht, landet diese Woche beim Trainer.
   const chatHeat = [career.flags?.chatFeud, career.flags?.dauerabsager].some((f) => f && f.round === career.round && f.season === career.season);
-  const urgent = derbyThisWeek(career) || career.flags?.injuryNews || career.flags?.invalid || chatHeat;
+  const due = Object.values(CLUBLIFE_EVENTS).some((ev) => ev.calendar?.(career) && ev.needs(career, rng));
+  const urgent = derbyThisWeek(career) || career.flags?.injuryNews || career.flags?.invalid || chatHeat || due;
   if (!rng.chance(EVENT_CHANCE) && !urgent) return null; // Derby, Diagnose & Co. kommen immer
   const recent = new Set(career.eventLog.filter((e) => e.season === career.season && career.round - e.round < NO_REPEAT).map((e) => e.id));
   const candidates = [];
@@ -603,7 +604,8 @@ export function rollWeekEvent(career) {
   if (!candidates.length) return null;
   let r = rng.next() * candidates.reduce((s, c) => s + c.ev.weight, 0);
   // In der Derbywoche geht es um nichts anderes (bisher konnte ein Zufallsereignis dazwischenfunken).
-  const chosen = (derbyThisWeek(career) && candidates.find((c) => c.id === 'derby_woche')) || candidates.find((c) => (r -= c.ev.weight) < 0) || candidates[0];
+  // Danach kommt der Vereinskalender: Jahreshauptversammlung, Weihnachtsfeier, Kassenprüfung.
+  const chosen = (derbyThisWeek(career) && candidates.find((c) => c.id === 'derby_woche')) || candidates.find((c) => c.ev.calendar?.(career)) || candidates.find((c) => (r -= c.ev.weight) < 0) || candidates[0];
   const event = { id: chosen.id, ctx: chosen.ctx, text: chosen.ev.text(career, chosen.ctx), options: chosen.ev.options.map((o) => o.label), choice: null, result: null, story: STORY_STARTS[chosen.id] ? 'Neue Geschichte' : PERSONAL_EVENTS[chosen.id] ? 'Privat' : SAGA_EVENTS[chosen.id] ? 'Vereinsgeschichte' : CLUBLIFE_EVENTS[chosen.id] ? 'Vereinsleben' : null };
   career.week.event = event;
   career.eventLog.push({ id: chosen.id, season: career.season, round: career.round });
