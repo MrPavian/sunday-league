@@ -656,10 +656,36 @@ if (params.get('venue')) {
   } else showTitle();
 }
 
+// Schwaches Gerät? Läuft das Spiel über ein paar Sekunden unter ~24 Bildern, gehen die
+// Zusatzeffekte von selbst aus – aber nur, wenn man sie nie selbst umgeschaltet hat.
+const fpsGuard = { t: 0, frames: 0, warmup: 3, done: false };
+function guardFps(dt) {
+  if (fpsGuard.done || mode !== 'play' || !pixel.effects) return;
+  if (fpsGuard.warmup > 0) return void (fpsGuard.warmup -= dt);
+  fpsGuard.t += dt;
+  fpsGuard.frames++;
+  if (fpsGuard.t < 4) return;
+  const fps = fpsGuard.frames / fpsGuard.t;
+  Object.assign(fpsGuard, { t: 0, frames: 0 });
+  if (fps >= 24) return;
+  fpsGuard.done = true;
+  let chosen = null;
+  try {
+    chosen = localStorage.getItem('sunday-league:fx');
+  } catch {
+    // egal
+  }
+  if (chosen !== null) return;
+  pixel.setEffects(false);
+  remember('sunday-league:fx', '0');
+  hud.toast(tr('Effekte automatisch aus – für ein flüssigeres Spiel (Einstellungen)', 'Effects switched off automatically for smoother play (Settings)'), 3, 2);
+}
+
 let last = performance.now();
 let acc = 0;
 function frame(now) {
   const dt = Math.min(0.1, (now - last) / 1000);
+  guardFps(Math.min(0.5, (now - last) / 1000)); // lange Pausen (Tab im Hintergrund) nicht mitzählen
   last = now;
   acc += dt * (mode === 'play' ? TEMPOS[tempo].factor : 1);
   while (acc >= STEP) {
