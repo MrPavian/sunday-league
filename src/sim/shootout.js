@@ -91,7 +91,7 @@ function setupKick(m) {
   so.timer = 0;
   so.charge = 0;
   // Der Mensch steuert den Schützen oder den eigenen Torwart.
-  if (m.humanTeam !== null) m.controlledId = so.team === m.humanTeam ? shooter.id : keeper.id;
+  if (m.humanTeam !== null && !m.manager) m.controlledId = so.team === m.humanTeam ? shooter.id : keeper.id;
   m.events.push({ type: 'shootout_kick', team: so.team, shooterId: shooter.id, keeperId: keeper.id });
 }
 
@@ -101,8 +101,9 @@ export function stepShootout(m, input, dt) {
   const gw = pitch.goalHalfWidth;
   const shooter = m.players.find((p) => p.id === so.shooterId);
   const keeper = m.players.find((p) => p.id === so.keeperId);
-  const humanShoots = m.humanTeam === so.team;
-  const humanKeeps = m.humanTeam !== null && !humanShoots;
+  // Im Trainer-Modus schießt und hält die Mannschaft selbst – man kann nur zittern.
+  const humanShoots = !m.manager && m.humanTeam === so.team;
+  const humanKeeps = !m.manager && m.humanTeam !== null && !humanShoots;
   so.timer += dt;
   for (const p of m.players) {
     p.kickCooldown = Math.max(0, p.kickCooldown - dt);
@@ -176,7 +177,7 @@ function kick(m, shooter, aim, power) {
   so.state = 'flight';
   so.timer = 0;
   // Die KI im Tor rät eine Ecke – etwas besser, je stärker der Keeper.
-  if (!(m.humanTeam !== null && m.humanTeam !== so.team)) {
+  if (m.manager || !(m.humanTeam !== null && m.humanTeam !== so.team)) {
     const r = m.rng.next();
     so.diveZ = r < 0.2 ? 0 : m.rng.chance(0.5) ? 1 : -1;
   }

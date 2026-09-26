@@ -100,6 +100,9 @@ export class Input {
     this.down = new Set();
     this.pressed = new Set();
     this.padPrev = [];
+    // Knöpfe auf dem Bildschirm (Handy, Trainer-Modus) schieben hier ihre Befehle rein.
+    this.virtual = new Set();
+    this.shouts = [];
     target.addEventListener('keydown', (e) => {
       if (PREVENT.has(e.code)) e.preventDefault();
       if (!this.down.has(e.code)) this.pressed.add(e.code);
@@ -107,6 +110,15 @@ export class Input {
     });
     target.addEventListener('keyup', (e) => this.down.delete(e.code));
     target.addEventListener('blur', () => this.down.clear());
+  }
+
+  // Zuruf oder Befehl vom Bildschirm-Knopf für den nächsten Schritt vormerken.
+  tap(action) {
+    this.virtual.add(action);
+  }
+
+  shoutNow(id) {
+    this.shouts.push(id);
   }
 
   held(action) {
@@ -159,12 +171,22 @@ export class Input {
       this.padPrev = pad.buttons.map((btn) => btn.pressed);
     }
 
+    // Zifferntasten 1–7: Zurufe im Trainer-Modus.
+    for (const code of this.pressed) if (/^Digit[1-7]$/.test(code)) this.shouts.push(Number(code.slice(5)));
+    const v = this.virtual;
+    sub ||= v.has('sub');
+    const vt = v.has('tempo');
+    const vr = v.has('restart');
+    const vm = v.has('menu');
+    const vh = v.has('help');
+    v.clear();
+    const shout = this.shouts.shift() ?? null;
     this.pressed.clear();
     const l = Math.hypot(x, z);
     if (l > 1) {
       x /= l;
       z /= l;
     }
-    return { move: { x, z }, sprint, shootHeld, pass, loft, hold, tackle, poke, switchPlayer, sub, tempo, restart, menu, mute, fx, help };
+    return { move: { x, z }, sprint, shootHeld, pass, loft, hold, tackle, poke, switchPlayer, sub, tempo: tempo || vt, restart: restart || vr, menu: menu || vm, mute, fx, help: help || vh, shout };
   }
 }

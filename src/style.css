@@ -856,3 +856,40 @@ li.sponsor .rel i { display: block; height: 100%; background: #c9a227; }
 .card .perk::before { content: '+ '; }
 .perk-tag { margin-left: 4px; padding: 0 4px; font-size: 10px; color: #111; background: #9fd8a8; border: 1px solid #000; text-shadow: none; cursor: help; }
 small.perk { display: block; color: #9fd8a8; }
+
+/* Trainer-Modus: Zuruf-Leiste unten, Sprechblase des Trainers */
+#shoutbar { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; flex-direction: column; gap: 6px; padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(10, 12, 14, 0.85), rgba(10, 12, 14, 0)); pointer-events: none; }
+#shoutbar[hidden] { display: none; }
+#shoutbar .shouts, #shoutbar .shout-tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; pointer-events: auto; }
+#shoutbar button { min-width: 84px; min-height: 44px; padding: 6px 12px; font: inherit; font-size: 16px; color: var(--ink); background: var(--panel); border: 2px solid #000; box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.35), 0 2px 0 #000; text-shadow: var(--shadow); cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+#shoutbar button kbd { margin: 0 6px 0 0; font-size: 11px; }
+#shoutbar button:active { transform: translateY(2px); box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.35); }
+#shoutbar button.active { background: var(--accent); color: #111; text-shadow: none; }
+#shoutbar button.hoarse:not(.active) { opacity: 0.55; }
+#shoutbar .shout-tools button { min-width: 70px; font-size: 14px; background: #1d2126; }
+#shoutbar .end-only { display: none; }
+#shoutbar.ended .end-only { display: inline-block; background: #2f7d3a; }
+#shoutbar.ended .shouts { display: none; }
+body.manager .help, body.manager .card { display: none; }
+.coach-bubble { position: absolute; left: 50%; bottom: 150px; transform: translateX(-50%); padding: 8px 16px; font-size: 26px; font-weight: 600; color: #111; background: #f6f1e4; border: 3px solid #000; box-shadow: 4px 4px 0 #000; text-shadow: none; white-space: nowrap; }
+.coach-bubble::after { content: ''; position: absolute; left: 24px; bottom: -12px; border: 6px solid transparent; border-top-color: #000; border-left-color: #000; }
+.coach-bubble[hidden] { display: none; }
+.coach-bubble.pop { animation: bubble-pop 0.25s steps(3); }
+@keyframes bubble-pop { from { transform: translateX(-50%) scale(0.6); } }
+@media (max-width: 720px) {
+  #shoutbar button { min-width: 0; flex: 1 1 22%; font-size: 14px; padding: 6px 4px; }
+  #shoutbar button kbd { display: none; }
+  .coach-bubble { font-size: 18px; bottom: 170px; }
+}
+
+/* Handy: Menü scrollt, Tastenhinweise weg, Hinweis zum Querformat */
+body.touch .menu-panel .hint, body.touch #title .title-hint, body.touch .help { display: none; }
+@media (max-width: 720px), (max-height: 520px) {
+  #menu { align-items: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch; background: rgba(10, 12, 14, 0.7); }
+  .venues { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .venue-card .tag { display: none; }
+}
+#shoutbar .rotate-hint { display: none; margin: 0; text-align: center; font-size: 13px; pointer-events: none; }
+@media (orientation: portrait) and (pointer: coarse) { #shoutbar .rotate-hint { display: block; } }
+@media (orientation: portrait) and (max-width: 720px) { .venue { top: 70px; font-size: 11px; max-width: 90%; text-align: center; } }
+@media (max-width: 720px) { .toast { font-size: clamp(18px, 6.5vw, 40px); white-space: normal; width: 92%; text-align: center; } }

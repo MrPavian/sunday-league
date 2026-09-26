@@ -12,6 +12,7 @@ export const getPlayer = (m, id) => (id == null ? null : m.players.find((p) => p
 export const ownGoalX = (m, team) => -attackDir(m, team) * m.pitch.halfLength;
 
 export function setControlled(m, id) {
+  if (m.manager) return; // Trainer-Modus: niemand wird gesteuert
   const old = getPlayer(m, m.controlledId);
   if (old) {
     old.charging = false;
@@ -23,6 +24,7 @@ export function setControlled(m, id) {
 
 // Nach Platzverweis: nächsten Feldspieler des Teams übernehmen.
 export function switchToNearestOnTeam(m, team) {
+  if (m.manager) return;
   let best = null;
   let bestD = Infinity;
   for (const p of m.players) {

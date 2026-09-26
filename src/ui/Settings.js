@@ -92,6 +92,9 @@ export class Settings {
         <h4>${tr('Spieltempo', 'Match tempo')}</h4>
         <div class="choice">${s.tempos.map((t, i) => `<button class="${s.tempo === i ? 'active' : ''}" data-action="tempo" data-value="${i}">${t.label.split(': ')[1] ?? t.label}</button>`).join('')}</div>
         <p class="hint">${tr('Im Spiel: Taste C.', 'In a match: key C.')}</p>
+        <h4>${tr('Spielmodus', 'Play mode')}</h4>
+        <div class="choice"><button class="${s.manager ? '' : 'active'}" data-action="mode" data-value="player">${tr('Selbst spielen', 'Play yourself')}</button><button class="${s.manager ? 'active' : ''}" data-action="mode" data-value="manager">${tr('Trainer an der Seitenlinie', 'Manager on the touchline')}</button></div>
+        <p class="hint">${tr('Als Trainer spielt deine Mannschaft selbst. Du rufst rein: Abspielen, Schießen, Pressing, Decken, hinten dicht, aufrücken, über die Flügel – per Knopf oder Taste 1–7. Ob die Jungs hören, ist eine andere Frage.', 'As manager your team plays on its own. You shout instructions: pass, shoot, press, mark, defend, push up, use the wings – by button or keys 1–7. Whether the lads listen is another matter.')}${s.touch ? tr(' Auf dem Handy ist das der Standard.', ' This is the default on phones.') : ''}</p>
         <h4>${tr('Schwierigkeit', 'Difficulty')}</h4>
         <div class="choice">${[['easy', tr('Locker', 'Easy')], ['normal', tr('Normal', 'Normal')], ['hard', tr('Kreisliga-hart', 'Hard')]].map(([id, label]) => `<button class="${s.difficulty === id ? 'active' : ''}" data-action="difficulty" data-value="${id}">${label}</button>`).join('')}</div>
         <p class="hint">${tr('Ändert, wie klug der Gegner spielt – schneller entscheiden, mehr Zweikämpfe, bessere Pässe. Die Werte der Spieler bleiben gleich, deine Mitspieler auch.', 'Changes how smart the opponent plays – faster decisions, more challenges, better passes. Player ratings stay the same, and so do your team-mates.')}</p>

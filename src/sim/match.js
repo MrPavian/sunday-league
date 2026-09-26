@@ -13,6 +13,7 @@ import { generateTeam } from './generator.js';
 import { PARKING_LOT } from './pitch.js';
 import { attackDir, getPlayer, setControlled, teamAttacking } from './players.js';
 import { makeEntity, requestSub, restBench, swapSides } from './squad.js';
+import { shout } from './coach.js';
 import { createStats, trackStep } from './stats.js';
 import { createReferee, stepReferee } from './referee.js';
 import { carRule, restartFromOut, startSetPiece } from './setpieces.js';
@@ -92,6 +93,7 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = tr
 export function stepMatch(m, input = NO_INPUT, dt) {
   if (m.phase === 'ended') return;
   if (input.sub && m.humanTeam !== null) requestSub(m, m.humanTeam);
+  if (input.shout && m.manager) shout(m, input.shout);
   restBench(m, dt);
   step(m, input, dt);
   if (m.phase === 'play' || m.phase === 'setpiece') stepReferee(m, dt);
@@ -230,7 +232,7 @@ function step(m, input, dt) {
 // Ball da und wartet auf Anweisungen.
 function autoSwitch(m) {
   const { ball } = m;
-  if (m.humanTeam === null || ball.holder || ball.lastTouch === m.controlledId) return;
+  if (m.humanTeam === null || m.manager || ball.holder || ball.lastTouch === m.controlledId) return;
   if (m.lastTouchTeam !== m.humanTeam) return defenceSwitch(m);
   const p = getPlayer(m, ball.lastTouch);
   if (!p || p.role === 'gk' || p.state !== 'normal' || dist2d(p.pos, ball.pos) > 1.2) return;

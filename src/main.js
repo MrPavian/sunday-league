@@ -47,6 +47,8 @@ import { Hud } from './ui/Hud.js';
 import { Menu } from './ui/Menu.js';
 import { PoolBrowser } from './ui/PoolBrowser.js';
 import { TitleScreen } from './ui/TitleScreen.js';
+import { ShoutBar } from './ui/ShoutBar.js';
+import { enableManager } from './sim/coach.js';
 import { Settings } from './ui/Settings.js';
 import { Ticker } from './ui/Ticker.js';
 import { SaveSlots } from './ui/SaveSlots.js';
@@ -83,6 +85,7 @@ const scene = new THREE.Scene();
 // ?debug: Renderer und Szene für die Browser-Konsole (Draw Calls, Speicher).
 if (params.has('debug')) globalThis.__sl = { renderer: pixel.renderer, scene, THREE };
 const input = new Input();
+const shoutBar = new ShoutBar(document.getElementById('shoutbar') ?? document.body.appendChild(Object.assign(document.createElement('div'), { id: 'shoutbar', hidden: true })), input);
 const hud = new Hud(document.getElementById('hud'));
 const endScreen = new EndScreen(document.getElementById('end'));
 const sound = new Sound();
@@ -96,10 +99,17 @@ const saveSlots = new SaveSlots(document.getElementById('saves'));
 let colorSafe = false;
 let difficulty = 'normal';
 let autoSwitchDefense = false;
+// Auf Handy und Tablet gibt es keine Tastatur: dort ist man Trainer an der Seitenlinie.
+const TOUCH = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+let managerMode = TOUCH;
+if (TOUCH) document.body.classList.add('touch');
 try {
   colorSafe = localStorage.getItem('sunday-league:safekits') === '1';
   difficulty = ['easy', 'normal', 'hard'].includes(localStorage.getItem('sunday-league:difficulty')) ? localStorage.getItem('sunday-league:difficulty') : 'normal';
   autoSwitchDefense = localStorage.getItem('sunday-league:autoswitch') === '1';
+  const storedMode = localStorage.getItem('sunday-league:mode');
+  if (storedMode) managerMode = storedMode === 'manager';
+  if (params.has('trainer')) managerMode = true;
 } catch {
   // egal
 }
@@ -158,9 +168,12 @@ function showMatch(m) {
   applyColorSafeKits(m, colorSafe);
   m.difficulty = difficulty;
   m.autoSwitchDefense = autoSwitchDefense;
+  if (managerMode && m.humanTeam !== null) enableManager(m);
   match = m;
   view = new MatchView(scene, match);
   hud.init(match);
+  if (m.manager) shoutBar.show();
+  else shoutBar.hide();
 }
 
 function startMatch(human) {
@@ -177,6 +190,7 @@ function startMatch(human) {
 
 function setMode(next) {
   mode = next;
+  if (next !== 'play') shoutBar.hide();
   document.body.classList.toggle('in-menu', next !== 'play');
   document.body.classList.toggle('in-club', next === 'club');
 }
@@ -212,7 +226,7 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
   onSettings() {
     menu.paused = true;
     settings.show({
-      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe, difficulty, autoSwitch: autoSwitchDefense }),
+      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe, difficulty, autoSwitch: autoSwitchDefense, manager: managerMode, touch: TOUCH }),
       onLang: switchLanguage,
       onChange(key, value) {
         if (key === 'sound' && sound.muted !== (value === 'off')) sound.toggleMute();
@@ -234,6 +248,10 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
         if (key === 'difficulty') {
           difficulty = value;
           remember('sunday-league:difficulty', value);
+        }
+        if (key === 'mode') {
+          managerMode = value === 'manager';
+          remember('sunday-league:mode', value);
         }
         if (key === 'autoswitch') {
           autoSwitchDefense = value === 'on';
@@ -662,6 +680,7 @@ function frame(now) {
   }
   view.sync(match, dt);
   hud.update(match, dt);
+  shoutBar.update(match);
   sound.update(dt);
   rig.follow(match.ball.pos.x, match.ball.pos.z, dt, venueInfo.bounds);
   const look = venue?.id === 'halle' ? 'halle' : match.weather ?? ((match.pitch?.heat ?? 1) > 1 ? 'hitze' : 'klar');

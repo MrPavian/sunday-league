@@ -18,7 +18,8 @@ export class CameraRig {
   resize(internalWidth, internalHeight) {
     this.internalHeight = internalHeight;
     const aspect = internalWidth / internalHeight;
-    const h = this.viewHeight / 2;
+    // Hochformat (Handy): weiter rauszoomen, damit genug Spielfeld in die Breite passt.
+    const h = (this.viewHeight / 2) * Math.max(1, 1.0 / aspect);
     Object.assign(this.camera, { left: -h * aspect, right: h * aspect, top: h, bottom: -h });
     this.camera.updateProjectionMatrix();
   }

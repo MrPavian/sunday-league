@@ -10,6 +10,7 @@ import { REF_TRAITS } from '../sim/referee.js';
 import { attackDir, getPlayer } from '../sim/match.js';
 import { shootoutScore } from '../sim/shootout.js';
 import { crestOf, crestSVG } from './crest.js';
+import { SHOUTS } from '../sim/coach.js';
 
 const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
 
@@ -29,6 +30,7 @@ export class Hud {
       </div>
       <div class="venue"></div>
       <div class="toast" hidden></div>
+      <div class="coach-bubble" hidden></div>
       <div class="flash"></div>
       <div class="edge left"></div>
       <div class="edge right"></div>
@@ -118,6 +120,16 @@ export class Hud {
   handleEvents(match) {
     const short = (team) => match.teams[team].short;
     for (const e of match.events) {
+      if (e.type === 'shout') {
+        const b = this.$('.coach-bubble');
+        b.textContent = tr(`„${SHOUTS[e.shout].label}“`, `“${SHOUTS[e.shout].label}”`);
+        b.hidden = false;
+        b.classList.remove('pop');
+        void b.offsetWidth; // Animation neu starten
+        b.classList.add('pop');
+        clearTimeout(this.bubbleTimer);
+        this.bubbleTimer = setTimeout(() => (b.hidden = true), 1600);
+      }
       const p = e.playerId && findAnyPlayer(match, e.playerId);
       const first = p ? p.name.split(' ')[0] : '';
       if (e.type === 'goal') {
