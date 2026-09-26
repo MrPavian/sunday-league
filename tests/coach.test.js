@@ -207,3 +207,28 @@ describe('team chat banter', async () => {
     expect(lines).toBeGreaterThan(4);
   });
 });
+
+describe('club memory', async () => {
+  const { createCareer, humanClub, releasePlayer, teamForMatch, clubById } = await import('../src/career/career.js');
+  const { memoryAfterMatch, placeFormers, preMatchMemories } = await import('../src/career/memory.js');
+
+  it('a player who leaves turns up at a rival, is announced and flagged as the old boy', () => {
+    const c = createCareer({ seed: 55 });
+    const club = humanClub(c);
+    const idx = club.squad.find((i) => i !== c.coach?.idx);
+    expect(releasePlayer(c, idx)).toBe(true);
+    expect(c.formers[idx]).toBeTruthy();
+    for (let s = 0; s < 6 && !c.formers[idx].club; s++) {
+      c.season++;
+      placeFormers(c);
+    }
+    const rival = clubById(c, c.formers[idx].club);
+    expect(rival.squad).toContain(idx);
+    const chat = [];
+    preMatchMemories(c, rival, chat);
+    expect(chat.some((m) => m.memory)).toBe(true);
+    const team = teamForMatch(c, rival, 5, Object.fromEntries(rival.squad.map((i) => [i, 'yes'])), { next: () => 0.5, int: (a) => a, chance: () => false, pick: (a) => a[0], range: (a) => a, gauss: () => 0 });
+    const tagged = team.players.find((p) => p.poolIndex === idx);
+    if (tagged) expect(tagged.story?.former).toBe(true);
+  });
+});

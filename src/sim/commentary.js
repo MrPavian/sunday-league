@@ -132,6 +132,9 @@ export function createCommentator(m, seed = 1) {
                     : '';
             text = tr(`TOOOR für ${team(e.team)}! ${name} trifft${how}. ${scoreText(m)}.`, `GOAL for ${team(e.team)}! ${name} scores${how}. ${scoreText(m)}.`);
             if (a) text += tr(` Vorlage: ${surname(a)}.`, ` Assist: ${surname(a)}.`);
+            if (p?.story?.former) text += tr(' Ausgerechnet der Ex! Er jubelt demonstrativ vor der alten Bank.', ' The old boy, of all people! He celebrates right in front of his old bench.');
+            else if (p?.story?.nemesis) text += tr(` Schon wieder ${name} – das ${p.story.nemesis + 1}. Tor gegen dieses Team.`, ` ${name} again – his goal number ${p.story.nemesis + 1} against this lot.`);
+            else if (p?.story?.exClub) text += tr(' Gegen den Ex-Verein! Er hält sich den Finger vor den Mund.', ' Against his old club! Finger to the lips.');
           }
           add(text, 'goal');
           break;

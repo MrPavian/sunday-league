@@ -29,6 +29,7 @@ import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFin
 
 import { NAME_EDITION } from '../data/names.js';
 import { weeklyBanter } from './banter.js';
+import { memoryAfterMatch, placeFormers, preMatchMemories, rememberArrival, rememberDeparture, tagStories } from './memory.js';
 import { defaultCrest } from '../ui/crest.js';
 import { clubTactic, normalizeTactic, systemFormation } from '../sim/tactics.js';
 import { shirtSponsor, sponsorColor, SPONSORS } from './sponsors.js';
@@ -267,6 +268,7 @@ export function nextSeason(career) {
   sagaNotes.push(...childrenGrowUp(career));
   sagaNotes.push(...seasonAcademy(career));
   const intake = youthIntake(career, youthDeps());
+  placeFormers(career); // Ehemalige kommen bei der Konkurrenz unter
   startWeek(career);
   const note = (text) => career.week?.chat.splice(1, 0, { from: null, text, time: 'Mo 09:00' });
   if (bestOfSeason) note(bestOfSeason.text);
@@ -382,6 +384,7 @@ export function startWeek(career) {
   const talker = club.squad.find((idx) => availability[idx] === 'yes' && !isCoach(career, idx));
   if (talker != null) chat.push({ from: talker, text: rng.pick(WEATHER_CHAT[weather.id]), time: 'Sa 09:40' });
   career.week = { availability, chat, nudges: NUDGES_PER_WEEK, nudged: [], lineup: null, training: null, event: null, weather };
+  preMatchMemories(career, opponent, chat); // „Wisst ihr, wer bei denen spielt?"
   career.flags ??= {};
   career.flags.derbyRival = leagueOf(career).derby?.club ?? null;
   advanceArcs(career);
@@ -580,6 +583,9 @@ export function scoutRumor(career, i) {
 export function joinSquad(career, idx, text) {
   const club = humanClub(career);
   if (club.squad.length >= maxSquad(career) || club.squad.includes(idx)) return false;
+  // Kommt er von einem Gegner? Dann merken – und er spielt dort nicht mehr.
+  rememberArrival(career, idx);
+  for (const other of career.clubs) if (!other.human) other.squad = other.squad.filter((x) => x !== idx);
   club.squad.push(idx);
   career.players[idx] = freshRecord();
   if (career.week) {
@@ -622,6 +628,7 @@ export function releasePlayer(career, idx) {
   const club = humanClub(career);
   if (club.squad.length <= MIN_SQUAD || !club.squad.includes(idx) || isCoach(career, idx)) return false;
   club.squad = club.squad.filter((x) => x !== idx);
+  rememberDeparture(career, idx);
   delete career.players[idx];
   if (career.week) {
     delete career.week.availability[idx];
@@ -735,6 +742,7 @@ export function teamForMatch(career, club, format, availability, rng) {
     return p;
   });
   applyPubToTeam(career, club, players); // Bierdeckel-Taktik bzw. Tipp vom Wirt
+  tagStories(career, club, players); // Ehemalige, Angstgegner
   if (club.human) applyChemistry(career, lineup.filter((idx) => !helpers.includes(idx)), players); // Kumpels & Rivalen
   return { name: club.name, short: club.short, kit: club.kit, keeperKit: club.keeperKit, crest: club.crest ?? defaultCrest(club), tactic: tacticOf(club, format), sponsor: clubSponsor(career, club), players, helpers };
 }
@@ -826,7 +834,10 @@ export function recordResult(career, fixture, prepared) {
     if (p.injury && p.injury.severity >= 2) rec.injuryWeeks = Math.max(rec.injuryWeeks, 1);
   }
   const humanId = humanClub(career).id;
-  if (fixture.home === humanId || fixture.away === humanId) rollInjuries(career, prepared); // Zerrung bis Kreuzband
+  if (fixture.home === humanId || fixture.away === humanId) {
+    rollInjuries(career, prepared); // Zerrung bis Kreuzband
+    memoryAfterMatch(career, prepared); // „ausgerechnet der Ex"
+  }
   matchFinances(career, fixture, prepared, career.level ?? 1);
   const human = humanClub(career).id;
   if (fixture.home === human) resultMood(career, fixture.result.home, fixture.result.away);

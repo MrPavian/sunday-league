@@ -136,7 +136,8 @@ export class Hud {
       if (e.type === 'goal') {
         const scorer = e.scorerId && findAnyPlayer(match, e.scorerId);
         const kind = e.ownGoal ? tr('EIGENTOR!', 'OWN GOAL!') : e.via === 'header' ? tr('KOPFBALLTOR!', 'HEADED GOAL!') : tr('TOR!', 'GOAL!');
-        this.toast(`${kind} ${scorer?.name ?? ''}`, 2.4, 3);
+        const story = scorer?.story?.former ? tr(' – ausgerechnet der Ex!', ' – the old boy, of all people!') : scorer?.story?.nemesis ? tr(' – schon wieder der!', ' – him again!') : scorer?.story?.exClub ? tr(' – gegen den Ex-Verein!', ' – against his old club!') : '';
+        this.toast(`${kind} ${scorer?.name ?? ''}${story}`, 2.4, 3);
       } else if (e.type === 'grab') this.toast(tr(`${first} hält am Trikot fest …`, `${first} grabs a shirt …`), 0.9);
       else if (e.type === 'whiff') this.toast(tr(`Luftloch von ${first}!`, `Air shot from ${first}!`), 1.4);
       else if (e.type === 'foul') {

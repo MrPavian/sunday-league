@@ -1,6 +1,7 @@
 // Ausgänge für Entscheidungen: Jede Antwort würfelt aus mehreren möglichen
 // Folgen – vom Happy End bis zum Knall. Gewichte dürfen vom Kontext abhängen
 // (Stimmung, Eigenschaften, Kadergröße); `if` schließt einen Ausgang ganz aus.
+import { rememberNewClub } from './memory.js';
 import { hasTrait } from '../data/traits.js';
 import { humanClub, joinSquad, MIN_SQUAD, playerOf, releasePlayer } from './career.js';
 
@@ -33,6 +34,7 @@ export function joinRival(c, idx, rivalId) {
   const rival = c.clubs.find((x) => x.id === rivalId);
   if (!rival || !leaveTeam(c, idx)) return false;
   rival.squad.push(idx);
+  rememberNewClub(c, idx, rivalId);
   c.players[idx] = { apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 };
   return true;
 }
