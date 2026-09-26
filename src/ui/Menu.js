@@ -1,5 +1,10 @@
 import { tr } from '../core/i18n.js';
 import { FORMATIONS } from '../sim/formation.js';
+import { crestSVG } from './logo.js';
+
+// Farbe des Untergrunds für den Kopfstreifen der Platzkarten.
+const SURFACE_COLORS = { asphalt: '#4d4d4b', concrete: '#8a877f', parkGrass: '#5a8f40', ash: '#b0603c', grass: '#3f8a3c', hall: '#c89d62', artificial: '#2f7d3a' };
+const kbd = (k) => `<kbd>${k}</kbd>`;
 
 // Platzwahl. Pfeiltasten/Klick wählen, Enter startet. Im Hintergrund läuft
 // auf dem gewählten Platz ein KI-Spiel als Vorschau.
@@ -18,25 +23,37 @@ export class Menu {
     this.index = 0;
     root.innerHTML = `
       <div class="menu-panel">
-        <h1>Sunday League</h1>
-        <p class="sub">${tr('Kreisklasse-Fußball mit Vollamateuren', 'Grassroots football with real amateurs')}</p>
+        <header class="hero">
+          ${crestSVG(84)}
+          <div>
+            <h1>Sunday League</h1>
+            <p class="sub">${tr('Kreisklasse-Fußball mit Vollamateuren', 'Grassroots football with real amateurs')}</p>
+          </div>
+        </header>
         <div class="career"></div>
-        <p class="section">${tr('Freundschaftsspiel – Platz wählen:', 'Friendly – pick a pitch:')}</p>
+        <p class="section">${tr('Freundschaftsspiel – Platz wählen', 'Friendly – pick a pitch')}</p>
         <div class="venues">${venues
-          .map(
-            (v, i) => `
-          <button class="venue-card" data-i="${i}">
+          .map((v, i) => {
+            const n = FORMATIONS[v.pitch.format].length;
+            return `
+          <button class="venue-card" data-i="${i}" style="--surf:${SURFACE_COLORS[v.pitch.surface.id] ?? '#3f8a3c'}">
+            <span class="strip surf-${v.pitch.surface.id}"><em class="format">${n} ${tr('gegen', 'v')} ${n}</em></span>
             <b>${v.pitch.name}</b>
-            <span class="facts">${FORMATIONS[v.pitch.format].length} ${tr('gegen', 'v')} ${FORMATIONS[v.pitch.format].length} · ${v.pitch.surface.name}</span>
+            <span class="facts">${v.pitch.surface.name}</span>
             <span class="tag">${v.tagline}</span>
-          </button>`,
-          )
+          </button>`;
+          })
           .join('')}</div>
-        <p class="hint">${tr('← → Platz wählen · <b>Enter</b> Anstoß · <b>K</b> Karriere · <b>C</b> Challenges · <b>P</b> Spielerpool · <b>L</b> Spielstände · <b>O</b> Einstellungen', '← → pick a pitch · <b>Enter</b> kick off · <b>K</b> career · <b>C</b> challenges · <b>P</b> player pool · <b>L</b> saves · <b>O</b> settings')}</p>
-        <button class="pool-link">${tr('Spielerpool ansehen', 'Browse player pool')}</button>
-        <button class="pool-link challenges-link">Challenges</button>
-        <button class="pool-link saves-link">${tr('Spielstände', 'Saves')}</button>
-        <button class="pool-link settings-link">${tr('Einstellungen', 'Settings')}</button>
+        <p class="hint">${tr(
+          `${kbd('←')}${kbd('→')} Platz · ${kbd('Enter')} Anstoß · ${kbd('K')} Karriere · ${kbd('C')} Challenges · ${kbd('P')} Spielerpool · ${kbd('L')} Spielstände · ${kbd('O')} Einstellungen`,
+          `${kbd('←')}${kbd('→')} pitch · ${kbd('Enter')} kick off · ${kbd('K')} career · ${kbd('C')} challenges · ${kbd('P')} player pool · ${kbd('L')} saves · ${kbd('O')} settings`,
+        )}</p>
+        <nav class="menu-links">
+          <button class="pool-link">${tr('Spielerpool', 'Player pool')}</button>
+          <button class="pool-link challenges-link">Challenges</button>
+          <button class="pool-link saves-link">${tr('Spielstände', 'Saves')}</button>
+          <button class="pool-link settings-link">${tr('Einstellungen', 'Settings')}</button>
+        </nav>
       </div>`;
     root.querySelector('.pool-link').addEventListener('click', () => this.onPool());
     root.querySelector('.challenges-link').addEventListener('click', () => this.onChallenges());

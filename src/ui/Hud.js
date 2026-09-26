@@ -18,9 +18,11 @@ export class Hud {
   constructor(root) {
     root.innerHTML = `
       <div class="scoreboard">
-        <span class="team" data-t="0"></span>
-        <span class="score"></span>
-        <span class="team" data-t="1"></span>
+        <div class="board">
+          <span class="team" data-t="0"></span>
+          <span class="score"><b></b><i>:</i><b></b></span>
+          <span class="team" data-t="1"></span>
+        </div>
         <span class="clock"></span>
       </div>
       <div class="venue"></div>
@@ -183,7 +185,9 @@ export class Hud {
     }
     this.updateEdges(match);
     const [a, b] = match.score;
-    this.$('.score').textContent = `${a} : ${b}`;
+    const [da, db] = this.root.querySelectorAll('.score b');
+    if (da.textContent !== String(a)) da.textContent = a;
+    if (db.textContent !== String(b)) db.textContent = b;
     const so = match.shootout;
     if (so) {
       // Elfmeterschießen: Punkte je Schütze (● drin, ○ vorbei) statt Uhr.
@@ -200,6 +204,7 @@ export class Hud {
     if (p.id !== this.lastControlled) {
       this.lastControlled = p.id;
       this.$('.name').textContent = p.name;
+      this.$('.card').style.setProperty('--kit', hex(match.teams[p.team].kit.shirt));
       this.$('.meta').textContent = `${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)}`;
       const tier = tierById(p.tier);
       const line = this.$('.tierline');

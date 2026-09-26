@@ -30,36 +30,65 @@ html, body {
   text-shadow: var(--shadow);
 }
 
+/* Anzeigetafel wie am alten Sportplatz: dunkler Kasten, Vereinsschilder, gelbe Ziffern. */
 .scoreboard {
   position: absolute;
-  top: 12px;
+  top: 10px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 6px 14px;
-  background: var(--panel);
-  border: 2px solid #000;
-  font-size: 20px;
   white-space: nowrap;
 }
-.scoreboard .team::before {
-  content: '';
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  margin-right: 6px;
-  background: var(--kit);
+.scoreboard .board {
+  display: flex;
+  align-items: stretch;
+  background: #1b1d1a;
   border: 2px solid #000;
-  vertical-align: -1px;
+  box-shadow: inset 0 0 0 2px #3a3d36, 0 3px 0 #000;
+  padding: 4px;
+  gap: 4px;
+  font-size: 18px;
 }
-.scoreboard .score { font-weight: 600; font-size: 24px; color: var(--accent); }
-.scoreboard .clock { opacity: 0.8; font-size: 16px; }
+.scoreboard .team {
+  display: flex;
+  align-items: center;
+  padding: 2px 10px;
+  background: #f1ead6;
+  color: #1a1a1a;
+  text-shadow: none;
+  font-weight: 600;
+  border: 2px solid #000;
+  border-top: 6px solid var(--kit);
+}
+.scoreboard .score { display: flex; align-items: center; gap: 2px; }
+.scoreboard .score b {
+  min-width: 30px;
+  padding: 0 4px;
+  text-align: center;
+  font-size: 28px;
+  line-height: 34px;
+  color: var(--accent);
+  background: #0c0d0b;
+  border: 2px solid #000;
+  box-shadow: inset 0 -2px 0 #22241f;
+  text-shadow: 0 0 6px rgba(255, 225, 77, 0.45), 2px 2px 0 #000;
+}
+.scoreboard .score i { font-style: normal; color: var(--accent); font-size: 22px; opacity: 0.8; }
+.scoreboard .clock {
+  margin-top: -2px;
+  padding: 1px 10px 2px;
+  font-size: 14px;
+  color: #cfe8c8;
+  background: #1b1d1a;
+  border: 2px solid #000;
+  border-top: 0;
+}
 
 .venue {
   position: absolute;
-  top: 58px;
+  top: 76px;
   left: 50%;
   transform: translateX(-50%);
   font-size: 13px;
@@ -83,9 +112,11 @@ html, body {
   left: 16px;
   bottom: 16px;
   width: 260px;
-  padding: 10px 12px;
+  padding: 8px 12px 10px;
   background: var(--panel);
   border: 2px solid #000;
+  border-left: 6px solid var(--kit, var(--accent));
+  box-shadow: 0 3px 0 #000;
   font-size: 14px;
 }
 .card .name { font-size: 18px; font-weight: 600; }
@@ -106,14 +137,24 @@ html, body {
   position: relative;
   height: 12px;
   margin-top: 4px;
-  background: #000;
+  background: #0c0d0b;
   border: 1px solid #000;
+}
+/* Segmente wie auf einer LED-Leiste. */
+.bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, transparent 0 9px, rgba(0, 0, 0, 0.55) 9px 10px);
+  pointer-events: none;
 }
 .bar i { position: absolute; inset: 0 auto 0 0; width: 0; }
 .bar.stamina i { background: #5cc46a; }
 .bar.charge i { background: #e8743b; }
 .bar span {
   position: relative;
+  z-index: 1;
+  display: block;
   padding-left: 4px;
   font-size: 10px;
   line-height: 12px;
@@ -152,27 +193,85 @@ body.in-club #hud { display: none; }
 }
 #menu[hidden] { display: none; }
 .menu-panel { width: min(1100px, 100%); text-align: center; }
-.menu-panel h1 { margin: 0; font-size: 52px; color: var(--accent); text-shadow: 4px 4px 0 #000; }
-.menu-panel .sub { margin: 4px 0 18px; opacity: 0.85; }
-.venues { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.menu-panel .hero { width: fit-content; margin-inline: auto; padding: 10px 22px; background: rgba(10, 12, 14, 0.55); border: 2px solid #000; display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 14px; text-align: left; }
+.menu-panel .crest { filter: drop-shadow(4px 4px 0 #000); flex: none; }
+.menu-panel h1 { margin: 0; font-size: 56px; line-height: 1; color: var(--accent); text-shadow: 4px 4px 0 #000, 0 0 0 #000; letter-spacing: 1px; }
+.menu-panel .sub { margin: 6px 0 0; opacity: 0.9; font-size: 16px; }
+.venues { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
 .venue-card {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 12px;
+  gap: 5px;
+  padding: 0 0 10px;
   text-align: left;
   font: inherit;
   color: var(--ink);
   background: var(--panel);
   border: 2px solid #000;
+  box-shadow: 0 3px 0 #000;
   cursor: pointer;
   text-shadow: var(--shadow);
+  overflow: hidden;
+  transition: transform 0.08s steps(2);
+}
+.venue-card > b, .venue-card > .facts, .venue-card > .tag { padding: 0 10px; }
+.venue-card .strip {
+  position: relative;
+  height: 34px;
+  margin-bottom: 3px;
+  background: var(--surf);
+  border-bottom: 2px solid #000;
+  image-rendering: pixelated;
+}
+/* Kleine Muster je Untergrund: Mähstreifen, Pflaster, Parkplatzlinien, Hallenparkett. */
+.venue-card .strip.surf-grass, .venue-card .strip.surf-parkGrass { background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0 16px, transparent 16px 32px); }
+.venue-card .strip.surf-asphalt { background-image: repeating-linear-gradient(90deg, transparent 0 34px, #e8e2c8 34px 36px); }
+.venue-card .strip.surf-concrete { background-image: linear-gradient(transparent 16px, rgba(0, 0, 0, 0.25) 16px 17px, transparent 17px), repeating-linear-gradient(90deg, transparent 0 23px, rgba(0, 0, 0, 0.25) 23px 24px); }
+.venue-card .strip.surf-ash { background-image: radial-gradient(rgba(255, 220, 190, 0.25) 1px, transparent 1.5px), radial-gradient(rgba(60, 20, 10, 0.3) 1px, transparent 1.5px); background-size: 7px 7px, 11px 9px; }
+.venue-card .strip.surf-hall { background-image: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.12) 0 1px, transparent 1px 12px), linear-gradient(transparent 22px, #2f6fb0 22px 24px, transparent 24px); }
+.venue-card .strip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  border-left: 2px solid rgba(255, 255, 255, 0.55);
+}
+.venue-card .format {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  z-index: 1;
+  padding: 1px 6px;
+  font-style: normal;
+  font-size: 12px;
+  color: #111;
+  background: var(--accent);
+  border: 2px solid #000;
+  text-shadow: none;
 }
 .venue-card b { font-size: 17px; }
 .venue-card .facts { font-size: 12px; color: var(--accent); }
 .venue-card .tag { font-size: 13px; opacity: 0.85; line-height: 1.35; }
-.venue-card.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
-.menu-panel .hint { margin-top: 14px; font-size: 14px; opacity: 0.9; }
+.venue-card:hover { transform: translateY(-2px); }
+.venue-card.active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent), 0 5px 0 #000; transform: translateY(-3px); }
+.menu-panel .hint { margin-top: 14px; font-size: 14px; opacity: 0.95; line-height: 2; }
+kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  margin: 0 2px;
+  padding: 0 5px;
+  font: inherit;
+  font-size: 0.9em;
+  line-height: 1.4;
+  text-align: center;
+  color: #111;
+  background: #efe8d4;
+  border: 2px solid #000;
+  box-shadow: inset 0 -3px 0 #b9b19a;
+  text-shadow: none;
+}
+.menu-panel .menu-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; }
 
 #pool {
   position: absolute;
@@ -231,7 +330,7 @@ body.in-club #hud { display: none; }
 .pool-panel footer { display: flex; justify-content: center; align-items: center; gap: 12px; margin: 12px 0; }
 .card .tierline { display: flex; align-items: center; gap: 6px; margin: 2px 0 6px; font-size: 12px; }
 .card .tierline .badge { padding: 0 6px; color: #111; background: var(--c); border: 1px solid #000; text-shadow: none; font-weight: 600; }
-.menu-panel .pool-link { margin-top: 10px; font: inherit; color: var(--ink); background: var(--panel); border: 2px solid #000; padding: 6px 14px; cursor: pointer; text-shadow: var(--shadow); }
+.menu-panel .pool-link { margin-top: 4px; font: inherit; color: var(--ink); background: var(--panel); border: 2px solid #000; padding: 6px 14px; cursor: pointer; text-shadow: var(--shadow); }
 
 #end {
   position: absolute;
@@ -700,3 +799,22 @@ li.sponsor .rel i { display: block; height: 100%; background: #c9a227; }
 .card-grid .up { color: #6fcf73; }
 .card-grid .down { color: #e07b6f; }
 .card-grid ul.awards { margin: 0; padding-left: 0; list-style: none; }
+
+/* Einheitliche Pixel-Knöpfe: harte Kante unten, beim Drücken sackt der Knopf ein. */
+#menu button:not(.venue-card), #pool button, .club-panel button, .settings-panel button, .saves-panel button, .ticker-panel button {
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.35), 0 2px 0 #000;
+  transition: transform 0.05s steps(1);
+}
+#menu button:not(.venue-card):hover, #pool button:hover:not(:disabled), .club-panel button:hover:not(:disabled), .settings-panel button:hover, .saves-panel button:hover, .ticker-panel button:hover { filter: brightness(1.15); }
+#menu button:not(.venue-card):active, #pool button:active:not(:disabled), .club-panel button:active:not(:disabled), .settings-panel button:active, .saves-panel button:active, .ticker-panel button:active {
+  transform: translateY(2px);
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+}
+@media (max-width: 720px) {
+  .menu-panel .hero { gap: 10px; }
+  .menu-panel .crest { width: 56px; height: 56px; }
+  .menu-panel h1 { font-size: 38px; }
+  .scoreboard .board { font-size: 13px; }
+  .scoreboard .score b { font-size: 20px; line-height: 26px; min-width: 22px; }
+  .venue { top: 62px; }
+}
