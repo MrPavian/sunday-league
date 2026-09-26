@@ -30,6 +30,7 @@ import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFin
 import { NAME_EDITION } from '../data/names.js';
 import { weeklyBanter } from './banter.js';
 import { matchdaySurprise } from './matchday.js';
+import { afterMatchVoice, deliverNews, grudgeMatch, preMatchVoice } from './opponents.js';
 import { relsMap } from '../sim/bonds.js';
 import { memoryAfterMatch, placeFormers, preMatchMemories, rememberArrival, rememberDeparture, tagStories } from './memory.js';
 import { defaultCrest } from '../ui/crest.js';
@@ -387,6 +388,7 @@ export function startWeek(career) {
   if (talker != null) chat.push({ from: talker, text: rng.pick(WEATHER_CHAT[weather.id]), time: 'Sa 09:40' });
   career.week = { availability, chat, nudges: NUDGES_PER_WEEK, nudged: [], lineup: null, training: null, event: null, weather };
   preMatchMemories(career, opponent, chat); // „Wisst ihr, wer bei denen spielt?"
+  preMatchVoice(career, opponent, chat); // der Gegnertrainer im Kreisblatt
   career.flags ??= {};
   career.flags.derbyRival = leagueOf(career).derby?.club ?? null;
   advanceArcs(career);
@@ -396,6 +398,7 @@ export function startWeek(career) {
   sagaChat(career);
   if (career.round === 0 && career.offersSeason !== career.season) makeOffers(career, career.level ?? 1);
   career.week.rumors = makeRumors(career, createRng(hashSeed(career.seed, career.season, career.round, 3)));
+  deliverNews(career, career.week.chat); // Rudelbildung, Handschlag, Wechselwillige
   career.week.actions = SCOUT_ACTIONS;
 }
 
@@ -790,7 +793,7 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   const teams = humanIsAway ? [teamAway, teamHome] : [teamHome, teamAway];
   const match = createMatch({ seed: rng.int(1, 1e9), pitch, teams, human, duration, incidents: true });
   // Derby: hitziger, mehr Karten – außer man hat sich aufs faire Grillen geeinigt.
-  match.derby = isDerbyFixture(career, fixture) && !career.week?.derbyFair;
+  match.derby = (isDerbyFixture(career, fixture) && !career.week?.derbyFair) || grudgeMatch(career, home.human ? away.id : home.id);
   // Eigenes Spiel: Manchmal kommt am Spieltag etwas dazwischen.
   if (home.human || away.human) matchdaySurprise(match, humanIsAway || home.human ? 0 : 1, createRng(hashSeed(career.seed, career.season, career.round, 77)));
   return { match, humanIsAway, pitch, home, away, helpers: [...teamHome.helpers, ...teamAway.helpers] };
@@ -845,6 +848,7 @@ export function recordResult(career, fixture, prepared) {
   if (fixture.home === humanId || fixture.away === humanId) {
     rollInjuries(career, prepared); // Zerrung bis Kreuzband
     memoryAfterMatch(career, prepared); // „ausgerechnet der Ex"
+    afterMatchVoice(career, prepared, fixture.home === humanId ? fixture.away : fixture.home);
   }
   matchFinances(career, fixture, prepared, career.level ?? 1);
   const human = humanClub(career).id;

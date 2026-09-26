@@ -276,3 +276,26 @@ describe('matchday surprises', async () => {
     expect(tested).toBe(true);
   });
 });
+
+describe('opponents with a face', async () => {
+  const { createCareer, finishRound, humanFixture, prepareMatch, recordResult, simulateSync } = await import('../src/career/career.js');
+  const { coachOf } = await import('../src/career/opponents.js');
+
+  it('the rival coach speaks, meetings are remembered and news reaches the chat', () => {
+    const c = createCareer({ seed: 70 });
+    expect(c.week.chat.some((m) => m.press)).toBe(true);
+    const opp = c.clubs.find((x) => !x.human);
+    expect(coachOf(opp)).toEqual(coachOf(opp));
+    let news = 0;
+    for (let r = 0; r < 6; r++) {
+      const f = humanFixture(c);
+      const prepared = prepareMatch(c, f, { duration: 60 });
+      simulateSync(prepared);
+      recordResult(c, f, prepared);
+      news += (c.pendingNews ?? []).length;
+      finishRound(c);
+    }
+    expect(Object.values(c.meetings).flat().length).toBe(6);
+    expect(news).toBeGreaterThan(0);
+  });
+});
