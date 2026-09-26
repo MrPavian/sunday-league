@@ -912,3 +912,4 @@ body.touch .coach-play { background: #2f6f3a; }
 .ticker-panel .calls { width: 100%; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; }
 .ticker-panel .calls span { opacity: 0.8; font-size: 13px; }
 .ticker-panel .calls button { padding: 4px 10px !important; font-size: 13px; background: #1d2126 !important; }
+@media (max-width: 720px) { .venue { top: 96px; } }

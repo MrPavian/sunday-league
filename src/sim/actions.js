@@ -269,6 +269,16 @@ function pass(m, p, a, fatigue, fromHands) {
   m.events.push({ type: 'pass', playerId: p.id, targetId: target?.id ?? null, lofted: !!a.lofted });
 }
 
+// Strafraum: Nur hier darf der Torwart den Ball in die Hand nehmen.
+export function keeperBox(pitch) {
+  const depth = Math.min(6, pitch.halfLength * 0.3);
+  return { depth, halfWidth: Math.min(pitch.halfWidth, pitch.goalHalfWidth + depth * 0.9) };
+}
+export function inKeeperBox(pitch, pos, goalX, margin = 0) {
+  const b = keeperBox(pitch);
+  return Math.abs(pos.x - goalX) <= b.depth + margin && Math.abs(pos.z) <= b.halfWidth + margin;
+}
+
 export function keeperSaves(m) {
   const { ball, rng, pitch } = m;
   if (ball.holder) return;
@@ -276,7 +286,8 @@ export function keeperSaves(m) {
     if (p.role !== 'gk' || p.catchCooldown > 0 || p.state !== 'normal') continue;
     const s = attackDir(m, p.team);
     const goalX = -s * pitch.halfLength;
-    if (Math.abs(ball.pos.x - goalX) > 6) continue;
+    // Hand nur im eigenen Strafraum – draußen muss er wie ein Feldspieler ran.
+    if (!inKeeperBox(pitch, ball.pos, goalX, 0.3) || !inKeeperBox(pitch, p.pos, goalX, 0.3)) continue;
     // Inkl. Hechtsprung. Vor großen Toren (Asche, Rasen) streckt er sich weiter –
     // sonst deckt er dort anteilig viel weniger ab als vor dem Jackentor.
     // Beim Elfmeter steht er fest auf der Linie – ohne Anlauf reicht der Sprung weniger weit.
