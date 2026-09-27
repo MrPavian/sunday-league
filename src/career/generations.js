@@ -4,7 +4,7 @@
 // stehen weiter am Zaun und haben zu jedem Ergebnis eine Meinung.
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
-import { FIRST_NAMES } from '../data/names.js';
+import { firstNameFor } from '../data/origins.js';
 import { generatePlayer, ratePlayer } from '../sim/generator.js';
 import { addCustomPlayer, humanClub, playerOf } from './career.js';
 import { chronicle } from './sagas.js';
@@ -36,7 +36,7 @@ export function heirIntake(c, rng = createRng((c.seed * 257 + c.season * 31 + 11
   const age = 16 + (gen.chance(0.5) ? 1 : 0);
   const player = {
     ...p,
-    name: `${gen.pick(FIRST_NAMES)} ${lastName(a.name)}`,
+    name: `${firstNameFor(lastName(a.name), gen, age)} ${lastName(a.name)}`,
     age: age - ((c.season ?? 1) - 1), // playerOf zählt die Saisons dazu
     profession: 'Schüler',
     position: role,

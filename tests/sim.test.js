@@ -214,7 +214,8 @@ describe('surfaces', () => {
   it('the AI rarely slides on hard ground', () => {
     const slides = (id) => {
       let n = 0;
-      for (const seed of [1, 2, 3, 4, 5, 6]) n += drain(createMatch({ seed, pitch: onSurface(id), human: false }), 300).filter((t) => t === 'slide').length;
+      for (const seed of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) // zwölf Spiele: bei sechs schwankt das Verhältnis zu sehr
+        n += drain(createMatch({ seed, pitch: onSurface(id), human: false }), 300).filter((t) => t === 'slide').length;
       return n;
     };
     expect(slides('asphalt') * 2.5).toBeLessThan(slides('grass'));

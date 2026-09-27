@@ -3,7 +3,8 @@ import { clamp } from '../core/math.js';
 import { createRng } from '../core/rng.js';
 import { HIGHER_AMATEUR_CLUBS, LOWER_LEAGUES, PRO_CLUBS } from '../data/clubs.js';
 import { LEGEND_ARCHETYPES } from '../data/legends.js';
-import { FIRST_NAMES, HAIR_COLORS, LAST_NAMES, NAME_EDITIONS, PROFESSIONS, SKIN_TONES } from '../data/names.js';
+import { HAIR_COLORS, NAME_EDITIONS, PROFESSIONS, SKIN_TONES } from '../data/names.js';
+import { personName } from '../data/origins.js';
 import { RANDOM_TRAIT_IDS } from '../data/traits.js';
 import { rollTier, tierById } from '../data/tiers.js';
 
@@ -94,7 +95,7 @@ function generateLegend(rng, role, names) {
   const attrs = {};
   for (const k of ATTRS) attrs[k] = clamp(arch.attrs[k] + rng.gauss() * 0.02, 0.05, 0.98);
   return {
-    name: `${rng.pick(names.first)} ${rng.pick(names.last)}`,
+    name: names.person ? names.person(rng, age) : `${rng.pick(names.first)} ${rng.pick(names.last)}`,
     age,
     profession: rng.pick(['Privatier', 'Hat eine Fußballschule', 'Teilhaber im Autohaus', 'Gelegentlich TV-Experte']),
     tier: 'legende',
@@ -108,7 +109,7 @@ function generateLegend(rng, role, names) {
   };
 }
 
-export function generatePlayer(rng, { role = 'mid', tier = null, tierWeights = null, names = { first: FIRST_NAMES, last: LAST_NAMES, jobs: PROFESSIONS } } = {}) {
+export function generatePlayer(rng, { role = 'mid', tier = null, tierWeights = null, names = { person: personName, jobs: PROFESSIONS } } = {}) {
   const t = tier ? tierById(tier) : rollTier(rng, tierWeights);
   let player;
   if (t.id === 'legende') {
@@ -127,7 +128,7 @@ export function generatePlayer(rng, { role = 'mid', tier = null, tierWeights = n
     }
     const stories = STORIES[t.id];
     player = {
-      name: `${rng.pick(names.first)} ${rng.pick(names.last)}`,
+      name: names.person ? names.person(rng, age) : `${rng.pick(names.first)} ${rng.pick(names.last)}`,
       age,
       profession: fitProfession(rng.pick(names.jobs), age),
       tier: t.id,

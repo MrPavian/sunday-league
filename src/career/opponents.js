@@ -4,7 +4,7 @@
 // fair war, bei dem will vielleicht einer wechseln.
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
-import { FIRST_NAMES, LAST_NAMES } from '../data/names.js';
+import { personName } from '../data/origins.js';
 import { humanClub, playerOf, table } from './career.js';
 import { chronicle } from './sagas.js';
 
@@ -24,7 +24,7 @@ function hash(s) {
 export function coachOf(club) {
   const h = hash(club.id);
   const types = Object.keys(TYPES);
-  return { name: `${FIRST_NAMES[h % FIRST_NAMES.length]} ${LAST_NAMES[(h >>> 8) % LAST_NAMES.length]}`, type: types[(h >>> 16) % types.length] };
+  return { name: personName(createRng(h), 42 + (h % 20)), type: types[(h >>> 16) % types.length] };
 }
 export const coachTypeName = (type) => TYPES[type]?.name ?? '';
 

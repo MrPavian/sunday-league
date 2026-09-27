@@ -66,6 +66,7 @@ describe('live ticker with decisions', async () => {
     const m = createMatch({ seed, pitch: PITCHES.rasenplatz, human: false, duration: 120 });
     const tl = createTouchline(m, 1); // die Gäste coachen
     const asked = [];
+    const after = {}; // Einstellung direkt nach jeder Entscheidung
     for (let i = 0; i < 120 * 60 * 1.5 && m.phase !== 'ended'; i++) {
       stepMatch(m, undefined, DT);
       const d = checkDecision(tl, m.events);
@@ -73,16 +74,17 @@ describe('live ticker with decisions', async () => {
       if (d) {
         asked.push(d.id);
         answer(tl, pick(d));
+        after[d.id] ??= m.mentality;
       }
     }
-    return { m, asked };
+    return { m, asked, after };
   }
 
   it('asks at kick-off and half-time and applies the answer', () => {
-    const { m, asked } = run(21, (d) => (d.id === 'start' ? 1 : 0));
+    const { m, asked, after } = run(21, (d) => (d.id === 'start' ? 1 : 0));
     expect(asked[0]).toBe('start');
     expect(asked).toContain('halftime');
-    expect(m.mentality).toBe('offensive');
+    expect(after.start).toBe('offensive'); // später darf sich die Einstellung je nach Spielstand ändern
     expect(m.phase).toBe('ended');
   });
 

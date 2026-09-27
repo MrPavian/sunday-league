@@ -4,7 +4,7 @@
 // Spielstand endet nie, der Verein schreibt einfach eine neue Ära.
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
-import { FIRST_NAMES } from '../data/names.js';
+import { firstNameFor } from '../data/origins.js';
 import { hasTrait } from '../data/traits.js';
 import { addCustomPlayer, humanClub, maxSquad, playerOf } from './career.js';
 import { adjustMood } from './events.js';
@@ -233,7 +233,7 @@ function randomFamily(rng, age, last, season) {
     const sex = rng.chance(0.5) ? 'w' : 'm';
     const kidAge = rng.int(0, Math.max(0, Math.min(12, age - 22)));
     // childAge rechnet mit (Saison - 1) – das Alter auf Saison 1 zurückrechnen.
-    children.push({ name: rng.pick(sex === 'w' ? GIRL_NAMES : FIRST_NAMES), age: kidAge - (season - 1), sex, idx: null });
+    children.push({ name: sex === 'w' ? rng.pick(GIRL_NAMES) : firstNameFor(last, rng, kidAge), age: kidAge - (season - 1), sex, idx: null });
   }
   return { relation, children, last };
 }

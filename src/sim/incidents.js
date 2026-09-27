@@ -5,7 +5,8 @@
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { clamp, dist2d, norm } from '../core/math.js';
-import { FIRST_NAMES, LAST_NAMES, SKIN_TONES } from '../data/names.js';
+import { SKIN_TONES } from '../data/names.js';
+import { personName } from '../data/origins.js';
 import { clampToPitch } from './players.js';
 import { startSetPiece } from './setpieces.js';
 
@@ -191,7 +192,7 @@ function endIncident(m, r) {
     restart = () => startSetPiece(m, { type: 'kickoff', team: other });
     text = tr('Wasser ist aus. Der Rasen ist jetzt schön schnell.', 'The water is off. The grass is nice and quick now.');
   } else if (inc.type === 'ersatzschiri') {
-    const name = `${r.pick(FIRST_NAMES)} ${r.pick(LAST_NAMES)}`;
+    const name = personName(r, r.int(30, 70));
     m.referee = { ...m.referee, name, trait: 'zuschauer', kit: STAND_IN_KIT, look: look(r, { belly: r.range(0.5, 1) }), pos: { x: 0, z: -pitch.halfWidth - 1 }, vel: { x: 0, z: 0 } };
     text = tr(`Zuschauer ${name} übernimmt die Pfeife. Das kann ja was werden.`, `Spectator ${name} takes the whistle. This should be interesting.`);
   }

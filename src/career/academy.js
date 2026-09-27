@@ -4,7 +4,7 @@
 // wechseln sie in die A-Jugend und werden zu richtigen Spielern.
 import { createRng } from '../core/rng.js';
 import { tr } from '../core/i18n.js';
-import { FIRST_NAMES, LAST_NAMES } from '../data/names.js';
+import { lastName, personName } from '../data/origins.js';
 import { generatePlayer, ratePlayer } from '../sim/generator.js';
 import { book } from './finances.js';
 import { addCustomPlayer, humanClub, playerOf } from './career.js';
@@ -37,7 +37,7 @@ function makeKid(c, rng, age, bonus = 0) {
   const q = c.youth.coach.quality;
   return {
     id: `k${c.season}-${Math.floor(rng.next() * 1e9)}`,
-    name: `${rng.pick(girl ? GIRL_NAMES : FIRST_NAMES)} ${rng.pick(LAST_NAMES)}`,
+    name: girl ? `${rng.pick(GIRL_NAMES)} ${lastName(rng)}` : personName(rng, age),
     girl,
     age,
     position: rng.pick(['def', 'mid', 'mid', 'fwd', 'gk']),

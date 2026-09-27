@@ -2,7 +2,8 @@
 // seine Eigenheiten. Ohne Schiri (Parkplatz & Co.) entscheiden die Spieler.
 import { tr } from '../core/i18n.js';
 import { clamp, dist2d, len, norm } from '../core/math.js';
-import { FIRST_NAMES, LAST_NAMES, SKIN_TONES } from '../data/names.js';
+import { SKIN_TONES } from '../data/names.js';
+import { personName } from '../data/origins.js';
 import { hasTrait } from '../data/traits.js';
 import { switchToNearestOnTeam } from './players.js';
 
@@ -17,7 +18,7 @@ export const REF_TRAITS = {
 export function createReferee(rng) {
   const trait = rng.pick(Object.keys(REF_TRAITS).filter((k) => k !== 'zuschauer'));
   return {
-    name: `${rng.pick(FIRST_NAMES)} ${rng.pick(LAST_NAMES)}`,
+    name: personName(rng, rng.int(28, 62)),
     trait,
     look: { skin: rng.pick(SKIN_TONES), hair: 0x3a3a3a, bald: rng.chance(0.6), beard: rng.chance(0.4), belly: rng.range(0.3, 0.9), height: rng.range(0.95, 1.05) },
     pos: { x: -3, z: -4 },

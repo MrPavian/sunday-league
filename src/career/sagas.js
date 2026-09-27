@@ -3,7 +3,7 @@
 // und das Jugendtalent, das Profi wird – und irgendwann zurückkommt.
 import { createRng } from '../core/rng.js';
 import { tr } from '../core/i18n.js';
-import { LAST_NAMES } from '../data/names.js';
+import { lastName } from '../data/origins.js';
 import { PITCHES } from '../sim/pitch.js';
 import { book } from './finances.js';
 import { clubById, humanClub, joinSquad, maxSquad, playerOf, table } from './career.js';
@@ -141,7 +141,7 @@ export const SAGA_EVENTS = {
       {
         label: tr('Frauenteam gründen (Trikots 60 €)', 'Found a women’s team (kit €60)'),
         effect: (c, ctx, rng) => {
-          const captain = `${rng.pick(WOMEN_NAMES)} ${rng.pick(LAST_NAMES)}`;
+          const captain = `${rng.pick(WOMEN_NAMES)} ${lastName(rng)}`;
           book(c, tr('Trikots fürs Frauenteam', 'Kit for the women’s team'), -60);
           c.saga.frauen = { founded: c.season, captain, strength: 0.35, seasons: [] };
           adjustMood(c, 0.08);
