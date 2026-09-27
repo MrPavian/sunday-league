@@ -769,7 +769,7 @@ function frame(now) {
   view.sync(match, dt);
   hud.update(match, dt);
   shoutBar.update(match);
-  sound.update(dt);
+  sound.update(dt, mode === 'play' ? match : null);
   rig.follow(match.ball.pos.x, match.ball.pos.z, dt, venueInfo.bounds);
   const look = venue?.id === 'halle' ? 'halle' : match.weather ?? ((match.pitch?.heat ?? 1) > 1 ? 'hitze' : 'klar');
   if (look !== lightMood) {

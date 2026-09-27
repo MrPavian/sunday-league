@@ -5,7 +5,7 @@ import { tr } from '../core/i18n.js';
 import { legacySeasonEnd } from './legacy.js';
 import { sponsorResult } from './sponsors.js';
 import { autoTrip } from './trip.js';
-import { absenceMul as facilityAbsence, recruitBonus, weeklyFacilities, youthExtra, youthGrowthMul } from './facilities.js';
+import { absenceMul as facilityAbsence, fansMul, recruitBonus, weeklyFacilities, youthExtra, youthGrowthMul } from './facilities.js';
 import { createRng } from '../core/rng.js';
 import { createPlayerPool, ratePlayer } from '../sim/generator.js';
 import { createMatch, stepMatch } from '../sim/match.js';
@@ -891,6 +891,11 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   match.derby = (isDerbyFixture(career, fixture) && !career.week?.derbyFair) || grudgeMatch(career, home.human ? away.id : home.id);
   // Eigenes Spiel: Manchmal kommt am Spieltag etwas dazwischen.
   if (home.human || away.human) matchdaySurprise(match, humanIsAway || home.human ? 0 : 1, createRng(hashSeed(career.seed, career.season, career.round, 77)));
+  // Zuschauer am Zaun – für die Geräuschkulisse (die Kasse zählt nach dem Spiel selbst).
+  const level = career.level ?? 1;
+  const fans = level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14);
+  match.crowd = Math.round(fans * (match.derby ? 1.8 : 1) * (home.human ? fansMul(career) : 1));
+  match.homeTeam = humanIsAway ? 1 : 0;
   return { match, humanIsAway, pitch, home, away, helpers: [...teamHome.helpers, ...teamAway.helpers] };
 }
 

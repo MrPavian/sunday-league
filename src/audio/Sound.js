@@ -1,6 +1,9 @@
 // Klang komplett synthetisch (WebAudio) – keine Audiodateien nötig.
 // Ballkontakte, Trillerpfeife, Pfosten, Jubel, Autoalarm und je Platz eine
-// eigene Geräuschkulisse (Verkehr, Vögel, Hunde, Kirchenglocke).
+// eigene Geräuschkulisse (Verkehr, Vögel, Hunde, Kirchenglocke). Dazu die
+// Atmosphäre: Zuschauer, die mit der Menge lauter werden und bei Torgefahr
+// anschwellen, Rufe auf dem Platz („Hier!", „Meiner!"), Raunen, Applaus, die
+// Tor-Tröte vom Wirt – und Hall in der Halle.
 
 const STORAGE_KEY = 'sunday-league:muted';
 const VOLUME_KEY = 'sunday-league:volume';
@@ -19,6 +22,8 @@ export class Sound {
     }
     this.venue = null;
     this.ambienceTimer = 0;
+    this.crowdLevel = 0;
+    this.tension = 0;
     // Browser erlauben Ton erst nach einer Nutzeraktion.
     const unlock = () => this.start();
     window.addEventListener('keydown', unlock, { once: true });
@@ -34,6 +39,12 @@ export class Sound {
     this.master.gain.value = this.gain();
     this.master.connect(this.ctx.destination);
     this.noiseBuffer = this.makeNoise();
+    // Hall: in der Halle kräftig, im Hinterhof zwischen den Hauswänden ein wenig.
+    this.reverb = this.ctx.createConvolver();
+    this.reverb.buffer = this.makeImpulse(2.2);
+    this.wet = this.ctx.createGain();
+    this.wet.gain.value = 0;
+    this.master.connect(this.reverb).connect(this.wet).connect(this.ctx.destination);
     if (this.venue) this.setVenue(this.venue, true);
   }
 
@@ -67,6 +78,17 @@ export class Sound {
     const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
     const d = buf.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    return buf;
+  }
+
+  // Nachhall als abklingendes Rauschen – reicht für Sporthalle und Hinterhof.
+  makeImpulse(sec) {
+    const len = Math.floor(this.ctx.sampleRate * sec);
+    const buf = this.ctx.createBuffer(2, len, this.ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 2.5;
+    }
     return buf;
   }
 
@@ -266,6 +288,106 @@ export class Sound {
     f.frequency.linearRampToValueAtTime(500, this.ctx.currentTime + 1.2);
   }
 
+  // --- Stimmen und Zuschauer ------------------------------------------------------
+
+  // Eine Stimme: Sägezahn durch zwei Formantfilter – klingt nach einem Ruf über den Platz.
+  // vowels: Folge von Vokalen, pitch: Grundton, dur: Länge.
+  voice(vowels, pitch = 150, dur = 0.35, peak = 0.08, pan = 0, t0 = this.ctx.currentTime) {
+    const F = { a: [800, 1200], e: [500, 1900], i: [320, 2300], o: [500, 900], u: [350, 750] };
+    const d = this.out(pan);
+    const o = this.ctx.createOscillator();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(pitch, t0);
+    o.frequency.linearRampToValueAtTime(pitch * 1.25, t0 + dur * 0.3);
+    o.frequency.linearRampToValueAtTime(pitch * 0.9, t0 + dur);
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(peak, t0 + 0.03);
+    g.gain.setValueAtTime(peak, t0 + dur * 0.7);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    const filters = [0, 1].map((k) => {
+      const f = this.ctx.createBiquadFilter();
+      f.type = 'bandpass';
+      f.Q.value = k ? 9 : 6;
+      vowels.split('').forEach((v, n) => f.frequency.setValueAtTime((F[v] ?? F.a)[k], t0 + (dur * n) / vowels.length));
+      o.connect(f).connect(g);
+      return f;
+    });
+    g.connect(d);
+    o.start(t0);
+    o.stop(t0 + dur + 0.05);
+    return filters;
+  }
+
+  // Rufe auf dem Platz: „Hier!", „Ja!", „Hey!", „Meiner!", „Weg!".
+  call(kind = 'hier', pan = 0) {
+    const base = 120 + Math.random() * 70;
+    const words = { hier: 'ie', ja: 'aa', hey: 'ei', meiner: 'eia', weg: 'ee', los: 'oo' };
+    this.voice(words[kind] ?? 'a', base, kind === 'meiner' ? 0.42 : 0.28, 0.4, pan);
+  }
+
+  // Die Leute am Rand: je mehr, desto dichter. Mehrere Stimmen auf einmal.
+  crowdVoices(vowels, n, pitch, dur, peak) {
+    const t = this.ctx.currentTime;
+    for (let i = 0; i < n; i++) this.voice(vowels, pitch * (0.8 + Math.random() * 0.6), dur * (0.8 + Math.random() * 0.4), peak, Math.random() * 1.6 - 0.8, t + Math.random() * 0.12);
+  }
+
+  // „Ohhh!" – knapp vorbei, an den Pfosten, der Torwart pariert glänzend.
+  oooh() {
+    const c = this.crowdLevel;
+    if (c < 0.05) return;
+    this.crowdVoices('oou', 3 + Math.round(c * 5), 170, 1.1, 0.06 + c * 0.04);
+  }
+
+  // Applaus: kurze Klatscher, dichter bei mehr Zuschauern.
+  applause(len = 1.6) {
+    const c = this.crowdLevel;
+    if (c < 0.05) return;
+    const d = this.out(0);
+    const t = this.ctx.currentTime;
+    const claps = Math.round((10 + c * 50) * len);
+    for (let i = 0; i < claps; i++) this.noise('bandpass', 1500 + Math.random() * 1800, 1.5, 0.03, 0.1 + c * 0.06, d, t + Math.random() * len, 0.002);
+  }
+
+  // Die Tor-Tröte vom Wirt und vier Töne Vereinshymne.
+  goalHorn() {
+    const d = this.out(0.2);
+    const t = this.ctx.currentTime + 0.2;
+    for (const f of [233, 294, 349]) {
+      const o = this.tone('sawtooth', f, f * 0.98, 0.9, 0.1, d, t);
+      const lfo = this.ctx.createOscillator();
+      lfo.frequency.value = 6;
+      const depth = this.ctx.createGain();
+      depth.gain.value = 4;
+      lfo.connect(depth).connect(o.frequency);
+      lfo.start(t);
+      lfo.stop(t + 1);
+    }
+    [523, 659, 784, 1047].forEach((f, i) => this.tone('square', f, f, i === 3 ? 0.5 : 0.18, 0.08, d, t + 1.05 + i * 0.2));
+  }
+
+  // Grundrauschen der Zuschauer; Lautstärke folgt Menge und Spannung.
+  ensureCrowdBed() {
+    if (this.crowdBed || !this.ctx) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = this.noiseBuffer;
+    src.loop = true;
+    const f = this.ctx.createBiquadFilter();
+    f.type = 'bandpass';
+    f.frequency.value = 520;
+    f.Q.value = 0.7;
+    const g = this.ctx.createGain();
+    g.gain.value = 0;
+    src.connect(f).connect(g).connect(this.master);
+    src.start();
+    this.crowdBed = { src, gain: g, filter: f };
+  }
+
+  // Menge 0…1,5 aus der Zuschauerzahl (3 im Hinterhof, 100 beim Hallenturnier).
+  setCrowd(n) {
+    this.crowdLevel = Math.max(0, Math.min(1.5, (n ?? 0) / 45));
+  }
+
   // --- Kulisse ----------------------------------------------------------------
 
   setVenue(id, force = false) {
@@ -285,10 +407,22 @@ export class Sound {
     src.connect(f).connect(g).connect(this.master);
     src.start();
     this.bed = src;
+    this.wet.gain.value = id === 'halle' ? 0.32 : id === 'hinterhof' ? 0.1 : 0;
   }
 
-  update(dt) {
+  update(dt, match = null) {
     if (!this.ctx || this.muted) return;
+    // Zuschauer: Grundmurmeln nach Menge, lauter bei Torgefahr und nach Toren.
+    if (match && this.crowdLevel > 0.02) {
+      this.ensureCrowdBed();
+      const hl = match.pitch.halfLength;
+      const nearGoal = match.phase === 'play' ? Math.max(0, 1 - (hl - Math.abs(match.ball.pos.x)) / (hl * 0.35)) : 0;
+      const target = match.phase === 'goal' ? 1 : match.phase === 'ended' ? 0.2 : nearGoal;
+      this.tension += (target - this.tension) * Math.min(1, dt * 1.5);
+      const level = this.crowdLevel * (0.07 + 0.16 * this.tension);
+      this.crowdBed.gain.gain.setTargetAtTime(level, this.ctx.currentTime, 0.2);
+      this.crowdBed.filter.frequency.setTargetAtTime(480 + 400 * this.tension, this.ctx.currentTime, 0.3);
+    } else if (this.crowdBed) this.crowdBed.gain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.3);
     this.ambienceTimer -= dt;
     if (this.ambienceTimer > 0) return;
     this.ambienceTimer = 1.5 + Math.random() * 3;
@@ -311,7 +445,15 @@ export class Sound {
 
   handle(match, cameraX) {
     if (!this.ctx) return;
+    if (this.crowdMatch !== match) {
+      this.crowdMatch = match;
+      this.setCrowd(match.crowd);
+    }
     const pan = (match.ball.pos.x - cameraX) / 14;
+    const at = (id) => {
+      const p = id != null ? match.players.find((q) => q.id === id) : null;
+      return p ? Math.max(-1, Math.min(1, (p.pos.x - cameraX) / 14)) : pan;
+    };
     const hard = match.pitch.surface.hard;
     for (const e of match.events) {
       switch (e.type) {
@@ -320,6 +462,8 @@ export class Sound {
           break;
         case 'pass':
           this.kick(e.lofted ? 0.5 : 0.3, pan);
+          // Der Anspielpartner ruft – nicht bei jedem Pass, sonst klingt es wie im Kindergarten.
+          if (Math.random() < 0.18) this.call(Math.random() < 0.6 ? 'hier' : 'ja', at(e.targetId) * 0.8);
           break;
         case 'touch':
           this.touch(pan);
@@ -328,17 +472,31 @@ export class Sound {
           this.header(pan);
           break;
         case 'save':
+          this.save(pan);
+          if (Math.random() < 0.5) this.oooh();
+          if (Math.random() < 0.4) this.applause(1);
+          break;
         case 'catch':
           this.save(pan);
+          if (Math.random() < 0.35) this.call('meiner', at(e.playerId));
           break;
         case 'post':
         case 'bar':
           this.post(pan);
+          this.oooh();
           break;
-        case 'goal':
-          if (e.team === match.humanTeam || match.humanTeam === null) this.cheer(e.ownGoal ? 1 : 2);
+        case 'goal': {
+          const ours = e.team === match.humanTeam || match.humanTeam === null;
+          if (ours) this.cheer(e.ownGoal ? 1 : 2);
           else this.groan();
+          // Heimtor: Die Leute am Zaun sind die Heimfans – Tröte, Hymne, Applaus.
+          if (e.team === (match.homeTeam ?? 0) && !e.ownGoal && this.crowdLevel > 0.1) {
+            this.goalHorn();
+            this.applause(2.2);
+            this.crowdVoices('aaa', 3 + Math.round(this.crowdLevel * 6), 190, 1, 0.07 + this.crowdLevel * 0.04);
+          } else if (!ours && this.crowdLevel > 0.1) this.applause(0.8);
           break;
+        }
         case 'foul':
           this.whistle('sharp');
           break;
@@ -390,6 +548,14 @@ export class Sound {
         case 'no_call':
         case 'complain':
           this.grumble(pan);
+          break;
+        case 'shout':
+          // Der Trainer an der Seitenlinie: tief und laut.
+          this.voice(e.shout === 'pass' ? 'aa' : e.shout === 'shoot' ? 'ai' : 'oo', 95, 0.45, 0.28, -0.6);
+          break;
+        case 'tackle':
+        case 'poke_won':
+          if (Math.random() < 0.15) this.call('weg', pan);
           break;
         case 'car':
           this.carAlarm(pan);

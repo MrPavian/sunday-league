@@ -129,6 +129,7 @@ export function prepareCupMatch(c, m, { human = false, duration } = {}) {
   const humanIsAway = human && away.human;
   const teams = humanIsAway ? [teamAway, teamHome] : [teamHome, teamAway];
   const match = createMatch({ seed: rng.int(1, 1e9), pitch, teams, human, duration: duration ?? Math.round(matchDuration(pitch) * (MATCH.cupShare ?? cfg.share)), incidents: true });
+  match.crowd = kind === 'halle' ? 70 + rng.int(0, 40) : 40 + rng.int(0, 30); // Turnier: halbe Stadt am Rand
   match.knockout = m.stage !== 'A' && m.stage !== 'B';
   return { match, humanIsAway, pitch, home, away, cup: m };
 }

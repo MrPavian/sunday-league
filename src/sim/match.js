@@ -32,6 +32,9 @@ export { startPoke, startTackle } from './tackles.js';
 export const MATCH_LENGTHS = { kurz: 240, mittel: 360, lang: 600 }; // Richtwert (Ascheplatz)
 export const LENGTH_SCALE = { kurz: 1, mittel: 1.5, lang: 2.5 };
 export const HALF_BY_PITCH = { hinterhof: 90, halle: 90, parkplatz: 105, park: 105, ascheplatz: 120, rasenplatz: 150 }; // bei „kurz"
+// Freundschaftsspiel: wie viele Leute schauen typischerweise zu?
+const CROWD_BY_PITCH = { hinterhof: 3, parkplatz: 6, park: 9, ascheplatz: 15, rasenplatz: 25, halle: 45 };
+
 // halves: eigene Halbzeitlängen je Platz aus den Einstellungen (überschreiben die Vorgabe).
 // cupShare: Anteil der Spieldauer bei Turnierspielen (Standard 75 %).
 export const MATCH = { length: 'kurz', duration: MATCH_LENGTHS.kurz, halves: null, cupShare: 0.75 };
@@ -114,6 +117,8 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = tr
     incident: null,
     incidents: [],
     weather: pitch.visual ?? null, // rain | snow | fog | frost | leaves
+    crowd: CROWD_BY_PITCH[pitch.id] ?? 8, // Zuschauer (Karriere und Turnier setzen eigene Zahlen)
+    homeTeam: 0,
   };
   m.incidentPlan = incidents ? planIncident(m, seed) : null;
   if (kickoff) startSetPiece(m, { type: 'kickoff', team: 0 });
