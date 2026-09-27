@@ -109,11 +109,48 @@ function firstFor(origin, rng, age) {
   return rng.chance(share) ? germanFirst(rng, age) : rng.pick(o.first);
 }
 
-// Ein ganzer Name, passend zum Alter.
-export function personName(rng, age = 30) {
+// Ein ganzer Name, passend zum Alter – mit Herkunft, damit das Aussehen dazu passen kann.
+export function personIdentity(rng, age = 30) {
   const origin = pickOrigin(rng);
   const last = rng.pick(ORIGINS[origin].last);
-  return `${firstFor(origin, rng, age)} ${last}`;
+  return { name: `${firstFor(origin, rng, age)} ${last}`, origin };
+}
+export const personName = (rng, age = 30) => personIdentity(rng, age).name;
+
+// Aussehen nach Herkunft – nur als Wahrscheinlichkeit, mit viel Überlappung: Der Name
+// sagt nicht alles (Jonas Becker kann genauso gut einen ghanaischen Vater haben).
+// Hauttöne von sehr hell bis sehr dunkel, Reihenfolge wie SKIN_TONES in names.js.
+const SKIN_W = {
+  de: [0.3, 0.38, 0.18, 0.08, 0.04, 0.02],
+  pl: [0.35, 0.4, 0.18, 0.05, 0.01, 0.01],
+  tr: [0.05, 0.25, 0.4, 0.25, 0.04, 0.01],
+  yu: [0.15, 0.4, 0.33, 0.1, 0.01, 0.01],
+  south: [0.08, 0.32, 0.38, 0.18, 0.03, 0.01],
+  ar: [0.03, 0.15, 0.35, 0.35, 0.1, 0.02],
+  wa: [0, 0.01, 0.04, 0.15, 0.4, 0.4],
+};
+// Haarfarben wie HAIR_COLORS: dunkelbraun, braun, hellbraun, blond, schwarz, grau, rot.
+// Grau kommt nicht aus der Herkunft, sondern mit dem Alter.
+const HAIR_W = {
+  de: [0.18, 0.3, 0.24, 0.2, 0.04, 0, 0.04],
+  pl: [0.18, 0.3, 0.24, 0.22, 0.03, 0, 0.03],
+  tr: [0.45, 0.15, 0.03, 0.01, 0.36, 0, 0],
+  yu: [0.4, 0.3, 0.1, 0.05, 0.15, 0, 0],
+  south: [0.45, 0.22, 0.06, 0.02, 0.25, 0, 0],
+  ar: [0.45, 0.15, 0.03, 0.01, 0.36, 0, 0],
+  wa: [0.1, 0.02, 0, 0, 0.88, 0, 0],
+};
+const LOOK_GROUP = { de: 'de', pl: 'pl', ruhr: 'pl', russ: 'pl', tr: 'tr', yu: 'yu', it: 'south', gr: 'south', pt: 'south', ar: 'ar', wa: 'wa' };
+function weighted(rng, weights) {
+  let r = rng.next() * weights.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < weights.length; i++) if ((r -= weights[i]) < 0) return i;
+  return 0;
+}
+export const skinIndex = (rng, origin) => weighted(rng, SKIN_W[LOOK_GROUP[origin] ?? 'de']);
+// Ab etwa 40 wird es grau – mit 45 bei gut jedem Vierten, mit 55 bei den meisten.
+export function hairIndex(rng, origin, age) {
+  const grey = age >= 40 ? Math.min(0.85, (age - 38) * 0.04) : 0;
+  return rng.chance(grey) ? 5 : weighted(rng, HAIR_W[LOOK_GROUP[origin] ?? 'de']);
 }
 
 // Herkunft eines Nachnamens (für Kinder, Söhne, Verwandte).

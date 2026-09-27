@@ -39,3 +39,28 @@ describe('coherent names', () => {
     expect(kids.filter((f) => ORIGINS.tr.first.includes(f)).length).toBeGreaterThan(180);
   });
 });
+
+describe('looks match the names', async () => {
+  const { createPlayerPool } = await import('../src/sim/generator.js');
+  const { SKIN_TONES, HAIR_COLORS } = await import('../src/data/names.js');
+  const pool = createPlayerPool({ seed: 1921, size: 3000, edition: 4 });
+  const all = pool.everyone();
+  const last = (p) => p.name.split(' ').slice(1).join(' ');
+  const dark = (p) => SKIN_TONES.indexOf(p.look.skin) >= 4;
+
+  it('skin tone follows the origin – as a tendency, not a rule', () => {
+    const de = all.filter((p) => ORIGINS.de.last.includes(last(p)));
+    const wa = all.filter((p) => ORIGINS.wa.last.includes(last(p)));
+    const deDark = de.filter(dark).length / de.length;
+    expect(deDark).toBeGreaterThan(0.01); // es gibt sie weiterhin
+    expect(deDark).toBeLessThan(0.15);
+    if (wa.length >= 10) expect(wa.filter(dark).length / wa.length).toBeGreaterThan(0.6);
+  });
+
+  it('grey hair only from about 40', () => {
+    const grey = HAIR_COLORS[5];
+    expect(all.filter((p) => p.age < 40 && p.look.hair === grey)).toHaveLength(0);
+    const old = all.filter((p) => p.age >= 48);
+    if (old.length >= 20) expect(old.filter((p) => p.look.hair === grey).length).toBeGreaterThan(0);
+  });
+});

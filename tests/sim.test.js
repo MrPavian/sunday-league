@@ -808,6 +808,8 @@ describe('free kicks and corners', () => {
     const pitch = PITCHES.rasenplatz;
     for (const [key, zone] of [['shootHeld', 'near'], ['loft', 'far'], ['pass', 'short']]) {
       const m = createMatch({ seed: 4, pitch, kickoff: false });
+      // Wie im Spiel: Vor einer Ecke steht die angreifende Mannschaft schon in der gegnerischen Hälfte.
+      for (const q of m.players) if (q.team === 0 && q.role !== 'gk') q.pos.x = 12;
       startSetPiece(m, { type: 'corner', team: 0, spot: { x: pitch.halfLength - 0.3, z: pitch.halfWidth - 0.3 } });
       for (let i = 0; i < 150; i++) stepMatch(m, NONE, DT); // Mitspieler laufen in den Strafraum
       let target = null;

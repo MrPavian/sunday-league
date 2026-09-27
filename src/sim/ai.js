@@ -110,7 +110,8 @@ export function updateTactics(m, dt) {
       const cornerRun = sp && sp.type === 'corner' && sp.team === team && !sp.taken && m.time - sp.time < 6;
       const boxSpots = cornerRun ? cornerSpots(m, team) : null;
       for (const p of rest) {
-        if (boxSpots?.length && p.role !== 'def') {
+        // Der Schütze selbst steht an der Fahne – er bekommt keinen Platz im Strafraum.
+        if (boxSpots?.length && p.role !== 'def' && p.id !== sp.takerId) {
           const spot = boxSpots.shift();
           m.tactics[p.id] = { type: 'support', ...clampToPitch(pitch, spot.x, spot.z, 0.5) };
           continue;

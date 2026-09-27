@@ -4,7 +4,7 @@ import { createRng } from '../core/rng.js';
 import { HIGHER_AMATEUR_CLUBS, LOWER_LEAGUES, PRO_CLUBS } from '../data/clubs.js';
 import { LEGEND_ARCHETYPES } from '../data/legends.js';
 import { HAIR_COLORS, NAME_EDITIONS, PROFESSIONS, SKIN_TONES } from '../data/names.js';
-import { personName } from '../data/origins.js';
+import { hairIndex, personIdentity, skinIndex } from '../data/origins.js';
 import { RANDOM_TRAIT_IDS } from '../data/traits.js';
 import { rollTier, tierById } from '../data/tiers.js';
 
@@ -63,10 +63,12 @@ function careerFacts(rng, age) {
   };
 }
 
-function makeLook(rng, age, overrides = {}) {
+// origin: Herkunft aus der Namenswahl (ab Auflage 4) – Haut und Haar passen dann dazu.
+// Ohne Herkunft bleibt es beim alten Würfeln, damit alte Spielstände gleich aussehen.
+function makeLook(rng, age, overrides = {}, origin = null) {
   return {
-    skin: rng.pick(SKIN_TONES),
-    hair: rng.pick(HAIR_COLORS),
+    skin: origin ? SKIN_TONES[skinIndex(rng, origin)] : rng.pick(SKIN_TONES),
+    hair: origin ? HAIR_COLORS[hairIndex(rng, origin, age)] : rng.pick(HAIR_COLORS),
     bald: age > 30 && rng.chance(0.35),
     beard: rng.chance(0.3),
     belly: age > 28 ? rng.next() * 0.9 : rng.next() * 0.3,
@@ -94,8 +96,9 @@ function generateLegend(rng, role, names) {
   const age = rng.int(32, 42);
   const attrs = {};
   for (const k of ATTRS) attrs[k] = clamp(arch.attrs[k] + rng.gauss() * 0.02, 0.05, 0.98);
+  const id = names.identity ? names.identity(rng, age) : { name: names.person ? names.person(rng, age) : `${rng.pick(names.first)} ${rng.pick(names.last)}`, origin: null };
   return {
-    name: names.person ? names.person(rng, age) : `${rng.pick(names.first)} ${rng.pick(names.last)}`,
+    name: id.name,
     age,
     profession: rng.pick(['Privatier', 'Hat eine Fußballschule', 'Teilhaber im Autohaus', 'Gelegentlich TV-Experte']),
     tier: 'legende',
@@ -105,11 +108,11 @@ function generateLegend(rng, role, names) {
     backstory: arch.story(careerFacts(rng, age)),
     attrs,
     traits: [...arch.traits],
-    look: makeLook(rng, age, arch.look),
+    look: makeLook(rng, age, arch.look, id.origin),
   };
 }
 
-export function generatePlayer(rng, { role = 'mid', tier = null, tierWeights = null, names = { person: personName, jobs: PROFESSIONS } } = {}) {
+export function generatePlayer(rng, { role = 'mid', tier = null, tierWeights = null, names = { identity: personIdentity, jobs: PROFESSIONS } } = {}) {
   const t = tier ? tierById(tier) : rollTier(rng, tierWeights);
   let player;
   if (t.id === 'legende') {
@@ -127,8 +130,9 @@ export function generatePlayer(rng, { role = 'mid', tier = null, tierWeights = n
       attrs.technique = clamp(attrs.technique + 0.05, 0.08, 1);
     }
     const stories = STORIES[t.id];
+    const id = names.identity ? names.identity(rng, age) : { name: names.person ? names.person(rng, age) : `${rng.pick(names.first)} ${rng.pick(names.last)}`, origin: null };
     player = {
-      name: names.person ? names.person(rng, age) : `${rng.pick(names.first)} ${rng.pick(names.last)}`,
+      name: id.name,
       age,
       profession: fitProfession(rng.pick(names.jobs), age),
       tier: t.id,
@@ -136,7 +140,7 @@ export function generatePlayer(rng, { role = 'mid', tier = null, tierWeights = n
       backstory: stories ? rng.pick(stories)(careerFacts(rng, age)) : null,
       attrs,
       traits: pickTraits(rng, t.traits),
-      look: makeLook(rng, age),
+      look: makeLook(rng, age, {}, id.origin),
     };
   }
   player.rating = ratePlayer(player);

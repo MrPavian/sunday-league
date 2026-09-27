@@ -1,5 +1,5 @@
 import { getLang } from '../core/i18n.js';
-import { personName } from './origins.js';
+import { personIdentity } from './origins.js';
 
 // Erste Auflage der Namen: Alte Spielstände würfeln ihre Spieler damit, damit
 // aus dem Kowalski von gestern nicht plötzlich ein anderer wird.
@@ -73,7 +73,7 @@ export const NAME_EDITIONS = {
   2: { first: FIRST_NAMES, last: LAST_NAMES, jobs: JOBS_V2 },
   3: { first: FIRST_NAMES, last: LAST_NAMES, jobs: PROFESSIONS },
   // Vierte Auflage: stimmige Namen nach Herkunft und Jahrgang (siehe data/origins.js).
-  4: { person: personName, jobs: PROFESSIONS },
+  4: { identity: personIdentity, jobs: PROFESSIONS },
 };
 export const NAME_EDITION = 4;
 
