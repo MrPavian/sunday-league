@@ -99,6 +99,7 @@ const title = new TitleScreen(titleRoot);
 const saveSlots = new SaveSlots(document.getElementById('saves'));
 
 let colorSafe = false;
+let leagueSize = 8; // neue Karrieren: 8 Teams, 14 Spieltage
 let difficulty = 'normal';
 let autoSwitchDefense = false;
 // Auf Handy und Tablet gibt es keine Tastatur: dort ist man Trainer an der Seitenlinie.
@@ -115,6 +116,7 @@ try {
   const halves = JSON.parse(localStorage.getItem('sunday-league:halves') ?? 'null');
   if (halves && typeof halves === 'object') MATCH.halves = halves;
   if (localStorage.getItem('sunday-league:cupshare') === '1') MATCH.cupShare = 1;
+  if (localStorage.getItem('sunday-league:leaguesize') === '6') leagueSize = 6;
   const storedMode = localStorage.getItem('sunday-league:mode');
   if (storedMode) managerMode = storedMode === 'manager';
   if (params.has('trainer')) managerMode = true;
@@ -241,7 +243,7 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
   onSettings() {
     menu.paused = true;
     settings.show({
-      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe, difficulty, autoSwitch: autoSwitchDefense, manager: managerMode, touch: TOUCH, length: MATCH.halves ? 'custom' : MATCH.length, cupShort: MATCH.cupShare < 1 }),
+      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe, difficulty, autoSwitch: autoSwitchDefense, manager: managerMode, touch: TOUCH, length: MATCH.halves ? 'custom' : MATCH.length, cupShort: MATCH.cupShare < 1, leagueSize: career ? career.nextLeagueSize ?? career.leagueSize ?? 6 : leagueSize, leagueSizeNow: career?.leagueSize ?? null }),
       onLang: switchLanguage,
       onChange(key, value) {
         if (key === 'sound' && sound.muted !== (value === 'off')) sound.toggleMute();
@@ -278,6 +280,15 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
             const now = matchDuration(pitch) / 2;
             MATCH.halves = { ...(MATCH.halves ?? {}), [id]: Math.max(HALF_MIN, Math.min(HALF_MAX, now + Number(step))) };
             remember('sunday-league:halves', JSON.stringify(MATCH.halves));
+          }
+        }
+        if (key === 'leaguesize') {
+          leagueSize = Number(value) === 6 ? 6 : 8;
+          remember('sunday-league:leaguesize', String(leagueSize));
+          if (career) {
+            // Laufende Karriere: gilt ab der nächsten Saison.
+            career.nextLeagueSize = leagueSize === (career.leagueSize ?? 6) ? null : leagueSize;
+            saveCareer(career);
           }
         }
         if (key === 'cupshare') {
@@ -366,7 +377,7 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
       seed: careerSeed,
       onDone(coach) {
         creator.hide();
-        career = createCareer({ seed: careerSeed, coach });
+        career = createCareer({ seed: careerSeed, coach, leagueSize });
         saveCareer(career);
         openClubhouse();
       },

@@ -19,7 +19,7 @@ function bot(c) {
   for (const id of Object.keys(FACILITIES)) if (canBuild(c, id) && c.cash > FACILITIES[id].cost * 1.4 && build(c, id, 'handwerker')) log.built.push(`${id}@S${c.season}`);
 }
 const t0 = Date.now();
-let c = createCareer({ seed });
+let c = createCareer({ seed, leagueSize: process.argv.includes('--8') ? 8 : 6 });
 const rng = createRng(seed + 1);
 const seen = new Map(); const dupWeek = []; const perSeason = [];
 let chatMax = 0, errors = [];

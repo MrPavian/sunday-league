@@ -159,6 +159,74 @@ export const KB_CLUBS = [
   },
 ];
 
+// Zwei weitere Vereine je Liga für die große Staffel (8 Teams, 14 Spieltage).
+export const EXTRA_CLUBS = {
+  1: [
+    {
+      id: 'grillchill',
+      name: 'Grill & Chill 09',
+      short: 'G09',
+      venue: 'hinterhof',
+      kit: { shirt: 0x1c1c1c, shorts: 0x1c1c1c, socks: 0xe8742a, pattern: 'brustring', second: 0xe8742a },
+      keeperKit: { shirt: 0x4fa3e0, shorts: 0x1c1c1c, socks: 0x4fa3e0 },
+      tiers: { ok: 0.62, gut: 0.3, stark: 0.07, dorfstar: 0.01 },
+    },
+    {
+      id: 'intermailand',
+      name: 'Inter Mailänder Straße',
+      short: 'IMS',
+      venue: 'parkplatz',
+      kit: { shirt: 0x1d3b6e, shorts: 0x1c1c1c, socks: 0x1d3b6e, pattern: 'streifen', second: 0x1c1c1c },
+      keeperKit: { shirt: 0xe0b020, shorts: 0x1c1c1c, socks: 0xe0b020 },
+      tiers: { ok: 0.5, gut: 0.36, stark: 0.12, dorfstar: 0.02 },
+    },
+  ],
+  2: [
+    {
+      id: 'brueckenfeld',
+      name: 'SC Rot-Weiß Brückenfeld',
+      short: 'RWB',
+      venue: 'rasenplatz',
+      kit: { shirt: 0xc8352f, shorts: 0xf2efe6, socks: 0xf2efe6, pattern: 'haelften', second: 0xf2efe6 },
+      keeperKit: { shirt: 0x1c1c1c, shorts: 0x1c1c1c, socks: 0x1c1c1c },
+      tiers: { ok: 0.4, gut: 0.38, stark: 0.18, dorfstar: 0.04 },
+    },
+    {
+      id: 'kanalhafen',
+      name: 'FV Kanalhafen 1920',
+      short: 'FVK',
+      venue: 'ascheplatz',
+      kit: { shirt: 0x4fa3e0, shorts: 0x1d2b44, socks: 0x4fa3e0, pattern: 'ringel', second: 0xf2efe6 },
+      keeperKit: { shirt: 0xe8742a, shorts: 0x1c1c1c, socks: 0xe8742a },
+      tiers: { ok: 0.42, gut: 0.38, stark: 0.16, dorfstar: 0.04 },
+    },
+  ],
+  3: [
+    {
+      id: 'deichwacht',
+      name: 'VfL Deichwacht',
+      short: 'VFL',
+      venue: 'rasenplatz',
+      kit: { shirt: 0x2e8b57, shorts: 0xf2efe6, socks: 0x2e8b57, pattern: 'schaerpe', second: 0xf2efe6 },
+      keeperKit: { shirt: 0x6a2c8c, shorts: 0x1c1c1c, socks: 0x6a2c8c },
+      tiers: { ok: 0.3, gut: 0.4, stark: 0.23, dorfstar: 0.06, superstar: 0.01 },
+    },
+    {
+      id: 'postsv',
+      name: 'Post SV Oststadt',
+      short: 'PSV',
+      venue: 'ascheplatz',
+      kit: { shirt: 0xe0c020, shorts: 0x1d3b6e, socks: 0x1d3b6e, pattern: 'schulter', second: 0x1d3b6e },
+      keeperKit: { shirt: 0x2e8b57, shorts: 0x1c1c1c, socks: 0x2e8b57 },
+      tiers: { ok: 0.33, gut: 0.41, stark: 0.2, dorfstar: 0.06 },
+    },
+  ],
+};
+
+// Ligagröße: 6 Teams (10 Spieltage) oder 8 Teams (14 Spieltage).
+export const LEAGUE_SIZES = [6, 8];
+export const leagueClubs = (league, size = 6) => [...league.clubs, ...(size >= 8 ? EXTRA_CLUBS[league.level] ?? [] : [])];
+
 export const MAX_LEVEL = 3;
 
 export const LEAGUES = {

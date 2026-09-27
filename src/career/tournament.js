@@ -61,7 +61,7 @@ export function startTournament(c, kind = 'stadt') {
   const rng = createRng((c.seed * 31 + c.season * 977 + kind.length * 101 + 5) >>> 0);
   const used = takenIndices(c);
   const pick = squadPicker(rng, used);
-  const guestDefs = [...GUESTS].sort(() => rng.next() - 0.5).slice(0, 2);
+  const guestDefs = [...GUESTS].sort(() => rng.next() - 0.5).slice(0, Math.max(0, 8 - c.clubs.length)); // aufgefüllt auf 8 Teams
   const guests = guestDefs.map((g) => ({ ...g, id: `${g.id}-${kind}`, human: false, venue: cfg.venue, squad: pick(g.tiers, SQUAD_SHAPES.small) }));
   for (const g of guests) for (const idx of g.squad) c.players[idx] ??= fresh();
   const ids = [...c.clubs.map((x) => x.id), ...guests.map((g) => g.id)];

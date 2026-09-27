@@ -13,7 +13,7 @@ import { PITCHES } from '../sim/pitch.js';
 import { allPlayers } from '../sim/squad.js';
 import { gradePlayers } from '../sim/stats.js';
 import { absenceChance, DECLINE_TEXT, FAREWELL, INJURED, JOIN_TEXT, LATE, noReasons, NUDGE_NO, NUDGE_YES, RUMOR_SOURCES, YES } from './chat.js';
-import { HUMAN_CLUB_DEFAULT, LEAGUES, MAX_LEVEL } from './clubs.js';
+import { EXTRA_CLUBS, HUMAN_CLUB_DEFAULT, LEAGUES, leagueClubs, MAX_LEVEL } from './clubs.js';
 import { autoRelegation, relegationOutcome } from './relegation.js';
 import { applyPubToTeam } from './pub.js';
 import { rollInjuries } from './injuries.js';
@@ -157,13 +157,13 @@ export function squadPicker(rng, used) {
     });
 }
 
-export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null } = {}) {
+export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null, leagueSize = 6 } = {}) {
   setNameEdition(NAME_EDITION);
   const rng = createRng(seed);
   const league = LEAGUES[1];
   const pick = squadPicker(rng, new Set());
   const human = { ...HUMAN_CLUB_DEFAULT, ...club, human: true, venue: league.humanVenue };
-  const clubs = [human, ...league.clubs.map((c) => ({ ...c, human: false }))].map((c) => ({
+  const clubs = [human, ...leagueClubs(league, leagueSize).map((c) => ({ ...c, human: false }))].map((c) => ({
     ...c,
     squad: pick(c.tiers, SQUAD_SHAPES[league.squadShape]),
   }));
@@ -177,6 +177,7 @@ export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null 
     seed,
     level: 1,
     league: league.name,
+    leagueSize,
     season: 1,
     round: 0,
     clubs,
@@ -247,6 +248,9 @@ export function nextSeason(career) {
   const sagaNotes = sagaSeasonEnd(career, { level });
   human.venue = career.saga.homeLost[newLevel] ?? league.humanVenue;
   let clubs = career.clubs;
+  const size = career.nextLeagueSize ?? career.leagueSize ?? 6; // neue Ligagröße gilt ab jetzt
+  career.leagueSize = size;
+  career.nextLeagueSize = null;
   if (newLevel === level) {
     const used = new Set([...clubs.flatMap((c) => c.squad), ...(career.youth?.prospects ?? []), ...(career.alumni ?? []).map((a) => a.idx)]);
     const pickFusion = squadPicker(createRng(hashSeed(career.seed, career.season, 98)), used);
@@ -254,13 +258,14 @@ export function nextSeason(career) {
     clubs = fused.clubs;
     sagaNotes.push(...fused.notes);
     sagaNotes.push(...aiTurnover(career, clubs, pickFusion)); // die Konkurrenz bleibt nicht stehen
+    clubs = resizeLeague(career, clubs, league, size, pickFusion, sagaNotes); // Ligagröße geändert?
   } else if (career.saga.fusion) career.saga.fusion = null; // Liga gewechselt – der Nachbar spielt woanders
   if (newLevel !== level) {
     // Neue Liga, neue Gegner. Die alten Gegner verlassen den Spielstand.
     const used = new Set(human.squad);
     const pick = squadPicker(rng, used);
     for (const c of career.clubs) if (!c.human) for (const idx of c.squad) delete career.players[idx];
-    clubs = [human, ...league.clubs.map((c) => ({ ...c, human: false, squad: pick(c.tiers, SQUAD_SHAPES[league.squadShape]) }))];
+    clubs = [human, ...leagueClubs(league, size).map((c) => ({ ...c, human: false, squad: pick(c.tiers, SQUAD_SHAPES[league.squadShape]) }))];
     for (const c of clubs) for (const idx of c.squad) career.players[idx] ??= freshRecord();
   }
   // Der Relegationsgegner verlässt den Spielstand wieder.
@@ -303,6 +308,27 @@ export function nextSeason(career) {
     else if (diff <= -2) career.week?.chat.splice(1, 0, { from: null, text: tr(`${now.name} (${now.age}) merkt die Jahre – Stärke ${d.before} → ${now.rating}.`, `${now.name} (${now.age}) is feeling his age – rating ${d.before} → ${now.rating}.`), time: 'Mo 09:00' });
   }
   return { pos, promoted, relegated, development, retired, intake, leaving };
+}
+
+// Ligagröße geändert: Die zwei Zusatzvereine kommen dazu oder melden sich ab.
+function resizeLeague(career, clubs, league, size, pick, notes) {
+  const extras = EXTRA_CLUBS[league.level] ?? [];
+  const wanted = new Set(leagueClubs(league, size).map((c) => c.id));
+  const out = [];
+  for (const c of clubs) {
+    if (!c.human && extras.some((e) => e.id === c.id) && !wanted.has(c.id)) {
+      for (const idx of c.squad) delete career.players[idx];
+      notes.push(tr(`${c.name} meldet sich aus der Liga ab.`, `${c.name} withdraw from the league.`));
+    } else out.push(c);
+  }
+  for (const e of extras) {
+    if (!wanted.has(e.id) || out.some((c) => c.id === e.id)) continue;
+    const squad = pick(e.tiers, SQUAD_SHAPES[league.squadShape]);
+    for (const idx of squad) career.players[idx] ??= freshRecord();
+    out.push({ ...e, human: false, squad });
+    notes.push(tr(`Neu in der Liga: ${e.name}.`, `New in the league: ${e.name}.`));
+  }
+  return out;
 }
 
 // Sommerpause bei der Konkurrenz: Jeder Verein verliert ein, zwei Leute (gern die
@@ -590,6 +616,7 @@ export function migrateCareer(career) {
     if (def && club.kit && club.kit.pattern === undefined && def.kit.pattern) club.kit = { ...club.kit, pattern: def.kit.pattern, second: def.kit.second };
   }
   career.level ??= 1;
+  career.leagueSize ??= 6;
   career.mood ??= 0;
   career.flags ??= {};
   initFinances(career);
