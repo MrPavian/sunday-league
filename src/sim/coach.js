@@ -5,13 +5,12 @@
 import { tr } from '../core/i18n.js';
 
 export const SHOUTS = {
-  pass: { label: tr('Abspielen!', 'Pass it!'), short: tr('Pass', 'Pass'), key: 'Digit1', secs: 4, ball: true },
-  shoot: { label: tr('Hau drauf!', 'Shoot!'), short: tr('Schuss', 'Shoot'), key: 'Digit2', secs: 4, ball: true },
-  press: { label: tr('Geht drauf!', 'Press them!'), short: tr('Pressing', 'Press'), key: 'Digit3', secs: 8 },
-  mark: { label: tr('Mann decken!', 'Pick up your man!'), short: tr('Decken', 'Mark'), key: 'Digit4', secs: 10 },
-  back: { label: tr('Hinten dicht!', 'Shut up shop!'), short: tr('Hinten dicht', 'Defend'), key: 'Digit5', secs: 10 },
-  forward: { label: tr('Rückt auf!', 'Push up!'), short: tr('Aufrücken', 'Push up'), key: 'Digit6', secs: 10 },
-  wide: { label: tr('Über die Flügel!', 'Use the wings!'), short: tr('Flügel', 'Wings'), key: 'Digit7', secs: 10 },
+  // Nur echte Ansagen, die ein paar Minuten wirken – keine Ballmomente („Hau drauf!"),
+  // die vorbei sind, bevor der Ruf ankommt.
+  press: { label: tr('Geht drauf!', 'Press them!'), short: tr('Pressing', 'Press'), key: 'Digit1', secs: 10 },
+  back: { label: tr('Hinten dicht!', 'Shut up shop!'), short: tr('Hinten dicht', 'Defend'), key: 'Digit2', secs: 12 },
+  forward: { label: tr('Rückt auf!', 'Push up!'), short: tr('Aufrücken', 'Push up'), key: 'Digit3', secs: 12 },
+  wide: { label: tr('Über die Flügel!', 'Use the wings!'), short: tr('Flügel', 'Wings'), key: 'Digit4', secs: 12 },
 };
 export const SHOUT_IDS = Object.keys(SHOUTS);
 const COOLDOWN = 1.5; // Heiser wird man trotzdem
@@ -32,7 +31,7 @@ export function enableManager(m, team = m.humanTeam) {
 // Reinrufen. Gibt false zurück, wenn man gerade erst gerufen hat.
 // secs/force: der Liveticker ruft länger und ohne Heiserkeitspause.
 export function shout(m, type, { secs = null, force = false } = {}) {
-  if (typeof type === 'number') type = SHOUT_IDS[type - 1]; // Zifferntasten 1–7
+  if (typeof type === 'number') type = SHOUT_IDS[type - 1]; // Zifferntasten 1–4
   if (!m.manager || !SHOUTS[type] || (!force && m.time - m.lastShout < COOLDOWN)) return false;
   m.lastShout = m.time;
   m.shouts[type] = m.time + (secs ?? SHOUTS[type].secs);
@@ -51,11 +50,6 @@ export function heeds(m, p, type) {
   if (type === 'forward' && m.mentality === 'offensive' && !(m.shouts?.back > m.time)) return true;
   const until = m.shouts?.[type];
   return until != null && m.time < until;
-}
-
-// Ballzurufe verbrauchen sich mit der Aktion.
-export function consumeShout(m, type) {
-  if (m.shouts) delete m.shouts[type];
 }
 
 export const activeShouts = (m) => (m.shouts ? SHOUT_IDS.filter((id) => m.time < (m.shouts[id] ?? -1)) : []);

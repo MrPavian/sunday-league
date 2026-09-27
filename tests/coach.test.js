@@ -42,19 +42,16 @@ describe('manager mode', () => {
     expect(shout(m, 'nonsense')).toBe(false);
   });
 
-  it('"Hau drauf!" means more shots, "Hinten dicht!" means a deeper team', () => {
-    let calm = 0;
-    let shooty = 0;
+  it('"Rückt auf!" means a higher team, "Hinten dicht!" a deeper one', () => {
+    let high = 0;
     let deep = 0;
     let base = 0;
     for (const seed of [11, 12, 13, 14]) {
-      const a = play(seed, null);
-      calm += a.m.stats.teams[0].shots;
-      base += a.depth;
-      shooty += play(seed, 'shoot').m.stats.teams[0].shots;
+      base += play(seed, null).depth;
+      high += play(seed, 'forward').depth;
       deep += play(seed, 'back').depth;
     }
-    expect(shooty).toBeGreaterThan(calm);
+    expect(high).toBeGreaterThan(base + 4);
     expect(deep).toBeLessThan(base - 4);
   });
 });

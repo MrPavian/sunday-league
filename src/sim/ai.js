@@ -3,7 +3,7 @@ import { clamp, dist2d, len, norm } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
 import { ballSpeed } from './ball.js';
 import { attackDir, clampToPitch, distToSegment, getPlayer, wallPush } from './players.js';
-import { consumeShout, heeds } from './coach.js';
+import { heeds } from './coach.js';
 import { shortGame } from './actions.js';
 import { styleOf } from './tactics.js';
 
@@ -82,9 +82,8 @@ export function updateTactics(m, dt) {
       const order = [...rest].sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role]);
       for (const p of order) {
         const a = anchor(m, p, false);
-        const r = heeds(m, p, 'mark') ? zone * 1.5 : zone;
         let best = null;
-        let bestD = r;
+        let bestD = zone;
         for (const o of opponents) {
           if (taken.has(o.id)) continue;
           const d = dist2d(o.pos, a);
@@ -99,8 +98,7 @@ export function updateTactics(m, dt) {
         }
         taken.add(best.id);
         const dir = norm(ownGoal.x - best.pos.x, ownGoal.z - best.pos.z);
-        // Zuruf „Mann decken!": enger dran am Gegenspieler.
-        const gap = heeds(m, p, 'mark') ? 0.7 : 1.5;
+        const gap = 1.5;
         m.tactics[p.id] = { type: 'mark', ...clampToPitch(pitch, best.pos.x + dir.x * gap, best.pos.z + dir.z * gap) };
       }
     } else {
@@ -338,8 +336,6 @@ export function outfieldIntent(m, p, dt) {
     p.dribbleDir = norm(oppGoal.x - p.pos.x, p.aimZ - p.pos.z);
     // In der Ecke nicht lange fackeln: abspielen oder raus Richtung Mitte.
     if (wall.corner && dBall < 1.3 && !p.pending && !ball.holder && p.decideTimer > 0.15) p.decideTimer = 0.15;
-    // Der Trainer brüllt „Abspielen!" oder „Hau drauf!": nicht lange überlegen.
-    if ((heeds(m, p, 'pass') || heeds(m, p, 'shoot')) && dBall < 1.3 && !p.pending && !ball.holder && p.decideTimer > 0.08) p.decideTimer = 0.08;
     if (dBall < 1.3 && p.decideTimer <= 0 && !p.pending && !ball.holder) {
       // Amateure brauchen einen Moment, bis sie sich entscheiden.
       p.decideTimer = (0.4 + (1 - p.attrs.technique) * 0.4 + m.rng.next() * 0.25) / aiSkill(m, p);
@@ -441,18 +437,6 @@ function aiDecide(m, p, oppGoal) {
   // Flügelspiel: Außen in Tornähe wird geflankt, nicht aus spitzem Winkel geschossen.
   if ((st.cross > 0.7 || heeds(m, p, 'wide')) && Math.abs(p.pos.z) > pitch.goalHalfWidth * 2.2 && Math.abs(p.pos.x - oppGoal.x) < pitch.halfLength * 0.45 && rng.chance(0.75)) {
     p.pending = { type: 'pass', lofted: 'cross', cone: -0.4, ttl: 0.3 };
-    return;
-  }
-  // Zurufe von der Seitenlinie gehen vor – wenn es halbwegs passt.
-  if (heeds(m, p, 'shoot') && dGoal < range + 12 && facingDot > -0.2) {
-    consumeShout(m, 'shoot');
-    const gw = pitch.goalHalfWidth;
-    p.pending = { type: 'shoot', power: clamp(0.5 + dGoal / 25, 0.5, 0.98), target: { x: oppGoal.x, z: (rng.chance(0.5) ? 1 : -1) * rng.range(gw * 0.3, gw * 1.0) }, ttl: 0.4 };
-    return;
-  }
-  if (heeds(m, p, 'pass')) {
-    consumeShout(m, 'pass');
-    p.pending = { type: 'pass', ttl: 0.4, cone: -0.3 };
     return;
   }
   // Schussauswahl: „hart" wartet auf die bessere Lage, „locker" schießt auch mal überhastet.

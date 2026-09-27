@@ -197,7 +197,7 @@ export class Ticker {
       return;
     }
     const calls = this.tl
-      ? `<div class="calls"><span>${tr('Reinrufen', 'Shout')}:</span>${['press', 'mark', 'back', 'forward', 'wide', 'shoot'].map((id) => `<button data-action="shout" data-value="${id}">${SHOUTS[id].short}</button>`).join('')}</div>`
+      ? `<div class="calls"><span>${tr('Reinrufen', 'Shout')}:</span>${['press', 'back', 'forward', 'wide'].map((id) => `<button data-action="shout" data-value="${id}">${SHOUTS[id].short}</button>`).join('')}</div>`
       : '';
     foot.innerHTML = `${calls}
       <button data-action="speed">${tr('Tempo', 'Speed')}: ${SPEEDS[this.speed]}× <small>(${tr('Leertaste', 'Space')})</small></button>

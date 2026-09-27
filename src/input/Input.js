@@ -171,8 +171,8 @@ export class Input {
       this.padPrev = pad.buttons.map((btn) => btn.pressed);
     }
 
-    // Zifferntasten 1–7: Zurufe im Trainer-Modus.
-    for (const code of this.pressed) if (/^Digit[1-7]$/.test(code)) this.shouts.push(Number(code.slice(5)));
+    // Zifferntasten 1–4: Zurufe im Trainer-Modus.
+    for (const code of this.pressed) if (/^Digit[1-4]$/.test(code)) this.shouts.push(Number(code.slice(5)));
     const v = this.virtual;
     sub ||= v.has('sub');
     const vt = v.has('tempo');

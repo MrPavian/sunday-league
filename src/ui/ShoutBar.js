@@ -2,7 +2,7 @@ import { tr } from '../core/i18n.js';
 import { activeShouts, SHOUTS } from '../sim/coach.js';
 
 // Trainer-Modus: Zurufe als große Knöpfe am unteren Rand – für Daumen gemacht,
-// am PC gehen auch die Tasten 1–7. Dazu Auswechseln, Tempo und am Ende Weiter/Menü.
+// am PC gehen auch die Tasten 1–4. Dazu Auswechseln, Tempo und am Ende Weiter/Menü.
 export class ShoutBar {
   constructor(root, input) {
     this.root = root;
