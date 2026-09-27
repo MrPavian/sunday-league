@@ -588,14 +588,13 @@ export function rollWeekEvent(career) {
   if (career.week.event) return null; // eine Geschichte verlangt schon eine Entscheidung
   // Was im Chat hochkocht, landet diese Woche beim Trainer.
   const chatHeat = [career.flags?.chatFeud, career.flags?.dauerabsager].some((f) => f && f.round === career.round && f.season === career.season);
-  const due = Object.values(CLUBLIFE_EVENTS).some((ev) => ev.calendar?.(career) && ev.needs(career, rng));
-  const urgent = derbyThisWeek(career) || career.flags?.injuryNews || career.flags?.invalid || chatHeat || due;
+  const urgent = derbyThisWeek(career) || career.flags?.injuryNews || career.flags?.invalid || chatHeat;
   if (!rng.chance(EVENT_CHANCE) && !urgent) return null; // Derby, Diagnose & Co. kommen immer
   const recent = new Set(career.eventLog.filter((e) => e.season === career.season && career.round - e.round < NO_REPEAT).map((e) => e.id));
   const candidates = [];
   const storySeason = new Set(career.eventLog.filter((e) => e.season === career.season).map((e) => e.id));
   const storiesFull = arcsOf(career).length >= 3;
-  for (const [id, ev] of [...Object.entries(EVENTS), ...Object.entries(STORY_STARTS), ...Object.entries(PERSONAL_EVENTS), ...Object.entries(SAGA_EVENTS), ...Object.entries(SOCIAL_EVENTS), ...Object.entries(BANTER_EVENTS), ...Object.entries(DERBY_EVENTS), ...Object.entries(INJURY_EVENTS), ...Object.entries(LIFE_EVENTS), ...Object.entries(ACADEMY_EVENTS), ...Object.entries(SPONSOR_EVENTS), ...Object.entries(CLUBLIFE_EVENTS)]) {
+  for (const [id, ev] of [...Object.entries(EVENTS), ...Object.entries(STORY_STARTS), ...Object.entries(PERSONAL_EVENTS), ...Object.entries(SAGA_EVENTS), ...Object.entries(SOCIAL_EVENTS), ...Object.entries(BANTER_EVENTS), ...Object.entries(DERBY_EVENTS), ...Object.entries(INJURY_EVENTS), ...Object.entries(LIFE_EVENTS), ...Object.entries(ACADEMY_EVENTS), ...Object.entries(SPONSOR_EVENTS)]) { // Vereinsleben hängt am Schwarzen Brett
     if (recent.has(id)) continue;
     if (STORY_STARTS[id] && (storiesFull || storySeason.has(id))) continue; // jede Geschichte höchstens einmal pro Saison
     const ctx = ev.needs(career, rng);
@@ -604,9 +603,8 @@ export function rollWeekEvent(career) {
   if (!candidates.length) return null;
   let r = rng.next() * candidates.reduce((s, c) => s + c.ev.weight, 0);
   // In der Derbywoche geht es um nichts anderes (bisher konnte ein Zufallsereignis dazwischenfunken).
-  // Danach kommt der Vereinskalender: Jahreshauptversammlung, Weihnachtsfeier, Kassenprüfung.
-  const chosen = (derbyThisWeek(career) && candidates.find((c) => c.id === 'derby_woche')) || candidates.find((c) => c.ev.calendar?.(career)) || candidates.find((c) => (r -= c.ev.weight) < 0) || candidates[0];
-  const event = { id: chosen.id, ctx: chosen.ctx, text: chosen.ev.text(career, chosen.ctx), options: chosen.ev.options.map((o) => o.label), choice: null, result: null, story: STORY_STARTS[chosen.id] ? 'Neue Geschichte' : PERSONAL_EVENTS[chosen.id] ? 'Privat' : SAGA_EVENTS[chosen.id] ? 'Vereinsgeschichte' : CLUBLIFE_EVENTS[chosen.id] ? 'Vereinsleben' : null };
+  const chosen = (derbyThisWeek(career) && candidates.find((c) => c.id === 'derby_woche')) || candidates.find((c) => (r -= c.ev.weight) < 0) || candidates[0];
+  const event = { id: chosen.id, ctx: chosen.ctx, text: chosen.ev.text(career, chosen.ctx), options: chosen.ev.options.map((o) => o.label), choice: null, result: null, story: STORY_STARTS[chosen.id] ? 'Neue Geschichte' : PERSONAL_EVENTS[chosen.id] ? 'Privat' : SAGA_EVENTS[chosen.id] ? 'Vereinsgeschichte' : null };
   career.week.event = event;
   career.eventLog.push({ id: chosen.id, season: career.season, round: career.round });
   if (career.eventLog.length > 40) career.eventLog.shift();
@@ -632,8 +630,8 @@ export function eventView(career, e) {
   }
 }
 
-export function resolveEvent(career, choice) {
-  const e = career.week?.event;
+export function resolveEvent(career, choice, slot = 'event') {
+  const e = career.week?.[slot];
   if (!e || e.choice !== null) return null;
   const def = eventDef(career, e.id);
   const option = def?.options[choice];
@@ -646,7 +644,7 @@ export function resolveEvent(career, choice) {
   const story = e.id.startsWith('story:') ? e.id.slice(6).split('-') : null;
   const key = story ? story[0] : e.id;
   const subject = story ? Number(story[1]) : e.ctx?.s ?? e.ctx?.idx ?? null;
-  const twist = applyTwist(career, key, subject, createRng((career.seed * 31 + career.round * 11 + choice * 5 + career.season) >>> 0));
+  const twist = slot === 'event' ? applyTwist(career, key, subject, createRng((career.seed * 31 + career.round * 11 + choice * 5 + career.season) >>> 0)) : null;
   if (twist) e.result = `${e.result} ${twist}`;
   e.effects = consequences(career, before); // sichtbar machen, was die Wahl bewirkt hat
   return e.result;
@@ -656,5 +654,28 @@ export function resolveEvent(career, choice) {
 export function autoResolve(career) {
   const e = career.week?.event;
   if (e && e.choice === null) resolveEvent(career, e.options.length - 1);
+  const n = career.week?.notice;
+  if (n && n.choice === null) resolveEvent(career, n.options.length - 1, 'notice');
+}
+
+// Das Schwarze Brett im Vereinsheim: neben der Hauptentscheidung der Woche oft noch
+// ein kleines Vereinsleben-Thema – so kommen bei kurzen Saisons mehr Geschichten dran.
+const NOTICE_CHANCE = 0.55;
+export function rollNotice(career) {
+  const w = career.week;
+  if (!w || w.notice) return null;
+  const rng = createRng((career.seed * 11 + career.season * 173 + career.round * 29 + 7) >>> 0);
+  const cands = Object.entries(CLUBLIFE_EVENTS)
+    .map(([id, ev]) => ({ id, ev, ctx: ev.needs(career, rng) }))
+    .filter((x) => x.ctx);
+  // Vereinskalender zuerst: Trainingslager, Jahreshauptversammlung, Weihnachtsfeier, Kassenprüfung.
+  const due = cands.find((x) => x.ev.calendar?.(career));
+  if (!due && !rng.chance(NOTICE_CHANCE)) return null;
+  const pool = cands.filter((x) => !x.ev.calendar);
+  if (!due && !pool.length) return null;
+  let r = rng.next() * pool.reduce((sum, x) => sum + x.ev.weight, 0);
+  const pick = due ?? pool.find((x) => (r -= x.ev.weight) < 0) ?? pool[0];
+  w.notice = { id: pick.id, ctx: pick.ctx, text: pick.ev.text(career, pick.ctx), options: pick.ev.options.map((o) => o.label), choice: null, result: null, story: 'Vereinsleben' };
+  return w.notice;
 }
 

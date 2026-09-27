@@ -996,3 +996,6 @@ body.touch .coach-play { background: #2f6f3a; }
 .half-grid { display: grid; grid-template-columns: minmax(110px, max-content) 40px 56px 40px; justify-content: start; gap: 6px 10px; align-items: center; margin: 6px 0 10px; }
 .half-grid b { text-align: center; font-variant-numeric: tabular-nums; }
 .half-grid button { width: 40px; min-width: 0; padding: 4px 0; }
+
+/* Schwarzes Brett */
+.event-card.board { border-left-color: #c9b27a; background: #2e2a20; }

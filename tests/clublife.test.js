@@ -61,3 +61,25 @@ describe('club life', () => {
     expect(clubLife(c).missing).toBeGreaterThan(0);
   });
 });
+
+describe('notice board', () => {
+  it('often has a small club-life topic next to the main decision, resolvable on its own', async () => {
+    const { resolveEvent } = await import('../src/career/events.js');
+    const c = createCareer({ seed: 960, leagueSize: 8 });
+    let seen = 0;
+    let resolved = 0;
+    for (let r = 0; r < 12; r++) {
+      const n = c.week?.notice;
+      if (n) {
+        seen++;
+        expect(n.id).not.toBe(c.week.event?.id);
+        if (r % 2 && typeof resolveEvent(c, 0, 'notice') === 'string') resolved++;
+      }
+      finishRound(c);
+    }
+    expect(seen).toBeGreaterThanOrEqual(3);
+    expect(resolved).toBeGreaterThan(0);
+    // Unbeantwortet? Dann nimmt sich die Gruppe am Spieltag die letzte Option.
+    expect(c.eventLog).toBeTruthy();
+  });
+});

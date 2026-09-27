@@ -158,6 +158,9 @@ export class Clubhouse {
         this.career.tipsOff = true;
         this.career.week.chat = this.career.week.chat.filter((m) => !m.tip);
         this.h.onChange();
+      } else if (action === 'notice') {
+        resolveEvent(this.career, Number(value), 'notice');
+        this.h.onChange();
       } else if (action === 'event') {
         resolveEvent(this.career, Number(value));
         this.h.onChange();
@@ -326,7 +329,7 @@ export class Clubhouse {
         <p class="avail">${count('yes')} ${tr('Zusagen', 'in')} · ${count('late')} ${tr('später', 'late')} · ${count('no')} ${tr('Absagen', 'out')}</p>
         <p class="mood-line">${tr('Stimmung im Team', 'Team spirit')}: <b class="mood mood-${moodLabel(c.mood ?? 0)}">${moodText(c.mood ?? 0)}</b></p>
         ${c.goal?.season === c.season ? `<p class="goal-line">${tr('Saisonziel', 'Season target')}: <b>${GOALS[c.goal.type].name}</b> · ${tr('jetzt', 'now')} ${table(c).findIndex((r) => r.club.human) + 1}. ${tr('Platz', 'place')} <small>(${tr('Ziel', 'target')}: ${tr('bis Platz', 'top')} ${c.goal.target})</small></p>` : ''}
-        ${w.event && w.event.choice === null ? `<p class="warn">${tr('In der Gruppe wartet eine Entscheidung auf dich.', 'A decision is waiting for you in the group chat.')}</p>` : ''}
+        ${w.notice && w.notice.choice === null && !(w.event && w.event.choice === null) ? `<p class="warn">${tr('Am Schwarzen Brett hängt etwas für dich.', 'Something on the notice board needs you.')}</p>` : ''}${w.event && w.event.choice === null ? `<p class="warn">${tr('In der Gruppe wartet eine Entscheidung auf dich.', 'A decision is waiting for you in the group chat.')}</p>` : ''}
         ${storyLabels(c).length ? `<ul class="stories">${storyLabels(c).map((s) => `<li>${s}</li>`).join('')}</ul>` : ''}
         ${count('yes') < venue.format ? `<p class="warn">${tr('Zu wenige Zusagen – es hilft jemand aus dem Bekanntenkreis aus.', 'Not enough players – someone from a mate\'s circle will help out.')}</p>` : ''}
         ${this.meBars()}
@@ -722,6 +725,20 @@ export class Clubhouse {
     const declined = club.squad.filter((idx) => w.availability[idx] === 'no' && !w.nudged.includes(idx) && !c.players[idx].injuryWeeks).filter((idx) => !isCoach(c, idx));
     const ev = w.event;
     const view = ev ? eventView(c, ev) : null;
+    // Schwarzes Brett: das kleine Vereinsleben-Thema der Woche.
+    const nt = w.notice;
+    const nview = nt ? eventView(c, nt) : null;
+    const noticeCard = nt
+      ? `<div class="event-card board">
+          <p class="label">📌 ${tr('Schwarzes Brett im Vereinsheim', 'Clubhouse notice board')}</p>
+          <p>${nview.text}</p>
+          ${nt.choice !== null
+            ? `<p class="reply ok">➜ ${nview.options[nt.choice] ?? ''}: ${nt.result ?? ''}</p>${effectChips(nt.effects)}`
+            : this.results
+              ? ''
+              : `<div class="actions">${nview.options.map((o, i) => `<button ${i === 0 ? 'class="primary"' : ''} data-action="notice" data-value="${i}">${o}</button>`).join('')}</div>`}
+        </div>`
+      : '';
     const eventCard = ev
       ? `<div class="event-card">
           <p class="label">${ev.story === 'Vereinsleben' ? storyTag(ev.story) : ev.story ? `${tr('Geschichte', 'Story')} · ${storyTag(ev.story)}` : tr('Diese Woche im Verein', 'This week at the club')}</p>
@@ -735,6 +752,7 @@ export class Clubhouse {
       : '';
     return `
       ${eventCard}
+      ${noticeCard}
       <div class="chat-head">${tr('„Wer kann Sonntag?"', '"Who can play Sunday?"')} · ${club.squad.length} ${tr('Mitglieder', 'members')}</div>
       <div class="chat">${bubbles}</div>
       <div class="nudge">

@@ -27,8 +27,8 @@ const TIPS = [
   },
   {
     id: 'clublife',
-    when: (c) => c.week.event?.story === 'Vereinsleben',
-    text: () => tr('Vereinsleben: Beitrag, Förderverein, Nachbarn und Kassenwart wirken dauerhaft – Woche für Woche in der Kasse und in der Stimmung. Den Stand siehst du im Tab „Verein".', 'Club life: fees, supporters, neighbours and the treasurer have lasting effects – week by week on the kitty and the mood. Check the “Club” tab for the current state.'),
+    when: (c) => !!c.week.notice,
+    text: () => tr('Das Schwarze Brett im Vereinsheim: Beitrag, Förderverein, Nachbarn und Kassenwart wirken dauerhaft – Woche für Woche in der Kasse und in der Stimmung. Den Stand siehst du im Tab „Verein".', 'The clubhouse notice board: fees, supporters, neighbours and the treasurer have lasting effects – week by week on the kitty and the mood. Check the “Club” tab for the current state.'),
   },
   {
     id: 'press',

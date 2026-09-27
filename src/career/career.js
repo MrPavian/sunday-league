@@ -23,7 +23,7 @@ import { derbyResult, isDerbyFixture } from './derby.js';
 import { applyChemistry, pastLink, relationsAmong, setRelation } from './relations.js';
 import { applyFusion, chronicle, initSagas, sagaChat, sagaSeasonEnd, sagaWeek } from './sagas.js';
 import { childrenGrowUp, coachAway, initCoach, isCoach, personalWeek, seasonPersonal, weeklyPersonal } from './personal.js';
-import { absenceFactor, advanceArcs, applyForm, autoResolve, resultMood, rollWeekEvent, weeklyMood } from './events.js';
+import { absenceFactor, advanceArcs, applyForm, autoResolve, resultMood, rollNotice, rollWeekEvent, weeklyMood } from './events.js';
 import { developYouth, expireYouth, initYouth, retirements, youthIntake } from './youth.js';
 import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFinances, weeklyFinances } from './finances.js';
 
@@ -472,6 +472,7 @@ export function startWeek(career) {
   personalWeek(career);
   weeklyBanter(career); // Sprüche im Chat – mit Folgen
   rollWeekEvent(career);
+  rollNotice(career); // Schwarzes Brett: kleines Vereinsleben-Thema
   sagaChat(career);
   if (career.round === 0 && career.offersSeason !== career.season) makeOffers(career, career.level ?? 1);
   career.week.rumors = makeRumors(career, createRng(hashSeed(career.seed, career.season, career.round, 3)));
