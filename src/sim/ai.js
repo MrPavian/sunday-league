@@ -435,7 +435,7 @@ function aiDecide(m, p, oppGoal) {
   // Auf großen Plätzen wird auch von weiter weg abgezogen.
   // Kurze Spiele: früher abziehen, damit überhaupt was passiert.
   // Auf dem großen Platz dauert der Weg nach vorn länger – dort noch etwas mehr.
-  const brisk = (shortGame(m) - 1) * (1 + Math.max(0, pitch.halfLength - 20) / 12);
+  const brisk = (shortGame(m) - 1) * (1 + Math.max(0, pitch.halfLength - 20) / 12) * (m.goalPace ?? 1);
   const range = 10 + p.attrs.shooting * 5 + (hasTrait(p, 'hammer') ? 4 : 0) + st.shoot + Math.max(0, (pitch.halfLength - 20) * 0.45) + brisk * 2.5;
   // Flügelspiel: Außen in Tornähe wird geflankt, nicht aus spitzem Winkel geschossen.
   if ((st.cross > 0.7 || heeds(m, p, 'wide')) && Math.abs(p.pos.z) > pitch.goalHalfWidth * 2.2 && Math.abs(p.pos.x - oppGoal.x) < pitch.halfLength * 0.45 && rng.chance(0.75)) {

@@ -1,5 +1,15 @@
 import { getLang, LANGS, tr } from '../core/i18n.js';
 import { ACTION_LABELS, REBINDABLE, bindingOf, keyName, resetBindings, setBinding } from '../input/Input.js';
+import { matchDuration } from '../sim/match.js';
+import { PITCHES } from '../sim/pitch.js';
+
+// Halbzeitlänge je Platz für die gewählte Spieldauer, z. B. „Hinterhof 1:30 · … · Rasenplatz 2:30".
+const clock = (sec) => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}`;
+function halfTable(length) {
+  const short = tr({ hinterhof: 'Hinterhof', halle: 'Halle', parkplatz: 'Parkplatz', park: 'Parkwiese', ascheplatz: 'Asche', rasenplatz: 'Rasen' }, { hinterhof: 'Backyard', halle: 'Hall', parkplatz: 'Car park', park: 'Park', ascheplatz: 'Ash', rasenplatz: 'Grass' });
+  const rows = Object.values(PITCHES).sort((a, b) => matchDuration(a, length) - matchDuration(b, length));
+  return `${tr('Pro Halbzeit', 'Per half')}: ${rows.map((p) => `${short[p.id] ?? p.id} ${clock(matchDuration(p, length) / 2)}`).join(' · ')}`;
+}
 
 // Einstellungen: Sprache, Ton, Grafik, Tempo, Trikots, Tastenbelegung. Beim allerersten Start
 // erscheint nur die Sprachwahl – zweisprachig, weil noch keine Sprache feststeht.
@@ -93,8 +103,9 @@ export class Settings {
         <div class="choice">${s.tempos.map((t, i) => `<button class="${s.tempo === i ? 'active' : ''}" data-action="tempo" data-value="${i}">${t.label.split(': ')[1] ?? t.label}</button>`).join('')}</div>
         <p class="hint">${tr('Im Spiel: Taste C.', 'In a match: key C.')}</p>
         <h4>${tr('Spieldauer', 'Match length')}</h4>
-        <div class="choice">${[['kurz', tr('2 × 2 Minuten', '2 × 2 minutes')], ['mittel', tr('2 × 3 Minuten', '2 × 3 minutes')], ['lang', tr('2 × 5 Minuten', '2 × 5 minutes')]].map(([id, label]) => `<button class="${s.length === id ? 'active' : ''}" data-action="length" data-value="${id}">${label}</button>`).join('')}</div>
-        <p class="hint">${tr('Gilt für alle Spiele, auch die simulierten der Liga. Turnierspiele sind etwas kürzer. Die Kraft ist auf die Spieldauer abgestimmt – müde werden die Jungs so oder so.', 'Applies to every match, including the simulated league games. Cup matches are a little shorter. Stamina is scaled to the length – the lads get tired either way.')}</p>
+        <div class="choice">${[['kurz', tr('Kurz', 'Short')], ['mittel', tr('Mittel', 'Medium')], ['lang', tr('Lang', 'Long')]].map(([id, label]) => `<button class="${s.length === id ? 'active' : ''}" data-action="length" data-value="${id}">${label}</button>`).join('')}</div>
+        <p class="hint">${halfTable(s.length)}</p>
+        <p class="hint">${tr('Je größer der Platz, desto länger die Halbzeit. Gilt für alle Spiele, auch die simulierten der Liga. Turnierspiele sind etwas kürzer. Die Kraft ist auf die Spieldauer abgestimmt – müde werden die Jungs so oder so.', 'The bigger the pitch, the longer the half. Applies to every match, including the simulated league games. Cup matches are a little shorter. Stamina is scaled to the length – the lads get tired either way.')}</p>
         <h4>${tr('Spielmodus', 'Play mode')}</h4>
         <div class="choice"><button class="${s.manager ? '' : 'active'}" data-action="mode" data-value="player">${tr('Selbst spielen', 'Play yourself')}</button><button class="${s.manager ? 'active' : ''}" data-action="mode" data-value="manager">${tr('Trainer an der Seitenlinie', 'Manager on the touchline')}</button></div>
         <p class="hint">${tr('Als Trainer spielt deine Mannschaft selbst. Du rufst rein: Abspielen, Schießen, Pressing, Decken, hinten dicht, aufrücken, über die Flügel – per Knopf oder Taste 1–7. Ob die Jungs hören, ist eine andere Frage.', 'As manager your team plays on its own. You shout instructions: pass, shoot, press, mark, defend, push up, use the wings – by button or keys 1–7. Whether the lads listen is another matter.')}${s.touch ? tr(' Auf dem Handy ist das der Standard.', ' This is the default on phones.') : ''}</p>

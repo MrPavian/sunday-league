@@ -291,8 +291,9 @@ function pass(m, p, a, fatigue, fromHands) {
 }
 
 // Strafraum: Nur hier darf der Torwart den Ball in die Hand nehmen.
-// Wie viel kürzer als 2 × 5 Minuten das Spiel ist (1 = volle Länge, bis 2,5).
-export const shortGame = (m) => clamp(600 / (m.duration || 600), 1, 2.5);
+// Wie viel kürzer als die lange Spieldauer auf diesem Platz das Spiel ist
+// (1 = volle Länge, bis 2,5). So ist „kurz" im Hinterhof so flott wie auf dem Rasen.
+export const shortGame = (m) => clamp((m.fullLength || 600) / (m.duration || 600), 1, 2.5);
 
 // Elfmeter – im Elfmeterschießen oder im Spiel: Der Torwart muss raten.
 const spotKick = (m) => m.phase === 'shootout' || m.time - (m.penaltyKick ?? -9) < 1.2;
@@ -353,7 +354,7 @@ export function keeperSaves(m) {
       // Elfmeter an den Pfosten: selbst bei richtiger Ecke schwer zu halten.
       const postShot = spotKick(m) ? clamp(Math.abs(lineZ) / gw, 0, 1) * 0.5 : 0;
       // Kurze Spiele: etwas mehr Tore, sonst endet die Hälfte 0:0.
-      const brisk = spotKick(m) ? 0 : (shortGame(m) - 1) * 0.1 * (1 + Math.max(0, pitch.halfLength - 20) / 12);
+      const brisk = spotKick(m) ? 0 : (shortGame(m) - 1) * 0.1 * (1 + Math.max(0, pitch.halfLength - 20) / 12) * (m.goalPace ?? 1);
       const beaten = clamp((bs - 8) * 0.02 + corner * 0.85 + pointBlank + postShot + brisk - 0.3 * p.attrs.keeping - (dist2d(p.pos, ball.pos) < 0.45 ? 0.15 : 0), 0.02, 0.7);
       if (rng.chance(beaten)) {
         p.catchCooldown = 0.7; // zu spät – der Ball ist vorbei

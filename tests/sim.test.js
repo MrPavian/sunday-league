@@ -855,3 +855,15 @@ describe('penalties and corners', () => {
     expect(result).not.toBeNull();
   });
 });
+
+describe('match length by pitch', () => {
+  it('the smallest pitches play 2 × 1:30, the big grass pitch 2 × 2:30 – scaled by the setting', async () => {
+    const { matchDuration } = await import('../src/sim/match.js');
+    expect(matchDuration(PITCHES.hinterhof, 'kurz')).toBe(180);
+    expect(matchDuration(PITCHES.halle, 'kurz')).toBe(180);
+    expect(matchDuration(PITCHES.rasenplatz, 'kurz')).toBe(300);
+    expect(matchDuration(PITCHES.rasenplatz, 'lang')).toBe(750);
+    const m = createMatch({ seed: 1, pitch: PITCHES.hinterhof, human: false });
+    expect(m.duration).toBe(180);
+  });
+});

@@ -27,18 +27,23 @@ import { startShootout, stepShootout } from './shootout.js';
 export { attackDir, getPlayer } from './players.js';
 export { startPoke, startTackle } from './tackles.js';
 
-// Spielzeit in Sekunden. Standard 2 × 2 Minuten; in den Einstellungen wählbar.
-export const MATCH_LENGTHS = { kurz: 240, mittel: 360, lang: 600 };
-export const MATCH = { duration: MATCH_LENGTHS.kurz };
+// Spielzeit in Sekunden. Sie hängt vom Platz ab: im Hinterhof und in der Halle kurz,
+// auf dem großen Rasenplatz am längsten. Die Einstellung „Spieldauer" ist ein Faktor.
+export const MATCH_LENGTHS = { kurz: 240, mittel: 360, lang: 600 }; // Richtwert (Ascheplatz)
+export const LENGTH_SCALE = { kurz: 1, mittel: 1.5, lang: 2.5 };
+export const HALF_BY_PITCH = { hinterhof: 90, halle: 90, parkplatz: 105, park: 105, ascheplatz: 120, rasenplatz: 150 }; // bei „kurz"
+export const MATCH = { length: 'kurz', duration: MATCH_LENGTHS.kurz };
 export const MATCH_DURATION = MATCH_LENGTHS.kurz;
+export const matchDuration = (pitch, length = MATCH.length) => 2 * 15 * Math.round(((HALF_BY_PITCH[pitch?.id] ?? 120) * (LENGTH_SCALE[length] ?? 1)) / 15); // Halbzeit auf Viertelminuten
 
 const NO_INPUT = { move: { x: 0, z: 0 }, sprint: false, shootHeld: false, pass: false, loft: false, hold: false, tackle: false, poke: false, switchPlayer: false, sub: false };
 
 const BENCH_ROLES = { 4: ['mid', 'fwd'], 5: ['def', 'mid', 'fwd'], 7: ['def', 'mid', 'fwd'] };
 
 // human: false → beide Teams von der KI gesteuert (Simulation ungespielter Partien).
-export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = true, human = true, duration = MATCH.duration, incidents = false } = {}) {
+export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = true, human = true, duration, incidents = false } = {}) {
   const rng = createRng(seed);
+  duration ??= matchDuration(pitch);
   const format = pitch.format ?? 5;
   // Taktik je Mannschaft: System (Aufstellung) und Spielstil.
   const plan = [0, 1].map((i) => normalizeTactic((teams ?? TEAM_PRESETS)[i]?.tactic, format));
@@ -75,6 +80,8 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = tr
     score: [0, 0],
     time: 0,
     duration,
+    fullLength: matchDuration(pitch, 'lang'), // Bezug für Kraft und Tempo in kurzen Spielen
+    goalPace: Math.min(1.8, Math.max(1, (240 / matchDuration(pitch, 'kurz')) ** 1.8)), // kleine Plätze, kurze Halbzeiten: etwas mehr Zug zum Tor
     half: 1,
     sidesSwapped: false,
     phase: 'play',
