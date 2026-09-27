@@ -95,6 +95,7 @@ describe('match', () => {
 describe('tackles', () => {
   const setup = (surface = 'grass') => {
     const m = createMatch({ seed: 11, pitch: { ...PARKING_LOT, surface: SURFACES[surface] }, kickoff: false });
+    m.noKnocks = true; // Regeltest: niemand bleibt verletzt liegen
     const tackler = getPlayer(m, '0-1');
     const victim = getPlayer(m, '1-1');
     Object.assign(tackler.pos, { x: -1, z: 0 });
@@ -198,6 +199,7 @@ describe('surfaces', () => {
       let n = 0;
       for (let seed = 1; seed <= 20; seed++) {
         const m = createMatch({ seed, pitch: onSurface(id), kickoff: false });
+        m.noKnocks = true;
         const p = getPlayer(m, '0-1');
         p.traits = [];
         Object.assign(m.ball.pos, { x: 12, z: 8 });
@@ -474,6 +476,7 @@ describe('referee', () => {
 
   it('a second yellow sends a player off and the team plays short', () => {
     const m = createMatch({ seed: 2, human: true, pitch: PITCHES.rasenplatz, kickoff: false });
+    m.noKnocks = true;
     const p = m.players.find((q) => q.id === m.controlledId);
     p.yellow = 1;
     m.referee.trait = 'pingelig';

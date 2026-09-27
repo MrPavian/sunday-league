@@ -23,7 +23,7 @@ export const INJURIES = {
   achilles: { label: tr('Achillessehnenriss', 'ruptured Achilles tendon'), weeks: [20, 32], w: 1.5 },
 };
 export const SEVERE = 5; // ab so vielen Wochen gibt es eine Diagnose mit Entscheidung
-const BASE_CHANCE = 0.018; // pro Spieler und Spiel
+const BASE_CHANCE = 0.008; // pro Spieler und Spiel – dazu kommt, was im Spiel selbst passiert (sim/knocks.js)
 
 function rollType(rng) {
   let r = rng.next() * Object.values(INJURIES).reduce((s, i) => s + i.w, 0);
@@ -48,8 +48,12 @@ export function rollInjuries(c, prepared, fixtureRound = c.round) {
     if (hasTrait(p, 'hart_im_nehmen')) chance *= 0.7;
     if (hasTrait(p, 'raucher')) chance *= 1.2;
     if ((p.injury?.severity ?? 0) >= 2) chance += 0.15; // die Schürfwunde war schlimmer als gedacht
-    if (!rng.chance(chance)) continue;
-    const type = rollType(rng);
+    // Im Spiel verletzt? Dann ist die Diagnose genau das – eine Prellung ohne Auswechslung
+    // ist oft am Montag schon vergessen.
+    const knock = p.knock;
+    if (knock && !knock.out && knock.kind === 'prellung' && rng.chance(0.6)) continue;
+    if (!knock && !rng.chance(chance)) continue;
+    const type = knock?.kind && INJURIES[knock.kind] ? knock.kind : rollType(rng);
     const def = INJURIES[type];
     const rolled = rng.int(def.weeks[0], def.weeks[1]);
     const weeks = medic ? Math.max(1, Math.round(rolled * 0.75)) : rolled;

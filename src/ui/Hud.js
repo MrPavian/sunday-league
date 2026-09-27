@@ -1,3 +1,4 @@
+import { MATCH_INJURIES } from '../sim/knocks.js';
 import { tr } from '../core/i18n.js';
 import { keyLabel } from '../input/Input.js';
 import { TRAITS } from '../data/traits.js';
@@ -174,7 +175,14 @@ export class Hud {
       else if (e.type === 'sub') {
         const out = findAnyPlayer(match, e.outId);
         const inn = findAnyPlayer(match, e.inId);
-        this.toast(tr(`Wechsel ${short(e.team)}: ${inn.name.split(' ')[0]} für ${out.name.split(' ')[0]}`, `Sub ${short(e.team)}: ${inn.name.split(' ')[0]} for ${out.name.split(' ')[0]}`), 1.6, 2);
+        this.toast(e.forced ? tr(`${out.name.split(' ')[0]} muss raus – ${inn.name.split(' ')[0]} kommt`, `${out.name.split(' ')[0]} has to come off – ${inn.name.split(' ')[0]} on`) : tr(`Wechsel ${short(e.team)}: ${inn.name.split(' ')[0]} für ${out.name.split(' ')[0]}`, `Sub ${short(e.team)}: ${inn.name.split(' ')[0]} for ${out.name.split(' ')[0]}`), 1.8, 2);
+      } else if (e.type === 'injury') {
+        const p = findAnyPlayer(match, e.playerId);
+        const label = MATCH_INJURIES[e.kind]?.label ?? '';
+        this.toast(e.out ? tr(`${p.name.split(' ')[0]} bleibt liegen – ${label}. Das sieht nicht gut aus.`, `${p.name.split(' ')[0]} stays down – ${label}. That does not look good.`) : tr(`${p.name.split(' ')[0]} humpelt weiter (${label})`, `${p.name.split(' ')[0]} limps on (${label})`), 2.2, 3);
+      } else if (e.type === 'injury_off') {
+        const p = findAnyPlayer(match, e.playerId);
+        this.toast(tr(`${p.name.split(' ')[0]} geht vom Platz – kein Wechsel mehr möglich, ${short(e.team)} in Unterzahl`, `${p.name.split(' ')[0]} goes off – no subs left, ${short(e.team)} down to ${match.players.filter((q) => q.team === e.team).length}`), 2.6, 4);
       } else if (e.type === 'incident') this.toast(e.text, e.stage === 'start' ? 3.5 : 2.5, 5);
       else if (e.type === 'lightning') this.lightning();
       else if (e.type === 'end') this.toast(match.shootout?.done ? tr(`ENTSCHIEDEN – ${short(shootoutScore(match.shootout)[0] > shootoutScore(match.shootout)[1] ? 0 : 1)} gewinnt im Elfmeterschießen`, `DECIDED – ${short(shootoutScore(match.shootout)[0] > shootoutScore(match.shootout)[1] ? 0 : 1)} win on penalties`) : tr('ABPFIFF', 'FULL TIME'), 3, 9);

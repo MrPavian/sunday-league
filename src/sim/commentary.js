@@ -1,6 +1,7 @@
 // Liveticker: macht aus den Spielereignissen kurze Kommentarzeilen – für simulierte
 // Partien, die man nicht selbst spielt. Nutzt einen eigenen Zufall, damit der
 // Ticker das Ergebnis nicht verändert.
+import { MATCH_INJURIES } from './knocks.js';
 import { bondOf, isBad, isGood } from './bonds.js';
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
@@ -152,6 +153,19 @@ export function createCommentator(m, seed = 1) {
           else add(pick(tr(['Foul von {p} an {v}. Freistoß.', '{p} erwischt {v} am Knöchel. Freistoß.', '{p} geht zu hart rein – {v} liegt.'], ['Foul by {p} on {v}. Free kick.', '{p} catches {v} on the ankle. Free kick.', '{p} goes in too hard – {v} is down.']), { p: surname(p), v: surname(v) }), 'foul');
           break;
         }
+        case 'injury': {
+          const p = who(e.playerId);
+          const label = MATCH_INJURIES[e.kind]?.label ?? '';
+          add(e.out ? pick(tr(['{p} bleibt liegen und hält sich das Bein. {l}. Für ihn geht es nicht weiter.', 'Autsch. {p} ({l}) muss behandelt werden – das war es für heute.'], ['{p} stays down clutching his leg. {l}. He cannot carry on.', 'Ouch. {p} ({l}) needs treatment – that is it for today.']), { p: surname(p), l: label }) : tr(`${surname(p)} hat was abbekommen (${label}) – humpelt aber weiter.`, `${surname(p)} took a knock (${label}) – but limps on.`), 'foul');
+          break;
+        }
+        case 'injury_off':
+          add(tr(`${surname(who(e.playerId))} geht vom Platz, kein Wechsel mehr möglich – ${team(e.team)} spielt in Unterzahl.`, `${surname(who(e.playerId))} goes off with no subs left – ${team(e.team)} are a man down.`), 'red');
+          break;
+        case 'sub':
+          if (e.forced) add(tr(`Verletzungsbedingter Wechsel bei ${team(e.team)}: ${surname(who(e.inId))} kommt für ${surname(who(e.outId))}.`, `Injury substitution for ${team(e.team)}: ${surname(who(e.inId))} replaces ${surname(who(e.outId))}.`));
+          else if (rng.chance(0.5)) add(tr(`Wechsel bei ${team(e.team)}: ${surname(who(e.inId))} für ${surname(who(e.outId))}.`, `Substitution for ${team(e.team)}: ${surname(who(e.inId))} for ${surname(who(e.outId))}.`));
+          break;
         case 'no_call':
           if (rng.chance(0.35)) add(m.referee ? tr(`${surname(who(e.playerId))} legt ${surname(who(e.victimId))} um – der Schiri lässt laufen.`, `${surname(who(e.playerId))} takes out ${surname(who(e.victimId))} – the ref waves play on.`) : tr(`${surname(who(e.victimId))} beschwert sich – ohne Schiri geht es einfach weiter.`, `${surname(who(e.victimId))} complains – with no ref, play just goes on.`), 'foul');
           break;

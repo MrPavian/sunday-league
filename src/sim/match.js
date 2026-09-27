@@ -13,7 +13,7 @@ import { normalizeTactic, systemFormation } from './tactics.js';
 import { applyFit } from './fit.js';
 import { generateTeam } from './generator.js';
 import { PARKING_LOT } from './pitch.js';
-import { attackDir, getPlayer, setControlled, teamAttacking } from './players.js';
+import { attackDir, clampToPitch, getPlayer, setControlled, teamAttacking } from './players.js';
 import { makeEntity, requestSub, restBench, swapSides } from './squad.js';
 import { shout } from './coach.js';
 import { createStats, trackStep } from './stats.js';
@@ -23,6 +23,7 @@ import { applyHold } from './holding.js';
 import { checkIncident, incidentOnBall, planIncident, stepIncident } from './incidents.js';
 import { resolveTackles, startPoke, startTackle, stateMove } from './tackles.js';
 import { startShootout, stepShootout } from './shootout.js';
+import { stepKnocks } from './knocks.js';
 
 export { attackDir, getPlayer } from './players.js';
 export { startPoke, startTackle } from './tackles.js';
@@ -204,6 +205,13 @@ function step(m, input, dt) {
     m.events.push({ type: 'late_arrival', playerId: p.id, team: p.team });
   }
   if (checkIncident(m, dt)) return;
+  // Einer liegt ohne Foul am Boden: Der Schiri (oder die Mannschaft) unterbricht.
+  stepKnocks(m, dt);
+  if (m.knockStop != null && m.time >= m.knockStop && m.phase === 'play' && !m.ball.holder) {
+    m.knockStop = null;
+    startSetPiece(m, { type: 'freekick', team: m.lastTouchTeam ?? 0, spot: clampToPitch(pitch, m.ball.pos.x, m.ball.pos.z, 1) });
+    return;
+  }
   if (input.switchPlayer) switchToNearest(m);
   updateTactics(m, dt);
 

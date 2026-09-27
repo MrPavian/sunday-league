@@ -1,7 +1,12 @@
-// Ersatzbank & Wechsel. Wie im Hobbyfußball: rollende Wechsel bei jeder
-// Unterbrechung, wer raus ist, darf später wieder rein.
+// Ersatzbank & Wechsel. Gewechselt wird bei jeder Unterbrechung. Die Regeln kommen
+// vom Spiel (m.subRule): in der Freizeitliga rollend mit Rückwechsel, in der
+// Kreisklasse begrenzt. Verletzte müssen runter – ohne Ersatz geht es in Unterzahl
+// weiter.
 import { dist2d } from '../core/math.js';
 import { formationSpot } from './formation.js';
+import { setControlled } from './players.js';
+
+export const FREE_SUBS = { limit: Infinity, reentry: true };
 
 export function makeEntity(pl, team, index, role, home) {
   return {
@@ -47,31 +52,84 @@ export function restBench(m, dt) {
   for (const team of m.bench) for (const p of team) p.stamina = Math.min(1, p.stamina + 0.02 * dt);
 }
 
-// Menschlicher Wechselwunsch: der Müdeste raus, der Frischeste rein.
+// Menschlicher Wechselwunsch ohne Auswahl: der Müdeste raus, der Frischeste rein.
 export function requestSub(m, team) {
-  if (!m.bench[team].length) return false;
+  if (!usableBench(m, team).length || !subsLeft(m, team)) return false;
   m.subRequests[team] = true;
   m.events.push({ type: 'sub_requested', team });
   return true;
 }
 
+// Geplanter Wechsel: genau dieser raus, genau der rein – bei der nächsten Unterbrechung.
+export function planSub(m, team, outId, inId) {
+  const out = m.players.find((p) => p.id === outId && p.team === team);
+  const inn = usableBench(m, team).find((p) => p.id === inId);
+  if (!out || !inn || !subsLeft(m, team)) return false;
+  (m.subPlan ??= [null, null])[team] = { outId, inId };
+  m.events.push({ type: 'sub_requested', team });
+  return true;
+}
+
+const rule = (m) => m.subRule ?? FREE_SUBS;
+export const subsLeft = (m, team) => rule(m).limit - (m.subsUsed?.[team] ?? 0);
+// Wer darf rein? Nicht verletzt, nicht schon ausgewechselt (ohne Rückwechsel), nicht noch im Auto.
+export const usableBench = (m, team) => m.bench[team].filter((b) => !b.usedUp && !b.mustLeave && !(b.late && m.half === 1));
+
+// Verletzt und kein Ersatz: Er geht vom Platz, die Mannschaft spielt mit einem weniger.
+function leaveInjured(m, p) {
+  const i = m.players.indexOf(p);
+  if (i < 0) return;
+  m.players.splice(i, 1);
+  p.injuredOff = true;
+  m.sentOff.push(p);
+  if (m.ball.holder === p.id) m.ball.holder = null;
+  const mates = m.players.filter((q) => q.team === p.team);
+  // Ohne Torwart geht einer ins Tor – der, der am nächsten dran steht.
+  if (p.role === 'gk' && mates.length) {
+    const goalX = p.home.x;
+    const keeper = mates.reduce((a, b) => (Math.abs(b.pos.x - goalX) < Math.abs(a.pos.x - goalX) ? b : a));
+    Object.assign(keeper, { role: 'gk', home: p.home, formationEntry: p.formationEntry });
+  }
+  if (m.controlledId === p.id) {
+    const next = mates.filter((q) => q.role !== 'gk').sort((a, b) => dist2d(a.pos, m.ball.pos) - dist2d(b.pos, m.ball.pos))[0];
+    if (next) setControlled(m, next.id);
+    else m.controlledId = null;
+  }
+  m.events.push({ type: 'injury_off', team: p.team, playerId: p.id });
+}
+
 // Wird an jeder Unterbrechung aufgerufen (Standard, Tor, Halbzeit).
 export function processSubs(m) {
   for (let team = 0; team < 2; team++) {
-    // Wer selbst spielt oder coacht, wechselt selbst.
+    // 1. Verletzte zuerst – egal, wer coacht.
+    for (const hurt of m.players.filter((p) => p.team === team && p.mustLeave)) {
+      const pool = subsLeft(m, team) > 0 ? usableBench(m, team) : [];
+      const incoming = pool.find((b) => (hurt.role === 'gk' ? b.position === 'gk' : b.position === hurt.role)) ?? pool.find((b) => b.position !== 'gk') ?? pool[0];
+      if (incoming) substitute(m, hurt, incoming, { forced: true });
+      else leaveInjured(m, hurt);
+    }
+    // 2. Selbst geplanter Wechsel.
+    const plan = m.subPlan?.[team];
+    if (plan) {
+      m.subPlan[team] = null;
+      m.subRequests[team] = false;
+      const out = m.players.find((p) => p.id === plan.outId);
+      const inn = usableBench(m, team).find((p) => p.id === plan.inId);
+      if (out && inn && subsLeft(m, team) > 0) substitute(m, out, inn);
+      continue;
+    }
+    // 3. Automatisch: Wer selbst spielt oder coacht, wechselt nur auf Wunsch.
     const human = team === m.humanTeam || (m.manager && team === m.coachTeam);
     if (human && !m.subRequests[team]) continue;
     m.subRequests[team] = false;
-    const bench = m.bench[team];
-    if (!bench.length) continue;
+    if (subsLeft(m, team) <= 0) continue;
+    const ready = usableBench(m, team);
+    if (!ready.length) continue;
     const onPitch = m.players.filter((p) => p.team === team && p.role !== 'gk');
     const tired = onPitch.reduce((a, b) => (b.stamina < a.stamina ? b : a), onPitch[0]);
     if (!tired) continue;
     // Die KI wechselt erst, wenn jemand wirklich platt ist.
     if (!human && (tired.stamina > 0.45 || m.rng.next() < 0.3)) continue;
-    // Wer selbst wechselt, entscheidet selbst – die KI nur für echte Frische.
-    // Wer erst zur zweiten Halbzeit kommt, sitzt vorher noch im Auto.
-    const ready = bench.filter((b) => !(b.late && m.half === 1));
     const fresh = human ? ready : ready.filter((b) => b.stamina > tired.stamina + 0.2);
     if (!fresh.length) continue;
     const incoming = fresh.find((b) => b.position === tired.role) ?? fresh.reduce((a, b) => (b.stamina > a.stamina ? b : a));
@@ -79,11 +137,14 @@ export function processSubs(m) {
   }
 }
 
-export function substitute(m, out, incoming) {
+export function substitute(m, out, incoming, { forced = false } = {}) {
   const idx = m.players.indexOf(out);
   const bench = m.bench[out.team];
   bench.splice(bench.indexOf(incoming), 1);
   bench.push(out);
+  (m.subsUsed ??= [0, 0])[out.team]++;
+  // Verletzt oder ohne Rückwechsel: Für ihn ist das Spiel vorbei.
+  if (out.mustLeave || !rule(m).reentry) out.usedUp = true;
   Object.assign(incoming, {
     role: out.role,
     home: out.home,
@@ -102,7 +163,7 @@ export function substitute(m, out, incoming) {
   m.players[idx] = incoming;
   if (m.controlledId === out.id) m.controlledId = incoming.id;
   if (m.ball.holder === out.id) m.ball.holder = null;
-  m.events.push({ type: 'sub', team: out.team, outId: out.id, inId: incoming.id });
+  m.events.push({ type: 'sub', team: out.team, outId: out.id, inId: incoming.id, forced });
 }
 
 // Seitenwechsel: neue Grundpositionen für alle.

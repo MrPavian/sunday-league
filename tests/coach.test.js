@@ -11,7 +11,7 @@ function play(seed, call, seconds = 90) {
   const m = enableManager(createMatch({ seed, pitch: PITCHES.rasenplatz, human: true, duration: seconds }));
   let depth = 0;
   let samples = 0;
-  for (let i = 0; i < seconds * 60 * 1.2 && m.phase !== 'ended'; i++) {
+  for (let i = 0; i < seconds * 60 * 1.6 && m.phase !== 'ended'; i++) { // Unterbrechungen kosten Zeit
     const input = i % 90 === 0 && call ? { shout: call } : undefined;
     stepMatch(m, input, DT);
     m.events.length = 0;

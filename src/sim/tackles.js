@@ -5,6 +5,7 @@ import { hasTrait } from '../data/traits.js';
 import { clampPlayer, inKeeperBox } from './actions.js';
 import { attackDir, getPlayer } from './players.js';
 import { penaltySpot, startSetPiece } from './setpieces.js';
+import { foulInjury } from './knocks.js';
 import { judgeDissent, judgeFoul, refereeSees } from './referee.js';
 
 const COMPLAINTS = {
@@ -167,12 +168,14 @@ export function resolveTackles(m) {
         } else judgeFoul(m, p, 0.03);
         o.state = 'normal';
         o.stateTimer = 0;
+        // Bleibt er liegen? Grätschen von hinten tun am meisten weh.
+        const hurtNow = foulInjury(m, o, { hard: slide && o.facing.x * p.facing.x + o.facing.z * p.facing.z > 0.5 });
         if (penalty) {
           startSetPiece(m, { type: 'penalty', team: o.team, spot: penaltySpot(m, o.team) });
           return true;
         }
         const spot = { x: o.pos.x, z: o.pos.z };
-        startSetPiece(m, { type: 'freekick', team: o.team, spot, takerId: o.id });
+        startSetPiece(m, { type: 'freekick', team: o.team, spot, takerId: hurtNow ? null : o.id });
         return true;
       }
     }

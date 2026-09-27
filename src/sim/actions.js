@@ -6,6 +6,7 @@ import { hasTrait } from '../data/traits.js';
 import { ballSpeed } from './ball.js';
 import { attackDir, distToSegment, setControlled, wallPush } from './players.js';
 import { aiSkill, keeperReaction } from './ai.js';
+import { knockSpeed } from './knocks.js';
 
 export const REACH = 0.75;
 
@@ -22,6 +23,7 @@ export function movePlayer(m, p, intent, dt, leaders) {
   if (p.heldUntil > m.time) maxSpeed *= 0.45; // wird am Trikot festgehalten
   if (p.holdingId != null) maxSpeed *= 0.7;
   if (p.injury) maxSpeed *= 1 - 0.03 * p.injury.severity * (hasTrait(p, 'hart_im_nehmen') ? 0.3 : 1);
+  maxSpeed *= knockSpeed(p); // angeschlagen humpelt man
 
   const speed = len(p.vel.x, p.vel.z);
   let drain = sprint ? 0.02 : speed > 2 ? 0.0012 : -0.008;
