@@ -35,7 +35,8 @@ import { setLightMood } from './render/props.js';
 import { disposeTree, mergeStatic } from './render/merge.js';
 import { applyColorSafeKits } from './render/colorSafe.js';
 import { VENUES, venueById } from './render/venues/index.js';
-import { createMatch, MATCH, MATCH_LENGTHS, stepMatch } from './sim/match.js';
+import { createMatch, HALF_MAX, HALF_MIN, MATCH, MATCH_LENGTHS, matchDuration, stepMatch } from './sim/match.js';
+import { PITCHES } from './sim/pitch.js';
 import { SURFACES } from './sim/surfaces.js';
 import { applyWeather, WEATHER } from './career/weather.js';
 import { ChallengeScreen } from './ui/Challenges.js';
@@ -111,6 +112,9 @@ try {
   difficulty = ['easy', 'normal', 'hard'].includes(localStorage.getItem('sunday-league:difficulty')) ? localStorage.getItem('sunday-league:difficulty') : 'normal';
   autoSwitchDefense = localStorage.getItem('sunday-league:autoswitch') === '1';
   MATCH.length = MATCH_LENGTHS[localStorage.getItem('sunday-league:length')] ? localStorage.getItem('sunday-league:length') : 'kurz';
+  const halves = JSON.parse(localStorage.getItem('sunday-league:halves') ?? 'null');
+  if (halves && typeof halves === 'object') MATCH.halves = halves;
+  if (localStorage.getItem('sunday-league:cupshare') === '1') MATCH.cupShare = 1;
   const storedMode = localStorage.getItem('sunday-league:mode');
   if (storedMode) managerMode = storedMode === 'manager';
   if (params.has('trainer')) managerMode = true;
@@ -237,7 +241,7 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
   onSettings() {
     menu.paused = true;
     settings.show({
-      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe, difficulty, autoSwitch: autoSwitchDefense, manager: managerMode, touch: TOUCH, length: MATCH.length }),
+      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe, difficulty, autoSwitch: autoSwitchDefense, manager: managerMode, touch: TOUCH, length: MATCH.halves ? 'custom' : MATCH.length, cupShort: MATCH.cupShare < 1 }),
       onLang: switchLanguage,
       onChange(key, value) {
         if (key === 'sound' && sound.muted !== (value === 'off')) sound.toggleMute();
@@ -261,8 +265,24 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
           remember('sunday-league:difficulty', value);
         }
         if (key === 'length' && MATCH_LENGTHS[value]) {
+          // Voreinstellung wählen: setzt alle Plätze zurück auf die Vorgabe.
           MATCH.length = value;
+          MATCH.halves = null;
           remember('sunday-league:length', value);
+          remember('sunday-league:halves', 'null');
+        }
+        if (key === 'half') {
+          const [id, step] = value.split(':');
+          const pitch = PITCHES[id];
+          if (pitch) {
+            const now = matchDuration(pitch) / 2;
+            MATCH.halves = { ...(MATCH.halves ?? {}), [id]: Math.max(HALF_MIN, Math.min(HALF_MAX, now + Number(step))) };
+            remember('sunday-league:halves', JSON.stringify(MATCH.halves));
+          }
+        }
+        if (key === 'cupshare') {
+          MATCH.cupShare = value === 'on' ? 0.75 : 1;
+          remember('sunday-league:cupshare', MATCH.cupShare === 1 ? '1' : '0');
         }
         if (key === 'mode') {
           managerMode = value === 'manager';

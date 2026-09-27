@@ -867,3 +867,21 @@ describe('match length by pitch', () => {
     expect(m.duration).toBe(180);
   });
 });
+
+describe('custom half lengths', () => {
+  it('own values per pitch from the settings win over the preset, cups follow the share', async () => {
+    const { MATCH, matchDuration } = await import('../src/sim/match.js');
+    const saved = { halves: MATCH.halves, cupShare: MATCH.cupShare, length: MATCH.length };
+    try {
+      MATCH.halves = { hinterhof: 150 };
+      expect(createMatch({ seed: 2, pitch: PITCHES.hinterhof, human: false }).duration).toBe(300);
+      expect(createMatch({ seed: 2, pitch: PITCHES.halle, human: false }).duration).toBe(180); // Vorgabe bleibt
+      expect(matchDuration(PITCHES.hinterhof, 'lang')).toBe(450); // Bezugsgröße bleibt die Vorgabe
+      MATCH.halves = null;
+      MATCH.length = 'lang';
+      expect(createMatch({ seed: 2, pitch: PITCHES.rasenplatz, human: false }).duration).toBe(750);
+    } finally {
+      Object.assign(MATCH, saved);
+    }
+  });
+});

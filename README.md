@@ -34,7 +34,7 @@ Alternativ die Browser-Version in Chrome öffnen und „Zum Startbildschirm hinz
 *Flügelspiel*, *Kurzpassspiel*, *Hohes Pressing* oder *Mauern*. Die Spieler halten ihre Position im System, der Block
 verschiebt sich mit dem Ball, verteidigt wird in Zonen. Jeder Gegner hat seine eigene Handschrift, sie steht beim Anpfiff unter der Anzeigetafel.
 
-**Spieldauer je Platz:** vom Hinterhof und der Halle (2 × 1:30) bis zum großen Rasenplatz (2 × 2:30). In den Einstellungen auch mittel (× 1,5) oder lang (× 2,5). Kraft und Torgefahr sind auf die Länge abgestimmt.
+**Spieldauer je Platz:** vom Hinterhof und der Halle (2 × 1:30) bis zum großen Rasenplatz (2 × 2:30) – in den Einstellungen als Voreinstellung (kurz, mittel, lang) oder pro Platz in Viertelminuten frei einstellbar, Turnierspiele wahlweise kürzer oder in voller Länge. Kraft und Torgefahr sind auf die Länge abgestimmt.
 
 **Drei Arten, ein Spiel zu erleben** – im Vereinsheim vor jedem Anpfiff wählbar:
 1. **Selbst spielen** (PC, Tastatur oder Gamepad).

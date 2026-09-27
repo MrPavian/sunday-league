@@ -991,3 +991,8 @@ body.touch .coach-play { background: #2f6f3a; }
   .club-panel table { display: block; max-width: 100%; overflow-x: auto; }
   .club-panel th, .club-panel td { padding-left: 4px; padding-right: 4px; }
 }
+
+/* Halbzeit je Platz in den Einstellungen */
+.half-grid { display: grid; grid-template-columns: minmax(110px, max-content) 40px 56px 40px; justify-content: start; gap: 6px 10px; align-items: center; margin: 6px 0 10px; }
+.half-grid b { text-align: center; font-variant-numeric: tabular-nums; }
+.half-grid button { width: 40px; min-width: 0; padding: 4px 0; }
