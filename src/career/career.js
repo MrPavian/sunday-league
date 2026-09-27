@@ -8,9 +8,9 @@ import { autoTrip } from './trip.js';
 import { absenceMul as facilityAbsence, fansMul, recruitBonus, weeklyFacilities, youthExtra, youthGrowthMul } from './facilities.js';
 import { createRng } from '../core/rng.js';
 import { createPlayerPool, ratePlayer } from '../sim/generator.js';
-import { createMatch, stepMatch } from '../sim/match.js';
+import { createMatch, MATCH, stepMatch } from '../sim/match.js';
 import { PITCHES } from '../sim/pitch.js';
-import { allPlayers } from '../sim/squad.js';
+import { allPlayers, subRuleFor } from '../sim/squad.js';
 import { gradePlayers } from '../sim/stats.js';
 import { absenceChance, DECLINE_TEXT, FAREWELL, INJURED, JOIN_TEXT, LATE, noReasons, NUDGE_NO, NUDGE_YES, RUMOR_SOURCES, YES } from './chat.js';
 import { EXTRA_CLUBS, HUMAN_CLUB_DEFAULT, LEAGUES, leagueClubs, MAX_LEVEL } from './clubs.js';
@@ -887,6 +887,8 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   const humanIsAway = human && away.human;
   const teams = humanIsAway ? [teamAway, teamHome] : [teamHome, teamAway];
   const match = createMatch({ seed: rng.int(1, 1e9), pitch, teams, human, duration, incidents: true });
+  // Freizeitliga: fliegend wechseln; ab der Kreisklasse zählt der Schiri mit.
+  match.subRule = subRuleFor(MATCH.subs, career.level);
   // Derby: hitziger, mehr Karten – außer man hat sich aufs faire Grillen geeinigt.
   match.derby = (isDerbyFixture(career, fixture) && !career.week?.derbyFair) || grudgeMatch(career, home.human ? away.id : home.id);
   // Eigenes Spiel: Manchmal kommt am Spieltag etwas dazwischen.

@@ -14,7 +14,7 @@ import { applyFit } from './fit.js';
 import { generateTeam } from './generator.js';
 import { PARKING_LOT } from './pitch.js';
 import { attackDir, clampToPitch, getPlayer, setControlled, teamAttacking } from './players.js';
-import { makeEntity, requestSub, restBench, swapSides } from './squad.js';
+import { makeEntity, requestSub, restBench, subRuleFor, swapSides } from './squad.js';
 import { shout } from './coach.js';
 import { createStats, trackStep } from './stats.js';
 import { createReferee, stepReferee } from './referee.js';
@@ -38,7 +38,8 @@ const CROWD_BY_PITCH = { hinterhof: 3, parkplatz: 6, park: 9, ascheplatz: 15, ra
 
 // halves: eigene Halbzeitlängen je Platz aus den Einstellungen (überschreiben die Vorgabe).
 // cupShare: Anteil der Spieldauer bei Turnierspielen (Standard 75 %).
-export const MATCH = { length: 'kurz', duration: MATCH_LENGTHS.kurz, halves: null, cupShare: 0.75 };
+// subs: Wechselregel ('liga' | 'frei' | 'begrenzt'), siehe subRuleFor.
+export const MATCH = { length: 'kurz', duration: MATCH_LENGTHS.kurz, halves: null, cupShare: 0.75, subs: 'liga' };
 export const MATCH_DURATION = MATCH_LENGTHS.kurz;
 export const HALF_MIN = 45;
 export const HALF_MAX = 600;
@@ -89,6 +90,8 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = tr
     players,
     bench,
     subRequests: [false, false],
+    subRule: subRuleFor(MATCH.subs),
+    subsUsed: [0, 0],
     ball: createBall(),
     score: [0, 0],
     time: 0,

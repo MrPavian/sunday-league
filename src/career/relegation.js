@@ -4,9 +4,10 @@
 // im Rückspiel Elfmeter geschossen – selbst gespielt live, simuliert gewürfelt.
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
-import { createMatch } from '../sim/match.js';
+import { createMatch, MATCH } from '../sim/match.js';
 import { PITCHES } from '../sim/pitch.js';
 import { shootoutScore } from '../sim/shootout.js';
+import { subRuleFor } from '../sim/squad.js';
 import { LEAGUES, MAX_LEVEL } from './clubs.js';
 import { humanClub, resolveKitClash, simulateSync, squadPicker, SQUAD_SHAPES, table, teamForMatch } from './career.js';
 import { adjustMood } from './events.js';
@@ -80,6 +81,7 @@ export function prepareRelegationMatch(career, { human = false, duration } = {})
   const humanIsAway = human && !homeIsMe;
   const teams = humanIsAway ? [teamAway, teamHome] : [teamHome, teamAway];
   const match = createMatch({ seed: rng.int(1, 1e9), pitch, teams, human, duration, incidents: true });
+  match.subRule = subRuleFor(MATCH.subs, higher.level);
   // Rückspiel: Hinspiel-Tore zählen mit; bei Gleichstand Elfmeterschießen.
   if (r.leg === 1) {
     match.knockout = true;

@@ -999,3 +999,27 @@ body.touch .coach-play { background: #2f6f3a; }
 
 /* Schwarzes Brett */
 .event-card.board { border-left-color: #c9b27a; background: #2e2a20; }
+
+/* Wechseltafel: Spiel steht, wer raus, wer rein. */
+#subpanel { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; padding: 16px; background: rgba(10, 12, 14, 0.6); z-index: 6; text-shadow: var(--shadow); }
+#subpanel[hidden] { display: none; }
+.sub-panel { width: min(640px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; background: rgba(22, 24, 28, 0.96); border: 2px solid #000; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.sub-panel header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.sub-panel h3, .sub-panel h4 { margin: 0; }
+.sub-panel h4 { margin-bottom: 4px; opacity: 0.8; }
+.sub-panel header small { color: var(--accent); }
+.sub-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sub-row { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; width: 100%; text-align: left; font: inherit; color: var(--ink); background: #1d2126; border: 2px solid #000; padding: 6px 8px; margin-bottom: 4px; cursor: pointer; text-shadow: var(--shadow); }
+.sub-row small { opacity: 0.7; }
+.sub-row.active { border-color: var(--accent); background: #2b2f1c; }
+.sub-row.active.col { box-shadow: 0 0 0 2px var(--accent); }
+.sub-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sub-knock { color: #ff8a7a; font-style: normal; font-size: 0.85em; }
+.sub-stamina { grid-column: 1 / -1; height: 5px; background: linear-gradient(90deg, #6fd36f var(--v), #333 var(--v)); border: 1px solid #000; }
+.sub-hurt, .sub-blocked { margin: 0; color: #ff8a7a; }
+.sub-panel footer { display: flex; flex-wrap: wrap; gap: 6px; }
+.sub-panel footer button { font: inherit; color: var(--ink); background: #1d2126; border: 2px solid #000; padding: 8px 12px; cursor: pointer; text-shadow: var(--shadow); min-height: 40px; }
+.sub-panel footer button.primary { background: #3a3a14; border-color: var(--accent); }
+.sub-panel footer button:disabled { opacity: 0.5; cursor: default; }
+.sub-panel .hint { margin: 0; opacity: 0.7; font-size: 0.85em; }
+@media (max-width: 520px) { .sub-cols { grid-template-columns: 1fr; } }

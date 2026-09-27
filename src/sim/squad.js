@@ -7,6 +7,15 @@ import { formationSpot } from './formation.js';
 import { setControlled } from './players.js';
 
 export const FREE_SUBS = { limit: Infinity, reentry: true };
+export const LIMITED_SUBS = { limit: 4, reentry: false };
+
+// Welche Regel gilt? mode aus den Einstellungen: 'liga' (Freizeitliga frei, ab der
+// Kreisklasse begrenzt; Freundschaftsspiele frei), 'frei' oder 'begrenzt'.
+export function subRuleFor(mode, level = null) {
+  if (mode === 'frei') return FREE_SUBS;
+  if (mode === 'begrenzt') return LIMITED_SUBS;
+  return (level ?? 1) > 1 ? LIMITED_SUBS : FREE_SUBS;
+}
 
 export function makeEntity(pl, team, index, role, home) {
   return {
@@ -123,6 +132,8 @@ export function processSubs(m) {
     if (human && !m.subRequests[team]) continue;
     m.subRequests[team] = false;
     if (subsLeft(m, team) <= 0) continue;
+    // Begrenzte Wechsel: Die KI hält den letzten für eine Verletzung zurück, bis es spät ist.
+    if (!human && Number.isFinite(rule(m).limit) && Math.min(subsLeft(m, team), usableBench(m, team).length) === 1 && m.time < m.duration * 0.8) continue;
     const ready = usableBench(m, team);
     if (!ready.length) continue;
     const onPitch = m.players.filter((p) => p.team === team && p.role !== 'gk');

@@ -49,6 +49,7 @@ import { Menu } from './ui/Menu.js';
 import { PoolBrowser } from './ui/PoolBrowser.js';
 import { TitleScreen } from './ui/TitleScreen.js';
 import { ShoutBar } from './ui/ShoutBar.js';
+import { SubPanel } from './ui/SubPanel.js';
 import { coachAway } from './career/personal.js';
 import { enableManager } from './sim/coach.js';
 import { Settings } from './ui/Settings.js';
@@ -89,6 +90,8 @@ if (params.has('debug')) globalThis.__sl = { renderer: pixel.renderer, scene, TH
 const input = new Input();
 const shoutBar = new ShoutBar(document.getElementById('shoutbar') ?? document.body.appendChild(Object.assign(document.createElement('div'), { id: 'shoutbar', hidden: true })), input);
 const hud = new Hud(document.getElementById('hud'));
+const subPanel = new SubPanel(document.body.appendChild(Object.assign(document.createElement('div'), { id: 'subpanel', hidden: true })));
+let drainInput = false; // nach dem Schließen der Wechseltafel: liegengebliebene Tasten verwerfen
 const endScreen = new EndScreen(document.getElementById('end'));
 const sound = new Sound();
 const poolBrowser = new PoolBrowser(document.getElementById('pool'));
@@ -116,6 +119,7 @@ try {
   const halves = JSON.parse(localStorage.getItem('sunday-league:halves') ?? 'null');
   if (halves && typeof halves === 'object') MATCH.halves = halves;
   if (localStorage.getItem('sunday-league:cupshare') === '1') MATCH.cupShare = 1;
+  if (['frei', 'begrenzt'].includes(localStorage.getItem('sunday-league:subs'))) MATCH.subs = localStorage.getItem('sunday-league:subs');
   if (localStorage.getItem('sunday-league:leaguesize') === '6') leagueSize = 6;
   const storedMode = localStorage.getItem('sunday-league:mode');
   if (storedMode) managerMode = storedMode === 'manager';
@@ -243,7 +247,7 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
   onSettings() {
     menu.paused = true;
     settings.show({
-      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe, difficulty, autoSwitch: autoSwitchDefense, manager: managerMode, touch: TOUCH, length: MATCH.halves ? 'custom' : MATCH.length, cupShort: MATCH.cupShare < 1, leagueSize: career ? career.nextLeagueSize ?? career.leagueSize ?? 6 : leagueSize, leagueSizeNow: career?.leagueSize ?? null }),
+      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe, difficulty, autoSwitch: autoSwitchDefense, manager: managerMode, touch: TOUCH, length: MATCH.halves ? 'custom' : MATCH.length, cupShort: MATCH.cupShare < 1, subs: MATCH.subs, leagueSize: career ? career.nextLeagueSize ?? career.leagueSize ?? 6 : leagueSize, leagueSizeNow: career?.leagueSize ?? null }),
       onLang: switchLanguage,
       onChange(key, value) {
         if (key === 'sound' && sound.muted !== (value === 'off')) sound.toggleMute();
@@ -290,6 +294,10 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
             career.nextLeagueSize = leagueSize === (career.leagueSize ?? 6) ? null : leagueSize;
             saveCareer(career);
           }
+        }
+        if (key === 'subs') {
+          MATCH.subs = value;
+          remember('sunday-league:subs', value);
         }
         if (key === 'cupshare') {
           MATCH.cupShare = value === 'on' ? 0.75 : 1;
@@ -719,8 +727,25 @@ function frame(now) {
   guardFps(Math.min(0.5, (now - last) / 1000)); // lange Pausen (Tab im Hintergrund) nicht mitzählen
   last = now;
   acc += dt * (mode === 'play' ? TEMPOS[tempo].factor : 1);
-  while (acc >= STEP) {
+  if (drainInput) {
+    input.poll();
+    drainInput = false;
+  }
+  // Wechseltafel offen: Das Spiel steht. Wechseltaste bestätigt, Menütaste bricht ab (auch am Gamepad).
+  if (subPanel.isOpen) {
+    acc = 0;
     const raw = input.poll();
+    if (mode !== 'play' || !subPanel.match || subPanel.match !== match) subPanel.close();
+    else if (raw.sub) subPanel.confirm();
+    else if (raw.menu) subPanel.close();
+  }
+  while (acc >= STEP) {
+    let raw = input.poll();
+    const subTeam = match.manager ? match.coachTeam : match.humanTeam;
+    if (mode === 'play' && raw.sub && subTeam !== null && subTeam !== undefined && match.phase !== 'ended') {
+      raw = { ...raw, sub: false };
+      subPanel.open(match, subTeam, () => (drainInput = true));
+    }
     const intent = mode === 'play' ? raw : undefined;
     if (mode === 'play') {
       if (intent.help) hud.toggleHelp();
@@ -765,6 +790,7 @@ function frame(now) {
     }
     match.events.length = 0;
     acc -= STEP;
+    if (subPanel.isOpen) acc = 0;
   }
   view.sync(match, dt);
   hud.update(match, dt);

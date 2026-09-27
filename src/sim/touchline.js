@@ -4,7 +4,7 @@
 import { tr } from '../core/i18n.js';
 import { tickerMinute } from './commentary.js';
 import { enableManager, MENTALITIES, setMentality, shout } from './coach.js';
-import { substitute } from './squad.js';
+import { substitute, subsLeft, usableBench } from './squad.js';
 
 const LONG = (m) => m.duration * 0.12; // ein Zuruf im Ticker hält gut zehn Fußballminuten
 
@@ -98,7 +98,7 @@ function subDecision(tl) {
   const { m, team } = tl;
   const onPitch = m.players.filter((p) => p.team === team && p.role !== 'gk');
   const tired = onPitch.reduce((x, y) => (y.stamina < x.stamina ? y : x), onPitch[0]);
-  const bench = m.bench[team].filter((b) => !(b.late && m.half === 1)).slice(0, 3);
+  const bench = subsLeft(m, team) > 0 ? usableBench(m, team).slice(0, 3) : [];
   if (!tired || tired.stamina > 0.45 || !bench.length) return null;
   tl.asked.add(tl.asked.has('sub1') ? 'sub2' : 'sub1');
   return {
@@ -110,7 +110,7 @@ function subDecision(tl) {
         label: tr(`${b.name} bringen`, `Bring on ${b.name}`),
         line: tr(`Wechsel: ${b.name} kommt für ${surname(tired)}.`, `Substitution: ${b.name} replaces ${surname(tired)}.`),
         apply: (mm) => {
-          if (mm.players.includes(tired) && mm.bench[team].includes(b)) substitute(mm, tired, b);
+          if (mm.players.includes(tired) && usableBench(mm, team).includes(b) && subsLeft(mm, team) > 0) substitute(mm, tired, b);
         },
       })),
     ],

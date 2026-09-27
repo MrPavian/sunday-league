@@ -46,9 +46,18 @@ verschiebt sich mit dem Ball, verteidigt wird in Zonen. Jeder Gegner hat seine e
    Schlussoffensive oder Bus parken. Dazu freie Zurufe jederzeit. „Zum Ergebnis" nimmt immer die erste Antwort.
 
 Auf dem Handy bist du **Trainer an der Seitenlinie**: Deine Mannschaft spielt selbst, du rufst rein –
-*Abspielen!*, *Hau drauf!*, *Geht drauf!* (Pressing), *Mann decken!*, *Hinten dicht!*, *Rückt auf!*, *Über die Flügel!* –
+*Geht drauf!* (Pressing), *Hinten dicht!*, *Rückt auf!*, *Über die Flügel!* –
 und wechselst aus. Ob die Jungs hören, hängt davon ab, wie gut sie kicken. Am PC gibt es den Modus auch
-(Einstellungen → Spielmodus, Tasten 1–7).
+(Einstellungen → Spielmodus, Tasten 1–4).
+
+**Auswechseln und Verletzungen im Spiel:** Nach einem Foul bleibt mal einer liegen, ohne Gegner zwickt es
+beim Sprint. Eine Prellung spielt man humpelnd weiter, alles Ernstere heißt runter – beim nächsten Stopp
+kommt Ersatz für die Position, ohne Ersatz geht es in Unterzahl weiter (fehlt der Torwart, geht ein
+Feldspieler ins Tor). Die Diagnose in der Karriere ist genau die Verletzung aus dem Spiel. Wechseln (X,
+Back oder Knopf „Wechsel") öffnet die Wechseltafel: Das Spiel steht, du wählst, wer raus- und wer
+reinkommt – oder „Automatisch: der Müdeste". Die Regeln hängen von der Liga ab: In der Freizeitliga und
+bei Freundschaftsspielen wird fliegend gewechselt (Rückwechsel erlaubt), ab der Kreisklasse zählt der
+Schiri mit – vier Wechsel, raus ist raus. Einstellbar unter Einstellungen → Auswechseln.
 
 **Lokal:**
 
@@ -218,7 +227,7 @@ Rechte Hand läuft, linke Hand spielt.
 | Stochern (Zweikampf im Stehen) | Y | R3 |
 | Einwurf (Richtung mit Laufen wählen) | S, E oder W | A |
 | Spieler wechseln | Q | LB |
-| Auswechseln (beim nächsten Stopp) | X | Back |
+| Wechseltafel (Wechsel beim nächsten Stopp) | X | Back |
 | Tempo (ruhig / normal / schnell) | C | – |
 | Hilfe ein/aus | H | – |
 | Ton an/aus | N | – |
