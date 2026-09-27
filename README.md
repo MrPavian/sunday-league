@@ -34,7 +34,7 @@ Alternativ die Browser-Version in Chrome öffnen und „Zum Startbildschirm hinz
 *Flügelspiel*, *Kurzpassspiel*, *Hohes Pressing* oder *Mauern*. Die Spieler halten ihre Position im System, der Block
 verschiebt sich mit dem Ball, verteidigt wird in Zonen. Jeder Gegner hat seine eigene Handschrift, sie steht beim Anpfiff unter der Anzeigetafel.
 
-**Atmosphäre:** Zuschauer, die mit der Menge lauter werden und bei Torgefahr anschwellen, Rufe auf dem Platz („Hier!", „Meiner!"), Raunen am Pfosten, Applaus, die Tor-Tröte vom Wirt bei Heimtoren und Hall in der Halle – alles synthetisch erzeugt.
+**Atmosphäre:** Zuschauer, die mit der Menge lauter werden und bei Torgefahr anschwellen, Raunen am Pfosten, Applaus, die Tor-Tröte vom Wirt bei Heimtoren und Hall in der Halle – alles synthetisch erzeugt.
 
 **Spieldauer je Platz:** vom Hinterhof und der Halle (2 × 1:30) bis zum großen Rasenplatz (2 × 2:30) – in den Einstellungen als Voreinstellung (kurz, mittel, lang) oder pro Platz in Viertelminuten frei einstellbar, Turnierspiele wahlweise kürzer oder in voller Länge. Kraft und Torgefahr sind auf die Länge abgestimmt.
 
