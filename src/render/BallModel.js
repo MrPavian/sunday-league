@@ -32,6 +32,8 @@ export function createBallModel() {
   // Rasen, Schnee, Zuschauern und im Abendlicht lesbar – und dämpft den Nebel auf ihm.
   mat.blending = THREE.NoBlending;
   mat.opacity = 0.7;
+  // Nasser Ball: bleibt bewusst nur dunkler (MatchView). Ein Glanzpunkt per Shader wurde im
+  // Polish-Pass getestet und verworfen – auf ~12 Pixeln Ball war er nicht sichtbar.
   const mesh = new THREE.Mesh(geo, mat);
   mesh.castShadow = true;
   mesh.userData.ball = true;

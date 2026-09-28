@@ -18,6 +18,7 @@ import { currentQuality } from './quality.js';
 
 const TRAIL_SPEED = 17; // m/s: erst harte Schüsse bekommen einen Schweif
 const SQUASH_TIME = 0.08;
+const KICK_BLEND = 0.09; // s, bis der sichtbare Ball wieder genau auf der Bahn der Simulation liegt
 const NET = { k: 140, damp: 9, kick: 3.2 }; // Feder: nach hinten, kurz zurück, Ruhe
 
 export class BallView {
@@ -38,6 +39,9 @@ export class BallView {
     this.shakeT = 0;
     this.shakeSign = 1;
     this.stats = { trail: 0, net: 0, shadow: 0, height: 0, impacts: 0 };
+    // Kontakt-Versatz: Die Simulation schießt aus bis zu 0,75–1 m Abstand. Fürs Auge startet
+    // der Ball am Fuß (bzw. Kopf) und holt seine echte Bahn in KICK_BLEND Sekunden ein.
+    this.off = { x: 0, y: 0, z: 0, t: 1 };
 
     // Schweif: wenige Punkte hinter dem Ball, vorne 3 Pixel, hinten 1 – in Ballfarbe, halbtransparent.
     this.trailN = q.ballTrail ?? 0;
@@ -77,6 +81,7 @@ export class BallView {
     const speed = Math.hypot(b.vel.x, b.vel.y, b.vel.z);
     const fx = this.effects;
     for (const e of match.events) {
+      if ((e.type === 'shot' || e.type === 'pass' || e.type === 'header') && e.playerId) this.contact(match, e);
       if (e.type === 'header') {
         fx.ballImpact(b.pos.x, b.pos.y, b.pos.z, 3, 0.8);
         this.stats.impacts++;
@@ -93,6 +98,25 @@ export class BallView {
         this.goal(b);
       }
     }
+  }
+
+  // Sichtbaren Kontaktpunkt merken: Fuß ≈ 0,42 m vor der Hüfte in Schussrichtung, Kopf in Kopfhöhe.
+  contact(match, e) {
+    const p = match.players.find((q) => q.id === e.playerId);
+    if (!p) return;
+    const b = match.ball.pos;
+    const head = e.type === 'header';
+    const k = p.look?.height ?? 1;
+    const fx = p.pos.x + p.facing.x * (head ? 0.18 : 0.42);
+    const fz = p.pos.z + p.facing.z * (head ? 0.18 : 0.42);
+    const fy = head ? 1.62 * k : BALL_RADIUS;
+    const dx = fx - b.x;
+    const dz = fz - b.z;
+    if (dx * dx + dz * dz > 1.7) return; // weit weg (z. B. Abstoß aus der Hand): kein Versatz
+    this.off.x = dx;
+    this.off.y = head ? fy - b.y : 0;
+    this.off.z = dz;
+    this.off.t = 0;
   }
 
   // Tor: das Netz beult sich dort aus, wo der Ball einschlägt, ein paar Netz-Pixel fliegen,
@@ -135,17 +159,27 @@ export class BallView {
     this.lastVy = b.vel.y;
     let sy = 1;
     if (this.squash > 0) {
-      this.squash = Math.max(0, this.squash - dt);
+      // erst zeigen, dann abklingen: das erste Bild nach dem Aufsetzer ist das gestauchteste
       sy = 1 - 0.16 * (this.squash / SQUASH_TIME);
+      this.squash = Math.max(0, this.squash - dt);
     }
     g.scale.set(1 + (1 - sy) * 0.5, sy, 1 + (1 - sy) * 0.5);
-    g.position.set(b.pos.x, b.pos.y - BALL_RADIUS + BALL_VISUAL_RADIUS * sy, b.pos.z);
+    const o = this.off;
+    let w = 0;
+    if (o.t < KICK_BLEND) {
+      o.t += dt;
+      w = Math.max(0, 1 - o.t / KICK_BLEND);
+      w *= w;
+    }
+    const bx = b.pos.x + o.x * w;
+    const bz = b.pos.z + o.z * w;
+    g.position.set(bx, b.pos.y + o.y * w - BALL_RADIUS + BALL_VISUAL_RADIUS * sy, bz);
     rollBall(this.mesh, b.vel, dt, air);
 
     // Kontaktschatten: am Boden klein und satt, je höher desto größer und lichter (gerastert).
     const k = Math.min(1, h / 3);
     const density = g.visible ? 1 - 0.65 * k : 0;
-    blob(b.pos.x, b.pos.z, 0.42 + 0.4 * k, density);
+    blob(bx, bz, 0.42 + 0.4 * k, density);
     this.stats.shadow = density;
     this.stats.height = h;
 

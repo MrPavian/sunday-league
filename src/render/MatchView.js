@@ -146,6 +146,103 @@ export class MatchView {
       else if (e.type === 'tackle' || e.type === 'poke_won') this.soil(e.playerId, 0.03);
       else if (e.type === 'foul') this.soil(e.victimId, 0.1);
     }
+    this.reactions(match);
+  }
+
+  // Kurze sichtbare Reaktionen auf Kontakte – nur aus Ereignissen, die die Simulation ohnehin
+  // meldet (Festhalten, Foul, Ball an den Körper, gewonnener Zweikampf, ausgespielt).
+  reactions(match) {
+    const find = (id) => (id == null ? null : match.players.find((q) => q.id === id));
+    const hitFrom = (victim, from, strength = 1) => {
+      const m = victim && this.models.get(victim.id);
+      if (!m) return;
+      // Seite des Kontakts relativ zur Blickrichtung (Kreuzprodukt): dreht von der Seite weg.
+      const dx = from ? from.pos.x - victim.pos.x : 0;
+      const dz = from ? from.pos.z - victim.pos.z : 1;
+      m.hitInfo ??= { t: 1, side: 1 };
+      m.hitInfo.t = 1 - strength; // läuft von (1 − Stärke) bis 1
+      m.hitInfo.side = victim.facing.x * dz - victim.facing.z * dx > 0 ? 1 : -1;
+    };
+    const mood = (id, face, time) => {
+      const m = this.models.get(id);
+      if (!m) return;
+      m.faceHint = face;
+      m.faceTime = time;
+    };
+    for (const e of match.events) {
+      if (e.type === 'grab' || e.type === 'foul') hitFrom(find(e.victimId), find(e.playerId), e.type === 'foul' ? 1 : 0.7);
+      else if (e.type === 'block') hitFrom(find(e.playerId), null, 0.8);
+      else if (e.type === 'tackle' || e.type === 'poke_won') {
+        // Wer den Ball verloren hat: der nächste Gegner am Zweikampf.
+        const p = find(e.playerId);
+        if (!p) continue;
+        let best = null;
+        let bd = 1.4;
+        for (const q of match.players) {
+          if (q.team === p.team) continue;
+          const d = Math.hypot(q.pos.x - p.pos.x, q.pos.z - p.pos.z);
+          if (d < bd) (bd = d), (best = q);
+        }
+        hitFrom(best, p, 0.75);
+        if (best) mood(best.id, 'angry', 0.8);
+      } else if (e.type === 'beaten') mood(e.playerId, 'surprised', 0.7);
+      else if (e.type === 'post' || e.type === 'bar') {
+        const gk = match.players.find((q) => q.role === 'gk' && Math.sign(q.pos.x) === Math.sign(match.ball.pos.x));
+        if (gk) mood(gk.id, 'surprised', 0.9);
+      }
+    }
+  }
+
+  // Kopfball kommt: Der Ball fliegt in Kopfhöhe auf den Spieler zu (aus Ballposition und
+  // -tempo vorausberechnet, ohne Einfluss aufs Spiel). 0 → 1 bis zum erwarteten Kontakt;
+  // so springt er ab und holt aus, bevor die Simulation den Kopfball meldet.
+  headerPrep(p, m, ball, dt) {
+    m.headPrep = Math.max(0, (m.headPrep ?? 0) - dt * 3);
+    if (p.role === 'gk' || p.state !== 'normal' || ball.holder || ball.pos.y < 1.0) return;
+    const vx = ball.vel.x;
+    const vz = ball.vel.z;
+    const v2 = vx * vx + vz * vz;
+    if (v2 < 4) return;
+    const rx = p.pos.x - ball.pos.x;
+    const rz = p.pos.z - ball.pos.z;
+    const t = (rx * vx + rz * vz) / v2; // Zeit bis zum nächsten Punkt
+    if (t <= 0 || t > 0.25) return;
+    const mx = rx - vx * t;
+    const mz = rz - vz * t;
+    if (mx * mx + mz * mz > 0.55) return;
+    const y = ball.pos.y + ball.vel.y * t - 4.9 * t * t;
+    const top = 1.75 * (p.look?.height ?? 1) + 0.35;
+    if (y < 1.35 || y > top) return;
+    // Kontakt passiert kurz vor der engsten Stelle (Reichweite des Kopfes): dort voll ausgeholt.
+    m.headPrep = Math.max(m.headPrep, Math.min(1, 1 - (t - 0.08) / 0.17));
+  }
+
+  // Ausholen: Die Simulation plant Schuss oder Pass (p.pending) und der Spieler ist am Ball –
+  // in ~0,14 s bis zum vollen Ausholen, sonst zurück in die Laufbewegung.
+  kickPrep(p, m, ball, dt) {
+    const t = p.pending?.type;
+    const near = Math.hypot(p.pos.x - ball.pos.x, p.pos.z - ball.pos.z) < 1.4 && ball.pos.y < 0.8;
+    const on = p.kickAnim <= 0 && (t === 'shoot' || t === 'pass') && near && p.state === 'normal' && ball.holder !== p.id;
+    m.kickPrep = on ? Math.min(1, (m.kickPrep ?? 0) + dt / 0.14) : Math.max(0, (m.kickPrep ?? 0) - dt / 0.1);
+  }
+
+  // Torwart duckt sich weg: harter Ball in Kopfhöhe knapp an ihm vorbei (vorausberechnet).
+  keeperDuck(p, m, ball, dt) {
+    m.duck = Math.max(0, (m.duck ?? 0) - dt / 0.45);
+    if (m.duck > 0 || p.role !== 'gk' || p.state !== 'normal' || p.diveAnim > 0 || ball.holder) return;
+    const vx = ball.vel.x;
+    const vz = ball.vel.z;
+    const v2 = vx * vx + vz * vz;
+    if (v2 < 144) return; // unter 12 m/s duckt sich keiner
+    const rx = p.pos.x - ball.pos.x;
+    const rz = p.pos.z - ball.pos.z;
+    const t = (rx * vx + rz * vz) / v2;
+    if (t <= 0 || t > 0.18) return;
+    const mx = rx - vx * t;
+    const mz = rz - vz * t;
+    const y = ball.pos.y + ball.vel.y * t - 4.9 * t * t;
+    if (mx * mx + mz * mz > 0.36 || y < 1.4 || y > 2.2) return;
+    m.duck = 1; // läuft rückwärts von 1 → 0 (Animation nutzt 1 − duck)
   }
 
   soil(id, amount) {
@@ -263,14 +360,29 @@ export class MatchView {
       if (p.mood === 'scorer' || p.mood === 'celebrate') {
         celebrate = m.celebration === 'rutscher' && !this.softGround ? 'flugzeug' : m.celebration;
       }
+      this.headerPrep(p, m, match.ball, dt);
+      this.kickPrep(p, m, match.ball, dt);
+      this.keeperDuck(p, m, match.ball, dt);
+      // Kopfball beginnt: wie weit er vorher abgesprungen war, bestimmt die Sprunghöhe danach.
+      if (p.headAnim > 0 && !(m.lastHeadAnim > 0)) m.headJump = Math.min(1, (m.headPrepPeak ?? 0) * 1.4);
+      m.lastHeadAnim = p.headAnim;
+      m.headPrepPeak = Math.max(m.headPrep, (m.headPrepPeak ?? 0) - dt * 3);
+      if (m.hitInfo && m.hitInfo.t < 1) m.hitInfo.t = Math.min(1, m.hitInfo.t + dt / 0.35);
+      if (m.faceTime > 0) m.faceTime -= dt;
       animatePlayer(m, {
         speed: len(p.vel.x, p.vel.z),
         dt,
-        // Der Ball fliegt schon im ersten Schritt los; die Beinbewegung beginnt daher gleich im
-        // Durchschwung (statt erst auszuholen, während der Ball schon weg ist): Treffpunkt ≈ Abflug.
-        kickAnim: p.kickAnim * 0.58,
-        // Schuss oder Pass? Nur zum Anschauen: der letzte Ballkontakt verrät es.
-        kick: match.ball.lastTouch === p.id && match.ball.lastAction === 'shoot' ? 'shot' : 'pass',
+        headPrep: m.headPrep,
+        headJump: m.headJump ?? 0,
+        hit: m.hitInfo && m.hitInfo.t < 1 ? m.hitInfo : null,
+        duck: m.duck > 0 ? 1 - m.duck : 0,
+        face: m.faceTime > 0 ? m.faceHint : null,
+        // Ausgeholt wird vorher (kickPrep, solange die Simulation den Schuss plant); der Ball fliegt
+        // im ersten Schritt los – die Beinbewegung steht dann im Durchschwung: Treffpunkt ≈ Abflug.
+        kickAnim: p.kickAnim * 0.53,
+        kickPrep: m.kickPrep,
+        // Schuss oder Pass? Nur zum Anschauen: geplante Aktion bzw. letzter Ballkontakt.
+        kick: (p.kickAnim > 0 ? match.ball.lastTouch === p.id && match.ball.lastAction === 'shoot' : p.pending?.type === 'shoot') ? 'shot' : 'pass',
         headAnim: p.headAnim,
         holding: match.ball.holder === p.id ? (p.role === 'gk' ? 'chest' : 'overhead') : null,
         state: p.state,

@@ -23,17 +23,84 @@ const TILE_H = 16;
 const FACE_X = 64;
 const FACE = 8;
 const UTIL_X = 120; // weiß | Bein (Dreck) | Pflaster
-export const FACES = ['neutral', 'happy', 'angry', 'pain', 'sad', 'effort'];
-// Pixelgesichter 8 × 8: e Auge, b Braue (Haarfarbe), m Mund. Bei ~30 px/m ist ein
-// Gesicht etwa 8 Pixel breit – jedes Zeichen ist ungefähr ein Bildschirmpixel.
-const FACE_ART = {
-  neutral: ['........', '........', '........', '..e..e..', '........', '...mm...', '........', '........'],
-  happy: ['........', '........', '........', '..e..e..', '........', '..m..m..', '...mm...', '........'],
-  angry: ['........', '.b....b.', '..b..b..', '..e..e..', '........', '..mmmm..', '........', '........'],
-  pain: ['........', '........', '..b..b..', '.ee..ee.', '........', '...mm...', '..m..m..', '........'],
-  sad: ['........', '..b..b..', '.b....b.', '..e..e..', '........', '...mm...', '..m..m..', '........'],
-  effort: ['........', '........', '.bb..bb.', '..e..e..', '........', '..mmmm..', '..mmmm..', '........'],
-};
+export const FACES = ['neutral', 'happy', 'angry', 'pain', 'sad', 'effort', 'surprised'];
+// Pixelgesichter 8 × 8 aus wenigen Bausteinen je Spieler (fest aus dem Aussehen): Augen,
+// Brauen, Nase, Mund, Bart – kombiniert mit dem Ausdruck. Bei ~30 px/m ist ein Gesicht etwa
+// 8 Pixel breit, jedes Feld also ungefähr ein Bildschirmpixel. Zeilen: 1–2 Brauen, 3 Augen,
+// 4 Nase, 5–6 Mund, 5–7 Kinn/Bart. Codes: e Auge, k Schlitzauge, b Braue, n Nase, m Mund,
+// o offener Mund, s Stoppeln, h Bart (Haarfarbe).
+export const FACE_PARTS = { eyes: ['dot', 'tall', 'narrow'], brows: ['thin', 'thick', 'mono', 'light'], nose: ['none', 'dot', 'long'], mouth: ['small', 'wide', 'thin'], beard: ['none', 'stubble', 'short', 'full', 'moustache'] };
+export function faceArt(expr, f) {
+  const g = Array.from({ length: 8 }, () => Array(8).fill('.'));
+  const put = (x, y, c) => {
+    if (x >= 0 && x < 8 && y >= 0 && y < 8) g[y][x] = c;
+  };
+  // Bart zuerst – Mund und Nase liegen darüber.
+  if (f.beard === 'stubble') for (const [x, y] of [[1, 5], [6, 5], [2, 6], [5, 6], [1, 6], [6, 6], [3, 7], [4, 7], [2, 7], [5, 7]]) put(x, y, (x + y) % 2 ? 's' : '.');
+  if (f.beard === 'short') {
+    for (let x = 1; x < 7; x++) put(x, 7, 'h');
+    for (const x of [1, 6]) put(x, 6, 'h');
+  }
+  if (f.beard === 'full') {
+    for (let x = 0; x < 8; x++) put(x, 7, 'h');
+    for (let x = 1; x < 7; x++) put(x, 6, 'h');
+    for (const x of [0, 1, 6, 7]) put(x, 5, 'h');
+    for (const x of [0, 7]) put(x, 4, 'h');
+  }
+  if (f.beard === 'moustache') for (let x = 2; x < 6; x++) put(x, 4, 'h');
+  // Nase: ein Pixel dunklere Haut (lang: zwei).
+  if (f.nose !== 'none' && f.beard !== 'moustache') put(4, 4, 'n');
+  if (f.nose === 'long') put(4, 3, 'n');
+  // Augen je Ausdruck; Grundform aus dem Baustein.
+  const eye = (x) => {
+    if (expr === 'pain') return put(x, 3, 'k'), put(x + (x < 4 ? -1 : 1), 3, 'k');
+    if (expr === 'surprised' || f.eyes === 'tall') return put(x, 3, 'e'), put(x, 2, expr === 'surprised' ? 'e' : g[2][x]);
+    if (f.eyes === 'narrow') return put(x, 3, 'e'), put(x + (x < 4 ? -1 : 1), 3, 'k');
+    put(x, 3, 'e');
+  };
+  eye(2);
+  eye(5);
+  // Brauen: Form je Ausdruck, Dicke aus dem Baustein.
+  const thick = f.brows === 'thick' || f.brows === 'mono';
+  const brow = (pts) => {
+    if (f.brows === 'light' && expr === 'neutral') return;
+    for (const [x, y] of pts) put(x, y, 'b');
+  };
+  if (expr === 'angry') brow([[1, 1], [2, 2], [6, 1], [5, 2], ...(thick ? [[3, 2], [4, 2]] : [])]);
+  else if (expr === 'sad' || expr === 'pain') brow([[1, 2], [2, 1], [6, 2], [5, 1]]);
+  else if (expr === 'surprised') brow([[1, 0], [2, 0], [5, 0], [6, 0]]);
+  else if (expr === 'effort') brow([[1, 2], [2, 2], [5, 2], [6, 2], ...(thick ? [[3, 2], [4, 2]] : [])]);
+  else if (f.brows === 'mono') brow([[1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [6, 1]]);
+  else brow(thick ? [[1, 1], [2, 1], [5, 1], [6, 1]] : [[2, 1], [5, 1]]);
+  // Mund je Ausdruck; neutrale Form aus dem Baustein.
+  const w = f.mouth === 'wide' ? [2, 5] : [3, 4];
+  if (expr === 'happy') {
+    put(w[0] - (w[0] === 3 ? 1 : 0), 5, 'm');
+    put(w[1] + (w[1] === 4 ? 1 : 0), 5, 'm');
+    for (let x = 3; x <= 4; x++) put(x, 6, 'm');
+  } else if (expr === 'angry') for (let x = 2; x <= 5; x++) put(x, 5, 'o');
+  else if (expr === 'pain') {
+    for (let x = 2; x <= 5; x++) put(x, 5, 'o');
+    put(2, 6, 'm');
+    put(5, 6, 'm');
+  } else if (expr === 'sad') {
+    for (let x = 3; x <= 4; x++) put(x, 5, 'm');
+    put(2, 6, 'm');
+    put(5, 6, 'm');
+  } else if (expr === 'surprised') for (const [x, y] of [[3, 5], [4, 5], [3, 6], [4, 6]]) put(x, y, 'o');
+  else if (expr === 'effort') for (let x = 2; x <= 5; x++) put(x, 5, f.mouth === 'thin' ? 'm' : 'o');
+  else for (let x = w[0]; x <= w[1]; x++) put(x, 5, f.mouth === 'thin' ? 'n' : 'm');
+  return g.map((row) => row.join(''));
+}
+// Bausteine je Spieler, fest aus dem Aussehen (Hash) – nie zufällig pro Bild.
+export function faceFeatures(hash, look) {
+  const pick = (arr, shift) => arr[(hash >>> shift) % arr.length];
+  let beard = 'none';
+  if (look.beard) beard = ['full', 'short', 'moustache', 'full', 'short'][(hash >>> 19) % 5];
+  else if ((hash >>> 19) % 5 === 0) beard = 'stubble';
+  const light = luminance(look.hair ?? 0) > 0.45;
+  return { eyes: pick(FACE_PARTS.eyes, 21), brows: light && !look.bald ? 'light' : pick(['thin', 'thick', 'thin', 'mono', 'thick'], 23), nose: pick(FACE_PARTS.nose, 25), mouth: pick(FACE_PARTS.mouth, 27), beard };
+}
 // Rückennummer: Ziffern 3 × 5, doppelt groß gemalt (6 × 10 Texel) – so bleibt sie bei
 // kleiner Figur als Nummer erkennbar.
 const DIGITS = ['111101101101111', '010110010010111', '111001111100111', '111001111001111', '101101111001001', '111100111001111', '111100111101111', '111001010010010', '111101111101111', '111101111001111'];
@@ -113,12 +180,13 @@ function paintTile(t) {
       }
     }
   }
+  const pal = { e: 0x1a1716, k: mixHex(t.skin, 0x1a1716, 0.55), b: t.brow, n: mixHex(t.skin, 0x000000, 0.22), m: t.mouth, o: mixHex(t.skin, 0x2a0e0a, 0.8), s: mixHex(t.skin, t.hairColor, 0.4), h: t.hairColor };
   FACES.forEach((id, fi) => {
-    const art = FACE_ART[id];
+    const art = t.faceArt[id];
     for (let y = 0; y < FACE; y++)
       for (let x = 0; x < FACE; x++) {
         const ch = art[y][x];
-        ctx.fillStyle = css(ch === 'e' ? 0x1a1716 : ch === 'b' ? t.brow : ch === 'm' ? t.mouth : t.skin);
+        ctx.fillStyle = css(pal[ch] ?? t.skin);
         ctx.fillRect(FACE_X + fi * FACE + x, y, 1, 1);
       }
   });
@@ -231,8 +299,11 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
   const hipY = ankle + shin + thigh;
   const torsoH = 0.5;
   const shoulderX = (0.26 + belly * 0.05) * shoulderK;
-  const headW = 0.29 * headK;
-  const headH = 0.3 * headK;
+  // Kopfform (fest je Spieler): rund, schmal, breit, länglich – nur leicht verschieden.
+  const HEADS = [[0.29, 0.29, 0.88], [0.27, 0.31, 0.86], [0.31, 0.28, 0.93], [0.28, 0.32, 0.8]];
+  const [hwK, hhK, jaw] = HEADS[(hash >>> 15) % 4];
+  const headW = hwK * headK;
+  const headH = hhK * headK;
   const rest = {
     hips: [0, hipY, 0],
     spine: [0, 0.09, 0],
@@ -258,7 +329,7 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
     b.add(`lowerLeg${s}`, prism(0.145, 0.12, shin - 0.06, 0.16, 0.13), kit.socks, { at: [0, -0.06 - (shin - 0.06) / 2, 0], uv: 'leg' });
     b.box(`lowerLeg${s}`, 0.15, 0.035, 0.166, accent, [0, -0.1, 0]);
     b.box(`foot${s}`, 0.14, 0.09, 0.15, shoe, [0, -ankle + 0.045, -0.01]);
-    b.add(`foot${s}`, prism(0.11, 0.135, 0.06, 0.11, 0.14), shoe, { at: [0, -ankle + 0.03, 0.12] });
+    b.add(`foot${s}`, prism(0.11, 0.135, 0.06, 0.12, 0.16), shoe, { at: [0, -ankle + 0.03, 0.13] }); // Spitze etwas länger (Profil)
   }
   // Pflaster auf dem rechten Schienbein (Farbe kommt aus dem Atlas).
   b.box('lowerLegR', 0.1, 0.07, 0.02, 0xffffff, [0, -0.16, 0.074], { uv: 'plaster' });
@@ -267,7 +338,8 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
   b.add('hips', prism(0.36 + belly * 0.1, 0.38 + belly * 0.08, 0.17, 0.25 + belly * 0.07, 0.24 + belly * 0.05), kit.shorts, { at: [0, 0.02, 0], uv: 'leg' });
   const torsoTop = (0.45 + belly * 0.05) * shoulderK;
   const torsoBot = 0.37 + belly * 0.13;
-  b.add('spine', prism(torsoTop, torsoBot, torsoH, 0.26 + belly * 0.04, 0.24 + belly * 0.1, { front: belly * 0.07 }), useAtlas ? 0xffffff : kit.shirt, { at: [0, torsoH / 2, 0], uv: 'kit' });
+  // Brust oben etwas tiefer als früher: kräftigeres Seitenprofil.
+  b.add('spine', prism(torsoTop, torsoBot, torsoH, 0.285 + belly * 0.04, 0.24 + belly * 0.1, { front: belly * 0.07 }), useAtlas ? 0xffffff : kit.shirt, { at: [0, torsoH / 2, 0.005], uv: 'kit' });
   b.box('spine', 0.18, 0.035, 0.17, accent, [0, torsoH, 0]); // Kragen
   b.box('spine', 0.055, 0.06, 0.02, accent, [-0.1, torsoH - 0.14, 0.13 + belly * 0.02]); // Wappen
   b.box('spine', 0.1, 0.08, 0.1, skin, [0, torsoH + 0.03, 0]); // Hals
@@ -281,37 +353,67 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
     b.box(`lowerArm${s}`, 0.1, 0.09, 0.115, keeper ? glove : skin, [out, -0.24, 0.005]);
   }
 
-  // Kopf: oben breiter als am Kinn, vorne das Pixelgesicht. Ohren seitlich.
-  b.add('head', prism(headW, headW * 0.84, headH, headW, headW * 0.88), skin, { at: [0, headH / 2, 0.005], uv: 'head' });
+  // Kopf: oben breiter als am Kinn (Kieferform je Spieler), vorne das Pixelgesicht, Ohren
+  // seitlich, kleine Nase (gibt dem Seitenprofil eine Kontur).
+  b.add('head', prism(headW, headW * jaw, headH, headW, headW * (jaw + 0.02)), skin, { at: [0, headH / 2, 0.005], uv: 'head' });
   for (const s of [-1, 1]) b.box('head', 0.03, 0.07, 0.06, skin, [s * (headW / 2 + 0.01), headH * 0.48, 0]);
+  b.box('head', 0.035, 0.045, 0.035, mixHex(skin, 0x000000, 0.08), [0, headH * 0.4, headW / 2 + 0.02]);
   if (!useAtlas) for (const s of [-1, 1]) b.box('head', 0.045, 0.05, 0.02, 0x1a1716, [s * 0.06, headH * 0.55, headW / 2 + 0.005]);
 
-  // Frisuren: kurz, lang, Locken, Irokese, Pony, Dutt – bei Glatze mal ein Haarkranz.
+  // Frisuren (fest je Spieler): kurz, Seitenscheitel, stachelig, lang, Locken, Irokese, kurzgeschoren.
+  // Silhouette vor Details: unregelmäßiger Haaransatz, Asymmetrie, Spitzen, Volumen.
+  // Sehr dunkles Haar wird leicht angehoben, damit es im Schatten keine schwarze Masse wird.
   const hw = headW / 2;
   const top = headH;
-  const style = hash % 6;
-  if (!look.bald) {
-    if (style === 3) {
-      b.box('head', 0.08, 0.1, headW, hair, [0, top + 0.04, 0]); // Irokese
-      b.box('head', headW + 0.01, 0.05, 0.05, hair, [0, top - 0.12, -hw]);
-    } else {
-      const big = style === 2;
-      b.add('head', prism(headW + (big ? 0.04 : 0.015), headW + (big ? 0.05 : 0.02), big ? 0.12 : 0.075, headW + (big ? 0.04 : 0.015), headW + (big ? 0.05 : 0.02)), hair, { at: [0, top + (big ? 0.03 : 0.012), 0] });
-      if (style === 1) {
-        b.box('head', headW + 0.01, 0.28, 0.07, hair, [0, top - 0.17, -hw - 0.005]); // lang über den Nacken
-        for (const s of [-1, 1]) b.box('head', 0.04, 0.18, headW * 0.7, hair, [s * (hw + 0.01), top - 0.11, -0.03]);
-      } else b.box('head', headW + 0.01, 0.15, 0.06, hair, [0, top - 0.09, -hw]);
-      if (style === 4) b.box('head', headW * 0.9, 0.05, 0.05, hair, [0.02, top - 0.035, hw]); // Pony
-      if (style === 5) b.box('head', 0.1, 0.1, 0.1, hair, [0, top + 0.07, -0.1]); // Dutt
-    }
+  const hairC = luminance(hair) < 0.12 ? mixHex(hair, 0x4a4038, 0.3) : hair;
+  const hairD = mixHex(hairC, 0x000000, 0.18); // Seiten und Nacken etwas dunkler
+  const styleRoll = (hash >>> 3) % 20;
+  const style = styleRoll < 5 ? 'short' : styleRoll < 9 ? 'sidepart' : styleRoll < 12 ? 'spiky' : styleRoll < 15 ? 'long' : styleRoll < 18 ? 'curly' : styleRoll < 19 ? 'mohawk' : 'buzz';
+  const cap = (grow, h, y) => b.add('head', prism(headW + grow, headW + grow + 0.005, h, headW + grow, headW + grow + 0.005), hairC, { at: [0, y, 0] });
+  const back = (h, y) => b.box('head', headW + 0.015, h, 0.055, hairD, [0, y, -hw]);
+  const hairStyle = look.bald ? 'bald' : style;
+  if (hairStyle === 'short') {
+    cap(0.018, 0.06, top + 0.01);
+    back(0.14, top - 0.08);
+    for (const s of [-1, 1]) b.box('head', 0.075, 0.04, 0.03, hairC, [s * (hw - 0.045), top - 0.02, hw + 0.004]); // Haaransatz mit Kerbe
+  } else if (hairStyle === 'sidepart') {
+    cap(0.018, 0.06, top + 0.01);
+    back(0.15, top - 0.085);
+    b.box('head', headW * 0.62, 0.06, headW + 0.03, hairC, [hw * 0.36, top + 0.05, 0]); // Volumen auf einer Seite
+    b.box('head', headW * 0.58, 0.05, 0.04, hairC, [-hw * 0.3, top - 0.025, hw + 0.006]); // Pony zur anderen Seite gekämmt
+    b.box('head', 0.035, 0.12, headW * 0.6, hairD, [hw + 0.012, top - 0.06, -0.03]);
+  } else if (hairStyle === 'spiky') {
+    cap(0.012, 0.045, top + 0.005);
+    back(0.12, top - 0.07);
+    for (const [x, z, h, t] of [[-0.075, 0.05, 0.1, 0.3], [0.07, 0.04, 0.11, 0.25], [0, -0.02, 0.13, -0.1], [-0.05, -0.08, 0.09, -0.35], [0.06, -0.07, 0.1, -0.3]])
+      b.add('head', prism(0.012, 0.085, h, 0.012, 0.085), hairC, { at: [x, top + 0.02 + h / 2, z], rot: t });
+  } else if (hairStyle === 'long') {
+    cap(0.02, 0.07, top + 0.012);
+    b.box('head', headW + 0.03, 0.34, 0.07, hairD, [0, top - 0.19, -hw - 0.008]); // über den Nacken
+    for (const s of [-1, 1]) b.box('head', 0.05, 0.25, headW * 0.78, hairC, [s * (hw + 0.015), top - 0.12, -0.02]); // über die Ohren
+    b.box('head', headW * 0.9, 0.05, 0.04, hairC, [0, top - 0.03, hw + 0.006]);
+  } else if (hairStyle === 'curly') {
+    cap(0.04, 0.09, top + 0.025);
+    back(0.16, top - 0.09);
+    // Locken: unregelmäßige Beulen statt glatter Haube
+    for (const [x, y, z, k] of [[-0.1, 0.06, 0.06, 0.1], [0.09, 0.07, 0.05, 0.11], [0, 0.1, 0, 0.12], [-0.08, 0.05, -0.1, 0.1], [0.1, 0.04, -0.08, 0.1], [0.02, 0.07, 0.1, 0.09], [-0.15, -0.03, 0, 0.08], [0.15, -0.02, -0.02, 0.08]])
+      b.box('head', k, k * 0.8, k, hairC, [x, top + y - 0.02, z]);
+  } else if (hairStyle === 'mohawk') {
+    b.box('head', 0.08, 0.1, headW, hairC, [0, top + 0.04, 0]);
+    b.box('head', headW + 0.01, 0.05, 0.05, hairD, [0, top - 0.12, -hw]);
+  } else if (hairStyle === 'buzz') {
+    // Kurzgeschoren: dünne Kappe, halb Haar, halb Haut – der Kopf bleibt als Form sichtbar.
+    const buzz = mixHex(hairC, skin, 0.35);
+    b.add('head', prism(headW + 0.008, headW + 0.01, 0.03, headW + 0.008, headW + 0.01), buzz, { at: [0, top + 0.0, 0] });
+    b.box('head', headW + 0.008, 0.1, 0.03, buzz, [0, top - 0.06, -hw - 0.002]);
   } else if (hash % 2) {
-    for (const s of [-1, 1]) b.box('head', 0.025, 0.06, headW * 0.5, hair, [s * (hw + 0.005), top * 0.62, -0.07]); // Haarkranz
-    b.box('head', headW + 0.01, 0.06, 0.04, hair, [0, top * 0.62, -hw]);
+    for (const s of [-1, 1]) b.box('head', 0.025, 0.06, headW * 0.5, hairD, [s * (hw + 0.005), top * 0.62, -0.07]); // Haarkranz
+    b.box('head', headW + 0.01, 0.06, 0.04, hairD, [0, top * 0.62, -hw]);
   }
-  if (look.beard) {
-    if ((hash >> 4) % 3 === 0) b.box('head', 0.13, 0.035, 0.03, hair, [0, headH * 0.36, hw + 0.01]); // Schnauzer
-    else b.box('head', headW * 0.8, 0.1, 0.07, hair, [0, headH * 0.14, hw - 0.015]); // Vollbart am Kinn
-  }
+  // Bart: gemalt im Gesicht (Atlas); nur der Vollbart bekommt etwas Volumen am Kinn.
+  const features = faceFeatures(hash, look);
+  if (features.beard === 'full') b.box('head', headW * 0.8, 0.075, 0.05, hairC, [0, headH * 0.1, hw - 0.005]);
+  if (!useAtlas && look.beard) b.box('head', headW * 0.8, 0.1, 0.07, hair, [0, headH * 0.14, hw - 0.015]);
 
   // Knochen in Ruhelage (Weltlage je Knochen = Summe der Versätze).
   const bones = {};
@@ -405,6 +507,8 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
     plaster: { visible: false },
     cloth: null,
     face: 'neutral',
+    hairStyle,
+    features,
     faceStart,
     faceCorners,
     phase: (hash % 628) / 100,
@@ -418,8 +522,10 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
       number,
       accent,
       skin,
-      brow: look.bald ? mixHex(skin, 0x000000, 0.45) : hair,
+      brow: look.bald ? mixHex(skin, 0x000000, 0.45) : hairC,
+      hairColor: hairC,
       mouth: mixHex(skin, 0x4a1c18, 0.55),
+      faceArt: Object.fromEntries(FACES.map((id) => [id, faceArt(id, features)])),
       splats: makeSplats(),
       shown: 0,
       dirt: 0,
@@ -587,7 +693,12 @@ function kickPose(bn, t, power) {
   bn.head.rotation.x = 0.18; // Blick auf den Ball
 }
 
-export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot' }) {
+// Zusätzlich zur Simulation (nur Darstellung, von MatchView abgeleitet):
+// headPrep 0…1 – Kopfball kommt gleich (Anlauf, Absprung, Kopf zurück), headJump 0…1 – wie
+// hoch nach dem Kontakt gesprungen wird, hit { t 0…1, side } – kurzer Kontakt/Rempler,
+// duck 0…1 – Torwart duckt sich weg, face – Ausdruck für einen Moment (z. B. überrascht),
+// kickPrep 0…1 – Schuss/Pass ist geplant: ausholen (die Simulation führt ihn als „pending“).
+export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot', headPrep = 0, headJump = 1, hit = null, duck = 0, face: faceHint = null, kickPrep = 0 }) {
   const bn = model.bones;
   resetPose(model);
   const s = locomotion(model, speed, dt);
@@ -609,6 +720,10 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
   if (kickAnim > 0) {
     kickPose(bn, 1 - kickAnim / 0.3, kick === 'pass' ? 0.55 : 1);
     face = 'effort';
+  } else if (kickPrep > 0) {
+    // Ausholen, solange der Schuss/Pass geplant ist (vor dem Abflug des Balls).
+    kickPose(bn, 0.35 * Math.min(1, kickPrep), kick === 'pass' ? 0.55 : 1);
+    face = 'effort';
   }
   if (holding === 'chest') {
     arm(bn, 'L', -1.05, -0.28, -1.25);
@@ -617,11 +732,15 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
     arm(bn, 'L', -2.85, 0.12, -0.75); // Einwurf
     arm(bn, 'R', -2.85, 0.12, -0.75);
   }
-  if (headAnim > 0) {
-    // Kopfball: abspringen, Oberkörper und Kopf zurück, dann nach vorn schnappen.
-    const t = 1 - headAnim / 0.3;
-    bn.hips.position.y += Math.sin(t * Math.PI) * 0.32;
-    const snap = t < 0.4 ? -(t / 0.4) : t < 0.6 ? lerp(-1, 1, (t - 0.4) / 0.2) : lerp(1, 0.2, (t - 0.6) / 0.4);
+  if (headAnim > 0 || headPrep > 0) {
+    // Kopfball: vorbereiten (abspringen, Oberkörper und Kopf zurück) → nach vorn schnappen →
+    // KONTAKT bei t = 0,5 (höchster Punkt, Kopf schnellt vor) → landen. Vor dem Kontakt
+    // treibt headPrep die Bewegung (MatchView sieht den Ball kommen), danach der Kopfball
+    // der Simulation (headAnim 0,3 → 0).
+    const t = headAnim > 0 ? 0.5 + 0.5 * (1 - headAnim / 0.3) : 0.5 * Math.min(1, headPrep);
+    const jump = headAnim > 0 ? headJump : 1;
+    bn.hips.position.y += Math.sin(t * Math.PI) * 0.32 * jump;
+    const snap = t < 0.38 ? -(t / 0.38) : t < 0.55 ? lerp(-1, 1, (t - 0.38) / 0.17) : lerp(1, 0.2, (t - 0.55) / 0.45);
     bn.spine.rotation.x = 0.35 * snap;
     bn.head.rotation.x = 0.4 * snap;
     arm(bn, 'L', -0.7, 0.55, -0.6);
@@ -629,6 +748,33 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
     leg(bn, 'L', -0.35, 0.8, 0.3);
     leg(bn, 'R', 0.1, 0.9, 0.3);
     face = 'effort';
+  }
+
+  // Kontakt (Rempler, Zweikampf, Ball an den Körper): kurz zurückweichen, Schulter dreht weg,
+  // Kopf ruckt, Arme gehen auseinander – dann erholt er sich (Sinusbogen über ~0,35 s).
+  if (hit && state === 'normal' && !dive) {
+    const k = Math.sin(Math.min(1, hit.t) * Math.PI);
+    bn.spine.rotation.x -= 0.28 * k;
+    bn.spine.rotation.y += 0.32 * k * hit.side;
+    bn.hips.rotation.y -= 0.12 * k * hit.side;
+    bn.head.rotation.x -= 0.18 * k;
+    bn.head.rotation.z += 0.14 * k * hit.side;
+    bn.upperArmL.rotation.z -= 0.45 * k;
+    bn.upperArmR.rotation.z += 0.45 * k;
+    bn.hips.position.y -= 0.03 * k;
+    face = 'pain';
+  }
+  // Torwart duckt sich weg: Kopf runter, Oberkörper vor, Knie beugen, Unterarme schützen den Kopf.
+  if (duck > 0 && state === 'normal' && !dive && !holding) {
+    const k = Math.sin(Math.min(1, duck) * Math.PI);
+    bn.hips.position.y -= 0.16 * k;
+    leg(bn, 'L', -0.55 * k, 1.0 * k, 0.2 * k);
+    leg(bn, 'R', -0.55 * k, 1.0 * k, 0.2 * k);
+    bn.spine.rotation.x += 0.6 * k;
+    bn.head.rotation.x += 0.45 * k;
+    arm(bn, 'L', -2.3 * k, 0.55 * k, -1.9 * k);
+    arm(bn, 'R', -2.3 * k, 0.55 * k, -1.9 * k);
+    face = 'surprised';
   }
 
   // Grätsche: Füße voran, führendes Bein gestreckt, das andere angewinkelt, eine Hand stützt.
@@ -722,6 +868,7 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
   // Wie hoch der Körper über dem Boden ist (für den Kontaktschatten).
   model.lift = Math.max(0, bn.hips.position.y - hipY);
   model.grounded = state === 'tackle' || state === 'down' || !!dive;
+  if (faceHint && !celebrate && face !== 'pain') face = faceHint;
   setFace(model, face);
 }
 

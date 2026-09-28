@@ -15,7 +15,8 @@ const SURFACE_FX = {
   hall: { colors: [0xe6dcc8, 0xf4efe4], size: 2, life: 0.25, lift: 0.6, drag: 5 },
   artificial: { colors: [0x1c1c1c, 0x2c2c2c, 0x48a040], size: 3, life: 0.5, lift: 2, drag: 3, gravity: 7 },
 };
-const WATER = { colors: [0xcfe4f2, 0xe8f2fa, 0xa8c4d8], size: 3, life: 0.4, lift: 2.2, drag: 2.5, gravity: 9 };
+const WATER = { colors: [0xcfe4f2, 0xe8f2fa, 0xa8c4d8, 0xffffff], // weiß dazu: auf nassem, dunklem Boden besser zu sehen
+  size: 3, life: 0.4, lift: 2.2, drag: 2.5, gravity: 9 };
 // Pulverschnee, den Schritte und Schüsse aufwirbeln.
 const SNOW = { colors: [0xf4f7fb, 0xe2e8f0, 0xffffff], size: 3, life: 0.55, lift: 1.5, drag: 3.2, gravity: 4 };
 // Ball 2.0: kurze helle Aufprall-Pixel (Kopfball, Parade, Pfosten) und Netz-Pixel beim Tor;
