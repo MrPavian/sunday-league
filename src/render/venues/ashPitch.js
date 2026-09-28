@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { toon } from '../materials.js';
 import { addLights, box, cylinder, ground, makeBench, makeFence, makeFloodlight, makeGoalFrame, makeTree } from '../props.js';
-import { makeSpectator } from '../spectators.js';
+import { crowdRow, makeSpectator } from '../spectators.js';
 import { makeAshTexture, makeSignTextureWide } from '../textures.js';
 
 // Ascheplatz vom SV Grün-Weiß: Jugendtore, Ballfangzaun, Flutlicht,
@@ -68,5 +68,7 @@ export function buildAshPitch(root, pitch, rng, scene) {
   root.add(makeSpectator(rng, { x: -16, z: -17.6, facing: 0.3 }));
 
   const lights = { heads: masts.map((x) => [x, 14.4, -18.2]), pools: masts.map((x) => [x * 0.8, -5, 10.5]), field: [hl, pitch.halfWidth] };
+  // Weitere Leute am Zaun hinten – eine Handvoll, ein Ascheplatz ist kein Stadion.
+  for (const o of crowdRow(301, { x0: -24, x1: 24, z: -17.7, n: 14, dz: 0.2, jitter: 1.2 })) root.add(o);
   return { viewHeight: 13, bounds: { x: hl + 4, z: 3.5 }, lights };
 }

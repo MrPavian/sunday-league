@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { toon } from '../materials.js';
 import { addLights, box, ground, lampHead, makeBackpack, makeBench, makeBin, makeBush, makeCone, makeDog, makeJacketPile, makeLamp, makeTree } from '../props.js';
-import { makeSpectator } from '../spectators.js';
+import { crowdRow, makeSpectator } from '../spectators.js';
 import { makeParkGrassTexture } from '../textures.js';
 
 // Stadtpark: Rucksäcke und Hütchen als Tore, die Seitenlinie denkt man sich.
@@ -51,8 +51,8 @@ export function buildPark(root, pitch, rng, scene) {
 
   // Weg mit Bänken, Laternen, Mülleimer – und Zuschauern.
   root.add(makeBench(-6, -14.2), makeBench(8, -14.2));
-  root.add(makeSpectator(rng, { x: -6.4, z: -14.1, sitting: true }));
-  root.add(makeSpectator(rng, { x: -5.5, z: -14.1, sitting: true }));
+  root.add(makeSpectator(rng, { x: -6.4, z: -14.1, sitting: true, y: 0.49 }));
+  root.add(makeSpectator(rng, { x: -5.5, z: -14.1, sitting: true, y: 0.49 }));
   root.add(makeSpectator(rng, { x: 2, z: -13.3, facing: 0.2 }));
   root.add(makeDog(2.8, -13, 0xd8c8a0, -1.2));
   root.add(makeDog(-12, -12.6, 0x2a2a2a, 0.4));
@@ -64,5 +64,7 @@ export function buildPark(root, pitch, rng, scene) {
   root.add(box(2, 0.02, 1.6, 0xc85a5a, -22, 0.01, -8), box(0.5, 0.3, 0.35, 0xc9a227, -21.6, 0.15, -8.2));
 
   const lights = { heads: lamps.map((x) => lampHead(x, -15.5, 4)), pools: lamps.map((x) => [x, -13, 7]), field: [hl, hw] };
+  // Spaziergänger bleiben stehen und schauen zu.
+  for (const o of crowdRow(201, { x0: -26, x1: 26, z: -13.4, n: 7, dz: 0.4, jitter: 2 })) root.add(o);
   return { viewHeight: 12.5, bounds: { x: hl + 4, z: 3.5 }, lights };
 }

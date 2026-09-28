@@ -35,6 +35,7 @@ import { DebugOverlay } from './render/DebugOverlay.js';
 import { cameraViewHeight, createGovernor, detectPlatform, gpuName, LADDER, pickInitialQuality, QUALITY, setCurrentQuality } from './render/quality.js';
 import { applyLighting } from './render/props.js';
 import { BONES } from './render/PlayerModel.js';
+import { buildCrowd } from './render/crowd.js';
 import { moodOf, pickTimeOfDay, resolveLighting } from './render/lighting.js';
 import { setEmissiveLevel } from './render/materials.js';
 import { disposeTree, mergeStatic } from './render/merge.js';
@@ -110,7 +111,9 @@ function playerDebug() {
   const shown = all.filter((m) => m.group.visible);
   const tris = shown[0]?.mesh ? shown[0].mesh.geometry.attributes.position.count / 3 : 0;
   const mats = new Set(all.map((m) => m.mesh?.material)).size + (view.referee ? 1 : 0);
+  const cs = crowd?.stats;
   return [
+    cs ? `CROWD       ${cs.shown}/${cs.people} Zuschauer · ${cs.calls} Draw Calls (+1 Schatten) · ${crowd.material ? 1 : 0} Material · aktiv ${cs.active} · ${crowd.hz ?? 12} Hz` : '',
     `PLAYER      Modell 2.0 · ${shown.length} Figuren · je 1 Draw Call (+1 Schatten)`,
     `PLAYER TRI  ${tris} je Figur · ${BONES.length} Knochen (starr) · ${mats} Materialien`,
     `PLAYER ANIM prozedural, 8 Posen je Schrittpaar · Gesicht ${shown[0]?.face ?? '–'}`,
@@ -125,7 +128,7 @@ try {
 const rig = new CameraRig();
 const scene = new THREE.Scene();
 // ?debug: Renderer und Szene für die Browser-Konsole (Draw Calls, Speicher).
-if (params.has('debug')) globalThis.__sl = { renderer: pixel.renderer, pixel, scene, THREE, rig, get match() { return match; }, get view() { return view; } };
+if (params.has('debug')) globalThis.__sl = { renderer: pixel.renderer, pixel, scene, THREE, rig, get match() { return match; }, get view() { return view; }, get crowd() { return crowd; } };
 const input = new Input();
 const shoutBar = new ShoutBar(document.getElementById('shoutbar') ?? document.body.appendChild(Object.assign(document.createElement('div'), { id: 'shoutbar', hidden: true })), input);
 const hud = new Hud(document.getElementById('hud'));
@@ -209,6 +212,7 @@ function switchLanguage(lang) {
 let venue = null;
 let venueRoot = null;
 let venueInfo = null;
+let crowd = null; // Zuschauer des Spielorts (crowd.js)
 let pitch = null;
 let match = null;
 let view = null;
@@ -232,6 +236,8 @@ function loadVenue(id) {
   lightMood = null;
   venueInfo = venue.build(venueRoot, pitch, createRng(venue.id.length * 7919), scene);
   // Statische Kulisse zu wenigen Meshes verschmelzen (?nomerge zum Vergleichen).
+  // Zuschauer-Plätze zur gemeinsamen Crowd (zwei Draw Calls), dann statische Kulisse verschmelzen.
+  crowd = buildCrowd(venueRoot, venue.id);
   if (!params.has('nomerge')) mergeStatic(venueRoot);
   scene.add(venueRoot);
   pixel.applyShadowSize(scene);
@@ -255,6 +261,7 @@ function showMatch(m) {
   view = new MatchView(scene, match);
   pixel.classifyShadowCasters(scene, venueRoot);
   pixel.setTeamEdges([m.teams[0].kit.shirt, m.teams[1].kit.shirt, m.referee?.kit?.shirt ?? 0x1c1c1c]);
+  crowd?.setMatch(match);
   hud.init(match);
   if (m.manager) shoutBar.show();
   else shoutBar.hide();
@@ -902,6 +909,7 @@ function frame(now) {
     stepMatch(match, intent, STEP);
     hud.handleEvents(match);
     view.handleEvents(match);
+    crowd?.handleEvents(match);
     if (mode === 'play') sound.handle(match, rig.target.x);
     if (mode === 'play' && challengeRun && match.events.some((e) => e.type === 'end')) {
       const ended = match;
@@ -920,6 +928,7 @@ function frame(now) {
   hud.update(match, dt);
   shoutBar.update(match);
   sound.update(dt, mode === 'play' ? match : null);
+  crowd?.update(dt);
   rig.follow(match.ball.pos.x, match.ball.pos.z, dt, venueInfo.bounds);
   updateLighting();
   pixel.render(scene, rig.camera, { moving: !(subPanel.isOpen || planPanel.isOpen || halfPanel.isOpen) });

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { toon } from '../materials.js';
 import { addLights, box, cylinder, ground, makeBench, makeDog, makeFence, makeFloodlight, makeGoalFrame, makeTree } from '../props.js';
-import { makeSpectator } from '../spectators.js';
+import { crowdRow, makeSpectator } from '../spectators.js';
 import { makeLawnTexture, makeSignTextureWide } from '../textures.js';
 
 // Lokale Sponsoren – selbst gemalte Banden, wie sie auf jedem Dorfplatz hängen.
@@ -49,7 +49,7 @@ export function buildLawn(root, pitch, rng, scene) {
   for (const x of [-9, 0, 9]) root.add(cylinder(0.08, 3.6, 0x4a5058, x, 1.8, tz - 3.2, 6));
   for (let i = 0; i < 12; i++) {
     const step = i % 3;
-    root.add(makeSpectator(rng, { x: -8 + rng.range(0, 16), z: tz - step * 1.2, sitting: true, y: step * 0.4 }));
+    root.add(makeSpectator(rng, { x: -8 + rng.range(0, 16), z: tz - step * 1.2, sitting: true, y: 0.4 + step * 0.4 }));
   }
   // Ein paar stehen am Zaun, einer mit Hund.
   root.add(makeSpectator(rng, { x: 14, z: bandZ - 0.8 }));
@@ -79,5 +79,8 @@ export function buildLawn(root, pitch, rng, scene) {
 
   // Flutlicht: Lampenköpfe (Lichthof) und wohin sie zielen (Lichtpool auf dem Rasen).
   const lights = { heads: masts.map((x) => [x, 15.4, -hw - 12.7]), pools: masts.map((x) => [x * 0.8, -hw * 0.4, 12]), field: [hl, hw] };
+  // Mehr Publikum (sichtbar je nach Besucherzahl): volle Tribünenreihen, Leute am Zaun.
+  for (let step = 0; step < 3; step++) for (const o of crowdRow(401 + step, { x0: -8.6, x1: 8.6, z: tz - step * 1.2, y: 0.4 + step * 0.4, n: 12, sitting: true })) root.add(o);
+  for (const [x0, x1, s] of [[-31, -11, 411], [11, 31, 412]]) for (const o of crowdRow(s, { x0, x1, z: bandZ - 0.9, n: 6, dz: 0.35, jitter: 0.8 })) root.add(o);
   return { viewHeight: 15, bounds: { x: hl + 4, z: 4.5 }, lights };
 }

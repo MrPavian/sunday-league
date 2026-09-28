@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { toon } from '../materials.js';
 import { addLights, box, cylinder, ground, group, lampHead, makeBackpack, makeCar, makeCrates, makeDog, makeFence, makeJacketPile, makeLamp, makeTree } from '../props.js';
-import { makeSpectator } from '../spectators.js';
+import { crowdRow, makeSpectator } from '../spectators.js';
 import { makeAsphaltTexture, makeShutterTexture, makeSignTexture } from '../textures.js';
 
 const LOT_W = 56;
@@ -89,5 +89,7 @@ export function buildParkingLot(root, pitch, rng, scene) {
 
   // Laternen: Lichthof am Kopf, Lichtpool darunter (reicht bis an die Autos).
   const lights = { heads: lamps.map((x) => lampHead(x, -18.6)), pools: lamps.map((x) => [x, -15.5, 7.5]), field: [pitch.halfLength, pitch.halfWidth] };
+  // Kundschaft vom Getränkemarkt bleibt hängen.
+  for (const o of crowdRow(101, { x0: -18, x1: 16, z: -16.4, n: 6, dz: 0.3, jitter: 1.5 })) root.add(o);
   return { viewHeight: 12.5, bounds: { x: pitch.wallX + 3, z: 3 }, lights };
 }

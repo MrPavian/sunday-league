@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { emissiveToon, toon } from '../materials.js';
 import { addLights, box, ground, makeBench, makeGoalFrame } from '../props.js';
-import { makeSpectator } from '../spectators.js';
+import { crowdRow, makeSpectator } from '../spectators.js';
 import { makeHallTexture, makeSignTextureWide } from '../textures.js';
 
 // Sporthalle der Kanalschule: Parkett mit bunten Linien, weiße Bande, Handballtore,
@@ -46,7 +46,7 @@ export function buildHall(root, pitch, rng, scene) {
   for (let r = 0; r < 3; r++) root.add(box(30, 0.35, 0.8, 0x6b6b6b, 4, 0.35 + r * 0.45, -hw - 1.4 - r * 0.85));
   for (let i = 0; i < 12; i++) {
     const r = i % 3;
-    root.add(makeSpectator(rng, { x: -8 + (i * 7) % 24 + rng.range(-0.5, 0.5), z: -hw - 1.4 - r * 0.85, y: 0.5 + r * 0.45, facing: 0, sitting: true }));
+    root.add(makeSpectator(rng, { x: -8 + (i * 7) % 24 + rng.range(-0.5, 0.5), z: -hw - 1.4 - r * 0.85, y: 0.525 + r * 0.45, facing: 0, sitting: true }));
   }
   const banner = new THREE.Mesh(new THREE.PlaneGeometry(9, 0.9), toon(0xffffff, { map: makeSignTextureWide('HALLEN-STADTMEISTERSCHAFT', { bg: '#6b2a2a' }) }));
   banner.position.set(6, 4.2, -hw - 4.3);
@@ -55,5 +55,7 @@ export function buildHall(root, pitch, rng, scene) {
   // Auswechselbänke vorne.
   for (const x of [-5, 5]) root.add(makeBench(x, hw + 1.1, Math.PI));
 
+  // Volle Klappbänke beim Hallenturnier (sichtbar je nach Besucherzahl).
+  for (let r = 0; r < 3; r++) for (const o of crowdRow(501 + r, { x0: -10.4, x1: 18.4, z: -hw - 1.4 - r * 0.85, y: 0.525 + r * 0.45, n: 16, sitting: true, jitter: 0.2 })) root.add(o);
   return { viewHeight: 12, bounds: { x: hl + 2, z: 2.5 } };
 }
