@@ -1,4 +1,4 @@
-import { styleOf } from './tactics.js';
+import { styleOf } from './plan.js';
 import { bondBonus, bondOf, isBad } from './bonds.js';
 // Bewegung und Ballkontakte: Laufen, Schuss, Pass, Kopfball, Torwart, Dribbling.
 import { clamp, dist2d, len, norm, rotate } from '../core/math.js';

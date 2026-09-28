@@ -93,7 +93,6 @@ export function normalizeTactic(tactic, format) {
   };
 }
 
-export const styleOf = (m, team) => STYLES[m.plan?.[team]?.style] ?? STYLES.ausgewogen;
 
 // Feste Taktik für KI-Vereine: jeder Verein hat seine Handschrift.
 export function clubTactic(clubId, format) {

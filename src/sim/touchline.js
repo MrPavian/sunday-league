@@ -131,7 +131,7 @@ function finaleDecision(tl) {
           opt('offensive', tr('Den Deckel draufmachen – drittes Tor!', 'Finish them off – one more goal!'), tr('Der Trainer will mehr: „Macht den Sack zu!"', 'The manager wants more: "Kill the game off!"')),
         ]
       : [
-          opt('offensive', tr('Alles nach vorne!', 'Everyone forward!'), tr('Schlussoffensive! Sogar der Libero geht mit nach vorne.', 'All-out attack! Even the sweeper joins in.'), (m) => (call('press')(m), call('shoot', 0.8)(m))),
+          opt('offensive', tr('Alles nach vorne!', 'Everyone forward!'), tr('Schlussoffensive! Sogar der Libero geht mit nach vorne.', 'All-out attack! Even the sweeper joins in.'), (m) => (call('press')(m), call('forward')(m))),
           opt(tl.m.mentality, tr('Geduld – die Chance kommt', 'Patience – the chance will come'), tr('Der Trainer bleibt ruhig auf der Bank sitzen.', 'The manager stays calmly on the bench.')),
           opt('defensive', tr(d === 0 ? 'Den Punkt sichern' : 'Nicht noch höher verlieren', d === 0 ? 'Settle for the point' : 'Avoid a heavier defeat'), tr('Der Trainer macht die Geste fürs Zurückziehen.', 'The manager signals to drop back.')),
         ],
