@@ -11,6 +11,23 @@ function lightingLines(L) {
   ];
 }
 
+// Phase 7: Post-Pipeline (Reihenfolge siehe PixelRenderer).
+function postLines(p) {
+  const i = p.postInfo?.();
+  if (!i) return [];
+  const q = p.quality;
+  const u = p.postMaterial.uniforms;
+  const d = p.postMaterial.defines;
+  return [
+    `POST        Kanten → Schnee/Frost → Licht → Nässe → Farbe → Dunst → Bloom → Schulter → Dither`,
+    `POST PASSES ${i.passes} (Bright/Blur nur bei Licht) · RENDER TARGETS ${i.targets} + Schattenkarte`,
+    `BLOOM       ${i.bloom} · ${i.bloomSize}`,
+    `COLOR GRADE Sätt. ${u.saturation.value.toFixed(2)} · Kontrast ${u.contrast.value.toFixed(2)} · Belichtung ${u.brightness.value.toFixed(2)} · Vignette ${u.vignette.value.toFixed(2)}`,
+    `DITHER      ${u.dither.value.toFixed(3)} (Gamma-Raum, Figuren ×0,35)  EDGE ${d.EDGES === 2 ? 'Silhouette + Innenkanten' : d.EDGES === 1 ? 'nur Silhouetten' : 'aus'}${q ? '' : ''}`,
+    `POST GPU    ${p.gpu ? 'siehe GPU FRAME' : 'nicht verfügbar'} · Post CPU ${p.stats.postMs.toFixed(2)} ms`,
+  ];
+}
+
 // Grafik-Messwerte (F3 oder ?gfx): Qualitätsstufe, internes Raster, FPS, Draw Calls,
 // Dreiecke und Zeiten des PixelRenderers. Standardmäßig unsichtbar.
 export class DebugOverlay {
@@ -61,6 +78,7 @@ export class DebugOverlay {
       `GPU FRAME   ${p.gpu ? ms(s.gpuMs) : 'nicht verfügbar'}`,
       `SHADOW      ${ms(s.shadowMs)}  ${p.shadowHz} Hz, ${Math.round(s.shadowShare * 100)} % der Bilder`,
       `CASTERS     ${s.casters.static} statisch / ${s.casters.dynamic} dynamisch`,
+      ...postLines(p),
       ...lightingLines(p.lighting),
       this.extra(),
     ].filter(Boolean).join('\n');

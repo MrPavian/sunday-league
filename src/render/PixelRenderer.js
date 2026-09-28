@@ -11,10 +11,15 @@ const MAX_LIGHTS = 4;
 //
 // Ablauf je Bild:
 //   1. Schattenkarte (nur wenn fällig, siehe shadowInterval / markShadowsDirty)
-//   2. Farbe + Tiefe → colorTarget (interne Auflösung)
-//   3. Nachbearbeitung → postTarget (interne Auflösung). Die Normalen werden hier
-//      aus der Tiefe rekonstruiert – ein eigener Normalen-Durchgang entfällt.
-//   4. Blit → Bildschirm: jedes interne Pixel wird exakt pixelSize × pixelSize
+//   2. Farbe + Tiefe → colorTarget (interne Auflösung, sRGB-gespeichert: 8 Bit reichen so
+//      auch für dunkle Abendtöne; gelesen wird automatisch wieder linear)
+//   3. nur wenn Lichter an sind (Abend, Halle) und die Stufe Bloom hat: Bright-Pass der
+//      Lichtquellen → bloomA (½), kleiner Weichzeichner → bloomB (½ bzw. ¼)
+//   4. Nachbearbeitung → postTarget (interne Auflösung), in dieser Reihenfolge:
+//      Normalen aus der Tiefe → Kanten → Kontaktschatten → Schnee/Frost → Flutlicht → Nässe
+//      → Farbkorrektur → Dunst → Bloom + Lichthöfe → weiche Schulter
+//      → Vignette → Dithering (Gamma-Raum, zuletzt: bricht auch Bloom-Verläufe auf)
+//   5. Blit → Bildschirm: jedes interne Pixel wird exakt pixelSize × pixelSize
 //      Gerätepixel groß (Nearest, ein Texturzugriff).
 //
 // Vorbereitet für eine spätere Objekt-ID: Der Alphakanal von colorTarget ist frei
@@ -78,6 +83,9 @@ const postFragment = /* glsl */ `
   uniform float frost;
   uniform float mist;        // Bodennebel (0…1)
   uniform float heatHaze;    // Hitzeflimmern (0…1)
+  // Phase 7: Bloom nur aus Lichtquellen (Kennung im Alphakanal, siehe materials.js LIGHT_CODE).
+  uniform sampler2D tBloom;
+  uniform float bloomIntensity;
   varying vec2 vUv;
 
   // Orthografisch: Die Tiefe ist linear.
@@ -163,7 +171,7 @@ const postFragment = /* glsl */ `
     // sie von beiden Seiten.
     float lap = max(dL + dR - 2.0 * d, 0.0) + max(dD + dU - 2.0 * d, 0.0);
     float silhouette = max(edgeMin, edgeTexels * px.y);
-    #if EDGES == 1
+    #if EDGES >= 1
     bool edge = !sky && lap > silhouette;
     #else
     bool edge = false;
@@ -172,7 +180,7 @@ const postFragment = /* glsl */ `
     // Helle Innenkanten: Knick zwischen zwei Flächen desselben Objekts, nur auf der
     // Seite, die mehr zur Lichtseite zeigt.
     float crease = 0.0;
-    #if EDGES == 1
+    #if EDGES >= 2
     if (!sky && !edge) {
       vec3 nOwnX = faceNormal(ownR ? txR : txL, ty);
       vec3 nOthX = faceNormal(ownR ? txL : txR, ty);
@@ -190,7 +198,7 @@ const postFragment = /* glsl */ `
     float id = texture2D(tColor, uv).a;
     bool character = id < 0.9;
     bool noCover = id < 0.97; // Figuren, Zuschauer, Boden-Decals: keine Schneedecke, kein Glanz
-    #if EDGES == 1
+    #if EDGES >= 1
     if (character && !edge) {
       float aL = texture2D(tColor, uv - vec2(texel.x, 0.0)).a;
       float aR = texture2D(tColor, uv + vec2(texel.x, 0.0)).a;
@@ -207,38 +215,32 @@ const postFragment = /* glsl */ `
       // Im Nebel wird auch die Figurenkante weicher (sonst stünden graue Figuren mit harten Rändern da).
       c = mix(c * (1.0 - clamp(depthEdgeStrength + characterEdgeBoost, 0.0, 1.0) * (1.0 - 0.5 * fogF)), teamTint, 0.3);
     } else if (edge) {
-      c *= 1.0 - depthEdgeStrength;
+      // Zuschauer (Kennung 0,94) treten zurück: schwächere Silhouette als Kulisse und Figuren.
+      c *= 1.0 - depthEdgeStrength * (noCover ? 0.6 : 1.0);
     } else if (crease > creaseMin) {
       // Nasse Kleidung glänzt an den Kanten etwas mehr.
       c *= 1.0 + normalEdgeStrength * (character ? 1.0 + 0.8 * clamp(wetness, 0.0, 1.0) : 1.0);
     }
 
     // Kontaktschatten (SSAO light) und Glühen um helle Stellen.
-    #if AO_SAMPLES > 0 || BLOOM == 1
+    #if AO_SAMPLES > 0
     #if AO_SAMPLES > 8
     const int DIRS = 8;
     #else
     const int DIRS = 4;
     #endif
     float ao = 0.0;
-    float glow = 0.0;
     for (int i = 0; i < DIRS; i++) {
       float a = float(i) * 6.2831853 / float(DIRS);
       vec2 dir = vec2(cos(a), sin(a));
       for (int k = 1; k <= 2; k++) {
         vec2 uv2 = uv + dir * texel * float(k * 2);
-        #if AO_SAMPLES > 0
         float dd = d - getDepth(uv2);
         ao += smoothstep(0.04, 0.35, dd) * (1.0 - smoothstep(0.8, 1.6, dd));
-        #endif
-        #if BLOOM == 1
-        glow += max(0.0, luma(texture2D(tColor, uv2).rgb) - 0.72);
-        #endif
       }
     }
     float taps = float(DIRS * 2);
     c *= 1.0 - aoStrength * clamp(ao / taps * 1.6, 0.0, 1.0);
-    c += glow / taps * bloom * tint;
     #endif
 
     // Schneedecke: nach oben zeigende Flächen werden weiß, je Untergrund verschieden viel
@@ -321,7 +323,9 @@ const postFragment = /* glsl */ `
       #endif
     }
 
-    // Farbkorrektur: Tönung, Sättigung, Kontrast, Helligkeit.
+    // Farbkorrektur: Tönung, Sättigung, Kontrast, Helligkeit – bewusst im linearen Raum wie
+    // seit Phase 2 (Kontrast um linear 0,5): Die Looks sind darauf abgestimmt. Im Gamma-Raum
+    // wirkte das Bild im A/B-Vergleich flau (Phase 7 geprüft und verworfen).
     c *= tint;
     c = mix(vec3(luma(c)), c, saturation);
     c = (c - 0.5) * contrast + 0.5;
@@ -329,6 +333,13 @@ const postFragment = /* glsl */ `
 
     // Dunst (oben berechnet). Figuren im Vordergrund bleiben lesbar: nur gut halb so viel.
     c = mix(c, fogColor, character ? fogF * 0.55 : fogF);
+
+    #if BLOOM == 1
+    // Bloom: nur echte Lichtquellen (Flutlichtköpfe, Laternen, Fenster, Hallenlampen), kleiner
+    // weicher Hof aus der Bloom-Textur, in Stufen gerastert – das Pixelbild bleibt vorn.
+    vec3 bl = texture2D(tBloom, vUv).rgb * bloomIntensity;
+    c += floor(bl * 16.0 + bay) / 16.0;
+    #endif
 
     #if HALO == 1
     // Lichthof um Flutlichtköpfe und Laternen: gerastert, liegt über dem Dunst (im Nebel
@@ -342,12 +353,21 @@ const postFragment = /* glsl */ `
     }
     #endif
 
-    // Vignette.
+    // Weiche Schulter statt harter Weißkappung (Schnee im Flutlicht, Lampen, weiße Trikots):
+    // bis 0,85 unverändert, darüber sanft gegen 1.
+    vec3 over = max(c - 0.85, 0.0);
+    c = min(c, 0.85) + over / (1.0 + over * 4.0);
+
+    // Vignette (nur auf Stufen mit Vignette, höchstens sehr schwach).
     vec2 v = vUv - 0.5;
     c *= 1.0 - vignette * smoothstep(0.25, 0.75, dot(v, v) * 2.2);
 
-    // Geordnetes Dithering, exakt im internen Pixelraster (4×4-Bayer als Textur).
-    c += (bay - 0.5) * dither;
+    // Geordnetes Dithering, exakt im internen Pixelraster (4×4-Bayer als Textur), im
+    // Gamma-Raum: gleich große Stufen in hellen und dunklen Tönen (linear war es in dunklen
+    // Tönen ein Vielfaches). Auf Figuren und Ball schwächer – Gesichter, Nummern, Ballmuster.
+    vec3 go = pow(max(c, 0.0), vec3(1.0 / 2.2));
+    go += (bay - 0.5) * dither * (character ? 0.35 : 1.0);
+    c = pow(max(go, 0.0), vec3(2.2));
     gl_FragColor = vec4(max(c, 0.0), 1.0);
     #include <colorspace_fragment>
   }
@@ -362,6 +382,43 @@ const blitFragment = /* glsl */ `
     #include <colorspace_fragment>
   }
 `;
+
+// Bloom (Phase 7): Bright-Pass nur über Pixel mit Licht-Kennung im Alphakanal (materials.js
+// LIGHT_CODE), 2×2 Texel je Zielpixel – kein Licht fällt zwischen die Abtastungen, nichts
+// flimmert beim Scrollen. Danach ein kleiner Zeltfilter (9 bilineare Abgriffe).
+const brightFragment = /* glsl */ `
+  uniform sampler2D tColor;
+  uniform vec2 srcTexel;
+  uniform float threshold;
+  varying vec2 vUv;
+  vec3 tap(vec2 uv) {
+    vec4 s = texture2D(tColor, uv);
+    float light = step(0.975, s.a) * step(s.a, 0.995);
+    float l = dot(s.rgb, vec3(0.299, 0.587, 0.114));
+    return s.rgb * light * smoothstep(threshold, threshold + 0.2, l);
+  }
+  void main() {
+    vec2 o = srcTexel * 0.5;
+    vec3 c = tap(vUv + vec2(-o.x, -o.y)) + tap(vUv + vec2(o.x, -o.y)) + tap(vUv + vec2(-o.x, o.y)) + tap(vUv + vec2(o.x, o.y));
+    gl_FragColor = vec4(c * 0.25, 1.0);
+  }
+`;
+const blurFragment = /* glsl */ `
+  uniform sampler2D tSrc;
+  uniform vec2 srcTexel;
+  varying vec2 vUv;
+  void main() {
+    vec2 t = srcTexel;
+    vec3 c = texture2D(tSrc, vUv).rgb * 4.0;
+    c += (texture2D(tSrc, vUv + vec2(t.x, 0.0)).rgb + texture2D(tSrc, vUv - vec2(t.x, 0.0)).rgb + texture2D(tSrc, vUv + vec2(0.0, t.y)).rgb + texture2D(tSrc, vUv - vec2(0.0, t.y)).rgb) * 2.0;
+    c += texture2D(tSrc, vUv + t).rgb + texture2D(tSrc, vUv - t).rgb + texture2D(tSrc, vUv + vec2(t.x, -t.y)).rgb + texture2D(tSrc, vUv + vec2(-t.x, t.y)).rgb;
+    gl_FragColor = vec4(c / 16.0, 1.0);
+  }
+`;
+// Bloom je Stufe: res = Auflösung des Weichzeichners relativ zur internen, blur = Durchgänge,
+// k = Stärke. Stufen ohne Bloom sparen beide Durchgänge ganz; tagsüber (keine Lichter an)
+// laufen sie ebenfalls nicht.
+export const BLOOM = { lite: { res: 0.25, blur: 1 }, full: { res: 0.5, blur: 1 }, ultra: { res: 0.5, blur: 2 }, threshold: 0.6, intensity: 0.32 };
 
 // 4×4-Bayer-Matrix (Werte 0…15) als winzige, sich wiederholende Textur.
 function bayerTexture() {
@@ -396,9 +453,12 @@ export class PixelRenderer {
     this.renderer.info.autoReset = false; // Zählt über alle Durchgänge eines Bildes
 
     const rtOptions = { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, generateMipmaps: false };
-    this.colorTarget = new THREE.WebGLRenderTarget(1, 1, { ...rtOptions, depthTexture: new THREE.DepthTexture(1, 1) });
+    this.colorTarget = new THREE.WebGLRenderTarget(1, 1, { ...rtOptions, depthTexture: new THREE.DepthTexture(1, 1), colorSpace: THREE.SRGBColorSpace });
     // sRGB-Speicher: dunkle Töne behalten ihre Abstufung, der Blit gibt sie unverändert aus.
     this.postTarget = new THREE.WebGLRenderTarget(1, 1, { ...rtOptions, depthBuffer: false, colorSpace: THREE.SRGBColorSpace });
+    // Bloom-Ziele (klein, linear gefiltert); nur angelegt, wenn die Stufe Bloom hat.
+    this.bloomA = null;
+    this.bloomB = null;
 
     this.postMaterial = new THREE.ShaderMaterial({
       vertexShader: quadVertex,
@@ -450,8 +510,10 @@ export class PixelRenderer {
         frost: { value: 0 },
         mist: { value: 0 },
         heatHaze: { value: 0 },
+        tBloom: { value: null },
+        bloomIntensity: { value: 0 },
       },
-      defines: { AO_SAMPLES: 16, BLOOM: 1, EDGES: 1, FLOOD: 2, HALO: 1, WETFX: 1, MAX_LIGHTS },
+      defines: { AO_SAMPLES: 16, BLOOM: 1, EDGES: 2, FLOOD: 2, HALO: 1, WETFX: 1, MAX_LIGHTS },
       depthTest: false,
       depthWrite: false,
     });
@@ -463,6 +525,14 @@ export class PixelRenderer {
       depthWrite: false,
     });
     const quad = new THREE.PlaneGeometry(2, 2);
+    const pass = (fragmentShader, uniforms) => {
+      const mat = new THREE.ShaderMaterial({ vertexShader: quadVertex, fragmentShader, uniforms, depthTest: false, depthWrite: false });
+      const sc = new THREE.Scene();
+      sc.add(new THREE.Mesh(quad, mat));
+      return { mat, scene: sc };
+    };
+    this.brightPass = pass(brightFragment, { tColor: { value: this.colorTarget.texture }, srcTexel: { value: new THREE.Vector2() }, threshold: { value: BLOOM.threshold } });
+    this.blurPass = pass(blurFragment, { tSrc: { value: null }, srcTexel: { value: new THREE.Vector2() } });
     this.postScene = new THREE.Scene();
     this.postScene.add(new THREE.Mesh(quad, this.postMaterial));
     this.blitScene = new THREE.Scene();
@@ -565,20 +635,27 @@ export class PixelRenderer {
     const look = { ...LOOKS.klar, brightness: 1, ...(this.postParams ?? {}) };
     const q = this.quality;
     const ao = this.effects ? q.ao : 0;
-    const bloom = this.effects && q.bloom;
+    const bloom = this.effects ? (q.bloom ? (q.bloomBlur > 1 ? BLOOM.ultra : BLOOM.full) : q.bloomLite ? BLOOM.lite : null) : null;
+    this.bloomCfg = bloom;
+    this.bloomK = bloom ? (q.bloom ? 1 : q.bloomLite) : 0;
     // Ohne Effekte: nur Wetter-Dunst und Schnee bleiben, alles Teure ist aus.
     if (!ao) look.aoStrength = 0;
     if (!bloom) look.bloom = 0;
+    // Vignette nur auf Stufen, die sie haben, und höchstens sehr schwach (vorher abends 0,6).
+    look.vignette = q.vignette ? Math.min(look.vignette, 0.18) : 0;
     if (!this.effects) Object.assign(look, { vignette: 0, dither: 0 });
     if (!q.dither) look.dither = 0;
     // Shader-Varianten nur je Qualitätsstufe, nie je Wetter oder Spielort.
     const defs = this.postMaterial.defines;
-    const want = { AO_SAMPLES: ao, BLOOM: bloom ? 1 : 0, EDGES: q.edges === false ? 0 : 1, FLOOD: q.flood ?? 2, HALO: q.halo === false ? 0 : 1, WETFX: q.wetFx === false ? 0 : 1 };
+    const want = { AO_SAMPLES: ao, BLOOM: bloom ? 1 : 0, EDGES: q.edges === false ? 0 : q.edges === 1 ? 1 : 2, FLOOD: q.flood ?? 2, HALO: q.halo === false ? 0 : 1, WETFX: q.wetFx === false ? 0 : 1 };
     if (Object.entries(want).some(([k, v]) => defs[k] !== v)) {
       Object.assign(defs, want);
       this.postMaterial.needsUpdate = true;
     }
     const u = this.postMaterial.uniforms;
+    // Bloom-Stärke aus dem Look (Tageszeit/Wetter), klein skaliert: ≈ 0,05–0,2.
+    u.bloomIntensity.value = bloom ? look.bloom * BLOOM.intensity * this.bloomK : 0;
+    this.sizeBloom();
     for (const [k, v] of Object.entries(look)) {
       if (!u[k]) continue;
       if (Array.isArray(v)) u[k].value.set(...v);
@@ -598,7 +675,69 @@ export class PixelRenderer {
     this.renderer.setSize(r.devWidth, r.devHeight, false); // Canvas = alle Gerätepixel, CSS-Größe 100 %
     this.colorTarget.setSize(r.width, r.height);
     this.postTarget.setSize(r.width, r.height);
+    this.sizeBloom();
     this.postMaterial.uniforms.resolution.value.set(r.width, r.height);
+  }
+
+  // Bloom-Ziele passend zu Stufe und interner Auflösung anlegen (oder freigeben).
+  sizeBloom() {
+    const cfg = this.bloomCfg;
+    if (!cfg) {
+      this.bloomA?.dispose();
+      this.bloomB?.dispose();
+      this.bloomA = this.bloomB = null;
+      this.postMaterial.uniforms.tBloom.value = null;
+      return;
+    }
+    const opts = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, generateMipmaps: false, depthBuffer: false };
+    const wA = Math.max(1, Math.ceil(this.width / 2));
+    const hA = Math.max(1, Math.ceil(this.height / 2));
+    const wB = Math.max(1, Math.ceil(this.width * cfg.res));
+    const hB = Math.max(1, Math.ceil(this.height * cfg.res));
+    this.bloomA ??= new THREE.WebGLRenderTarget(wA, hA, opts);
+    this.bloomB ??= new THREE.WebGLRenderTarget(wB, hB, opts);
+    this.bloomA.setSize(wA, hA);
+    this.bloomB.setSize(wB, hB);
+  }
+
+  // Wie viele Renderziele und Durchgänge das Bild gerade braucht (Debug-Anzeige).
+  postInfo() {
+    const b = this.bloomActive;
+    const cfg = this.bloomCfg;
+    return {
+      targets: 2 + (this.bloomA ? 2 : 0),
+      passes: 2 + (b ? 1 + cfg.blur : 0),
+      bloom: cfg ? `${cfg === BLOOM.lite ? 'reduziert ¼' : cfg === BLOOM.ultra ? 'hoch ½, 2× weich' : 'normal ½'} · ${b ? `an (${this.postMaterial.uniforms.bloomIntensity.value.toFixed(2)})` : 'aus (keine Lichter an)'}` : 'aus (Stufe)',
+      bloomSize: this.bloomA ? `${this.bloomA.width}×${this.bloomA.height} / ${this.bloomB.width}×${this.bloomB.height}` : '–',
+    };
+  }
+
+  // Bloom-Durchgänge: nur wenn Lichter leuchten (Abend, Halle) – tagsüber gibt es keine Quelle.
+  renderBloom() {
+    const r = this.renderer;
+    const cfg = this.bloomCfg;
+    const on = !!cfg && this.bloomA && (this.lighting?.emissive ?? 0) > 0 && this.postMaterial.uniforms.bloomIntensity.value > 0;
+    this.bloomActive = on;
+    const u = this.postMaterial.uniforms;
+    if (!on) {
+      u.tBloom.value = null;
+      return;
+    }
+    const bp = this.brightPass.mat.uniforms;
+    bp.srcTexel.value.set(1 / this.width, 1 / this.height);
+    r.setRenderTarget(this.bloomA);
+    r.render(this.brightPass.scene, this.quadCamera);
+    const bu = this.blurPass.mat.uniforms;
+    let src = this.bloomA;
+    let dst = this.bloomB;
+    for (let i = 0; i < cfg.blur; i++) {
+      bu.tSrc.value = src.texture;
+      bu.srcTexel.value.set(1 / src.width, 1 / src.height);
+      r.setRenderTarget(dst);
+      r.render(this.blurPass.scene, this.quadCamera);
+      [src, dst] = [dst, src];
+    }
+    u.tBloom.value = src.texture;
   }
 
   // Schattenwerfer einteilen: statisch ist die Kulisse eines Spielorts (verschmolzen,
@@ -708,6 +847,7 @@ export class PixelRenderer {
     const t0 = performance.now();
     r.setRenderTarget(this.colorTarget);
     r.render(scene, camera);
+    this.renderBloom();
     const t1 = performance.now();
     r.setRenderTarget(this.postTarget);
     r.render(this.postScene, this.quadCamera);

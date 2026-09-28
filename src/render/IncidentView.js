@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { len } from '../core/math.js';
-import { toon } from './materials.js';
+import { keepAlpha, toon } from './materials.js';
 import { currentQuality } from './quality.js';
 import { animatePlayer, createPlayerModel } from './PlayerModel.js';
 
@@ -66,7 +66,7 @@ export class IncidentView {
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
     // depthWrite aus: Wetterpartikel sollen keine Silhouetten-Kanten bekommen (dunkle Ränder).
-    this.rain = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.42, depthWrite: false }));
+    this.rain = new THREE.LineSegments(geo, keepAlpha(new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.42, depthWrite: false })));
     this.rain.frustumCulled = false;
     this.rain.visible = false;
     this.drops = Array.from({ length: drops }, (_, i) => {
@@ -96,7 +96,7 @@ export class IncidentView {
       const tmp = new THREE.Color();
       for (let i = 0; i < n; i++) c.set(tmp.setHex(colors[i % colors.length]).toArray(), i * 3);
       g.setAttribute('color', new THREE.BufferAttribute(c, 3));
-      const mat = new THREE.PointsMaterial({ size, sizeAttenuation: false, vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false });
+      const mat = keepAlpha(new THREE.PointsMaterial({ size, sizeAttenuation: false, vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false }));
       mat.onBeforeCompile = (sh) => {
         sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aSize;').replace('gl_PointSize = size;', 'gl_PointSize = floor(size * aSize + 0.5);');
       };
@@ -115,7 +115,7 @@ export class IncidentView {
     this.sprinklers = new THREE.Group();
     this.sprinklers.visible = false;
     this.jets = [];
-    const water = new THREE.PointsMaterial({ color: 0xcfe8ff, size: 3, sizeAttenuation: false, transparent: true, opacity: 0.85 });
+    const water = keepAlpha(new THREE.PointsMaterial({ color: 0xcfe8ff, size: 3, sizeAttenuation: false, transparent: true, opacity: 0.85 }));
     for (const [sx, sz] of [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]]) {
       const g = new THREE.BufferGeometry();
       g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(90 * 3), 3));

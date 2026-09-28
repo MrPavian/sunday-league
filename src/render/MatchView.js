@@ -4,7 +4,7 @@ import { allPlayers } from '../sim/squad.js';
 import { attackDir } from '../sim/players.js';
 import { BallView } from './BallView.js';
 import { animatePlayer, createPlayerModel, disposeKit, KitAtlas, setKitDirt } from './PlayerModel.js';
-import { pixelTexture } from './materials.js';
+import { keepAlpha, pixelTexture } from './materials.js';
 
 let flameTex = null;
 function flameTexture() {
@@ -77,7 +77,7 @@ export class MatchView {
       model.celebration = celebrationFor(p.id);
       if (p.hot) {
         // In Form: eine kleine Pixelflamme über dem Kopf.
-        model.flame = new THREE.Sprite(new THREE.SpriteMaterial({ map: flameTexture(), transparent: true, depthWrite: false }));
+        model.flame = new THREE.Sprite(keepAlpha(new THREE.SpriteMaterial({ map: flameTexture(), transparent: true, depthWrite: false })));
         model.flame.scale.set(0.32, 0.4, 1);
         model.flame.position.set(0, 2.25, 0);
         model.group.add(model.flame);
@@ -201,7 +201,7 @@ export class MatchView {
     // über einer Deckkraft von 0,3 – beides verwarf jedes Pixel. Die Maske ist 0 oder 1, daher
     // reicht alphaTest 0,1. Dichte je Instanz (Farbe rot = 0…1): gerastert ausgedünnt, so wird der
     // Ballschatten mit der Höhe lichter, ohne weichen Verlauf.
-    const mat = new THREE.MeshBasicMaterial({ color: 0x000000, alphaMap: tex, transparent: true, opacity: 0.3, depthWrite: false, alphaTest: 0.1 });
+    const mat = keepAlpha(new THREE.MeshBasicMaterial({ color: 0x000000, alphaMap: tex, transparent: true, opacity: 0.3, depthWrite: false, alphaTest: 0.1 }));
     mat.onBeforeCompile = (sh) => {
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying float vDensity;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvDensity = instanceColor.r;');
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vDensity;').replace(

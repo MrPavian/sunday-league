@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { keepAlpha } from './materials.js';
 import { currentQuality } from './quality.js';
 
 // Kleine Partikeleffekte: Staub, Grasfetzen, Spritzwasser. Alles in einem Pool
@@ -42,7 +43,7 @@ export class Effects {
     geo.setAttribute('position', new THREE.BufferAttribute(this.pos, 3));
     geo.setAttribute('color', new THREE.BufferAttribute(this.col, 3));
     // Punkte in Pixelgröße – die Kamera ist orthografisch.
-    this.points = new THREE.Points(geo, new THREE.PointsMaterial({ size: this.fx.size, sizeAttenuation: false, vertexColors: true, transparent: true, opacity: 1, depthWrite: false }));
+    this.points = new THREE.Points(geo, keepAlpha(new THREE.PointsMaterial({ size: this.fx.size, sizeAttenuation: false, vertexColors: true, transparent: true, opacity: 1, depthWrite: false })));
     this.points.frustumCulled = false;
     this.points.renderOrder = 2;
     root.add(this.points);

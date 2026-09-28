@@ -45,6 +45,9 @@ export function emissiveToon(color, glow = 0xfff2c8, strength = 1) {
   const key = `${color}|${glow}|${strength}`;
   if (glowCache.has(key)) return glowCache.get(key);
   const mat = new THREE.MeshToonMaterial({ color, gradientMap: gradient, emissive: glow, emissiveIntensity: glowLevel * strength });
+  // Licht-Kennung im Alphakanal: Nur solche Pixel speisen das Bloom (PixelRenderer).
+  mat.blending = THREE.NoBlending;
+  mat.opacity = LIGHT_CODE;
   mat.userData.emissiveStrength = strength;
   glowCache.set(key, mat);
   return mat;
@@ -54,3 +57,21 @@ export function setEmissiveLevel(level) {
   for (const mat of glowCache.values()) mat.emissiveIntensity = level * mat.userData.emissiveStrength;
 }
 export const emissiveLevel = () => glowLevel;
+
+// Kennungen im Alphakanal des Szenenbilds (vom Post-Shader gelesen): Figuren < 0,9
+// (PlayerModel EDGE_CODE, Ball 0,7), Zuschauer und Boden-Decals 0,94 (weather.js DECAL_CODE),
+// Lichtquellen LIGHT_CODE, alles andere 1.
+export const LIGHT_CODE = 0.985;
+
+// Transparente Effekte (Regen, Schnee, Laub, Spritzer, Schweif, Kontaktschatten) mischen nur
+// die Farbe; der Alphakanal – und damit die Kennung darunter – bleibt unberührt. Sonst würde
+// ein Regentropfen über dem Rasen z. B. als „Figur“ gelten.
+export function keepAlpha(mat) {
+  mat.blending = THREE.CustomBlending;
+  mat.blendEquation = THREE.AddEquation;
+  mat.blendSrc = THREE.SrcAlphaFactor;
+  mat.blendDst = THREE.OneMinusSrcAlphaFactor;
+  mat.blendSrcAlpha = THREE.ZeroFactor;
+  mat.blendDstAlpha = THREE.OneFactor;
+  return mat;
+}

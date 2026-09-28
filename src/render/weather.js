@@ -23,7 +23,7 @@ import { currentQuality } from './quality.js';
 // print – Farbe der Spuren (nass bzw. im Schnee festgetreten).
 export const GROUND = {
   grass: { wetDark: 0.2, wetSat: 1.28, glint: 0.014, streak: 0.22, spots: 0, sky: 0.04, snow: 0.88, snowShade: [0.62, 0.68, 0.8], print: 0x2e4426 },
-  ash: { wetDark: 0.3, wetSat: 1.1, glint: 0, streak: 0.2, spots: 0.5, sky: 0, snow: 1.15, snowShade: [0.64, 0.64, 0.68], print: 0x5a3020 },
+  ash: { wetDark: 0.3, wetSat: 0.96, glint: 0, streak: 0.2, spots: 0.5, sky: 0, snow: 1.15, snowShade: [0.64, 0.64, 0.68], print: 0x5a3020 },
   asphalt: { wetDark: 0.3, wetSat: 1.05, glint: 0.045, streak: 0.6, spots: 0, sky: 0.16, snow: 0.5, snowShade: [0.58, 0.62, 0.72], print: 0x2a2a2c },
   concrete: { wetDark: 0.26, wetSat: 1.05, glint: 0.03, streak: 0.42, spots: 0.18, sky: 0.1, snow: 0.6, snowShade: [0.6, 0.63, 0.72], print: 0x4a4946 },
   wood: { wetDark: 0.1, wetSat: 1.08, glint: 0.008, streak: 0.3, spots: 0, sky: 0, snow: 0, snowShade: [0.6, 0.6, 0.6], print: 0x8a6a40 },

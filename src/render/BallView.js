@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { BALL_RADIUS } from '../sim/ball.js';
 import { BALL_VISUAL_RADIUS, createBallModel, rollBall } from './BallModel.js';
+import { keepAlpha } from './materials.js';
 import { currentQuality } from './quality.js';
 
 // Ball 2.0 – Darstellung des Balls. Die Simulation wird nur gelesen (Position, Geschwindigkeit,
@@ -47,7 +48,7 @@ export class BallView {
       const sizes = new Float32Array(this.trailN);
       for (let i = 0; i < this.trailN; i++) sizes[i] = Math.max(1, Math.round(3 - (i * 2.5) / this.trailN));
       g.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
-      const mat = new THREE.PointsMaterial({ color: 0xf2f2ea, size: 1, sizeAttenuation: false, transparent: true, opacity: 0.5, depthWrite: false });
+      const mat = keepAlpha(new THREE.PointsMaterial({ color: 0xf2f2ea, size: 1, sizeAttenuation: false, transparent: true, opacity: 0.5, depthWrite: false }));
       mat.onBeforeCompile = (s) => {
         s.vertexShader = s.vertexShader.replace('#include <common>', '#include <common>\nattribute float aSize;').replace('gl_PointSize = size;', 'gl_PointSize = aSize;');
       };
