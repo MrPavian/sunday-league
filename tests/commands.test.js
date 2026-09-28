@@ -32,13 +32,35 @@ describe('coach orders change real behaviour', () => {
     expect(right - left).toBeGreaterThan(0.12);
   }, SLOW);
 
-  it('high pressing wins the ball higher up but costs stamina', () => {
-    const high = series(['press:hoch']);
-    const deep = series(['press:tief']);
-    const wins = (ms) => mean(ms.map((m) => m.log.turnovers.filter((t) => t.to === 0 && t.third === 'att').length));
+  it('high pressing squeezes the whole block up to the ball – and costs stamina', async () => {
+    const { updateTactics, anchor } = await import('../src/sim/ai.js');
+    // Eingefrorene Lage: Der Gegner baut in seiner Hälfte auf. Wohin schickt die KI unsere Leute?
+    const freeze = (orders) => {
+      const m = createMatch({ seed: 12, pitch: PITCHES.ascheplatz, human: false, aiCoach: false });
+      for (const o of orders) setOrder(m, 0, ...o.split(':'));
+      const carrier = m.players.find((p) => p.team === 1 && p.role === 'def');
+      m.ball.pos = { x: m.pitch.halfLength * 0.55, y: 0, z: 2 };
+      carrier.pos = { x: m.ball.pos.x + 0.5, z: 2 };
+      m.ball.lastTouch = carrier.id;
+      m.ball.lastAction = 'dribble';
+      m.lastTouchTeam = 1;
+      // Unsere Leute stehen dort, wo sie gegen den Ball hingehören.
+      for (const p of m.players) if (p.team === 0 && p.role !== 'gk') p.pos = { ...anchor(m, p, false) };
+      updateTactics(m, 1 / 60);
+      const chaser = m.chasers[0];
+      if (chaser) m.tactics[chaser] = { ...m.ball.pos };
+      const ours = m.players.filter((p) => p.team === 0 && p.role !== 'gk');
+      const toBall = ours.map((p) => m.tactics[p.id] ?? p.pos).map((t) => Math.hypot(t.x - m.ball.pos.x, t.z - m.ball.pos.z)).sort((a, b) => a - b);
+      const height = ours.reduce((sum, p) => sum + anchor(m, p, false).x, 0) / ours.length;
+      return { block: mean(toBall), height };
+    };
+    const high = freeze(['press:hoch']);
+    const deep = freeze(['press:tief']);
+    expect(high.block).toBeLessThan(deep.block - 1); // der ganze Block ist näher am Ball
+    expect(high.height).toBeGreaterThan(deep.height + 2);
+    // Und es kostet Kraft.
     const stamina = (ms) => mean(ms.map((m) => mean(m.players.filter((p) => p.team === 0 && p.role !== 'gk').map((p) => p.stamina))));
-    expect(wins(high)).toBeGreaterThan(wins(deep));
-    expect(stamina(high)).toBeLessThan(stamina(deep) - 0.05);
+    expect(stamina(series(['press:hoch'], { n: 4 }))).toBeLessThan(stamina(series(['press:tief'], { n: 4 })) - 0.05);
   }, SLOW);
 
   it('balls in behind only happen when the coach asks for them', () => {

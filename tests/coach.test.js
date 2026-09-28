@@ -9,18 +9,20 @@ const DT = 1 / 60;
 // Ein Spiel im Trainer-Modus; call(m) darf alle paar Sekunden reinrufen.
 function play(seed, call, seconds = 90) {
   const m = enableManager(createMatch({ seed, pitch: PITCHES.rasenplatz, human: true, duration: seconds, aiCoach: false }));
-  let depth = 0;
-  let samples = 0;
+  // Tiefe getrennt nach Ballbesitz: Aufrücken wirkt mit Ball, Hinten dicht gegen den Ball.
+  const acc = { att: 0, attN: 0, def: 0, defN: 0 };
   for (let i = 0; i < seconds * 60 * 1.6 && m.phase !== 'ended'; i++) { // Unterbrechungen kosten Zeit
     const input = i === 60 && call ? { shout: call } : undefined; // einmal rufen, gilt dann
     stepMatch(m, input, DT);
     m.events.length = 0;
     if (m.phase === 'play' && i % 30 === 0) {
       const s = attackDir(m, 0);
-      for (const p of m.players) if (p.team === 0 && p.role !== 'gk') (depth += p.pos.x * s), samples++;
+      // Relativ zum Ball: Wie weit steht die Mannschaft vor (mit Ball) bzw. hinter ihm (gegen den Ball)?
+      const k = m.lastTouchTeam === 0 ? 'att' : 'def';
+      for (const p of m.players) if (p.team === 0 && p.role !== 'gk') (acc[k] += (p.pos.x - m.ball.pos.x) * s), acc[`${k}N`]++;
     }
   }
-  return { m, depth: depth / samples };
+  return { m, att: acc.att / (acc.attN || 1), def: acc.def / (acc.defN || 1) };
 }
 
 describe('manager mode', () => {
@@ -47,17 +49,18 @@ describe('manager mode', () => {
     expect(shout(m, 'nonsense')).toBe(false);
   });
 
-  it('"Rückt auf!" means a higher team, "Hinten dicht!" a deeper one', () => {
-    let high = 0;
-    let deep = 0;
-    let base = 0;
-    for (const seed of [11, 12, 13, 14]) {
-      base += play(seed, null).depth;
-      high += play(seed, 'forward').depth;
-      deep += play(seed, 'back').depth;
-    }
-    expect(high).toBeGreaterThan(base + 4);
-    expect(deep).toBeLessThan(base - 4);
+  it('"Rückt auf!" means a higher team on the ball, "Hinten dicht!" a deeper one without it', async () => {
+    const { anchor } = await import('../src/sim/ai.js');
+    const height = (call, possession) => {
+      const m = enableManager(createMatch({ seed: 11, pitch: PITCHES.rasenplatz, human: true, aiCoach: false }));
+      m.time = 5;
+      if (call) shout(m, call);
+      const s = attackDir(m, 0);
+      const ours = m.players.filter((p) => p.team === 0 && p.role !== 'gk');
+      return ours.reduce((sum, p) => sum + anchor(m, p, possession).x * s, 0) / ours.length;
+    };
+    expect(height('forward', true)).toBeGreaterThan(height(null, true) + 1);
+    expect(height('back', false)).toBeLessThan(height(null, false) - 1);
   });
 });
 

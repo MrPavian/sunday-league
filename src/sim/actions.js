@@ -7,6 +7,7 @@ import { ballSpeed } from './ball.js';
 import { attackDir, distToSegment, setControlled, wallPush } from './players.js';
 import { aiSkill, keeperReaction, laneScore } from './ai.js';
 import { knockSpeed } from './knocks.js';
+import { hasProfile, pressureChaos } from './profiles.js';
 
 export const REACH = 0.75;
 
@@ -145,7 +146,8 @@ function shoot(m, p, a, fatigue) {
   // der selbst zielt – sonst treffen Amateure wie Profis.
   const sigma = 0.025 + 0.16 * (1 - p.attrs.shooting) + 0.08 * fatigue + 0.05 * power + (hammer ? 0.03 : 0) + (p.id === m.controlledId ? 0 : 0.005 + (aiSkill(m, p) < 1 ? 0.05 : aiSkill(m, p) > 1 ? -0.015 : 0));
   // Elfmeter: in Ruhe platziert, ohne Gegner am Fuß – deutlich weniger Streuung.
-  dir = rotate(dir, rng.gauss() * sigma * (a.placed ? 0.35 : 1));
+  // Ebene 3: Wer bedrängt abzieht, streut mehr – nervöse Spieler noch mehr.
+  dir = rotate(dir, rng.gauss() * sigma * (a.placed ? 0.35 : pressureChaos(m, p)));
   const speed = (8 + 18 * power) * (0.85 + 0.15 * p.attrs.shooting) * (hammer ? 1.15 : 1);
   const vy = 0.8 + 5 * power * power + Math.abs(rng.gauss()) * 1.2 * (1 - p.attrs.shooting) * power;
   ball.vel.x = dir.x * speed;
@@ -222,7 +224,7 @@ function pass(m, p, a, fatigue, fromHands) {
     let score = dot - d * (ai ? st.shortPass : 0.035) - gkMalus + (t.pos.x - p.pos.x) * attackDir(m, p.team) * (ai ? st.forward : 0.025);
     // Angriffsseite und -kanal: dorthin wird der Ball eher verteilt (nicht bei Rückpässen).
     if (ai && (st.focus || st.channel) && (t.pos.x - p.pos.x) * attackDir(m, p.team) > -2) score += laneScore(m, p, st, t.pos) * 0.7;
-    const riskK = ai ? 1 - 0.35 * st.risk : 1;
+    const riskK = ai ? (1 - 0.35 * st.risk) * (hasProfile(p, 'teamplayer') ? 1.2 : 1) : 1;
     // Flanken sollen in Tornähe landen.
     if (a.lofted) score -= Math.abs(t.pos.x - attackDir(m, p.team) * pitch.halfLength) * 0.08;
     for (const o of m.players) {
@@ -238,6 +240,9 @@ function pass(m, p, a, fatigue, fromHands) {
       plainBest = t;
     }
     if (ai) score += bondBonus(bondOf(m, p, t));
+    // Profile: Den Spielmacher sucht man, der Ballmagnet will ihn sowieso.
+    if (ai && hasProfile(t, 'spielmacher')) score += 0.25;
+    if (ai && hasProfile(t, 'ballmagnet')) score += 0.12;
     if (score > bestScore) {
       bestScore = score;
       target = t;
@@ -285,7 +290,7 @@ function pass(m, p, a, fatigue, fromHands) {
       speed = clamp(3.5 + d * 0.75, 5.5, 16);
       vy = d > 16 ? 3.5 : 0.2;
     }
-    const sigma = (0.02 + 0.12 * (1 - p.attrs.passing) + 0.05 * fatigue) * (eye ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.6 : 1);
+    const sigma = (0.02 + 0.12 * (1 - p.attrs.passing) + 0.05 * fatigue) * (eye ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.6 : 1) * (hasProfile(p, 'spielmacher') ? 0.85 : 1) * pressureChaos(m, p);
     dir = rotate(dir, rng.gauss() * sigma);
     speed *= 1 + rng.gauss() * 0.08 * (1 - p.attrs.passing);
     if (p.id === m.controlledId) m.pendingSwitch = { receiver: target.id, kicker: p.id };

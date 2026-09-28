@@ -1087,3 +1087,4 @@ body.touch .coach-play { background: #2f6f3a; }
 .half-panel footer button { flex: 1 1 30%; min-height: 52px; font: inherit; font-size: 16px; color: var(--ink); background: #1d2126; border: 2px solid #000; cursor: pointer; text-shadow: var(--shadow); }
 .half-panel footer button.primary { background: #2f7d3a; }
 @media (max-width: 640px) { .half-cols { grid-template-columns: 1fr; } }
+.sub-row .sub-prof { grid-column: 1 / -1; opacity: 0.75; color: #bcd; font-size: 0.8em; }

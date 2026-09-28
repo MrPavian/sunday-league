@@ -6,6 +6,7 @@ import { clampPlayer, inKeeperBox } from './actions.js';
 import { attackDir, getPlayer } from './players.js';
 import { penaltySpot, startSetPiece } from './setpieces.js';
 import { foulInjury } from './knocks.js';
+import { hasProfile } from './profiles.js';
 import { judgeDissent, judgeFoul, refereeSees } from './referee.js';
 
 const COMPLAINTS = {
@@ -117,7 +118,7 @@ export function resolveTackles(m) {
         m.events.push({ type: 'tackle', playerId: p.id });
       } else {
         const win = contested
-          ? clamp(0.32 + 0.45 * p.attrs.tackling - 0.35 * opp.attrs.technique - (hasTrait(opp, 'ballsicher') ? 0.1 : 0) - (opp.shielding ? 0.25 : 0), 0.1, 0.9)
+          ? clamp(0.32 + 0.45 * p.attrs.tackling - 0.35 * opp.attrs.technique - (hasTrait(opp, 'ballsicher') ? 0.1 : 0) - (opp.shielding ? 0.25 : 0) + (hasProfile(p, 'kaempfer') ? 0.08 : 0) + (hasProfile(opp, 'nervoes') ? 0.05 : 0), 0.1, 0.9)
           : 0.95;
         p.tackleWon = rng.chance(win) ? true : 'missed';
         if (p.tackleWon === true) {

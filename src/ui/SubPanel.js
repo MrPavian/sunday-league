@@ -1,6 +1,7 @@
 import { tr } from '../core/i18n.js';
 import { MATCH_INJURIES } from '../sim/knocks.js';
 import { POSITIONS } from '../sim/generator.js';
+import { PROFILES, profilesOf } from '../sim/profiles.js';
 import { planSub, requestSub, subsLeft, usableBench } from '../sim/squad.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -107,7 +108,8 @@ export class SubPanel {
     const row = (p, kind, selected) => {
       const knock = p.knock ? ` <em class="sub-knock">✚ ${esc(MATCH_INJURIES[p.knock.kind]?.label ?? '')}</em>` : '';
       const role = POSITIONS[kind === 'out' ? p.role : p.position] ?? '';
-      return `<button class="sub-row${selected ? ' active' : ''}${this.col === kind ? ' col' : ''}" data-action="${kind}" data-value="${p.id}"><span class="sub-name">${esc(p.name)}${knock}</span><small>${esc(role)}</small>${bar(p.stamina)}</button>`;
+      const prof = profilesOf(p).map((id) => PROFILES[id].label).join(' · ');
+      return `<button class="sub-row${selected ? ' active' : ''}${this.col === kind ? ' col' : ''}" data-action="${kind}" data-value="${p.id}"><span class="sub-name">${esc(p.name)}${knock}</span><small>${esc(role)}</small>${prof ? `<small class="sub-prof">${esc(prof)}</small>` : ''}${bar(p.stamina)}</button>`;
     };
     const blocked = left <= 0 ? tr('Alle Wechsel aufgebraucht.', 'All substitutions used.') : !ins.length ? tr('Keiner mehr auf der Bank, der rein kann.', 'Nobody left on the bench who can come on.') : '';
     this.root.innerHTML = `

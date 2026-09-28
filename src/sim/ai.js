@@ -6,6 +6,7 @@ import { attackDir, clampToPitch, distToSegment, getPlayer, wallPush } from './p
 import { heeds } from './coach.js';
 import { keeperBox, shortGame } from './actions.js';
 import { adherence, styleOf } from './plan.js';
+import { hasProfile } from './profiles.js';
 
 // Schwierigkeitsgrad: Nur der Gegner des Menschen spielt klüger oder nachsichtiger –
 // schneller entscheiden, entschlossener in den Zweikampf, öfter der kluge Pass.
@@ -88,9 +89,10 @@ export function updateTactics(m, dt) {
       // aus größerer Entfernung.
       const ballAdv = (ball.pos.x * s) / pitch.halfLength;
       const pressHere = !st.pressZone || st.pressZone === 'high' || ballAdv < 1 / 3;
-      if (st.press && pressHere && rest.length > 2) {
+      // Einer bleibt immer hinten: im 4 gegen 4 geht der Absichernde nicht mit.
+      if (st.press && pressHere && rest.length > (st.pressZone === 'high' && pool.length >= 4 ? 1 : 2)) {
         const second = rest.reduce((a, b) => (dist2d(b.pos, ball.pos) < dist2d(a.pos, ball.pos) ? b : a));
-        if (dist2d(second.pos, ball.pos) < (st.pressZone === 'high' ? 11 : 9)) {
+        if (dist2d(second.pos, ball.pos) < (st.pressZone === 'high' ? 14 : 9)) {
           m.tactics[second.id] = { type: 'mark', ...clampToPitch(pitch, ball.pos.x, ball.pos.z) };
           rest.splice(rest.indexOf(second), 1);
         }
@@ -118,7 +120,7 @@ export function updateTactics(m, dt) {
         m.tactics[p.id] = { type: 'mark', ...clampToPitch(pitch, best.pos.x + dir.x * gap, best.pos.z + dir.z * gap) };
       }
       // Hohes Pressing: In der gegnerischen Hälfte geht auch der Absichernde mit drauf.
-      if (st.pressZone === 'high' && ballAdv > 0.2 && cover && m.tactics[cover.id]?.type === 'cover') m.tactics[cover.id] = { type: 'mark', ...clampToPitch(pitch, ball.pos.x, ball.pos.z) };
+      if (st.pressZone === 'high' && ballAdv > 0.2 && cover && pool.length >= 5 && m.tactics[cover.id]?.type === 'cover') m.tactics[cover.id] = { type: 'mark', ...clampToPitch(pitch, ball.pos.x, ball.pos.z) };
     } else {
       // Ecke fürs eigene Team: rein in den Strafraum – erster Pfosten, langer Pfosten,
       // Elfmeterpunkt, Strafraumkante.
@@ -244,7 +246,7 @@ export function anchor(m, p, possession) {
     u = e.x * st.compact + adv * 0.22 + st.line + mood - 0.04;
     if (p.role === 'fwd') u += st.fwdHold;
     // Hohes Pressing: Hat der Gegner den Ball in seiner Hälfte, schiebt der ganze Block nach.
-    if (st.pressZone === 'high' && adv > 0) u += adv * (p.role === 'def' ? 0.22 : 0.35);
+    if (st.pressZone === 'high' && adv > 0) u += adv * (p.role === 'def' ? 0.11 : 0.3); // die Abwehr nur halb – einer muss den langen Ball ablaufen
   }
   // Nicht auf die eigene Torlinie zurückfallen: Die Abwehr steht höchstens an der
   // Strafraumkante, das Mittelfeld davor.
@@ -300,6 +302,7 @@ function supportSpot(m, p, dt) {
   // Position bleibt erkennbar.
   const a = anchor(m, p, true);
   const st = styleOf(m, p.team);
+  const demands = hasProfile(p, 'spielmacher') || hasProfile(p, 'ballmagnet');
   const base = clampToPitch(pitch, a.x, a.z, margin);
   const deep = p.role === 'fwd' ? [[4, 0], [4, 2.5], [4, -2.5]] : [];
   const back = p.role === 'def';
@@ -310,6 +313,7 @@ function supportSpot(m, p, dt) {
     const c = clampToPitch(pitch, base.x + ox * s, base.z + oz, margin);
     let score = (back ? 0 : s * c.x * 0.05) - len(c.x - base.x, c.z - base.z) * 0.16;
     if (!back && (st.focus || st.channel)) score += laneScore(m, p, st, c) * 0.9;
+    if (demands) for (const o of m.players) if (o.team !== p.team && dist2d(o.pos, c) < 3) score -= 0.4; // Spielmacher sucht sich freie Räume
     for (const o of m.players) {
       if (o.team === p.team) continue;
       const d = dist2d(o.pos, c);
@@ -407,7 +411,7 @@ export function outfieldIntent(m, p, dt) {
     const intensity = k < 1 ? 0.8 : 1;
     const mv = norm(ax - p.pos.x, az - p.pos.z);
     const press = heeds(m, p, 'press') || fst.pressZone === 'high';
-    return { move: { x: mv.x * intensity, z: mv.z * intensity }, sprint: dBall > (press ? 1.2 : k > 1 ? 2 : k < 1 ? 5 : 3) && p.stamina > (press ? 0.2 : 0.3) };
+    return { move: { x: mv.x * intensity, z: mv.z * intensity }, sprint: dBall > (press ? 1.2 : k > 1 ? 2 : k < 1 ? 5 : 3) && p.stamina > (press ? 0.32 : 0.3) };
   }
 
   p.dribbleDir = null;
@@ -473,7 +477,7 @@ function carryIntent(m, p, oppGoal, wall) {
   if (blocked) {
     // Sicher spielen: Körper rein, Ball abschirmen, auf den freien Mann warten.
     if (st.risk < -0.3) p.shielding = true;
-    else if (p.decideTimer > 0.25) p.decideTimer = 0.25;
+    else if (p.decideTimer > (hasProfile(p, 'solist') ? 0.45 : 0.25)) p.decideTimer = hasProfile(p, 'solist') ? 0.45 : 0.25;
     return { move: { x: dir.x * 0.45, z: dir.z * 0.45 }, sprint: false };
   }
   const pace = space ? 1 : 0.7;
@@ -561,7 +565,8 @@ function aiDecide(m, p, oppGoal) {
     const d = len(dx, dz);
     return d < 2.2 && (dx * toG.x + dz * toG.z) / (d || 1) > 0.2;
   });
-  if (underPressure && rng.chance(Math.min(0.95, (0.45 + 0.4 * p.attrs.passing) * aiSkill(m, p) * st.passRate * (1 - 0.2 * st.risk)))) {
+  const selfish = hasProfile(p, 'solist') || hasProfile(p, 'ballmagnet') ? 0.75 : hasProfile(p, 'teamplayer') ? 1.2 : 1;
+  if (underPressure && rng.chance(Math.min(0.95, (0.45 + 0.4 * p.attrs.passing) * aiSkill(m, p) * st.passRate * (1 - 0.2 * st.risk) * selfish))) {
     p.pending = { type: 'pass', ttl: 0.3, cone: -0.2 };
     return;
   }
@@ -579,7 +584,7 @@ function aiDecide(m, p, oppGoal) {
     if (ahead < 3 || d > 16) return false;
     return !m.players.some((o) => o.team !== p.team && (dist2d(o.pos, t.pos) < 2.5 || distToSegment(o.pos, p.pos, t.pos) < 1.3));
   });
-  if (open && rng.chance(Math.min(0.92, (0.25 + 0.35 * p.attrs.passing) * aiSkill(m, p) * st.passRate))) p.pending = { type: 'pass', ttl: 0.3, cone: -0.3, optional: true };
+  if (open && rng.chance(Math.min(0.92, (0.25 + 0.35 * p.attrs.passing) * aiSkill(m, p) * st.passRate * selfish))) p.pending = { type: 'pass', ttl: 0.3, cone: -0.3, optional: true };
 }
 
 // Raum hinter der Abwehr: Welcher Mitspieler kommt vor den Verteidigern an den Ball,
@@ -614,7 +619,7 @@ export function throughTarget(m, p) {
     // Zugestellt? Dann eben gelupft – ungenauer, aber drüber.
     // Wer direkt am Ballführer klebt, ist Druck, kein zugestellter Passweg.
     const lofted = opps.some((o) => dist2d(o.pos, p.pos) > 1.5 && dist2d(o.pos, point) > 2 && distToSegment(o.pos, p.pos, point) < 1.3);
-    const score = margin - (lofted ? 0.3 : 0);
+    const score = margin - (lofted ? 0.3 : 0) + (hasProfile(t, 'sprinter') ? 0.25 : 0);
     if (!best || score > best.score) best = { target: t, point, margin, lofted, score };
   }
   return best;

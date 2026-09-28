@@ -48,7 +48,7 @@ export const ORDER_EFFECTS = {
   },
   // GEGEN DEN BALL: Pressinghöhe
   press: {
-    hoch: (s) => ({ press: true, pressZone: 'high', line: Math.max(s.line + 0.06, 0.1), tire: Math.max(s.tire * 1.15, 1.25) }),
+    hoch: (s) => ({ press: true, pressZone: 'high', line: Math.max(s.line + 0.06, 0.1), tire: Math.max(s.tire * 1.1, 1.18) }),
     mittel: (s) => ({ press: true, pressZone: 'mid', line: Math.min(s.line, 0.03), tire: Math.max(s.tire, 1.08) }),
     tief: (s) => ({ press: false, pressZone: null, line: Math.min(s.line - 0.08, -0.1), compact: s.compact * 0.88, tire: s.tire * 0.92 }),
   },
