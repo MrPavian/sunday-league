@@ -4,6 +4,7 @@ import { createCommentator, tickerMinute } from '../sim/commentary.js';
 import { answer, checkDecision, createTouchline, mentalityLabel } from '../sim/touchline.js';
 import { shout, SHOUTS } from '../sim/coach.js';
 import { tacticLabel } from '../sim/tactics.js';
+import { coachReviewHtml } from './coachReview.js';
 
 const hex = (n) => `#${(n ?? 0x888888).toString(16).padStart(6, '0')}`;
 // Tempo: Spielsekunden pro echter Sekunde (1× ≈ eine Minute für das ganze Spiel).
@@ -184,6 +185,7 @@ export class Ticker {
       const poss = st[0].possession + st[1].possession || 1;
       foot.innerHTML = `
         <p class="stats">${tr('Schüsse', 'Shots')} ${st[0].shots}:${st[1].shots} · ${tr('Ballbesitz', 'Possession')} ${Math.round((st[0].possession / poss) * 100)}:${Math.round((st[1].possession / poss) * 100)} % · ${tr('Fouls', 'Fouls')} ${st[0].fouls}:${st[1].fouls}</p>
+        ${this.tl ? coachReviewHtml(m, this.tl.team) : ''}
         <button class="go" data-action="done">${tr('Weiter (Enter)', 'Continue (Enter)')}</button>`;
       return;
     }

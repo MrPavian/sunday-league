@@ -4,6 +4,7 @@ import { gradePlayers, headline, playerOfTheMatch } from '../sim/stats.js';
 import { allPlayers, findAnyPlayer } from '../sim/squad.js';
 import { matchMinute } from './Hud.js';
 import { shootoutScore } from '../sim/shootout.js';
+import { coachReviewHtml } from './coachReview.js';
 
 const surname = (p) => p.name.split(' ').slice(1).join(' ');
 const gradeText = (g) => tr(g.toFixed(1).replace('.', ','), g.toFixed(1));
@@ -67,6 +68,7 @@ export class EndScreen {
           ${m.referee ? row(tr('Karten', 'Cards'), cards(0), cards(1)) : ''}
         </table>
         ${potm ? `<p class="potm">${tr('Spieler des Spiels', 'Player of the match')}: <b>${potm.name}</b> (${m.teams[potm.team].short}), ${tr('Note', 'rating')} ${gradeText(grades[potm.id])}</p>` : ''}
+        ${coachReviewHtml(m, m.manager ? m.coachTeam : m.humanTeam)}
         <div class="lineups">
           <div><h3>${t0.short}</h3><ol>${lineup(0)}</ol></div>
           <div><h3>${t1.short}</h3><ol>${lineup(1)}</ol></div>

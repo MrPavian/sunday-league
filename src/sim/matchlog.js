@@ -40,7 +40,11 @@ function openPossession(m, log, team, how) {
 
 // Nach jedem Schritt (nach trackStep) aufrufen.
 export function stepLog(m) {
-  const log = (m.log ??= createLog());
+  if (!m.log) {
+    m.log = createLog();
+    m.log.starters = m.players.map((p) => p.id); // wer von Anfang an spielt
+  }
+  const log = m.log;
   const { ball } = m;
   let cause = null;
   for (const e of m.events) {
@@ -67,6 +71,9 @@ export function stepLog(m) {
         break;
       case 'goal':
         if (log.cur && log.cur.team === e.team) log.cur.goal = true;
+        break;
+      case 'sub':
+        (log.subsIn ??= []).push(e.inId);
         break;
     }
   }

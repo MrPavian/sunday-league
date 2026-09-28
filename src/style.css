@@ -1088,3 +1088,22 @@ body.touch .coach-play { background: #2f6f3a; }
 .half-panel footer button.primary { background: #2f7d3a; }
 @media (max-width: 640px) { .half-cols { grid-template-columns: 1fr; } }
 .sub-row .sub-prof { grid-column: 1 / -1; opacity: 0.75; color: #bcd; font-size: 0.8em; }
+
+/* Trainer-Analyse nach dem Abpfiff („Dein Spiel"). */
+.coach-review { margin: 12px 0; padding: 10px 12px; border: 2px solid #1b1b1b; background: rgba(0, 0, 0, 0.04); font-family: inherit; }
+.coach-review h3 { margin: 0 0 6px; }
+.coach-review h4 { margin: 8px 0 4px; font-size: 14px; }
+.coach-review ul, .coach-review ol { margin: 0; padding-left: 18px; }
+.coach-review li { margin: 2px 0; line-height: 1.3; }
+.coach-review li.none { opacity: 0.7; list-style: none; margin-left: -18px; }
+.coach-review .cr-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.coach-review ul.good li::marker { content: '✓ '; color: #2f7d3a; }
+.coach-review ul.bad li::marker { content: '✗ '; color: #b3261e; }
+.coach-review p.good { border-left: 4px solid #2f7d3a; padding-left: 8px; margin: 0; }
+.coach-review p.bad { border-left: 4px solid #b3261e; padding-left: 8px; margin: 0; }
+.coach-review .chains li.ours { color: #1f5e2a; }
+.coach-review .chains li.theirs { color: #7a1f1a; }
+.ticker-panel .coach-review { background: rgba(255, 255, 255, 0.04); border-color: #000; }
+.ticker-panel .coach-review .chains li.ours { color: #9fe39f; }
+.ticker-panel .coach-review .chains li.theirs { color: #ffb0a6; }
+@media (max-width: 560px) { .coach-review .cr-cols { grid-template-columns: 1fr; } }

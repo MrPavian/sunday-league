@@ -66,8 +66,9 @@ export function report(m, team, half = null) {
   // Unsere Seiten.
   for (const lane of ['left', 'right', 'centre']) {
     const l = s.ours[lane];
-    if (l.good >= 2 && l.good >= l.n * 0.4) good.push(tr(`Angriffe über ${laneWord(lane)}`, `Attacks down ${laneWord(lane)}`));
-    else if (l.n >= 3 && l.good === 0) bad.push(tr(`Über ${laneWord(lane)} geht nichts`, `Nothing working down ${laneWord(lane)}`));
+    const via = lane === 'centre' ? tr('durch die Mitte', 'through the middle') : tr(`über ${laneWord(lane)}`, `down ${laneWord(lane)}`);
+    if (l.good >= 2 && l.good >= l.n * 0.4) good.push(tr(`Angriffe ${via}`, `Attacks ${via}`));
+    else if (l.n >= 3 && l.good === 0) bad.push(tr(`${lane === 'centre' ? 'Durch die Mitte' : `Über ${laneWord(lane)}`} geht nichts`, `Nothing working ${via}`));
   }
   if (s.winsHigh >= 3) good.push(mods.press ? tr('Pressing: Bälle vorne erobert', 'The press wins the ball high') : tr('Früh Bälle erobert', 'Winning the ball early'));
   if (s.through >= 2 && s.throughOk / s.through >= 0.4) good.push(tr('Bälle in die Tiefe kommen an', 'Balls in behind are finding their man'));
@@ -111,4 +112,41 @@ export function matchupHint(m, team) {
   const slow = defs.reduce((a, b) => (b.attrs.pace < a.attrs.pace ? b : a));
   if (quick.attrs.pace - slow.attrs.pace < 0.15) return null;
   return tr(`${surname(quick)} ist deutlich schneller als ${surname(slow)}`, `${surname(quick)} is much quicker than ${surname(slow)}`);
+}
+
+// Nach dem Spiel: Was hat funktioniert, was nicht (mit Halbzeit-Nuance), der
+// entscheidende Moment und was man daraus lernen kann.
+const LESSON_BY_STYLE = {
+  mauern: tr('Gegen tief stehende Gegner helfen Breite und Geduld – durch die Mitte ist meistens zu.', 'Against a deep block, width and patience help – the middle is usually shut.'),
+  pressing: tr('Gegen Pressing hilft kurzes, sicheres Spiel – oder der lange Ball über die erste Reihe.', 'Against a press, short safe passing helps – or the long ball over the first line.'),
+  offensiv: tr('Offensive Gegner lassen hinten Platz: Konter und Bälle in die Tiefe.', 'Attacking sides leave space behind: counters and balls in behind.'),
+  konter: tr('Gegen Konterteams lohnt es sich, hinten zwei stehen zu lassen.', 'Against counter-attacking sides, keep two at the back.'),
+  fluegel: tr('Gegen Flügelteams: Seiten absichern und kompakt bleiben.', 'Against wing play: cover the flanks and stay compact.'),
+  kurzpass: tr('Kurzpassteams mögen es nicht, wenn man sie früh stört.', 'Short-passing sides hate being pressed early.'),
+};
+
+export function postMatch(m, team, traces) {
+  const all = report(m, team, null);
+  const h1 = report(m, team, 1);
+  const h2 = report(m, team, 2);
+  const tag = (list, others, suffix, base) => list.filter((x) => !others.includes(x) && !base.includes(x)).map((x) => `${x} ${suffix}`);
+  const good = [...new Set([...all.good, ...tag(h1.good, h2.good, tr('– in der ersten Halbzeit', '– in the first half'), all.good), ...tag(h2.good, h1.good, tr('– nach der Pause', '– after the break'), all.good)])].slice(0, 3);
+  const bad = [...new Set([...all.bad, ...tag(h2.bad, h1.bad, tr('– nach der Pause', '– after the break'), all.bad), ...tag(h1.bad, h2.bad, tr('– in der ersten Halbzeit', '– in the first half'), all.bad)])].slice(0, 3);
+  const lessons = [];
+  const ours = traces.filter((t) => t.team === team);
+  const theirs = traces.filter((t) => t.team !== team);
+  const count = (list, f) => list.filter(f).length;
+  // Wo war der Gegner verwundbar?
+  if (count(ours, (t) => t.through) >= 1) lessons.push(tr('Dein Gegner war anfällig für Bälle in die Tiefe.', 'Your opponent was vulnerable to balls in behind.'));
+  const lane = ['left', 'right'].find((l) => count(ours, (t) => t.lane === l) >= 2);
+  if (lane) lessons.push(tr(`Dein Gegner hatte Probleme mit Angriffen über ${lane === 'left' ? 'links' : 'rechts'}.`, `Your opponent struggled with attacks down the ${lane}.`));
+  if (count(ours, (t) => t.how === 'tackle' || t.how === 'intercept') >= 2) lessons.push(tr('Früh erobert heißt gefährlich: Deine Tore entstanden aus Ballgewinnen.', 'Winning it early pays: your goals came from turnovers.'));
+  // Und wo wir?
+  if (count(theirs, (t) => t.through) >= 1) lessons.push(tr('Hinter deiner Abwehr war zu viel Platz – eine tiefere Linie oder zwei Mann hinten helfen.', 'There was too much space behind your defence – a deeper line or two men back would help.'));
+  const theirLane = ['left', 'right'].find((l) => count(theirs, (t) => t.lane === l) >= 2);
+  if (theirLane) lessons.push(tr(`Die Gegentore kamen über unsere ${mirror(theirLane) === 'left' ? 'linke' : 'rechte'} Seite – dort absichern.`, `The goals against came down our ${mirror(theirLane)} – cover that side.`));
+  if (count(theirs, (t) => t.how === 'tackle' && t.steps[0]?.includes('weit vorne')) >= 1 || all.stats?.lostDeep >= 6) lessons.push(planMods(m, 1 - team).press ? tr('Hinten zu viele Bälle verloren – gegen das Pressing sicherer aufbauen oder lang spielen.', 'Too many balls lost at the back – build up more safely against the press, or go long.') : tr('Hinten zu viele Bälle verloren – ruhiger aufbauen.', 'Too many balls lost at the back – build up more calmly.'));
+  const oppStyle = m.plan?.[1 - team]?.style;
+  if (lessons.length < 2 && LESSON_BY_STYLE[oppStyle]) lessons.push(LESSON_BY_STYLE[oppStyle]);
+  return { good, bad, opp: all.opp, lessons: lessons.slice(0, 2), stats: all.stats };
 }
