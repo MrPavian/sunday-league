@@ -2,6 +2,7 @@ import { tr } from '../core/i18n.js';
 import { MATCH_INJURIES } from '../sim/knocks.js';
 import { POSITIONS } from '../sim/generator.js';
 import { PROFILES, profilesOf } from '../sim/profiles.js';
+import { trickLine } from '../sim/tricks.js';
 import { planSub, requestSub, subsLeft } from '../sim/squad.js';
 import { benchAdvice, outAdvice } from '../sim/subadvice.js';
 
@@ -117,7 +118,7 @@ export class SubPanel {
     const row = (p, kind, selected) => {
       const knock = p.knock ? ` <em class="sub-knock">✚ ${esc(MATCH_INJURIES[p.knock.kind]?.label ?? '')}</em>` : '';
       const role = POSITIONS[kind === 'out' ? p.role : p.position] ?? '';
-      const prof = profilesOf(p).map((id) => PROFILES[id].label).join(' · ');
+      const prof = [...profilesOf(p).map((id) => PROFILES[id].label), trickLine(p)].filter(Boolean).join(' · ');
       const tips = (kind === 'out' ? this.outTips : this.inTips)?.get(p.id) ?? [];
       const tip = tips.length ? `<small class="sub-tip ${kind}">${kind === 'in' ? tr('Passt jetzt', 'Good call now') : tr('Raus?', 'Take off?')}: ${esc(tips.join(', '))}</small>` : '';
       return `<button class="sub-row${selected ? ' active' : ''}${this.col === kind ? ' col' : ''}" data-action="${kind}" data-value="${p.id}"><span class="sub-name">${esc(p.name)}${knock}</span><small>${esc(role)}</small>${prof ? `<small class="sub-prof">${esc(prof)}</small>` : ''}${tip}${bar(p.stamina)}</button>`;

@@ -1,6 +1,7 @@
 // Liveticker: macht aus den Spielereignissen kurze Kommentarzeilen – für simulierte
 // Partien, die man nicht selbst spielt. Nutzt einen eigenen Zufall, damit der
 // Ticker das Ergebnis nicht verändert.
+import { TRICKS } from './tricks.js';
 import { MATCH_INJURIES } from './knocks.js';
 import { bondOf, isBad, isGood } from './bonds.js';
 import { tr } from '../core/i18n.js';
@@ -69,6 +70,8 @@ export function createCommentator(m, seed = 1) {
     const p = who(s.id);
     const name = surname(p);
     if (s.header) return tr(`Kopfball ${name}!`, `Header from ${name}!`);
+    if (s.acro === 'fallrueck') return pick(tr(['FALLRÜCKZIEHER von {p}!', '{p} hebt ab – Fallrückzieher!'], ['BICYCLE KICK from {p}!', '{p} takes off – overhead kick!']), { p: name });
+    if (s.acro === 'seitfall') return pick(tr(['Seitfallzieher von {p}!', '{p} legt sich quer in die Luft – Seitfallzieher!'], ['Scissor kick from {p}!', '{p} goes horizontal – scissor kick!']), { p: name });
     if (s.dist > 14) return tr(`${name} versucht es aus ${s.dist} Metern …`, `${name} tries his luck from ${s.dist} metres …`);
     return pick(tr(['{p} zieht ab!', 'Schuss von {p}!', '{p} hält einfach drauf!'], ['{p} lets fly!', 'Shot from {p}!', '{p} just hits it!']), { p: name });
   };
@@ -98,7 +101,7 @@ export function createCommentator(m, seed = 1) {
           const p = who(e.playerId);
           const goalX = attackDir(m, p?.team ?? 0) * m.pitch.halfLength;
           const dist = p ? Math.round(Math.hypot(goalX - p.pos.x, p.pos.z)) : 10;
-          pendingShot = { id: e.playerId, team: p?.team ?? 0, time: m.time, dist };
+          pendingShot = { id: e.playerId, team: p?.team ?? 0, time: m.time, dist, acro: e.acro };
           break;
         }
         case 'header':
@@ -126,7 +129,11 @@ export function createCommentator(m, seed = 1) {
           if (e.ownGoal) text = tr(`Eigentor! ${name} lenkt den Ball ins eigene Netz. ${scoreText(m)}.`, `Own goal! ${name} turns it into his own net. ${scoreText(m)}.`);
           else {
             const how =
-              e.via === 'header'
+              e.acro === 'fallrueck'
+                ? tr(' per FALLRÜCKZIEHER – was für ein Ding', ' with a BICYCLE KICK – what a goal')
+                : e.acro === 'seitfall'
+                  ? tr(' per Seitfallzieher – sehenswert', ' with a scissor kick – a beauty')
+                  : e.via === 'header'
                 ? tr(' per Kopf', ' with a header')
                 : e.via === 'dribble'
                   ? tr(' – eiskalt eingeschoben', ' – slotted home coolly')
@@ -184,6 +191,14 @@ export function createCommentator(m, seed = 1) {
         case 'incident':
           if (e.text) add(e.text, 'incident');
           break;
+        case 'trick': {
+          const p = surname(who(e.playerId));
+          const v = surname(who(e.victimId));
+          const t = TRICKS[e.trick]?.label ?? '';
+          if (e.ok && rng.chance(0.6)) add(pick(tr(['{p} lässt {v} mit einem {t} stehen!', '{t} von {p} – {v} sucht noch den Ball.', 'Oha, {p}! {t}, und {v} ist aus dem Spiel.'], ['{p} leaves {v} for dead with a {t}!', 'What a {t} from {p} – {v} is still looking for the ball.', 'Ooh, {p}! A {t}, and {v} is out of the game.']), { p, v, t }), 'chance');
+          else if (!e.ok && rng.chance(0.35)) add(pick(tr(['{p} will es mit einem {t} versuchen – hängen geblieben.', 'Zu viel gewollt: {p} verstolpert den {t}.'], ['{p} tries a {t} – and gets stuck.', 'Too clever by half: {p} fluffs the {t}.']), { p, t }));
+          break;
+        }
         case 'whiff':
           if (rng.chance(0.5)) add(tr(`Luftloch von ${surname(who(e.playerId))}! Der Ball bleibt einfach liegen.`, `Air shot from ${surname(who(e.playerId))}! The ball just sits there.`));
           break;

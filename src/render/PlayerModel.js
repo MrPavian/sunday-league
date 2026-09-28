@@ -693,12 +693,103 @@ function kickPose(bn, t, power) {
   bn.head.rotation.x = 0.18; // Blick auf den Ball
 }
 
+// Tricks am Ball (t 0 → 1): Übersteiger, Hackentrick, Jay-Jay-Lupfer, Zidane-Drehung.
+// side: zu welcher Seite angetäuscht wird (+1 rechts). Gibt nichts zurück, setzt nur Knochen.
+function trickPose(bn, kind, t, side) {
+  const R = side > 0 ? 'R' : 'L';
+  const Lg = side > 0 ? 'L' : 'R';
+  const out = side > 0 ? 1 : -1; // Abspreizen nach außen (R positiv, L negativ)
+  if (kind === 'uebersteiger') {
+    // Bein kreist außen über den Ball, Oberkörper täuscht mit – dann Abdruck zur anderen Seite.
+    if (t < 0.6) {
+      const a = Math.sin((t / 0.6) * Math.PI);
+      leg(bn, R, -0.7 * a, 0.75 * a, 0.2);
+      bn[`upperLeg${R}`].rotation.z = 0.85 * a * out;
+      leg(bn, Lg, 0.05, 0.45, -0.1);
+      bn.spine.rotation.z = -0.4 * a * out;
+      bn.hips.rotation.z = 0.12 * a * out;
+      bn.hips.position.y -= 0.08 * a;
+    } else {
+      const a = Math.sin(((t - 0.6) / 0.4) * Math.PI);
+      leg(bn, Lg, -0.45 * a, 0.5 * a, 0.2);
+      leg(bn, R, 0.35 * a, 0.3, 0);
+      bn.spine.rotation.z = 0.22 * a * out;
+    }
+    arm(bn, 'L', -0.2, 0.7, -0.5);
+    arm(bn, 'R', -0.2, 0.7, -0.5);
+    bn.head.rotation.x = 0.25;
+  } else if (kind === 'hacke') {
+    // Hinter dem Standbein vorbei mit der Hacke gespitzelt.
+    const a = t < 0.45 ? t / 0.45 : t < 0.65 ? 1 : 1 - (t - 0.65) / 0.35;
+    const snap = t > 0.45 && t < 0.65 ? 1 : 0;
+    leg(bn, R, 0.55 + 0.35 * a, 0.9 * a + 0.5 * snap, 0.4);
+    bn[`upperLeg${R}`].rotation.z = -0.3 * a * out; // kreuzt hinter dem Standbein
+    leg(bn, Lg, -0.1, 0.3, -0.1);
+    bn.spine.rotation.x = 0.18 * a;
+    bn.head.rotation.x = 0.3;
+    arm(bn, 'L', 0.2, 0.5, -0.4);
+    arm(bn, 'R', 0.2, 0.5, -0.4);
+  } else if (kind === 'jayjay') {
+    // Ball hinten mit der Ferse hochgelupft, kleiner Hüpfer, Arme zur Balance.
+    const a = Math.sin(t * Math.PI);
+    bn.hips.position.y += 0.18 * a;
+    leg(bn, R, 0.45 + 0.5 * a, 0.7 + 1.3 * a, 0.6);
+    leg(bn, Lg, -0.25 * a, 0.35 * a, 0.2);
+    bn.spine.rotation.x = 0.25 * a;
+    bn.head.rotation.x = 0.1 - 0.3 * a; // schaut dem Ball nach
+    arm(bn, 'L', -0.3, 0.9 * a, -0.4);
+    arm(bn, 'R', -0.3, 0.9 * a, -0.4);
+  } else if (kind === 'zidane') {
+    // Roulette: Fuß auf dem Ball, einmal um die eigene Achse, Arme weit.
+    const e = t * t * (3 - 2 * t);
+    bn.root.rotation.y = -out * TAU * e;
+    const a = Math.sin(t * Math.PI);
+    leg(bn, R, -0.3 * a, 0.5 * a, 0.3);
+    leg(bn, Lg, 0.2 * a, 0.4 * a, 0);
+    bn.hips.position.y -= 0.04 * a;
+    arm(bn, 'L', -0.1, 0.9 * a, -0.3);
+    arm(bn, 'R', -0.1, 0.9 * a, -0.3);
+    bn.head.rotation.x = 0.3;
+  }
+}
+
+// Fallrückzieher / Seitfallzieher (t 0 → 1, dann liegt er): abheben, Scherenschlag, Landung.
+function acroPose(bn, kind, t, hipY) {
+  const lift = t < 0.55 ? Math.sin((t / 0.55) * Math.PI * 0.5) : 1 - smooth(0.55, 0.8, t);
+  const lie = smooth(0.55, 0.8, t);
+  bn.hips.position.y = hipY + 0.5 * lift * (1 - lie) - (hipY - 0.24) * lie;
+  // Schere: erst holt das Schwungbein Schwung, dann schnellt das Schussbein über Kopf.
+  const snap = smooth(0.22, 0.4, t);
+  const relax = smooth(0.6, 0.9, t);
+  const kick = lerp(lerp(-0.9, -2.5, snap), -0.9, relax);
+  const swing = lerp(lerp(-2.1, -0.3, snap), -0.5, relax);
+  if (kind === 'fallrueck') {
+    bn.hips.rotation.set(-1.65 * smooth(0, 0.35, t), 0, 0); // auf den Rücken
+    leg(bn, 'R', kick, lerp(0.5, 0.05, snap) + 0.4 * relax, 0.3);
+    leg(bn, 'L', swing, 0.6, 0.3);
+    bn.spine.rotation.set(-0.15 * lie, 0, 0);
+    bn.head.rotation.x = 0.55 * (1 - lie); // Kinn zur Brust, Blick auf den Ball
+    arm(bn, 'L', 0.9, 1.1, -0.2); // Arme fangen den Fall ab
+    arm(bn, 'R', 0.9, 1.1, -0.2);
+  } else {
+    bn.hips.rotation.set(-0.35 * smooth(0, 0.35, t), 0, 1.35 * smooth(0, 0.35, t)); // seitlich in die Luft
+    leg(bn, 'L', lerp(-0.4, -1.7, snap) * (1 - relax) - 0.3 * relax, 0.3, 0.3);
+    leg(bn, 'R', lerp(-1.4, -0.2, snap), 0.5, 0.3);
+    bn.spine.rotation.set(0, 0, 0.15);
+    bn.head.rotation.z = -0.4;
+    arm(bn, 'L', -0.5, 1.2, -0.3);
+    arm(bn, 'R', 0.6, 0.4, -0.8); // stützt sich ab
+  }
+}
+
 // Zusätzlich zur Simulation (nur Darstellung, von MatchView abgeleitet):
 // headPrep 0…1 – Kopfball kommt gleich (Anlauf, Absprung, Kopf zurück), headJump 0…1 – wie
 // hoch nach dem Kontakt gesprungen wird, hit { t 0…1, side } – kurzer Kontakt/Rempler,
 // duck 0…1 – Torwart duckt sich weg, face – Ausdruck für einen Moment (z. B. überrascht),
-// kickPrep 0…1 – Schuss/Pass ist geplant: ausholen (die Simulation führt ihn als „pending“).
-export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot', headPrep = 0, headJump = 1, hit = null, duck = 0, face: faceHint = null, kickPrep = 0 }) {
+// kickPrep 0…1 – Schuss/Pass ist geplant: ausholen (die Simulation führt ihn als „pending“),
+// trick/trickT/trickSide – Trick am Ball, acro/acroT – Fall-/Seitfallzieher, fooled 0…1 –
+// ausgetrickst, steht kurz auf dem falschen Fuß.
+export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot', headPrep = 0, headJump = 1, hit = null, duck = 0, face: faceHint = null, kickPrep = 0, trick = null, trickT = 0, trickSide = 1, acro = null, acroT = 0, fooled = 0 }) {
   const bn = model.bones;
   resetPose(model);
   const s = locomotion(model, speed, dt);
@@ -748,6 +839,24 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
     leg(bn, 'L', -0.35, 0.8, 0.3);
     leg(bn, 'R', 0.1, 0.9, 0.3);
     face = 'effort';
+  }
+
+  if (trick && state === 'normal' && kickAnim <= 0) {
+    trickPose(bn, trick, trickT, trickSide);
+    face = 'effort';
+  }
+  // Ausgetrickst: Gewicht auf der falschen Seite, Oberkörper hängt hinterher.
+  if (fooled > 0 && state === 'normal') {
+    const k = Math.sin(Math.min(1, fooled) * Math.PI);
+    bn.spine.rotation.z += 0.5 * k;
+    bn.spine.rotation.x -= 0.2 * k;
+    bn.hips.rotation.z -= 0.22 * k;
+    bn.hips.position.x -= 0.1 * k;
+    leg(bn, 'L', -0.2 * k, 0.5 * k, 0.1);
+    bn.upperLegL.rotation.z = -0.45 * k; // Bein rutscht zur falschen Seite weg
+    bn.upperArmL.rotation.z -= 1.0 * k;
+    bn.upperArmR.rotation.z += 0.6 * k;
+    face = 'surprised';
   }
 
   // Kontakt (Rempler, Zweikampf, Ball an den Körper): kurz zurückweichen, Schulter dreht weg,
@@ -809,6 +918,10 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
     bn.head.rotation.x = -0.45;
     face = 'pain';
   }
+  if (state === 'acro' || (acro && acroT < 1)) {
+    acroPose(bn, acro ?? 'fallrueck', acroT, hipY);
+    face = 'effort';
+  }
   // Hechtsprung des Torwarts: seitlich flach in die Ecke, Arme lang, Beine hinterher.
   if (dive) {
     const k = Math.sin(Math.min(1, (0.5 - dive.t) / 0.2) * Math.PI * 0.5);
@@ -867,7 +980,7 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
   }
   // Wie hoch der Körper über dem Boden ist (für den Kontaktschatten).
   model.lift = Math.max(0, bn.hips.position.y - hipY);
-  model.grounded = state === 'tackle' || state === 'down' || !!dive;
+  model.grounded = state === 'tackle' || state === 'down' || state === 'acro' || !!dive;
   if (faceHint && !celebrate && face !== 'pain') face = faceHint;
   setFace(model, face);
 }

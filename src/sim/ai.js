@@ -6,6 +6,7 @@ import { attackDir, clampToPitch, distToSegment, getPlayer, wallPush } from './p
 import { heeds } from './coach.js';
 import { keeperBox, shortGame } from './actions.js';
 import { adherence, styleOf } from './plan.js';
+import { fooled } from './tricks.js';
 import { hasProfile } from './profiles.js';
 
 // Schwierigkeitsgrad: Nur der Gegner des Menschen spielt klüger oder nachsichtiger –
@@ -392,7 +393,7 @@ export function outfieldIntent(m, p, dt) {
         ? r < 0.5 ? { type: 'pass', lofted: 'cross', zone: 'far', ttl: 0.4 } : r < 0.8 ? { type: 'pass', lofted: 'cross', driven: true, zone: 'near', ttl: 0.4 } : { type: 'pass', zone: 'short', ttl: 0.4 }
         : { type: 'pass', lofted: 'cross', cone: -0.8, ttl: 0.4 };
     }
-    const tackle = chooseTackle(m, p, dBall);
+    const tackle = fooled(m, p) ? null : chooseTackle(m, p, dBall);
     if (tackle) return { tackle };
     p.dribbleDir = norm(oppGoal.x - p.pos.x, p.aimZ - p.pos.z);
     // In der Ecke nicht lange fackeln: abspielen oder raus Richtung Mitte.

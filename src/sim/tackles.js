@@ -6,6 +6,7 @@ import { clampPlayer, inKeeperBox } from './actions.js';
 import { attackDir, getPlayer } from './players.js';
 import { penaltySpot, startSetPiece } from './setpieces.js';
 import { foulInjury } from './knocks.js';
+import { landAcro } from './tricks.js';
 import { hasProfile } from './profiles.js';
 import { judgeDissent, judgeFoul, refereeSees } from './referee.js';
 
@@ -60,6 +61,8 @@ export function stateMove(m, p, dt) {
     p.stateTimer = 0.55;
     const risk = pitch.surface.scrapeChance * (hasTrait(p, 'hart_im_nehmen') ? 0.5 : 1);
     if (rng.chance(risk)) injure(m, p);
+  } else if (p.state === 'acro') {
+    landAcro(m, p);
   } else if (p.state === 'poke') {
     p.state = 'recover';
     p.stateTimer = 0.25;

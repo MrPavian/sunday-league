@@ -1,3 +1,4 @@
+import { trickLine } from '../sim/tricks.js';
 import { MATCH_INJURIES } from '../sim/knocks.js';
 import { tr } from '../core/i18n.js';
 import { keyLabel } from '../input/Input.js';
@@ -255,9 +256,10 @@ export class Hud {
       const line = this.$('.tierline');
       line.style.setProperty('--c', tier.color);
       line.innerHTML = `<span class="badge">${tier.name}</span> ${tr('Stärke', 'Rating')} ${p.rating} · ${POSITIONS[p.position] ?? ''}${p.title ? ` · <b>${p.title}</b>` : ''}`;
-      this.$('.traits').innerHTML = p.traits.length
+      const tricks = trickLine(p);
+      this.$('.traits').innerHTML = (p.traits.length
         ? p.traits.map((id) => `<span title="${TRAITS[id].desc}">${TRAITS[id].name}</span>`).join('')
-        : `<em>${tr('keine Besonderheiten', 'no special traits')}</em>`;
+        : `<em>${tr('keine Besonderheiten', 'no special traits')}</em>`) + (tricks ? `<span>${tricks}</span>` : '');
     }
     const injury = p.injury ? `${p.injury.label}${p.injury.severity > 1 ? ` ×${p.injury.severity}` : ''}` : '';
     if (this.$('.injury').textContent !== injury) this.$('.injury').textContent = injury;

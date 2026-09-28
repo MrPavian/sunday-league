@@ -25,6 +25,7 @@ import { checkIncident, incidentOnBall, planIncident, stepIncident } from './inc
 import { resolveTackles, startPoke, startTackle, stateMove } from './tackles.js';
 import { startShootout, stepShootout } from './shootout.js';
 import { stepKnocks } from './knocks.js';
+import { acrobaticTouch } from './tricks.js';
 import { stepLog } from './matchlog.js';
 import { stepSituations } from './situations.js';
 import { answerCard, stepCoachFeed } from './coachfeed.js';
@@ -140,6 +141,9 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = tr
   return m;
 }
 
+// Tor per Fall- oder Seitfallzieher? (der Schuss liegt höchstens 3 s zurück)
+const acroGoal = (m, scorer) => (scorer && m.lastAcro?.id === scorer.id && m.time - m.lastAcro.time < 3 && m.ball.lastTouch === scorer.id ? m.lastAcro.kind : null);
+
 export function stepMatch(m, input = NO_INPUT, dt) {
   if (m.phase === 'ended') return;
   if (input.sub && m.humanTeam !== null) requestSub(m, m.humanTeam);
@@ -246,6 +250,8 @@ function step(m, input, dt) {
     p.kickAnim = Math.max(0, p.kickAnim - dt);
     p.headAnim = Math.max(0, p.headAnim - dt);
     p.diveAnim = Math.max(0, p.diveAnim - dt);
+    if (p.trickAnim > 0) p.trickAnim = Math.max(0, p.trickAnim - dt);
+    if (p.acroAnim > 0) p.acroAnim = Math.max(0, p.acroAnim - dt);
     p.catchCooldown = Math.max(0, p.catchCooldown - dt);
     p.decideTimer -= dt;
     if (p.state !== 'normal') {
@@ -291,7 +297,7 @@ function step(m, input, dt) {
   }
 
   keeperSaves(m);
-  headerTouch(m);
+  if (!acrobaticTouch(m)) headerTouch(m);
   bodyBlock(m);
   dribbleTouch(m);
   carryBall(m, dt);
@@ -409,7 +415,7 @@ function onGoal(m, team) {
   const ownGoal = !!scorer && scorer.team !== team;
   const lp = m.lastPass;
   const assistId = !ownGoal && lp && lp.team === team && lp.playerId !== scorer?.id && m.time - lp.time < 8 ? lp.playerId : null;
-  m.events.push({ type: 'goal', team, scorerId: scorer?.id ?? null, assistId, ownGoal, via: m.ball.lastAction, time: m.time });
+  m.events.push({ type: 'goal', team, scorerId: scorer?.id ?? null, assistId, ownGoal, via: m.ball.lastAction, acro: acroGoal(m, scorer), time: m.time });
   m.lastGoal = { team, scorerId: ownGoal ? null : scorer?.id ?? null };
   for (const p of m.players) p.mood = p.team !== team ? 'sad' : p.id === m.lastGoal.scorerId ? 'scorer' : 'celebrate';
   m.phase = 'goal';

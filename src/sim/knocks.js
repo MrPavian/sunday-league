@@ -54,6 +54,17 @@ export function foulInjury(m, victim, { hard = false } = {}) {
   return true;
 }
 
+// Harte Landung nach Fall- oder Seitfallzieher: meist eine Prellung, selten mehr.
+// Gibt true zurück, wenn er liegen bleibt (dann unterbricht der Schiri gleich).
+export function acroInjury(m, p) {
+  if (m.noKnocks) return false;
+  const r = m.rng.next();
+  const kind = r < 0.75 ? 'prellung' : r < 0.9 ? 'zerrung' : 'baender';
+  const out = hurt(m, p, kind);
+  if (out) m.knockStop = m.time + 3;
+  return true;
+}
+
 // Ohne Gegner: Zerrung beim Sprint, umgeknickt auf holprigem Boden. Müde Beine
 // und ältere Knochen erwischt es öfter.
 export function stepKnocks(m, dt) {

@@ -419,6 +419,10 @@ export class Sound {
       switch (e.type) {
         case 'shot':
           this.kick(e.power, pan);
+          if (e.acro) this.oooh();
+          break;
+        case 'trick':
+          if (e.ok && Math.random() < 0.5) this.oooh();
           break;
         case 'pass':
           this.kick(e.lofted ? 0.5 : 0.3, pan);

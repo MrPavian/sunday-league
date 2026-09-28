@@ -327,7 +327,9 @@ export class Crowd {
         this.react((i) => this.fan[i] === -1, TYPE.clap, 0.6, 3);
         this.react((i) => this.fan[i] === 1 - side, TYPE.head, 0.45, 2.5);
       } else if (e.type === 'shot') {
-        this.react(() => true, TYPE.lean, 0.35, 1.2);
+        this.react(() => true, TYPE.lean, e.acro ? 0.6 : 0.35, 1.2);
+      } else if (e.type === 'trick' && e.ok) {
+        this.react(() => true, TYPE.clap, 0.22, 1.4); // Szenenapplaus
       } else if (e.type === 'post' || e.type === 'bar') {
         this.react(() => true, TYPE.head, 0.5, 1.6);
       } else if (e.type === 'save') {

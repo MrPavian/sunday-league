@@ -8,6 +8,7 @@ import { attackDir, distToSegment, setControlled, wallPush } from './players.js'
 import { aiSkill, keeperReaction, laneScore } from './ai.js';
 import { knockSpeed } from './knocks.js';
 import { hasProfile, pressureChaos } from './profiles.js';
+import { fooled, tryTrick } from './tricks.js';
 
 export const REACH = 0.75;
 
@@ -23,6 +24,7 @@ export function movePlayer(m, p, intent, dt, leaders) {
   if (p.shielding) maxSpeed *= 0.55; // Körper zwischen Gegner und Ball
   if (p.heldUntil > m.time) maxSpeed *= 0.45; // wird am Trikot festgehalten
   if (p.holdingId != null) maxSpeed *= 0.7;
+  if (fooled(m, p)) maxSpeed *= 0.35; // ausgetrickst: steht kurz falsch
   if (p.injury) maxSpeed *= 1 - 0.03 * p.injury.severity * (hasTrait(p, 'hart_im_nehmen') ? 0.3 : 1);
   maxSpeed *= knockSpeed(p); // angeschlagen humpelt man
 
@@ -95,7 +97,7 @@ export function tryExecute(m, p) {
     // Die kurze Sperre nach einer Dribbel-Berührung gilt nicht für einen gewollten
     // Schuss oder Pass – sonst verfällt die Aktion, bevor sie ausgeführt wird.
     const ownDribble = p.id === m.controlledId && ball.lastTouch === p.id && ball.lastAction === 'dribble';
-    if (ball.holder || (p.kickCooldown > 0 && !ownDribble)) return;
+    if (ball.holder || (p.kickCooldown > 0 && !ownDribble) || fooled(m, p)) return;
     // Der gesteuerte Spieler kommt etwas weiter an den Ball – Taste gedrückt, Ball gespielt.
     if (dist2d(p.pos, ball.pos) > (p.id === m.controlledId ? REACH * 1.3 : REACH) || ball.pos.y > 1.1) return;
     if (shielded(m, p)) {
@@ -533,7 +535,7 @@ export function dribbleTouch(m) {
   for (const c of m.players) {
     // Den eigenen Ball, den man gerade überläuft, darf man auch direkt wieder berühren.
     const catching = c.id === ball.lastTouch && ball.lastAction === 'dribble' && ballSpeed(ball) < len(c.vel.x, c.vel.z);
-    if ((c.kickCooldown > 0 && !catching) || c.state !== 'normal') continue;
+    if ((c.kickCooldown > 0 && !catching) || c.state !== 'normal' || fooled(m, c)) continue;
     const d = dist2d(c.pos, ball.pos);
     if (d < best) {
       best = d;
@@ -543,6 +545,13 @@ export function dribbleTouch(m) {
   if (!p) return;
 
   if (shielded(m, p)) return;
+
+  // Ball am Fuß, Gegner vor sich: Wer es draufhat, versucht einen Trick.
+  const own = ball.lastTouch === p.id && ball.lastAction === 'dribble';
+  if (own && ballSpeed(ball) < 9 && tryTrick(m, p)) {
+    m.events.push({ type: 'touch', playerId: p.id });
+    return;
+  }
 
   const tech = p.attrs.technique;
   const fatigue = 1 - p.stamina;

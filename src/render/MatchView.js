@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { ACRO, TRICKS } from '../sim/tricks.js';
 import { len } from '../core/math.js';
 import { allPlayers } from '../sim/squad.js';
 import { attackDir } from '../sim/players.js';
@@ -191,6 +192,7 @@ export class MatchView {
         hitFrom(best, p, 0.75);
         if (best) mood(best.id, 'angry', 0.8);
       } else if (e.type === 'beaten') mood(e.playerId, 'surprised', 0.7);
+      else if (e.type === 'trick' && !e.ok) mood(e.playerId, 'angry', 0.7);
       else if (e.type === 'post' || e.type === 'bar') {
         const gk = match.players.find((q) => q.role === 'gk' && Math.sign(q.pos.x) === Math.sign(match.ball.pos.x));
         if (gk) mood(gk.id, 'surprised', 0.9);
@@ -398,6 +400,15 @@ export class MatchView {
         DIVE.side = p.diveSide * (p.facing.x > 0 ? 1 : -1);
         o.dive = DIVE;
       } else o.dive = null;
+      // Tricks und Akrobatik (Simulation: trick/trickAnim, acro/acroAnim).
+      const tk = p.trickAnim > 0 ? TRICKS[p.trick] : null;
+      o.trick = tk ? p.trick : null;
+      o.trickT = tk ? 1 - p.trickAnim / tk.time : 0;
+      o.trickSide = p.trickSide ?? 1;
+      const ac = p.state === 'acro' ? ACRO[p.acro] : null;
+      o.acro = ac ? p.acro : null;
+      o.acroT = ac ? 1 - Math.max(0, p.acroAnim) / ac.time : 0;
+      o.fooled = p.fooledUntil > match.time ? 1 - (p.fooledUntil - match.time) / (p.fooledFor || 0.8) : 0;
       o.celebrate = celebrate;
       o.sad = p.mood === 'sad';
       animatePlayer(m, o);
