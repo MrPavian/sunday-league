@@ -31,6 +31,8 @@ import { Input } from './input/Input.js';
 import { CameraRig } from './render/CameraRig.js';
 import { MatchView } from './render/MatchView.js';
 import { PixelRenderer } from './render/PixelRenderer.js';
+import { DebugOverlay } from './render/DebugOverlay.js';
+import { cameraViewHeight, createGovernor, detectPlatform, gpuName, LADDER, pickInitialQuality, QUALITY, setCurrentQuality } from './render/quality.js';
 import { setLightMood } from './render/props.js';
 import { disposeTree, mergeStatic } from './render/merge.js';
 import { applyColorSafeKits } from './render/colorSafe.js';
@@ -79,7 +81,25 @@ let seed = Number(params.get('seed')) || Math.floor(Math.random() * 1e9);
 const testDuration = Number(params.get('dauer')) || undefined; // Testschalter: ?dauer=60
 
 const canvas = document.getElementById('game');
-const pixel = new PixelRenderer(canvas, { targetHeight: Number(params.get('px')) || 384 });
+// Grafikqualität: Startstufe aus Plattform, Bildschirm und GPU; ?quality=PC_LOW bzw.
+// localStorage sunday-league:quality legen sie fest (dann ohne Automatik). ?px=… setzt
+// nur die interne Höhe (Testschalter).
+const pixel = new PixelRenderer(canvas, { targetHeight: Number(params.get('px')) || null });
+const platform = detectPlatform();
+let fixedQuality = params.get('quality');
+try {
+  fixedQuality ??= localStorage.getItem('sunday-league:quality');
+} catch {
+  // egal
+}
+if (!QUALITY[fixedQuality]) fixedQuality = null;
+const gl = pixel.renderer.getContext();
+const startQuality = fixedQuality ?? pickInitialQuality({ platform, gpu: gpuName(gl), screenHeight: (screen?.height ?? innerHeight) * (devicePixelRatio || 1), webgl2: pixel.renderer.capabilities.isWebGL2 !== false });
+setCurrentQuality(startQuality);
+pixel.applyQuality(startQuality);
+const governor = createGovernor(startQuality, { platform, auto: !fixedQuality });
+const gfx = new DebugOverlay(pixel, { visible: params.has('gfx') });
+gfx.extra = () => `Plattform  ${platform}${governor.auto ? `  Auto (${governor.changes} Wechsel${governor.lastFps ? `, zuletzt ${governor.lastFps.toFixed(0)} fps` : ''})` : '  fest'}`;
 let lightMood = null;
 try {
   if (localStorage.getItem('sunday-league:fx') === '0') pixel.setEffects(false);
@@ -89,7 +109,7 @@ try {
 const rig = new CameraRig();
 const scene = new THREE.Scene();
 // ?debug: Renderer und Szene für die Browser-Konsole (Draw Calls, Speicher).
-if (params.has('debug')) globalThis.__sl = { renderer: pixel.renderer, scene, THREE, get match() { return match; } };
+if (params.has('debug')) globalThis.__sl = { renderer: pixel.renderer, pixel, scene, THREE, get match() { return match; } };
 const input = new Input();
 const shoutBar = new ShoutBar(document.getElementById('shoutbar') ?? document.body.appendChild(Object.assign(document.createElement('div'), { id: 'shoutbar', hidden: true })), input);
 const hud = new Hud(document.getElementById('hud'));
@@ -198,8 +218,10 @@ function loadVenue(id) {
   // Statische Kulisse zu wenigen Meshes verschmelzen (?nomerge zum Vergleichen).
   if (!params.has('nomerge')) mergeStatic(venueRoot);
   scene.add(venueRoot);
+  pixel.applyShadowSize(scene);
+  pixel.markShadowsDirty();
   sound.setVenue(venue.id);
-  rig.viewHeight = venueInfo.viewHeight;
+  rig.viewHeight = cameraViewHeight(venueInfo.viewHeight);
   resize();
 }
 
@@ -700,7 +722,7 @@ function finishCareerMatch() {
 // --- Loop ------------------------------------------------------------------------
 
 function resize() {
-  pixel.setSize(window.innerWidth, window.innerHeight);
+  pixel.setSize(window.innerWidth, window.innerHeight, window.devicePixelRatio || 1);
   rig.resize(pixel.width, pixel.height);
 }
 window.addEventListener('resize', resize);
@@ -723,11 +745,22 @@ if (params.get('venue')) {
   } else showTitle();
 }
 
-// Schwaches Gerät? Läuft das Spiel über ein paar Sekunden unter ~24 Bildern, gehen die
+// Automatische Qualität (siehe quality.js: Hysterese, Mindestverweildauer, Abklingzeit).
+function governQuality(dt) {
+  const next = governor.sample(dt, mode === 'play');
+  if (!next) return;
+  const down = LADDER[platform].indexOf(next) < LADDER[platform].indexOf(pixel.qualityId);
+  setCurrentQuality(next);
+  pixel.applyQuality(next, scene);
+  resize();
+  if (down) hud.toast(tr('Grafik etwas einfacher – für ein flüssigeres Spiel', 'Graphics simplified a little for smoother play'), 2.5, 2);
+}
+
+// Schon auf der untersten Stufe und immer noch unter ~24 Bildern? Dann gehen die
 // Zusatzeffekte von selbst aus – aber nur, wenn man sie nie selbst umgeschaltet hat.
 const fpsGuard = { t: 0, frames: 0, warmup: 3, done: false };
 function guardFps(dt) {
-  if (fpsGuard.done || mode !== 'play' || !pixel.effects) return;
+  if (fpsGuard.done || mode !== 'play' || !pixel.effects || LADDER[platform].indexOf(pixel.qualityId) > 0) return;
   if (fpsGuard.warmup > 0) return void (fpsGuard.warmup -= dt);
   fpsGuard.t += dt;
   fpsGuard.frames++;
@@ -753,6 +786,8 @@ let acc = 0;
 function frame(now) {
   const dt = Math.min(0.1, (now - last) / 1000);
   guardFps(Math.min(0.5, (now - last) / 1000)); // lange Pausen (Tab im Hintergrund) nicht mitzählen
+  governQuality((now - last) / 1000);
+  gfx.update((now - last) / 1000);
   last = now;
   acc += dt * (mode === 'play' ? TEMPOS[tempo].factor : 1);
   if (drainInput) {
@@ -840,7 +875,7 @@ function frame(now) {
     setLightMood(venueRoot, look === 'halle' ? 'klar' : look);
   }
   pixel.setLook(look);
-  pixel.render(scene, rig.camera);
+  pixel.render(scene, rig.camera, { moving: !(subPanel.isOpen || planPanel.isOpen || halfPanel.isOpen) });
   if (screenshotWanted) saveScreenshot();
   requestAnimationFrame(frame);
 }
@@ -849,6 +884,11 @@ function frame(now) {
 // Canvas") direkt nach dem Rendern abgreifen – danach ist der Puffer leer.
 let screenshotWanted = false;
 window.addEventListener('keydown', (e) => {
+  if (e.code === 'F3') {
+    e.preventDefault();
+    gfx.toggle();
+    return;
+  }
   if (e.code !== 'F2') return;
   e.preventDefault();
   screenshotWanted = true;

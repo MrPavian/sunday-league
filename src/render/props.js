@@ -1,6 +1,7 @@
 // Wiederverwendbare Low-Poly-Requisiten für alle Spielorte.
 import * as THREE from 'three';
 import { toon } from './materials.js';
+import { currentQuality } from './quality.js';
 
 export const CAR_COLORS = [0x8c2f2f, 0x2f4f7f, 0xd8d4c8, 0x3b3b3b, 0x6a7d4a, 0xb8962e, 0x7a7f86, 0x4a2f5c];
 export const JACKET_COLORS = [0x2b3a55, 0x6b1e1e, 0x2e5d3a, 0x444444, 0xc27a1a];
@@ -200,7 +201,7 @@ export function addLights(scene, { sky = 0xa9bccb, sun = 0xfff0d8, sunIntensity 
   const light = new THREE.DirectionalLight(sun, sunIntensity);
   light.position.set(...sunPos);
   light.castShadow = true;
-  light.shadow.mapSize.set(2048, 2048);
+  light.shadow.mapSize.setScalar(currentQuality().shadowMap);
   Object.assign(light.shadow.camera, { left: -span, right: span, top: span * 0.8, bottom: -span * 0.8, near: 1, far: 90 });
   light.shadow.bias = -0.0008;
   light.shadow.normalBias = 0.02;

@@ -1,8 +1,9 @@
 import * as THREE from 'three';
+import { currentQuality } from './quality.js';
 
 // Kleine Partikeleffekte: Staub, Grasfetzen, Spritzwasser. Alles in einem Pool
 // und einem einzigen Draw Call. Farben und Verhalten hängen vom Untergrund ab.
-const MAX = 300;
+// Die Poolgröße kommt aus der Qualitätsstufe (quality.js).
 
 const SURFACE_FX = {
   asphalt: { colors: [0x8a8a86, 0x9c9a94, 0x74736f], size: 4, life: 0.45, lift: 1.2, drag: 3.5 },
@@ -17,6 +18,7 @@ const WATER = { colors: [0xcfe4f2, 0xe8f2fa, 0xa8c4d8], size: 3, life: 0.4, lift
 
 export class Effects {
   constructor(root, match) {
+    const MAX = (this.max = currentQuality().particles);
     this.fx = SURFACE_FX[match.pitch.surface?.id] ?? SURFACE_FX.grass;
     this.wet = match.weather === 'rain';
     this.p = Array.from({ length: MAX }, () => ({ life: 0, x: 0, y: -10, z: 0, vx: 0, vy: 0, vz: 0, g: 0, drag: 0, max: 1 }));
@@ -40,7 +42,7 @@ export class Effects {
     for (let i = 0; i < count; i++) {
       const idx = this.next;
       const q = this.p[idx];
-      this.next = (idx + 1) % MAX;
+      this.next = (idx + 1) % this.max;
       const a = Math.random() * Math.PI * 2;
       const sp = (0.4 + Math.random()) * spread;
       q.x = x + (Math.random() - 0.5) * 0.3;
@@ -87,7 +89,7 @@ export class Effects {
     if (this.lastBallVy < -3 && b.vel.y >= 0 && b.pos.y < 0.2) this.emit(b.pos.x, 0.03, b.pos.z, this.wet ? 8 : 5, { spread: 0.7, up: 0.8, kind: this.wet ? WATER : this.fx });
     this.lastBallVy = b.vel.y;
 
-    for (let i = 0; i < MAX; i++) {
+    for (let i = 0; i < this.max; i++) {
       const q = this.p[i];
       if (q.life <= 0) {
         if (this.pos[i * 3 + 1] !== -10) this.pos[i * 3 + 1] = -10;

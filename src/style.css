@@ -29,10 +29,11 @@ html, body {
   color: var(--ink);
 }
 
+/* Größe und Lage setzt der PixelRenderer in ganzen Gerätepixeln (siehe quality.js). */
 #game {
   position: absolute;
-  inset: 0;
-  margin: auto;
+  left: 0;
+  top: 0;
   image-rendering: pixelated;
 }
 
@@ -606,7 +607,6 @@ kbd {
 .flash { position: absolute; inset: 0; background: #eef4ff; opacity: 0; pointer-events: none; }
 .flash.on { animation: lightning 0.7s steps(4) forwards; }
 @keyframes lightning { 0% { opacity: 0.85; } 25% { opacity: 0.1; } 50% { opacity: 0.6; } 100% { opacity: 0; } }
-body.weather-rain #game { filter: brightness(0.78) saturate(0.75) contrast(1.05); }
 .paper .incident { font-style: italic; margin: 4px 0; font-size: 14px; }
 
 /* Spielertrainer */

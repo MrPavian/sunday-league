@@ -33,7 +33,8 @@ export class CameraRig {
     this.target.x += (tx - this.target.x) * k;
     this.target.z += (tz - this.target.z) * k;
 
-    const texel = this.viewHeight / this.internalHeight;
+    // Ein internes Pixel in Metern – aus dem tatsächlichen Kamerafenster, auch im Hochformat.
+    const texel = (this.camera.top - this.camera.bottom) / this.internalHeight;
     const q = this.camera.quaternion;
     this._inv.copy(q).invert();
     const p = this._p.copy(this.target).applyQuaternion(this._inv);
