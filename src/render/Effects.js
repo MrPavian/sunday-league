@@ -17,6 +17,11 @@ const SURFACE_FX = {
 const WATER = { colors: [0xcfe4f2, 0xe8f2fa, 0xa8c4d8], size: 3, life: 0.4, lift: 2.2, drag: 2.5, gravity: 9 };
 // Pulverschnee, den Schritte und Schüsse aufwirbeln.
 const SNOW = { colors: [0xf4f7fb, 0xe2e8f0, 0xffffff], size: 3, life: 0.55, lift: 1.5, drag: 3.2, gravity: 4 };
+// Ball 2.0: kurze helle Aufprall-Pixel (Kopfball, Parade, Pfosten) und Netz-Pixel beim Tor;
+// harter Aufsetzer auf Asphalt/Beton: ein paar graue Körner.
+const IMPACT = { colors: [0xffffff, 0xf2f2e8, 0xe0e4ea], size: 3, life: 0.2, lift: 0.6, drag: 7, gravity: 1 };
+const NETFX = { colors: [0xe8e8e0, 0xd8d8d0, 0xffffff], size: 3, life: 0.35, lift: 1, drag: 4, gravity: 3 };
+const HARD = new Set(['asphalt', 'concrete']);
 
 // Wetter 2.0: Spritzer entstehen nur an Kontakten, die das Spiel ohnehin liefert (Sprint,
 // Richtungswechsel, Schuss/Pass, Grätsche, Hechtsprung, Ball-Aufsetzer) – 2 bis 6 Partikel,
@@ -45,6 +50,37 @@ export class Effects {
     this.lastBallVy = 0;
     this.sprintTimer = 0;
     this.facing = new Map(); // Spieler-Id → letzte Blickrichtung (Richtungswechsel)
+    this.surfaceId = match.pitch.surface?.id ?? 'grass';
+    this.impactQ = currentQuality().impacts ?? 1;
+    this.ballFx = new Uint8Array(MAX); // 1 = Partikel stammt von einem Ball-Akzent (Debug-Anzeige)
+  }
+
+  // Aufprall-Pixel am Ball (n bei voller Qualität). net: Netz-Pixel statt heller Funken.
+  ballImpact(x, y, z, n, spread = 1, net = false) {
+    const count = Math.max(1, Math.round(n * this.impactQ));
+    const first = this.next;
+    this.emit(x, y - 0.05, z, count, spread, 1, net ? NETFX : IMPACT);
+    for (let i = 0; i < count; i++) this.ballFx[(first + i) % this.max] = 1;
+  }
+
+  // Ball trifft den Boden (Aufsetzer, Schuss aus dem Stand): je nach Untergrund und Wetter,
+  // Stärke 0…1 aus dem Balltempo. Rasen kaum, Asche staubt, Asphalt harte Körner, nass spritzt,
+  // Schnee stäubt, Halle fast nichts. Gibt die Zahl der Partikel zurück.
+  groundKick(x, z, strength) {
+    if (strength < 0.15) return 0;
+    if (this.splash(x, z, Math.round(2 + 4 * strength), 0.6 + 0.4 * strength, 0.8)) return 1;
+    const id = this.surfaceId;
+    let n = 0;
+    let kind = this.fx;
+    if (id === 'ash') n = Math.round(1 + 5 * strength);
+    else if (HARD.has(id)) {
+      n = strength > 0.45 ? 2 + Math.round(2 * strength) : 0;
+      kind = this.fx;
+    } else if (id === 'hall') n = strength > 0.6 ? 1 : 0;
+    else n = strength > 0.55 ? Math.round(1 + 2 * strength) : 0; // Rasen: nur kräftig ein paar Halme
+    n = Math.round(n * this.impactQ);
+    if (n > 0) this.emit(x, 0.03, z, n, 0.5 + 0.5 * strength, 0.6 + 0.6 * strength, kind);
+    return n;
   }
 
   get wet() {
@@ -54,6 +90,7 @@ export class Effects {
   emit(x, y, z, count, spread = 1, up = 1, kind = this.fx, dx = 0, dz = 0) {
     for (let i = 0; i < count; i++) {
       const idx = this.next;
+      this.ballFx[idx] = 0;
       const q = this.p[idx];
       this.next = (idx + 1) % this.max;
       const a = Math.random() * Math.PI * 2;
@@ -103,9 +140,16 @@ export class Effects {
       if (e.type === 'slide' && p) {
         if (dust) this.emit(p.pos.x, 0.05, p.pos.z, 18, 1.3, 1, this.fx, p.facing.x, p.facing.z);
         this.splash(p.pos.x, p.pos.z, 6, 1.4, 1.3, p.facing.x * 0.6, p.facing.z * 0.6);
-      } else if ((e.type === 'shot' || e.type === 'pass') && p) {
-        if (e.type === 'shot' || e.lofted) this.emit(b.x, 0.05, b.z, e.type === 'shot' ? 8 : 4, 0.8, 1, this.fx, -p.facing.x * 0.3, -p.facing.z * 0.3);
-        this.splash(b.x, b.z, e.type === 'shot' ? 5 : 3, 0.7, 1, -p.facing.x * 0.3, -p.facing.z * 0.3);
+      } else if (e.type === 'shot' && p) {
+        // Schuss: Stärke aus der Schusskraft der Simulation – leichter Schuss fast nichts.
+        this.groundKick(b.x, b.z, Math.min(1, e.power ?? 0.6));
+      } else if (e.type === 'pass' && p) {
+        // Pässe: kein großer Effekt – nur trockene Asche staubt beim hohen Ball ein wenig,
+        // auf nassem Boden spritzt es leicht.
+        if (e.lofted && dust && this.fx === SURFACE_FX.ash) this.emit(b.x, 0.05, b.z, 2, 0.5, 0.8, this.fx, -p.facing.x * 0.3, -p.facing.z * 0.3);
+        this.splash(b.x, b.z, 2, 0.6, 0.8, -p.facing.x * 0.3, -p.facing.z * 0.3);
+      } else if (e.type === 'touch' && p && dust && this.fx === SURFACE_FX.ash && Math.hypot(p.vel.x, p.vel.z) > 6) {
+        this.emit(b.x, 0.03, b.z, 1, 0.4, 0.6); // Ballkontakt im Sprint auf trockener Asche
       } else if ((e.type === 'tackle' || e.type === 'poke_won') && p) {
         this.emit(b.x, 0.05, b.z, 6, 1);
         this.splash(b.x, b.z, 3, 0.9);
@@ -145,15 +189,14 @@ export class Effects {
     if (this.sprintTimer <= 0) this.sprintTimer = 0.08;
     // Ball-Aufsetzer: aus der Ballbewegung der Simulation (fällt schnell, steigt wieder).
     const b = match.ball;
-    if (this.lastBallVy < -3 && b.vel.y >= 0 && b.pos.y < 0.2) {
-      if (!this.splash(b.pos.x, b.pos.z, 5, 0.7, 0.8)) this.emit(b.pos.x, 0.03, b.pos.z, 5, 0.7, 0.8);
-    }
+    if (this.lastBallVy < -3 && b.vel.y >= 0 && b.pos.y < 0.2) this.groundKick(b.pos.x, b.pos.z, Math.min(1, -this.lastBallVy / 9));
     this.lastBallVy = b.vel.y;
 
     for (let i = 0; i < this.max; i++) {
       const q = this.p[i];
       if (q.life <= 0) {
         if (this.pos[i * 3 + 1] !== -10) this.pos[i * 3 + 1] = -10;
+        this.ballFx[i] = 0;
         continue;
       }
       q.life -= dt;

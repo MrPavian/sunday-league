@@ -1,5 +1,6 @@
 // Wiederverwendbare Low-Poly-Requisiten für alle Spielorte.
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { emissiveToon, toon } from './materials.js';
 import { shadowBias } from './lighting.js';
 import { currentQuality } from './quality.js';
@@ -175,6 +176,9 @@ export function makeDog(x, z, color = 0x8a6a3a, rotation = 0) {
 }
 
 // Echtes Tor mit Pfosten, Latte und angedeutetem Netz (dünne Schnüre).
+// Mit Netzreaktion (Qualitätsstufe netFx) werden die Schnüre zu einem eigenen Mesh je Tor
+// zusammengefasst, das sich beim Tor ausbeulen kann (Ball 2.0, BallView) – sonst bleiben es
+// Einzelboxen, die mergeStatic mit der übrigen Kulisse verschmilzt.
 export function makeGoalFrame(halfWidth, height, sign, depth = 1.2) {
   const g = new THREE.Group();
   const white = 0xf2f2ee;
@@ -184,11 +188,50 @@ export function makeGoalFrame(halfWidth, height, sign, depth = 1.2) {
   g.add(box(t, height, t, white, 0, height / 2, halfWidth));
   g.add(box(t, t, halfWidth * 2 + t, white, 0, height, 0));
   const back = sign * depth;
-  for (const z of [-halfWidth, halfWidth]) g.add(box(depth, 0.04, 0.04, net, back / 2, height * 0.9, z));
-  for (let y = 0.3; y < height; y += 0.35) g.add(box(0.02, 0.02, halfWidth * 2, net, back, y, 0));
-  for (let z = -halfWidth; z <= halfWidth + 0.01; z += 0.5) g.add(box(0.02, height * 0.9, 0.02, net, back, height * 0.45, z));
-  for (let x = 0.3; x < depth; x += 0.35) g.add(box(0.02, 0.02, halfWidth * 2, net, sign * x, height * 0.9, 0));
+  const strings = [];
+  for (const z of [-halfWidth, halfWidth]) strings.push(box(depth, 0.04, 0.04, net, back / 2, height * 0.9, z));
+  for (let y = 0.3; y < height; y += 0.35) strings.push(box(0.02, 0.02, halfWidth * 2, net, back, y, 0));
+  for (let z = -halfWidth; z <= halfWidth + 0.01; z += 0.5) strings.push(box(0.02, height * 0.9, 0.02, net, back, height * 0.45, z));
+  for (let x = 0.3; x < depth; x += 0.35) strings.push(box(0.02, 0.02, halfWidth * 2, net, sign * x, height * 0.9, 0));
+  if (!(currentQuality().netFx > 0)) {
+    for (const m of strings) g.add(m);
+    return g;
+  }
+  const geo = mergeGeometries(strings.map((m) => m.geometry.clone().translate(m.position.x, m.position.y, m.position.z)), false);
+  for (const m of strings) m.geometry.dispose();
+  const mesh = new THREE.Mesh(geo, netMaterial(net, sign, depth));
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  mesh.userData.keep = true; // nicht mit der Kulisse verschmelzen
+  mesh.userData.net = { sign, halfWidth, height, depth };
+  g.add(mesh);
   return g;
+}
+
+// Netz-Material: Die Schnüre werden hinten am stärksten und rund um den Einschlagpunkt
+// (hit = Höhe, Breite) nach außen gedrückt; amount kommt aus einer gedämpften Feder.
+function netMaterial(color, sign, depth) {
+  const mat = toon(color).clone();
+  const amount = { value: 0 };
+  const hit = { value: new THREE.Vector2(1, 0) };
+  mat.userData.amount = amount;
+  mat.userData.hit = hit;
+  mat.onBeforeCompile = (s) => {
+    s.uniforms.uNetAmount = amount;
+    s.uniforms.uNetHit = hit;
+    s.vertexShader = s.vertexShader
+      .replace('#include <common>', '#include <common>\nuniform float uNetAmount;\nuniform vec2 uNetHit;')
+      .replace(
+        '#include <begin_vertex>',
+        `#include <begin_vertex>
+        float wBack = clamp(abs(position.x) / ${depth.toFixed(2)}, 0.0, 1.0);
+        vec2 dh = vec2(position.y - uNetHit.x, position.z - uNetHit.y);
+        float fall = exp(-dot(dh * dh, vec2(1.4, 0.7)));
+        transformed.x += ${sign.toFixed(1)} * uNetAmount * wBack * fall;`,
+      );
+  };
+  mat.customProgramCacheKey = () => `net${sign}|${depth}`;
+  return mat;
 }
 
 export function makeFence(x0, z0, x1, z1, height = 2.2, color = 0x6b7076) {

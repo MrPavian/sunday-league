@@ -115,6 +115,7 @@ function playerDebug() {
   return [
     cs ? `CROWD       ${cs.shown}/${cs.people} Zuschauer · ${cs.calls} Draw Calls (+1 Schatten) · ${crowd.material ? 1 : 0} Material · aktiv ${cs.active} · ${crowd.hz ?? 12} Hz` : '',
     ...weatherDebug(),
+    ...ballDebug(),
     `PLAYER      Modell 2.0 · ${shown.length} Figuren · je 1 Draw Call (+1 Schatten)`,
     `PLAYER TRI  ${tris} je Figur · ${BONES.length} Knochen (starr) · ${mats} Materialien`,
     `PLAYER ANIM prozedural, 8 Posen je Schrittpaar · Gesicht ${shown[0]?.face ?? '–'}`,
@@ -144,6 +145,29 @@ function weatherDebug() {
     `W-PARTICLES ${parts}`,
   ];
 }
+// Ball 2.0 in der Debug-Anzeige (BallView.js, Effects.js).
+function ballDebug() {
+  const bv = view?.ballView;
+  if (!bv) return [];
+  const st = bv.stats;
+  const fx = view.effects;
+  let live = 0;
+  let ball = 0;
+  for (let i = 0; i < fx.max; i++) {
+    if (fx.p[i].life <= 0) continue;
+    live++;
+    if (fx.ballFx[i]) ball++;
+  }
+  const tris = bv.mesh.geometry.attributes.position.count / 3;
+  return [
+    `BALL        ${tris} Dreiecke · ${bv.mesh.castShadow ? 2 : 1} Draw Calls (Farbe + Schatten)${bv.trail ? ` · Schweif +1 wenn sichtbar` : ''}`,
+    `BALL FX     ${ball} Ball-Akzente · ${live}/${fx.max} Effekte aktiv (1 Draw Call) · ${st.impacts} Aufpralle`,
+    `BALL SHADOW Höhe ${st.height.toFixed(2)} m · Dichte ${st.shadow.toFixed(2)} (im Kontaktschatten-Draw-Call)`,
+    `BALL TRAIL  ${bv.trail ? (st.trail ? `an (${st.trail} Punkte)` : 'aus') : 'nicht in dieser Stufe'}`,
+    `NET EFFECT  ${bv.nets.length ? `${bv.nets.length} Netze · ${st.net.toFixed(2)} m` : 'keine Netze / Stufe ohne Netzreaktion'}`,
+  ];
+}
+const shakeDir = new THREE.Vector3();
 let lightMood = null;
 try {
   if (localStorage.getItem('sunday-league:fx') === '0') pixel.setEffects(false);
@@ -958,6 +982,10 @@ function frame(now) {
   sound.update(dt, mode === 'play' ? match : null);
   crowd?.update(dt);
   rig.follow(match.ball.pos.x, match.ball.pos.z, dt, venueInfo.bounds);
+  // Ball 2.0: bei Tor oder hartem Pfostentreffer zuckt das Bild um genau ein internes Pixel
+  // (nur Darstellung; die Kameraführung selbst bleibt, wie sie ist).
+  const shake = view.ballView?.shakeOffset(dt) ?? 0;
+  if (shake) rig.camera.position.addScaledVector(shakeDir.set(1, 0, 0).applyQuaternion(rig.camera.quaternion), (shake * (rig.camera.top - rig.camera.bottom)) / rig.internalHeight);
   updateLighting();
   pixel.render(scene, rig.camera, { moving: !(subPanel.isOpen || planPanel.isOpen || halfPanel.isOpen) });
   if (screenshotWanted) saveScreenshot();
