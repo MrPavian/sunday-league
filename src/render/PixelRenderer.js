@@ -41,7 +41,8 @@ const postFragment = /* glsl */ `
   uniform float edgeMin;     // Silhouette ab diesem Tiefensprung (Meter) …
   uniform float edgeTexels;  // … bzw. ab so vielen Pixelbreiten, was größer ist
   uniform float creaseMin;   // Knickstärke für helle Innenkanten
-  uniform float characterEdgeBoost; // reserviert: Zusatzstärke für Figuren (braucht spätere Objekt-ID)
+  uniform float characterEdgeBoost; // Zusatzstärke der Außenkante für Figuren
+  uniform vec3 teamEdge[3];         // Kantentönung: Heim, Gast, neutral
   // Look: Kontaktschatten, Glühen, Farbkorrektur, Dunst und Vignette.
   uniform float aoStrength;
   uniform float bloom;
@@ -142,10 +143,29 @@ const postFragment = /* glsl */ `
     }
     #endif
 
+    // Figuren (Spieler, Schiri) tragen im Alphakanal eine Kennung (0,25 Heim, 0,5 Gast,
+    // 0,7 neutral, sonst 1). Sie bekommen eine etwas kräftigere Außenkante: schon bei
+    // halbem Tiefensprung und überall, wo ein anderes Objekt dahinter liegt (Spieler
+    // vor Spieler), leicht in die Teamfarbe getönt. Immer genau ein Pixel breit.
+    float id = texture2D(tColor, vUv).a;
+    bool character = id < 0.9;
+    #if EDGES == 1
+    if (character && !edge) {
+      float aL = texture2D(tColor, vUv - vec2(texel.x, 0.0)).a;
+      float aR = texture2D(tColor, vUv + vec2(texel.x, 0.0)).a;
+      float aD = texture2D(tColor, vUv - vec2(0.0, texel.y)).a;
+      float aU = texture2D(tColor, vUv + vec2(0.0, texel.y)).a;
+      bool other = (abs(aL - id) > 0.1 && dL > d + 0.02) || (abs(aR - id) > 0.1 && dR > d + 0.02) || (abs(aD - id) > 0.1 && dD > d + 0.02) || (abs(aU - id) > 0.1 && dU > d + 0.02);
+      edge = other || lap > silhouette * 0.5;
+    }
+    #endif
+
     vec3 c = color;
-    if (edge) {
-      float character = 0.0; // Figur? Erst mit Objekt-ID bekannt, bis dahin 0.
-      c *= 1.0 - clamp(depthEdgeStrength + characterEdgeBoost * character, 0.0, 1.0);
+    if (edge && character) {
+      vec3 teamTint = id < 0.4 ? teamEdge[0] : id < 0.6 ? teamEdge[1] : teamEdge[2];
+      c = mix(c * (1.0 - clamp(depthEdgeStrength + characterEdgeBoost, 0.0, 1.0)), teamTint, 0.3);
+    } else if (edge) {
+      c *= 1.0 - depthEdgeStrength;
     } else if (crease > creaseMin) {
       c *= 1.0 + normalEdgeStrength;
     }
@@ -288,9 +308,9 @@ function bayerTexture() {
 //                  texels Pixelbreiten (≈ die alte feste Schwelle ohne den Anteil des
 //                  schrägen Bodens) – Kanten bleiben so im Pixelraster gleich dicht
 // crease         – ab welcher Knickstärke eine Innenkante hell wird
-// characterBoost – reserviert: Figuren stärker trennen als Kulisse. Braucht eine
-//                  Objekt-ID (geplant im Alphakanal von colorTarget), bis dahin wirkungslos.
-export const EDGE = { depthStrength: 0.55, normalStrength: 0.35, min: 0.3, texels: 8, crease: 0.18, characterBoost: 0 };
+// characterBoost – Figuren (Kennung im Alphakanal, siehe PlayerModel EDGE_CODE) bekommen
+//                  eine um so viel dunklere Außenkante als die Kulisse
+export const EDGE = { depthStrength: 0.55, normalStrength: 0.35, min: 0.3, texels: 8, crease: 0.18, characterBoost: 0.15 };
 
 export class PixelRenderer {
   constructor(canvas, { quality = 'PC_HIGH', targetHeight = null } = {}) {
@@ -324,6 +344,7 @@ export class PixelRenderer {
         edgeTexels: { value: EDGE.texels },
         creaseMin: { value: EDGE.crease },
         characterEdgeBoost: { value: EDGE.characterBoost },
+        teamEdge: { value: [new THREE.Vector3(0.1, 0.1, 0.1), new THREE.Vector3(0.1, 0.1, 0.1), new THREE.Vector3(0.08, 0.08, 0.08)] },
         aoStrength: { value: 0.35 },
         bloom: { value: 0.45 },
         tint: { value: new THREE.Vector3(1, 1, 1) },
@@ -531,6 +552,14 @@ export class PixelRenderer {
     g.gl.endQuery(g.ext.TIME_ELAPSED_EXT);
     g.pending.push(g.active);
     g.active = null;
+  }
+
+  // Kantentönung der Figuren: dunkle Fassung der Trikotfarben (Heim, Gast, Schiri).
+  setTeamEdges(colors) {
+    colors.forEach((hex, i) => {
+      const v = this.postMaterial.uniforms.teamEdge.value[i];
+      v.set(((hex >> 16) & 255) / 255, ((hex >> 8) & 255) / 255, (hex & 255) / 255).multiplyScalar(0.35);
+    });
   }
 
   // Lampenköpfe auf den Bildschirm projizieren (Lichthof im Post-Shader).

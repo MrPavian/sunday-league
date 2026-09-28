@@ -4,7 +4,8 @@ import { BALL_RADIUS } from '../sim/ball.js';
 import { allPlayers } from '../sim/squad.js';
 import { attackDir } from '../sim/players.js';
 import { BALL_VISUAL_RADIUS, createBallModel, rollBall } from './BallModel.js';
-import { animatePlayer, createPlayerModel, disposeKit, setKitDirt } from './PlayerModel.js';
+import { animatePlayer, createPlayerModel, disposeKit, KitAtlas, setKitDirt } from './PlayerModel.js';
+import { pixelTexture } from './materials.js';
 
 let flameTex = null;
 function flameTexture() {
@@ -54,12 +55,25 @@ export class MatchView {
     scene.add(this.root);
     this.models = new Map();
     this.softGround = !match.pitch.surface.hard;
-    for (const p of allPlayers(match)) {
+    // Ein Atlas (Textur + Material) je Team und Trikot: Feldspieler, Torwart.
+    const everyone = allPlayers(match);
+    this.atlases = new Map();
+    const atlasFor = (p) => {
+      const key = `${p.team}|${p.role === 'gk' ? 'gk' : 'field'}`;
+      if (!this.atlases.has(key)) {
+        const team = match.teams[p.team];
+        const kit = p.role === 'gk' ? team.keeperKit : team.kit;
+        const capacity = everyone.filter((q) => q.team === p.team && (q.role === 'gk') === (p.role === 'gk')).length;
+        this.atlases.set(key, new KitAtlas(kit, { sponsor: team.sponsor ?? null, capacity, edge: p.team === 0 ? 'home' : 'away' }));
+      }
+      return this.atlases.get(key);
+    };
+    for (const p of everyone) {
       const team = match.teams[p.team];
       const kit = p.role === 'gk' ? team.keeperKit : team.kit;
       // Rückennummer: Position in der Aufstellung (Torwart die 1).
       const number = p.role === 'gk' ? 1 : (Number(String(p.id).split('-')[1]) || 0) + 1;
-      const model = createPlayerModel(p.look, kit, { number, keeper: p.role === 'gk', sponsor: team.sponsor ?? null });
+      const model = createPlayerModel(p.look, kit, { number, keeper: p.role === 'gk', sponsor: team.sponsor ?? null, atlas: typeof document !== 'undefined' ? atlasFor(p) : null });
       model.celebration = celebrationFor(p.id);
       if (p.hot) {
         // In Form: eine kleine Pixelflamme über dem Kopf.
@@ -80,6 +94,7 @@ export class MatchView {
     // ?dirt=0.8 – zum Anschauen gleich verdreckt anfangen.
     const pre = typeof location !== 'undefined' ? Number(new URLSearchParams(location.search).get('dirt')) : 0;
     if (pre > 0) for (const p of allPlayers(match)) this.soil(p.id, pre / Math.max(0.01, this.dirtRate));
+    this.makeBlobs();
     if (match.referee) this.buildReferee(match.referee);
     this.incidents = new IncidentView(this.root, match);
     this.effects = new Effects(this.root, match);
@@ -109,7 +124,8 @@ export class MatchView {
   // Schiri ganz in Schwarz, wie es sich gehört – der Ersatzschiri in Straßenkleidung.
   buildReferee(r) {
     if (this.referee) this.root.remove(this.referee.group);
-    this.referee = createPlayerModel(r.look, r.kit ?? { shirt: 0x1c1c1c, shorts: 0x1c1c1c, socks: 0x1c1c1c }, { textured: false });
+    if (this.referee) disposeKit(this.referee);
+    this.referee = createPlayerModel(r.look, r.kit ?? { shirt: 0x1c1c1c, shorts: 0x1c1c1c, socks: 0x1c1c1c }, { edge: 'neutral' });
     this.refereeName = r.name;
     this.root.add(this.referee.group);
   }
@@ -138,6 +154,48 @@ export class MatchView {
     this.scene.remove(this.root);
     this.root.traverse((o) => o.geometry?.dispose());
     for (const m of this.models.values()) disposeKit(m);
+    if (this.referee) disposeKit(this.referee);
+    this.blobs.geometry.dispose();
+  }
+
+  // Kontaktschatten: ein gerasterter Fleck unter jeder Figur, alle in einem Draw Call.
+  // Wird mit der Höhe über dem Boden kleiner und blasser.
+  makeBlobs() {
+    const c = document.createElement('canvas');
+    c.width = c.height = 16;
+    const ctx = c.getContext('2d');
+    const bayer = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+    for (let y = 0; y < 16; y++)
+      for (let x = 0; x < 16; x++) {
+        const d = Math.hypot((x - 7.5) / 7.5, (y - 7.5) / 7.5);
+        // innen voll, außen gedithert – harte Pixel, kein weicher Verlauf
+        const a = d < 0.55 ? 1 : d < 1 ? (1 - d) / 0.45 : 0;
+        if (a * 16 > bayer[(y % 4) * 4 + (x % 4)]) ctx.fillRect(x, y, 1, 1);
+      }
+    const tex = pixelTexture(c);
+    const mat = new THREE.MeshBasicMaterial({ color: 0x000000, alphaMap: tex, transparent: true, opacity: 0.3, depthWrite: false, alphaTest: 0.5 });
+    const geo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+    this.blobs = new THREE.InstancedMesh(geo, mat, this.models.size + 1);
+    this.blobs.frustumCulled = false;
+    this.blobs.renderOrder = -1;
+    this.root.add(this.blobs);
+    this.blobIndex = 0;
+  }
+
+  blob(model, x, z) {
+    const h = model.lift ?? 0;
+    const k = model.grounded ? 1.35 : Math.max(0.35, 1 - h * 1.4);
+    const m = (this._m ??= new THREE.Matrix4());
+    m.makeScale(0.7 * k, 1, 0.5 * k).setPosition(x, 0.012, z);
+    this.blobs.setMatrixAt(this.blobIndex++, m);
+  }
+
+  endBlobs() {
+    const m = (this._m ??= new THREE.Matrix4());
+    m.makeScale(0, 0, 0);
+    for (let i = this.blobIndex; i < this.blobs.count; i++) this.blobs.setMatrixAt(i, m);
+    this.blobs.instanceMatrix.needsUpdate = true;
+    this.blobIndex = 0;
   }
 
   sync(match, dt) {
@@ -164,6 +222,8 @@ export class MatchView {
         speed: len(p.vel.x, p.vel.z),
         dt,
         kickAnim: p.kickAnim,
+        // Schuss oder Pass? Nur zum Anschauen: der letzte Ballkontakt verrät es.
+        kick: match.ball.lastTouch === p.id && match.ball.lastAction === 'shoot' ? 'shot' : 'pass',
         headAnim: p.headAnim,
         holding: match.ball.holder === p.id ? (p.role === 'gk' ? 'chest' : 'overhead') : null,
         state: p.state,
@@ -172,6 +232,7 @@ export class MatchView {
         celebrate,
         sad: p.mood === 'sad',
       });
+      this.blob(m, p.pos.x, p.pos.z);
     }
     const r = match.referee;
     if (r && this.referee && r.name !== this.refereeName) this.buildReferee(r);
@@ -180,7 +241,9 @@ export class MatchView {
       this.referee.group.rotation.y = Math.atan2(r.facing.x, r.facing.z);
       animatePlayer(this.referee, { speed: len(r.vel.x, r.vel.z), dt, kickAnim: 0, headAnim: 0, holding: null, state: 'normal' });
       if (r.cardAnim > 0) this.referee.arms[1].rotation.x = -2.9; // Karte hoch
+      this.blob(this.referee, r.pos.x, r.pos.z);
     }
+    this.endBlobs();
     this.incidents.sync(match, dt);
     this.effects.update(match, dt);
     const b = match.ball;

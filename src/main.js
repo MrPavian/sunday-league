@@ -34,6 +34,7 @@ import { PixelRenderer } from './render/PixelRenderer.js';
 import { DebugOverlay } from './render/DebugOverlay.js';
 import { cameraViewHeight, createGovernor, detectPlatform, gpuName, LADDER, pickInitialQuality, QUALITY, setCurrentQuality } from './render/quality.js';
 import { applyLighting } from './render/props.js';
+import { BONES } from './render/PlayerModel.js';
 import { moodOf, pickTimeOfDay, resolveLighting } from './render/lighting.js';
 import { setEmissiveLevel } from './render/materials.js';
 import { disposeTree, mergeStatic } from './render/merge.js';
@@ -101,7 +102,20 @@ setCurrentQuality(startQuality);
 pixel.applyQuality(startQuality);
 const governor = createGovernor(startQuality, { platform, auto: !fixedQuality });
 const gfx = new DebugOverlay(pixel, { visible: params.has('gfx') });
-gfx.extra = () => `PLATFORM    ${platform}${governor.auto ? `  Auto (${governor.changes} Wechsel${governor.lastFps ? `, zuletzt ${governor.lastFps.toFixed(0)} fps` : ''})` : '  fest'}`;
+gfx.extra = () => [playerDebug(), `PLATFORM    ${platform}${governor.auto ? `  Auto (${governor.changes} Wechsel${governor.lastFps ? `, zuletzt ${governor.lastFps.toFixed(0)} fps` : ''})` : '  fest'}`].join('\n');
+// Spieler 2.0 in der Debug-Anzeige: ein SkinnedMesh je Figur, Team-Atlanten.
+function playerDebug() {
+  if (!view?.models) return '';
+  const all = [...view.models.values()];
+  const shown = all.filter((m) => m.group.visible);
+  const tris = shown[0]?.mesh ? shown[0].mesh.geometry.attributes.position.count / 3 : 0;
+  const mats = new Set(all.map((m) => m.mesh?.material)).size + (view.referee ? 1 : 0);
+  return [
+    `PLAYER      Modell 2.0 · ${shown.length} Figuren · je 1 Draw Call (+1 Schatten)`,
+    `PLAYER TRI  ${tris} je Figur · ${BONES.length} Knochen (starr) · ${mats} Materialien`,
+    `PLAYER ANIM prozedural, 8 Posen je Schrittpaar · Gesicht ${shown[0]?.face ?? '–'}`,
+  ].join('\n');
+}
 let lightMood = null;
 try {
   if (localStorage.getItem('sunday-league:fx') === '0') pixel.setEffects(false);
@@ -111,7 +125,7 @@ try {
 const rig = new CameraRig();
 const scene = new THREE.Scene();
 // ?debug: Renderer und Szene für die Browser-Konsole (Draw Calls, Speicher).
-if (params.has('debug')) globalThis.__sl = { renderer: pixel.renderer, pixel, scene, THREE, get match() { return match; } };
+if (params.has('debug')) globalThis.__sl = { renderer: pixel.renderer, pixel, scene, THREE, rig, get match() { return match; }, get view() { return view; } };
 const input = new Input();
 const shoutBar = new ShoutBar(document.getElementById('shoutbar') ?? document.body.appendChild(Object.assign(document.createElement('div'), { id: 'shoutbar', hidden: true })), input);
 const hud = new Hud(document.getElementById('hud'));
@@ -240,6 +254,7 @@ function showMatch(m) {
   match = m;
   view = new MatchView(scene, match);
   pixel.classifyShadowCasters(scene, venueRoot);
+  pixel.setTeamEdges([m.teams[0].kit.shirt, m.teams[1].kit.shirt, m.referee?.kit?.shirt ?? 0x1c1c1c]);
   hud.init(match);
   if (m.manager) shoutBar.show();
   else shoutBar.hide();
