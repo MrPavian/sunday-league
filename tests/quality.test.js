@@ -125,3 +125,11 @@ describe('Stufen', () => {
     }
   });
 });
+
+describe('Pixel-Look bleibt', () => {
+  it('ULTRA auf 720p rendert nicht mit 1×1-Pixeln', () => {
+    const r = computeRaster(1280, 720, 1, QUALITY.PC_ULTRA.internalHeight);
+    expect(r.pixelSize).toBeGreaterThanOrEqual(2);
+    expect(r.height).toBeLessThanOrEqual(QUALITY.PC_ULTRA.internalHeight * 1.25);
+  });
+});

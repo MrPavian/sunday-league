@@ -62,7 +62,9 @@ export function computeRaster(cssWidth, cssHeight, dpr, targetHeight, dev = null
   const devW = Math.max(1, dev?.width ?? Math.round(cssWidth * dpr));
   const devH = Math.max(1, dev?.height ?? Math.round(cssHeight * dpr));
   // Maßgeblich ist die kurze Seite: Im Hochformat wird sonst die Breite winzig.
-  const pixelSize = Math.max(1, Math.round(Math.min(devW, devH) / targetHeight));
+  let pixelSize = Math.max(1, Math.round(Math.min(devW, devH) / targetHeight));
+  // Nie deutlich feiner als die Stufe will – sonst ginge auf kleinen Bildschirmen der Pixel-Look verloren.
+  while (Math.min(devW, devH) / pixelSize > targetHeight * 1.25) pixelSize++;
   const width = Math.max(1, Math.floor(devW / pixelSize));
   const height = Math.max(1, Math.floor(devH / pixelSize));
   const canvasWidth = width * pixelSize;
