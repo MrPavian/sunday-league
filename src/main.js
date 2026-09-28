@@ -33,7 +33,9 @@ import { MatchView } from './render/MatchView.js';
 import { PixelRenderer } from './render/PixelRenderer.js';
 import { DebugOverlay } from './render/DebugOverlay.js';
 import { cameraViewHeight, createGovernor, detectPlatform, gpuName, LADDER, pickInitialQuality, QUALITY, setCurrentQuality } from './render/quality.js';
-import { setLightMood } from './render/props.js';
+import { applyLighting } from './render/props.js';
+import { moodOf, pickTimeOfDay, resolveLighting } from './render/lighting.js';
+import { setEmissiveLevel } from './render/materials.js';
 import { disposeTree, mergeStatic } from './render/merge.js';
 import { applyColorSafeKits } from './render/colorSafe.js';
 import { VENUES, venueById } from './render/venues/index.js';
@@ -723,6 +725,23 @@ function finishCareerMatch() {
 
 // --- Loop ------------------------------------------------------------------------
 
+// Licht & Atmosphäre: Tageszeit (fest je Spiel, nur Darstellung) × Wetter × Spielort.
+// Testschalter: ?zeit=morgen|mittag|nachmittag|abend
+const TIME_PARAM = { morgen: 'MORNING', mittag: 'DAY', tag: 'DAY', nachmittag: 'AFTERNOON', abend: 'EVENING' }[params.get('zeit')];
+function updateLighting() {
+  if (!venue || !venueRoot) return;
+  const mood = moodOf(match);
+  const time = TIME_PARAM ?? pickTimeOfDay(match.seed, venue.id, mood);
+  const key = `${venue.id}|${mood}|${time}|${pixel.qualityId}|${venueRoot.uuid}`;
+  if (key === lightMood) return;
+  lightMood = key;
+  const L = resolveLighting({ venue: venue.id, mood, time, grade: pixel.quality.grade });
+  applyLighting(venueRoot, scene, L);
+  setEmissiveLevel(L.emissive * pixel.quality.emissive);
+  pixel.setLighting(L, venueInfo.lights);
+  pixel.markShadowsDirty();
+}
+
 // Exakte Canvasgröße in Gerätepixeln (Chrome/Android-WebView, Firefox); sonst geschätzt.
 let devSize = null;
 function resize() {
@@ -887,12 +906,7 @@ function frame(now) {
   shoutBar.update(match);
   sound.update(dt, mode === 'play' ? match : null);
   rig.follow(match.ball.pos.x, match.ball.pos.z, dt, venueInfo.bounds);
-  const look = venue?.id === 'halle' ? 'halle' : match.weather ?? ((match.pitch?.heat ?? 1) > 1 ? 'hitze' : 'klar');
-  if (look !== lightMood) {
-    lightMood = look;
-    setLightMood(venueRoot, look === 'halle' ? 'klar' : look);
-  }
-  pixel.setLook(look);
+  updateLighting();
   pixel.render(scene, rig.camera, { moving: !(subPanel.isOpen || planPanel.isOpen || halfPanel.isOpen) });
   if (screenshotWanted) saveScreenshot();
   requestAnimationFrame(frame);

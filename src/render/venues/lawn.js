@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { toon } from '../materials.js';
-import { addLights, box, cylinder, ground, makeBench, makeDog, makeFence, makeGoalFrame, makeTree } from '../props.js';
+import { addLights, box, cylinder, ground, makeBench, makeDog, makeFence, makeFloodlight, makeGoalFrame, makeTree } from '../props.js';
 import { makeSpectator } from '../spectators.js';
 import { makeLawnTexture, makeSignTextureWide } from '../textures.js';
 
@@ -19,7 +19,7 @@ const SPONSORS = [
 // Sportplatz Waldesruh: der erste "richtige" Platz in der Kreisklasse –
 // Rasen, Tribüne mit drei Stufen, Banden, Vereinsheim aus Backstein.
 export function buildLawn(root, pitch, rng, scene) {
-  root.add(addLights(scene, { sky: 0x9ec4de, sun: 0xfff0d0, sunIntensity: 2.8, sunPos: [-22, 26, 10], span: 40 }));
+  root.add(addLights(scene, { span: 40 }));
   const W = 72;
   const D = 50;
   root.add(ground(W, D, toon(0xffffff, { map: makeLawnTexture(rng, { width: W, depth: D, pitch }) })));
@@ -68,12 +68,8 @@ export function buildLawn(root, pitch, rng, scene) {
   root.add(box(2.4, 1.1, 1.2, 0xc9a227, 8, 0.55, -hw - 8), box(2.6, 0.1, 1.5, 0xc0392b, 8, 2.2, -hw - 8), cylinder(0.04, 1.1, 0x555555, 7, 1.65, -hw - 8.6, 4), cylinder(0.04, 1.1, 0x555555, 9, 1.65, -hw - 8.6, 4));
 
   // Flutlicht und Bäume hinten.
-  for (const x of [-24, 0, 24]) {
-    root.add(cylinder(0.16, 15, 0x7a7f84, x, 7.5, -hw - 13, 6));
-    const head = box(2.6, 1, 0.3, 0x4d5358, x, 15.2, -hw - 12.7);
-    head.rotation.x = -0.4;
-    root.add(head);
-  }
+  const masts = [-24, 0, 24];
+  for (const x of masts) root.add(makeFloodlight(x, -hw - 13, 15, 2.6));
   for (let i = 0; i < 18; i++) {
     const t = makeTree(rng, rng.range(1.1, 1.5));
     t.position.set(rng.range(-40, 40), 0, -rng.range(hw + 15, hw + 24));
@@ -81,5 +77,7 @@ export function buildLawn(root, pitch, rng, scene) {
   }
   root.add(box(W - 6, 0.06, 0.06, 0x8a9096, 0, 0.9, hw + 2.5));
 
-  return { viewHeight: 15, bounds: { x: hl + 4, z: 4.5 } };
+  // Flutlicht: Lampenköpfe (Lichthof) und wohin sie zielen (Lichtpool auf dem Rasen).
+  const lights = { heads: masts.map((x) => [x, 15.4, -hw - 12.7]), pools: masts.map((x) => [x * 0.8, -hw * 0.4, 12]), field: [hl, hw] };
+  return { viewHeight: 15, bounds: { x: hl + 4, z: 4.5 }, lights };
 }

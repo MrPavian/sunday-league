@@ -18,14 +18,20 @@
 // particles      – Größe des Partikel-Pools (Staub, Grasfetzen, Spritzer)
 // weather        – Anteil der Wetterpartikel (Regen, Schnee, Laub), 0…1
 // spectators     – Anteil der Zuschauer (für spätere Phasen, 0…1)
+// Licht & Atmosphäre (Phase 2, alles im vorhandenen Post-Pass, keine Zusatz-Durchgänge):
+// flood          – Flutlicht: 1 = nur das Spielfeld hell, 2 = plus Lichtpools der Masten
+// halo           – gerasterter Lichthof um Lampenköpfe
+// wetFx          – harte Pixel-Glanzpunkte auf nassem Boden (sonst nur dunkler)
+// grade          – Anteil der Farbkorrektur aus Tageszeit und Spielort (0…1)
+// emissive       – Stärke des Eigenleuchtens (Flutlichtköpfe, Fenster, Hallenlampen)
 export const QUALITY = {
-  PC_LOW: { platform: 'pc', internalHeight: 270, shadowMap: 1024, shadowHz: 30, ao: 0, bloom: false, dither: true, edges: true, particles: 150, weather: 0.6, spectators: 0.6 },
-  PC_MEDIUM: { platform: 'pc', internalHeight: 360, shadowMap: 2048, shadowHz: 60, ao: 8, bloom: false, dither: true, edges: true, particles: 300, weather: 1, spectators: 1 },
-  PC_HIGH: { platform: 'pc', internalHeight: 400, shadowMap: 2048, shadowHz: 60, ao: 16, bloom: true, dither: true, edges: true, particles: 400, weather: 1, spectators: 1 },
-  PC_ULTRA: { platform: 'pc', internalHeight: 500, shadowMap: 4096, shadowHz: 60, ao: 16, bloom: true, dither: true, edges: true, particles: 600, weather: 1, spectators: 1 },
-  ANDROID_LOW: { platform: 'android', internalHeight: 250, shadowMap: 1024, shadowHz: 20, ao: 0, bloom: false, dither: true, edges: true, particles: 120, weather: 0.5, spectators: 0.5 },
-  ANDROID_MEDIUM: { platform: 'android', internalHeight: 330, shadowMap: 1024, shadowHz: 30, ao: 8, bloom: false, dither: true, edges: true, particles: 200, weather: 0.75, spectators: 0.75 },
-  ANDROID_HIGH: { platform: 'android', internalHeight: 360, shadowMap: 2048, shadowHz: 30, ao: 8, bloom: false, dither: true, edges: true, particles: 250, weather: 1, spectators: 1 },
+  PC_LOW: { platform: 'pc', internalHeight: 270, shadowMap: 1024, shadowHz: 30, ao: 0, bloom: false, dither: true, edges: true, particles: 150, weather: 0.6, spectators: 0.6, flood: 1, halo: false, wetFx: false, grade: 1, emissive: 0.7 },
+  PC_MEDIUM: { platform: 'pc', internalHeight: 360, shadowMap: 2048, shadowHz: 60, ao: 8, bloom: false, dither: true, edges: true, particles: 300, weather: 1, spectators: 1, flood: 2, halo: true, wetFx: true, grade: 1, emissive: 1 },
+  PC_HIGH: { platform: 'pc', internalHeight: 400, shadowMap: 2048, shadowHz: 60, ao: 16, bloom: true, dither: true, edges: true, particles: 400, weather: 1, spectators: 1, flood: 2, halo: true, wetFx: true, grade: 1, emissive: 1 },
+  PC_ULTRA: { platform: 'pc', internalHeight: 500, shadowMap: 4096, shadowHz: 60, ao: 16, bloom: true, dither: true, edges: true, particles: 600, weather: 1, spectators: 1, flood: 2, halo: true, wetFx: true, grade: 1, emissive: 1 },
+  ANDROID_LOW: { platform: 'android', internalHeight: 250, shadowMap: 1024, shadowHz: 20, ao: 0, bloom: false, dither: true, edges: true, particles: 120, weather: 0.5, spectators: 0.5, flood: 1, halo: false, wetFx: false, grade: 0.5, emissive: 1 },
+  ANDROID_MEDIUM: { platform: 'android', internalHeight: 330, shadowMap: 1024, shadowHz: 30, ao: 8, bloom: false, dither: true, edges: true, particles: 200, weather: 0.75, spectators: 0.75, flood: 2, halo: false, wetFx: true, grade: 1, emissive: 1 },
+  ANDROID_HIGH: { platform: 'android', internalHeight: 360, shadowMap: 2048, shadowHz: 30, ao: 8, bloom: false, dither: true, edges: true, particles: 250, weather: 1, spectators: 1, flood: 2, halo: true, wetFx: true, grade: 1, emissive: 1 },
 };
 export const QUALITY_IDS = Object.keys(QUALITY);
 

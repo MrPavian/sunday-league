@@ -1,13 +1,13 @@
 import * as THREE from 'three';
 import { toon } from '../materials.js';
-import { addLights, box, cylinder, ground, makeBench, makeFence, makeGoalFrame, makeTree } from '../props.js';
+import { addLights, box, cylinder, ground, makeBench, makeFence, makeFloodlight, makeGoalFrame, makeTree } from '../props.js';
 import { makeSpectator } from '../spectators.js';
 import { makeAshTexture, makeSignTextureWide } from '../textures.js';
 
 // Ascheplatz vom SV Grün-Weiß: Jugendtore, Ballfangzaun, Flutlicht,
 // Vereinsheim im Container und die üblichen drei Zuschauer.
 export function buildAshPitch(root, pitch, rng, scene) {
-  root.add(addLights(scene, { sky: 0xa9b6c0, sun: 0xffe2b8, sunIntensity: 2.4, sunPos: [-20, 18, 10], hemi: 1.5 }));
+  root.add(addLights(scene));
   const W = 56;
   const D = 40;
   root.add(ground(W, D, toon(0xffffff, { map: makeAshTexture(rng, { width: W, depth: D, pitch }) })));
@@ -28,12 +28,8 @@ export function buildAshPitch(root, pitch, rng, scene) {
   for (let x = -25; x <= 25; x += 5) root.add(box(0.06, 0.9, 0.06, 0x8a9096, x, 0.45, 16.5));
 
   // Flutlichtmasten hinten.
-  for (const x of [-18, 0, 18]) {
-    root.add(cylinder(0.15, 14, 0x7a7f84, x, 7, -18.5, 6));
-    const head = box(2.4, 0.9, 0.3, 0x4d5358, x, 14.2, -18.2);
-    head.rotation.x = -0.4;
-    root.add(head);
-  }
+  const masts = [-18, 0, 18];
+  for (const x of masts) root.add(makeFloodlight(x, -18.5, 14, 2.4));
 
   // Auswechselbänke mit Dach.
   for (const x of [-5, 5]) {
@@ -71,5 +67,6 @@ export function buildAshPitch(root, pitch, rng, scene) {
   root.add(makeSpectator(rng, { x: 10.1, z: -17.7, facing: -0.2 }));
   root.add(makeSpectator(rng, { x: -16, z: -17.6, facing: 0.3 }));
 
-  return { viewHeight: 13, bounds: { x: hl + 4, z: 3.5 } };
+  const lights = { heads: masts.map((x) => [x, 14.4, -18.2]), pools: masts.map((x) => [x * 0.8, -5, 10.5]), field: [hl, pitch.halfWidth] };
+  return { viewHeight: 13, bounds: { x: hl + 4, z: 3.5 }, lights };
 }

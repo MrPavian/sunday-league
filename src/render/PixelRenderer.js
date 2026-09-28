@@ -1,5 +1,9 @@
 import * as THREE from 'three';
+import { FLOOD, LOOKS } from './lighting.js';
 import { computeRaster, QUALITY } from './quality.js';
+
+export { LOOKS };
+const MAX_LIGHTS = 4;
 
 // "3D-Pixelart": Die Szene wird in niedriger Auflösung gerendert, Kanten werden
 // aus der Tiefe erkannt (dunkle Silhouetten, helle Innenkanten) und das Bild
@@ -51,6 +55,20 @@ const postFragment = /* glsl */ `
   uniform float fogEnd;
   uniform float dither;
   uniform float snowCover;
+  uniform float brightness;
+  // Licht & Atmosphäre (Phase 2): Weltposition aus der Tiefe, Flutlicht, Nässe.
+  uniform mat4 camWorld;     // Kamera → Welt
+  uniform float floodAmount; // 0 tagsüber, 1 abends
+  uniform float floodField;  // wie hell das Spielfeld selbst ist (Flutlichtart)
+  uniform vec4 field;        // halbe Länge, halbe Breite, Rand, Übergang (Meter)
+  uniform vec3 floodColor;
+  uniform vec3 floodNight;   // Umgebung außerhalb des Lichts
+  uniform vec4 pools[MAX_LIGHTS];  // Lichtpool: x, z, Radius, Stärke
+  uniform int poolCount;
+  uniform vec4 halos[MAX_LIGHTS];  // Lichthof: uv, Radius (Pixel), Stärke
+  uniform int haloCount;
+  uniform float wetness;
+  uniform vec3 glintColor;
   varying vec2 vUv;
 
   // Orthografisch: Die Tiefe ist linear.
@@ -66,6 +84,8 @@ const postFragment = /* glsl */ `
   }
 
   void main() {
+    vec2 cell = floor(vUv * resolution) + 0.5;
+    float bay = texture2D(tBayer, cell * 0.25).r * (255.0 / 16.0); // 0…1 im 4×4-Raster
     vec2 texel = 1.0 / resolution;
     vec2 px = frustum * texel; // Größe eines Pixels in Metern
     vec3 color = texture2D(tColor, vUv).rgb;
@@ -163,22 +183,78 @@ const postFragment = /* glsl */ `
     float shade = clamp(luma(color) * 2.4, 0.45, 1.1);
     c = mix(c, vec3(0.9, 0.93, 0.98) * shade, snowCover * up);
 
-    // Farbkorrektur: Tönung, Sättigung, Kontrast.
+    // Weltposition des Pixels (für Flutlicht und Nässe).
+    vec3 pC = vec3((vUv - 0.5) * frustum, -d); // Kameraraum (orthografisch)
+    vec3 wp = (camWorld * vec4(pC, 1.0)).xyz;
+    float lit = 1.0; // wie viel Flutlicht hier ankommt (für Glanzpunkte)
+
+    #if FLOOD > 0
+    // Flutlicht: Das Spielfeld (und abends die Lichtpools) bleibt hell, die Umgebung
+    // versinkt im Abend. Gerastert in vier Stufen mit Bayer-Übergang – kein weicher Teppich.
+    if (floodAmount > 0.0 && !sky) {
+      // Formen erst rastern, dann gewichten: Flächen mit gleichem Licht bleiben ruhig,
+      // gedithert wird nur im Übergang.
+      float high = 1.0 - smoothstep(5.0, 12.0, wp.y); // Baumkronen und Dächer bleiben dunkel
+      vec2 q = max(abs(wp.xz) - field.xy, 0.0);
+      float sf = (1.0 - smoothstep(field.z, field.z + field.w, length(q))) * high;
+      float fl = clamp(floor(sf * 4.0 + bay) / 4.0, 0.0, 1.0) * floodField;
+      #if FLOOD > 1
+      for (int i = 0; i < MAX_LIGHTS; i++) {
+        if (i >= poolCount) break;
+        float r = distance(wp.xz, pools[i].xy) / pools[i].z;
+        float sp = (1.0 - smoothstep(0.35, 1.0, r)) * high;
+        fl = max(fl, clamp(floor(sp * 4.0 + bay) / 4.0, 0.0, 1.0) * pools[i].w);
+      }
+      #endif
+      lit = fl;
+      float selfLit = smoothstep(0.82, 0.92, luma(color)); // leuchtende Teile nicht abdunkeln
+      c *= mix(mix(floodNight, floodColor, fl), vec3(1.0), selfLit);
+    }
+    #endif
+
+    // Nässe: Der Boden wird dunkler; auf geeigneten Stufen blitzen harte Pixel-Reflexe
+    // (kurze Streifen zur Kamera hin), abends nur im Licht.
+    if (wetness > 0.0 && !sky) {
+      float ground = (1.0 - smoothstep(0.03, 0.12, wp.y)) * step(0.8, n.y);
+      float w = wetness * ground;
+      c *= 1.0 - 0.2 * w;
+      #if WETFX == 1
+      // Zellen: ein Pixel breit, gut zwei hoch (Streifen zur Kamera), 1,2 % davon glänzen.
+      vec2 wc = floor(wp.xz / vec2(px.x, 0.22));
+      float h = fract(sin(dot(wc, vec2(12.9898, 78.233))) * 43758.5453);
+      float glint = step(1.0 - 0.012 * w, h) * mix(1.0, lit, floodAmount);
+      c = mix(c, glintColor, glint * 0.45);
+      #endif
+    }
+
+    // Farbkorrektur: Tönung, Sättigung, Kontrast, Helligkeit.
     c *= tint;
     c = mix(vec3(luma(c)), c, saturation);
     c = (c - 0.5) * contrast + 0.5;
+    c *= brightness;
 
     // Dunst mit der Entfernung (Nebel, Regen, Schnee – oder nur ein Hauch Luft).
     float f = smoothstep(fogStart, fogEnd, d) * fogAmount;
     c = mix(c, fogColor, f);
+
+    #if HALO == 1
+    // Lichthof um Flutlichtköpfe und Laternen: gerastert, liegt über dem Dunst (im Nebel
+    // wirken Lichter so atmosphärisch stärker).
+    for (int i = 0; i < MAX_LIGHTS; i++) {
+      if (i >= haloCount) break;
+      float g = 1.0 - length((vUv - halos[i].xy) * resolution) / halos[i].z;
+      if (g <= 0.0) continue;
+      g = floor(g * g * 3.0 + bay) / 3.0;
+      c += floodColor * g * halos[i].w * 0.3;
+    }
+    #endif
 
     // Vignette.
     vec2 v = vUv - 0.5;
     c *= 1.0 - vignette * smoothstep(0.25, 0.75, dot(v, v) * 2.2);
 
     // Geordnetes Dithering, exakt im internen Pixelraster (4×4-Bayer als Textur).
-    vec2 cell = floor(vUv * resolution) + 0.5;
-    c += (texture2D(tBayer, cell * 0.25).r * (255.0 / 16.0) - 0.5) * dither;
+    c += (bay - 0.5) * dither;
     gl_FragColor = vec4(max(c, 0.0), 1.0);
     #include <colorspace_fragment>
   }
@@ -204,18 +280,6 @@ function bayerTexture() {
   tex.needsUpdate = true;
   return tex;
 }
-
-// Grundstimmung und Wetter-Looks für den Nachbearbeitungs-Shader.
-export const LOOKS = {
-  klar: { aoStrength: 0.35, bloom: 0.45, tint: [1.03, 1.0, 0.95], saturation: 1.1, contrast: 1.06, vignette: 0.3, fogColor: [0.62, 0.74, 0.85], fogAmount: 0.18, fogStart: 24, fogEnd: 60, dither: 0.02, snowCover: 0 },
-  hitze: { tint: [1.09, 1.0, 0.86], saturation: 1.15, bloom: 0.8, fogColor: [0.95, 0.88, 0.7], fogAmount: 0.22 },
-  rain: { tint: [0.88, 0.93, 1.0], saturation: 0.78, contrast: 0.96, bloom: 0.2, fogColor: [0.55, 0.6, 0.66], fogAmount: 0.4, fogStart: 22, fogEnd: 50 },
-  fog: { tint: [0.96, 0.98, 1.0], saturation: 0.7, contrast: 0.9, bloom: 0.15, fogColor: [0.78, 0.8, 0.8], fogAmount: 0.8, fogStart: 20, fogEnd: 40 },
-  snow: { tint: [0.98, 1.0, 1.06], saturation: 0.72, contrast: 0.95, bloom: 0.6, fogColor: [0.88, 0.9, 0.95], fogAmount: 0.4, fogStart: 22, fogEnd: 48, snowCover: 0.72 },
-  frost: { tint: [0.94, 0.98, 1.08], saturation: 0.82, bloom: 0.5, fogColor: [0.8, 0.86, 0.94], fogAmount: 0.25, snowCover: 0.28 },
-  leaves: { tint: [1.07, 1.0, 0.9], saturation: 1.05, fogColor: [0.85, 0.75, 0.6], fogAmount: 0.2 },
-  halle: { tint: [1.02, 1.0, 0.97], saturation: 1.0, vignette: 0.4, fogAmount: 0, bloom: 0.55 },
-};
 
 // Kanten, zentral einstellbar:
 // depthStrength  – wie stark Silhouetten abdunkeln (Tiefensprung)
@@ -272,8 +336,21 @@ export class PixelRenderer {
         fogEnd: { value: 60 },
         dither: { value: 0.02 },
         snowCover: { value: 0 },
+        brightness: { value: 1 },
+        camWorld: { value: new THREE.Matrix4() },
+        floodAmount: { value: 0 },
+        floodField: { value: 0 },
+        field: { value: new THREE.Vector4(20, 12, 1.5, 7) },
+        floodColor: { value: new THREE.Vector3(...FLOOD.color) },
+        floodNight: { value: new THREE.Vector3(...FLOOD.night) },
+        pools: { value: Array.from({ length: MAX_LIGHTS }, () => new THREE.Vector4()) },
+        poolCount: { value: 0 },
+        halos: { value: Array.from({ length: MAX_LIGHTS }, () => new THREE.Vector4()) },
+        haloCount: { value: 0 },
+        wetness: { value: 0 },
+        glintColor: { value: new THREE.Vector3(0.9, 0.93, 1) },
       },
-      defines: { AO_SAMPLES: 16, BLOOM: 1, EDGES: 1 },
+      defines: { AO_SAMPLES: 16, BLOOM: 1, EDGES: 1, FLOOD: 2, HALO: 1, WETFX: 1, MAX_LIGHTS },
       depthTest: false,
       depthWrite: false,
     });
@@ -333,16 +410,36 @@ export class PixelRenderer {
   }
 
   refreshLook() {
-    const id = this.lookId ?? 'klar';
-    this.lookId = null;
-    this.setLook(id);
+    this.applyPost();
   }
 
-  // Look setzen: Grundstimmung plus Wetter (siehe LOOKS).
+  // Nur ein Wetter-Look ohne Lichtpaket (z. B. für Vorschauen).
   setLook(id = 'klar') {
-    if (this.lookId === id) return;
-    this.lookId = id;
-    const look = { ...LOOKS.klar, ...(LOOKS[id] ?? {}) };
+    this.postParams = { ...LOOKS.klar, ...(LOOKS[id] ?? {}), brightness: 1 };
+    this.applyPost();
+  }
+
+  // Lichtpaket aus lighting.js übernehmen: Farbkorrektur, Nebel, Flutlicht, Nässe.
+  // lights: Lampenköpfe, Lichtpools und Spielfeld des Spielorts (venue.build).
+  setLighting(L, lights = null) {
+    this.lighting = L;
+    this.postParams = L.post;
+    const u = this.postMaterial.uniforms;
+    u.floodAmount.value = L.flood;
+    u.floodField.value = L.floodField;
+    const f = lights?.field ?? [20, 12];
+    u.field.value.set(f[0], f[1], 1.5, 7);
+    const pools = lights?.pools ?? [];
+    u.poolCount.value = Math.min(MAX_LIGHTS, pools.length);
+    pools.slice(0, MAX_LIGHTS).forEach(([x, z, r], i) => u.pools.value[i].set(x, z, r, 1));
+    this.heads = L.flood ? (lights?.heads ?? []).slice(0, MAX_LIGHTS).map((h) => new THREE.Vector3(...h)) : [];
+    u.wetness.value = L.wetness;
+    u.glintColor.value.set(...(L.flood ? FLOOD.color : [0.9, 0.93, 1]));
+    this.applyPost();
+  }
+
+  applyPost() {
+    const look = { ...LOOKS.klar, brightness: 1, ...(this.postParams ?? {}) };
     const q = this.quality;
     const ao = this.effects ? q.ao : 0;
     const bloom = this.effects && q.bloom;
@@ -351,16 +448,16 @@ export class PixelRenderer {
     if (!bloom) look.bloom = 0;
     if (!this.effects) Object.assign(look, { vignette: 0, dither: 0 });
     if (!q.dither) look.dither = 0;
+    // Shader-Varianten nur je Qualitätsstufe, nie je Wetter oder Spielort.
     const defs = this.postMaterial.defines;
-    const edges = q.edges === false ? 0 : 1;
-    if (defs.AO_SAMPLES !== ao || defs.BLOOM !== (bloom ? 1 : 0) || defs.EDGES !== edges) {
-      defs.AO_SAMPLES = ao;
-      defs.BLOOM = bloom ? 1 : 0;
-      defs.EDGES = edges;
+    const want = { AO_SAMPLES: ao, BLOOM: bloom ? 1 : 0, EDGES: q.edges === false ? 0 : 1, FLOOD: q.flood ?? 2, HALO: q.halo === false ? 0 : 1, WETFX: q.wetFx === false ? 0 : 1 };
+    if (Object.entries(want).some(([k, v]) => defs[k] !== v)) {
+      Object.assign(defs, want);
       this.postMaterial.needsUpdate = true;
     }
     const u = this.postMaterial.uniforms;
     for (const [k, v] of Object.entries(look)) {
+      if (!u[k]) continue;
       if (Array.isArray(v)) u[k].value.set(...v);
       else u[k].value = v;
     }
@@ -436,6 +533,21 @@ export class PixelRenderer {
     g.active = null;
   }
 
+  // Lampenköpfe auf den Bildschirm projizieren (Lichthof im Post-Shader).
+  projectHalos(camera) {
+    const u = this.postMaterial.uniforms;
+    let n = 0;
+    const r = FLOOD.halo * (this.lighting?.haloMul ?? 1) * (this.height / 360);
+    for (const h of this.heads ?? []) {
+      const v = (this._hv ??= new THREE.Vector3()).copy(h).project(camera);
+      const x = (v.x + 1) / 2;
+      const y = (v.y + 1) / 2;
+      if (x < -0.1 || x > 1.1 || y < -0.1 || y > 1.1) continue;
+      u.halos.value[n++].set(x, y, r, 1);
+    }
+    u.haloCount.value = n;
+  }
+
   // Schattenkarte beim nächsten Bild sicher neu zeichnen (Spielortwechsel, Qualität).
   markShadowsDirty() {
     this.shadowDirty = true;
@@ -448,6 +560,8 @@ export class PixelRenderer {
     u.cameraNear.value = camera.near;
     u.cameraFar.value = camera.far;
     u.frustum.value.set((camera.right - camera.left) / camera.zoom, (camera.top - camera.bottom) / camera.zoom);
+    u.camWorld.value.copy(camera.matrixWorld);
+    this.projectHalos(camera);
 
     // Schattenkarte: sofort bei einer Änderung (markShadowsDirty), sonst zeitbasiert mit
     // shadowHz, solange sich etwas bewegt. 2 ms Toleranz: 60 Hz heißt bei 60 fps „jedes Bild“.

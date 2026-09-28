@@ -1,12 +1,12 @@
 import * as THREE from 'three';
 import { toon } from '../materials.js';
-import { addLights, box, ground, makeBackpack, makeBench, makeBin, makeBush, makeCone, makeDog, makeJacketPile, makeLamp, makeTree } from '../props.js';
+import { addLights, box, ground, lampHead, makeBackpack, makeBench, makeBin, makeBush, makeCone, makeDog, makeJacketPile, makeLamp, makeTree } from '../props.js';
 import { makeSpectator } from '../spectators.js';
 import { makeParkGrassTexture } from '../textures.js';
 
 // Stadtpark: Rucksäcke und Hütchen als Tore, die Seitenlinie denkt man sich.
 export function buildPark(root, pitch, rng, scene) {
-  root.add(addLights(scene, { sky: 0x9cc3e0, sun: 0xfff3d0, sunIntensity: 2.9, sunPos: [-18, 28, 8] }));
+  root.add(addLights(scene));
   const W = 70;
   const D = 52;
   root.add(ground(W, D, toon(0xffffff, { map: makeParkGrassTexture(rng, { width: W, depth: D, goalX: pitch.halfLength }) })));
@@ -57,10 +57,12 @@ export function buildPark(root, pitch, rng, scene) {
   root.add(makeDog(2.8, -13, 0xd8c8a0, -1.2));
   root.add(makeDog(-12, -12.6, 0x2a2a2a, 0.4));
   root.add(makeSpectator(rng, { x: -12.8, z: -13.2, facing: 0.3 }));
-  for (const x of [-18, 0, 18]) root.add(makeLamp(x, -15.5, 4));
+  const lamps = [-18, 0, 18];
+  for (const x of lamps) root.add(makeLamp(x, -15.5, 4));
   root.add(makeBin(12, -14.6, 0x3a5a3a));
   // Picknickdecke am Rand
   root.add(box(2, 0.02, 1.6, 0xc85a5a, -22, 0.01, -8), box(0.5, 0.3, 0.35, 0xc9a227, -21.6, 0.15, -8.2));
 
-  return { viewHeight: 12.5, bounds: { x: hl + 4, z: 3.5 } };
+  const lights = { heads: lamps.map((x) => lampHead(x, -15.5, 4)), pools: lamps.map((x) => [x, -13, 7]), field: [hl, hw] };
+  return { viewHeight: 12.5, bounds: { x: hl + 4, z: 3.5 }, lights };
 }

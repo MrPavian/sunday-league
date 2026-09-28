@@ -34,3 +34,23 @@ export function pixelTexture(canvas) {
   return tex;
 }
 
+
+// Leuchtende Teile (Flutlichtköpfe, Laternen, erleuchtete Fenster): dasselbe Toon-
+// Material mit Eigenleuchten. Tagsüber aus, abends und in der Halle an – gesteuert über
+// einen einzigen Regler (setEmissiveLevel), ohne eigene Shader-Variante: Das Toon-
+// Material hat das Eigenleuchten immer eingebaut. Geteilt je Farbe, wie toon().
+const glowCache = new Map();
+let glowLevel = 0;
+export function emissiveToon(color, glow = 0xfff2c8, strength = 1) {
+  const key = `${color}|${glow}|${strength}`;
+  if (glowCache.has(key)) return glowCache.get(key);
+  const mat = new THREE.MeshToonMaterial({ color, gradientMap: gradient, emissive: glow, emissiveIntensity: glowLevel * strength });
+  mat.userData.emissiveStrength = strength;
+  glowCache.set(key, mat);
+  return mat;
+}
+export function setEmissiveLevel(level) {
+  glowLevel = level;
+  for (const mat of glowCache.values()) mat.emissiveIntensity = level * mat.userData.emissiveStrength;
+}
+export const emissiveLevel = () => glowLevel;

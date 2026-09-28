@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { toon } from '../materials.js';
+import { emissiveToon, toon } from '../materials.js';
 import { addLights, box, ground, makeBench, makeGoalFrame } from '../props.js';
 import { makeSpectator } from '../spectators.js';
 import { makeHallTexture, makeSignTextureWide } from '../textures.js';
@@ -7,7 +7,7 @@ import { makeHallTexture, makeSignTextureWide } from '../textures.js';
 // Sporthalle der Kanalschule: Parkett mit bunten Linien, weiße Bande, Handballtore,
 // Sprossenwand, Tribüne mit Klappbänken – und es riecht nach Hallenschuh.
 export function buildHall(root, pitch, rng, scene) {
-  root.add(addLights(scene, { sky: 0xdfe6ea, sun: 0xfff6e8, sunIntensity: 1.8, sunPos: [0, 24, 6], hemi: 2.1, span: 26 }));
+  root.add(addLights(scene, { span: 26 }));
   const { halfLength: hl, halfWidth: hw, wallX, goalHalfWidth: gw, goalHeight: gh } = pitch;
   const W = 48;
   const D = 30;
@@ -37,7 +37,7 @@ export function buildHall(root, pitch, rng, scene) {
   for (const s of [-1, 1]) root.add(box(0.3, 8, D, 0xd8d4c8, s * (W / 2), 4, 0));
   // Deckenlichter
   for (let x = -18; x <= 18; x += 6) {
-    const lamp = new THREE.Mesh(new THREE.BoxGeometry(3, 0.12, 0.5), new THREE.MeshBasicMaterial({ color: 0xfff8e0 }));
+    const lamp = new THREE.Mesh(new THREE.BoxGeometry(3, 0.12, 0.5), emissiveToon(0xfff8e0, 0xfff8e0, 1.2));
     lamp.position.set(x, 8.2, -2);
     root.add(lamp);
   }

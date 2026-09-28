@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { toon } from '../materials.js';
-import { addLights, box, cylinder, ground, group, makeBackpack, makeCar, makeCrates, makeDog, makeFence, makeJacketPile, makeLamp, makeTree } from '../props.js';
+import { addLights, box, cylinder, ground, group, lampHead, makeBackpack, makeCar, makeCrates, makeDog, makeFence, makeJacketPile, makeLamp, makeTree } from '../props.js';
 import { makeSpectator } from '../spectators.js';
 import { makeAsphaltTexture, makeShutterTexture, makeSignTexture } from '../textures.js';
 
@@ -62,7 +62,8 @@ export function buildParkingLot(root, pitch, rng, scene) {
     root.add(t);
   }
   root.add(box(LOT_W - 8, 1.0, 1.0, 0x3f6436, -2, 0.5, -(LOT_D / 2 + 1.2)));
-  for (const x of [-14, 0, 14]) root.add(makeLamp(x, -18.6));
+  const lamps = [-14, 0, 14];
+  for (const x of lamps) root.add(makeLamp(x, -18.6));
 
   root.add(cylinder(0.3, 0.9, 0x2f5a3a, -19.3, 0.45, 9.6, 8));
   const cart = group(box(0.55, 0.45, 0.9, 0xb0b6bb, 0, 0.7, 0), box(0.5, 0.05, 0.8, 0x80868c, 0, 0.3, 0));
@@ -86,5 +87,7 @@ export function buildParkingLot(root, pitch, rng, scene) {
   root.add(makeSpectator(rng, { x: 7.1, z: -16.4, facing: -0.3 }));
   root.add(makeDog(7.8, -15.8, 0x3a2a1a, -Math.PI / 2));
 
-  return { viewHeight: 12.5, bounds: { x: pitch.wallX + 3, z: 3 } };
+  // Laternen: Lichthof am Kopf, Lichtpool darunter (reicht bis an die Autos).
+  const lights = { heads: lamps.map((x) => lampHead(x, -18.6)), pools: lamps.map((x) => [x, -15.5, 7.5]), field: [pitch.halfLength, pitch.halfWidth] };
+  return { viewHeight: 12.5, bounds: { x: pitch.wallX + 3, z: 3 }, lights };
 }

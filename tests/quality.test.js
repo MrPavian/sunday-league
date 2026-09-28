@@ -100,7 +100,7 @@ describe('Hochformat', () => {
 describe('Stufen', () => {
   it('haben alle Pflichtwerte', () => {
     for (const [id, q] of Object.entries(QUALITY)) {
-      for (const k of ['internalHeight', 'shadowMap', 'shadowHz', 'ao', 'bloom', 'dither', 'edges', 'particles', 'weather', 'spectators']) expect(q, `${id}.${k}`).toHaveProperty(k);
+      for (const k of ['internalHeight', 'shadowMap', 'shadowHz', 'ao', 'bloom', 'dither', 'edges', 'particles', 'weather', 'spectators', 'flood', 'halo', 'wetFx', 'grade', 'emissive']) expect(q, `${id}.${k}`).toHaveProperty(k);
       expect([0, 8, 16]).toContain(q.ao);
       expect(q.weather).toBeGreaterThan(0);
       expect(q.weather).toBeLessThanOrEqual(1);
@@ -131,5 +131,14 @@ describe('Pixel-Look bleibt', () => {
     const r = computeRaster(1280, 720, 1, QUALITY.PC_ULTRA.internalHeight);
     expect(r.pixelSize).toBeGreaterThanOrEqual(2);
     expect(r.height).toBeLessThanOrEqual(QUALITY.PC_ULTRA.internalHeight * 1.25);
+  });
+});
+
+describe('Phase 2 je Stufe', () => {
+  it('Android LOW ohne Lichthof und Glanzpunkte, reduzierte Farbkorrektur; Android nie mit Bloom', () => {
+    expect(QUALITY.ANDROID_LOW).toMatchObject({ halo: false, wetFx: false, flood: 1 });
+    expect(QUALITY.ANDROID_LOW.grade).toBeLessThan(1);
+    for (const id of LADDER.android) expect(QUALITY[id].bloom).toBe(false);
+    expect(QUALITY.PC_LOW.emissive).toBeLessThan(QUALITY.PC_HIGH.emissive);
   });
 });

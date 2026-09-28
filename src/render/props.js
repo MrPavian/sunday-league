@@ -1,6 +1,7 @@
 // Wiederverwendbare Low-Poly-Requisiten für alle Spielorte.
 import * as THREE from 'three';
-import { toon } from './materials.js';
+import { emissiveToon, toon } from './materials.js';
+import { shadowBias } from './lighting.js';
 import { currentQuality } from './quality.js';
 
 export const CAR_COLORS = [0x8c2f2f, 0x2f4f7f, 0xd8d4c8, 0x3b3b3b, 0x6a7d4a, 0xb8962e, 0x7a7f86, 0x4a2f5c];
@@ -112,7 +113,19 @@ export function makeCrates(x, z) {
 }
 
 export function makeLamp(x, z, height = 5.5) {
-  return group(cylinder(0.08, height, 0x4d5358, x, height / 2, z, 6), box(0.9, 0.18, 0.3, 0x4d5358, x, height, z + 0.35));
+  const head = box(0.9, 0.18, 0.3, 0x4d5358, x, height, z + 0.35);
+  head.material = emissiveToon(0x4d5358, 0xffe2a0, 1.3);
+  return group(cylinder(0.08, height, 0x4d5358, x, height / 2, z, 6), head);
+}
+// Lampenkopf einer Laterne (für Lichthof und Lichtpool, siehe lighting.js).
+export const lampHead = (x, z, height = 5.5) => [x, height, z + 0.35];
+
+// Flutlichtmast: Mast plus leuchtender Kopf (zur Spielfeldseite geneigt).
+export function makeFloodlight(x, z, height, width = 2.5) {
+  const head = box(width, 0.95, 0.3, 0x4d5358, x, height + 0.2, z + 0.3);
+  head.rotation.x = -0.4;
+  head.material = emissiveToon(0x4d5358, 0xfff4d0, 1.5);
+  return group(cylinder(0.16, height, 0x7a7f84, x, height / 2, z, 6), head);
 }
 
 export function makeBin(x, z, color) {
@@ -195,42 +208,52 @@ export function makeFence(x0, z0, x1, z1, height = 2.2, color = 0x6b7076) {
   return g;
 }
 
-export function addLights(scene, { sky = 0xa9bccb, sun = 0xfff0d8, sunIntensity = 2.6, hemi = 1.4, sunPos = [-14, 26, 12], span = 32 } = {}) {
-  scene.background = new THREE.Color(sky);
-  const hemiLight = new THREE.HemisphereLight(0xdbe8ff, 0x5a5140, hemi);
-  const light = new THREE.DirectionalLight(sun, sunIntensity);
-  light.position.set(...sunPos);
+// Die drei Lichter jedes Spielorts: Himmelslicht, Sonne (mit Schatten) und ein
+// Gegenlicht von hinten. Farben, Stärken und Sonnenstand setzt applyLighting aus dem
+// Lichtpaket (lighting.js); span = halbe Breite des Schattenausschnitts.
+export function addLights(scene, { span = 32 } = {}) {
+  scene.background = new THREE.Color(0xa9bccb);
+  const hemiLight = new THREE.HemisphereLight(0xdbe8ff, 0x5a5140, 1.4);
+  const light = new THREE.DirectionalLight(0xfff0d8, 2.6);
   light.castShadow = true;
   light.shadow.mapSize.setScalar(currentQuality().shadowMap);
-  Object.assign(light.shadow.camera, { left: -span, right: span, top: span * 0.8, bottom: -span * 0.8, near: 1, far: 90 });
-  light.shadow.bias = -0.0008;
-  light.shadow.normalBias = 0.02;
-  // Kühles Gegenlicht von hinten: Spieler heben sich besser vom Rasen ab.
-  const rim = new THREE.DirectionalLight(0xbcd4ff, sunIntensity * 0.22);
-  rim.position.set(-sunPos[0] * 0.8, sunPos[1] * 0.6, -Math.abs(sunPos[2]) - 10);
-  for (const l of [hemiLight, light, rim]) l.userData.base = { intensity: l.intensity, color: l.color.getHex() };
-  light.userData.sun = true;
-  return group(hemiLight, light, rim);
+  Object.assign(light.shadow.camera, { left: -span, right: span, top: span * 0.8, bottom: -span * 0.8, near: 1, far: 120 });
+  light.shadow.camera.updateProjectionMatrix();
+  // Gegenlicht von hinten: Spieler heben sich besser vom Boden ab.
+  const rim = new THREE.DirectionalLight(0xbcd4ff, 0.57);
+  hemiLight.userData.role = 'hemi';
+  light.userData.role = 'sun';
+  rim.userData.role = 'rim';
+  const g = group(hemiLight, light, rim);
+  g.userData.scene = scene;
+  return g;
 }
 
-// Lichtstimmung fürs Wetter: Regen dämpft die Sonne, Hitze macht sie gelb und hart.
-const MOODS = {
-  klar: { sun: 1, hemi: 1, tint: null },
-  hitze: { sun: 1.15, hemi: 0.95, tint: 0xffe2a8 },
-  rain: { sun: 0.45, hemi: 1.15, tint: 0xc8d4e6 },
-  fog: { sun: 0.35, hemi: 1.25, tint: 0xdfe4e8 },
-  snow: { sun: 0.55, hemi: 1.3, tint: 0xe8f0ff },
-  frost: { sun: 0.85, hemi: 1.05, tint: 0xdce8ff },
-  leaves: { sun: 0.95, hemi: 1, tint: 0xffd9a8 },
-};
-export function setLightMood(root, id = 'klar') {
-  const m = MOODS[id] ?? MOODS.klar;
+const SUN_DISTANCE = 45;
+// Lichtpaket anwenden: Sonnenstand (Schatten gehen mit), Farben, Stärken, Himmel.
+export function applyLighting(root, scene, L) {
+  scene.background = new THREE.Color(L.sky);
+  const bias = shadowBias(L.sun.elevation);
   root.traverse((o) => {
-    const base = o.isLight && o.userData.base;
-    if (!base) return;
-    const sun = o.userData.sun;
-    o.intensity = base.intensity * (o.isHemisphereLight ? m.hemi : m.sun);
-    o.color.setHex(base.color);
-    if (sun && m.tint) o.color.setHex(m.tint);
+    const role = o.isLight && o.userData.role;
+    if (role === 'hemi') {
+      o.color.setHex(L.hemi.sky);
+      o.groundColor.setHex(L.hemi.ground);
+      o.intensity = L.hemi.intensity;
+    } else if (role === 'sun') {
+      o.position.set(...L.sun.dir.map((v) => v * SUN_DISTANCE));
+      o.color.setHex(L.sun.color);
+      o.intensity = L.sun.intensity;
+      o.shadow.intensity = L.shadow;
+      o.shadow.bias = bias.bias;
+      o.shadow.normalBias = bias.normalBias;
+    } else if (role === 'rim') {
+      // Von hinten, gegenüber der Sonne, etwas flacher.
+      const [x, y] = L.sun.dir;
+      o.position.set(-x * 30, Math.max(8, y * 20), -30);
+      o.color.setHex(L.rim.color);
+      o.intensity = L.rim.intensity;
+      o.visible = L.rim.intensity > 0;
+    }
   });
 }

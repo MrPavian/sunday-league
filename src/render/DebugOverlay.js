@@ -1,3 +1,16 @@
+const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
+function lightingLines(L) {
+  if (!L) return [];
+  return [
+    `MOOD        ${L.mood}  (${L.venue})`,
+    `TIME        ${L.time}  ${L.label}`,
+    `SUN         ${L.sun.intensity.toFixed(2)}  ${hex(L.sun.color)}  ${L.sun.elevation}°`,
+    `SHADOW INT  ${L.shadow.toFixed(2)}`,
+    `WETNESS     ${L.wetness.toFixed(2)}`,
+    `EMISSIVE    ${L.emissive.toFixed(2)}  FLOOD ${L.flood ? `an (Feld ${L.floodField})` : 'aus'}`,
+  ];
+}
+
 // Grafik-Messwerte (F3 oder ?gfx): Qualitätsstufe, internes Raster, FPS, Draw Calls,
 // Dreiecke und Zeiten des PixelRenderers. Standardmäßig unsichtbar.
 export class DebugOverlay {
@@ -48,6 +61,7 @@ export class DebugOverlay {
       `GPU FRAME   ${p.gpu ? ms(s.gpuMs) : 'nicht verfügbar'}`,
       `SHADOW      ${ms(s.shadowMs)}  ${p.shadowHz} Hz, ${Math.round(s.shadowShare * 100)} % der Bilder`,
       `CASTERS     ${s.casters.static} statisch / ${s.casters.dynamic} dynamisch`,
+      ...lightingLines(p.lighting),
       this.extra(),
     ].filter(Boolean).join('\n');
   }

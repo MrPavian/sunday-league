@@ -1,12 +1,12 @@
 import * as THREE from 'three';
-import { toon } from '../materials.js';
+import { emissiveToon, toon } from '../materials.js';
 import { addLights, box, ground, makeBike, makeBin, makeBush } from '../props.js';
 import { makeConcreteTexture, makeShutterTexture } from '../textures.js';
 
 // Hinterhof zwischen Mietshäusern: Garagentor auf der einen Seite, ein mit
 // Kreide an die Hauswand gemaltes Tor auf der anderen.
 export function buildBackyard(root, pitch, rng, scene) {
-  root.add(addLights(scene, { sky: 0xb4c4cf, sunPos: [-8, 24, -16], sunIntensity: 2.3, hemi: 1.6, span: 24 }));
+  root.add(addLights(scene, { span: 24 }));
   const W = 32;
   const D = 22;
   root.add(ground(W, D, toon(0xffffff, { map: makeConcreteTexture(rng, { width: W, depth: D }) })));
@@ -27,7 +27,9 @@ export function buildBackyard(root, pitch, rng, scene) {
   for (const y of floors) {
     for (let x = -14; x <= 14; x += 2.8) {
       const lit = rng.chance(0.15);
-      root.add(box(1.0, 1.3, 0.1, lit ? 0xe8d9a0 : 0x3d5068, x, y, facadeZ + 0.36));
+      const win = box(1.0, 1.3, 0.1, lit ? 0xe8d9a0 : 0x3d5068, x, y, facadeZ + 0.36);
+      if (lit) win.material = emissiveToon(0xe8d9a0, 0xffd890, 0.9); // abends erleuchtet
+      root.add(win);
       root.add(box(1.2, 0.1, 0.18, 0xe6e0d4, x, y - 0.72, facadeZ + 0.4));
       if (!omaPlaced && y === floors[1] && x > 2) {
         // Oma Gisela lehnt auf dem Kissen und guckt zu.
@@ -85,5 +87,6 @@ export function buildBackyard(root, pitch, rng, scene) {
   root.add(makeBike(5.2, hw + 1.2, 0x2f6fb5, -0.1));
   for (let i = 0; i < 4; i++) root.add(makeBush(rng, rng.range(-14, 14), hw + 2.2));
 
-  return { viewHeight: 11, bounds: { x: wx + 2, z: 1.5 } };
+  // Kein Flutlicht: abends leuchten nur die Fenster, der Hof bleibt gedämpft.
+  return { viewHeight: 11, bounds: { x: wx + 2, z: 1.5 }, lights: { heads: [], pools: [], field: [wx, hw] } };
 }
