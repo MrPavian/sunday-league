@@ -169,7 +169,7 @@ export class Ticker {
       list.prepend(li);
     }
     this.root.querySelector('.score').textContent = `${m.score[0]} : ${m.score[1]}`;
-    const clock = m.phase === 'ended' ? tr('Abpfiff', 'Full time') : m.phase === 'halftime' ? tr('Halbzeit', 'Half-time') : `${m.half}${tr('. HZ', 'H')} · ${tickerMinute(m)}'`;
+    const clock = m.phase === 'ended' ? tr('Abpfiff', 'Full time') : m.phase === 'halftime' ? tr('Halbzeit', 'Half-time') : `${m.half}${tr('. Halbzeit', m.half === 1 ? 'st half' : 'nd half')} · ${tickerMinute(m)}'`;
     this.root.querySelector('.clock').textContent = this.tl ? `${clock} · ${tr('Ausrichtung', 'Approach')}: ${mentalityLabel(m)}` : clock;
     if (m.phase === 'ended' && !this.endShown) this.updateControls();
   }

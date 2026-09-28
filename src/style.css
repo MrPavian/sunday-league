@@ -1,9 +1,22 @@
+/* Ziffern: Pixelify Sans verwechselt 2/Z, 5/S und 7/1 – deshalb kommen alle Zahlen
+   aus Jersey 10 (eindeutige, schmale Trikot-Ziffern, SIL OFL). Nur 0–9 und %,
+   der Text bleibt in Pixelify. Kein Kunstfett: eine Schnittstärke für alle. */
+@font-face {
+  font-family: 'SL Ziffern';
+  src: url('./fonts/jersey-10-latin-400-normal.woff2') format('woff2');
+  unicode-range: U+0030-0039, U+0025;
+  font-weight: 100 900;
+  size-adjust: 118%;
+  font-display: swap;
+}
+
 :root {
   --ink: #f6f1e4;
   --panel: rgba(22, 24, 28, 0.78);
   --accent: #ffe14d;
   --shadow: 2px 2px 0 #111;
-  font-family: 'Pixelify Sans', ui-monospace, monospace;
+  font-family: 'SL Ziffern', 'Pixelify Sans', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
 }
 
 * { box-sizing: border-box; }

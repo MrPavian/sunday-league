@@ -231,7 +231,7 @@ export class Hud {
       const dots = (t) => so.kicks[t].map((k) => (k ? '●' : '○')).join('') || '–';
       const [pa, pb] = shootoutScore(so);
       this.$('.clock').textContent = `${tr('i. E.', 'pens')} ${pa}:${pb} · ${dots(0)} | ${dots(1)}`;
-    } else this.$('.clock').textContent = `${match.half}${tr('. HZ', 'H')} · ${matchMinute(match, match.time)}'`;
+    } else this.$('.clock').textContent = `${match.half}${tr('. Halbzeit', match.half === 1 ? 'st half' : 'nd half')} · ${matchMinute(match, match.time)}'`;
 
     if (this.toastTimer > 0 && (this.toastTimer -= dt) <= 0) this.hideToast();
 

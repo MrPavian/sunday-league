@@ -105,7 +105,7 @@ export function crestSVG(crest, { size = 48, label = '', short = '' } = {}) {
   const c = normalizeCrest(crest);
   const id = `cr${++uid}`;
   const path = SHAPES[c.shape] ?? SHAPES.schild;
-  const band = c.band && short ? `<rect x="0" y="50" width="64" height="11" fill="${css(c.colors.border)}"/><text x="32" y="59" text-anchor="middle" font-family="'Pixelify Sans', monospace" font-size="10" font-weight="700" fill="${css(c.colors.field)}">${String(short).slice(0, 4).replace(/[<&>"]/g, '')}</text>` : '';
+  const band = c.band && short ? `<rect x="0" y="50" width="64" height="11" fill="${css(c.colors.border)}"/><text x="32" y="59" text-anchor="middle" font-family="'SL Ziffern', 'Pixelify Sans', monospace" font-size="10" font-weight="700" fill="${css(c.colors.field)}">${String(short).slice(0, 4).replace(/[<&>"]/g, '')}</text>` : '';
   const symY = c.band && short ? 12 : 17;
   const symbol = c.symbol && c.symbol !== 'keins' ? symbolRects(c.symbol, c.colors.symbol, c.colors.border, { y: symY }) : '';
   return `<svg class="crest-svg" width="${size}" height="${Math.round((size * 72) / 64)}" viewBox="0 0 64 72" role="img" aria-label="${label.replace(/"/g, '')}"><defs><clipPath id="${id}"><path d="${path}"/></clipPath></defs><g clip-path="url(#${id})"><rect width="64" height="72" fill="${css(c.colors.field)}"/><g fill="${css(c.colors.second)}">${DIVISIONS[c.division] ?? ''}</g><g shape-rendering="crispEdges">${symbol}</g>${band}</g><path d="${path}" fill="none" stroke="${css(c.colors.border)}" stroke-width="4" stroke-linejoin="round"/></svg>`;
