@@ -15,12 +15,20 @@ const SURFACE_FX = {
   artificial: { colors: [0x1c1c1c, 0x2c2c2c, 0x48a040], size: 3, life: 0.5, lift: 2, drag: 3, gravity: 7 },
 };
 const WATER = { colors: [0xcfe4f2, 0xe8f2fa, 0xa8c4d8], size: 3, life: 0.4, lift: 2.2, drag: 2.5, gravity: 9 };
+// Pulverschnee, den Schritte und Schüsse aufwirbeln.
+const SNOW = { colors: [0xf4f7fb, 0xe2e8f0, 0xffffff], size: 3, life: 0.55, lift: 1.5, drag: 3.2, gravity: 4 };
+
+// Wetter 2.0: Spritzer entstehen nur an Kontakten, die das Spiel ohnehin liefert (Sprint,
+// Richtungswechsel, Schuss/Pass, Grätsche, Hechtsprung, Ball-Aufsetzer) – 2 bis 6 Partikel,
+// in einer Pfütze etwas mehr. Menge: Nässe × Qualitätsstufe × Profil des Spielorts.
+export const SPLASH_MAX = 6;
 
 export class Effects {
-  constructor(root, match) {
+  // weather: WeatherFx (weather.js) – liefert Nässe, Schnee und Pfützen; ohne: trocken.
+  constructor(root, match, weather = null) {
     const MAX = (this.max = currentQuality().particles);
     this.fx = SURFACE_FX[match.pitch.surface?.id] ?? SURFACE_FX.grass;
-    this.wet = match.weather === 'rain';
+    this.weather = weather;
     this.p = Array.from({ length: MAX }, () => ({ life: 0, x: 0, y: -10, z: 0, vx: 0, vy: 0, vz: 0, g: 0, drag: 0, max: 1 }));
     this.next = 0;
     const geo = new THREE.BufferGeometry();
@@ -36,9 +44,14 @@ export class Effects {
     this.tmp = new THREE.Color();
     this.lastBallVy = 0;
     this.sprintTimer = 0;
+    this.facing = new Map(); // Spieler-Id → letzte Blickrichtung (Richtungswechsel)
   }
 
-  emit(x, y, z, count, { spread = 1, up = 1, kind = this.fx, dir = null } = {}) {
+  get wet() {
+    return (this.weather?.state.wet ?? 0) > 0.35;
+  }
+
+  emit(x, y, z, count, spread = 1, up = 1, kind = this.fx, dx = 0, dz = 0) {
     for (let i = 0; i < count; i++) {
       const idx = this.next;
       const q = this.p[idx];
@@ -48,45 +61,93 @@ export class Effects {
       q.x = x + (Math.random() - 0.5) * 0.3;
       q.y = y + Math.random() * 0.1;
       q.z = z + (Math.random() - 0.5) * 0.3;
-      q.vx = Math.cos(a) * sp + (dir ? dir.x * spread * 1.5 : 0);
-      q.vz = Math.sin(a) * sp + (dir ? dir.z * spread * 1.5 : 0);
+      q.vx = Math.cos(a) * sp + dx * spread * 1.5;
+      q.vz = Math.sin(a) * sp + dz * spread * 1.5;
       q.vy = (0.3 + Math.random()) * kind.lift * up;
       q.g = kind.gravity ?? 2.5;
       q.drag = kind.drag;
       q.max = kind.life * (0.6 + Math.random() * 0.8);
       q.life = q.max;
       this.tmp.setHex(kind.colors[(Math.random() * kind.colors.length) | 0]);
-      this.col.set([this.tmp.r, this.tmp.g, this.tmp.b], idx * 3);
+      this.col[idx * 3] = this.tmp.r;
+      this.col[idx * 3 + 1] = this.tmp.g;
+      this.col[idx * 3 + 2] = this.tmp.b;
     }
+  }
+
+  // Bodenkontakt auf nassem oder verschneitem Boden: Spritzwasser bzw. Schneestaub.
+  // n = Partikel bei voller Nässe (2…6). Gibt zurück, ob etwas gespritzt hat.
+  splash(x, z, n, spread = 0.8, up = 1, dx = 0, dz = 0) {
+    const w = this.weather;
+    if (!w) return false;
+    const s = w.state;
+    const snow = s.snow > 0.4;
+    if (!snow && s.wet <= 0.35) return false;
+    const puddle = !snow && w.inPuddle(x, z);
+    const k = (snow ? s.snow : Math.min(1, s.wet)) * s.splash * (puddle ? 1.7 : 1);
+    const count = Math.min(puddle ? SPLASH_MAX + 4 : SPLASH_MAX, Math.round(n * k));
+    if (count < 1) return false;
+    this.emit(x, 0.04, z, count, spread * (puddle ? 1.3 : 1), up * (puddle ? 1.4 : 1), snow ? SNOW : WATER, dx, dz);
+    w.countSplash();
+    return true;
   }
 
   // Einmalige Anlässe aus den Spielereignissen.
   handle(match) {
     const find = (id) => match.players.find((p) => p.id === id);
+    // Nasse Asche staubt nicht mehr, sie klebt.
+    const dust = !(this.fx === SURFACE_FX.ash && this.wet);
+    const b = match.ball.pos;
     for (const e of match.events) {
       const p = e.playerId && find(e.playerId);
-      if (e.type === 'slide' && p) this.emit(p.pos.x, 0.05, p.pos.z, 18, { spread: 1.3, dir: p.facing });
-      else if ((e.type === 'shot' || (e.type === 'pass' && e.lofted)) && p) this.emit(match.ball.pos.x, 0.05, match.ball.pos.z, e.type === 'shot' ? 8 : 4, { spread: 0.8, dir: { x: -p.facing.x * 0.3, z: -p.facing.z * 0.3 } });
-      else if ((e.type === 'tackle' || e.type === 'poke_won') && p) this.emit(match.ball.pos.x, 0.05, match.ball.pos.z, 6, { spread: 1 });
-      else if (e.type === 'foul' && e.victimId) {
+      if (e.type === 'slide' && p) {
+        if (dust) this.emit(p.pos.x, 0.05, p.pos.z, 18, 1.3, 1, this.fx, p.facing.x, p.facing.z);
+        this.splash(p.pos.x, p.pos.z, 6, 1.4, 1.3, p.facing.x * 0.6, p.facing.z * 0.6);
+      } else if ((e.type === 'shot' || e.type === 'pass') && p) {
+        if (e.type === 'shot' || e.lofted) this.emit(b.x, 0.05, b.z, e.type === 'shot' ? 8 : 4, 0.8, 1, this.fx, -p.facing.x * 0.3, -p.facing.z * 0.3);
+        this.splash(b.x, b.z, e.type === 'shot' ? 5 : 3, 0.7, 1, -p.facing.x * 0.3, -p.facing.z * 0.3);
+      } else if ((e.type === 'tackle' || e.type === 'poke_won') && p) {
+        this.emit(b.x, 0.05, b.z, 6, 1);
+        this.splash(b.x, b.z, 3, 0.9);
+      } else if (e.type === 'foul' && e.victimId) {
         const v = find(e.victimId);
-        if (v) this.emit(v.pos.x, 0.05, v.pos.z, 14, { spread: 1.4 });
-      } else if (e.type === 'scrape' && p) this.emit(p.pos.x, 0.05, p.pos.z, 18, { spread: 1.6, up: 1.3 });
-      if (this.wet && (e.type === 'slide' || e.type === 'foul') && p) this.emit(p.pos.x, 0.05, p.pos.z, 10, { spread: 1.6, up: 1.4, kind: WATER });
+        if (v) {
+          if (dust) this.emit(v.pos.x, 0.05, v.pos.z, 14, 1.4);
+          this.splash(v.pos.x, v.pos.z, 6, 1.5, 1.3);
+        }
+      } else if (e.type === 'scrape' && p) this.emit(p.pos.x, 0.05, p.pos.z, 18, 1.6, 1.3);
     }
   }
 
   update(match, dt) {
-    // Laufende Quellen: Grätsche zieht eine Spur, Sprint auf Asche staubt, Ball-Aufsetzer.
+    // Laufende Quellen: Grätsche zieht eine Spur, Sprint auf Asche staubt, auf nassem Boden
+    // spritzt es beim Sprint und beim scharfen Richtungswechsel, der Ball beim Aufsetzen.
     this.sprintTimer -= dt;
-    const dusty = this.fx === SURFACE_FX.ash || this.wet;
+    const wet = this.wet;
+    const snow = (this.weather?.state.snow ?? 0) > 0.4;
+    const dusty = this.fx === SURFACE_FX.ash && !wet && !snow;
     for (const p of match.players) {
-      if (p.state === 'tackle' && Math.random() < dt * 70) this.emit(p.pos.x, 0.04, p.pos.z, 1, { spread: 0.5, dir: { x: -p.facing.x * 0.3, z: -p.facing.z * 0.3 } });
-      else if (dusty && this.sprintTimer <= 0 && Math.hypot(p.vel.x, p.vel.z) > 6.2 && Math.random() < 0.35) this.emit(p.pos.x - p.facing.x * 0.3, 0.03, p.pos.z - p.facing.z * 0.3, 1, { spread: 0.4, up: 0.6, kind: this.wet ? WATER : this.fx });
+      const speed = Math.hypot(p.vel.x, p.vel.z);
+      let f = this.facing.get(p.id);
+      if (!f) this.facing.set(p.id, (f = { x: p.facing.x, z: p.facing.z }));
+      const turn = f.x * p.facing.x + f.z * p.facing.z < 0.5 && speed > 3.5;
+      f.x = p.facing.x;
+      f.z = p.facing.z;
+      if (p.state === 'tackle' && Math.random() < dt * 70) this.emit(p.pos.x, 0.04, p.pos.z, 1, 0.5, 1, this.fx, -p.facing.x * 0.3, -p.facing.z * 0.3);
+      else if (turn && (wet || snow)) this.splash(p.pos.x, p.pos.z, 3, 0.7, 0.9, -p.facing.x * 0.4, -p.facing.z * 0.4);
+      else if (this.sprintTimer <= 0 && speed > 6.2 && Math.random() < 0.35) {
+        const x = p.pos.x - p.facing.x * 0.3;
+        const z = p.pos.z - p.facing.z * 0.3;
+        if (wet || snow) this.splash(x, z, 2, 0.4, 0.7);
+        else if (dusty) this.emit(x, 0.03, z, 1, 0.4, 0.6);
+      }
     }
     if (this.sprintTimer <= 0) this.sprintTimer = 0.08;
+    // Ball-Aufsetzer: aus der Ballbewegung der Simulation (fällt schnell, steigt wieder).
     const b = match.ball;
-    if (this.lastBallVy < -3 && b.vel.y >= 0 && b.pos.y < 0.2) this.emit(b.pos.x, 0.03, b.pos.z, this.wet ? 8 : 5, { spread: 0.7, up: 0.8, kind: this.wet ? WATER : this.fx });
+    if (this.lastBallVy < -3 && b.vel.y >= 0 && b.pos.y < 0.2) {
+      if (!this.splash(b.pos.x, b.pos.z, 5, 0.7, 0.8)) this.emit(b.pos.x, 0.03, b.pos.z, 5, 0.7, 0.8);
+    }
     this.lastBallVy = b.vel.y;
 
     for (let i = 0; i < this.max; i++) {

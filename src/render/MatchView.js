@@ -36,6 +36,7 @@ const DIRT = {
 };
 import { Effects } from './Effects.js';
 import { IncidentView } from './IncidentView.js';
+import { WeatherFx } from './weather.js';
 
 const CELEBRATIONS = ['flugzeug', 'faust', 'tanz', 'rutscher'];
 
@@ -97,7 +98,10 @@ export class MatchView {
     this.makeBlobs();
     if (match.referee) this.buildReferee(match.referee);
     this.incidents = new IncidentView(this.root, match);
-    this.effects = new Effects(this.root, match);
+    // Wetter 2.0: Umgebungszustand, Pfützen, Spuren – Spritzer laufen über den Effekt-Pool.
+    this.weather = new WeatherFx(this.root, match);
+    this.effects = new Effects(this.root, match, this.weather);
+    this.wetLook = -1;
     this.ball = createBallModel();
     this.root.add(this.ball);
 
@@ -127,6 +131,7 @@ export class MatchView {
     if (this.referee) disposeKit(this.referee);
     this.referee = createPlayerModel(r.look, r.kit ?? { shirt: 0x1c1c1c, shorts: 0x1c1c1c, socks: 0x1c1c1c }, { edge: 'neutral' });
     this.refereeName = r.name;
+    this.wetLook = -1; // Nässe auch auf den neuen Schiri
     this.root.add(this.referee.group);
   }
 
@@ -151,11 +156,23 @@ export class MatchView {
 
   dispose() {
     this.effects.dispose();
+    this.weather.dispose();
     this.scene.remove(this.root);
     this.root.traverse((o) => o.geometry?.dispose());
     for (const m of this.models.values()) disposeKit(m);
     if (this.referee) disposeKit(this.referee);
     this.blobs.geometry.dispose();
+  }
+
+  // Nasse Spieler und nasser Ball: Stoff und Leder etwas dunkler (ein Materialfaktor je
+  // Team-Atlas, keine neue Textur). Den feuchten Glanz an Kanten gibt der Post-Shader.
+  syncWetLook() {
+    const w = Math.round(Math.min(1, this.weather.state.wet) * 20) / 20;
+    if (w === this.wetLook) return;
+    this.wetLook = w;
+    for (const a of this.atlases.values()) a.material?.color.setScalar(1 - 0.14 * w);
+    this.referee?.mesh?.material.color.setScalar(1 - 0.12 * w);
+    this.ball.material.color.setScalar(1 - 0.12 * w);
   }
 
   // Kontaktschatten: ein gerasterter Fleck unter jeder Figur, alle in einem Draw Call.
@@ -211,6 +228,7 @@ export class MatchView {
       if (p.diveAnim > 0 && !this.diving.has(p.id)) {
         this.diving.add(p.id);
         this.soil(p.id, 0.1);
+        this.effects.splash(p.pos.x + p.facing.x * 0.6, p.pos.z + p.facing.z * 0.6, 6, 1.3, 1.2);
       } else if (p.diveAnim <= 0) this.diving.delete(p.id);
       if (p.state === 'tackle') this.soil(p.id, dt * 0.15);
       else if (len(p.vel.x, p.vel.z) > 5.5) this.soil(p.id, dt * 0.002);
@@ -244,7 +262,9 @@ export class MatchView {
       this.blob(this.referee, r.pos.x, r.pos.z);
     }
     this.endBlobs();
-    this.incidents.sync(match, dt);
+    this.weather.update(match, dt);
+    this.syncWetLook();
+    this.incidents.sync(match, dt, this.weather.state);
     this.effects.update(match, dt);
     const b = match.ball;
     this.ball.visible = !match.ballHidden;

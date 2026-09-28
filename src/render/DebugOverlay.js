@@ -6,7 +6,7 @@ function lightingLines(L) {
     `TIME        ${L.time}  ${L.label}`,
     `SUN         ${L.sun.intensity.toFixed(2)}  ${hex(L.sun.color)}  ${L.sun.elevation}°`,
     `SHADOW INT  ${L.shadow.toFixed(2)}`,
-    `WETNESS     ${L.wetness.toFixed(2)}`,
+    `WET (LICHT) ${L.wetness.toFixed(2)}  Zielwert des Lichtpakets`,
     `EMISSIVE    ${L.emissive.toFixed(2)}  FLOOD ${L.flood ? `an (Feld ${L.floodField})` : 'aus'}`,
   ];
 }

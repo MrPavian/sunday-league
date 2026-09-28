@@ -70,6 +70,14 @@ const postFragment = /* glsl */ `
   uniform int haloCount;
   uniform float wetness;
   uniform vec3 glintColor;
+  // Wetter 2.0 (weather.js): Bodenreaktion je Untergrund, Frost, Bodennebel, Hitzeflimmern.
+  uniform float time;
+  uniform vec4 groundWet;    // dunkler, satter, Glanz-Anteil, Glanz-Länge (m)
+  uniform vec4 groundMisc;   // feuchte Flecken, Himmelsanteil, Schnee-Anteil, –
+  uniform vec3 snowShade;    // Schnee im Schatten
+  uniform float frost;
+  uniform float mist;        // Bodennebel (0…1)
+  uniform float heatHaze;    // Hitzeflimmern (0…1)
   varying vec2 vUv;
 
   // Orthografisch: Die Tiefe ist linear.
@@ -78,6 +86,16 @@ const postFragment = /* glsl */ `
   }
   float luma(vec3 c) {
     return dot(c, vec3(0.299, 0.587, 0.114));
+  }
+  float hash21(vec2 p) {
+    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+  }
+  // Wertrauschen (für unregelmäßige Schneekanten und feuchte Flecken).
+  float vnoise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash21(i), hash21(i + vec2(1.0, 0.0)), f.x), mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), f.x), f.y);
   }
   // Normale im Kameraraum aus zwei Tangenten (Meter).
   vec3 faceNormal(vec3 tx, vec3 ty) {
@@ -89,16 +107,26 @@ const postFragment = /* glsl */ `
     float bay = texture2D(tBayer, cell * 0.25).r * (255.0 / 16.0); // 0…1 im 4×4-Raster
     vec2 texel = 1.0 / resolution;
     vec2 px = frustum * texel; // Größe eines Pixels in Metern
-    vec3 color = texture2D(tColor, vUv).rgb;
-    float d = getDepth(vUv);
-    float dL = getDepth(vUv - vec2(texel.x, 0.0));
-    float dR = getDepth(vUv + vec2(texel.x, 0.0));
-    float dD = getDepth(vUv - vec2(0.0, texel.y));
-    float dU = getDepth(vUv + vec2(0.0, texel.y));
-    float dL2 = getDepth(vUv - vec2(2.0 * texel.x, 0.0));
-    float dR2 = getDepth(vUv + vec2(2.0 * texel.x, 0.0));
-    float dD2 = getDepth(vUv - vec2(0.0, 2.0 * texel.y));
-    float dU2 = getDepth(vUv + vec2(0.0, 2.0 * texel.y));
+    // Hitzeflimmern: In der Ferne (Tribüne, Bäume, Horizont) verschieben sich ganze Pixelzeilen
+    // um höchstens ein Pixel, langsam wandernd – bleibt im Raster, Figuren bleiben ruhig.
+    vec2 uv = vUv;
+    if (heatHaze > 0.0) {
+      float farK = smoothstep(27.0, 40.0, getDepth(vUv)) * heatHaze;
+      float wave = sin(cell.y * 0.42 + time * 2.1) + 0.5 * sin(cell.y * 0.11 - time * 1.3 + cell.x * 0.02);
+      float shift = floor(wave * 0.8 * farK + 0.5);
+      vec2 uvS = vUv + vec2(shift * texel.x, 0.0);
+      if (shift != 0.0 && texture2D(tColor, vUv).a > 0.9 && texture2D(tColor, uvS).a > 0.9) uv = uvS;
+    }
+    vec3 color = texture2D(tColor, uv).rgb;
+    float d = getDepth(uv);
+    float dL = getDepth(uv - vec2(texel.x, 0.0));
+    float dR = getDepth(uv + vec2(texel.x, 0.0));
+    float dD = getDepth(uv - vec2(0.0, texel.y));
+    float dU = getDepth(uv + vec2(0.0, texel.y));
+    float dL2 = getDepth(uv - vec2(2.0 * texel.x, 0.0));
+    float dR2 = getDepth(uv + vec2(2.0 * texel.x, 0.0));
+    float dD2 = getDepth(uv - vec2(0.0, 2.0 * texel.y));
+    float dU2 = getDepth(uv + vec2(0.0, 2.0 * texel.y));
     bool sky = d > cameraFar * 0.999;
 
     // Normalen aus der Tiefe: Je Achse zählt die Seite, auf der die Tiefe gerade
@@ -116,6 +144,18 @@ const postFragment = /* glsl */ `
     vec3 tx = ownR ? txR : txL;
     vec3 ty = ownU ? tyU : tyD;
     vec3 n = sky ? vec3(0.0, 0.0, 1.0) : faceNormal(tx, ty);
+
+    // Weltposition des Pixels (für Flutlicht, Nässe, Schnee und Bodennebel).
+    vec3 pC = vec3((uv - 0.5) * frustum, -d); // Kameraraum (orthografisch)
+    vec3 wp = (camWorld * vec4(pC, 1.0)).xyz;
+    float onGround = 1.0 - smoothstep(0.03, 0.12, wp.y);
+
+    // Dunst mit der Entfernung (Nebel, Regen, Schnee – oder nur ein Hauch Luft). Nebel 2.0:
+    // dazu Bodennebel über tiefen, fernen Flächen; in sechs gerasterten Stufen (Bayer),
+    // damit er zur Pixelart passt statt als weicher Grauschleier.
+    float fogF = smoothstep(fogStart, fogEnd, d) * fogAmount;
+    if (mist > 0.0 && !sky) fogF = max(fogF, mist * (1.0 - smoothstep(0.0, 2.5, wp.y)) * smoothstep(fogStart * 0.7, fogEnd, d) * 0.7);
+    fogF = clamp(floor(fogF * 6.0 + bay) / 6.0, 0.0, 1.0);
 
     // Silhouette: zweite Ableitung der Tiefe. Ebenen – auch der schräg gesehene
     // Boden – haben keine; nur wo ein Nachbar hinter einer Kante liegt, springt sie.
@@ -147,14 +187,15 @@ const postFragment = /* glsl */ `
     // 0,7 neutral, sonst 1). Sie bekommen eine etwas kräftigere Außenkante: schon bei
     // halbem Tiefensprung und überall, wo ein anderes Objekt dahinter liegt (Spieler
     // vor Spieler), leicht in die Teamfarbe getönt. Immer genau ein Pixel breit.
-    float id = texture2D(tColor, vUv).a;
+    float id = texture2D(tColor, uv).a;
     bool character = id < 0.9;
+    bool noCover = id < 0.97; // Figuren, Zuschauer, Boden-Decals: keine Schneedecke, kein Glanz
     #if EDGES == 1
     if (character && !edge) {
-      float aL = texture2D(tColor, vUv - vec2(texel.x, 0.0)).a;
-      float aR = texture2D(tColor, vUv + vec2(texel.x, 0.0)).a;
-      float aD = texture2D(tColor, vUv - vec2(0.0, texel.y)).a;
-      float aU = texture2D(tColor, vUv + vec2(0.0, texel.y)).a;
+      float aL = texture2D(tColor, uv - vec2(texel.x, 0.0)).a;
+      float aR = texture2D(tColor, uv + vec2(texel.x, 0.0)).a;
+      float aD = texture2D(tColor, uv - vec2(0.0, texel.y)).a;
+      float aU = texture2D(tColor, uv + vec2(0.0, texel.y)).a;
       bool other = (abs(aL - id) > 0.1 && dL > d + 0.02) || (abs(aR - id) > 0.1 && dR > d + 0.02) || (abs(aD - id) > 0.1 && dD > d + 0.02) || (abs(aU - id) > 0.1 && dU > d + 0.02);
       edge = other || lap > silhouette * 0.5;
     }
@@ -163,11 +204,13 @@ const postFragment = /* glsl */ `
     vec3 c = color;
     if (edge && character) {
       vec3 teamTint = id < 0.4 ? teamEdge[0] : id < 0.6 ? teamEdge[1] : teamEdge[2];
-      c = mix(c * (1.0 - clamp(depthEdgeStrength + characterEdgeBoost, 0.0, 1.0)), teamTint, 0.3);
+      // Im Nebel wird auch die Figurenkante weicher (sonst stünden graue Figuren mit harten Rändern da).
+      c = mix(c * (1.0 - clamp(depthEdgeStrength + characterEdgeBoost, 0.0, 1.0) * (1.0 - 0.5 * fogF)), teamTint, 0.3);
     } else if (edge) {
       c *= 1.0 - depthEdgeStrength;
     } else if (crease > creaseMin) {
-      c *= 1.0 + normalEdgeStrength;
+      // Nasse Kleidung glänzt an den Kanten etwas mehr.
+      c *= 1.0 + normalEdgeStrength * (character ? 1.0 + 0.8 * clamp(wetness, 0.0, 1.0) : 1.0);
     }
 
     // Kontaktschatten (SSAO light) und Glühen um helle Stellen.
@@ -183,7 +226,7 @@ const postFragment = /* glsl */ `
       float a = float(i) * 6.2831853 / float(DIRS);
       vec2 dir = vec2(cos(a), sin(a));
       for (int k = 1; k <= 2; k++) {
-        vec2 uv2 = vUv + dir * texel * float(k * 2);
+        vec2 uv2 = uv + dir * texel * float(k * 2);
         #if AO_SAMPLES > 0
         float dd = d - getDepth(uv2);
         ao += smoothstep(0.04, 0.35, dd) * (1.0 - smoothstep(0.8, 1.6, dd));
@@ -198,14 +241,38 @@ const postFragment = /* glsl */ `
     c += glow / taps * bloom * tint;
     #endif
 
-    // Schneedecke bzw. Raureif: nach oben zeigende Flächen werden weiß, Schatten bleiben erhalten.
+    // Schneedecke: nach oben zeigende Flächen werden weiß, je Untergrund verschieden viel
+    // (Asphalt nur stellenweise), mit unregelmäßiger, gerasterter Kante. Im Schatten bleibt
+    // der Schnee grau-bläulich – Schatten verschwinden nicht.
     float up = smoothstep(0.72, 0.9, n.y) * step(d, cameraFar * 0.9);
-    float shade = clamp(luma(color) * 2.4, 0.45, 1.1);
-    c = mix(c, vec3(0.9, 0.93, 0.98) * shade, snowCover * up);
+    if (snowCover > 0.0 && !noCover && up > 0.0) {
+      float amt = snowCover * mix(1.0, groundMisc.z, onGround);
+      float cover = amt;
+      #if WETFX == 1
+      float nz = vnoise(wp.xz * 0.45) * 0.65 + vnoise(wp.xz * 1.9) * 0.35;
+      cover = step(1.0 - amt, nz + (bay - 0.5) * 0.14) * min(1.0, amt * 1.3);
+      #endif
+      float lum = clamp(luma(color) * 2.4, 0.0, 1.0);
+      vec3 snowCol = mix(snowShade, vec3(0.93, 0.95, 0.99), smoothstep(0.45, 0.92, lum));
+      c = mix(c, snowCol, clamp(cover, 0.0, 1.0) * up);
+    }
+    // Frost: dünner, bläulicher Reif (nie ganz weiß), auf Oberseiten von Pfosten, Bänken und
+    // Zäunen eine helle Kante; auf dem Boden vereinzelt glitzernde Kristalle.
+    if (frost > 0.0 && !sky && !noCover) {
+      float upF = smoothstep(0.55, 0.9, n.y);
+      vec3 frostCol = vec3(0.84, 0.9, 1.0) * clamp(luma(color) * 2.2, 0.55, 1.05);
+      float rime = upF * mix(0.55, 0.22, onGround);
+      #if WETFX == 1
+      vec2 fc = floor(wp.xz / px.x);
+      rime += upF * onGround * 0.25 * step(0.5, hash21(fc));
+      #endif
+      c = mix(c, frostCol, frost * rime);
+      if (!edge && crease > creaseMin * 0.6) c = mix(c, vec3(0.9, 0.95, 1.0), frost * 0.45);
+      #if WETFX == 1
+      c = mix(c, vec3(1.0), frost * 0.8 * onGround * upF * step(0.994, hash21(fc + 17.0)));
+      #endif
+    }
 
-    // Weltposition des Pixels (für Flutlicht und Nässe).
-    vec3 pC = vec3((vUv - 0.5) * frustum, -d); // Kameraraum (orthografisch)
-    vec3 wp = (camWorld * vec4(pC, 1.0)).xyz;
     float lit = 1.0; // wie viel Flutlicht hier ankommt (für Glanzpunkte)
 
     #if FLOOD > 0
@@ -232,18 +299,25 @@ const postFragment = /* glsl */ `
     }
     #endif
 
-    // Nässe: Der Boden wird dunkler; auf geeigneten Stufen blitzen harte Pixel-Reflexe
-    // (kurze Streifen zur Kamera hin), abends nur im Licht.
+    // Nässe je Untergrund: dunkler und satter, Asche mit feuchten Flecken, Asphalt mit
+    // Himmelsanteil; auf geeigneten Stufen harte Pixel-Glanzstreifen zur Kamera hin
+    // (Asphalt lang und häufig, Rasen kurz, Asche nie), abends nur im Licht.
     if (wetness > 0.0 && !sky) {
-      float ground = (1.0 - smoothstep(0.03, 0.12, wp.y)) * step(0.8, n.y);
-      float w = wetness * ground;
-      c *= 1.0 - 0.2 * w;
+      float ground = onGround * step(0.8, n.y);
+      float w = clamp(wetness, 0.0, 1.0) * ground;
+      float spot = 0.0;
       #if WETFX == 1
-      // Zellen: ein Pixel breit, gut zwei hoch (Streifen zur Kamera), 1,2 % davon glänzen.
-      vec2 wc = floor(wp.xz / vec2(px.x, 0.22));
-      float h = fract(sin(dot(wc, vec2(12.9898, 78.233))) * 43758.5453);
-      float glint = step(1.0 - 0.012 * w, h) * mix(1.0, lit, floodAmount);
-      c = mix(c, glintColor, glint * 0.45);
+      if (groundMisc.x > 0.0) spot = step(0.58, vnoise(wp.xz * 0.8) + (bay - 0.5) * 0.1) * groundMisc.x;
+      #endif
+      c *= 1.0 - groundWet.x * w * (1.0 + spot);
+      c = mix(vec3(luma(c)), c, 1.0 + (groundWet.y - 1.0) * w);
+      c = mix(c, fogColor * 0.85, groundMisc.y * w);
+      #if WETFX == 1
+      if (!noCover && groundWet.z > 0.0) {
+        vec2 wc = floor(wp.xz / vec2(px.x, groundWet.w));
+        float glint = step(1.0 - groundWet.z * w, hash21(wc)) * mix(1.0, lit, floodAmount);
+        c = mix(c, glintColor, glint * 0.5);
+      }
       #endif
     }
 
@@ -253,9 +327,8 @@ const postFragment = /* glsl */ `
     c = (c - 0.5) * contrast + 0.5;
     c *= brightness;
 
-    // Dunst mit der Entfernung (Nebel, Regen, Schnee – oder nur ein Hauch Luft).
-    float f = smoothstep(fogStart, fogEnd, d) * fogAmount;
-    c = mix(c, fogColor, f);
+    // Dunst (oben berechnet). Figuren im Vordergrund bleiben lesbar: nur gut halb so viel.
+    c = mix(c, fogColor, character ? fogF * 0.55 : fogF);
 
     #if HALO == 1
     // Lichthof um Flutlichtköpfe und Laternen: gerastert, liegt über dem Dunst (im Nebel
@@ -370,6 +443,13 @@ export class PixelRenderer {
         haloCount: { value: 0 },
         wetness: { value: 0 },
         glintColor: { value: new THREE.Vector3(0.9, 0.93, 1) },
+        time: { value: 0 },
+        groundWet: { value: new THREE.Vector4(0.2, 1, 0.012, 0.22) },
+        groundMisc: { value: new THREE.Vector4(0, 0, 1, 0) },
+        snowShade: { value: new THREE.Vector3(0.62, 0.68, 0.8) },
+        frost: { value: 0 },
+        mist: { value: 0 },
+        heatHaze: { value: 0 },
       },
       defines: { AO_SAMPLES: 16, BLOOM: 1, EDGES: 1, FLOOD: 2, HALO: 1, WETFX: 1, MAX_LIGHTS },
       depthTest: false,
@@ -457,6 +537,28 @@ export class PixelRenderer {
     u.wetness.value = L.wetness;
     u.glintColor.value.set(...(L.flood ? FLOOD.color : [0.9, 0.93, 1]));
     this.applyPost();
+  }
+
+  // Wetter 2.0: Umgebungszustand aus weather.js (wird dort mit 10 Hz nachgeführt und hier
+  // jedes Bild in die Uniforms kopiert). Ohne Zustand gilt der reine Wetter-Look.
+  setWeather(state) {
+    this.weather = state;
+  }
+
+  applyWeather() {
+    const w = this.weather;
+    if (!w) return;
+    const u = this.postMaterial.uniforms;
+    const g = w.ground;
+    u.time.value = w.time;
+    u.wetness.value = w.wet;
+    u.snowCover.value = w.snow * 0.95;
+    u.frost.value = w.frost;
+    u.mist.value = w.fog;
+    u.heatHaze.value = w.heat * (this.quality.heatHaze ?? 0);
+    u.groundWet.value.set(g.wetDark, g.wetSat, g.glint, g.streak);
+    u.groundMisc.value.set(g.spots, g.sky, g.snow, 0);
+    u.snowShade.value.set(g.snowShade[0], g.snowShade[1], g.snowShade[2]);
   }
 
   applyPost() {
@@ -591,6 +693,7 @@ export class PixelRenderer {
     u.frustum.value.set((camera.right - camera.left) / camera.zoom, (camera.top - camera.bottom) / camera.zoom);
     u.camWorld.value.copy(camera.matrixWorld);
     this.projectHalos(camera);
+    this.applyWeather();
 
     // Schattenkarte: sofort bei einer Änderung (markShadowsDirty), sonst zeitbasiert mit
     // shadowHz, solange sich etwas bewegt. 2 ms Toleranz: 60 Hz heißt bei 60 fps „jedes Bild“.

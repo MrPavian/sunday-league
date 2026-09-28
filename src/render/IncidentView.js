@@ -58,28 +58,58 @@ export class IncidentView {
     const share = currentQuality().weather;
     const drops = Math.round(RAIN_DROPS * share);
     this.leafCount = Math.round(LEAVES * share);
+    // Regen in drei Tiefenebenen: vorne (zur Kamera, +z) längere, hellere Striche, hinten
+    // kürzere, blassere. Am Boden wird jeder Tropfen kurz zum waagrechten Spritzer.
     const pos = new Float32Array(drops * 6);
+    const col = new Float32Array(drops * 6);
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    this.rain = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0xaac4dd, transparent: true, opacity: 0.55 }));
+    geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    // depthWrite aus: Wetterpartikel sollen keine Silhouetten-Kanten bekommen (dunkle Ränder).
+    this.rain = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.42, depthWrite: false }));
     this.rain.frustumCulled = false;
     this.rain.visible = false;
-    this.drops = Array.from({ length: drops }, (_, i) => ({ x: ((i * 7919) % 1000) / 1000, z: ((i * 104729) % 1000) / 1000, y: ((i * 1301) % 1000) / 100 }));
+    this.drops = Array.from({ length: drops }, (_, i) => {
+      const layer = i % 3; // 0 vorne, 1 Mitte, 2 hinten
+      const zr = ((i * 104729) % 1000) / 1000;
+      return { x: ((i * 7919) % 1000) / 1000, z: layer === 0 ? 0.55 + zr * 0.45 : layer === 2 ? zr * 0.5 : zr, y: ((i * 1301) % 1000) / 100, len: [0.5, 0.38, 0.26][layer] };
+    });
+    const shade = [[0.72, 0.8, 0.9], [0.62, 0.71, 0.82], [0.52, 0.6, 0.7]];
+    this.drops.forEach((_, i) => {
+      const c = shade[i % 3];
+      col.set(c, i * 6);
+      col.set(c, i * 6 + 3);
+    });
     root.add(this.rain);
 
-    // Schneeflocken und Herbstlaub: langsam fallende Punkte.
+    // Schneeflocken und Herbstlaub: fallende Punkte, vorne größer (aSize), Laub bunt und
+    // taumelnd (die Größe wechselt, als drehe sich das Blatt).
     this.flakes = Array.from({ length: Math.round(FLAKES * share) }, (_, i) => ({ x: ((i * 7919) % 1000) / 1000, z: ((i * 3571) % 1000) / 1000, y: ((i * 911) % 1000) / 100, p: (i % 17) / 17 }));
-    const mk = (color, size) => {
+    const mk = (size, colors) => {
+      const n = this.flakes.length;
       const g = new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(this.flakes.length * 3), 3));
-      const pts = new THREE.Points(g, new THREE.PointsMaterial({ color, size, sizeAttenuation: false, transparent: true, opacity: 0.9 }));
+      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+      const sizes = new Float32Array(n);
+      this.flakes.forEach((f, i) => (sizes[i] = f.z > 0.6 ? 1.5 : f.z < 0.3 ? 1 : 1.25));
+      g.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
+      const c = new Float32Array(n * 3);
+      const tmp = new THREE.Color();
+      for (let i = 0; i < n; i++) c.set(tmp.setHex(colors[i % colors.length]).toArray(), i * 3);
+      g.setAttribute('color', new THREE.BufferAttribute(c, 3));
+      const mat = new THREE.PointsMaterial({ size, sizeAttenuation: false, vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false });
+      mat.onBeforeCompile = (sh) => {
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aSize;').replace('gl_PointSize = size;', 'gl_PointSize = floor(size * aSize + 0.5);');
+      };
+      mat.customProgramCacheKey = () => 'flake';
+      const pts = new THREE.Points(g, mat);
       pts.frustumCulled = false;
       pts.visible = false;
       root.add(pts);
       return pts;
     };
-    this.snow = mk(0xffffff, 3);
-    this.leaves = mk(0xd9822b, 4);
+    this.snow = mk(2, [0xffffff, 0xf2f6fc, 0xe6eef8]);
+    this.leaves = mk(3, [0xd9822b, 0xc2562a, 0xe8b33a, 0x9a5f2a, 0xcf6f24]);
+    this.wind = { x: 0, z: 0 };
 
     // Vier Sprenger am Rand, jeder mit einer sich drehenden Wasserfontäne.
     this.sprinklers = new THREE.Group();
@@ -98,8 +128,12 @@ export class IncidentView {
     root.add(this.sprinklers);
   }
 
-  sync(match, dt) {
+  // env: Umgebungszustand aus weather.js (Wind, Regenstärke); ohne: windstill.
+  sync(match, dt, env = null) {
     this.time += dt;
+    this.wind.x = env?.windX ?? 0;
+    this.wind.z = env?.windZ ?? 0;
+    this.rainRate = env ? Math.max(0.5, env.rain) : 0.8;
     this.syncDog(match.dog, dt);
     this.syncVisitors(match.visitors ?? [], dt);
     this.syncRain(match.weather === 'rain', dt);
@@ -148,25 +182,45 @@ export class IncidentView {
     if (!on) return;
     const a = this.rain.geometry.attributes.position;
     const { x: ax, z: az } = this.area;
+    // Leichte Schräge durch den Wind (↓ bis ↘), nie waagrecht.
+    const slant = Math.max(-0.35, Math.min(0.35, 0.1 * Math.sign(this.wind.x || 1) + this.wind.x * 0.07));
+    const fall = 14 * (0.85 + 0.2 * this.rainRate);
+    // Bei schwachem Regen fällt nur ein Teil der Tropfen (Gewitter: alle).
+    const active = Math.round(this.drops.length * (0.55 + 0.45 * this.rainRate));
     for (let i = 0; i < this.drops.length; i++) {
       const d = this.drops[i];
-      d.y -= dt * 14;
-      if (d.y < 0) d.y += 10;
-      const x = (d.x * 2 - 1) * ax + d.y * 0.15;
+      if (i >= active) {
+        a.setXYZ(i * 2, 0, -50, 0);
+        a.setXYZ(i * 2 + 1, 0, -50, 0);
+        continue;
+      }
+      d.y -= dt * fall;
+      if (d.y < -0.7) d.y += 10.7;
+      const x = (d.x * 2 - 1) * ax + Math.max(0, d.y) * slant;
       const z = (d.z * 2 - 1) * az;
-      a.setXYZ(i * 2, x, d.y, z);
-      a.setXYZ(i * 2 + 1, x + 0.05, d.y + 0.45, z);
+      if (d.y < 0) {
+        // Aufprall: ein paar Pixel breiter Spritzer am Boden, der kurz aufgeht.
+        const w = 0.05 + (-d.y / 0.7) * 0.1;
+        a.setXYZ(i * 2, x - w, 0.03, z);
+        a.setXYZ(i * 2 + 1, x + w, 0.03 + w * 0.3, z);
+      } else {
+        a.setXYZ(i * 2, x, d.y, z);
+        a.setXYZ(i * 2 + 1, x + slant * d.len, d.y + d.len, z);
+      }
     }
     a.needsUpdate = true;
   }
 
-  // Fallende Punkte: Schnee rieselt senkrecht, Laub trudelt seitlich.
+  // Fallende Punkte: Schnee rieselt und treibt mit dem Wind, Laub trudelt stärker.
   syncFlakes(pts, on, dt, fall, sway) {
     pts.visible = on;
     if (!on) return;
+    const leaves = pts === this.leaves;
     const a = pts.geometry.attributes.position;
+    const size = pts.geometry.attributes.aSize;
     const { x: ax, z: az } = this.area;
-    const n = pts === this.leaves ? Math.min(this.leafCount, this.flakes.length) : this.flakes.length;
+    const n = leaves ? Math.min(this.leafCount, this.flakes.length) : this.flakes.length;
+    const drift = this.wind.x * (leaves ? 0.9 : 0.35);
     for (let i = 0; i < this.flakes.length; i++) {
       const d = this.flakes[i];
       if (i >= n) {
@@ -174,11 +228,15 @@ export class IncidentView {
         continue;
       }
       d.y -= dt * fall * (0.6 + d.p);
-      if (d.y < 0) d.y += pts === this.leaves ? 7 : 10;
+      if (d.y < 0) d.y += leaves ? 7 : 10;
+      d.x += (drift * dt) / (2 * ax);
+      d.x -= Math.floor(d.x); // am Rand wieder herein
       const x = (d.x * 2 - 1) * ax + Math.sin(this.time * (0.8 + d.p) + i) * sway;
       a.setXYZ(i, x, d.y, (d.z * 2 - 1) * az + Math.cos(this.time * 0.7 + i) * sway * 0.5);
+      if (leaves) size.setX(i, (d.z > 0.6 ? 1.35 : 1) * (Math.abs(Math.sin(this.time * (2 + d.p * 3) + i)) < 0.3 ? 0.67 : 1));
     }
     a.needsUpdate = true;
+    if (leaves) size.needsUpdate = true;
   }
 
   syncSprinklers(on) {

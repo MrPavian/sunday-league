@@ -114,10 +114,35 @@ function playerDebug() {
   const cs = crowd?.stats;
   return [
     cs ? `CROWD       ${cs.shown}/${cs.people} Zuschauer · ${cs.calls} Draw Calls (+1 Schatten) · ${crowd.material ? 1 : 0} Material · aktiv ${cs.active} · ${crowd.hz ?? 12} Hz` : '',
+    ...weatherDebug(),
     `PLAYER      Modell 2.0 · ${shown.length} Figuren · je 1 Draw Call (+1 Schatten)`,
     `PLAYER TRI  ${tris} je Figur · ${BONES.length} Knochen (starr) · ${mats} Materialien`,
     `PLAYER ANIM prozedural, 8 Posen je Schrittpaar · Gesicht ${shown[0]?.face ?? '–'}`,
   ].join('\n');
+}
+// Wetter 2.0 in der Debug-Anzeige (weather.js, Effects, IncidentView).
+function weatherDebug() {
+  const w = view?.weather;
+  if (!w) return [];
+  const s = w.state;
+  const st = w.stats;
+  const inc = view.incidents;
+  const fx = view.effects;
+  let live = 0;
+  for (const p of fx.p) if (p.life > 0) live++;
+  const parts = inc.rain.visible ? `${Math.round(inc.drops.length * (0.55 + 0.45 * (inc.rainRate ?? 0.8)))} Regen` : inc.snow.visible ? `${inc.flakes.length} Schnee` : inc.leaves.visible ? `${inc.leafCount} Laub` : '0';
+  const f2 = (v) => v.toFixed(2);
+  return [
+    `WEATHER     ${s.weather ?? 'sonne'}${(match?.pitch?.heat ?? 1) > 1 ? ' (Hitze)' : ''}  Boden ${s.groundId}${s.indoor ? ' · Halle' : ''}  Wind ${f2(s.windX)}  (F4: nächstes Wetter)`,
+    `WETNESS     ${f2(s.wet)} → Ziel ${f2(s.wetTarget)}  Regen ${f2(s.rain)}`,
+    `PUDDLES     ${st.puddles}/${st.puddleMax}  ${st.puddles ? '1 Draw Call' : ''}`,
+    `SPLASHES    ${st.splashRate.toFixed(1)}/s  (gesamt ${st.splashes})  Partikel ${live}/${fx.max}`,
+    `FOOTPRINTS  ${st.footprints}/${st.footprintMax}${st.leaves ? `  Laub am Boden ${st.leaves}` : ''}`,
+    `SNOW        ${f2(s.snow)}  FROST ${f2(s.frost)}`,
+    `FOG         ${f2(s.fog)}  Bodennebel ${s.fog > 0 ? 'an' : 'aus'}`,
+    `HEAT HAZE   ${st.heatHaze > 0 ? f2(st.heatHaze) : 'aus'}`,
+    `W-PARTICLES ${parts}`,
+  ];
 }
 let lightMood = null;
 try {
@@ -128,7 +153,7 @@ try {
 const rig = new CameraRig();
 const scene = new THREE.Scene();
 // ?debug: Renderer und Szene für die Browser-Konsole (Draw Calls, Speicher).
-if (params.has('debug')) globalThis.__sl = { renderer: pixel.renderer, pixel, scene, THREE, rig, get match() { return match; }, get view() { return view; }, get crowd() { return crowd; } };
+if (params.has('debug')) globalThis.__sl = { renderer: pixel.renderer, pixel, scene, THREE, rig, get match() { return match; }, get view() { return view; }, get crowd() { return crowd; }, get weather() { return view?.weather; } };
 const input = new Input();
 const shoutBar = new ShoutBar(document.getElementById('shoutbar') ?? document.body.appendChild(Object.assign(document.createElement('div'), { id: 'shoutbar', hidden: true })), input);
 const hud = new Hud(document.getElementById('hud'));
@@ -259,6 +284,8 @@ function showMatch(m) {
   if (style === 'manager' && m.humanTeam !== null) enableManager(m);
   match = m;
   view = new MatchView(scene, match);
+  pixel.setWeather(view.weather.state);
+  lightMood = null; // Lichtpaket neu an die frische Ansicht geben (Pfützenfarbe)
   pixel.classifyShadowCasters(scene, venueRoot);
   pixel.setTeamEdges([m.teams[0].kit.shirt, m.teams[1].kit.shirt, m.referee?.kit?.shirt ?? 0x1c1c1c]);
   crowd?.setMatch(match);
@@ -761,6 +788,7 @@ function updateLighting() {
   applyLighting(venueRoot, scene, L);
   setEmissiveLevel(L.emissive * pixel.quality.emissive);
   pixel.setLighting(L, venueInfo.lights);
+  view?.weather?.setLighting(L);
   pixel.markShadowsDirty();
 }
 
@@ -943,6 +971,16 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'F3') {
     e.preventDefault();
     gfx.toggle();
+    return;
+  }
+  // F4 (nur bei offener Debug-Anzeige): nächstes Wetter – lädt mit ?wetter=… neu.
+  if (e.code === 'F4' && !gfx.el.hidden) {
+    e.preventDefault();
+    const list = ['sonne', 'regen', 'nebel', 'schnee', 'frost', 'hitze', 'laub', 'wind'];
+    const u = new URL(location.href);
+    u.searchParams.set('wetter', list[(list.indexOf(u.searchParams.get('wetter') ?? 'sonne') + 1) % list.length]);
+    if (venue) u.searchParams.set('venue', venue.id);
+    location.href = u.toString();
     return;
   }
   if (e.code !== 'F2') return;

@@ -13,7 +13,7 @@ export const LOOKS = {
   hitze: { tint: [1.09, 1.0, 0.86], saturation: 1.15, bloom: 0.8, fogColor: [0.95, 0.88, 0.7], fogAmount: 0.22 },
   overcast: { tint: [0.99, 1.0, 1.02], saturation: 0.92, contrast: 0.98, bloom: 0.25, fogColor: [0.72, 0.75, 0.78], fogAmount: 0.26, fogStart: 24, fogEnd: 56 },
   rain: { tint: [0.88, 0.93, 1.0], saturation: 0.78, contrast: 0.98, bloom: 0.2, fogColor: [0.55, 0.6, 0.66], fogAmount: 0.4, fogStart: 22, fogEnd: 50 },
-  fog: { tint: [0.96, 0.98, 1.0], saturation: 0.72, contrast: 0.9, bloom: 0.15, fogColor: [0.78, 0.8, 0.8], fogAmount: 0.85, fogStart: 24, fogEnd: 44 },
+  fog: { tint: [0.96, 0.98, 1.0], saturation: 0.72, contrast: 0.9, bloom: 0.15, fogColor: [0.78, 0.8, 0.8], fogAmount: 0.85, fogStart: 23, fogEnd: 46 },
   snow: { tint: [0.98, 1.0, 1.06], saturation: 0.72, contrast: 0.95, bloom: 0.6, fogColor: [0.88, 0.9, 0.95], fogAmount: 0.4, fogStart: 22, fogEnd: 48, snowCover: 0.72 },
   frost: { tint: [0.94, 0.98, 1.08], saturation: 0.84, contrast: 1.04, bloom: 0.5, fogColor: [0.8, 0.86, 0.94], fogAmount: 0.25, snowCover: 0.28 },
   leaves: { tint: [1.07, 1.0, 0.9], saturation: 1.05, fogColor: [0.85, 0.75, 0.6], fogAmount: 0.2 },
@@ -73,15 +73,18 @@ export const MOODS = {
 
 // Farbidentität der Spielorte – bewusst sparsam: kleine Verschiebungen, damit Trikots,
 // Haut und Linien lesbar bleiben. ground = Bodenlicht (Himmelslicht von unten).
-// wet = wie stark der Boden bei Regen nass wirkt. flood: stadium (Flutlichtmasten),
+// wet = wie stark der Boden bei Regen nass wird (0…1). flood: stadium (Flutlichtmasten),
 // street (Laternen), yard (nur Fenster) – bestimmt, wie das Spielfeld abends leuchtet.
+// Wetter 2.0 (weather.js): surface = Untergrund (Bodenreaktion, siehe GROUND),
+// weather = Wetterprofil: puddles/splash (Anteil der Qualitätsstufe), snow (bleibt liegen),
+// footprints (Spuren auf nassem Boden; im Schnee gibt es sie überall draußen).
 export const VENUES = {
-  hinterhof: { sky: 0xb4c4cf, ground: 0x6a5a48, sunMul: 0.9, hemiMul: 1.12, wet: 1, flood: 'yard', post: { tint: [1.03, 1.0, 0.96], saturation: 0.98, contrast: 1.03, brightness: 1 } },
-  parkplatz: { sky: 0xa9bccb, ground: 0x55565a, sunMul: 1, hemiMul: 1, wet: 1, flood: 'street', post: { tint: [0.98, 0.99, 1.03], saturation: 0.95, contrast: 1.04, brightness: 1 } },
-  park: { sky: 0x9cc3e0, ground: 0x4f7040, sunMul: 1.08, hemiMul: 1, wet: 0.35, flood: 'street', post: { tint: [0.99, 1.02, 1.0], saturation: 1.03, contrast: 1.0, brightness: 1.02 } },
-  ascheplatz: { sky: 0xa9b6c0, ground: 0x7a4a30, sunMul: 0.94, hemiMul: 1.07, wet: 0.8, flood: 'stadium', post: { tint: [1.02, 0.99, 0.97], saturation: 1.0, contrast: 1.05, brightness: 1 } },
-  rasenplatz: { sky: 0x9ec4de, ground: 0x4a6a3a, sunMul: 1.06, hemiMul: 1, wet: 0.4, flood: 'stadium', post: { tint: [1.0, 1.01, 0.99], saturation: 1.05, contrast: 1.03, brightness: 1 } },
-  halle: { sky: 0xdfe6ea, ground: 0xb08a58, sunMul: 1, hemiMul: 1, wet: 0, flood: 'none', indoor: true, post: { tint: [1.03, 1.0, 0.97], saturation: 1.0, contrast: 1.02, brightness: 1 } },
+  hinterhof: { sky: 0xb4c4cf, ground: 0x6a5a48, sunMul: 0.9, hemiMul: 1.12, wet: 0.9, surface: 'concrete', weather: { puddles: 0.8, splash: 0.6, snow: 0.6, footprints: false }, flood: 'yard', post: { tint: [1.03, 1.0, 0.96], saturation: 0.98, contrast: 1.03, brightness: 1 } },
+  parkplatz: { sky: 0xa9bccb, ground: 0x55565a, sunMul: 1, hemiMul: 1, wet: 1, surface: 'asphalt', weather: { puddles: 1.25, splash: 0.55, snow: 0.5, footprints: false }, flood: 'street', post: { tint: [0.98, 0.99, 1.03], saturation: 0.95, contrast: 1.04, brightness: 1 } },
+  park: { sky: 0x9cc3e0, ground: 0x4f7040, sunMul: 1.08, hemiMul: 1, wet: 0.8, surface: 'grass', weather: { puddles: 0.8, splash: 0.9, snow: 1, footprints: true }, flood: 'street', post: { tint: [0.99, 1.02, 1.0], saturation: 1.03, contrast: 1.0, brightness: 1.02 } },
+  ascheplatz: { sky: 0xa9b6c0, ground: 0x7a4a30, sunMul: 0.94, hemiMul: 1.07, wet: 0.75, surface: 'ash', weather: { puddles: 0.6, splash: 0.75, snow: 1.1, footprints: true }, flood: 'stadium', post: { tint: [1.02, 0.99, 0.97], saturation: 1.0, contrast: 1.05, brightness: 1 } },
+  rasenplatz: { sky: 0x9ec4de, ground: 0x4a6a3a, sunMul: 1.06, hemiMul: 1, wet: 0.85, surface: 'grass', weather: { puddles: 0.7, splash: 1, snow: 1, footprints: true }, flood: 'stadium', post: { tint: [1.0, 1.01, 0.99], saturation: 1.05, contrast: 1.03, brightness: 1 } },
+  halle: { sky: 0xdfe6ea, ground: 0xb08a58, sunMul: 1, hemiMul: 1, wet: 0, surface: 'wood', weather: { puddles: 0, splash: 0, snow: 0, footprints: false }, flood: 'none', indoor: true, post: { tint: [1.03, 1.0, 0.97], saturation: 1.0, contrast: 1.02, brightness: 1 } },
 };
 // Wie hell das Spielfeld abends selbst ist (1 = ganz im Flutlicht), je Flutlichtart.
 // Stadion: Grundlicht auf dem Feld, hell wird es erst in den Lichtpools der Masten.

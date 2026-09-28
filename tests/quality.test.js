@@ -100,7 +100,7 @@ describe('Hochformat', () => {
 describe('Stufen', () => {
   it('haben alle Pflichtwerte', () => {
     for (const [id, q] of Object.entries(QUALITY)) {
-      for (const k of ['internalHeight', 'shadowMap', 'shadowHz', 'ao', 'bloom', 'dither', 'edges', 'particles', 'weather', 'spectators', 'flood', 'halo', 'wetFx', 'grade', 'emissive', 'crowdActive', 'crowdHz']) expect(q, `${id}.${k}`).toHaveProperty(k);
+      for (const k of ['internalHeight', 'shadowMap', 'shadowHz', 'ao', 'bloom', 'dither', 'edges', 'particles', 'weather', 'spectators', 'flood', 'halo', 'wetFx', 'grade', 'emissive', 'crowdActive', 'crowdHz', 'puddles', 'splash', 'footprints', 'heatHaze']) expect(q, `${id}.${k}`).toHaveProperty(k);
       expect([0, 8, 16]).toContain(q.ao);
       expect(q.weather).toBeGreaterThan(0);
       expect(q.weather).toBeLessThanOrEqual(1);

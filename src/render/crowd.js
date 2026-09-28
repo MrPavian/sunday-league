@@ -16,6 +16,7 @@ import { generatePlayer } from '../sim/generator.js';
 import { createRng } from '../core/rng.js';
 import { pixelTexture, toon } from './materials.js';
 import { currentQuality } from './quality.js';
+import { DECAL_CODE } from './weather.js';
 
 const ATLAS = 32;
 const CELL = 4;
@@ -173,6 +174,10 @@ export class Crowd {
     this.material = toon(0xffffff, { map: this.texture });
     this.material.onBeforeCompile = patch;
     this.material.customProgramCacheKey = () => 'crowd';
+    // Kennung im Alphakanal (wie Boden-Decals): Wetter wirkt global über Licht und Dunst,
+    // aber Schneedecke und Nässeglanz des Post-Shaders bleiben von den Leuten fern.
+    this.material.blending = THREE.NoBlending;
+    this.material.opacity = DECAL_CODE;
     const depth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
     depth.onBeforeCompile = patch;
     depth.customProgramCacheKey = () => 'crowd-depth';

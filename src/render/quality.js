@@ -26,14 +26,19 @@
 // wetFx          – harte Pixel-Glanzpunkte auf nassem Boden (sonst nur dunkler)
 // grade          – Anteil der Farbkorrektur aus Tageszeit und Spielort (0…1)
 // emissive       – Stärke des Eigenleuchtens (Flutlichtköpfe, Fenster, Hallenlampen)
+// Wetter 2.0 (weather.js; Budget, bei Engpass zuerst Spuren, dann Pfützen, dann Spritzer):
+// puddles        – höchstens so viele Pfützen (× Profil des Spielorts)
+// splash         – Anteil der Spritzer (Wasser, Schneestaub) je Kontakt
+// footprints     – Größe des Spuren-Ringpuffers (0 = keine Spuren)
+// heatHaze       – Stärke des Hitzeflimmerns (0 = aus)
 export const QUALITY = {
-  PC_LOW: { platform: 'pc', internalHeight: 270, shadowMap: 1024, shadowHz: 30, ao: 0, bloom: false, dither: true, edges: true, particles: 150, weather: 0.6, spectators: 0.6, crowdActive: 0.15, crowdHz: 10, flood: 1, halo: false, wetFx: false, grade: 1, emissive: 0.7 },
-  PC_MEDIUM: { platform: 'pc', internalHeight: 360, shadowMap: 2048, shadowHz: 60, ao: 8, bloom: false, dither: true, edges: true, particles: 300, weather: 1, spectators: 0.85, crowdActive: 0.3, crowdHz: 12, flood: 2, halo: true, wetFx: true, grade: 1, emissive: 1 },
-  PC_HIGH: { platform: 'pc', internalHeight: 400, shadowMap: 2048, shadowHz: 60, ao: 16, bloom: true, dither: true, edges: true, particles: 400, weather: 1, spectators: 1, crowdActive: 0.4, crowdHz: 12, flood: 2, halo: true, wetFx: true, grade: 1, emissive: 1 },
-  PC_ULTRA: { platform: 'pc', internalHeight: 500, shadowMap: 4096, shadowHz: 60, ao: 16, bloom: true, dither: true, edges: true, particles: 600, weather: 1, spectators: 1, crowdActive: 0.5, crowdHz: 15, flood: 2, halo: true, wetFx: true, grade: 1, emissive: 1 },
-  ANDROID_LOW: { platform: 'android', internalHeight: 250, shadowMap: 1024, shadowHz: 20, ao: 0, bloom: false, dither: true, edges: true, particles: 120, weather: 0.5, spectators: 0.4, crowdActive: 0.1, crowdHz: 8, flood: 1, halo: false, wetFx: false, grade: 0.5, emissive: 1 },
-  ANDROID_MEDIUM: { platform: 'android', internalHeight: 330, shadowMap: 1024, shadowHz: 30, ao: 8, bloom: false, dither: true, edges: true, particles: 200, weather: 0.75, spectators: 0.7, crowdActive: 0.25, crowdHz: 10, flood: 2, halo: false, wetFx: true, grade: 1, emissive: 1 },
-  ANDROID_HIGH: { platform: 'android', internalHeight: 360, shadowMap: 2048, shadowHz: 30, ao: 8, bloom: false, dither: true, edges: true, particles: 250, weather: 1, spectators: 0.9, crowdActive: 0.35, crowdHz: 12, flood: 2, halo: true, wetFx: true, grade: 1, emissive: 1 },
+  PC_LOW: { platform: 'pc', internalHeight: 270, shadowMap: 1024, shadowHz: 30, ao: 0, bloom: false, dither: true, edges: true, particles: 150, weather: 0.6, spectators: 0.6, crowdActive: 0.15, crowdHz: 10, flood: 1, halo: false, wetFx: false, grade: 1, emissive: 0.7, puddles: 0, splash: 0.5, footprints: 0, heatHaze: 0 },
+  PC_MEDIUM: { platform: 'pc', internalHeight: 360, shadowMap: 2048, shadowHz: 60, ao: 8, bloom: false, dither: true, edges: true, particles: 300, weather: 1, spectators: 0.85, crowdActive: 0.3, crowdHz: 12, flood: 2, halo: true, wetFx: true, grade: 1, emissive: 1, puddles: 4, splash: 1, footprints: 0, heatHaze: 0.7 },
+  PC_HIGH: { platform: 'pc', internalHeight: 400, shadowMap: 2048, shadowHz: 60, ao: 16, bloom: true, dither: true, edges: true, particles: 400, weather: 1, spectators: 1, crowdActive: 0.4, crowdHz: 12, flood: 2, halo: true, wetFx: true, grade: 1, emissive: 1, puddles: 8, splash: 1, footprints: 24, heatHaze: 1 },
+  PC_ULTRA: { platform: 'pc', internalHeight: 500, shadowMap: 4096, shadowHz: 60, ao: 16, bloom: true, dither: true, edges: true, particles: 600, weather: 1, spectators: 1, crowdActive: 0.5, crowdHz: 15, flood: 2, halo: true, wetFx: true, grade: 1, emissive: 1, puddles: 12, splash: 1.3, footprints: 64, heatHaze: 1 },
+  ANDROID_LOW: { platform: 'android', internalHeight: 250, shadowMap: 1024, shadowHz: 20, ao: 0, bloom: false, dither: true, edges: true, particles: 120, weather: 0.5, spectators: 0.4, crowdActive: 0.1, crowdHz: 8, flood: 1, halo: false, wetFx: false, grade: 0.5, emissive: 1, puddles: 0, splash: 0.4, footprints: 0, heatHaze: 0 },
+  ANDROID_MEDIUM: { platform: 'android', internalHeight: 330, shadowMap: 1024, shadowHz: 30, ao: 8, bloom: false, dither: true, edges: true, particles: 200, weather: 0.75, spectators: 0.7, crowdActive: 0.25, crowdHz: 10, flood: 2, halo: false, wetFx: true, grade: 1, emissive: 1, puddles: 2, splash: 0.6, footprints: 0, heatHaze: 0 },
+  ANDROID_HIGH: { platform: 'android', internalHeight: 360, shadowMap: 2048, shadowHz: 30, ao: 8, bloom: false, dither: true, edges: true, particles: 250, weather: 1, spectators: 0.9, crowdActive: 0.35, crowdHz: 12, flood: 2, halo: true, wetFx: true, grade: 1, emissive: 1, puddles: 4, splash: 0.8, footprints: 0, heatHaze: 0.6 },
 };
 export const QUALITY_IDS = Object.keys(QUALITY);
 
