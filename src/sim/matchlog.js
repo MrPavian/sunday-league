@@ -48,13 +48,13 @@ export function stepLog(m) {
     switch (e.type) {
       case 'pass':
         if (!p) break;
-        log.pending = { t: m.time, team: p.team, kicker: p.id, targetId: e.targetId, lofted: e.lofted, through: !!e.through, ...zone(m, p.team, p.pos), done: null };
+        log.pending = { t: m.time, half: m.half, team: p.team, kicker: p.id, targetId: e.targetId, lofted: e.lofted, through: !!e.through, ...zone(m, p.team, p.pos), done: null };
         log.passes.push(log.pending);
         if (log.cur?.team === p.team) log.cur.passes++;
         break;
       case 'shot':
         if (!p) break;
-        log.shots.push({ t: m.time, team: p.team, playerId: p.id, ...zone(m, p.team, p.pos), dist: dist2d(p.pos, { x: attackDir(m, p.team) * m.pitch.halfLength, z: 0 }), possIndex: log.poss.length - 1 });
+        log.shots.push({ t: m.time, half: m.half, team: p.team, playerId: p.id, ...zone(m, p.team, p.pos), dist: dist2d(p.pos, { x: attackDir(m, p.team) * m.pitch.halfLength, z: 0 }), possIndex: log.poss.length - 1 });
         if (log.cur?.team === p.team) log.cur.shots++;
         break;
       case 'tackle':
@@ -93,7 +93,7 @@ export function stepLog(m) {
     } else if (cause && tent.how === 'loose') tent.how = cause;
     const t2 = log.tentative;
     if (m.time - t2.t >= CONFIRM || cause === 'keeper' || m.phase !== 'play') {
-      log.turnovers.push({ t: t2.t, to: team, how: t2.how, third: t2.third, lane: t2.lane });
+      log.turnovers.push({ t: t2.t, half: m.half, to: team, how: t2.how, third: t2.third, lane: t2.lane });
       openPossession(m, log, team, t2.how);
       log.cur.start = t2.t;
       log.tentative = null;
@@ -114,7 +114,7 @@ export function stepLog(m) {
 }
 
 function sample(m, poss) {
-  const out = { t: m.time, half: m.half, poss, line: [0, 0], top: [0, 0], fwdGap: [0, 0], stamina: [0, 0] };
+  const out = { t: m.time, half: m.half, poss, line: [0, 0], top: [0, 0], fwdGap: [0, 0], stamina: [0, 0], ballSide: [0, 1].map((t) => (m.ball.pos.z * attackDir(m, t)) / m.pitch.halfWidth), ballAdv: advance(m, 0, m.ball.pos) };
   for (let team = 0; team < 2; team++) {
     const mine = m.players.filter((p) => p.team === team && p.role !== 'gk');
     if (!mine.length) continue;

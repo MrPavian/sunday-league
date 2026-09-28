@@ -15,7 +15,7 @@ export class SubPanel {
     this.match = null;
     root.addEventListener('click', (e) => {
       const t = e.target.closest('[data-action]');
-      if (!t || !this.match) return;
+      if (!t || !this.match || performance.now() - (this.openedAt ?? 0) < 350) return;
       const { action, value } = t.dataset;
       if (action === 'out') this.outId = value;
       else if (action === 'in') this.inId = value;
@@ -59,6 +59,7 @@ export class SubPanel {
   }
 
   open(match, team, onClose) {
+    this.openedAt = performance.now(); // Tipp zum Öffnen soll nicht gleich einen Knopf im Blatt treffen
     this.match = match;
     this.team = team;
     this.onClose = onClose;

@@ -19,6 +19,9 @@ export const SITUATION_TYPES = [
   'SECOND_BALLS', // Wir verlieren die zweiten Bälle
   'OPP_DEEP_BLOCK', // Gegner mauert, wir kommen nicht durch
   'UNDER_PRESSURE', // Gegner presst hoch und erobert bei uns hinten den Ball
+  'OPP_TIRING', // Der Gegner wird müde
+  'WE_TIRING', // Uns geht die Luft aus (ohne Pressing)
+  'ENDGAME', // Schlussphase: knapp vorne oder hinten
 ];
 
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
@@ -181,15 +184,59 @@ const DETECTORS = {
     const oppHigh = oppMods.press || oppMods.pressZone === 'high' || oppMods.line > 0.05;
     const lostDeep = w.turnovers.filter((t) => t.to !== team && t.third === 'att' && t.how !== 'keeper').length;
     const ours = w.poss.filter((p) => p.team === team && p.startThird === 'def').length;
-    if (lostDeep < 3 || ours < 3 || lostDeep / ours < (oppHigh ? 0.35 : 0.55)) return null;
+    if (lostDeep < 3 || ours < 3 || lostDeep / ours < (oppHigh ? 0.4 : 0.7)) return null;
     return {
-      severity: clamp01((lostDeep / ours) * 1.2 - 0.2),
+      severity: clamp01(((lostDeep / ours) * 1.2 - 0.2) * (oppHigh ? 1 : 0.7)),
       confidence: clamp01(ours / 6),
       evidence: { lostDeep, builds: ours },
       options: [{ group: 'build', value: 'kurz' }, { group: 'route', value: 'aussen' }, { group: 'build', value: 'direkt' }],
     };
   },
 };
+
+const DETECTORS_MORE = {
+  OPP_TIRING(m, team, w) {
+    const last = w.samples.at(-1);
+    if (!last || m.time < m.duration * 0.35) return null;
+    const opp = last.stamina[1 - team];
+    const ours = last.stamina[team];
+    if (opp > 0.58 || ours - opp < 0.06) return null;
+    return {
+      severity: clamp01((0.62 - opp) * 3 + (ours - opp)),
+      confidence: 0.85,
+      evidence: { opp, ours },
+      options: [{ group: 'press', value: 'hoch' }, { group: 'tempo', value: 'schnell' }, { group: 'route', value: 'tiefe' }],
+    };
+  },
+
+  WE_TIRING(m, team, w) {
+    const mods = planMods(m, team);
+    if (mods.press || mods.tire > 1.1) return null; // das meldet PRESS_TIRING
+    const last = w.samples.at(-1);
+    if (!last || m.time < m.duration * 0.4) return null;
+    const ours = last.stamina[team];
+    if (ours > 0.46) return null;
+    return {
+      severity: clamp01((0.55 - ours) * 3),
+      confidence: 0.85,
+      evidence: { stamina: ours },
+      options: [{ group: 'tempo', value: 'ruhig' }, { group: 'press', value: 'tief' }, { group: 'build', value: 'halten' }],
+    };
+  },
+
+  // Keine Hilfe fürs Ergebnis – nur die Frage, die sich jeder Trainer an der Linie stellt.
+  ENDGAME(m, team) {
+    if (m.time < m.duration * 0.78 || m.time > m.duration * 0.95) return null;
+    const d = m.score[team] - m.score[1 - team];
+    if (Math.abs(d) > 1) return null;
+    const lead = d > 0 ? 'lead' : d < 0 ? 'behind' : 'level';
+    const options = lead === 'lead'
+      ? [{ group: 'press', value: 'tief' }, { group: 'route', value: 'konter' }, { group: 'build', value: 'halten' }]
+      : [{ group: 'shape', value: 'aufruecken' }, { group: 'risk', value: 'aggressiv' }, { group: 'route', value: 'tiefe' }];
+    return { lead, severity: 0.6, confidence: 1, evidence: { score: [...m.score] }, options };
+  },
+};
+Object.assign(DETECTORS, DETECTORS_MORE);
 
 // Alle aktuellen Situationen für ein Team, die stärksten zuerst.
 export function detectSituations(m, team) {

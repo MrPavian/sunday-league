@@ -12,6 +12,7 @@ import { attackDir, getPlayer } from '../sim/match.js';
 import { shootoutScore } from '../sim/shootout.js';
 import { crestOf, crestSVG } from './crest.js';
 import { SHOUTS } from '../sim/coach.js';
+import { orderLabel } from '../sim/commands.js';
 import { tacticLabel } from '../sim/tactics.js';
 import { bondOf, isBad, isGood } from '../sim/bonds.js';
 
@@ -123,9 +124,10 @@ export class Hud {
   handleEvents(match) {
     const short = (team) => match.teams[team].short;
     for (const e of match.events) {
-      if (e.type === 'shout') {
+      if (e.type === 'shout' || (e.type === 'order' && e.by === 'card')) {
         const b = this.$('.coach-bubble');
-        b.textContent = tr(`„${SHOUTS[e.shout].label}“`, `“${SHOUTS[e.shout].label}”`);
+        const said = e.type === 'shout' ? (e.on ? SHOUTS[e.shout].label : tr(`Schluss mit ${SHOUTS[e.shout].short}!`, `Enough ${SHOUTS[e.shout].short.toLowerCase()}!`)) : `${orderLabel(e.group, e.value)}!`;
+        b.textContent = tr(`„${said}“`, `“${said}”`);
         b.hidden = false;
         b.classList.remove('pop');
         void b.offsetWidth; // Animation neu starten
@@ -180,6 +182,8 @@ export class Hud {
         const p = findAnyPlayer(match, e.playerId);
         const label = MATCH_INJURIES[e.kind]?.label ?? '';
         this.toast(e.out ? tr(`${p.name.split(' ')[0]} bleibt liegen – ${label}. Das sieht nicht gut aus.`, `${p.name.split(' ')[0]} stays down – ${label}. That does not look good.`) : tr(`${p.name.split(' ')[0]} humpelt weiter (${label})`, `${p.name.split(' ')[0]} limps on (${label})`), 2.2, 3);
+      } else if (e.type === 'coach_followup' && e.text) {
+        this.toast(`${e.result === 'better' ? '✓' : '✗'} ${e.text}`, 3, 2);
       } else if (e.type === 'injury_off') {
         const p = findAnyPlayer(match, e.playerId);
         this.toast(tr(`${p.name.split(' ')[0]} geht vom Platz – kein Wechsel mehr möglich, ${short(e.team)} in Unterzahl`, `${p.name.split(' ')[0]} goes off – no subs left, ${short(e.team)} down to ${match.players.filter((q) => q.team === e.team).length}`), 2.6, 4);

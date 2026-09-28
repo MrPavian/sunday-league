@@ -26,6 +26,7 @@ import { startShootout, stepShootout } from './shootout.js';
 import { stepKnocks } from './knocks.js';
 import { stepLog } from './matchlog.js';
 import { stepSituations } from './situations.js';
+import { answerCard, stepCoachFeed } from './coachfeed.js';
 
 export { attackDir, getPlayer } from './players.js';
 export { startPoke, startTackle } from './tackles.js';
@@ -134,13 +135,18 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = tr
 export function stepMatch(m, input = NO_INPUT, dt) {
   if (m.phase === 'ended') return;
   if (input.sub && m.humanTeam !== null) requestSub(m, m.humanTeam);
-  if (input.shout && m.manager) shout(m, input.shout);
+  if (input.shout && m.manager) {
+    // Offene Lagekarte: 1–3 beantworten sie, sonst sind 1–4 die Schnellbefehle.
+    if (m.coachCard && typeof input.shout === 'number' && input.shout <= m.coachCard.options.length) answerCard(m, m.coachTeam, input.shout - 1);
+    else shout(m, input.shout);
+  }
   restBench(m, dt);
   step(m, input, dt);
   if (m.phase === 'play' || m.phase === 'setpiece') stepReferee(m, dt);
   trackStep(m, dt);
   stepLog(m);
   stepSituations(m);
+  if (m.manager) stepCoachFeed(m, m.coachTeam);
 }
 
 function step(m, input, dt) {

@@ -1,16 +1,16 @@
-// Trainer-Modus: Man steht an der Seitenlinie und ruft rein. Die eigene Mannschaft
-// spielt selbst (KI), die Zurufe schieben sie in eine Richtung – sofern die Jungs
-// zuhören. Ballzurufe (Abspielen, Schießen) gelten für den nächsten Ballführer,
-// taktische Zurufe ein paar Sekunden lang.
+// Trainer-Modus: Man steht an der Seitenlinie. Die eigene Mannschaft spielt selbst
+// (KI), der Trainer gibt Befehle – wie gut sie umgesetzt werden, hängt an den Jungs
+// (plan.js).
 import { tr } from '../core/i18n.js';
+import { orderOf, setOrder } from './plan.js';
 
+// Schnellbefehle (Knöpfe 1–4): jeder schaltet einen dauerhaften Befehl an oder aus.
+// Die Wirkung steht im Spielplan (plan.js) – hier nur Knopf und Zuordnung.
 export const SHOUTS = {
-  // Nur echte Ansagen, die ein paar Minuten wirken – keine Ballmomente („Hau drauf!"),
-  // die vorbei sind, bevor der Ruf ankommt.
-  press: { label: tr('Geht drauf!', 'Press them!'), short: tr('Pressing', 'Press'), key: 'Digit1', secs: 10 },
-  back: { label: tr('Hinten dicht!', 'Shut up shop!'), short: tr('Hinten dicht', 'Defend'), key: 'Digit2', secs: 12 },
-  forward: { label: tr('Rückt auf!', 'Push up!'), short: tr('Aufrücken', 'Push up'), key: 'Digit3', secs: 12 },
-  wide: { label: tr('Über die Flügel!', 'Use the wings!'), short: tr('Flügel', 'Wings'), key: 'Digit4', secs: 12 },
+  press: { label: tr('Geht drauf!', 'Press them!'), short: tr('Pressing', 'Press'), key: 'Digit1', order: ['press', 'hoch'] },
+  back: { label: tr('Hinten dicht!', 'Shut up shop!'), short: tr('Hinten dicht', 'Defend'), key: 'Digit2', order: ['press', 'tief'] },
+  forward: { label: tr('Rückt auf!', 'Push up!'), short: tr('Aufrücken', 'Push up'), key: 'Digit3', order: ['shape', 'aufruecken'] },
+  wide: { label: tr('Über die Flügel!', 'Use the wings!'), short: tr('Flügel', 'Wings'), key: 'Digit4', order: ['route', 'aussen'] },
 };
 export const SHOUT_IDS = Object.keys(SHOUTS);
 const COOLDOWN = 1.5; // Heiser wird man trotzdem
@@ -28,31 +28,32 @@ export function enableManager(m, team = m.humanTeam) {
   return m;
 }
 
-// Reinrufen. Gibt false zurück, wenn man gerade erst gerufen hat.
-// secs/force: der Liveticker ruft länger und ohne Heiserkeitspause.
-export function shout(m, type, { secs = null, force = false } = {}) {
+// Reinrufen: Befehl an (oder, noch mal gerufen, wieder aus). Gibt false zurück, wenn
+// man gerade erst gerufen hat. force: der Liveticker ruft ohne Heiserkeitspause und
+// schaltet nur an, nie aus.
+export function shout(m, type, { force = false } = {}) {
   if (typeof type === 'number') type = SHOUT_IDS[type - 1]; // Zifferntasten 1–4
   if (!m.manager || !SHOUTS[type] || (!force && m.time - m.lastShout < COOLDOWN)) return false;
   m.lastShout = m.time;
-  m.shouts[type] = m.time + (secs ?? SHOUTS[type].secs);
+  const [group, value] = SHOUTS[type].order;
+  const on = force || orderOf(m, m.coachTeam, group) !== value;
+  setOrder(m, m.coachTeam, group, on ? value : null);
   // Gegenteile heben sich auf.
-  if (type === 'back') delete m.shouts.forward;
-  if (type === 'forward') delete m.shouts.back;
-  m.events.push({ type: 'shout', shout: type });
+  if (on && type === 'back') setOrder(m, m.coachTeam, 'shape', null);
+  if (on && type === 'forward' && orderOf(m, m.coachTeam, 'press') === 'tief') setOrder(m, m.coachTeam, 'press', null);
+  m.events.push({ type: 'shout', shout: type, on });
   return true;
 }
 
-// Hört dieser Spieler gerade auf einen Zuruf? Wer gut Fußball spielt, setzt ihn eher um.
+// Grundausrichtung aus der Kabine (Liveticker): gilt das ganze Spiel.
 export function heeds(m, p, type) {
   if (!m.manager || p.team !== m.coachTeam) return false;
-  // Grundausrichtung aus der Kabine gilt das ganze Spiel.
-  if (type === 'back' && m.mentality === 'defensive' && !(m.shouts?.forward > m.time)) return true;
-  if (type === 'forward' && m.mentality === 'offensive' && !(m.shouts?.back > m.time)) return true;
-  const until = m.shouts?.[type];
-  return until != null && m.time < until;
+  if (type === 'back') return m.mentality === 'defensive';
+  if (type === 'forward') return m.mentality === 'offensive';
+  return false;
 }
 
-export const activeShouts = (m) => (m.shouts ? SHOUT_IDS.filter((id) => m.time < (m.shouts[id] ?? -1)) : []);
+export const activeShouts = (m) => (m.manager ? SHOUT_IDS.filter((id) => orderOf(m, m.coachTeam, SHOUTS[id].order[0]) === SHOUTS[id].order[1]) : []);
 
 export const MENTALITIES = {
   defensive: tr('defensiv', 'defensive'),

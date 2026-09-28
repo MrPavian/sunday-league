@@ -5,8 +5,8 @@ import { tr } from '../core/i18n.js';
 import { tickerMinute } from './commentary.js';
 import { enableManager, MENTALITIES, setMentality, shout } from './coach.js';
 import { substitute, subsLeft, usableBench } from './squad.js';
+import { answerCard } from './coachfeed.js';
 
-const LONG = (m) => m.duration * 0.12; // ein Zuruf im Ticker hält gut zehn Fußballminuten
 
 const surname = (p) => p.name.split(' ').slice(-1)[0];
 
@@ -32,6 +32,7 @@ export function checkDecision(tl, events) {
   else if (events.some((e) => e.type === 'goal' && e.team !== team) && !recent) d = concededDecision(tl);
   else if (minute >= 55 && !recent && !tl.asked.has('sub2')) d = subDecision(tl);
   else if (minute >= 78 && !recent && once('finale')) d = finaleDecision(tl);
+  else if (m.coachCard && m.coachCard.team === team && m.coachCard !== tl.lastCard) d = cardDecision(tl, m.coachCard);
   if (d) {
     tl.open = d;
     tl.lastAsk = m.time;
@@ -49,7 +50,7 @@ export function answer(tl, choice = 0) {
   return opt.line ?? null;
 }
 
-const call = (type, secsFactor = 1) => (m) => shout(m, type, { secs: LONG(m) * secsFactor, force: true });
+const call = (type) => (m) => shout(m, type, { force: true });
 
 function startDecision(tl) {
   const opp = tl.m.teams[1 - tl.team].name;
@@ -135,6 +136,19 @@ function finaleDecision(tl) {
           opt(tl.m.mentality, tr('Geduld – die Chance kommt', 'Patience – the chance will come'), tr('Der Trainer bleibt ruhig auf der Bank sitzen.', 'The manager stays calmly on the bench.')),
           opt('defensive', tr(d === 0 ? 'Den Punkt sichern' : 'Nicht noch höher verlieren', d === 0 ? 'Settle for the point' : 'Avoid a heavier defeat'), tr('Der Trainer macht die Geste fürs Zurückziehen.', 'The manager signals to drop back.')),
         ],
+  };
+}
+
+// Lagekarte des Co-Trainers (coachfeed.js) als Ticker-Frage.
+function cardDecision(tl, card) {
+  tl.lastCard = card;
+  return {
+    id: `card:${card.type}`,
+    question: `${card.title}. ${card.text}`,
+    options: [
+      ...card.options.map((o, i) => ({ label: o.label, line: tr(`Von der Seitenlinie: „${o.label}!“`, `From the touchline: “${o.label}!”`), apply: (m) => answerCard(m, tl.team, i) })),
+      { label: tr('Nichts ändern', 'No change'), line: tr('Der Trainer schaut sich das noch an.', 'The manager keeps watching.'), apply: (m) => answerCard(m, tl.team, null) },
+    ],
   };
 }
 

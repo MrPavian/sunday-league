@@ -5,7 +5,7 @@ import { clamp, dist2d, len, norm, rotate } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
 import { ballSpeed } from './ball.js';
 import { attackDir, distToSegment, setControlled, wallPush } from './players.js';
-import { aiSkill, keeperReaction } from './ai.js';
+import { aiSkill, keeperReaction, laneScore } from './ai.js';
 import { knockSpeed } from './knocks.js';
 
 export const REACH = 0.75;
@@ -220,15 +220,18 @@ function pass(m, p, a, fatigue, fromHands) {
     const gkMalus = t.role === 'gk' ? (ai && !pressed ? 2 : 0.8) : 0;
     const st = styleOf(m, p.team);
     let score = dot - d * (ai ? st.shortPass : 0.035) - gkMalus + (t.pos.x - p.pos.x) * attackDir(m, p.team) * (ai ? st.forward : 0.025);
+    // Angriffsseite und -kanal: dorthin wird der Ball eher verteilt (nicht bei Rückpässen).
+    if (ai && (st.focus || st.channel) && (t.pos.x - p.pos.x) * attackDir(m, p.team) > -2) score += laneScore(m, p, st, t.pos) * 0.7;
+    const riskK = ai ? 1 - 0.35 * st.risk : 1;
     // Flanken sollen in Tornähe landen.
     if (a.lofted) score -= Math.abs(t.pos.x - attackDir(m, p.team) * pitch.halfLength) * 0.08;
     for (const o of m.players) {
       if (o.team === p.team) continue;
       const lane = distToSegment(o.pos, p.pos, t.pos);
-      if (!a.lofted && lane < 1.4) score -= 0.9 - lane * 0.3;
+      if (!a.lofted && lane < 1.4) score -= (0.9 - lane * 0.3) * riskK;
       // Wer eng gedeckt ist, bekommt den Ball ungern – vor allem nicht vom Torwart.
       const near = dist2d(o.pos, t.pos);
-      if (near < 2.5) score -= (2.5 - near) * (p.role === 'gk' ? 0.5 : 0.2);
+      if (near < 2.5) score -= (2.5 - near) * (p.role === 'gk' ? 0.5 : 0.2) * riskK;
     }
     if (score > plainScore) {
       plainScore = score;
@@ -243,11 +246,12 @@ function pass(m, p, a, fatigue, fromHands) {
   if (target && plainBest && target !== plainBest && isBad(bondOf(m, p, plainBest))) m.events.push({ type: 'snub', playerId: p.id, otherId: plainBest.id });
 
   // Freiwilliger Pass der KI, aber keiner wirklich frei? Dann lieber weiterdribbeln.
-  if (a.optional && (!target || bestScore < 0.35)) return false;
+  if (a.optional && (!target || bestScore < 0.35 - (p.id !== m.controlledId ? 0.12 * styleOf(m, p.team).risk : 0))) return false;
 
   let dir;
   let speed;
   let vy;
+  const lead = target && a.through && target.id === a.targetId ? a.through : null;
   if (!target) {
     // Keiner frei? Dann eben nach vorne gebolzt – grob Richtung Tor.
     // Aus der eigenen Hälfte weit nach vorne, in der gegnerischen in die Mitte.
@@ -258,9 +262,10 @@ function pass(m, p, a, fatigue, fromHands) {
     speed = outfieldThrow ? 9 : ownHalf ? 11 : 7;
     vy = ownHalf ? 2 : 0.5;
   } else {
-    const lx = clamp(target.pos.x + target.vel.x * 0.35, -pitch.halfLength, pitch.halfLength);
+    // Pass in die Tiefe (lead): nicht in den Fuß, sondern in den Raum vor dem Läufer.
+    const lx = clamp(lead ? lead.x : target.pos.x + target.vel.x * 0.35, -pitch.halfLength, pitch.halfLength);
     const edge = pitch.boundary === 'lines' ? 1.5 : 0.5;
-    const lz = clamp(target.pos.z + target.vel.z * 0.35, -pitch.halfWidth + edge, pitch.halfWidth - edge);
+    const lz = clamp(lead ? lead.z : target.pos.z + target.vel.z * 0.35, -pitch.halfWidth + edge, pitch.halfWidth - edge);
     const d = len(lx - p.pos.x, lz - p.pos.z);
     dir = norm(lx - p.pos.x, lz - p.pos.z);
     if (a.lofted) {
@@ -270,6 +275,11 @@ function pass(m, p, a, fatigue, fromHands) {
       vy = a.driven ? clamp(1.5 + d * 0.1, 2, 3.2) : clamp(3 + d * 0.22, 4, 8);
       const flight = (vy + Math.sqrt(Math.max(0, vy * vy - 2 * 9.81 * (arrive - 0.11)))) / 9.81;
       speed = d / Math.max(0.4, flight);
+    } else if (lead) {
+      // In den Lauf: so dosiert, dass er kurz hinter dem Zielpunkt ausrollt.
+      const k = pitch.surface?.rollFriction ?? 0.7;
+      speed = clamp(k * (d + 2.5), 6, 15);
+      vy = 0.2;
     } else {
       // Flache Pässe mit Zug – ein lahmer Pass wird in der Kreisklasse abgefangen.
       speed = clamp(3.5 + d * 0.75, 5.5, 16);
@@ -289,7 +299,14 @@ function pass(m, p, a, fatigue, fromHands) {
   m.lastPass = { playerId: p.id, team: p.team, time: m.time };
   // Offener Pass: Der Adressat läuft dem Ball entgegen (siehe ai.js, receiveSpot).
   m.pass = target ? { targetId: target.id, kicker: p.id, team: p.team, time: m.time } : null;
-  m.events.push({ type: 'pass', playerId: p.id, targetId: target?.id ?? null, lofted: !!a.lofted });
+  // In die Tiefe: Wie lange die Verteidiger zum Umschalten brauchen, hängt an ihrem Zweikampfverhalten.
+  if (m.pass && lead) {
+    const defs = m.players.filter((o) => o.team !== p.team && o.role === 'def');
+    const read = defs.length ? defs.reduce((s2, o) => s2 + o.attrs.tackling, 0) / defs.length : 0.5;
+    m.pass.through = true;
+    m.pass.react = 0.55 - 0.3 * read;
+  }
+  m.events.push({ type: 'pass', playerId: p.id, targetId: target?.id ?? null, lofted: !!a.lofted, through: !!(a.through && target) });
 }
 
 // Strafraum: Nur hier darf der Torwart den Ball in die Hand nehmen.

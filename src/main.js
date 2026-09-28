@@ -50,6 +50,8 @@ import { PoolBrowser } from './ui/PoolBrowser.js';
 import { TitleScreen } from './ui/TitleScreen.js';
 import { ShoutBar } from './ui/ShoutBar.js';
 import { SubPanel } from './ui/SubPanel.js';
+import { PlanPanel } from './ui/PlanPanel.js';
+import { HalftimePanel } from './ui/HalftimePanel.js';
 import { coachAway } from './career/personal.js';
 import { enableManager } from './sim/coach.js';
 import { Settings } from './ui/Settings.js';
@@ -86,11 +88,35 @@ try {
 const rig = new CameraRig();
 const scene = new THREE.Scene();
 // ?debug: Renderer und Szene für die Browser-Konsole (Draw Calls, Speicher).
-if (params.has('debug')) globalThis.__sl = { renderer: pixel.renderer, scene, THREE };
+if (params.has('debug')) globalThis.__sl = { renderer: pixel.renderer, scene, THREE, get match() { return match; } };
 const input = new Input();
 const shoutBar = new ShoutBar(document.getElementById('shoutbar') ?? document.body.appendChild(Object.assign(document.createElement('div'), { id: 'shoutbar', hidden: true })), input);
 const hud = new Hud(document.getElementById('hud'));
 const subPanel = new SubPanel(document.body.appendChild(Object.assign(document.createElement('div'), { id: 'subpanel', hidden: true })));
+const planPanel = new PlanPanel(document.body.appendChild(Object.assign(document.createElement('div'), { id: 'planpanel', hidden: true })));
+const halfPanel = new HalftimePanel(document.body.appendChild(Object.assign(document.createElement('div'), { id: 'halfpanel', hidden: true })));
+// Halbzeit im Trainermodus: Spiel steht, Lage ansehen, umstellen, wechseln.
+function openHalftime() {
+  const team = match.coachTeam;
+  halfPanel.open(match, team, {
+    onPlan: () => {
+      halfPanel.hideForNow();
+      planPanel.open(match, team, { advanced: true }, () => halfPanel.reopen());
+    },
+    onSub: () => {
+      halfPanel.hideForNow();
+      subPanel.open(match, team, () => halfPanel.reopen());
+    },
+    onClose: () => {
+      drainInput = true;
+      if (match.phase === 'halftime') match.phaseTimer = Math.min(match.phaseTimer, 0.5); // die Pause war schon lang genug
+    },
+  });
+}
+shoutBar.onPlan = () => {
+  if (mode !== 'play' || !match?.manager || match.phase === 'ended' || subPanel.isOpen) return;
+  planPanel.open(match, match.coachTeam, { advanced: true }, () => (drainInput = true));
+};
 let drainInput = false; // nach dem Schließen der Wechseltafel: liegengebliebene Tasten verwerfen
 const endScreen = new EndScreen(document.getElementById('end'));
 const sound = new Sound();
@@ -738,6 +764,14 @@ function frame(now) {
     if (mode !== 'play' || !subPanel.match || subPanel.match !== match) subPanel.close();
     else if (raw.sub) subPanel.confirm();
     else if (raw.menu) subPanel.close();
+  } else if (planPanel.isOpen) {
+    acc = 0;
+    const raw = input.poll();
+    if (mode !== 'play' || planPanel.match !== match || raw.menu) planPanel.close();
+  } else if (halfPanel.isOpen) {
+    acc = 0;
+    input.poll();
+    if (mode !== 'play' || halfPanel.match !== match) halfPanel.close();
   }
   while (acc >= STEP) {
     let raw = input.poll();
@@ -788,9 +822,10 @@ function frame(now) {
       const keys = careerMatch ? tr('<b>Enter</b> weiter ins Vereinsheim', '<b>Enter</b> back to the clubhouse') : undefined;
       setTimeout(() => ended === match && mode === 'play' && endScreen.show(ended, { keys }), 1200);
     }
+    if (mode === 'play' && match.manager && match.events.some((e) => e.type === 'halftime')) openHalftime();
     match.events.length = 0;
     acc -= STEP;
-    if (subPanel.isOpen) acc = 0;
+    if (subPanel.isOpen || planPanel.isOpen || halfPanel.isOpen) acc = 0;
   }
   view.sync(match, dt);
   hud.update(match, dt);

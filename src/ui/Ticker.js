@@ -84,7 +84,7 @@ export class Ticker {
   // Freier Zuruf zwischendurch – hält im Ticker gut zehn Fußballminuten.
   call(type) {
     const m = this.match;
-    if (!this.tl || m.phase === 'ended' || !shout(m, type, { secs: m.duration * 0.12 })) return;
+    if (!this.tl || m.phase === 'ended' || !shout(m, type)) return;
     m.events.length = 0;
     this.commentator.lines.push({ minute: tickerMinute(m), text: tr(`Von der Seitenlinie: „${SHOUTS[type].label}“`, `From the touchline: “${SHOUTS[type].label}”`), kind: 'coach' });
     this.update();

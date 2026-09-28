@@ -12,7 +12,7 @@ function play(seed, call, seconds = 90) {
   let depth = 0;
   let samples = 0;
   for (let i = 0; i < seconds * 60 * 1.6 && m.phase !== 'ended'; i++) { // Unterbrechungen kosten Zeit
-    const input = i % 90 === 0 && call ? { shout: call } : undefined;
+    const input = i === 60 && call ? { shout: call } : undefined; // einmal rufen, gilt dann
     stepMatch(m, input, DT);
     m.events.length = 0;
     if (m.phase === 'play' && i % 30 === 0) {
@@ -31,14 +31,19 @@ describe('manager mode', () => {
     expect(m.stats.teams[0].shots + m.stats.teams[1].shots).toBeGreaterThan(0);
   });
 
-  it('shouts need a breather and expire', () => {
+  it('shouts need a breather, stay on until called off again', () => {
     const m = enableManager(createMatch({ seed: 1, pitch: PITCHES.rasenplatz, human: true, duration: 60 }));
     m.time = 10;
     expect(shout(m, 'press')).toBe(true);
     expect(shout(m, 'back')).toBe(false); // zu schnell hintereinander
     expect(activeShouts(m)).toContain('press');
     m.time = 30;
-    expect(activeShouts(m)).not.toContain('press');
+    expect(activeShouts(m)).toContain('press'); // ein Befehl bleibt
+    expect(shout(m, 'back')).toBe(true); // Gegenteil löst ihn ab
+    expect(activeShouts(m)).toEqual(['back']);
+    m.time = 35;
+    shout(m, 'back');
+    expect(activeShouts(m)).toEqual([]);
     expect(shout(m, 'nonsense')).toBe(false);
   });
 
