@@ -24,6 +24,8 @@ import { checkIncident, incidentOnBall, planIncident, stepIncident } from './inc
 import { resolveTackles, startPoke, startTackle, stateMove } from './tackles.js';
 import { startShootout, stepShootout } from './shootout.js';
 import { stepKnocks } from './knocks.js';
+import { stepLog } from './matchlog.js';
+import { stepSituations } from './situations.js';
 
 export { attackDir, getPlayer } from './players.js';
 export { startPoke, startTackle } from './tackles.js';
@@ -137,6 +139,8 @@ export function stepMatch(m, input = NO_INPUT, dt) {
   step(m, input, dt);
   if (m.phase === 'play' || m.phase === 'setpiece') stepReferee(m, dt);
   trackStep(m, dt);
+  stepLog(m);
+  stepSituations(m);
 }
 
 function step(m, input, dt) {
