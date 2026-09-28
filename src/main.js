@@ -99,7 +99,7 @@ setCurrentQuality(startQuality);
 pixel.applyQuality(startQuality);
 const governor = createGovernor(startQuality, { platform, auto: !fixedQuality });
 const gfx = new DebugOverlay(pixel, { visible: params.has('gfx') });
-gfx.extra = () => `Plattform  ${platform}${governor.auto ? `  Auto (${governor.changes} Wechsel${governor.lastFps ? `, zuletzt ${governor.lastFps.toFixed(0)} fps` : ''})` : '  fest'}`;
+gfx.extra = () => `PLATFORM    ${platform}${governor.auto ? `  Auto (${governor.changes} Wechsel${governor.lastFps ? `, zuletzt ${governor.lastFps.toFixed(0)} fps` : ''})` : '  fest'}`;
 let lightMood = null;
 try {
   if (localStorage.getItem('sunday-league:fx') === '0') pixel.setEffects(false);
@@ -219,6 +219,7 @@ function loadVenue(id) {
   if (!params.has('nomerge')) mergeStatic(venueRoot);
   scene.add(venueRoot);
   pixel.applyShadowSize(scene);
+  pixel.classifyShadowCasters(scene, venueRoot);
   pixel.markShadowsDirty();
   sound.setVenue(venue.id);
   rig.viewHeight = cameraViewHeight(venueInfo.viewHeight);
@@ -236,6 +237,7 @@ function showMatch(m) {
   if (style === 'manager' && m.humanTeam !== null) enableManager(m);
   match = m;
   view = new MatchView(scene, match);
+  pixel.classifyShadowCasters(scene, venueRoot);
   hud.init(match);
   if (m.manager) shoutBar.show();
   else shoutBar.hide();
@@ -721,11 +723,27 @@ function finishCareerMatch() {
 
 // --- Loop ------------------------------------------------------------------------
 
+// Exakte Canvasgröße in Gerätepixeln (Chrome/Android-WebView, Firefox); sonst geschätzt.
+let devSize = null;
 function resize() {
-  pixel.setSize(window.innerWidth, window.innerHeight, window.devicePixelRatio || 1);
+  pixel.setSize(window.innerWidth, window.innerHeight, window.devicePixelRatio || 1, devSize);
   rig.resize(pixel.width, pixel.height);
 }
 window.addEventListener('resize', resize);
+try {
+  new ResizeObserver((entries) => {
+    const box = entries[0]?.devicePixelContentBoxSize?.[0];
+    if (!box) return;
+    // Nur plausible Werte (±2 px zu CSS × DPR) – manche Emulationen melden CSS-Pixel.
+    const dpr = window.devicePixelRatio || 1;
+    const ok = Math.abs(box.inlineSize - innerWidth * dpr) <= 2 && Math.abs(box.blockSize - innerHeight * dpr) <= 2;
+    if (!ok) return;
+    devSize = { width: box.inlineSize, height: box.blockSize };
+    if (devSize.width !== pixel.raster?.devWidth || devSize.height !== pixel.raster?.devHeight) resize();
+  }).observe(canvas, { box: 'device-pixel-content-box' });
+} catch {
+  // ältere Browser: Schätzung aus CSS-Größe × DPR
+}
 
 if (params.get('venue')) {
   loadVenue(params.get('venue'));

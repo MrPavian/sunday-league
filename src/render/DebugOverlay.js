@@ -10,6 +10,7 @@ export class DebugOverlay {
     });
     this.el.hidden = !visible;
     document.body.appendChild(this.el);
+    pixel.enableGpuTiming(visible);
     this.t = 0;
     this.frames = 0;
     this.fps = 0;
@@ -18,6 +19,7 @@ export class DebugOverlay {
 
   toggle() {
     this.el.hidden = !this.el.hidden;
+    this.pixel.enableGpuTiming(!this.el.hidden);
   }
 
   // dt in Sekunden; aktualisiert die Anzeige zweimal pro Sekunde.
@@ -32,16 +34,20 @@ export class DebugOverlay {
     const p = this.pixel;
     const s = p.stats;
     const ms = (v) => (v == null ? '–' : `${v.toFixed(2)} ms`);
+    const k = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
     this.el.textContent = [
-      `Qualität   ${p.qualityId}`,
-      `Intern     ${p.width}×${p.height}  ×${p.pixelSize}  (DPR ${p.dpr})`,
-      `Canvas     ${p.raster?.canvasWidth}×${p.raster?.canvasHeight}`,
-      `FPS        ${this.fps.toFixed(1)}`,
-      `Draw Calls ${s.calls}`,
-      `Dreiecke   ${s.triangles}`,
-      `Szene      ${ms(s.sceneMs)}  (CPU)`,
-      `Post+Blit  ${ms(s.postMs)}  (CPU)`,
-      `Schatten   ${ms(s.shadowMs)}  (${Math.round(s.shadowShare * 100)} % der Bilder)`,
+      'GRAPHICS DEBUG',
+      `QUALITY     ${p.qualityId}`,
+      `INTERNAL    ${p.width} × ${p.height}  (Pixel ${p.pixelSize}×${p.pixelSize}, DPR ${p.dpr})`,
+      `CANVAS      ${p.raster?.canvasWidth} × ${p.raster?.canvasHeight}`,
+      `FPS         ${this.fps.toFixed(1)}`,
+      `DRAW CALLS  ${s.calls}`,
+      `TRIANGLES   ${k(s.triangles)}`,
+      `SCENE CPU   ${ms(s.sceneMs)}`,
+      `POST CPU    ${ms(s.postMs)}`,
+      `GPU FRAME   ${p.gpu ? ms(s.gpuMs) : 'nicht verfügbar'}`,
+      `SHADOW      ${ms(s.shadowMs)}  ${p.shadowHz} Hz, ${Math.round(s.shadowShare * 100)} % der Bilder`,
+      `CASTERS     ${s.casters.static} statisch / ${s.casters.dynamic} dynamisch`,
       this.extra(),
     ].filter(Boolean).join('\n');
   }

@@ -9,20 +9,23 @@
 // internalHeight – Zielhöhe des internen Bildes (Pixel); die echte Höhe ergibt sich aus
 //                  der ganzzahligen Pixelgröße (1080 Gerätepixel: 330 → 3 → 360 px)
 // shadowMap      – Kantenlänge der Schattenkarte
-// shadowInterval – Schattenkarte nur jedes n-te Bild neu (1 = jedes Bild)
-// ao             – Kontaktschatten-Abfragen im Post-Shader (0 | 8 | 16)
+// shadowHz       – wie oft die Schattenkarte höchstens neu gezeichnet wird (pro Sekunde,
+//                  zeitbasiert – ein 30-fps-Gerät bekommt so trotzdem 30 Hz)
+// ao             – Kontaktschatten-Abfragen im Post-Shader (0 = aus | 8 | 16)
 // bloom          – Glühen um helle Stellen (Pseudo-Bloom im Post-Shader)
 // dither         – Bayer-Dithering an
-// particles      – Größe des Partikel-Pools
+// edges          – Kantenerkennung (Silhouetten und helle Innenkanten) an
+// particles      – Größe des Partikel-Pools (Staub, Grasfetzen, Spritzer)
+// weather        – Anteil der Wetterpartikel (Regen, Schnee, Laub), 0…1
 // spectators     – Anteil der Zuschauer (für spätere Phasen, 0…1)
 export const QUALITY = {
-  PC_LOW: { platform: 'pc', internalHeight: 270, shadowMap: 1024, shadowInterval: 2, ao: 0, bloom: false, dither: true, particles: 150, spectators: 0.6 },
-  PC_MEDIUM: { platform: 'pc', internalHeight: 360, shadowMap: 2048, shadowInterval: 1, ao: 8, bloom: false, dither: true, particles: 300, spectators: 1 },
-  PC_HIGH: { platform: 'pc', internalHeight: 384, shadowMap: 2048, shadowInterval: 1, ao: 16, bloom: true, dither: true, particles: 400, spectators: 1 },
-  PC_ULTRA: { platform: 'pc', internalHeight: 480, shadowMap: 4096, shadowInterval: 1, ao: 16, bloom: true, dither: true, particles: 600, spectators: 1 },
-  ANDROID_LOW: { platform: 'android', internalHeight: 270, shadowMap: 1024, shadowInterval: 3, ao: 0, bloom: false, dither: true, particles: 120, spectators: 0.5 },
-  ANDROID_MEDIUM: { platform: 'android', internalHeight: 330, shadowMap: 1024, shadowInterval: 2, ao: 8, bloom: false, dither: true, particles: 200, spectators: 0.75 },
-  ANDROID_HIGH: { platform: 'android', internalHeight: 360, shadowMap: 2048, shadowInterval: 1, ao: 8, bloom: false, dither: true, particles: 250, spectators: 1 },
+  PC_LOW: { platform: 'pc', internalHeight: 270, shadowMap: 1024, shadowHz: 30, ao: 0, bloom: false, dither: true, edges: true, particles: 150, weather: 0.6, spectators: 0.6 },
+  PC_MEDIUM: { platform: 'pc', internalHeight: 360, shadowMap: 2048, shadowHz: 60, ao: 8, bloom: false, dither: true, edges: true, particles: 300, weather: 1, spectators: 1 },
+  PC_HIGH: { platform: 'pc', internalHeight: 400, shadowMap: 2048, shadowHz: 60, ao: 16, bloom: true, dither: true, edges: true, particles: 400, weather: 1, spectators: 1 },
+  PC_ULTRA: { platform: 'pc', internalHeight: 500, shadowMap: 4096, shadowHz: 60, ao: 16, bloom: true, dither: true, edges: true, particles: 600, weather: 1, spectators: 1 },
+  ANDROID_LOW: { platform: 'android', internalHeight: 250, shadowMap: 1024, shadowHz: 20, ao: 0, bloom: false, dither: true, edges: true, particles: 120, weather: 0.5, spectators: 0.5 },
+  ANDROID_MEDIUM: { platform: 'android', internalHeight: 330, shadowMap: 1024, shadowHz: 30, ao: 8, bloom: false, dither: true, edges: true, particles: 200, weather: 0.75, spectators: 0.75 },
+  ANDROID_HIGH: { platform: 'android', internalHeight: 360, shadowMap: 2048, shadowHz: 30, ao: 8, bloom: false, dither: true, edges: true, particles: 250, weather: 1, spectators: 1 },
 };
 export const QUALITY_IDS = Object.keys(QUALITY);
 
@@ -50,22 +53,24 @@ export function cameraViewHeight(venueViewHeight = DENSITY.reference) {
   return venueViewHeight + (DENSITY.reference - venueViewHeight) * DENSITY.blend;
 }
 
-// Ganzzahliges Raster aus Fenster (CSS-Pixel) und DPR: Gerätepixel → Pixelgröße →
-// interne Auflösung. Das Canvas bekommt exakt width·pixelSize × height·pixelSize
-// Gerätepixel; die CSS-Größe ist dieselbe Fläche geteilt durch den DPR.
-export function computeRaster(cssWidth, cssHeight, dpr, targetHeight) {
-  const devW = Math.max(1, Math.round(cssWidth * dpr));
-  const devH = Math.max(1, Math.round(cssHeight * dpr));
+// Ganzzahliges Raster: Gerätepixel → Pixelgröße → interne Auflösung. Das Canvas füllt
+// das Fenster und hat exakt so viele Pixel wie das Gerät dafür zeigt (dev, gemessen per
+// ResizeObserver „device-pixel-content-box“; sonst geschätzt aus CSS-Größe × DPR). Das
+// Bild wird mittig als width·pixelSize × height·pixelSize hineinkopiert – der Browser
+// skaliert nichts, auch nicht bei DPR 2,625 (dort wären 914,29 CSS-Pixel nicht exakt).
+export function computeRaster(cssWidth, cssHeight, dpr, targetHeight, dev = null) {
+  const devW = Math.max(1, dev?.width ?? Math.round(cssWidth * dpr));
+  const devH = Math.max(1, dev?.height ?? Math.round(cssHeight * dpr));
   // Maßgeblich ist die kurze Seite: Im Hochformat wird sonst die Breite winzig.
   const pixelSize = Math.max(1, Math.round(Math.min(devW, devH) / targetHeight));
   const width = Math.max(1, Math.floor(devW / pixelSize));
   const height = Math.max(1, Math.floor(devH / pixelSize));
   const canvasWidth = width * pixelSize;
   const canvasHeight = height * pixelSize;
-  // Mittig, aber auf ganze Gerätepixel versetzt – sonst würde der Browser doch interpolieren.
+  // Mittig, auf ganze Gerätepixel versetzt; der Rest (< pixelSize) bleibt als schmaler Rand.
   const left = Math.floor((devW - canvasWidth) / 2);
   const top = Math.floor((devH - canvasHeight) / 2);
-  return { pixelSize, width, height, canvasWidth, canvasHeight, cssWidth: canvasWidth / dpr, cssHeight: canvasHeight / dpr, cssLeft: left / dpr, cssTop: top / dpr };
+  return { pixelSize, width, height, devWidth: devW, devHeight: devH, canvasWidth, canvasHeight, left, top };
 }
 
 // Plattform: Android (Capacitor-App oder Android-Browser) oder PC.

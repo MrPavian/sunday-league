@@ -10,8 +10,9 @@ describe('Pixelraster', () => {
       expect(r.canvasHeight).toBe(r.height * r.pixelSize);
       expect(r.canvasWidth).toBeLessThanOrEqual(Math.round(w * dpr));
       expect(r.canvasHeight).toBeLessThanOrEqual(Math.round(h * dpr));
-      expect(Number.isInteger(r.cssLeft * dpr)).toBe(true);
-      expect(Number.isInteger(r.cssTop * dpr)).toBe(true);
+      expect(Number.isInteger(r.left) && Number.isInteger(r.top)).toBe(true);
+      expect(r.left * 2 + r.canvasWidth - r.devWidth).toBeLessThanOrEqual(1);
+      expect(r.devWidth - r.canvasWidth).toBeLessThan(r.pixelSize);
     }
   });
   it('Handy 915×412 @2,625: 3 Gerätepixel je Pixel, 360 px hoch', () => {
@@ -81,10 +82,46 @@ describe('Automatik', () => {
   });
 });
 
+describe('Gemessene Gerätepixel', () => {
+  it('haben Vorrang vor der Schätzung aus CSS × DPR', () => {
+    const r = computeRaster(915, 412, 2.625, 330, { width: 2401, height: 1081 });
+    expect(r).toMatchObject({ devWidth: 2401, devHeight: 1081, pixelSize: 3, width: 800, height: 360, left: 0, top: 0 });
+  });
+});
+
 describe('Hochformat', () => {
   it('richtet die Pixelgröße nach der kurzen Seite', () => {
     const r = computeRaster(412, 915, 2.625, QUALITY.ANDROID_MEDIUM.internalHeight);
     expect(r.width).toBe(360);
     expect(r.pixelSize).toBe(3);
+  });
+});
+
+describe('Stufen', () => {
+  it('haben alle Pflichtwerte', () => {
+    for (const [id, q] of Object.entries(QUALITY)) {
+      for (const k of ['internalHeight', 'shadowMap', 'shadowHz', 'ao', 'bloom', 'dither', 'edges', 'particles', 'weather', 'spectators']) expect(q, `${id}.${k}`).toHaveProperty(k);
+      expect([0, 8, 16]).toContain(q.ao);
+      expect(q.weather).toBeGreaterThan(0);
+      expect(q.weather).toBeLessThanOrEqual(1);
+    }
+  });
+  it('Android schont: Schatten höchstens 30 Hz, höchstens 8 AO-Abfragen', () => {
+    for (const id of LADDER.android) {
+      expect(QUALITY[id].shadowHz).toBeLessThanOrEqual(30);
+      expect(QUALITY[id].ao).toBeLessThanOrEqual(8);
+    }
+  });
+  it('Raster je Stufe und Bildschirm bleibt ganzzahlig und bei ~30 px/m', () => {
+    const screens = [[1920, 1080, 1], [2560, 1440, 1], [3840, 2160, 1], [1280, 720, 1], [915, 412, 2.625], [740, 360, 3], [412, 915, 2.625]];
+    for (const [id, q] of Object.entries(QUALITY)) {
+      for (const [w, h, dpr] of screens) {
+        const r = computeRaster(w, h, dpr, q.internalHeight);
+        expect(Number.isInteger(r.pixelSize)).toBe(true);
+        const short = Math.min(r.width, r.height);
+        expect(short, `${id} ${w}x${h}`).toBeGreaterThanOrEqual(q.internalHeight * 0.66);
+        expect(short, `${id} ${w}x${h}`).toBeLessThanOrEqual(q.internalHeight * 1.5);
+      }
+    }
   });
 });

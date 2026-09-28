@@ -37,6 +37,7 @@ const postFragment = /* glsl */ `
   uniform float edgeMin;     // Silhouette ab diesem Tiefensprung (Meter) …
   uniform float edgeTexels;  // … bzw. ab so vielen Pixelbreiten, was größer ist
   uniform float creaseMin;   // Knickstärke für helle Innenkanten
+  uniform float characterEdgeBoost; // reserviert: Zusatzstärke für Figuren (braucht spätere Objekt-ID)
   // Look: Kontaktschatten, Glühen, Farbkorrektur, Dunst und Vignette.
   uniform float aoStrength;
   uniform float bloom;
@@ -101,11 +102,16 @@ const postFragment = /* glsl */ `
     // sie von beiden Seiten.
     float lap = max(dL + dR - 2.0 * d, 0.0) + max(dD + dU - 2.0 * d, 0.0);
     float silhouette = max(edgeMin, edgeTexels * px.y);
+    #if EDGES == 1
     bool edge = !sky && lap > silhouette;
+    #else
+    bool edge = false;
+    #endif
 
     // Helle Innenkanten: Knick zwischen zwei Flächen desselben Objekts, nur auf der
     // Seite, die mehr zur Lichtseite zeigt.
     float crease = 0.0;
+    #if EDGES == 1
     if (!sky && !edge) {
       vec3 nOwnX = faceNormal(ownR ? txR : txL, ty);
       vec3 nOthX = faceNormal(ownR ? txL : txR, ty);
@@ -114,10 +120,12 @@ const postFragment = /* glsl */ `
       crease += step(abs(ownR ? dL - d : dR - d), 0.3) * smoothstep(-0.01, 0.01, dot(nOwnX - nOthX, vec3(1.0))) * distance(nOwnX, nOthX);
       crease += step(abs(ownU ? dD - d : dU - d), 0.3) * smoothstep(-0.01, 0.01, dot(nOwnY - nOthY, vec3(1.0))) * distance(nOwnY, nOthY);
     }
+    #endif
 
     vec3 c = color;
     if (edge) {
-      c *= 1.0 - depthEdgeStrength;
+      float character = 0.0; // Figur? Erst mit Objekt-ID bekannt, bis dahin 0.
+      c *= 1.0 - clamp(depthEdgeStrength + characterEdgeBoost * character, 0.0, 1.0);
     } else if (crease > creaseMin) {
       c *= 1.0 + normalEdgeStrength;
     }
@@ -209,10 +217,16 @@ export const LOOKS = {
   halle: { tint: [1.02, 1.0, 0.97], saturation: 1.0, vignette: 0.4, fogAmount: 0, bloom: 0.55 },
 };
 
-// Kantenschwellen. Silhouette: mindestens EDGE.min Meter Tiefensprung (≈ die alte
-// feste Schwelle ohne den Anteil des schrägen Bodens), bei grober Auflösung
-// EDGE.texels Pixelbreiten – so bleiben Kanten im Pixelraster gleich dicht.
-export const EDGE = { min: 0.3, texels: 8, crease: 0.18 };
+// Kanten, zentral einstellbar:
+// depthStrength  – wie stark Silhouetten abdunkeln (Tiefensprung)
+// normalStrength – wie stark helle Innenkanten aufhellen (Knick zwischen Flächen)
+// min / texels   – Silhouette ab min Metern Tiefensprung, bei grober Auflösung ab
+//                  texels Pixelbreiten (≈ die alte feste Schwelle ohne den Anteil des
+//                  schrägen Bodens) – Kanten bleiben so im Pixelraster gleich dicht
+// crease         – ab welcher Knickstärke eine Innenkante hell wird
+// characterBoost – reserviert: Figuren stärker trennen als Kulisse. Braucht eine
+//                  Objekt-ID (geplant im Alphakanal von colorTarget), bis dahin wirkungslos.
+export const EDGE = { depthStrength: 0.55, normalStrength: 0.35, min: 0.3, texels: 8, crease: 0.18, characterBoost: 0 };
 
 export class PixelRenderer {
   constructor(canvas, { quality = 'PC_HIGH', targetHeight = null } = {}) {
@@ -240,11 +254,12 @@ export class PixelRenderer {
         frustum: { value: new THREE.Vector2(1, 1) },
         cameraNear: { value: 0.1 },
         cameraFar: { value: 100 },
-        depthEdgeStrength: { value: 0.55 },
-        normalEdgeStrength: { value: 0.35 },
+        depthEdgeStrength: { value: EDGE.depthStrength },
+        normalEdgeStrength: { value: EDGE.normalStrength },
         edgeMin: { value: EDGE.min },
         edgeTexels: { value: EDGE.texels },
         creaseMin: { value: EDGE.crease },
+        characterEdgeBoost: { value: EDGE.characterBoost },
         aoStrength: { value: 0.35 },
         bloom: { value: 0.45 },
         tint: { value: new THREE.Vector3(1, 1, 1) },
@@ -258,7 +273,7 @@ export class PixelRenderer {
         dither: { value: 0.02 },
         snowCover: { value: 0 },
       },
-      defines: { AO_SAMPLES: 16, BLOOM: 1 },
+      defines: { AO_SAMPLES: 16, BLOOM: 1, EDGES: 1 },
       depthTest: false,
       depthWrite: false,
     });
@@ -281,9 +296,10 @@ export class PixelRenderer {
     this.pixelSize = 1;
     this.dpr = 1;
     this.effects = true;
-    this.frame = 0;
+    this.lastShadow = -Infinity;
     this.shadowDirty = true;
-    this.stats = { calls: 0, triangles: 0, sceneMs: 0, postMs: 0, shadowMs: null, shadowShare: 1 };
+    this.gpu = null; // Zeitmessung auf der GPU, nur wenn eingeschaltet (Debug-Anzeige)
+    this.stats = { calls: 0, triangles: 0, sceneMs: 0, postMs: 0, shadowMs: null, shadowShare: 1, gpuMs: null, casters: { static: 0, dynamic: 0 } };
     this.targetOverride = targetHeight;
     this.applyQuality(quality);
   }
@@ -294,7 +310,7 @@ export class PixelRenderer {
     this.qualityId = QUALITY[id] ? id : 'PC_HIGH';
     this.quality = QUALITY[this.qualityId];
     this.targetHeight = this.targetOverride ?? this.quality.internalHeight;
-    this.shadowInterval = Math.max(1, this.quality.shadowInterval);
+    this.shadowHz = this.quality.shadowHz;
     if (scene) this.applyShadowSize(scene);
     this.refreshLook();
   }
@@ -336,9 +352,11 @@ export class PixelRenderer {
     if (!this.effects) Object.assign(look, { vignette: 0, dither: 0 });
     if (!q.dither) look.dither = 0;
     const defs = this.postMaterial.defines;
-    if (defs.AO_SAMPLES !== ao || defs.BLOOM !== (bloom ? 1 : 0)) {
+    const edges = q.edges === false ? 0 : 1;
+    if (defs.AO_SAMPLES !== ao || defs.BLOOM !== (bloom ? 1 : 0) || defs.EDGES !== edges) {
       defs.AO_SAMPLES = ao;
       defs.BLOOM = bloom ? 1 : 0;
+      defs.EDGES = edges;
       this.postMaterial.needsUpdate = true;
     }
     const u = this.postMaterial.uniforms;
@@ -349,21 +367,73 @@ export class PixelRenderer {
   }
 
   // Fenstergröße in CSS-Pixeln plus DPR → ganzzahliges Raster in Gerätepixeln.
-  setSize(cssWidth, cssHeight, dpr = 1) {
-    const r = computeRaster(cssWidth, cssHeight, dpr, this.targetHeight);
+  // dev: exakte Canvasgröße in Gerätepixeln, falls der Browser sie meldet (siehe main.js).
+  setSize(cssWidth, cssHeight, dpr = 1, dev = null) {
+    const r = computeRaster(cssWidth, cssHeight, dpr, this.targetHeight, dev);
     this.raster = r;
     this.dpr = dpr;
     this.pixelSize = r.pixelSize;
     this.width = r.width;
     this.height = r.height;
-    this.renderer.setSize(r.canvasWidth, r.canvasHeight, false);
-    this.canvas.style.width = `${r.cssWidth}px`;
-    this.canvas.style.height = `${r.cssHeight}px`;
-    this.canvas.style.left = `${r.cssLeft}px`;
-    this.canvas.style.top = `${r.cssTop}px`;
+    this.renderer.setSize(r.devWidth, r.devHeight, false); // Canvas = alle Gerätepixel, CSS-Größe 100 %
     this.colorTarget.setSize(r.width, r.height);
     this.postTarget.setSize(r.width, r.height);
     this.postMaterial.uniforms.resolution.value.set(r.width, r.height);
+  }
+
+  // Schattenwerfer einteilen: statisch ist die Kulisse eines Spielorts (verschmolzen,
+  // unbeweglich), dynamisch alles andere (Spieler, Ball, bewegte Teile mit userData.keep).
+  // Heute teilen sich beide eine Schattenkarte; die Einteilung ist die Grundlage für
+  // eine spätere getrennte statische Karte.
+  classifyShadowCasters(scene, staticRoot) {
+    const c = { static: 0, dynamic: 0 };
+    staticRoot?.traverse((o) => {
+      if (o.isMesh && !o.userData.keep) o.userData.shadowClass = 'static';
+    });
+    scene.traverse((o) => {
+      if (!(o.isMesh || o.isPoints) || !o.castShadow) return;
+      if (o.userData.shadowClass === 'static') c.static++;
+      else c.dynamic++;
+    });
+    this.stats.casters = c;
+    return c;
+  }
+
+  // GPU-Zeit eines ganzen Bildes (EXT_disjoint_timer_query_webgl2), wo vorhanden.
+  // Ergebnisse kommen einige Bilder später an; höchstens drei Messungen gleichzeitig.
+  enableGpuTiming(on) {
+    if (!on) return void (this.gpu = null);
+    const gl = this.renderer.getContext();
+    const ext = gl.getExtension?.('EXT_disjoint_timer_query_webgl2');
+    this.gpu = ext ? { gl, ext, pending: [], active: null } : null;
+    return !!this.gpu;
+  }
+
+  gpuBegin() {
+    const g = this.gpu;
+    if (!g) return;
+    const { gl, ext } = g;
+    while (g.pending.length) {
+      const q = g.pending[0];
+      if (!gl.getQueryParameter(q, gl.QUERY_RESULT_AVAILABLE)) break;
+      g.pending.shift();
+      if (!gl.getParameter(ext.GPU_DISJOINT_EXT)) {
+        const ms = gl.getQueryParameter(q, gl.QUERY_RESULT) / 1e6;
+        this.stats.gpuMs = this.stats.gpuMs == null ? ms : this.stats.gpuMs + (ms - this.stats.gpuMs) * 0.1;
+      }
+      gl.deleteQuery(q);
+    }
+    if (g.pending.length >= 3) return;
+    g.active = gl.createQuery();
+    gl.beginQuery(ext.TIME_ELAPSED_EXT, g.active);
+  }
+
+  gpuEnd() {
+    const g = this.gpu;
+    if (!g?.active) return;
+    g.gl.endQuery(g.ext.TIME_ELAPSED_EXT);
+    g.pending.push(g.active);
+    g.active = null;
   }
 
   // Schattenkarte beim nächsten Bild sicher neu zeichnen (Spielortwechsel, Qualität).
@@ -379,12 +449,16 @@ export class PixelRenderer {
     u.cameraFar.value = camera.far;
     u.frustum.value.set((camera.right - camera.left) / camera.zoom, (camera.top - camera.bottom) / camera.zoom);
 
-    this.frame++;
-    const shadow = this.shadowDirty || (moving && this.frame % this.shadowInterval === 0);
+    // Schattenkarte: sofort bei einer Änderung (markShadowsDirty), sonst zeitbasiert mit
+    // shadowHz, solange sich etwas bewegt. 2 ms Toleranz: 60 Hz heißt bei 60 fps „jedes Bild“.
+    const now = performance.now();
+    const shadow = this.shadowDirty || (moving && now - this.lastShadow >= 1000 / this.shadowHz - 2);
+    if (shadow) this.lastShadow = now;
     this.shadowDirty = false;
     r.shadowMap.needsUpdate = shadow;
     r.info.reset();
 
+    this.gpuBegin();
     const t0 = performance.now();
     r.setRenderTarget(this.colorTarget);
     r.render(scene, camera);
@@ -392,8 +466,22 @@ export class PixelRenderer {
     r.setRenderTarget(this.postTarget);
     r.render(this.postScene, this.quadCamera);
     r.setRenderTarget(null);
+    const ras = this.raster;
+    if (ras.canvasWidth !== ras.devWidth || ras.canvasHeight !== ras.devHeight) {
+      // Schmaler Rand ums Bild (weniger als ein Pixel breit): einmal dunkel löschen.
+      r.getClearColor(this._clear ??= new THREE.Color());
+      const alpha = r.getClearAlpha();
+      r.setViewport(0, 0, ras.devWidth, ras.devHeight);
+      r.setClearColor(0x000000, 1);
+      r.clear(true, false, false);
+      r.setClearColor(this._clear, alpha);
+    }
+    // Viewport in Gerätepixeln, von unten gezählt (WebGL).
+    r.setViewport(ras.left, ras.devHeight - ras.top - ras.canvasHeight, ras.canvasWidth, ras.canvasHeight);
     r.render(this.blitScene, this.quadCamera);
+    r.setViewport(0, 0, ras.devWidth, ras.devHeight);
     const t2 = performance.now();
+    this.gpuEnd();
 
     // CPU-Zeiten (gleitende Mittel). Schattenzeit = Szene mit minus Szene ohne Schatten.
     const s = this.stats;

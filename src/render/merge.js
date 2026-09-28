@@ -4,8 +4,8 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 // Statische Kulisse zusammenfassen: Alle Meshes mit demselben Material (und
 // denselben Schatten-Einstellungen) werden zu einem Mesh verschmolzen. Aus
 // Hunderten Einzelboxen – Autos, Zaunpfosten, Bäume, Zuschauer – werden so
-// eine Handvoll Draw Calls. Da jedes Bild drei Durchgänge hat (Schatten, Farbe,
-// Normalen), spart das besonders viel.
+// eine Handvoll Draw Calls. Jeder Mesh kostet in beiden Szenen-Durchgängen
+// (Schatten und Farbe), das spart also doppelt.
 export function mergeStatic(root) {
   root.updateMatrixWorld(true);
   const toRoot = new THREE.Matrix4().copy(root.matrixWorld).invert();

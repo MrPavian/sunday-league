@@ -1,9 +1,13 @@
 import * as THREE from 'three';
 import { len } from '../core/math.js';
 import { toon } from './materials.js';
+import { currentQuality } from './quality.js';
 import { animatePlayer, createPlayerModel } from './PlayerModel.js';
 
+// Volle Wetterdichte; die Qualitätsstufe (quality.js: weather) nimmt davon einen Anteil.
 const RAIN_DROPS = 700;
+const FLAKES = 500;
+const LEAVES = 220;
 
 // Kleiner Pixelhund: Rumpf, Kopf mit Schlappohren, vier Beine, Wedelschwanz.
 function createDog() {
@@ -51,17 +55,20 @@ export class IncidentView {
     const { pitch } = match;
     this.area = { x: pitch.halfLength + 6, z: pitch.halfWidth + 6 };
 
-    const pos = new Float32Array(RAIN_DROPS * 6);
+    const share = currentQuality().weather;
+    const drops = Math.round(RAIN_DROPS * share);
+    this.leafCount = Math.round(LEAVES * share);
+    const pos = new Float32Array(drops * 6);
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     this.rain = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0xaac4dd, transparent: true, opacity: 0.55 }));
     this.rain.frustumCulled = false;
     this.rain.visible = false;
-    this.drops = Array.from({ length: RAIN_DROPS }, (_, i) => ({ x: ((i * 7919) % 1000) / 1000, z: ((i * 104729) % 1000) / 1000, y: ((i * 1301) % 1000) / 100 }));
+    this.drops = Array.from({ length: drops }, (_, i) => ({ x: ((i * 7919) % 1000) / 1000, z: ((i * 104729) % 1000) / 1000, y: ((i * 1301) % 1000) / 100 }));
     root.add(this.rain);
 
     // Schneeflocken und Herbstlaub: langsam fallende Punkte.
-    this.flakes = Array.from({ length: 500 }, (_, i) => ({ x: ((i * 7919) % 1000) / 1000, z: ((i * 3571) % 1000) / 1000, y: ((i * 911) % 1000) / 100, p: (i % 17) / 17 }));
+    this.flakes = Array.from({ length: Math.round(FLAKES * share) }, (_, i) => ({ x: ((i * 7919) % 1000) / 1000, z: ((i * 3571) % 1000) / 1000, y: ((i * 911) % 1000) / 100, p: (i % 17) / 17 }));
     const mk = (color, size) => {
       const g = new THREE.BufferGeometry();
       g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(this.flakes.length * 3), 3));
@@ -159,7 +166,7 @@ export class IncidentView {
     if (!on) return;
     const a = pts.geometry.attributes.position;
     const { x: ax, z: az } = this.area;
-    const n = pts === this.leaves ? 220 : this.flakes.length;
+    const n = pts === this.leaves ? Math.min(this.leafCount, this.flakes.length) : this.flakes.length;
     for (let i = 0; i < this.flakes.length; i++) {
       const d = this.flakes[i];
       if (i >= n) {
