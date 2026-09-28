@@ -45,6 +45,26 @@ export class DebugOverlay {
     this.frames = 0;
     this.fps = 0;
     this.extra = () => '';
+    // CPU-Zeiten des ganzen Bildes (main.js markiert Anfang, Simulation, Ende) – geglättet,
+    // nur solange die Anzeige offen ist; keine Objekte pro Bild.
+    this.cpu = { t0: 0, t1: 0, frame: 0, update: 0 };
+  }
+
+  get active() {
+    return !this.el.hidden;
+  }
+
+  // Bildanfang / Ende der Simulationsschritte / Bildende (nach dem Rendern).
+  begin(now) {
+    this.cpu.t0 = this.cpu.t1 = now;
+  }
+  simDone(now) {
+    this.cpu.t1 = now;
+  }
+  end(now) {
+    const c = this.cpu;
+    c.frame += (now - c.t0 - c.frame) * 0.1;
+    c.update += (c.t1 - c.t0 - c.update) * 0.1;
   }
 
   toggle() {
@@ -71,11 +91,13 @@ export class DebugOverlay {
       `INTERNAL    ${p.width} × ${p.height}  (Pixel ${p.pixelSize}×${p.pixelSize}, DPR ${p.dpr})`,
       `CANVAS      ${p.raster?.canvasWidth} × ${p.raster?.canvasHeight}`,
       `FPS         ${this.fps.toFixed(1)}`,
+      `CPU FRAME   ${ms(this.cpu.frame)}  (Simulation ${ms(this.cpu.update)}, Rest = Darstellung + Rendern)`,
       `DRAW CALLS  ${s.calls}`,
       `TRIANGLES   ${k(s.triangles)}`,
       `SCENE CPU   ${ms(s.sceneMs)}`,
       `POST CPU    ${ms(s.postMs)}`,
-      `GPU FRAME   ${p.gpu ? ms(s.gpuMs) : 'nicht verfügbar'}`,
+      `GPU FRAME   ${p.gpu ? ms(s.gpuMs) : 'GPU timing unavailable (EXT_disjoint_timer_query_webgl2 fehlt)'}`,
+      `MEMORY      ${p.renderer.info.memory.textures} Texturen · ${p.renderer.info.memory.geometries} Geometrien · ${p.renderer.info.programs?.length ?? '–'} Shader-Programme`,
       `SHADOW      ${ms(s.shadowMs)}  ${p.shadowHz} Hz, ${Math.round(s.shadowShare * 100)} % der Bilder`,
       `CASTERS     ${s.casters.static} statisch / ${s.casters.dynamic} dynamisch`,
       ...postLines(p),

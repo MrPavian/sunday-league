@@ -37,6 +37,11 @@ import { Effects } from './Effects.js';
 import { IncidentView } from './IncidentView.js';
 import { WeatherFx } from './weather.js';
 
+// Wiederverwendete Animations-Optionen (keine Objekte pro Figur und Bild).
+const ANIM = {};
+const DIVE = { t: 0, side: 1 };
+const REF_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal' };
+
 const CELEBRATIONS = ['flugzeug', 'faust', 'tanz', 'rutscher'];
 
 // Jeder Spieler hat "seinen" Jubel – fest an der ID, damit er wiedererkennbar ist.
@@ -369,28 +374,33 @@ export class MatchView {
       m.headPrepPeak = Math.max(m.headPrep, (m.headPrepPeak ?? 0) - dt * 3);
       if (m.hitInfo && m.hitInfo.t < 1) m.hitInfo.t = Math.min(1, m.hitInfo.t + dt / 0.35);
       if (m.faceTime > 0) m.faceTime -= dt;
-      animatePlayer(m, {
-        speed: len(p.vel.x, p.vel.z),
-        dt,
-        headPrep: m.headPrep,
-        headJump: m.headJump ?? 0,
-        hit: m.hitInfo && m.hitInfo.t < 1 ? m.hitInfo : null,
-        duck: m.duck > 0 ? 1 - m.duck : 0,
-        face: m.faceTime > 0 ? m.faceHint : null,
-        // Ausgeholt wird vorher (kickPrep, solange die Simulation den Schuss plant); der Ball fliegt
-        // im ersten Schritt los – die Beinbewegung steht dann im Durchschwung: Treffpunkt ≈ Abflug.
-        kickAnim: p.kickAnim * 0.53,
-        kickPrep: m.kickPrep,
-        // Schuss oder Pass? Nur zum Anschauen: geplante Aktion bzw. letzter Ballkontakt.
-        kick: (p.kickAnim > 0 ? match.ball.lastTouch === p.id && match.ball.lastAction === 'shoot' : p.pending?.type === 'shoot') ? 'shot' : 'pass',
-        headAnim: p.headAnim,
-        holding: match.ball.holder === p.id ? (p.role === 'gk' ? 'chest' : 'overhead') : null,
-        state: p.state,
-        injured: !!p.injury,
-        dive: p.diveAnim > 0 ? { t: p.diveAnim, side: p.diveSide * (p.facing.x > 0 ? 1 : -1) } : null,
-        celebrate,
-        sad: p.mood === 'sad',
-      });
+      // Ein wiederverwendetes Optionsobjekt statt 22 neuer pro Bild (animatePlayer liest nur).
+      const o = ANIM;
+      o.speed = len(p.vel.x, p.vel.z);
+      o.dt = dt;
+      o.headPrep = m.headPrep;
+      o.headJump = m.headJump ?? 0;
+      o.hit = m.hitInfo && m.hitInfo.t < 1 ? m.hitInfo : null;
+      o.duck = m.duck > 0 ? 1 - m.duck : 0;
+      o.face = m.faceTime > 0 ? m.faceHint : null;
+      // Ausgeholt wird vorher (kickPrep, solange die Simulation den Schuss plant); der Ball fliegt
+      // im ersten Schritt los – die Beinbewegung steht dann im Durchschwung: Treffpunkt ≈ Abflug.
+      o.kickAnim = p.kickAnim * 0.53;
+      o.kickPrep = m.kickPrep;
+      // Schuss oder Pass? Nur zum Anschauen: geplante Aktion bzw. letzter Ballkontakt.
+      o.kick = (p.kickAnim > 0 ? match.ball.lastTouch === p.id && match.ball.lastAction === 'shoot' : p.pending?.type === 'shoot') ? 'shot' : 'pass';
+      o.headAnim = p.headAnim;
+      o.holding = match.ball.holder === p.id ? (p.role === 'gk' ? 'chest' : 'overhead') : null;
+      o.state = p.state;
+      o.injured = !!p.injury;
+      if (p.diveAnim > 0) {
+        DIVE.t = p.diveAnim;
+        DIVE.side = p.diveSide * (p.facing.x > 0 ? 1 : -1);
+        o.dive = DIVE;
+      } else o.dive = null;
+      o.celebrate = celebrate;
+      o.sad = p.mood === 'sad';
+      animatePlayer(m, o);
       this.blob(m, p.pos.x, p.pos.z);
     }
     const r = match.referee;
@@ -398,7 +408,9 @@ export class MatchView {
     if (r && this.referee) {
       this.referee.group.position.set(r.pos.x, 0, r.pos.z);
       this.referee.group.rotation.y = Math.atan2(r.facing.x, r.facing.z);
-      animatePlayer(this.referee, { speed: len(r.vel.x, r.vel.z), dt, kickAnim: 0, headAnim: 0, holding: null, state: 'normal' });
+      REF_ANIM.speed = len(r.vel.x, r.vel.z);
+      REF_ANIM.dt = dt;
+      animatePlayer(this.referee, REF_ANIM);
       if (r.cardAnim > 0) this.referee.arms[1].rotation.x = -2.9; // Karte hoch
       this.blob(this.referee, r.pos.x, r.pos.z);
     }

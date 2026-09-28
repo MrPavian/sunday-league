@@ -86,6 +86,7 @@ const postFragment = /* glsl */ `
   // Phase 7: Bloom nur aus Lichtquellen (Kennung im Alphakanal, siehe materials.js LIGHT_CODE).
   uniform sampler2D tBloom;
   uniform float bloomIntensity;
+  uniform vec2 ditherOrigin; // Kameraversatz in Texeln (mod 4)
   varying vec2 vUv;
 
   // Orthografisch: Die Tiefe ist linear.
@@ -112,7 +113,9 @@ const postFragment = /* glsl */ `
 
   void main() {
     vec2 cell = floor(vUv * resolution) + 0.5;
-    float bay = texture2D(tBayer, cell * 0.25).r * (255.0 / 16.0); // 0…1 im 4×4-Raster
+    // Bayer-Raster an der Welt verankert: um den ganzzahligen Kameraversatz verschoben – beim
+    // Schwenken wandert das Muster mit dem Bild, statt über Boden, Dunst und Schatten zu „tanzen“.
+    float bay = texture2D(tBayer, (cell + ditherOrigin) * 0.25).r * (255.0 / 16.0); // 0…1 im 4×4-Raster
     vec2 texel = 1.0 / resolution;
     vec2 px = frustum * texel; // Größe eines Pixels in Metern
     // Hitzeflimmern: In der Ferne (Tribüne, Bäume, Horizont) verschieben sich ganze Pixelzeilen
@@ -512,6 +515,7 @@ export class PixelRenderer {
         heatHaze: { value: 0 },
         tBloom: { value: null },
         bloomIntensity: { value: 0 },
+        ditherOrigin: { value: new THREE.Vector2() },
       },
       defines: { AO_SAMPLES: 16, BLOOM: 1, EDGES: 2, FLOOD: 2, HALO: 1, WETFX: 1, MAX_LIGHTS },
       depthTest: false,
@@ -803,6 +807,17 @@ export class PixelRenderer {
     });
   }
 
+  // Kameraposition in ganzen Texeln entlang der Bildachsen (CameraRig rastet genau darauf):
+  // verschiebt das Bayer-Raster mit, damit es an der Welt statt am Bildschirm hängt.
+  anchorDither(camera) {
+    const e = camera.matrixWorld.elements;
+    const texel = (camera.top - camera.bottom) / camera.zoom / this.height;
+    const p = camera.position;
+    const x = Math.round((p.x * e[0] + p.y * e[1] + p.z * e[2]) / texel);
+    const y = Math.round((p.x * e[4] + p.y * e[5] + p.z * e[6]) / texel);
+    this.postMaterial.uniforms.ditherOrigin.value.set(((x % 4) + 4) % 4, ((y % 4) + 4) % 4);
+  }
+
   // Lampenköpfe auf den Bildschirm projizieren (Lichthof im Post-Shader).
   projectHalos(camera) {
     const u = this.postMaterial.uniforms;
@@ -831,6 +846,7 @@ export class PixelRenderer {
     u.cameraFar.value = camera.far;
     u.frustum.value.set((camera.right - camera.left) / camera.zoom, (camera.top - camera.bottom) / camera.zoom);
     u.camWorld.value.copy(camera.matrixWorld);
+    this.anchorDither(camera);
     this.projectHalos(camera);
     this.applyWeather();
 

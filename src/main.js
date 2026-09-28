@@ -899,6 +899,7 @@ function frame(now) {
   guardFps(Math.min(0.5, (now - last) / 1000)); // lange Pausen (Tab im Hintergrund) nicht mitzählen
   governQuality((now - last) / 1000);
   gfx.update((now - last) / 1000);
+  if (gfx.active) gfx.begin(performance.now());
   last = now;
   acc += dt * (mode === 'play' ? TEMPOS[tempo].factor : 1);
   if (drainInput) {
@@ -976,6 +977,7 @@ function frame(now) {
     acc -= STEP;
     if (subPanel.isOpen || planPanel.isOpen || halfPanel.isOpen) acc = 0;
   }
+  if (gfx.active) gfx.simDone(performance.now());
   view.sync(match, dt);
   hud.update(match, dt);
   shoutBar.update(match);
@@ -988,6 +990,7 @@ function frame(now) {
   if (shake) rig.camera.position.addScaledVector(shakeDir.set(1, 0, 0).applyQuaternion(rig.camera.quaternion), (shake * (rig.camera.top - rig.camera.bottom)) / rig.internalHeight);
   updateLighting();
   pixel.render(scene, rig.camera, { moving: !(subPanel.isOpen || planPanel.isOpen || halfPanel.isOpen) });
+  if (gfx.active) gfx.end(performance.now());
   if (screenshotWanted) saveScreenshot();
   requestAnimationFrame(frame);
 }
