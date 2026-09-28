@@ -9,7 +9,7 @@ import { planMods, setOrder } from '../src/sim/plan.js';
 function series(orders, { n = 8, pitch = PITCHES.parkplatz, duration = 150, seed = 300 } = {}) {
   const out = [];
   for (let i = 0; i < n; i++) {
-    const m = createMatch({ seed: seed + i, pitch, human: false, duration });
+    const m = createMatch({ seed: seed + i, pitch, human: false, duration, aiCoach: false }); // reine Engine, kein Gegen-Trainer
     for (const o of orders) setOrder(m, 0, ...o.split(':'));
     while (m.phase !== 'ended') {
       stepMatch(m, undefined, 1 / 60);
@@ -73,7 +73,7 @@ describe('coach orders change real behaviour', () => {
 describe('fairness', () => {
   it('no hidden comeback help: the score changes nothing about how the match plays', () => {
     const run = (fakeScore) => {
-      const m = createMatch({ seed: 44, pitch: PITCHES.parkplatz, human: false, duration: 120 });
+      const m = createMatch({ seed: 44, pitch: PITCHES.parkplatz, human: false, duration: 120, aiCoach: false });
       const trail = [];
       while (m.phase !== 'ended') {
         stepMatch(m, undefined, 1 / 60);
@@ -92,5 +92,37 @@ describe('fairness', () => {
     expect(scores(5)).toBe(scores(5));
     const many = new Set(series([], { n: 8, seed: 60 }).map((m) => m.score.join(':')));
     expect(many.size).toBeGreaterThan(2);
+  }, SLOW);
+});
+
+describe('the coach on the other bench', async () => {
+  const { aiCoaches } = await import('../src/sim/aicoach.js');
+  const { enableManager } = await import('../src/sim/coach.js');
+
+  it('AI clubs change their plan a few times per match – with the same orders you have', () => {
+    let changes = 0;
+    for (let i = 0; i < 6; i++) {
+      const m = createMatch({ seed: 80 + i, pitch: PITCHES.ascheplatz, human: false });
+      m.coachPersona = ['stratege', 'stratege'];
+      while (m.phase !== 'ended') {
+        stepMatch(m, undefined, 1 / 60);
+        m.events.length = 0;
+      }
+      const ai = (m.decisions ?? []).filter((d) => d.by === 'ai');
+      for (const team of [0, 1]) expect(ai.filter((d) => d.team === team && d.group !== 'side' && d.group !== 'cover').length).toBeLessThanOrEqual(4);
+      changes += ai.length;
+    }
+    expect(changes).toBeGreaterThan(3);
+  }, SLOW);
+
+  it('never touches the team you coach or play for', () => {
+    const m = enableManager(createMatch({ seed: 5, pitch: PITCHES.parkplatz, human: true }));
+    expect(aiCoaches(m, 0)).toBe(false);
+    expect(aiCoaches(m, 1)).toBe(true);
+    while (m.phase !== 'ended') {
+      stepMatch(m, undefined, 1 / 60);
+      m.events.length = 0;
+    }
+    expect((m.decisions ?? []).filter((d) => d.team === 0 && d.by === 'ai')).toEqual([]);
   }, SLOW);
 });

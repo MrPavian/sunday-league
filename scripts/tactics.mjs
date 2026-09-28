@@ -11,7 +11,7 @@ const list = process.argv.slice(4).length ? process.argv.slice(4) : ['-', 'side:
 export function run(orders, seeds = N, pt = pitch, oppOrders = []) {
   const acc = { goals: 0, against: 0, shots: 0, shotsAgainst: 0, left: 0, right: 0, centre: 0, entries: 0, winsHigh: 0, stamina: 0, oppBuilds: 0, oppThrough: 0, passes: 0, done: 0, through: 0, throughDone: 0, box: 0, poss: 0, side: 0, sideN: 0 };
   for (let i = 0; i < seeds; i++) {
-    const m = createMatch({ seed: 700 + i, pitch: pt, human: false, duration: matchDuration(pt) });
+    const m = createMatch({ seed: 700 + i, pitch: pt, human: false, duration: matchDuration(pt), aiCoach: process.env.AICOACH === '1' });
     for (const o of orders) if (o !== '-') setOrder(m, 0, ...o.split(':'));
     for (const o of oppOrders) setOrder(m, 1, ...o.split(':'));
     while (m.phase !== 'ended') { stepMatch(m, undefined, 1 / 60); m.events.length = 0; }

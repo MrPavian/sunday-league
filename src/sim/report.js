@@ -3,6 +3,7 @@
 // Sätzen, nicht in Zahlen. Für Halbzeit und Abpfiff.
 import { tr } from '../core/i18n.js';
 import { planMods } from './plan.js';
+import { orderLabel } from './commands.js';
 
 const laneWord = (lane) => (lane === 'left' ? tr('links', 'the left') : lane === 'right' ? tr('rechts', 'the right') : tr('durch die Mitte', 'the middle'));
 const mean = (xs) => (xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : 0);
@@ -93,6 +94,9 @@ export function report(m, team, half = null) {
   else if (s.oppLine < -0.6) opp.push(tr('Tief und kompakt', 'Deep and compact'));
   if (oppMods.long > 0.4) opp.push(tr('Lange Bälle auf die Spitze', 'Long balls up to the striker'));
   if (s.oppStamina < s.stamina - 0.08) opp.push(tr('Wird müde', 'Tiring'));
+  // Umstellungen des gegnerischen Trainers.
+  const changed = (m.decisions ?? []).filter((d) => d.team !== team && d.by === 'ai' && d.value != null && (half == null || d.half === half)).at(-1);
+  if (changed) opp.unshift(tr(`Hat umgestellt: ${orderLabel(changed.group, changed.value)}`, `Has switched to: ${orderLabel(changed.group, changed.value)}`));
   return { good: good.slice(0, 3), bad: bad.slice(0, 3), opp: opp.slice(0, 3), stats: s };
 }
 

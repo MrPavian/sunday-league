@@ -27,6 +27,7 @@ import { stepKnocks } from './knocks.js';
 import { stepLog } from './matchlog.js';
 import { stepSituations } from './situations.js';
 import { answerCard, stepCoachFeed } from './coachfeed.js';
+import { aiCoachHalftime, stepAiCoach } from './aicoach.js';
 
 export { attackDir, getPlayer } from './players.js';
 export { startPoke, startTackle } from './tackles.js';
@@ -58,7 +59,7 @@ const NO_INPUT = { move: { x: 0, z: 0 }, sprint: false, shootHeld: false, pass: 
 const BENCH_ROLES = { 4: ['mid', 'fwd'], 5: ['def', 'mid', 'fwd'], 7: ['def', 'mid', 'fwd'] };
 
 // human: false → beide Teams von der KI gesteuert (Simulation ungespielter Partien).
-export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = true, human = true, duration, incidents = false } = {}) {
+export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = true, human = true, duration, incidents = false, aiCoach = true } = {}) {
   const rng = createRng(seed);
   duration ??= matchDuration(pitch);
   const format = pitch.format ?? 5;
@@ -92,6 +93,8 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = tr
     teams: squads,
     players,
     bench,
+    seed,
+    aiCoach, // KI-Trainer stellen während des Spiels um (aicoach.js)
     subRequests: [false, false],
     subRule: subRuleFor(MATCH.subs),
     subsUsed: [0, 0],
@@ -147,6 +150,8 @@ export function stepMatch(m, input = NO_INPUT, dt) {
   stepLog(m);
   stepSituations(m);
   if (m.manager) stepCoachFeed(m, m.coachTeam);
+  stepAiCoach(m, 0);
+  stepAiCoach(m, 1);
 }
 
 function step(m, input, dt) {
@@ -193,6 +198,8 @@ function step(m, input, dt) {
     m.phase = 'halftime';
     m.phaseTimer = 3;
     m.events.push({ type: 'halftime' });
+    aiCoachHalftime(m, 0);
+    aiCoachHalftime(m, 1);
     return;
   }
   if (m.time >= m.duration) {

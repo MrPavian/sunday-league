@@ -182,6 +182,8 @@ export class Hud {
         const p = findAnyPlayer(match, e.playerId);
         const label = MATCH_INJURIES[e.kind]?.label ?? '';
         this.toast(e.out ? tr(`${p.name.split(' ')[0]} bleibt liegen – ${label}. Das sieht nicht gut aus.`, `${p.name.split(' ')[0]} stays down – ${label}. That does not look good.`) : tr(`${p.name.split(' ')[0]} humpelt weiter (${label})`, `${p.name.split(' ')[0]} limps on (${label})`), 2.2, 3);
+      } else if (e.type === 'ai_coach' && match.manager && e.team !== match.coachTeam) {
+        this.toast(tr(`Drüben stellt der Trainer um: ${orderLabel(e.group, e.value)}`, `Their manager changes things: ${orderLabel(e.group, e.value)}`), 2.5, 1);
       } else if (e.type === 'coach_followup' && e.text) {
         this.toast(`${e.result === 'better' ? '✓' : '✗'} ${e.text}`, 3, 2);
       } else if (e.type === 'injury_off') {

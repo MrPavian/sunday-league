@@ -14,7 +14,7 @@ for (const o of orders) {
   for (const st of oppStyles) {
     let gd = 0;
     for (let i = 0; i < N; i++) {
-      const m = createMatch({ seed: 900 + i, pitch, human: false, duration: matchDuration(pitch) });
+      const m = createMatch({ seed: 900 + i, pitch, human: false, duration: matchDuration(pitch), aiCoach: process.env.AICOACH === '1' });
       m.plan[1] = { ...m.plan[1], style: st };
       m.modsCache = null;
       if (o !== '-') for (const x of o.split('+')) setOrder(m, 0, ...x.split(':'));

@@ -25,7 +25,7 @@ export const GOLDEN_CASES = [
 
 export function fingerprint([pitchId, seed, styleA, styleB]) {
   const pitch = PITCHES[pitchId];
-  const m = createMatch({ seed, pitch, teams: createTeamsFor(seed, pitch, styleA, styleB), human: false, duration: 120 });
+  const m = createMatch({ seed, pitch, teams: createTeamsFor(seed, pitch, styleA, styleB), human: false, duration: 120, aiCoach: false });
   let events = 0;
   while (m.phase !== 'ended') {
     stepMatch(m, undefined, 1 / 60);

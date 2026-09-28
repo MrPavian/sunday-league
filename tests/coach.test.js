@@ -8,7 +8,7 @@ const DT = 1 / 60;
 
 // Ein Spiel im Trainer-Modus; call(m) darf alle paar Sekunden reinrufen.
 function play(seed, call, seconds = 90) {
-  const m = enableManager(createMatch({ seed, pitch: PITCHES.rasenplatz, human: true, duration: seconds }));
+  const m = enableManager(createMatch({ seed, pitch: PITCHES.rasenplatz, human: true, duration: seconds, aiCoach: false }));
   let depth = 0;
   let samples = 0;
   for (let i = 0; i < seconds * 60 * 1.6 && m.phase !== 'ended'; i++) { // Unterbrechungen kosten Zeit

@@ -34,7 +34,7 @@ import { TIP_IDS, weeklyTip } from './tips.js';
 import { fenceVoice, heirIntake, heirMoments } from './generations.js';
 import { archiveReview } from './review.js';
 import { clubLifeWeek } from './clublife.js';
-import { afterMatchVoice, deliverNews, grudgeMatch, preMatchVoice } from './opponents.js';
+import { coachOf, afterMatchVoice, deliverNews, grudgeMatch, preMatchVoice } from './opponents.js';
 import { midSeasonReport, seasonGoalVerdict, setSeasonGoal } from './board.js';
 import { relsMap } from '../sim/bonds.js';
 import { memoryAfterMatch, placeFormers, preMatchMemories, rememberArrival, rememberDeparture, tagStories } from './memory.js';
@@ -889,6 +889,9 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   const match = createMatch({ seed: rng.int(1, 1e9), pitch, teams, human, duration, incidents: true });
   // Freizeitliga: fliegend wechseln; ab der Kreisklasse zählt der Schiri mit.
   match.subRule = subRuleFor(MATCH.subs, career.level);
+  // Jeder Verein hat seinen Trainer – der stellt während des Spiels auf seine Art um.
+  const persona = (club) => (club.human ? null : coachOf(club).type);
+  match.coachPersona = humanIsAway ? [persona(away), persona(home)] : [persona(home), persona(away)];
   // Derby: hitziger, mehr Karten – außer man hat sich aufs faire Grillen geeinigt.
   match.derby = (isDerbyFixture(career, fixture) && !career.week?.derbyFair) || grudgeMatch(career, home.human ? away.id : home.id);
   // Eigenes Spiel: Manchmal kommt am Spieltag etwas dazwischen.
