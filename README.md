@@ -50,6 +50,22 @@ Auf dem Handy bist du **Trainer an der Seitenlinie**: Deine Mannschaft spielt se
 und wechselst aus. Ob die Jungs hören, hängt davon ab, wie gut sie kicken. Am PC gibt es den Modus auch
 (Einstellungen → Spielmodus, Tasten 1–4).
 
+**Trainermodus 2.0 – Beobachten, entscheiden, Wirkung sehen:** Der Trainer steuert keine Spieler, sondern
+die Idee. Befehle in neun Gruppen (Aufbau, Angriffsweg, Seite, Pressinghöhe, Ausrichtung gegen den Ball,
+Seite absichern, Formation, Tempo, Risiko) verschieben echte Stellgrößen der Engine – Laufwege, Passwahl,
+Dribbelrichtung, Pressing-Auslöser, Pässe in die Tiefe –, nie direkt die Torchance. Wie gut die Jungs sie
+umsetzen, hängt an Technik, Kraft, Position und Teamchemie; unter Gegnerdruck streut alles mehr. Eine
+Situations-Engine liest das Spiel mit („Gegner kommt über rechts", „Raum hinter der Abwehr", „Pressing läuft
+ins Leere", „Stürmer hängt allein"…) und legt ein paar Mal pro Spiel eine Karte mit drei großen Knöpfen hin;
+später sagt der Co-Trainer, ob es gewirkt hat. In der Halbzeit steht das Spiel: was funktioniert, was nicht,
+was der Gegner macht – dann Taktik ändern oder wechseln. Die Wechseltafel schlägt vor, wer jetzt passt, und
+sagt warum. Spielerprofile (Spielmacher, Kämpfer, Sprinter, Ballmagnet, Mannschaftsspieler, Einzelkämpfer,
+Nervös, Ruhepol) wirken in der Simulation. Die KI-Trainer drüben sehen dieselben Situationen und stellen mit
+denselben Befehlen um – kein Bonus, kein Rubber-Banding. Nach dem Abpfiff: „Dein Spiel" mit Ursachenketten
+der Tore, dem entscheidenden Moment und dem, was man daraus lernen kann. Den Spielplan legst du im
+Vereinsheim fest (Aufstellung → Spielplan); Einsteiger sehen sechs große Entscheidungen, Fortgeschrittene
+jede Stellschraube (Einstellungen → Trainer-Ansicht).
+
 **Auswechseln und Verletzungen im Spiel:** Nach einem Foul bleibt mal einer liegen, ohne Gegner zwickt es
 beim Sprint. Eine Prellung spielt man humpelnd weiter, alles Ernstere heißt runter – beim nächsten Stopp
 kommt Ersatz für die Position, ohne Ersatz geht es in Unterzahl weiter (fehlt der Torwart, geht ein

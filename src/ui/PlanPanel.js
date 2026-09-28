@@ -2,6 +2,7 @@ import { tr } from '../core/i18n.js';
 import { applySimple, GROUP_LABELS, ORDERS, simpleActive, SIMPLE, SIMPLE_IDS } from '../sim/commands.js';
 import { ORDER_GROUPS, orderOf, setOrder, setStyle } from '../sim/plan.js';
 import { STYLES } from '../sim/tactics.js';
+import { setCoachLevel } from './prefs.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
@@ -21,7 +22,10 @@ export class PlanPanel {
       else if (action === 'order') setOrder(m, this.team, group, orderOf(m, this.team, group) === value ? null : value, { by: 'plan' });
       else if (action === 'style') setStyle(m, this.team, value);
       else if (action === 'reset') for (const g of ORDER_GROUPS) setOrder(m, this.team, g, null, { by: 'plan' });
-      else if (action === 'close') return this.close();
+      else if (action === 'level') {
+        this.advanced = !this.advanced;
+        setCoachLevel(this.advanced ? 'profi' : 'einsteiger');
+      } else if (action === 'close') return this.close();
       this.render();
     });
     window.addEventListener('keydown', (e) => {
@@ -71,6 +75,7 @@ export class PlanPanel {
         <header><h3>${tr('Spielplan', 'Game plan')}</h3><small>${tr('Das Spiel steht. Befehle gelten, bis du sie änderst.', 'The match is paused. Orders stay until you change them.')}</small></header>
         <div class="chips simple">${simple}</div>
         ${this.advanced ? `<div class="plan-grid">${groups}</div><div class="plan-group"><h4>${tr('Grundstil', 'Base style')}</h4><div class="chips">${styles}</div></div>` : ''}
+        <p class="hint"><button class="linkish" data-action="level">${this.advanced ? tr('Weniger Optionen', 'Fewer options') : tr('Alle Befehle zeigen', 'Show all orders')}</button></p>
         <footer><button data-action="reset">${tr('Alles zurück auf den Grundstil', 'Back to the base style')}</button><button class="primary" data-action="close">${tr('Weiter (Enter)', 'Resume (Enter)')}</button></footer>
       </div>`;
   }

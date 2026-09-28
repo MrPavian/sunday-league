@@ -1107,3 +1107,8 @@ body.touch .coach-play { background: #2f6f3a; }
 .ticker-panel .coach-review .chains li.ours { color: #9fe39f; }
 .ticker-panel .coach-review .chains li.theirs { color: #ffb0a6; }
 @media (max-width: 560px) { .coach-review .cr-cols { grid-template-columns: 1fr; } }
+.tactic-board .plan-row { margin: 4px 0; }
+.tactic-board .plan-row small { display: block; opacity: 0.75; margin-bottom: 2px; }
+.tactic-board .linkish { font: inherit; color: var(--accent); background: none; border: 0; padding: 0 4px; cursor: pointer; text-decoration: underline; text-shadow: inherit; }
+.plan-panel .linkish { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; min-height: 0; }
+.sub-row .sub-tip { grid-column: 1 / -1; font-size: 0.8em; } .sub-row .sub-tip.in { color: #9fe39f; } .sub-row .sub-tip.out { color: #ffb0a6; }

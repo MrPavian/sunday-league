@@ -2,7 +2,8 @@ import { tr } from '../core/i18n.js';
 import { MATCH_INJURIES } from '../sim/knocks.js';
 import { POSITIONS } from '../sim/generator.js';
 import { PROFILES, profilesOf } from '../sim/profiles.js';
-import { planSub, requestSub, subsLeft, usableBench } from '../sim/squad.js';
+import { planSub, requestSub, subsLeft } from '../sim/squad.js';
+import { benchAdvice, outAdvice } from '../sim/subadvice.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const bar = (v) => `<span class="sub-stamina" style="--v:${Math.round(Math.max(0, Math.min(1, v)) * 100)}%"></span>`;
@@ -18,7 +19,11 @@ export class SubPanel {
       const t = e.target.closest('[data-action]');
       if (!t || !this.match || performance.now() - (this.openedAt ?? 0) < 350) return;
       const { action, value } = t.dataset;
-      if (action === 'out') this.outId = value;
+      if (action === 'out') {
+        this.outId = value;
+        this.inList();
+        this.inId = this.bestIn ?? this.inId; // neuer Kandidat raus – neuer Vorschlag rein
+      }
       else if (action === 'in') this.inId = value;
       else if (action === 'confirm') return this.confirm();
       else if (action === 'auto') return this.auto();
@@ -50,13 +55,18 @@ export class SubPanel {
   }
 
   // Auswechseln dürfen nur Feldspieler, die nicht ohnehin verletzt runter müssen.
+  // Reihenfolge nach Rat: Wer am ehesten raus sollte, wer jetzt am besten passt.
   outList() {
-    const m = this.match;
-    return m.players.filter((p) => p.team === this.team && !p.mustLeave).sort((a, b) => (a.role === 'gk') - (b.role === 'gk') || a.stamina - b.stamina);
+    this.outTips = new Map(outAdvice(this.match, this.team).map((a) => [a.player.id, a.reasons]));
+    return outAdvice(this.match, this.team).map((a) => a.player);
   }
 
   inList() {
-    return usableBench(this.match, this.team);
+    const out = this.match.players.find((p) => p.id === this.outId) ?? null;
+    const advice = benchAdvice(this.match, this.team, out);
+    this.inTips = new Map(advice.map((a) => [a.player.id, a.reasons]));
+    this.bestIn = advice[0]?.player.id ?? null;
+    return advice.map((a) => a.player);
   }
 
   open(match, team, onClose) {
@@ -66,11 +76,10 @@ export class SubPanel {
     this.onClose = onClose;
     this.col = 'out';
     const outs = this.outList();
-    const ins = this.inList();
-    // Vorschlag: der Müdeste raus, dazu jemand für seine Position.
-    const tired = outs.find((p) => p.role !== 'gk') ?? outs[0];
-    this.outId = tired?.id ?? null;
-    this.inId = (ins.find((b) => b.position === tired?.role) ?? ins.find((b) => b.position !== 'gk') ?? ins[0])?.id ?? null;
+    // Vorschlag: wer am ehesten raus sollte, dazu der, der jetzt am besten passt.
+    this.outId = (outs.find((p) => p.role !== 'gk') ?? outs[0])?.id ?? null;
+    this.inList();
+    this.inId = this.bestIn;
     this.root.hidden = false;
     this.render();
   }
@@ -109,7 +118,9 @@ export class SubPanel {
       const knock = p.knock ? ` <em class="sub-knock">✚ ${esc(MATCH_INJURIES[p.knock.kind]?.label ?? '')}</em>` : '';
       const role = POSITIONS[kind === 'out' ? p.role : p.position] ?? '';
       const prof = profilesOf(p).map((id) => PROFILES[id].label).join(' · ');
-      return `<button class="sub-row${selected ? ' active' : ''}${this.col === kind ? ' col' : ''}" data-action="${kind}" data-value="${p.id}"><span class="sub-name">${esc(p.name)}${knock}</span><small>${esc(role)}</small>${prof ? `<small class="sub-prof">${esc(prof)}</small>` : ''}${bar(p.stamina)}</button>`;
+      const tips = (kind === 'out' ? this.outTips : this.inTips)?.get(p.id) ?? [];
+      const tip = tips.length ? `<small class="sub-tip ${kind}">${kind === 'in' ? tr('Passt jetzt', 'Good call now') : tr('Raus?', 'Take off?')}: ${esc(tips.join(', '))}</small>` : '';
+      return `<button class="sub-row${selected ? ' active' : ''}${this.col === kind ? ' col' : ''}" data-action="${kind}" data-value="${p.id}"><span class="sub-name">${esc(p.name)}${knock}</span><small>${esc(role)}</small>${prof ? `<small class="sub-prof">${esc(prof)}</small>` : ''}${tip}${bar(p.stamina)}</button>`;
     };
     const blocked = left <= 0 ? tr('Alle Wechsel aufgebraucht.', 'All substitutions used.') : !ins.length ? tr('Keiner mehr auf der Bank, der rein kann.', 'Nobody left on the bench who can come on.') : '';
     this.root.innerHTML = `

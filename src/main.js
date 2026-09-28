@@ -52,6 +52,7 @@ import { ShoutBar } from './ui/ShoutBar.js';
 import { SubPanel } from './ui/SubPanel.js';
 import { PlanPanel } from './ui/PlanPanel.js';
 import { HalftimePanel } from './ui/HalftimePanel.js';
+import { coachLevel, setCoachLevel } from './ui/prefs.js';
 import { coachAway } from './career/personal.js';
 import { enableManager } from './sim/coach.js';
 import { Settings } from './ui/Settings.js';
@@ -101,7 +102,7 @@ function openHalftime() {
   halfPanel.open(match, team, {
     onPlan: () => {
       halfPanel.hideForNow();
-      planPanel.open(match, team, { advanced: true }, () => halfPanel.reopen());
+      planPanel.open(match, team, { advanced: coachLevel() === 'profi' }, () => halfPanel.reopen());
     },
     onSub: () => {
       halfPanel.hideForNow();
@@ -115,7 +116,7 @@ function openHalftime() {
 }
 shoutBar.onPlan = () => {
   if (mode !== 'play' || !match?.manager || match.phase === 'ended' || subPanel.isOpen) return;
-  planPanel.open(match, match.coachTeam, { advanced: true }, () => (drainInput = true));
+  planPanel.open(match, match.coachTeam, { advanced: coachLevel() === 'profi' }, () => (drainInput = true));
 };
 let drainInput = false; // nach dem Schließen der Wechseltafel: liegengebliebene Tasten verwerfen
 const endScreen = new EndScreen(document.getElementById('end'));
@@ -273,7 +274,7 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
   onSettings() {
     menu.paused = true;
     settings.show({
-      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe, difficulty, autoSwitch: autoSwitchDefense, manager: managerMode, touch: TOUCH, length: MATCH.halves ? 'custom' : MATCH.length, cupShort: MATCH.cupShare < 1, subs: MATCH.subs, leagueSize: career ? career.nextLeagueSize ?? career.leagueSize ?? 6 : leagueSize, leagueSizeNow: career?.leagueSize ?? null }),
+      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe, difficulty, autoSwitch: autoSwitchDefense, manager: managerMode, touch: TOUCH, length: MATCH.halves ? 'custom' : MATCH.length, cupShort: MATCH.cupShare < 1, subs: MATCH.subs, coachLevel: coachLevel(), leagueSize: career ? career.nextLeagueSize ?? career.leagueSize ?? 6 : leagueSize, leagueSizeNow: career?.leagueSize ?? null }),
       onLang: switchLanguage,
       onChange(key, value) {
         if (key === 'sound' && sound.muted !== (value === 'off')) sound.toggleMute();
@@ -321,6 +322,7 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
             saveCareer(career);
           }
         }
+        if (key === 'coachlevel') setCoachLevel(value);
         if (key === 'subs') {
           MATCH.subs = value;
           remember('sunday-league:subs', value);

@@ -508,7 +508,18 @@ const ROLE_ATTR = { gk: 'keeping', def: 'tackling', mid: 'passing', fwd: 'shooti
 // Format, ein Spielstil), die anderen haben ihre feste Handschrift.
 export function tacticOf(club, format) {
   if (!club.human) return normalizeTactic(club.tactic ?? clubTactic(club.id, format), format);
-  return normalizeTactic({ style: club.tactic?.style, system: club.tactic?.systems?.[format] }, format);
+  return { ...normalizeTactic({ style: club.tactic?.style, system: club.tactic?.systems?.[format] }, format), orders: { ...(club.tactic?.orders ?? {}) } };
+}
+
+// Spielplan vor dem Spiel: Befehle, mit denen die Mannschaft aufläuft (Gruppe → Wert,
+// null nimmt ihn zurück). Gilt für jedes Spiel, bis man ihn ändert.
+export function setClubPlan(career, group, value) {
+  const club = humanClub(career);
+  club.tactic ??= { style: 'ausgewogen', systems: {} };
+  club.tactic.orders ??= {};
+  if (value == null) delete club.tactic.orders[group];
+  else club.tactic.orders[group] = value;
+  return club.tactic.orders;
 }
 
 export function setClubTactic(career, format, { system, style } = {}) {

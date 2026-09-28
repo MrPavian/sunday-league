@@ -8,6 +8,8 @@ import { reviewHTML, shareReview } from './review.js';
 import { GOALS } from '../career/board.js';
 import { STYLES as PLAY_STYLES, systemsFor } from '../sim/tactics.js';
 import { jobFits, styleFit } from '../sim/fit.js';
+import { GROUP_LABELS, ORDERS, SIMPLE, SIMPLE_IDS } from '../sim/commands.js';
+import { coachLevel, setCoachLevel } from './prefs.js';
 import { jobPerk } from '../data/jobs.js';
 import { CREST_COLORS, CREST_DIVISIONS, CREST_SHAPES, CREST_SYMBOLS, crestOf, crestSVG, defaultCrest, FIGURES } from './crest.js';
 import { awardLabel } from '../career/awards.js';
@@ -23,6 +25,7 @@ import {
   updateClub,
   updateCrest,
   setClubTactic,
+  setClubPlan,
   nextPitch,
   maxSquad,
   leagueOf,
@@ -210,6 +213,19 @@ export class Clubhouse {
         const { format } = currentLineup(this.career);
         setClubTactic(this.career, format, action === 'tacticSystem' ? { system: value } : { style: value });
         this.h.onChange();
+      } else if (action === 'planOrder') {
+        const cur = humanClub(this.career).tactic?.orders?.[t.dataset.group];
+        setClubPlan(this.career, t.dataset.group, cur === value ? null : value);
+        this.h.onChange();
+      } else if (action === 'planSimple') {
+        for (const [g, v] of Object.entries(SIMPLE[value].orders)) setClubPlan(this.career, g, v);
+        this.h.onChange();
+      } else if (action === 'planReset') {
+        for (const g of Object.keys(GROUP_LABELS)) setClubPlan(this.career, g, null);
+        this.h.onChange();
+      } else if (action === 'planLevel') {
+        setCoachLevel(coachLevel() === 'profi' ? 'einsteiger' : 'profi');
+        this.render();
       } else if (action === 'autoLineup') {
         resetLineup(this.career);
         this.h.onChange();
@@ -787,6 +803,27 @@ export class Clubhouse {
     return `<table class="squad"><thead><tr><th></th><th>${tr('Spieler', 'Player')}</th><th>${tr('Pos.', 'Pos.')}</th><th>${tr('Stärke', 'Rating')}</th><th>${tr('Sonntag', 'Sunday')}</th><th>${tr('Sp.', 'Apps')}</th><th>${tr('Tore', 'Goals')}</th><th>${tr('Vorl.', 'Ast.')}</th><th>${tr('Ø Note', 'Avg.')}</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
   }
 
+  // Spielplan: mit welchen Befehlen die Mannschaft aufläuft. Einsteiger: sechs Pakete,
+  // Profi: jede Gruppe einzeln.
+  planBlock(orders) {
+    const active = (pack) => Object.entries(pack.orders).every(([g, v]) => v == null || orders[g] === v);
+    const simple = SIMPLE_IDS.map((id) => `<button class="${active(SIMPLE[id]) ? 'active' : ''}" data-action="planSimple" data-value="${id}">${SIMPLE[id].label}</button>`).join('');
+    const groups = Object.keys(GROUP_LABELS).map((g) => {
+      const chips = Object.keys(ORDERS).filter((k) => k.startsWith(`${g}:`)).map((k) => {
+        const v = k.split(':')[1];
+        return `<button class="${orders[g] === v ? 'active' : ''}" data-action="planOrder" data-group="${g}" data-value="${v}" title="${ORDERS[k].hint}">${ORDERS[k].label}</button>`;
+      }).join('');
+      return `<div class="plan-row"><small>${GROUP_LABELS[g]}</small><div class="styles">${chips}</div></div>`;
+    }).join('');
+    const summary = Object.entries(orders).map(([g, v]) => ORDERS[`${g}:${v}`]?.label).filter(Boolean);
+    const pro = coachLevel() === 'profi';
+    return `
+      <h4>${tr('Spielplan', 'Game plan')} <small>${summary.length ? summary.join(' · ') : tr('nur der Grundstil', 'base style only')}</small></h4>
+      <div class="styles">${simple}</div>
+      ${pro ? groups : ''}
+      <p class="hint">${tr('Damit laufen die Jungs auf. Im Spiel kannst du jederzeit abweichen.', 'This is how the lads start. You can change it at any time during the match.')} <button class="linkish" data-action="planLevel">${pro ? tr('Weniger Optionen', 'Fewer options') : tr('Alle Befehle zeigen', 'Show all orders')}</button>${summary.length ? ` <button class="linkish" data-action="planReset">${tr('Zurücksetzen', 'Reset')}</button>` : ''}</p>`;
+  }
+
   tab_lineup() {
     const c = this.career;
     if (!c.week || this.results) return `<p class="empty">${tr('Die Aufstellung für den nächsten Spieltag gibt es nach dem Wochenstart.', 'The line-up for the next matchday is available once the week starts.')}</p>`;
@@ -816,6 +853,7 @@ export class Clubhouse {
         <div class="styles">${styles}</div>
         <p class="hint">${PLAY_STYLES[tactic.style].desc}</p>
         ${fitNote ? `<p class="fit-note">${pitch ? `${tr('Sonntag', 'Sunday')}: ${pitch.name}, ${pitch.surface.name}. ` : ''}${fitNote}</p>` : ''}
+        ${this.planBlock(tactic.orders ?? {})}
       </div>`;
     const ROLE = tr({ gk: 'Tor', def: 'Abwehr', mid: 'Mitte', fwd: 'Sturm' }, { gk: 'GK', def: 'Def', mid: 'Mid', fwd: 'Att' });
     const options = club.squad

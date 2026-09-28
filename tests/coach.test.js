@@ -167,7 +167,7 @@ describe('tactics', async () => {
     const other = Object.keys(SYSTEMS[format])[1];
     setClubTactic(c, format, { system: other, style: 'konter' });
     const lu = currentLineup(c);
-    expect(lu.tactic).toEqual({ system: other, style: 'konter' });
+    expect(lu.tactic).toEqual({ system: other, style: 'konter', orders: {} });
     expect(lu.formation.map((e) => e.role)).toEqual(systemFormation(format, other).map((e) => e.role));
     const club = humanClub(c);
     const team = teamForMatch(c, club, format, c.week.availability, createRngLocal());

@@ -10,6 +10,7 @@ import { keeperIntent, outfieldIntent, updateTactics } from './ai.js';
 import { createBall, stepBall } from './ball.js';
 import { formationSpot } from './formation.js';
 import { normalizeTactic, systemFormation } from './tactics.js';
+import { setOrder } from './plan.js';
 import { applyFit } from './fit.js';
 import { generateTeam } from './generator.js';
 import { PARKING_LOT } from './pitch.js';
@@ -130,6 +131,10 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = tr
     crowd: CROWD_BY_PITCH[pitch.id] ?? 8, // Zuschauer (Karriere und Turnier setzen eigene Zahlen)
     homeTeam: 0,
   };
+  // Spielplan aus dem Vereinsheim: Befehle, mit denen die Mannschaft aufläuft.
+  squads.forEach((team, ti) => {
+    for (const [group, value] of Object.entries(team?.tactic?.orders ?? {})) setOrder(m, ti, group, value, { by: 'plan' });
+  });
   m.incidentPlan = incidents ? planIncident(m, seed) : null;
   if (kickoff) startSetPiece(m, { type: 'kickoff', team: 0 });
   return m;
