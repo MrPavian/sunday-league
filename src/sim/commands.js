@@ -72,3 +72,10 @@ export const simpleActive = (m, team, id) => Object.entries(SIMPLE[id].orders).e
 export function toggleOrder(m, team, group, value) {
   return setOrder(m, team, group, orderOf(m, team, group) === value ? null : value);
 }
+
+// Was ein Paket setzt, in Worten (für die Trainerkarten): nur die Befehle, die es einschaltet.
+export const packLines = (id) =>
+  Object.entries(SIMPLE[id]?.orders ?? {})
+    .filter(([, v]) => v)
+    .map(([g, v]) => ORDERS[orderKey(g, v)]?.label)
+    .filter(Boolean);

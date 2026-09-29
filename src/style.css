@@ -1526,3 +1526,51 @@ line.tb-chalk { stroke-width: 1; }
 @media (prefers-reduced-motion: reduce) { .deck-slot { transform: none; } }
 /* Waagrechtes Wischen gehört der Karte bzw. dem Profil, senkrechtes Scrollen bleibt beim Browser. */
 .squad-deck .m-card, [data-swipe='player'] { touch-action: pan-y; }
+
+/* ===== UI 3.0 Phase 4: Magnet-Taktiktafel, Aufstellung als Magnete, Trainerkarten ===== */
+/* Trainerkarten liegen als Reihe auf dem Tisch; im Spiel-Blatt etwas kleiner. */
+.tcard-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(150px, calc(50% - var(--s3))), 1fr)); gap: var(--s3); margin: var(--s2) 0 var(--s3); }
+.tcard-row.compact { grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: var(--s2); }
+.tcard-row.compact .m-tcard-title { font-size: var(--fs-body); }
+@media (max-width: 560px) { .tcard-row .m-tcard-title { font-size: var(--fs-body); letter-spacing: 0.02em; } .tcard-row .m-tcard { padding: 8px 8px 6px; } }
+.club-panel button.m-tcard:active:not(:disabled) { transform: translateY(2px) rotate(var(--tilt, 0deg)); box-shadow: 1px 1px 0 #000; }
+.club-panel button.m-tcard.active:active:not(:disabled) { transform: translateY(-2px); box-shadow: 3px 3px 0 #000, 0 0 0 3px var(--accent); }
+.club-panel button.m-tcard:hover:not(:disabled) { filter: none; }
+.tactic-board .tp-preview { margin: 0 0 var(--s2); }
+
+/* Taktiktafel im Rahmen einer Magnettafel: grüner Belag, Alurahmen, Ablage für Stifte */
+.club-tboard.m-board, .tp-board.m-board { padding: 6px; margin-bottom: calc(var(--s3) + 14px); }
+.m-board .tboard svg { border-color: rgba(255, 255, 255, 0.85); box-shadow: 0 0 0 2px #000; }
+.m-board .tb-legend li { color: var(--paper-ink); background: #fff; border: 1px solid var(--marker-black); transform: rotate(-0.6deg); }
+.m-board .tb-legend li.none { color: rgba(42, 38, 32, 0.72); }
+.tb-mag { stroke: #000; stroke-width: 1; }
+.tb-p .tb-shine { fill: rgba(255, 255, 255, 0.65); stroke: none; pointer-events: none; }
+.tp-board.m-board { position: sticky; top: 0; }
+@media (max-width: 720px) { .tp-board.m-board { position: relative; } }
+
+/* Aufstellung: Magnettafel. Spieler sind runde Magnete in Vereinsfarbe, Name auf Kreppband. */
+.lp-board.m-board { padding: 6px; margin-bottom: 14px; }
+.lp-board .lp-pitch { box-shadow: 0 0 0 2px #000; }
+.lp-board .lp-shirt {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  clip-path: none;
+  background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.6) 0 3px, transparent 4px), var(--kit);
+  box-shadow: 2px 3px 0 rgba(0, 0, 0, 0.55);
+}
+.lineup2.light-kit .lp-shirt { color: var(--paper-ink); text-shadow: none; }
+.lp-board .lp-token.standin .lp-shirt { background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.6) 0 3px, transparent 4px), #8a8a8a; }
+.lp-board .lp-name { color: var(--paper-ink); background: #efe3bf; border: 1px solid rgba(0, 0, 0, 0.6); text-shadow: none; transform: rotate(-2deg); }
+.lp-board .lp-role { color: #fff; }
+.lp-board .lp-token.picked .lp-shirt { outline: 3px solid var(--accent); outline-offset: 3px; }
+/* Beim Ziehen: Magnet hebt sich (größerer Schatten), am Ziel klackt er ein */
+.lp-ghost .lp-shirt { transform: scale(1.12); box-shadow: 6px 9px 0 rgba(0, 0, 0, 0.4); }
+.lp-token.snap .lp-shirt { animation: lp-snap 0.24s var(--ease) 1; }
+@keyframes lp-snap { 0% { transform: scale(1.18); } 60% { transform: scale(0.94); } }
+/* Bank: Magnete in der Ablage */
+.lp-bench b { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; color: #fff; background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.55) 0 3px, transparent 4px), var(--kit); border: 2px solid #000; box-shadow: 1px 2px 0 rgba(0, 0, 0, 0.5); text-shadow: 1px 1px 0 #000; font-size: var(--fs-body); }
+.lineup2.light-kit .lp-bench b { color: var(--paper-ink); text-shadow: none; }
+@media (max-width: 560px) { .lp-board .lp-shirt { width: 36px; height: 36px; } }
+@media (prefers-reduced-motion: reduce) { .lp-token.snap .lp-shirt { animation: none; } .lp-ghost .lp-shirt { transform: none; } }
+.tactic-board .styles button { min-height: var(--touch-min); }

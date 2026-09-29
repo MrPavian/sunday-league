@@ -137,3 +137,14 @@ export const note = (html, { color = '', tilt = -1.2, pin = false, tape = false 
   `<div class="m-note${color ? ` ${color}` : ''}${pin ? ' m-pin' : ''}${tape ? ' m-tape' : ''}" style="--tilt:${tilt}deg">${html}</div>`;
 export const stamp = (text, { ok = false, tilt = -8 } = {}) => `<span class="m-stamp${ok ? ' ok' : ''}" style="--tilt:${tilt}deg">${esc(text)}</span>`;
 export const magnet = (text, color) => `<span class="m-magnet" style="--c:${hex(color)}">${esc(text)}</span>`;
+
+// Trainerkarte (UI 3.0, Phase 4): ein Befehlspaket als Karte auf dem Tisch. Die ganze Karte ist
+// der Knopf (Tippen = ausspielen). lines: was die Karte wirklich verstellt (Befehls-Beschriftungen
+// aus commands.js). played: nur beim eben ausgespielten Exemplar – einmal kurz anheben.
+export function trainerCard({ action, value, title, lines = [], active = false, played = false, kbd = '', hint = '' }) {
+  return `<button class="m-tcard${active ? ' active' : ''}${played ? ' m-play' : ''}" data-action="${esc(action)}" data-value="${esc(value)}" aria-pressed="${active}"${hint ? ` title="${esc(hint)}"` : ''}>
+    <span class="m-tcard-title">${kbd ? `<kbd>${esc(kbd)}</kbd>` : ''}${esc(title)}</span>
+    <span class="m-tcard-lines">${lines.map((l) => `<i>${esc(l)}</i>`).join('')}</span>
+    <span class="m-tcard-foot">${active ? stamp(tr('Aktiv', 'Active'), { ok: true, tilt: -6 }) : `<span class="m-tcard-go">${tr('Aktivieren', 'Activate')}</span>`}</span>
+  </button>`;
+}

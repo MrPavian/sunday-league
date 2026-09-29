@@ -1,11 +1,12 @@
 import { tr } from '../core/i18n.js';
-import { applySimple, GROUP_LABELS, ORDERS, simpleActive, SIMPLE, SIMPLE_IDS } from '../sim/commands.js';
+import { applySimple, GROUP_LABELS, ORDERS, packLines, simpleActive, SIMPLE, SIMPLE_IDS } from '../sim/commands.js';
 import { activeShouts, shout, SHOUTS } from '../sim/coach.js';
 import { execution, ORDER_GROUPS, orderOf, planTarget, setOrder, setStyle } from '../sim/plan.js';
 import { STYLES } from '../sim/tactics.js';
 import { button, haptic } from './ds.js';
 import { setCoachLevel } from './prefs.js';
 import { TacticBoard } from './TacticBoard.js';
+import { trainerCard } from './world.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
@@ -26,14 +27,8 @@ export class PlanPanel {
       const m = this.match;
       if (action === 'simple') {
         applySimple(m, this.team, value);
-        this.preview = {
-          label: SIMPLE[value].label,
-          text: Object.entries(SIMPLE[value].orders)
-            .filter(([, v]) => v)
-            .map(([g, v]) => ORDERS[`${g}:${v}`]?.label)
-            .filter(Boolean)
-            .join(' · '),
-        };
+        this.preview = { label: SIMPLE[value].label, text: packLines(value).join(' · ') };
+        this.played = value;
       } else if (action === 'order') {
         const off = value === '' || orderOf(m, this.team, group) === value;
         setOrder(m, this.team, group, off ? null : value, { by: 'plan' });
@@ -82,7 +77,7 @@ export class PlanPanel {
       <div class="plan-panel tp" role="dialog" aria-label="${tr('Taktik', 'Tactics')}">
         <header class="tp-head"><div><h3>${tr('Taktik', 'Tactics')}</h3><small>${tr('Das Spiel steht. Befehle gelten, bis du sie änderst.', 'The match is paused. Orders stay until you change them.')}</small></div>
           ${button('✕', { kind: 'ghost icon', action: 'close', 'aria-label': tr('Weiter', 'Resume') })}</header>
-        <div class="tp-body"><div class="tp-board"></div><div class="tp-controls"></div></div>
+        <div class="tp-body"><div class="tp-board m-board"><span class="tray" aria-hidden="true"></span></div><div class="tp-controls"></div></div>
         <footer><button data-action="reset">${tr('Alles zurück auf den Grundstil', 'Back to the base style')}</button><button class="primary" data-action="close">${tr('Weiter (Enter)', 'Resume (Enter)')}</button></footer>
       </div>`;
     if (this.board) this.root.querySelector('.tp-board').appendChild(this.board.el);
@@ -107,7 +102,10 @@ export class PlanPanel {
     const shouts = Object.entries(SHOUTS)
       .map(([id, s], i) => `<button data-action="shout" data-value="${id}" aria-pressed="${shouting.has(id)}" class="${shouting.has(id) ? 'active' : ''}" title="${esc(s.label)}"><kbd>${i + 1}</kbd>${s.short}</button>`)
       .join('');
-    const simple = SIMPLE_IDS.map((id) => `<button data-action="simple" data-value="${id}" aria-pressed="${simpleActive(m, team, id)}" class="${simpleActive(m, team, id) ? 'active' : ''}">${SIMPLE[id].label}</button>`).join('');
+    // Schnellbefehle als Trainerkarten auf dem Tisch; die eben ausgespielte hebt sich einmal an.
+    const played = this.played;
+    this.played = null;
+    const simple = SIMPLE_IDS.map((id) => trainerCard({ action: 'simple', value: id, title: SIMPLE[id].label, lines: packLines(id), active: simpleActive(m, team, id), played: played === id })).join('');
     // Fortgeschritten: jede Gruppe als Stufenregler – nur die vorhandenen Stufen, dazu „–" für aus.
     const groups = ORDER_GROUPS.map((g) => {
       const values = Object.keys(ORDERS).filter((k) => k.startsWith(`${g}:`)).map((k) => k.split(':')[1]);
@@ -124,8 +122,8 @@ export class PlanPanel {
       ${this.preview ? `<p class="tp-preview" aria-live="polite"><b>${esc(this.preview.label)}</b> ${esc(this.preview.text)}</p>` : ''}
       <p class="ui-section-title">${tr('Zurufe', 'Shouts')}</p>
       <div class="chips shouts">${shouts}</div>
-      <p class="ui-section-title">${tr('Schnellbefehle', 'Quick orders')}</p>
-      <div class="chips simple">${simple}</div>
+      <p class="ui-section-title">${tr('Trainerkarten', 'Coach cards')}</p>
+      <div class="tcard-row compact">${simple}</div>
       ${this.advanced ? `<p class="ui-section-title">${tr('Alle Befehle', 'All orders')}</p><div class="plan-grid">${groups}</div><div class="plan-group"><h4>${tr('Grundstil', 'Base style')}</h4><div class="chips">${styles}</div></div>` : ''}
       <p class="hint"><button class="linkish" data-action="level">${this.advanced ? tr('Weniger Optionen', 'Fewer options') : tr('Alle Befehle zeigen', 'Show all orders')}</button></p>`;
     if (this.board) {

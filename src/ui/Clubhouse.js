@@ -8,13 +8,13 @@ import { reviewHTML, shareReview } from './review.js';
 import { GOALS } from '../career/board.js';
 import { STYLES as PLAY_STYLES, systemsFor } from '../sim/tactics.js';
 import { jobFits, styleFit } from '../sim/fit.js';
-import { GROUP_LABELS, ORDERS, SIMPLE, SIMPLE_IDS } from '../sim/commands.js';
+import { GROUP_LABELS, ORDERS, packLines, SIMPLE, SIMPLE_IDS } from '../sim/commands.js';
 import { coachLevel, setCoachLevel } from './prefs.js';
-import { button, icon, segmented, tabs as uiTabs } from './ds.js';
+import { button, haptic, icon, segmented, tabs as uiTabs } from './ds.js';
 import { ATTR_LABELS } from './PoolBrowser.js';
 import { TacticBoard } from './TacticBoard.js';
 import { clubScene } from './ClubScene.js';
-import { bindFlips, playerCard as collectorCard } from './world.js';
+import { bindFlips, isLight, playerCard as collectorCard, trainerCard } from './world.js';
 import { planTarget } from '../sim/plan.js';
 import { jobPerk } from '../data/jobs.js';
 import { CREST_COLORS, CREST_DIVISIONS, CREST_SHAPES, CREST_SYMBOLS, crestOf, crestSVG, defaultCrest, FIGURES } from './crest.js';
@@ -273,6 +273,8 @@ export class Clubhouse {
         this.h.onChange();
       } else if (action === 'planSimple') {
         for (const [g, v] of Object.entries(SIMPLE[value].orders)) setClubPlan(this.career, g, v);
+        this.playedCard = value;
+        haptic('select');
         this.h.onChange();
       } else if (action === 'planReset') {
         for (const g of Object.keys(GROUP_LABELS)) setClubPlan(this.career, g, null);
@@ -1127,7 +1129,12 @@ export class Clubhouse {
   // Profi: jede Gruppe einzeln.
   planBlock(orders) {
     const active = (pack) => Object.entries(pack.orders).every(([g, v]) => v == null || orders[g] === v);
-    const simple = SIMPLE_IDS.map((id) => `<button class="${active(SIMPLE[id]) ? 'active' : ''}" data-action="planSimple" data-value="${id}">${SIMPLE[id].label}</button>`).join('');
+    // Einsteiger-Pakete als Trainerkarten: jede Karte zeigt, welche Befehle sie setzt.
+    const played = this.playedCard;
+    this.playedCard = null;
+    const simple = SIMPLE_IDS.map((id) =>
+      trainerCard({ action: 'planSimple', value: id, title: SIMPLE[id].label, lines: packLines(id), active: active(SIMPLE[id]), played: played === id }),
+    ).join('');
     const groups = Object.keys(GROUP_LABELS).map((g) => {
       const chips = Object.keys(ORDERS).filter((k) => k.startsWith(`${g}:`)).map((k) => {
         const v = k.split(':')[1];
@@ -1139,7 +1146,8 @@ export class Clubhouse {
     const pro = coachLevel() === 'profi';
     return `
       <h4>${tr('Spielplan', 'Game plan')} <small>${summary.length ? summary.join(' · ') : tr('nur der Grundstil', 'base style only')}</small></h4>
-      <div class="styles">${simple}</div>
+      <div class="tcard-row">${simple}</div>
+      ${played ? `<p class="tp-preview" aria-live="polite"><b>${SIMPLE[played].label}</b> ${tr('ausgespielt – die Tafel zeigt, was sich ändert.', 'played – the board shows what changes.')}</p>` : ''}
       ${pro ? groups : ''}
       <p class="hint">${tr('Damit laufen die Jungs auf. Im Spiel kannst du jederzeit abweichen.', 'This is how the lads start. You can change it at any time during the match.')} <button class="linkish" data-action="planLevel">${pro ? tr('Weniger Optionen', 'Fewer options') : tr('Alle Befehle zeigen', 'Show all orders')}</button>${summary.length ? ` <button class="linkish" data-action="planReset">${tr('Zurücksetzen', 'Reset')}</button>` : ''}</p>`;
   }
@@ -1169,7 +1177,7 @@ export class Clubhouse {
     this.boardData = { formation, target: planTarget({ plan: [{ style: tactic.style }], orders: [tactic.orders ?? {}] }, 0) };
     return `
       <div class="tactic-board">
-        <div class="club-tboard"></div>
+        <div class="club-tboard m-board"><span class="tray" aria-hidden="true"></span></div>
         <p class="ui-section-title">${tr('System', 'System')} · ${formation.length} ${tr('gegen', 'v')} ${formation.length}</p>
         <div class="systems">${systems}</div>
         <p class="ui-section-title">${tr('Spielstil', 'Playing style')}</p>
@@ -1206,6 +1214,9 @@ export class Clubhouse {
       else if (lineup[slot] != null) setLineupSlot(this.career, other, lineup[slot]);
       else return;
     } else if (idx != null) setLineupSlot(this.career, slot, idx);
+    // Magnet „klackt" an der neuen Stelle ein (einmal, beim nächsten Zeichnen).
+    this.justSet = new Set([slot, other].filter((x) => x != null));
+    haptic('select');
     this.h.onChange();
   }
 
@@ -1219,6 +1230,8 @@ export class Clubhouse {
     if (coachAway(c)) return `<p class="warn">${tr('Du bist diese Woche nicht da. Der Kapitän stellt auf – nach bestem Wissen und Gewissen.', 'You are away this week. The captain picks the team – to the best of his knowledge.')}</p><h4>${tr('Bank', 'Bench')}</h4><ul class="bench">${benchList}</ul>`;
     const ROLE = tr({ gk: 'Tor', def: 'Abwehr', mid: 'Mitte', fwd: 'Sturm' }, { gk: 'GK', def: 'Def', mid: 'Mid', fwd: 'Att' });
     const pick = this.pick;
+    const snap = this.justSet ?? new Set();
+    this.justSet = null;
     // Formation liegt in der eigenen Hälfte (x −0,96 … −0,14): auf das ganze Feld strecken, Tor links.
     const left = (x) => (6 + ((x + 0.96) / 0.82) * 84).toFixed(1);
     const top = (z) => (50 + z * 70).toFixed(1);
@@ -1228,7 +1241,7 @@ export class Clubhouse {
         const p = idx != null ? this.p(idx) : null;
         const off = p && p.position !== slot.role && !(slot.role === 'mid' && p.position !== 'gk');
         const picked = pick?.slot === i;
-        return `<button class="lp-token role-${slot.role}${picked ? ' picked' : ''}${p ? '' : ' standin'}" data-action="slotPick" data-value="${i}" data-drop="slot:${i}" data-drag="slot:${i}" style="--x:${left(slot.x)}%;--y:${top(slot.z)}%" aria-pressed="${picked}" aria-label="${ROLE[slot.role]}: ${p ? p.name : tr('Aushilfe', 'Stand-in')}">
+        return `<button class="lp-token role-${slot.role}${picked ? ' picked' : ''}${p ? '' : ' standin'}${snap.has(i) ? ' snap' : ''}" data-action="slotPick" data-value="${i}" data-drop="slot:${i}" data-drag="slot:${i}" style="--x:${left(slot.x)}%;--y:${top(slot.z)}%" aria-pressed="${picked}" aria-label="${ROLE[slot.role]}: ${p ? p.name : tr('Aushilfe', 'Stand-in')}">
           <span class="lp-shirt">${p ? p.rating : '?'}</span>
           <span class="lp-name">${p ? p.name.split(' ').at(-1) : tr('Aushilfe', 'Stand-in')}</span>
           <span class="lp-role${off ? ' off' : ''}">${ROLE[slot.role]}${off ? ` · ${POSITIONS[p.position]}` : ''}</span>
@@ -1258,13 +1271,13 @@ export class Clubhouse {
         : tr('Jetzt die Position antippen, auf der er spielen soll.', 'Now tap the position he should play.')
       : tr('Spieler antippen, dann Ziel antippen – oder einfach ziehen.', 'Tap a player, then the target – or just drag.');
     return `
-      <div class="lineup2">
+      <div class="lineup2${isLight(humanClub(c).kit.shirt) ? ' light-kit' : ''}">
         <div class="lp-head">
           <p class="t-cap">${c.week.lineup ? tr('Eigene Aufstellung', 'Your line-up') : tr('Automatisch aufgestellt', 'Picked automatically')} · ${PLAY_STYLES[tactic.style].label}</p>
           <div class="ui-row">${pick ? button(tr('Abbrechen', 'Cancel'), { kind: 'ghost', action: 'pickCancel' }) : ''}${button(tr('Automatisch aufstellen', 'Pick automatically'), { action: 'autoLineup' })}</div>
         </div>
         <div class="lp-stage">
-          <div class="lp-pitch" aria-label="${tr('Spielfeld', 'Pitch')}"><i class="lp-box l"></i><i class="lp-box r"></i><i class="lp-mid"></i>${tokens}</div>
+          <div class="lp-board m-board"><div class="lp-pitch" aria-label="${tr('Magnettafel', 'Magnet board')}"><i class="lp-box l"></i><i class="lp-box r"></i><i class="lp-mid"></i>${tokens}</div><span class="tray" aria-hidden="true"></span></div>
           <div class="lp-benchcol"><p class="ui-section-title">${tr('Bank', 'Bench')} · ${tr('verfügbar', 'available')}</p>
           <div class="lp-benchrow">${benchChips || `<p class="t-2">${tr('niemand', 'nobody')}</p>`}</div></div>
         </div>

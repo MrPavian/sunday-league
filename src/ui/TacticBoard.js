@@ -44,12 +44,14 @@ export class TacticBoard {
   // formation: [{ role, x, z }] · t: Zielwerte (planTarget) · exec: Umsetzung 0..1 (optional)
   update(formation, t, exec = null) {
     const svg = this.el.querySelector('svg');
-    // Spieler: gleiche Anzahl → Knoten wiederverwenden (Übergang), sonst neu anlegen.
-    const key = formation.map((f) => f.role).join();
+    // Spieler als Magnete: gleiche Anzahl → Knoten wiederverwenden, dann gleiten sie auch beim
+    // Systemwechsel an die neuen Plätze (nur die Farbe der Rolle wechselt). Sonst neu anlegen.
+    const key = String(formation.length);
     if (key !== this.key) {
-      this.players.innerHTML = formation.map((f) => `<g class="tb-p"><circle r="5.2" fill="${ROLE_COLOR[f.role] ?? '#ccc'}"/></g>`).join('');
+      this.players.innerHTML = formation.map(() => `<g class="tb-p"><circle class="tb-mag" r="5.2"/><circle class="tb-shine" r="1.4" cx="-1.8" cy="-1.8"/></g>`).join('');
       this.key = key;
     }
+    [...this.players.children].forEach((n, i) => n.firstElementChild.setAttribute('fill', ROLE_COLOR[formation[i].role] ?? '#ccc'));
     const defs = formation.filter((f) => f.role === 'def');
     const defX = defs.length ? defs.reduce((s, f) => s + f.x, 0) / defs.length : -0.62;
     const lineShift = t.line ?? 0;

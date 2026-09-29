@@ -254,3 +254,41 @@
 /* Umdrehen oben rechts in der Kopfzeile – unten bleibt Platz für Position und Sonntag-Status */
 .m-card .m-flip-btn { top: 2px; right: 2px; bottom: auto; }
 .m-card-top { padding-right: 52px; min-height: 48px; }
+
+/* ---------- Trainerkarte (Befehlspaket) – die ganze Karte ist der Knopf ---------- */
+button.m-tcard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: var(--touch-min);
+  padding: 8px 10px 6px;
+  font: inherit;
+  text-align: left;
+  color: var(--paper-ink);
+  background: linear-gradient(var(--marker-red) 0 6px, transparent 6px), var(--paper);
+  border: 2px solid #000;
+  box-shadow: 3px 3px 0 #000;
+  text-shadow: none;
+  cursor: pointer;
+  transform: rotate(var(--tilt, 0deg));
+  transition: transform 0.16s var(--ease), box-shadow 0.16s var(--ease);
+}
+button.m-tcard:nth-child(3n + 1) { --tilt: -1deg; }
+button.m-tcard:nth-child(3n + 2) { --tilt: 0.8deg; }
+button.m-tcard:active { transform: translateY(2px) rotate(var(--tilt, 0deg)); box-shadow: 1px 1px 0 #000; }
+button.m-tcard:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.m-tcard-title { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: var(--fs-h3); line-height: 1.1; text-transform: uppercase; letter-spacing: 0.04em; }
+.m-tcard-title kbd { font: inherit; font-size: var(--fs-caption); padding: 0 4px; border: 1px solid currentColor; }
+.m-tcard-lines { display: grid; gap: 1px; color: var(--marker-blue); font-size: var(--fs-secondary); }
+.m-tcard-lines i { font-style: normal; }
+.m-tcard-lines i::before { content: '→ '; color: var(--marker-red); }
+.m-tcard-foot { margin-top: auto; display: flex; justify-content: flex-end; min-height: 24px; align-items: center; }
+.m-tcard-go { font-size: var(--fs-caption); padding: 1px 8px; border: 2px solid var(--paper-ink); }
+/* Aktiv: Karte liegt obenauf (angehoben, gerade, grüner Kopf) */
+button.m-tcard.active { --tilt: 0deg; background: linear-gradient(var(--marker-green) 0 6px, transparent 6px), #fffaf0; box-shadow: 3px 3px 0 #000, 0 0 0 3px var(--accent); transform: translateY(-4px); }
+button.m-tcard.active:active { transform: translateY(-2px); }
+/* Eben ausgespielt: einmal auf den Tisch geklatscht */
+button.m-tcard.m-play { animation: m-play 0.3s var(--ease) 1; }
+@keyframes m-play { 0% { transform: translateY(-16px) rotate(-4deg) scale(1.06); } 70% { transform: translateY(1px) scale(0.98); } }
+@media (prefers-reduced-motion: reduce) { .m-tcard, .m-tcard.m-play { transition: none; animation: none; } }
