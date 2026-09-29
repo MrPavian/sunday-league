@@ -14,6 +14,7 @@ import { button, icon, segmented, tabs as uiTabs } from './ds.js';
 import { ATTR_LABELS } from './PoolBrowser.js';
 import { TacticBoard } from './TacticBoard.js';
 import { clubScene } from './ClubScene.js';
+import { bindFlips, playerCard as collectorCard } from './world.js';
 import { planTarget } from '../sim/plan.js';
 import { jobPerk } from '../data/jobs.js';
 import { CREST_COLORS, CREST_DIVISIONS, CREST_SHAPES, CREST_SYMBOLS, crestOf, crestSVG, defaultCrest, FIGURES } from './crest.js';
@@ -119,10 +120,14 @@ export class Clubhouse {
     this.h = handlers;
     this.tab = 'home';
     this.lastTab = {}; // je Bereich der zuletzt offene Tab
+    this.flipped = {}; // umgedrehte Spielerkarten (nur Ansicht)
+    // Karten umdrehen: Knopf überall, Wischen nur im Kartenstapel (im Profil blättert Wischen weiter).
+    bindFlips(root, (id, on) => (this.flipped[id] = on), { scope: '.squad-deck' });
     this.busy = null;
     root.addEventListener('click', (e) => {
       const t = e.target.closest('[data-action]');
       if (!t || this.busy || this.suppressClick) return;
+      if (t.classList.contains('m-card-open') && performance.now() - Number(root.dataset.swiped ?? 0) < 400) return; // war ein Wischen
       const { action, value } = t.dataset;
       if (action === 'tab') this.tab = value;
       else if (action === 'area') {
@@ -131,6 +136,7 @@ export class Clubhouse {
       }
       else if (action === 'playerCard') {
         this.openPlayer = Number(value);
+        this.pulled = true; // Karte kommt einmal aus dem Stapel nach vorn
         this.profileTab = 'overview';
         this.confirmRelease = null;
       } else if (action === 'playerBack') this.openPlayer = null;
@@ -1010,19 +1016,8 @@ export class Clubhouse {
     const club = humanClub(c);
     if (this.openPlayer != null && club.squad.includes(this.openPlayer)) return this.playerProfile(this.openPlayer);
     this.openPlayer = null;
-    const ROLE = { gk: '#e8742a', def: '#4fa3e0', mid: '#6fbf73', fwd: '#d9534f' };
     const cards = this.squadOrder()
-      .map((idx) => {
-        const p = this.p(idx);
-        const r = c.players[idx];
-        const tier = tierById(p.tier);
-        return `<button class="ui-card squad-card" data-action="playerCard" data-value="${idx}" style="--c:${ROLE[p.position] ?? '#888'};--tier:${tier.color}">
-          <span class="sc-rating">${p.rating}</span>
-          <span class="sc-name"><b>${p.name}</b>${this.nameMarks(idx, p, r)}</span>
-          <span class="sc-pos">${POSITIONS[p.position]} · <i class="sc-tier">${tier.name}</i></span>
-          <span class="sc-sun">${this.sundayChip(idx)}</span>
-        </button>`;
-      })
+      .map((idx) => `<div class="deck-slot">${this.collector(idx)}</div>`)
       .join('');
     const count = { yes: 0, no: 0, late: 0 };
     for (const idx of club.squad) if (c.week?.availability[idx]) count[c.week.availability[idx]]++;
@@ -1031,11 +1026,43 @@ export class Clubhouse {
         <p class="t-2">${club.squad.length} ${tr('Spieler', 'players')}${c.week ? ` · ${count.yes} ${tr('Zusagen', 'in')} · ${count.late} ${tr('später', 'late')} · ${count.no} ${tr('Absagen', 'out')}` : ''}</p>
         <div class="squad-sort">${segmented('sort', [['rating', tr('Stärke', 'Rating')], ['pos', tr('Position', 'Position')]], this.squadSort === 'pos' ? 'pos' : 'rating', { action: 'squadSort' })}</div>
       </div>
-      <div class="squad-grid">${cards}</div>`;
+      <div class="squad-deck">${cards}</div>`;
+  }
+
+  // Sammelkarte eines Spielers: vorn Stärke, Trikot, Name, Position, Sonntag – hinten die Werte.
+  collector(idx, { w, open = true } = {}) {
+    const c = this.career;
+    const p = this.p(idx);
+    const r = c.players[idx];
+    const tier = tierById(p.tier);
+    const club = humanClub(c);
+    const attrs = Object.entries(ATTR_LABELS)
+      .filter(([k]) => p.attrs[k] != null && (k !== 'keeping' || p.position === 'gk' || p.attrs.keeping > 0.4))
+      .map(([k, label]) => [label, Math.round(p.attrs[k] * 100)]);
+    const traits = (p.traits ?? []).filter((t) => TRAITS[t]).map((t) => TRAITS[t].name);
+    const extra = `<p class="m-card-extra">${jobName(p.profession)}${traits.length ? ` · ${traits.slice(0, 2).join(' · ')}` : ''}</p>`;
+    const marks = `${r.awards?.length ? '★' : ''}${isCoach(c, idx) ? ` ${tr('Du', 'You')}` : ''}`;
+    return collectorCard({
+      id: idx,
+      name: `${p.name}${marks ? ` ${marks}` : ''}`,
+      pos: `${POSITIONS[p.position]} · ${tier.name}`,
+      rating: p.rating,
+      kit: club.kit.shirt,
+      badge: formArrow(r.form),
+      art: `<span class="m-card-shirt" style="--shirt:url(${kitPreviewURL(club.kit)})"></span>`,
+      sub: this.sundayChip(idx),
+      attrs,
+      extra,
+      flipped: !!this.flipped[idx],
+      w,
+      open: open ? { action: 'playerCard', value: idx, label: tr(`Profil von ${p.name} öffnen`, `Open ${p.name}'s profile`) } : null,
+    });
   }
 
   // Spielerprofil: eigener Bildschirm mit Tabs statt weiterer Menüebenen. Wischen = nächster Spieler.
   playerProfile(idx) {
+    const pulled = this.pulled;
+    this.pulled = false;
     const c = this.career;
     const club = humanClub(c);
     const p = this.p(idx);
@@ -1083,7 +1110,7 @@ export class Clubhouse {
           <span class="ui-row">${button('‹', { kind: 'icon', action: 'playerStep', value: -1, 'aria-label': tr('Voriger Spieler', 'Previous player') })}${button('›', { kind: 'icon', action: 'playerStep', value: 1, 'aria-label': tr('Nächster Spieler', 'Next player') })}</span>
         </div>
         <div class="profile-head" style="--tier:${tier.color}">
-          <span class="profile-shirt" style="background:url(${kitPreviewURL(club.kit)}) center / 100% 100%"><b>${p.rating}</b></span>
+          <div class="profile-card${pulled ? ' m-pull' : ''}">${this.collector(idx, { w: 150, open: false })}</div>
           <div>
             <h3 class="t-h2">${p.name}${this.nameMarks(idx, p, r)}</h3>
             <p class="t-body">${POSITIONS[p.position]} · <span class="badge" style="--c:${tier.color}">${tier.name}</span></p>

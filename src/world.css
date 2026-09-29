@@ -234,3 +234,23 @@
   .m-card-inner { transition: none; }
   .m-phone.buzz, .m-phone-wrap.rise { animation: none; }
 }
+
+/* Karte ziehen: unsichtbare Fläche über der ganzen Karte (unter dem Umdrehen-Knopf) */
+.m-card .m-card-open { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; padding: 0; background: transparent; border: 0; cursor: pointer; }
+.m-card .m-card-open:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.m-card:has(.m-card-open:active) .m-card-inner { transform: translateY(-6px) rotate(-1.5deg); }
+.m-card.flipped:has(.m-card-open:active) .m-card-inner { transform: rotateY(180deg) translateY(-6px); }
+.m-card-sub { padding: 0 8px 8px; margin-top: -4px; }
+/* Aus dem Stapel gezogen: die Karte kommt einmal nach vorn (nur beim Öffnen) */
+.m-pull { animation: m-pull 0.28s var(--ease) 1; }
+@keyframes m-pull { from { transform: translateY(24px) scale(0.86) rotate(-3deg); opacity: 0.4; } }
+@media (prefers-reduced-motion: reduce) { .m-pull { animation: none; } .m-card:has(.m-card-open:active) .m-card-inner { transform: none; } }
+
+/* Helle Vereinsfarben: dunkle Schrift oben, dunkle Kante unter der Kopfzeile */
+.m-card.light-kit .m-card-top { color: var(--paper-ink); text-shadow: none; border-bottom-color: #000; box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.15); }
+.m-card.light-kit .m-face.back { background: repeating-linear-gradient(45deg, var(--kit) 0 8px, #b9b1a0 8px 16px); }
+/* Trikot mit Pixel-Kontur, damit es sich auch in Weiß vom Karton abhebt */
+.m-card-shirt { filter: drop-shadow(2px 0 0 #000) drop-shadow(-2px 0 0 #000) drop-shadow(0 2px 0 #000) drop-shadow(0 -2px 0 #000); }
+/* Umdrehen oben rechts in der Kopfzeile – unten bleibt Platz für Position und Sonntag-Status */
+.m-card .m-flip-btn { top: 2px; right: 2px; bottom: auto; }
+.m-card-top { padding-right: 52px; min-height: 48px; }

@@ -5,6 +5,12 @@ import { tr } from '../core/i18n.js';
 import { esc } from './ds.js';
 
 const hex = (n) => (typeof n === 'number' ? `#${n.toString(16).padStart(6, '0')}` : n);
+// Helle Vereinsfarbe (Weiß, Gelb …)? Dann dunkle Schrift auf der Karte – sonst weiß auf weiß.
+export function isLight(color) {
+  const n = parseInt(hex(color).slice(1), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  return 0.299 * r + 0.587 * g + 0.114 * b > 160;
+}
 
 // Pixelbild aus Zeichenkarte: jede Zeile ein String, jedes Zeichen ein Pixel (Palette → Farbe).
 export function pixelSVG(rows, palette, cls = '') {
@@ -73,26 +79,29 @@ export function lockScreen({ time = '', notes = [], openAction = 'phone-open' })
 // Spielerkarte: Vorderseite (Stärke, Name, Position) und Rückseite (Werte). Umdrehen per Knopf
 // (data-flip) oder waagrechtem Wischen (bindFlips). Beide Seiten stehen im DOM – Screenreader
 // lesen die aktive Seite, die andere ist aria-hidden.
-export function playerCard({ id, name, pos, rating, kit = 0x2f6f3a, art = '', badge = '', attrs = [], extra = '', flipped = false, w }) {
-  return `<div class="m-card${flipped ? ' flipped' : ''}" data-card="${esc(id)}" style="--kit:${hex(kit)}${w ? `;--card-w:${w}px` : ''}">
+// open: { action, value, label } – unsichtbare Fläche über der Karte (Antippen = Karte ziehen/öffnen).
+export function playerCard({ id, name, pos, rating, kit = 0x2f6f3a, art = '', badge = '', attrs = [], extra = '', flipped = false, w, open = null, sub = '' }) {
+  return `<div class="m-card${flipped ? ' flipped' : ''}${isLight(kit) ? ' light-kit' : ''}" data-card="${esc(id)}" style="--kit:${hex(kit)}${w ? `;--card-w:${w}px` : ''}">
     <div class="m-card-inner">
       <div class="m-face front" aria-hidden="${flipped}">
         <div class="m-card-top"><span class="rating">${esc(rating)}</span><span>${badge}</span></div>
         <div class="m-card-art">${art}</div>
         <div class="m-card-name">${esc(name)}</div>
-        <div class="m-card-pos">${esc(pos)}</div>
+        <div class="m-card-pos">${esc(pos)}</div>${sub ? `<div class="m-card-sub">${sub}</div>` : ''}
       </div>
       <div class="m-face back" aria-hidden="${!flipped}">
         <div class="m-card-sheet"><p class="t-cap" style="margin:0 0 6px">${esc(name)}</p>
           <ul class="m-attrs">${attrs.map(([label, v]) => `<li><span>${esc(label)}</span><b>${esc(v)}</b></li>`).join('')}</ul>${extra}</div>
       </div>
     </div>
+    ${open ? `<button class="m-card-open" data-action="${esc(open.action)}" data-value="${esc(open.value)}" aria-label="${esc(open.label)}"></button>` : ''}
     <button class="ui-btn ghost icon m-flip-btn" data-flip="${esc(id)}" aria-pressed="${flipped}" aria-label="${tr('Karte umdrehen', 'Flip card')}">⟲</button>
   </div>`;
 }
 
 // Umdrehen: Klick auf [data-flip] oder waagrecht über die Karte wischen. Einmal am Container binden.
-export function bindFlips(root, onFlip) {
+// scope: nur Karten innerhalb dieses Selektors lassen sich per Wischen drehen (Knopf geht immer).
+export function bindFlips(root, onFlip, { scope = null } = {}) {
   const flip = (card) => {
     const on = !card.classList.contains('flipped');
     card.classList.toggle('flipped', on);
@@ -108,13 +117,17 @@ export function bindFlips(root, onFlip) {
   let start = null;
   root.addEventListener('pointerdown', (e) => {
     const card = e.target.closest('.m-card');
-    start = card && e.pointerType !== 'mouse' ? { card, x: e.clientX, y: e.clientY } : null;
+    start = card && e.pointerType !== 'mouse' && (!scope || card.closest(scope)) ? { card, x: e.clientX, y: e.clientY } : null;
   });
   root.addEventListener('pointerup', (e) => {
     if (!start) return;
     const { card, x, y } = start;
     start = null;
-    if (Math.abs(e.clientX - x) > 50 && Math.abs(e.clientX - x) > Math.abs(e.clientY - y) * 1.5) flip(card);
+    if (Math.abs(e.clientX - x) > 50 && Math.abs(e.clientX - x) > Math.abs(e.clientY - y) * 1.5) {
+      flip(card);
+      e.preventDefault();
+      root.dataset.swiped = String(performance.now()); // der folgende Klick soll die Karte nicht öffnen
+    }
   });
   return flip;
 }
