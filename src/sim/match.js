@@ -25,7 +25,7 @@ import { checkIncident, incidentOnBall, planIncident, stepIncident } from './inc
 import { resolveTackles, startPoke, startTackle, stateMove } from './tackles.js';
 import { startShootout, stepShootout } from './shootout.js';
 import { stepKnocks } from './knocks.js';
-import { acrobaticTouch } from './tricks.js';
+import { acrobaticTouch, humanTrick } from './tricks.js';
 import { stepLog } from './matchlog.js';
 import { stepSituations } from './situations.js';
 import { answerCard, stepCoachFeed } from './coachfeed.js';
@@ -299,7 +299,7 @@ function step(m, input, dt) {
   keeperSaves(m);
   if (!acrobaticTouch(m)) headerTouch(m);
   bodyBlock(m);
-  dribbleTouch(m);
+  if (!humanTrick(m)) dribbleTouch(m);
   carryBall(m, dt);
 
   const ev = stepBall(ball, pitch, dt);
@@ -389,6 +389,12 @@ function humanIntent(m, p, input, dt) {
       return { move: { x: 0, z: 0 }, sprint: false };
     }
     input = { ...input, move: { x: 0, z: 0 } };
+  }
+  // R = Trick: am Ball je nach Stickrichtung, bei hohem Ball Fall- oder Seitfallzieher
+  // (kurz vorgemerkt, damit man auch knapp vor dem Ball drücken kann – tricks.js).
+  if (input.trick) {
+    p.trickWish = m.time;
+    p.trickStick = { x: input.move.x, z: input.move.z };
   }
   // D = Grätsche (auf hartem Boden mit Schürfwunden-Risiko), Y = Stochern im Stehen.
   if (input.tackle) return { tackle: 'slide' };

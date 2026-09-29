@@ -5,7 +5,7 @@ import { createRng } from '../src/core/rng.js';
 import { TEAM_PRESETS } from '../src/data/teams.js';
 import { generateTeam } from '../src/sim/generator.js';
 import { systemFormation } from '../src/sim/tactics.js';
-import { acrobaticTouch, landAcro, tricksOf, TRICKS } from '../src/sim/tricks.js';
+import { acrobaticTouch, humanTrick, landAcro, tricksOf, TRICKS } from '../src/sim/tricks.js';
 import { attackDir } from '../src/sim/players.js';
 
 function newMatch(pitchId, seed) {
@@ -101,5 +101,53 @@ describe('Tricks und Akrobatik', () => {
     landAcro(m, p);
     expect(m.events.some((e) => e.type === 'injury')).toBe(false);
     expect(p.state).toBe('recover');
+  });
+
+  it('Tricktaste: Stickrichtung wählt den Trick, bei hohem Ball Fallrückzieher auch ohne Repertoire', () => {
+    const m = newMatch('rasenplatz', 2);
+    m.phase = 'play';
+    const p = m.players.find((q) => q.role !== 'gk' && q.team === 0);
+    m.controlledId = p.id;
+    Object.defineProperty(p, '_tricks', { value: { tricks: [], acro: false }, configurable: true });
+    const s = attackDir(m, 0);
+    const setup = (stick) => {
+      p.state = 'normal';
+      p.trickCooldown = 0;
+      p.pos = { x: 0, z: 0 };
+      p.vel = { x: s * 4, z: 0 };
+      p.facing = { x: s, z: 0 };
+      m.ball.holder = null;
+      m.ball.pos = { x: s * 0.4, y: 0.11, z: 0 };
+      m.ball.vel = { x: s * 4, y: 0, z: 0 };
+      m.ball.lastTouch = p.id;
+      m.ball.lastAction = 'dribble';
+      p.trickWish = m.time;
+      p.trickStick = stick;
+      m.events.length = 0;
+      expect(humanTrick(m)).toBe(true);
+      return m.events.find((e) => e.type === 'trick').trick;
+    };
+    expect(setup({ x: s, z: 0 })).toBe('jayjay');
+    expect(setup({ x: 0, z: 1 })).toBe('uebersteiger');
+    expect(p.trickSide).toBe(s > 0 ? 1 : -1); // zur Stickseite
+    expect(setup({ x: -s, z: 0 })).toBe('zidane');
+    expect(setup({ x: 0, z: 0 })).toBe('hacke');
+    // ohne Tastendruck passiert nichts
+    p.trickWish = -9;
+    p.trickCooldown = 0;
+    expect(humanTrick(m)).toBe(false);
+    // hoher Ball, Rücken zum Tor, Taste gedrückt → Fallrückzieher
+    p.state = 'normal';
+    p.kickCooldown = 0;
+    p.pos = { x: s * (m.pitch.halfLength - 10), z: 0 };
+    p.facing = { x: -s, z: 0 };
+    for (const q of m.players) if (q !== p) q.pos = { x: -s * 5, z: 3 };
+    m.ball.pos = { x: p.pos.x + 0.3, y: 1.4, z: 0 };
+    m.ball.vel = { x: 0, y: -1, z: 0 };
+    m.ball.lastAction = 'pass';
+    p.trickWish = m.time;
+    m.events.length = 0;
+    expect(acrobaticTouch(m)).toBe(true);
+    expect(m.events.find((e) => e.type === 'shot').acro).toBe('fallrueck');
   });
 });

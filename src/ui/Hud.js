@@ -274,8 +274,8 @@ function helpText() {
   const arrows = ['up', 'down', 'left', 'right'].map(keyLabel).join('') === '↑↓←→' ? tr('<b>Pfeile</b>', '<b>Arrows</b>') : `<b>${['up', 'left', 'down', 'right'].map(keyLabel).join('')}</b>`;
   return tr(
     `${arrows} laufen · ${k('sprint')} sprinten · ${k('shoot')} Schuss (halten = fester) · ${k('pass')} Pass · ${k('loft')} hoher Ball ·
-        ${k('hold')} halten (abschirmen / festhalten) · ${k('tackle')} Grätsche · ${k('poke')} stochern · ${k('switchPlayer')} Spieler wechseln · ${k('sub')} Auswechseln · <b>C</b> Tempo · <b>N</b> Ton · <b>G</b> Effekte · <b>F2</b> Screenshot · <b>H</b> Hilfe`,
+        ${k('hold')} halten (abschirmen / festhalten) · ${k('tackle')} Grätsche · ${k('poke')} stochern · ${k('trick')} Trick (Stick vor/seitlich/zurück/los; hoher Ball: Fallrückzieher) · ${k('switchPlayer')} Spieler wechseln · ${k('sub')} Auswechseln · <b>C</b> Tempo · <b>N</b> Ton · <b>G</b> Effekte · <b>F2</b> Screenshot · <b>H</b> Hilfe`,
     `${arrows} run · ${k('sprint')} sprint · ${k('shoot')} shoot (hold = harder) · ${k('pass')} pass · ${k('loft')} lofted ball ·
-        ${k('hold')} hold (shield / grab) · ${k('tackle')} slide tackle · ${k('poke')} poke · ${k('switchPlayer')} switch player · ${k('sub')} substitute · <b>C</b> tempo · <b>N</b> sound · <b>G</b> effects · <b>F2</b> screenshot · <b>H</b> help`,
+        ${k('hold')} hold (shield / grab) · ${k('tackle')} slide tackle · ${k('poke')} poke · ${k('trick')} trick (stick forward/side/back/none; high ball: bicycle kick) · ${k('switchPlayer')} switch player · ${k('sub')} substitute · <b>C</b> tempo · <b>N</b> sound · <b>G</b> effects · <b>F2</b> screenshot · <b>H</b> help`,
   );
 }

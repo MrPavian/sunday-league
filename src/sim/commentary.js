@@ -195,7 +195,9 @@ export function createCommentator(m, seed = 1) {
           const p = surname(who(e.playerId));
           const v = surname(who(e.victimId));
           const t = TRICKS[e.trick]?.label ?? '';
-          if (e.ok && rng.chance(0.6)) add(pick(tr(['{p} lässt {v} mit einem {t} stehen!', '{t} von {p} – {v} sucht noch den Ball.', 'Oha, {p}! {t}, und {v} ist aus dem Spiel.'], ['{p} leaves {v} for dead with a {t}!', 'What a {t} from {p} – {v} is still looking for the ball.', 'Ooh, {p}! A {t}, and {v} is out of the game.']), { p, v, t }), 'chance');
+          if (!e.victimId) {
+            if (e.ok && rng.chance(0.4)) add(pick(tr(['{p} zeigt einen {t} – einfach so, fürs Publikum.', 'Kunststück von {p}: {t}. Die Zuschauer klatschen.'], ['{p} shows off a {t} – just for the crowd.', 'Party trick from {p}: a {t}. The crowd applauds.']), { p, t }));
+          } else if (e.ok && rng.chance(0.6)) add(pick(tr(['{p} lässt {v} mit einem {t} stehen!', '{t} von {p} – {v} sucht noch den Ball.', 'Oha, {p}! {t}, und {v} ist aus dem Spiel.'], ['{p} leaves {v} for dead with a {t}!', 'What a {t} from {p} – {v} is still looking for the ball.', 'Ooh, {p}! A {t}, and {v} is out of the game.']), { p, v, t }), 'chance');
           else if (!e.ok && rng.chance(0.35)) add(pick(tr(['{p} will es mit einem {t} versuchen – hängen geblieben.', 'Zu viel gewollt: {p} verstolpert den {t}.'], ['{p} tries a {t} – and gets stuck.', 'Too clever by half: {p} fluffs the {t}.']), { p, t }));
           break;
         }

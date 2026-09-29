@@ -13,6 +13,7 @@ const DEFAULT_KEYS = {
   hold: ['KeyA'], // mit Ball abschirmen, ohne Ball Gegner festhalten
   tackle: ['KeyD'], // Grätsche
   poke: ['KeyY', 'KeyZ'], // Zweikampf im Stehen – Y auf QWERTZ ist physisch KeyZ
+  trick: ['KeyR'], // Trick am Ball / Fall- und Seitfallzieher
   switchPlayer: ['KeyQ'],
   sub: ['KeyX'],
   tempo: ['KeyC'],
@@ -24,10 +25,10 @@ const DEFAULT_KEYS = {
 };
 
 // Frei belegbar sind die Tasten fürs Spielen; Menü-, Hilfe- und Sondertasten bleiben fest.
-export const REBINDABLE = ['up', 'down', 'left', 'right', 'sprint', 'shoot', 'pass', 'loft', 'hold', 'tackle', 'poke', 'switchPlayer', 'sub'];
+export const REBINDABLE = ['up', 'down', 'left', 'right', 'sprint', 'shoot', 'pass', 'loft', 'hold', 'tackle', 'poke', 'trick', 'switchPlayer', 'sub'];
 export const ACTION_LABELS = tr(
-  { up: 'Hoch', down: 'Runter', left: 'Links', right: 'Rechts', sprint: 'Sprinten', shoot: 'Schuss', pass: 'Pass', loft: 'Hoher Ball', hold: 'Halten', tackle: 'Grätsche', poke: 'Stochern', switchPlayer: 'Spieler wechseln', sub: 'Auswechseln' },
-  { up: 'Up', down: 'Down', left: 'Left', right: 'Right', sprint: 'Sprint', shoot: 'Shoot', pass: 'Pass', loft: 'Lofted ball', hold: 'Hold', tackle: 'Slide tackle', poke: 'Poke', switchPlayer: 'Switch player', sub: 'Substitute' },
+  { up: 'Hoch', down: 'Runter', left: 'Links', right: 'Rechts', sprint: 'Sprinten', shoot: 'Schuss', pass: 'Pass', loft: 'Hoher Ball', hold: 'Halten', tackle: 'Grätsche', poke: 'Stochern', trick: 'Trick / Fallrückzieher', switchPlayer: 'Spieler wechseln', sub: 'Auswechseln' },
+  { up: 'Up', down: 'Down', left: 'Left', right: 'Right', sprint: 'Sprint', shoot: 'Shoot', pass: 'Pass', loft: 'Lofted ball', hold: 'Hold', tackle: 'Slide tackle', poke: 'Poke', trick: 'Trick / bicycle kick', switchPlayer: 'Switch player', sub: 'Substitute' },
 );
 const BIND_KEY = 'sunday-league:keys';
 
@@ -141,6 +142,7 @@ export class Input {
     let hold = this.held('hold');
     let tackle = this.wasPressed('tackle');
     let poke = this.wasPressed('poke');
+    let trick = this.wasPressed('trick');
     const tempo = this.wasPressed('tempo');
     let switchPlayer = this.wasPressed('switchPlayer');
     let sub = this.wasPressed('sub');
@@ -165,6 +167,7 @@ export class Input {
       tackle ||= edge(3); // Y
       hold ||= b(6); // LT
       poke ||= edge(11); // R3
+      trick ||= edge(10); // L3
       switchPlayer ||= edge(4); // LB
       sub ||= edge(8); // Back/Select
       sprint ||= b(5) || b(7); // RB / RT
@@ -187,6 +190,6 @@ export class Input {
       x /= l;
       z /= l;
     }
-    return { move: { x, z }, sprint, shootHeld, pass, loft, hold, tackle, poke, switchPlayer, sub, tempo: tempo || vt, restart: restart || vr, menu: menu || vm, mute, fx, help: help || vh, shout };
+    return { move: { x, z }, sprint, shootHeld, pass, loft, hold, tackle, poke, trick, switchPlayer, sub, tempo: tempo || vt, restart: restart || vr, menu: menu || vm, mute, fx, help: help || vh, shout };
   }
 }

@@ -65,19 +65,10 @@ export function trickLine(p) {
 // Wer gerade getäuscht wurde, steht kurz falsch (movePlayer bremst, kein Zugriff auf den Ball).
 export const fooled = (m, p) => (p.fooledUntil ?? -1) > m.time;
 
-// Beim Dribbeln (dribbleTouch der KI): Gegner direkt vor sich und ein Trick im Repertoire?
-// Gibt true zurück, wenn der Trick die Ballberührung übernommen hat.
-export function tryTrick(m, p) {
-  const { ball, rng } = m;
-  if (p.id === m.controlledId || (p.trickCooldown ?? 0) > m.time) return false;
-  const rep = tricksOf(p);
-  if (!rep.tricks.length) return false;
-  const speed = len(p.vel.x, p.vel.z);
-  if (speed < 1.2) return false;
-  const fx = p.vel.x / speed;
-  const fz = p.vel.z / speed;
+// Nächster Gegner vor dem Ballführer (Blickrichtung fx/fz), sonst null.
+function victimAhead(m, p, fx, fz, range) {
   let victim = null;
-  let best = 2.1;
+  let best = range;
   for (const o of m.players) {
     if (o.team === p.team || o.state !== 'normal' || o.role === 'gk') continue;
     const rx = o.pos.x - p.pos.x;
@@ -88,14 +79,74 @@ export function tryTrick(m, p) {
       victim = o;
     }
   }
+  return victim;
+}
+
+// Beim Dribbeln (dribbleTouch der KI): Gegner direkt vor sich und ein Trick im Repertoire?
+// Gibt true zurück, wenn der Trick die Ballberührung übernommen hat.
+export function tryTrick(m, p) {
+  const { rng } = m;
+  if (p.id === m.controlledId || (p.trickCooldown ?? 0) > m.time) return false;
+  const rep = tricksOf(p);
+  if (!rep.tricks.length) return false;
+  const speed = len(p.vel.x, p.vel.z);
+  if (speed < 1.2) return false;
+  const victim = victimAhead(m, p, p.vel.x / speed, p.vel.z / speed, 2.1);
   if (!victim) return false;
   const st = styleOf(m, p.team);
   const mood = (hasProfile(p, 'solist') ? 1.6 : 1) * (hasProfile(p, 'teamplayer') ? 0.5 : 1) * (1 + 0.3 * (st.risk ?? 0));
   if (!rng.chance(0.2 * mood)) return false;
-
   const kind = rng.pick(rep.tricks);
-  const t = TRICKS[kind];
   p.trickCooldown = m.time + rng.range(3, 6);
+  performTrick(m, p, kind, victim);
+  return true;
+}
+
+// Tricktaste der eigenen Figur: gedrückt in den letzten 0,35 s (p.trickWish), Ball am Fuß.
+// Welcher Trick, sagt der Stick relativ zur Laufrichtung:
+//   nach vorn → Jay-Jay-Lupfer · zur Seite → Übersteiger dorthin · zurück → Zidane-Trick ·
+//   Stick los → Hackentrick. Wer den Trick nicht im Repertoire hat, versucht es trotzdem –
+//   klappt dann nur deutlich seltener.
+export const WISH_TIME = 0.35;
+export function humanTrick(m) {
+  if (m.controlledId == null) return false;
+  const p = m.players.find((q) => q.id === m.controlledId);
+  if (!p || m.time - (p.trickWish ?? -9) > WISH_TIME || p.state !== 'normal') return false;
+  const { ball } = m;
+  if (ball.holder || ball.pos.y > 0.5 || (p.trickCooldown ?? 0) > m.time) return false;
+  const own = ball.lastTouch === p.id && ball.lastAction === 'dribble';
+  if (!own || dist2d(p.pos, ball.pos) > 1.1) return false;
+  const speed = len(p.vel.x, p.vel.z);
+  const f = speed > 0.8 ? { x: p.vel.x / speed, z: p.vel.z / speed } : p.facing;
+  const st = p.trickStick ?? { x: 0, z: 0 };
+  const sl = len(st.x, st.z);
+  let kind = 'hacke';
+  let side = 0;
+  if (sl > 0.3) {
+    const dot = (st.x * f.x + st.z * f.z) / sl;
+    const cross = (f.x * st.z - f.z * st.x) / sl;
+    if (dot > 0.7) kind = 'jayjay';
+    else if (dot < -0.5) kind = 'zidane';
+    else {
+      kind = 'uebersteiger';
+      side = cross >= 0 ? 1 : -1;
+    }
+  }
+  p.trickWish = -9;
+  performTrick(m, p, kind, victimAhead(m, p, f.x, f.z, 2.6), { fwd: f, side, skilled: tricksOf(p).tricks.includes(kind) });
+  p.trickCooldown = m.time + 0.9;
+  return true;
+}
+
+// Trick ausführen. victim darf fehlen (Kunststück ohne Gegner, dann wird niemand getäuscht).
+// opt.fwd Laufrichtung, opt.side erzwungene Seite (±1), opt.skilled false = nicht im Repertoire.
+function performTrick(m, p, kind, victim, opt = {}) {
+  const { ball, rng } = m;
+  const speed = len(p.vel.x, p.vel.z);
+  const fwd = opt.fwd ?? { x: p.vel.x / Math.max(speed, 1e-3), z: p.vel.z / Math.max(speed, 1e-3) };
+  const fx = fwd.x;
+  const fz = fwd.z;
+  const t = TRICKS[kind];
   p.trick = kind;
   p.trickAnim = t.time;
   p.kickCooldown = 0.25;
@@ -104,16 +155,19 @@ export function tryTrick(m, p) {
   m.lastTouchTeam = p.team;
 
   const fatigue = 1 - p.stamina;
-  const ok = rng.chance(clamp(0.3 + 0.65 * p.attrs.technique - 0.35 * victim.attrs.tackling - 0.2 * fatigue + (hasTrait(p, 'ex_profi') ? 0.1 : 0), 0.15, 0.85));
-  // Auf welche Seite am Gegner vorbei? Weg von ihm, zur Platzmitte hin, wenn es passt.
-  const rx = victim.pos.x - p.pos.x;
-  const rz = victim.pos.z - p.pos.z;
-  const side = rx * -fz + rz * fx >= 0 ? -1 : 1;
+  const human = p.id === m.controlledId;
+  const tackling = victim ? victim.attrs.tackling : 0.3;
+  const ok = rng.chance(clamp(0.3 + 0.65 * p.attrs.technique - 0.35 * tackling - 0.2 * fatigue + (hasTrait(p, 'ex_profi') ? 0.1 : 0) + (human ? 0.08 : 0) - (opt.skilled === false ? 0.3 : 0), human ? 0.08 : 0.15, 0.85));
+  // Auf welche Seite am Gegner vorbei? Weg von ihm (oder wohin der Stick zeigt).
+  const rx = victim ? victim.pos.x - p.pos.x : fx;
+  const rz = victim ? victim.pos.z - p.pos.z : fz;
+  const side = opt.side || (rx * -fz + rz * fx >= 0 ? -1 : 1);
   p.trickSide = side;
-  const fwd = { x: fx, z: fz };
   if (ok) {
-    victim.fooledFor = rng.range(0.45, 0.8);
-    victim.fooledUntil = m.time + victim.fooledFor;
+    if (victim) {
+      victim.fooledFor = rng.range(0.45, 0.8);
+      victim.fooledUntil = m.time + victim.fooledFor;
+    }
     let dir;
     let v;
     let vy = 0;
@@ -147,8 +201,7 @@ export function tryTrick(m, p) {
     ball.vel.y = kind === 'jayjay' ? 2 : 0;
     p.kickCooldown = 0.5;
   }
-  m.events.push({ type: 'trick', playerId: p.id, victimId: victim.id, trick: kind, ok });
-  return true;
+  m.events.push({ type: 'trick', playerId: p.id, victimId: victim?.id ?? null, trick: kind, ok });
 }
 
 // Hoher Ball vor dem Tor, Rücken oder Seite zum Tor: Fall- oder Seitfallzieher.
@@ -157,27 +210,31 @@ export function acrobaticTouch(m) {
   const { ball, rng, pitch } = m;
   if (ball.holder || ball.pos.y < 0.8 || ball.pos.y > 1.9 || ball.vel.y > 1.5) return false;
   for (const p of m.players) {
-    if (p.role === 'gk' || p.state !== 'normal' || p.kickCooldown > 0 || p.id === m.controlledId) continue;
+    // Die eigene Figur nur auf Tastendruck (Tricktaste), dann auch ohne Repertoire und weiter weg.
+    const human = p.id === m.controlledId;
+    if (human && m.time - (p.trickWish ?? -9) > WISH_TIME) continue;
+    if (p.role === 'gk' || p.state !== 'normal' || (p.kickCooldown > 0 && !human)) continue;
     if (ball.lastAction === 'shoot' && m.lastTouchTeam === p.team) continue;
-    if (dist2d(p.pos, ball.pos) > 0.85 || !tricksOf(p).acro) continue;
+    if (dist2d(p.pos, ball.pos) > (human ? 1 : 0.85) || (!human && !tricksOf(p).acro)) continue;
     const s = attackDir(m, p.team);
     const gx = s * pitch.halfLength;
     const toGoal = norm(gx - p.pos.x, -p.pos.z);
     const dGoal = len(gx - p.pos.x, p.pos.z);
-    if (dGoal > 14 || dGoal < 3) continue;
+    if (human ? dGoal < 2 : dGoal > 14 || dGoal < 3) continue;
     const face = p.facing.x * toGoal.x + p.facing.z * toGoal.z;
     const kind = face < -0.35 && ball.pos.y > 1.05 ? 'fallrueck' : Math.abs(face) < 0.6 && ball.pos.y < 1.55 ? 'seitfall' : null;
     if (!kind) continue;
-    // Nicht jeder traut sich jedes Mal.
+    // Nicht jeder traut sich jedes Mal (die eigene Figur schon – Taste gedrückt).
     p.kickCooldown = 0.6;
-    if (!rng.chance(0.45)) continue;
-    acrobatic(m, p, kind, toGoal, dGoal);
+    if (!human && !rng.chance(0.45)) continue;
+    if (human) p.trickWish = -9;
+    acrobatic(m, p, kind, toGoal, dGoal, human && !tricksOf(p).acro);
     return true;
   }
   return false;
 }
 
-function acrobatic(m, p, kind, toGoal, dGoal) {
+function acrobatic(m, p, kind, toGoal, dGoal, untrained = false) {
   const { ball, rng, pitch } = m;
   const a = ACRO[kind];
   p.acro = kind;
@@ -189,7 +246,7 @@ function acrobatic(m, p, kind, toGoal, dGoal) {
   p.vel.z *= 0.3;
   const fatigue = 1 - p.stamina;
   // Voll getroffen? Sonst geht der Ball irgendwohin.
-  const clean = rng.chance(clamp(0.3 + 0.45 * p.attrs.technique + 0.15 * p.attrs.shooting - 0.15 * fatigue - (kind === 'fallrueck' ? 0.08 : 0), 0.15, 0.8));
+  const clean = rng.chance(clamp(0.3 + 0.45 * p.attrs.technique + 0.15 * p.attrs.shooting - 0.15 * fatigue - (kind === 'fallrueck' ? 0.08 : 0) - (untrained ? 0.15 : 0), 0.1, 0.8));
   const gw = pitch.goalHalfWidth;
   const aimZ = rng.range(-gw * 0.8, gw * 0.8);
   let dir = norm(attackDir(m, p.team) * pitch.halfLength - p.pos.x, aimZ - p.pos.z);
