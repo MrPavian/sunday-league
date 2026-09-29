@@ -1038,7 +1038,7 @@ body.touch .coach-play:not(.ui-btn) { background: #2f6f3a; }
 .sub-stamina { grid-column: 1 / -1; height: 5px; background: linear-gradient(90deg, #6fd36f var(--v), #333 var(--v)); border: 1px solid #000; }
 .sub-hurt, .sub-blocked { margin: 0; color: #ff8a7a; }
 .sub-panel footer { display: flex; flex-wrap: wrap; gap: 6px; }
-.sub-panel footer button { font: inherit; color: var(--ink); background: #1d2126; border: 2px solid #000; padding: 8px 12px; cursor: pointer; text-shadow: var(--shadow); min-height: 40px; }
+.sub-panel footer button { font: inherit; color: var(--ink); background: #1d2126; border: 2px solid #000; padding: 8px 12px; cursor: pointer; text-shadow: var(--shadow); min-height: var(--touch-min); }
 .sub-panel footer button.primary { background: #3a3a14; border-color: var(--accent); }
 .sub-panel footer button:disabled { opacity: 0.5; cursor: default; }
 .sub-panel .hint { margin: 0; opacity: 0.7; font-size: 0.85em; }
@@ -1186,7 +1186,7 @@ body.touch .hub-alt .self-play { display: none; }
   .club2 { grid-template-columns: calc(72px + env(safe-area-inset-left)) minmax(0, 1fr); }
   .club-panel .club-rail { padding: 2px 2px; padding-left: env(safe-area-inset-left); gap: 0; }
   .club-panel .club-rail .rail-btn { min-height: 56px; padding: 6px 0; }
-  .club-rail .rail-btn span { font-size: 11px; }
+  .club-rail .rail-btn span { font-size: var(--fs-caption); }
   .club-main { padding: var(--s2) var(--s4) var(--s5); }
   .club-id h2 { font-size: var(--fs-h3); }
   .club-id .crest-svg { width: 26px; height: 26px; }
@@ -1202,8 +1202,100 @@ body.touch .hub-alt .self-play { display: none; }
   .club-panel .club-rail { grid-row: 2; flex-direction: row; gap: 0; justify-content: space-around; padding: 0 0 env(safe-area-inset-bottom); border-right: 0; border-top: 2px solid #000; overflow-x: auto; }
   .club-panel .club-rail .rail-btn { flex: 1 1 0; min-width: 52px; min-height: 60px; }
   .club-panel .club-rail .rail-btn[aria-current='page'] { box-shadow: inset 0 4px 0 var(--kit, var(--accent)); }
-  .club-rail .rail-btn span { font-size: 11px; }
+  .club-rail .rail-btn span { font-size: var(--fs-caption); }
   .club-rail .rail-btn .ui-badge { right: 6px; }
   .club-main { grid-row: 1; padding: var(--s2) var(--s3) var(--s4); }
   .club-id h2 { font-size: var(--fs-h3); }
+}
+
+/* ===== UI 2.0 Phase D: Kader, Spielerprofil, Aufstellung ===== */
+.squad-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s3); margin-bottom: var(--s3); }
+.squad-head .t-2 { margin: 0; }
+.squad-sort { width: 240px; max-width: 100%; }
+.squad-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: var(--s2); }
+.club-panel button.squad-card { display: grid; grid-template-columns: 1fr auto; grid-template-areas: 'name rating' 'pos rating' 'sun sun'; gap: 2px var(--s3); align-items: center; padding: var(--s3) var(--s4); text-align: left; background: var(--surface-1); border: 2px solid #000; border-left: 6px solid var(--c); box-shadow: var(--drop); }
+.club-panel button.squad-card:active { transform: translateY(2px); box-shadow: none; }
+.sc-name { grid-area: name; min-width: 0; font-size: var(--fs-h3); line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sc-name b { font-weight: inherit; }
+.sc-pos { grid-area: pos; font-size: var(--fs-secondary); color: var(--ink-2); }
+.sc-tier { font-style: normal; color: var(--tier); }
+.sc-rating { grid-area: rating; font-size: var(--fs-num); color: var(--accent); align-self: start; }
+.sc-sun { grid-area: sun; min-height: 0; margin-top: var(--s1); }
+.sc-sun:empty { display: none; }
+
+.profile { display: grid; gap: var(--s3); }
+.profile-nav { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); }
+.profile-head { display: flex; align-items: center; gap: var(--s4); padding: var(--s3) 0; border-bottom: 2px solid var(--line-soft); }
+.profile-head h3 { margin: 0 0 var(--s1); }
+.profile-head p { margin: 0 0 var(--s2); }
+.profile-shirt { position: relative; flex: none; width: 88px; height: 78px; image-rendering: pixelated; clip-path: polygon(20% 0, 80% 0, 100% 22%, 86% 36%, 80% 30%, 80% 100%, 20% 100%, 20% 30%, 14% 36%, 0 22%); display: grid; place-items: center; }
+.profile-shirt b { font-size: 30px; font-weight: inherit; color: #fff; text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; margin-top: 10px; }
+.profile-head .badge { padding: 0 6px; color: #111; background: var(--c); border: 1px solid #000; text-shadow: none; font-size: var(--fs-caption); }
+.profile-body { min-height: 120px; }
+.profile-stats { gap: var(--s5); margin-bottom: var(--s4); }
+.rel-line { color: #c9b27a; }
+.attr-list { display: grid; gap: var(--s2); max-width: 520px; }
+.attr-row { display: grid; grid-template-columns: 110px 1fr 40px; align-items: center; gap: var(--s3); font-size: var(--fs-body); }
+.attr-row i { height: 12px; border: 1px solid #000; background: linear-gradient(90deg, var(--accent) var(--v), #2a2a2a var(--v)); }
+.attr-row b { font-weight: inherit; text-align: right; font-size: var(--fs-h3); }
+.profile-foot { display: flex; justify-content: flex-end; padding-top: var(--s3); border-top: 2px solid var(--line-soft); }
+
+.lineup2 { display: grid; gap: var(--s2); }
+.lp-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2); }
+.lp-head .t-cap { margin: 0; }
+.lp-pitch { position: relative; width: 100%; aspect-ratio: 16 / 9; max-height: 62vh; background: repeating-linear-gradient(90deg, #3f8a3c 0 6.25%, #4a9645 6.25% 12.5%); border: 3px solid #f2efe6; box-shadow: 0 0 0 2px #000, var(--drop); overflow: hidden; }
+.lp-mid { position: absolute; left: 50%; top: 0; bottom: 0; border-left: 2px solid rgba(255, 255, 255, 0.75); }
+.lp-mid::after { content: ''; position: absolute; left: 50%; top: 50%; width: 18%; aspect-ratio: 1; border: 2px solid rgba(255, 255, 255, 0.75); border-radius: 50%; transform: translate(-50%, -50%); }
+.lp-box { position: absolute; top: 25%; bottom: 25%; width: 12%; border: 2px solid rgba(255, 255, 255, 0.75); }
+.lp-box.l { left: -2px; border-left: 0; }
+.lp-box.r { right: -2px; border-right: 0; }
+.club-panel button.lp-token { position: absolute; left: clamp(52px, var(--x), calc(100% - 52px)); top: clamp(34px, var(--y), calc(100% - 34px)); transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 64px; min-height: 64px; padding: 2px 4px; background: transparent; border: 0; box-shadow: none; touch-action: none; user-select: none; }
+.club-panel button.lp-token:active { transform: translate(-50%, -50%); }
+.lp-shirt { display: grid; place-items: center; width: 40px; height: 36px; font-size: var(--fs-h3); color: #fff; background: var(--kit); border: 2px solid #000; box-shadow: 2px 2px 0 #000; clip-path: polygon(20% 0, 80% 0, 100% 24%, 88% 38%, 80% 32%, 80% 100%, 20% 100%, 20% 32%, 12% 38%, 0 24%); text-shadow: 1px 1px 0 #000; }
+.lp-token.standin .lp-shirt { background: #777; }
+.lp-name { max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-secondary); padding: 0 4px; background: rgba(0, 0, 0, 0.65); }
+.lp-role { font-size: var(--fs-caption); padding: 0 4px; background: rgba(0, 0, 0, 0.45); border-left: 3px solid var(--rc); }
+.lp-role.off { color: #ffcf7a; }
+.lp-token.role-gk { --rc: #e8742a; }
+.lp-token.role-def { --rc: #4fa3e0; }
+.lp-token.role-mid { --rc: #6fbf73; }
+.lp-token.role-fwd { --rc: #d9534f; }
+.lp-token.picked .lp-shirt, .lp-bench.picked { outline: 3px solid var(--accent); outline-offset: 2px; }
+.lp-token.picked .lp-shirt { animation: lp-pulse 0.9s steps(2) infinite; }
+@keyframes lp-pulse { 50% { outline-color: #fff; } }
+.lp-token.dragging { opacity: 0.35; }
+.lp-hint { margin: 0; }
+.lp-benchrow { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.club-panel button.lp-bench, .lp-bench { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: var(--s2); align-items: center; min-height: 52px; padding: 4px var(--s3); text-align: left; background: var(--surface-2); border: 2px solid #000; box-shadow: var(--drop); touch-action: none; user-select: none; }
+.lp-bench b { grid-row: span 2; font-size: var(--fs-h3); color: var(--accent); font-weight: inherit; }
+.lp-bench small { color: var(--ink-2); }
+.lp-bench.late { opacity: 0.6; box-shadow: none; }
+.lp-ghost { position: fixed; z-index: 50; pointer-events: none; transform-origin: center; opacity: 0.9; margin: 0; list-style: none; }
+.lp-ghost.lp-token { transform: none; background: transparent; border: 0; display: flex; flex-direction: column; align-items: center; }
+@media (max-height: 520px) and (orientation: landscape) { .lp-pitch { max-height: 70vh; } }
+@media (max-width: 560px) { .club-panel button.lp-token { min-width: 52px; } .lp-shirt { width: 34px; height: 30px; font-size: var(--fs-body); } .lp-name { max-width: 70px; font-size: var(--fs-caption); } .lp-role { display: none; } .attr-row { grid-template-columns: 90px 1fr 34px; } .profile-shirt { width: 70px; height: 62px; } }
+
+/* Aufstellung: Bank neben dem Feld, wenn Platz ist (quer, Desktop) – so lässt sich von der Bank ziehen. */
+.lp-stage { display: grid; gap: var(--s3); }
+.lp-benchcol .ui-section-title { margin-top: 0; }
+@media (min-width: 700px) and (orientation: landscape), (min-width: 1000px) {
+  .lp-stage { grid-template-columns: minmax(0, 1fr) 220px; align-items: start; }
+  .lp-pitch { max-height: calc(100vh - 190px); }
+  .lp-benchcol { max-height: calc(100vh - 190px); overflow-y: auto; }
+  .lp-benchrow { flex-direction: column; flex-wrap: nowrap; }
+  .club-panel button.lp-bench, .lp-bench { width: 100%; }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  .lp-pitch, .lp-benchcol { max-height: calc(100vh - 150px); }
+  .lp-pitch { aspect-ratio: auto; height: calc(100vh - 150px); min-height: 190px; }
+}
+/* Hochformat: Feld hochkant – eigenes Tor unten, Angriff nach oben. */
+@media (orientation: portrait) and (max-width: 720px) {
+  .lp-pitch { aspect-ratio: 10 / 13; max-height: none; background: repeating-linear-gradient(0deg, #3f8a3c 0 6.25%, #4a9645 6.25% 12.5%); }
+  .club-panel button.lp-token { left: clamp(44px, var(--y), calc(100% - 44px)); top: clamp(32px, calc(100% - var(--x)), calc(100% - 32px)); }
+  .lp-mid { left: 0; right: 0; top: 50%; bottom: auto; border-left: 0; border-top: 2px solid rgba(255, 255, 255, 0.75); }
+  .lp-mid::after { width: 26%; }
+  .lp-box { top: auto; bottom: auto; left: 25%; right: 25%; width: auto; height: 12%; }
+  .lp-box.l { bottom: -2px; top: auto; left: 25%; border: 2px solid rgba(255, 255, 255, 0.75); border-bottom: 0; }
+  .lp-box.r { top: -2px; right: 25%; border: 2px solid rgba(255, 255, 255, 0.75); border-top: 0; }
 }

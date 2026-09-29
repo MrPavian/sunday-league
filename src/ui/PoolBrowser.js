@@ -6,7 +6,7 @@ import { TIERS, tierById } from '../data/tiers.js';
 import { POSITIONS, createPlayerPool } from '../sim/generator.js';
 
 const PAGE = 12;
-const ATTR_LABELS = {
+export const ATTR_LABELS = {
   pace: tr('Tempo', 'Pace'), stamina: tr('Ausdauer', 'Stamina'), technique: tr('Technik', 'Technique'), passing: tr('Passen', 'Passing'),
   shooting: tr('Schuss', 'Shooting'), tackling: tr('Zweikampf', 'Tackling'), heading: tr('Kopfball', 'Heading'), keeping: tr('Torwart', 'Goalkeeping'),
 };

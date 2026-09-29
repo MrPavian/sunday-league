@@ -8,7 +8,7 @@ describe('Vereinsheim-Navigation', () => {
   const screens = Object.getOwnPropertyNames(Clubhouse.prototype).filter((n) => n.startsWith('tab_')).map((n) => n.slice(4));
 
   it('jeder bisherige Tab ist genau einem Bereich zugeordnet, jeder Bereichs-Tab existiert', () => {
-    expect(screens.length).toBe(13);
+    expect(screens.length).toBe(14); // 13 bisherige + Taktik (aus der Aufstellung herausgelöst)
     for (const t of screens) expect(CLUB_AREAS.filter((a) => a.tabs.includes(t))).toHaveLength(1);
     for (const a of CLUB_AREAS) for (const t of a.tabs) if (t !== 'home') expect(screens).toContain(t);
   });

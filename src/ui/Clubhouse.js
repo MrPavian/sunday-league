@@ -10,7 +10,8 @@ import { STYLES as PLAY_STYLES, systemsFor } from '../sim/tactics.js';
 import { jobFits, styleFit } from '../sim/fit.js';
 import { GROUP_LABELS, ORDERS, SIMPLE, SIMPLE_IDS } from '../sim/commands.js';
 import { coachLevel, setCoachLevel } from './prefs.js';
-import { button, icon, tabs as uiTabs } from './ds.js';
+import { button, icon, segmented, tabs as uiTabs } from './ds.js';
+import { ATTR_LABELS } from './PoolBrowser.js';
 import { jobPerk } from '../data/jobs.js';
 import { CREST_COLORS, CREST_DIVISIONS, CREST_SHAPES, CREST_SYMBOLS, crestOf, crestSVG, defaultCrest, FIGURES } from './crest.js';
 import { awardLabel } from '../career/awards.js';
@@ -83,7 +84,7 @@ const euro = (n) => tr(`${n.toLocaleString('de-DE', { maximumFractionDigits: 2 }
 // Bereich; data-action="tab" mit einem alten Tab-Namen funktioniert deshalb weiter.
 const AREAS = [
   { id: 'home', icon: 'home', label: () => tr('Heute', 'Today'), tabs: ['home'] },
-  { id: 'team', icon: 'team', label: () => tr('Mannschaft', 'Squad'), tabs: ['squad', 'lineup', 'training', 'youth', 'transfers'] },
+  { id: 'team', icon: 'team', label: () => tr('Mannschaft', 'Squad'), tabs: ['squad', 'lineup', 'tactic', 'training', 'youth', 'transfers'] },
   { id: 'season', icon: 'season', label: () => tr('Saison', 'Season'), tabs: ['table', 'fixtures', 'cup'] },
   { id: 'club', icon: 'club', label: () => tr('Verein', 'Club'), tabs: ['cash', 'club', 'museum'] },
   { id: 'pub', icon: 'pub', label: () => tr('Kneipe', 'Pub'), tabs: ['pub'] },
@@ -94,6 +95,7 @@ const TAB_LABELS = () => ({
   pub: tr('Kneipe', 'Pub'),
   squad: tr('Kader', 'Squad'),
   lineup: tr('Aufstellung', 'Line-up'),
+  tactic: tr('Taktik', 'Tactics'),
   transfers: tr('Transfers', 'Transfers'),
   training: tr('Training', 'Training'),
   youth: tr('Jugend', 'Youth'),
@@ -117,14 +119,23 @@ export class Clubhouse {
     this.busy = null;
     root.addEventListener('click', (e) => {
       const t = e.target.closest('[data-action]');
-      if (!t || this.busy) return;
+      if (!t || this.busy || this.suppressClick) return;
       const { action, value } = t.dataset;
       if (action === 'tab') this.tab = value;
       else if (action === 'area') {
         const area = AREAS.find((a) => a.id === value) ?? AREAS[0];
         this.tab = this.lastTab[area.id] ?? area.tabs[0];
       }
-      else if (action === 'playerCard') this.openPlayer = this.openPlayer === Number(value) ? null : Number(value);
+      else if (action === 'playerCard') {
+        this.openPlayer = Number(value);
+        this.profileTab = 'overview';
+        this.confirmRelease = null;
+      } else if (action === 'playerBack') this.openPlayer = null;
+      else if (action === 'profileTab') this.profileTab = value;
+      else if (action === 'playerStep') this.stepPlayer(Number(value));
+      else if (action === 'squadSort') this.squadSort = value;
+      else if (action === 'slotPick' || action === 'benchPick') this.lineupPick(action === 'slotPick' ? { slot: Number(value) } : { idx: Number(value) });
+      else if (action === 'pickCancel') this.pick = null;
       else if (action === 'poachKid') {
         poachKid(this.career, value);
         this.h.onChange();
@@ -271,6 +282,81 @@ export class Clubhouse {
     });
   }
 
+  // Ziehen auf dem Spielfeld (Maus und Finger, Pointer Events). Erst ab 8 px Bewegung – ein
+  // kurzer Tipp bleibt ein Tipp. Kein Animations-Loop: der Geist folgt pointermove.
+  bindDrag() {
+    const pitch = this.root.querySelector('.lineup2');
+    if (!pitch) return;
+    let drag = null;
+    const parse = (v) => {
+      const [kind, n] = v.split(':');
+      return kind === 'slot' ? { slot: Number(n) } : { idx: Number(n) };
+    };
+    pitch.addEventListener('pointerdown', (e) => {
+      const el = e.target.closest('[data-drag]');
+      if (!el || e.button > 0) return;
+      drag = { el, from: parse(el.dataset.drag), x: e.clientX, y: e.clientY, ghost: null };
+    });
+    pitch.addEventListener('pointermove', (e) => {
+      if (!drag) return;
+      const dx = e.clientX - drag.x;
+      const dy = e.clientY - drag.y;
+      if (!drag.ghost) {
+        if (Math.hypot(dx, dy) < 8) return;
+        drag.ghost = drag.el.cloneNode(true);
+        drag.ghost.classList.add('lp-ghost');
+        const r = drag.el.getBoundingClientRect();
+        Object.assign(drag.ghost.style, { left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px` });
+        document.body.appendChild(drag.ghost);
+        drag.el.setPointerCapture?.(e.pointerId);
+        drag.el.classList.add('dragging');
+      }
+      drag.ghost.style.transform = `translate(${dx}px, ${dy}px)`;
+      e.preventDefault();
+    });
+    const end = (e) => {
+      if (!drag) return;
+      const d = drag;
+      drag = null;
+      if (!d.ghost) return; // war ein Tipp – der Klick-Handler übernimmt
+      d.ghost.remove();
+      d.el.classList.remove('dragging');
+      this.suppressClick = true;
+      setTimeout(() => (this.suppressClick = false), 0);
+      const target = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-drop]');
+      if (!target || target.dataset.drop === d.el.dataset.drag) return;
+      const to = parse(target.dataset.drop);
+      if (d.from.idx != null && to.idx != null) return; // Bank auf Bank: nichts zu tun
+      this.pick = null;
+      this.applyLineup(d.from, to);
+      this.render();
+    };
+    pitch.addEventListener('pointerup', end);
+    pitch.addEventListener('pointercancel', (e) => {
+      if (drag?.ghost) drag.ghost.remove();
+      drag?.el.classList.remove('dragging');
+      drag = null;
+    });
+  }
+
+  // Im Spielerprofil nach links/rechts wischen: nächster/voriger Spieler.
+  bindProfileSwipe() {
+    const el = this.root.querySelector('[data-swipe="player"]');
+    if (!el) return;
+    let start = null;
+    el.addEventListener('pointerdown', (e) => (start = e.pointerType === 'mouse' ? null : { x: e.clientX, y: e.clientY }));
+    el.addEventListener('pointerup', (e) => {
+      if (!start) return;
+      const dx = e.clientX - start.x;
+      const dy = e.clientY - start.y;
+      start = null;
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        this.stepPlayer(dx < 0 ? 1 : -1);
+        this.render();
+      }
+    });
+  }
+
   bindClubForm() {
     this.root.querySelectorAll('input[data-field]').forEach((el) =>
       el.addEventListener('input', () => {
@@ -288,6 +374,8 @@ export class Clubhouse {
   }
 
   bindLineup() {
+    this.bindDrag();
+    this.bindProfileSwipe();
     this.root.querySelectorAll('select[data-slot]').forEach((sel) =>
       sel.addEventListener('change', () => {
         setLineupSlot(this.career, Number(sel.dataset.slot), Number(sel.value));
@@ -877,28 +965,130 @@ export class Clubhouse {
       </div>`;
   }
 
+  // Kader als Spielerkarten. Ebene 1: Name, Position, Stärke, Sonntag. Alles Weitere im Profil.
+  squadOrder() {
+    const c = this.career;
+    const ORDER = { gk: 0, def: 1, mid: 2, fwd: 3 };
+    const list = humanClub(c).squad.map((idx) => ({ idx, p: this.p(idx) }));
+    return list
+      .sort((a, b) => (this.squadSort === 'pos' ? (ORDER[a.p.position] ?? 9) - (ORDER[b.p.position] ?? 9) : 0) || b.p.rating - a.p.rating)
+      .map((x) => x.idx);
+  }
+
+  stepPlayer(dir) {
+    const order = this.squadOrder();
+    const i = order.indexOf(this.openPlayer);
+    if (i < 0) return;
+    this.openPlayer = order[(i + dir + order.length) % order.length];
+    this.confirmRelease = null;
+  }
+
+  // Sonntag-Status als Chip: Farbe UND Text (nie nur Farbe).
+  sundayChip(idx) {
+    const c = this.career;
+    const r = c.players[idx];
+    if (r.injuryWeeks) return `<span class="ui-chip" style="--c:#d9534f" title="${r.injury?.label ?? tr('verletzt', 'injured')}">${r.injury ? `${r.injury.label} · ${r.injuryWeeks} ${tr('Wo.', 'wks')}` : tr('verletzt', 'injured')}</span>`;
+    const st = c.week ? STATUS[c.week.availability[idx]] : null;
+    if (!st) return '';
+    const color = { yes: '#5cc46a', no: '#d9534f', late: '#e0b020' }[st[1]];
+    return `<span class="ui-chip" style="--c:${color}">${st[0]}</span>`;
+  }
+
+  // Kleine Marker hinter dem Namen: Du, Auszeichnungen, Titel, Form, Launen.
+  nameMarks(idx, p, r) {
+    const c = this.career;
+    return `${r.awards?.length ? ` <span class="award" title="${r.awards.map(awardLabel).join(' · ')}">★${r.awards.length > 1 ? r.awards.length : ''}</span>` : ''}${isCoach(c, idx) ? ` <span class="me-tag">${tr('Du', 'You')}</span>` : ''}${p.title ? ` <em>${p.title}</em>` : ''}${formArrow(r.form)}${r.absenceMul > 1.2 ? tr(' <span class="grumpy" title="hat gerade wenig Zeit – sagt öfter ab">selten da</span>', ' <span class="grumpy" title="short of time at the moment – drops out more often">rarely around</span>') : ''}${r.grumpy ? tr(' <span class="grumpy" title="angefressen – sagt öfter ab">grummelt</span>', ' <span class="grumpy" title="sulking – drops out more often">sulking</span>') : ''}`;
+  }
+
   tab_squad() {
     const c = this.career;
     const club = humanClub(c);
-    const canRelease = club.squad.length > MIN_SQUAD && !this.results;
-    const rows = club.squad
-      .map((idx) => ({ idx, p: this.p(idx), r: c.players[idx] }))
-      .sort((a, b) => b.p.rating - a.p.rating)
-      .map(({ idx, p, r }) => {
+    if (this.openPlayer != null && club.squad.includes(this.openPlayer)) return this.playerProfile(this.openPlayer);
+    this.openPlayer = null;
+    const ROLE = { gk: '#e8742a', def: '#4fa3e0', mid: '#6fbf73', fwd: '#d9534f' };
+    const cards = this.squadOrder()
+      .map((idx) => {
+        const p = this.p(idx);
+        const r = c.players[idx];
         const tier = tierById(p.tier);
-        const st = c.week ? STATUS[c.week.availability[idx]] : null;
-        const avg = r.graded ? tr((r.gradeSum / r.graded).toFixed(1).replace('.', ','), (r.gradeSum / r.graded).toFixed(1)) : '–';
-        return `<tr style="--c:${tier.color}">
-          <td><span class="badge">${tier.name}</span></td>
-          <td><button class="linkish" data-action="playerCard" data-value="${idx}" title="${tr('Formkurve und Verlauf', 'Form and history')}"><b>${p.name}</b></button>${r.awards?.length ? ` <span class="award" title="${r.awards.map(awardLabel).join(' · ')}">★${r.awards.length > 1 ? r.awards.length : ''}</span>` : ''}${isCoach(c, idx) ? ` <span class="me-tag">${tr('Du', 'You')}</span>` : ''}${p.title ? ` <em>${p.title}</em>` : ''}${formArrow(r.form)}${r.absenceMul > 1.2 ? tr(' <span class="grumpy" title="hat gerade wenig Zeit – sagt öfter ab">selten da</span>', ' <span class="grumpy" title="short of time at the moment – drops out more often">rarely around</span>') : ''}${r.grumpy ? tr(' <span class="grumpy" title="angefressen – sagt öfter ab">grummelt</span>', ' <span class="grumpy" title="sulking – drops out more often">sulking</span>') : ''}<small>${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)}${jobPerk(p.profession) ? ` <span class="perk-tag" title="${jobPerk(p.profession).label}">${tr('Bonus', 'perk')}</span>` : ''}</small>${relationLabel(c, idx) ? `<small class="rel">${relationLabel(c, idx)}</small>` : ''}</td>
-          <td>${POSITIONS[p.position]}</td><td class="num">${p.rating}</td>
-          <td>${r.injuryWeeks ? `<span class="st-text no" title="${r.injury?.label ?? tr('verletzt', 'injured')}">${r.injury ? `${r.injury.label} · ${r.injuryWeeks} ${tr('Wo.', 'wks')}` : tr('verletzt', 'injured')}</span>` : st ? `<span class="st-text ${st[1]}">${st[0]}</span>` : ''}</td>
-          <td class="num">${r.apps}</td><td class="num">${r.goals}</td><td class="num">${r.assists}</td><td class="num">${avg}</td>
-          <td>${canRelease && !isCoach(c, idx) ? (this.confirmRelease === idx ? `<button class="tiny danger" data-action="release" data-value="${idx}">${tr('Wirklich?', 'Sure?')}</button>` : `<button class="tiny" data-action="release" data-value="${idx}" title="${tr('Verabschieden', 'Release')}">×</button>`) : ''}</td>
-        </tr>${this.openPlayer === idx ? `<tr class="player-card"><td colspan="10">${playerCard(c, idx, p, r)}</td></tr>` : ''}`;
+        return `<button class="ui-card squad-card" data-action="playerCard" data-value="${idx}" style="--c:${ROLE[p.position] ?? '#888'};--tier:${tier.color}">
+          <span class="sc-rating">${p.rating}</span>
+          <span class="sc-name"><b>${p.name}</b>${this.nameMarks(idx, p, r)}</span>
+          <span class="sc-pos">${POSITIONS[p.position]} · <i class="sc-tier">${tier.name}</i></span>
+          <span class="sc-sun">${this.sundayChip(idx)}</span>
+        </button>`;
       })
       .join('');
-    return `<table class="squad"><thead><tr><th></th><th>${tr('Spieler', 'Player')}</th><th>${tr('Pos.', 'Pos.')}</th><th>${tr('Stärke', 'Rating')}</th><th>${tr('Sonntag', 'Sunday')}</th><th>${tr('Sp.', 'Apps')}</th><th>${tr('Tore', 'Goals')}</th><th>${tr('Vorl.', 'Ast.')}</th><th>${tr('Ø Note', 'Avg.')}</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+    const count = { yes: 0, no: 0, late: 0 };
+    for (const idx of club.squad) if (c.week?.availability[idx]) count[c.week.availability[idx]]++;
+    return `
+      <div class="squad-head">
+        <p class="t-2">${club.squad.length} ${tr('Spieler', 'players')}${c.week ? ` · ${count.yes} ${tr('Zusagen', 'in')} · ${count.late} ${tr('später', 'late')} · ${count.no} ${tr('Absagen', 'out')}` : ''}</p>
+        <div class="squad-sort">${segmented('sort', [['rating', tr('Stärke', 'Rating')], ['pos', tr('Position', 'Position')]], this.squadSort === 'pos' ? 'pos' : 'rating', { action: 'squadSort' })}</div>
+      </div>
+      <div class="squad-grid">${cards}</div>`;
+  }
+
+  // Spielerprofil: eigener Bildschirm mit Tabs statt weiterer Menüebenen. Wischen = nächster Spieler.
+  playerProfile(idx) {
+    const c = this.career;
+    const club = humanClub(c);
+    const p = this.p(idx);
+    const r = c.players[idx];
+    const tier = tierById(p.tier);
+    const canRelease = club.squad.length > MIN_SQUAD && !this.results && !isCoach(c, idx);
+    const tab = this.profileTab ?? 'overview';
+    const avg = r.graded ? tr((r.gradeSum / r.graded).toFixed(1).replace('.', ','), (r.gradeSum / r.graded).toFixed(1)) : '–';
+    const rels = relationLabel(c, idx);
+    const perk = jobPerk(p.profession);
+    let body;
+    if (tab === 'attrs') {
+      body = `<div class="attr-list">${Object.entries(ATTR_LABELS)
+        .filter(([k]) => p.attrs[k] != null && (k !== 'keeping' || p.position === 'gk' || p.attrs.keeping > 0.4))
+        .map(([k, label]) => {
+          const v = Math.round(p.attrs[k] * 100);
+          return `<div class="attr-row"><span>${label}</span><i style="--v:${v}%"></i><b>${v}</b></div>`;
+        })
+        .join('')}</div>
+        ${p.traits?.length ? `<p class="ui-section-title">${tr('Eigenheiten', 'Traits')}</p><div class="ui-chips">${p.traits.filter((t) => TRAITS[t]).map((t) => `<span class="ui-chip plain" title="${TRAITS[t].desc}">${TRAITS[t].name}</span>`).join('')}</div>` : ''}`;
+    } else if (tab === 'stats') {
+      body = `<div class="ui-row profile-stats">
+          <div class="ui-stat"><b>${r.apps}</b><span>${tr('Spiele', 'Apps')}</span></div>
+          <div class="ui-stat"><b>${r.goals}</b><span>${tr('Tore', 'Goals')}</span></div>
+          <div class="ui-stat"><b>${r.assists}</b><span>${tr('Vorlagen', 'Assists')}</span></div>
+          <div class="ui-stat"><b>${avg}</b><span>${tr('Ø Note', 'Avg. grade')}</span></div>
+        </div>
+        ${playerCard(c, idx, p, r)}`;
+    } else {
+      body = `<div class="ui-stack tight">
+          <p class="t-body">${p.age}${tr(' Jahre', ' years')} · ${jobName(p.profession)}${perk ? ` <span class="perk-tag" title="${perk.label}">${tr('Bonus', 'perk')}</span>` : ''}</p>
+          ${perk ? `<p class="t-2">${perk.label}</p>` : ''}
+          ${rels ? `<p class="t-2 rel-line">${rels}</p>` : ''}
+          ${r.awards?.length ? `<p class="t-2">★ ${r.awards.map(awardLabel).join(' · ')}</p>` : ''}
+          ${p.traits?.length ? `<div class="ui-chips">${p.traits.filter((t) => TRAITS[t]).map((t) => `<span class="ui-chip plain" title="${TRAITS[t].desc}">${TRAITS[t].name}</span>`).join('')}</div>` : ''}
+        </div>`;
+    }
+    const order = this.squadOrder();
+    const pos = order.indexOf(idx);
+    return `
+      <div class="profile" data-swipe="player">
+        <div class="profile-nav">
+          ${button(`‹ ${tr('Kader', 'Squad')}`, { kind: 'ghost', action: 'playerBack' })}
+          <span class="t-2">${pos + 1} / ${order.length}</span>
+          <span class="ui-row">${button('‹', { kind: 'icon', action: 'playerStep', value: -1, 'aria-label': tr('Voriger Spieler', 'Previous player') })}${button('›', { kind: 'icon', action: 'playerStep', value: 1, 'aria-label': tr('Nächster Spieler', 'Next player') })}</span>
+        </div>
+        <div class="profile-head" style="--tier:${tier.color}">
+          <span class="profile-shirt" style="background:url(${kitPreviewURL(club.kit)}) center / 100% 100%"><b>${p.rating}</b></span>
+          <div>
+            <h3 class="t-h2">${p.name}${this.nameMarks(idx, p, r)}</h3>
+            <p class="t-body">${POSITIONS[p.position]} · <span class="badge" style="--c:${tier.color}">${tier.name}</span></p>
+            <div class="ui-chips">${this.sundayChip(idx)}</div>
+          </div>
+        </div>
+        ${uiTabs([['overview', tr('Übersicht', 'Overview')], ['attrs', tr('Attribute', 'Attributes')], ['stats', tr('Statistik', 'Stats')]], tab, 'profileTab')}
+        <div class="profile-body">${body}</div>
+        ${canRelease ? `<div class="profile-foot">${this.confirmRelease === idx ? button(tr('Wirklich verabschieden?', 'Really release him?'), { kind: 'danger', action: 'release', value: idx }) : button(tr('Verabschieden', 'Release'), { kind: 'ghost', action: 'release', value: idx })}</div>` : ''}
+      </div>`;
   }
 
   // Spielplan: mit welchen Befehlen die Mannschaft aufläuft. Einsteiger: sechs Pakete,
@@ -922,15 +1112,14 @@ export class Clubhouse {
       <p class="hint">${tr('Damit laufen die Jungs auf. Im Spiel kannst du jederzeit abweichen.', 'This is how the lads start. You can change it at any time during the match.')} <button class="linkish" data-action="planLevel">${pro ? tr('Weniger Optionen', 'Fewer options') : tr('Alle Befehle zeigen', 'Show all orders')}</button>${summary.length ? ` <button class="linkish" data-action="planReset">${tr('Zurücksetzen', 'Reset')}</button>` : ''}</p>`;
   }
 
-  tab_lineup() {
+  // Taktik: System, Spielstil, Passung, Spielplan-Befehle (früher oben in der Aufstellung).
+  tab_tactic() {
     const c = this.career;
     if (!c.week || this.results) return `<p class="empty">${tr('Die Aufstellung für den nächsten Spieltag gibt es nach dem Wochenstart.', 'The line-up for the next matchday is available once the week starts.')}</p>`;
-    const { formation, lineup, bench, format, tactic } = currentLineup(c);
-    const club = humanClub(c);
-    // Taktiktafel: System als Mini-Spielfeld, dazu der Spielstil.
+    const { formation, lineup, format, tactic } = currentLineup(c);
     const board = (f, active) => `<span class="mini-pitch ${active ? 'on' : ''}">${f.map((e) => `<i class="dot-${e.role}" style="left:${((e.x + 1) * 100).toFixed(0)}%;top:${((e.z + 1) * 50).toFixed(0)}%"></i>`).join('')}</span>`;
     const systems = Object.entries(systemsFor(format))
-      .map(([id, sys]) => `<button class="system ${tactic.system === id ? 'active' : ''}" data-action="tacticSystem" data-value="${id}">${board(sys.formation, tactic.system === id)}<b>${sys.label}</b></button>`)
+      .map(([id, sys]) => `<button class="system ${tactic.system === id ? 'active' : ''}" data-action="tacticSystem" data-value="${id}" aria-pressed="${tactic.system === id}">${board(sys.formation, tactic.system === id)}<b>${sys.label}</b></button>`)
       .join('');
     // Passt der Stil zum Platz und Wetter am Sonntag? Und zu den Berufen der Jungs?
     const pitch = nextPitch(c);
@@ -939,35 +1128,88 @@ export class Clubhouse {
       return f > 0 ? ' <i class="fit good">▲</i>' : f < 0 ? ' <i class="fit bad">▼</i>' : '';
     };
     const styles = Object.entries(PLAY_STYLES)
-      .map(([id, st]) => `<button class="${tactic.style === id ? 'active' : ''}" data-action="tacticStyle" data-value="${id}">${st.label}${fitMark(id)}</button>`)
+      .map(([id, st]) => `<button class="${tactic.style === id ? 'active' : ''}" data-action="tacticStyle" data-value="${id}" aria-pressed="${tactic.style === id}">${st.label}${fitMark(id)}</button>`)
       .join('');
     const reasons = pitch ? styleFit(tactic.style, pitch).reasons : [];
     const fitters = lineup.filter((idx) => idx != null && jobFits(tactic.style, this.p(idx).profession)).map((idx) => this.p(idx).name.split(' ')[0]);
     const fitNote = `${reasons.map((r) => `<span class="${r.score > 0 ? 'good' : 'bad'}">${r.score > 0 ? '▲' : '▼'} ${r.text}</span>`).join(' ')}${fitters.length ? ` <span class="good">▲ ${tr('Passt zum Stil (Beruf)', 'Suits the style (job)')}: ${fitters.join(', ')}</span>` : ''}`;
-    const tacticBlock = `
+    return `
       <div class="tactic-board">
-        <h4>${tr('Taktik', 'Tactics')} <small>${formation.length} ${tr('gegen', 'v')} ${formation.length}</small></h4>
+        <p class="ui-section-title">${tr('System', 'System')} · ${formation.length} ${tr('gegen', 'v')} ${formation.length}</p>
         <div class="systems">${systems}</div>
+        <p class="ui-section-title">${tr('Spielstil', 'Playing style')}</p>
         <div class="styles">${styles}</div>
         <p class="hint">${PLAY_STYLES[tactic.style].desc}</p>
         ${fitNote ? `<p class="fit-note">${pitch ? `${tr('Sonntag', 'Sunday')}: ${pitch.name}, ${pitch.surface.name}. ` : ''}${fitNote}</p>` : ''}
         ${this.planBlock(tactic.orders ?? {})}
       </div>`;
+  }
+
+  // Aufstellung direkt auf dem Spielfeld: Spieler antippen, dann Ziel antippen (Position oder Bank)
+  // – oder ziehen. Beides führt zu setLineupSlot, der Tausch passiert in der Karriere-Logik.
+  lineupPick(target) {
+    const c = this.career;
+    const { lineup } = currentLineup(c);
+    const cur = this.pick;
+    if (!cur) {
+      this.pick = target;
+      return;
+    }
+    this.pick = null;
+    if (cur.slot != null && target.slot === cur.slot) return; // abgewählt
+    if (cur.idx != null && target.idx != null) return void (this.pick = target); // Bank → Bank: neue Auswahl
+    this.applyLineup(cur, target, lineup);
+  }
+
+  applyLineup(a, b, lineup = currentLineup(this.career).lineup) {
+    const slot = a.slot ?? b.slot;
+    const other = a.slot != null && b.slot != null ? (a.slot === slot ? b.slot : a.slot) : null;
+    const idx = a.idx ?? b.idx;
+    if (other != null) {
+      // Zwei Positionen tauschen (auch mit einer Aushilfe: dann rückt der Spieler einfach um).
+      if (lineup[other] != null) setLineupSlot(this.career, slot, lineup[other]);
+      else if (lineup[slot] != null) setLineupSlot(this.career, other, lineup[slot]);
+      else return;
+    } else if (idx != null) setLineupSlot(this.career, slot, idx);
+    this.h.onChange();
+  }
+
+  tab_lineup() {
+    const c = this.career;
+    if (!c.week || this.results) return `<p class="empty">${tr('Die Aufstellung für den nächsten Spieltag gibt es nach dem Wochenstart.', 'The line-up for the next matchday is available once the week starts.')}</p>`;
+    const { formation, lineup, bench, tactic } = currentLineup(c);
+    const benchList = bench.length
+      ? bench.map((idx) => `<li>${this.p(idx).name}${c.week.availability[idx] === 'late' ? tr(' <em>(kommt zur 2. Halbzeit)</em>', ' <em>(arrives for the 2nd half)</em>') : ''}</li>`).join('')
+      : `<li><em>${tr('niemand', 'nobody')}</em></li>`;
+    if (coachAway(c)) return `<p class="warn">${tr('Du bist diese Woche nicht da. Der Kapitän stellt auf – nach bestem Wissen und Gewissen.', 'You are away this week. The captain picks the team – to the best of his knowledge.')}</p><h4>${tr('Bank', 'Bench')}</h4><ul class="bench">${benchList}</ul>`;
     const ROLE = tr({ gk: 'Tor', def: 'Abwehr', mid: 'Mitte', fwd: 'Sturm' }, { gk: 'GK', def: 'Def', mid: 'Mid', fwd: 'Att' });
-    const options = club.squad
-      .filter((idx) => c.week.availability[idx] === 'yes')
-      .map((idx) => ({ idx, p: this.p(idx) }))
-      .sort((a, b) => b.p.rating - a.p.rating);
-    const slots = formation
+    const pick = this.pick;
+    // Formation liegt in der eigenen Hälfte (x −0,96 … −0,14): auf das ganze Feld strecken, Tor links.
+    const left = (x) => (6 + ((x + 0.96) / 0.82) * 84).toFixed(1);
+    const top = (z) => (50 + z * 70).toFixed(1);
+    const tokens = formation
       .map((slot, i) => {
-        const current = lineup[i];
-        const opts = options
-          .map(({ idx, p }) => `<option value="${idx}" ${idx === current ? 'selected' : ''}>${p.name} · ${POSITIONS[p.position]} · ${p.rating}</option>`)
-          .join('');
-        return `<label class="slot slot-${slot.role}"><span>${ROLE[slot.role]}</span>
-          <select data-slot="${i}">${current == null ? `<option selected>${tr('Aushilfe aus dem Bekanntenkreis', 'Stand-in from a mate\'s circle')}</option>` : ''}${opts}</select></label>`;
+        const idx = lineup[i];
+        const p = idx != null ? this.p(idx) : null;
+        const off = p && p.position !== slot.role && !(slot.role === 'mid' && p.position !== 'gk');
+        const picked = pick?.slot === i;
+        return `<button class="lp-token role-${slot.role}${picked ? ' picked' : ''}${p ? '' : ' standin'}" data-action="slotPick" data-value="${i}" data-drop="slot:${i}" data-drag="slot:${i}" style="--x:${left(slot.x)}%;--y:${top(slot.z)}%" aria-pressed="${picked}" aria-label="${ROLE[slot.role]}: ${p ? p.name : tr('Aushilfe', 'Stand-in')}">
+          <span class="lp-shirt">${p ? p.rating : '?'}</span>
+          <span class="lp-name">${p ? p.name.split(' ').at(-1) : tr('Aushilfe', 'Stand-in')}</span>
+          <span class="lp-role${off ? ' off' : ''}">${ROLE[slot.role]}${off ? ` · ${POSITIONS[p.position]}` : ''}</span>
+        </button>`;
       })
       .join('');
+    // Wer kann rein? Alle mit Zusage, die nicht schon spielen (wie früher in der Auswahlliste).
+    const avail = humanClub(c).squad
+      .filter((idx) => c.week.availability[idx] === 'yes' && !lineup.includes(idx))
+      .map((idx) => ({ idx, p: this.p(idx) }))
+      .sort((a, b) => b.p.rating - a.p.rating);
+    const late = bench.filter((idx) => c.week.availability[idx] === 'late');
+    const benchChips = [
+      ...avail.map(({ idx, p }) => `<button class="lp-bench${pick?.idx === idx ? ' picked' : ''}" data-action="benchPick" data-value="${idx}" data-drop="bench:${idx}" data-drag="bench:${idx}" aria-pressed="${pick?.idx === idx}"><b>${p.rating}</b><span>${p.name}</span><small>${POSITIONS[p.position]}</small></button>`),
+      ...late.map((idx) => `<span class="lp-bench late"><b>${this.p(idx).rating}</b><span>${this.p(idx).name}</span><small>${tr('kommt zur 2. Halbzeit', 'arrives for the 2nd half')}</small></span>`),
+    ].join('');
     const gkIdx = formation.findIndex((f) => f.role === 'gk');
     const keeper = lineup[gkIdx] != null ? this.p(lineup[gkIdx]) : null;
     const keeperNote = keeper && keeper.position !== 'gk' ? `<p class="warn">${tr(`Kein Torwart da – ${keeper.name.split(' ')[0]} muss ran. Handschuhe liegen im Kofferraum.`, `No keeper – ${keeper.name.split(' ')[0]} has to go in goal. The gloves are in the boot.`)}</p>` : '';
@@ -975,18 +1217,26 @@ export class Clubhouse {
     const chemLine = chem.pairs.length
       ? `<p class="chem ${chem.score < 0 ? 'bad' : 'good'}">${tr('Teamchemie', 'Chemistry')} ${chem.score > 0 ? '+' : ''}${chem.score}: ${chem.pairs.map((pr) => `${shortName(c, pr.a)} & ${shortName(c, pr.b)} (${REL[pr.type].plural})`).join(' · ')}</p>`
       : `<p class="chem">${tr('Teamchemie: In dieser Aufstellung kennt sich keiner näher.', 'Chemistry: nobody in this line-up knows each other well.')}</p>`;
-    const benchList = bench.length
-      ? bench.map((idx) => `<li>${this.p(idx).name}${c.week.availability[idx] === 'late' ? tr(' <em>(kommt zur 2. Halbzeit)</em>', ' <em>(arrives for the 2nd half)</em>') : ''}</li>`).join('')
-      : `<li><em>${tr('niemand', 'nobody')}</em></li>`;
-    if (coachAway(c)) return `<p class="warn">${tr('Du bist diese Woche nicht da. Der Kapitän stellt auf – nach bestem Wissen und Gewissen.', 'You are away this week. The captain picks the team – to the best of his knowledge.')}</p><h4>${tr('Bank', 'Bench')}</h4><ul class="bench">${benchList}</ul>`;
+    const hint = pick
+      ? pick.slot != null
+        ? tr('Jetzt eine andere Position zum Tauschen antippen – oder einen Spieler von der Bank.', 'Now tap another position to swap – or a player from the bench.')
+        : tr('Jetzt die Position antippen, auf der er spielen soll.', 'Now tap the position he should play.')
+      : tr('Spieler antippen, dann Ziel antippen – oder einfach ziehen.', 'Tap a player, then the target – or just drag.');
     return `
-      ${tacticBlock}
-      <p class="chat-head">${c.week.lineup ? tr('Eigene Aufstellung', 'Your line-up') : tr('Automatisch aufgestellt', 'Picked automatically')}</p>
-      <div class="lineup">${slots}</div>
-      ${chemLine}
-      ${keeperNote}
-      <h4>${tr('Bank', 'Bench')}</h4><ul class="bench">${benchList}</ul>
-      <button data-action="autoLineup">${tr('Automatisch aufstellen', 'Pick automatically')}</button>`;
+      <div class="lineup2">
+        <div class="lp-head">
+          <p class="t-cap">${c.week.lineup ? tr('Eigene Aufstellung', 'Your line-up') : tr('Automatisch aufgestellt', 'Picked automatically')} · ${PLAY_STYLES[tactic.style].label}</p>
+          <div class="ui-row">${pick ? button(tr('Abbrechen', 'Cancel'), { kind: 'ghost', action: 'pickCancel' }) : ''}${button(tr('Automatisch aufstellen', 'Pick automatically'), { action: 'autoLineup' })}</div>
+        </div>
+        <div class="lp-stage">
+          <div class="lp-pitch" aria-label="${tr('Spielfeld', 'Pitch')}"><i class="lp-box l"></i><i class="lp-box r"></i><i class="lp-mid"></i>${tokens}</div>
+          <div class="lp-benchcol"><p class="ui-section-title">${tr('Bank', 'Bench')} · ${tr('verfügbar', 'available')}</p>
+          <div class="lp-benchrow">${benchChips || `<p class="t-2">${tr('niemand', 'nobody')}</p>`}</div></div>
+        </div>
+        <p class="t-2 lp-hint" aria-live="polite">${hint}</p>
+        ${keeperNote}
+        ${chemLine}
+      </div>`;
   }
 
   tab_transfers() {
