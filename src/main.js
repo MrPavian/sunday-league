@@ -477,6 +477,7 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
       onBack() {
         settings.hide();
         setTimeout(() => (menu.paused = false), 0);
+        if (mode === 'club' && career) clubhouse.render(); // aus dem Vereinsheim geöffnet
       },
     });
   },
@@ -575,6 +576,7 @@ function openMenu() {
 
 const clubhouse = new Clubhouse(document.getElementById('club'), {
   onMenu: openMenu,
+  onSettings: () => menu.onSettings(),
   onChange: () => saveCareer(career),
   onPlay: () => playCareerMatch('player'),
   onCoach: () => playCareerMatch('manager'),
