@@ -1412,3 +1412,96 @@ line.tb-chalk { stroke-width: 1; }
 .plan-panel.tp > footer button.primary { color: var(--on-accent); background: var(--accent); text-shadow: none; }
 .sub-panel > header, .sub-panel > footer { flex: none; }
 #shoutbar:not(.ended) button.end-only { display: none; }
+
+/* ===== UI 3.0 Phase 2: Vereinsheim als Raum ===== */
+/* Durchsichtig nur im Bereich „Heute": der Raum wird um das Fenster herum gemalt (box-shadow),
+   durchs Fenster sieht man die 3D-Szene des eigenen Platzes, die ohnehin im Hintergrund läuft. */
+#club.see-through { background: transparent; }
+#club.see-through .club-main > * { position: relative; z-index: 1; }
+#club.see-through .club-main > .club-body { z-index: auto; }
+#club.see-through .hub > * { position: relative; z-index: 1; }
+#club.see-through .hub > .hub-scene { z-index: auto; }
+#club.see-through .club-scene > * { position: relative; }
+#club.see-through .cs-wall > .cs-obj, #club.see-through .cs-desk { z-index: 1; }
+.hub { grid-template-columns: minmax(0, 1.6fr) minmax(260px, 1fr); grid-template-areas: 'scene scene' 'main side'; }
+.hub-scene { grid-area: scene; min-width: 0; }
+.hub-main { grid-area: main; min-width: 0; }
+.hub-side { grid-area: side; min-width: 0; }
+@media (max-width: 980px) { .hub { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'scene' 'main' 'side'; } }
+
+.club-scene { display: grid; gap: 0; }
+.cs-wall, .cs-desk { display: flex; align-items: flex-end; gap: var(--s3); overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+.cs-wall::-webkit-scrollbar, .cs-desk::-webkit-scrollbar { display: none; }
+.cs-wall { padding: var(--s3) var(--s2) var(--s4); }
+.cs-desk { padding: var(--s3) var(--s3) var(--s2); background: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.08) 0 2px, transparent 2px 60px), linear-gradient(#7a5533, #5e3f24); border: 2px solid #000; border-top: 6px solid #8c6440; box-shadow: 0 3px 0 #000; }
+.cs-window {
+  flex: 1 1 200px;
+  min-width: 150px;
+  height: 118px;
+  align-self: stretch;
+  position: relative;
+  z-index: 0 !important;
+  border: 8px solid #6b4a2b;
+  outline: 2px solid #000;
+  /* alles um das Fenster herum ist Wand – die 3D-Szene bleibt nur hier sichtbar */
+  box-shadow: inset 0 0 0 2px #000, 0 0 0 200vmax #231b15;
+  background: linear-gradient(rgba(170, 200, 230, 0.12), rgba(170, 200, 230, 0) 60%);
+}
+.cs-sash::before, .cs-sash::after { content: ''; position: absolute; background: #6b4a2b; border: 1px solid #000; }
+.cs-sash::before { left: calc(50% - 3px); top: 0; bottom: 0; width: 6px; }
+.cs-sash::after { top: calc(45% - 3px); left: 0; right: 0; height: 6px; }
+.club-panel button.cs-obj { flex: none; display: flex; flex-direction: column; align-items: center; gap: var(--s1); min-width: 96px; max-width: 150px; min-height: var(--touch); padding: var(--s1); color: var(--ink); background: transparent; border: 0; box-shadow: none; text-align: center; scroll-snap-align: start; text-shadow: var(--shadow); }
+.club-panel button.cs-obj:hover .cs-art { filter: brightness(1.12); }
+.club-panel button.cs-obj:active { transform: translateY(2px); }
+.cs-art { position: relative; display: grid; place-items: end center; height: 66px; }
+.cs-art .ui-badge { position: absolute; top: -6px; right: -10px; }
+.cs-label { display: grid; gap: 1px; line-height: 1.15; }
+.cs-label b { font-weight: inherit; font-size: var(--fs-secondary); }
+.cs-label small { color: var(--ink-2); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.cs-whiteboard { position: relative; width: 104px; height: 64px; background: linear-gradient(135deg, #fff, #eef0ec 45%); border: 5px solid #a9b0b6; outline: 2px solid #000; }
+.cs-whiteboard i { position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--c); border: 1px solid #000; }
+.cs-cork { position: relative; width: 92px; height: 64px; background: radial-gradient(rgba(60, 35, 10, 0.35) 1px, transparent 1.6px) 0 0 / 6px 6px, #b98a55; border: 5px solid #6b4a2b; outline: 2px solid #000; }
+.cs-slip { position: absolute; left: 8px; top: 7px; padding: 1px 5px; font-style: normal; font-size: var(--fs-caption); color: #2a2620; background: #fff4a8; border: 1px solid #000; transform: rotate(-4deg); text-shadow: none; }
+.cs-slip.b { left: 40px; top: 28px; background: #cfe6ff; transform: rotate(3deg); }
+.cs-slip.n { left: 62px; top: 4px; background: #ffd3dc; color: #b3261e; }
+.cs-calsheet { display: grid; width: 58px; height: 64px; background: #efe6d2; border: 2px solid #000; box-shadow: 2px 2px 0 #000; text-shadow: none; }
+.cs-calsheet i { font-style: normal; font-size: var(--fs-caption); color: #fff; background: #c0392b; border-bottom: 2px solid #000; text-align: center; }
+.cs-calsheet b { font-weight: inherit; font-size: 28px; color: #2a2620; text-align: center; line-height: 38px; }
+.cs-cards { position: relative; width: 60px; height: 62px; }
+.cs-cards i { position: absolute; bottom: 0; left: 10px; width: 40px; height: 56px; background: #e4d8bd; border: 2px solid #000; }
+.cs-cards i:nth-child(1) { transform: rotate(-9deg) translateX(-6px); }
+.cs-cards i:nth-child(2) { transform: rotate(5deg) translateX(4px); }
+.cs-cards i:nth-child(3) { background: linear-gradient(var(--k) 0 12px, #efe6d2 12px); box-shadow: 2px 2px 0 #000; }
+.cs-sportbag { position: relative; width: 86px; height: 42px; background: var(--k); border: 2px solid #000; border-radius: 14px 14px 6px 6px; box-shadow: inset 0 -8px 0 rgba(0, 0, 0, 0.25), 2px 2px 0 #000; }
+.cs-sportbag::before { content: ''; position: absolute; left: 24px; right: 24px; top: -14px; height: 16px; border: 3px solid #000; border-bottom: 0; border-radius: 10px 10px 0 0; }
+.cs-sportbag i { position: absolute; left: 32px; top: 12px; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid #000; }
+.cs-mobile { position: relative; width: 32px; height: 56px; background: #1b1d22; border: 2px solid #000; border-radius: 6px; box-shadow: 2px 2px 0 #000; }
+.cs-mobile i { position: absolute; inset: 5px 3px 8px; background: #0f1a14; border: 1px solid #000; }
+.cs-mobile.lit i { background: #1f4a31; box-shadow: 0 0 10px 2px rgba(120, 255, 170, 0.45); }
+.cs-news { display: grid; align-content: start; width: 78px; height: 54px; padding: 3px 5px; color: #2a2620; background: #efe6d2; border: 2px solid #000; box-shadow: 2px 2px 0 #000; transform: rotate(-3deg); text-shadow: none; }
+.cs-news i { font-style: normal; font-size: 9px; letter-spacing: 0.12em; border-bottom: 2px double #2a2620; text-align: center; }
+.cs-news b { font-weight: inherit; font-size: var(--fs-h3); text-align: center; }
+.cs-mappe { display: grid; place-items: center; width: 74px; height: 54px; background: #c9a56a; border: 2px solid #000; box-shadow: 2px 2px 0 #000; clip-path: polygon(0 12%, 34% 12%, 42% 0, 100% 0, 100% 100%, 0 100%); }
+.cs-coaster { position: relative; width: 52px; height: 52px; border-radius: 50%; background: radial-gradient(circle, #f2efe6 0 14px, #c0392b 15px 20px, #f2efe6 21px); border: 2px solid #000; box-shadow: 2px 2px 0 #000; }
+.cs-book { position: relative; width: 50px; height: 62px; background: #2f5d8a; border: 2px solid #000; box-shadow: 2px 2px 0 #000; }
+.cs-book::before { content: ''; position: absolute; left: 4px; top: 4px; bottom: 4px; width: 6px; background: radial-gradient(circle, #ddd 0 2px, transparent 3px) 0 0 / 6px 8px repeat-y; }
+.cs-book i { position: absolute; right: 8px; top: 10px; width: 22px; height: 12px; background: #efe6d2; border: 1px solid #000; }
+@media (max-height: 520px) and (orientation: landscape) {
+  .cs-wall { padding: var(--s2) var(--s2) var(--s3); }
+  .cs-window { height: 92px; }
+  .cs-art { height: 68px; }
+}
+/* Wand scrollt nicht (overflow würde den gemalten Raum ums Fenster abschneiden) – sie bricht um. */
+.cs-wall { overflow: visible; flex-wrap: wrap; justify-content: center; }
+.cs-wall > .cs-window { order: 0; }
+@media (max-width: 720px) { .cs-wall > .cs-window { flex: 1 1 100%; order: -1; height: 96px; } }
+/* Handy quer: Spielkarte links (Anpfiff bleibt im Bild), der Raum rechts daneben. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .hub { grid-template-columns: minmax(290px, 1fr) minmax(0, 1.15fr); grid-template-areas: 'main scene' 'side scene'; align-items: start; }
+  .cs-wall > .cs-window { flex: 1 1 100%; order: -1; height: 70px; }
+  .cs-desk { flex-wrap: wrap; justify-content: center; overflow: visible; }
+  .club-panel button.cs-obj { min-width: 84px; }
+}
+/* Kleine Handys hochkant: erst das Spiel (Anpfiff im Bild), dann der Raum. */
+@media (orientation: portrait) and (max-height: 700px) { .hub { grid-template-areas: 'main' 'scene' 'side'; } }

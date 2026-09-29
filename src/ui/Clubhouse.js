@@ -13,6 +13,7 @@ import { coachLevel, setCoachLevel } from './prefs.js';
 import { button, icon, segmented, tabs as uiTabs } from './ds.js';
 import { ATTR_LABELS } from './PoolBrowser.js';
 import { TacticBoard } from './TacticBoard.js';
+import { clubScene } from './ClubScene.js';
 import { planTarget } from '../sim/plan.js';
 import { jobPerk } from '../data/jobs.js';
 import { CREST_COLORS, CREST_DIVISIONS, CREST_SHAPES, CREST_SYMBOLS, crestOf, crestSVG, defaultCrest, FIGURES } from './crest.js';
@@ -425,6 +426,8 @@ export class Clubhouse {
     ).join('');
     const labels = TAB_LABELS();
     const sub = area.tabs.length > 1 ? uiTabs(area.tabs.map((t) => [t, labels[t]]), this.tab, 'tab') : '';
+    // Im Vereinsheim („Heute") ist das Fenster der Szene durchsichtig: dahinter läuft der eigene Platz.
+    this.root.classList.toggle('see-through', area.id === 'home');
     this.root.innerHTML = `
       <div class="club-panel club2" style="--kit:${hex(club.kit.shirt)}">
         <nav class="club-rail" aria-label="${tr('Bereiche', 'Sections')}">${rail}</nav>
@@ -449,15 +452,12 @@ export class Clubhouse {
     }
   }
 
-  // HEUTE: das Wichtigste der Woche auf einen Blick – Spiel (oder Ergebnisse/Saisonende) groß,
-  // daneben Tabelle, letzte Ergebnisse, Aushang und was in der Gruppe auf dich wartet.
+  // HEUTE: das Vereinsheim als Raum (Szene), das Spiel (oder Ergebnisse/Saisonende) groß,
+  // daneben letzte Ergebnisse, Aushang und was in der Gruppe auf dich wartet.
   hub() {
     const c = this.career;
     const over = seasonOver(c);
     const main = over ? this.seasonEnd() : this.results ? this.roundResults() : this.nextMatch();
-    const t = table(c);
-    const pos = t.findIndex((r) => r.club.human);
-    const me = t[pos];
     const mine = [];
     // Während der Ergebnisanzeige ist der eben gespielte Spieltag schon dabei.
     for (let i = Math.min(this.results ? c.round : c.round - 1, c.fixtures.length - 1); i >= 0 && mine.length < 5; i--) {
@@ -482,14 +482,11 @@ export class Clubhouse {
     const ev = c.week?.event;
     const pending = ev && ev.choice === null && !this.results;
     const side = `
-      <button class="ui-card tap hub-table" data-action="tab" data-value="table">
-        <p class="t-cap">${tr('Tabelle', 'Table')}</p>
-        <div class="ui-row hub-stats"><div class="ui-stat"><b>${pos + 1}.</b><span>${tr('Platz', 'Place')}</span></div><div class="ui-stat"><b>${me.pts}</b><span>${tr('Punkte', 'Points')}</span></div><div class="ui-stat"><b>${me.gf}:${me.ga}</b><span>${tr('Tore', 'Goals')}</span></div></div>
-      </button>
       <div class="ui-card"><p class="t-cap">${tr('Letzte Ergebnisse', 'Recent results')}</p>${last}</div>
       ${pending ? `<button class="ui-card tap notify hub-pending" data-action="tab" data-value="chat"><p class="t-cap">${icon('phone', 16)} ${tr('Handy', 'Phone')}</p><p class="t-body">${tr('In der Gruppe wartet eine Entscheidung auf dich.', 'A decision is waiting for you in the group chat.')}</p></button>` : ''}
       ${this.noticeCard()}`;
-    return `<div class="hub"><section class="hub-main">${main}</section><aside class="hub-side ui-stack tight">${side}</aside></div>`;
+    // Die Szene zeigt Tabellenplatz, Termin, Taktik und Handy als Objekte im Raum (ClubScene.js).
+    return `<div class="hub"><div class="hub-scene">${clubScene(c, { results: this.results })}</div><section class="hub-main">${main}</section><aside class="hub-side ui-stack tight">${side}</aside></div>`;
   }
 
   nextMatch() {
