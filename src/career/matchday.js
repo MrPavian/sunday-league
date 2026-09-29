@@ -52,9 +52,11 @@ const SURPRISES = [
 ];
 
 // team: Index der eigenen Mannschaft im Spiel.
-export function matchdaySurprise(m, team, rng, chance = 0.28) {
+// only: nur diese Überraschung zulassen (Testschalter ?stau in main.js).
+export function matchdaySurprise(m, team, rng, chance = 0.28, only = null) {
   if (!rng.chance(chance)) return null;
-  const list = SURPRISES.filter((s) => !s.if || s.if(m, team));
+  const list = SURPRISES.filter((s) => (!only || s.id === only) && (!s.if || s.if(m, team)));
+  if (!list.length) return null;
   let r = rng.next() * list.reduce((s, x) => s + x.w, 0);
   const pick = list.find((x) => (r -= x.w) < 0) ?? list[0];
   const text = pick.run(m, team, rng);

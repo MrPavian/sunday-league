@@ -27,6 +27,8 @@ import { applyChallengeRewards } from './career/rewards.js';
 import { advanceCup, currentCupMatches, humanCupMatch, prepareCupMatch, recordCupResult, skipTournament, startTournament } from './career/tournament.js';
 import { CHALLENGES, challengeById, createChallengeMatch, evaluateChallenge, loadProgress, recordChallenge, saveProgress } from './challenges/challenges.js';
 import { createRng } from './core/rng.js';
+import { matchdaySurprise } from './career/matchday.js';
+import { INCIDENT_TYPES } from './sim/incidents.js';
 import { Input } from './input/Input.js';
 import { CameraRig } from './render/CameraRig.js';
 import { MatchView } from './render/MatchView.js';
@@ -178,6 +180,28 @@ const rig = new CameraRig();
 const scene = new THREE.Scene();
 // ?debug: Renderer und Szene für die Browser-Konsole (Draw Calls, Speicher).
 if (params.has('debug')) globalThis.__sl = { renderer: pixel.renderer, pixel, scene, THREE, rig, get match() { return match; }, get view() { return view; }, get crowd() { return crowd; }, get weather() { return view?.weather; } };
+// Nur mit ?debug: Herzschlag und „letztes System" je Bild – zeigt bei einem Hänger, wo es stand.
+// Reine Diagnose: setzt nichts zurück und startet nichts neu.
+const DIAG = params.has('debug') ? { frame: 0, simStep: 0, sys: '-', stalls: 0, errors: [] } : null;
+if (DIAG) {
+  globalThis.__sl.diag = DIAG;
+  const where = () => `SIM STEP ${DIAG.simStep} · SIM TIME ${match ? match.time.toFixed(2) : '-'} · MATCH seed ${match?.seed ?? '-'} phase ${match?.phase ?? '-'} · FRAME ${DIAG.frame} · LAST SYSTEM ${DIAG.sys}`;
+  window.addEventListener('error', (e) => {
+    DIAG.errors.push({ msg: e.message, at: where() });
+    console.error(`[sl-diag] Fehler in ${DIAG.sys}: ${e.message} | ${where()}`);
+  });
+  let seen = 0;
+  let quiet = 0;
+  setInterval(() => {
+    if (document.hidden || mode !== 'play') return void (quiet = 0);
+    quiet = DIAG.frame === seen ? quiet + 1 : 0;
+    seen = DIAG.frame;
+    if (quiet === 3) {
+      DIAG.stalls++;
+      console.error(`[sl-diag] Kein Bild seit 3 s | ${where()}`);
+    }
+  }, 1000);
+}
 const input = new Input();
 const shoutBar = new ShoutBar(document.getElementById('shoutbar') ?? document.body.appendChild(Object.assign(document.createElement('div'), { id: 'shoutbar', hidden: true })), input);
 const hud = new Hud(document.getElementById('hud'));
@@ -324,9 +348,12 @@ function startMatch(human) {
   const matchPitch = w ? applyWeather(pitch, { id: WEATHER[w] ? w : 'sonne', leaves: w === 'laub', windDir: 1 }) : pitch;
   const m = createMatch({ seed: seed++, pitch: matchPitch, human, duration: testDuration, incidents: true });
   // Testschalter: ?incident=hund|gewitter|… löst den Vorfall nach 3 Sekunden aus.
-  if (human && params.get('incident')) m.incidentPlan = { type: params.get('incident'), at: 3 };
+  // Unbekannte Namen ignorieren – ein Vorfall ohne Text ließ die Anzeige werfen und das Bild stehen.
+  if (human && INCIDENT_TYPES.includes(params.get('incident'))) m.incidentPlan = { type: params.get('incident'), at: 3 };
   // Testschalter: ?elfmeter (mit ?dauer=2) – Freundschaftsspiel als K.-o.-Spiel, bei Remis Elfmeterschießen.
   if (human && params.has('elfmeter')) m.knockout = true;
+  // Testschalter: ?stau – Spieltags-Überraschung „Stau" wie in der Karriere (einer kommt nach einem Drittel).
+  if (human && params.has('stau')) matchdaySurprise(m, 0, createRng(m.seed ?? 1), 1, 'stau');
   showMatch(m);
 }
 
@@ -895,6 +922,7 @@ function guardFps(dt) {
 let last = performance.now();
 let acc = 0;
 function frame(now) {
+  if (DIAG) DIAG.frame++;
   const dt = Math.min(0.1, (now - last) / 1000);
   guardFps(Math.min(0.5, (now - last) / 1000)); // lange Pausen (Tab im Hintergrund) nicht mitzählen
   governQuality((now - last) / 1000);
@@ -959,7 +987,9 @@ function frame(now) {
     } else if (match.phase === 'ended') {
       startMatch(false);
     }
+    if (DIAG) (DIAG.sys = 'stepMatch'), DIAG.simStep++;
     stepMatch(match, intent, STEP);
+    if (DIAG) DIAG.sys = 'handleEvents';
     hud.handleEvents(match);
     view.handleEvents(match);
     crowd?.handleEvents(match);
@@ -978,9 +1008,12 @@ function frame(now) {
     if (subPanel.isOpen || planPanel.isOpen || halfPanel.isOpen) acc = 0;
   }
   if (gfx.active) gfx.simDone(performance.now());
+  if (DIAG) DIAG.sys = 'view.sync';
   view.sync(match, dt);
+  if (DIAG) DIAG.sys = 'hud';
   hud.update(match, dt);
   shoutBar.update(match);
+  if (DIAG) DIAG.sys = 'sound/crowd/camera';
   sound.update(dt, mode === 'play' ? match : null);
   crowd?.update(dt);
   rig.follow(match.ball.pos.x, match.ball.pos.z, dt, venueInfo.bounds);
@@ -988,10 +1021,12 @@ function frame(now) {
   // (nur Darstellung; die Kameraführung selbst bleibt, wie sie ist).
   const shake = view.ballView?.shakeOffset(dt) ?? 0;
   if (shake) rig.camera.position.addScaledVector(shakeDir.set(1, 0, 0).applyQuaternion(rig.camera.quaternion), (shake * (rig.camera.top - rig.camera.bottom)) / rig.internalHeight);
+  if (DIAG) DIAG.sys = 'render';
   updateLighting();
   pixel.render(scene, rig.camera, { moving: !(subPanel.isOpen || planPanel.isOpen || halfPanel.isOpen) });
   if (gfx.active) gfx.end(performance.now());
   if (screenshotWanted) saveScreenshot();
+  if (DIAG) DIAG.sys = 'idle';
   requestAnimationFrame(frame);
 }
 

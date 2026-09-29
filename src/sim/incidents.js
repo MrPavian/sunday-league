@@ -34,6 +34,7 @@ const REPORTS = {
 };
 
 const DURATION = { hund: 8, zaun: 6, autoalarm: 6, polizei: 9, gewitter: 8, sprenger: 5, ersatzschiri: 6 };
+export const INCIDENT_TYPES = Object.keys(DURATION);
 const POLICE_KIT = { shirt: 0x2c3e66, shorts: 0x1f2a44, socks: 0x111111 };
 const CIVIL_KIT = { shirt: 0x8a4b2a, shorts: 0x34425a, socks: 0x222222 };
 export const STAND_IN_KIT = { shirt: 0x8c8c86, shorts: 0x34425a, socks: 0x222222 }; // graue Kapuzenjacke, Jeans

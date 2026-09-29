@@ -53,7 +53,9 @@ export function makeEntity(pl, team, index, role, home) {
   };
 }
 
-export const allPlayers = (m) => [...m.players, ...m.bench[0], ...m.bench[1], ...(m.sentOff ?? [])];
+// Alle, die in diesem Spiel dabei sind – auch der Nachzügler aus dem Stau (Spieltags-Überraschung),
+// der erst später in m.players kommt. Die 3D-Ansicht baut ihre Modelle aus dieser Liste.
+export const allPlayers = (m) => [...m.players, ...m.bench[0], ...m.bench[1], ...(m.sentOff ?? []), ...(m.lateArrival ? [m.lateArrival.player] : [])];
 export const findAnyPlayer = (m, id) => allPlayers(m).find((p) => p.id === id) ?? null;
 
 // Auf der Bank erholt man sich (Zigarette an der Eckfahne inklusive).
