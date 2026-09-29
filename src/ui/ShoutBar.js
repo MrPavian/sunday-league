@@ -72,7 +72,9 @@ export class ShoutBar {
   update(match) {
     if (this.root.hidden) return;
     this.match = match;
-    if (match.coachCard !== this.card) this.renderCard(match, match.coachCard ?? null);
+    // Nach dem Abpfiff gibt es nichts mehr zu entscheiden – die Karte darf nicht über dem Endbildschirm stehen.
+    const card = match.phase === 'ended' ? null : match.coachCard ?? null;
+    if (card !== this.card) this.renderCard(match, card);
     if (this.card) {
       const life = Math.max(14, match.duration * 0.07);
       this.cardEl.style.setProperty('--left', `${Math.max(0, 1 - (match.time - this.card.t) / life) * 100}%`);

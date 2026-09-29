@@ -133,6 +133,9 @@ export class Settings {
         <p class="hint">${tr('Hat der Gegner den Ball, übernimmst du automatisch den Mitspieler, der deutlich näher dran ist. Sonst wechselst du selbst mit Q.', 'When the opponent has the ball you automatically take over the team-mate who is clearly closer. Otherwise you switch yourself with Q.')}</p>
         <h4>${tr('Lautstärke', 'Volume')}</h4>
         <div class="choice"><input type="range" min="0" max="100" step="5" value="${Math.round(s.volume * 100)}" data-action="volume" aria-label="${tr('Lautstärke', 'Volume')}"></div>
+        <h4>${tr('Vibration', 'Vibration')}</h4>
+        <div class="choice">${toggle('haptics', s.haptics, tr('Dezent', 'Subtle'), tr('Aus', 'Off'))}</div>
+        <p class="hint">${tr('Kurzer, leichter Impuls bei neuen Nachrichten und Entscheidungen – nur auf Geräten, die vibrieren können.', 'A short, light pulse for new messages and decisions – only on devices that can vibrate.')}</p>
         <h4>${tr('Trikots', 'Kits')}</h4>
         <div class="choice">${toggle('safekits', !s.safeKits, tr('Vereinsfarben', 'Club colours'), tr('Farbenblind-sicher', 'Colour-blind safe'))}</div>
         <p class="hint">${tr('Blau gegen Orange mit hellen und dunklen Hosen – gut unterscheidbar auch bei Rot-Grün-Schwäche. Nur die Anzeige ändert sich.', 'Blue against orange with light and dark shorts – easy to tell apart even with red-green colour blindness. Only the display changes.')}</p>

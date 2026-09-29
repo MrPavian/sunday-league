@@ -29,6 +29,7 @@ import { CHALLENGES, challengeById, createChallengeMatch, evaluateChallenge, loa
 import { createRng } from './core/rng.js';
 import { matchdaySurprise } from './career/matchday.js';
 import { INCIDENT_TYPES } from './sim/incidents.js';
+import { haptic, hapticsOn, setHaptics } from './ui/ds.js';
 import { Input } from './input/Input.js';
 import { CameraRig } from './render/CameraRig.js';
 import { MatchView } from './render/MatchView.js';
@@ -68,6 +69,7 @@ import { Ticker } from './ui/Ticker.js';
 import { SaveSlots } from './ui/SaveSlots.js';
 import { prepareRelegationMatch, recordRelegationLeg, startRelegation } from './career/relegation.js';
 import './style.css';
+import './ds.css';
 
 const STEP = 1 / 60;
 // Spieltempo (Taste C): Die Simulation bleibt gleich, sie läuft nur langsamer ab.
@@ -179,6 +181,8 @@ try {
 const rig = new CameraRig();
 const scene = new THREE.Scene();
 // ?debug: Renderer und Szene für die Browser-Konsole (Draw Calls, Speicher).
+// ?ds – Übersicht des Designsystems (UI 2.0), nur zum Prüfen.
+if (params.has('ds')) import('./ui/StyleGuide.js').then((m) => m.showStyleGuide());
 if (params.has('debug')) globalThis.__sl = { renderer: pixel.renderer, pixel, scene, THREE, rig, get match() { return match; }, get view() { return view; }, get crowd() { return crowd; }, get weather() { return view?.weather; } };
 // Nur mit ?debug: Herzschlag und „letztes System" je Bild – zeigt bei einem Hänger, wo es stand.
 // Reine Diagnose: setzt nichts zurück und startet nichts neu.
@@ -400,7 +404,7 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
   onSettings() {
     menu.paused = true;
     settings.show({
-      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe, difficulty, autoSwitch: autoSwitchDefense, manager: managerMode, touch: TOUCH, length: MATCH.halves ? 'custom' : MATCH.length, cupShort: MATCH.cupShare < 1, subs: MATCH.subs, coachLevel: coachLevel(), leagueSize: career ? career.nextLeagueSize ?? career.leagueSize ?? 6 : leagueSize, leagueSizeNow: career?.leagueSize ?? null }),
+      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe, difficulty, autoSwitch: autoSwitchDefense, manager: managerMode, touch: TOUCH, length: MATCH.halves ? 'custom' : MATCH.length, cupShort: MATCH.cupShare < 1, subs: MATCH.subs, coachLevel: coachLevel(), haptics: hapticsOn(), leagueSize: career ? career.nextLeagueSize ?? career.leagueSize ?? 6 : leagueSize, leagueSizeNow: career?.leagueSize ?? null }),
       onLang: switchLanguage,
       onChange(key, value) {
         if (key === 'sound' && sound.muted !== (value === 'off')) sound.toggleMute();
@@ -417,6 +421,10 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
           colorSafe = value === 'off'; // „aus" = nicht Vereinsfarben
           remember('sunday-league:safekits', colorSafe ? '1' : '0');
           if (match) showMatch(match); // Kulisse im Menü sofort umfärben
+        }
+        if (key === 'haptics') {
+          setHaptics(value === 'on');
+          haptic('select');
         }
         if (key === 'keys') hud.refreshHelp();
         if (key === 'difficulty') {

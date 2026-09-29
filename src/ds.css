@@ -1,0 +1,310 @@
+/* Sunday League – Designsystem (UI 2.0)
+   Tokens und Grundbausteine für alle Bildschirme. Neue Oberflächen bauen nur hieraus;
+   ältere Bildschirme ziehen nach und nach um. Präfix ui- (".card" gehört der HUD-Spielerkarte).
+   Wird nach style.css geladen: die Untergrenzen unten (Schrift, Touch, Fokus) gelten überall. */
+
+:root {
+  /* Farben – dunkle Kabine, gelbes Flutlicht, Kreide */
+  --bg: #0c0d0b;
+  --surface-1: #16181c;          /* Fläche */
+  --surface-2: #1d2126;          /* Knopf, Eingabe */
+  --surface-3: #262b31;          /* gehoben, gedrückt */
+  --line: #000;                  /* harte Pixelkante */
+  --line-soft: rgba(255, 255, 255, 0.1);
+  --ink-2: rgba(246, 241, 228, 0.72); /* Nebentext */
+  --ink-3: rgba(246, 241, 228, 0.5);  /* deaktiviert */
+  --on-accent: #111;
+  --ok: #2f7d3a;
+  --ok-ink: #7fd48b;
+  --warn: #e0b020;
+  --bad: #b0302c;
+  --bad-ink: #ff8a7a;
+  --info: #6fb3ff;
+  --paper: #efe6d2;
+  --paper-ink: #2a2620;
+
+  /* Schrift: eine Schnittstärke (Pixelify), Ziffern aus Jersey 10 */
+  --fs-caption: 12px;            /* Untergrenze */
+  --fs-secondary: 14px;
+  --fs-body: 16px;
+  --fs-h3: 20px;
+  --fs-h2: 24px;
+  --fs-h1: 32px;
+  --fs-num: 28px;
+  --fs-score: 48px;
+  --lh-tight: 1.15;
+  --lh-body: 1.4;
+
+  /* Abstände */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+
+  /* Bedienung */
+  --touch: 48px;                 /* Standardhöhe Knopf */
+  --touch-min: 44px;             /* absolute Untergrenze */
+  --edge: 2px solid var(--line);
+  --drop: 0 2px 0 #000;
+  --drop-lg: 4px 4px 0 #000;
+  --bevel: inset 0 -3px 0 rgba(0, 0, 0, 0.35);
+  --focus: 0 0 0 3px var(--accent);
+
+  /* Ebenen */
+  --z-hud: 5;
+  --z-panel: 6;
+  --z-sheet: 20;
+  --z-modal: 30;
+
+  /* Bewegung – nur bei Übergängen, nie dauernd */
+  --dur-fast: 0.12s;
+  --dur: 0.22s;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ---------- Typografie ---------- */
+.t-score { font-size: var(--fs-score); line-height: 1; color: var(--accent); }
+.t-h1 { margin: 0; font-size: var(--fs-h1); line-height: var(--lh-tight); color: var(--accent); }
+.t-h2 { margin: 0; font-size: var(--fs-h2); line-height: var(--lh-tight); }
+.t-h3 { margin: 0; font-size: var(--fs-h3); line-height: var(--lh-tight); }
+.t-body { font-size: var(--fs-body); line-height: var(--lh-body); }
+.t-2 { font-size: var(--fs-secondary); color: var(--ink-2); }
+.t-cap { font-size: var(--fs-caption); color: var(--ink-2); letter-spacing: 0.04em; text-transform: uppercase; }
+.t-num { font-size: var(--fs-num); line-height: 1; font-variant-numeric: tabular-nums; }
+
+/* ---------- Knöpfe ---------- */
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  min-height: var(--touch);
+  min-width: var(--touch);
+  padding: 0 var(--s4);
+  font: inherit;
+  font-size: var(--fs-body);
+  line-height: var(--lh-tight);
+  color: var(--ink);
+  background: var(--surface-2);
+  border: var(--edge);
+  box-shadow: var(--bevel), var(--drop);
+  text-shadow: var(--shadow);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.ui-btn:hover:not(:disabled) { filter: brightness(1.12); }
+.ui-btn:active:not(:disabled), .ui-btn.pressed { transform: translateY(2px); box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.35); }
+.ui-btn:disabled { color: var(--ink-3); cursor: default; filter: saturate(0.4); }
+.ui-btn.primary { color: var(--on-accent); background: var(--accent); text-shadow: none; font-size: var(--fs-h3); }
+.ui-btn.secondary { background: var(--ok); }
+.ui-btn.ghost { background: transparent; border-color: transparent; box-shadow: none; }
+.ui-btn.ghost:hover:not(:disabled) { background: var(--surface-2); filter: none; }
+.ui-btn.danger { background: var(--bad); }
+.ui-btn.big { min-height: 64px; padding: 0 var(--s5); font-size: var(--fs-h3); }
+.ui-btn.block { display: flex; width: 100%; }
+.ui-btn.icon { width: var(--touch); padding: 0; font-size: var(--fs-h3); }
+/* Umschalter: aria-pressed zeigt den Zustand – nicht nur die Farbe, auch ein Haken. */
+.ui-btn.toggle[aria-pressed='true'] { color: var(--on-accent); background: var(--accent); text-shadow: none; }
+.ui-btn.toggle[aria-pressed='true']::before { content: '✓'; }
+.ui-btn .ui-badge { margin-left: var(--s1); }
+
+/* Zähler an Knopf oder Symbol (neue Nachrichten, offene Entscheidungen) */
+.ui-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  font-size: var(--fs-caption);
+  line-height: 1;
+  color: #fff;
+  background: var(--bad);
+  border: var(--edge);
+  text-shadow: none;
+}
+
+/* ---------- Chips (aktive Befehle, Merkmale) ---------- */
+.ui-chips { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.ui-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 var(--s3);
+  font-size: var(--fs-secondary);
+  background: var(--surface-3);
+  border: var(--edge);
+  text-shadow: var(--shadow);
+}
+.ui-chip::before { content: ''; width: 8px; height: 8px; background: var(--c, var(--accent)); border: 1px solid #000; }
+.ui-chip.plain::before { display: none; }
+button.ui-chip { min-height: var(--touch-min); font: inherit; font-size: var(--fs-secondary); color: var(--ink); cursor: pointer; }
+
+/* ---------- Segment-Regler (diskrete Stufen, z. B. Pressing tief/mittel/hoch) ---------- */
+.ui-seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: var(--edge); background: var(--surface-1); box-shadow: var(--drop); }
+.ui-seg button {
+  min-height: var(--touch);
+  padding: 0 var(--s2);
+  font: inherit;
+  font-size: var(--fs-secondary);
+  color: var(--ink-2);
+  background: transparent;
+  border: 0;
+  border-left: 2px solid #000;
+  cursor: pointer;
+  text-shadow: var(--shadow);
+  touch-action: manipulation;
+}
+.ui-seg button:first-child { border-left: 0; }
+.ui-seg button[aria-pressed='true'] { color: var(--on-accent); background: var(--accent); text-shadow: none; }
+.ui-seg-label { display: flex; justify-content: space-between; margin-bottom: var(--s1); font-size: var(--fs-caption); color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* ---------- Tabs (zweite Navigationsebene) ---------- */
+.ui-tabs {
+  display: flex;
+  gap: var(--s1);
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 2px solid var(--line-soft);
+  -webkit-overflow-scrolling: touch;
+}
+.ui-tabs::-webkit-scrollbar { display: none; }
+.ui-tabs button {
+  flex: none;
+  min-height: var(--touch);
+  padding: 0 var(--s4);
+  font: inherit;
+  font-size: var(--fs-body);
+  color: var(--ink-2);
+  background: transparent;
+  border: 0;
+  border-bottom: 4px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  text-shadow: var(--shadow);
+}
+.ui-tabs button[aria-selected='true'] { color: var(--ink); border-bottom-color: var(--accent); }
+
+/* ---------- Karten: nur für echte Gruppen ---------- */
+.ui-card { position: relative; padding: var(--s4); background: var(--surface-1); border: var(--edge); box-shadow: var(--drop); }
+.ui-card.highlight { border-left: 6px solid var(--accent); }
+.ui-card.match { border-top: 6px solid var(--kit, var(--accent)); }
+.ui-card.notify { border-left: 6px solid var(--info); }
+.ui-card.situation { border-left: 6px solid var(--accent); box-shadow: var(--drop-lg); }
+.ui-card.paper { color: var(--paper-ink); background: var(--paper); text-shadow: none; box-shadow: var(--drop-lg); }
+button.ui-card, .ui-card.tap { width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
+button.ui-card:active, .ui-card.tap:active { transform: translateY(2px); box-shadow: none; }
+
+/* Spielerkarte: Nummer, Name, Position – groß; Stärke und Fitness als Zahlen */
+.ui-player { display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: 'no name rating' 'no pos fit'; gap: 2px var(--s3); align-items: center; padding: var(--s3) var(--s4); border-left: 6px solid var(--c, #888); }
+.ui-player .no { grid-area: no; font-size: var(--fs-num); color: var(--ink-2); min-width: 1.6em; text-align: center; }
+.ui-player .name { grid-area: name; font-size: var(--fs-h3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-player .pos { grid-area: pos; font-size: var(--fs-secondary); color: var(--ink-2); }
+.ui-player .rating { grid-area: rating; font-size: var(--fs-num); color: var(--accent); text-align: right; }
+.ui-player .fit { grid-area: fit; font-size: var(--fs-secondary); color: var(--ink-2); text-align: right; }
+
+/* Kennzahl: Wert groß, Beschriftung klein darunter */
+.ui-stat { display: grid; gap: 2px; }
+.ui-stat b { font-size: var(--fs-num); line-height: 1; font-weight: inherit; }
+.ui-stat span { font-size: var(--fs-caption); color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.04em; }
+/* Vergleichszeile (Statistik): links : Mitte : rechts */
+.ui-vs { display: grid; grid-template-columns: 1fr auto 1fr; align-items: baseline; gap: var(--s3); min-height: var(--touch-min); }
+.ui-vs > :first-child { text-align: right; font-size: var(--fs-h3); }
+.ui-vs > :last-child { font-size: var(--fs-h3); }
+.ui-vs > span { font-size: var(--fs-caption); color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* Balken (Fitness, Energie) – Wert immer auch als Zahl daneben, nicht nur Farbe */
+.ui-meter { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: var(--s2); font-size: var(--fs-secondary); }
+.ui-meter i { height: 10px; background: linear-gradient(90deg, var(--c, var(--ok-ink)) var(--v, 0%), #2a2a2a var(--v, 0%)); border: 1px solid #000; }
+
+/* ---------- Bottom Sheet & Modal ---------- */
+.ui-scrim { position: fixed; inset: 0; z-index: var(--z-sheet); background: rgba(8, 9, 10, 0.55); opacity: 0; transition: opacity var(--dur) var(--ease); }
+.ui-scrim.open { opacity: 1; }
+.ui-sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: calc(var(--z-sheet) + 1);
+  width: min(760px, 100%);
+  max-height: min(86vh, 100% - 24px);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-1);
+  border: var(--edge);
+  border-bottom: 0;
+  box-shadow: 0 -4px 0 #000;
+  transform: translate(-50%, 100%);
+  transition: transform var(--dur) var(--ease);
+  text-shadow: var(--shadow);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.ui-sheet.open { transform: translate(-50%, 0); }
+.ui-sheet .grip { flex: none; display: grid; place-items: center; height: 28px; cursor: grab; touch-action: none; }
+.ui-sheet .grip::before { content: ''; width: 48px; height: 5px; background: var(--ink-3); border: 1px solid #000; }
+.ui-sheet header { flex: none; display: flex; align-items: center; justify-content: space-between; gap: var(--s3); padding: 0 var(--s4) var(--s3); }
+.ui-sheet .body { flex: 1; overflow-y: auto; padding: 0 var(--s4) var(--s4); -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.ui-sheet footer { flex: none; display: flex; gap: var(--s2); padding: var(--s3) var(--s4); border-top: 2px solid var(--line-soft); }
+.ui-sheet footer .ui-btn { flex: 1; }
+/* Auf breiten, flachen Schirmen (Handy quer) kommt das Blatt von der Seite: Spielfeld bleibt sichtbar. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .ui-sheet { left: auto; right: 0; top: 0; bottom: 0; width: min(440px, 62vw); max-height: none; border-bottom: var(--edge); border-right: 0; box-shadow: -4px 0 0 #000; transform: translateX(100%); padding-bottom: 0; padding-right: env(safe-area-inset-right); }
+  .ui-sheet.open { transform: translateX(0); }
+  .ui-sheet .grip { display: none; }
+  .ui-sheet header { padding-top: var(--s3); }
+}
+.ui-modal {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: var(--z-modal);
+  width: min(560px, 100% - 32px);
+  max-height: calc(100% - 32px);
+  overflow-y: auto;
+  padding: var(--s5);
+  background: var(--surface-1);
+  border: 3px solid #000;
+  box-shadow: var(--drop-lg);
+  transform: translate(-50%, -46%);
+  opacity: 0;
+  transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease);
+  text-shadow: var(--shadow);
+}
+.ui-modal.open { transform: translate(-50%, -50%); opacity: 1; }
+
+/* ---------- Layout-Helfer ---------- */
+.ui-stack { display: grid; gap: var(--s4); align-content: start; }
+.ui-stack.tight { gap: var(--s2); }
+.ui-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); }
+.ui-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--min, 240px), 1fr)); gap: var(--s3); }
+.ui-section-title { margin: var(--s5) 0 var(--s2); font-size: var(--fs-caption); color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.06em; }
+.ui-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- Untergrenzen für alle Bildschirme ---------- */
+/* <small> verkleinert relativ – nie unter die Caption-Größe. */
+small { font-size: max(var(--fs-caption), 0.85em); }
+
+/* Fokus sichtbar – Tastatur und Gamepad-Nutzer sehen, wo sie sind. */
+button:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* Finger statt Maus: jedes Bedienelement mindestens 44 px. */
+@media (pointer: coarse) {
+  #menu button, #pool button, .club-panel button, .settings-panel button, .saves-panel button, .ticker-panel button,
+  .sub-panel button, .plan-panel button, .half-panel button, .creator button, .challenge button, .challenge-panel button,
+  #end button, .coach-card button, .club-panel select, .lineup select, .pub select, .sub-row {
+    min-height: var(--touch-min);
+  }
+  .club-panel button.swatch, .club-panel button.tiny, .half-grid button { min-width: var(--touch-min); min-height: var(--touch-min); }
+  .club-form input, .creator input { min-height: var(--touch-min); }
+  .bubble.tip .link, .squad .linkish, .tactic-board .linkish, .plan-panel .linkish { min-height: var(--touch-min); display: inline-flex; align-items: center; }
+  #shoutbar .coach-card button.skip { min-width: var(--touch); min-height: var(--touch); }
+}
+
+/* Weniger Bewegung gewünscht: Übergänge fast sofort, keine Schleifen. Alles bleibt bedienbar. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
