@@ -120,7 +120,7 @@ export function adherence(m, p) {
 }
 
 // Mannschaft: Durchschnitt plus Teamchemie (Kumpels ziehen mit, Streithähne nicht).
-function execution(m, team) {
+export function execution(m, team) {
   const mine = m.players.filter((p) => p.team === team && p.role !== 'gk');
   if (!mine.length) return 0.5;
   let v = mine.reduce((s, p) => s + adherence(m, p), 0) / mine.length;
@@ -165,6 +165,17 @@ export function planMods(m, team) {
 }
 
 export const styleOf = planMods;
+
+// Nur zum Anzeigen (Taktiktafel): Zielwerte aus Stil und Befehlen, ohne Umsetzung und ohne den
+// Zeit-Cache von planMods anzufassen – die Oberfläche darf den Spielverlauf nicht beeinflussen.
+export function planTarget(m, team) {
+  let target = { ...NEUTRAL, ...(STYLES[m.plan?.[team]?.style] ?? STYLES.ausgewogen) };
+  for (const [group, value] of Object.entries(ordersOf(m, team) ?? {})) {
+    const fx = ORDER_EFFECTS[group]?.[value];
+    if (fx) target = { ...target, ...fx(target) };
+  }
+  return target;
+}
 
 // Engagement nach vorn bei eigenem Ballbesitz: -1 (alle hinter den Ball) … 0 (ausgewogen)
 // … +1 (alles nach vorn). Aus den vorhandenen Stellgrößen – Nachrücken, Linie, Risiko,

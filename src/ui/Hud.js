@@ -63,7 +63,7 @@ export class Hud {
     match.teams.forEach((t, i) => {
       const el = this.root.querySelector(`.team[data-t="${i}"]`);
       const crest = t.crest ?? crestOf({ id: t.name, kit: t.clubKits?.kit ?? t.kit });
-      el.innerHTML = `${crestSVG(crest, { size: 20, label: t.name })}<span>${t.name}</span>`;
+      el.innerHTML = `${crestSVG(crest, { size: 20, label: t.name })}<span class="full">${t.name}</span><span class="short">${t.short ?? t.name}</span>`;
       el.style.setProperty('--kit', hex(t.kit.shirt));
     });
     this.$('.venue').innerHTML = `${match.pitch.name} · ${match.pitch.surface.name}${r ? ` · ${tr('Schiri', 'Referee')}: ${r.name}` : ''}<br><small>${match.teams.map((t, i) => `${t.short ?? t.name}: ${tacticLabel(match.plan?.[i], match.pitch.format)}`).join(' – ')}</small>`;

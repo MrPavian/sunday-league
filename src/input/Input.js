@@ -182,6 +182,7 @@ export class Input {
     const vr = v.has('restart');
     const vm = v.has('menu');
     const vh = v.has('help');
+    const vmu = v.has('mute');
     v.clear();
     const shout = this.shouts.shift() ?? null;
     this.pressed.clear();
@@ -190,6 +191,6 @@ export class Input {
       x /= l;
       z /= l;
     }
-    return { move: { x, z }, sprint, shootHeld, pass, loft, hold, tackle, poke, trick, switchPlayer, sub, tempo: tempo || vt, restart: restart || vr, menu: menu || vm, mute, fx, help: help || vh, shout };
+    return { move: { x, z }, sprint, shootHeld, pass, loft, hold, tackle, poke, trick, switchPlayer, sub, tempo: tempo || vt, restart: restart || vr, menu: menu || vm, mute: mute || vmu, fx, help: help || vh, shout };
   }
 }

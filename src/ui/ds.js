@@ -97,12 +97,18 @@ export class Sheet {
     document.body.append(this.scrim, this.el);
     this.scrim.addEventListener('click', () => this.close());
     this.el.addEventListener('click', (e) => e.target.closest('[data-action="sheet-close"]') && this.close());
-    window.addEventListener('keydown', (e) => {
-      if (this.isOpen && e.code === 'Escape') {
-        e.stopPropagation();
-        this.close();
-      }
-    });
+    // Capture-Phase: Esc schließt nur das Blatt und erreicht die Spieltasten nicht (dort ist Esc „Menü").
+    window.addEventListener(
+      'keydown',
+      (e) => {
+        if (this.isOpen && e.code === 'Escape') {
+          e.stopImmediatePropagation();
+          e.preventDefault();
+          this.close();
+        }
+      },
+      true,
+    );
     this.bindDrag();
   }
 

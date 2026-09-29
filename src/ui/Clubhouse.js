@@ -12,6 +12,8 @@ import { GROUP_LABELS, ORDERS, SIMPLE, SIMPLE_IDS } from '../sim/commands.js';
 import { coachLevel, setCoachLevel } from './prefs.js';
 import { button, icon, segmented, tabs as uiTabs } from './ds.js';
 import { ATTR_LABELS } from './PoolBrowser.js';
+import { TacticBoard } from './TacticBoard.js';
+import { planTarget } from '../sim/plan.js';
 import { jobPerk } from '../data/jobs.js';
 import { CREST_COLORS, CREST_DIVISIONS, CREST_SHAPES, CREST_SYMBOLS, crestOf, crestSVG, defaultCrest, FIGURES } from './crest.js';
 import { awardLabel } from '../career/awards.js';
@@ -439,6 +441,12 @@ export class Clubhouse {
     this.bindLineup();
     this.bindPub();
     this.bindClubForm();
+    const slot = this.root.querySelector('.club-tboard');
+    if (slot && this.boardData) {
+      this.tboard ??= new TacticBoard();
+      slot.appendChild(this.tboard.el);
+      this.tboard.update(this.boardData.formation, this.boardData.target);
+    }
   }
 
   // HEUTE: das Wichtigste der Woche auf einen Blick – Spiel (oder Ergebnisse/Saisonende) groß,
@@ -1133,8 +1141,11 @@ export class Clubhouse {
     const reasons = pitch ? styleFit(tactic.style, pitch).reasons : [];
     const fitters = lineup.filter((idx) => idx != null && jobFits(tactic.style, this.p(idx).profession)).map((idx) => this.p(idx).name.split(' ')[0]);
     const fitNote = `${reasons.map((r) => `<span class="${r.score > 0 ? 'good' : 'bad'}">${r.score > 0 ? '▲' : '▼'} ${r.text}</span>`).join(' ')}${fitters.length ? ` <span class="good">▲ ${tr('Passt zum Stil (Beruf)', 'Suits the style (job)')}: ${fitters.join(', ')}</span>` : ''}`;
+    // Tafel wie im Spiel: zeigt, was System, Stil und Spielplan verstellen.
+    this.boardData = { formation, target: planTarget({ plan: [{ style: tactic.style }], orders: [tactic.orders ?? {}] }, 0) };
     return `
       <div class="tactic-board">
+        <div class="club-tboard"></div>
         <p class="ui-section-title">${tr('System', 'System')} · ${formation.length} ${tr('gegen', 'v')} ${formation.length}</p>
         <div class="systems">${systems}</div>
         <p class="ui-section-title">${tr('Spielstil', 'Playing style')}</p>
