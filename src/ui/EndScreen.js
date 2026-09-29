@@ -3,6 +3,7 @@ import { tierById } from '../data/tiers.js';
 import { gradePlayers, headline, playerOfTheMatch } from '../sim/stats.js';
 import { allPlayers, findAnyPlayer } from '../sim/squad.js';
 import { matchMinute } from './Hud.js';
+import { chanceStats } from '../sim/report.js';
 import { shootoutScore } from '../sim/shootout.js';
 import { coachReviewHtml } from './coachReview.js';
 
@@ -25,6 +26,7 @@ export class EndScreen {
     const [t0, t1] = m.teams;
     const st = m.stats;
     const poss = st.teams[0].possession + st.teams[1].possession || 1;
+    const ch = m.log ? [chanceStats(m, 0), chanceStats(m, 1)] : null;
     const goals = st.goals
       .map((g) => {
         const scorer = g.scorerId && findAnyPlayer(m, g.scorerId);
@@ -61,6 +63,9 @@ export class EndScreen {
         <ul class="goals">${goals || `<li>${tr('Keine Tore – aber viel Einsatz.', 'No goals – but plenty of effort.')}</li>`}</ul>
         <table class="stats">
           ${row(tr('Schüsse', 'Shots'), st.teams[0].shots, st.teams[1].shots)}
+          ${ch ? row(tr('Schüsse aufs Tor', 'Shots on target'), ch[0].onTarget, ch[1].onTarget) : ''}
+          ${ch ? row(tr('Großchancen (≤ 7 m)', 'Big chances (≤ 7 m)'), ch[0].big, ch[1].big) : ''}
+          ${ch ? row(tr('Paraden', 'Saves'), ch[0].saves, ch[1].saves) : ''}
           ${row(tr('Ballbesitz', 'Possession'), `${Math.round((st.teams[0].possession / poss) * 100)} %`, `${Math.round((st.teams[1].possession / poss) * 100)} %`)}
           ${row(tr('Fouls', 'Fouls'), st.teams[0].fouls, st.teams[1].fouls)}
           ${m.pitch.boundary === 'lines' ? row(tr('Ecken', 'Corners'), st.teams[0].corners, st.teams[1].corners) : ''}

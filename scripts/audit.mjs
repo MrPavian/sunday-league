@@ -60,6 +60,11 @@ export const SERIES = {
   // 0:0 in der „80. Minute" (Rest 11 %)
   late00_none: { str: [70, 70], late: { at: 0.89, score: [0, 0], orders: [[], []] } },
   late00_risk: { str: [70, 70], late: { at: 0.89, score: [0, 0], orders: [O.allin, []] } },
+  // Situationskarte „Schlussphase" (78–95 % der Spielzeit): jede Option einzeln ab 80 %
+  ...Object.fromEntries([['lead80', [1, 0], [['none'], ['press', 'tief'], ['route', 'konter'], ['build', 'halten'], ['guard', 'konter'], ['tempo', 'ruhig']]],
+    ['behind80', [0, 1], [['none'], ['shape', 'aufruecken'], ['risk', 'aggressiv'], ['route', 'tiefe'], ['press', 'hoch'], ['tempo', 'schnell']]],
+    ['level80', [0, 0], [['none'], ['shape', 'aufruecken'], ['risk', 'aggressiv'], ['route', 'tiefe'], ['press', 'hoch'], ['tempo', 'schnell']]]].flatMap(([k, score, opts]) =>
+    opts.map(([g, v]) => [`${k}_${g === 'guard' ? 'absichern' : g === 'tempo' ? `tempo_${v}` : g === 'press' && v === 'hoch' ? 'pressing' : v ?? g}`, { str: [70, 70], late: { at: 0.8, score, orders: [g === 'none' ? [] : [[g, v]], []] } }]))),
   // Kraft und Torwart
   tired: { str: [70, 70], stamina: [0.55, 1] },
   keeper_good: { str: [70, 70], keeper: [0.9, 0.5] },
@@ -67,6 +72,7 @@ export const SERIES = {
   // Kontrollierte Spielerwerte: alle Feldspieler von Team 0 auf einen Wert (Gegner Ø 70)
   ...Object.fromEntries(['passing', 'technique', 'tackling', 'shooting', 'pace', 'stamina'].flatMap((a) => [
     [`${a}_lo`, { str: [70, 70], set: [{ [a]: 0.3 }, null] }],
+    [`${a}_mid`, { str: [70, 70], set: [{ [a]: 0.55 }, null] }],
     [`${a}_hi`, { str: [70, 70], set: [{ [a]: 0.8 }, null] }],
   ])),
   // mit KI-Trainern auf beiden Seiten (sonst aus, damit nur die Einstellung wirkt)
@@ -100,6 +106,36 @@ function teamsFor(seed, pitch, cfg) {
 }
 
 const SIX = 6; // Zeitabschnitte (je 15 „Minuten")
+
+// Kennzahlen aus dem Spielprotokoll ab Zeitpunkt t0 (für Schlussphasen-Szenarien).
+//   gezielt/gezieltOk – flache Pässe mit Adressat; abgefangen – Pass endet beim Gegner
+//   flanken – hohe Bälle im letzten Drittel; aussen – Anteil der Angriffe, die über
+//   außen ins letzte Drittel kommen; konterChancen – Schuss ≤ 8 s nach Ballgewinn im eigenen
+//   Drittel; verlusteVorne – Ballverlust im letzten Drittel (Gegner gewinnt ihn in seinem).
+function windowStats(m, t0) {
+  const L = m.log;
+  const team = (id) => m.players.find((p) => p.id === id)?.team ?? m.bench.flat().find((p) => p.id === id)?.team;
+  const out = {};
+  for (const t of [0, 1]) {
+    const ps = L.passes.filter((p) => p.team === t && p.t >= t0 && p.done !== null);
+    const aimed = ps.filter((p) => p.targetId && !p.lofted);
+    const poss = L.poss.filter((p) => p.team === t && p.start >= t0);
+    const entries = poss.filter((p) => p.entryLane);
+    const shots = L.shots.filter((x) => x.team === t && x.t >= t0);
+    const counter = shots.filter((x) => { const q = L.poss[x.possIndex]; return q && q.team === t && q.startThird === 'def' && x.t - q.start < 8; });
+    out[t] = {
+      paesse: ps.length, gezielt: aimed.length, gezieltOk: aimed.filter((p) => p.done).length,
+      abgefangen: ps.filter((p) => !p.done && p.receiver && team(p.receiver) !== t).length,
+      tiefe: ps.filter((p) => p.through).length, tiefeOk: ps.filter((p) => p.through && p.done).length,
+      flanken: ps.filter((p) => p.lofted && p.third === 'att').length,
+      angriffe: entries.length, aussen: entries.filter((p) => p.entryLane !== 'centre').length, strafraum: poss.filter((p) => p.box).length,
+      phasen: poss.length, paesseJePhase: poss.length ? poss.reduce((a, p) => a + p.passes, 0) / poss.length : 0,
+      schuesse: shots.length, konterChancen: counter.length,
+      verlusteVorne: L.turnovers.filter((x) => x.to === 1 - t && x.t >= t0 && x.third === 'def').length,
+    };
+  }
+  return out;
+}
 
 function play(seed, pitch, cfg) {
   const m = createMatch({ seed, pitch, teams: teamsFor(seed, pitch, cfg), human: false, aiCoach: !!cfg.aiCoach, duration: matchDuration(pitch) });
@@ -202,6 +238,8 @@ function play(seed, pitch, cfg) {
       final: [...m.score],
     };
   }
+  r.win = windowStats(m, 0);
+  if (lateBase) r.lateWin = windowStats(m, lateBase.t);
   // Spielerwerte mitgeben (nur Feldspieler/Torwart des Spiels)
   const players = [...m.players, ...m.bench.flat()].filter((p) => pl[p.id]).map((p) => ({ team: p.team, role: p.position ?? p.role, attrs: p.attrs, ...pl[p.id] }));
   const keepers = m.players.filter((p) => p.role === 'gk').map((p) => ({ team: p.team, keeping: p.attrs.keeping }));
@@ -251,6 +289,14 @@ if (!isMainThread) {
     null0: +(sum((x) => (x.r.score[0] + x.r.score[1] === 0 ? 1 : 0)) / N).toFixed(3),
     sekunden: +((Date.now() - t0) / 1000).toFixed(0),
   };
+  const detail = (key) => {
+    const keys = Object.keys(results[0].r[key][0]);
+    return Object.fromEntries(keys.map((k) => [k, [0, 1].map((t) => +(results.reduce((a, x) => a + x.r[key][t][k], 0) / N).toFixed(3))]));
+  };
+  out.detail = detail('win');
+  out.detail.gezieltQuote = [0, 1].map((t) => +(results.reduce((a, x) => a + x.r.win[t].gezieltOk, 0) / Math.max(1, results.reduce((a, x) => a + x.r.win[t].gezielt, 0))).toFixed(3));
+  out.detail.aussenAnteil = [0, 1].map((t) => +(results.reduce((a, x) => a + x.r.win[t].aussen, 0) / Math.max(1, results.reduce((a, x) => a + x.r.win[t].angriffe, 0))).toFixed(3));
+  if (cfg.late) out.lateDetail = detail('lateWin');
   if (cfg.late) {
     const L = (f) => results.reduce((s, x) => s + f(x.r.late), 0) / N;
     out.schlussphase = {

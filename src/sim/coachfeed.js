@@ -66,8 +66,8 @@ const TEXTS = {
   }),
   ENDGAME: (s) => ({
     title: s.lead === 'lead' ? tr('Schlussphase – knapp vorne', 'Closing stages – just ahead') : s.lead === 'behind' ? tr('Schlussphase – ein Tor fehlt', 'Closing stages – one goal short') : tr('Schlussphase – alles offen', 'Closing stages – all square'),
-    text: s.lead === 'lead' ? tr('Wie bringen wir das über die Zeit?', 'How do we see this out?') : tr('Noch ein paar Minuten. Wie viel riskieren wir?', 'A few minutes left. How much do we risk?'),
-    labels: s.lead === 'lead' ? [tr('Hinten dicht', 'Shut up shop'), tr('Auf Konter lauern', 'Wait for the counter'), tr('Ball laufen lassen', 'Keep the ball moving')] : [tr('Alle nach vorne', 'Everyone forward'), tr('Mehr Risiko', 'More risk'), tr('Lange Bälle in die Tiefe', 'Long balls in behind')],
+    text: s.lead === 'lead' ? tr('Wie bringen wir das über die Zeit?', 'How do we see this out?') : tr('Noch ein paar Minuten. Mehr Risiko heißt mehr Abschlüsse – aber auch Konter gegen uns.', 'A few minutes left. More risk means more shots – but also counters against us.'),
+    labels: s.lead === 'lead' ? [tr('Ball laufen lassen', 'Keep the ball moving'), tr('Auf Konter lauern', 'Wait for the counter')] : [tr('Mehr Risiko', 'More risk'), tr('So weiterspielen', 'Keep playing our game')],
   }),
   UNDER_PRESSURE: () => ({
     title: tr('Die pressen uns hinten zu', 'They\'re pressing us high'),

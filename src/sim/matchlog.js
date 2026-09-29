@@ -38,6 +38,17 @@ function openPossession(m, log, team, how) {
   log.poss.push(log.cur);
 }
 
+// Wie ging der letzte Schuss aus? Nur innerhalb von 3 s und nur durch den Gegner
+// (Parade, Block) bzw. Pfosten; was danach nicht mehr aufgelöst wird, war daneben.
+function shotOutcome(m, log, outcome, byId = null) {
+  const s = log.openShot;
+  if (!s || m.time - s.t > 3) return;
+  if (byId && m.players.find((q) => q.id === byId)?.team === s.team) return;
+  s.outcome = outcome;
+  if (byId) s.by = byId;
+  if (outcome !== 'woodwork') log.openShot = null; // vom Pfosten kann er noch reingehen
+}
+
 // Nach jedem Schritt (nach trackStep) aufrufen.
 export function stepLog(m) {
   if (!m.log) {
@@ -56,11 +67,18 @@ export function stepLog(m) {
         log.passes.push(log.pending);
         if (log.cur?.team === p.team) log.cur.passes++;
         break;
-      case 'shot':
+      case 'shot': {
         if (!p) break;
-        log.shots.push({ t: m.time, half: m.half, team: p.team, playerId: p.id, ...zone(m, p.team, p.pos), dist: dist2d(p.pos, { x: attackDir(m, p.team) * m.pitch.halfLength, z: 0 }), possIndex: log.poss.length - 1 });
+        // Druck beim Abschluss: nächster Feldspieler des Gegners (Torwart zählt nicht).
+        let press = Infinity;
+        for (const o of m.players) if (o.team !== p.team && o.role !== 'gk') press = Math.min(press, dist2d(o.pos, p.pos));
+        const shot = { t: m.time, half: m.half, team: p.team, playerId: p.id, ...zone(m, p.team, p.pos), dist: dist2d(p.pos, { x: attackDir(m, p.team) * m.pitch.halfLength, z: 0 }), possIndex: log.poss.length - 1, press, acro: e.acro ?? null, outcome: null };
+        if (log.openShot && !log.openShot.outcome) log.openShot.outcome = 'miss'; // Nachschuss: der erste ging nicht rein
+        log.shots.push(shot);
+        log.openShot = shot;
         if (log.cur?.team === p.team) log.cur.shots++;
         break;
+      }
       case 'tackle':
       case 'poke_won':
         cause = 'tackle';
@@ -68,14 +86,30 @@ export function stepLog(m) {
       case 'save':
       case 'catch':
         cause = 'keeper';
+        shotOutcome(m, log, 'save', e.playerId);
+        break;
+      case 'block':
+        shotOutcome(m, log, 'block', e.playerId);
+        break;
+      case 'post':
+      case 'bar':
+        shotOutcome(m, log, 'woodwork');
         break;
       case 'goal':
         if (log.cur && log.cur.team === e.team) log.cur.goal = true;
+        if (log.openShot && log.openShot.team === e.team && !e.ownGoal) {
+          log.openShot.outcome = 'goal';
+          log.openShot = null;
+        }
         break;
       case 'sub':
         (log.subsIn ??= []).push(e.inId);
         break;
     }
+  }
+  if (log.openShot && m.time - log.openShot.t > 3) {
+    log.openShot.outcome ??= 'miss';
+    log.openShot = null;
   }
   // Pass angekommen? Entschieden, sobald ein anderer den Ball berührt.
   const pend = log.pending;

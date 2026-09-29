@@ -527,6 +527,33 @@ export function carryBall(m, dt) {
   ball.vel.z += (wantZ - ball.vel.z) * k;
 }
 
+// Gerade gespielter Pass, ein Gegner steht dicht am Passgeber: Kommt der Ball an ihm vorbei?
+// Früher bekam der nächste Gegner in Ballnähe den Ball einfach – rund vier von fünf
+// abgefangenen Pässen waren so „geblockt", ganz gleich, wie gut Passgeber und Presser sind.
+// Jetzt entscheidet das Duell: saubere, schnelle Ablage am Mann vorbei (Passwert) gegen
+// Antizipation und Zugriff (Zweikampf), dazu Balltempo und ob er vor dem Ball steht oder
+// nur daneben. Einmal je Pass und Gegner; kommt der Ball vorbei, ist er für diesen Ball raus.
+const PASS_DUEL_TIME = 0.4;
+function passBeatsPresser(m, c) {
+  const { ball } = m;
+  const lp = m.lastPass;
+  if (!lp || ball.lastAction !== 'pass' || ball.lastTouch !== lp.playerId || c.team === lp.team || m.time - lp.time > PASS_DUEL_TIME) return false;
+  lp.duel ??= {};
+  if (lp.duel[c.id] === undefined) {
+    const kicker = m.players.find((q) => q.id === lp.playerId);
+    if (!kicker) return false;
+    const bs = ballSpeed(ball);
+    const dx = c.pos.x - ball.pos.x;
+    const dz = c.pos.z - ball.pos.z;
+    const ahead = (dx * ball.vel.x + dz * ball.vel.z) / ((len(dx, dz) || 1) * (bs || 1)); // 1 = mitten im Weg
+    const block = clamp(0.55 + 0.5 * (c.attrs.tackling - 0.5) - 0.7 * (kicker.attrs.passing - 0.5) + 0.2 * ahead - 0.03 * (bs - 9), 0.1, 0.92);
+    lp.duel[c.id] = !m.rng.chance(block);
+  }
+  if (!lp.duel[c.id]) return false;
+  c.kickCooldown = Math.max(c.kickCooldown, 0.3);
+  return true;
+}
+
 export function dribbleTouch(m) {
   const { ball, rng, pitch } = m;
   if (ball.holder || ball.pos.y > 0.7) return;
@@ -544,6 +571,7 @@ export function dribbleTouch(m) {
   }
   if (!p) return;
 
+  if (passBeatsPresser(m, p)) return;
   if (shielded(m, p)) return;
 
   // Ball am Fuß, Gegner vor sich: Wer es draufhat, versucht einen Trick.

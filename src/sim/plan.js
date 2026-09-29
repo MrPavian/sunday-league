@@ -166,5 +166,15 @@ export function planMods(m, team) {
 
 export const styleOf = planMods;
 
+// Engagement nach vorn bei eigenem Ballbesitz: -1 (alle hinter den Ball) … 0 (ausgewogen)
+// … +1 (alles nach vorn). Aus den vorhandenen Stellgrößen – Nachrücken, Linie, Risiko,
+// Restverteidigung –, gewichtet mit der Umsetzung (planMods). Wer sich vorne reinwirft,
+// hat beim Ballverlust weniger Leute hinter dem Ball (ai.js: anchor, Laufwege).
+export function commitment(m, team) {
+  const st = planMods(m, team);
+  const c = (st.push - 0.22) * 6 + st.line * 2 + st.risk * 0.35 - (st.rest ?? 0) * 0.3;
+  return clamp(c, -1, 1);
+}
+
 // Hilfen für die Engine: Seitenlage einer Position aus Sicht des Teams (-1 links … +1 rechts).
 export const sideness = (m, team, pos, attackDir) => (pos.z * attackDir) / m.pitch.halfWidth;

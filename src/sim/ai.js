@@ -5,9 +5,12 @@ import { ballSpeed } from './ball.js';
 import { attackDir, clampToPitch, distToSegment, getPlayer, wallPush } from './players.js';
 import { heeds } from './coach.js';
 import { keeperBox, shortGame } from './actions.js';
-import { adherence, styleOf } from './plan.js';
+import { adherence, commitment, styleOf } from './plan.js';
 import { fooled } from './tricks.js';
 import { hasProfile } from './profiles.js';
+
+const LURK_GAP = 8; // m Platz hinter der gegnerischen Abwehr, ab dem der Stürmer vorne lauert
+const CAUGHT_TIME = 0.7; // s: so lange ist nach dem Ballverlust raus, wer vor dem Ball stand
 
 // Schwierigkeitsgrad: Nur der Gegner des Menschen spielt klüger oder nachsichtiger –
 // schneller entscheiden, entschlossener in den Zweikampf, öfter der kluge Pass.
@@ -28,6 +31,10 @@ export function updateTactics(m, dt) {
   const human = getPlayer(m, m.controlledId);
   const holder = ball.holder && getPlayer(m, ball.holder);
   const possession = holder ? holder.team : m.lastTouchTeam;
+  // Ballverlust merken: Wer in dem Moment vor dem Ball stand, ist kurz aus dem Spiel
+  // (umdrehen, zurücklaufen) – er presst nicht sofort mit (siehe caught unten).
+  if (possession != null && m.lastPossession != null && possession !== m.lastPossession) (m.lostAt ??= [-9, -9])[m.lastPossession] = m.time;
+  m.lastPossession = possession;
   m.tactics = {};
   // Letzte Linie je Team (x des hintersten Feldspielers) – für Läufe in die Tiefe.
   m.defLine = [0, 1].map((t) => {
@@ -40,9 +47,18 @@ export function updateTactics(m, dt) {
   for (let team = 0; team < 2; team++) {
     const s = attackDir(m, team);
     const ownGoal = { x: -s * pitch.halfLength, z: 0 };
+    // Umschaltmoment: Kurz nach dem Ballverlust sind die, die vor dem Ball standen, noch
+    // auf dem Rückweg. Wer sich nach vorn reingeworfen hat, hat davon mehr.
+    const lost = m.lostAt?.[team] ?? -9;
+    const caughtUp = (p) => m.time - lost < CAUGHT_TIME && (p.pos.x - ball.pos.x) * s > 1.5;
     const pool = m.players
-      .filter((p) => p.team === team && p.role !== 'gk' && p.id !== m.controlledId)
+      .filter((p) => p.team === team && p.role !== 'gk' && p.id !== m.controlledId && !caughtUp(p))
       .sort((a, b) => dist2d(a.pos, target) - dist2d(b.pos, target));
+    // Sie sprinten zurück in ihre Position gegen den Ball – pressen nicht mit, aber es kostet Kraft.
+    for (const p of m.players) if (p.team === team && p.role !== 'gk' && p.id !== m.controlledId && caughtUp(p)) {
+      const a = anchor(m, p, false);
+      m.tactics[p.id] = { type: 'zone', ...clampToPitch(pitch, a.x, a.z) };
+    }
 
     // Hält der gegnerische Torwart den Ball, zieht sich das Team aus seinem Raum zurück.
     // Kurz nach dem Abwurf gilt die Zone noch – sonst wird der kurze Wurf sofort abgefangen.
@@ -101,6 +117,11 @@ export function updateTactics(m, dt) {
       const order = [...rest].sort((a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role]);
       for (const p of order) {
         const a = anchor(m, p, false);
+        // Der lauernde Stürmer übernimmt keinen Gegenspieler – er bleibt vorne im Raum.
+        if (lurking(m, p) > 0.5) {
+          m.tactics[p.id] = { type: 'zone', ...clampToPitch(pitch, a.x, a.z) };
+          continue;
+        }
         let best = null;
         let bestD = zone;
         for (const o of opponents) {
@@ -138,7 +159,12 @@ export function updateTactics(m, dt) {
         const spot = supportSpot(m, p, dt);
         // Absicherung: Abwehrspieler bleiben immer ein Stück hinter dem Ball – auch
         // wenn der Ball schneller wandert, als sie ihren Laufweg neu planen.
-        if (p.role === 'def') spot.x = Math.min(spot.x * s, ball.pos.x * s - 5, pitch.halfLength * 0.35) * s;
+        if (p.role === 'def') {
+          const c = commitment(m, team);
+          const cap = Math.min(ball.pos.x * s - 5 + 2.5 * c, pitch.halfLength * (0.35 + 0.2 * c));
+          const j = overlap(m, p);
+          spot.x = Math.min(spot.x * s, cap + (Math.min(ball.pos.x * s + 2, pitch.halfLength - 3) - cap) * j) * s;
+        }
         m.tactics[p.id] = { type: 'support', ...clampToPitch(pitch, spot.x, spot.z, 0.5) };
       }
     }
@@ -246,6 +272,10 @@ export function anchor(m, p, possession) {
   else {
     u = e.x * st.compact + adv * 0.22 + st.line + mood - 0.04;
     if (p.role === 'fwd') u += st.fwdHold;
+    // Stürmer lauert: Steht die gegnerische Abwehr hoch (viel Platz dahinter), bleibt er
+    // auf Höhe ihrer letzten Linie, statt mit nach hinten zu arbeiten – für den Konter.
+    const lurk = lurking(m, p);
+    if (lurk > 0) u = Math.max(u, u + ((m.defLine[1 - p.team] * s - 1.5) / pitch.halfLength - u) * lurk);
     // Hohes Pressing: Hat der Gegner den Ball in seiner Hälfte, schiebt der ganze Block nach.
     if (st.pressZone === 'high' && adv > 0) u += adv * (p.role === 'def' ? 0.11 : 0.3); // die Abwehr nur halb – einer muss den langen Ball ablaufen
   }
@@ -259,14 +289,27 @@ export function anchor(m, p, possession) {
     const bx = ball.pos.x * s;
     const top = pitch.halfLength - 3;
     if (p.role === 'def') {
-      x = Math.min(x * s, bx - 4, pitch.halfLength * (0.3 + st.line)) * s;
+      // Abstand der Abwehr zum Ball und Höhe der Linie folgen dem Engagement: wer vorne
+      // mitmacht, steht dicht am Ball (Raum im Rücken), wer absichert, bleibt weiter weg.
+      const c = commitment(m, p.team);
+      x = Math.min(x * s, bx - 4 + 2.5 * c, pitch.halfLength * (0.3 + st.line + 0.2 * c)) * s;
       // Restverteidigung / abgesicherte Seite: bleibt hinter der Mittellinie.
       if (staysBack(m, p, st)) x = Math.min(x * s, -pitch.halfLength * 0.1) * s;
-    } else if (p.role === 'mid') x = Math.min(Math.max(x * s, bx + 2), top) * s;
+      // Offensiv: Der ballnahe Außenverteidiger schiebt mit nach vorn (hinten wird es dünn).
+      else {
+        const j = overlap(m, p);
+        if (j > 0) x = (x * s + (Math.min(bx + 2, top) - x * s) * j) * s;
+      }
+    } else if (p.role === 'mid') {
+      // Defensiv: Das Mittelfeld bleibt hinter dem Ball statt sich davor anzubieten.
+      const hold = clamp((-commitment(m, p.team) - 0.15) / 0.6, 0, 1);
+      x = Math.min(Math.max(x * s, bx + 2 - 5 * hold), top) * s;
+    }
     else if (p.role === 'fwd') {
       x = Math.max(x * s, bx + 6 - 4 * st.fwdDrop);
       // In die Tiefe: auf Höhe der letzten Linie lauern, bereit zum Start.
-      if (st.through > 0.3 && m.defLine) x = Math.max(x, m.defLine[1 - p.team] * s - 1);
+      // Auch ohne Befehl, wenn hinter der gegnerischen Abwehr Platz ist (siehe lurking).
+      if ((st.through > 0.3 || lurking(m, p) > 0) && m.defLine) x = Math.max(x, m.defLine[1 - p.team] * s - 1);
       x = Math.min(x, top) * s;
     }
   }
@@ -278,6 +321,24 @@ export function anchor(m, p, possession) {
   if (!possession && st.cover) z += st.cover * s * pitch.halfWidth * 0.12;
   z = clamp(z, -pitch.halfWidth * 0.9, pitch.halfWidth * 0.9);
   return { x, z };
+}
+
+// Lauert dieser Stürmer gegen den Ball vorne? Je mehr Platz hinter der gegnerischen
+// Abwehr, desto eher (0 … 1). Sichtbar für jeden auf dem Platz, keine versteckte Info.
+function lurking(m, p) {
+  if (p.role !== 'fwd' || !m.defLine) return 0;
+  const lineX = m.defLine[1 - p.team] * attackDir(m, p.team);
+  return clamp((m.pitch.halfLength - lineX - LURK_GAP) / 6, 0, 1);
+}
+
+// Schiebt dieser Abwehrspieler bei Ballbesitz mit nach vorn? Nur der ballnahe von
+// mindestens zwei, nie einer aus der Restverteidigung. 0 … 1, je nach Engagement.
+function overlap(m, p) {
+  const j = clamp((commitment(m, p.team) - 0.15) / 0.6, 0, 1);
+  if (j <= 0 || !m.ball.pos.z) return 0;
+  const defs = m.players.filter((d) => d.team === p.team && d.role === 'def' && d.state === 'normal');
+  if (defs.length < 2 || staysBack(m, p, styleOf(m, p.team))) return 0;
+  return Math.sign(p.home.z) === Math.sign(m.ball.pos.z) ? j : 0;
 }
 
 // Bleibt dieser Abwehrspieler bei Ballbesitz hinten? (Konter absichern, Seite absichern)
@@ -429,8 +490,11 @@ export function outfieldIntent(m, p, dt) {
     p.dribbleDir = norm(oppGoal.x - p.pos.x, -p.pos.z * 0.3);
     return { move: d < 0.3 ? { x: 0, z: 0 } : norm(dx, dz), sprint: d > 3 && p.stamina > 0.25 };
   }
-  const k = urgent ? Math.min(1, d / 2) : Math.min(1, d / 3) * 0.75;
-  return { move: { x: n.x * k, z: n.z * k }, sprint: d > (urgent ? 5 : 9) && p.stamina > 0.35 };
+  // Engagiert nach vorn: Läufe nach vorn (Anbieten vor dem Ball) werden gesprintet – mehr
+  // Leute vor dem Ball, dafür fehlen sie beim Ballverlust hinten, und es kostet Kraft.
+  const run = t.type === 'support' && dx * attackDir(m, p.team) > 1.5 && commitment(m, p.team) > 0.3;
+  const k = urgent || run ? Math.min(1, d / 2) : Math.min(1, d / 3) * 0.75;
+  return { move: { x: n.x * k, z: n.z * k }, sprint: d > (urgent ? 5 : run ? 3 : 9) && p.stamina > 0.35 };
 }
 
 // Dribbeln: Richtung Tor (leicht versetzt auf die Zielseite), Gegnern vor sich
@@ -536,10 +600,14 @@ function aiDecide(m, p, oppGoal) {
     p.pending = { type: 'shoot', power: 0.95, target: { x: oppGoal.x, z: (rng.chance(0.5) ? 1 : -1) * rng.range(gw * 0.4, gw * 1.0) }, ttl: 0.3 };
     return;
   }
-  // Pass in die Tiefe: in den Raum hinter der letzten Linie, wenn einer startet.
-  if (st.through > 0 && rng.chance(st.through * 0.55 * adherence(m, p))) {
-    const tb = throughTarget(m, p);
-    if (tb) {
+  // Pass in die Tiefe: in den Raum hinter der letzten Linie, wenn einer startet. Befehl
+  // und Stil machen ihn häufiger – aber liegt der Raum offen da (ein Mitspieler ist klar
+  // vor seinem Gegenspieler), sieht ihn jeder mal, ein guter Passspieler öfter. Sonst würde
+  // eine aufgerückte Abwehr nie bestraft.
+  const tb = throughTarget(m, p);
+  if (tb) {
+    const seen = tb.margin > 0.4 ? 0.12 + 0.3 * p.attrs.passing : 0;
+    if (rng.chance(Math.min(0.9, st.through * 0.55 * adherence(m, p) + seen))) {
       p.pending = { type: 'pass', through: tb.point, targetId: tb.target.id, lofted: tb.lofted || undefined, ttl: 0.4, cone: -0.6 };
       return;
     }

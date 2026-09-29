@@ -21,7 +21,8 @@ function coached(seed, onCard) {
 }
 
 describe('coach feed', () => {
-  it('shows a few cards per match, never in the opening minutes, with three options each', () => {
+  // Zwei oder drei Optionen: Die Schlussphasen-Karte bietet nur, was gemessen wirkt (situations.js).
+  it('shows a few cards per match, never in the opening minutes, with two or three options each', () => {
     let total = 0;
     for (const seed of [1, 2, 3, 4]) {
       const { m, cards } = coached(seed);
@@ -29,7 +30,9 @@ describe('coach feed', () => {
       expect(cards.length).toBeLessThanOrEqual(6);
       for (const c of cards) {
         expect(c.t).toBeGreaterThanOrEqual(m.duration * 0.12);
-        expect(c.options).toHaveLength(3);
+        expect(c.options.length).toBeGreaterThanOrEqual(2);
+        expect(c.options.length).toBeLessThanOrEqual(3);
+        if (c.type !== 'ENDGAME') expect(c.options).toHaveLength(3);
         expect(c.title.length).toBeGreaterThan(5);
       }
       for (let i = 1; i < cards.length; i++) expect(cards[i].t - cards[i - 1].t).toBeGreaterThanOrEqual(Math.max(20, m.duration * 0.14) - 1);

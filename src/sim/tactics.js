@@ -63,7 +63,7 @@ export const STYLES = {
   kurzpass: {
     label: tr('Kurzpassspiel', 'Short passing'),
     desc: tr('Ball laufen lassen, kurze Wege, wenig Dribblings. Sieht schön aus – wenn es klappt.', 'Keep the ball moving, short distances, few dribbles. Looks lovely – when it works.'),
-    line: 0.03, compact: 0.8, width: 1.05, push: 0.2, fwdHold: 0, forward: 0.035, shortPass: 0.07, passRate: 1.6, cross: 0.3, press: false, long: 0, tire: 0.95, shoot: -1,
+    line: 0.03, compact: 0.8, width: 1.05, push: 0.2, fwdHold: 0, forward: 0.065, shortPass: 0.07, passRate: 1.6, cross: 0.3, press: false, long: 0, tire: 0.95, shoot: -1,
   },
   pressing: {
     label: tr('Hohes Pressing', 'High press'),
@@ -73,7 +73,7 @@ export const STYLES = {
   mauern: {
     label: tr('Mauern', 'Park the bus'),
     desc: tr('Alle hinter den Ball, lange Bälle nach vorne. Hässlich, aber es gibt Punkte.', 'Everyone behind the ball, long balls forward. Ugly, but it earns points.'),
-    line: -0.22, compact: 0.62, width: 0.8, push: 0.12, fwdHold: 0.08, forward: 0.08, shortPass: 0.01, passRate: 0.8, cross: 0.4, press: false, long: 0.6, tire: 0.9, shoot: 2,
+    line: -0.22, compact: 0.62, width: 0.8, push: 0.12, fwdHold: 0.08, forward: 0.08, shortPass: 0.01, passRate: 0.8, cross: 0.4, press: false, long: 0.6, tire: 0.9, shoot: 0,
   },
 };
 export const STYLE_IDS = Object.keys(STYLES);

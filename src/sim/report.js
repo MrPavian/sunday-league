@@ -150,3 +150,57 @@ export function postMatch(m, team, traces) {
   if (lessons.length < 2 && LESSON_BY_STYLE[oppStyle]) lessons.push(LESSON_BY_STYLE[oppStyle]);
   return { good, bad, opp: all.opp, lessons: lessons.slice(0, 2), stats: all.stats };
 }
+
+// Chancen aus dem Spielprotokoll (matchlog.js): Schüsse aufs Tor, Paraden, Großchancen und
+// die wichtigsten vergebenen Möglichkeiten – nur, was wirklich passiert ist.
+// Großchance: Abschluss aus höchstens 7 m. Konterchance: Schuss binnen 8 s nach Ballgewinn
+// im eigenen Drittel. Unter Druck: ein Gegenspieler näher als 1,5 m.
+export const BIG_CHANCE_DIST = 7;
+const minuteAt = (m, t) => Math.min(90, Math.floor((t / m.duration) * 90) + 1);
+
+export function chanceStats(m, team) {
+  const L = m.log;
+  if (!L) return null;
+  const shots = L.shots.filter((s) => s.team === team);
+  const out = (s) => s.outcome ?? 'miss';
+  return {
+    shots: shots.length,
+    onTarget: shots.filter((s) => out(s) === 'goal' || out(s) === 'save').length,
+    saves: L.shots.filter((s) => s.team !== team && out(s) === 'save').length, // unser Torwart
+    big: shots.filter((s) => s.dist <= BIG_CHANCE_DIST).length,
+    bigScored: shots.filter((s) => s.dist <= BIG_CHANCE_DIST && out(s) === 'goal').length,
+  };
+}
+
+// Vergebene gute Chancen (höchstens `max`, die besten zuerst): { minute, team, text, kind }.
+export function missedChances(m, team, max = 3) {
+  const L = m.log;
+  if (!L) return [];
+  const who = (id) => m.players.find((p) => p.id === id) ?? m.bench.flat().find((p) => p.id === id);
+  const OUT = {
+    save: (s) => tr(`Torwart ${surname(who(s.by)) || ''} hält`.replace('  ', ' '), `keeper ${surname(who(s.by)) || ''} saves`.replace('  ', ' ')),
+    block: () => tr('geblockt', 'blocked'),
+    woodwork: () => tr('Pfosten', 'off the woodwork'),
+    miss: () => tr('daneben', 'wide'),
+  };
+  return L.shots
+    .filter((s) => s.team === team && (s.outcome ?? 'miss') !== 'goal')
+    .map((s) => {
+      const poss = L.poss[s.possIndex];
+      const counter = poss && poss.team === s.team && poss.startThird === 'def' && s.t - poss.start < 8;
+      const big = s.dist <= BIG_CHANCE_DIST;
+      const pressed = s.press < 1.5;
+      // Güte: nah, frei, schnell – nur zum Sortieren, keine Torwahrscheinlichkeit.
+      const quality = (big ? 2 : 0) + (counter ? 1 : 0) + (pressed ? -0.5 : 0.5) - s.dist * 0.05;
+      return { s, counter, big, pressed, quality };
+    })
+    .filter((c) => c.big || c.counter || (c.s.dist <= 11 && !c.pressed))
+    .sort((a, b) => b.quality - a.quality)
+    .slice(0, max)
+    .sort((a, b) => a.s.t - b.s.t)
+    .map(({ s, counter, big, pressed }) => {
+      const kind = big ? tr('Großchance', 'Big chance') : counter ? tr('Konterchance', 'Counter chance') : tr('Schuss aus guter Position', 'Shot from a good position');
+      const how = `${surname(who(s.playerId))} ${pressed ? tr('unter Druck ', 'under pressure ') : ''}${tr(`aus ${Math.round(s.dist)} m`, `from ${Math.round(s.dist)} m`)}${s.acro ? ` (${s.acro === 'fallrueck' ? tr('Fallrückzieher', 'bicycle kick') : tr('Seitfallzieher', 'scissor kick')})` : ''}`;
+      return { minute: minuteAt(m, s.t), team: s.team, kind, text: `${kind}: ${how} → ${OUT[s.outcome ?? 'miss'](s)}` };
+    });
+}

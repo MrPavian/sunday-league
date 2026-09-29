@@ -30,7 +30,8 @@ describe('Tricks und Akrobatik', () => {
 
   it('im Spiel: nur Spieler mit Repertoire tricksen, gelingt mal, misslingt mal', () => {
     const seen = { n: 0, ok: 0, kinds: new Set() };
-    for (const [id, seed] of [['rasenplatz', 1], ['ascheplatz', 2], ['halle', 3], ['park', 4], ['parkplatz', 5], ['rasenplatz', 6]]) {
+    // 12 Spiele – bei rund der Hälfte gelungener Tricks sind 6 Spiele zu wenig, um beides sicher zu sehen.
+    for (const [id, seed] of [['rasenplatz', 1], ['ascheplatz', 2], ['halle', 3], ['park', 4], ['parkplatz', 5], ['rasenplatz', 6], ['rasenplatz', 7], ['ascheplatz', 8], ['halle', 9], ['park', 10], ['parkplatz', 11], ['rasenplatz', 12]]) {
       const m = newMatch(id, seed);
       while (m.phase !== 'ended') {
         stepMatch(m, undefined, 1 / 60);
@@ -49,7 +50,7 @@ describe('Tricks und Akrobatik', () => {
     expect(seen.n).toBeGreaterThan(3);
     expect(seen.ok).toBeGreaterThan(0);
     expect(seen.ok).toBeLessThan(seen.n);
-  }, 120000);
+  }, 240000);
 
   it('Fallrückzieher: Rücken zum Tor, Ball in Brusthöhe → Schuss aufs Tor, danach liegt er kurz', () => {
     const m = newMatch('rasenplatz', 3);

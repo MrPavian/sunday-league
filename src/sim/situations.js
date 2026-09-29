@@ -225,14 +225,22 @@ const DETECTORS_MORE = {
   },
 
   // Keine Hilfe fürs Ergebnis – nur die Frage, die sich jeder Trainer an der Linie stellt.
+  // Angeboten wird nur, was in der Simulation nachweislich wirkt (Monte-Carlo, je 1000 Spiele,
+  // Befehl ab 80 % der Spielzeit, scripts/audit.mjs lead80_* / behind80_* / level80_*):
+  //   knapp vorne:   Ball halten und Konter halten die Führung öfter; „Tief stehen", „Tempo
+  //                  raus" und „Konter absichern" allein nicht (tief stehen sogar schlechter).
+  //   hinten/offen:  Kein Befehl bringt in der kurzen Restzeit messbar mehr Punkte. Mehr Risiko
+  //                  bringt ~25 % mehr Abschlüsse bei gleich vielen Toren und etwas mehr Gegentoren;
+  //                  In die Tiefe kostet sogar Tore. Die Karte bietet deshalb ehrlich „Mehr Risiko"
+  //                  oder „So weiterspielen" (Risiko zurück auf normal) an.
   ENDGAME(m, team) {
     if (m.time < m.duration * 0.78 || m.time > m.duration * 0.95) return null;
     const d = m.score[team] - m.score[1 - team];
     if (Math.abs(d) > 1) return null;
     const lead = d > 0 ? 'lead' : d < 0 ? 'behind' : 'level';
     const options = lead === 'lead'
-      ? [{ group: 'press', value: 'tief' }, { group: 'route', value: 'konter' }, { group: 'build', value: 'halten' }]
-      : [{ group: 'shape', value: 'aufruecken' }, { group: 'risk', value: 'aggressiv' }, { group: 'route', value: 'tiefe' }];
+      ? [{ group: 'build', value: 'halten' }, { group: 'route', value: 'konter' }]
+      : [{ group: 'risk', value: 'aggressiv' }, { group: 'risk', value: null }];
     return { lead, severity: 0.6, confidence: 1, evidence: { score: [...m.score] }, options };
   },
 };

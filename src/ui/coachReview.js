@@ -1,5 +1,5 @@
 import { tr } from '../core/i18n.js';
-import { postMatch } from '../sim/report.js';
+import { missedChances, postMatch } from '../sim/report.js';
 import { decisiveMoment, traceGoals } from '../sim/trace.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -12,6 +12,11 @@ export function coachReviewHtml(m, team) {
   const traces = traceGoals(m);
   const pm = postMatch(m, team, traces);
   const moment = decisiveMoment(m, team);
+  // Vergebene Chancen beider Seiten – Kette aus dem Protokoll (Distanz, Druck, Ausgang).
+  const missed = [...missedChances(m, team), ...missedChances(m, 1 - team)]
+    .sort((a, b) => a.minute - b.minute)
+    .map((c) => `<li class="${c.team === team ? 'ours' : 'theirs'}"><b>${c.minute}'</b> ${esc(c.text)}</li>`)
+    .join('');
   const list = (items, empty) => (items.length ? items.map((t) => `<li>${esc(t)}</li>`).join('') : `<li class="none">${empty}</li>`);
   const goals = traces
     .map((t) => `<li class="${t.team === team ? 'ours' : 'theirs'}"><b>${t.minute}'</b> ${t.steps.map(esc).join(' → ')}</li>`)
@@ -25,6 +30,7 @@ export function coachReviewHtml(m, team) {
       </div>
       ${moment ? `<h4>${tr('Entscheidender Moment', 'Decisive moment')}</h4><p class="${moment.positive ? 'good' : 'bad'}">${esc(moment.text)}</p>` : ''}
       ${goals ? `<h4>${tr('So sind die Tore entstanden', 'How the goals came about')}</h4><ol class="chains">${goals}</ol>` : ''}
+      ${missed ? `<h4>${tr('Vergebene Chancen', 'Chances that went begging')}</h4><ol class="chains">${missed}</ol>` : ''}
       ${pm.lessons.length ? `<h4>${tr('Was du daraus lernen kannst', 'What you can take from it')}</h4><ul class="lessons">${pm.lessons.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>` : ''}
     </section>`;
 }

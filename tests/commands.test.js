@@ -63,9 +63,13 @@ describe('coach orders change real behaviour', () => {
     expect(stamina(series(['press:hoch'], { n: 4 }))).toBeLessThan(stamina(series(['press:tief'], { n: 4 })) - 0.05);
   }, SLOW);
 
-  it('balls in behind only happen when the coach asks for them', () => {
+  // Trainermodus 2.0: Liegt der Raum hinter der Abwehr offen da, spielt ihn jeder mal
+  // (sonst wird eine aufgerückte Abwehr nie bestraft) – der Befehl macht es deutlich häufiger.
+  it('balls in behind: rare on their own, far more often when the coach asks for them', () => {
     const through = (ms) => ms.reduce((s, m) => s + m.log.passes.filter((p) => p.team === 0 && p.through).length, 0);
-    expect(through(series([]))).toBe(0);
+    const own = through(series([]));
+    const asked = through(series(['route:tiefe']));
+    expect(asked).toBeGreaterThan(own * 2);
     expect(through(series(['route:tiefe'], { pitch: PITCHES.ascheplatz, duration: 200 }))).toBeGreaterThan(2);
   }, SLOW);
 
