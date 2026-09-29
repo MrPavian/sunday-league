@@ -70,6 +70,7 @@ import { SaveSlots } from './ui/SaveSlots.js';
 import { prepareRelegationMatch, recordRelegationLeg, startRelegation } from './career/relegation.js';
 import './style.css';
 import './ds.css';
+import './world.css';
 
 const STEP = 1 / 60;
 // Spieltempo (Taste C): Die Simulation bleibt gleich, sie läuft nur langsamer ab.

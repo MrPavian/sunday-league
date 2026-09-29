@@ -1,6 +1,7 @@
 // ?ds – Übersicht aller Bausteine des Designsystems (zum Prüfen auf Handy und Desktop).
 // Wird nur mit dem Schalter nachgeladen; im Spiel selbst taucht die Seite nie auf.
 import { button, chip, haptic, meter, segmented, Sheet, stat, tabs, versus } from './ds.js';
+import { bindFlips, lockScreen, magnet, note, phone, playerCard, stamp } from './world.js';
 
 export function showStyleGuide() {
   const root = Object.assign(document.createElement('div'), { id: 'styleguide' });
@@ -45,6 +46,22 @@ export function showStyleGuide() {
       <div class="ui-row" style="gap:32px">${stat('4.', 'Platz')}${stat('18', 'Punkte')}${stat('84 %', 'Fitness')}</div>
       <div style="max-width:420px" class="ui-stack tight">${versus(14, 'Schüsse', 9, { action: 'noop' })}${versus(7, 'Aufs Tor', 4)}${meter(0.84, '84 %')}${meter(0.3, '30 %', '#e0a050')}</div>
 
+      <p class="ui-section-title">Materialien der Vereinswelt</p>
+      <div class="ui-grid" style="--min:260px;align-items:start">
+        <div class="m-paper ruled margin"><h3 class="t-h3">Papier, liniert</h3><p>Spielbericht, Notizen. <span class="m-hand">Handschrift in Blau</span> und <span class="m-hand red m-underline">rot unterstrichen</span>.</p></div>
+        <div class="m-cork" style="display:grid;gap:14px">
+          ${note('<b>Aushang</b><br>Sonntag 10:30 · Asche', { pin: true, tilt: -2 })}
+          ${note('Tabelle: 4. Platz · 18 Pkt.', { color: 'blue', tape: true, tilt: 1.5 })}
+        </div>
+        <div class="m-board" style="padding:16px 16px 24px;display:flex;gap:10px;flex-wrap:wrap;align-items:center"><span class="m-hand black">4-4-2?</span>${magnet('1', 0xe8742a)}${magnet('4', 0x4fa3e0)}${magnet('8', 0x6fbf73)}${magnet('9', 0xd9534f)}<i class="tray"></i></div>
+        <div class="m-folder"><div class="m-tabs"><button aria-selected="true">Verein</button><button aria-selected="false">Kasse</button></div><div class="m-paper"><h3 class="t-h3">Vereinsmappe</h3><p>Register statt Menüs. ${stamp('Genehmigt', { ok: true })}</p></div></div>
+        <div class="m-notebook"><div class="m-paper ruled"><h3 class="t-h3">Trainer-Notizbuch</h3><p>Einstellungen als Seiten.</p></div></div>
+        <div class="m-news"><p class="masthead">KREISBLATT</p><div class="dateline"><span>Montag</span><span>Sport</span></div><h3 class="headline">SVS dreht das Spiel</h3><div class="columns"><p>Spaltensatz wie in der Zeitung.</p></div></div>
+        <div class="m-calendar"><div class="rings"><i></i><i></i><i></i></div><div class="month">September 2025</div><div class="days"><span>So. 7. · SVS – IMS</span><span>So. 21. · KO4 – SVS</span></div></div>
+        <div style="display:flex;gap:18px;align-items:flex-end">${playerCard({ id: 'sg1', name: 'Schmidt', pos: 'Abwehr', rating: 72, kit: 0x2c5fb3, badge: 'Gut', attrs: [['Tempo', 61], ['Technik', 48], ['Passen', 55], ['Zweikampf', 77], ['Ausdauer', 70]] })}${stamp('Aktiv')}</div>
+        <div style="display:grid;place-items:center;padding:20px 0 40px">${phone(lockScreen({ time: 'Sa 18:40', notes: [{ app: 'Wer kann Sonntag?', from: 'Schmidt', text: 'Trainer, wie sieht es morgen aus?' }] }), { lit: true })}</div>
+      </div>
+
       <p class="ui-section-title">Blatt & Vibration</p>
       <div class="ui-row">${button('Taktik-Blatt öffnen', { kind: 'secondary', action: 'sg-sheet' })}${button('Vibration testen', { action: 'sg-haptic' })}</div>
     </div>`;
@@ -67,5 +84,6 @@ export function showStyleGuide() {
     render();
   });
   document.body.appendChild(root);
+  bindFlips(root);
   render();
 }

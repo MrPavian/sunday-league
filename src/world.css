@@ -1,0 +1,236 @@
+/* Sunday League – Materialien der Vereinswelt (UI 3.0, Phase 1)
+   Dinge, die ein Trainer wirklich in der Hand hat: Papier, Kork, Whiteboard, Karten, Mappe,
+   Notizbuch, Zeitung, Kalender, Handy. Nur CSS (Verläufe, harte Kanten) – keine Bilddateien,
+   damit alles scharf, klein und später durch echte Assets ersetzbar bleibt.
+   Regel: Material ist Präsentation. Bedienung bleibt aus ds.css (Knöpfe, Tabs, Größen). */
+
+:root {
+  --paper: #efe6d2;
+  --paper-2: #e4d8bd;
+  --paper-ink: #2a2620;
+  --paper-rule: rgba(60, 90, 150, 0.22);
+  --paper-margin: rgba(200, 60, 50, 0.45);
+  --cork: #b98a55;
+  --cork-dark: #8e6436;
+  --wood: #6b4a2b;
+  --board: #f2f4ef;
+  --board-frame: #a9b0b6;
+  --marker-blue: #2c5fb3;
+  --marker-red: #c0392b;
+  --marker-green: #2f7d3a;
+  --marker-black: #242424;
+  --kraft: #c9a56a;
+  --kraft-dark: #a9854a;
+  --tape: rgba(236, 226, 190, 0.78);
+  --stamp: #b3261e;
+  --phone: #1b1d22;
+  --phone-edge: #3a3f48;
+  --screen: #0f1a14;
+  --skin: #e0ac80;
+}
+
+/* ---------- Papier ---------- */
+.m-paper {
+  position: relative;
+  color: var(--paper-ink);
+  background: var(--paper);
+  border: 2px solid #000;
+  box-shadow: 3px 3px 0 #000;
+  text-shadow: none;
+  padding: var(--s4);
+}
+/* liniert (Notizblock, Spielbericht-Rückseite) */
+.m-paper.ruled { background: linear-gradient(transparent 0 23px, var(--paper-rule) 23px 24px) 0 12px / 100% 24px, var(--paper); line-height: 24px; }
+.m-paper.margin { padding-left: calc(var(--s4) + 18px); }
+.m-paper.margin::before { content: ''; position: absolute; top: 0; bottom: 0; left: 18px; border-left: 2px solid var(--paper-margin); }
+/* kleiner Zettel, leicht schief – wie hingeheftet */
+.m-note { background: #fff4a8; color: var(--paper-ink); border: 2px solid #000; box-shadow: 3px 3px 0 #000; padding: var(--s3) var(--s4); text-shadow: none; transform: rotate(var(--tilt, -1.2deg)); }
+.m-note.blue { background: #cfe6ff; }
+.m-note.pink { background: #ffd3dc; }
+.m-note.white { background: var(--paper); }
+/* abgerissene Unterkante (Abrisszettel, Aushang) */
+.m-torn { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 6px), 94% 100%, 88% calc(100% - 5px), 80% 100%, 72% calc(100% - 6px), 63% 100%, 55% calc(100% - 4px), 46% 100%, 38% calc(100% - 6px), 29% 100%, 20% calc(100% - 5px), 11% 100%, 4% calc(100% - 6px), 0 100%); padding-bottom: calc(var(--s4) + 6px); }
+.m-paper h2, .m-paper h3, .m-note h3 { color: inherit; }
+.m-paper .t-2, .m-note .t-2, .m-paper .t-cap, .m-note .t-cap { color: rgba(42, 38, 32, 0.72); }
+.m-paper .ui-btn:not(.primary):not(.danger), .m-note .ui-btn:not(.primary):not(.danger) { color: var(--ink); }
+
+/* ---------- Kork (Pinnwand) ---------- */
+.m-cork {
+  position: relative;
+  padding: var(--s5) var(--s4) var(--s4);
+  background:
+    radial-gradient(rgba(60, 35, 10, 0.35) 1px, transparent 1.6px) 0 0 / 7px 7px,
+    radial-gradient(rgba(255, 230, 190, 0.25) 1px, transparent 1.6px) 3px 4px / 9px 8px,
+    var(--cork);
+  border: 8px solid var(--wood);
+  box-shadow: inset 0 0 0 2px #000, 0 0 0 2px #000, 4px 4px 0 2px #000;
+}
+/* Pinnnadel oben mittig auf einem Zettel */
+.m-pin { position: relative; }
+.m-pin::after { content: ''; position: absolute; top: -7px; left: calc(50% - 7px); width: 14px; height: 14px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ff8a80 0 2px, var(--pin, #d9342b) 3px); border: 2px solid #000; box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45); }
+/* Klebestreifen über einer Ecke */
+.m-tape { position: relative; }
+.m-tape::before { content: ''; position: absolute; top: -10px; left: var(--tape-x, 18px); width: 64px; height: 20px; background: var(--tape); border: 1px solid rgba(0, 0, 0, 0.25); transform: rotate(var(--tape-r, -6deg)); }
+
+/* ---------- Stempel ---------- */
+.m-stamp {
+  display: inline-block;
+  padding: 2px 10px;
+  font-size: var(--fs-secondary);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--stamp);
+  border: 3px double var(--stamp);
+  transform: rotate(var(--tilt, -8deg));
+  opacity: 0.9;
+  text-shadow: none;
+}
+.m-stamp.ok { color: var(--marker-green); border-color: var(--marker-green); }
+
+/* ---------- Filzstift / Handschrift ---------- */
+.m-hand { color: var(--marker-blue); transform: rotate(-1deg); display: inline-block; text-shadow: none; }
+.m-hand.red { color: var(--marker-red); }
+.m-hand.green { color: var(--marker-green); }
+.m-hand.black { color: var(--marker-black); }
+.m-underline { background: linear-gradient(transparent 70%, var(--c, var(--marker-red)) 70% 88%, transparent 88%); }
+
+/* ---------- Whiteboard mit Magneten ---------- */
+.m-board {
+  position: relative;
+  color: var(--marker-black);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 40%), var(--board);
+  border: 8px solid var(--board-frame);
+  box-shadow: inset 0 0 0 2px #000, 0 0 0 2px #000, 4px 4px 0 2px #000;
+  text-shadow: none;
+}
+.m-board .tray { position: absolute; left: 10%; right: 10%; bottom: -14px; height: 8px; background: var(--board-frame); border: 2px solid #000; }
+.m-magnet {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: var(--fs-secondary);
+  color: #fff;
+  background: radial-gradient(circle at 32% 30%, rgba(255, 255, 255, 0.55) 0 3px, transparent 4px), var(--c, var(--marker-red));
+  border: 2px solid #000;
+  box-shadow: 2px 3px 0 rgba(0, 0, 0, 0.45);
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* ---------- Spielerkarte (Sammelkarte) mit Vorder- und Rückseite ---------- */
+.m-card {
+  position: relative;
+  width: var(--card-w, 170px);
+  aspect-ratio: 5 / 7;
+  perspective: 900px;
+  font-size: var(--fs-secondary);
+}
+.m-card-inner { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform 0.45s var(--ease); }
+.m-card.flipped .m-card-inner { transform: rotateY(180deg); }
+.m-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  color: var(--paper-ink);
+  background: var(--paper);
+  border: 2px solid #000;
+  box-shadow: 3px 3px 0 #000;
+  text-shadow: none;
+  overflow: hidden;
+}
+.m-face.back { transform: rotateY(180deg); background: repeating-linear-gradient(45deg, var(--kit, #2f6f3a) 0 8px, color-mix(in srgb, var(--kit, #2f6f3a) 80%, #000) 8px 16px); }
+.m-face.back .m-card-sheet { margin: 10px; flex: 1; background: var(--paper); border: 2px solid #000; padding: 8px 10px; overflow: hidden; }
+.m-card-top { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; color: #fff; background: var(--kit, #2f6f3a); border-bottom: 2px solid #000; text-shadow: 1px 1px 0 #000; }
+.m-card-top .rating { font-size: var(--fs-num); line-height: 1; }
+.m-card-art { flex: 1; display: grid; place-items: center; background: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.04) 0 10px, transparent 10px 20px), var(--paper-2); }
+.m-card-name { padding: 6px 8px 2px; font-size: var(--fs-h3); line-height: 1.1; }
+.m-card-pos { padding: 0 8px 8px; color: rgba(42, 38, 32, 0.72); }
+.m-attrs { display: grid; gap: 3px; margin: 0; padding: 0; list-style: none; }
+.m-attrs li { display: grid; grid-template-columns: 1fr auto; font-size: var(--fs-caption); }
+.m-attrs li b { font-weight: inherit; font-size: var(--fs-secondary); }
+/* Umdrehen-Knopf unten rechts auf der Karte (immer da – Wischen ist nur die Abkürzung) */
+.m-card-sheet .t-cap { color: rgba(42, 38, 32, 0.72) !important; }
+.m-card .ui-btn.ghost.m-flip-btn:hover:not(:disabled), .m-card .ui-btn.ghost.m-flip-btn:active:not(:disabled) { color: var(--paper-ink); background: var(--paper); filter: none; }
+.m-card .m-flip-btn { position: absolute; right: 4px; bottom: 4px; z-index: 3; min-width: var(--touch-min); min-height: var(--touch-min); width: var(--touch-min); color: var(--paper-ink); background: rgba(239, 230, 210, 0.9); border: 2px solid #000; box-shadow: none; text-shadow: none; }
+
+/* Kartenstapel: die hinteren Karten schauen leicht versetzt hervor */
+.m-stack { position: relative; }
+.m-stack::before, .m-stack::after { content: ''; position: absolute; inset: 0; background: var(--paper-2); border: 2px solid #000; }
+.m-stack::before { transform: translate(6px, 6px) rotate(2deg); }
+.m-stack::after { transform: translate(3px, 3px) rotate(-1.5deg); }
+.m-stack > * { position: relative; z-index: 1; }
+
+/* ---------- Vereinsmappe (Karton mit Registern) ---------- */
+.m-folder { position: relative; padding: var(--s4); padding-top: calc(var(--s4) + 6px); color: var(--paper-ink); background: var(--kraft); border: 2px solid #000; box-shadow: 4px 4px 0 #000; text-shadow: none; }
+.m-folder > .m-paper { box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5); }
+.m-tabs { display: flex; gap: 4px; margin: 0 var(--s3) -2px; }
+.m-tabs button { min-height: var(--touch-min); padding: 0 var(--s3); font: inherit; font-size: var(--fs-secondary); color: var(--paper-ink); background: var(--kraft-dark); border: 2px solid #000; border-bottom: 0; cursor: pointer; text-shadow: none; }
+.m-tabs button[aria-selected='true'] { background: var(--kraft); position: relative; z-index: 1; }
+
+/* ---------- Notizbuch (Spiralbindung links) ---------- */
+.m-notebook { position: relative; padding-left: 34px; }
+.m-notebook::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 6px;
+  width: 22px;
+  background: radial-gradient(circle at 11px 50%, #444 0 4px, #bbb 5px 6px, transparent 7px) 0 0 / 22px 22px repeat-y;
+  z-index: 2;
+}
+.m-notebook > .m-paper { min-height: 100%; }
+
+/* ---------- Zeitung ---------- */
+.m-news { color: var(--paper-ink); background: var(--paper); border: 3px solid #000; box-shadow: 6px 6px 0 #000; text-shadow: none; padding: var(--s4) var(--s5); }
+.m-news .masthead { margin: 0; font-size: var(--fs-h1); letter-spacing: 0.18em; text-align: center; border-bottom: 3px double var(--paper-ink); padding-bottom: 4px; }
+.m-news .dateline { display: flex; justify-content: space-between; font-size: var(--fs-caption); border-bottom: 1px solid var(--paper-ink); padding: 2px 0; margin-bottom: var(--s3); }
+.m-news .headline { margin: 0 0 var(--s2); font-size: var(--fs-h2); line-height: 1.15; }
+.m-news .columns { columns: 2 220px; column-gap: var(--s5); column-rule: 1px solid rgba(42, 38, 32, 0.25); }
+
+/* ---------- Kalenderblatt ---------- */
+.m-calendar { color: var(--paper-ink); background: var(--paper); border: 2px solid #000; box-shadow: 3px 3px 0 #000; text-shadow: none; }
+.m-calendar .rings { display: flex; justify-content: space-around; height: 14px; margin-top: -8px; }
+.m-calendar .rings i { width: 8px; height: 18px; background: #888; border: 2px solid #000; border-radius: 4px; }
+.m-calendar .month { padding: var(--s2) var(--s4); color: #fff; background: var(--marker-red); border-bottom: 2px solid #000; font-size: var(--fs-h3); text-shadow: 1px 1px 0 #000; }
+.m-calendar .days { padding: var(--s3) var(--s4); display: grid; gap: var(--s2); }
+
+/* ---------- Handy (Gehäuse; das Display ist echtes HTML) + Hand ---------- */
+.m-phone-wrap { position: relative; width: var(--phone-w, 300px); max-width: 100%; }
+.m-phone {
+  position: relative;
+  z-index: 1;
+  aspect-ratio: 9 / 18;
+  padding: 18px 12px 22px;
+  background: linear-gradient(90deg, var(--phone-edge) 0 3px, var(--phone) 3px calc(100% - 3px), var(--phone-edge) calc(100% - 3px));
+  border: 3px solid #000;
+  border-radius: 22px;
+  box-shadow: 4px 4px 0 #000;
+}
+.m-phone::before { content: ''; position: absolute; top: 7px; left: 50%; width: 46px; height: 5px; transform: translateX(-50%); background: #0a0b0d; border-radius: 3px; }
+.m-screen { position: relative; height: 100%; overflow: hidden; display: flex; flex-direction: column; color: #e9f5ec; background: var(--screen); border: 2px solid #000; border-radius: 8px; text-shadow: none; }
+.m-screen .statusbar { flex: none; display: flex; justify-content: space-between; padding: 4px 10px; font-size: var(--fs-caption); color: rgba(233, 245, 236, 0.8); }
+.m-screen .lock-time { font-size: 44px; text-align: center; margin: 18px 0 4px; }
+.m-screen .notif { margin: 8px; padding: 8px 10px; background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 8px; }
+.m-screen .notif b { display: block; font-size: var(--fs-caption); color: #9fe0b0; text-transform: uppercase; letter-spacing: 0.04em; }
+.m-phone.lit .m-screen { box-shadow: 0 0 0 2px #000, 0 0 18px 2px rgba(120, 255, 170, 0.35); }
+.m-phone.buzz { animation: m-buzz 0.36s steps(6) 1; }
+@keyframes m-buzz { 20% { transform: translateX(-2px) rotate(-1deg); } 40% { transform: translateX(2px) rotate(1deg); } 60% { transform: translateX(-2px); } 80% { transform: translateX(1px); } }
+/* Hand: Handfläche hinter dem Gerät, Daumen und Finger davor (zwei SVG-Schichten aus world.js) */
+.m-hand-back, .m-hand-front { position: absolute; pointer-events: none; image-rendering: pixelated; }
+.m-hand-back { z-index: 0; left: -12%; bottom: -22%; width: 74%; }
+.m-hand-front { z-index: 2; }
+.m-thumb { left: -6%; bottom: 10%; width: 18%; }
+.m-fingers { right: -5%; bottom: 14%; width: 12%; }
+.m-phone-wrap.rise { animation: m-rise 0.32s var(--ease) 1; }
+@keyframes m-rise { from { transform: translateY(40px) rotate(4deg); opacity: 0.2; } }
+
+/* Weniger Bewegung: Umdrehen und Einblenden ohne Übergang, Inhalte gleich. */
+@media (prefers-reduced-motion: reduce) {
+  .m-card-inner { transition: none; }
+  .m-phone.buzz, .m-phone-wrap.rise { animation: none; }
+}
