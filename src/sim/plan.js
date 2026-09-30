@@ -23,7 +23,8 @@ import { STYLES } from './tactics.js';
 //   cover     – Seite absichern: -1 links … +1 rechts (Block verschiebt, Außenverteidiger bleibt)
 //   defWidth  – Breite des Blocks gegen den Ball (0.78 = wie bisher)
 //   fwdDrop   – Stürmer lässt sich fallen (0 … 1)
-export const NEUTRAL = { focus: 0, channel: null, through: 0, risk: 0, tempo: 1, pressZone: null, funnel: null, rest: 0, cover: 0, defWidth: 0.78, fwdDrop: 0 };
+//   combo     – Kombinationsspiel: Doppelpässe, Ablagen, Rückpässe in den Rückraum (1 = wie bisher)
+export const NEUTRAL = { focus: 0, channel: null, through: 0, risk: 0, tempo: 1, pressZone: null, funnel: null, rest: 0, cover: 0, defWidth: 0.78, fwdDrop: 0, combo: 1 };
 
 // Befehlsgruppen – je Gruppe gilt höchstens ein Befehl, Gruppen lassen sich kombinieren.
 // Wirkung: Funktion (aktuelle Werte → Änderungen). Echte Stellgrößen, keine Torbonusse.
@@ -39,6 +40,7 @@ export const ORDER_EFFECTS = {
     aussen: (s) => ({ width: Math.max(s.width * 1.2, 1.2), cross: Math.max(s.cross, 0.8), channel: 'wide' }),
     mitte: (s) => ({ width: s.width * 0.85, cross: s.cross * 0.5, channel: 'centre' }),
     tiefe: (s) => ({ through: 0.65, forward: s.forward + 0.02 }),
+    kombi: (s) => ({ combo: Math.max(s.combo, 1) * 2.3, shortPass: s.shortPass + 0.01, fwdDrop: Math.max(s.fwdDrop, 0.3) }),
     konter: (s) => ({ fwdHold: s.fwdHold + 0.15, long: Math.max(s.long, 0.45), through: Math.max(s.through, 0.45), line: s.line - 0.06, tempo: 1.15 }),
   },
   // MIT BALL: Angriffsseite

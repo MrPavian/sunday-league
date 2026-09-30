@@ -24,9 +24,11 @@ const ballSide = (ms) => mean(ms.flatMap((m) => m.log.samples.filter((s) => s.po
 
 describe('coach orders change real behaviour', () => {
   it('attacking focus left/right moves our play to that side', () => {
-    const left = ballSide(series(['side:left']));
-    const right = ballSide(series(['side:right']));
-    const none = ballSide(series([]));
+    // 24 Spiele je Befehl: Bei 8 streute der Unterschied zwischen 0,07 und 0,19 (Grenze 0,12);
+    // über 24 Spiele stabil bei ≈ 0,13–0,15.
+    const left = ballSide(series(['side:left'], { n: 24 }));
+    const right = ballSide(series(['side:right'], { n: 24 }));
+    const none = ballSide(series([], { n: 24 }));
     expect(left).toBeLessThan(none);
     expect(right).toBeGreaterThan(none);
     expect(right - left).toBeGreaterThan(0.12);
@@ -58,10 +60,11 @@ describe('coach orders change real behaviour', () => {
     const deep = freeze(['press:tief']);
     expect(high.block).toBeLessThan(deep.block - 1); // der ganze Block ist näher am Ball
     expect(high.height).toBeGreaterThan(deep.height + 2);
-    // Und es kostet Kraft. 16 Spiele: Die Kraft am Ende streut je Spiel stark (bei 4 oder 8 Spielen
-    // lag der Unterschied mal bei 0,03, mal bei −0,02; über 48 Spiele stabil bei ≈ 0,08).
+    // Und es kostet Kraft. 48 Spiele: Die Kraft am Ende streut je Spiel stark (bei 4 oder 8 Spielen
+    // lag der Unterschied mal bei 0,03, mal bei −0,02; bei 16 zwischen 0,02 und 0,14; über 48
+    // Spiele stabil bei ≈ 0,07–0,08).
     const stamina = (ms) => mean(ms.map((m) => mean(m.players.filter((p) => p.team === 0 && p.role !== 'gk').map((p) => p.stamina))));
-    expect(stamina(series(['press:hoch'], { n: 16 }))).toBeLessThan(stamina(series(['press:tief'], { n: 16 })) - 0.05);
+    expect(stamina(series(['press:hoch'], { n: 48 }))).toBeLessThan(stamina(series(['press:tief'], { n: 48 })) - 0.05);
   }, SLOW);
 
   // Trainermodus 2.0: Liegt der Raum hinter der Abwehr offen da, spielt ihn jeder mal

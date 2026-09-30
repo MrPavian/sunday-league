@@ -89,6 +89,11 @@ export class TacticBoard {
       arrow(W * 0.42, H - 10, W * 0.9, H - 10, 'wide');
     } else if (t.channel === 'centre') arrow(W * 0.45, H / 2, W * 0.88, H / 2, 'centre');
     if ((t.through ?? 0) >= 0.45) arrow(W * 0.55, H * 0.36, W * 0.96, H * 0.3, 'deep');
+    // Kombinieren: Doppelpass-Dreieck (hin, zurück in den Lauf).
+    if ((t.combo ?? 1) >= 1.3) {
+      arrow(W * 0.5, H * 0.66, W * 0.6, H * 0.56, 'combo');
+      arrow(W * 0.6, H * 0.56, W * 0.72, H * 0.68, 'combo');
+    }
     if ((t.rest ?? 0) >= 2) arrows.push(`<rect class="tb-rest" x="${px(defX) - 10}" y="${H * 0.2}" width="20" height="${H * 0.6}"/>`);
     this.el.querySelector('.tb-arrows').innerHTML = `<defs><marker id="tb-head" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#ffe14d"/></marker></defs>${arrows.join('')}`;
     svg.classList.toggle('compact', compact < 0.8);
@@ -101,6 +106,7 @@ export class TacticBoard {
     if (t.channel === 'centre') items.push(tr('Durchs Zentrum', 'Through the middle'));
     if (t.focus) items.push(t.focus < 0 ? tr('Angriffe über links', 'Attacks down the left') : tr('Angriffe über rechts', 'Attacks down the right'));
     if ((t.through ?? 0) >= 0.45) items.push(tr('Bälle in die Tiefe', 'Balls in behind'));
+    if ((t.combo ?? 1) >= 1.3) items.push(tr('Doppelpässe und Ablagen', 'One-twos and lay-offs'));
     if ((t.rest ?? 0) >= 2) items.push(tr('Zwei sichern hinten ab', 'Two stay back'));
     if (compact < 0.8) items.push(tr('Kompakter Block', 'Compact block'));
     if ((t.tempo ?? 1) !== 1) items.push(t.tempo > 1 ? tr('Schnelles Spiel', 'Quick play') : tr('Tempo raus', 'Slow it down'));

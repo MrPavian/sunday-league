@@ -23,6 +23,7 @@ export const ORDERS = {
   'route:aussen': { label: tr('Über außen', 'Down the wings'), hint: tr('Breit machen, Flanken.', 'Stretch the pitch, cross.') },
   'route:mitte': { label: tr('Durch die Mitte', 'Through the middle'), hint: tr('Eng und zentral, kaum Flanken.', 'Narrow and central, few crosses.') },
   'route:tiefe': { label: tr('In die Tiefe', 'In behind'), hint: tr('Bälle hinter die Abwehr, die Spitze startet auf Höhe der letzten Linie.', 'Balls in behind, the striker runs off the last defender.') },
+  'route:kombi': { label: tr('Kombinieren', 'Combine'), hint: tr('Doppelpässe und Ablagen: abspielen, loslaufen, zurückbekommen – die Spitze lässt prallen und startet.', 'One-twos and lay-offs: pass, run, get it back – the striker lays it off and spins in behind.') },
   'route:konter': { label: tr('Konter', 'Counter'), hint: tr('Tief stehen, Ball erobern, schnell und steil.', 'Sit deep, win it, go fast and direct.') },
   'side:left': { label: tr('Über links', 'Down the left'), hint: tr('Angriffe über die linke Seite.', 'Attacks down the left.') },
   'side:right': { label: tr('Über rechts', 'Down the right'), hint: tr('Angriffe über die rechte Seite.', 'Attacks down the right.') },

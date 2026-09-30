@@ -1364,6 +1364,7 @@ line.tb-chalk { stroke-width: 1; }
 .tb-p circle { stroke: #000; stroke-width: 1; }
 .tb-arrow { stroke: #ffe14d; stroke-width: 1.6; }
 .tb-arrow.deep { stroke-dasharray: 4 2; }
+.tb-arrow.combo { stroke-dasharray: 2 1.5; }
 .tb-rest { fill: none; stroke: #6fb3ff; stroke-width: 1.2; stroke-dasharray: 2 2; }
 .tb-legend { list-style: none; margin: var(--s2) 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--s1); }
 .tb-legend li { padding: 2px 8px; font-size: var(--fs-caption); background: var(--surface-3); border: 1px solid #000; }

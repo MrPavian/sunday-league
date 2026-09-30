@@ -208,6 +208,14 @@ export function createCommentator(m, seed = 1) {
           else if (!e.ok && rng.chance(0.35)) add(pick(tr(['{p} will es mit einem {t} versuchen – hängen geblieben.', 'Zu viel gewollt: {p} verstolpert den {t}.'], ['{p} tries a {t} – and gets stuck.', 'Too clever by half: {p} fluffs the {t}.']), { p, t }));
           break;
         }
+        case 'combo': {
+          const a = surname(who(e.playerId));
+          const w = surname(who(e.wallId));
+          if (e.kind === 'onetwo' && rng.chance(0.7)) add(pick(tr(['Doppelpass {a} – {w} – {a}! Die Abwehr schaut hinterher.', '{a} spielt {w} an, läuft durch und bekommt ihn direkt zurück.', 'Schön kombiniert: {a} und {w} mit dem Doppelpass.'], ['One-two {a} – {w} – {a}! The defence is left watching.', '{a} plays it to {w}, keeps running and gets it straight back.', 'Lovely combination: {a} and {w} with the one-two.']), { a, w }), 'chance');
+          else if (e.kind === 'layoff' && rng.chance(0.5)) add(pick(tr(['{a} lässt prallen, dreht ab – und {w} schickt ihn in die Tiefe.', 'Ablage, Abdrehen, Steilpass: {w} findet {a} hinter der Abwehr.'], ['{a} lays it off, spins – and {w} sends the ball in behind.', 'Lay-off, spin, through ball: {w} finds {a} behind the defence.']), { a, w }), 'chance');
+          else if (e.kind === 'cutback' && rng.chance(0.5)) add(pick(tr(['{a} geht bis zur Grundlinie und legt flach zurück auf {w}.', 'Rückpass in den Rückraum – {w} läuft ein.'], ['{a} gets to the byline and cuts it back for {w}.', 'Cut-back into the danger zone – {w} arrives.']), { a, w }), 'chance');
+          break;
+        }
         case 'whiff':
           if (rng.chance(0.5)) add(tr(`Luftloch von ${surname(who(e.playerId))}! Der Ball bleibt einfach liegen.`, `Air shot from ${surname(who(e.playerId))}! The ball just sits there.`));
           break;

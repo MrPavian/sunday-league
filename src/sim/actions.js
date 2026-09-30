@@ -96,7 +96,8 @@ export function tryExecute(m, p) {
   if (!holds) {
     // Die kurze Sperre nach einer Dribbel-Berührung gilt nicht für einen gewollten
     // Schuss oder Pass – sonst verfällt die Aktion, bevor sie ausgeführt wird.
-    const ownDribble = p.id === m.controlledId && ball.lastTouch === p.id && ball.lastAction === 'dribble';
+    // Auch die KI: Ein beschlossener Schuss geht aus dem Dribbling heraus sofort.
+    const ownDribble = (p.id === m.controlledId || a?.type === 'shoot') && ball.lastTouch === p.id && ball.lastAction === 'dribble';
     if (ball.holder || (p.kickCooldown > 0 && !ownDribble) || fooled(m, p)) return;
     // Der gesteuerte Spieler kommt etwas weiter an den Ball – Taste gedrückt, Ball gespielt.
     if (dist2d(p.pos, ball.pos) > (p.id === m.controlledId ? REACH * 1.3 : REACH) || ball.pos.y > 1.1) return;
@@ -150,7 +151,8 @@ function shoot(m, p, a, fatigue) {
   const sigma = 0.025 + 0.16 * (1 - p.attrs.shooting) + 0.08 * fatigue + 0.05 * power + (hammer ? 0.03 : 0) + (p.id === m.controlledId ? 0 : 0.005 + (aiSkill(m, p) < 1 ? 0.05 : aiSkill(m, p) > 1 ? -0.015 : 0));
   // Elfmeter: in Ruhe platziert, ohne Gegner am Fuß – deutlich weniger Streuung.
   // Ebene 3: Wer bedrängt abzieht, streut mehr – nervöse Spieler noch mehr.
-  dir = rotate(dir, rng.gauss() * sigma * (a.placed ? 0.35 : pressureChaos(m, p)));
+  // Direktabnahme und Schuss aus der Drehung sind schwerer zu platzieren.
+  dir = rotate(dir, rng.gauss() * sigma * (a.placed ? 0.35 : pressureChaos(m, p)) * (a.first ? 1.2 : 1) * (a.turn ? 1.25 : 1));
   const speed = (8 + 18 * power) * (0.85 + 0.15 * p.attrs.shooting) * (hammer ? 1.15 : 1);
   const vy = 0.8 + 5 * power * power + Math.abs(rng.gauss()) * 1.2 * (1 - p.attrs.shooting) * power;
   ball.vel.x = dir.x * speed;
@@ -314,7 +316,8 @@ function pass(m, p, a, fatigue, fromHands) {
     m.pass.through = true;
     m.pass.react = 0.55 - 0.3 * read;
   }
-  m.events.push({ type: 'pass', playerId: p.id, targetId: target?.id ?? null, lofted: !!a.lofted, through: !!(a.through && target) });
+  // Rückpass beim Doppelpass: in den Lauf gespielt, aber kein Ball hinter die Abwehrlinie.
+  m.events.push({ type: 'pass', playerId: p.id, targetId: target?.id ?? null, lofted: !!a.lofted, through: !!(a.through && target && !a.combo), combo: a.combo || undefined });
 }
 
 // Strafraum: Nur hier darf der Torwart den Ball in die Hand nehmen.

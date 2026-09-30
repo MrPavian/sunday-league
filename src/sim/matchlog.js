@@ -62,7 +62,7 @@ export function stepLog(m) {
     switch (e.type) {
       case 'pass':
         if (!p) break;
-        log.pending = { t: m.time, half: m.half, team: p.team, kicker: p.id, targetId: e.targetId, lofted: e.lofted, through: !!e.through, ...zone(m, p.team, p.pos), done: null };
+        log.pending = { t: m.time, half: m.half, team: p.team, kicker: p.id, targetId: e.targetId, lofted: e.lofted, through: !!e.through, combo: e.combo || null, ...zone(m, p.team, p.pos), done: null };
         log.passes.push(log.pending);
         if (log.cur?.team === p.team) log.cur.passes++;
         break;

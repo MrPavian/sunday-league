@@ -63,7 +63,7 @@ export const STYLES = {
   kurzpass: {
     label: tr('Kurzpassspiel', 'Short passing'),
     desc: tr('Ball laufen lassen, kurze Wege, wenig Dribblings. Sieht schön aus – wenn es klappt.', 'Keep the ball moving, short distances, few dribbles. Looks lovely – when it works.'),
-    line: 0.03, compact: 0.8, width: 1.05, push: 0.2, fwdHold: 0, forward: 0.065, shortPass: 0.07, passRate: 1.6, cross: 0.3, press: false, long: 0, tire: 0.95, shoot: -1,
+    line: 0.03, compact: 0.8, width: 1.05, push: 0.2, fwdHold: 0, forward: 0.065, shortPass: 0.07, passRate: 1.6, cross: 0.3, press: false, long: 0, tire: 0.95, shoot: -1, combo: 1.35,
   },
   pressing: {
     label: tr('Hohes Pressing', 'High press'),

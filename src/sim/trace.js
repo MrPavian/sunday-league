@@ -71,6 +71,13 @@ export function traceGoal(m, goal) {
       add('build', 'halten');
     }
   }
+  const combo = passes.findLast((p) => p.combo && p.done);
+  if (combo) {
+    const k = findAnyPlayer(m, combo.kicker);
+    const r = findAnyPlayer(m, combo.targetId);
+    steps.push(combo.combo === 'layoff' ? tr(`Ablage, ${surname(r)} startet, ${surname(k)} spielt ihn in die Tiefe`, `Lay-off, ${surname(r)} spins, ${surname(k)} plays it in behind`) : tr(`Doppelpass ${surname(r)} – ${surname(k)}`, `One-two ${surname(r)} – ${surname(k)}`));
+    add('route', 'kombi');
+  }
   const through = passes.find((p) => p.through && p.done);
   if (through) {
     const k = findAnyPlayer(m, through.kicker);

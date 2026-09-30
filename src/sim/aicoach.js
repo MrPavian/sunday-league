@@ -10,7 +10,7 @@ import { createRng } from '../core/rng.js';
 import { setOrder } from './plan.js';
 
 const PERSONAS = {
-  stratege: { react: 0.85, like: [], avoid: [] },
+  stratege: { react: 0.85, like: ['route:kombi'], avoid: [] },
   oldschool: { react: 0.4, like: ['press:hoch', 'shape:kompakt', 'build:direkt', 'press:tief', 'route:konter'], avoid: ['build:kurz', 'build:halten', 'tempo:ruhig'] },
   grossmaul: { react: 0.6, like: ['risk:aggressiv', 'shape:aufruecken', 'press:hoch', 'route:tiefe'], avoid: ['press:tief', 'build:halten'] },
   kumpeltyp: { react: 0.35, like: [], avoid: [] },

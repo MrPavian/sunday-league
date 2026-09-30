@@ -144,7 +144,7 @@ const DETECTORS = {
       severity: clamp01((gap - 0.3) * 2 + (1 - toFwd / attacks) * 0.3),
       confidence: clamp01(ours.length / 30),
       evidence: { gap, toFwd, attacks },
-      options: [{ group: 'shape', value: 'aufruecken' }, { group: 'route', value: 'aussen' }, { group: 'shape', value: 'stuermer_fallen' }],
+      options: [{ group: 'shape', value: 'aufruecken' }, { group: 'route', value: 'kombi' }, { group: 'shape', value: 'stuermer_fallen' }],
     };
   },
 
@@ -174,7 +174,7 @@ const DETECTORS = {
       severity: clamp01((-0.55 - line) * 2 + (1 - into / attacks.length) * 0.4),
       confidence: clamp01(ours.length / 30),
       evidence: { line, attacks: attacks.length, into },
-      options: [{ group: 'route', value: 'aussen' }, { group: 'build', value: 'halten' }, { group: 'risk', value: 'aggressiv' }],
+      options: [{ group: 'route', value: 'aussen' }, { group: 'route', value: 'kombi' }, { group: 'risk', value: 'aggressiv' }],
     };
   },
 

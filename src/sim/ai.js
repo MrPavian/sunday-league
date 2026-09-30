@@ -8,6 +8,7 @@ import { HAND_ZONE, inHandZone, keeperBox, shortGame } from './actions.js';
 import { adherence, commitment, styleOf } from './plan.js';
 import { fooled } from './tricks.js';
 import { hasProfile } from './profiles.js';
+import { backToGoal, comboK, comboReturn, comboRun, considerCombo, cutbackMate, layoffMate, shotOn } from './combos.js';
 
 const LURK_GAP = 8; // m Platz hinter der gegnerischen Abwehr, ab dem der Stürmer vorne lauert
 const CAUGHT_TIME = 0.7; // s: so lange ist nach dem Ballverlust raus, wer vor dem Ball stand
@@ -36,6 +37,7 @@ export function updateTactics(m, dt) {
   if (possession != null && m.lastPossession != null && possession !== m.lastPossession) (m.lostAt ??= [-9, -9])[m.lastPossession] = m.time;
   m.lastPossession = possession;
   m.tactics = {};
+  considerCombo(m, keeperBox(pitch).depth);
   // Letzte Linie je Team (x des hintersten Feldspielers) – für Läufe in die Tiefe.
   m.defLine = [0, 1].map((t) => {
     const ts = attackDir(m, t);
@@ -69,6 +71,10 @@ export function updateTactics(m, dt) {
     // Offener Pass ans eigene Team: Der Adressat holt sich den Ball, kein anderer rennt dazwischen.
     const receiver = incomingPass(m, team);
     if (receiver) chaser = null;
+    // Wer den Ball am Fuß hat, bleibt dran – auch wenn ein Mitspieler näher an der Stelle
+    // steht, wo der Ball gleich ist. Sonst entscheidet keiner, und der Ball ist weg.
+    const owner = !receiver && !oppKeeper ? getPlayer(m, ball.lastTouch) : null;
+    if (owner && owner !== chaser && owner.team === team && owner.state === 'normal' && pool.includes(owner) && dist2d(owner.pos, ball.pos) < 1.3 && ballSpeed(ball) < 9) chaser = owner;
     // Pass in die Tiefe des Gegners: Die Abwehr braucht einen Moment, bis sie umschaltet.
     if (m.pass?.through && m.pass.team !== team && m.time - m.pass.time < m.pass.react) chaser = null;
     // Im eigenen Team läuft die KI nur an, wenn der gesteuerte Spieler weit weg ist.
@@ -166,6 +172,19 @@ export function updateTactics(m, dt) {
           spot.x = Math.min(spot.x * s, cap + (Math.min(ball.pos.x * s + 2, pitch.halfLength - 3) - cap) * j) * s;
         }
         m.tactics[p.id] = { type: 'support', ...clampToPitch(pitch, spot.x, spot.z, 0.5) };
+      }
+      // Kombination: Der Passgeber sprintet in den Raum für den Rückpass.
+      const run = comboRun(m, team);
+      if (run && rest.some((p) => p.id === run.runner)) m.tactics[run.runner] = { type: 'run', x: run.spot.x, z: run.spot.z };
+      // Behauptet einer vorne den Ball mit dem Rücken zum Tor, rückt der nächste Mitspieler
+      // zum Ablegen nach – schräg dahinter, mit Blick aufs Tor.
+      const carrier = getPlayer(m, ball.lastTouch);
+      if (carrier && carrier.team === team && m.time - (carrier.holdUp ?? -9) < 0.5) {
+        const helper = rest.filter((p) => p.id !== run?.runner && p.role !== 'def').sort((a, b) => dist2d(a.pos, carrier.pos) - dist2d(b.pos, carrier.pos))[0];
+        if (helper) {
+          const side = helper.pos.z >= carrier.pos.z ? 1 : -1;
+          m.tactics[helper.id] = { type: 'support', ...clampToPitch(pitch, carrier.pos.x - s * 4, carrier.pos.z + side * 2.5, 0.8) };
+        }
       }
     }
     if (m.manager && team === m.coachTeam) shoutTactics(m, team, rest, possession !== null && possession !== team, ball);
@@ -459,6 +478,12 @@ export function outfieldIntent(m, p, dt) {
     p.dribbleDir = norm(oppGoal.x - p.pos.x, p.aimZ - p.pos.z);
     // In der Ecke nicht lange fackeln: abspielen oder raus Richtung Mitte.
     if (wall.corner && dBall < 1.3 && !p.pending && !ball.holder && p.decideTimer > 0.15) p.decideTimer = 0.15;
+    // Abschlussinstinkt: In guter Lage vor dem Tor wird nicht lange gefackelt – sonst ist
+    // der Ball weg, bevor er sich entschieden hat. Die Wand beim Doppelpass spielt direkt.
+    if (dBall < 1.3 && !p.pending && !ball.holder && p.decideTimer > 0.1) {
+      if (m.combo?.wall === p.id && !m.combo.returned) p.decideTimer = 0.1;
+      else if (shotOn(m, p, oppGoal)) p.decideTimer = Math.min(p.decideTimer, 0.06 + 0.12 * (1 - p.attrs.technique));
+    }
     if (dBall < 1.3 && p.decideTimer <= 0 && !p.pending && !ball.holder) {
       // Amateure brauchen einen Moment, bis sie sich entscheiden.
       p.decideTimer = (0.4 + (1 - p.attrs.technique) * 0.4 + m.rng.next() * 0.25) / (aiSkill(m, p) * fst.tempo);
@@ -484,10 +509,26 @@ export function outfieldIntent(m, p, dt) {
   if (d < 0.4) return { move: { x: 0, z: 0 }, sprint: false };
   const n = norm(dx, dz);
   // Weit weg von der eigenen Zone (nach Ballverlust): zurück in die Position, aber zügig.
-  const urgent = t.type === 'cover' || t.type === 'mark' || t.type === 'receive' || (t.type === 'zone' && d > 4);
+  const urgent = t.type === 'cover' || t.type === 'mark' || t.type === 'receive' || t.type === 'run' || (t.type === 'zone' && d > 4);
+  // Lauf für den Doppelpass: volles Tempo in den Raum.
+  if (t.type === 'run') return { move: d < 0.3 ? { x: 0, z: 0 } : n, sprint: d > 1.5 && p.stamina > 0.25 };
   if (t.type === 'receive') {
     // Dem Ball entgegen: volle Kraft bis zum Treffpunkt, dann abbremsen und annehmen.
     p.dribbleDir = norm(oppGoal.x - p.pos.x, -p.pos.z * 0.3);
+    // Wand beim Doppelpass: direkt zurück in den Lauf, ohne den Ball erst anzunehmen.
+    if (!p.pending && m.combo?.wall === p.id && dist2d(p.pos, ball.pos) < 1.8 && ball.pos.y < 1.1) {
+      const back = comboReturn(m, p);
+      if (back && back !== 'wait') p.pending = back;
+    }
+    // Direktabnahme: Kommt der Pass in guter Lage an, wird gleich abgezogen – wer die
+    // Technik hat, öfter. Nicht aus der eigenen Hälfte, nicht mit dem Rücken zum Tor.
+    if (!p.pending && dist2d(p.pos, ball.pos) < 1.8 && ball.pos.y < 1.1 && p.firstTry !== m.pass && shotOn(m, p, oppGoal)) {
+      p.firstTry = m.pass;
+      if (m.rng.chance(0.35 + 0.45 * p.attrs.technique)) {
+        const gw = pitch.goalHalfWidth;
+        p.pending = { type: 'shoot', power: clamp(0.35 + dist2d(p.pos, oppGoal) / 20, 0.4, 0.9), target: { x: oppGoal.x, z: (m.rng.chance(0.5) ? 1 : -1) * m.rng.range(gw * 0.4, gw * 1.0) }, ttl: 0.35, first: true };
+      }
+    }
     return { move: d < 0.3 ? { x: 0, z: 0 } : norm(dx, dz), sprint: d > 3 && p.stamina > 0.25 };
   }
   // Engagiert nach vorn: Läufe nach vorn (Anbieten vor dem Ball) werden gesprintet – mehr
@@ -535,6 +576,11 @@ function carryIntent(m, p, oppGoal, wall) {
   }
   // Nie nach hinten dribbeln – höchstens quer.
   const s = attackDir(m, p.team);
+  // Ball behaupten: Körper zwischen Gegner und Ball, kaum Bewegung, auf den Nachrücker warten.
+  if (m.time - (p.holdUp ?? -9) < 0.35) {
+    p.shielding = true;
+    return { move: { x: -s * 0.15, z: 0 }, sprint: false };
+  }
   if (dx * s < 0.15) dx = s * 0.15;
   dir = norm(dx, dz);
   p.dribbleDir = dir;
@@ -561,11 +607,38 @@ function aiDecide(m, p, oppGoal) {
   p.aimZ = rng.range(-2.5, 2.5);
 
   const st = styleOf(m, p.team);
+  const sd = attackDir(m, p.team);
+  // Mit dem Rücken zum Tor, Gegner im Nacken: prallen lassen, wenn einer frei nachrückt –
+  // sonst den Ball behaupten, bis Hilfe kommt. Nicht ewig: danach wird normal entschieden.
+  if (p.role !== 'def' && p.pos.x * sd > -pitch.halfLength * 0.2 && backToGoal(m, p, toG)) {
+    const mate = layoffMate(m, p);
+    if (mate && rng.chance(Math.min(0.95, (0.45 + 0.35 * p.attrs.passing) * comboK(m, p)))) {
+      p.pending = { type: 'pass', targetId: mate.id, ttl: 0.3, cone: -1 };
+      m.layoffBy = { id: p.id, time: m.time };
+      m.events.push({ type: 'combo', kind: 'layoff_pass', playerId: p.id, wallId: mate.id });
+      return;
+    }
+    if (m.time - (p.holdUpStart ?? -9) > 3) p.holdUpStart = m.time;
+    if (m.time - p.holdUpStart < 0.8 + 1.0 * p.attrs.technique) {
+      p.holdUp = m.time;
+      p.decideTimer = 0.25;
+      return;
+    }
+  }
   // Auf großen Plätzen wird auch von weiter weg abgezogen.
   // Kurze Spiele: früher abziehen, damit überhaupt was passiert.
   // Auf dem großen Platz dauert der Weg nach vorn länger – dort noch etwas mehr.
   const brisk = (shortGame(m) - 1) * (1 + Math.max(0, pitch.halfLength - 20) / 12) * (m.goalPace ?? 1);
   const range = 10 + p.attrs.shooting * 5 + (hasTrait(p, 'hammer') ? 4 : 0) + st.shoot + st.risk * 0.8 + Math.max(0, (pitch.halfLength - 20) * 0.45) + brisk * 2.5;
+  // An der Grundlinie: flach zurück in den Rückraum, wenn dort einer frei einläuft.
+  if (Math.abs(p.pos.z) > pitch.goalHalfWidth * 1.5) {
+    const cb = cutbackMate(m, p, oppGoal);
+    if (cb && rng.chance(Math.min(0.95, (0.55 + 0.25 * p.attrs.passing) * comboK(m, p)))) {
+      p.pending = { type: 'pass', targetId: cb.id, ttl: 0.3, cone: -1 };
+      m.events.push({ type: 'combo', kind: 'cutback', playerId: p.id, wallId: cb.id });
+      return;
+    }
+  }
   // Flügelspiel: Außen in Tornähe wird geflankt, nicht aus spitzem Winkel geschossen.
   if ((st.cross > 0.7 || heeds(m, p, 'wide')) && Math.abs(p.pos.z) > pitch.goalHalfWidth * 2.2 && Math.abs(p.pos.x - oppGoal.x) < pitch.halfLength * 0.45 && rng.chance(0.75)) {
     p.pending = { type: 'pass', lofted: 'cross', cone: -0.4, ttl: 0.3 };
@@ -580,10 +653,12 @@ function aiDecide(m, p, oppGoal) {
   const lane = { x: p.pos.x + toG.x * Math.min(5, dGoal), z: p.pos.z + toG.z * Math.min(5, dGoal) };
   const blockedLane = m.players.some((o) => o.team !== p.team && o.role !== 'gk' && dist2d(o.pos, p.pos) > 0.4 && distToSegment(o.pos, p.pos, lane) < 0.8);
   const justShot = m.time - (m.lastShotAt?.[p.team] ?? -9) < 0.9 && dGoal > 5;
-  const hold = (blockedLane && rng.chance(0.5 - 0.2 * st.risk)) || (justShot && rng.chance(0.6));
+  // Freie Bahn in guter Lage: Dann wird geschossen – auch aus der Drehung.
+  const onTarget = shotOn(m, p, oppGoal);
+  const hold = !onTarget && ((blockedLane && rng.chance(0.5 - 0.2 * st.risk)) || (justShot && rng.chance(0.6)));
   // Aus der eigenen Hälfte zählt ein Tor nicht – dann gar nicht erst schießen.
   const ownHalf = p.pos.x * attackDir(m, p.team) <= 0.3;
-  if (!hold && !ownHalf && dGoal < range * (skill > 1 ? 0.9 : 1) && facingDot > facingNeed) {
+  if (!hold && !ownHalf && dGoal < range * (skill > 1 ? 0.9 : 1) && facingDot > (onTarget ? -0.3 : facingNeed)) {
     const gw = pitch.goalHalfWidth;
     p.pending = {
       type: 'shoot',
@@ -591,6 +666,7 @@ function aiDecide(m, p, oppGoal) {
       // Die KI zielt auf die Ecken – mal drin, mal knapp daneben.
       target: { x: oppGoal.x, z: (rng.chance(0.5) ? 1 : -1) * rng.range(gw * 0.45, gw * 1.05) },
       ttl: 0.3,
+      turn: facingDot < 0.3 || undefined,
     };
     return;
   }
@@ -602,13 +678,25 @@ function aiDecide(m, p, oppGoal) {
     p.pending = { type: 'shoot', power: 0.95, target: { x: oppGoal.x, z: (rng.chance(0.5) ? 1 : -1) * rng.range(gw * 0.4, gw * 1.0) }, ttl: 0.3 };
     return;
   }
+  // Doppelpass: Die Wand spielt direkt in den Lauf zurück.
+  const back = comboReturn(m, p);
+  if (back === 'wait') {
+    p.holdUp = m.time;
+    p.decideTimer = 0.12;
+    return;
+  }
+  if (back) {
+    p.pending = back;
+    return;
+  }
   // Pass in die Tiefe: in den Raum hinter der letzten Linie, wenn einer startet. Befehl
   // und Stil machen ihn häufiger – aber liegt der Raum offen da (ein Mitspieler ist klar
   // vor seinem Gegenspieler), sieht ihn jeder mal, ein guter Passspieler öfter. Sonst würde
   // eine aufgerückte Abwehr nie bestraft.
   const tb = throughTarget(m, p);
   if (tb) {
-    const seen = tb.margin > 0.4 ? 0.12 + 0.3 * p.attrs.passing : 0;
+    // Je Entscheidung – der Ballführende entscheidet jetzt öfter selbst, daher etwas seltener.
+    const seen = tb.margin > 0.4 ? 0.08 + 0.2 * p.attrs.passing : 0;
     if (rng.chance(Math.min(0.9, st.through * 0.55 * adherence(m, p) + seen))) {
       p.pending = { type: 'pass', through: tb.point, targetId: tb.target.id, lofted: tb.lofted || undefined, ttl: 0.4, cone: -0.6 };
       return;
