@@ -181,14 +181,22 @@ function paintTile(t) {
     }
   }
   const pal = { e: 0x1a1716, k: mixHex(t.skin, 0x1a1716, 0.55), b: t.brow, n: mixHex(t.skin, 0x000000, 0.22), m: t.mouth, o: mixHex(t.skin, 0x2a0e0a, 0.8), s: mixHex(t.skin, t.hairColor, 0.4), h: t.hairColor };
+  // Gleichfarbige Läufe einer Zeile als ein Rechteck – pixelgleich, aber weit weniger Canvas-Aufrufe.
+  const fill = {};
+  const style = (ch) => (fill[ch] ??= css(pal[ch] ?? t.skin));
   FACES.forEach((id, fi) => {
     const art = t.faceArt[id];
-    for (let y = 0; y < FACE; y++)
-      for (let x = 0; x < FACE; x++) {
-        const ch = art[y][x];
-        ctx.fillStyle = css(pal[ch] ?? t.skin);
-        ctx.fillRect(FACE_X + fi * FACE + x, y, 1, 1);
+    for (let y = 0; y < FACE; y++) {
+      const row = art[y];
+      for (let x = 0; x < FACE; ) {
+        const ch = row[x];
+        let end = x + 1;
+        while (end < FACE && row[end] === ch) end++;
+        ctx.fillStyle = style(ch);
+        ctx.fillRect(FACE_X + fi * FACE + x, y, end - x, 1);
+        x = end;
       }
+    }
   });
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(UTIL_X, 0, 1, 1);
@@ -210,10 +218,29 @@ function lookHash(look) {
   return (h ^ (h >>> 13)) >>> 0;
 }
 
+// Quader wie `new BoxGeometry(w, h, d).toNonIndexed()`, aber aus einer einmal gebauten Einheitsbox
+// skaliert (±0,5 · Maß = ±Maß/2, bitgleich) – spart je Körperteil den kompletten Box-Aufbau.
+let unitBox = null;
+export function boxGeometry(w, h, d) {
+  unitBox ??= new THREE.BoxGeometry(1, 1, 1).toNonIndexed();
+  const src = unitBox.attributes.position.array;
+  const pos = new Float32Array(src.length);
+  for (let i = 0; i < src.length; i += 3) {
+    pos[i] = src[i] * w;
+    pos[i + 1] = src[i + 1] * h;
+    pos[i + 2] = src[i + 2] * d;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('normal', new THREE.BufferAttribute(unitBox.attributes.normal.array.slice(), 3));
+  g.setAttribute('uv', new THREE.BufferAttribute(unitBox.attributes.uv.array.slice(), 2));
+  return g;
+}
+
 // Verjüngter Quader: Breite/Tiefe oben und unten getrennt (Low-Poly-Prisma).
 // Nicht indiziert, Flächenfolge wie BoxGeometry: +x, -x, +y, -y, +z, -z (je 6 Ecken).
 function prism(wTop, wBot, h, dTop, dBot, { front = 0 } = {}) {
-  const g = new THREE.BoxGeometry(1, h, 1).toNonIndexed();
+  const g = boxGeometry(1, h, 1);
   const p = g.attributes.position;
   for (let i = 0; i < p.count; i++) {
     const top = p.getY(i) > 0;
@@ -240,7 +267,7 @@ class Builder {
   }
 
   box(bone, w, h, d, color, at, opts = {}) {
-    return this.add(bone, new THREE.BoxGeometry(w, h, d).toNonIndexed(), color, { ...opts, at });
+    return this.add(bone, boxGeometry(w, h, d), color, { ...opts, at });
   }
 }
 
@@ -454,7 +481,9 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
     const white = useAtlas && (part.uv === 'kit' || part.uv === 'plaster');
     c.setHex(white ? 0xffffff : part.color);
     for (let i = 0; i < n; i++) {
-      col.set([c.r, c.g, c.b], (o + i) * 3);
+      col[(o + i) * 3] = c.r;
+      col[(o + i) * 3 + 1] = c.g;
+      col[(o + i) * 3 + 2] = c.b;
       si[(o + i) * 4] = B[part.bone];
       sw[(o + i) * 4] = 1;
     }
