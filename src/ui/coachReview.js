@@ -1,8 +1,7 @@
 import { tr } from '../core/i18n.js';
 import { missedChances, postMatch } from '../sim/report.js';
 import { decisiveMoment, traceGoals } from '../sim/trace.js';
-
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+import { esc } from './ds.js';
 
 // „Dein Spiel": die Trainer-Analyse nach dem Abpfiff – für Kreisblatt und Ticker.
 // Keine Note, sondern: was lief, was nicht, der entscheidende Moment, wie die Tore

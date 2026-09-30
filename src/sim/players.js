@@ -9,8 +9,6 @@ export const teamAttacking = (m, side) => (attackDir(m, 0) === side ? 0 : 1);
 
 export const getPlayer = (m, id) => (id == null ? null : m.players.find((p) => p.id === id));
 
-export const ownGoalX = (m, team) => -attackDir(m, team) * m.pitch.halfLength;
-
 export function setControlled(m, id) {
   if (m.manager) return; // Trainer-Modus: niemand wird gesteuert
   const old = getPlayer(m, m.controlledId);

@@ -1,15 +1,13 @@
 import { tr } from '../core/i18n.js';
-import { activeShouts, SHOUTS } from '../sim/coach.js';
+import { activeShouts } from '../sim/coach.js';
 import { answerCard } from '../sim/coachfeed.js';
 import { ORDERS } from '../sim/commands.js';
 import { ORDER_GROUPS, orderOf } from '../sim/plan.js';
 import { chanceStats } from '../sim/report.js';
 import { tacticLabel } from '../sim/tactics.js';
-import { button, haptic, icon, Sheet, versus } from './ds.js';
+import { button, esc, haptic, icon, Sheet, versus } from './ds.js';
 import { matchMinute } from './Hud.js';
 import { chatCount, coachChat } from './benchChat.js';
-
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 // Trainer-Modus (UI 2.0): Das Spielfeld steht im Vordergrund. Unten nur drei Knöpfe –
 // TAKTIK (Blatt mit Tafel, Zurufen, Befehlen; das Spiel steht), WECHSEL (Wechseltafel) und
@@ -240,6 +238,3 @@ export class ShoutBar {
     }
   }
 }
-
-// Für Tests und das Taktik-Blatt: welche Zurufe es gibt (unverändert aus coach.js).
-export const SHOUT_LIST = Object.keys(SHOUTS);

@@ -38,11 +38,6 @@ export function setLang(l) {
   if (globalThis.document) document.documentElement.lang = lang;
 }
 
-// Nur für Tests: Sprache umschalten, ohne etwas zu speichern.
-export function useLang(l) {
-  lang = l === 'en' ? 'en' : 'de';
-}
-
 export const tr = (de, en) => (lang === 'en' && en != null ? en : de);
 
 // Zahlwort-Plural: plural(n, 'Woche', 'Wochen', 'week', 'weeks')

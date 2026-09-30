@@ -3,12 +3,10 @@ import { applySimple, GROUP_LABELS, ORDERS, packLines, simpleActive, SIMPLE, SIM
 import { activeShouts, shout, SHOUTS } from '../sim/coach.js';
 import { execution, ORDER_GROUPS, orderOf, planTarget, setOrder, setStyle } from '../sim/plan.js';
 import { STYLES } from '../sim/tactics.js';
-import { button, haptic } from './ds.js';
+import { button, esc, haptic } from './ds.js';
 import { setCoachLevel } from './prefs.js';
 import { TacticBoard } from './TacticBoard.js';
 import { trainerCard } from './world.js';
-
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 // Taktik-Blatt im Spiel (UI 2.0): Das Spiel steht, man stellt in Ruhe um. Links die Taktiktafel
 // (zeigt, was die Befehle verstellen), rechts: aktive Befehle, die vier Zurufe, die sechs

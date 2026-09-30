@@ -20,7 +20,6 @@ export function laneOf(m, team, pos) {
 }
 // Dieselbe Stelle aus Sicht des Gegners: links ↔ rechts, Angriff ↔ Abwehr.
 export const mirrorLane = (lane) => (lane === 'left' ? 'right' : lane === 'right' ? 'left' : lane);
-export const mirrorThird = (third) => (third === 'def' ? 'att' : third === 'att' ? 'def' : third);
 
 export function createLog() {
   return { poss: [], turnovers: [], passes: [], shots: [], samples: [], cur: null, pending: null, nextSample: 0, setPiece: null };

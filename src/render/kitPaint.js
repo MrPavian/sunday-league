@@ -1,8 +1,6 @@
 // Trikotstoff als winziger Pixel-Atlas (64 × 16): vorne | hinten | Seite links |
 // Seite rechts. Die Spielfigur mappt ihre Quader auf diese Felder, das Vereinsheim
 // zeigt dieselbe Vorderseite als Vorschau. Dazu Sponsor-Brustfeld und Dreck.
-export const ATLAS_W = 64;
-export const ATLAS_H = 16;
 export const REGION = { front: 0, back: 16, left: 32, right: 48 };
 
 const css = (n) => `#${(n >>> 0).toString(16).padStart(6, '0').slice(-6)}`;
@@ -23,7 +21,6 @@ const PATTERNS = {
   seiten: (x, y, face) => face === 'left' || face === 'right' || x <= 1 || x >= 14,
   schulter: (x, y) => y <= 3,
 };
-export const PATTERN_IDS = Object.keys(PATTERNS);
 
 // Kleine Pixel-„Schrift" für das Brustfeld: aus jedem Buchstaben wird ein
 // Säulenmuster. Lesbar ist das auf dem Platz nicht – aber es sieht aus wie ein Logo.

@@ -1,7 +1,7 @@
 // Das Kreisblatt-Sonderheft: als Zeitungsseite im Vereinsheim und als Bild zum Teilen.
 import { tr } from '../core/i18n.js';
+import { esc } from './ds.js';
 
-const esc = (s) => String(s).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
 const masthead = (r) => `${tr('KREISBLATT', 'KREISBLATT')} · ${tr('Sonderheft', 'Special issue')} ${r.year}/${String(r.year + 1).slice(2)}`;
 
 export function reviewHTML(r, { share = false } = {}) {

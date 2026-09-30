@@ -157,5 +157,4 @@ export function applyTwist(c, key, s, rng) {
     return '';
   }
 }
-export const hasTwists = (key) => !!T[key];
 export { playerOf };

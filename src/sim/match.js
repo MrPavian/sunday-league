@@ -46,7 +46,6 @@ const CROWD_BY_PITCH = { hinterhof: 3, parkplatz: 6, park: 9, ascheplatz: 15, ra
 // cupShare: Anteil der Spieldauer bei Turnierspielen (Standard 75 %).
 // subs: Wechselregel ('liga' | 'frei' | 'begrenzt'), siehe subRuleFor.
 export const MATCH = { length: 'kurz', duration: MATCH_LENGTHS.kurz, halves: null, cupShare: 0.75, subs: 'liga' };
-export const MATCH_DURATION = MATCH_LENGTHS.kurz;
 export const HALF_MIN = 45;
 export const HALF_MAX = 600;
 export const presetHalf = (pitch, length) => 15 * Math.round(((HALF_BY_PITCH[pitch?.id] ?? 120) * (LENGTH_SCALE[length] ?? 1)) / 15); // auf Viertelminuten

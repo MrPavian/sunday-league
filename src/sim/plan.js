@@ -133,7 +133,6 @@ export function execution(m, team) {
   if (mine.some((p) => hasTrait(p, 'anfuehrer'))) v += 0.04;
   return clamp(v, 0.35, 1);
 }
-export const teamExecution = (m, team) => execution(m, team);
 
 const EXEC_REFRESH = 5; // Spielsekunden: so oft wird die Umsetzung neu bewertet (Kraft, Wechsel)
 
@@ -186,6 +185,3 @@ export function commitment(m, team) {
   const c = (st.push - 0.22) * 6 + st.line * 2 + st.risk * 0.35 - (st.rest ?? 0) * 0.3;
   return clamp(c, -1, 1);
 }
-
-// Hilfen für die Engine: Seitenlage einer Position aus Sicht des Teams (-1 links … +1 rechts).
-export const sideness = (m, team, pos, attackDir) => (pos.z * attackDir) / m.pitch.halfWidth;

@@ -48,12 +48,10 @@ export const QUALITY = {
   ANDROID_MEDIUM: { platform: 'android', internalHeight: 330, shadowMap: 1024, shadowHz: 30, ao: 8, bloom: false, dither: true, edges: 2, particles: 200, weather: 0.75, spectators: 0.7, crowdActive: 0.25, crowdHz: 10, flood: 2, halo: false, wetFx: true, grade: 1, emissive: 1, puddles: 2, splash: 0.6, footprints: 0, heatHaze: 0, ballTrail: 0, netFx: 0, shake: false, impacts: 0.7, bloomLite: 0.6, bloomBlur: 1, vignette: false },
   ANDROID_HIGH: { platform: 'android', internalHeight: 360, shadowMap: 2048, shadowHz: 30, ao: 8, bloom: false, dither: true, edges: 2, particles: 250, weather: 1, spectators: 0.9, crowdActive: 0.35, crowdHz: 12, flood: 2, halo: true, wetFx: true, grade: 1, emissive: 1, puddles: 4, splash: 0.8, footprints: 0, heatHaze: 0.6, ballTrail: 3, netFx: 0.6, shake: false, impacts: 0.9, bloomLite: 0.8, bloomBlur: 1, vignette: true },
 };
-export const QUALITY_IDS = Object.keys(QUALITY);
 
 // Aktive Stufe für Stellen, die beim Aufbau Größen brauchen (Schattenkarte, Partikel).
 let active = 'PC_HIGH';
 export const currentQuality = () => QUALITY[active];
-export const currentQualityId = () => active;
 export function setCurrentQuality(id) {
   if (QUALITY[id]) active = id;
 }

@@ -126,4 +126,3 @@ export function jobKey(job) {
   const hit = Object.entries(JOB_EN).find(([, en]) => en === t);
   return hit ? hit[0] : job;
 }
-export const jobChoices = (list) => list.map((j) => jobName(j));

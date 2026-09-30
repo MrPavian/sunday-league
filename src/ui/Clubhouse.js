@@ -48,7 +48,7 @@ import {
   seasonOver,
   table,
 } from '../career/career.js';
-import { acceptSponsor, bookTrip, FINES, KIT_COST, MEMBER_FEE, SLOTS, TRIP_COST } from '../career/finances.js';
+import { acceptSponsor, bookTrip, FINES, KIT_COST, MEMBER_FEE, SLOTS } from '../career/finances.js';
 import { DESTINATIONS, tripChoose, tripStage, tripState, tripVerdict } from '../career/trip.js';
 import { build, canBuild, facilities, FACILITIES } from '../career/facilities.js';
 import { bossOf, goalProgress, goalText, lineOf, negotiate, relLabel, shirtSponsor, sponsorColor, TRAITS as SPONSOR_TRAITS } from '../career/sponsors.js';

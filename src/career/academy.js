@@ -7,7 +7,7 @@ import { tr } from '../core/i18n.js';
 import { lastName, personName } from '../data/origins.js';
 import { generatePlayer, ratePlayer } from '../sim/generator.js';
 import { book } from './finances.js';
-import { addCustomPlayer, humanClub, playerOf } from './career.js';
+import { addCustomPlayer, playerOf } from './career.js';
 import { adjustMood } from './events.js';
 import { outcome } from './outcomes.js';
 import { adjustEnergy, childAge } from './personal.js';
@@ -159,8 +159,6 @@ function graduate(c, k, rng) {
   c.youth.prospects.push(idx);
   return idx;
 }
-
-export const tierForTalent = (t) => (t >= 0.9 ? 'dorfstar' : t >= 0.72 ? 'stark' : t >= 0.5 ? 'gut' : 'ok');
 
 // --- Ereignisse rund um die Jugend -------------------------------------------------
 const kidPick = (c, rng, filter = () => true) => {

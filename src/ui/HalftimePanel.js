@@ -2,8 +2,7 @@ import { tr } from '../core/i18n.js';
 import { orderLabel } from '../sim/commands.js';
 import { matchupHint, report } from '../sim/report.js';
 import { matchMinute } from './Hud.js';
-
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+import { esc } from './ds.js';
 
 // Halbzeit: der wichtigste Trainermoment. Das Spiel steht. Was sehe ich – was läuft,
 // was nicht, was macht der Gegner – und was mache ich jetzt: Plan, Wechsel, weiter.

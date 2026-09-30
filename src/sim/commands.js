@@ -68,11 +68,6 @@ export function applySimple(m, team, id) {
 // Ist dieses Paket gerade aktiv (alle gesetzten Befehle stimmen)?
 export const simpleActive = (m, team, id) => Object.entries(SIMPLE[id].orders).every(([g, v]) => v == null || orderOf(m, team, g) === v);
 
-// Knopf im Spiel: Befehl an- oder (noch mal) abschalten.
-export function toggleOrder(m, team, group, value) {
-  return setOrder(m, team, group, orderOf(m, team, group) === value ? null : value);
-}
-
 // Was ein Paket setzt, in Worten (für die Trainerkarten): nur die Befehle, die es einschaltet.
 export const packLines = (id) =>
   Object.entries(SIMPLE[id]?.orders ?? {})

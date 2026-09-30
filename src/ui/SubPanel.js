@@ -5,8 +5,8 @@ import { PROFILES, profilesOf } from '../sim/profiles.js';
 import { trickLine } from '../sim/tricks.js';
 import { planSub, requestSub, subsLeft } from '../sim/squad.js';
 import { benchAdvice, outAdvice } from '../sim/subadvice.js';
+import { esc } from './ds.js';
 
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const hex = (n) => (typeof n === 'number' ? `#${n.toString(16).padStart(6, '0')}` : '#2f6f3a');
 const bar = (v) => `<span class="sub-stamina" style="--v:${Math.round(Math.max(0, Math.min(1, v)) * 100)}%"></span>`;
 

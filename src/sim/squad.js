@@ -186,5 +186,3 @@ export function swapSides(m) {
     if (p.formationEntry) p.home = formationSpot(m.pitch, p.formationEntry, p.team, m.sidesSwapped);
   }
 }
-
-export const nearestTo = (list, pos) => list.reduce((a, b) => (dist2d(b.pos, pos) < dist2d(a.pos, pos) ? b : a));

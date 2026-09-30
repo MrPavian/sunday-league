@@ -3,7 +3,7 @@
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { book } from './finances.js';
-import { getPool, humanClub, joinSquad, playerOf, releasePlayer } from './career.js';
+import { getPool, humanClub, joinSquad, playerOf } from './career.js';
 import { advanceStories, arcsOf, STORY_STARTS, storyDecision } from './stories.js';
 import { CRISES, PERSONAL_EVENTS } from './personal.js';
 import { SAGA_EVENTS } from './sagas.js';

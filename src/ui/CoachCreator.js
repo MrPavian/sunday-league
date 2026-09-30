@@ -3,9 +3,9 @@ import { HAIR_COLORS, jobKey, jobName, PROFESSIONS, SKIN_TONES } from '../data/n
 import { TRAITS } from '../data/traits.js';
 import { createCoachPlayer, RELATIONS, STYLES } from '../career/personal.js';
 import { POSITIONS } from '../sim/generator.js';
+import { esc } from './ds.js';
 
 const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
-const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
 const ATTR_LABELS = tr({ pace: 'Tempo', stamina: 'Ausdauer', technique: 'Technik', passing: 'Passen', shooting: 'Schuss', tackling: 'Zweikampf', heading: 'Kopfball', keeping: 'Torwart' }, { pace: 'Pace', stamina: 'Stamina', technique: 'Technique', passing: 'Passing', shooting: 'Shooting', tackling: 'Tackling', heading: 'Heading', keeping: 'Goalkeeping' });
 const JOBS = [...PROFESSIONS.filter((j) => !j.startsWith('Azubi') && !j.startsWith('Student')), 'Mechatroniker', 'Polizist', 'Koch', 'Landschaftsgärtner', 'Erzieher', 'Vertriebler'];
 

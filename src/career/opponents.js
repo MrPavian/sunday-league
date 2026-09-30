@@ -26,7 +26,6 @@ export function coachOf(club) {
   const types = Object.keys(TYPES);
   return { name: personName(createRng(h), 42 + (h % 20)), type: types[(h >>> 16) % types.length] };
 }
-export const coachTypeName = (type) => TYPES[type]?.name ?? '';
 
 const feudOf = (c, id) => c.feuds?.[id] ?? 0;
 

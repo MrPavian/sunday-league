@@ -56,7 +56,6 @@ export function setEmissiveLevel(level) {
   glowLevel = level;
   for (const mat of glowCache.values()) mat.emissiveIntensity = level * mat.userData.emissiveStrength;
 }
-export const emissiveLevel = () => glowLevel;
 
 // Kennungen im Alphakanal des Szenenbilds (vom Post-Shader gelesen): Figuren < 0,9
 // (PlayerModel EDGE_CODE, Ball 0,7), Zuschauer und Boden-Decals 0,94 (weather.js DECAL_CODE),

@@ -11,7 +11,7 @@ import { first, outcome } from './outcomes.js';
 import { isCoach } from './personal.js';
 import { chronicle } from './sagas.js';
 import { roleName } from './youth.js';
-import { tr, plural, euroFmt } from '../core/i18n.js';
+import { tr, euroFmt } from '../core/i18n.js';
 
 export const INJURIES = {
   zerrung: { label: tr('Zerrung', 'strain'), weeks: [1, 2], w: 40 },
@@ -68,13 +68,6 @@ export function rollInjuries(c, prepared, fixtureRound = c.round) {
   }
   return news;
 }
-
-export const injuryText = (rec) => {
-  if (!(rec?.injuryWeeks > 0)) return null;
-  const label = rec.injury?.label ?? tr('verletzt', 'injured');
-  const weeks = plural(rec.injuryWeeks, 'Woche', 'Wochen', 'week', 'weeks');
-  return tr(`${label}, noch ${rec.injuryWeeks} ${weeks}`, `${label}, ${rec.injuryWeeks} ${weeks} left`);
-};
 
 // Laufbahn beendet: Er verlässt den Kader und bekommt ein Amt – oder wird Ehrenmitglied.
 // Der Titel wird in c.alumni immer auf Deutsch gespeichert (wie bei den Jugend-Ämtern) und

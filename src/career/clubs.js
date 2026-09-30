@@ -223,8 +223,6 @@ export const EXTRA_CLUBS = {
   ],
 };
 
-// Ligagröße: 6 Teams (10 Spieltage) oder 8 Teams (14 Spieltage).
-export const LEAGUE_SIZES = [6, 8];
 export const leagueClubs = (league, size = 6) => [...league.clubs, ...(size >= 8 ? EXTRA_CLUBS[league.level] ?? [] : [])];
 
 export const MAX_LEVEL = 3;

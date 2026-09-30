@@ -78,8 +78,3 @@ export function applyJobPerks(players) {
     return { ...p, attrs };
   });
 }
-
-// Welche Team-Boni sind im Kader? Für die Anzeige im Vereinsheim.
-export function teamPerkJobs(players) {
-  return players.filter((p) => jobPerk(p.profession)?.team || jobPerk(p.profession)?.medic);
-}
