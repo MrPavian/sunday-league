@@ -1764,3 +1764,50 @@ line.tb-chalk { stroke-width: 1; }
 @media (max-width: 720px) { .pin-sheet { padding-left: var(--s2); padding-right: var(--s2); } .pin-sheet table.league td, .pin-sheet table.league th { padding-left: 3px; padding-right: 3px; } }
 /* Trainer-Modus: unten liegen „Weiter/Menü" – die Zeitung lässt darüber Platz, damit Blättern erreichbar bleibt */
 body.manager #end { padding-bottom: 84px; }
+
+/* ===== UI 3.0 Phase 8: Feinschliff ===== */
+/* Bereichswechsel: Inhalt blendet einmal kurz ein (nur bei neuem Tab, nie pro Neuzeichnen) */
+.club-body.enter > * { animation: area-in 0.18s var(--ease) 1; }
+@keyframes area-in { from { opacity: 0; transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { .club-body.enter > * { animation: none; } }
+
+/* Gerüchteküche: Zettel am Kork (Transfers) */
+.rumor-board.m-cork { padding: var(--s4) var(--s3) var(--s3); }
+.rb-title { margin: 0 0 var(--s3); font-size: var(--fs-h2); color: var(--paper-ink); background: var(--paper); padding: 2px 12px; border: 2px solid #000; box-shadow: 2px 2px 0 #000; }
+.rumor-board .rumors { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--s4); }
+.rumor-board .rumor { position: relative; color: var(--paper-ink); background: #fff4a8; border: 2px solid #000; border-left: 6px solid var(--c); box-shadow: 3px 3px 0 #000; text-shadow: none; transform: rotate(-0.8deg); }
+.rumor-board .rumor:nth-child(2n) { background: #f7f0dc; transform: rotate(0.7deg); }
+.rumor-board .rumor::after { content: ''; position: absolute; top: -7px; left: calc(50% - 7px); width: 14px; height: 14px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ff8a80 0 2px, #d9342b 3px); border: 2px solid #000; }
+.rumor-board .rumor .who small, .rumor-board .rumor .source, .rumor-board .rumor .story { color: rgba(42, 38, 32, 0.8); opacity: 1; }
+.rumor-board .rumor .who em { color: var(--paper-ink); text-decoration: underline; text-decoration-color: var(--c); }
+.rumor-board .rumor .traits i { color: #fff; text-shadow: 1px 1px 0 #000; }
+.rumor-board .rumor .reply { color: var(--paper-ink); }
+@media (prefers-reduced-motion: reduce) { .rumor-board .rumor, .rumor-board .rumor:nth-child(2n) { transform: none; } }
+
+/* Kneipe: Holztisch, Opa Heinz' Spruch als Kreidetafel, Taktik auf einem echten Bierdeckel */
+.pub .pub-grid { padding: var(--s3); background: repeating-linear-gradient(90deg, #4a2f1c 0 38px, #553722 38px 76px); border: 2px solid #000; box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.4); }
+.pub .heinz { font-style: normal; color: #f2efe6; background: #20302a; border: 6px solid #6b4a2b; border-left-width: 6px; box-shadow: 3px 3px 0 #000; }
+.pub-grid article { background: rgba(20, 16, 12, 0.88); }
+.pub-grid article.coaster { justify-self: center; width: min(360px, 100%); aspect-ratio: 1; border-radius: 50%; place-content: center; justify-items: center; text-align: center; padding: 28px; color: var(--paper-ink); background: radial-gradient(circle, #efe3c6 0 58%, #c9a56a 59% 62%, #efe3c6 63%); border: 3px solid #000; box-shadow: 3px 3px 0 #000; text-shadow: none; }
+.pub-grid article.coaster .actions { justify-content: center; }
+.pub-grid article.coaster h4 { color: var(--marker-red); }
+@media (max-width: 560px) { .pub-grid article.coaster { aspect-ratio: auto; border-radius: 26px; padding: var(--s4); } }
+
+/* Ergebnisse im Vereinsheim: Zeitungsausschnitt */
+.hub-card.results-clip { color: var(--paper-ink); background: var(--paper); text-shadow: none; clip-path: polygon(0 2%, 4% 0, 12% 1.5%, 22% 0, 35% 1%, 50% 0, 64% 1.5%, 78% 0, 90% 1%, 100% 0, 100% 100%, 0 100%); }
+.results-clip .clip-mast { margin: 0; font-size: var(--fs-h3); letter-spacing: 0.18em; border-bottom: 3px double var(--paper-ink); }
+.results-clip .t-cap { color: rgba(42, 38, 32, 0.72); }
+.results-clip .results li.mine { background: linear-gradient(transparent 12%, rgba(255, 225, 77, 0.75) 12% 88%, transparent 88%); }
+.results-clip .mini li.mine { color: var(--paper-ink); background: rgba(255, 225, 77, 0.75); }
+.results-clip .mini li, .results-clip .results li { color: var(--paper-ink); }
+
+/* Co-Trainer im Spiel: das Blatt ist ein quer gehaltenes Handy (Rahmen, Kamera links, Display) */
+#comm-sheet { background: var(--phone); border: 3px solid #000; border-radius: 22px 22px 0 0; box-shadow: 0 -4px 0 #000; }
+#comm-sheet > header { color: #e9f5ec; }
+#comm-sheet .body { margin: 0 10px 10px; padding: var(--s3); background: var(--screen); border: 2px solid #000; border-radius: 10px; }
+#comm-sheet .grip { background: #3a3f48; }
+@media (orientation: landscape) and (max-height: 520px) {
+  #comm-sheet { border-radius: 18px; margin: 0 8px 6px; }
+  #comm-sheet::before { content: ''; position: absolute; left: 6px; top: 50%; width: 5px; height: 38px; transform: translateY(-50%); background: #0a0b0d; border-radius: 3px; }
+  #comm-sheet .body { margin-left: 18px; }
+}

@@ -123,7 +123,7 @@ export class Clubhouse {
     this.lastTab = {}; // je Bereich der zuletzt offene Tab
     this.flipped = {}; // umgedrehte Spielerkarten (nur Ansicht)
     // Karten umdrehen: Knopf überall, Wischen nur im Kartenstapel (im Profil blättert Wischen weiter).
-    bindFlips(root, (id, on) => (this.flipped[id] = on), { scope: '.squad-deck' });
+    bindFlips(root, (id, on) => ((this.flipped[id] = on), haptic('tap')), { scope: '.squad-deck' });
     this.busy = null;
     root.addEventListener('click', (e) => {
       const t = e.target.closest('[data-action]');
@@ -218,9 +218,11 @@ export class Clubhouse {
         this.h.onChange();
       } else if (action === 'notice') {
         resolveEvent(this.career, Number(value), 'notice');
+        haptic('confirm');
         this.h.onChange();
       } else if (action === 'event') {
         resolveEvent(this.career, Number(value));
+        haptic('confirm');
         this.h.onChange();
       } else if (action === 'promote') {
         promoteProspect(this.career, Number(value), maxSquad(this.career));
@@ -298,6 +300,7 @@ export class Clubhouse {
         this.h.onChange();
       } else if (action === 'nudge') {
         nudge(this.career, Number(value));
+        haptic('tap');
         this.h.onChange();
       } else if (action in this.h) return this.h[action](value);
       this.render();
@@ -475,6 +478,9 @@ export class Clubhouse {
       : '';
     // Im Vereinsheim („Heute") ist das Fenster der Szene durchsichtig: dahinter läuft der eigene Platz.
     this.root.classList.toggle('see-through', area.id === 'home');
+    // Neuer Bereich/Tab: Inhalt blendet einmal kurz ein (nicht bei jedem Neuzeichnen).
+    const enter = this.shownTab !== this.tab;
+    this.shownTab = this.tab;
     this.root.innerHTML = `
       <div class="club-panel club2" style="--kit:${hex(club.kit.shirt)}">
         <nav class="club-rail" aria-label="${tr('Bereiche', 'Sections')}">${rail}</nav>
@@ -485,7 +491,7 @@ export class Clubhouse {
             <div class="club-tools">${this.h.onSettings ? button(icon('gear'), { kind: 'ghost icon', action: 'onSettings', 'aria-label': tr('Einstellungen', 'Settings'), title: tr('Einstellungen', 'Settings') }) : ''}${button(icon('exit'), { kind: 'ghost icon', action: 'onMenu', 'aria-label': tr('Hauptmenü', 'Main menu'), title: tr('Hauptmenü', 'Main menu') })}</div>
           </header>
           ${sub}
-          <div class="club-body ${area.id === 'home' ? 'is-home' : 'tab'}${folder ? ' in-folder' : ''}">${area.id === 'home' ? this.hub() : folder ? `<div class="m-folder club-folder"><div class="folder-sheet">${this[`tab_${this.tab}`]()}</div></div>` : this[`tab_${this.tab}`]()}</div>
+          <div class="club-body ${area.id === 'home' ? 'is-home' : 'tab'}${folder ? ' in-folder' : ''}${enter ? ' enter' : ''}">${area.id === 'home' ? this.hub() : folder ? `<div class="m-folder club-folder"><div class="folder-sheet">${this[`tab_${this.tab}`]()}</div></div>` : this[`tab_${this.tab}`]()}</div>
         </div>
       </div>`;
     this.bindLineup();
@@ -667,7 +673,7 @@ export class Clubhouse {
               <button data-action="pubTalk" data-value="cheer" ${dis}>${tr('Aufmuntern', 'Cheer him up')}</button>
               <button data-action="pubTalk" data-value="straight" ${dis}>${tr('Klartext reden', 'Give it to him straight')}</button>
             </div></article>
-          <article class="wide"><h4>${tr('Taktik auf dem Bierdeckel', 'Tactics on a beer mat')}</h4><p>${tr('Gilt fürs nächste Spiel.', 'Applies to the next match.')}${pub.tactic ? ` ${tr('Gewählt', 'Chosen')}: <b>${TACTICS[pub.tactic].name}</b>.` : ''}</p><div class="actions">${tactics}</div></article>
+          <article class="wide coaster"><h4>${tr('Taktik auf dem Bierdeckel', 'Tactics on a beer mat')}</h4><p>${tr('Gilt fürs nächste Spiel.', 'Applies to the next match.')}${pub.tactic ? ` ${tr('Gewählt', 'Chosen')}: <b>${TACTICS[pub.tactic].name}</b>.` : ''}</p><div class="actions">${tactics}</div></article>
           <article class="wide"><h4>${tr('Dart', 'Darts')}</h4>${dart}${pub.dart ? `<p class="reply">${tr('Letztes Duell', 'Last duel')}: ${pub.dart.you} ${tr('zu', 'to')} ${pub.dart.heinz}</p>` : ''}</article>
         </div>
       </div>`;
@@ -773,7 +779,8 @@ export class Clubhouse {
     const c = this.career;
     const round = this.results;
     return `
-      <div class="ui-card hub-card">
+      <div class="ui-card hub-card results-clip">
+        <p class="clip-mast">${tr('KREISBLATT', 'THE DISTRICT GAZETTE')}</p>
         <p class="t-cap">${tr('Ergebnisse Spieltag', 'Results, matchday')} ${c.round + 1}</p>
         <ul class="results">${round
           .map((f) => {
@@ -1391,7 +1398,7 @@ export class Clubhouse {
     return `
       ${coachAway(c) ? `<p class="warn">${tr('Du bist diese Woche nicht da – Gespräche mit neuen Leuten müssen warten.', 'You are away this week – talks with new players will have to wait.')}</p>` : ''}
       <p class="chat-head">${tr('Kader', 'Squad')} ${club.squad.length}/${maxSquad(c)} · ${tr(`noch ${w.actions} Aktion${w.actions === 1 ? '' : 'en'} diese Woche`, `${w.actions} action${w.actions === 1 ? '' : 's'} left this week`)}${full ? tr(' · Kader voll – erst jemanden verabschieden', ' · squad full – release someone first') : ''}</p>
-      <div class="rumors">${cards}</div>`;
+      <div class="rumor-board m-cork"><p class="rb-title m-hand black">${tr('Gerüchteküche', 'Rumour mill')}</p><div class="rumors">${cards}</div></div>`;
   }
 
   tab_club() {
