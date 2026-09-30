@@ -26,10 +26,12 @@ export async function launch() {
   return playwright().chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
 }
 
-// Neue Seite mit leerem Speicher (Deutsch, Effekte aus); sammelt Seitenfehler.
-export async function page(browser, size = 'land', { query = '?notitle', store = {} } = {}) {
+// Neue Seite mit leerem Speicher (Deutsch, Effekte aus); sammelt Seitenfehler. `init` läuft vor
+// jedem Seitenskript (z. B. Zähler an Browser-APIs).
+export async function page(browser, size = 'land', { query = '?notitle', store = {}, init = null } = {}) {
   const s = SIZES[size];
   const ctx = await browser.newContext({ viewport: { width: s.width, height: s.height }, hasTouch: s.touch, isMobile: s.touch });
+  if (init) await ctx.addInitScript(init);
   const p = await ctx.newPage();
   p.errors = [];
   p.on('pageerror', (e) => p.errors.push(e.message));

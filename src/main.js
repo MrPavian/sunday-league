@@ -184,7 +184,7 @@ const scene = new THREE.Scene();
 // ?debug: Renderer und Szene für die Browser-Konsole (Draw Calls, Speicher).
 // ?ds – Übersicht des Designsystems (UI 2.0), nur zum Prüfen.
 if (params.has('ds')) import('./ui/StyleGuide.js').then((m) => m.showStyleGuide());
-if (params.has('debug')) globalThis.__sl = { renderer: pixel.renderer, pixel, scene, THREE, rig, get match() { return match; }, get view() { return view; }, get crowd() { return crowd; }, get weather() { return view?.weather; } };
+if (params.has('debug')) globalThis.__sl = { renderer: pixel.renderer, pixel, scene, THREE, rig, get match() { return match; }, get view() { return view; }, get crowd() { return crowd; }, get weather() { return view?.weather; }, get sound() { return sound; } };
 // Nur mit ?debug: Herzschlag und „letztes System" je Bild – zeigt bei einem Hänger, wo es stand.
 // Reine Diagnose: setzt nichts zurück und startet nichts neu.
 const DIAG = params.has('debug') ? { frame: 0, simStep: 0, sys: '-', stalls: 0, errors: [] } : null;

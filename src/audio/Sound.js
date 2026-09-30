@@ -45,6 +45,7 @@ export class Sound {
     this.wet.gain.value = 0;
     this.master.connect(this.reverb).connect(this.wet).connect(this.ctx.destination);
     if (this.venue) this.setVenue(this.venue, true);
+    this.applyGain();
   }
 
   toggleMute() {
@@ -54,12 +55,25 @@ export class Sound {
     } catch {
       // egal
     }
-    if (this.master) this.master.gain.value = this.gain();
+    this.applyGain();
     return this.muted;
   }
 
   gain() {
     return this.muted ? 0 : 0.75 * this.volume;
+  }
+
+  // Stumm (Ton aus oder Lautstärke 0): keine Klänge bauen und den AudioContext anhalten – sonst
+  // rechnen Hall, Kulisse und Zuschauerrauschen unhörbar weiter.
+  silent() {
+    return this.gain() === 0;
+  }
+
+  applyGain() {
+    if (!this.ctx) return;
+    this.master.gain.value = this.gain();
+    if (this.silent()) this.ctx.suspend?.().catch(() => {});
+    else this.ctx.resume?.().catch(() => {});
   }
 
   setVolume(v) {
@@ -69,7 +83,7 @@ export class Sound {
     } catch {
       // egal
     }
-    if (this.master) this.master.gain.value = this.gain();
+    this.applyGain();
   }
 
   makeNoise() {
@@ -374,7 +388,7 @@ export class Sound {
   }
 
   update(dt, match = null) {
-    if (!this.ctx || this.muted) return;
+    if (!this.ctx || this.silent()) return;
     // Zuschauer: Grundmurmeln nach Menge, lauter bei Torgefahr und nach Toren.
     if (match && this.crowdLevel > 0.02) {
       this.ensureCrowdBed();
@@ -412,6 +426,7 @@ export class Sound {
       this.crowdMatch = match;
       this.setCrowd(match.crowd);
     }
+    if (this.silent()) return;
     const pan = (match.ball.pos.x - cameraX) / 14;
 
     const hard = match.pitch.surface.hard;

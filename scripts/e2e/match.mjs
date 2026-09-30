@@ -49,6 +49,41 @@ async function trainerFlow(b) {
   return ok.done();
 }
 
+// Ton aus: keine Audioknoten, AudioContext angehalten; Ton wieder an: Kontext läuft, Klänge entstehen.
+function countAudioNodes() {
+  window.__audioNodes = 0;
+  const B = window.BaseAudioContext?.prototype;
+  if (!B) return;
+  for (const k of Object.getOwnPropertyNames(B)) {
+    if (!k.startsWith('create') || typeof B[k] !== 'function') continue;
+    const orig = B[k];
+    B[k] = function (...a) {
+      window.__audioNodes++;
+      return orig.apply(this, a);
+    };
+  }
+}
+
+export async function audio(b) {
+  const ok = checker('Ton aus: keine Klänge, Audio angehalten; Ton an: Klänge');
+  const p = await page(b, 'desk', { query: '?venue=park&notitle&debug&dauer=60&seed=3', store: { 'sunday-league:muted': '1' }, init: countAudioNodes });
+  await p.mouse.click(5, 5); // Nutzeraktion: erst dann darf der AudioContext entstehen
+  await p.waitForTimeout(500);
+  const n0 = await p.evaluate(() => window.__audioNodes);
+  await p.waitForTimeout(8000);
+  const muted = await p.evaluate(() => ({ n: window.__audioNodes, state: __sl.sound?.ctx?.state ?? null }));
+  ok(muted.n === n0, `Ton aus erzeugt Audioknoten: ${n0} → ${muted.n}`);
+  ok(muted.state === 'suspended', `AudioContext bei Ton aus nicht angehalten (${muted.state})`);
+  await p.keyboard.press('n');
+  await p.waitForTimeout(8000);
+  const on = await p.evaluate(() => ({ n: window.__audioNodes, state: __sl.sound?.ctx?.state ?? null, muted: __sl.sound?.muted }));
+  ok(on.muted === false && on.state === 'running', `Ton an: Kontext läuft nicht (${on.state}, stumm=${on.muted})`);
+  ok(on.n > muted.n, `Ton an erzeugt keine Klänge (${muted.n} → ${on.n})`);
+  ok(!p.errors.length, `Fehler: ${p.errors.join(' | ')}`);
+  await p.context().close();
+  return ok.done();
+}
+
 async function freeze(b) {
   const ok = checker('Freeze-Szenario: verspäteter Spieler (?stau) bis zum Abpfiff');
   const p = await page(b, 'land', { query: '?venue=ascheplatz&notitle&trainer&debug&stau&dauer=45&seed=7', store: { 'sunday-league:tempo': 'schnell' } });
@@ -74,7 +109,7 @@ async function freeze(b) {
 
 export async function run() {
   const b = await launch();
-  const fails = (await trainerFlow(b)) + (await freeze(b));
+  const fails = (await trainerFlow(b)) + (await freeze(b)) + (await audio(b));
   await b.close();
   return fails;
 }
