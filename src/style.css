@@ -1574,3 +1574,51 @@ line.tb-chalk { stroke-width: 1; }
 @media (max-width: 560px) { .lp-board .lp-shirt { width: 36px; height: 36px; } }
 @media (prefers-reduced-motion: reduce) { .lp-token.snap .lp-shirt { animation: none; } .lp-ghost .lp-shirt { transform: none; } }
 .tactic-board .styles button { min-height: var(--touch-min); }
+
+/* ===== UI 3.0 Phase 5: Trainerbank ===== */
+/* Situationskarte als Notiz auf dem Trainerpult: Papier, Klebestreifen, Stift. Lesbar über dem Platz. */
+#shoutbar .coach-card { color: var(--paper-ink); background: var(--paper); border: 2px solid #000; border-left: 2px solid #000; box-shadow: 4px 4px 0 #000; text-shadow: none; transform: rotate(-0.6deg); }
+#shoutbar .coach-card::before { content: ''; position: absolute; top: -9px; left: 50%; width: 84px; height: 18px; transform: translateX(-50%) rotate(-3deg); background: rgba(236, 226, 190, 0.85); border: 1px solid rgba(0, 0, 0, 0.25); }
+#shoutbar .coach-card .cc-min { color: var(--marker-red); }
+#shoutbar .coach-card .t-cap { color: rgba(42, 38, 32, 0.72); }
+#shoutbar .coach-card h3 { color: var(--paper-ink); }
+#shoutbar .coach-card p { color: var(--marker-blue); }
+#shoutbar .coach-card .answers button { color: var(--paper-ink); background: var(--paper-2); border: 2px solid #000; text-shadow: none; }
+#shoutbar .coach-card .answers button.first { color: var(--on-accent); background: var(--accent); }
+#shoutbar .coach-card .answers button kbd { color: var(--paper-ink); }
+#shoutbar .coach-card button.skip { color: var(--paper-ink); text-decoration: underline; text-shadow: none; min-height: var(--touch-min); }
+#shoutbar .coach-card .timer { background: var(--marker-red); }
+@media (prefers-reduced-motion: reduce) { #shoutbar .coach-card { transform: none; } }
+
+/* Dock: vierter Knopf (Co-Trainer) mit Zähler für neue Meldungen */
+#shoutbar button.hud-btn.comm { position: relative; }
+#shoutbar button.hud-btn.comm .ui-badge { position: absolute; top: -6px; right: -6px; }
+@media (max-width: 720px) { #shoutbar .hud-actions button.hud-btn span { font-size: var(--fs-secondary); } }
+
+/* KOMMUNIKATION: Verlauf mit dem Co-Trainer als Chat (links Co-Trainer, rechts du) */
+.bc-chat { display: flex; flex-direction: column; gap: var(--s2); }
+.bc-msg { max-width: 86%; display: flex; flex-direction: column; gap: 2px; padding: var(--s2) var(--s3); border: 2px solid #000; box-shadow: 2px 2px 0 #000; }
+.bc-msg small { font-size: var(--fs-caption); opacity: 0.8; }
+.bc-msg.co { align-self: flex-start; background: var(--surface-2); }
+.bc-msg.me { align-self: flex-end; color: var(--on-accent); background: var(--accent); text-shadow: none; }
+.bc-msg.pending { border-color: var(--accent); box-shadow: 2px 2px 0 #000, 0 0 0 2px var(--accent); max-width: 100%; }
+.bc-msg.follow.better { border-left: 6px solid #6fd36f; }
+.bc-msg.follow.worse { border-left: 6px solid #ff8a7a; }
+.bc-answers { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s2); }
+.bc-answers .ui-btn { flex: 1 1 140px; }
+.bc-note { margin: 0; align-self: center; font-size: var(--fs-secondary); color: var(--ink-2); }
+
+/* WECHSEL: Spieler als Karten – Kopf in Vereinsfarbe, gewählt = angehoben mit Stempel */
+.sub-panel .sub-row.sub-card { position: relative; color: var(--paper-ink); background: linear-gradient(var(--kit) 0 7px, transparent 7px), var(--paper); border: 2px solid #000; box-shadow: 2px 2px 0 #000; padding: 11px 8px 6px; text-shadow: none; min-height: var(--touch-min); }
+.sub-panel .sub-row.sub-card small { opacity: 1; color: rgba(42, 38, 32, 0.75); }
+.sub-panel .sub-row.sub-card .sub-tip.in { color: var(--marker-green); }
+.sub-panel .sub-row.sub-card .sub-tip.out { color: var(--marker-red); }
+.sub-panel .sub-row.sub-card .sub-knock { color: var(--marker-red); }
+.sub-panel .sub-row.sub-card .sub-stamina { background: linear-gradient(90deg, var(--marker-green) var(--v), #cfc4aa var(--v)); }
+.sub-panel .sub-row.sub-card.active { background: linear-gradient(var(--kit) 0 7px, transparent 7px), #fffaf0; border-color: #000; box-shadow: 3px 3px 0 #000, 0 0 0 3px var(--accent); transform: translateY(-2px); }
+.sub-panel .sub-row.sub-card.active.col { box-shadow: 3px 3px 0 #000, 0 0 0 3px var(--accent); }
+.sub-panel .sub-row.sub-card.active { padding-right: 78px; }
+.sub-mark { position: absolute; right: 8px; top: calc(50% + 2px); margin-top: -12px; font-size: var(--fs-caption); pointer-events: none; }
+.sub-swap { margin: 0; padding: var(--s2) var(--s3); background: var(--surface-2); border: 2px solid #000; }
+.sub-swap b { color: var(--accent); font-weight: inherit; }
+@media (prefers-reduced-motion: reduce) { .sub-panel .sub-row.sub-card.active { transform: none; } }

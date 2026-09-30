@@ -7,6 +7,7 @@ import { chanceStats } from '../sim/report.js';
 import { tacticLabel } from '../sim/tactics.js';
 import { button, haptic, icon, Sheet, versus } from './ds.js';
 import { matchMinute } from './Hud.js';
+import { chatCount, coachChat } from './benchChat.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
@@ -30,6 +31,7 @@ export class ShoutBar {
           <button class="hud-btn" data-tap="plan">${icon('team', 20)}<span>${tr('Taktik', 'Tactics')}</span></button>
           <button class="hud-btn" data-tap="sub">${icon('exit', 20)}<span>${tr('Wechsel', 'Subs')}</span></button>
           <button class="hud-btn" data-tap="info">${icon('season', 20)}<span>${tr('Info', 'Info')}</span></button>
+          <button class="hud-btn comm" data-tap="comm" aria-label="${tr('Kommunikation: Co-Trainer', 'Communication: assistant')}">${icon('phone', 20)}<span>${tr('Co-Trainer', 'Assistant')}</span><b class="ui-badge" hidden></b></button>
           <button data-tap="restart" class="hud-btn end-only go">${tr('Weiter', 'Continue')}</button>
           <button data-tap="menu" class="hud-btn end-only">${tr('Menü', 'Menu')}</button>
         </div>
@@ -45,9 +47,21 @@ export class ShoutBar {
         haptic('confirm');
       } else if (b.dataset.tap === 'plan') this.onPlan?.();
       else if (b.dataset.tap === 'info') this.openInfo();
+      else if (b.dataset.tap === 'comm') this.openComm();
       else if (b.dataset.tap) this.input.tap(b.dataset.tap);
     });
     this.info = typeof document !== 'undefined' ? new Sheet({ id: 'info-sheet', onClose: () => clearInterval(this.infoTimer) }) : null;
+    // KOMMUNIKATION: Verlauf mit dem Co-Trainer. Das Spiel läuft weiter (wie INFO).
+    this.comm = typeof document !== 'undefined' ? new Sheet({ id: 'comm-sheet', onClose: () => clearInterval(this.commTimer) }) : null;
+    this.comm?.el.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-answer]');
+      if (!b) return;
+      this.answer(b.dataset.answer === 'skip' ? null : Number(b.dataset.answer));
+      haptic('confirm');
+      this.refreshComm();
+    });
+    this.titles = new Map();
+    this.seen = 0;
     this.info?.el.addEventListener('click', (e) => {
       const b = e.target.closest('[data-info]');
       if (!b) return;
@@ -66,6 +80,7 @@ export class ShoutBar {
     this.root.hidden = true;
     document.body.classList.remove('manager');
     this.info?.close();
+    this.comm?.close();
   }
 
   answer(index) {
@@ -114,10 +129,63 @@ export class ShoutBar {
       <div class="ui-row">${button(tr('Tempo wechseln', 'Change tempo'), { 'data-info': 'tempo' })}${button(tr('Ton an/aus', 'Sound on/off'), { 'data-info': 'mute' })}</div>`;
   }
 
+  openComm() {
+    if (!this.comm || !this.match) return;
+    this.comm.open({ title: tr('Co-Trainer', 'Assistant coach'), body: this.commBody() });
+    this.markSeen();
+    this.scrollComm();
+    clearInterval(this.commTimer);
+    this.commTimer = setInterval(() => (this.comm.isOpen ? this.refreshComm() : clearInterval(this.commTimer)), 1000);
+  }
+
+  refreshComm() {
+    if (!this.comm?.isOpen || !this.match) return;
+    const last = this.commHtml;
+    const html = this.commBody();
+    if (html === last) return;
+    this.comm.update(html);
+    this.markSeen();
+    this.scrollComm();
+  }
+
+  scrollComm() {
+    const body = this.comm.el.querySelector('.body');
+    if (body) body.scrollTop = body.scrollHeight;
+  }
+
+  markSeen() {
+    this.seen = chatCount(this.match);
+    this.renderBadge();
+  }
+
+  renderBadge() {
+    const n = this.match ? chatCount(this.match) - this.seen : 0;
+    const badge = this.root.querySelector('.comm .ui-badge');
+    if (!badge || badge.textContent === String(n)) return;
+    badge.textContent = String(n);
+    badge.hidden = n <= 0;
+  }
+
+  commBody() {
+    const m = this.match;
+    const list = coachChat(m, this.titles);
+    const bubble = (e) => {
+      if (e.kind === 'card')
+        return `<div class="bc-msg co${e.pending ? ' pending' : ''}"><small>${e.min}' · ${tr('Co-Trainer', 'Assistant')}</small><b>${esc(e.title)}</b>${e.text ? `<span>${esc(e.text)}</span>` : ''}
+          ${e.pending ? `<div class="bc-answers">${e.options.map((o, i) => `<button class="ui-btn${i === 0 ? ' primary' : ''}" data-answer="${i}">${esc(o)}</button>`).join('')}<button class="ui-btn ghost" data-answer="skip">${tr('Nichts ändern', 'No change')}</button></div>` : ''}</div>`;
+      if (e.kind === 'answer') return `<div class="bc-msg me"><small>${e.min}' · ${tr('Du', 'You')}</small><span>${esc(e.text)}</span></div>`;
+      if (e.kind === 'missed') return `<p class="bc-note">${tr('Keine Antwort – alles bleibt, wie es ist.', 'No answer – everything stays as it is.')}</p>`;
+      return `<div class="bc-msg co follow ${e.result}"><small>${tr('Co-Trainer', 'Assistant')} · ${e.result === 'better' ? tr('besser', 'better') : tr('nicht besser', 'not better')}</small><span>${esc(e.text)}</span></div>`;
+    };
+    this.commHtml = `<div class="bc-chat" aria-live="polite">${list.length ? list.map(bubble).join('') : `<p class="bc-note">${tr('Noch ruhig an der Linie. Meldet sich der Co-Trainer, steht es hier.', 'Quiet on the touchline so far. When your assistant speaks up, it shows here.')}</p>`}</div>`;
+    return this.commHtml;
+  }
+
   renderCard(m, card) {
     this.card = card;
     this.cardEl.hidden = !card;
     if (!card) return;
+    this.titles.set(card.t, { title: card.title, text: card.text });
     haptic('message');
     const minute = matchMinute(m, card.t);
     // Ebene 1: Lage (groß). Ebene 2: ein Satz. Dann die Entscheidung – große Knöpfe, Ignorieren klein.
@@ -143,7 +211,16 @@ export class ShoutBar {
 
   update(match) {
     if (this.root.hidden) return;
+    if (match !== this.match) {
+      this.titles = new Map();
+      this.seen = 0;
+    }
     this.match = match;
+    const sec = Math.floor(match.time);
+    if (sec !== this.badgeSec) {
+      this.badgeSec = sec;
+      this.renderBadge();
+    }
     // Nach dem Abpfiff gibt es nichts mehr zu entscheiden – die Karte darf nicht über dem Endbildschirm stehen.
     const card = match.phase === 'ended' ? null : match.coachCard ?? null;
     if (card !== this.card) this.renderCard(match, card);
@@ -156,7 +233,10 @@ export class ShoutBar {
     if (ended !== this.ended) {
       this.ended = ended;
       this.root.classList.toggle('ended', ended);
-      if (ended) this.info?.close();
+      if (ended) {
+        this.info?.close();
+        this.comm?.close();
+      }
     }
   }
 }

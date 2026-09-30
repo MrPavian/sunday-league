@@ -7,6 +7,7 @@ import { planSub, requestSub, subsLeft } from '../sim/squad.js';
 import { benchAdvice, outAdvice } from '../sim/subadvice.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const hex = (n) => (typeof n === 'number' ? `#${n.toString(16).padStart(6, '0')}` : '#2f6f3a');
 const bar = (v) => `<span class="sub-stamina" style="--v:${Math.round(Math.max(0, Math.min(1, v)) * 100)}%"></span>`;
 
 // Auswechseln: Wer raus, wer rein? Das Spiel steht, solange die Tafel offen ist.
@@ -121,18 +122,24 @@ export class SubPanel {
       const prof = [...profilesOf(p).map((id) => PROFILES[id].label), trickLine(p)].filter(Boolean).join(' · ');
       const tips = (kind === 'out' ? this.outTips : this.inTips)?.get(p.id) ?? [];
       const tip = tips.length ? `<small class="sub-tip ${kind}">${kind === 'in' ? tr('Passt jetzt', 'Good call now') : tr('Raus?', 'Take off?')}: ${esc(tips.join(', '))}</small>` : '';
-      return `<button class="sub-row${selected ? ' active' : ''}${this.col === kind ? ' col' : ''}" data-action="${kind}" data-value="${p.id}"><span class="sub-name">${esc(p.name)}${knock}</span><small>${esc(role)}</small>${prof ? `<small class="sub-prof">${esc(prof)}</small>` : ''}${tip}${bar(p.stamina)}</button>`;
+      // Als Spielerkarte: Kopf in Vereinsfarbe, Name, Position, Kraftbalken; gewählt = Stempel.
+      const mark = selected ? `<span class="m-stamp sub-mark${kind === 'in' ? ' ok' : ''}" style="--tilt:-8deg">${kind === 'in' ? tr('Rein', 'On') : tr('Raus', 'Off')}</span>` : '';
+      return `<button class="sub-row sub-card${selected ? ' active' : ''}${this.col === kind ? ' col' : ''}" data-action="${kind}" data-value="${p.id}" aria-pressed="${selected}"><span class="sub-name">${esc(p.name)}${knock}</span><small>${esc(role)}</small>${prof ? `<small class="sub-prof">${esc(prof)}</small>` : ''}${tip}${bar(p.stamina)}${mark}</button>`;
     };
+    const swapOut = outs.find((p) => p.id === this.outId);
+    const swapIn = ins.find((p) => p.id === this.inId);
+    const swap = swapOut && swapIn ? { out: swapOut, in: swapIn } : null;
     const blocked = left <= 0 ? tr('Alle Wechsel aufgebraucht.', 'All substitutions used.') : !ins.length ? tr('Keiner mehr auf der Bank, der rein kann.', 'Nobody left on the bench who can come on.') : '';
     this.root.innerHTML = `
-      <div class="sub-panel" role="dialog" aria-label="${tr('Auswechseln', 'Substitution')}">
+      <div class="sub-panel" role="dialog" aria-label="${tr('Auswechseln', 'Substitution')}" style="--kit:${hex(m.teams[this.team].kit?.shirt)}">
         <header><h3>${tr('Auswechseln', 'Substitution')}</h3><small>${ruleText}</small></header>
         ${hurt.map((p) => `<p class="sub-hurt">✚ ${tr(`${esc(p.name)} ist verletzt und geht beim nächsten Stopp runter.`, `${esc(p.name)} is injured and comes off at the next stoppage.`)}</p>`).join('')}
         ${blocked ? `<p class="sub-blocked">${blocked}</p>` : `
         <div class="sub-cols">
           <div><h4>${tr('Raus', 'Off')}</h4>${outs.map((p) => row(p, 'out', p.id === this.outId)).join('')}</div>
           <div><h4>${tr('Rein', 'On')}</h4>${ins.map((p) => row(p, 'in', p.id === this.inId)).join('')}</div>
-        </div>`}
+        </div>
+        ${swap ? `<p class="sub-swap" aria-live="polite">⇄ <b>${esc(swap.out.name)}</b> ${tr('raus', 'off')} · <b>${esc(swap.in.name)}</b> ${tr('rein', 'on')}</p>` : ''}`}
         <footer>
           ${blocked ? '' : `<button class="primary" data-action="confirm" ${this.outId && this.inId ? '' : 'disabled'}>${tr('Wechseln (Enter)', 'Substitute (Enter)')}</button><button data-action="auto">${tr('Automatisch: der Müdeste', 'Automatic: the most tired')}</button>`}
           <button data-action="cancel">${tr('Zurück (Esc)', 'Back (Esc)')}</button>
