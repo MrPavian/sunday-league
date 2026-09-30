@@ -1625,6 +1625,8 @@ line.tb-chalk { stroke-width: 1; }
 
 /* ===== UI 3.0 Phase 6: Handy + Hand + Gruppenchat ===== */
 .phone-stage { display: grid; justify-items: center; padding: var(--s2) 0 var(--s6, 28px); }
+/* Die Hand ragt über den Rand hinaus (Arm aus dem Bild) – abgeschnitten wird erst am Inhaltsbereich. */
+.club-body:has(.phone-stage) { overflow: clip; }
 .phone-stage .m-phone-wrap { --phone-w: min(380px, 100%); }
 .phone-stage .m-phone { aspect-ratio: auto; height: clamp(300px, calc(100dvh - 230px), 720px); padding: 16px 10px 20px; }
 .phone-stage .m-screen { font-size: var(--fs-secondary); }
@@ -1647,8 +1649,6 @@ line.tb-chalk { stroke-width: 1; }
 .wa-reply { flex: none; display: flex; flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; white-space: nowrap; gap: 4px; align-items: center; padding: 6px; font-size: var(--fs-caption); background: rgba(255, 255, 255, 0.06); border-top: 1px solid rgba(255, 255, 255, 0.15); }
 .club-panel .wa-reply button.wa-chip { flex: none; min-height: var(--touch-min); padding: 0 12px; border-radius: 22px; color: #0f1a14; background: #9fe0b0; text-shadow: none; }
 /* Offen: die Hand rutscht etwas tiefer, damit Daumen und Finger nicht auf der Antwortzeile liegen */
-.phone-stage.open .m-thumb { bottom: -9%; }
-.phone-stage.open .m-fingers { bottom: -3%; }
 .phone-stage.open .wa-reply { padding-left: 28px; padding-right: 22px; }
 /* Handy quer (Querformat mit wenig Höhe): Gerät liegt quer in der Hand, volle Breite */
 @media (orientation: landscape) and (max-height: 520px) {
@@ -1666,3 +1666,4 @@ line.tb-chalk { stroke-width: 1; }
   .wa-head { padding: 0 6px 2px; }
 }
 @media (pointer: coarse) { .bubble.tip .link { min-height: var(--touch-min); } }
+@media (min-width: 900px) and (min-height: 700px) { .phone-stage { padding-bottom: 96px; } }

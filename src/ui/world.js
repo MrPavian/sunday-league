@@ -28,33 +28,122 @@ function shade(color, f = 0.78) {
   return `rgb(${c(16)}, ${c(8)}, ${c(0)})`;
 }
 
-// Hand in drei Teilen: Handfläche (hinter dem Handy), Daumen links und Fingerspitzen rechts (davor).
-const PALM = [
-  '......kkkkkkk...',
-  '....kksssssssk..',
-  '...kssssssssssk.',
-  '..ksssssssssssk.',
-  '.kssssssssssssk.',
-  '.ksssssssssssSk.',
-  'kssssssssssSSk..',
-  'ksssssssssSSk...',
-  'kSssssssSSSk....',
-  '.kSSsSSSSSk.....',
-  '..kSSSSSSk......',
-  '...ksssssk......',
-  '...ksssssk......',
-  '...kSssssk......',
+// Hand (rechte Hand hält das Handy hochkant, wie auf einem Produktfoto): Die Teile sind als
+// einfache Formen anatomisch platziert und werden auf ein Pixelraster gerechnet – so haben alle
+// Teile dieselbe Pixelgröße, Kontur und Schattierung. Koordinaten: Handy-Breite = 100, Unterkante
+// des Handys bei y = 0, y wächst nach unten (negativ = auf dem Handy).
+//   Daumen: rechts am Rand, Kuppe leicht auf dem Rahmen. Finger: umgreifen die linke Kante, man
+//   sieht vier Kuppen. Handfläche hinter der unteren Hälfte, Ballen rechts unten, Handgelenk geht
+//   schräg nach rechts unten aus dem Bild.
+const HAND_FRAME = { x0: -26, y0: -110, w: 180, h: 170, px: 2.4 };
+// cap: Kapsel von a nach b, Radius läuft von ra nach rb (verjüngt). g: Gruppe – Kontur nur an
+// Gruppengrenzen, Schatten über die ganze Gruppe. front: liegt vor dem Handy.
+const cap = (ax, ay, bx, by, ra, rb = ra, o = {}) => ({ kind: 'cap', ax, ay, bx, by, ra, rb, ...o });
+const ell = (cx, cy, rx, ry, o = {}) => ({ kind: 'ell', cx, cy, rx, ry, ...o });
+const HAND_PARTS = [
+  // Vor dem Handy: Daumen (rechts, zwei Glieder, verjüngt) und vier Fingerkuppen (links).
+  cap(110, -34, 106, -66, 12, 9.6, { g: 'thumb', front: true }),
+  cap(106, -66, 100.5, -90, 9.6, 7.2, { g: 'thumb', front: true }),
+  cap(-15, -72, -1, -69, 6.6, 6, { g: 'f1', front: true }),
+  cap(-16, -58, -1, -56, 6.8, 6.2, { g: 'f2', front: true }),
+  cap(-15, -44, -1, -43, 6.5, 5.9, { g: 'f3', front: true }),
+  cap(-13, -31, -1.5, -31, 5.6, 5, { g: 'f4', front: true }),
+  // Hinter dem Handy: Handfläche mit Ballen, Daumenballen, Fingerwurzeln, Handgelenk.
+  ell(104, -28, 16, 27, { g: 'hand' }),
+  ell(66, -18, 38, 32, { g: 'hand' }),
+  ell(-9, -52, 9, 25, { g: 'hand' }),
+  cap(90, 14, 156, 74, 22, 20, { g: 'hand' }),
 ];
-const THUMB = ['..kkkk..', '.kssssk.', 'kssssssk', 'ksssssSk', 'ksssssSk', 'kssssSSk', '.kssssSk', '.ksssSSk', '.kssssSk', '..ksssSk', '..kssssk', '..ksssSk', '..kssssk', '...kkkk.'];
-// Vier Finger, die um die rechte Kante greifen – aneinander, damit sie als Hand lesen.
-const FINGERS = ['kkkk..', 'sssskk', 'SsssSk', 'kkkkk.', 'sssskk', 'SsssSk', 'kkkkk.', 'sssskk', 'SsssSk', 'kkkkk.', 'sssskk', 'SsssSk', 'kkkk..'];
+const THUMB_NAIL = ell(100.5, -88, 3.8, 5.2);
 
+function inside(sh, x, y) {
+  if (sh.kind === 'ell') return ((x - sh.cx) / sh.rx) ** 2 + ((y - sh.cy) / sh.ry) ** 2 <= 1;
+  const dx = sh.bx - sh.ax;
+  const dy = sh.by - sh.ay;
+  const t = Math.max(0, Math.min(1, ((x - sh.ax) * dx + (y - sh.ay) * dy) / (dx * dx + dy * dy)));
+  const r = sh.ra + (sh.rb - sh.ra) * t;
+  return (x - sh.ax - t * dx) ** 2 + (y - sh.ay - t * dy) ** 2 <= r * r;
+}
+
+// Ein Raster für die ganze Hand: Zelle gehört zum ersten Teil, das sie trifft (Reihenfolge =
+// Vorrang). Kontur, wo der Nachbar leer ist oder zu einer anderen Gruppe gehört (Fingerzwischen-
+// räume, Daumen gegen Ballen); Schatten unten rechts, Glanz oben links – bezogen auf die Gruppe,
+// damit Formen weich ineinander übergehen. Ergebnis: zwei Zeichenkarten (hinten/vorn).
+function rasterHand() {
+  const { x0, y0, w, h, px } = HAND_FRAME;
+  const cols = Math.round(w / px);
+  const rows = Math.round(h / px);
+  const at = (c, r) => [x0 + (c + 0.5) * px, y0 + (r + 0.5) * px];
+  const partAt = (x, y) => HAND_PARTS.findIndex((sh) => inside(sh, x, y));
+  const groupAt = (x, y) => HAND_PARTS[partAt(x, y)]?.g ?? null;
+  const owner = [];
+  for (let r = 0; r < rows; r++) {
+    owner.push([]);
+    for (let c = 0; c < cols; c++) owner[r].push(partAt(...at(c, r)));
+  }
+  const g = (c, r) => (r < 0 || r >= rows || c < 0 || c >= cols || owner[r][c] < 0 ? null : HAND_PARTS[owner[r][c]].g);
+  const back = [];
+  const front = [];
+  for (let r = 0; r < rows; r++) {
+    let b = '';
+    let f = '';
+    for (let c = 0; c < cols; c++) {
+      const o = owner[r][c];
+      let ch = '.';
+      if (o >= 0) {
+        const grp = HAND_PARTS[o].g;
+        const [x, y] = at(c, r);
+        if ([g(c - 1, r), g(c + 1, r), g(c, r - 1), g(c, r + 1)].some((n) => n !== grp)) ch = 'k';
+        else if (grp === 'thumb' && inside(THUMB_NAIL, x, y)) ch = inside(THUMB_NAIL, x + px, y + px) && inside(THUMB_NAIL, x - px, y - px) ? 'n' : 'N';
+        else if (groupAt(x + px * 2.2, y + px * 1.6) !== grp) ch = 'S';
+        else if (groupAt(x - px * 1.6, y - px * 1.6) !== grp) ch = 'h';
+        else ch = 's';
+      }
+      const isFront = o >= 0 && HAND_PARTS[o].front;
+      b += isFront ? '.' : ch;
+      f += isFront ? ch : '.';
+    }
+    back.push(b);
+    front.push(f);
+  }
+  return { back, front };
+}
+
+// Pixelreihen → SVG mit zusammengefassten waagrechten Läufen (weniger Knoten als ein Rechteck je Pixel).
+function runsSVG(rows, palette, cls) {
+  const out = [];
+  rows.forEach((row, y) => {
+    for (let x = 0; x < row.length; ) {
+      const ch = row[x];
+      let n = 1;
+      while (row[x + n] === ch) n++;
+      if (palette[ch]) out.push(`<rect x="${x}" y="${y}" width="${n}" height="1" fill="${palette[ch]}"/>`);
+      x += n;
+    }
+  });
+  return out.join('');
+}
+
+function tint(color, f) {
+  const n = parseInt(hex(color).slice(1), 16);
+  const c = (s) => Math.round(((n >> s) & 255) + (255 - ((n >> s) & 255)) * f);
+  return `rgb(${c(16)}, ${c(8)}, ${c(0)})`;
+}
+
+const handCache = new Map();
 export function handLayers(skin = 0xe0ac80) {
-  const pal = { k: '#000', s: hex(skin), S: shade(skin) };
-  return {
-    back: pixelSVG(PALM, pal, 'm-hand-back'),
-    front: `${pixelSVG(THUMB, pal, 'm-hand-front m-thumb')}${pixelSVG(FINGERS, pal, 'm-hand-front m-fingers')}`,
+  if (handCache.has(skin)) return handCache.get(skin);
+  const pal = { k: '#1a1410', s: hex(skin), S: shade(skin), h: tint(skin, 0.22), n: tint(skin, 0.55), N: shade(skin, 0.9) };
+  const { w, h, px } = HAND_FRAME;
+  const vb = `viewBox="0 0 ${Math.round(w / px)} ${Math.round(h / px)}"`;
+  const svg = (cls, body) => `<svg class="${cls}" ${vb} shape-rendering="crispEdges" aria-hidden="true">${body}</svg>`;
+  const { back, front } = rasterHand();
+  const layers = {
+    back: svg('m-hand-layer m-hand-back', runsSVG(back, pal)),
+    front: svg('m-hand-layer m-hand-front m-thumb m-fingers', runsSVG(front, pal)),
   };
+  handCache.set(skin, layers);
+  return layers;
 }
 
 // Handy mit Hand. screen: HTML des Displays (Chat, Sperrbildschirm …) – echtes, bedienbares HTML.

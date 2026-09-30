@@ -221,11 +221,11 @@
 .m-phone.buzz { animation: m-buzz 0.36s steps(6) 1; }
 @keyframes m-buzz { 20% { transform: translateX(-2px) rotate(-1deg); } 40% { transform: translateX(2px) rotate(1deg); } 60% { transform: translateX(-2px); } 80% { transform: translateX(1px); } }
 /* Hand: Handfläche hinter dem Gerät, Daumen und Finger davor (zwei SVG-Schichten aus world.js) */
-.m-hand-back, .m-hand-front { position: absolute; pointer-events: none; image-rendering: pixelated; }
-.m-hand-back { z-index: 0; left: -12%; bottom: -22%; width: 74%; }
+/* Beide Schichten teilen denselben Rahmen (world.js HAND_FRAME): 180 % der Handybreite, links
+   bei −26 %, die Unterkante des Handys liegt bei 110/170 der Bildhöhe. */
+.m-hand-layer { position: absolute; left: -26%; top: 100%; width: 180%; height: auto; transform: translateY(-64.7%); pointer-events: none; }
+.m-hand-back { z-index: 0; }
 .m-hand-front { z-index: 2; }
-.m-thumb { left: -6%; bottom: 10%; width: 18%; }
-.m-fingers { right: -5%; bottom: 14%; width: 12%; }
 .m-phone-wrap.rise { animation: m-rise 0.32s var(--ease) 1; }
 @keyframes m-rise { from { transform: translateY(40px) rotate(4deg); opacity: 0.2; } }
 
