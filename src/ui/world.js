@@ -32,8 +32,8 @@ function shade(color, f = 0.78) {
 // einfache Formen anatomisch platziert und werden auf ein Pixelraster gerechnet – so haben alle
 // Teile dieselbe Pixelgröße, Kontur und Schattierung. Koordinaten: Handy-Breite = 100, Unterkante
 // des Handys bei y = 0, y wächst nach unten (negativ = auf dem Handy).
-//   Daumen: rechts am Rand, Kuppe leicht auf dem Rahmen. Finger: umgreifen die linke Kante, man
-//   sieht vier Kuppen. Handfläche hinter der unteren Hälfte, Ballen rechts unten, Handgelenk geht
+//   Daumen: rechts am Rand, Kuppe reicht etwas aufs Display. Finger: umgreifen die linke Kante,
+//   man sieht vier Kuppen, die ein Stück aufs Display ragen. Handfläche hinter der unteren Hälfte, Ballen rechts unten, Handgelenk geht
 //   schräg nach rechts unten aus dem Bild.
 const HAND_FRAME = { x0: -26, y0: -110, w: 180, h: 170, px: 2.4 };
 // cap: Kapsel von a nach b, Radius läuft von ra nach rb (verjüngt). g: Gruppe – Kontur nur an
@@ -43,18 +43,18 @@ const ell = (cx, cy, rx, ry, o = {}) => ({ kind: 'ell', cx, cy, rx, ry, ...o });
 const HAND_PARTS = [
   // Vor dem Handy: Daumen (rechts, zwei Glieder, verjüngt) und vier Fingerkuppen (links).
   cap(110, -34, 106, -66, 12, 9.6, { g: 'thumb', front: true }),
-  cap(106, -66, 100.5, -90, 9.6, 7.2, { g: 'thumb', front: true }),
-  cap(-15, -72, -1, -69, 6.6, 6, { g: 'f1', front: true }),
-  cap(-16, -58, -1, -56, 6.8, 6.2, { g: 'f2', front: true }),
-  cap(-15, -44, -1, -43, 6.5, 5.9, { g: 'f3', front: true }),
-  cap(-13, -31, -1.5, -31, 5.6, 5, { g: 'f4', front: true }),
+  cap(106, -66, 97, -90, 9.6, 7.2, { g: 'thumb', front: true }),
+  cap(-15, -72, 5, -69, 6.6, 6, { g: 'f1', front: true }),
+  cap(-16, -58, 6, -56, 6.8, 6.2, { g: 'f2', front: true }),
+  cap(-15, -44, 5, -43, 6.5, 5.9, { g: 'f3', front: true }),
+  cap(-13, -31, 3, -31, 5.6, 5, { g: 'f4', front: true }),
   // Hinter dem Handy: Handfläche mit Ballen, Daumenballen, Fingerwurzeln, Handgelenk.
   ell(104, -28, 16, 27, { g: 'hand' }),
   ell(66, -18, 38, 32, { g: 'hand' }),
   ell(-9, -52, 9, 25, { g: 'hand' }),
   cap(90, 14, 156, 74, 22, 20, { g: 'hand' }),
 ];
-const THUMB_NAIL = ell(100.5, -88, 3.8, 5.2);
+const THUMB_NAIL = ell(97.5, -88, 3.8, 5.2);
 
 function inside(sh, x, y) {
   if (sh.kind === 'ell') return ((x - sh.cx) / sh.rx) ** 2 + ((y - sh.cy) / sh.ry) ** 2 <= 1;
