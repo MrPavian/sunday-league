@@ -62,10 +62,9 @@ Abschnitten (Menü, Karriere, Challenges, Loop).
 | | vorher (Phase B) | nachher |
 |---|---|---|
 | größte UI-Datei | `Clubhouse.js` 1 816 Zeilen | `clubhouse/team.js` 512 Zeilen |
-| JS-Bundle | 1 761 269 B (gzip 558 222) | 1 761 220 B (gzip 564 370*) |
+| JS-Bundle | 1 761 269 B (gzip 558 222) | 1 761 223 B (gzip 558 003) |
 | CSS-Bundle | 136 312 B | 136 310 B |
 | Tests / Browser-Suite | 362 / grün | 362 / grün |
 | Speicherzyklus (4 Spiele) | Texturen 24 → 28, Heap 21 → 22 MB | unverändert |
 
-\* gzip-Wert schwankt mit der Modulreihenfolge im Bundle (mehr Dateien, andere Anordnung);
-Rohgröße praktisch gleich. Das ist kein Laufzeit-Effekt – Phase E prüft das Bundle gezielt.
+gzip jeweils mit `gzip -6` gemessen (Vite zeigt einen eigenen, höheren Wert – nicht vergleichbar).
