@@ -65,6 +65,6 @@ Abschnitten (Menü, Karriere, Challenges, Loop).
 | JS-Bundle | 1 761 269 B (gzip 558 222) | 1 761 223 B (gzip 558 003) |
 | CSS-Bundle | 136 312 B | 136 310 B |
 | Tests / Browser-Suite | 362 / grün | 362 / grün |
-| Speicherzyklus (4 Spiele) | Texturen 24 → 28, Heap 21 → 22 MB | unverändert |
+| Speicherzyklus (4 Spiele) | Texturen 28 → 32 (Phase-B-Protokoll) | Texturen 24 → 28, Heap 21,4 → 22,3 MB, Listener 99 konstant |
 
 gzip jeweils mit `gzip -6` gemessen (Vite zeigt einen eigenen, höheren Wert – nicht vergleichbar).
