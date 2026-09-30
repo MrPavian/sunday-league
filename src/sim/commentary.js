@@ -173,6 +173,9 @@ export function createCommentator(m, seed = 1) {
           if (e.forced) add(tr(`Verletzungsbedingter Wechsel bei ${team(e.team)}: ${surname(who(e.inId))} kommt für ${surname(who(e.outId))}.`, `Injury substitution for ${team(e.team)}: ${surname(who(e.inId))} replaces ${surname(who(e.outId))}.`));
           else if (rng.chance(0.5)) add(tr(`Wechsel bei ${team(e.team)}: ${surname(who(e.inId))} für ${surname(who(e.outId))}.`, `Substitution for ${team(e.team)}: ${surname(who(e.inId))} for ${surname(who(e.outId))}.`));
           break;
+        case 'no_goal':
+          add(tr(`${surname(who(e.playerId))} trifft aus der eigenen Hälfte – zählt aber nicht. Abstoß.`, `${surname(who(e.playerId))} scores from inside their own half – but it doesn't count. Goal kick.`), 'foul');
+          break;
         case 'no_call':
           if (rng.chance(0.35)) add(m.referee ? tr(`${surname(who(e.playerId))} legt ${surname(who(e.victimId))} um – der Schiri lässt laufen.`, `${surname(who(e.playerId))} takes out ${surname(who(e.victimId))} – the ref waves play on.`) : tr(`${surname(who(e.victimId))} beschwert sich – ohne Schiri geht es einfach weiter.`, `${surname(who(e.victimId))} complains – with no ref, play just goes on.`), 'foul');
           break;

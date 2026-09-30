@@ -3,7 +3,7 @@ import { museum } from '../career/museum.js';
 import { seasonReview } from '../career/review.js';
 import { shareReview } from './review.js';
 import { GROUP_LABELS, SIMPLE } from '../sim/commands.js';
-import { coachLevel, setCoachLevel } from './prefs.js';
+import { coachLevel, homeView, setCoachLevel } from './prefs.js';
 import { button, haptic, icon, tabs as uiTabs } from './ds.js';
 import { TacticBoard } from './TacticBoard.js';
 import { bindFlips, phone } from './world.js';
@@ -86,6 +86,7 @@ export class Clubhouse {
         this.confirmRelease = null;
       } else if (action === 'playerBack') this.openPlayer = null;
       else if (action === 'profileTab') this.profileTab = value;
+      else if (action === 'youthTab') this.youthTab = value;
       else if (action === 'playerStep') this.stepPlayer(Number(value));
       else if (action === 'squadSort') this.squadSort = value;
       else if (action === 'slotPick' || action === 'benchPick') this.lineupPick(action === 'slotPick' ? { slot: Number(value) } : { idx: Number(value) });
@@ -421,7 +422,7 @@ export class Clubhouse {
         : uiTabs(area.tabs.map((t) => [t, labels[t]]), this.tab, 'tab')
       : '';
     // Im Vereinsheim („Heute") ist das Fenster der Szene durchsichtig: dahinter läuft der eigene Platz.
-    this.root.classList.toggle('see-through', area.id === 'home');
+    this.root.classList.toggle('see-through', area.id === 'home' && homeView() !== 'klassisch');
     // Neuer Bereich/Tab: Inhalt blendet einmal kurz ein (nicht bei jedem Neuzeichnen).
     const enter = this.shownTab !== this.tab;
     this.shownTab = this.tab;

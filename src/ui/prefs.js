@@ -17,3 +17,21 @@ export function setCoachLevel(level) {
     // egal
   }
 }
+
+// Vereinsheim „Heute": 'raum' (Wand, Fenster, Tisch) oder 'klassisch' (schlichte Kacheln).
+const HOME_KEY = 'sunday-league:homeview';
+export function homeView() {
+  try {
+    return localStorage.getItem(HOME_KEY) === 'klassisch' ? 'klassisch' : 'raum';
+  } catch {
+    return 'raum';
+  }
+}
+
+export function setHomeView(view) {
+  try {
+    localStorage.setItem(HOME_KEY, view === 'klassisch' ? 'klassisch' : 'raum');
+  } catch {
+    // egal
+  }
+}

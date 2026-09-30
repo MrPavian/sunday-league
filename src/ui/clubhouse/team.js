@@ -438,17 +438,24 @@ export const teamScreens = {
     const alumni = c.alumni.length
       ? c.alumni.map((a) => tr(`<li>${a.name} – ${a.apps} Spiele, ${a.goals} Tore · ${a.role} (seit Saison ${a.season + 1})</li>`, `<li>${a.name} – ${a.apps} games, ${a.goals} goals · ${roleName(a.role)} (since season ${a.season + 1})</li>`)).join('')
       : `<li><em>${tr('noch niemand – der Verein ist jung', 'nobody yet – the club is young')}</em></li>`;
-    return `
+    // Unterreiter: eigene Jugend (A-Jugend zuerst), Talente anderer Vereine, Ehrenamt & Ehemalige.
+    const sub = ['own', 'scout', 'club'].includes(this.youthTab) ? this.youthTab : 'own';
+    const scouts = scoutList(c).filter((k) => k.status === 'open').length;
+    const subTabs = uiTabs([['own', tr('Eigene Jugend', 'Our youth')], ['scout', tr('Andere Vereine', 'Other clubs'), scouts || null], ['club', tr('Ehrenamt & Ehemalige', 'Volunteers & alumni')]], sub, 'youthTab');
+    if (sub === 'scout') return `${subTabs}${this.scoutBlock()}`;
+    if (sub === 'club')
+      return `${subTabs}
       <h4>${tr('Ehrenamt', 'Volunteers')}</h4>
       <ul class="plain staff"><li><b>${tr('Jugendtrainer', 'Youth coach')}:</b> ${c.youth.coach.name} <span class="stars">${stars(c.youth.coach.quality)}</span> <small>${tr('– je besser, desto mehr Talente', '– the better, the more talents')}</small></li>${staff}</ul>
-      ${this.academyBlock()}
-      <h4>${tr('A-Jugend (16–19)', 'U19s (16–19)')}</h4>
-      ${prospects
-        ? `<table class="squad"><thead><tr><th>${tr('Talent', 'Talent')}</th><th>${tr('Pos.', 'Pos.')}</th><th>${tr('Stärke', 'Rating')}</th><th>${tr('Einschätzung', 'Assessment')}</th><th></th></tr></thead><tbody>${prospects}</tbody></table>
-           <p class="empty">${tr('Talente entwickeln sich auch in der Jugend. Mit 20 wechseln sie zum Nachbarn, wenn du sie nicht hochziehst.', 'Talents develop in the youth team too. At 20 they leave for a neighbouring club if you do not promote them.')}${full ? tr(' Kader voll – erst Platz schaffen.', ' Squad full – make room first.') : ''}</p>`
-        : `<p class="empty">${tr('Kein Talent in der A-Jugend. Der nächste Jahrgang kommt zur neuen Saison.', 'No talent in the U19s. The next intake arrives with the new season.')}</p>`}
       <h4>${tr('Ehemalige', 'Former players')}</h4>
       <ul class="plain">${alumni}</ul>`;
+    return `${subTabs}
+      <h4>${tr('A-Jugend (16–19)', 'U19s (16–19)')}</h4>
+      ${prospects
+        ? `<table class="squad prospects"><thead><tr><th>${tr('Talent', 'Talent')}</th><th>${tr('Pos.', 'Pos.')}</th><th>${tr('Stärke', 'Rating')}</th><th>${tr('Einschätzung', 'Assessment')}</th><th></th></tr></thead><tbody>${prospects}</tbody></table>
+           <p class="empty">${tr('Talente entwickeln sich auch in der Jugend. Mit 20 wechseln sie zum Nachbarn, wenn du sie nicht hochziehst.', 'Talents develop in the youth team too. At 20 they leave for a neighbouring club if you do not promote them.')}${full ? tr(' Kader voll – erst Platz schaffen.', ' Squad full – make room first.') : ''}</p>`
+        : `<p class="empty">${tr('Kein Talent in der A-Jugend. Der nächste Jahrgang kommt zur neuen Saison.', 'No talent in the U19s. The next intake arrives with the new season.')}</p>`}
+      ${this.academyBlock()}`;
   },
 
   // Jahrgänge E bis B mit Trainingsschwerpunkt der Woche.
@@ -474,8 +481,14 @@ export const teamScreens = {
       <div class="actions">${focusButtons}</div>
       <p class="empty">${FOCUS[focus].desc} ${tr('Mit 16 wechseln die Kinder in die A-Jugend – Mädchen ins Frauenteam, sobald es eins gibt.', 'At 16 the kids move up to the U19s – girls to the women\'s team once there is one.')}</p>
       <div class="youth-teams">${teams || `<p class="empty">${tr('Keine Kinder in der Jugend.', 'No kids in the youth section.')}</p>`}</div>
-      ${last ? `<p>${tr('Letzte Saison', 'Last season')}: ${last.results.map((r) => tr(`${r.team}-Jugend ${r.pos}.`, `${r.team} youth: ${r.pos}.`)).join(' · ')}</p>` : ''}
-      <h4>${tr('Talente bei anderen Vereinen', 'Talents at other clubs')}</h4>
+      ${last ? `<p>${tr('Letzte Saison', 'Last season')}: ${last.results.map((r) => tr(`${r.team}-Jugend ${r.pos}.`, `${r.team} youth: ${r.pos}.`)).join(' · ')}</p>` : ''}`;
+  },
+
+  // Talente anderer Vereine (eigener Unterreiter der Jugend).
+  scoutBlock() {
+    const c = this.career;
+    const stars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n);
+    return `<h4>${tr('Talente bei anderen Vereinen', 'Talents at other clubs')}</h4>
       <p class="empty">${tr('Einmal pro Woche kannst du die Eltern eines Talents ansprechen. Kostet Kraft – und die anderen Vereine mögen das gar nicht.', 'Once a week you can approach a talent\'s parents. It costs energy – and the other clubs really don\'t like it.')}</p>
       <ul class="plain scout-kids">${scoutList(c)
         .map((k) => `<li><b>${k.name}</b> <small>${k.age}${tr(' J.', ' yrs')} · ${POSITIONS[k.position]} · ${k.club}</small> <span class="stars">${stars(talentGuess(c, k))}</span>

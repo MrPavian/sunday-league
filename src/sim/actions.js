@@ -115,7 +115,8 @@ export function tryExecute(m, p) {
   if (holds) {
     ball.holder = null;
     p.catchCooldown = 0.3;
-    if (p.role === 'gk') m.keeperRelease = { id: p.id, team: p.team, time: m.time };
+    // lofted: Abschlag aus der Hand (Drop-Kick) – sonst wirft er (nur für die Darstellung).
+    if (p.role === 'gk') m.keeperRelease = { id: p.id, team: p.team, time: m.time, lofted: !!a.lofted };
   } else {
     // Luftloch – gehört in der Kreisklasse dazu.
     const whiff = (0.05 * (1 - p.attrs.technique) + 0.04 * fatigue) * (hasTrait(p, 'ballsicher') ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.3 : 1) * (p.id === m.controlledId ? 0.5 : 1);
@@ -333,6 +334,13 @@ export function inKeeperBox(pitch, pos, goalX, margin = 0) {
   return Math.abs(pos.x - goalX) <= b.depth + margin && Math.abs(pos.z) <= b.halfWidth + margin;
 }
 
+// Hände nur im Torraum: 1 m vor der Linie, je 1 m neben den Pfosten. Kommt der Keeper weiter
+// raus, spielt er wie ein Feldspieler mit dem Fuß (der Strafraum oben bleibt für Standards).
+export const HAND_ZONE = { depth: 1, side: 1 };
+export function inHandZone(pitch, pos, goalX, margin = 0) {
+  return Math.abs(pos.x - goalX) <= HAND_ZONE.depth + margin && Math.abs(pos.z) <= pitch.goalHalfWidth + HAND_ZONE.side + margin;
+}
+
 export function keeperSaves(m) {
   const { ball, rng, pitch } = m;
   if (ball.holder) return;
@@ -340,17 +348,21 @@ export function keeperSaves(m) {
     if (p.role !== 'gk' || p.catchCooldown > 0 || p.state !== 'normal') continue;
     const s = attackDir(m, p.team);
     const goalX = -s * pitch.halfLength;
-    // Hand nur im eigenen Strafraum – draußen muss er wie ein Feldspieler ran.
-    if (!inKeeperBox(pitch, ball.pos, goalX, 0.3) || !inKeeperBox(pitch, p.pos, goalX, 0.3)) continue;
+    // Hände nur im eigenen Torraum. Weiter draußen (bis zum Strafraum) hält er flache Bälle
+    // nur noch mit Fuß und Körper: kürzere Reichweite, kein Fangen, kein Hechtsprung.
+    const hands = inHandZone(pitch, ball.pos, goalX, 0.2) && inHandZone(pitch, p.pos, goalX, 0.2);
+    if (!hands && (!inKeeperBox(pitch, ball.pos, goalX, 0.3) || !inKeeperBox(pitch, p.pos, goalX, 0.3))) continue;
     // Inkl. Hechtsprung. Vor großen Toren (Asche, Rasen) streckt er sich weiter –
     // sonst deckt er dort anteilig viel weniger ab als vor dem Jackentor.
     // Beim Elfmeter steht er fest auf der Linie – ohne Anlauf reicht der Sprung weniger weit.
-    const reach = (0.85 + 0.75 * p.attrs.keeping) * clamp(pitch.goalHalfWidth / 1.6, 0.85, 1.3) * (spotKick(m) ? 0.62 : 1);
-    if (dist2d(p.pos, ball.pos) > reach || ball.pos.y > 2.3) continue;
+    const reach = hands ? (0.85 + 0.75 * p.attrs.keeping) * clamp(pitch.goalHalfWidth / 1.6, 0.85, 1.3) * (spotKick(m) ? 0.62 : 1) : 0.55 + 0.35 * p.attrs.keeping;
+    if (dist2d(p.pos, ball.pos) > reach || ball.pos.y > (hands ? 2.3 : 1)) continue;
 
     const bs = ballSpeed(ball);
     const towardGoal = ball.vel.x * -s > 0;
     if (bs >= 4 && !towardGoal) continue;
+    // Langsamer Ball außerhalb des Torraums: kein Abwehren – er nimmt ihn mit dem Fuß an.
+    if (!hands && bs < 4) continue;
     // Ball am Fuß eines Gegners: Der Keeper muss sich in die Füße werfen. Klappt
     // mal, sonst liegt er und das Tor ist offen.
     const carrier = ball.lastAction === 'dribble' ? m.players.find((c) => c.id === ball.lastTouch) : null;
@@ -390,13 +402,13 @@ export function keeperSaves(m) {
         return;
       }
     }
-    // Hechtsprung, wenn der Ball nicht direkt auf den Mann kommt.
-    if (dist2d(p.pos, ball.pos) > 0.45) {
+    // Hechtsprung, wenn der Ball nicht direkt auf den Mann kommt (nur mit Händen).
+    if (hands && dist2d(p.pos, ball.pos) > 0.45) {
       p.diveAnim = 0.5;
       p.diveSide = Math.sign(ball.pos.z - p.pos.z) || 1;
     }
-    const pCatch = bs < 4 ? 0.97 : clamp(0.3 + 0.6 * p.attrs.keeping - (bs - 8) * 0.03, 0.08, 0.95);
-    if (rng.chance(pCatch)) {
+    const pCatch = !hands ? 0 : bs < 4 ? 0.97 : clamp(0.3 + 0.6 * p.attrs.keeping - (bs - 8) * 0.03, 0.08, 0.95);
+    if (pCatch > 0 && rng.chance(pCatch)) {
       ball.holder = p.id;
       ball.vel.x = ball.vel.y = ball.vel.z = 0;
       ball.lastTouch = p.id;
@@ -408,7 +420,7 @@ export function keeperSaves(m) {
       // nicht als Kerze über den Keeper.
       const side = Math.sign(ball.pos.z - p.pos.z) || (rng.chance(0.5) ? 1 : -1);
       // Harte Schüsse lenkt er öfter über die Latte oder ums Tor – dann gibt es Ecke.
-      const tip = pitch.boundary === 'lines' && m.phase !== 'shootout' && rng.chance(clamp(0.15 + (bs - 10) * 0.025, 0.1, 0.45));
+      const tip = hands && pitch.boundary === 'lines' && m.phase !== 'shootout' && rng.chance(clamp(0.15 + (bs - 10) * 0.025, 0.1, 0.45));
       if (tip) {
         const over = Math.abs(ball.pos.z) < pitch.goalHalfWidth * 0.6 || rng.chance(0.5); // mittig nur drüber, nie ins eigene Netz
         ball.vel.x = -s * rng.range(1.5, 3);

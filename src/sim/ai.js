@@ -4,7 +4,7 @@ import { hasTrait } from '../data/traits.js';
 import { ballSpeed } from './ball.js';
 import { attackDir, clampToPitch, distToSegment, getPlayer, wallPush } from './players.js';
 import { heeds } from './coach.js';
-import { keeperBox, shortGame } from './actions.js';
+import { HAND_ZONE, inHandZone, keeperBox, shortGame } from './actions.js';
 import { adherence, commitment, styleOf } from './plan.js';
 import { fooled } from './tricks.js';
 import { hasProfile } from './profiles.js';
@@ -581,7 +581,9 @@ function aiDecide(m, p, oppGoal) {
   const blockedLane = m.players.some((o) => o.team !== p.team && o.role !== 'gk' && dist2d(o.pos, p.pos) > 0.4 && distToSegment(o.pos, p.pos, lane) < 0.8);
   const justShot = m.time - (m.lastShotAt?.[p.team] ?? -9) < 0.9 && dGoal > 5;
   const hold = (blockedLane && rng.chance(0.5 - 0.2 * st.risk)) || (justShot && rng.chance(0.6));
-  if (!hold && dGoal < range * (skill > 1 ? 0.9 : 1) && facingDot > facingNeed) {
+  // Aus der eigenen Hälfte zählt ein Tor nicht – dann gar nicht erst schießen.
+  const ownHalf = p.pos.x * attackDir(m, p.team) <= 0.3;
+  if (!hold && !ownHalf && dGoal < range * (skill > 1 ? 0.9 : 1) && facingDot > facingNeed) {
     const gw = pitch.goalHalfWidth;
     p.pending = {
       type: 'shoot',
@@ -595,7 +597,7 @@ function aiDecide(m, p, oppGoal) {
   // Distanzschuss: Wer schießen kann und Platz hat, versucht es auch mal von weiter weg.
   const longRange = range + 7;
   const space = !m.players.some((o) => o.team !== p.team && o.role !== 'gk' && dist2d(o.pos, p.pos) < 3 && (o.pos.x - p.pos.x) * toG.x + (o.pos.z - p.pos.z) * toG.z > 0);
-  if (!hold && dGoal >= range && dGoal < longRange && facingDot > 0.5 && space && (p.attrs.shooting > 0.55 || hasTrait(p, 'hammer')) && rng.chance((0.18 + brisk * 0.12) * (1 + 0.3 * st.risk))) {
+  if (!hold && !ownHalf && dGoal >= range && dGoal < longRange && facingDot > 0.5 && space && (p.attrs.shooting > 0.55 || hasTrait(p, 'hammer')) && rng.chance((0.18 + brisk * 0.12) * (1 + 0.3 * st.risk))) {
     const gw = pitch.goalHalfWidth;
     p.pending = { type: 'shoot', power: 0.95, target: { x: oppGoal.x, z: (rng.chance(0.5) ? 1 : -1) * rng.range(gw * 0.4, gw * 1.0) }, ttl: 0.3 };
     return;
@@ -758,6 +760,13 @@ export function keeperIntent(m, p, dt) {
   }
   p.holdTimer = 0;
 
+  // Außerhalb des Torraums gibt es keine Hände: Hat er den Ball am Fuß, spielt er ihn sofort weg –
+  // kurz zum freien Mitspieler oder weit nach vorne.
+  if (!ball.holder && !p.pending && ball.lastTouch === p.id && ball.lastAction === 'dribble' && ball.pos.y < 0.7 && dist2d(p.pos, ball.pos) < 1.2 && !inHandZone(pitch, ball.pos, goalX, 0.2)) {
+    const free = openMate(m, p);
+    p.pending = free ? { type: 'pass', ttl: 0.5, cone: -0.2, targetId: free.id } : { type: 'pass', ttl: 0.5, cone: -0.2, lofted: true, minDist: 9 };
+  }
+
   // Elfmeter: auf der Linie warten, dann eine Ecke raten – wie im Elfmeterschießen.
   const sp = m.setPiece;
   if (sp?.type === 'penalty' && sp.team !== p.team && (!sp.taken || m.time - (m.penaltyKick ?? -9) < 1.2)) {
@@ -793,16 +802,19 @@ export function keeperIntent(m, p, dt) {
     const dGoal = Math.hypot(ball.pos.x - goalX, ball.pos.z);
     const covered = m.players.some((o) => o.team === p.team && o !== p && o.state === 'normal' && distToSegment(o.pos, ball.pos, { x: goalX, z: 0 }) < 1 && dist2d(o.pos, { x: goalX, z: 0 }) < dGoal);
     if (dGoal < 11 && !covered) {
-      const out = clamp(dGoal * 0.35, 0.8, 3.2) * (0.7 + 0.3 * p.attrs.keeping);
+      // Nur bis an den Rand des Torraums: weiter draußen dürfte er den Ball nicht mehr mit den Händen spielen.
+      const out = clamp(dGoal * 0.35, 0.8, HAND_ZONE.depth) * (0.7 + 0.3 * p.attrs.keeping);
       const dir = norm(ball.pos.x - goalX, ball.pos.z);
       tx = goalX + dir.x * out;
       tz = dir.z * out;
     }
   }
-  // Freie Bälle im Fünfer holt er sich.
+  // Freie Bälle vor dem Tor holt er sich – ohne Hände (außerhalb des Torraums) aber nur, wenn
+  // sie nah am Tor liegen; weiter draußen wäre er mit dem Fuß im Gewühl.
   const dMe = dist2d(p.pos, ball.pos);
   const beaten = m.players.some((o) => o.team !== p.team && dist2d(o.pos, ball.pos) < dMe - 0.5);
-  if (!ball.holder && !beaten && Math.abs(ball.pos.x - goalX) < 5 && Math.abs(ball.pos.z) < 5 && ballSpeed(ball) < 6) {
+  const claim = HAND_ZONE.depth + 0.5;
+  if (!ball.holder && !beaten && Math.abs(ball.pos.x - goalX) < claim && Math.abs(ball.pos.z) < Math.max(claim, gw + 1) && ballSpeed(ball) < 6) {
     tx = ball.pos.x;
     tz = ball.pos.z;
   }

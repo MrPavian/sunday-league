@@ -61,7 +61,7 @@ import { ShoutBar } from './ui/ShoutBar.js';
 import { SubPanel } from './ui/SubPanel.js';
 import { PlanPanel } from './ui/PlanPanel.js';
 import { HalftimePanel } from './ui/HalftimePanel.js';
-import { coachLevel, setCoachLevel } from './ui/prefs.js';
+import { coachLevel, homeView, setCoachLevel, setHomeView } from './ui/prefs.js';
 import { coachAway } from './career/personal.js';
 import { enableManager } from './sim/coach.js';
 import { Settings } from './ui/Settings.js';
@@ -407,7 +407,7 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
   onSettings() {
     menu.paused = true;
     settings.show({
-      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe, difficulty, autoSwitch: autoSwitchDefense, manager: managerMode, touch: TOUCH, length: MATCH.halves ? 'custom' : MATCH.length, cupShort: MATCH.cupShare < 1, subs: MATCH.subs, coachLevel: coachLevel(), haptics: hapticsOn(), leagueSize: career ? career.nextLeagueSize ?? career.leagueSize ?? 6 : leagueSize, leagueSizeNow: career?.leagueSize ?? null }),
+      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe, difficulty, autoSwitch: autoSwitchDefense, manager: managerMode, touch: TOUCH, length: MATCH.halves ? 'custom' : MATCH.length, cupShort: MATCH.cupShare < 1, subs: MATCH.subs, coachLevel: coachLevel(), homeView: homeView(), haptics: hapticsOn(), leagueSize: career ? career.nextLeagueSize ?? career.leagueSize ?? 6 : leagueSize, leagueSizeNow: career?.leagueSize ?? null }),
       onLang: switchLanguage,
       onChange(key, value) {
         if (key === 'sound' && sound.muted !== (value === 'off')) sound.toggleMute();
@@ -460,6 +460,7 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
           }
         }
         if (key === 'coachlevel') setCoachLevel(value);
+        if (key === 'homeview') setHomeView(value);
         if (key === 'subs') {
           MATCH.subs = value;
           remember('sunday-league:subs', value);
@@ -1029,6 +1030,10 @@ function frame(now) {
   if (DIAG) DIAG.sys = 'sound/crowd/camera';
   sound.update(dt, mode === 'play' ? match : null);
   crowd?.update(dt);
+  // Vereinsheim „Heute": Das Spiel läuft im Fenster an der Wand – dort das ganze Kamerabild zeigen.
+  const clubWindow = mode === 'club' ? document.querySelector('#club.see-through .cs-window') : null;
+  const windowRect = clubWindow?.getBoundingClientRect();
+  rig.frameWindow(windowRect?.width > 0 && windowRect.height > 0 ? windowRect : null, window.innerWidth, window.innerHeight, pitch.halfLength);
   rig.follow(match.ball.pos.x, match.ball.pos.z, dt, venueInfo.bounds);
   // Ball 2.0: bei Tor oder hartem Pfostentreffer zuckt das Bild um genau ein internes Pixel
   // (nur Darstellung; die Kameraführung selbst bleibt, wie sie ist).

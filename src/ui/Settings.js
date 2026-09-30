@@ -140,6 +140,9 @@ export class Settings {
         <h4>${tr('Sprache', 'Language')}</h4>
         <div class="choice">${langButtons}</div>
         <p class="hint">${tr('Das Spiel lädt kurz neu, dein Spielstand bleibt erhalten. Bereits geschriebene Chat- und Chronik-Einträge bleiben in der alten Sprache.', 'The game reloads briefly; your save is kept. Chat and chronicle entries already written stay in the old language.')}</p>
+        <h4>${tr('Vereinsheim „Heute"', 'Clubhouse “Today”')}</h4>
+        <div class="choice"><button class="${s.homeView === 'klassisch' ? '' : 'active'}" data-action="homeview" data-value="raum">${tr('Raum', 'Room')}</button><button class="${s.homeView === 'klassisch' ? 'active' : ''}" data-action="homeview" data-value="klassisch">${tr('Klassisch', 'Classic')}</button></div>
+        <p class="hint">${tr('Raum: Wand mit Taktiktafel, Fenster zum Platz und Tisch. Klassisch: dieselben Angaben als schlichte Kacheln, ohne Fenster.', 'Room: wall with tactics board, window onto the pitch and a desk. Classic: the same information as plain tiles, without the window.')}</p>
         <h4>${tr('Grafikeffekte', 'Graphics effects')}</h4>
         <div class="choice">${toggle('effects', s.effects, tr('An', 'On'), tr('Aus (schneller)', 'Off (faster)'))}</div>
         <p class="hint">${tr('Kontaktschatten, Glühen, Vignette und Dithering. Auf langsamen Rechnern lieber aus. Im Spiel: Taste G.', 'Contact shadows, glow, vignette and dithering. Better off on slow computers. In a match: key G.')}</p>

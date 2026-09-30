@@ -166,6 +166,7 @@ export class Hud {
         const text = e.color === 'yellow' ? tr(`Gelb für ${p.name}${e.reason === 'meckern' ? ' – wegen Meckern' : ''}`, `Yellow for ${p.name}${e.reason === 'meckern' ? ' – for dissent' : ''}`) : tr(`GELB-ROT! ${p.name} muss runter`, `SECOND YELLOW! ${p.name} is off`);
         this.toast(text, 2, 3);
       } else if (e.type === 'no_call') this.toast(tr('Schiri lässt laufen!', 'Ref waves play on!'), 1.2, 2);
+      else if (e.type === 'no_goal') this.toast(tr('Kein Tor – aus der eigenen Hälfte geschossen! Abstoß', 'No goal – shot from inside their own half! Goal kick'), 2, 3);
       else if (e.type === 'post') this.toast(tr('Pfosten!', 'Off the post!'), 1.2);
       else if (e.type === 'bar') this.toast(tr('Latte!', 'Off the bar!'), 1.2);
       else if (e.type === 'header' && e.onGoal) this.toast(tr(`Kopfball ${first}!`, `Header from ${first}!`), 0.9);

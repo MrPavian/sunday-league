@@ -39,8 +39,9 @@ describe('player profiles', () => {
   it('team-mates look for the playmaker', () => {
     const received = (makePlaymaker) => {
       let n = 0;
-      // 24 Spiele: Bei nur 6 lag der Unterschied im Rauschen (~17 Pässe je Seite).
-      for (let i = 0; i < 24; i++) {
+      // 48 Spiele: Bei 6, 16 oder 24 lag der Unterschied im Rauschen (Faktor zwischen 0,99 und 1,55);
+      // über 48 Spiele stabil (≈ 1,15–1,3).
+      for (let i = 0; i < 48; i++) {
         const m = createMatch({ seed: 500 + i, pitch: PITCHES.parkplatz, human: false, duration: 150, aiCoach: false });
         const mid = m.players.find((q) => q.team === 0 && q.role === 'mid');
         mid._profiles = makePlaymaker ? ['spielmacher'] : [];
@@ -55,5 +56,5 @@ describe('player profiles', () => {
     };
     expect(received(true)).toBeGreaterThan(received(false) * 1.1);
     expect(hasProfile({ _profiles: ['spielmacher'] }, 'spielmacher')).toBe(true);
-  }, 240_000);
+  }, 480_000);
 });

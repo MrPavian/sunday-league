@@ -520,6 +520,10 @@ export class Sound {
         case 'card':
           this.whistle('sharp');
           break;
+        case 'no_goal':
+          this.whistle('sharp');
+          this.groan();
+          break;
         case 'no_call':
         case 'complain':
           this.grumble(pan);

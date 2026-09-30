@@ -300,6 +300,10 @@ function step(m, input, dt) {
   bodyBlock(m);
   if (!humanTrick(m)) dribbleTouch(m);
   carryBall(m, dt);
+  // Wo war der Ball zuletzt am Fuß? (Solange er beim Spieler ist, wandert die Stelle mit –
+  // beim Schuss bleibt sie stehen.) Für die Regel „Tore nur aus der gegnerischen Hälfte".
+  const toucher = ball.lastTouch && getPlayer(m, ball.lastTouch);
+  if (toucher && dist2d(toucher.pos, ball.pos) < 1.2) m.touchFrom = { id: toucher.id, team: toucher.team, x: toucher.pos.x };
 
   const ev = stepBall(ball, pitch, dt);
   if (ev) handleBallEvent(m, ev);
@@ -415,9 +419,18 @@ function humanIntent(m, p, input, dt) {
 }
 
 function onGoal(m, team) {
-  m.score[team]++;
   const scorer = m.ball.lastTouch && getPlayer(m, m.ball.lastTouch);
   const ownGoal = !!scorer && scorer.team !== team;
+  // Tore zählen nur aus der gegnerischen Hälfte: Kam der letzte Ball des Torschützen von
+  // der Mittellinie oder aus der eigenen Hälfte, gibt es Abstoß für den Gegner.
+  const from = m.touchFrom;
+  if (!ownGoal && scorer && from?.id === scorer.id && from.x * attackDir(m, team) <= 0 && m.phase === 'play') {
+    const defending = 1 - team;
+    m.events.push({ type: 'no_goal', reason: 'own_half', team, playerId: scorer.id, time: m.time });
+    startSetPiece(m, { type: 'goalkick', team: defending, spot: { x: attackDir(m, team) * (m.pitch.halfLength - 1.5), z: 0 } });
+    return;
+  }
+  m.score[team]++;
   const lp = m.lastPass;
   const assistId = !ownGoal && lp && lp.team === team && lp.playerId !== scorer?.id && m.time - lp.time < 8 ? lp.playerId : null;
   m.events.push({ type: 'goal', team, scorerId: scorer?.id ?? null, assistId, ownGoal, via: m.ball.lastAction, acro: acroGoal(m, scorer), time: m.time });

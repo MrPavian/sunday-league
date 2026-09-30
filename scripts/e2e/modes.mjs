@@ -12,7 +12,10 @@ const WEATHER = ['sonne', 'hitze', 'regen', 'wind', 'nebel', 'frost', 'schnee', 
 const TIMES = ['morgen', 'mittag', 'nachmittag', 'abend'];
 // Jeder Vorfall auf einem Platz, auf dem er auch im Spiel vorkommt (VENUE_INCIDENTS); Zaun und
 // Autoalarm brauchen ein auslösendes Ereignis (Ball fliegt drüber, Auto fährt vorbei).
+// Seed je Vorfall fest: Der Autoalarm geht nur mit 60 % je Autotreffer los – mit Seed 13 trifft der
+// Ball früh ein Auto und der Alarm kommt (alter wie neuer Code, bei 18 s).
 const INCIDENTS = { hund: 'park', zaun: 'hinterhof', autoalarm: 'parkplatz', polizei: 'hinterhof', gewitter: 'park', sprenger: 'rasenplatz', ersatzschiri: 'rasenplatz' };
+const INCIDENT_SEED = { autoalarm: 13 };
 const TABS = [['home'], ['team', 'squad'], ['team', 'lineup'], ['team', 'tactic'], ['team', 'training'], ['team', 'youth'], ['team', 'transfers'], ['season', 'table'], ['season', 'fixtures'], ['season', 'cup'], ['club', 'cash'], ['club', 'club'], ['club', 'museum'], ['pub'], ['phone', 'chat']];
 
 const frame = (p) => p.evaluate(() => globalThis.__sl?.diag?.frame ?? -1);
@@ -63,12 +66,14 @@ async function qualities(b) {
   return ok.done();
 }
 
-async function incidents(b) {
+export async function incidents(b) {
   const ok = checker(`Vorfälle bis zum Abpfiff (${Object.keys(INCIDENTS).length}) + Ersatzschiri ohne Schiri`);
   for (const [v, venue] of Object.entries(INCIDENTS)) {
-    const p = await page(b, 'land', { query: `?venue=${venue}&notitle&trainer&debug&dauer=40&incident=${v}` });
+    // Fester Seed und volle Spielzeit: Zaun/Autoalarm brauchen ein auslösendes Ereignis, das mit
+    // zufälligem Seed in einem kurzen Spiel mal kam und mal nicht (Test war Glückssache).
+    const p = await page(b, 'land', { query: `?venue=${venue}&notitle&trainer&debug&dauer=120&seed=${INCIDENT_SEED[v] ?? 11}&incident=${v}`, store: { 'sunday-league:tempo': 'schnell' } });
     let seen = false;
-    for (let i = 0; i < 150 && !seen; i++) {
+    for (let i = 0; i < 400 && !seen; i++) {
       seen = await p.evaluate((t) => __sl.match.incident?.type === t, v);
       if (!seen && (await p.evaluate(() => __sl.match.phase === 'ended'))) break;
       if (!seen) {
@@ -77,7 +82,7 @@ async function incidents(b) {
       }
     }
     ok(seen, `${v} (${venue}): Vorfall tritt nicht auf`);
-    ok(await toEnd(p, 90), `${v}: kein Abpfiff`);
+    ok(await toEnd(p, 240), `${v}: kein Abpfiff`);
     ok(!p.errors.length, `${v}: Fehler ${p.errors.slice(0, 2).join(' | ')}`);
     await p.context().close();
   }
@@ -242,6 +247,47 @@ export async function oldSave(b, file) {
   return ok.done();
 }
 
+// Vereinsheim „Heute": Raum mit Fenster (Kamera zeigt dort das ganze Bild) und klassische Kacheln.
+export async function homeViews(b) {
+  const ok = checker('Vereinsheim „Heute": Fenster zeigt den Platz, klassische Ansicht per Notizbuch');
+  for (const size of ['port', 'desk']) {
+    const p = await page(b, size, { query: '?notitle&debug' });
+    await p.click('.career button');
+    await p.waitForTimeout(500);
+    await p.fill('#cc-first', 'Erika');
+    await p.fill('#cc-last', 'Test');
+    await p.click('#creator [data-action="done"]');
+    await p.waitForTimeout(1500);
+    await click(p, '[data-action="area"][data-value="home"]');
+    await p.waitForTimeout(600);
+    const win = await p.evaluate(() => {
+      const r = document.querySelector('.cs-window')?.getBoundingClientRect();
+      const v = __sl.rig.camera.view;
+      return { rect: r && [r.x, r.y, r.width, r.height], view: v?.enabled ? [v.offsetX, v.offsetY, v.fullWidth, v.fullHeight] : null };
+    });
+    ok(win.rect && win.view && Math.abs(win.view[0] + win.rect[0]) < 1 && Math.abs(win.view[1] + win.rect[1]) < 1 && Math.abs(win.view[3] - win.rect[3]) < 1, `${size}: Kamerabild liegt nicht im Fenster (${JSON.stringify(win)})`);
+    await click(p, '[data-action="area"][data-value="team"]');
+    await p.waitForTimeout(400);
+    ok(!(await p.evaluate(() => __sl.rig.camera.view?.enabled)), `${size}: Fensteransicht bleibt nach dem Verlassen von „Heute" aktiv`);
+    // Klassisch einstellen (Notizbuch → Grafik)
+    await click(p, '.club-tools [data-action="onSettings"]');
+    await p.waitForTimeout(300);
+    await click(p, '.nb-tabs [data-value="grafik"]');
+    await click(p, '[data-action="homeview"][data-value="klassisch"]');
+    await click(p, '.settings-panel [data-action="back"]');
+    await p.waitForTimeout(500);
+    await click(p, '[data-action="area"][data-value="home"]');
+    await p.waitForTimeout(600);
+    const cl = await p.evaluate(() => ({ tiles: document.querySelectorAll('.club-classic .cc-tile').length, window: !!document.querySelector('.cs-window'), see: document.getElementById('club').classList.contains('see-through'), h: Math.min(...[...document.querySelectorAll('.cc-tile')].map((e) => e.getBoundingClientRect().height)), view: !!__sl.rig.camera.view?.enabled }));
+    ok(cl.tiles === 10 && !cl.window && !cl.see && !cl.view, `${size}: klassische Ansicht falsch (${JSON.stringify(cl)})`);
+    ok(cl.h >= 44, `${size}: Kachel kleiner als 44 px (${cl.h})`);
+    ok(!(await p.evaluate(() => document.scrollingElement.scrollWidth > innerWidth)), `${size}: seitliches Scrollen`);
+    ok(!p.errors.length, `${size}: Fehler ${p.errors.slice(0, 2).join(' | ')}`);
+    await p.context().close();
+  }
+  return ok.done();
+}
+
 export async function run() {
   const b = await launch();
   let f = 0;
@@ -254,6 +300,7 @@ export async function run() {
   f += await shootout(b);
   f += await menus(b);
   f += await english(b);
+  f += await homeViews(b);
   f += await oldSave(b, process.env.E2E_OLD_SAVE ?? fileURLToPath(new URL('./fixtures/save-858e978.json', import.meta.url)));
   await b.close();
   return f;

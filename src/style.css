@@ -1787,3 +1787,14 @@ body.manager #end { padding-bottom: 84px; }
   #comm-sheet::before { content: ''; position: absolute; left: 6px; top: 50%; width: 5px; height: 38px; transform: translateY(-50%); background: #0a0b0d; border-radius: 3px; }
   #comm-sheet .body { margin-left: 18px; }
 }
+
+/* Vereinsheim „Heute" klassisch (Einstellung): dieselben Objekte als schlichte Kacheln, kein Fenster */
+.club-classic { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--s2); }
+.club-classic .cc-tile { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; min-height: 52px; padding: var(--s2) var(--s3); text-align: left; }
+.club-classic .cc-tile p { margin: 0; }
+.club-classic .cc-tile .t-body { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.club-classic .cc-tile .ui-badge { position: static; display: inline-block; margin-left: var(--s1); }
+@media (max-width: 520px) { .club-classic { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* A-Jugend auf dem Handy: „Einschätzung" (steht auch als Stärke da) ausblenden, damit „Hochziehen" ohne Scrollen passt */
+@media (max-width: 520px) { .club-panel table.prospects th:nth-child(4), .club-panel table.prospects td:nth-child(4) { display: none; } }

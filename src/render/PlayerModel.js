@@ -821,7 +821,7 @@ function acroPose(bn, kind, t, hipY) {
 // kickPrep 0…1 – Schuss/Pass ist geplant: ausholen (die Simulation führt ihn als „pending“),
 // trick/trickT/trickSide – Trick am Ball, acro/acroT – Fall-/Seitfallzieher, fooled 0…1 –
 // ausgetrickst, steht kurz auf dem falschen Fuß.
-export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot', headPrep = 0, headJump = 1, hit = null, duck = 0, face: faceHint = null, kickPrep = 0, trick = null, trickT = 0, trickSide = 1, acro = null, acroT = 0, fooled = 0 }) {
+export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot', headPrep = 0, headJump = 1, hit = null, duck = 0, face: faceHint = null, kickPrep = 0, trick = null, trickT = 0, trickSide = 1, acro = null, acroT = 0, fooled = 0, ready = 0, throwT = 0 }) {
   const bn = model.bones;
   resetPose(model);
   const s = locomotion(model, speed, dt);
@@ -846,6 +846,31 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
   } else if (kickPrep > 0) {
     // Ausholen, solange der Schuss/Pass geplant ist (vor dem Abflug des Balls).
     kickPose(bn, 0.35 * Math.min(1, kickPrep), kick === 'pass' ? 0.55 : 1);
+    face = 'effort';
+  }
+  // Torwart in Bereitschaft: in die Knie, Oberkörper vor, Arme seitlich offen (0…1 eingeblendet).
+  if (ready > 0 && !holding && !dive && state === 'normal') {
+    // Breitbeinig und Arme weit zur Seite – das liest man aus jeder Blickrichtung.
+    const k = ready * (1 - Math.min(0.5, s * 0.35)); // beim Seitwärtsschieben etwas weniger tief
+    bn.hips.position.y -= 0.17 * k;
+    bn.spine.rotation.x += 0.35 * k;
+    bn.head.rotation.x -= 0.25 * k;
+    leg(bn, 'L', -0.6 * k, 1.05 * k, -0.45 * k);
+    leg(bn, 'R', -0.6 * k, 1.05 * k, -0.45 * k);
+    bn.upperLegL.rotation.z = -0.28 * k;
+    bn.upperLegR.rotation.z = 0.28 * k;
+    arm(bn, 'L', -0.45 * k, 1.15 * k, -0.55 * k);
+    arm(bn, 'R', -0.45 * k, 1.15 * k, -0.55 * k);
+    face = 'effort';
+  }
+  // Abwurf: Ball über die Schulter nach vorn werfen (throwT 0 → 1).
+  if (throwT > 0 && !dive && state === 'normal') {
+    const back = throwT < 0.35 ? throwT / 0.35 : 1 - (throwT - 0.35) / 0.65;
+    const swing = throwT < 0.35 ? -2.9 * back : lerp(-2.9, -0.4, (throwT - 0.35) / 0.65);
+    arm(bn, 'R', swing, 0.2, -0.3 - 0.6 * back);
+    arm(bn, 'L', -1.0, 0.35, -0.4);
+    bn.spine.rotation.x += throwT < 0.35 ? -0.18 * back : 0.28 * ((throwT - 0.35) / 0.65);
+    bn.spine.rotation.y += 0.35 * (throwT < 0.35 ? back : 1 - (throwT - 0.35) / 0.65);
     face = 'effort';
   }
   if (holding === 'chest') {

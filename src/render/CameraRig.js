@@ -17,10 +17,34 @@ export class CameraRig {
 
   resize(internalWidth, internalHeight) {
     this.internalHeight = internalHeight;
+    this.screen = { w: internalWidth, h: internalHeight };
+    this.windowed = null;
+    this.camera.clearViewOffset();
     const aspect = internalWidth / internalHeight;
     // Hochformat (Handy): weiter rauszoomen, damit genug Spielfeld in die Breite passt.
     const h = (this.viewHeight / 2) * Math.max(1, 1.0 / aspect);
     Object.assign(this.camera, { left: -h * aspect, right: h * aspect, top: h, bottom: -h });
+    this.camera.updateProjectionMatrix();
+  }
+
+  // Vereinsheim-Fenster: Das ganze Kamerabild erscheint im Fensterausschnitt (rect in CSS-Pixeln,
+  // screenW/H = Fenstergröße des Browsers), im Seitenverhältnis des Fensters – wie ein Fernseher;
+  // halfLength: halbe Platzlänge in Metern (daraus der Zoom).
+  // Der Rest der Leinwand liegt unter dem Vereinsheim. null stellt die normale Ansicht wieder her.
+  frameWindow(rect, screenW, screenH, halfLength = 20) {
+    const key = rect && `${rect.x | 0},${rect.y | 0},${rect.width | 0},${rect.height | 0},${screenW},${screenH},${halfLength}`;
+    if (key === this.windowed) return;
+    if (!rect) {
+      if (this.screen) this.resize(this.screen.w, this.screen.h);
+      return;
+    }
+    this.windowed = key;
+    const aspect = rect.width / rect.height;
+    // Der Platz soll das Fenster in der Breite füllen; mindestens 5,2 m Bildhöhe, damit die ganze
+    // Platztiefe (schräg von oben) und die Spieler hineinpassen – höchstens so viel wie im Spiel.
+    const h = Math.min(this.viewHeight / 2, Math.max(2.6, (halfLength + 1.5) / aspect));
+    Object.assign(this.camera, { left: -h * aspect, right: h * aspect, top: h, bottom: -h });
+    this.camera.setViewOffset(rect.width, rect.height, -rect.x, -rect.y, screenW, screenH);
     this.camera.updateProjectionMatrix();
   }
 
@@ -34,7 +58,8 @@ export class CameraRig {
     this.target.z += (tz - this.target.z) * k;
 
     // Ein internes Pixel in Metern – aus dem tatsächlichen Kamerafenster, auch im Hochformat.
-    const texel = (this.camera.top - this.camera.bottom) / this.internalHeight;
+    const view = this.camera.view?.enabled ? this.camera.view : null;
+    const texel = (this.camera.top - this.camera.bottom) / (view ? (this.internalHeight * view.fullHeight) / view.height : this.internalHeight);
     const q = this.camera.quaternion;
     this._inv.copy(q).invert();
     const p = this._p.copy(this.target).applyQuaternion(this._inv);

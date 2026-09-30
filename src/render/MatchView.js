@@ -398,6 +398,26 @@ export class MatchView {
       o.kick = (p.kickAnim > 0 ? match.ball.lastTouch === p.id && match.ball.lastAction === 'shoot' : p.pending?.type === 'shoot') ? 'shot' : 'pass';
       o.headAnim = p.headAnim;
       o.holding = match.ball.holder === p.id ? (p.role === 'gk' ? 'chest' : 'overhead') : null;
+      // Torwart: Bereitschaft, wenn der Gegner mit dem Ball vor dem eigenen Tor auftaucht
+      // (weich ein- und ausgeblendet), und Abwurf statt Schuss, wenn er aus der Hand wirft.
+      o.ready = 0;
+      o.throwT = 0;
+      if (p.role === 'gk') {
+        const goalX = -attackDir(match, p.team) * match.pitch.halfLength;
+        const threat = match.phase === 'play' && !match.ball.holder && match.lastTouchTeam !== p.team && Math.hypot(match.ball.pos.x - goalX, match.ball.pos.z) < 12 ? 1 : 0;
+        m.readyK = (m.readyK ?? 0) + (threat - (m.readyK ?? 0)) * Math.min(1, dt * 8);
+        o.ready = m.readyK;
+        const rel = match.keeperRelease;
+        const since = rel && rel.id === p.id && !rel.lofted ? match.time - rel.time : 9;
+        if (since < 0.45) {
+          o.throwT = Math.min(1, 0.35 + since / 0.45 * 0.65);
+          o.kickAnim = 0;
+          o.kickPrep = 0;
+        } else if (p.pending?.type === 'pass' && !p.pending.lofted && match.ball.holder === p.id) {
+          o.throwT = 0.2; // Ausholen, solange der Wurf geplant ist
+          o.kickPrep = 0;
+        }
+      }
       o.state = p.state;
       o.injured = !!p.injury;
       if (p.diveAnim > 0) {

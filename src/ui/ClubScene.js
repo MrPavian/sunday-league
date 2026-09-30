@@ -15,14 +15,22 @@ const ROLE = { gk: '#e8742a', def: '#4fa3e0', mid: '#6fbf73', fwd: '#d9534f' };
 const euro = (n) => tr(`${Math.round(n).toLocaleString('de-DE')} €`, `€${Math.round(n).toLocaleString('en-GB')}`);
 
 // Ein Objekt: Knopf mit Bild (art), Beschriftung und Wert. badge: Zähler (offene Entscheidung).
-function obj(cls, { action, value, art, label, info, badge = 0, aria }) {
+function sceneObj(cls, { action, value, art, label, info, badge = 0, aria }) {
   return `<button class="cs-obj ${cls}" data-action="${action}"${value != null ? ` data-value="${esc(value)}"` : ''} aria-label="${esc(aria ?? `${label}: ${info}`)}">
     <span class="cs-art">${art}${badge ? `<b class="ui-badge">${badge}</b>` : ''}</span>
     <span class="cs-label"><b>${label}</b><small>${info}</small></span>
   </button>`;
 }
 
-export function clubScene(c, { results = null } = {}) {
+// Klassische Ansicht: dasselbe Objekt als schlichte Kachel – gleiche Aktion, gleiche Angaben.
+function tile(cls, { action, value, label, info, badge = 0, aria }) {
+  return `<button class="ui-card tap cc-tile" data-action="${action}"${value != null ? ` data-value="${esc(value)}"` : ''} aria-label="${esc(aria ?? `${label}: ${info}`)}">
+    <p class="t-cap">${label}${badge ? ` <b class="ui-badge">${badge}</b>` : ''}</p><p class="t-body">${info}</p>
+  </button>`;
+}
+
+export function clubScene(c, { results = null, classic = false } = {}) {
+  const obj = classic ? tile : sceneObj;
   const club = humanClub(c);
   const over = seasonOver(c);
   const w = c.week;
@@ -58,7 +66,7 @@ export function clubScene(c, { results = null } = {}) {
   const notice = w?.notice && w.notice.choice === null && !results;
   const wall = [
     obj('cs-board', { action: 'tab', value: 'tactic', art: `<span class="cs-whiteboard">${board}</span>`, label: tr('Taktiktafel', 'Tactics board'), info: boardInfo }),
-    `<div class="cs-window" aria-hidden="true"><span class="cs-sash"></span></div>`,
+    classic ? '' : `<div class="cs-window" aria-hidden="true"><span class="cs-sash"></span></div>`,
     obj('cs-pin', { action: 'tab', value: 'table', art: `<span class="cs-cork"><i class="cs-slip">${pos + 1}.</i><i class="cs-slip b">${me.pts} ${tr('Pkt.', 'pts')}</i>${notice ? '<i class="cs-slip n">!</i>' : ''}</span>`, label: tr('Pinnwand', 'Notice board'), info: `${pos + 1}. ${tr('Platz', 'place')} · ${me.pts} ${tr('Punkte', 'points')}`, badge: notice ? 1 : 0 }),
     obj('cs-cal', { action: 'tab', value: 'fixtures', art: `<span class="cs-calsheet"><i>${next ? tr(['', 'JAN', 'FEB', 'MÄR', 'APR', 'MAI', 'JUN', 'JUL', 'AUG', 'SEP', 'OKT', 'NOV', 'DEZ'][next.month], ['', 'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][next.month]) : '—'}</i><b>${next ? next.day : '✓'}</b></span>`, label: tr('Kalender', 'Calendar'), info: next ? `${dateLabel(next)}${opp ? ` · ${opp.short}` : ''}` : tr('Saison beendet', 'Season over') }),
   ].join('');
@@ -71,6 +79,7 @@ export function clubScene(c, { results = null } = {}) {
     obj('cs-beer', { action: 'tab', value: 'pub', art: `<span class="cs-coaster"><i></i></span>`, label: tr('Stammtisch', 'Regulars\' table'), info: tr('Kneipe', 'Pub') }),
     obj('cs-notebook', { action: 'onSettings', art: `<span class="cs-book"><i></i></span>`, label: tr('Notizbuch', 'Notebook'), info: tr('Einstellungen', 'Settings') }),
   ].join('');
+  if (classic) return `<section class="club-classic" aria-label="${tr('Vereinsheim', 'Clubhouse')}">${wall}${desk}</section>`;
   return `<section class="club-scene" aria-label="${tr('Vereinsheim', 'Clubhouse')}">
     <div class="cs-wall">${wall}</div>
     <div class="cs-desk">${desk}</div>
