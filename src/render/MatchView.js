@@ -358,7 +358,24 @@ export class MatchView {
       const m = this.models.get(p.id);
       m.group.visible = true;
       m.group.position.set(p.pos.x, 0, p.pos.z);
-      m.group.rotation.y = Math.atan2(p.facing.x, p.facing.z);
+      // Torwart: Oberkörper zum Ball, auch wenn er seitlich an der Linie entlang schiebt – nur wenn
+      // er den Ball selbst am Fuß hat, sich wirft oder weit läuft, zeigt er in Laufrichtung.
+      let angle = Math.atan2(p.facing.x, p.facing.z);
+      if (p.role === 'gk' && p.state === 'normal' && !(p.diveAnim > 0) && match.ball.holder !== p.id) {
+        const bx = match.ball.pos.x - p.pos.x;
+        const bz = match.ball.pos.z - p.pos.z;
+        const atFeet = match.ball.lastTouch === p.id && bx * bx + bz * bz < 1.44;
+        const running = Math.hypot(p.vel.x, p.vel.z) > 4.5;
+        if (!atFeet && !running && bx * bx + bz * bz > 0.04) angle = Math.atan2(bx, bz);
+      }
+      if (p.role === 'gk') {
+        // weich nachdrehen (kürzester Weg), damit er nicht ruckartig umspringt
+        const prev = m.gkAngle ?? angle;
+        const d = Math.atan2(Math.sin(angle - prev), Math.cos(angle - prev));
+        angle = p.diveAnim > 0 ? prev : prev + d * Math.min(1, dt * 10);
+        m.gkAngle = angle;
+      }
+      m.group.rotation.y = angle;
       if (m.flame) m.flame.scale.y = 0.4 + Math.sin(this.time * 12 + p.pos.x) * 0.04; // flackert
       // Hechtsprung des Torwarts und Rutschen am Boden machen dreckig; Laufen ein wenig.
       if (p.diveAnim > 0 && !this.diving.has(p.id)) {
@@ -422,7 +439,7 @@ export class MatchView {
       o.injured = !!p.injury;
       if (p.diveAnim > 0) {
         DIVE.t = p.diveAnim;
-        DIVE.side = p.diveSide * (p.facing.x > 0 ? 1 : -1);
+        DIVE.side = p.diveSide * (Math.sin(m.group.rotation.y) > 0 ? 1 : -1); // zur Blickrichtung passend
         o.dive = DIVE;
       } else o.dive = null;
       // Tricks und Akrobatik (Simulation: trick/trickAnim, acro/acroAnim).
