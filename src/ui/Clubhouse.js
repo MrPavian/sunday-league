@@ -63,7 +63,8 @@ import { DOSSIER_LABELS } from '../data/backstories.js';
 import { weatherLine } from '../career/weather.js';
 import { FOCUS, ownKids, poachChance, poachKid, scoutList, setYouthFocus, talentGuess, TEAMS, teamOfAge } from '../career/academy.js';
 import { derbyOf, isDerbyFixture } from '../career/derby.js';
-import { CUP_NAME, CUPS, cupClub, cupOf, groupTable, humanCupMatch, PRIZES, stageName, tournamentOpen, winterCupDue, winterCupRunning } from '../career/tournament.js';
+import { dateLabel, matchDate, monthLabel } from '../career/calendar.js';
+import { CUP_NAME, CUPS, cupClub, cupOf, groupTable, humanCupMatch, PRIZES, stageName, tournamentOpen, winterCupDue, winterCupRunning, winterRound } from '../career/tournament.js';
 import { canSupportDream, DREAM_COST, supportDream } from '../career/pub.js';
 import { chemistry, REL, relationLabel, relationsOfPlayer, shortName } from '../career/relations.js';
 import { childAge, coachAway, coachName, energyLabel, familyText, isCoach, patienceLabel, STYLES, trainingLocked } from '../career/personal.js';
@@ -282,6 +283,13 @@ export class Clubhouse {
       } else if (action === 'planLevel') {
         setCoachLevel(coachLevel() === 'profi' ? 'einsteiger' : 'profi');
         this.render();
+      } else if (action === 'tableRow') {
+        this.tableOpen = this.tableOpen === value ? null : value;
+      } else if (action === 'calRound') {
+        this.calRound = Number(value);
+      } else if (action === 'calMonth') {
+        this.calMonth = (this.calMonth ?? 0) + Number(value);
+        this.calRound = null;
       } else if (action === 'phone-open' || action === 'phone-lock') {
         this.phoneView = action === 'phone-open' ? 'app' : 'lock';
         if (this.phoneView === 'app') haptic('tap');
@@ -371,6 +379,28 @@ export class Clubhouse {
     });
   }
 
+  // Wandkalender: waagrecht wischen = Monat blättern.
+  bindCalSwipe() {
+    const el = this.root.querySelector('[data-swipe="cal"]');
+    if (!el) return;
+    let start = null;
+    el.addEventListener('pointerdown', (e) => (start = e.pointerType === 'mouse' ? null : { x: e.clientX, y: e.clientY }));
+    el.addEventListener('pointerup', (e) => {
+      if (!start) return;
+      const dx = e.clientX - start.x;
+      const dy = e.clientY - start.y;
+      start = null;
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        const before = this.calMonth;
+        this.calMonth = Math.max(0, (this.calMonth ?? 0) + (dx < 0 ? 1 : -1));
+        this.calRound = null;
+        this.suppressClick = true;
+        setTimeout(() => (this.suppressClick = false), 0);
+        if (this.calMonth !== before) this.render();
+      }
+    });
+  }
+
   bindClubForm() {
     this.root.querySelectorAll('input[data-field]').forEach((el) =>
       el.addEventListener('input', () => {
@@ -436,7 +466,13 @@ export class Clubhouse {
       (a) => `<button class="rail-btn" data-action="area" data-value="${a.id}" aria-current="${a.id === area.id ? 'page' : 'false'}">${icon(a.icon, 26)}<span>${a.label()}</span>${badges[a.id] ? `<b class="ui-badge">${badges[a.id]}</b>` : ''}</button>`,
     ).join('');
     const labels = TAB_LABELS();
-    const sub = area.tabs.length > 1 ? uiTabs(area.tabs.map((t) => [t, labels[t]]), this.tab, 'tab') : '';
+    // Bereich „Verein" ist die Vereinsmappe: Register statt Reiterleiste, Inhalt in der Kartonmappe.
+    const folder = area.id === 'club';
+    const sub = area.tabs.length > 1
+      ? folder
+        ? `<div class="m-tabs folder-tabs" role="tablist">${area.tabs.map((t) => `<button role="tab" aria-selected="${t === this.tab}" data-action="tab" data-value="${t}">${labels[t]}</button>`).join('')}</div>`
+        : uiTabs(area.tabs.map((t) => [t, labels[t]]), this.tab, 'tab')
+      : '';
     // Im Vereinsheim („Heute") ist das Fenster der Szene durchsichtig: dahinter läuft der eigene Platz.
     this.root.classList.toggle('see-through', area.id === 'home');
     this.root.innerHTML = `
@@ -449,7 +485,7 @@ export class Clubhouse {
             <div class="club-tools">${this.h.onSettings ? button(icon('gear'), { kind: 'ghost icon', action: 'onSettings', 'aria-label': tr('Einstellungen', 'Settings'), title: tr('Einstellungen', 'Settings') }) : ''}${button(icon('exit'), { kind: 'ghost icon', action: 'onMenu', 'aria-label': tr('Hauptmenü', 'Main menu'), title: tr('Hauptmenü', 'Main menu') })}</div>
           </header>
           ${sub}
-          <div class="club-body ${area.id === 'home' ? 'is-home' : 'tab'}">${area.id === 'home' ? this.hub() : this[`tab_${this.tab}`]()}</div>
+          <div class="club-body ${area.id === 'home' ? 'is-home' : 'tab'}${folder ? ' in-folder' : ''}">${area.id === 'home' ? this.hub() : folder ? `<div class="m-folder club-folder"><div class="folder-sheet">${this[`tab_${this.tab}`]()}</div></div>` : this[`tab_${this.tab}`]()}</div>
         </div>
       </div>`;
     this.bindLineup();
@@ -457,6 +493,7 @@ export class Clubhouse {
     const wa = this.root.querySelector('.phone-stage.open .wa-body');
     if (wa) wa.scrollTop = wa.scrollHeight;
     this.bindPub();
+    this.bindCalSwipe();
     this.bindClubForm();
     const slot = this.root.querySelector('.club-tboard');
     if (slot && this.boardData) {
@@ -1628,29 +1665,118 @@ export class Clubhouse {
       </div>`;
   }
 
+  // TABELLE als Pinnwand (UI 3.0, Phase 7): die Tabelle hängt als Zettel am Kork, der eigene
+  // Verein ist mit Textmarker markiert. Eintrag antippen: Form (letzte Spiele) und nächster Gegner –
+  // alles aus dem Spielplan. Daneben: Aushang (Schwarzes Brett) und Plakat der Stadtmeisterschaften.
   tab_table() {
-    const rows = table(this.career)
-      .map(
-        (r, i) => `<tr class="${r.club.human ? 'mine' : ''}"><td>${i + 1}.</td><td class="club-cell">${crestSVG(crestOf(r.club), { size: 16, label: r.club.name })}${r.club.name}</td><td class="num">${r.played}</td>
-          <td class="num">${r.w}</td><td class="num">${r.d}</td><td class="num">${r.l}</td><td class="num">${r.gf}:${r.ga}</td><td class="num"><b>${r.pts}</b></td></tr>`,
-      )
+    const c = this.career;
+    const rows = table(c)
+      .map((r, i) => {
+        const open = this.tableOpen === r.club.id;
+        const main = `<tr class="${r.club.human ? 'mine' : ''}${open ? ' open' : ''}"><td>${i + 1}.</td><td class="club-cell"><button class="tbl-club" data-action="tableRow" data-value="${r.club.id}" aria-expanded="${open}">${crestSVG(crestOf(r.club), { size: 16, label: r.club.name })}<span>${r.club.name}</span></button></td><td class="num">${r.played}</td>
+          <td class="num">${r.w}</td><td class="num">${r.d}</td><td class="num">${r.l}</td><td class="num">${r.gf}:${r.ga}</td><td class="num"><b>${r.pts}</b></td></tr>`;
+        return open ? `${main}<tr class="tbl-detail"><td></td><td colspan="7">${this.clubForm(r.club.id)}</td></tr>` : main;
+      })
       .join('');
-    return `<table class="league"><thead><tr><th></th><th>${tr('Verein', 'Club')}</th><th>${tr('Sp.', 'P')}</th><th>${tr('S', 'W')}</th><th>${tr('U', 'D')}</th><th>${tr('N', 'L')}</th><th>${tr('Tore', 'Goals')}</th><th>${tr('Pkt.', 'Pts')}</th></tr></thead><tbody>${rows}</tbody></table>`;
+    const sheet = `<div class="pin-sheet m-paper m-pin"><p class="t-cap">${leagueName(c)} · ${tr('Saison', 'Season')} ${c.season}</p>
+      <table class="league"><thead><tr><th></th><th>${tr('Verein', 'Club')}</th><th>${tr('Sp.', 'P')}</th><th>${tr('S', 'W')}</th><th>${tr('U', 'D')}</th><th>${tr('N', 'L')}</th><th>${tr('Tore', 'Goals')}</th><th>${tr('Pkt.', 'Pts')}</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="t-2 pin-hint">${tr('Verein antippen: Form und nächstes Spiel.', 'Tap a club: form and next match.')}</p></div>`;
+    const notice = this.noticeCard();
+    return `<div class="pinboard m-cork">${sheet}<div class="pin-side">${notice ? `<div class="pin-notice m-tape">${notice}</div>` : ''}${this.cupPoster()}</div></div>`;
   }
 
+  // Form eines Vereins: letzte fünf Ergebnisse (S/U/N mit Ergebnis) und das nächste Spiel.
+  clubForm(id) {
+    const c = this.career;
+    const played = [];
+    let next = null;
+    c.fixtures.forEach((round, i) => {
+      const f = round.find((x) => x.home === id || x.away === id);
+      if (!f) return;
+      if (f.result) played.push({ f, i });
+      else if (!next && i >= c.round) next = { f, i };
+    });
+    const mark = ({ f }) => {
+      const home = f.home === id;
+      const gf = home ? f.result.home : f.result.away;
+      const ga = home ? f.result.away : f.result.home;
+      const opp = clubById(c, home ? f.away : f.home);
+      const k = gf > ga ? ['w', tr('S', 'W')] : gf < ga ? ['l', tr('N', 'L')] : ['d', tr('U', 'D')];
+      return `<li class="${k[0]}" title="${opp.name}"><b>${k[1]}</b> ${gf}:${ga} ${home ? tr('gg.', 'v') : tr('bei', 'at')} ${opp.short}</li>`;
+    };
+    const form = played.slice(-5).map(mark).join('');
+    const nx = next ? `${tr('Spieltag', 'Matchday')} ${next.i + 1} (${dateLabel(matchDate(c, next.i))}): ${next.f.home === id ? tr('gegen', 'v') : tr('bei', 'at')} ${clubById(c, next.f.home === id ? next.f.away : next.f.home).name}` : tr('Kein Spiel mehr in dieser Saison.', 'No more matches this season.');
+    return `<ul class="tbl-form">${form || `<li class="none">${tr('noch kein Spiel', 'no games yet')}</li>`}</ul><p class="t-2">${nx}</p>`;
+  }
+
+  // Plakat der Stadtmeisterschaften: welches Turnier als Nächstes kommt, wo, was es zu gewinnen gibt.
+  cupPoster() {
+    const c = this.career;
+    const halle = cupOf(c, 'halle');
+    const kind = !halle && !seasonOver(c) && c.round <= winterRound(c) ? 'halle' : 'stadt';
+    const cfg = CUPS[kind];
+    const t = cupOf(c, kind);
+    const when = t
+      ? t.stage === 'done' ? tr('gespielt', 'played') : t.skipped ? tr('ohne uns', 'without us') : tr('läuft gerade', 'under way')
+      : kind === 'halle'
+        ? `${tr('Winterpause', 'Winter break')} · ${dateLabel(matchDate(c, winterRound(c)))}`
+        : tr('Im Sommer, nach dem letzten Spieltag', 'In summer, after the last matchday');
+    return `<button class="cup-poster m-pin" data-action="tab" data-value="cup" style="--pin:#2f6fb5">
+      <span class="cp-kicker">${tr('Plakat', 'Poster')}</span><b>${cfg.name}</b><span>${cfg.place}</span>
+      <span class="cp-when">${when}</span><span class="cp-prize">${tr(`${cfg.prizes.winner} € für den Sieger`, `€${cfg.prizes.winner} for the winner`)}</span></button>`;
+  }
+
+  // SPIELPLAN als Wandkalender: ein Blatt pro Monat, Spieltage auf den Sonntagen markiert, das
+  // eigene Spiel mit Gegner und Ergebnis. Tag antippen: alle Spiele dieses Spieltags. Blättern mit
+  // den Pfeilen oder Wischen. Datum aus calendar.js (abgeleitet, nicht erfunden).
   tab_fixtures() {
     const c = this.career;
-    return c.fixtures
-      .map(
-        (round, i) => `<div class="round ${i === c.round ? 'current' : ''}"><h4>${tr('Spieltag', 'Matchday')} ${i + 1}</h4>${round
-          .map((f) => {
-            const h = clubById(c, f.home);
-            const a = clubById(c, f.away);
-            return `<p class="${h.human || a.human ? 'mine' : ''}">${h.name} – ${a.name} <b>${f.result ? `${f.result.home}:${f.result.away}` : '-:-'}</b></p>`;
-          })
-          .join('')}</div>`,
-      )
+    const dates = c.fixtures.map((_, i) => matchDate(c, i));
+    const months = [];
+    dates.forEach((d, i) => {
+      const key = `${d.year}-${d.month}`;
+      let m = months.find((x) => x.key === key);
+      if (!m) months.push((m = { key, year: d.year, month: d.month, rounds: [] }));
+      m.rounds.push(i);
+    });
+    const cur = Math.min(c.round, c.fixtures.length - 1);
+    if (this.calMonth == null || this.calMonth >= months.length) this.calMonth = Math.max(0, months.findIndex((m) => m.rounds.includes(cur)));
+    const mo = months[this.calMonth];
+    const sel = this.calRound != null && mo.rounds.includes(this.calRound) ? this.calRound : mo.rounds.includes(cur) ? cur : mo.rounds[0];
+    const me = humanClub(c).id;
+    const first = (new Date(Date.UTC(mo.year, mo.month - 1, 1)).getUTCDay() + 6) % 7; // Mo = 0
+    const days = new Date(Date.UTC(mo.year, mo.month, 0)).getUTCDate();
+    const cells = [];
+    for (let i = 0; i < first; i++) cells.push('<span class="cal-day empty"></span>');
+    for (let d = 1; d <= days; d++) {
+      const r = mo.rounds.find((i) => dates[i].day === d);
+      if (r == null) {
+        cells.push(`<span class="cal-day${(first + d - 1) % 7 === 6 ? ' sun' : ''}">${d}</span>`);
+        continue;
+      }
+      const f = c.fixtures[r].find((x) => x.home === me || x.away === me);
+      const opp = f ? clubById(c, f.home === me ? f.away : f.home) : null;
+      const res = f?.result ? `${f.home === me ? f.result.home : f.result.away}:${f.home === me ? f.result.away : f.result.home}` : '';
+      cells.push(`<button class="cal-day md${r === cur && !seasonOver(c) ? ' next' : ''}${r === sel ? ' sel' : ''}${f?.result ? ' done' : ''}" data-action="calRound" data-value="${r}" aria-pressed="${r === sel}" aria-label="${dateLabel(dates[r])}: ${tr('Spieltag', 'Matchday')} ${r + 1}${opp ? ` ${tr('gegen', 'v')} ${opp.name}` : ''}${res ? ` ${res}` : ''}"><b>${d}</b><small>${opp ? opp.short : tr('frei', 'bye')}</small>${res ? `<i>${res}</i>` : ''}</button>`);
+    }
+    const round = c.fixtures[sel];
+    const games = round
+      .map((f) => {
+        const h = clubById(c, f.home);
+        const a = clubById(c, f.away);
+        return `<p class="${h.human || a.human ? 'mine' : ''}">${h.name} – ${a.name} <b>${f.result ? `${f.result.home}:${f.result.away}` : '-:-'}</b></p>`;
+      })
       .join('');
+    const dow = tr(['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'], ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']);
+    return `<div class="wall-cal">
+      <div class="m-calendar cal-sheet" data-swipe="cal">
+        <div class="rings" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <div class="month cal-head">${button('‹', { kind: 'ghost icon', action: 'calMonth', value: -1, 'aria-label': tr('Voriger Monat', 'Previous month'), disabled: this.calMonth === 0 })}<span>${monthLabel(mo)}</span>${button('›', { kind: 'ghost icon', action: 'calMonth', value: 1, 'aria-label': tr('Nächster Monat', 'Next month'), disabled: this.calMonth === months.length - 1 })}</div>
+        <div class="cal-grid">${dow.map((x, i) => `<span class="cal-dow${i === 6 ? ' sun' : ''}">${x}</span>`).join('')}${cells.join('')}</div>
+        <div class="cal-chips">${mo.rounds.map((r) => `<button class="cal-chip${r === sel ? ' sel' : ''}" data-action="calRound" data-value="${r}" aria-pressed="${r === sel}">${tr('ST', 'MD')} ${r + 1} · ${dates[r].day}.</button>`).join('')}</div>
+      </div>
+      <div class="round current cal-round"><h4>${tr('Spieltag', 'Matchday')} ${sel + 1} · ${dateLabel(dates[sel], { year: true })}</h4>${games}</div>
+    </div>`;
   }
 }
 

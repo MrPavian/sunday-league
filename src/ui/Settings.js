@@ -26,6 +26,10 @@ export class Settings {
       const { action, value } = t.dataset;
       if (action === 'lang') this.h.onLang?.(value);
       else if (action === 'back') this.h.onBack?.();
+      else if (action === 'nbPage') {
+        this.page = value;
+        this.render();
+      }
       else if (action === 'bind') {
         this.capturing = value;
         this.render();
@@ -92,17 +96,8 @@ export class Settings {
     const s = this.h.state();
     const toggle = (action, on, labelOn, labelOff) =>
       `<button class="${on ? 'active' : ''}" data-action="${action}" data-value="on">${labelOn}</button><button class="${on ? '' : 'active'}" data-action="${action}" data-value="off">${labelOff}</button>`;
-    this.root.innerHTML = `
-      <div class="settings-panel">
-        <header><h2>${tr('Einstellungen', 'Settings')}</h2><button data-action="back">${tr('Zurück (Esc)', 'Back (Esc)')}</button></header>
-        <h4>${tr('Sprache', 'Language')}</h4>
-        <div class="choice">${langButtons}</div>
-        <p class="hint">${tr('Das Spiel lädt kurz neu, dein Spielstand bleibt erhalten. Bereits geschriebene Chat- und Chronik-Einträge bleiben in der alten Sprache.', 'The game reloads briefly; your save is kept. Chat and chronicle entries already written stay in the old language.')}</p>
-        <h4>${tr('Ton', 'Sound')}</h4>
-        <div class="choice">${toggle('sound', !s.muted, tr('An', 'On'), tr('Aus', 'Off'))}</div>
-        <h4>${tr('Grafikeffekte', 'Graphics effects')}</h4>
-        <div class="choice">${toggle('effects', s.effects, tr('An', 'On'), tr('Aus (schneller)', 'Off (faster)'))}</div>
-        <p class="hint">${tr('Kontaktschatten, Glühen, Vignette und Dithering. Auf langsamen Rechnern lieber aus. Im Spiel: Taste G.', 'Contact shadows, glow, vignette and dithering. Better off on slow computers. In a match: key G.')}</p>
+    const pages = {
+      spiel: `
         <h4>${tr('Spieltempo', 'Match tempo')}</h4>
         <div class="choice">${s.tempos.map((t, i) => `<button class="${s.tempo === i ? 'active' : ''}" data-action="tempo" data-value="${i}">${t.label.split(': ')[1] ?? t.label}</button>`).join('')}</div>
         <p class="hint">${tr('Im Spiel: Taste C.', 'In a match: key C.')}</p>
@@ -131,17 +126,40 @@ export class Settings {
         <h4>${tr('Automatisch wechseln in der Abwehr', 'Auto-switch when defending')}</h4>
         <div class="choice">${toggle('autoswitch', s.autoSwitch, tr('An', 'On'), tr('Aus', 'Off'))}</div>
         <p class="hint">${tr('Hat der Gegner den Ball, übernimmst du automatisch den Mitspieler, der deutlich näher dran ist. Sonst wechselst du selbst mit Q.', 'When the opponent has the ball you automatically take over the team-mate who is clearly closer. Otherwise you switch yourself with Q.')}</p>
+      `,
+      ton: `
+        <h4>${tr('Ton', 'Sound')}</h4>
+        <div class="choice">${toggle('sound', !s.muted, tr('An', 'On'), tr('Aus', 'Off'))}</div>
         <h4>${tr('Lautstärke', 'Volume')}</h4>
         <div class="choice"><input type="range" min="0" max="100" step="5" value="${Math.round(s.volume * 100)}" data-action="volume" aria-label="${tr('Lautstärke', 'Volume')}"></div>
         <h4>${tr('Vibration', 'Vibration')}</h4>
         <div class="choice">${toggle('haptics', s.haptics, tr('Dezent', 'Subtle'), tr('Aus', 'Off'))}</div>
         <p class="hint">${tr('Kurzer, leichter Impuls bei neuen Nachrichten und Entscheidungen – nur auf Geräten, die vibrieren können.', 'A short, light pulse for new messages and decisions – only on devices that can vibrate.')}</p>
+      `,
+      grafik: `
+        <h4>${tr('Sprache', 'Language')}</h4>
+        <div class="choice">${langButtons}</div>
+        <p class="hint">${tr('Das Spiel lädt kurz neu, dein Spielstand bleibt erhalten. Bereits geschriebene Chat- und Chronik-Einträge bleiben in der alten Sprache.', 'The game reloads briefly; your save is kept. Chat and chronicle entries already written stay in the old language.')}</p>
+        <h4>${tr('Grafikeffekte', 'Graphics effects')}</h4>
+        <div class="choice">${toggle('effects', s.effects, tr('An', 'On'), tr('Aus (schneller)', 'Off (faster)'))}</div>
+        <p class="hint">${tr('Kontaktschatten, Glühen, Vignette und Dithering. Auf langsamen Rechnern lieber aus. Im Spiel: Taste G.', 'Contact shadows, glow, vignette and dithering. Better off on slow computers. In a match: key G.')}</p>
         <h4>${tr('Trikots', 'Kits')}</h4>
         <div class="choice">${toggle('safekits', !s.safeKits, tr('Vereinsfarben', 'Club colours'), tr('Farbenblind-sicher', 'Colour-blind safe'))}</div>
         <p class="hint">${tr('Blau gegen Orange mit hellen und dunklen Hosen – gut unterscheidbar auch bei Rot-Grün-Schwäche. Nur die Anzeige ändert sich.', 'Blue against orange with light and dark shorts – easy to tell apart even with red-green colour blindness. Only the display changes.')}</p>
+      `,
+      tasten: `
         <h4>${tr('Tastenbelegung', 'Key bindings')}</h4>
         <div class="keys">${REBINDABLE.map((a) => `<span>${ACTION_LABELS[a]}</span><button class="${this.capturing === a ? 'active' : ''}" data-action="bind" data-value="${a}">${this.capturing === a ? tr('Taste drücken …', 'Press a key …') : [...new Set(bindingOf(a).map(keyName))].join(' / ')}</button>`).join('')}</div>
         <p class="hint">${tr('Klicken, dann die neue Taste drücken (Esc bricht ab). Ist die Taste schon belegt, tauschen beide. Gamepad bleibt unverändert.', 'Click, then press the new key (Esc cancels). If the key is already used, the two swap. The gamepad stays as it is.')} <button data-action="resetkeys">${tr('Standard wiederherstellen', 'Restore defaults')}</button></p>
+      `,
+    };
+    const tabs = [['spiel', tr('Spiel', 'Game')], ['ton', tr('Ton & Vibration', 'Sound & vibration')], ['grafik', tr('Grafik & Sprache', 'Display & language')], ['tasten', tr('Steuerung', 'Controls')]];
+    const page = pages[this.page] ? this.page : 'spiel';
+    this.root.innerHTML = `
+      <div class="settings-panel notebook">
+        <header><h2>${tr('Einstellungen', 'Settings')}</h2><button data-action="back">${tr('Zurück (Esc)', 'Back (Esc)')}</button></header>
+        <div class="m-tabs nb-tabs" role="tablist">${tabs.map(([id, label]) => `<button role="tab" aria-selected="${id === page}" data-action="nbPage" data-value="${id}">${label}</button>`).join('')}</div>
+        <div class="m-notebook"><div class="m-paper ruled nb-page">${pages[page]}</div></div>
       </div>`;
   }
 }
