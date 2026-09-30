@@ -269,6 +269,10 @@ export class MatchView {
     for (const m of this.models.values()) disposeKit(m);
     if (this.referee) disposeKit(this.referee);
     this.blobs.geometry.dispose();
+    // Schattenflecken: eigene Maske und eigenes Material je Spielansicht.
+    this.blobs.material.alphaMap?.dispose();
+    this.blobs.material.dispose();
+    this.blobs.dispose();
   }
 
   // Nasse Spieler und nasser Ball: Stoff und Leder etwas dunkler (ein Materialfaktor je

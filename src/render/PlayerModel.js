@@ -564,6 +564,9 @@ export function setKitDirt(model, dirt, color) {
 export function disposeKit(model) {
   model.cloth?.atlas.release();
   model.mesh?.geometry.dispose();
+  // Skelett: three legt je SkinnedMesh eine Knochen-Textur auf der GPU an – ohne dispose bliebe
+  // sie nach jedem Spiel liegen (≈ 1 Textur je Spieler und Spielansicht).
+  model.mesh?.skeleton?.dispose();
 }
 
 // --- Animation ----------------------------------------------------------------------
