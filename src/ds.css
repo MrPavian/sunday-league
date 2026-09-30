@@ -251,7 +251,7 @@ button.ui-card:active, .ui-card.tap:active { transform: translateY(2px); box-sha
 .ui-sheet footer { flex: none; display: flex; gap: var(--s2); padding: var(--s3) var(--s4); border-top: 2px solid var(--line-soft); }
 .ui-sheet footer .ui-btn { flex: 1; }
 /* Auf breiten, flachen Schirmen (Handy quer) kommt das Blatt von der Seite: Spielfeld bleibt sichtbar. */
-@media (orientation: landscape) and (max-height: 520px) {
+@media (max-height: 520px) and (orientation: landscape) {
   .ui-sheet { left: auto; right: 0; top: 0; bottom: 0; width: min(440px, 62vw); max-height: none; border-bottom: var(--edge); border-right: 0; box-shadow: -4px 0 0 #000; transform: translateX(100%); padding-bottom: 0; padding-right: env(safe-area-inset-right); }
   .ui-sheet.open { transform: translateX(0); }
   .ui-sheet .grip { display: none; }

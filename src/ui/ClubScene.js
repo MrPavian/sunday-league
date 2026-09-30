@@ -9,9 +9,8 @@ import { clubById, currentLineup, humanClub, humanFixture, playerOf, seasonOver,
 import { dateLabel, matchDate } from '../career/calendar.js';
 import { systemsFor, STYLES as PLAY_STYLES } from '../sim/tactics.js';
 import { crestOf, crestSVG } from './crest.js';
-import { esc } from './ds.js';
+import { esc, hex } from './ds.js';
 
-const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
 const ROLE = { gk: '#e8742a', def: '#4fa3e0', mid: '#6fbf73', fwd: '#d9534f' };
 const euro = (n) => tr(`${Math.round(n).toLocaleString('de-DE')} €`, `€${Math.round(n).toLocaleString('en-GB')}`);
 

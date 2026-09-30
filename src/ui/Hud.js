@@ -16,8 +16,8 @@ import { SHOUTS } from '../sim/coach.js';
 import { orderLabel } from '../sim/commands.js';
 import { tacticLabel } from '../sim/tactics.js';
 import { bondOf, isBad, isGood } from '../sim/bonds.js';
+import { hex } from './ds.js';
 
-const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
 
 // Anzeige in "Fußballminuten": die Spielzeit wird auf 90 Minuten hochgerechnet.
 export const matchMinute = (match, t) => Math.min(90, Math.floor((t / match.duration) * 90) + 1);

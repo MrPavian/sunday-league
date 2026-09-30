@@ -3,6 +3,8 @@
 // dieselben Klassen, Größen und Zustände benutzen (Styles in src/ds.css).
 import { tr } from '../core/i18n.js';
 
+// Farbzahl 0xRRGGBB → „#rrggbb".
+export const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
 export const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 // attrs: { action, value, … } → data-action="…" data-value="…"; andere Schlüssel als echte Attribute.

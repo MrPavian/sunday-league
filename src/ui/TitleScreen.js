@@ -1,5 +1,6 @@
 import { tr } from '../core/i18n.js';
 import { crestSVG } from './logo.js';
+import { hex } from './ds.js';
 
 // Startbild: Sonntagmorgen auf dem Dorfplatz, als Pixelbild von Hand gezeichnet
 // (prozedural, 384 × 216). Wolken ziehen, das Flutlicht flackert, die Fahne weht.
@@ -24,7 +25,6 @@ function rng(seed) {
   };
 }
 
-const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
 const mix = (a, b, t) => {
   const c = (s) => Math.round(((a >> s) & 255) * (1 - t) + ((b >> s) & 255) * t);
   return (c(16) << 16) | (c(8) << 8) | c(0);

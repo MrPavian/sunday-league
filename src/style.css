@@ -1323,7 +1323,7 @@ body.touch #shoutbar kbd { display: none; }
 #planpanel, #subpanel { align-items: flex-end; padding: 0; background: rgba(8, 9, 10, 0.5); }
 .plan-panel, .sub-panel { width: min(980px, 100%); max-height: min(92vh, 100%); border-bottom: 0; box-shadow: 0 -4px 0 #000; padding: var(--s3) var(--s4) calc(var(--s3) + env(safe-area-inset-bottom)); animation: sheet-up var(--dur) var(--ease); }
 @keyframes sheet-up { from { transform: translateY(40px); opacity: 0.4; } }
-@media (orientation: landscape) and (max-height: 520px) {
+@media (max-height: 520px) and (orientation: landscape) {
   #planpanel, #subpanel { justify-content: flex-end; align-items: stretch; }
   .plan-panel, .sub-panel { width: min(760px, 88vw); max-height: 100vh; border-bottom: 2px solid #000; border-right: 0; box-shadow: -4px 0 0 #000; animation-name: sheet-left; padding-right: calc(var(--s4) + env(safe-area-inset-right)); }
   @keyframes sheet-left { from { transform: translateX(40px); opacity: 0.4; } }
@@ -1344,7 +1344,7 @@ body.touch #shoutbar kbd { display: none; }
 .plan-panel .ui-seg button[aria-pressed='true'] { color: var(--on-accent); background: var(--accent); text-shadow: none; }
 .plan-panel .plan-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
 @media (max-width: 720px) { .tp-body { grid-template-columns: 1fr; } .tp-board { position: static; } }
-@media (orientation: landscape) and (max-height: 520px) { .tp-body { grid-template-columns: minmax(200px, 0.8fr) minmax(0, 1.2fr); } }
+@media (max-height: 520px) and (orientation: landscape) { .tp-body { grid-template-columns: minmax(200px, 0.8fr) minmax(0, 1.2fr); } }
 
 /* Taktiktafel */
 .tboard svg { display: block; width: 100%; height: auto; border: 3px solid #f2efe6; box-shadow: 0 0 0 2px #000, var(--drop); }
@@ -1377,7 +1377,7 @@ line.tb-chalk { stroke-width: 1; }
 .half-panel { padding: var(--s4) var(--s5); }
 .half-panel h2 { font-size: var(--fs-h1); }
 .half-panel footer button.primary { color: var(--on-accent); background: var(--accent); text-shadow: none; font-size: var(--fs-h3); }
-@media (orientation: landscape) and (max-height: 520px) { #halfpanel { padding: 0; } .half-panel { max-height: 100vh; width: 100%; border: 0; padding: var(--s3) var(--s4); } .half-panel h2 { font-size: var(--fs-h2); } }
+@media (max-height: 520px) and (orientation: landscape) { #halfpanel { padding: 0; } .half-panel { max-height: 100vh; width: 100%; border: 0; padding: var(--s3) var(--s4); } .half-panel h2 { font-size: var(--fs-h2); } }
 .club-tboard { max-width: 520px; margin-bottom: var(--s3); }
 /* Kopf und Fuß fest, nur der Inhalt scrollt (sonst schiebt sich der Fuß über die Knöpfe). */
 .plan-panel.tp { overflow: hidden; }
@@ -1627,7 +1627,7 @@ line.tb-chalk { stroke-width: 1; }
 /* Offen: die Hand rutscht etwas tiefer, damit Daumen und Finger nicht auf der Antwortzeile liegen */
 .phone-stage.open .wa-reply { padding-left: 28px; padding-right: 22px; }
 /* Handy quer (Querformat mit wenig Höhe): Gerät liegt quer in der Hand, volle Breite */
-@media (orientation: landscape) and (max-height: 520px) {
+@media (max-height: 520px) and (orientation: landscape) {
   .phone-stage { padding-bottom: var(--s2); }
   .phone-stage .m-phone-wrap { --phone-w: min(760px, 100%); }
   .phone-stage .m-phone { height: calc(100dvh - 150px); min-height: 200px; padding: 8px 18px 8px 14px; border-radius: 16px; }
@@ -1782,7 +1782,7 @@ body.manager #end { padding-bottom: 84px; }
 #comm-sheet > header { color: #e9f5ec; }
 #comm-sheet .body { margin: 0 10px 10px; padding: var(--s3); background: var(--screen); border: 2px solid #000; border-radius: 10px; }
 #comm-sheet .grip { background: #3a3f48; }
-@media (orientation: landscape) and (max-height: 520px) {
+@media (max-height: 520px) and (orientation: landscape) {
   #comm-sheet { border-radius: 18px; margin: 0 8px 6px; }
   #comm-sheet::before { content: ''; position: absolute; left: 6px; top: 50%; width: 5px; height: 38px; transform: translateY(-50%); background: #0a0b0d; border-radius: 3px; }
   #comm-sheet .body { margin-left: 18px; }
