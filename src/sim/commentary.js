@@ -18,6 +18,8 @@ const pools = {
     ['{gk} ist unten und hält.', '{gk} pariert stark!', 'Glanzparade von {gk}!', '{gk} faustet den Ball weg.', '{gk} ist zur Stelle.'],
     ['{gk} gets down and saves.', 'Strong save from {gk}!', 'Superb stop by {gk}!', '{gk} punches it clear.', '{gk} is equal to it.'],
   ),
+  punch: tr(['{gk} steigt hoch und faustet den Ball weg!', 'Fäuste raus – {gk} klärt im Getümmel.', '{gk} faustet, der Ball fliegt bis zur Mittellinie.'], ['{gk} rises and punches it away!', 'Fists out – {gk} clears in the crowd.', '{gk} punches, the ball flies to halfway.']),
+  high: tr(['{gk} pflückt den Ball aus der Luft.', 'Hoch gesprungen – {gk} hat ihn.', '{gk} holt sich den hohen Ball.'], ['{gk} plucks it out of the air.', 'Up he goes – {gk} has it.', '{gk} claims the high ball.']),
   catch: tr(['{gk} fängt sicher.', 'Kein Problem für {gk}.', '{gk} packt zu.'], ['{gk} holds on comfortably.', 'No trouble for {gk}.', '{gk} gathers it.']),
   wide: tr(['Knapp vorbei!', 'Drüber. Weit drüber.', 'Vorbei – der Ball rollt bis zum Zaun.', 'Das war eher eine Flanke.'], ['Just wide!', 'Over. Well over.', 'Wide – the ball rolls all the way to the fence.', 'That was more of a cross.']),
   quiet: tr(
@@ -80,7 +82,9 @@ export function createCommentator(m, seed = 1) {
     pendingShot = null;
     if (!s) return;
     const gk = surname(who(gkId) ?? keeperOf(1 - s.team));
-    if (outcome === 'save') add(`${shotLine(s)} ${pick(pools.save, { gk })}`, 'chance');
+    if (outcome === 'punch') add(`${shotLine(s)} ${pick(pools.punch, { gk })}`, 'chance');
+    else if (outcome === 'high') add(`${shotLine(s)} ${pick(pools.high, { gk })}`, 'chance');
+    else if (outcome === 'save') add(`${shotLine(s)} ${pick(pools.save, { gk })}`, 'chance');
     else if (outcome === 'catch') add(`${shotLine(s)} ${pick(pools.catch, { gk })}`, 'chance');
     else if (outcome === 'post') add(`${shotLine(s)} ${tr('Pfosten!', 'Off the post!')}`, 'chance');
     else if (outcome === 'bar') add(`${shotLine(s)} ${tr('An die Latte!', 'Off the bar!')}`, 'chance');
@@ -113,7 +117,7 @@ export function createCommentator(m, seed = 1) {
           break;
         case 'save':
         case 'catch':
-          if (pendingShot) resolveShot(e.type, e.playerId);
+          if (pendingShot) resolveShot(e.punch ? 'punch' : e.high ? 'high' : e.type, e.playerId);
           break;
         case 'post':
         case 'bar':

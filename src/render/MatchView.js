@@ -419,11 +419,13 @@ export class MatchView {
       // (weich ein- und ausgeblendet), und Abwurf statt Schuss, wenn er aus der Hand wirft.
       o.ready = 0;
       o.throwT = 0;
+      o.jump = p.jumpAnim > 0 ? 1 - p.jumpAnim / 0.5 : 0;
+      o.punch = p.punchAnim > 0 ? 1 - p.punchAnim / 0.35 : 0;
       if (p.role === 'gk') {
         const goalX = -attackDir(match, p.team) * match.pitch.halfLength;
         const threat = match.phase === 'play' && !match.ball.holder && match.lastTouchTeam !== p.team && Math.hypot(match.ball.pos.x - goalX, match.ball.pos.z) < 12 ? 1 : 0;
         m.readyK = (m.readyK ?? 0) + (threat - (m.readyK ?? 0)) * Math.min(1, dt * 8);
-        o.ready = m.readyK;
+        o.ready = o.jump > 0 || o.punch > 0 ? 0 : m.readyK;
         const rel = match.keeperRelease;
         const since = rel && rel.id === p.id && !rel.lofted ? match.time - rel.time : 9;
         if (since < 0.45) {

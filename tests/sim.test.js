@@ -7,6 +7,7 @@ import { createMatch, getPlayer, startTackle, stepMatch } from '../src/sim/match
 import { createPlayerPool } from '../src/sim/generator.js';
 import { gradePlayers, headline } from '../src/sim/stats.js';
 import { keeperZone } from '../src/sim/ai.js';
+import { attackDir } from '../src/sim/players.js';
 
 const DT = 1 / 60;
 
@@ -600,7 +601,8 @@ describe('feel: parries, corners, set pieces', () => {
       let watch = 0;
       for (let i = 0; i < 60 * 600 && m.phase !== 'ended'; i++) {
         stepMatch(m, undefined, DT);
-        if (m.events.some((e) => e.type === 'save')) {
+        // Fausten ist gewollt hoch (eigener Test unten) – hier nur echte Paraden zur Seite.
+        if (m.events.some((e) => e.type === 'save' && !e.punch)) {
           parries++;
           watch = 30;
         }
@@ -610,6 +612,31 @@ describe('feel: parries, corners, set pieces', () => {
     }
     expect(parries).toBeGreaterThan(5);
     expect(maxY).toBeLessThan(1.9);
+  });
+
+  it('a high ball in the six-yard box is punched forward, away from goal, or claimed', () => {
+    let punches = 0;
+    let highCatches = 0;
+    for (const seed of [1, 2, 3, 4, 5, 6]) {
+      const m = createMatch({ seed, pitch: PARKING_LOT, human: false });
+      for (let i = 0; i < 60 * 600 && m.phase !== 'ended'; i++) {
+        stepMatch(m, undefined, DT);
+        for (const e of m.events) {
+          if (e.type === 'catch' && e.high) highCatches++;
+          if (e.type !== 'save' || !e.punch) continue;
+          punches++;
+          const gk = m.players.find((p) => p.id === e.playerId);
+          const s = attackDir(m, gk.team);
+          expect(m.ball.vel.x * s).toBeGreaterThan(6); // weit nach vorn, nie Richtung eigenes Tor
+          expect(m.ball.vel.y).toBeGreaterThan(2.5);
+          expect(gk.punchAnim).toBeGreaterThan(0);
+          expect(gk.jumpAnim).toBeGreaterThan(0);
+        }
+        m.events.length = 0;
+      }
+    }
+    expect(punches).toBeGreaterThan(5);
+    expect(highCatches).toBeGreaterThan(0);
   });
 
   it('nobody gets stuck in the corners of a walled pitch', () => {

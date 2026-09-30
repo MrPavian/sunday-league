@@ -249,6 +249,8 @@ function step(m, input, dt) {
     p.kickAnim = Math.max(0, p.kickAnim - dt);
     p.headAnim = Math.max(0, p.headAnim - dt);
     p.diveAnim = Math.max(0, p.diveAnim - dt);
+    p.jumpAnim = Math.max(0, (p.jumpAnim ?? 0) - dt);
+    p.punchAnim = Math.max(0, (p.punchAnim ?? 0) - dt);
     if (p.trickAnim > 0) p.trickAnim = Math.max(0, p.trickAnim - dt);
     if (p.acroAnim > 0) p.acroAnim = Math.max(0, p.acroAnim - dt);
     p.catchCooldown = Math.max(0, p.catchCooldown - dt);

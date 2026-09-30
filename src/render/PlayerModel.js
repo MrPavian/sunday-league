@@ -821,7 +821,7 @@ function acroPose(bn, kind, t, hipY) {
 // kickPrep 0…1 – Schuss/Pass ist geplant: ausholen (die Simulation führt ihn als „pending“),
 // trick/trickT/trickSide – Trick am Ball, acro/acroT – Fall-/Seitfallzieher, fooled 0…1 –
 // ausgetrickst, steht kurz auf dem falschen Fuß.
-export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot', headPrep = 0, headJump = 1, hit = null, duck = 0, face: faceHint = null, kickPrep = 0, trick = null, trickT = 0, trickSide = 1, acro = null, acroT = 0, fooled = 0, ready = 0, throwT = 0 }) {
+export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot', headPrep = 0, headJump = 1, hit = null, duck = 0, face: faceHint = null, kickPrep = 0, trick = null, trickT = 0, trickSide = 1, acro = null, acroT = 0, fooled = 0, ready = 0, throwT = 0, jump = 0, punch = 0 }) {
   const bn = model.bones;
   resetPose(model);
   const s = locomotion(model, speed, dt);
@@ -879,6 +879,31 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
   } else if (holding === 'overhead') {
     arm(bn, 'L', -2.85, 0.12, -0.75); // Einwurf
     arm(bn, 'R', -2.85, 0.12, -0.75);
+  }
+  // Torwart steigt zum hohen Ball: Absprung aus den Knien, ein Knie hoch, Arme gestreckt über den
+  // Kopf (jump 0 → 1). Hält er den Ball schon, bleiben die Arme an der Brust.
+  if (jump > 0 && !dive && state === 'normal') {
+    const k = Math.sin(jump * Math.PI);
+    bn.hips.position.y += 0.38 * k;
+    bn.spine.rotation.x -= 0.12 * k;
+    bn.head.rotation.x -= 0.3 * k;
+    leg(bn, 'L', -1.1 * k, 1.5 * k, 0.2 * k);
+    leg(bn, 'R', 0.15 * k, 0.5 * k, 0.3 * k);
+    if (!holding && !(punch > 0)) {
+      arm(bn, 'L', -3.0 * k, 0.15, -0.15);
+      arm(bn, 'R', -3.0 * k, 0.15, -0.15);
+    }
+    face = 'effort';
+  }
+  // Fausten: kurz anwinkeln, dann beide Fäuste nach oben-vorn durchstoßen (punch 0 → 1).
+  if (punch > 0 && !dive && state === 'normal') {
+    const wind = punch < 0.4;
+    const fwd = wind ? lerp(-1.6, -2.2, punch / 0.4) : lerp(-2.2, -2.7, Math.min(1, (punch - 0.4) / 0.25));
+    const elbow = wind ? -1.6 : lerp(-1.6, 0, Math.min(1, (punch - 0.4) / 0.2));
+    arm(bn, 'L', fwd, 0.08, elbow);
+    arm(bn, 'R', fwd, 0.08, elbow);
+    bn.spine.rotation.x += wind ? -0.1 : 0.15;
+    face = 'effort';
   }
   if (headAnim > 0 || headPrep > 0) {
     // Kopfball: vorbereiten (abspringen, Oberkörper und Kopf zurück) → nach vorn schnappen →

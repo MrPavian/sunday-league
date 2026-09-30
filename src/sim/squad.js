@@ -35,6 +35,8 @@ export function makeEntity(pl, team, index, role, home) {
     kickAnim: 0,
     headAnim: 0,
     diveAnim: 0,
+    jumpAnim: 0,
+    punchAnim: 0,
     diveSide: 0,
     catchCooldown: 0,
     holdTimer: 0,

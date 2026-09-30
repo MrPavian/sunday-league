@@ -396,25 +396,43 @@ export function keeperSaves(m) {
       const beaten = clamp((bs - 8) * 0.02 + corner * 0.85 + pointBlank + postShot + brisk - 0.3 * p.attrs.keeping - (dist2d(p.pos, ball.pos) < 0.45 ? 0.15 : 0), 0.02, 0.7);
       if (rng.chance(beaten)) {
         p.catchCooldown = 0.7; // zu spät – der Ball ist vorbei
-        p.diveAnim = 0.5;
+        if (hands && ball.pos.y > 1.5) p.jumpAnim = 0.5; // hoch: springt vergeblich hoch
+        else p.diveAnim = 0.5;
         p.diveSide = Math.sign(ball.pos.z - p.pos.z) || 1;
         m.events.push({ type: 'beaten', playerId: p.id });
         return;
       }
     }
+    // Hoher Ball im Torraum: hochspringen, beide Arme lang – statt zur Seite zu hechten.
+    const high = hands && ball.pos.y > 1.5;
+    // Bedrängt (Gegner am Ball)? Dann lieber fausten als fangen.
+    const pressed = high && m.players.some((o) => o.team !== p.team && o.state === 'normal' && dist2d(o.pos, ball.pos) < 1.5);
+    if (high) p.jumpAnim = 0.5;
     // Hechtsprung, wenn der Ball nicht direkt auf den Mann kommt (nur mit Händen).
-    if (hands && dist2d(p.pos, ball.pos) > 0.45) {
+    else if (hands && dist2d(p.pos, ball.pos) > 0.45) {
       p.diveAnim = 0.5;
       p.diveSide = Math.sign(ball.pos.z - p.pos.z) || 1;
     }
-    const pCatch = !hands ? 0 : bs < 4 ? 0.97 : clamp(0.3 + 0.6 * p.attrs.keeping - (bs - 8) * 0.03, 0.08, 0.95);
+    const pCatch = (!hands ? 0 : bs < 4 ? 0.97 : clamp(0.3 + 0.6 * p.attrs.keeping - (bs - 8) * 0.03, 0.08, 0.95)) * (pressed ? 0.45 : 1);
     if (pCatch > 0 && rng.chance(pCatch)) {
       ball.holder = p.id;
       ball.vel.x = ball.vel.y = ball.vel.z = 0;
       ball.lastTouch = p.id;
       m.lastTouchTeam = p.team;
       m.pendingSwitch = null;
-      if (bs >= 4) m.events.push({ type: 'catch', playerId: p.id });
+      if (bs >= 4) m.events.push({ type: 'catch', playerId: p.id, high });
+    } else if (high) {
+      // Fausten: weit nach vorn und hoch weg vom Tor – nicht zur Seite, nicht zurück ins Getümmel.
+      const side = Math.sign(ball.pos.z - p.pos.z) || (rng.chance(0.5) ? 1 : -1);
+      ball.vel.x = s * rng.range(7, 11);
+      ball.vel.z = side * rng.range(1, 4);
+      ball.vel.y = rng.range(3, 5);
+      p.punchAnim = 0.35;
+      p.catchCooldown = 0.6;
+      ball.lastTouch = p.id;
+      ball.lastAction = 'save';
+      m.lastTouchTeam = p.team;
+      m.events.push({ type: 'save', playerId: p.id, punch: true });
     } else {
       // Zur Seite abwehren, flach und zügig – nicht zurück vors eigene Tor und
       // nicht als Kerze über den Keeper.

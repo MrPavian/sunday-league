@@ -109,6 +109,8 @@ export function stepShootout(m, input, dt) {
     p.kickCooldown = Math.max(0, p.kickCooldown - dt);
     p.kickAnim = Math.max(0, p.kickAnim - dt);
     p.diveAnim = Math.max(0, p.diveAnim - dt);
+    p.jumpAnim = Math.max(0, (p.jumpAnim ?? 0) - dt);
+    p.punchAnim = Math.max(0, (p.punchAnim ?? 0) - dt);
     p.catchCooldown = Math.max(0, p.catchCooldown - dt);
   }
   const stick = clamp(input?.move?.z ?? 0, -1, 1);
