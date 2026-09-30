@@ -14,7 +14,7 @@ import { button, haptic, icon, segmented, tabs as uiTabs } from './ds.js';
 import { ATTR_LABELS } from './PoolBrowser.js';
 import { TacticBoard } from './TacticBoard.js';
 import { clubScene } from './ClubScene.js';
-import { bindFlips, isLight, playerCard as collectorCard, trainerCard } from './world.js';
+import { bindFlips, isLight, lockScreen, phone, playerCard as collectorCard, trainerCard } from './world.js';
 import { planTarget } from '../sim/plan.js';
 import { jobPerk } from '../data/jobs.js';
 import { CREST_COLORS, CREST_DIVISIONS, CREST_SHAPES, CREST_SYMBOLS, crestOf, crestSVG, defaultCrest, FIGURES } from './crest.js';
@@ -282,6 +282,9 @@ export class Clubhouse {
       } else if (action === 'planLevel') {
         setCoachLevel(coachLevel() === 'profi' ? 'einsteiger' : 'profi');
         this.render();
+      } else if (action === 'phone-open' || action === 'phone-lock') {
+        this.phoneView = action === 'phone-open' ? 'app' : 'lock';
+        if (this.phoneView === 'app') haptic('tap');
       } else if (action === 'autoLineup') {
         resetLineup(this.career);
         this.h.onChange();
@@ -450,6 +453,9 @@ export class Clubhouse {
         </div>
       </div>`;
     this.bindLineup();
+    // Chat im Handy: beim Öffnen unten anfangen (neueste Nachricht), wie im echten Messenger.
+    const wa = this.root.querySelector('.phone-stage.open .wa-body');
+    if (wa) wa.scrollTop = wa.scrollHeight;
     this.bindPub();
     this.bindClubForm();
     const slot = this.root.querySelector('.club-tboard');
@@ -966,16 +972,42 @@ export class Clubhouse {
               : `<div class="actions">${view.options.map((o, i) => `<button ${i === 0 ? 'class="primary"' : ''} data-action="event" data-value="${i}">${o}</button>`).join('')}</div>`}
         </div>`
       : '';
-    return `
-      ${eventCard}
-      <div class="chat-head">${tr('„Wer kann Sonntag?"', '"Who can play Sunday?"')} · ${club.squad.length} ${tr('Mitglieder', 'members')}</div>
-      <div class="chat">${bubbles}</div>
-      <div class="nudge">
-        <span>${tr('Nachhaken', 'Chase up')} (${w.nudges} ${tr('übrig', 'left')}):</span>
-        ${declined.length && w.nudges > 0 && !this.results
-          ? declined.map((idx) => `<button data-action="nudge" data-value="${idx}">${first(this.p(idx).name)}</button>`).join('')
-          : `<em>${tr('niemand', 'nobody')}</em>`}
-      </div>`;
+    // UI 3.0 Phase 6: Die Gruppe steckt im Handy (in der Hand des Trainers). Beim ersten Blick
+    // in einer Woche zeigt es den Sperrbildschirm mit den neuesten Nachrichten – danach direkt den Chat.
+    const weekId = `${c.season}:${c.round}`;
+    const pending = ev && ev.choice === null && !this.results;
+    if (this.phoneWeek !== weekId) {
+      this.phoneWeek = weekId;
+      this.phoneView = ordered.length || pending ? 'lock' : 'app';
+      this.phoneBuzz = pending;
+    }
+    const coachIdx = c.coach?.idx;
+    const skin = coachIdx != null ? c.players[coachIdx]?.look?.skin : undefined;
+    const lastTime = [...ordered].reverse().find((msg) => /^\w\w \d\d:\d\d/.test(msg.time ?? ''))?.time ?? '';
+    const plain = (h) => String(h ?? '').replace(/<[^>]+>/g, '');
+    const cut = (t, n = 70) => (t.length > n ? `${t.slice(0, n - 1)}…` : t);
+    const groupName = tr('Wer kann Sonntag?', 'Who can play Sunday?');
+    let screen;
+    if (this.phoneView === 'lock') {
+      const notes = [];
+      if (pending) notes.push({ app: tr('Verein', 'Club'), from: ev.story ? plain(storyTag(ev.story)) : tr('Diese Woche', 'This week'), text: cut(plain(view.text)) });
+      for (const msg of [...ordered].reverse().filter((x) => x.from != null && !x.tip && !x.press).slice(0, pending ? 1 : 2)) notes.push({ app: groupName, from: first(this.p(msg.from).name), text: cut(plain(msg.text)) });
+      screen = lockScreen({ time: timeLabel(lastTime), notes });
+    } else {
+      const replies = declined.length && w.nudges > 0 && !this.results
+        ? declined.map((idx) => `<button class="wa-chip" data-action="nudge" data-value="${idx}">${first(this.p(idx).name)}</button>`).join('')
+        : `<em>${tr('niemand', 'nobody')}</em>`;
+      screen = `<div class="statusbar"><span>${timeLabel(lastTime)}</span><span>▮▮▮ ▰</span></div>
+        <div class="wa-head">${button('‹', { kind: 'ghost icon', action: 'phone-lock', 'aria-label': tr('Zum Sperrbildschirm', 'To the lock screen') })}
+          <span class="wa-crest">${crestSVG(crestOf(club), { size: 26, short: club.short, label: club.name })}</span>
+          <div><b>${groupName}</b><small>${club.squad.length} ${tr('Mitglieder', 'members')}</small></div></div>
+        ${eventCard ? `<div class="wa-pinned">${eventCard}</div>` : ''}<div class="wa-body"><div class="chat">${bubbles}</div></div>
+        <div class="wa-reply"><span>${tr('Nachhaken', 'Chase up')} (${w.nudges} ${tr('übrig', 'left')}):</span>${replies}</div>`;
+    }
+    const buzz = this.phoneView === 'lock' && this.phoneBuzz;
+    this.phoneBuzz = false;
+    if (buzz) haptic('message');
+    return `<div class="phone-stage${this.phoneView === 'app' ? ' open' : ''}">${phone(screen, { skin, lit: this.phoneView === 'lock' && (pending || ordered.length > 0), buzz, rise: this.phoneView === 'lock', label: groupName })}</div>`;
   }
 
   // Kader als Spielerkarten. Ebene 1: Name, Position, Stärke, Sonntag. Alles Weitere im Profil.
