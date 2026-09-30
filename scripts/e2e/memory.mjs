@@ -1,4 +1,5 @@
-// Speicherzyklus: mehrere Karrierespiele hintereinander. Nach jedem Spiel (Speicherbereinigung
+// Speicherzyklen: mehrere Karrierespiele hintereinander, Spielorte im Menü durchschalten und
+// Freundschaftsspiele mit Vorfall (Besucher auf dem Platz). Nach jeder Runde (Speicherbereinigung
 // erzwungen) dürfen GPU-Texturen, Geometrien, JS-Heap und Listener nicht dauerhaft wachsen.
 import { checker, launch, newCareer, page, playCareerMatch } from './lib.mjs';
 
@@ -21,9 +22,8 @@ async function detachedNodes(cdp) {
   return n;
 }
 
-export async function run({ matches = 4 } = {}) {
+async function career(b, matches) {
   const ok = checker('Speicherzyklus (Karriere → Spiel → Vereinsheim)');
-  const b = await launch();
   const p = await page(b, 'land', { query: '?notitle&debug&dauer=30' });
   await newCareer(p);
   const cdp = await p.context().newCDPSession(p);
@@ -59,8 +59,76 @@ export async function run({ matches = 4 } = {}) {
   ok(last.attached - first.attached <= 150, `DOM (eingehängt) wächst: ${first.attached} → ${last.attached}`);
   ok(last.detached == null || last.detached - first.detached <= 50, `Losgelöste DOM-Knoten wachsen: ${first.detached} → ${last.detached}`);
   ok(!p.errors.length, `Seitenfehler: ${p.errors.join(' | ')}`);
-  await b.close();
+  await p.context().close();
   return ok.done();
+}
+
+// GPU-Stand nach erzwungener Bereinigung.
+async function gpu(p, cdp) {
+  for (let i = 0; i < 3; i++) {
+    await cdp.send('HeapProfiler.collectGarbage');
+    await p.waitForTimeout(300);
+  }
+  return p.evaluate(() => ({ tex: __sl.renderer.info.memory.textures, geo: __sl.renderer.info.memory.geometries }));
+}
+
+// Spielorte im Menü durchschalten: Jeder Wechsel baut Kulisse, Licht (Schattenkarte) und ein
+// Hintergrundspiel neu. Früher blieb je Wechsel die Schattenkarte der Sonne liegen.
+export async function venues(b, rounds = 3) {
+  const ok = checker('Speicherzyklus: Spielorte im Menü durchschalten');
+  const p = await page(b, 'land', { query: '?notitle&debug' });
+  const cdp = await p.context().newCDPSession(p);
+  const n = await p.$$eval('.venue-card', (e) => e.length);
+  const rows = [];
+  for (let r = 0; r <= rounds; r++) {
+    if (r) for (let i = 0; i < n; i++) {
+      await p.keyboard.press('ArrowRight');
+      await p.waitForTimeout(700);
+    }
+    rows.push(await gpu(p, cdp));
+  }
+  console.table(rows);
+  // Runde 0 → 1 füllt Caches (Shader, geteilte Materialien); danach darf nichts mehr wachsen.
+  ok(rows.at(-1).tex - rows[1].tex <= 2, `GPU-Texturen wachsen je Ortswechsel: ${rows.map((x) => x.tex).join(' → ')}`);
+  ok(rows.at(-1).geo - rows[1].geo <= 2, `Geometrien wachsen: ${rows.map((x) => x.geo).join(' → ')}`);
+  ok(!p.errors.length, `Seitenfehler: ${p.errors.join(' | ')}`);
+  await p.context().close();
+  return ok.done();
+}
+
+// Freundschaftsspiele mit Polizei-Einsatz: Besucher-Figuren haben eigenen Atlas und eigenes
+// Skelett. Früher blieben je Spiel 4 Texturen liegen.
+export async function incidentMatches(b, matches = 4) {
+  const ok = checker('Speicherzyklus: Freundschaftsspiele mit Vorfall (Polizei)');
+  const p = await page(b, 'land', { query: '?notitle&debug&dauer=12&incident=polizei' });
+  const cdp = await p.context().newCDPSession(p);
+  const rows = [await gpu(p, cdp)];
+  for (let i = 0; i < matches; i++) {
+    await p.keyboard.press('Enter');
+    await p.waitForFunction(() => document.getElementById('menu').hidden, null, { timeout: 20000 });
+    const police = await p.waitForFunction(() => __sl.match?.visitors?.length > 0, null, { timeout: 30000 }).then(() => true, () => false);
+    ok(police, `Spiel ${i + 1}: Polizei kommt nicht aufs Feld`);
+    for (let k = 0; k < 120 && (await p.evaluate(() => document.getElementById('end').hidden)); k++) {
+      await p.evaluate(() => document.querySelector('.half-panel [data-action="go"]')?.click());
+      await p.waitForTimeout(1000);
+    }
+    await p.waitForTimeout(800);
+    await p.keyboard.press('Escape');
+    await p.waitForTimeout(600);
+    rows.push(await gpu(p, cdp));
+  }
+  console.table(rows);
+  ok(rows.at(-1).tex - rows[1].tex <= 2, `GPU-Texturen wachsen je Spiel: ${rows.map((x) => x.tex).join(' → ')}`);
+  ok(!p.errors.length, `Seitenfehler: ${p.errors.join(' | ')}`);
+  await p.context().close();
+  return ok.done();
+}
+
+export async function run({ matches = 4 } = {}) {
+  const b = await launch();
+  const fails = (await career(b, matches)) + (await venues(b)) + (await incidentMatches(b));
+  await b.close();
+  return fails;
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) process.exitCode = await run();

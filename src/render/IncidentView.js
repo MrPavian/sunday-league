@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { len } from '../core/math.js';
 import { keepAlpha, toon } from './materials.js';
 import { currentQuality } from './quality.js';
-import { animatePlayer, createPlayerModel } from './PlayerModel.js';
+import { animatePlayer, createPlayerModel, disposeKit } from './PlayerModel.js';
 
 // Volle Wetterdichte; die Qualitätsstufe (quality.js: weather) nimmt davon einen Anteil.
 const RAIN_DROPS = 700;
@@ -157,6 +157,13 @@ export class IncidentView {
     d.legs.forEach((leg, i) => (leg.rotation.x = Math.sin(run + (i % 2 ? Math.PI : 0) + (i > 1 ? 0.8 : 0)) * 0.7));
     d.tail.rotation.y = Math.sin(this.time * 22) * 0.6;
     d.head.position.y = 0.46 + Math.abs(Math.sin(run)) * 0.02;
+  }
+
+  // Besucher (Polizei, Hundebesitzer …) haben eigenen Trikot-Atlas und eigenes Skelett –
+  // beides liegt auf der GPU und wird mit der Spielansicht freigegeben.
+  dispose() {
+    for (const model of this.visitors.values()) disposeKit(model);
+    this.visitors.clear();
   }
 
   syncVisitors(list, dt) {

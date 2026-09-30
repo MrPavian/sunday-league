@@ -105,7 +105,9 @@ export const smallTargets = (p, sel, ignore = []) =>
       [...document.querySelectorAll(s)]
         .filter((x) => !ig.some((c) => x.matches(c)))
         .filter((x) => { const r = x.getBoundingClientRect(); return r.width > 0 && r.height > 0 && Math.min(r.width, r.height) < 44; })
-        .map((x) => `${x.className || x.tagName}:${Math.round(x.getBoundingClientRect().width)}x${Math.round(x.getBoundingClientRect().height)}`),
+        .map((x) => `${x.className || x.tagName}${x.dataset.action ? `[${x.dataset.action}]` : ''}:${x.getBoundingClientRect().width.toFixed(2)}x${x.getBoundingClientRect().height.toFixed(2)}`),
     [sel, ignore],
   );
+// Warten, bis Übergangs-Animationen (z. B. Bereichswechsel) durch sind – gemessen wird der Ruhezustand.
+export const settle = (p) => p.evaluate(() => Promise.race([Promise.all(document.getAnimations().filter((a) => a.playState === 'running' && a.effect?.getTiming().iterations !== Infinity).map((a) => a.finished.catch(() => {}))), new Promise((r) => setTimeout(r, 2000))]));
 export const hScroll = (p) => p.evaluate(() => document.scrollingElement.scrollWidth > innerWidth);

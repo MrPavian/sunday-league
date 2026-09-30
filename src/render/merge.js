@@ -55,10 +55,11 @@ export function mergeStatic(root) {
 }
 
 // Beim Platzwechsel alles freigeben, was nur diese Kulisse benutzt hat:
-// Geometrien, Texturen (Schilder, Bodentexturen) und Materialien mit Textur.
-// Die geteilten Toon-Materialien ohne Textur bleiben im Cache.
+// Geometrien, Texturen (Schilder, Bodentexturen), Materialien mit Textur und die
+// Schattenkarten der Lichter. Die geteilten Toon-Materialien ohne Textur bleiben im Cache.
 export function disposeTree(root) {
   root.traverse((o) => {
+    if (o.isLight) o.dispose(); // Sonne: Schattenkarte (Farbe + Tiefe) liegt sonst weiter auf der GPU
     o.geometry?.dispose();
     const mats = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];
     for (const m of mats) {

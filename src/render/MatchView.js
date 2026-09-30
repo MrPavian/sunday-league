@@ -264,6 +264,7 @@ export class MatchView {
     this.effects.dispose();
     this.weather.dispose();
     this.ballView.dispose();
+    this.incidents.dispose();
     this.scene.remove(this.root);
     this.root.traverse((o) => o.geometry?.dispose());
     for (const m of this.models.values()) disposeKit(m);

@@ -1,7 +1,7 @@
 // Oberfläche in vier Größen: jeder Bereich/Tab des Vereinsheims öffnet ohne Fehler, ohne seitliches
 // Scrollen, auf Touch ohne Schaltflächen unter 44 px; dazu die wichtigsten Interaktionen und eine
 // Karriere-Runde per Liveticker bis zur nächsten Woche.
-import { checker, click, hScroll, launch, newCareer, page, SIZES, smallTargets, visible } from './lib.mjs';
+import { checker, click, hScroll, launch, newCareer, page, settle, SIZES, smallTargets, visible } from './lib.mjs';
 
 const TABS = [['home'], ['team', 'squad'], ['team', 'lineup'], ['team', 'tactic'], ['team', 'training'], ['team', 'youth'], ['team', 'transfers'], ['season', 'table'], ['season', 'fixtures'], ['season', 'cup'], ['club', 'cash'], ['club', 'club'], ['club', 'museum'], ['pub'], ['phone', 'chat']];
 // Bewusst schmal: Tageskästchen im Kalender (große Spieltag-Knöpfe darunter sind die Alternative).
@@ -15,6 +15,7 @@ async function screens(b, size) {
     await click(p, `[data-action="area"][data-value="${area}"]`);
     if (tab) await p.evaluate((t) => document.querySelector(`[data-action="tab"][data-value="${t}"]`)?.click(), tab);
     await p.waitForTimeout(250);
+    await settle(p);
     const label = tab ?? area;
     ok(!(await hScroll(p)), `${label}: seitliches Scrollen`);
     if (SIZES[size].touch) {
