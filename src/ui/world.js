@@ -42,8 +42,8 @@ const cap = (ax, ay, bx, by, ra, rb = ra, o = {}) => ({ kind: 'cap', ax, ay, bx,
 const ell = (cx, cy, rx, ry, o = {}) => ({ kind: 'ell', cx, cy, rx, ry, ...o });
 const HAND_PARTS = [
   // Vor dem Handy: Daumen (rechts, zwei Glieder, verjüngt) und vier Fingerkuppen (links).
-  cap(110, -34, 106, -66, 12, 9.6, { g: 'thumb', front: true }),
-  cap(106, -66, 97, -90, 9.6, 7.2, { g: 'thumb', front: true }),
+  cap(110, -34, 106, -66, 12, 9.6, { g: 'hand', front: true, nail: true }),
+  cap(106, -66, 97, -90, 9.6, 7.2, { g: 'hand', front: true, nail: true }),
   cap(-15, -72, 5, -69, 6.6, 6, { g: 'f1', front: true }),
   cap(-16, -58, 6, -56, 6.8, 6.2, { g: 'f2', front: true }),
   cap(-15, -44, 5, -43, 6.5, 5.9, { g: 'f3', front: true }),
@@ -67,7 +67,7 @@ function inside(sh, x, y) {
 
 // Ein Raster für die ganze Hand: Zelle gehört zum ersten Teil, das sie trifft (Reihenfolge =
 // Vorrang). Kontur, wo der Nachbar leer ist oder zu einer anderen Gruppe gehört (Fingerzwischen-
-// räume, Daumen gegen Ballen); Schatten unten rechts, Glanz oben links – bezogen auf die Gruppe,
+// räume; Daumen und Ballen sind eine Gruppe und gehen ohne Kante ineinander über); Schatten unten rechts, Glanz oben links – bezogen auf die Gruppe,
 // damit Formen weich ineinander übergehen. Ergebnis: zwei Zeichenkarten (hinten/vorn).
 function rasterHand() {
   const { x0, y0, w, h, px } = HAND_FRAME;
@@ -94,7 +94,7 @@ function rasterHand() {
         const grp = HAND_PARTS[o].g;
         const [x, y] = at(c, r);
         if ([g(c - 1, r), g(c + 1, r), g(c, r - 1), g(c, r + 1)].some((n) => n !== grp)) ch = 'k';
-        else if (grp === 'thumb' && inside(THUMB_NAIL, x, y)) ch = inside(THUMB_NAIL, x + px, y + px) && inside(THUMB_NAIL, x - px, y - px) ? 'n' : 'N';
+        else if (HAND_PARTS[o].nail && inside(THUMB_NAIL, x, y)) ch = inside(THUMB_NAIL, x + px, y + px) && inside(THUMB_NAIL, x - px, y - px) ? 'n' : 'N';
         else if (groupAt(x + px * 2.2, y + px * 1.6) !== grp) ch = 'S';
         else if (groupAt(x - px * 1.6, y - px * 1.6) !== grp) ch = 'h';
         else ch = 's';
