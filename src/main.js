@@ -354,7 +354,9 @@ function startMatch(human) {
   const m = createMatch({ seed: seed++, pitch: matchPitch, human, duration: testDuration, incidents: true });
   // Testschalter: ?incident=hund|gewitter|… löst den Vorfall nach 3 Sekunden aus.
   // Unbekannte Namen ignorieren – ein Vorfall ohne Text ließ die Anzeige werfen und das Bild stehen.
-  if (human && INCIDENT_TYPES.includes(params.get('incident'))) m.incidentPlan = { type: params.get('incident'), at: 3 };
+  // Ersatzschiri nur, wo es einen Schiri gibt (wie bei der Auslosung in incidents.js) – sonst stand das Spiel.
+  const forced = params.get('incident');
+  if (human && INCIDENT_TYPES.includes(forced) && (forced !== 'ersatzschiri' || m.referee)) m.incidentPlan = { type: forced, at: 3 };
   // Testschalter: ?elfmeter (mit ?dauer=2) – Freundschaftsspiel als K.-o.-Spiel, bei Remis Elfmeterschießen.
   if (human && params.has('elfmeter')) m.knockout = true;
   // Testschalter: ?stau – Spieltags-Überraschung „Stau" wie in der Karriere (einer kommt nach einem Drittel).

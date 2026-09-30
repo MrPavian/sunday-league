@@ -1,11 +1,11 @@
 // Alle Browser-Regressionstests: baut nicht selbst, startet aber den Vorschau-Server für dist/.
 //   npm run build && npm run e2e            (alle)
-//   npm run e2e -- ui memory                (Auswahl: ui, match, memory)
+//   npm run e2e -- ui memory                (Auswahl: ui, match, memory, modes)
 // Voraussetzung: Chromium/Playwright (global oder PLAYWRIGHT_PATH). Kein Ersatz für ein echtes Gerät.
 import { spawn } from 'node:child_process';
 import { BASE } from './lib.mjs';
 
-const SUITES = { ui: () => import('./ui.mjs'), match: () => import('./match.mjs'), memory: () => import('./memory.mjs') };
+const SUITES = { ui: () => import('./ui.mjs'), match: () => import('./match.mjs'), memory: () => import('./memory.mjs'), modes: () => import('./modes.mjs') };
 const pick = process.argv.slice(2).filter((a) => SUITES[a]);
 const port = new URL(BASE).port;
 const server = spawn('npx', ['vite', 'preview', '--port', port, '--strictPort'], { stdio: 'ignore' });
