@@ -21,6 +21,7 @@ import { afterMatchFitness, backFromInjury, fitnessOf, weeklyFitness } from './f
 import { askAround, checkPromises, pickArgument, revealFirst, startTalk } from './recruiting.js';
 import { initAcademy, ownKids, seasonAcademy, weeklyAcademy } from './academy.js';
 import { weeklyYouthMatches } from './youthleague.js';
+import { seasonBridge, weeklyBridge, youthFactor } from './bridge.js';
 import { applyWeather, rollWeather, WEATHER, WEATHER_CHAT } from './weather.js';
 import { derbyResult, isDerbyFixture } from './derby.js';
 import { applyChemistry, pastLink, relationsAmong, setRelation } from './relations.js';
@@ -228,7 +229,8 @@ export function nextSeason(career) {
 
   // Entwicklung zuerst – die Einsätze dieser Saison zählen als Spielpraxis.
   const development = developPlayers(career);
-  developYouth(career);
+  developYouth(career, (idx) => youthFactor(career, idx, career.fixtures.length));
+  seasonBridge(career);
   const retired = retirements(career, youthDeps(), MIN_SQUAD);
 
   // Saisonwerte in die Karriere-Gesamtstatistik übernehmen. Über den Sommer werden alle wieder fit.
@@ -1019,6 +1021,7 @@ export function finishRound(career) {
   sagaWeek(career);
   weeklyAcademy(career);
   weeklyYouthMatches(career, ownKids(career)); // Jugendspieltag am Wochenende
+  weeklyBridge(career); // A-Jugend trainiert bei der Ersten mit
   weeklyFacilities(career);
   clubLifeWeek(career); // Förderverein, Beitrag, Kassenwart
   weeklyFitness(career, playerOf, humanClub(career).squad); // erst erholen …

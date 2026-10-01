@@ -16,6 +16,7 @@ import { build } from '../career/facilities.js';
 import { negotiate } from '../career/sponsors.js';
 import { inviteTrialist, runStation, startTraining } from '../career/training.js';
 import { promoteProspect } from '../career/youth.js';
+import { setPate, toggleTrainUp } from '../career/bridge.js';
 import { resolveEvent } from '../career/events.js';
 import { legacy, resolveLegacy, stepDown, succeed, successionCandidates } from '../career/legacy.js';
 import { askWirt, buyRound, playDart, setTactic, talk } from '../career/pub.js';
@@ -177,6 +178,9 @@ export class Clubhouse {
       } else if (action === 'event') {
         resolveEvent(this.career, Number(value));
         haptic('confirm');
+        this.h.onChange();
+      } else if (action === 'trainUp') {
+        toggleTrainUp(this.career, Number(value));
         this.h.onChange();
       } else if (action === 'promote') {
         promoteProspect(this.career, Number(value), maxSquad(this.career));
@@ -384,6 +388,17 @@ export class Clubhouse {
     });
   }
 
+  // A-Jugend: Pate auswählen (Auswahlliste je Talent).
+  bindPate() {
+    this.root.querySelectorAll('select[data-pate]').forEach((sel) =>
+      sel.addEventListener('change', () => {
+        setPate(this.career, Number(sel.dataset.pate), sel.value === '' ? null : Number(sel.value));
+        this.h.onChange();
+        this.render();
+      }),
+    );
+  }
+
   bindLineup() {
     this.bindDrag();
     this.bindProfileSwipe();
@@ -463,6 +478,7 @@ export class Clubhouse {
     const wa = this.root.querySelector('.phone-stage.open .wa-body');
     if (wa) wa.scrollTop = wa.scrollHeight;
     this.bindPub();
+    this.bindPate();
     this.bindCalSwipe();
     this.bindClubForm();
     const slot = this.root.querySelector('.club-tboard');

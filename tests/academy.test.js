@@ -56,6 +56,12 @@ describe('youth academy', () => {
         c.youth.kids.forEach((k) => Object.assign(k, { talent: 0.8, age: 12, parent: 'ehrgeizig' }));
         // Je ein Kind für die Persönlichkeits-Ereignisse (Spätentwickler, Schulstress, keiner holt ab).
         Object.assign(c.youth.kids[0], { girl: false, parent: 'desinteressiert', parentSet: true, bloom: 'spaet', school: 'stress', stuetzpunkt: true, talent: 0.95 });
+        // Und ein A-Jugendlicher, der bei der Ersten mittrainiert und einen Paten hat (Brücke).
+        const pros = Object.keys(c.players).length + 400;
+        c.youth.prospects.push(pros);
+        c.players[pros] = { apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0, trainsUp: true, reife: 0.6 };
+        const olds = humanClub(c).squad.filter((i) => playerOf(c, i).age >= 30);
+        c.youth.paten = olds.length ? { [pros]: olds[0] } : {};
         let ctx = def.needs(c, createRng(choice + 2));
         // Manche Ereignisse kommen nur in manchen Wochen (z. B. wenn Scouts da sind) – weitere Wochen probieren.
         for (let w = 3; !ctx && w < 60; w++) ctx = def.needs(c, createRng(choice + w));

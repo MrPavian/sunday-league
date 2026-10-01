@@ -19,6 +19,7 @@ import { currentLineup, humanClub, nextPitch, maxSquad, MIN_SQUAD, recruit, recr
 import { inviteChance, isRawDiamond, MAX_STATIONS, STATIONS, TRAINING_COST, trainingDone } from '../../career/training.js';
 import { roleName, STAFF_ROLES } from '../../career/youth.js';
 import { personaTags } from '../../career/kidpersona.js';
+import { MAX_UP, PATE_AGE, pateCandidates, pateOf, REIFE_WEEKS, reifeOf, trainingUp } from '../../career/bridge.js';
 import { FESTIVAL_TEAMS, resultLabel, youthLeague, youthPos, youthTable } from '../../career/youthleague.js';
 import { FOCUS, ownKids, poachChance, poachKid, scoutList, talentGuess, TEAMS, teamOfAge } from '../../career/academy.js';
 import { COACH_KINDS, coachCandidates, COURSE_COST, FOCUS_FIT, fitLabel, initTeams, SELF_ENERGY, selfQuality } from '../../career/youthteams.js';
@@ -445,7 +446,8 @@ export const teamScreens = {
         const talent = p.rating >= 50 ? tr('großes Talent', 'big talent') : p.rating >= 40 ? tr('solide', 'solid') : tr('noch roh', 'still raw');
         return `<tr><td><b>${p.name}</b><small>${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)}${p.parentName ? ` · ${tr('Sohn von', 'son of')} ${p.parentName}` : ''}</small></td><td>${POSITIONS[p.position]}</td>
           <td class="num">${p.rating}</td><td><em>${talent}</em></td>
-          <td><button class="primary tiny" data-action="promote" data-value="${idx}" ${full ? 'disabled' : ''}>${tr('Hochziehen', 'Promote')}</button></td></tr>`;
+          <td><button class="primary tiny" data-action="promote" data-value="${idx}" ${full ? 'disabled' : ''}>${tr('Hochziehen', 'Promote')}</button></td></tr>
+          <tr class="bridge-row"><td colspan="5">${bridgeLine(this, c, idx)}</td></tr>`;
       })
       .join('');
     const alumni = c.alumni.length
@@ -466,7 +468,8 @@ export const teamScreens = {
       <h4>${tr('A-Jugend (16–19)', 'U19s (16–19)')}</h4>
       ${prospects
         ? `<table class="squad prospects"><thead><tr><th>${tr('Talent', 'Talent')}</th><th>${tr('Pos.', 'Pos.')}</th><th>${tr('Stärke', 'Rating')}</th><th>${tr('Einschätzung', 'Assessment')}</th><th></th></tr></thead><tbody>${prospects}</tbody></table>
-           <p class="empty">${tr('Talente entwickeln sich auch in der Jugend. Mit 20 wechseln sie zum Nachbarn, wenn du sie nicht hochziehst.', 'Talents develop in the youth team too. At 20 they leave for a neighbouring club if you do not promote them.')}${full ? tr(' Kader voll – erst Platz schaffen.', ' Squad full – make room first.') : ''}</p>`
+           <p class="empty">${tr('Talente entwickeln sich auch in der Jugend. Mit 20 wechseln sie zum Nachbarn, wenn du sie nicht hochziehst.', 'Talents develop in the youth team too. At 20 they leave for a neighbouring club if you do not promote them.')}${full ? tr(' Kader voll – erst Platz schaffen.', ' Squad full – make room first.') : ''}</p>
+           <p class="empty">${tr(`Bis zu ${MAX_UP} dürfen bei der Ersten mittrainieren: Sie lernen schneller, und nach ${REIFE_WEEKS} Wochen kennen sie das Tempo – sonst sind sie nach dem Hochziehen erst einmal nervös. Ein Pate (ab ${PATE_AGE}) bringt ihnen noch mehr bei.`, `Up to ${MAX_UP} can train with the first team: they learn faster, and after ${REIFE_WEEKS} weeks they know the pace – otherwise they are nervous after promotion. A mentor (${PATE_AGE}+) teaches them even more.`)}</p>`
         : `<p class="empty">${tr('Kein Talent in der A-Jugend. Der nächste Jahrgang kommt zur neuen Saison.', 'No talent in the U19s. The next intake arrives with the new season.')}</p>`}
       ${this.academyBlock()}`;
   },
@@ -526,6 +529,19 @@ export const teamScreens = {
         .join('')}</ul>`;
   },
 };
+
+// A-Jugend: Mittrainieren (mit Reife) und Pate.
+function bridgeLine(ui, c, idx) {
+  const rec = c.players[idx] ?? {};
+  const off = !c.week || ui.results;
+  const full = !rec.trainsUp && trainingUp(c).length >= MAX_UP;
+  const reife = Math.round(reifeOf(c, idx) * 100);
+  const pate = pateOf(c, idx);
+  const options = [pate, ...pateCandidates(c)].filter((x) => x != null);
+  return `<span class="bridge"><button class="tiny${rec.trainsUp ? ' active' : ''}" data-action="trainUp" data-value="${idx}" aria-pressed="${!!rec.trainsUp}" ${off || full ? 'disabled' : ''}>${rec.trainsUp ? tr('trainiert bei der Ersten', 'trains with the first team') : tr('bei der Ersten mittrainieren', 'train with the first team')}</button>
+    <span class="reife" title="${tr('Reife: kennt das Tempo der Herren', 'Readiness: knows the pace of senior football')}">${tr('Reife', 'Ready')} ${reife} %</span>
+    <label>${tr('Pate', 'Mentor')}: <select data-pate="${idx}" ${off ? 'disabled' : ''}><option value="">${tr('keiner', 'none')}</option>${options.map((m) => `<option value="${m}" ${m === pate ? 'selected' : ''}>${ui.p(m).name} (${ui.p(m).age})</option>`).join('')}</select></label></span>`;
+}
 
 // Spielbetrieb eines Jugendteams: letztes Spiel, Platz, Tabelle zum Aufklappen.
 function youthLeagueLine(c, id) {

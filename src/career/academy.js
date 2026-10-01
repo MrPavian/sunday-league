@@ -7,12 +7,14 @@ import { tr } from '../core/i18n.js';
 import { lastName, personName } from '../data/origins.js';
 import { generatePlayer, ratePlayer } from '../sim/generator.js';
 import { book } from './finances.js';
-import { addCustomPlayer, playerOf } from './career.js';
+import { addCustomPlayer, humanClub, maxSquad, playerOf } from './career.js';
 import { adjustMood } from './events.js';
 import { outcome } from './outcomes.js';
 import { adjustEnergy, childAge } from './personal.js';
 import { chronicle } from './sagas.js';
 import { bloomGrowth, looksStrength, missesTraining, parentJoy, persona, physEdge, quitExtra } from './kidpersona.js';
+import { pateCandidates, pateOf, reifeOf, trainingUp } from './bridge.js';
+import { promoteProspect } from './youth.js';
 import { ageBand, NLZ_RATES, nlzClub, nlzCompensation, nlzTier, passesTrial, scoutsNotice, yearsAtClub } from './nlz.js';
 import { resultLabel, seasonYouthResults, tournamentOdds, stuetzpunktGrowth, weeklyYouthMatches } from './youthleague.js';
 import { coachQuality, FOCUS_FIT, initTeams, seasonTeams, setTeamFocus, weeklyTeams } from './youthteams.js';
@@ -225,6 +227,14 @@ function cupDay(c, ctx, dj, dt, energy, text, won = false) {
 }
 
 const euro = (v) => v.toLocaleString('de-DE');
+const reife = (c, idx, d) => {
+  const rec = c.players[idx];
+  if (rec) rec.reife = Math.max(0, Math.min(1, (rec.reife ?? 0) + d));
+};
+const formNudge = (c, idx, d) => {
+  const rec = c.players[idx];
+  if (rec) rec.form = Math.max(-1, Math.min(1, (rec.form ?? 0) + d));
+};
 // Gemessen: so kommt etwa alle sieben Spielzeiten eine NLZ-Anfrage, gut die Hälfte endet mit
 // einem Wechsel (Überschlag echt: rund 5.600 NLZ-Spieler, ~24.000 Vereine → 0,03–0,06 Wechsel
 // je Verein und Jahr).
@@ -567,6 +577,64 @@ export const ACADEMY_EVENTS = {
         ]),
       },
       { label: tr('Nein, dieses Jahr nicht', 'No, not this year'), effect: outcome([{ w: 1, run: (c) => ((c.youth.hostSeason = c.season), tr('Vielleicht nächstes Jahr.', 'Maybe next year.')) }]) },
+    ],
+  },
+  // Punkt 5: Brücke A-Jugend → Erste.
+  mittraining_graetsche: {
+    weight: 1.5,
+    needs: (c, rng) => {
+      const up = trainingUp(c);
+      const olds = humanClub(c).squad.filter((i) => playerOf(c, i).age >= 30 && c.coach?.idx !== i);
+      if (!up.length || !olds.length) return null;
+      return { p: rng.pick(up), o: rng.pick(olds) };
+    },
+    text: (c, ctx) => tr(`Mittwochstraining: ${playerOf(c, ctx.o).name} grätscht den A-Jugendlichen ${playerOf(c, ctx.p).name} im Abschlussspiel um. „Willkommen bei den Herren, Junge."`, `Wednesday training: ${playerOf(c, ctx.o).name} scythes down U19 player ${playerOf(c, ctx.p).name} in the practice match. "Welcome to men's football, lad."`),
+    options: [
+      {
+        label: tr('Ansage an den Alten', 'Have a word with the veteran'),
+        effect: outcome([
+          { w: 2, run: (c, ctx) => (formNudge(c, ctx.o, -0.1), reife(c, ctx.p, 0.05), tr(`${playerOf(c, ctx.o).name.split(' ')[0]} brummt, entschuldigt sich aber. Der Junge merkt: Der Trainer steht hinter ihm.`, `${playerOf(c, ctx.o).name.split(' ')[0]} grumbles but apologises. The lad notices: the manager has his back.`)) },
+          { w: 1, run: (c, ctx) => (formNudge(c, ctx.o, -0.2), adjustMood(c, -0.02), tr('„Früher hat man das ausgehalten." Der Alte ist eingeschnappt, in der Kabine wird getuschelt.', '"In my day you just took it." The veteran sulks; there is whispering in the dressing room.')) },
+        ]),
+      },
+      {
+        label: tr('Gehört dazu – weiter', 'Part of the game – carry on'),
+        effect: outcome([
+          { w: 3, run: (c, ctx) => (reife(c, ctx.p, 0.15), tr(`${playerOf(c, ctx.p).name.split(' ')[0]} steht auf, klopft sich ab – und tunnelt den Alten in der nächsten Szene. Respekt.`, `${playerOf(c, ctx.p).name.split(' ')[0]} gets up, dusts himself off – and nutmegs the veteran in the next move. Respect.`)) },
+          { w: 1, run: (c, ctx) => (reife(c, ctx.p, -0.25), tr(`${playerOf(c, ctx.p).name.split(' ')[0]} humpelt raus. Eingeschüchtert – beim Mittrainieren hält er sich jetzt zurück.`, `${playerOf(c, ctx.p).name.split(' ')[0]} limps off. Intimidated – he now holds back when training with the first team.`)) },
+        ]),
+      },
+      {
+        label: tr('Den Alten zum Paten machen', 'Make the veteran his mentor'),
+        effect: outcome([
+          { w: 2, if: (c, ctx) => pateCandidates(c).includes(ctx.o) && pateOf(c, ctx.p) == null, run: (c, ctx) => ((c.youth.paten[ctx.p] = ctx.o), reife(c, ctx.p, 0.1), tr(`„Dann pass ich halt auf ihn auf." ${playerOf(c, ctx.o).name.split(' ')[0]} ist ab jetzt Pate – und grätscht nur noch die anderen um.`, `"Fine, I'll look after him then." ${playerOf(c, ctx.o).name.split(' ')[0]} is now his mentor – and only scythes down the others.`)) },
+          { w: 1, run: (c, ctx) => (formNudge(c, ctx.o, -0.05), tr('„Ich bin doch kein Kindermädchen." Er will nicht.', '"I am not a babysitter." He does not want to.')) },
+        ]),
+      },
+    ],
+  },
+  pate_meint: {
+    weight: 1.2,
+    needs: (c, rng) => {
+      const pairs = Object.entries(c.youth?.paten ?? {}).map(([p, m]) => ({ p: Number(p), m })).filter(({ p }) => reifeOf(c, p) >= 0.5);
+      return pairs.length ? rng.pick(pairs) : null;
+    },
+    text: (c, ctx) => tr(`Nach dem Training kommt ${playerOf(c, ctx.m).name} zu dir: „${playerOf(c, ctx.p).name.split(' ')[0]} ist so weit. Zieh ihn hoch, sonst holt ihn der Nachbar."`, `After training ${playerOf(c, ctx.m).name} comes over: "${playerOf(c, ctx.p).name.split(' ')[0]} is ready. Promote him, or the neighbours will grab him."`),
+    options: [
+      {
+        label: tr('Hochziehen – jetzt', 'Promote him – now'),
+        effect: outcome([
+          { w: 1, if: (c) => humanClub(c).squad.length < maxSquad(c), run: (c, ctx) => (promoteProspect(c, ctx.p, maxSquad(c)), adjustMood(c, 0.02), tr(`${playerOf(c, ctx.p).name} ist ab sofort im Kader. Der Pate gibt in der Kabine einen aus.`, `${playerOf(c, ctx.p).name} is in the squad from now on. The mentor buys a round in the dressing room.`)) },
+          { w: 1, run: () => tr('Der Kader ist voll – erst muss jemand Platz machen.', 'The squad is full – someone has to make room first.') },
+        ]),
+      },
+      {
+        label: tr('Noch ein bisschen – er soll weiter mittrainieren', 'A bit longer – keep him training with us'),
+        effect: outcome([
+          { w: 2, run: (c, ctx) => (reife(c, ctx.p, 0.1), tr('„Na gut. Aber nicht zu lange." Der Junge legt im Training noch eine Schippe drauf.', '"Alright. But not too long." The lad steps it up another notch in training.')) },
+          { w: 1, run: (c, ctx) => (formNudge(c, ctx.m, -0.05), tr('Der Pate ist enttäuscht: „Du wirst schon sehen."', 'The mentor is disappointed: "You\'ll see."')) },
+        ]),
+      },
     ],
   },
   talentsichtung: {

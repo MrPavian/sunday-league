@@ -3,6 +3,7 @@
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { hasTrait } from '../data/traits.js';
+import { onPromote } from './bridge.js';
 
 const YOUTH_MAX_AGE = 19;
 export const STAFF_ROLES = {
@@ -50,13 +51,15 @@ export function youthIntake(career, deps, rng = createRng(career.seed + career.s
 }
 
 // Talente entwickeln sich in der Jugend – mit einem guten Trainer schneller.
-export function developYouth(career) {
+// factor(idx): Mittrainieren bei der Ersten und ein Pate bringen mehr (siehe bridge.js).
+export function developYouth(career, factor = () => 1) {
   const q = career.youth.coach.quality;
   for (const idx of career.youth.prospects) {
     const rec = career.players[idx];
     rec.delta ??= {};
+    const f = factor(idx);
     for (const k of ['pace', 'stamina', 'technique', 'passing', 'shooting', 'tackling', 'heading', 'keeping']) {
-      rec.delta[k] = (rec.delta[k] ?? 0) + 0.035 * (0.6 + q);
+      rec.delta[k] = (rec.delta[k] ?? 0) + 0.035 * (0.6 + q) * f;
     }
   }
 }
@@ -75,6 +78,7 @@ export function promoteProspect(career, idx, maxSquad) {
   career.youth.prospects = career.youth.prospects.filter((x) => x !== idx);
   club.squad.push(idx);
   if (career.players[idx]) career.players[idx].fromYouth = true; // eigenes Gewächs
+  onPromote(career, idx); // Reife und Pate (Brücke A-Jugend → Erste)
   if (career.week) career.week.availability[idx] = 'yes';
   return true;
 }

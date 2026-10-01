@@ -1852,3 +1852,8 @@ body.manager #end { padding-bottom: 84px; }
 .youth-team .yt-table td, .youth-team .yt-table th { padding: 1px 4px; text-align: left; }
 .youth-team .yt-table tr.own { color: var(--accent); }
 .kid-tag.star { color: #e0b020; border-color: #e0b020; }
+.prospects .bridge { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; font-size: 12px; }
+.prospects tr.bridge-row td { padding-top: 0; }
+.prospects tr:has(+ tr.bridge-row) td { border-bottom: 0; }
+.prospects .bridge button.active { background: var(--accent); color: #111; }
+.prospects .bridge select { font: inherit; max-width: 160px; }

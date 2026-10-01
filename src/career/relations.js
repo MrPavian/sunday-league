@@ -12,6 +12,7 @@ export const REL = {
   rivalen: { name: tr('Rivale', 'Rival'), plural: tr('Rivalen', 'Rivals'), mods: { passing: -0.03, technique: -0.01 } },
   feinde: { name: tr('Erzfeind', 'Arch-enemy'), plural: tr('Erzfeinde', 'Arch-enemies'), mods: { passing: -0.05, technique: -0.02, stamina: -0.01 } },
   schulfreunde: { name: tr('Schulfreund', 'Old school friend'), plural: tr('Schulfreunde', 'Old school friends'), mods: { passing: 0.03, technique: 0.01 } },
+  pate: { name: tr('Pate & Schützling', 'Mentor & protégé'), plural: tr('Pate & Schützling', 'Mentor & protégé'), mods: { passing: 0.02, technique: 0.015 } },
 };
 const GENERIC_JOBS = /^(Schüler|Student|Azubi|Arbeitssuchend)/;
 const CAP = 0.06;
