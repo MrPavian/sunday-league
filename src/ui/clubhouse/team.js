@@ -19,6 +19,7 @@ import { currentLineup, humanClub, nextPitch, maxSquad, MIN_SQUAD, recruit, recr
 import { inviteChance, isRawDiamond, MAX_STATIONS, STATIONS, TRAINING_COST, trainingDone } from '../../career/training.js';
 import { roleName, STAFF_ROLES } from '../../career/youth.js';
 import { personaTags } from '../../career/kidpersona.js';
+import { FESTIVAL_TEAMS, resultLabel, youthLeague, youthPos, youthTable } from '../../career/youthleague.js';
 import { FOCUS, ownKids, poachChance, poachKid, scoutList, talentGuess, TEAMS, teamOfAge } from '../../career/academy.js';
 import { COACH_KINDS, coachCandidates, COURSE_COST, FOCUS_FIT, fitLabel, initTeams, SELF_ENERGY, selfQuality } from '../../career/youthteams.js';
 import { chemistry, REL, relationLabel, shortName } from '../../career/relations.js';
@@ -502,13 +503,14 @@ export const teamScreens = {
         ${coachLine}
         <div class="actions yt-focus">${focusBtns}</div>
         <p class="hint">${FOCUS[st.focus].name}: ${tr('für dieses Alter', 'for this age')} <b>${fitLabel(fit)}</b>.</p>
+        ${youthLeagueLine(c, t.id)}
         ${rows ? `<ul class="plain">${rows}</ul>` : `<p class="empty">${tr('Keine Kinder in diesem Jahrgang.', 'No kids in this age group.')}</p>`}</article>`;
     }).join('');
     const last = c.youth.results?.at(-1);
     return `<h4>${tr('Jugendmannschaften', 'Youth teams')}</h4>
       <p class="empty">${tr('Jede Mannschaft hat ihren Trainer und ihren Schwerpunkt. Faustregel: Kleine spielen und lernen Technik, Große lernen Spielverständnis, Kondition und Turnierhärte. Mit 16 geht es in die A-Jugend – Mädchen ins Frauenteam, sobald es eins gibt.', 'Each team has its coach and its focus. Rule of thumb: little ones play and learn technique, older ones learn game sense, fitness and tournament toughness. At 16 they move up to the U19s – girls to the women\'s team once there is one.')}</p>
       <div class="youth-teams">${teams}</div>
-      ${last ? `<p>${tr('Letzte Saison', 'Last season')}: ${last.results.map((r) => tr(`${r.team}-Jugend ${r.pos}.`, `${r.team} youth: ${r.pos}.`)).join(' · ')}</p>` : ''}`;
+      ${last ? `<p>${tr('Letzte Saison', 'Last season')}: ${last.results.map(resultLabel).join(' · ')}</p>` : ''}`;
   },
 
   // Talente anderer Vereine (eigener Unterreiter der Jugend).
@@ -524,10 +526,25 @@ export const teamScreens = {
   },
 };
 
+// Spielbetrieb eines Jugendteams: letztes Spiel, Platz, Tabelle zum Aufklappen.
+function youthLeagueLine(c, id) {
+  const t = youthLeague(c).teams[id];
+  const g = t.games.at(-1);
+  const score = g ? `${g.gf}:${g.ga} ${g.home ? tr('gegen', 'v') : tr('bei', 'at')} ${g.opp}` : tr('noch kein Spiel', 'no game yet');
+  if (FESTIVAL_TEAMS.includes(id)) return `<p class="yt-league"><b>${tr('Spielfest', 'Festival')}:</b> ${score} <small>${tr('· ohne Tabelle (Kinderfußball-Reform)', '· no table (kids\' football reform)')}</small></p>`;
+  if (!g) return `<p class="yt-league"><b>${tr('Kreisliga', 'District league')}:</b> ${score}</p>`;
+  const rows = youthTable(c, id, tr('Wir', 'Us'))
+    .map((r, i) => `<tr class="${r.own ? 'own' : ''}"><td>${i + 1}.</td><td>${r.name}</td><td>${r.p}</td><td>${r.gf}:${r.ga}</td><td><b>${r.w * 3 + r.d}</b></td></tr>`)
+    .join('');
+  return `<details class="yt-league"><summary><b>${tr('Kreisliga', 'District league')}:</b> ${tr(`Platz ${youthPos(c, id)} von 6`, `${youthPos(c, id)} of 6`)} · ${score}</summary>
+    <table class="yt-table"><tr><th></th><th></th><th>${tr('Sp.', 'P')}</th><th>${tr('Tore', 'Goals')}</th><th>${tr('Pkt.', 'Pts')}</th></tr>${rows}</table></details>`;
+}
+
 // Merkmale eines Kindes (Entwicklung, Schule, Eltern, Fußballverbot) – eigene Zeile.
 function kidTags(c, k) {
   if (k.own) return '';
   const tags = personaTags(k).map((t) => `<span class="kid-tag"${t.title ? ` title="${t.title}"` : ''}>${t.text}</span>`);
+  if (k.stuetzpunkt) tags.unshift(`<span class="kid-tag star" title="${tr('Zusatztraining einmal pro Woche am DFB-Stützpunkt', 'Extra session once a week at the DFB centre')}">${tr('DFB-Stützpunkt', 'DFB centre')}</span>`);
   if ((k.banUntil ?? -1) > c.round) tags.push(`<span class="kid-tag warn">${tr('Fußballverbot', 'Football ban')}</span>`);
   return tags.length ? `<span class="kid-tags">${tags.join('')}</span>` : '';
 }

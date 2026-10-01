@@ -1846,3 +1846,9 @@ body.manager #end { padding-bottom: 84px; }
 .youth-team .yt-focus { margin: 4px 0; }
 .youth-team .yt-focus button.early:not(.active) { opacity: 0.6; }
 .youth-team .hint { margin: 2px 0 6px; font-size: 12px; opacity: 0.85; }
+.youth-team .yt-league { margin: 2px 0 6px; font-size: 12px; }
+.youth-team details.yt-league summary { cursor: pointer; }
+.youth-team .yt-table { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 12px; }
+.youth-team .yt-table td, .youth-team .yt-table th { padding: 1px 4px; text-align: left; }
+.youth-team .yt-table tr.own { color: var(--accent); }
+.kid-tag.star { color: #e0b020; border-color: #e0b020; }

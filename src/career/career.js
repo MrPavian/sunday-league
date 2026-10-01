@@ -19,7 +19,8 @@ import { applyPubToTeam } from './pub.js';
 import { rollInjuries } from './injuries.js';
 import { afterMatchFitness, backFromInjury, fitnessOf, weeklyFitness } from './fitness.js';
 import { askAround, checkPromises, pickArgument, revealFirst, startTalk } from './recruiting.js';
-import { initAcademy, seasonAcademy, weeklyAcademy } from './academy.js';
+import { initAcademy, ownKids, seasonAcademy, weeklyAcademy } from './academy.js';
+import { weeklyYouthMatches } from './youthleague.js';
 import { applyWeather, rollWeather, WEATHER, WEATHER_CHAT } from './weather.js';
 import { derbyResult, isDerbyFixture } from './derby.js';
 import { applyChemistry, pastLink, relationsAmong, setRelation } from './relations.js';
@@ -1017,6 +1018,7 @@ export function finishRound(career) {
   weeklyPersonal(career);
   sagaWeek(career);
   weeklyAcademy(career);
+  weeklyYouthMatches(career, ownKids(career)); // Jugendspieltag am Wochenende
   weeklyFacilities(career);
   clubLifeWeek(career); // Förderverein, Beitrag, Kassenwart
   weeklyFitness(career, playerOf, humanClub(career).squad); // erst erholen …

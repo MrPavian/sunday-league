@@ -13,6 +13,7 @@ import { outcome } from './outcomes.js';
 import { adjustEnergy, childAge } from './personal.js';
 import { chronicle } from './sagas.js';
 import { bloomGrowth, looksStrength, missesTraining, parentJoy, persona, physEdge, quitExtra } from './kidpersona.js';
+import { resultLabel, seasonYouthResults, tournamentOdds, stuetzpunktGrowth, weeklyYouthMatches } from './youthleague.js';
 import { coachQuality, FOCUS_FIT, initTeams, seasonTeams, setTeamFocus, weeklyTeams } from './youthteams.js';
 
 export const TEAMS = [
@@ -117,7 +118,7 @@ export function weeklyAcademy(c) {
       target.joy = clamp01(target.joy + joy);
       if (missesTraining(k, c.round)) continue; // Klassenarbeit: kein Training diese Woche
       const growth = (t.coach ? f.growth * fit : FOCUS.spass.growth * 0.3) * bloomGrowth(k);
-      target.talent = clamp01(target.talent + growth * (0.5 + q) * (0.4 + target.joy));
+      target.talent = clamp01(target.talent + growth * (0.5 + q) * (0.4 + target.joy) + stuetzpunktGrowth(k));
     }
   }
   weeklyTeams(c, adjustEnergy);
@@ -131,8 +132,10 @@ export function seasonAcademy(c) {
   const rng = createRng((c.seed * 71 + c.season * 389) >>> 0);
   const notes = [];
   // Saisonbilanz der Jugendteams
-  const results = [];
-  for (const t of TEAMS) {
+  // Mit Ligabetrieb: Platz aus der echten Tabelle. Sonst (alter Spielstand mitten in der Saison) geschätzt.
+  const real = seasonYouthResults(c);
+  const results = real ?? [];
+  for (const t of real ? [] : TEAMS) {
     const kids = [...y.kids, ...ownKids(c)].filter((k) => teamOfAge(k.age)?.id === t.id);
     if (!kids.length) continue;
     const avg = kids.reduce((s, k) => s + looksStrength(k), 0) / kids.length; // in der Jugend gewinnen oft die Großen
@@ -140,9 +143,10 @@ export function seasonAcademy(c) {
     results.push({ team: t.id, pos });
     if (pos === 1) chronicle(c, tr(`Die ${t.name} wird Kreismeister!`, `The ${t.name} become district champions!`));
   }
+  if (real) for (const r of real) if (r.pos === 1) chronicle(c, tr(`Die ${TEAMS.find((t) => t.id === r.team).name} wird Kreismeister!`, `The ${TEAMS.find((t) => t.id === r.team).name} become district champions!`));
   if (results.length) {
     y.results.push({ season: c.season, results });
-    notes.push(tr(`Jugend: ${results.map((r) => `${r.team}-Jugend ${r.pos}. Platz`).join(', ')}.`, `Youth: ${results.map((r) => `${TEAMS.find((t) => t.id === r.team).name} ${r.pos}${r.pos === 1 ? 'st' : r.pos === 2 ? 'nd' : r.pos === 3 ? 'rd' : 'th'}`).join(', ')}.`));
+    notes.push(tr(`Jugend: ${results.map(resultLabel).join(', ')}.`, `Youth: ${results.map(resultLabel).join(', ')}.`));
   }
   // Trainer: manche hören auf; Teams ohne Trainer werden abgemeldet (ein Teil der Kinder hört auf).
   notes.push(...seasonTeams(c, rng, (id) => y.kids.filter((k) => teamOfAge(k.age)?.id === id)));
@@ -201,6 +205,22 @@ const tal = (c, ctx, d) => {
   if (k) k.talent = clamp01(k.talent + d);
 };
 const drop = (c, ctx) => (c.youth.kids = c.youth.kids.filter((k) => k.id !== ctx.k));
+
+// Turniertag: Spaß für das Team, ggf. Pokal in die Chronik.
+function cupDay(c, ctx, dj, dt, energy, text, won = false) {
+  c.youth.cupSeason = c.season;
+  for (const k of c.youth.kids) if (teamOfAge(k.age)?.id === ctx.team) {
+    k.joy = clamp01(k.joy + dj);
+    k.talent = clamp01(k.talent + dt);
+  }
+  if (energy) adjustEnergy(c, energy); // du fährst mit
+  book(c, tr('Startgeld Jugendturnier', 'Youth tournament entry'), -20);
+  if (won) {
+    chronicle(c, tr(`Die ${TEAMS.find((t) => t.id === ctx.team).name} gewinnt das Pfingstturnier beim ${ctx.host}.`, `The ${TEAMS.find((t) => t.id === ctx.team).name} win the Whitsun tournament at ${ctx.host}.`));
+    c.youth.cups = [...(c.youth.cups ?? []), { season: c.season, team: ctx.team, host: ctx.host }];
+  }
+  return text;
+}
 
 export const ACADEMY_EVENTS = {
   ehrgeiziger_vater: {
@@ -434,6 +454,65 @@ export const ACADEMY_EVENTS = {
           { w: 1, run: (c, ctx) => (joy(c, ctx, -0.1), tr(`Beim nächsten Training fehlt ${kn(c, ctx)}. „Hat sich nicht gelohnt", sagt er später.`, `${kn(c, ctx)} misses the next session. "Wasn't worth it," he says later.`)) },
         ]),
       },
+    ],
+  },
+  // Punkt 3: Turniere. Einladung zum Pfingstturnier oder selbst eins ausrichten (einmal je Saison).
+  pfingstturnier: {
+    weight: 1.5,
+    needs: (c, rng) => {
+      if (c.youth?.cupSeason === c.season || c.round < 5) return null;
+      const yt = initTeams(c);
+      const teams = TEAMS.filter((t) => yt[t.id]?.coach && c.youth.kids.some((k) => teamOfAge(k.age)?.id === t.id));
+      if (!teams.length) return null;
+      const t = rng.pick(teams);
+      return { team: t.id, host: rng.pick(['TuS Mühlbach', 'SpVgg Hollerbach', 'SV Rot-Weiß Oberdorf', 'TSV Eichenau', 'FC Bergheide']) };
+    },
+    text: (c, ctx) => tr(`Einladung: Pfingstturnier beim ${ctx.host} für die ${TEAMS.find((t) => t.id === ctx.team).name}. Zwölf Mannschaften, Startgeld 20 €, Bratwurst inklusive.`, `Invitation: Whitsun tournament at ${ctx.host} for the ${TEAMS.find((t) => t.id === ctx.team).name}. Twelve teams, €20 entry, bratwurst included.`),
+    options: [
+      {
+        label: tr('Anmelden (20 €, du fährst mit)', 'Enter (€20, you go along)'),
+        effect: outcome([
+          { w: (c, ctx) => tournamentOdds(c, ctx.team), run: (c, ctx) => cupDay(c, ctx, 0.15, 0.03, -2, tr(`Turniersieg! Die ${TEAMS.find((t) => t.id === ctx.team).name} gewinnt das Pfingstturnier beim ${ctx.host}. Der Pokal ist größer als der Torwart.`, `Tournament win! The ${TEAMS.find((t) => t.id === ctx.team).name} win the Whitsun tournament at ${ctx.host}. The trophy is bigger than the goalkeeper.`), true) },
+          { w: 0.35, run: (c, ctx) => cupDay(c, ctx, 0.08, 0, -2, tr('Halbfinale, dann Siebenmeterschießen verloren. Auf der Heimfahrt reden alle nur vom Elfer, der an die Latte ging.', 'Semi-final, then lost on penalties. On the way home all anyone talks about is the one that hit the bar.')) },
+          { w: (c, ctx) => Math.max(0.1, 0.65 - tournamentOdds(c, ctx.team)), run: (c, ctx) => cupDay(c, ctx, 0.03, 0, -2, tr('In der Gruppe ausgeschieden. Aber die Bratwurst war gut, und abends haben alle zusammen gekickt.', 'Out in the group stage. But the bratwurst was good and in the evening everyone had a kickabout together.')) },
+        ]),
+      },
+      {
+        label: tr('Anmelden, der Trainer fährt', 'Enter, the coach takes them'),
+        effect: outcome([
+          { w: (c, ctx) => tournamentOdds(c, ctx.team) * 0.8, run: (c, ctx) => cupDay(c, ctx, 0.12, 0.02, 0, tr(`Ohne dich gewonnen! Die ${TEAMS.find((t) => t.id === ctx.team).name} schickt ein Foto mit Pokal in die Handy-Gruppe.`, `They won without you! The ${TEAMS.find((t) => t.id === ctx.team).name} send a photo with the trophy to the group chat.`), true) },
+          { w: (c, ctx) => 1 - tournamentOdds(c, ctx.team) * 0.8, run: (c, ctx) => cupDay(c, ctx, 0.05, 0, 0, tr('Mittelfeld. Der Trainer schreibt: „Schöner Tag, Kinder platt."', 'Mid-table. The coach writes: "Lovely day, kids shattered."')) },
+        ]),
+      },
+      {
+        label: tr('Absagen – zu viel los', 'Decline – too much going on'),
+        effect: outcome([
+          { w: 2, run: (c) => ((c.youth.cupSeason = c.season), tr('Abgesagt. Ein paar Kinder sind enttäuscht.', 'Declined. A few kids are disappointed.')) },
+          { w: 1, run: (c, ctx) => { c.youth.cupSeason = c.season; for (const k of c.youth.kids) if (teamOfAge(k.age)?.id === ctx.team) k.joy = clamp01(k.joy - 0.05); return tr('Die Eltern organisieren eine Fahrgemeinschaft – ohne Verein. Peinlich.', 'The parents organise a lift share – without the club. Embarrassing.'); } },
+        ]),
+      },
+    ],
+  },
+  eigenes_turnier: {
+    weight: 0.8,
+    needs: (c) => (c.youth?.hostSeason !== c.season && c.round >= 3 && c.youth.kids.length >= 6 ? {} : null),
+    text: () => tr('Die Jugendeltern fragen: Sollen wir dieses Jahr selbst ein Jugendturnier ausrichten? Sechs Plätze, Kuchen, Grill, Tombola.', 'The youth parents ask: shall we host our own youth tournament this year? Six pitches, cake, barbecue, raffle.'),
+    options: [
+      {
+        label: tr('Ja – du organisierst mit (viel Kraft)', 'Yes – you help organise (lots of energy)'),
+        effect: outcome([
+          { w: 3, run: (c, ctx, rng) => { c.youth.hostSeason = c.season; adjustEnergy(c, -6); const n = rng.int(120, 220); book(c, tr('Jugendturnier: Startgelder, Kuchen, Grill', 'Youth tournament: entry fees, cake, barbecue'), n); for (const k of c.youth.kids) k.joy = clamp01(k.joy + 0.08); adjustMood(c, 0.03); chronicle(c, tr('Der Verein richtet sein erstes eigenes Jugendturnier aus.', 'The club hosts its own youth tournament.')); return tr(`Ein voller Erfolg: 24 Mannschaften, ${n} € Gewinn, und abends sitzen Erste und Jugend zusammen am Grill.`, `A huge success: 24 teams, €${n} profit, and in the evening the first team and the kids sit together at the barbecue.`); } },
+          { w: 1, run: (c, ctx, rng) => { c.youth.hostSeason = c.season; adjustEnergy(c, -8); book(c, tr('Jugendturnier: Startgelder, Kuchen, Grill', 'Youth tournament: entry fees, cake, barbecue'), rng.int(30, 70)); return tr('Gewitter um zwei, alle unter dem Vordach. Wenig Gewinn, aber die Kinder fanden es super.', 'Thunderstorm at two, everyone under the awning. Little profit, but the kids loved it.'); } },
+        ]),
+      },
+      {
+        label: tr('Ja – die Eltern machen das', 'Yes – the parents do it'),
+        effect: outcome([
+          { w: 2, run: (c, ctx, rng) => { c.youth.hostSeason = c.season; const n = rng.int(60, 140); book(c, tr('Jugendturnier der Eltern', 'Parents\' youth tournament'), n); for (const k of c.youth.kids) k.joy = clamp01(k.joy + 0.05); return tr(`Die Eltern ziehen es durch. ${n} € für die Jugendkasse.`, `The parents pull it off. €${n} for the youth fund.`); } },
+          { w: 1, run: (c) => { c.youth.hostSeason = c.season; adjustMood(c, -0.02); return tr('Streit im Orga-Team, wer die Kasse macht. Das Turnier findet statt, die Stimmung leidet.', 'Row in the organising team over who handles the cash. The tournament happens, the mood suffers.'); } },
+        ]),
+      },
+      { label: tr('Nein, dieses Jahr nicht', 'No, not this year'), effect: outcome([{ w: 1, run: (c) => ((c.youth.hostSeason = c.season), tr('Vielleicht nächstes Jahr.', 'Maybe next year.')) }]) },
     ],
   },
   talentsichtung: {

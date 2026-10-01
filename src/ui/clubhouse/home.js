@@ -34,6 +34,15 @@ function unfitNote(c, club) {
 }
 import { hex, first, euro } from './shared.js';
 
+// Jugendspieltag vom Wochenende (kurz): „Jugend: D 3:1 · C 0:2 · E Spielfest".
+function youthNote(c) {
+  const lw = c.youth?.lastWeek;
+  if (!lw || lw.round !== c.round - 1 || !lw.games.length) return '';
+  const games = lw.games.map((g) => (g.team === 'E' ? tr(`E Spielfest ${g.gf}:${g.ga}`, `U11 festival ${g.gf}-${g.ga}`) : `${g.team} ${g.gf}:${g.ga}`)).join(' · ');
+  const picked = lw.sichtung?.length ? tr(` – ${lw.sichtung.join(', ')} zum DFB-Stützpunkt eingeladen!`, ` – ${lw.sichtung.join(', ')} invited to the DFB centre!`) : '';
+  return tr(`Jugend am Wochenende: ${games}${picked}`, `Youth at the weekend: ${games}${picked}`);
+}
+
 export const homeScreens = {
   // HEUTE: das Vereinsheim als Raum (Szene), das Spiel (oder Ergebnisse/Saisonende) groß,
   // daneben letzte Ergebnisse, Aushang und was in der Gruppe auf dich wartet.
@@ -91,6 +100,7 @@ export const homeScreens = {
       w.event && w.event.choice === null ? tr('In der Gruppe wartet eine Entscheidung auf dich.', 'A decision is waiting for you in the group chat.') : '',
       count('yes') < venue.format ? tr('Zu wenige Zusagen – es hilft jemand aus dem Bekanntenkreis aus.', 'Not enough players – someone from a mate\'s circle will help out.') : '',
       unfitNote(c, club),
+      youthNote(c),
     ].filter(Boolean);
     const stories = storyLabels(c);
     let actions;

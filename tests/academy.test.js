@@ -52,7 +52,7 @@ describe('youth academy', () => {
     for (const [id, def] of Object.entries(ACADEMY_EVENTS)) {
       for (let choice = 0; choice < def.options.length; choice++) {
         const c = createCareer({ seed: 610 + choice });
-        c.round = 3;
+        c.round = 6; // Frühjahr: auch das Pfingstturnier ist möglich
         c.youth.kids.forEach((k) => Object.assign(k, { talent: 0.8, age: 12, parent: 'ehrgeizig' }));
         // Je ein Kind für die Persönlichkeits-Ereignisse (Spätentwickler, Schulstress, keiner holt ab).
         Object.assign(c.youth.kids[0], { girl: false, parent: 'desinteressiert', parentSet: true, bloom: 'spaet', school: 'stress' });
