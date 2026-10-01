@@ -510,7 +510,8 @@ export const teamScreens = {
     return `<h4>${tr('Jugendmannschaften', 'Youth teams')}</h4>
       <p class="empty">${tr('Jede Mannschaft hat ihren Trainer und ihren Schwerpunkt. Faustregel: Kleine spielen und lernen Technik, Große lernen Spielverständnis, Kondition und Turnierhärte. Mit 16 geht es in die A-Jugend – Mädchen ins Frauenteam, sobald es eins gibt.', 'Each team has its coach and its focus. Rule of thumb: little ones play and learn technique, older ones learn game sense, fitness and tournament toughness. At 16 they move up to the U19s – girls to the women\'s team once there is one.')}</p>
       <div class="youth-teams">${teams}</div>
-      ${last ? `<p>${tr('Letzte Saison', 'Last season')}: ${last.results.map(resultLabel).join(' · ')}</p>` : ''}`;
+      ${last ? `<p>${tr('Letzte Saison', 'Last season')}: ${last.results.map(resultLabel).join(' · ')}</p>` : ''}
+      ${c.youth.nlz?.length ? `<p class="yt-nlz"><b>${tr('Aus unserer Jugend im Leistungszentrum', 'From our youth section to an academy')}:</b> ${c.youth.nlz.map((n) => tr(`${n.name} (${n.club}, Saison ${n.season}, ${n.amount.toLocaleString('de-DE')} € Ausbildungsentschädigung)`, `${n.name} (${n.club}, season ${n.season}, €${n.amount.toLocaleString('de-DE')} training compensation)`)).join(' · ')}</p>` : ''}`;
   },
 
   // Talente anderer Vereine (eigener Unterreiter der Jugend).

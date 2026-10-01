@@ -55,8 +55,10 @@ describe('youth academy', () => {
         c.round = 6; // Frühjahr: auch das Pfingstturnier ist möglich
         c.youth.kids.forEach((k) => Object.assign(k, { talent: 0.8, age: 12, parent: 'ehrgeizig' }));
         // Je ein Kind für die Persönlichkeits-Ereignisse (Spätentwickler, Schulstress, keiner holt ab).
-        Object.assign(c.youth.kids[0], { girl: false, parent: 'desinteressiert', parentSet: true, bloom: 'spaet', school: 'stress' });
-        const ctx = def.needs(c, createRng(choice + 2));
+        Object.assign(c.youth.kids[0], { girl: false, parent: 'desinteressiert', parentSet: true, bloom: 'spaet', school: 'stress', stuetzpunkt: true, talent: 0.95 });
+        let ctx = def.needs(c, createRng(choice + 2));
+        // Manche Ereignisse kommen nur in manchen Wochen (z. B. wenn Scouts da sind) – weitere Wochen probieren.
+        for (let w = 3; !ctx && w < 60; w++) ctx = def.needs(c, createRng(choice + w));
         expect(ctx, id).toBeTruthy();
         c.week.event = { id, ctx, text: def.text(c, ctx), options: def.options.map((o) => o.label), choice: null, result: null };
         expect(typeof resolveEvent(c, choice), `${id}/${choice}`).toBe('string');

@@ -13,6 +13,7 @@ import { outcome } from './outcomes.js';
 import { adjustEnergy, childAge } from './personal.js';
 import { chronicle } from './sagas.js';
 import { bloomGrowth, looksStrength, missesTraining, parentJoy, persona, physEdge, quitExtra } from './kidpersona.js';
+import { ageBand, NLZ_RATES, nlzClub, nlzCompensation, nlzTier, passesTrial, scoutsNotice, yearsAtClub } from './nlz.js';
 import { resultLabel, seasonYouthResults, tournamentOdds, stuetzpunktGrowth, weeklyYouthMatches } from './youthleague.js';
 import { coachQuality, FOCUS_FIT, initTeams, seasonTeams, setTeamFocus, weeklyTeams } from './youthteams.js';
 
@@ -48,6 +49,7 @@ function makeKid(c, rng, age, bonus = 0) {
     talent: clamp01(rng.range(0.15, 0.75) + rng.gauss() * 0.08 + bonus + q * 0.05),
     joy: rng.range(0.55, 0.9),
     parent: rng.chance(0.15) ? 'ehrgeizig' : rng.chance(0.1) ? 'engagiert' : null,
+    since: c.season ?? 1,
   };
 }
 // Neues Kind mit Persönlichkeit (Entwicklung, Schule, Eltern).
@@ -222,6 +224,43 @@ function cupDay(c, ctx, dj, dt, energy, text, won = false) {
   return text;
 }
 
+const euro = (v) => v.toLocaleString('de-DE');
+// Gemessen: so kommt etwa alle sieben Spielzeiten eine NLZ-Anfrage, gut die Hälfte endet mit
+// einem Wechsel (Überschlag echt: rund 5.600 NLZ-Spieler, ~24.000 Vereine → 0,03–0,06 Wechsel
+// je Verein und Jahr).
+export const NLZ_GATE = 0.25;
+const seen = (c, ctx) => {
+  const k = kidById(c, ctx.k);
+  if (k) k.nlzSeen = true; // ein Verein fragt nicht zweimal
+};
+
+// Probetraining im NLZ: Dort zählt echtes Talent, nicht Größe. Bestanden → Wechsel, die
+// Ausbildungsentschädigung kommt (sie steht dem Verein zu, egal was du davon hältst).
+function nlzTrial(c, ctx, rng, withYou, pre = '') {
+  const k = kidById(c, ctx.k);
+  if (!k) return tr('Das Kind ist schon weg.', 'The kid has already gone.');
+  seen(c, ctx);
+  const nm = k.name.split(' ')[0]; // nach dem Wechsel ist das Kind nicht mehr in der Liste
+  if (withYou) adjustEnergy(c, -3);
+  if (!passesTrial(k)) {
+    joy(c, ctx, withYou ? 0.05 : -0.1);
+    return pre + (withYou
+      ? tr(`Probetraining beim ${ctx.club}: „Noch nicht so weit." Auf der Rückfahrt kauft ihr Pommes, und ${nm} ist fast erleichtert.`, `Trial at ${ctx.club}: "Not ready yet." On the drive home you buy chips and ${nm} is almost relieved.`)
+      : tr(`Probetraining beim ${ctx.club}: abgelehnt. ${nm} ist am Boden zerstört.`, `Trial at ${ctx.club}: rejected. ${nm} is devastated.`));
+  }
+  // Bestanden. Ganz selten will das Kind trotzdem nicht weg.
+  if (rng.chance(withYou ? 0.1 : 0.2)) {
+    joy(c, ctx, 0.15);
+    return pre + tr(`Bestanden – aber ${nm} sagt nein: „Hier sind meine Freunde." Bleibt.`, `Passed – but ${nm} says no: "My friends are here." Stays.`);
+  }
+  book(c, tr(`Ausbildungsentschädigung ${ctx.club} (${k.name})`, `Training compensation ${ctx.club} (${k.name})`), ctx.amount);
+  chronicle(c, tr(`${k.name} (${k.age}) wechselt aus der eigenen Jugend ins Leistungszentrum des ${ctx.club}.`, `${k.name} (${k.age}) moves from the club's youth section to the ${ctx.club} academy.`));
+  c.youth.nlz = [...(c.youth.nlz ?? []), { name: k.name, club: ctx.club, season: c.season, age: k.age, amount: ctx.amount }];
+  drop(c, ctx);
+  adjustMood(c, withYou ? 0.05 : 0.03);
+  return pre + tr(`Bestanden! ${nm} wechselt zum ${ctx.club}. ${euro(ctx.amount)} € Ausbildungsentschädigung gehen an den Verein – und alle sind stolz.`, `Passed! ${nm} moves to ${ctx.club}. €${euro(ctx.amount)} in training compensation comes to the club – and everyone is proud.`);
+}
+
 export const ACADEMY_EVENTS = {
   ehrgeiziger_vater: {
     weight: 1.5,
@@ -256,25 +295,40 @@ export const ACADEMY_EVENTS = {
     ],
   },
 
+  // Punkt 4: NLZ-Anfrage mit echter Ausbildungsentschädigung (DFB-Jugendordnung ab 2024/25).
   nlz_anfrage: {
-    weight: 1,
-    needs: (c, rng) => kidPick(c, rng, (k) => k.talent >= 0.7 && k.age >= 11),
-    text: (c, ctx) => tr(`Ein Scout vom Nachwuchsleistungszentrum des großen Stadtvereins hat ${kn(c, ctx)} (${kidById(c, ctx.k).age}) beobachtet. Sie wollen ${kidById(c, ctx.k).girl ? 'sie' : 'ihn'} holen.`, `A scout from the big city club's academy has been watching ${kn(c, ctx)} (${kidById(c, ctx.k).age}). They want to sign ${kidById(c, ctx.k).girl ? 'her' : 'him'}.`),
+    weight: 30,
+    needs: (c, rng) => {
+      if (!rng.chance(NLZ_GATE)) return null; // Scouts sind nicht jede Woche da
+      const pick = kidPick(c, rng, (k) => scoutsNotice(persona(k)));
+      if (!pick) return null;
+      const k = kidById(c, pick.k);
+      const club = nlzClub(k, rng);
+      return { k: k.id, club, amount: nlzCompensation(k, club, c.season), years: yearsAtClub(k, c.season) };
+    },
+    text: (c, ctx) => {
+      const k = kidById(c, ctx.k);
+      const where = k.stuetzpunkt ? tr('am DFB-Stützpunkt', 'at the DFB centre') : tr('beim Jugendspiel', 'at a youth match');
+      return tr(
+        `Ein Scout vom Leistungszentrum des ${ctx.club} (${NLZ_RATES[nlzTier(ctx.club)].label}) hat ${kn(c, ctx)} (${k.age}) ${where} gesehen und lädt zum Probetraining ein. Bei einem Wechsel stünden euch ${euro(ctx.amount)} € Ausbildungsentschädigung zu (${ctx.years} Spieljahre bei euch).`,
+        `A scout from the ${ctx.club} academy (${NLZ_RATES[nlzTier(ctx.club)].label}) saw ${kn(c, ctx)} (${k.age}) ${where} and invites them to a trial. A move would bring you €${euro(ctx.amount)} in training compensation (${ctx.years} seasons with you).`,
+      );
+    },
     options: [
       {
-        label: tr('Viel Glück! (Ausbildungsentschädigung 80 €)', 'Good luck to them! (training compensation €80)'),
-        effect: outcome([
-          { w: 3, run: (c, ctx) => (book(c, tr('Ausbildungsentschädigung NLZ', 'Academy training compensation'), 80), chronicle(c, tr(`${kidById(c, ctx.k).name} aus der eigenen Jugend wechselt ins Nachwuchsleistungszentrum.`, `${kidById(c, ctx.k).name}, from the club's own youth section, moves to the academy.`)), drop(c, ctx), adjustMood(c, 0.05), tr('Der Wechsel ist perfekt. Der Verein ist stolz – und 80 € reicher.', 'The move goes through. The club is proud – and (€80) richer.')) },
-          { w: 1, run: (c, ctx) => (book(c, tr('Ausbildungsentschädigung NLZ', 'Academy training compensation'), 80), drop(c, ctx), tr('Wechsel perfekt. Die Mitspieler vermissen ihn/sie jetzt schon.', 'Move goes through. The team-mates already miss them.')) },
-          { w: 1, run: (c, ctx) => (joy(c, ctx, 0.2), tr(`${kn(c, ctx)} will gar nicht wechseln: „Hier sind meine Freunde." Bleibt.`, `${kn(c, ctx)} doesn't want to move at all: "My friends are here." Stays.`)) },
-        ]),
+        label: tr('Unterstützen – du fährst mit zum Probetraining', 'Support it – you go along to the trial'),
+        effect: (c, ctx, rng) => nlzTrial(c, ctx, rng, true),
       },
       {
-        label: tr('Den Eltern abraten – hier wächst er/sie in Ruhe', 'Advise the parents against it – he/she can grow up here in peace'),
+        label: tr('Den Eltern die Entscheidung lassen', 'Leave the decision to the parents'),
+        effect: (c, ctx, rng) => nlzTrial(c, ctx, rng, false),
+      },
+      {
+        label: tr('Abraten – hier wächst er/sie in Ruhe', 'Advise against it – he/she can grow up here in peace'),
         effect: outcome([
-          { w: 2, run: (c, ctx) => (joy(c, ctx, 0.1), tr('Die Eltern sind einverstanden. Talent bleibt im Dorf.', 'The parents agree. The talent stays in the village.')) },
-          { w: 2, run: (c, ctx) => (drop(c, ctx), tr('Die Eltern entscheiden anders. Weg ist er/sie – ohne Entschädigung.', 'The parents decide otherwise. Off they go – no compensation.')) },
-          { w: 1, run: (c, ctx) => (tal(c, ctx, -0.05), joy(c, ctx, -0.1), tr(`${kn(c, ctx)} bleibt, fragt sich aber, was gewesen wäre.`, `${kn(c, ctx)} stays, but wonders what might have been.`)) },
+          { w: 2, run: (c, ctx) => (seen(c, ctx), joy(c, ctx, 0.05), tr('Die Eltern sind einverstanden. Talent bleibt im Dorf – vorerst.', 'The parents agree. The talent stays in the village – for now.')) },
+          { w: 1, run: (c, ctx, rng) => nlzTrial(c, ctx, rng, false, tr('Die Eltern wollen es trotzdem probieren. ', 'The parents want to try anyway. ')) },
+          { w: 1, run: (c, ctx) => (seen(c, ctx), tal(c, ctx, -0.03), joy(c, ctx, -0.1), tr(`${kn(c, ctx)} bleibt, fragt sich aber, was gewesen wäre.`, `${kn(c, ctx)} stays, but wonders what might have been.`)) },
         ]),
       },
     ],
