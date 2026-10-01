@@ -156,6 +156,16 @@ export function createCommentator(m, seed = 1) {
           add(text, 'goal');
           break;
         }
+        case 'offside': {
+          const p = who(e.playerId);
+          add(pick(tr(['Pfiff – {p} stand im Abseits.', 'Abseits! {p} war zu früh gestartet.', '{p} läuft durch, aber der Schiri pfeift: Abseits.'], ['Whistle – {p} was offside.', 'Offside! {p} went too early.', '{p} runs through, but the referee blows: offside.']), { p: surname(p) }), 'foul');
+          break;
+        }
+        case 'offside_missed': {
+          const p = who(e.playerId);
+          add(pick(tr(['Das war Abseits – aber ohne Linienrichter sieht der Schiri es nicht. {p} läuft weiter.', 'Die Abwehr hebt die Arme: Abseits! Der Schiri lässt laufen.'], ['That was offside – but with no linesman the referee misses it. {p} carries on.', 'The defence raise their arms: offside! The referee waves play on.']), { p: surname(p) }), 'foul');
+          break;
+        }
         case 'foul': {
           const p = who(e.playerId);
           const v = who(e.victimId);

@@ -52,6 +52,7 @@ export const SQUAD_SHAPES = {
   small: ['gk', 'def', 'def', 'def', 'mid', 'mid', 'mid', 'fwd', 'fwd'],
   large: ['gk', 'gk', 'def', 'def', 'def', 'def', 'mid', 'mid', 'mid', 'mid', 'fwd', 'fwd', 'fwd'],
   xl: ['gk', 'gk', 'def', 'def', 'def', 'def', 'def', 'mid', 'mid', 'mid', 'mid', 'mid', 'fwd', 'fwd', 'fwd'], // Kreisliga A: 9 Spieler + Bank
+  xxl: ['gk', 'gk', 'def', 'def', 'def', 'def', 'def', 'def', 'def', 'mid', 'mid', 'mid', 'mid', 'mid', 'mid', 'mid', 'fwd', 'fwd', 'fwd', 'fwd'], // Bezirksliga: 11 + Bank
 };
 const NUDGES_PER_WEEK = 3;
 export const MAX_SQUAD = 12; // Freizeitliga; in der Kreisklasse mehr (siehe maxSquad)
@@ -59,7 +60,7 @@ export const MIN_SQUAD = 7;
 const SCOUT_ACTIONS = 2;
 const RUMOR_TIERS = { ok: 0.44, gut: 0.33, stark: 0.15, dorfstar: 0.06, superstar: 0.014, legende: 0.006 };
 // Kreisliga A: Wer dort spielt, zieht bessere Leute an.
-const RUMOR_TIERS_BY_LEVEL = { 4: { ok: 0.26, gut: 0.36, stark: 0.23, dorfstar: 0.1, superstar: 0.035, legende: 0.007 } };
+const RUMOR_TIERS_BY_LEVEL = { 4: { ok: 0.26, gut: 0.36, stark: 0.23, dorfstar: 0.1, superstar: 0.035, legende: 0.007 }, 5: { ok: 0.14, gut: 0.33, stark: 0.3, dorfstar: 0.16, superstar: 0.06, legende: 0.01 } };
 export const RECRUIT_BASE = { ok: 0.85, gut: 0.65, stark: 0.45, dorfstar: 0.3, superstar: 0.2, legende: 0.15 };
 const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 
@@ -951,7 +952,7 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   if (home.human || away.human) matchdaySurprise(match, humanIsAway || home.human ? 0 : 1, createRng(hashSeed(career.seed, career.season, career.round, 77)));
   // Zuschauer am Zaun – für die Geräuschkulisse (die Kasse zählt nach dem Spiel selbst).
   const level = career.level ?? 1;
-  const fans = level > 3 ? rng.int(45, 90) : level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14);
+  const fans = level > 4 ? rng.int(80, 200) : level > 3 ? rng.int(45, 90) : level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14);
   match.crowd = Math.round(fans * (match.derby ? 1.8 : 1) * (home.human ? fansMul(career) : 1));
   match.homeTeam = humanIsAway ? 1 : 0;
   return { match, humanIsAway, pitch, home, away, helpers: [...teamHome.helpers, ...teamAway.helpers] };

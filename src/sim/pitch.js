@@ -103,6 +103,27 @@ export const NINE_PITCH = {
   boundary: 'lines',
   carRule: false,
   referee: true,
+  penaltyDistance: 8, // DFB-9er: Strafstoß aus 8 m
+  surface: SURFACES.grass,
+};
+
+// Bezirksliga: das echte Großfeld, 105 × 68 m, Tore 7,32 × 2,44 m, Elfmeter aus 11 m – und Abseits.
+export const BIG_PITCH = {
+  id: 'grossfeld',
+  name: tr('Stadion am Kanal', 'Canal Stadium'),
+  format: 11,
+  halfLength: 52.5,
+  halfWidth: 34,
+  wallX: 57,
+  fenceZ: 38,
+  goalHalfWidth: 3.66,
+  goalHeight: 2.44,
+  goalType: 'frame',
+  boundary: 'lines',
+  carRule: false,
+  referee: true,
+  offside: true,
+  penaltyDistance: 11,
   surface: SURFACES.grass,
 };
 
@@ -122,4 +143,4 @@ export const HALL = {
   surface: SURFACES.hall,
 };
 
-export const PITCHES = { parkplatz: PARKING_LOT, hinterhof: BACKYARD, park: PARK, ascheplatz: ASH_PITCH, rasenplatz: LAWN_PITCH, sportplatz: NINE_PITCH, halle: HALL };
+export const PITCHES = { parkplatz: PARKING_LOT, hinterhof: BACKYARD, park: PARK, ascheplatz: ASH_PITCH, rasenplatz: LAWN_PITCH, sportplatz: NINE_PITCH, grossfeld: BIG_PITCH, halle: HALL };

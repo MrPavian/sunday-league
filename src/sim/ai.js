@@ -267,6 +267,9 @@ function receiveSpot(m, p) {
   return clampToPitch(pitch, spot.x, spot.z, 0.3);
 }
 
+// Abseits: so weit bleiben Stürmer vor der letzten Linie (Meter).
+export const OFFSIDE_MARGIN = 0.8;
+
 // Hält der Torwart den Ball, bleiben Gegner so weit weg (wie beim Abstoß).
 export const keeperZone = (pitch) => Math.min(9, pitch.halfLength * 0.45);
 
@@ -331,6 +334,8 @@ export function anchor(m, p, possession) {
       if ((st.through > 0.3 || lurking(m, p) > 0) && m.defLine) x = Math.max(x, m.defLine[1 - p.team] * s - 1);
       x = Math.min(x, top) * s;
     }
+    // Großfeld mit Abseits: Vorne bleibt man knapp vor der letzten Linie, solange der Ball dahinter ist.
+    if (pitch.offside && m.defLine && p.role !== 'def') x = Math.min(x * s, Math.max(m.defLine[1 - p.team] * s - OFFSIDE_MARGIN, bx)) * s;
   }
   const width = possession ? st.width : st.defWidth;
   let z = p.home.z * width + ball.pos.z * (possession ? 0.2 : 0.32);
@@ -756,6 +761,8 @@ export function throughTarget(m, p) {
   const lineX = Math.max(...opps.map((o) => o.pos.x * s)); // letzte Linie aus unserer Sicht
   const keeper = m.players.find((o) => o.team !== p.team && o.role === 'gk');
   const speed = (q) => (4.6 + 2.6 * q.attrs.pace + (hasTrait(q, 'schnell') ? 0.6 : 0)) * (0.72 + 0.28 * q.stamina) * 1.25;
+  // Reichweite wächst mit dem Feld (bis zum 7er-Rasen 22 m wie bisher; Großfeld weiter).
+  const reach = 22 * Math.max(1, pitch.halfLength / 26);
   let best = null;
   for (const t of m.players) {
     if (t.team !== p.team || t === p || t.role === 'gk' || t.role === 'def' || t.state !== 'normal') continue;
@@ -766,7 +773,7 @@ export function throughTarget(m, p) {
     if (px < tx + 1.5) continue;
     const point = { x: px * s, z: clamp(t.pos.z + t.vel.z * 0.4, -pitch.halfWidth * 0.8, pitch.halfWidth * 0.8) };
     const d = dist2d(p.pos, point);
-    if (d < 6 || d > 22) continue;
+    if (d < 6 || d > reach) continue;
     // Wer schon läuft, ist im Vorteil; Verteidiger müssen sich erst umdrehen.
     const runner = dist2d(t.pos, point) / speed(t) - (t.vel.x * s > 2.5 ? 0.3 : 0);
     const chaser = Math.min(...opps.map((o) => dist2d(o.pos, point) / speed(o) + (o.facing.x * s < 0 ? 0.35 : 0.1)));

@@ -610,13 +610,24 @@ describe('leagues and relegation play-offs', () => {
     expect(relegationNeeded(c)).toMatchObject({ kind: 'up', level: 3, other: 4 });
   });
 
-  it('the Kreisliga A (9 v 9) is the top league – its champion stays at the top', async () => {
-    const { LEAGUES, MAX_LEVEL } = await import('../src/career/clubs.js');
-    expect(MAX_LEVEL).toBe(4);
+  it('the Kreisliga A (9 v 9) – its runner-up plays off for the Bezirksliga', async () => {
+    const { LEAGUES } = await import('../src/career/clubs.js');
     expect(LEAGUES[4].clubs.length).toBe(5);
     expect(LEAGUES[4].format).toBe(9);
     const c = createCareer({ seed: 32 });
     c.level = 4;
+    const { relegationNeeded } = await import('../src/career/relegation.js');
+    finishAsRunnerUp(c);
+    expect(relegationNeeded(c)).toMatchObject({ kind: 'up', level: 4, other: 5 });
+  });
+
+  it('the Bezirksliga (11 v 11) is the top league – its champion stays at the top', async () => {
+    const { LEAGUES, MAX_LEVEL } = await import('../src/career/clubs.js');
+    expect(MAX_LEVEL).toBe(5);
+    expect(LEAGUES[5].clubs.length).toBe(5);
+    expect(LEAGUES[5].format).toBe(11);
+    const c = createCareer({ seed: 32 });
+    c.level = 5;
     const { relegationNeeded } = await import('../src/career/relegation.js');
     finishAsRunnerUp(c);
     expect(relegationNeeded(c)).toBeNull(); // von ganz oben gibt es keinen Aufstieg

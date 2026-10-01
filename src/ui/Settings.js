@@ -5,7 +5,7 @@ import { PITCHES } from '../sim/pitch.js';
 
 // Halbzeit je Platz: Voreinstellung als Ausgangspunkt, dann pro Platz in Viertelminuten anpassbar.
 const clock = (sec) => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}`;
-const SHORT = () => tr({ hinterhof: 'Hinterhof', halle: 'Halle', parkplatz: 'Parkplatz', park: 'Parkwiese', ascheplatz: 'Ascheplatz', rasenplatz: 'Rasenplatz', sportplatz: 'Sportplatz 9er' }, { hinterhof: 'Backyard', halle: 'Sports hall', parkplatz: 'Car park', park: 'Park', ascheplatz: 'Ash pitch', rasenplatz: 'Grass pitch', sportplatz: '9-a-side ground' });
+const SHORT = () => tr({ hinterhof: 'Hinterhof', halle: 'Halle', parkplatz: 'Parkplatz', park: 'Parkwiese', ascheplatz: 'Ascheplatz', rasenplatz: 'Rasenplatz', sportplatz: 'Sportplatz 9er', grossfeld: 'Großfeld' }, { hinterhof: 'Backyard', halle: 'Sports hall', parkplatz: 'Car park', park: 'Park', ascheplatz: 'Ash pitch', rasenplatz: 'Grass pitch', sportplatz: '9-a-side ground', grossfeld: 'Full-size pitch' });
 function halfRows() {
   const short = SHORT();
   const rows = Object.values(PITCHES).sort((a, b) => presetHalf(a, 'kurz') - presetHalf(b, 'kurz') || a.id.localeCompare(b.id));

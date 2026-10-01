@@ -20,6 +20,7 @@ import { shout } from './coach.js';
 import { createStats, trackStep } from './stats.js';
 import { createReferee, stepReferee } from './referee.js';
 import { carRule, restartFromOut, startSetPiece } from './setpieces.js';
+import { checkOffside } from './offside.js';
 import { applyHold } from './holding.js';
 import { checkIncident, incidentOnBall, planIncident, stepIncident } from './incidents.js';
 import { resolveTackles, startPoke, startTackle, stateMove } from './tackles.js';
@@ -38,9 +39,9 @@ export { startPoke, startTackle } from './tackles.js';
 // auf dem großen Rasenplatz am längsten. Die Einstellung „Spieldauer" ist ein Faktor.
 export const MATCH_LENGTHS = { kurz: 240, mittel: 360, lang: 600 }; // Richtwert (Ascheplatz)
 export const LENGTH_SCALE = { kurz: 1, mittel: 1.5, lang: 2.5 };
-export const HALF_BY_PITCH = { hinterhof: 90, halle: 90, parkplatz: 105, park: 105, ascheplatz: 120, rasenplatz: 150, sportplatz: 165 }; // bei „kurz"
+export const HALF_BY_PITCH = { hinterhof: 90, halle: 90, parkplatz: 105, park: 105, ascheplatz: 120, rasenplatz: 150, sportplatz: 165, grossfeld: 180 }; // bei „kurz"
 // Freundschaftsspiel: wie viele Leute schauen typischerweise zu?
-const CROWD_BY_PITCH = { hinterhof: 3, parkplatz: 6, park: 9, ascheplatz: 15, rasenplatz: 25, sportplatz: 40, halle: 45 };
+const CROWD_BY_PITCH = { hinterhof: 3, parkplatz: 6, park: 9, ascheplatz: 15, rasenplatz: 25, sportplatz: 40, grossfeld: 80, halle: 45 };
 
 // halves: eigene Halbzeitlängen je Platz aus den Einstellungen (überschreiben die Vorgabe).
 // cupShare: Anteil der Spieldauer bei Turnierspielen (Standard 75 %).
@@ -57,7 +58,7 @@ export function matchDuration(pitch, length) {
 
 const NO_INPUT = { move: { x: 0, z: 0 }, sprint: false, shootHeld: false, pass: false, loft: false, hold: false, tackle: false, poke: false, switchPlayer: false, sub: false };
 
-const BENCH_ROLES = { 4: ['mid', 'fwd'], 5: ['def', 'mid', 'fwd'], 7: ['def', 'mid', 'fwd'], 9: ['gk', 'def', 'mid', 'fwd'] };
+const BENCH_ROLES = { 4: ['mid', 'fwd'], 5: ['def', 'mid', 'fwd'], 7: ['def', 'mid', 'fwd'], 9: ['gk', 'def', 'mid', 'fwd'], 11: ['gk', 'def', 'def', 'mid', 'mid', 'fwd', 'fwd'] };
 
 // human: false → beide Teams von der KI gesteuert (Simulation ungespielter Partien).
 export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = true, human = true, duration, incidents = false, aiCoach = true } = {}) {
@@ -302,6 +303,7 @@ function step(m, input, dt) {
   bodyBlock(m);
   if (!humanTrick(m)) dribbleTouch(m);
   carryBall(m, dt);
+  if (checkOffside(m, startSetPiece)) return; // Großfeld: wer aus dem Abseits den Ball spielt
   // Wo war der Ball zuletzt am Fuß? (Solange er beim Spieler ist, wandert die Stelle mit –
   // beim Schuss bleibt sie stehen.) Für die Regel „Tore nur aus der gegnerischen Hälfte".
   const toucher = ball.lastTouch && getPlayer(m, ball.lastTouch);

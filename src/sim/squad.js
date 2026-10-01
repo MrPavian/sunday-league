@@ -8,12 +8,14 @@ import { setControlled } from './players.js';
 
 export const FREE_SUBS = { limit: Infinity, reentry: true };
 export const LIMITED_SUBS = { limit: 4, reentry: false };
+export const BEZIRK_SUBS = { limit: 5, reentry: false }; // Bezirksliga: fünf Wechsel, kein Rückwechsel (z. B. FVM 2024/25)
 
 // Welche Regel gilt? mode aus den Einstellungen: 'liga' (Freizeitliga frei, ab der
 // Kreisklasse begrenzt; Freundschaftsspiele frei), 'frei' oder 'begrenzt'.
 export function subRuleFor(mode, level = null) {
   if (mode === 'frei') return FREE_SUBS;
   if (mode === 'begrenzt') return LIMITED_SUBS;
+  if ((level ?? 1) >= 5) return BEZIRK_SUBS;
   return (level ?? 1) > 1 ? LIMITED_SUBS : FREE_SUBS;
 }
 

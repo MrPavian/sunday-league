@@ -44,6 +44,9 @@ export function trackStep(m, dt) {
       case 'whiff':
         ps(stats, id).whiffs++;
         break;
+      case 'offside':
+        if (team != null) stats.teams[team].offsides = (stats.teams[team].offsides ?? 0) + 1;
+        break;
       case 'slide':
         ps(stats, id).slides++;
         break;

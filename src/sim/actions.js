@@ -7,6 +7,7 @@ import { ballSpeed } from './ball.js';
 import { attackDir, distToSegment, setControlled, wallPush } from './players.js';
 import { aiSkill, keeperReaction, laneScore } from './ai.js';
 import { knockSpeed } from './knocks.js';
+import { markOffside } from './offside.js';
 import { hasProfile, pressureChaos } from './profiles.js';
 import { fooled, tryTrick } from './tricks.js';
 
@@ -108,6 +109,7 @@ export function tryExecute(m, p) {
   }
   p.pending = null;
   p.setPieceAction = null;
+  const restart = m.setPiece && m.setPiece.takerId === p.id && !m.setPiece.taken ? m.setPiece.type : null; // für die Abseitsregel
   if (m.setPiece && m.setPiece.takerId === p.id) m.setPiece.taken = true;
   p.kickCooldown = 0.35;
   p.kickAnim = 0.3;
@@ -136,6 +138,8 @@ export function tryExecute(m, p) {
   ball.lastAction = a.type === 'shoot' && !holds ? 'shoot' : 'pass';
   ball.lastTouch = p.id;
   m.lastTouchTeam = p.team;
+  if (ball.lastAction === 'pass') markOffside(m, p, restart);
+  else m.offside = null;
 }
 
 function shoot(m, p, a, fatigue) {

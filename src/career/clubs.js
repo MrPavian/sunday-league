@@ -208,6 +208,55 @@ export const KA_CLUBS = [
   },
 ];
 
+// Bezirksliga: 11 gegen 11 auf dem Großfeld, mit Abseits – hier wird Geld bezahlt.
+export const BZ_CLUBS = [
+  {
+    id: 'hafen',
+    name: 'FC Hafen 1905',
+    short: 'FCH',
+    venue: 'grossfeld',
+    kit: { shirt: 0x1d3b6e, shorts: 0xf2efe6, socks: 0x1d3b6e, pattern: 'streifen', second: 0xf2efe6 },
+    keeperKit: { shirt: 0xe0b020, shorts: 0x1c1c1c, socks: 0xe0b020 },
+    tiers: { ok: 0.04, gut: 0.24, stark: 0.4, dorfstar: 0.23, superstar: 0.08, legende: 0.01 },
+  },
+  {
+    id: 'borussia',
+    name: 'Borussia Kanalstadt',
+    short: 'BKS',
+    venue: 'grossfeld',
+    kit: { shirt: 0xe0c020, shorts: 0x1c1c1c, socks: 0xe0c020, pattern: 'brustring', second: 0x1c1c1c },
+    keeperKit: { shirt: 0x2e8b57, shorts: 0x1c1c1c, socks: 0x2e8b57 },
+    tiers: { ok: 0.05, gut: 0.27, stark: 0.4, dorfstar: 0.21, superstar: 0.07 },
+  },
+  {
+    id: 'sportfreunde',
+    name: 'Sportfreunde Werftstraße',
+    short: 'SFW',
+    venue: 'grossfeld',
+    kit: { shirt: 0x2e8b57, shorts: 0x2e8b57, socks: 0xf2efe6, pattern: 'schulter', second: 0xf2efe6 },
+    keeperKit: { shirt: 0xc8352f, shorts: 0x1c1c1c, socks: 0xc8352f },
+    tiers: { ok: 0.07, gut: 0.3, stark: 0.38, dorfstar: 0.19, superstar: 0.06 },
+  },
+  {
+    id: 'olympia',
+    name: 'SC Olympia Neustadt',
+    short: 'SCO',
+    venue: 'grossfeld',
+    kit: { shirt: 0xf2efe6, shorts: 0x1d3b6e, socks: 0xf2efe6, pattern: 'schaerpe', second: 0x1d3b6e },
+    keeperKit: { shirt: 0xe8742a, shorts: 0x1c1c1c, socks: 0xe8742a },
+    tiers: { ok: 0.07, gut: 0.3, stark: 0.38, dorfstar: 0.19, superstar: 0.06 },
+  },
+  {
+    id: 'alemannia',
+    name: 'SV Alemannia Deichtor',
+    short: 'SVA',
+    venue: 'grossfeld',
+    kit: { shirt: 0xb02a2a, shorts: 0xf2efe6, socks: 0xb02a2a, pattern: 'karo', second: 0xf2efe6 },
+    keeperKit: { shirt: 0x2f6fb5, shorts: 0x1c1c1c, socks: 0x2f6fb5 },
+    tiers: { ok: 0.05, gut: 0.27, stark: 0.4, dorfstar: 0.21, superstar: 0.07 },
+  },
+];
+
 // Zwei weitere Vereine je Liga für die große Staffel (8 Teams, 14 Spieltage).
 export const EXTRA_CLUBS = {
   1: [
@@ -290,15 +339,36 @@ export const EXTRA_CLUBS = {
       tiers: { ok: 0.15, gut: 0.38, stark: 0.33, dorfstar: 0.11, superstar: 0.03 },
     },
   ],
+  5: [
+    {
+      id: 'lotsen',
+      name: 'TuS Lotsenhaus',
+      short: 'TUL',
+      venue: 'grossfeld',
+      kit: { shirt: 0x6a2c8c, shorts: 0xf2efe6, socks: 0x6a2c8c, pattern: 'nadel', second: 0xf2efe6 },
+      keeperKit: { shirt: 0xe0b020, shorts: 0x1c1c1c, socks: 0xe0b020 },
+      tiers: { ok: 0.07, gut: 0.3, stark: 0.38, dorfstar: 0.19, superstar: 0.06 },
+    },
+    {
+      id: 'fortunadeich',
+      name: 'Fortuna Deichhausen',
+      short: 'FOR',
+      venue: 'grossfeld',
+      kit: { shirt: 0xc8352f, shorts: 0x1c1c1c, socks: 0xc8352f, pattern: 'haelften', second: 0x1c1c1c },
+      keeperKit: { shirt: 0x2e8b57, shorts: 0x1c1c1c, socks: 0x2e8b57 },
+      tiers: { ok: 0.05, gut: 0.27, stark: 0.4, dorfstar: 0.21, superstar: 0.07 },
+    },
+  ],
 };
 
 export const leagueClubs = (league, size = 6) => [...league.clubs, ...(size >= 8 ? EXTRA_CLUBS[league.level] ?? [] : [])];
 
-export const MAX_LEVEL = 4;
+export const MAX_LEVEL = 5;
 
 export const LEAGUES = {
   1: { level: 1, name: LEAGUE_NAME, referee: false, format: null, humanVenue: 'hinterhof', clubs: AI_CLUBS, squadShape: 'small', maxSquad: 12, derby: { club: 'kanal', name: tr('Kanal-Derby', 'Canal Derby') } },
   2: { level: 2, name: tr('Kreisklasse C Kanalbezirk', 'Kanalbezirk District League C'), referee: true, format: 7, humanVenue: 'rasenplatz', clubs: KC_CLUBS, squadShape: 'large', maxSquad: 16, derby: { club: 'bwk', name: tr('Bezirks-Derby', 'District Derby') } },
   3: { level: 3, name: tr('Kreisklasse B Kanalbezirk', 'Kanalbezirk District League B'), referee: true, format: 7, humanVenue: 'rasenplatz', clubs: KB_CLUBS, squadShape: 'large', maxSquad: 16, derby: { club: 'viktoria', name: tr('Stadtderby', 'City Derby') } },
   4: { level: 4, name: tr('Kreisliga A Kanalbezirk', 'Kanalbezirk County League A'), referee: true, format: 9, humanVenue: 'sportplatz', clubs: KA_CLUBS, squadShape: 'xl', maxSquad: 18, derby: { club: 'wacker', name: tr('Kanal-Klassiker', 'Canal Classic') } },
+  5: { level: 5, name: tr('Bezirksliga Kanal', 'Kanal Bezirksliga'), referee: true, format: 11, humanVenue: 'grossfeld', clubs: BZ_CLUBS, squadShape: 'xxl', maxSquad: 22, derby: { club: 'hafen', name: tr('Hafen-Derby', 'Harbour Derby') } },
 };

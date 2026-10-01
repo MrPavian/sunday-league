@@ -71,11 +71,13 @@ export function matchFinances(career, fixture, prepared, level) {
     const rng = createRng(career.seed + career.season * 97 + career.round * 13);
     const press = (career.flags?.pressWeeks > 0 ? 1.4 : 1) * (m.derby ? 1.8 : 1); // Kreisblatt-Porträt, Derby
     const weatherFans = { sonne: 1.2, hitze: 0.9, regen: 0.6, wind: 0.85, nebel: 0.8, frost: 0.7, schnee: 0.5 }[career.week?.weather?.id] ?? 1;
-    const fans = Math.round((level > 3 ? rng.int(45, 90) : level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14)) * press * weatherFans * fansMul(career));
+    const fans = Math.round((level > 4 ? rng.int(80, 200) : level > 3 ? rng.int(45, 90) : level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14)) * press * weatherFans * fansMul(career));
     career.flags ??= {};
     career.flags.fans = { round: career.round, n: fans }; // für die Unterschriftenlisten
     const wirt = (career.staff?.wirt ? 1.3 : 1) * salesMul(career); // Wirt, Grill & Theke
     book(career, tr(`Getränkeverkauf (${fans} Zuschauer)${career.staff?.wirt ? ` – Wirt ${career.staff.wirt.name.split(' ')[0]}` : ''}${salesMul(career) > 1 ? ' – mit Grill' : ''}`, `Drinks sales (${fans} spectators)${career.staff?.wirt ? ` – bar manager ${career.staff.wirt.name.split(' ')[0]}` : ''}${salesMul(career) > 1 ? ' – with barbecue' : ''}`), Math.round(fans * 2.5 * wirt));
+    // Bezirksliga: Eintritt (3 € – Kinder und Mitglieder frei, daher im Schnitt etwas weniger).
+    if (level > 4) book(career, tr(`Eintritt (${fans} Zuschauer)`, `Gate money (${fans} spectators)`), Math.round(fans * ENTRY_FEE));
     if (level > 1) {
       book(career, tr('Schiri-Gebühr', 'Referee fee'), -20 - (level - 2) * 10);
       book(career, career.staff?.platzwart ? tr('Platzmiete (Platzwart macht vieles selbst)', 'Pitch rent (groundsman does a lot himself)') : tr('Platzmiete Waldesruh', 'Pitch rent Waldesruh'), career.staff?.platzwart ? -7.5 : -15);
@@ -85,11 +87,29 @@ export function matchFinances(career, fixture, prepared, level) {
 
 // Ab der Kreisklasse kostet der Spielbetrieb: Verband, Versicherung, Trikotwäsche –
 // und die guten Leute wollen Fahrgeld. Wer oben mitspielen will, muss rechnen.
-export const OPS_COST = [0, 0, 40, 70, 100];
+export const OPS_COST = [0, 0, 40, 70, 100, 150];
+export const ENTRY_FEE = 2.2; // 3 € Eintritt, Kinder und Mitglieder frei
 export const FAHRGELD = { stark: 3, dorfstar: 6, superstar: 10, legende: 12 };
+// Bezirksliga: Aufwandsentschädigung statt Fahrgeld (je Woche). Recherche: etwa die Hälfte
+// der Spieler wird bezahlt, typisch 100–250 € im Monat; mehr als 250 € im Monat erlaubt der
+// DFB für Amateure nicht (≈ 58 € je Woche).
+export const AE_WEEK = { stark: 25, dorfstar: 40, superstar: 55, legende: 58 };
 export function fahrgeld(career) {
   const level = career.level ?? 1;
   const human = career.clubs.find((c) => c.human);
+  if (level >= 5) {
+    let total = 0;
+    let n = 0;
+    for (const idx of human.squad) {
+      if (career.coach?.idx === idx) continue;
+      const pay = AE_WEEK[playerOf(career, idx).tier] ?? 0;
+      if (pay) {
+        total += pay;
+        n++;
+      }
+    }
+    return { total: Math.round(total), n, ae: true };
+  }
   const mul = level >= 4 ? 2.6 : level >= 3 ? 2 : level === 2 ? 1.2 : 0;
   if (!mul) return { total: 0, n: 0 };
   let total = 0;
@@ -110,7 +130,7 @@ export function awayTravel(career, fixture) {
   const level = career.level ?? 1;
   const human = career.clubs.find((c) => c.human);
   if (level < 2 || fixture.away !== human.id) return;
-  book(career, tr('Auswärtsfahrt (Sprit)', 'Away trip (fuel)'), -Math.round((level === 2 ? 10 : level === 3 ? 20 : 25) * travelMul(career)));
+  book(career, tr('Auswärtsfahrt (Sprit)', 'Away trip (fuel)'), -Math.round((level === 2 ? 10 : level === 3 ? 20 : level === 4 ? 25 : 35) * travelMul(career)));
 }
 
 // Jede Woche: Mitgliedsbeiträge und Sponsorengeld.
@@ -122,7 +142,7 @@ export function weeklyFinances(career) {
   const ops = OPS_COST[career.level ?? 1] ?? 0;
   if (ops) book(career, tr('Spielbetrieb (Verband, Versicherung, Trikotwäsche)', 'Running the team (league fees, insurance, kit washing)'), -ops);
   const fg = fahrgeld(career);
-  if (fg.total) book(career, tr(`Fahrgeld für ${fg.n} gute Leute`, `Travel money for ${fg.n} good players`), -fg.total);
+  if (fg.total) book(career, fg.ae ? tr(`Aufwandsentschädigung für ${fg.n} Spieler`, `Expenses for ${fg.n} players`) : tr(`Fahrgeld für ${fg.n} gute Leute`, `Travel money for ${fg.n} good players`), -fg.total);
 }
 
 // Saisonende: Boni auszahlen, Verträge laufen aus, Stimmung aus der Fahrt übernehmen.

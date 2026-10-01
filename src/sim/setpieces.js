@@ -10,7 +10,7 @@ import { keeperBox } from './actions.js';
 // Elfmeterpunkt: im Kleinfeld näher dran als auf dem großen Platz.
 export function penaltySpot(m, team) {
   const s = attackDir(m, team);
-  return { x: s * (m.pitch.halfLength - Math.min(9, m.pitch.halfLength * 0.38)), z: 0 };
+  return { x: s * (m.pitch.halfLength - (m.pitch.penaltyDistance ?? Math.min(9, m.pitch.halfLength * 0.38))), z: 0 };
 }
 
 const FREEZE = { kickoff: 0.8, freekick: 1.3, throwin: 1.0, corner: 1.3, goalkick: 1.0, penalty: 1.8 };
@@ -89,6 +89,7 @@ export function startSetPiece(m, { type, team, spot = { x: 0, z: 0 }, takerId = 
   m.phase = 'setpiece';
   m.phaseTimer = FREEZE[type];
   m.setPiece = { type, team, takerId: taker.id, time: m.time, taken: false };
+  m.offside = null;
   m.wallIds = type === 'freekick' ? buildWall(m, team, spot) : null;
   m.events.push({ type: 'setpiece', kind: type, team, playerId: taker.id });
 }
@@ -181,7 +182,7 @@ function buildWall(m, team, spot) {
   const goalX = attackDir(m, team) * pitch.halfLength;
   const dGoal = Math.hypot(goalX - spot.x, spot.z);
   if (dGoal > 17 || dGoal < DISTANCE + 1.5 || pitch.format < 5) return null; // im Hinterhof stellt keiner eine Mauer
-  const size = pitch.format >= 7 ? 3 : 2;
+  const size = pitch.format >= 11 ? 4 : pitch.format >= 7 ? 3 : 2;
   const dir = norm(goalX - spot.x, -spot.z);
   const side = { x: -dir.z, z: dir.x };
   const centre = { x: spot.x + dir.x * DISTANCE, z: spot.z + dir.z * DISTANCE };

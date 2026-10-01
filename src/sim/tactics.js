@@ -10,7 +10,8 @@ const f = (x, z) => ({ role: 'fwd', x, z });
 
 // 9er-Feld: Linien enger zusammen (gemessen: sonst steht ein Team über die halbe Platzlänge).
 export const NINE_TIGHT = 0.6;
-const tight = (list) => list.map((e) => (e.role === 'gk' ? e : { ...e, x: -0.42 + (e.x + 0.42) * NINE_TIGHT }));
+export const ELEVEN_TIGHT = 0.6; // Großfeld: gleicher Ansatz, nachgemessen (siehe Commit)
+const tight = (list, k = NINE_TIGHT) => list.map((e) => (e.role === 'gk' ? e : { ...e, x: -0.42 + (e.x + 0.42) * k }));
 
 // Systeme je Spielformat (Anzahl inklusive Torwart). Das erste ist der Standard.
 export const SYSTEMS = {
@@ -30,6 +31,12 @@ export const SYSTEMS = {
     '3-2-1': { label: '3-2-1', formation: [gk, d(-0.66, -0.45), d(-0.68, 0), d(-0.66, 0.45), mi(-0.4, -0.3), mi(-0.4, 0.3), f(-0.14, 0)] },
     '2-2-2': { label: '2-2-2', formation: [gk, d(-0.66, -0.32), d(-0.66, 0.32), mi(-0.42, -0.4), mi(-0.42, 0.4), f(-0.16, -0.3), f(-0.16, 0.3)] },
     '3-1-2': { label: '3-1-2', formation: [gk, d(-0.66, -0.45), d(-0.68, 0), d(-0.66, 0.45), mi(-0.42, 0), f(-0.16, -0.35), f(-0.16, 0.35)] },
+  },
+  11: {
+    '4-4-2': { label: '4-4-2', formation: tight(FORMATIONS[11], ELEVEN_TIGHT) },
+    '4-3-3': { label: '4-3-3', formation: tight([gk, d(-0.64, -0.62), d(-0.68, -0.22), d(-0.68, 0.22), d(-0.64, 0.62), mi(-0.43, -0.38), mi(-0.46, 0), mi(-0.43, 0.38), f(-0.14, -0.62), f(-0.12, 0), f(-0.14, 0.62)], ELEVEN_TIGHT) },
+    '4-2-3-1': { label: '4-2-3-1', formation: tight([gk, d(-0.64, -0.62), d(-0.68, -0.22), d(-0.68, 0.22), d(-0.64, 0.62), mi(-0.5, -0.22), mi(-0.5, 0.22), mi(-0.3, -0.6), mi(-0.28, 0), mi(-0.3, 0.6), f(-0.1, 0)], ELEVEN_TIGHT) },
+    '3-5-2': { label: '3-5-2', formation: tight([gk, d(-0.66, -0.42), d(-0.68, 0), d(-0.66, 0.42), mi(-0.4, -0.72), mi(-0.46, -0.24), mi(-0.48, 0), mi(-0.46, 0.24), mi(-0.4, 0.72), f(-0.14, -0.2), f(-0.14, 0.2)], ELEVEN_TIGHT) },
   },
   9: {
     '3-3-2': { label: '3-3-2', formation: tight(FORMATIONS[9]) },

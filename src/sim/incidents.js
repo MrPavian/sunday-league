@@ -19,6 +19,7 @@ export const VENUE_INCIDENTS = {
   ascheplatz: ['hund', 'zaun', 'gewitter'],
   rasenplatz: ['sprenger', 'ersatzschiri', 'hund', 'gewitter', 'zaun'],
   sportplatz: ['sprenger', 'ersatzschiri', 'hund', 'gewitter', 'zaun'],
+  grossfeld: ['sprenger', 'ersatzschiri', 'hund', 'gewitter', 'zaun'],
   halle: ['ersatzschiri', 'polizei'], // drinnen kein Wetter; die Polizei kommt wegen der Musik aus der Kabine
 };
 

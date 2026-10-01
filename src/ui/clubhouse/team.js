@@ -287,7 +287,10 @@ export const teamScreens = {
     this.justSet = null;
     // Formation liegt in der eigenen Hälfte (x −0,96 … −0,14): auf das ganze Feld strecken, Tor links.
     const left = (x) => (6 + ((x + 0.96) / 0.82) * 84).toFixed(1);
-    const top = (z) => (50 + z * 70).toFixed(1);
+    // Breite Systeme (Großfeld, z bis 0,72) etwas enger, damit die Außen nicht am Rand kleben.
+    const maxZ = Math.max(...formation.map((e) => Math.abs(e.z)));
+    const zk = maxZ > 0.56 ? 38 / maxZ : 70;
+    const top = (z) => (50 + z * zk).toFixed(1);
     const tokens = formation
       .map((slot, i) => {
         const idx = lineup[i];

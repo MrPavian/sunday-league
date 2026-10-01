@@ -39,6 +39,20 @@ FORMATIONS[9] = [
   { role: 'fwd', x: -0.16, z: 0.3 },
 ];
 
+FORMATIONS[11] = [
+  { role: 'gk', x: -0.96, z: 0 },
+  { role: 'def', x: -0.64, z: -0.62 },
+  { role: 'def', x: -0.68, z: -0.22 },
+  { role: 'def', x: -0.68, z: 0.22 },
+  { role: 'def', x: -0.64, z: 0.62 },
+  { role: 'mid', x: -0.4, z: -0.62 },
+  { role: 'mid', x: -0.43, z: -0.2 },
+  { role: 'mid', x: -0.43, z: 0.2 },
+  { role: 'mid', x: -0.4, z: 0.62 },
+  { role: 'fwd', x: -0.14, z: -0.2 },
+  { role: 'fwd', x: -0.14, z: 0.2 },
+];
+
 export function formationSpot(pitch, entry, team, swapped = false) {
   const s = (team === 0 ? 1 : -1) * (swapped ? -1 : 1);
   return { x: entry.x * pitch.halfLength * s, z: entry.z * pitch.halfWidth * s };

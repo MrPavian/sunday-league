@@ -20,7 +20,7 @@ const NEW_CLUBS = [
   { name: 'BSG Stadtwerke', short: 'BSG', kit: { shirt: 0xe07a2a, shorts: 0x1d2b44, socks: 0xe07a2a } },
 ];
 // Wenn der eigene Platz weg ist: Ausweichplatz je Liga.
-const FALLBACK = { hinterhof: 'parkplatz', rasenplatz: 'ascheplatz', sportplatz: 'rasenplatz', parkplatz: 'park', park: 'parkplatz', ascheplatz: 'park' };
+const FALLBACK = { hinterhof: 'parkplatz', rasenplatz: 'ascheplatz', sportplatz: 'rasenplatz', grossfeld: 'sportplatz', parkplatz: 'park', park: 'parkplatz', ascheplatz: 'park' };
 const SIGNATURE_TARGET = 700;
 
 export const yearOf = (c, season = c.season) => FIRST_YEAR + season - 1;

@@ -46,6 +46,12 @@ export const VENUES = [
     tagline: tr('Kreisliga A: 9 gegen 9 von Sechzehner zu Sechzehner, Flutlicht, Würstchenbude.', 'Kreisliga A: 9 v 9 from box to box, floodlights, sausage stand.'),
   },
   {
+    id: 'grossfeld',
+    pitch: PITCHES.grossfeld,
+    build: buildLawn,
+    tagline: tr('Bezirksliga: 11 gegen 11 auf dem Großfeld, mit Abseits und kleinem Stadion.', 'Bezirksliga: 11 v 11 on a full-size pitch, with offside and a small stadium.'),
+  },
+  {
     id: 'halle',
     pitch: PITCHES.halle,
     build: buildHall,
