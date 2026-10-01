@@ -18,6 +18,7 @@ import { ARG_IDS, ARGUMENTS, knownMotives, MOTIVES } from '../../career/recruiti
 import { currentLineup, humanClub, nextPitch, maxSquad, MIN_SQUAD, recruit, recruitChance, setLineupSlot, table } from '../../career/career.js';
 import { inviteChance, isRawDiamond, MAX_STATIONS, STATIONS, TRAINING_COST, trainingDone } from '../../career/training.js';
 import { roleName, STAFF_ROLES } from '../../career/youth.js';
+import { personaTags } from '../../career/kidpersona.js';
 import { FOCUS, ownKids, poachChance, poachKid, scoutList, talentGuess, TEAMS, teamOfAge } from '../../career/academy.js';
 import { COACH_KINDS, coachCandidates, COURSE_COST, FOCUS_FIT, fitLabel, initTeams, SELF_ENERGY, selfQuality } from '../../career/youthteams.js';
 import { chemistry, REL, relationLabel, shortName } from '../../career/relations.js';
@@ -482,7 +483,7 @@ export const teamScreens = {
       const list = kids.filter((k) => teamOfAge(k.age)?.id === t.id).sort((a, b) => b.age - a.age);
       const rows = list
         .map((k) => `<li class="${k.own ? 'own' : ''}"><b>${k.name}</b>${k.own ? ` <span class="me-tag">${k.girl ? tr('Tochter', 'daughter') : tr('Sohn', 'son')}</span>` : ''} <small>${k.age}${tr(' J.', ' yrs')} · ${POSITIONS[k.position]}</small>
-          <span class="stars" title="${tr('Einschätzung des Jugendleiters', 'Youth director\'s assessment')}">${stars(talentGuess(c, k))}</span><span class="me-bar mini"><i style="--v:${Math.round(k.joy * 100)}%"></i><small>${tr('Spaß', 'fun')}</small></span></li>`)
+          <span class="stars" title="${tr('Einschätzung des Jugendleiters', 'Youth director\'s assessment')}">${stars(talentGuess(c, k))}</span><span class="me-bar mini"><i style="--v:${Math.round(k.joy * 100)}%"></i><small>${tr('Spaß', 'fun')}</small></span>${kidTags(c, k)}</li>`)
         .join('');
       const coach = st.coach;
       const coachLine = coach
@@ -522,6 +523,14 @@ export const teamScreens = {
         .join('')}</ul>`;
   },
 };
+
+// Merkmale eines Kindes (Entwicklung, Schule, Eltern, Fußballverbot) – eigene Zeile.
+function kidTags(c, k) {
+  if (k.own) return '';
+  const tags = personaTags(k).map((t) => `<span class="kid-tag"${t.title ? ` title="${t.title}"` : ''}>${t.text}</span>`);
+  if ((k.banUntil ?? -1) > c.round) tags.push(`<span class="kid-tag warn">${tr('Fußballverbot', 'Football ban')}</span>`);
+  return tags.length ? `<span class="kid-tags">${tags.join('')}</span>` : '';
+}
 
 // Fitness-Chip: nur, wenn jemand nicht ganz fit ist (Farbe UND Text).
 function fitChip(c, idx) {

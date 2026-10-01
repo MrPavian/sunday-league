@@ -12,6 +12,7 @@ import { adjustMood } from './events.js';
 import { outcome } from './outcomes.js';
 import { adjustEnergy, childAge } from './personal.js';
 import { chronicle } from './sagas.js';
+import { bloomGrowth, looksStrength, missesTraining, parentJoy, persona, physEdge, quitExtra } from './kidpersona.js';
 import { coachQuality, FOCUS_FIT, initTeams, seasonTeams, setTeamFocus, weeklyTeams } from './youthteams.js';
 
 export const TEAMS = [
@@ -48,6 +49,8 @@ function makeKid(c, rng, age, bonus = 0) {
     parent: rng.chance(0.15) ? 'ehrgeizig' : rng.chance(0.1) ? 'engagiert' : null,
   };
 }
+// Neues Kind mit Persönlichkeit (Entwicklung, Schule, Eltern).
+const newKid = (c, rng, age, bonus) => persona(makeKid(c, rng, age, bonus));
 
 export function initAcademy(c) {
   c.youth.kids ??= [];
@@ -55,7 +58,7 @@ export function initAcademy(c) {
   if (c.youth.kidsInit) return c.youth;
   c.youth.kidsInit = true;
   const rng = createRng((c.seed * 53 + 11) >>> 0);
-  for (let i = 0; i < 11; i++) c.youth.kids.push(makeKid(c, rng, 8 + (i % 8)));
+  for (let i = 0; i < 11; i++) c.youth.kids.push(newKid(c, rng, 8 + (i % 8)));
   return c.youth;
 }
 
@@ -74,7 +77,8 @@ export function ownKids(c) {
 export function talentGuess(c, kid) {
   const q = c.youth.coach.quality;
   const noise = ((kid.name.length * 13 + kid.age * 7) % 21) / 100 - 0.1;
-  const est = clamp01(kid.talent + noise * (1.4 - q * 1.2));
+  // Ein schwacher Trainer sieht vor allem Größe und Tempo – Frühentwickler wirken besser, als sie sind.
+  const est = clamp01(kid.talent + physEdge(kid) * (1 - q) + noise * (1.4 - q * 1.2));
   return Math.max(1, Math.min(5, Math.round(est * 5)));
 }
 
@@ -99,15 +103,20 @@ export function weeklyAcademy(c) {
     const f = FOCUS[t.focus] ?? FOCUS.spass;
     const fit = FOCUS_FIT[id][t.focus] ?? 1;
     const q = coachQuality(c, id) + c.youth.coach.quality * 0.1; // der Jugendleiter hilft ein bisschen mit
-    const top = [...kids].sort((a, b) => b.talent - a.talent).slice(0, Math.ceil(kids.length / 3));
+    // Wer spielt bei Turnieren? Was man sieht: Größe und Tempo zählen mit (relativer Alterseffekt).
+    const top = [...kids].sort((a, b) => looksStrength(b) - looksStrength(a)).slice(0, Math.ceil(kids.length / 3));
     for (const k of kids) {
       const target = k.own ? k.ref : k;
+      if (!k.own) persona(k);
       let joy = t.coach ? f.joy : -0.03; // ohne Trainer fällt Training aus oder wird zusammengelegt
       if (t.coach && fit < 0.7) joy -= 0.02; // zu früh: Kondition oder Taktik für die Kleinen
       if (f.elite) joy += top.includes(k) ? 0.04 : -0.04;
-      if (k.parent === 'ehrgeizig') joy -= 0.01;
+      // Spätentwickler sitzen bei schwachen Trainern draußen – ein guter Trainer lässt alle spielen.
+      if (k.bloom === 'spaet' && k.age <= 13 && q < 0.5) joy -= 0.01;
+      joy += parentJoy(k, t.focus, c.week?.weather?.id);
       target.joy = clamp01(target.joy + joy);
-      const growth = t.coach ? f.growth * fit : FOCUS.spass.growth * 0.3;
+      if (missesTraining(k, c.round)) continue; // Klassenarbeit: kein Training diese Woche
+      const growth = (t.coach ? f.growth * fit : FOCUS.spass.growth * 0.3) * bloomGrowth(k);
       target.talent = clamp01(target.talent + growth * (0.5 + q) * (0.4 + target.joy));
     }
   }
@@ -126,7 +135,7 @@ export function seasonAcademy(c) {
   for (const t of TEAMS) {
     const kids = [...y.kids, ...ownKids(c)].filter((k) => teamOfAge(k.age)?.id === t.id);
     if (!kids.length) continue;
-    const avg = kids.reduce((s, k) => s + k.talent, 0) / kids.length;
+    const avg = kids.reduce((s, k) => s + looksStrength(k), 0) / kids.length; // in der Jugend gewinnen oft die Großen
     const pos = Math.max(1, Math.min(8, Math.round(8.5 - avg * 9 + rng.range(-1.5, 1.5) - coachQuality(c, t.id) * 2)));
     results.push({ team: t.id, pos });
     if (pos === 1) chronicle(c, tr(`Die ${t.name} wird Kreismeister!`, `The ${t.name} become district champions!`));
@@ -138,7 +147,7 @@ export function seasonAcademy(c) {
   // Trainer: manche hören auf; Teams ohne Trainer werden abgemeldet (ein Teil der Kinder hört auf).
   notes.push(...seasonTeams(c, rng, (id) => y.kids.filter((k) => teamOfAge(k.age)?.id === id)));
   // Aufhören: wer den Spaß verloren hat (und ab und zu einfach so)
-  const quit = y.kids.filter((k) => k.quit || k.joy < 0.3 || rng.chance(0.06));
+  const quit = y.kids.filter((k) => k.quit || k.joy < 0.3 || rng.chance(0.06 + quitExtra(persona(k))));
   if (quit.length) notes.push(tr(`Aufgehört: ${quit.map((k) => k.name.split(' ')[0]).join(', ')}${quit.some((k) => k.joy < 0.3) ? ' – zu viel Drill, zu wenig Spaß' : ''}.`, `Quit: ${quit.map((k) => k.name.split(' ')[0]).join(', ')}${quit.some((k) => k.joy < 0.3) ? ' – too much drilling, not enough fun' : ''}.`));
   y.kids = y.kids.filter((k) => !quit.includes(k));
   for (const k of y.kids) k.age++;
@@ -158,7 +167,7 @@ export function seasonAcademy(c) {
   }
   // Schnuppertraining im Sommer: 3–5 Neue, mit gutem Trainer und Talentsichtung mehr Talent
   const count = 3 + (y.coach.quality >= 0.6 ? 1 : 0) + (c.flags?.talentScout ? 1 : 0);
-  for (let i = 0; i < count; i++) y.kids.push(makeKid(c, rng, rng.int(8, 10), c.flags?.talentScout ? 0.08 : 0));
+  for (let i = 0; i < count; i++) y.kids.push(newKid(c, rng, rng.int(8, 10), c.flags?.talentScout ? 0.08 : 0));
   if (c.flags) c.flags.talentScout = false;
   notes.push(tr(`Schnuppertraining: ${count} neue Kinder in der E-Jugend.`, `Taster training: ${count} new kids in the U11s.`));
   return notes;
@@ -335,6 +344,98 @@ export const ACADEMY_EVENTS = {
     ],
   },
 
+  // Punkt 2: Persönlichkeit – Spätzünder, Zeugnis, keiner holt ab.
+  spaetzuender: {
+    weight: 1.2,
+    needs: (c, rng) => kidPick(c, rng, (k) => !k.girl && persona(k).bloom === 'spaet' && k.age >= 10 && k.age <= 13),
+    text: (c, ctx) => tr(`${kn(c, ctx)} ist der Kleinste im Jahrgang und sitzt beim Turnier wieder nur draußen. Nach dem Spiel, leise: „Ich bin eh zu klein. Ich glaub, ich hör auf."`, `${kn(c, ctx)} is the smallest in the age group and sat out the tournament again. Afterwards, quietly: "I'm too small anyway. I think I'll quit."`),
+    options: [
+      {
+        label: tr('Bio-Banding: Training nach Größe statt Jahrgang (Kraft)', 'Bio-banding: train by size, not by age (energy)'),
+        effect: outcome([
+          { w: 3, run: (c, ctx) => (adjustEnergy(c, -3), joy(c, ctx, 0.2), tal(c, ctx, 0.02), tr(`Einmal die Woche spielen die Kleinen unter sich. ${kn(c, ctx)} dribbelt plötzlich alle aus und lacht wieder.`, `Once a week the small ones play among themselves. Suddenly ${kn(c, ctx)} is dribbling past everyone and laughing again.`)) },
+          { w: 1, run: (c, ctx) => (adjustEnergy(c, -3), joy(c, ctx, 0.1), adjustMood(c, -0.01), tr('Die Eltern der Großen meckern: „Warum trainiert mein Sohn jetzt mit Jüngeren?" Aber es hilft.', 'The big kids\' parents moan: "Why is my son training with younger ones now?" But it helps.')) },
+        ]),
+      },
+      {
+        label: tr('Ihm erzählen, dass die Spätzünder oft die Besten werden', 'Tell him late bloomers often end up the best'),
+        effect: outcome([
+          { w: 2, run: (c, ctx) => (joy(c, ctx, 0.15), tr(`„Echt? Der war auch so klein?" ${kn(c, ctx)} bleibt – und misst sich jetzt jede Woche am Türrahmen.`, `"Really? He was that small too?" ${kn(c, ctx)} stays – and now measures himself on the door frame every week.`)) },
+          { w: 1, run: (c, ctx) => (joy(c, ctx, 0.05), tr(`${kn(c, ctx)} nickt, sagt nichts. Kommt aber nächste Woche wieder.`, `${kn(c, ctx)} nods and says nothing. But turns up again next week.`)) },
+        ]),
+      },
+      {
+        label: tr('Beim nächsten Spiel von Anfang an bringen', 'Start him in the next game'),
+        effect: outcome([
+          { w: 2, run: (c, ctx) => (joy(c, ctx, 0.15), tr(`${kn(c, ctx)} spielt durch. Verliert jeden Zweikampf, gewinnt aber das Spiel mit einem Pass, den sonst keiner sieht.`, `${kn(c, ctx)} plays the whole game. Loses every duel, but wins the match with a pass nobody else sees.`)) },
+          { w: 1, run: (c, ctx) => (joy(c, ctx, -0.05), adjustMood(c, -0.01), tr('Die Jugend verliert hoch. Ein ehrgeiziger Vater: „Wer stellt hier eigentlich auf?"', 'The youth team gets thrashed. A pushy dad: "Who picks this team?"')) },
+        ]),
+      },
+      {
+        label: tr('Da muss er durch', 'He has to get through it'),
+        effect: outcome([
+          { w: 1, run: (c, ctx) => (drop(c, ctx), tr(`${kn(c, ctx)} kommt nicht mehr. Drei Jahre später ist er einen Kopf größer – und spielt Handball.`, `${kn(c, ctx)} stops coming. Three years later he is a head taller – and plays handball.`)) },
+          { w: 1, run: (c, ctx) => (joy(c, ctx, -0.1), tr(`${kn(c, ctx)} bleibt. Aber das Lachen ist weg.`, `${kn(c, ctx)} stays. But the laughter is gone.`)) },
+        ]),
+      },
+    ],
+  },
+  zeugnis: {
+    weight: 1.2,
+    needs: (c, rng) => kidPick(c, rng, (k) => !k.girl && persona(k).school === 'stress' && k.age >= 10 && !((k.banUntil ?? -1) > c.round)),
+    text: (c, ctx) => tr(`Zeugnistag. Die Mutter von ${kn(c, ctx)} ruft an: „Eine Fünf in Mathe. Bis die besser ist, ist Schluss mit Fußball."`, `Report day. ${kn(c, ctx)}'s mother calls: "An F in maths. No football until that improves."`),
+    options: [
+      {
+        label: tr('Nachhilfe im Verein organisieren (Kraft)', 'Organise tutoring at the club (energy)'),
+        effect: outcome([
+          { w: 3, run: (c, ctx) => { adjustEnergy(c, -3); joy(c, ctx, 0.1); const k = kidById(c, ctx.k); if (k) k.school = 'locker'; return tr(`Ein pensionierter Lehrer aus dem Vorstand übernimmt, dienstags vor dem Training. Die Mutter ist beeindruckt: ${kn(c, ctx)} darf weiterspielen.`, `A retired teacher from the committee takes it on, Tuesdays before training. The mother is impressed: ${kn(c, ctx)} can keep playing.`); } },
+          { w: 1, run: (c, ctx) => { adjustEnergy(c, -3); const k = kidById(c, ctx.k); if (k) k.banUntil = c.round + 3; return tr(`Die Nachhilfe hilft – aber drei Wochen Pause will die Mutter trotzdem.`, `The tutoring helps – but the mother still wants three weeks off.`); } },
+        ]),
+      },
+      {
+        label: tr('Mit der Mutter reden: Fußball ist sein Ausgleich', 'Talk to the mother: football is his outlet'),
+        effect: outcome([
+          { w: 2, run: (c, ctx) => (joy(c, ctx, 0.05), tr('Kompromiss: Training nur noch einmal die Woche, aber er darf spielen.', 'Compromise: training only once a week, but he can play.')) },
+          { w: 2, run: (c, ctx) => { const k = kidById(c, ctx.k); if (k) k.banUntil = c.round + 6; joy(c, ctx, -0.1); return tr('„Schule geht vor." Sechs Wochen Fußballverbot.', '"School comes first." Six weeks without football.'); } },
+        ]),
+      },
+      {
+        label: tr('Akzeptieren – Schule geht vor', 'Accept it – school comes first'),
+        effect: outcome([
+          { w: 3, run: (c, ctx) => { const k = kidById(c, ctx.k); if (k) k.banUntil = c.round + 6; joy(c, ctx, -0.05); return tr(`${kn(c, ctx)} fehlt sechs Wochen. Die Mutter bedankt sich für das Verständnis.`, `${kn(c, ctx)} misses six weeks. The mother thanks you for understanding.`); } },
+          { w: 1, run: (c, ctx) => (drop(c, ctx), tr(`${kn(c, ctx)} kommt danach nicht wieder. Jetzt ist es Gitarre.`, `${kn(c, ctx)} never comes back afterwards. It's guitar now.`)) },
+        ]),
+      },
+    ],
+  },
+  keiner_holt_ab: {
+    weight: 1,
+    needs: (c, rng) => kidPick(c, rng, (k) => !k.girl && persona(k).parent === 'desinteressiert'),
+    text: (c, ctx) => tr(`Halb neun, das Training ist seit einer Stunde vorbei. ${kn(c, ctx)} sitzt allein auf der Bank vorm Vereinsheim. Zu Hause geht keiner ans Telefon.`, `Half eight, training finished an hour ago. ${kn(c, ctx)} is sitting alone on the bench outside the clubhouse. Nobody answers the phone at home.`),
+    options: [
+      {
+        label: tr('Selbst heimfahren', 'Drive him home yourself'),
+        effect: outcome([
+          { w: 3, run: (c, ctx) => (adjustEnergy(c, -2), joy(c, ctx, 0.15), tr(`Im Auto erzählt ${kn(c, ctx)} mehr als in einem ganzen Jahr. Der Verein ist für ihn mehr als Fußball.`, `In the car ${kn(c, ctx)} talks more than in a whole year. The club is more than football to him.`)) },
+          { w: 1, run: (c, ctx) => (adjustEnergy(c, -2), joy(c, ctx, 0.05), tr('Zu Hause brennt Licht, aber keiner macht auf. Du wartest, bis er drin ist.', 'There are lights on at home, but nobody answers. You wait until he is inside.')) },
+        ]),
+      },
+      {
+        label: tr('Fahrgemeinschaft mit anderen Eltern einrichten', 'Set up a lift share with other parents'),
+        effect: outcome([
+          { w: 2, run: (c, ctx) => { const k = kidById(c, ctx.k); if (k) k.parent = null; joy(c, ctx, 0.1); return tr(`Die Eltern von zwei Mitspielern nehmen ${kn(c, ctx)} jetzt immer mit.`, `Two teammates' parents now always take ${kn(c, ctx)} along.`); } },
+          { w: 1, run: (c) => (adjustMood(c, -0.01), tr('„Wir sind doch kein Taxiunternehmen." Keiner will.', '"We\'re not a taxi firm." Nobody is willing.')) },
+        ]),
+      },
+      {
+        label: tr('Der Jugendtrainer soll das klären', 'Let the youth coach sort it out'),
+        effect: outcome([
+          { w: 2, run: (c, ctx) => (joy(c, ctx, -0.05), tr('Er wartet noch eine halbe Stunde, dann kommt der große Bruder mit dem Roller.', 'He waits another half hour, then the big brother turns up on a scooter.')) },
+          { w: 1, run: (c, ctx) => (joy(c, ctx, -0.1), tr(`Beim nächsten Training fehlt ${kn(c, ctx)}. „Hat sich nicht gelohnt", sagt er später.`, `${kn(c, ctx)} misses the next session. "Wasn't worth it," he says later.`)) },
+        ]),
+      },
+    ],
+  },
   talentsichtung: {
     weight: 1,
     needs: (c) => (!c.flags?.talentScout && c.round >= 2 ? {} : null),
@@ -363,7 +464,7 @@ export function scoutList(c) {
   if (y.scoutSeason !== c.season) {
     const rng = createRng((c.seed * 29 + c.season * 211 + 3) >>> 0);
     y.scoutSeason = c.season;
-    y.scouted = Array.from({ length: 3 }, () => ({ ...makeKid(c, rng, rng.int(10, 15), 0.12), club: rng.pick(RIVAL_YOUTH), status: 'open' }));
+    y.scouted = Array.from({ length: 3 }, () => ({ ...newKid(c, rng, rng.int(10, 15), 0.12), club: rng.pick(RIVAL_YOUTH), status: 'open' }));
   }
   return y.scouted;
 }

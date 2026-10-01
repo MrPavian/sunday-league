@@ -54,6 +54,8 @@ describe('youth academy', () => {
         const c = createCareer({ seed: 610 + choice });
         c.round = 3;
         c.youth.kids.forEach((k) => Object.assign(k, { talent: 0.8, age: 12, parent: 'ehrgeizig' }));
+        // Je ein Kind für die Persönlichkeits-Ereignisse (Spätentwickler, Schulstress, keiner holt ab).
+        Object.assign(c.youth.kids[0], { girl: false, parent: 'desinteressiert', parentSet: true, bloom: 'spaet', school: 'stress' });
         const ctx = def.needs(c, createRng(choice + 2));
         expect(ctx, id).toBeTruthy();
         c.week.event = { id, ctx, text: def.text(c, ctx), options: def.options.map((o) => o.label), choice: null, result: null };
