@@ -499,8 +499,6 @@ export function nudge(career, idx) {
 
 // --- Aufstellung ----------------------------------------------------------------
 
-const ROLE_ATTR = { gk: 'keeping', def: 'tackling', mid: 'passing', fwd: 'shooting' };
-
 // Beste verfügbare Elf für das Format des Platzes; fehlen Leute, hilft ein
 // Kumpel aus dem Pool aus ("der Schwager von …").
 // manual: vom Trainer gewählte Pool-Nummern je Position (null = automatisch).
@@ -559,10 +557,13 @@ export function buildLineup(career, club, format, availability, rng, manual = nu
   const free = starters.filter((idx) => !lineup.includes(idx));
   formation.forEach((slot, i) => {
     if (lineup[i] != null) return;
-    const attr = ROLE_ATTR[slot.role];
+    // Stärke auf genau dieser Position (alle Werte gewichtet wie die Stärkezahl, Ausdauer
+    // inklusive), mit Form so, wie sie im Spiel wirkt (±8 %, wie applyForm). Wer die
+    // Position gelernt hat, bekommt einen kleinen Vorsprung.
     const score = (idx) => {
       const p = playerOf(career, idx);
-      return p.attrs[attr] + (p.position === slot.role ? 0.25 : 0) + p.rating / 400;
+      const k = 1 + 0.08 * (career.players[idx]?.form ?? 0);
+      return ratePlayer({ ...p, position: slot.role }) * k + (p.position === slot.role ? 5 : 0);
     };
     free.sort((a, b) => score(b) - score(a));
     lineup[i] = free.shift();

@@ -320,7 +320,7 @@ export const teamScreens = {
     return `
       <div class="lineup2${isLight(humanClub(c).kit.shirt) ? ' light-kit' : ''}">
         <div class="lp-head">
-          <p class="t-cap">${c.week.lineup ? tr('Eigene Aufstellung', 'Your line-up') : tr('Automatisch aufgestellt', 'Picked automatically')} · ${PLAY_STYLES[tactic.style].label}</p>
+          <p class="t-cap">${c.week.lineup ? tr('Eigene Aufstellung', 'Your line-up') : tr('Automatisch aufgestellt (Stärke auf der Position, Form)', 'Picked automatically (strength in position, form)')} · ${PLAY_STYLES[tactic.style].label}</p>
           <div class="ui-row">${pick ? button(tr('Abbrechen', 'Cancel'), { kind: 'ghost', action: 'pickCancel' }) : ''}${button(tr('Automatisch aufstellen', 'Pick automatically'), { action: 'autoLineup' })}</div>
         </div>
         <div class="lp-stage">

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildLineup,
+  playerOf,
   createCareer,
   finishRound,
   currentFixtures,
@@ -62,6 +63,31 @@ describe('career', () => {
     if (yes) expect(nudge(c, Number(yes[0]))).toBeNull();
     for (const [idx] of declined.slice(0, 3)) expect(typeof nudge(c, Number(idx))).toBe('boolean');
     expect(c.week.nudges).toBe(Math.max(0, 3 - Math.min(3, declined.length)));
+  });
+
+  it('automatic line-up picks the strongest in each position, and form tips the balance', () => {
+    const c = createCareer({ seed: 11 });
+    const club = humanClub(c);
+    const availability = Object.fromEntries(club.squad.map((idx) => [idx, 'yes']));
+    const pick = () => buildLineup(c, club, 5, availability, createRng(1)).lineup;
+    const base = pick();
+    const rating = (idx) => playerOf(c, idx).rating;
+    // Kein Spieler auf der Bank ist auf seiner Position klar stärker als ein Starter dieser Position.
+    for (const b of club.squad.filter((idx) => !base.includes(idx))) {
+      for (const s of base.filter((idx) => playerOf(c, idx).position === playerOf(c, b).position)) expect(rating(b)).toBeLessThanOrEqual(rating(s) + 2);
+    }
+    // Zwei fast gleich starke Spieler derselben Position: Form entscheidet.
+    const pairs = [];
+    for (const s of base) for (const b of club.squad) if (!base.includes(b) && playerOf(c, b).position === playerOf(c, s).position && playerOf(c, s).position !== 'gk' && Math.abs(rating(s) - rating(b)) <= 6) pairs.push({ s, b });
+    expect(pairs.length).toBeGreaterThan(0);
+    const { s, b } = pairs[0];
+    c.players[b].form = 1;
+    c.players[s].form = -1;
+    const after = pick();
+    expect(after).toContain(b);
+    expect(after).not.toContain(s);
+    c.players[b].form = c.players[s].form = 0;
+    expect(pick()).toEqual(base);
   });
 
   it('fills up with a helper when too few can play', () => {
