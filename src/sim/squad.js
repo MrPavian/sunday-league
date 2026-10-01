@@ -27,7 +27,7 @@ export function makeEntity(pl, team, index, role, home) {
     pos: { ...home },
     vel: { x: 0, z: 0 },
     facing: { x: team === 0 ? 1 : -1, z: 0 },
-    stamina: 1,
+    stamina: pl.fitness ?? 1, // Karriere: Fitness = Startausdauer (sonst voll)
     charge: 0,
     charging: false,
     pending: null,
@@ -62,7 +62,7 @@ export const findAnyPlayer = (m, id) => allPlayers(m).find((p) => p.id === id) ?
 
 // Auf der Bank erholt man sich (Zigarette an der Eckfahne inklusive).
 export function restBench(m, dt) {
-  for (const team of m.bench) for (const p of team) p.stamina = Math.min(1, p.stamina + 0.02 * dt);
+  for (const team of m.bench) for (const p of team) p.stamina = Math.min(p.fitness ?? 1, p.stamina + 0.02 * dt);
 }
 
 // Menschlicher Wechselwunsch ohne Auswahl: der Müdeste raus, der Frischeste rein.

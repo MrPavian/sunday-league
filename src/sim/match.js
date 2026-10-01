@@ -195,7 +195,7 @@ function step(m, input, dt) {
     if ((m.phaseTimer -= dt) > 0) return;
     // Seitenwechsel, kurz durchschnaufen, die andere Mannschaft stößt an.
     swapSides(m);
-    for (const p of m.players) p.stamina = Math.min(1, p.stamina + 0.25);
+    for (const p of m.players) p.stamina = Math.min(p.fitness ?? 1, p.stamina + 0.25); // mehr als fit wird keiner
     startSetPiece(m, { type: 'kickoff', team: 1 });
     return;
   }

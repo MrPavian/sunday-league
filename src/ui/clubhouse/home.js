@@ -12,7 +12,7 @@ import { homeView } from '../prefs.js';
 import { crestOf, crestSVG } from '../crest.js';
 import { relegationNeeded, relegationOf } from '../../career/relegation.js';
 import { LEAGUES } from '../../career/clubs.js';
-import { clubById, humanClub, leagueOf, humanFixture, seasonOver, table } from '../../career/career.js';
+import { clubById, humanClub, leagueOf, humanFixture, playerOf, seasonOver, table } from '../../career/career.js';
 import { DESTINATIONS, tripChoose, tripStage, tripState, tripVerdict } from '../../career/trip.js';
 import { eventView, moodLabel, moodText } from '../../career/events.js';
 import { storyLabels } from '../../career/stories.js';
@@ -23,6 +23,15 @@ import { derbyOf, isDerbyFixture } from '../../career/derby.js';
 import { CUP_NAME, CUPS, cupOf, PRIZES, tournamentOpen, winterCupDue, winterCupRunning } from '../../career/tournament.js';
 import { coachAway, energyLabel, patienceLabel } from '../../career/personal.js';
 import { PITCHES } from '../../sim/pitch.js';
+import { FIT_LOW, fitnessOf, fitnessPct } from '../../career/fitness.js';
+
+// Zusagen, die nicht fit sind: eine echte Entscheidung (spielen lassen oder schonen?).
+function unfitNote(c, club) {
+  const low = club.squad.filter((idx) => c.week.availability[idx] !== 'no' && fitnessOf(c, idx) < FIT_LOW);
+  if (!low.length) return '';
+  const names = low.map((idx) => `${playerOf(c, idx).name.split(' ').at(-1)} (${fitnessPct(fitnessOf(c, idx))} %)`).join(', ');
+  return tr(`Nicht ganz fit: ${names} – spielen lassen oder schonen?`, `Not fully fit: ${names} – play them or give them a rest?`);
+}
 import { hex, first, euro } from './shared.js';
 
 export const homeScreens = {
@@ -81,6 +90,7 @@ export const homeScreens = {
       w.notice && w.notice.choice === null && !(w.event && w.event.choice === null) ? tr('Am Schwarzen Brett hängt etwas für dich.', 'Something on the notice board needs you.') : '',
       w.event && w.event.choice === null ? tr('In der Gruppe wartet eine Entscheidung auf dich.', 'A decision is waiting for you in the group chat.') : '',
       count('yes') < venue.format ? tr('Zu wenige Zusagen – es hilft jemand aus dem Bekanntenkreis aus.', 'Not enough players – someone from a mate\'s circle will help out.') : '',
+      unfitNote(c, club),
     ].filter(Boolean);
     const stories = storyLabels(c);
     let actions;

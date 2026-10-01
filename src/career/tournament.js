@@ -9,6 +9,7 @@ import { clubById, humanClub, playerOf, resolveKitClash, seasonOver, squadPicker
 import { adjustMood } from './events.js';
 import { chronicle, yearOf } from './sagas.js';
 import { shootoutScore } from '../sim/shootout.js';
+import { afterMatchFitness } from './fitness.js';
 import { tr, euroFmt } from '../core/i18n.js';
 
 export const CUPS = {
@@ -162,6 +163,12 @@ function penalties(c, m, prepared) {
 
 export function recordCupResult(c, m, prepared) {
   const [s0, s1] = prepared.match.score;
+  // Turnier: mehrere Spiele ohne Woche dazwischen – das merkt man in den Beinen.
+  const mm = prepared.match;
+  for (const p of [...mm.players, ...mm.bench.flat(), ...(mm.sentOff ?? [])]) {
+    const st = mm.stats.players[p.id];
+    if (p.poolIndex != null && st?.seconds > 0) afterMatchFitness(c, p.poolIndex, st.seconds / (mm.duration || st.seconds), 1.6);
+  }
   m.result = prepared.humanIsAway ? { home: s1, away: s0 } : { home: s0, away: s1 };
   if (m.stage !== 'A' && m.stage !== 'B' && m.result.home === m.result.away) {
     // Selbst geschossen? Dann zählt das echte Elfmeterschießen, sonst wird gewürfelt.

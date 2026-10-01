@@ -12,6 +12,8 @@ import { isLight, playerCard as collectorCard, trainerCard } from '../world.js';
 import { planTarget } from '../../sim/plan.js';
 import { jobPerk } from '../../data/jobs.js';
 import { awardLabel } from '../../career/awards.js';
+import { FIT_LOW, fitnessCap, fitnessOf, fitnessPct, fitnessShown } from '../../career/fitness.js';
+import { SHIFT_JOBS } from '../../career/chat.js';
 import { currentLineup, humanClub, nextPitch, maxSquad, MIN_SQUAD, recruit, recruitChance, setLineupSlot, table } from '../../career/career.js';
 import { inviteChance, isRawDiamond, MAX_STATIONS, STATIONS, TRAINING_COST, trainingDone } from '../../career/training.js';
 import { roleName, STAFF_ROLES } from '../../career/youth.js';
@@ -44,14 +46,13 @@ export const teamScreens = {
   },
 
   // Sonntag-Status als Chip: Farbe UND Text (nie nur Farbe).
-  sundayChip(idx) {
+  sundayChip(idx, withFit = true) {
     const c = this.career;
     const r = c.players[idx];
     if (r.injuryWeeks) return `<span class="ui-chip" style="--c:#d9534f" title="${r.injury?.label ?? tr('verletzt', 'injured')}">${r.injury ? `${r.injury.label} · ${r.injuryWeeks} ${tr('Wo.', 'wks')}` : tr('verletzt', 'injured')}</span>`;
     const st = c.week ? STATUS[c.week.availability[idx]] : null;
-    if (!st) return '';
-    const color = { yes: '#5cc46a', no: '#d9534f', late: '#e0b020' }[st[1]];
-    return `<span class="ui-chip" style="--c:${color}">${st[0]}</span>`;
+    const color = st && { yes: '#5cc46a', no: '#d9534f', late: '#e0b020' }[st[1]];
+    return `${st ? `<span class="ui-chip" style="--c:${color}">${st[0]}</span>` : ''}${withFit ? fitChip(c, idx) : ''}`;
   },
 
   // Kleine Marker hinter dem Namen: Du, Auszeichnungen, Titel, Form, Launen.
@@ -97,9 +98,9 @@ export const teamScreens = {
       pos: `${POSITIONS[p.position]} · ${tier.name}`,
       rating: p.rating,
       kit: club.kit.shirt,
-      badge: formArrow(r.form),
+      badge: `${formArrow(r.form)}${fitBadge(c, idx)}`, // Fitness oben neben der Stärke – unten ist nur Platz für einen Chip
       art: `<span class="m-card-shirt" style="--shirt:url(${kitPreviewURL(club.kit)})"></span>`,
-      sub: this.sundayChip(idx),
+      sub: this.sundayChip(idx, false),
       attrs,
       extra,
       flipped: !!this.flipped[idx],
@@ -290,7 +291,7 @@ export const teamScreens = {
         const picked = pick?.slot === i;
         return `<button class="lp-token role-${slot.role}${picked ? ' picked' : ''}${p ? '' : ' standin'}${snap.has(i) ? ' snap' : ''}" data-action="slotPick" data-value="${i}" data-drop="slot:${i}" data-drag="slot:${i}" style="--x:${left(slot.x)}%;--y:${top(slot.z)}%" aria-pressed="${picked}" aria-label="${ROLE[slot.role]}: ${p ? p.name : tr('Aushilfe', 'Stand-in')}">
           <span class="lp-shirt">${p ? p.rating : '?'}</span>
-          <span class="lp-name">${p ? p.name.split(' ').at(-1) : tr('Aushilfe', 'Stand-in')}</span>
+          <span class="lp-name">${p ? p.name.split(' ').at(-1) : tr('Aushilfe', 'Stand-in')}</span>${idx != null && fitnessShown(fitnessOf(c, idx)) ? `<span class="lp-fit${fitnessOf(c, idx) < FIT_LOW ? ' low' : ''}" title="${tr('Fitness', 'Fitness')}">${fitnessPct(fitnessOf(c, idx))} %</span>` : ''}
           <span class="lp-role${off ? ' off' : ''}">${ROLE[slot.role]}${off ? ` · ${POSITIONS[p.position]}` : ''}</span>
         </button>`;
       })
@@ -497,6 +498,33 @@ export const teamScreens = {
   },
 };
 
+// Fitness-Chip: nur, wenn jemand nicht ganz fit ist (Farbe UND Text).
+function fitChip(c, idx) {
+  const f = fitnessOf(c, idx);
+  if (!fitnessShown(f)) return '';
+  return `<span class="ui-chip" style="--c:${f < FIT_LOW ? '#d9534f' : '#e0b020'}" title="${tr('Fitness – unter 70 % steigt das Verletzungsrisiko', 'Fitness – below 70 % the injury risk goes up')}">${tr('Fitness', 'Fitness')} ${fitnessPct(f)} %</span>`;
+}
+
+// Kleine Plakette auf der Sammelkarte (Kopfzeile): Zahl + Farbe, Erklärung im Tooltip.
+function fitBadge(c, idx) {
+  const f = fitnessOf(c, idx);
+  if (!fitnessShown(f)) return '';
+  return `<span class="fit-badge${f < FIT_LOW ? ' low' : ''}" title="${tr('Fitness', 'Fitness')} ${fitnessPct(f)} %">${fitnessPct(f)} %</span>`;
+}
+
+// Was die Fitness ausmacht – in Worten.
+function fitHint(c, idx, p) {
+  const f = fitnessOf(c, idx);
+  const cap = fitnessCap(p);
+  const lines = [];
+  if (f >= 0.95) lines.push(tr('Topfit.', 'Fully fit.'));
+  else lines.push(tr('Startet mit weniger Puste und wird bis zum nächsten Spieltag ein Stück fitter.', 'Starts with less in the tank and gets a bit fitter by the next matchday.'));
+  if (f < FIT_LOW) lines.push(tr('Unter 70 %: höheres Verletzungsrisiko – vielleicht lieber schonen.', 'Below 70 %: higher injury risk – maybe give him a rest.'));
+  if (cap < 0.98) lines.push(tr(`Mit ${p.age} sind mehr als ${Math.round(cap * 100)} % nicht mehr drin.`, `At ${p.age}, more than ${Math.round(cap * 100)} % is out of reach.`));
+  if (SHIFT_JOBS.includes(p.profession)) lines.push(tr('Schichtarbeit: In manchen Wochen kommt er müde aus der Nachtschicht.', 'Shift work: some weeks he comes in tired from the night shift.'));
+  return lines.join(' ');
+}
+
 // Spielerkarte im Kader: Formkurve der letzten Noten, Stärke über die Saisons,
 // Auszeichnungen vom Kreisblatt.
 function playerCard(c, idx, p, r) {
@@ -518,6 +546,7 @@ function playerCard(c, idx, p, r) {
   const total = r.total ? tr(`Karriere bei uns: ${r.total.apps + r.apps} Spiele, ${r.total.goals + r.goals} Tore, ${r.total.assists + r.assists} Vorlagen.`, `Career with us: ${r.total.apps + r.apps} games, ${r.total.goals + r.goals} goals, ${r.total.assists + r.assists} assists.`) : '';
   return `<div class="card-grid">
     <div><h4>${tr('Formkurve', 'Form')} <small>${tr('letzte Noten', 'recent grades')}</small></h4>${bars}</div>
+    <div><h4>${tr('Fitness', 'Fitness')} ${fitnessPct(fitnessOf(c, idx))} %</h4><p class="hint">${fitHint(c, idx, p)}</p></div>
     <div><h4>${tr('Verlauf', 'History')}</h4><table class="mini"><thead><tr><th></th><th>${tr('Stärke', 'Rating')}</th><th>${tr('Sp.', 'Apps')}</th><th>${tr('Tore', 'Goals')}</th><th>${tr('Vorl.', 'Ast.')}</th><th>Ø</th></tr></thead><tbody>${rows}</tbody></table><p class="hint">${total}</p></div>
     ${awards ? `<div><h4>${tr('Auszeichnungen', 'Awards')}</h4><ul class="awards">${awards}</ul></div>` : ''}
     ${jobPerk(p.profession) ? `<div><h4>${tr('Beruf', 'Job')}: ${jobName(p.profession)}</h4><p class="hint">${jobPerk(p.profession).label}</p></div>` : ''}

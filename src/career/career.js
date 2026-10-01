@@ -17,6 +17,7 @@ import { EXTRA_CLUBS, HUMAN_CLUB_DEFAULT, LEAGUES, leagueClubs, MAX_LEVEL } from
 import { autoRelegation, relegationOutcome } from './relegation.js';
 import { applyPubToTeam } from './pub.js';
 import { rollInjuries } from './injuries.js';
+import { afterMatchFitness, backFromInjury, fitnessOf, weeklyFitness } from './fitness.js';
 import { initAcademy, seasonAcademy, weeklyAcademy } from './academy.js';
 import { applyWeather, rollWeather, WEATHER, WEATHER_CHAT } from './weather.js';
 import { derbyResult, isDerbyFixture } from './derby.js';
@@ -228,8 +229,9 @@ export function nextSeason(career) {
   developYouth(career);
   const retired = retirements(career, youthDeps(), MIN_SQUAD);
 
-  // Saisonwerte in die Karriere-Gesamtstatistik übernehmen.
+  // Saisonwerte in die Karriere-Gesamtstatistik übernehmen. Über den Sommer werden alle wieder fit.
   for (const rec of Object.values(career.players)) {
+    delete rec.fitness;
     rec.total = {
       apps: (rec.total?.apps ?? 0) + rec.apps,
       goals: (rec.total?.goals ?? 0) + rec.goals,
@@ -563,7 +565,9 @@ export function buildLineup(career, club, format, availability, rng, manual = nu
     const score = (idx) => {
       const p = playerOf(career, idx);
       const k = 1 + 0.08 * (career.players[idx]?.form ?? 0);
-      return ratePlayer({ ...p, position: slot.role }) * k + (p.position === slot.role ? 5 : 0);
+      // Fitness: Wer nicht ganz fit ist, startet mit weniger Puste – bei 70 % gut 6 % Abzug.
+      const fit = 0.8 + 0.2 * fitnessOf(career, idx);
+      return ratePlayer({ ...p, position: slot.role }) * k * fit + (p.position === slot.role ? 5 : 0);
     };
     free.sort((a, b) => score(b) - score(a));
     lineup[i] = free.shift();
@@ -841,6 +845,8 @@ export function teamForMatch(career, club, format, availability, rng) {
   const players = [...lineup, ...bench].map((idx) => {
     const p = helpers.includes(idx) ? helperOf(career, club, idx) : applyForm(copyPlayer(playerOf(career, idx)), career.players[idx], club.human ? career.mood ?? 0 : 0);
     if (late.includes(idx)) p.late = true;
+    const fit = helpers.includes(idx) ? 1 : fitnessOf(career, idx);
+    if (fit < 1) p.fitness = fit; // Startausdauer im Spiel
     return p;
   });
   applyPubToTeam(career, club, players); // Bierdeckel-Taktik bzw. Tipp vom Wirt
@@ -951,6 +957,7 @@ export function recordResult(career, fixture, prepared) {
     if (!rec || !st || st.seconds <= 0) continue;
     rec.apps++;
     rec.lastApp = career.round;
+    afterMatchFitness(career, p.poolIndex, st.seconds / (m.duration || st.seconds));
     rec.goals += st.goals;
     rec.assists += st.assists;
     if (grades[p.id] !== undefined) {
@@ -990,8 +997,12 @@ export function finishRound(career) {
   weeklyAcademy(career);
   weeklyFacilities(career);
   clubLifeWeek(career); // Förderverein, Beitrag, Kassenwart
-  for (const rec of Object.values(career.players)) {
-    if (rec.injuryWeeks > 0) rec.injuryWeeks--;
+  weeklyFitness(career, playerOf, humanClub(career).squad); // erst erholen …
+  for (const [key, rec] of Object.entries(career.players)) {
+    if (rec.injuryWeeks > 0) {
+      rec.injuryWeeks--;
+      if (rec.injuryWeeks === 0) backFromInjury(career, Number(key), rec.injury?.weeks ?? 1); // … wer zurückkommt, ist noch nicht ganz da
+    }
     if (rec.injuryWeeks === 0) rec.injury = null;
     if (rec.awayWeeks > 0) rec.awayWeeks--;
   }

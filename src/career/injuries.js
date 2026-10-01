@@ -11,6 +11,7 @@ import { first, outcome } from './outcomes.js';
 import { isCoach } from './personal.js';
 import { chronicle } from './sagas.js';
 import { roleName } from './youth.js';
+import { FIT_LOW } from './fitness.js';
 import { tr, euroFmt } from '../core/i18n.js';
 
 export const INJURIES = {
@@ -48,6 +49,7 @@ export function rollInjuries(c, prepared, fixtureRound = c.round) {
     if (hasTrait(p, 'hart_im_nehmen')) chance *= 0.7;
     if (hasTrait(p, 'raucher')) chance *= 1.2;
     if ((p.injury?.severity ?? 0) >= 2) chance += 0.15; // die Schürfwunde war schlimmer als gedacht
+    if ((p.fitness ?? 1) < FIT_LOW) chance *= 1.6; // nicht fit: Muskeln machen eher zu
     // Im Spiel verletzt? Dann ist die Diagnose genau das – eine Prellung ohne Auswechslung
     // ist oft am Montag schon vergessen.
     const knock = p.knock;

@@ -9,6 +9,7 @@ import { SHIFT_JOBS, TRAVEL_JOBS } from './chat.js';
 import { adjustForm, adjustMood } from './events.js';
 import { canLose, first, leaveTeam, outcome, sitOut } from './outcomes.js';
 import { isCoach } from './personal.js';
+import { adjustFitness } from './fitness.js';
 import { startStory } from './stories.js';
 
 const STUDENT = /^(Student|Schüler|Azubi|FSJ)/;
@@ -38,7 +39,7 @@ export const LIFE_EVENTS = {
         label: tr('Dem Kollegen einen Kasten spendieren (12 €)', 'Buy his colleague a crate (€12)'),
         effect: outcome([
           { w: 4, run: (c, ctx) => (book(c, tr('Kasten für den Schichttausch', 'Crate for the shift swap'), -12), sitOut(c, ctx.s, 'yes'), tr('Der Kollege tauscht. Für einen Kasten macht man das.', 'The colleague swaps. For a crate, you do that.')) },
-          { w: 2, run: (c, ctx) => (book(c, tr('Kasten für den Schichttausch', 'Crate for the shift swap'), -12), sitOut(c, ctx.s, 'late'), tr('Tausch klappt halb: Er kommt direkt nach der Schicht, zur zweiten Halbzeit.', 'Half a swap: he comes straight from his shift, for the second half.')) },
+          { w: 2, run: (c, ctx) => (book(c, tr('Kasten für den Schichttausch', 'Crate for the shift swap'), -12), sitOut(c, ctx.s, 'late'), adjustFitness(c, ctx.s, -0.1), tr('Tausch klappt halb: Er kommt direkt nach der Schicht, zur zweiten Halbzeit.', 'Half a swap: he comes straight from his shift, for the second half.')) },
           { w: 1, run: (c, ctx) => (book(c, tr('Kasten für den Schichttausch', 'Crate for the shift swap'), -12), sitOut(c, ctx.s, 'yes'), tr('Der Kollege tauscht – und fragt, ob er mal mittrainieren darf. Kickt wohl ganz ordentlich.', 'The colleague swaps – and asks if he can join training. Apparently he can play a bit.')) },
           { w: 1, run: (c, ctx) => (book(c, tr('Kasten für den Schichttausch', 'Crate for the shift swap'), -12), (c.players[ctx.s].grumpy = 1), tr('Der Schichtleiter merkt den Deal und gibt ihm eine Abmahnung. Er spielt, aber mit schlechtem Gewissen.', 'The shift manager notices the deal and gives him a warning. He plays, but with a guilty conscience.')) },
         ]),
@@ -57,9 +58,9 @@ export const LIFE_EVENTS = {
         label: tr('Dann fehlt er halt', 'Then he misses it'),
         effect: outcome([
           { w: 3, run: (c, ctx) => (sitOut(c, ctx.s), tr('Er arbeitet. Einer weniger am Sonntag.', 'He works. One fewer on Sunday.')) },
-          { w: 1.5, run: (c, ctx) => (sitOut(c, ctx.s, 'late'), tr('Er organisiert selbst einen Tausch und kommt zur zweiten Halbzeit.', 'He sorts out a swap himself and comes for the second half.')) },
+          { w: 1.5, run: (c, ctx) => (sitOut(c, ctx.s, 'late'), adjustFitness(c, ctx.s, -0.1), tr('Er organisiert selbst einen Tausch und kommt zur zweiten Halbzeit.', 'He sorts out a swap himself and comes for the second half.')) },
           { w: 1, run: (c, ctx) => (sitOut(c, ctx.s), (c.players[ctx.s].grumpy = 1), tr('Er hatte gehofft, du setzt dich für ihn ein.', 'He had hoped you would stand up for him.')) },
-          { w: 0.6, run: (c, ctx) => (sitOut(c, ctx.s, 'yes'), mul(c, ctx.s, 0.8), tr('Er meldet sich krank und spielt. Du hast nichts gesehen.', 'He calls in sick and plays. You saw nothing.')) },
+          { w: 0.6, run: (c, ctx) => (sitOut(c, ctx.s, 'yes'), mul(c, ctx.s, 0.8), adjustFitness(c, ctx.s, -0.12), tr('Er meldet sich krank und spielt. Du hast nichts gesehen.', 'He calls in sick and plays. You saw nothing.')) },
         ]),
       },
     ],

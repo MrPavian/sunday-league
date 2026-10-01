@@ -19,6 +19,7 @@ import { CLUBLIFE_EVENTS } from './clublife.js';
 import { applyTwist } from './twists.js';
 import { canLose, joinRival, leaveTeam, outcome, sitOut } from './outcomes.js';
 import { isCoach } from './personal.js';
+import { adjustFitness } from './fitness.js';
 import { setRelation } from './relations.js';
 
 const EVENT_CHANCE = 0.65; // pro Woche
@@ -324,10 +325,10 @@ export const EVENTS = {
       {
         label: tr('Trotzdem spielen lassen', 'Let him play anyway'),
         effect: outcome([
-          { w: 4, run: (c, ctx) => (adjustForm(c, ctx.s, -0.8), tr(`${first(c, ctx.s)} läuft Sonntag auf Restalkohol.`, `${first(c, ctx.s)} runs on leftover alcohol on Sunday.`)) },
+          { w: 4, run: (c, ctx) => (adjustForm(c, ctx.s, -0.8), adjustFitness(c, ctx.s, -0.15), tr(`${first(c, ctx.s)} läuft Sonntag auf Restalkohol.`, `${first(c, ctx.s)} runs on leftover alcohol on Sunday.`)) },
           { w: 1.5, run: (c, ctx) => (adjustForm(c, ctx.s, 0.3), tr(`Wider Erwarten ist ${first(c, ctx.s)} hellwach. „Das Adrenalin", sagt er.`, `Against all expectations ${first(c, ctx.s)} is wide awake. "Adrenaline," he says.`)) },
           { w: 1, run: (c, ctx) => (sitOut(c, ctx.s), tr(`${first(c, ctx.s)} verschläft komplett. Handy aus. Sonntag ohne ihn.`, `${first(c, ctx.s)} sleeps right through. Phone off. Sunday without him.`)) },
-          { w: 1, run: (c, ctx) => (adjustForm(c, ctx.s, -0.6), adjustMood(c, 0.05), tr(`${first(c, ctx.s)} übergibt sich in der Halbzeit hinters Tor. Die Kabine hat eine neue Geschichte.`, `${first(c, ctx.s)} throws up behind the goal at half-time. The dressing room has a new story.`)) },
+          { w: 1, run: (c, ctx) => (adjustForm(c, ctx.s, -0.6), adjustFitness(c, ctx.s, -0.2), adjustMood(c, 0.05), tr(`${first(c, ctx.s)} übergibt sich in der Halbzeit hinters Tor. Die Kabine hat eine neue Geschichte.`, `${first(c, ctx.s)} throws up behind the goal at half-time. The dressing room has a new story.`)) },
         ]),
       },
       {
@@ -341,7 +342,7 @@ export const EVENTS = {
       {
         label: tr('5 € in die Kasse, Thema durch', '€5 into the kitty, end of story'),
         effect: outcome([
-          { w: 3, run: (c, ctx) => (book(c, tr(`Strafe: Kater ${first(c, ctx.s)}`, `Fine: hangover ${first(c, ctx.s)}`), 5), adjustForm(c, ctx.s, -0.5), tr('Gezahlt, gelacht, gespielt.', 'Paid, laughed, played.')) },
+          { w: 3, run: (c, ctx) => (book(c, tr(`Strafe: Kater ${first(c, ctx.s)}`, `Fine: hangover ${first(c, ctx.s)}`), 5), adjustForm(c, ctx.s, -0.5), adjustFitness(c, ctx.s, -0.1), tr('Gezahlt, gelacht, gespielt.', 'Paid, laughed, played.')) },
           { w: 1, run: (c, ctx) => (book(c, tr(`Strafe: Kater ${first(c, ctx.s)}`, `Fine: hangover ${first(c, ctx.s)}`), 25), tr(`${first(c, ctx.s)} zahlt freiwillig 25 € – für alle, die auch auf der Party waren.`, `${first(c, ctx.s)} voluntarily pays €25 – for everyone who was at the party too.`)) },
           { w: 1, run: (c, ctx) => (book(c, tr(`Strafe: Kater ${first(c, ctx.s)}`, `Fine: hangover ${first(c, ctx.s)}`), 5), adjustMood(c, -0.03), tr('Jetzt wollen alle wissen, warum sie nicht eingeladen waren.', 'Now everyone wants to know why they were not invited.')) },
         ]),
