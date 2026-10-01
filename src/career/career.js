@@ -18,6 +18,7 @@ import { autoRelegation, relegationOutcome } from './relegation.js';
 import { applyPubToTeam } from './pub.js';
 import { rollInjuries } from './injuries.js';
 import { afterMatchFitness, backFromInjury, fitnessOf, weeklyFitness } from './fitness.js';
+import { askAround, checkPromises, pickArgument, revealFirst, startTalk } from './recruiting.js';
 import { initAcademy, seasonAcademy, weeklyAcademy } from './academy.js';
 import { applyWeather, rollWeather, WEATHER, WEATHER_CHAT } from './weather.js';
 import { derbyResult, isDerbyFixture } from './derby.js';
@@ -232,6 +233,7 @@ export function nextSeason(career) {
   // Saisonwerte in die Karriere-Gesamtstatistik übernehmen. Über den Sommer werden alle wieder fit.
   for (const rec of Object.values(career.players)) {
     delete rec.fitness;
+    delete rec.playShare;
     rec.total = {
       apps: (rec.total?.apps ?? 0) + rec.apps,
       goals: (rec.total?.goals ?? 0) + rec.goals,
@@ -402,6 +404,7 @@ export function humanFixture(career) {
 }
 
 export function startWeek(career) {
+  const prevRumors = career.week?.rumors ?? []; // offene Gerüchte bleiben 2–4 Wochen am Brett
   if (seasonOver(career)) {
     career.week = null;
     return;
@@ -477,7 +480,11 @@ export function startWeek(career) {
   rollNotice(career); // Schwarzes Brett: kleines Vereinsleben-Thema
   sagaChat(career);
   if (career.round === 0 && career.offersSeason !== career.season) makeOffers(career, career.level ?? 1);
-  career.week.rumors = makeRumors(career, createRng(hashSeed(career.seed, career.season, career.round, 3)));
+  // Werben dauert: Ein Gerücht hängt 2–4 Wochen am Brett (zuschauen, rumfragen, reden – auch
+  // über mehrere Wochen). Wer zugesagt oder abgesagt hat oder woanders unterkam, fliegt raus.
+  const taken = takenIndices(career);
+  const keep = prevRumors.filter((r) => r.status === 'open' && r.season === career.season && (r.until ?? -1) > career.round && !taken.has(r.idx));
+  career.week.rumors = [...keep, ...makeRumors(career, createRng(hashSeed(career.seed, career.season, career.round, 3)), 3 - keep.length, keep.map((r) => r.idx))];
   deliverNews(career, career.week.chat); // Rudelbildung, Handschlag, Wechselwillige
   midSeasonReport(career); // Zwischenzeugnis vom Vorstand
   career.week.actions = SCOUT_ACTIONS;
@@ -577,14 +584,16 @@ export function buildLineup(career, club, format, availability, rng, manual = nu
 
 // --- Gerüchteküche & Transfers -------------------------------------------------------
 
+// Profis (formers[idx].pro) tauchen nie wieder als Amateur auf.
 export const takenIndices = (career) =>
-  new Set([...career.clubs.flatMap((c) => c.squad), ...(career.youth?.prospects ?? []), ...(career.alumni ?? []).map((a) => a.idx)]);
+  new Set([...career.clubs.flatMap((c) => c.squad), ...(career.youth?.prospects ?? []), ...(career.alumni ?? []).map((a) => a.idx), ...Object.entries(career.formers ?? {}).filter(([, f]) => f.pro).map(([k]) => Number(k))]);
 
-function makeRumors(career, rng) {
+function makeRumors(career, rng, count = 3, exclude = []) {
   const pool = getPool();
   const taken = takenIndices(career);
+  for (const idx of exclude) taken.add(idx);
   const rumors = [];
-  for (let n = 0; n < 3; n++) {
+  for (let n = 0; n < count; n++) {
     const tier = weighted(rng, RUMOR_TIERS);
     const list = pool.byTier(tier);
     for (let attempt = 0; attempt < 30; attempt++) {
@@ -597,7 +606,7 @@ function makeRumors(career, rng) {
       const offset = Math.floor(rng.next() * templates.length);
       const texts = templates.map((_, k) => templates[(offset + k) % templates.length]({ ...p, first: p.name.split(' ')[0] }));
       const source = texts.find((t) => !rumors.some((r) => r.source.slice(0, 25) === t.slice(0, 25))) ?? texts[0];
-      rumors.push({ idx: p.poolIndex, source, scouted: false, status: 'open', range: [p.rating - shift, p.rating - shift + spread], reply: null });
+      rumors.push({ idx: p.poolIndex, source, scouted: false, status: 'open', range: [p.rating - shift, p.rating - shift + spread], reply: null, season: career.season, until: career.round + 2 + Math.floor(rng.next() * 3) });
       break;
     }
   }
@@ -616,7 +625,7 @@ export function addRumor(career, rng, source) {
     if (taken.has(p.poolIndex) || w.rumors.some((r) => r.idx === p.poolIndex)) continue;
     const spread = 5 + Math.floor(rng.next() * 4);
     const shift = Math.floor(rng.next() * spread);
-    const rumor = { idx: p.poolIndex, source: source.replace('{first}', p.name.split(' ')[0]), scouted: false, status: 'open', range: [p.rating - shift, p.rating - shift + spread], reply: null };
+    const rumor = { idx: p.poolIndex, source: source.replace('{first}', p.name.split(' ')[0]), scouted: false, status: 'open', range: [p.rating - shift, p.rating - shift + spread], reply: null, season: career.season, until: career.round + 2 };
     w.rumors.push(rumor);
     return rumor;
   }
@@ -680,7 +689,17 @@ export function scoutRumor(career, i) {
   if (!r || r.scouted || r.status !== 'open' || w.actions <= 0 || coachAway(career)) return false;
   w.actions--;
   r.scouted = true;
+  revealFirst(r); // beim Zuschauen merkt man auch, was ihm wichtig ist
   return true;
+}
+
+// Werben als Gespräch (recruiting.js): rumfragen, ansprechen, zwei Argumente.
+export const askRumor = (career, i) => askAround(career, career.week?.rumors[i], coachAway(career));
+export const talkRumor = (career, i) => startTalk(career, career.week?.rumors[i], coachAway(career), humanClub(career).squad.length >= maxSquad(career));
+export function argueRumor(career, i, arg) {
+  const r = career.week?.rumors[i];
+  if (!r) return null;
+  return pickArgument(career, r, arg, { player: poolPlayer(r.idx), idx: r.idx, baseChance: recruitChance(career, r), join: () => joinSquad(career, r.idx, tr('Bin dabei!', 'I am in!')) });
 }
 
 // Neuer Spieler kommt in den Kader, die Gruppe erfährt es sofort.
@@ -728,9 +747,10 @@ export function recruit(career, i) {
   return 'declined';
 }
 
-export function releasePlayer(career, idx) {
+// force: geht auch bei knapper Besetzung (Profivertrag) – dann helfen Aushilfen aus.
+export function releasePlayer(career, idx, { force = false } = {}) {
   const club = humanClub(career);
-  if (club.squad.length <= MIN_SQUAD || !club.squad.includes(idx) || isCoach(career, idx)) return false;
+  if ((!force && club.squad.length <= MIN_SQUAD) || !club.squad.includes(idx) || isCoach(career, idx)) return false;
   club.squad = club.squad.filter((x) => x !== idx);
   rememberDeparture(career, idx);
   delete career.players[idx];
@@ -957,7 +977,9 @@ export function recordResult(career, fixture, prepared) {
     if (!rec || !st || st.seconds <= 0) continue;
     rec.apps++;
     rec.lastApp = career.round;
-    afterMatchFitness(career, p.poolIndex, st.seconds / (m.duration || st.seconds));
+    const share = Math.min(1, st.seconds / (m.duration || st.seconds));
+    afterMatchFitness(career, p.poolIndex, share);
+    rec.playShare = Math.round(((rec.playShare ?? 0) + share) * 100) / 100; // Spielzeit in ganzen Spielen (Saison)
     rec.goals += st.goals;
     rec.assists += st.assists;
     if (grades[p.id] !== undefined) {
@@ -1008,6 +1030,8 @@ export function finishRound(career) {
   }
   career.round++;
   startWeek(career);
+  // Versprochene Einsätze für Neuzugänge: nach zwei Spieltagen abrechnen.
+  checkPromises(career, humanClub(career).squad, (idx, text) => career.week?.chat.push({ from: idx, text, time: 'Mo 08:15' }));
   monthlyAward(career, awardDeps(career));
 }
 

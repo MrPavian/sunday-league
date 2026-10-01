@@ -510,6 +510,11 @@ kbd {
 .rumor .story { margin: 0; font-size: 13px; opacity: 0.85; }
 .rumor .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .rumor .reply { margin: 0; }
+.rumor .source .weeks { font-style: normal; font-size: 12px; opacity: 0.8; white-space: nowrap; }
+.rumor .motives { margin: 0; font-size: 13px; }
+.rumor .motives .unknown { opacity: 0.6; }
+.rumor .hint { margin: 0; font-size: 13px; opacity: 0.85; }
+.rumor .actions.args button[aria-pressed='true'] { outline: 3px solid var(--accent); }
 .rumor .reply.ok { color: #5cc46a; }
 .rumor .reply.no { color: #d9a04f; }
 .club-panel button:disabled { opacity: 0.45; cursor: default; }
@@ -1830,3 +1835,11 @@ body.manager #end { padding-bottom: 84px; }
 
 /* A-Jugend auf dem Handy: „Einschätzung" (steht auch als Stärke da) ausblenden, damit „Hochziehen" ohne Scrollen passt */
 @media (max-width: 520px) { .club-panel table.prospects th:nth-child(4), .club-panel table.prospects td:nth-child(4) { display: none; } }
+
+/* Jugend: Trainer und Schwerpunkt je Mannschaft */
+.youth-team .yt-coach { margin: 4px 0; font-size: 13px; }
+.youth-team .yt-coach.warn { color: #ffb38a; }
+.youth-team .yt-coach .course { margin-left: 6px; opacity: 0.85; }
+.youth-team .yt-focus { margin: 4px 0; }
+.youth-team .yt-focus button.early:not(.active) { opacity: 0.6; }
+.youth-team .hint { margin: 2px 0 6px; font-size: 12px; opacity: 0.85; }

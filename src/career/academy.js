@@ -12,6 +12,7 @@ import { adjustMood } from './events.js';
 import { outcome } from './outcomes.js';
 import { adjustEnergy, childAge } from './personal.js';
 import { chronicle } from './sagas.js';
+import { coachQuality, FOCUS_FIT, initTeams, seasonTeams, setTeamFocus, weeklyTeams } from './youthteams.js';
 
 export const TEAMS = [
   { id: 'E', name: tr('E-Jugend', 'U11s'), ages: [8, 10] },
@@ -26,6 +27,7 @@ export const FOCUS = {
   spass: { name: tr('Spaß & Spiel', 'Fun & games'), desc: tr('Kleine Spiele, viel lachen. Kaum Fortschritt, aber keiner hört auf.', 'Small games, lots of laughing. Barely any progress, but nobody quits.'), growth: 0.004, joy: 0.05 },
   technik: { name: tr('Technik', 'Technique'), desc: tr('Ballgefühl, Passen, Annehmen. Gute Entwicklung, etwas zäh.', 'Touch, passing, first touch. Good development, a bit dull.'), growth: 0.012, joy: -0.02 },
   kondition: { name: tr('Kondition', 'Fitness'), desc: tr('Laufen, laufen, laufen. Bringt was, macht aber keinen Spaß.', 'Running, running, running. Does something, but no fun at all.'), growth: 0.009, joy: -0.05 },
+  taktik: { name: tr('Spielverständnis', 'Game sense'), desc: tr('Laufwege, Abstände, wann passen, wann dribbeln. Für Ältere wertvoll, für die Kleinen zu abstrakt.', 'Runs, spacing, when to pass and when to dribble. Valuable for older kids, too abstract for the little ones.'), growth: 0.011, joy: -0.01 },
   turnier: { name: tr('Turniervorbereitung', 'Tournament prep'), desc: tr('Spielzüge und Ehrgeiz. Gut für die Besten, Frust für die anderen.', 'Set moves and ambition. Great for the best, frustrating for the rest.'), growth: 0.008, joy: -0.01, elite: true },
 };
 
@@ -76,28 +78,40 @@ export function talentGuess(c, kid) {
   return Math.max(1, Math.min(5, Math.round(est * 5)));
 }
 
-export function setYouthFocus(c, id) {
-  if (!c.week || !FOCUS[id]) return false;
-  c.week.youthFocus = id;
+// Schwerpunkt je Mannschaft (bleibt, bis du ihn änderst). Ohne Team: für alle (alte Aufrufe).
+export function setYouthFocus(c, id, team = null) {
+  if (!FOCUS[id]) return false;
+  initTeams(c);
+  if (team) return setTeamFocus(c, team, id);
+  for (const t of Object.keys(c.youth.teams)) setTeamFocus(c, t, id);
   return true;
 }
 
 // Jede Woche: Training nach Schwerpunkt, Spaß steigt oder sinkt.
 export function weeklyAcademy(c) {
   if (!c.youth?.kids) return;
-  const f = FOCUS[c.week?.youthFocus ?? 'spass'];
-  const q = c.youth.coach.quality;
+  const teams = initTeams(c);
   const all = [...c.youth.kids, ...ownKids(c)];
-  const top = [...all].sort((a, b) => b.talent - a.talent).slice(0, Math.ceil(all.length / 3));
-  for (const k of all) {
-    const target = k.own ? k.ref : k;
-    let joy = f.joy;
-    if (f.elite) joy += top.includes(k) ? 0.04 : -0.04;
-    if (k.parent === 'ehrgeizig') joy -= 0.01;
-    target.joy = clamp01(target.joy + joy);
-    target.talent = clamp01(target.talent + f.growth * (0.5 + q) * (0.4 + target.joy));
+  for (const id of Object.keys(teams)) {
+    const t = teams[id];
+    const kids = all.filter((k) => teamOfAge(k.age)?.id === id);
+    if (!kids.length) continue;
+    const f = FOCUS[t.focus] ?? FOCUS.spass;
+    const fit = FOCUS_FIT[id][t.focus] ?? 1;
+    const q = coachQuality(c, id) + c.youth.coach.quality * 0.1; // der Jugendleiter hilft ein bisschen mit
+    const top = [...kids].sort((a, b) => b.talent - a.talent).slice(0, Math.ceil(kids.length / 3));
+    for (const k of kids) {
+      const target = k.own ? k.ref : k;
+      let joy = t.coach ? f.joy : -0.03; // ohne Trainer fällt Training aus oder wird zusammengelegt
+      if (t.coach && fit < 0.7) joy -= 0.02; // zu früh: Kondition oder Taktik für die Kleinen
+      if (f.elite) joy += top.includes(k) ? 0.04 : -0.04;
+      if (k.parent === 'ehrgeizig') joy -= 0.01;
+      target.joy = clamp01(target.joy + joy);
+      const growth = t.coach ? f.growth * fit : FOCUS.spass.growth * 0.3;
+      target.talent = clamp01(target.talent + growth * (0.5 + q) * (0.4 + target.joy));
+    }
   }
-  if (c.week?.youthFocus && c.week.youthFocus !== 'spass') adjustEnergy(c, -0.5);
+  weeklyTeams(c, adjustEnergy);
 }
 
 // Saisonwechsel: ein Jahr älter, wer 16 wird, geht in die A-Jugend, wer keine
@@ -113,7 +127,7 @@ export function seasonAcademy(c) {
     const kids = [...y.kids, ...ownKids(c)].filter((k) => teamOfAge(k.age)?.id === t.id);
     if (!kids.length) continue;
     const avg = kids.reduce((s, k) => s + k.talent, 0) / kids.length;
-    const pos = Math.max(1, Math.min(8, Math.round(8.5 - avg * 9 + rng.range(-1.5, 1.5) - y.coach.quality * 2)));
+    const pos = Math.max(1, Math.min(8, Math.round(8.5 - avg * 9 + rng.range(-1.5, 1.5) - coachQuality(c, t.id) * 2)));
     results.push({ team: t.id, pos });
     if (pos === 1) chronicle(c, tr(`Die ${t.name} wird Kreismeister!`, `The ${t.name} become district champions!`));
   }
@@ -121,8 +135,10 @@ export function seasonAcademy(c) {
     y.results.push({ season: c.season, results });
     notes.push(tr(`Jugend: ${results.map((r) => `${r.team}-Jugend ${r.pos}. Platz`).join(', ')}.`, `Youth: ${results.map((r) => `${TEAMS.find((t) => t.id === r.team).name} ${r.pos}${r.pos === 1 ? 'st' : r.pos === 2 ? 'nd' : r.pos === 3 ? 'rd' : 'th'}`).join(', ')}.`));
   }
+  // Trainer: manche hören auf; Teams ohne Trainer werden abgemeldet (ein Teil der Kinder hört auf).
+  notes.push(...seasonTeams(c, rng, (id) => y.kids.filter((k) => teamOfAge(k.age)?.id === id)));
   // Aufhören: wer den Spaß verloren hat (und ab und zu einfach so)
-  const quit = y.kids.filter((k) => k.joy < 0.3 || rng.chance(0.06));
+  const quit = y.kids.filter((k) => k.quit || k.joy < 0.3 || rng.chance(0.06));
   if (quit.length) notes.push(tr(`Aufgehört: ${quit.map((k) => k.name.split(' ')[0]).join(', ')}${quit.some((k) => k.joy < 0.3) ? ' – zu viel Drill, zu wenig Spaß' : ''}.`, `Quit: ${quit.map((k) => k.name.split(' ')[0]).join(', ')}${quit.some((k) => k.joy < 0.3) ? ' – too much drilling, not enough fun' : ''}.`));
   y.kids = y.kids.filter((k) => !quit.includes(k));
   for (const k of y.kids) k.age++;

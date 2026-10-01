@@ -8,7 +8,8 @@ import { button, haptic, icon, tabs as uiTabs } from './ds.js';
 import { TacticBoard } from './TacticBoard.js';
 import { bindFlips, phone } from './world.js';
 import { crestOf, crestSVG } from './crest.js';
-import { currentLineup, humanClub, updateClub, setClubTactic, setClubPlan, maxSquad, recruit, releasePlayer, scoutRumor, nudge, playerOf, resetLineup, setLineupSlot, seasonOver, table } from '../career/career.js';
+import { argueRumor, askRumor, currentLineup, humanClub, updateClub, setClubTactic, setClubPlan, maxSquad, recruit, releasePlayer, scoutRumor, talkRumor, nudge, playerOf, resetLineup, setLineupSlot, seasonOver, table } from '../career/career.js';
+import { appointCoach, startCourse } from '../career/youthteams.js';
 import { acceptSponsor, bookTrip, KIT_COST } from '../career/finances.js';
 import { tripChoose } from '../career/trip.js';
 import { build } from '../career/facilities.js';
@@ -95,7 +96,15 @@ export class Clubhouse {
         poachKid(this.career, value);
         this.h.onChange();
       } else if (action === 'youthFocus') {
-        setYouthFocus(this.career, value);
+        const [team, focus] = String(value).includes(':') ? String(value).split(':') : [null, value];
+        setYouthFocus(this.career, focus, team);
+        this.h.onChange();
+      } else if (action === 'youthCoach') {
+        const [team, kind] = String(value).split(':');
+        appointCoach(this.career, team, kind, (idx) => playerOf(this.career, idx).name);
+        this.h.onChange();
+      } else if (action === 'youthCourse') {
+        startCourse(this.career, value);
         this.h.onChange();
       }
       else if (action === 'chronicle') this.showChronicle = !this.showChronicle;
@@ -200,6 +209,16 @@ export class Clubhouse {
         this.h.onChange();
       } else if (action === 'recruit') {
         recruit(this.career, Number(value));
+        this.h.onChange();
+      } else if (action === 'askAround') {
+        askRumor(this.career, Number(value));
+        this.h.onChange();
+      } else if (action === 'talk') {
+        talkRumor(this.career, Number(value));
+        this.h.onChange();
+      } else if (action === 'argue') {
+        const [i, arg] = String(value).split(':');
+        argueRumor(this.career, Number(i), arg);
         this.h.onChange();
       } else if (action === 'release') {
         // Zweiter Klick bestätigt (Browser-Dialoge sind nicht überall erlaubt).

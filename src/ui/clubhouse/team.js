@@ -14,10 +14,12 @@ import { jobPerk } from '../../data/jobs.js';
 import { awardLabel } from '../../career/awards.js';
 import { FIT_LOW, fitnessCap, fitnessOf, fitnessPct, fitnessShown } from '../../career/fitness.js';
 import { SHIFT_JOBS } from '../../career/chat.js';
+import { ARG_IDS, ARGUMENTS, knownMotives, MOTIVES } from '../../career/recruiting.js';
 import { currentLineup, humanClub, nextPitch, maxSquad, MIN_SQUAD, recruit, recruitChance, setLineupSlot, table } from '../../career/career.js';
 import { inviteChance, isRawDiamond, MAX_STATIONS, STATIONS, TRAINING_COST, trainingDone } from '../../career/training.js';
 import { roleName, STAFF_ROLES } from '../../career/youth.js';
 import { FOCUS, ownKids, poachChance, poachKid, scoutList, talentGuess, TEAMS, teamOfAge } from '../../career/academy.js';
+import { COACH_KINDS, coachCandidates, COURSE_COST, FOCUS_FIT, fitLabel, initTeams, SELF_ENERGY, selfQuality } from '../../career/youthteams.js';
 import { chemistry, REL, relationLabel, shortName } from '../../career/relations.js';
 import { coachAway, isCoach, trainingLocked } from '../../career/personal.js';
 import { TRAITS } from '../../data/traits.js';
@@ -351,19 +353,27 @@ export const teamScreens = {
         const traits = known && p.traits.length ? `<p class="traits">${p.traits.map((t) => `<i title="${TRAITS[t].desc}">${TRAITS[t].name}</i>`).join('')}</p>` : '';
         const story = known && p.backstory ? `<p class="story">${p.backstory}</p>` : '';
         const chance = Math.round(recruitChance(c, r) * 100);
+        // Was ihm wichtig ist (aufgedeckt durch Zuschauen, Rumfragen oder das Gespräch).
+        const motives = knownMotives(r, p);
+        const motiveLine = `<p class="motives">${tr('Ihm wichtig', 'Matters to him')}: ${[0, 1].map((k) => (motives[k] ? `<b>${MOTIVES[motives[k]].label}</b>` : '<span class="unknown">?</span>')).join(' · ')}</p>`;
+        const off = w.actions <= 0 || coachAway(c);
         let footer;
         if (r.status === 'joined') footer = tr(`<p class="reply ok">„${r.reply}" – ist jetzt im Kader!</p>`, `<p class="reply ok">"${r.reply}" – now in the squad!</p>`);
         else if (r.status === 'declined') footer = tr(`<p class="reply no">„${r.reply}"</p>`, `<p class="reply no">"${r.reply}"</p>`);
+        else if (r.talk)
+          footer = `<p class="hint">${tr(`Gespräch läuft – wähle ${2 - r.talk.args.length} Argument${r.talk.args.length ? '' : 'e'}:`, `Talk in progress – pick ${2 - r.talk.args.length} argument${r.talk.args.length ? '' : 's'}:`)}</p>
+          <div class="actions args">${ARG_IDS.map((a) => `<button data-action="argue" data-value="${i}:${a}" title="${ARGUMENTS[a].hint}" aria-pressed="${r.talk.args.includes(a)}" ${r.talk.args.includes(a) ? 'disabled' : ''}>${ARGUMENTS[a].label}</button>`).join('')}</div>`;
         else
           footer = `<div class="actions">
-            <button data-action="scout" data-value="${i}" ${known || w.actions <= 0 || coachAway(c) ? 'disabled' : ''}>${tr('Beim Kick zuschauen', 'Watch him play')}</button>
-            <button class="primary" data-action="recruit" data-value="${i}" ${w.actions <= 0 || full || coachAway(c) ? 'disabled' : ''}>${tr('Ansprechen', 'Approach')} <small>(~${chance} %)</small></button>
+            <button data-action="scout" data-value="${i}" ${known || off ? 'disabled' : ''}>${tr('Beim Kick zuschauen', 'Watch him play')}</button>
+            <button data-action="askAround" data-value="${i}" ${(r.known?.length ?? 0) >= 2 || off ? 'disabled' : ''}>${tr('Rumfragen', 'Ask around')}</button>
+            <button class="primary" data-action="talk" data-value="${i}" ${off || full ? 'disabled' : ''}>${tr('Ansprechen', 'Approach')} <small>(${tr('Grundchance', 'base')} ~${chance} %)</small></button>
           </div>`;
         return `<article class="rumor ${p.tier === 'legende' ? 'legend' : ''}" style="--c:${known ? tier.color : '#666'}">
-          <p class="source">${r.source}</p>
+          <p class="source">${r.source}${r.status === 'open' && r.until != null ? ` <span class="weeks">${r.until - c.round <= 1 ? tr('· nur noch diese Woche', '· this week only') : tr(`· noch ${r.until - c.round} Wochen`, `· ${r.until - c.round} weeks left`)}</span>` : ''}</p>
           <div class="who">${badge} <b>${p.name}</b>${known && p.title ? ` <em>${p.title}</em>` : ''}
             <small>${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)} · ${POSITIONS[p.position]} · ${rating}</small>${jobPerk(p.profession) ? `<small class="perk">${jobPerk(p.profession).label}</small>` : ''}</div>
-          ${traits}${story}${footer}
+          ${traits}${story}${r.status === 'open' || r.talk ? motiveLine : ''}${footer}
         </article>`;
       })
       .join('');
@@ -447,7 +457,7 @@ export const teamScreens = {
     if (sub === 'club')
       return `${subTabs}
       <h4>${tr('Ehrenamt', 'Volunteers')}</h4>
-      <ul class="plain staff"><li><b>${tr('Jugendtrainer', 'Youth coach')}:</b> ${c.youth.coach.name} <span class="stars">${stars(c.youth.coach.quality)}</span> <small>${tr('– je besser, desto mehr Talente', '– the better, the more talents')}</small></li>${staff}</ul>
+      <ul class="plain staff"><li><b>${tr('Jugendleiter', 'Youth director')}:</b> ${c.youth.coach.name} <span class="stars">${stars(c.youth.coach.quality)}</span> <small>${tr('– je besser, desto mehr Talente', '– the better, the more talents')}</small></li>${staff}</ul>
       <h4>${tr('Ehemalige', 'Former players')}</h4>
       <ul class="plain">${alumni}</ul>`;
     return `${subTabs}
@@ -459,29 +469,44 @@ export const teamScreens = {
       ${this.academyBlock()}`;
   },
 
-  // Jahrgänge E bis B mit Trainingsschwerpunkt der Woche.
+  // Jahrgänge E bis B: je Mannschaft ein Trainer und ein Trainingsschwerpunkt.
   academyBlock() {
     const c = this.career;
     const kids = [...(c.youth.kids ?? []), ...ownKids(c)];
-    const focus = c.week?.youthFocus ?? 'spass';
+    const teamsState = initTeams(c);
     const stars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n);
-    const focusButtons = Object.entries(FOCUS)
-      .map(([id, f]) => `<button class="${focus === id ? 'active' : ''}" data-action="youthFocus" data-value="${id}" ${!c.week || this.results ? 'disabled' : ''} title="${f.desc}">${f.name}</button>`)
-      .join('');
+    const qStars = (q) => stars(Math.max(1, Math.min(5, Math.round(q * 5))));
+    const off = !c.week || this.results;
     const teams = TEAMS.map((t) => {
+      const st = teamsState[t.id];
       const list = kids.filter((k) => teamOfAge(k.age)?.id === t.id).sort((a, b) => b.age - a.age);
-      if (!list.length) return '';
       const rows = list
-        .map((k) => `<li class="${k.own ? 'own' : ''}"><b>${k.name}</b>${k.own ? ` <span class="me-tag">${k.girl ? tr('Tochter', 'daughter') : tr('Sohn', 'son')}</span>` : ''} <small>${k.age}${tr(' J.', ' yrs')} · ${POSITIONS[k.position]}${k.girl ? tr(' · Mädchen', ' · girl') : ''}${k.parent === 'ehrgeizig' ? tr(' · ehrgeiziger Vater', ' · pushy father') : k.parent === 'engagiert' ? tr(' · Eltern helfen mit', ' · parents help out') : ''}</small>
-          <span class="stars" title="${tr('Einschätzung des Jugendtrainers', 'Youth coach\'s assessment')}">${stars(talentGuess(c, k))}</span><span class="me-bar mini"><i style="--v:${Math.round(k.joy * 100)}%"></i><small>${tr('Spaß', 'fun')}</small></span></li>`)
+        .map((k) => `<li class="${k.own ? 'own' : ''}"><b>${k.name}</b>${k.own ? ` <span class="me-tag">${k.girl ? tr('Tochter', 'daughter') : tr('Sohn', 'son')}</span>` : ''} <small>${k.age}${tr(' J.', ' yrs')} · ${POSITIONS[k.position]}</small>
+          <span class="stars" title="${tr('Einschätzung des Jugendleiters', 'Youth director\'s assessment')}">${stars(talentGuess(c, k))}</span><span class="me-bar mini"><i style="--v:${Math.round(k.joy * 100)}%"></i><small>${tr('Spaß', 'fun')}</small></span></li>`)
         .join('');
-      return `<article class="youth-team"><h5>${t.name} <small>(${t.ages[0]}–${t.ages[1]}${tr(' J.', ' yrs')})</small></h5><ul class="plain">${rows}</ul></article>`;
+      const coach = st.coach;
+      const coachLine = coach
+        ? `<p class="yt-coach"><b>${tr('Trainer', 'Coach')}:</b> ${coach.kind === 'du' ? tr('du selbst', 'you') : coach.name} <span class="stars">${qStars(coach.kind === 'du' ? selfQuality(c) : coach.quality)}</span> <small>${COACH_KINDS[coach.kind].label}${coach.licence ? ' · C-Lizenz' : ''}${coach.kind === 'du' ? tr(` · kostet dich ${SELF_ENERGY} Kraft pro Woche`, ` · costs you ${SELF_ENERGY} energy a week`) : ''}</small>
+            ${st.course ? `<small class="course">${tr(`Lizenzkurs läuft – noch ${Math.max(1, st.course.until - c.round)} Wo.`, `Licence course running – ${Math.max(1, st.course.until - c.round)} wks left`)}</small>` : coach.kind !== 'du' && !coach.licence ? `<button class="tiny" data-action="youthCourse" data-value="${t.id}" ${off || c.cash < COURSE_COST ? 'disabled' : ''} title="${tr('Vier Wochen, danach deutlich besser', 'Four weeks, clearly better afterwards')}">${tr(`C-Lizenz-Kurs (${COURSE_COST} €)`, `C licence course (€${COURSE_COST})`)}</button>` : ''}</p>`
+        : `<p class="yt-coach warn"><b>${tr('Kein Trainer!', 'No coach!')}</b> ${tr('Training fällt aus, die Kinder verlieren den Spaß. Ohne Trainer zum Saisonende wird das Team abgemeldet.', 'Training is cancelled, the kids lose interest. Still no coach at the end of the season and the team is withdrawn.')}</p>
+           <div class="actions">${coachCandidates(c, t.id).map((cand) => `<button class="tiny" data-action="youthCoach" data-value="${t.id}:${cand.kind}" ${off ? 'disabled' : ''}>${COACH_KINDS[cand.kind].label}${cand.kind === 'du' ? '' : `: ${cand.name ?? this.p(cand.idx).name}`} <span class="stars">${qStars(cand.quality)}</span></button>`).join('')}</div>`;
+      const focusBtns = Object.entries(FOCUS)
+        .map(([id, f]) => {
+          const fit = FOCUS_FIT[t.id][id];
+          return `<button class="${st.focus === id ? 'active' : ''}${fit < 0.7 ? ' early' : ''}" data-action="youthFocus" data-value="${t.id}:${id}" ${off ? 'disabled' : ''} aria-pressed="${st.focus === id}" title="${f.desc} – ${fitLabel(fit)}">${f.name}</button>`;
+        })
+        .join('');
+      const fit = FOCUS_FIT[t.id][st.focus];
+      return `<article class="youth-team"><h5>${t.name} <small>(${t.ages[0]}–${t.ages[1]}${tr(' J.', ' yrs')})</small></h5>
+        ${coachLine}
+        <div class="actions yt-focus">${focusBtns}</div>
+        <p class="hint">${FOCUS[st.focus].name}: ${tr('für dieses Alter', 'for this age')} <b>${fitLabel(fit)}</b>.</p>
+        ${rows ? `<ul class="plain">${rows}</ul>` : `<p class="empty">${tr('Keine Kinder in diesem Jahrgang.', 'No kids in this age group.')}</p>`}</article>`;
     }).join('');
     const last = c.youth.results?.at(-1);
-    return `<h4>${tr('Jugendtraining diese Woche', 'Youth training this week')}</h4>
-      <div class="actions">${focusButtons}</div>
-      <p class="empty">${FOCUS[focus].desc} ${tr('Mit 16 wechseln die Kinder in die A-Jugend – Mädchen ins Frauenteam, sobald es eins gibt.', 'At 16 the kids move up to the U19s – girls to the women\'s team once there is one.')}</p>
-      <div class="youth-teams">${teams || `<p class="empty">${tr('Keine Kinder in der Jugend.', 'No kids in the youth section.')}</p>`}</div>
+    return `<h4>${tr('Jugendmannschaften', 'Youth teams')}</h4>
+      <p class="empty">${tr('Jede Mannschaft hat ihren Trainer und ihren Schwerpunkt. Faustregel: Kleine spielen und lernen Technik, Große lernen Spielverständnis, Kondition und Turnierhärte. Mit 16 geht es in die A-Jugend – Mädchen ins Frauenteam, sobald es eins gibt.', 'Each team has its coach and its focus. Rule of thumb: little ones play and learn technique, older ones learn game sense, fitness and tournament toughness. At 16 they move up to the U19s – girls to the women\'s team once there is one.')}</p>
+      <div class="youth-teams">${teams}</div>
       ${last ? `<p>${tr('Letzte Saison', 'Last season')}: ${last.results.map((r) => tr(`${r.team}-Jugend ${r.pos}.`, `${r.team} youth: ${r.pos}.`)).join(' · ')}</p>` : ''}`;
   },
 

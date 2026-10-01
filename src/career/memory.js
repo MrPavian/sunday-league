@@ -34,6 +34,7 @@ export function placeFormers(c) {
   const others = c.clubs.filter((cl) => !cl.human);
   for (const [k, f] of Object.entries(c.formers ?? {})) {
     const idx = Number(k);
+    if (f.pro) continue; // Profi geworden – kommt nicht mehr in die Kreisliga
     if (f.club && others.some((cl) => cl.id === f.club && cl.squad.includes(idx))) continue;
     if (c.clubs.some((cl) => cl.squad.includes(idx))) continue;
     if (!others.length || !rng.chance(0.45)) continue;

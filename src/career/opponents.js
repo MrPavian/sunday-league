@@ -114,6 +114,8 @@ export function deliverNews(c, chat) {
       status: 'open',
       range: [p.rating - 2, p.rating - 2 + spread],
       reply: null,
+      season: c.season,
+      until: c.round + 2,
     });
   }
 }

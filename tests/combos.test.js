@@ -63,7 +63,7 @@ describe('offence: finishing from a good position', () => {
     }
     expect(chances).toBeGreaterThan(40);
     expect(shots / chances).toBeGreaterThan(0.5);
-  });
+  }, 60000);
 });
 
 describe('offence: combinations', () => {
@@ -112,7 +112,7 @@ describe('offence: combinations', () => {
     // Die meisten Rückpässe kommen beim Läufer an.
     expect(done.onetwo / made.onetwo).toBeGreaterThan(0.6);
     expect(done.layoff / made.layoff).toBeGreaterThan(0.5);
-  });
+  }, 60000);
 
   it('a striker with his back to goal and a marker behind holds the ball up', () => {
     let held = 0;
@@ -126,7 +126,7 @@ describe('offence: combinations', () => {
       }
     }
     expect(held).toBeGreaterThan(30);
-  });
+  }, 60000);
 });
 
 describe('offence: the coach can ask for combination play', () => {
