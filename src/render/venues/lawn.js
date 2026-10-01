@@ -19,13 +19,15 @@ const SPONSORS = [
 // Sportplatz Waldesruh: der erste "richtige" Platz in der Kreisklasse –
 // Rasen, Tribüne mit drei Stufen, Banden, Vereinsheim aus Backstein.
 export function buildLawn(root, pitch, rng, scene) {
-  root.add(addLights(scene, { span: 40 }));
-  const W = 72;
-  const D = 50;
+  // Maße aus dem Feld: beim 7er-Platz (26 × 17) genau wie bisher, beim 9er-Feld größer.
+  const { halfLength: hl, halfWidth: hw, goalHalfWidth: gw, goalHeight: gh } = pitch;
+  const k = hl / 26; // Abstände längs des Platzes
+  root.add(addLights(scene, { span: 40 * k }));
+  const W = 2 * hl + 20;
+  const D = 2 * hw + 16;
   root.add(ground(W, D, toon(0xffffff, { map: makeLawnTexture(rng, { width: W, depth: D, pitch }) })));
   root.add(ground(220, 220, toon(0x5d7a42), -0.02));
 
-  const { halfLength: hl, halfWidth: hw, goalHalfWidth: gw, goalHeight: gh } = pitch;
   for (const s of [-1, 1]) {
     const goal = makeGoalFrame(gw, gh, s);
     goal.position.x = s * hl;
@@ -52,27 +54,28 @@ export function buildLawn(root, pitch, rng, scene) {
     root.add(makeSpectator(rng, { x: -8 + rng.range(0, 16), z: tz - step * 1.2, sitting: true, y: 0.4 + step * 0.4 }));
   }
   // Ein paar stehen am Zaun, einer mit Hund.
-  root.add(makeSpectator(rng, { x: 14, z: bandZ - 0.8 }));
-  root.add(makeSpectator(rng, { x: -15, z: bandZ - 0.8, facing: 0.3 }));
-  root.add(makeDog(-14.2, bandZ - 0.6, 0x8a6a3a, 0.2));
+  root.add(makeSpectator(rng, { x: 14 * k, z: bandZ - 0.8 }));
+  root.add(makeSpectator(rng, { x: -15 * k, z: bandZ - 0.8, facing: 0.3 }));
+  root.add(makeDog(-14.2 * k, bandZ - 0.6, 0x8a6a3a, 0.2));
 
   // Vereinsheim aus Backstein mit Terrasse.
-  root.add(box(12, 3.4, 5, 0x9a4a38, 20, 1.7, -hw - 10));
-  root.add(box(12.6, 0.3, 5.6, 0x3a3a3a, 20, 3.5, -hw - 10));
-  for (const x of [16, 20, 24]) root.add(box(1.4, 1.1, 0.05, 0xd8e0e0, x, 2, -hw - 7.48));
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(8, 0.8), toon(0xffffff, { map: makeSignTextureWide('SPORTPLATZ WALDESRUH', { bg: '#f2efe6', fg: '#2a2620' }) }));
-  sign.position.set(20, 4.1, -hw - 7.45);
+  const hx = 20 * k; // Vereinsheim
+  root.add(box(12, 3.4, 5, 0x9a4a38, hx, 1.7, -hw - 10));
+  root.add(box(12.6, 0.3, 5.6, 0x3a3a3a, hx, 3.5, -hw - 10));
+  for (const x of [-4, 0, 4]) root.add(box(1.4, 1.1, 0.05, 0xd8e0e0, hx + x, 2, -hw - 7.48));
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(8, 0.8), toon(0xffffff, { map: makeSignTextureWide(pitch.id === 'sportplatz' ? 'SPORTANLAGE KANALWIESE' : 'SPORTPLATZ WALDESRUH', { bg: '#f2efe6', fg: '#2a2620' }) }));
+  sign.position.set(hx, 4.1, -hw - 7.45);
   root.add(sign);
-  root.add(makeBench(18, -hw - 6.5), makeBench(22, -hw - 6.5));
+  root.add(makeBench(hx - 2, -hw - 6.5), makeBench(hx + 2, -hw - 6.5));
   // Bratwurststand
   root.add(box(2.4, 1.1, 1.2, 0xc9a227, 8, 0.55, -hw - 8), box(2.6, 0.1, 1.5, 0xc0392b, 8, 2.2, -hw - 8), cylinder(0.04, 1.1, 0x555555, 7, 1.65, -hw - 8.6, 4), cylinder(0.04, 1.1, 0x555555, 9, 1.65, -hw - 8.6, 4));
 
   // Flutlicht und Bäume hinten.
-  const masts = [-24, 0, 24];
+  const masts = [-24 * k, 0, 24 * k];
   for (const x of masts) root.add(makeFloodlight(x, -hw - 13, 15, 2.6));
   for (let i = 0; i < 18; i++) {
     const t = makeTree(rng, rng.range(1.1, 1.5));
-    t.position.set(rng.range(-40, 40), 0, -rng.range(hw + 15, hw + 24));
+    t.position.set(rng.range(-40 * k, 40 * k), 0, -rng.range(hw + 15, hw + 24));
     root.add(t);
   }
   root.add(box(W - 6, 0.06, 0.06, 0x8a9096, 0, 0.9, hw + 2.5));
@@ -81,6 +84,6 @@ export function buildLawn(root, pitch, rng, scene) {
   const lights = { heads: masts.map((x) => [x, 15.4, -hw - 12.7]), pools: masts.map((x) => [x * 0.8, -hw * 0.4, 12]), field: [hl, hw] };
   // Mehr Publikum (sichtbar je nach Besucherzahl): volle Tribünenreihen, Leute am Zaun.
   for (let step = 0; step < 3; step++) for (const o of crowdRow(401 + step, { x0: -8.6, x1: 8.6, z: tz - step * 1.2, y: 0.4 + step * 0.4, n: 12, sitting: true })) root.add(o);
-  for (const [x0, x1, s] of [[-31, -11, 411], [11, 31, 412]]) for (const o of crowdRow(s, { x0, x1, z: bandZ - 0.9, n: 6, dz: 0.35, jitter: 0.8 })) root.add(o);
+  for (const [x0, x1, s] of [[-31 * k, -11 * k, 411], [11 * k, 31 * k, 412]]) for (const o of crowdRow(s, { x0, x1, z: bandZ - 0.9, n: 6, dz: 0.35, jitter: 0.8 })) root.add(o);
   return { viewHeight: 15, bounds: { x: hl + 4, z: 4.5 }, lights };
 }

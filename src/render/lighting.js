@@ -84,6 +84,7 @@ export const VENUES = {
   park: { sky: 0x9cc3e0, ground: 0x4f7040, sunMul: 1.08, hemiMul: 1, wet: 0.8, surface: 'grass', weather: { puddles: 0.8, splash: 0.9, snow: 1, footprints: true }, flood: 'street', post: { tint: [0.99, 1.02, 1.0], saturation: 1.03, contrast: 1.0, brightness: 1.02 } },
   ascheplatz: { sky: 0xa9b6c0, ground: 0x7a4a30, sunMul: 0.94, hemiMul: 1.07, wet: 0.75, surface: 'ash', weather: { puddles: 0.6, splash: 0.75, snow: 1.1, footprints: true }, flood: 'stadium', post: { tint: [1.02, 0.99, 0.97], saturation: 1.0, contrast: 1.05, brightness: 1 } },
   rasenplatz: { sky: 0x9ec4de, ground: 0x4a6a3a, sunMul: 1.06, hemiMul: 1, wet: 0.85, surface: 'grass', weather: { puddles: 0.7, splash: 1, snow: 1, footprints: true }, flood: 'stadium', post: { tint: [1.0, 1.01, 0.99], saturation: 1.05, contrast: 1.03, brightness: 1 } },
+  sportplatz: { sky: 0x9ec4de, ground: 0x4a6a3a, sunMul: 1.06, hemiMul: 1, wet: 0.85, surface: 'grass', weather: { puddles: 0.7, splash: 1, snow: 1, footprints: true }, flood: 'stadium', post: { tint: [1.0, 1.01, 0.99], saturation: 1.05, contrast: 1.03, brightness: 1 } },
   halle: { sky: 0xdfe6ea, ground: 0xb08a58, sunMul: 1, hemiMul: 1, wet: 0, surface: 'wood', weather: { puddles: 0, splash: 0, snow: 0, footprints: false }, flood: 'none', indoor: true, post: { tint: [1.03, 1.0, 0.97], saturation: 1.0, contrast: 1.02, brightness: 1 } },
 };
 // Wie hell das Spielfeld abends selbst ist (1 = ganz im Flutlicht), je Flutlichtart.

@@ -159,6 +159,55 @@ export const KB_CLUBS = [
   },
 ];
 
+// Kreisliga A: 9 gegen 9 auf dem halben Großfeld, alle auf Rasen – die Liga, in der man sich kennt.
+export const KA_CLUBS = [
+  {
+    id: 'wacker',
+    name: 'SV Wacker Kanalbezirk',
+    short: 'WKB',
+    venue: 'sportplatz',
+    kit: { shirt: 0x1d3b6e, shorts: 0x1d3b6e, socks: 0xf2efe6, pattern: 'streifen', second: 0xf2efe6 },
+    keeperKit: { shirt: 0xe0b020, shorts: 0x1c1c1c, socks: 0xe0b020 },
+    tiers: { ok: 0.12, gut: 0.36, stark: 0.36, dorfstar: 0.13, superstar: 0.03 },
+  },
+  {
+    id: 'schleuse',
+    name: 'SG Eintracht Schleusenhof',
+    short: 'SGE',
+    venue: 'sportplatz',
+    kit: { shirt: 0xc8352f, shorts: 0xf2efe6, socks: 0xc8352f, pattern: 'haelften', second: 0x1c1c1c },
+    keeperKit: { shirt: 0x2e8b57, shorts: 0x1c1c1c, socks: 0x2e8b57 },
+    tiers: { ok: 0.15, gut: 0.38, stark: 0.33, dorfstar: 0.11, superstar: 0.03 },
+  },
+  {
+    id: 'germania',
+    name: 'FC Germania Hafenviertel',
+    short: 'FCG',
+    venue: 'sportplatz',
+    kit: { shirt: 0xf2efe6, shorts: 0x1c1c1c, socks: 0x1c1c1c, pattern: 'brustring', second: 0x1c1c1c },
+    keeperKit: { shirt: 0xe8742a, shorts: 0x1c1c1c, socks: 0xe8742a },
+    tiers: { ok: 0.18, gut: 0.4, stark: 0.3, dorfstar: 0.1, superstar: 0.02 },
+  },
+  {
+    id: 'brueckendorf',
+    name: 'SpVgg Rot-Weiß Brückendorf',
+    short: 'RWB',
+    venue: 'sportplatz',
+    kit: { shirt: 0xb02a2a, shorts: 0xb02a2a, socks: 0xf2efe6, pattern: 'chevron', second: 0xf2efe6 },
+    keeperKit: { shirt: 0x2f6fb5, shorts: 0x1c1c1c, socks: 0x2f6fb5 },
+    tiers: { ok: 0.18, gut: 0.4, stark: 0.3, dorfstar: 0.1, superstar: 0.02 },
+  },
+  {
+    id: 'uferstadt',
+    name: 'TSV 1898 Uferstadt',
+    short: 'TSV',
+    venue: 'sportplatz',
+    kit: { shirt: 0x2e8b57, shorts: 0xf2efe6, socks: 0x2e8b57, pattern: 'ringel', second: 0xf2efe6 },
+    keeperKit: { shirt: 0x6a2c8c, shorts: 0x1c1c1c, socks: 0x6a2c8c },
+    tiers: { ok: 0.15, gut: 0.38, stark: 0.33, dorfstar: 0.11, superstar: 0.03 },
+  },
+];
+
 // Zwei weitere Vereine je Liga für die große Staffel (8 Teams, 14 Spieltage).
 export const EXTRA_CLUBS = {
   1: [
@@ -221,14 +270,35 @@ export const EXTRA_CLUBS = {
       tiers: { ok: 0.33, gut: 0.41, stark: 0.2, dorfstar: 0.06 },
     },
   ],
+  4: [
+    {
+      id: 'pumpwerk',
+      name: 'DJK Grün-Weiß Pumpwerk',
+      short: 'DJK',
+      venue: 'sportplatz',
+      kit: { shirt: 0x2e8b57, shorts: 0x1c1c1c, socks: 0xf2efe6, pattern: 'seiten', second: 0xf2efe6 },
+      keeperKit: { shirt: 0xc8352f, shorts: 0x1c1c1c, socks: 0xc8352f },
+      tiers: { ok: 0.18, gut: 0.4, stark: 0.3, dorfstar: 0.1, superstar: 0.02 },
+    },
+    {
+      id: 'treidelpfad',
+      name: 'VfL Treidelpfad 08',
+      short: 'V08',
+      venue: 'sportplatz',
+      kit: { shirt: 0xe0c020, shorts: 0x1c1c1c, socks: 0xe0c020, pattern: 'schulter', second: 0x1c1c1c },
+      keeperKit: { shirt: 0x2f6fb5, shorts: 0x1c1c1c, socks: 0x2f6fb5 },
+      tiers: { ok: 0.15, gut: 0.38, stark: 0.33, dorfstar: 0.11, superstar: 0.03 },
+    },
+  ],
 };
 
 export const leagueClubs = (league, size = 6) => [...league.clubs, ...(size >= 8 ? EXTRA_CLUBS[league.level] ?? [] : [])];
 
-export const MAX_LEVEL = 3;
+export const MAX_LEVEL = 4;
 
 export const LEAGUES = {
   1: { level: 1, name: LEAGUE_NAME, referee: false, format: null, humanVenue: 'hinterhof', clubs: AI_CLUBS, squadShape: 'small', maxSquad: 12, derby: { club: 'kanal', name: tr('Kanal-Derby', 'Canal Derby') } },
   2: { level: 2, name: tr('Kreisklasse C Kanalbezirk', 'Kanalbezirk District League C'), referee: true, format: 7, humanVenue: 'rasenplatz', clubs: KC_CLUBS, squadShape: 'large', maxSquad: 16, derby: { club: 'bwk', name: tr('Bezirks-Derby', 'District Derby') } },
   3: { level: 3, name: tr('Kreisklasse B Kanalbezirk', 'Kanalbezirk District League B'), referee: true, format: 7, humanVenue: 'rasenplatz', clubs: KB_CLUBS, squadShape: 'large', maxSquad: 16, derby: { club: 'viktoria', name: tr('Stadtderby', 'City Derby') } },
+  4: { level: 4, name: tr('Kreisliga A Kanalbezirk', 'Kanalbezirk County League A'), referee: true, format: 9, humanVenue: 'sportplatz', clubs: KA_CLUBS, squadShape: 'xl', maxSquad: 18, derby: { club: 'wacker', name: tr('Kanal-Klassiker', 'Canal Classic') } },
 };

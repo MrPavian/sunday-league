@@ -40,6 +40,12 @@ export const VENUES = [
     tagline: tr('Kreisklasse! Rasen, Tribüne, Banden – und ein Schiri.', 'District league! Grass, a stand, advertising boards – and a referee.'),
   },
   {
+    id: 'sportplatz',
+    pitch: PITCHES.sportplatz,
+    build: buildLawn,
+    tagline: tr('Kreisliga A: 9 gegen 9 von Sechzehner zu Sechzehner, Flutlicht, Würstchenbude.', 'Kreisliga A: 9 v 9 from box to box, floodlights, sausage stand.'),
+  },
+  {
     id: 'halle',
     pitch: PITCHES.halle,
     build: buildHall,

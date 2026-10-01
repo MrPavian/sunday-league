@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clubById, createCareer, humanClub, MIN_SQUAD, playerOf, takenIndices } from '../src/career/career.js';
+import { clubById, createCareer, finishRound, humanClub, MIN_SQUAD, nextSeason, playerOf, seasonOver, SQUAD_SHAPES, takenIndices } from '../src/career/career.js';
 import { EVENTS, advanceArcs } from '../src/career/events.js';
 import { STORY_STARTS } from '../src/career/stories.js';
 import { CRISES, PERSONAL_EVENTS } from '../src/career/personal.js';
@@ -58,6 +58,21 @@ describe('Abwerbeversuche anderer Vereine', () => {
     expect(club.squad).not.toContain(idx);
     expect(clubById(c, ctx.club).squad).toContain(idx);
     expect(c.formers[idx].club).toBe(ctx.club);
+  });
+
+  it('nach dem Sommer hat der Rivale wieder seine übliche Kadergröße – der Ehemalige bleibt', () => {
+    const { c, idx } = benchCareer();
+    const ctx = POACH_EVENTS.abwerbeversuch.needs(c, yes);
+    POACH_EVENTS.abwerbeversuch.options[3].effect(c, ctx, yes);
+    const rival = clubById(c, ctx.club);
+    const usual = SQUAD_SHAPES.small.length;
+    expect(rival.squad.length).toBe(usual + 1);
+    while (!seasonOver(c)) finishRound(c);
+    nextSeason(c);
+    const after = c.clubs.find((x) => x.id === ctx.club);
+    expect(after).toBeTruthy(); // gleiche Liga (kein Aufstieg in diesem Durchlauf)
+    expect(after.squad.length).toBe(usual);
+    expect(after.squad).toContain(idx);
   });
 
   it('Einsatz versprechen: Er bleibt – gebrochenes Versprechen macht ihn sauer', () => {

@@ -87,6 +87,25 @@ export const LAWN_PITCH = {
   surface: SURFACES.grass,
 };
 
+// Kreisliga A: 9 gegen 9 „von Sechzehner zu Sechzehner" auf dem Großfeld – etwa 70 × 50 m,
+// Tore 5 × 2 m (DFB-Maße für das 9er-Feld).
+export const NINE_PITCH = {
+  id: 'sportplatz',
+  name: tr('Sportanlage Kanalwiese', 'Kanalwiese Sports Ground'),
+  format: 9,
+  halfLength: 35,
+  halfWidth: 25,
+  wallX: 39,
+  fenceZ: 29,
+  goalHalfWidth: 2.5,
+  goalHeight: 2.0,
+  goalType: 'frame',
+  boundary: 'lines',
+  carRule: false,
+  referee: true,
+  surface: SURFACES.grass,
+};
+
 export const HALL = {
   id: 'halle',
   name: tr('Sporthalle Kanalschule', 'Kanalschule Sports Hall'),
@@ -103,4 +122,4 @@ export const HALL = {
   surface: SURFACES.hall,
 };
 
-export const PITCHES = { parkplatz: PARKING_LOT, hinterhof: BACKYARD, park: PARK, ascheplatz: ASH_PITCH, rasenplatz: LAWN_PITCH, halle: HALL };
+export const PITCHES = { parkplatz: PARKING_LOT, hinterhof: BACKYARD, park: PARK, ascheplatz: ASH_PITCH, rasenplatz: LAWN_PITCH, sportplatz: NINE_PITCH, halle: HALL };

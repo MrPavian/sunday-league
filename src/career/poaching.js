@@ -11,8 +11,10 @@
 // Nachwuchsleistungszentren schaffen es nur 3,5 % in einen Profikader. Die DFL zahlte in einem
 // Jahr an 107 Amateurvereine Ausbildungsentschädigung – bei rund 24.000 Vereinen etwa einmal in
 // 200 Jahren je Verein, Jugendjahre eingerechnet. Hier: nur Spieler bis 21 Jahre mit
-// Ausnahmestärke (ab 68 – das oberste Prozent der jungen Amateure); gemessen etwa einmal in
-// rund 300 Saisons je Verein. Der Profiverein zahlt eine Ausbildungsentschädigung
+// Ausnahmestärke (ab 68 – das oberste Prozent der jungen Amateure). Nachgemessen mit einem
+// aktiven Bot-Manager, der gezielt starke junge Spieler holt: ohne Hürde 0,17 erwartete Fälle
+// je Saison (3 Profis in 40 Saisons) – viel zu oft. Mit PRO_GATE etwa einmal in 100 Saisons
+// für einen aktiven Verein, bei passivem Spiel praktisch nie. Der Profiverein zahlt eine Ausbildungsentschädigung
 // nach dem Muster der DFL-Regel: 5.400 € je Ausbildungsjahr im Alter von 12 bis 21 Jahren beim
 // Verein. Profivereine tragen ausgedachte Namen.
 import { tr } from '../core/i18n.js';
@@ -26,6 +28,7 @@ import { chronicle } from './sagas.js';
 const POACH_GATE = 0.6; // so oft wird überhaupt ein Kandidat gesucht (je Ereigniswoche)
 export const PRO_MIN_RATING = 68;
 export const PRO_MAX_AGE = 21;
+export const PRO_GATE = 0.06; // gemessen, siehe oben: 0,17 × 0,06 ≈ 0,01 je Saison bei aktivem Spiel
 export const COMPENSATION_PER_YEAR = 5400;
 
 export const PRO_CLUBS = ['FC Rheinstadt 1899', 'SV Hanseatica Nordhafen', 'Sportverein Elbtal 1904', 'Union Weserland', '1. FC Südbergen', 'Viktoria Lindenhof 07', 'Eintracht Bergmark', 'Athletik-Club Moorhausen', 'Fortuna Sternfeld 1911', 'Rot-Weiß Kaltenbach'];
@@ -125,6 +128,7 @@ export const POACH_EVENTS = {
   profivertrag: {
     weight: 1000, // wenn es passiert, ist es das Thema der Woche
     needs(c, rng) {
+      if (!rng.chance(PRO_GATE)) return null; // Profi-Scouts verirren sich kaum in die Kreisliga
       const rounds = Math.max(1, c.fixtures?.length ?? 14);
       for (const idx of humanClub(c).squad) {
         const p = playerOf(c, idx);

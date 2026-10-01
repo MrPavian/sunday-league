@@ -51,12 +51,15 @@ export const POOL_SEED = 1921;
 export const SQUAD_SHAPES = {
   small: ['gk', 'def', 'def', 'def', 'mid', 'mid', 'mid', 'fwd', 'fwd'],
   large: ['gk', 'gk', 'def', 'def', 'def', 'def', 'mid', 'mid', 'mid', 'mid', 'fwd', 'fwd', 'fwd'],
+  xl: ['gk', 'gk', 'def', 'def', 'def', 'def', 'def', 'mid', 'mid', 'mid', 'mid', 'mid', 'fwd', 'fwd', 'fwd'], // Kreisliga A: 9 Spieler + Bank
 };
 const NUDGES_PER_WEEK = 3;
 export const MAX_SQUAD = 12; // Freizeitliga; in der Kreisklasse mehr (siehe maxSquad)
 export const MIN_SQUAD = 7;
 const SCOUT_ACTIONS = 2;
 const RUMOR_TIERS = { ok: 0.44, gut: 0.33, stark: 0.15, dorfstar: 0.06, superstar: 0.014, legende: 0.006 };
+// Kreisliga A: Wer dort spielt, zieht bessere Leute an.
+const RUMOR_TIERS_BY_LEVEL = { 4: { ok: 0.26, gut: 0.36, stark: 0.23, dorfstar: 0.1, superstar: 0.035, legende: 0.007 } };
 export const RECRUIT_BASE = { ok: 0.85, gut: 0.65, stark: 0.45, dorfstar: 0.3, superstar: 0.2, legende: 0.15 };
 const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 
@@ -361,6 +364,15 @@ function aiTurnover(career, clubs, pick) {
       delete career.players[out];
       career.players[inn] ??= freshRecord();
     }
+    // Hat der Verein unter der Saison jemanden von uns abgeworben, ist der Kader größer als
+    // üblich: Im Sommer gehen überzählige Ältere ohne Ersatz (der Ehemalige bleibt).
+    const usual = SQUAD_SHAPES[leagueOf(career).squadShape].length;
+    const surplus = byAge.filter((idx) => club.squad.includes(idx));
+    while (club.squad.length > usual && surplus.length) {
+      const out = surplus.shift();
+      club.squad = club.squad.filter((x) => x !== out);
+      delete career.players[out];
+    }
   }
   return [];
 }
@@ -597,7 +609,7 @@ function makeRumors(career, rng, count = 3, exclude = []) {
   for (const idx of exclude) taken.add(idx);
   const rumors = [];
   for (let n = 0; n < count; n++) {
-    const tier = weighted(rng, RUMOR_TIERS);
+    const tier = weighted(rng, RUMOR_TIERS_BY_LEVEL[career.level ?? 1] ?? RUMOR_TIERS);
     const list = pool.byTier(tier);
     for (let attempt = 0; attempt < 30; attempt++) {
       const p = rng.pick(list);
@@ -939,7 +951,7 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   if (home.human || away.human) matchdaySurprise(match, humanIsAway || home.human ? 0 : 1, createRng(hashSeed(career.seed, career.season, career.round, 77)));
   // Zuschauer am Zaun – für die Geräuschkulisse (die Kasse zählt nach dem Spiel selbst).
   const level = career.level ?? 1;
-  const fans = level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14);
+  const fans = level > 3 ? rng.int(45, 90) : level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14);
   match.crowd = Math.round(fans * (match.derby ? 1.8 : 1) * (home.human ? fansMul(career) : 1));
   match.homeTeam = humanIsAway ? 1 : 0;
   return { match, humanIsAway, pitch, home, away, helpers: [...teamHome.helpers, ...teamAway.helpers] };

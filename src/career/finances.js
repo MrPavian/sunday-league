@@ -71,7 +71,7 @@ export function matchFinances(career, fixture, prepared, level) {
     const rng = createRng(career.seed + career.season * 97 + career.round * 13);
     const press = (career.flags?.pressWeeks > 0 ? 1.4 : 1) * (m.derby ? 1.8 : 1); // Kreisblatt-Porträt, Derby
     const weatherFans = { sonne: 1.2, hitze: 0.9, regen: 0.6, wind: 0.85, nebel: 0.8, frost: 0.7, schnee: 0.5 }[career.week?.weather?.id] ?? 1;
-    const fans = Math.round((level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14)) * press * weatherFans * fansMul(career));
+    const fans = Math.round((level > 3 ? rng.int(45, 90) : level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14)) * press * weatherFans * fansMul(career));
     career.flags ??= {};
     career.flags.fans = { round: career.round, n: fans }; // für die Unterschriftenlisten
     const wirt = (career.staff?.wirt ? 1.3 : 1) * salesMul(career); // Wirt, Grill & Theke
@@ -85,12 +85,12 @@ export function matchFinances(career, fixture, prepared, level) {
 
 // Ab der Kreisklasse kostet der Spielbetrieb: Verband, Versicherung, Trikotwäsche –
 // und die guten Leute wollen Fahrgeld. Wer oben mitspielen will, muss rechnen.
-export const OPS_COST = [0, 0, 40, 70];
+export const OPS_COST = [0, 0, 40, 70, 100];
 export const FAHRGELD = { stark: 3, dorfstar: 6, superstar: 10, legende: 12 };
 export function fahrgeld(career) {
   const level = career.level ?? 1;
   const human = career.clubs.find((c) => c.human);
-  const mul = level >= 3 ? 2 : level === 2 ? 1.2 : 0;
+  const mul = level >= 4 ? 2.6 : level >= 3 ? 2 : level === 2 ? 1.2 : 0;
   if (!mul) return { total: 0, n: 0 };
   let total = 0;
   let n = 0;
@@ -110,7 +110,7 @@ export function awayTravel(career, fixture) {
   const level = career.level ?? 1;
   const human = career.clubs.find((c) => c.human);
   if (level < 2 || fixture.away !== human.id) return;
-  book(career, tr('Auswärtsfahrt (Sprit)', 'Away trip (fuel)'), -Math.round((level === 2 ? 10 : 20) * travelMul(career)));
+  book(career, tr('Auswärtsfahrt (Sprit)', 'Away trip (fuel)'), -Math.round((level === 2 ? 10 : level === 3 ? 20 : 25) * travelMul(career)));
 }
 
 // Jede Woche: Mitgliedsbeiträge und Sponsorengeld.

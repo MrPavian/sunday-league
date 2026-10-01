@@ -18,6 +18,7 @@ export const VENUE_INCIDENTS = {
   park: ['hund', 'zaun', 'gewitter'],
   ascheplatz: ['hund', 'zaun', 'gewitter'],
   rasenplatz: ['sprenger', 'ersatzschiri', 'hund', 'gewitter', 'zaun'],
+  sportplatz: ['sprenger', 'ersatzschiri', 'hund', 'gewitter', 'zaun'],
   halle: ['ersatzschiri', 'polizei'], // drinnen kein Wetter; die Polizei kommt wegen der Musik aus der Kabine
 };
 
