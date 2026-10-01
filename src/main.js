@@ -1061,7 +1061,7 @@ function frame(now) {
   // Vereinsheim „Heute": Das Spiel läuft im Fenster an der Wand – dort das ganze Kamerabild zeigen.
   const clubWindow = mode === 'club' ? document.querySelector('#club.see-through .cs-window') : null;
   const windowRect = clubWindow?.getBoundingClientRect();
-  rig.frameWindow(windowRect?.width > 0 && windowRect.height > 0 ? windowRect : null, window.innerWidth, window.innerHeight, pitch.halfLength);
+  rig.frameWindow(windowRect?.width > 0 && windowRect.height > 0 ? windowRect : null, window.innerWidth, window.innerHeight, pitch.halfLength, pitch.halfWidth);
   rig.follow(match.ball.pos.x, match.ball.pos.z, dt, venueInfo.bounds);
   // Ball 2.0: bei Tor oder hartem Pfostentreffer zuckt das Bild um genau ein internes Pixel
   // (nur Darstellung; die Kameraführung selbst bleibt, wie sie ist).
