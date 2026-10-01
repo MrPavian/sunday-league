@@ -17,7 +17,7 @@ export class CoachCreator {
       last: '',
       age: 32,
       relation: 'beziehung',
-      profession: jobName('Elektriker'),
+      profession: '', // leer – du trägst deinen Beruf selbst ein (sonst „Angestellter")
       style: 'spielmacher',
       look: { skin: SKIN_TONES[1], hair: HAIR_COLORS[1], bald: false, beard: false },
       children: [],
@@ -120,7 +120,7 @@ export class CoachCreator {
             </div>
             <div class="row">
               <label>${tr('Alter', 'Age')} <input id="cc-age" type="number" min="18" max="55" data-field="age" value="${d.age}"></label>
-              <label>${tr('Beruf', 'Job')} <input id="cc-job" data-field="profession" value="${esc(d.profession)}" list="cc-jobs" maxlength="28"></label>
+              <label>${tr('Beruf', 'Job')} <input id="cc-job" data-field="profession" value="${esc(d.profession)}" list="cc-jobs" maxlength="28" placeholder="${tr('z. B. Elektriker', 'e.g. electrician')}"></label>
               <datalist id="cc-jobs">${JOBS.map((j) => `<option value="${esc(jobName(j))}">`).join('')}</datalist>
             </div>
             <h4>${tr('Beziehung', 'Relationship')}</h4>
