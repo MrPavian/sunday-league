@@ -1389,6 +1389,8 @@ line.tb-chalk { stroke-width: 1; }
 .plan-panel.tp > footer button.primary { color: var(--on-accent); background: var(--accent); text-shadow: none; }
 .sub-panel > header, .sub-panel > footer { flex: none; }
 #shoutbar:not(.ended) button.end-only { display: none; }
+#shoutbar.no-menu button[data-tap="menu"] { display: none; }
+#shoutbar.ended .rotate-hint { display: none; } /* nach dem Abpfiff unnötig – und er läge unter dem Kreisblatt */
 
 /* ===== UI 3.0 Phase 2: Vereinsheim als Raum ===== */
 /* Durchsichtig nur im Bereich „Heute": der Raum wird um das Fenster herum gemalt (box-shadow),
@@ -1664,6 +1666,30 @@ line.tb-chalk { stroke-width: 1; }
 #end .news-foot button:disabled { opacity: 0.35; cursor: default; }
 .news-count { font-size: var(--fs-secondary); }
 #end .paper.news .keys { margin-top: 4px; font-size: var(--fs-secondary); }
+/* Touch: kein Tastatur-Hinweis, sondern Wischen/Knöpfe. */
+#end .keys-touch { display: none; text-align: center; margin: 4px 0 0; font-size: var(--fs-secondary); }
+@media (pointer: coarse) {
+  #end .paper.news .keys { display: none; }
+  #end .keys-touch { display: block; }
+}
+/* Ergebnis: Teams links/rechts, Spielstand immer in einer Zeile in der Mitte. */
+#end .result { display: grid; grid-template-columns: 1fr auto 1fr; }
+#end .result .t0 { text-align: right; }
+#end .result .t1 { text-align: left; }
+#end .result b { white-space: nowrap; }
+/* Hochformat (Handy): Kopf ohne Umbruch, Reiter als 2×2, Blatt füllt die Höhe bis zur Leiste. */
+@media (max-width: 560px) {
+  #end { align-items: stretch; padding: 12px 10px; }
+  #end .paper.news { min-height: 100%; padding: 14px 14px; }
+  #end .paper.news .news-page { flex: 1; }
+  #end .masthead { font-size: 24px; letter-spacing: 2px; }
+  #end .masthead small { display: block; margin: 2px 0 0; letter-spacing: 0; }
+  #end .news-tabs { display: grid; grid-template-columns: 1fr 1fr; }
+  #end .news-tabs button.news-tab { padding: 0 6px; }
+  #end h2 { font-size: 21px; }
+  #end .result { gap: 10px; font-size: 15px; }
+  #end .result b { font-size: 30px; }
+}
 
 /* Pinnwand: Tabelle als Zettel am Kork, daneben Aushang und Turnierplakat */
 .pinboard.m-cork { display: grid; grid-template-columns: minmax(0, 1fr) minmax(200px, 280px); gap: var(--s5); align-items: start; }

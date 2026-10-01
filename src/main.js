@@ -24,7 +24,7 @@ import {
   simulate,
 } from './career/career.js';
 import { applyChallengeRewards } from './career/rewards.js';
-import { advanceCup, currentCupMatches, humanCupMatch, prepareCupMatch, recordCupResult, skipTournament, startTournament } from './career/tournament.js';
+import { advanceCup, CUPS, cupOf, currentCupMatches, humanCupMatch, prepareCupMatch, recordCupResult, skipTournament, startTournament } from './career/tournament.js';
 import { CHALLENGES, challengeById, createChallengeMatch, evaluateChallenge, loadProgress, recordChallenge, saveProgress } from './challenges/challenges.js';
 import { createRng } from './core/rng.js';
 import { matchdaySurprise } from './career/matchday.js';
@@ -630,6 +630,14 @@ const clubhouse = new Clubhouse(document.getElementById('club'), {
   },
 });
 
+// App in den Hintergrund (Android: anderer App-Wechsel, Bildschirm aus) oder Seite zu:
+// Karriere sichern – das System darf die App danach jederzeit beenden.
+function saveOnLeave() {
+  if (career) saveCareer(career);
+}
+document.addEventListener('visibilitychange', () => document.hidden && saveOnLeave());
+window.addEventListener('pagehide', saveOnLeave);
+
 // Offene Challenge-Belohnungen landen in der Karriere, sobald es eine gibt.
 function redeemRewards() {
   if (!career) return [];
@@ -683,6 +691,22 @@ function openClubhouse(results = null) {
   loadVenue(humanClub(career).venue);
   startMatch(false);
   clubhouse.show(career, { results });
+  if (!results) resumeRound();
+}
+
+// Eigenes Spiel schon gewertet, der Rest des Spieltags bzw. der Turnierrunde aber noch
+// nicht (Weiter gedrückt, oder die App wurde nach dem Abpfiff geschlossen): jetzt nachrechnen.
+let resuming = false;
+function resumeRound() {
+  if (resuming || careerMatch) return;
+  const fixture = humanFixture(career);
+  if (fixture?.result) return void runRound(fixture);
+  for (const kind of Object.keys(CUPS)) {
+    const t = cupOf(career, kind);
+    const me = humanClub(career).id;
+    const playedNow = t && t.stage !== 'done' && t.matches.some((m) => m.round === t.round && m.result && (m.home === me || m.away === me));
+    if (playedNow && currentCupMatches(career, kind).length) return void runCupRound(null, kind);
+  }
 }
 
 function playCareerMatch(style = null) {
@@ -715,6 +739,8 @@ function playCupMatch(kind, style = null) {
 }
 
 async function runCupRound(played, kind = played?.kind ?? 'stadt') {
+  if (resuming) return;
+  resuming = true;
   clubhouse.setBusy(kind === 'halle' ? tr('Turnier läuft … auf dem anderen Hallendrittel wird auch gespielt.', 'Tournament under way … the other end of the hall is playing too.') : tr('Turnier läuft … auf dem Nebenplatz wird auch gekickt.', 'Tournament under way … they are playing on the next pitch too.'));
   for (const m of currentCupMatches(career, kind)) {
     if (m === played) continue;
@@ -724,6 +750,7 @@ async function runCupRound(played, kind = played?.kind ?? 'stadt') {
   }
   advanceCup(career, kind);
   saveCareer(career);
+  resuming = false;
   clubhouse.tab = 'cup';
   openClubhouse();
 }
@@ -750,8 +777,7 @@ function tickerRound() {
     onDone() {
       recordResult(career, fixture, prepared);
       saveCareer(career);
-      openClubhouse();
-      runRound(fixture);
+      openClubhouse(); // rechnet den Rest des Spieltags (resumeRound)
     },
   });
 }
@@ -767,22 +793,24 @@ function tickerCup(kind) {
     onDone() {
       recordCupResult(career, m, prepared);
       saveCareer(career);
-      openClubhouse();
-      runCupRound(m);
+      openClubhouse(); // rechnet den Rest der Turnierrunde (resumeRound)
     },
   });
 }
 
 // Restliche Partien des Spieltags simulieren (und ggf. das eigene Spiel).
 async function runRound(playedFixture) {
+  if (resuming) return;
+  resuming = true;
   clubhouse.setBusy(tr('Spieltag läuft … die anderen Plätze melden sich gleich.', 'Matchday under way … the other grounds will report in shortly.'));
   for (const f of currentFixtures(career)) {
-    if (f === playedFixture) continue;
+    if (f === playedFixture || f.result) continue;
     const prepared = prepareMatch(career, f, { duration: testDuration });
     await simulate(prepared);
     recordResult(career, f, prepared);
   }
   saveCareer(career);
+  resuming = false;
   openClubhouse(currentFixtures(career));
 }
 
@@ -815,26 +843,23 @@ function tickerRelegation() {
   });
 }
 
-function finishCareerMatch() {
+// Abpfiff: Ergebnis sofort werten und speichern – nicht erst, wenn der Spieler das
+// Kreisblatt weglegt. Wer die App auf dem Ergebnis-Bildschirm schließt, verliert nichts.
+function commitCareerMatch() {
+  if (!careerMatch || careerMatch.committed) return;
   const { prepared, fixture, cup, relegation } = careerMatch;
-  careerMatch = null;
-  if (relegation) {
-    recordRelegationLeg(career, prepared);
-    saveCareer(career);
-    openClubhouse();
-    return;
-  }
-  if (cup) {
-    recordCupResult(career, cup, prepared);
-    saveCareer(career);
-    openClubhouse();
-    runCupRound(cup);
-    return;
-  }
-  recordResult(career, fixture, prepared);
+  careerMatch.committed = true;
+  if (relegation) recordRelegationLeg(career, prepared);
+  else if (cup) recordCupResult(career, cup, prepared);
+  else recordResult(career, fixture, prepared);
   saveCareer(career);
+}
+
+// „Weiter“ auf dem Kreisblatt: zurück ins Vereinsheim, dort läuft der Rest des Spieltags.
+function finishCareerMatch() {
+  commitCareerMatch();
+  careerMatch = null;
   openClubhouse();
-  runRound(fixture);
 }
 
 // --- Loop ------------------------------------------------------------------------
@@ -1013,6 +1038,9 @@ function frame(now) {
       setTimeout(() => ended === match && challengeRun && finishChallenge(ended), 1200);
     } else if (mode === 'play' && match.events.some((e) => e.type === 'end')) {
       const ended = match;
+      commitCareerMatch();
+      // Karrierespiel: Das Menü führt hier nirgends hin (das Ergebnis zählt) – Knopf weg.
+      shoutBar.root.classList.toggle('no-menu', !!careerMatch);
       const keys = careerMatch ? tr('<b>Enter</b> weiter ins Vereinsheim', '<b>Enter</b> back to the clubhouse') : undefined;
       setTimeout(() => ended === match && mode === 'play' && endScreen.show(ended, { keys }), 1200);
     }

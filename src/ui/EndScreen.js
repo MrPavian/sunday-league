@@ -51,7 +51,7 @@ export function newsPages(m) {
       id: 'front',
       label: tr('Titelseite', 'Front page'),
       html: `<h2>${m.derby ? 'Derby: ' : ''}${headline(m, grades)}</h2>
-        <div class="result"><span>${t0.name}</span><b>${m.score[0]} : ${m.score[1]}</b><span>${t1.name}</span></div>
+        <div class="result"><span class="t0">${t0.name}</span><b>${m.score[0]} : ${m.score[1]}</b><span class="t1">${t1.name}</span></div>
         ${shootout}
         <p class="place">${m.pitch.name} · ${m.pitch.surface.name}${m.referee ? ` · ${tr('Schiedsrichter', 'Referee')}: ${m.referee.name}` : ''}</p>
         ${potm ? `<p class="potm">${tr('Spieler des Spiels', 'Player of the match')}: <b>${potm.name}</b> (${m.teams[potm.team].short}), ${tr('Note', 'rating')} ${gradeText(grades[potm.id])}</p>` : ''}`,
@@ -164,6 +164,7 @@ export class EndScreen {
           <button class="news-next" aria-label="${tr('Nächste Seite', 'Next page')}">›</button>
         </div>
         <p class="keys">${keys} · <b>← →</b> ${tr('blättern', 'turn pages')}</p>
+        <p class="keys-touch">${tr('Wischen oder ‹ › zum Blättern', 'Swipe or tap ‹ › to turn pages')}</p>
       </div>`;
     this.renderPage();
     this.root.hidden = false;

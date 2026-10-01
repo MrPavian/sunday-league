@@ -5,7 +5,7 @@
 // Geprüft wird: keine Seitenfehler, Bildschleife läuft, Spiel erreicht den Abpfiff.
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { checker, click, launch, page, visible } from './lib.mjs';
+import { checker, click, launch, leaveHalftime, newCareer, page, visible } from './lib.mjs';
 
 const QUALITIES = ['PC_LOW', 'PC_MEDIUM', 'PC_HIGH', 'PC_ULTRA', 'ANDROID_LOW', 'ANDROID_MEDIUM', 'ANDROID_HIGH'];
 const WEATHER = ['sonne', 'hitze', 'regen', 'wind', 'nebel', 'frost', 'schnee', 'laub'];
@@ -288,6 +288,60 @@ export async function homeViews(b) {
   return ok.done();
 }
 
+// Karrierespiel auf dem Handy (Hochformat): Das Ergebnis ist schon beim Abpfiff gespeichert.
+// Wird die App auf dem Kreisblatt beendet (hier: neu laden), rechnet das Vereinsheim den
+// Spieltag zu Ende – das Spiel wird nicht noch einmal angeboten. Dazu: kein toter Menü-Knopf,
+// Spielstand in einer Zeile, Touch-Hinweis statt Tastatur-Hinweis.
+export async function saveAtWhistle(b) {
+  const ok = checker('Karriere (Handy): Ergebnis beim Abpfiff gespeichert, App-Abbruch auf dem Kreisblatt verliert nichts');
+  const p = await page(b, 'port', { query: '?notitle&debug&dauer=20' });
+  await newCareer(p);
+  await p.waitForSelector('[data-action="onCoach"]', { state: 'attached', timeout: 60000 });
+  await click(p, '[data-action="onCoach"]');
+  await p.waitForTimeout(2500);
+  await p.waitForFunction(() => !document.getElementById('halfpanel').hidden || !document.getElementById('end').hidden, null, { timeout: 300000 });
+  await leaveHalftime(p);
+  await p.waitForFunction(() => !document.getElementById('end').hidden, null, { timeout: 300000 });
+  await p.waitForTimeout(800);
+  const end = await p.evaluate(() => {
+    const shown = (el) => !!el && getComputedStyle(el).display !== 'none';
+    const score = document.querySelector('#end .result b').getBoundingClientRect();
+    const mast = document.querySelector('#end .masthead small').getBoundingClientRect();
+    const paper = document.querySelector('#end .paper').getBoundingClientRect();
+    return {
+      menu: shown(document.querySelector('#shoutbar [data-tap="menu"]')),
+      go: shown(document.querySelector('#shoutbar [data-tap="restart"]')),
+      scoreLines: Math.round(score.height / 30),
+      mastLines: Math.round(mast.height / 14),
+      keys: shown(document.querySelector('#end .keys')),
+      touchKeys: shown(document.querySelector('#end .keys-touch')),
+      fill: paper.height / window.innerHeight,
+    };
+  });
+  ok(!end.menu && end.go, `Endbildschirm Karriere: Menü ${end.menu ? 'sichtbar' : 'weg'}, Weiter ${end.go ? 'da' : 'fehlt'}`);
+  ok(end.scoreLines <= 1, `Spielstand bricht um (${end.scoreLines} Zeilen)`);
+  ok(end.mastLines <= 1, `„Sport am Montag" bricht um (${end.mastLines} Zeilen)`);
+  ok(!end.keys && end.touchKeys, 'Touch: Tastatur-Hinweis statt Wisch-Hinweis');
+  ok(end.fill > 0.75, `Kreisblatt nutzt die Höhe nicht (${Math.round(end.fill * 100)} %)`);
+  await p.screenshot({ path: '/tmp/sl-end-port.png' });
+  // App „abgeschossen", ohne Weiter zu drücken.
+  await p.reload();
+  await p.waitForTimeout(2000);
+  ok(!!(await p.$('.career [data-c="continue"]')), 'nach Neustart kein „Karriere fortsetzen"');
+  await click(p, '.career [data-c="continue"]');
+  await p.waitForSelector('[data-action="onNextWeek"]', { state: 'attached', timeout: 60000 }).catch(() => null);
+  ok(!!(await p.$('[data-action="onNextWeek"]')), 'Spieltag nach Neustart nicht zu Ende gerechnet');
+  ok(!(await p.$('[data-action="onCoach"]')), 'gewertetes Spiel wird nach Neustart noch einmal angeboten');
+  if (await p.$('[data-action="onNextWeek"]')) {
+    await click(p, '[data-action="onNextWeek"]');
+    await p.waitForTimeout(1500);
+    ok(!!(await p.$('[data-action="onCoach"]')), 'nächste Woche ohne Anpfiff-Knopf');
+  }
+  ok(!p.errors.length, `Fehler: ${p.errors.slice(0, 2).join(' | ')}`);
+  await p.context().close();
+  return ok.done();
+}
+
 export async function run() {
   const b = await launch();
   let f = 0;
@@ -301,6 +355,7 @@ export async function run() {
   f += await menus(b);
   f += await english(b);
   f += await homeViews(b);
+  f += await saveAtWhistle(b);
   f += await oldSave(b, process.env.E2E_OLD_SAVE ?? fileURLToPath(new URL('./fixtures/save-858e978.json', import.meta.url)));
   await b.close();
   return f;
