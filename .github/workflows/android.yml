@@ -1,7 +1,8 @@
 name: Android
 
 # Baut bei jedem Push auf main eine installierbare Debug-APK (unter „Artifacts“ am Lauf).
-# Bei einem Tag wie v0.2.0 hängt sie zusätzlich an einem GitHub-Release.
+# Dazu landet sie im Release „Neueste APK“ (Tag apk-latest); bei einem Tag wie v0.2.0
+# hängt sie zusätzlich an dessen eigenem Release.
 on:
   push:
     branches: [main]
@@ -36,3 +37,20 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: sunday-league.apk
+      # Jeder Push auf main: das Release „Neueste APK" (Tag apk-latest) bekommt die frische APK.
+      # So zeigt …/releases/latest/download/sunday-league.apk immer auf den aktuellen Stand.
+      - if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-latest
+          target_commitish: ${{ github.sha }}
+          name: Sunday League – neueste APK / latest APK
+          body: |
+            Automatisch gebaut aus `main` (${{ github.sha }}). Debug-Build zum Selbstinstallieren:
+            APK aufs Handy, öffnen, „Unbekannte Quellen“ erlauben.
+
+            Built automatically from `main`. Debug build for sideloading: copy the APK to your phone,
+            open it and allow "unknown sources".
+          files: sunday-league.apk
+          make_latest: true
+          overwrite_files: true
