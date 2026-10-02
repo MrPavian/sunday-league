@@ -18,6 +18,7 @@ import { ARG_IDS, ARGUMENTS, knownMotives, MOTIVES } from '../../career/recruiti
 import { currentLineup, humanClub, nextPitch, maxSquad, MIN_SQUAD, recruit, recruitChance, setLineupSlot, table } from '../../career/career.js';
 import { inviteChance, isRawDiamond, MAX_STATIONS, STATIONS, TRAINING_COST, trainingDone } from '../../career/training.js';
 import { roleName, STAFF_ROLES } from '../../career/youth.js';
+import { canAffordOutside, EHRENAMT_MONTH, feeOf, holderOf, outsideCandidate, ROLES as STAFF_ROLE_IDS, squadCandidates, STAFF_MIN_AGE, UEBUNGSLEITER_MONTH } from '../../career/staff.js';
 import { personaTags } from '../../career/kidpersona.js';
 import { MAX_UP, PATE_AGE, pateCandidates, pateOf, REIFE_WEEKS, reifeOf, trainingUp } from '../../career/bridge.js';
 import { FESTIVAL_TEAMS, resultLabel, youthLeague, youthPos, youthTable } from '../../career/youthleague.js';
@@ -30,6 +31,8 @@ import { jobName } from '../../data/names.js';
 import { tierById } from '../../data/tiers.js';
 import { POSITIONS } from '../../sim/generator.js';
 import { STATUS, first, formArrow } from './shared.js';
+
+const roleLabelCap = (role) => (role === 'jugendleiter' ? tr('Jugendleiter', 'Youth director') : STAFF_ROLES[role].name);
 
 export const teamScreens = {
   // Kader als Spielerkarten. Ebene 1: Name, Position, Stärke, Sonntag. Alles Weitere im Profil.
@@ -438,10 +441,6 @@ export const teamScreens = {
     const c = this.career;
     const club = humanClub(c);
     const full = club.squad.length >= maxSquad(c);
-    const stars = (q) => '★'.repeat(Math.max(1, Math.round(q * 5))) + '☆'.repeat(5 - Math.max(1, Math.round(q * 5)));
-    const staff = Object.entries(STAFF_ROLES)
-      .map(([id, r]) => `<li><b>${r.name}:</b> ${c.staff[id] ? `${c.staff[id].name} <small>– ${r.effect}</small>` : `<em>${tr('unbesetzt – vielleicht übernimmt das mal ein Ehemaliger', 'vacant – maybe a former player will take it on one day')}</em>`}</li>`)
-      .join('');
     const prospects = c.youth.prospects
       .map((idx) => ({ idx, p: this.p(idx) }))
       .sort((a, b) => b.p.rating - a.p.rating)
@@ -463,8 +462,7 @@ export const teamScreens = {
     if (sub === 'scout') return `${subTabs}${this.scoutBlock()}`;
     if (sub === 'club')
       return `${subTabs}
-      <h4>${tr('Ehrenamt', 'Volunteers')}</h4>
-      <ul class="plain staff"><li><b>${tr('Jugendleiter', 'Youth director')}:</b> ${c.youth.coach.name} <span class="stars">${stars(c.youth.coach.quality)}</span> <small>${tr('– je besser, desto mehr Talente', '– the better, the more talents')}</small></li>${staff}</ul>
+      ${this.staffBlock()}
       <h4>${tr('Ehemalige', 'Former players')}</h4>
       <ul class="plain">${alumni}</ul>`;
     return `${subTabs}
@@ -475,6 +473,38 @@ export const teamScreens = {
            <p class="empty">${tr(`Bis zu ${MAX_UP} dürfen bei der Ersten mittrainieren: Sie lernen schneller, und nach ${REIFE_WEEKS} Wochen kennen sie das Tempo – sonst sind sie nach dem Hochziehen erst einmal nervös. Ein Pate (ab ${PATE_AGE}) bringt ihnen noch mehr bei.`, `Up to ${MAX_UP} can train with the first team: they learn faster, and after ${REIFE_WEEKS} weeks they know the pace – otherwise they are nervous after promotion. A mentor (${PATE_AGE}+) teaches them even more.`)}</p>`
         : `<p class="empty">${tr('Kein Talent in der A-Jugend. Der nächste Jahrgang kommt zur neuen Saison.', 'No talent in the U19s. The next intake arrives with the new season.')}</p>`}
       ${this.academyBlock()}`;
+  },
+
+  // Ehrenamt: jedes Amt selbst besetzen – aus dem Kader (umsonst) oder per Aushang (Pauschale).
+  staffBlock() {
+    const c = this.career;
+    const off = !c.week || this.results;
+    const stars = (q) => '★'.repeat(Math.max(1, Math.round(q * 5))) + '☆'.repeat(5 - Math.max(1, Math.round(q * 5)));
+    const deps = { playerOf: (cc, idx) => this.p(idx), squad: humanClub(c).squad };
+    const effect = { ...Object.fromEntries(Object.entries(STAFF_ROLES).map(([id, r]) => [id, r.effect])), jugendleiter: tr('Je besser, desto mehr und bessere Talente.', 'The better, the more and better talents.') };
+    const rows = STAFF_ROLE_IDS.map((role) => {
+      const h = holderOf(c, role);
+      const coachRole = role === 'cotrainer' || role === 'jugendleiter';
+      const how = h ? (h.outside ? tr(`per Aushang · ${feeOf(role)} € Pauschale im Monat`, `via notice · €${feeOf(role)} allowance a month`) : h.playing ? tr('aus dem Kader, macht es nebenher', 'from the squad, does it on the side') : role === 'jugendleiter' && h.from == null ? tr('seit Jahren dabei', 'here for years') : tr('Ehemaliger', 'former player')) : '';
+      const holderLine = h
+        ? `<b>${h.name}</b>${role === 'jugendleiter' ? ` <span class="stars">${stars(h.quality)}</span>` : ''} <small>${how}</small>`
+        : `<em>${tr('unbesetzt', 'vacant')}</em>`;
+      const cands = squadCandidates(c, role, deps);
+      const out = outsideCandidate(c, role);
+      const pick = cands.length
+        ? `<select data-staff-pick="${role}" ${off ? 'disabled' : ''}>${cands.map((x) => `<option value="${x.idx}">${x.name}${coachRole ? ` ${stars(x.quality)}` : ''}</option>`).join('')}</select>
+           <button class="tiny" data-action="staffSquad" data-value="${role}" ${off ? 'disabled' : ''}>${tr('Aus dem Kader', 'From the squad')}</button>`
+        : '';
+      const broke = !canAffordOutside(c, role);
+      const outside = `<button class="tiny" data-action="staffOutside" data-value="${role}" ${off || broke ? 'disabled' : ''} title="${tr(`${role === 'cotrainer' ? 'Übungsleiterpauschale' : 'Ehrenamtspauschale'} (steuerfrei)`, `${role === 'cotrainer' ? 'Coaching allowance' : 'Volunteer allowance'} (tax-free)`)}">${tr('Aushang', 'Notice')}: ${out.name}, ${out.age}${role === 'jugendleiter' ? ` ${stars(out.quality)}` : ''} · ${feeOf(role)} €${tr('/Monat', '/month')}</button>${broke ? `<small class="warn">${tr(`Kasse reicht nicht für den ersten Monat (${feeOf(role)} €).`, `Not enough in the kitty for the first month (€${feeOf(role)}).`)}</small>` : ''}`;
+      const actions = h && role !== 'jugendleiter'
+        ? `<button class="tiny" data-action="staffRelease" data-value="${role}" ${off ? 'disabled' : ''}>${tr('Amt abgeben', 'Release')}</button>`
+        : `<div class="actions staff-pick">${pick}${h?.outside && role === 'jugendleiter' ? '' : outside}</div>`;
+      return `<li data-role="${role}"><b>${roleLabelCap(role)}:</b> ${holderLine}<small> – ${effect[role]}</small>${actions}</li>`;
+    }).join('');
+    return `<h4>${tr('Ehrenamt', 'Volunteers')}</h4>
+      <ul class="plain staff">${rows}</ul>
+      <p class="empty">${tr(`Unbesetzte Ämter kosten dich jede Woche Kraft. Ein Spieler ab ${STAFF_MIN_AGE} macht es umsonst nebenher, verlässt er den Verein, ist das Amt wieder frei. Auf den Aushang meldet sich jemand von außen, der die steuerfreie Pauschale bekommt (Trainer ${UEBUNGSLEITER_MONTH} €, sonst ${EHRENAMT_MONTH} € im Monat). Ist die Kasse leer, hört er auf.`, `Vacant posts cost you energy every week. A player aged ${STAFF_MIN_AGE}+ does it for free on the side; if he leaves the club, the post is vacant again. Someone from outside answers the notice and gets the tax-free allowance (coach €${UEBUNGSLEITER_MONTH}, otherwise €${EHRENAMT_MONTH} a month). If the kitty runs dry, he quits.`)}</p>`;
   },
 
   // Jahrgänge E bis B: je Mannschaft ein Trainer und ein Trainingsschwerpunkt.

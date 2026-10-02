@@ -26,6 +26,7 @@ import { applyWeather, rollWeather, WEATHER, WEATHER_CHAT } from './weather.js';
 import { derbyResult, isDerbyFixture } from './derby.js';
 import { applyChemistry, pastLink, relationsAmong, setRelation } from './relations.js';
 import { applyFusion, chronicle, initSagas, sagaChat, sagaSeasonEnd, sagaWeek } from './sagas.js';
+import { weeklyStaff } from './staff.js';
 import { childrenGrowUp, coachAway, initCoach, isCoach, personalWeek, seasonPersonal, weeklyPersonal } from './personal.js';
 import { absenceFactor, advanceArcs, applyForm, autoResolve, resultMood, rollNotice, rollWeekEvent, weeklyMood } from './events.js';
 import { developYouth, expireYouth, initYouth, retirements, youthIntake } from './youth.js';
@@ -789,16 +790,19 @@ export const KIT_PATTERNS = tr(
 // Trikots werden vor Saisonbeginn bestellt – danach ist die Saison gelaufen.
 export const kitEditable = (career) => career.round === 0;
 
-export function updateClub(career, { name, short, kit }) {
-  if (!kitEditable(career)) return false;
+// free: Gründung zu Karrierebeginn – der Förderverein zahlt die ersten Trikots.
+export function updateClub(career, { name, short, kit }, { free = false } = {}) {
+  if (!free && !kitEditable(career)) return false;
   const club = humanClub(career);
   if (name?.trim()) club.name = name.trim().slice(0, 32);
   if (short?.trim()) club.short = short.trim().toUpperCase().slice(0, 4);
   if (kit && JSON.stringify({ ...club.kit, ...kit }) !== JSON.stringify(club.kit)) {
     // Neue Trikots kosten – ohne Geld in der Kasse bleibt's beim alten Satz.
-    if (career.cash < KIT_COST) return 'nocash';
-    book(career, tr('Neuer Trikotsatz', 'New kit'), -KIT_COST);
-    club.kitHistory = [...(club.kitHistory ?? []), { season: career.season, kit: { ...club.kit } }].slice(-12); // fürs Museum
+    if (!free) {
+      if (career.cash < KIT_COST) return 'nocash';
+      book(career, tr('Neuer Trikotsatz', 'New kit'), -KIT_COST);
+      club.kitHistory = [...(club.kitHistory ?? []), { season: career.season, kit: { ...club.kit } }].slice(-12); // fürs Museum
+    }
     club.kit = { ...club.kit, ...kit };
     // Torwart immer in einer Kontrastfarbe.
     const keeper = [0xe8742a, 0x5cc46a, 0xe0b020, 0x6b4f8c].find((c) => colorDistance(c, club.kit.shirt) > 150) ?? 0xe8742a;
@@ -1046,8 +1050,10 @@ export function finishRound(career) {
     if (rec.injuryWeeks === 0) rec.injury = null;
     if (rec.awayWeeks > 0) rec.awayWeeks--;
   }
+  const staffNotes = weeklyStaff(career, { squad: humanClub(career).squad }); // Pauschalen, freie Ämter
   career.round++;
   startWeek(career);
+  for (const text of staffNotes) career.week?.chat.push({ from: null, text, time: 'Mo 08:00' });
   // Versprochene Einsätze für Neuzugänge: nach zwei Spieltagen abrechnen.
   checkPromises(career, humanClub(career).squad, (idx, text) => career.week?.chat.push({ from: idx, text, time: 'Mo 08:15' }));
   monthlyAward(career, awardDeps(career));

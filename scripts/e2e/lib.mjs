@@ -58,6 +58,14 @@ export async function newCareer(p) {
   await p.fill('#cc-last', 'Test');
   await p.click('#creator [data-action="done"]');
   await p.waitForTimeout(1500);
+  await founding(p);
+}
+
+// Gründungsversammlung (Name, Trikot, Wappen) mit den Vorgaben abschließen.
+export async function founding(p) {
+  if (!(await p.$('[data-action="foundClub"]'))) return;
+  await click(p, '[data-action="foundClub"]');
+  await p.waitForTimeout(800);
 }
 
 // Karrierespiel als Trainer bis zum Abpfiff, zurück ins Vereinsheim.

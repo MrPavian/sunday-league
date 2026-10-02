@@ -5,7 +5,7 @@
 // Geprüft wird: keine Seitenfehler, Bildschleife läuft, Spiel erreicht den Abpfiff.
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { checker, click, launch, leaveHalftime, newCareer, page, visible } from './lib.mjs';
+import { checker, click, founding, launch, leaveHalftime, newCareer, page, visible } from './lib.mjs';
 
 const QUALITIES = ['PC_LOW', 'PC_MEDIUM', 'PC_HIGH', 'PC_ULTRA', 'ANDROID_LOW', 'ANDROID_MEDIUM', 'ANDROID_HIGH'];
 const WEATHER = ['sonne', 'hitze', 'regen', 'wind', 'nebel', 'frost', 'schnee', 'laub'];
@@ -214,6 +214,8 @@ async function english(b) {
   await p.fill('#cc-last', 'Test');
   await p.click('#creator [data-action="done"]');
   await p.waitForTimeout(1500);
+  ok(/Founding meeting/.test(await p.textContent('#club')), 'Gründungsversammlung nicht englisch');
+  await founding(p);
   await tabs(p, ok, 'EN');
   ok(/Squad|Season|Club/.test(await p.textContent('#club')), 'Vereinsheim nicht englisch');
   await p.context().close();
@@ -247,6 +249,73 @@ export async function oldSave(b, file) {
   return ok.done();
 }
 
+// Karrierestart: Trainer anlegen, Verein gründen (Name, Trikot, Wappen – gratis), Farbwahl ohne
+// Sprung nach oben; danach Ehrenämter selbst besetzen (aus dem Kader und per Aushang).
+export async function clubSetup(b) {
+  const ok = checker('Karrierestart: Gründung (Name, Trikot, Wappen), Scrollposition bei Farbwahl, Ehrenamt besetzen');
+  const p = await page(b, 'port', { query: '?notitle&debug' });
+  await p.click('.career button');
+  await p.waitForTimeout(500);
+  await p.fill('#cc-first', 'Erika');
+  await p.fill('#cc-last', 'Test');
+  // Haarfarbe weiter unten wählen: Die Seite darf nicht nach oben springen.
+  const keptCreator = await p.evaluate(() => {
+    const root = document.getElementById('creator');
+    const sw = root.querySelectorAll('[data-action="hair"]')[2];
+    sw.scrollIntoView({ block: 'center' });
+    const before = root.scrollTop;
+    sw.click();
+    return { before, after: root.scrollTop };
+  });
+  ok(keptCreator.before > 0 && Math.abs(keptCreator.after - keptCreator.before) < 2, `Trainer: Farbwahl springt (${keptCreator.before} → ${keptCreator.after})`);
+  await p.click('#creator [data-action="done"]');
+  await p.waitForTimeout(1500);
+  ok(!!(await p.$('[data-action="foundClub"]')), 'Gründungsversammlung fehlt');
+  const cash0 = await p.evaluate(() => JSON.parse(localStorage.getItem('sunday-league:career')).cash);
+  await p.fill('#club input[data-field="name"]', 'FC Testhausen');
+  await p.fill('#club input[data-field="short"]', 'FCT');
+  // Trikotfarbe und Wappensymbol: Scrollposition bleibt.
+  for (const sel of ['[data-action="kitColor"][data-value^="socks"]', '.crest-grid [data-action="crestSymbol"]']) {
+    const kept = await p.evaluate((s) => {
+      const all = [...document.querySelectorAll(`#club ${s}`)];
+      const el = all[Math.min(3, all.length - 1)];
+      el.scrollIntoView({ block: 'center' });
+      const sc = [document.getElementById('club'), ...document.querySelectorAll('#club .club-panel')].find((x) => x.scrollTop > 0);
+      const before = sc?.scrollTop ?? 0;
+      el.click();
+      const sc2 = [document.getElementById('club'), ...document.querySelectorAll('#club .club-panel')].find((x) => x.scrollTop > 0);
+      return { before, after: sc2?.scrollTop ?? 0 };
+    }, sel);
+    ok(kept.before > 0 && Math.abs(kept.after - kept.before) < 2, `Gründung: ${sel} springt (${kept.before} → ${kept.after})`);
+  }
+  await click(p, '[data-action="foundClub"]');
+  await p.waitForTimeout(1000);
+  const head = await p.textContent('#club .club-id h2');
+  ok(head === 'FC Testhausen', `Vereinsname nicht übernommen: ${head}`);
+  const saved = await p.evaluate(() => JSON.parse(localStorage.getItem('sunday-league:career')));
+  const club = saved.clubs.find((c) => c.human);
+  ok(club.short === 'FCT' && !!club.crest && !saved.founding, 'Kürzel/Wappen nicht gespeichert');
+  ok(saved.cash === cash0, `Erstausstattung hat Geld gekostet (${cash0} → ${saved.cash})`);
+  // Ehrenamt: Wirt aus dem Kader, Platzwart per Aushang.
+  await click(p, '[data-action="area"][data-value="team"]');
+  await p.waitForTimeout(300);
+  await click(p, '[data-action="tab"][data-value="youth"]');
+  await p.waitForTimeout(300);
+  await click(p, '[data-action="youthTab"][data-value="club"]');
+  await p.waitForTimeout(300);
+  await click(p, '[data-action="staffSquad"][data-value="wirt"]');
+  await p.waitForTimeout(300);
+  await click(p, '[data-action="staffOutside"][data-value="platzwart"]');
+  await p.waitForTimeout(300);
+  const staff = await p.evaluate(() => JSON.parse(localStorage.getItem('sunday-league:career')).staff);
+  ok(staff.wirt?.playing && staff.wirt.idx != null, 'Wirt aus dem Kader nicht besetzt');
+  ok(staff.platzwart?.outside && staff.platzwart.fee === 80, 'Platzwart per Aushang nicht besetzt');
+  ok(/80 €/.test(await p.textContent('#club li[data-role="platzwart"]')), 'Pauschale nicht angezeigt');
+  ok(!p.errors.length, `Fehler ${p.errors.slice(0, 2).join(' | ')}`);
+  await p.context().close();
+  return ok.done();
+}
+
 // Vereinsheim „Heute": Raum mit Fenster (Kamera zeigt dort das ganze Bild) und klassische Kacheln.
 export async function homeViews(b) {
   const ok = checker('Vereinsheim „Heute": Fenster zeigt den Platz, klassische Ansicht per Notizbuch');
@@ -258,6 +327,7 @@ export async function homeViews(b) {
     await p.fill('#cc-last', 'Test');
     await p.click('#creator [data-action="done"]');
     await p.waitForTimeout(1500);
+    await founding(p);
     await click(p, '[data-action="area"][data-value="home"]');
     await p.waitForTimeout(600);
     const win = await p.evaluate(() => {
@@ -355,6 +425,7 @@ export async function run() {
   f += await menus(b);
   f += await english(b);
   f += await homeViews(b);
+  f += await clubSetup(b);
   f += await saveAtWhistle(b);
   f += await oldSave(b, process.env.E2E_OLD_SAVE ?? fileURLToPath(new URL('./fixtures/save-858e978.json', import.meta.url)));
   await b.close();

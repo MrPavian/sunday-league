@@ -172,6 +172,8 @@ die Komik entsteht aus dem Alltag.
 - **Kreisblatt-Sonderheft**: Am Saisonende der Rückblick mit Schlagzeile, Torjäger, Spieler der Saison, höchstem Sieg,
   bitterster Pleite und dem Aufreger des Jahres – archiviert im Museum und als Bild zum Teilen.
 - **Einsteiger-Tipps**: Jedes System wird einmal kurz erklärt, genau in der Woche, in der es zum ersten Mal auftaucht.
+- **Gründungsversammlung** zum Karrierestart: Vereinsname, Kürzel, Trikot und Wappen selbst festlegen – die Erstausstattung zahlt der Förderverein
+- **Ehrenämter selbst besetzen**: Co-Trainer, Wirt, Platzwart und Jugendleiter aus dem eigenen Kader (umsonst, nebenher) oder per Aushang von außen – mit der steuerfreien Übungsleiter- bzw. Ehrenamtspauschale (275 € bzw. 80 € im Monat)
 - **Vereinsleben**: Jahreshauptversammlung mit Beitragsbeschluss, Förderverein, Kassenprüfung (ist der Kassenwart
   ehrlich?), Nachbarn und Ordnungsamt, Flohmarkt, Trainingslager und Weihnachtsfeier – mit festen Terminen im
   Vereinskalender und Folgen, die Woche für Woche mitlaufen

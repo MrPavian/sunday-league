@@ -1861,3 +1861,14 @@ body.manager #end { padding-bottom: 84px; }
 /* Android-Zurück-Taste: kurzer Hinweis unten */
 .back-toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 9999; padding: 8px 14px; background: #1b1d22; color: var(--ink, #f2efe6); border: 2px solid #000; box-shadow: 2px 2px 0 #000; font-size: var(--fs-secondary, 14px); max-width: calc(100vw - 32px); text-align: center; }
 .back-toast[hidden] { display: none; }
+
+/* Gründungsversammlung (Karrierestart): Name, Trikot, Wappen. */
+.club-panel.founding { display: grid; gap: 12px; align-content: start; padding-bottom: 24px; }
+.founding h2 { margin: 0; color: var(--accent); font-size: 30px; }
+.founding .lead { margin: 0; opacity: 0.85; max-width: 70ch; }
+.founding-actions { display: flex; justify-content: flex-end; position: sticky; bottom: 0; padding: 10px 0; background: linear-gradient(transparent, rgba(10, 12, 14, 0.95) 40%); }
+
+/* Ehrenamt selbst besetzen. */
+.staff li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-bottom: 10px; }
+.staff .staff-pick { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+.staff .staff-pick select { max-width: 100%; }

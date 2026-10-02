@@ -5,7 +5,7 @@ import { kitPreviewURL } from '../../render/kitPaint.js';
 import { museum } from '../../career/museum.js';
 import { clubLife, FEE_NAMES, neighborText } from '../../career/clublife.js';
 import { reviewHTML } from '../review.js';
-import { button } from '../ds.js';
+import { button, esc } from '../ds.js';
 import { CREST_COLORS, CREST_DIVISIONS, CREST_SHAPES, CREST_SYMBOLS, crestOf, crestSVG, defaultCrest, FIGURES } from '../crest.js';
 import { humanClub, KIT_COLORS, KIT_PATTERNS, kitEditable, updateCrest, playerOf, table } from '../../career/career.js';
 import { FINES, KIT_COST, MEMBER_FEE, SLOTS } from '../../career/finances.js';
@@ -22,17 +22,6 @@ import { hex, first, euro } from './shared.js';
 export const clubScreens = {
   tab_club() {
     const c = this.career;
-    const club = humanClub(c);
-    const editable = kitEditable(c);
-    this.draft ??= { name: club.name, short: club.short, kit: { pattern: 'uni', second: 0xf2efe6, ...club.kit } };
-    const d = this.draft;
-    const mainSponsor = shirtSponsor(c);
-    const sponsorShown = mainSponsor ? { name: mainSponsor.name, color: sponsorColor(mainSponsor) } : null;
-    const shirtCss = (k) => `url(${kitPreviewURL(k, sponsorShown)}) center / 100% 100%`;
-    const swatches = (part, label) => `
-      <div class="swatch-row"><span>${label}</span>${KIT_COLORS.map(
-        (col) => `<button class="swatch ${d.kit[part] === col ? 'on' : ''}" style="background:${hex(col)}" data-action="kitColor" data-value="${part}:${col}" ${editable ? '' : 'disabled'}></button>`,
-      ).join('')}</div>`;
     const k = c.coach;
     const me = k?.idx != null ? this.p(k.idx) : null;
     const profile = k
@@ -54,6 +43,25 @@ export const clubScreens = {
       ${this.facilityBlock()}
       ${this.clubLifeBlock()}
       ${this.chronicleBlock()}
+      ${this.kitForm()}
+      ${this.crestBlock()}`;
+  },
+
+  // Name, Kürzel und Trikot. Bei der Gründung (Karrierestart) ohne Bestellknopf – das macht der Gründungsknopf.
+  kitForm(founding = false) {
+    const c = this.career;
+    const club = humanClub(c);
+    const editable = founding || kitEditable(c);
+    this.draft ??= { name: club.name, short: club.short, kit: { pattern: 'uni', second: 0xf2efe6, ...club.kit } };
+    const d = this.draft;
+    const mainSponsor = shirtSponsor(c);
+    const sponsorShown = mainSponsor ? { name: mainSponsor.name, color: sponsorColor(mainSponsor) } : null;
+    const shirtCss = (k) => `url(${kitPreviewURL(k, sponsorShown)}) center / 100% 100%`;
+    const swatches = (part, label) => `
+      <div class="swatch-row"><span>${label}</span>${KIT_COLORS.map(
+        (col) => `<button class="swatch ${d.kit[part] === col ? 'on' : ''}" style="background:${hex(col)}" data-action="kitColor" data-value="${part}:${col}" ${editable ? '' : 'disabled'}></button>`,
+      ).join('')}</div>`;
+    return `
       <div class="club-form">
         <div class="kit-preview">
           <div class="shirt" style="background:${shirtCss(d.kit)}"></div>
@@ -63,8 +71,8 @@ export const clubScreens = {
           <small class="sponsor-note">${sponsorShown ? tr(`Auf der Brust: ${sponsorShown.name}`, `On the chest: ${sponsorShown.name}`) : tr('Noch kein Trikotsponsor', 'No shirt sponsor yet')}</small>
         </div>
         <div class="fields">
-          <label>${tr('Vereinsname', 'Club name')} <input data-field="name" value="${d.name}" maxlength="32" ${editable ? '' : 'disabled'}></label>
-          <label>${tr('Kürzel', 'Short name')} <input data-field="short" value="${d.short}" maxlength="4" ${editable ? '' : 'disabled'}></label>
+          <label>${tr('Vereinsname', 'Club name')} <input data-field="name" value="${esc(d.name)}" maxlength="32" ${editable ? '' : 'disabled'}></label>
+          <label>${tr('Kürzel', 'Short name')} <input data-field="short" value="${esc(d.short)}" maxlength="4" ${editable ? '' : 'disabled'}></label>
           <div class="swatch-row"><span>${tr('Muster', 'Pattern')}</span>${Object.entries(KIT_PATTERNS)
             .map(([id, label]) => `<button class="${d.kit.pattern === id ? 'active' : ''}" data-action="kitPattern" data-value="${id}" ${editable ? '' : 'disabled'}>${label}</button>`)
             .join('')}</div>
@@ -73,12 +81,24 @@ export const clubScreens = {
           ${swatches('shorts', tr('Hose', 'Shorts'))}
           ${swatches('socks', tr('Stutzen', 'Socks'))}
           ${this.clubNote ? `<p class="warn">${this.clubNote}</p>` : ''}
-          ${editable
+          ${founding ? '' : editable
             ? `<button class="primary" data-action="saveClub">${tr(`Trikots bestellen <small>(neuer Satz ${KIT_COST} €, Name gratis)</small>`, `Order kits <small>(new set €${KIT_COST}, name change free)</small>`)}</button>`
             : `<p class="warn">${tr('Die Trikots für diese Saison sind bestellt. Änderungen wieder vor dem ersten Spieltag der nächsten Saison.', 'This season\'s kits are ordered. Changes again before the first matchday of next season.')}</p>`}
         </div>
-      </div>
-      ${this.crestBlock()}`;
+      </div>`;
+  },
+
+  // Gründungsversammlung: Zu Karrierebeginn legst du Name, Trikot und Wappen fest – die Erstausstattung ist frei.
+  founding() {
+    return `<div class="club-panel founding">
+        <h2>${tr('Gründungsversammlung', 'Founding meeting')}</h2>
+        <p class="lead">${tr('Bevor der Ball rollt: Wie heißt dein Verein, in welchen Farben läuft er auf, und was steht auf dem Wappen? Die ersten Trikots zahlt der Förderverein. Später kostet ein neuer Satz Geld, das Wappen bleibt immer änderbar.', 'Before a ball is kicked: what is your club called, what colours does it play in, and what goes on the crest? The supporters\' club pays for the first kits. Later a new set costs money; the crest can always be changed.')}</p>
+        ${this.kitForm(true)}
+        ${this.crestBlock(true)}
+        <div class="actions founding-actions">
+          <button class="primary" data-action="foundClub">${tr('Verein eintragen und loslegen', 'Register the club and get started')}</button>
+        </div>
+      </div>`;
   },
 
   crestAction(action, value) {
@@ -105,8 +125,8 @@ export const clubScreens = {
   },
 
   // Wappen-Editor: Form, Teilung, Symbol oder Figur, vier Farben, Schriftband.
-  crestBlock() {
-    const club = humanClub(this.career);
+  crestBlock(founding = false) {
+    const club = { ...humanClub(this.career), ...(founding && this.draft ? { name: this.draft.name || humanClub(this.career).name, short: this.draft.short || humanClub(this.career).short } : {}) };
     const d = this.crestDraft ?? crestOf(club);
     const slot = this.crestSlot ?? 'field';
     const mini = (patch) => crestSVG({ ...d, ...patch, colors: d.colors }, { size: 30, short: club.short });
@@ -123,7 +143,7 @@ export const clubScreens = {
             <button data-action="crestRandom">${tr('Würfeln', 'Shuffle')}</button>
             <button data-action="crestBand" class="${d.band ? 'active' : ''}">${tr('Schriftband', 'Name band')}</button>
             ${this.crestDraft ? `<button data-action="crestReset">${tr('Verwerfen', 'Discard')}</button>` : ''}
-            <button class="primary" data-action="crestSave" ${this.crestDraft ? '' : 'disabled'}>${tr('Wappen übernehmen', 'Use this crest')}</button>
+            ${founding ? '' : `<button class="primary" data-action="crestSave" ${this.crestDraft ? '' : 'disabled'}>${tr('Wappen übernehmen', 'Use this crest')}</button>`}
           </div>
           ${this.crestNote && !this.crestDraft ? `<p class="empty">${this.crestNote}</p>` : ''}
         </div>

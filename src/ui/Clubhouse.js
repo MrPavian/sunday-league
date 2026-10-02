@@ -8,7 +8,12 @@ import { button, haptic, icon, tabs as uiTabs } from './ds.js';
 import { TacticBoard } from './TacticBoard.js';
 import { bindFlips, phone } from './world.js';
 import { crestOf, crestSVG } from './crest.js';
-import { argueRumor, askRumor, currentLineup, humanClub, updateClub, setClubTactic, setClubPlan, maxSquad, recruit, releasePlayer, scoutRumor, talkRumor, nudge, playerOf, resetLineup, setLineupSlot, seasonOver, table } from '../career/career.js';
+import { appointStaff, releaseStaff } from '../career/staff.js';
+
+// Was im Vereinsheim scrollt (je nach Bildschirmgröße das Fenster, der Inhalt oder die Mappe).
+const SCROLLERS = '.club-panel, .club-main, .club-body, .club-folder, .folder-sheet';
+const scrollKey = (el) => SCROLLERS.split(', ').find((sel) => el.matches(sel));
+import { argueRumor, askRumor, currentLineup, humanClub, updateClub, updateCrest, setClubTactic, setClubPlan, maxSquad, recruit, releasePlayer, scoutRumor, talkRumor, nudge, playerOf, resetLineup, setLineupSlot, seasonOver, table } from '../career/career.js';
 import { appointCoach, startCourse } from '../career/youthteams.js';
 import { acceptSponsor, bookTrip, KIT_COST } from '../career/finances.js';
 import { tripChoose } from '../career/trip.js';
@@ -104,6 +109,16 @@ export class Clubhouse {
         const [team, kind] = String(value).split(':');
         appointCoach(this.career, team, kind, (idx) => playerOf(this.career, idx).name);
         this.h.onChange();
+      } else if (action === 'staffSquad') {
+        const sel = this.root.querySelector(`select[data-staff-pick="${value}"]`);
+        if (sel) appointStaff(this.career, value, { idx: Number(sel.value) }, { playerOf: (c, idx) => playerOf(c, idx), squad: humanClub(this.career).squad });
+        this.h.onChange();
+      } else if (action === 'staffOutside') {
+        appointStaff(this.career, value, 'outside');
+        this.h.onChange();
+      } else if (action === 'staffRelease') {
+        releaseStaff(this.career, value);
+        this.h.onChange();
       } else if (action === 'youthCourse') {
         startCourse(this.career, value);
         this.h.onChange();
@@ -114,7 +129,15 @@ export class Clubhouse {
         this.draft.kit[part] = Number(color);
       } else if (action === 'kitPattern') this.draft.kit.pattern = value;
       else if (action.startsWith('crest')) this.crestAction(action, value);
-      else if (action === 'saveClub') {
+      else if (action === 'foundClub') {
+        updateClub(this.career, this.draft ?? {}, { free: true });
+        if (this.crestDraft) updateCrest(this.career, this.crestDraft);
+        delete this.career.founding;
+        this.draft = null;
+        this.crestDraft = null;
+        this.tab = 'home';
+        this.h.onChange();
+      } else if (action === 'saveClub') {
         const res = updateClub(this.career, this.draft);
         this.clubNote = res === 'nocash' ? tr(`Zu wenig in der Kasse – ein neuer Trikotsatz kostet ${KIT_COST} €.`, `Not enough in the kitty – a new kit costs €${KIT_COST}.`) : tr('Bestellt!', 'Ordered!');
         if (res !== 'nocash') this.draft = null;
@@ -372,6 +395,29 @@ export class Clubhouse {
     });
   }
 
+  // Neuzeichnen ersetzt das ganze Fenster – ohne das hier springt jede Farbwahl nach oben.
+  saveScroll() {
+    const els = [this.root, ...this.root.querySelectorAll(SCROLLERS)];
+    return { page: document.scrollingElement?.scrollTop ?? 0, list: els.map((el) => [el === this.root ? null : scrollKey(el), el.scrollTop]).filter(([, top]) => top > 0) };
+  }
+
+  restoreScroll({ page, list }) {
+    for (const [key, top] of list) {
+      const el = key == null ? this.root : this.root.querySelector(key);
+      if (el) el.scrollTop = top;
+    }
+    if (document.scrollingElement && page) document.scrollingElement.scrollTop = page;
+  }
+
+  renderFounding() {
+    const scroll = this.shownTab === 'founding' ? this.saveScroll() : null;
+    this.shownTab = 'founding';
+    this.root.classList.remove('see-through');
+    this.root.innerHTML = this.founding();
+    if (scroll) this.restoreScroll(scroll);
+    this.bindClubForm();
+  }
+
   bindClubForm() {
     this.root.querySelectorAll('input[data-field]').forEach((el) =>
       el.addEventListener('input', () => {
@@ -432,6 +478,7 @@ export class Clubhouse {
   // false = nichts mehr zurückzunehmen (dann geht es ins Hauptmenü).
   back() {
     if (this.busy) return true;
+    if (this.career?.founding) return false; // Gründung bleibt offen, geht beim nächsten Mal weiter
     if (this.pick) this.pick = null;
     else if (this.openPlayer != null) this.openPlayer = null;
     else if (this.tab !== 'home') this.tab = 'home';
@@ -448,6 +495,7 @@ export class Clubhouse {
   render() {
     const c = this.career;
     const club = humanClub(c);
+    if (c.founding) return this.renderFounding();
     const over = seasonOver(c);
     const roundNo = Math.min(c.round + 1, c.fixtures.length);
     if (this.tab === 'home' || !this[`tab_${this.tab}`]) this.tab = 'home';
@@ -472,6 +520,7 @@ export class Clubhouse {
     // Neuer Bereich/Tab: Inhalt blendet einmal kurz ein (nicht bei jedem Neuzeichnen).
     const enter = this.shownTab !== this.tab;
     this.shownTab = this.tab;
+    const scroll = enter ? null : this.saveScroll();
     this.root.innerHTML = `
       <div class="club-panel club2" style="--kit:${hex(club.kit.shirt)}">
         <nav class="club-rail" aria-label="${tr('Bereiche', 'Sections')}">${rail}</nav>
@@ -485,6 +534,7 @@ export class Clubhouse {
           <div class="club-body ${area.id === 'home' ? 'is-home' : 'tab'}${folder ? ' in-folder' : ''}${enter ? ' enter' : ''}">${area.id === 'home' ? this.hub() : folder ? `<div class="m-folder club-folder"><div class="folder-sheet">${this[`tab_${this.tab}`]()}</div></div>` : this[`tab_${this.tab}`]()}</div>
         </div>
       </div>`;
+    if (scroll) this.restoreScroll(scroll);
     this.bindLineup();
     // Chat im Handy: beim Öffnen unten anfangen (neueste Nachricht), wie im echten Messenger.
     const wa = this.root.querySelector('.phone-stage.open .wa-body');

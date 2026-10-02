@@ -34,6 +34,8 @@ export class CoachCreator {
     this.onDone = onDone;
     this.onCancel = onCancel;
     this.root.hidden = false;
+    this.root.innerHTML = '';
+    this.root.scrollTop = 0;
     this.render();
     this.root.querySelector('#cc-first')?.focus();
   }
@@ -108,10 +110,13 @@ export class CoachCreator {
         </div>`,
       )
       .join('');
+    // Neuzeichnen ersetzt alles – Scrollposition merken, sonst springt jede Farbwahl nach oben.
+    const panel = this.root.querySelector('.club-panel');
+    const keep = [this.root.scrollTop, panel?.scrollTop ?? 0, document.scrollingElement?.scrollTop ?? 0];
     this.root.innerHTML = `
       <div class="club-panel creator">
         <h2>${this.successor ? tr('Der neue Trainer', 'The new manager') : tr('Dein Spielertrainer', 'Your player-manager')}</h2>
-        <p class="lead">${this.successor ? tr(`Eine neue Ära beim ${this.successor}. Bis 45 spielt der Neue selbst mit.`, `A new era at ${this.successor}. Up to 45, the new manager plays too.`) : tr('Du trainierst den SV Sonntagsschuss – und stehst selbst mit auf dem Platz.', 'You manage SV Sonntagsschuss – and play in the team yourself.')}</p>
+        <p class="lead">${this.successor ? tr(`Eine neue Ära beim ${this.successor}. Bis 45 spielt der Neue selbst mit.`, `A new era at ${this.successor}. Up to 45, the new manager plays too.`) : tr('Du trainierst einen Freizeitverein – und stehst selbst mit auf dem Platz. Name, Trikot und Wappen des Vereins legst du gleich danach fest.', 'You manage a recreational club – and play in the team yourself. You choose the club name, kit and crest right after this.')}</p>
         <div class="creator-grid">
           <section>
             <div class="row">
@@ -148,6 +153,10 @@ export class CoachCreator {
           <button type="button" class="primary" data-action="done">${this.successor ? tr('Amt übernehmen', 'Take charge') : tr('Karriere starten', 'Start career')}</button>
         </div>
       </div>`;
+    this.root.scrollTop = keep[0];
+    const fresh = this.root.querySelector('.club-panel');
+    if (fresh) fresh.scrollTop = keep[1];
+    if (document.scrollingElement && keep[2]) document.scrollingElement.scrollTop = keep[2];
     this.renderPreview();
   }
 

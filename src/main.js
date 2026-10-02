@@ -553,6 +553,7 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
       onDone(coach) {
         creator.hide();
         career = createCareer({ seed: careerSeed, coach, leagueSize });
+        career.founding = true; // erst Name, Trikot und Wappen (Gründungsversammlung)
         saveCareer(career);
         openClubhouse();
       },

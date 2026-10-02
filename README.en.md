@@ -99,6 +99,8 @@ the clubhouse. And at some point the knees creak and the next generation takes o
 - **The group chat lives:** answers change team chemistry, form and reliability; every decision shows its consequences
 - **The club remembers:** players who leave in a row turn up at rivals and score "of all people" against you;
   bogey teams, opposing managers in the local paper, handshakes or brawls after the final whistle
+- **Founding meeting** at the start of a career: choose club name, short name, kit and crest – the supporters' club pays for the first kits
+- **Fill volunteer posts yourself:** assistant manager, bar manager, groundsman and youth director from your own squad (free, on the side) or via a notice from outside – paid the tax-free German coaching or volunteer allowance (€275 or €80 a month)
 - **Club life:** annual general meeting, supporters' association, treasurer audit, neighbours, flea market,
   training camp and Christmas party; a fines list (air shot €1, own goal buys a round)
 - **Sponsors with quirks**, over 100 jobs with perks, shirts and a crest editor, an expandable clubhouse

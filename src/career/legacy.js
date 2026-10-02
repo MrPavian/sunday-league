@@ -208,7 +208,7 @@ export function successionCandidates(c) {
     out.push({ type: 'kind', child: child.name, name: `${child.name} ${k.last ?? ''}`.trim(), age, desc: tr(`${child.sex === 'w' ? 'Tochter' : 'Sohn'}${plays ? ', spielt im Kader – wird Spielertrainer' : ''}. Familientradition: Die Mannschaft kennt ${child.sex === 'w' ? 'sie' : 'ihn'} seit dem Kinderwagen.`, `${child.sex === 'w' ? 'Daughter' : 'Son'}${plays ? ', plays in the squad – becomes player-manager' : ''}. Family tradition: the team has known ${child.sex === 'w' ? 'her' : 'him'} since the pram.`) });
   }
   const co = c.staff?.cotrainer;
-  if (co && co.idx !== k?.idx) out.push({ type: 'cotrainer', idx: co.idx, name: co.name, age: co.idx != null ? playerOf(c, co.idx).age : null, desc: tr('Dein Co-Trainer. Kennt jede Macke der Mannschaft und jeden Schlüssel zum Geräteraum.', 'Your assistant. Knows every quirk of the team and every key to the equipment room.') });
+  if (co && co.idx != null && co.idx !== k?.idx) out.push({ type: 'cotrainer', idx: co.idx, name: co.name, age: co.idx != null ? playerOf(c, co.idx).age : null, desc: tr('Dein Co-Trainer. Kennt jede Macke der Mannschaft und jeden Schlüssel zum Geräteraum.', 'Your assistant. Knows every quirk of the team and every key to the equipment room.') });
   const vets = club.squad
     .filter((idx) => idx !== k?.idx && !c.players[idx]?.fromYouth && playerOf(c, idx).age >= 29)
     .map((idx) => ({ idx, score: totalApps(c, idx) + (hasTrait(playerOf(c, idx), 'anfuehrer') ? 25 : 0) + (hasTrait(playerOf(c, idx), 'ex_profi') ? 15 : 0) }))
