@@ -226,20 +226,21 @@ teuren Effekte für langsame Rechner abschalten.
 ## 8. Stand und Grenzen
 
 **Fertig und spielbar**
-- Match mit sechs Spielorten, Wetter, Vorfällen, Schiri, Auswechslungen, Standards
-- Karriere über beliebig viele Saisons mit drei Ligen, Relegation, Turnieren und Derbys
-- Alle Vereins-, Lebens- und Geschichtensysteme aus der Tabelle oben
+- Match auf acht Spielorten vom 4 gegen 4 bis zum 11 gegen 11 (Großfeld mit Abseits), Wetter, Vorfälle,
+  Schiri, Auswechslungen, Standards
+- Karriere über beliebig viele Saisons mit fünf Ligen (Freizeitliga bis Bezirksliga), Relegation, Turnieren und Derbys
+- Alle Vereins-, Jugend-, Lebens- und Geschichtensysteme aus der Tabelle oben, dazu Fitness, Werben mit
+  Motiven, Abwerbeversuche und Profivertrag
 - Nachfolge über Generationen
 - Sechs Challenges
+- Deutsch und Englisch, im Browser (GitHub Pages) und als Android-APK
 
 **Bekannte Grenzen**
-- **Nur Deutsch** – alle Texte stehen direkt im Code, ein Übersetzungsgerüst fehlt noch.
-- **Zwei Ligen** – über der Kreisklasse C geht es noch nicht weiter.
-- **Kein Tutorial**, Einstellungen noch ohne Tastenbelegung und Lautstärke.
-- **Spielstand nur im Browser** – er geht verloren, wenn man die Browserdaten löscht; es gibt keinen Export.
-- **Ein Spielstand** gleichzeitig.
-- **Große JavaScript-Datei** (knapp 1 MB, gut 280 KB komprimiert) – noch ohne Aufteilung.
-- **Grafik** bisher nur mit einem Software-Renderer automatisch getestet; auf schwacher Hardware hilft die Taste G.
+- **Keine Store-Version** – die APK ist ein Debug-Build zum Selbstinstallieren.
+- **Spielstand nur lokal** – im Browser bzw. in der App; Export und Import als Datei gibt es.
+- **Großfeld** mit 22 Spielern ist deutlich teurer zu zeichnen; auf sehr schwachen Handys hilft die Taste G
+  bzw. eine niedrigere Qualitätsstufe.
+- **Grafik** bisher nur mit einem Software-Renderer automatisch getestet.
 
 ---
 

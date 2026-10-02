@@ -1,6 +1,8 @@
 # Sunday League
 
-**Kreisklasse-Fußball mit Vollamateuren – vom Hinterhof bis zum Rasenplatz.**
+**Amateurfußball mit Vollamateuren – vom Hinterhof bis zur Bezirksliga.**
+
+🇬🇧 **[English version → README.en.md](README.en.md)**
 Ein Fußball- und Vereinsspiel über die schönste Nebensache der Welt, wie sie wirklich gespielt wird:
 Sonntag, 10:30 Uhr, Nieselregen, sieben Zuschauer, zwei davon Hunde.
 
@@ -13,6 +15,8 @@ Sonntag, 10:30 Uhr, Nieselregen, sieben Zuschauer, zwei davon Hunde.
 > dentists, bus drivers and apprentices, play the matches yourself, and live through job stress,
 > derbies, pub nights and season trips – across generations. Fully playable in English:
 > pick the language on first start or any time in the settings (key **O**).
+> **[Full English README](README.en.md)** · **[Play in the browser](https://mrpavian.github.io/sunday-league/)** ·
+> **[Android APK](https://github.com/MrPavian/sunday-league/releases/latest/download/sunday-league.apk)**
 
 ![Startbild](docs/startbild.png)
 
@@ -22,15 +26,19 @@ Sonntag, 10:30 Uhr, Nieselregen, sieben Zuschauer, zwei davon Hunde.
 
 ## Jetzt spielen
 
-**Im Browser:** <https://mrpavian.github.io/sunday-league/> – auf dem PC mit Tastatur oder Gamepad.
-Der Spielstand wird im Browser gespeichert.
+**Im Browser:** **<https://mrpavian.github.io/sunday-league/>** – auf dem PC mit Tastatur oder Gamepad, auf dem
+Handy als Trainer an der Seitenlinie. Der Spielstand wird im Browser gespeichert (Export/Import unter Spielstände).
 
-**Auf Android:** Die APK hängt an jedem Lauf des Workflows „Android“ (Actions → Android → Artifacts) und bei
-Versions-Tags am Release. Installieren: APK aufs Handy, öffnen, „Unbekannte Quellen“ für den Browser/Dateimanager erlauben.
+**Auf Android (APK):** **[sunday-league.apk herunterladen](https://github.com/MrPavian/sunday-league/releases/latest/download/sunday-league.apk)**
+(immer die neueste Version, siehe [Releases](https://github.com/MrPavian/sunday-league/releases)). Installieren: APK aufs Handy,
+öffnen und „Unbekannte Quellen“ für Browser oder Dateimanager erlauben. Es ist eine Debug-Build ohne Play-Store-Signatur;
+das Spiel braucht keine Berechtigungen und kein Internet. Jeder Push auf `main` baut außerdem eine APK im Workflow
+„Android“ (Actions → Android → Artifacts).
 Alternativ die Browser-Version in Chrome öffnen und „Zum Startbildschirm hinzufügen“ – dann läuft sie wie eine App, auch offline.
 
 **Taktik** (Vereinsheim → Aufstellung): Pro Spielformat ein System – etwa 2-1-1, Raute oder 2-2 im Fünfer,
-2-3-1, 3-2-1, 2-2-2 oder 3-1-2 im Siebener – und ein Spielstil: *Ausgewogen*, *Offensiv*, *Auf Konter lauern*,
+2-3-1, 3-2-1, 2-2-2 oder 3-1-2 im Siebener, 3-3-2, 3-4-1, 4-3-1 oder 2-4-2 im Neuner und 4-4-2, 4-3-3, 4-2-3-1
+oder 3-5-2 auf dem Großfeld – und ein Spielstil: *Ausgewogen*, *Offensiv*, *Auf Konter lauern*,
 *Flügelspiel*, *Kurzpassspiel*, *Hohes Pressing* oder *Mauern*. Die Spieler halten ihre Position im System, der Block
 verschiebt sich mit dem Ball, verteidigt wird in Zonen. Jeder Gegner hat seine eigene Handschrift, sie steht beim Anpfiff unter der Anzeigetafel.
 
@@ -73,7 +81,10 @@ Feldspieler ins Tor). Die Diagnose in der Karriere ist genau die Verletzung aus 
 Back oder Knopf „Wechsel") öffnet die Wechseltafel: Das Spiel steht, du wählst, wer raus- und wer
 reinkommt – oder „Automatisch: der Müdeste". Die Regeln hängen von der Liga ab: In der Freizeitliga und
 bei Freundschaftsspielen wird fliegend gewechselt (Rückwechsel erlaubt), ab der Kreisklasse zählt der
-Schiri mit – vier Wechsel, raus ist raus. Einstellbar unter Einstellungen → Auswechseln.
+Schiri mit – vier Wechsel, raus ist raus, in der Bezirksliga fünf. Einstellbar unter Einstellungen → Auswechseln.
+
+**Abseits** gibt es nur auf dem Großfeld (Bezirksliga): Es zählt die Stellung beim Pass, nach Einwurf, Abstoß und
+Ecke gibt es keins – und ohne Linienrichter übersieht der Schiri ab und zu eins.
 
 **Lokal:**
 
@@ -119,7 +130,10 @@ die Komik entsteht aus dem Alltag.
 - **Echtes Passspiel**: Mitspieler laufen dem Ball entgegen, rücken bei Ballbesitz auf und sichern hinten ab
 - **Torhüter mit Reaktionszeit**: Platzierte Schüsse sind oft drin, im Eins gegen eins kommt der Keeper raus
   und wirft sich in die Füße – klappt mal, mal nicht
-- **Sechs Spielorte** mit eigener Physik: Betonplatten, Asphalt, Parkwiese, Asche, Rasen, Hallenparkett
+- **Acht Spielorte** mit eigener Physik: Betonplatten, Asphalt, Parkwiese, Asche, Rasen, Hallenparkett – vom 4 gegen 4
+  im Hinterhof über 7er- und 9er-Feld bis zum 11 gegen 11 auf dem Großfeld (105 × 68 m) mit Abseits
+- **Offensive mit Ideen**: Doppelpass, Ablagen mit dem Rücken zum Tor, Ball halten, Steilpässe, Abschluss aus guter Position;
+  der Keeper faustet hohe Bälle weg
 - **Amateurfußball, der sich so anfühlt**: Ausdauer, verspringende Bälle, Schürfwunden auf hartem Boden,
   „Ans Auto“-Regel auf dem Parkplatz
 - **Vorfälle im Spiel**: Ein Hund klaut den Ball, der Rasensprenger springt an, die Polizei kommt
@@ -131,7 +145,12 @@ die Komik entsteht aus dem Alltag.
 
 ### Karriere & Verein
 - **Wochenrhythmus**: Chatgruppe, Open Training, Stammkneipe, Ereignis, Spieltag
-- **Drei Ligen mit Relegation**: Freizeitliga, Kreisklasse C und B – der Zweite spielt in Hin- und Rückspiel um den Aufstieg
+- **Fünf Ligen mit Relegation**: Freizeitliga, Kreisklasse C und B (7 gegen 7), Kreisliga A (9 gegen 9) und
+  Bezirksliga (11 gegen 11) – der Zweite spielt in Hin- und Rückspiel um den Aufstieg. Oben wird es teurer:
+  Eintritt, mehr Zuschauer und größere Sponsoren, aber auch Aufwandsentschädigung für gute Spieler
+  (höchstens 250 € im Monat, wie beim DFB)
+- **Fitness**: 50–100 % je Spieler; wer müde aufläuft, startet mit weniger Puste und verletzt sich eher.
+  „Automatisch aufstellen“ achtet auf Stärke auf der Position, Form und Fitness
 - **Spielerentwicklung sichtbar**: Formkurve, Stärke-Verlauf über die Saisons, Spieler des Monats im Kreisblatt
 - **Eigener Spielertrainer**: Name, Alter, Beruf, Beziehung, Kinder und Spielertyp selbst festlegen
 - **Die Gruppe lebt**: Sprüche im Teamchat („Du hast jetzt 3x in Folge abgesagt.", „Geiles Spiel letzte Woche!") –
@@ -162,9 +181,17 @@ die Komik entsteht aus dem Alltag.
   elf Teilungen, 15 Symbolen, neun Wappentieren und frei wählbaren Farben. Auf Asche und bei Regen werden die Trikots dreckig.
 - **Vereinsheim ausbauen**: warme Duschen, Grill & Theke, Flutlicht, Tribüne – mit Handwerkern oder
   als Arbeitseinsatz mit Überraschungen
-- **Transfers, Scouting und Jugend** von der E- bis zur A-Jugend; Talente werden auch abgeworben
+- **Werben statt Ein-Klick-Transfer**: Jeder Kandidat hat zwei Beweggründe (spielen, Kumpels, Erfolg, Geselligkeit,
+  Trainingszeiten, Geld, Ruhe). Zuschauen und Rumfragen decken sie auf, im Gespräch zählen die richtigen Argumente –
+  Gerüchte hängen 2–4 Wochen am Brett, Versprechen müssen gehalten werden
+- **Abwerbeversuche**: Andere Vereine – oft der Derby-Rivale – werben um deine Bankdrücker und Stars. Und ganz selten
+  unterschreibt einer einen Profivertrag: Dann zahlt der Profiverein Ausbildungsentschädigung
+- **Jugend mit Tiefgang** von der E- bis zur A-Jugend: Trainer und Trainingsschwerpunkt je Mannschaft (C-Lizenz-Kurs),
+  Früh- und Spätentwickler, Schulstress und Elterntypen, wöchentliche Jugendspiele mit Tabelle, Spielfeste in der
+  E-Jugend, Pfingstturnier, DFB-Stützpunkt, Wechsel ins Nachwuchsleistungszentrum mit Ausbildungsentschädigung nach
+  DFB-Jugendordnung – und die Brücke zur Ersten: Mittrainieren und Paten
 - **Turniere**: Stadtmeisterschaft im Sommer, Hallenturnier in der Winterpause
-- **Auf- und Abstieg** zwischen Freizeitliga und Kreisklasse
+- **Auf- und Abstieg** über fünf Ligen
 
 ### Leben & Geschichten
 - **67 Ereignisse mit 3–10 Ausgängen**, vom Happy End bis zum Vereinsaustritt
@@ -196,9 +223,9 @@ die Komik entsteht aus dem Alltag.
 |---|---|---|
 | ![Rasenplatz](docs/screenshot-rasenplatz.png) | ![Halle](docs/screenshot-halle.png) | ![Schnee](docs/screenshot-wetter-schnee.png) |
 
-| Regen | Nebel |
-|---|---|
-| ![Regen](docs/screenshot-wetter-regen.png) | ![Nebel](docs/screenshot-wetter-nebel.png) |
+| Regen | Nebel | Kreisliga A (9 gegen 9) |
+|---|---|---|
+| ![Regen](docs/screenshot-wetter-regen.png) | ![Nebel](docs/screenshot-wetter-nebel.png) | ![Kreisliga A](docs/screenshot-sportplatz.png) |
 
 | Vereinsheim ausbauen | Sponsoren & Kasse |
 |---|---|
@@ -222,7 +249,9 @@ die Komik entsteht aus dem Alltag.
 | Parkplatz am Getränkemarkt | 5 gegen 5 | Asphalt | Jackentore, „Ans Auto“-Regel |
 | Stadtpark an der Kastanienallee | 5 gegen 5 | Parkwiese | Rucksack-Tore, Einwurf an der gedachten Linie |
 | Sportplatz Am Kanal | 5 gegen 5 | Asche | Jugendtore mit Pfosten und Latte, Ecken, Abstöße |
-| Sportplatz Waldesruh | 7 gegen 7 | Rasen | Schiri, Banden der lokalen Sponsoren (ab der Kreisklasse) |
+| Sportplatz Waldesruh | 7 gegen 7 | Rasen | Schiri, Banden der lokalen Sponsoren (Kreisklasse C und B) |
+| Sportanlage Kanalwiese | 9 gegen 9 | Rasen | 70 × 50 m, Tore 5 × 2 m, Elfmeter aus 8 m (Kreisliga A) |
+| Stadion am Kanal | 11 gegen 11 | Rasen | Großfeld 105 × 68 m, Abseits, fünf Wechsel (Bezirksliga) |
 | Sporthalle Kanalschule | 5 gegen 5 | Parkett | Bande, Handballtore, Hallenturnier im Winter |
 
 ---
@@ -263,7 +292,8 @@ Auf englischen Tastaturen liegt „Stochern“ auf **Z** (gleiche Taste).
 
 ```bash
 npm run dev      # Entwicklungsserver mit Hot Reload
-npm test         # 198 Tests (Simulation und Karriere)
+npm test         # 459 Tests (Simulation und Karriere)
+npm run e2e      # Browser-Prüfungen mit Playwright (Menüs, Spiel, Karriere, Grafik)
 npm run longrun -- 8        # acht Saisons am Stück durchspielen und auf Auffälligkeiten prüfen
 npm run longrun -- 10 77 --bot  # dito als aktiver Bot-Manager, mit Kassen-Aufschlüsselung je Liga
 node scripts/engine.mjs 30 240  # Match-Engine vermessen: Tore, Schüsse, Ecken, Elfer … je Platz
@@ -276,7 +306,7 @@ npm run preview  # Build lokal ansehen
 | Parameter | Wirkung |
 |---|---|
 | `?seed=123` | Reproduzierbar dieselben Teams und derselbe Spielverlauf |
-| `?venue=hinterhof\|parkplatz\|park\|ascheplatz\|rasenplatz\|halle` | Überspringt die Platzwahl |
+| `?venue=hinterhof\|parkplatz\|park\|ascheplatz\|rasenplatz\|sportplatz\|grossfeld\|halle` | Überspringt die Platzwahl |
 | `?wetter=regen\|schnee\|nebel\|frost\|wind\|hitze\|laub` | Freundschaftsspiel bei diesem Wetter |
 | `?dauer=60` | Kurzspiel mit 60 Sekunden |
 | `?surface=grass\|ash\|artificial` | Anderer Untergrund auf dem gewählten Platz |
@@ -312,9 +342,10 @@ veröffentlicht (`.github/workflows/pages.yml`). Einmalig im Repository einschal
 
 ## Stand
 
-Spielbarer Prototyp: Das Match, eine vollständige Karriere mit drei Ligen samt Relegation und die meisten Vereins- und
-Lebenssysteme sind fertig. Das Spiel ist komplett auf Deutsch und Englisch spielbar. Offen sind unter anderem
-weitere Ligen und ein Desktop-Build. Details im [Projektüberblick](docs/OVERVIEW.md#8-stand-und-grenzen).
+Spielbarer Prototyp: Das Match vom 4 gegen 4 bis zum 11 gegen 11, eine vollständige Karriere über fünf Ligen samt
+Relegation und die Vereins-, Jugend- und Lebenssysteme sind fertig. Das Spiel ist komplett auf Deutsch und Englisch
+spielbar, im Browser und als Android-APK. Offen sind unter anderem ein Desktop-Build und eine signierte
+Store-Version. Details im [Projektüberblick](docs/OVERVIEW.md#8-stand-und-grenzen).
 
 ## Mitmachen
 
