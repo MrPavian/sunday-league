@@ -1,5 +1,12 @@
 apply plugin: 'com.android.application'
 
+// Release für Google Play: Versionsnummer und Upload-Schlüssel kommen aus der Umgebung
+// (im Workflow aus den GitHub-Secrets). Ohne Schlüssel bleibt alles wie bisher (Debug-APK).
+def env = System.getenv()
+def slVersionCode = (env.SL_VERSION_CODE ?: '1') as Integer
+def slVersionName = env.SL_VERSION_NAME ?: '0.1.0'
+def slKeystore = env.SL_KEYSTORE
+
 android {
     namespace = "de.mrpavian.sundayleague"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +14,8 @@ android {
         applicationId "de.mrpavian.sundayleague"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "0.1.0"
+        versionCode slVersionCode
+        versionName slVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +23,19 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (slKeystore) {
+            release {
+                storeFile file(slKeystore)
+                storePassword env.SL_KEYSTORE_PASSWORD
+                keyAlias env.SL_KEY_ALIAS
+                keyPassword env.SL_KEY_PASSWORD
+            }
+        }
+    }
     buildTypes {
         release {
+            if (slKeystore) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

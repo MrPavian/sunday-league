@@ -1119,3 +1119,50 @@ if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.Ca
     // In eingebetteten Seiten nicht erlaubt – dann eben ohne.
   });
 }
+
+// --- Android: Zurück-Taste -------------------------------------------------------
+// Ohne eigenen Handler beendet Android die App sofort, auch mitten im Spiel. Reihenfolge:
+// offenes Blatt oder Fenster schließen (wie Esc) → Wechsel-/Plantafel → Vereinsheim zurück auf
+// „Heute" → Hauptmenü; im Hauptmenü erst beim zweiten Druck innerhalb von 2 s beenden.
+let backArmedAt = -1e9;
+function backToast(text) {
+  let el = document.getElementById('back-toast');
+  if (!el) el = document.body.appendChild(Object.assign(document.createElement('div'), { id: 'back-toast', className: 'back-toast' }));
+  el.textContent = text;
+  el.hidden = false;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => (el.hidden = true), 1800);
+}
+const pressEscape = () => window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape', key: 'Escape', bubbles: true }));
+function onAndroidBack(exitApp) {
+  if (document.querySelector('.ui-sheet:not([hidden])')) return pressEscape();
+  for (const id of ['settings', 'saves', 'pool', 'challenges']) if (!document.getElementById(id)?.hidden) return pressEscape();
+  if (subPanel.isOpen) return subPanel.close();
+  if (planPanel.isOpen) return planPanel.close();
+  if (halfPanel.isOpen) return; // Halbzeit: erst entscheiden
+  if (!document.getElementById('creator')?.hidden) {
+    creator.hide();
+    return openMenu();
+  }
+  if (mode === 'play') {
+    if (careerMatch) {
+      if (match.phase === 'ended') return finishCareerMatch();
+      return backToast(tr('Das Spiel läuft – zurück ins Vereinsheim nach dem Abpfiff.', 'The match is on – back to the clubhouse after the final whistle.'));
+    }
+    return challengeRun ? openChallenges() : openMenu();
+  }
+  if (mode === 'club') {
+    if (!document.getElementById('ticker')?.hidden) return; // Liveticker: dort entscheidet man selbst
+    if (clubhouse.back()) return;
+    return openMenu();
+  }
+  // Hauptmenü oder Titelbild: zweimal drücken zum Beenden.
+  const now = performance.now();
+  if (now - backArmedAt < 2000) return exitApp();
+  backArmedAt = now;
+  backToast(tr('Nochmal „Zurück“ zum Beenden', 'Press back again to quit'));
+}
+if (window.Capacitor?.isNativePlatform?.()) {
+  import('@capacitor/app').then(({ App }) => App.addListener('backButton', () => onAndroidBack(() => App.exitApp()))).catch(() => {});
+}
+if (params.has('debug')) globalThis.__back = () => onAndroidBack(() => (globalThis.__exited = true));

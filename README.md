@@ -35,6 +35,10 @@ Handy als Trainer an der Seitenlinie. Der Spielstand wird im Browser gespeichert
 das Spiel braucht keine Berechtigungen und kein Internet. Jeder Push auf `main` baut außerdem eine APK im Workflow
 „Android“ (Actions → Android → Artifacts).
 Alternativ die Browser-Version in Chrome öffnen und „Zum Startbildschirm hinzufügen“ – dann läuft sie wie eine App, auch offline.
+Ist im Repository ein Upload-Schlüssel hinterlegt, baut der Workflow zusätzlich ein signiertes App-Bundle für Google Play
+(Artefakt `sunday-league-aab`). Store-Grafiken liegen in [`docs/store/`](docs/store/).
+
+**Datenschutz:** Das Spiel erhebt keine Daten – **[Datenschutzerklärung](https://mrpavian.github.io/sunday-league/datenschutz.html)**.
 
 **Taktik** (Vereinsheim → Aufstellung): Pro Spielformat ein System – etwa 2-1-1, Raute oder 2-2 im Fünfer,
 2-3-1, 3-2-1, 2-2-2 oder 3-1-2 im Siebener, 3-3-2, 3-4-1, 4-3-1 oder 2-4-2 im Neuner und 4-4-2, 4-3-3, 4-2-3-1
@@ -359,3 +363,4 @@ mit mehreren gewichteten Ausgängen, die passive Antwort zuletzt.
 spielen ist erlaubt; kopieren, verändern oder weiterverwenden nur mit Erlaubnis. Verwendete Bibliotheken: [three.js](https://github.com/mrdoob/three.js) (MIT) und
 die Schrift [Pixelify Sans](https://fonts.google.com/specimen/Pixelify+Sans) (SIL Open Font License 1.1).
 Alle Vereine, Personen und Orte sind frei erfunden.
+[Datenschutzerklärung](https://mrpavian.github.io/sunday-league/datenschutz.html)

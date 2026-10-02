@@ -27,6 +27,10 @@ open it and allow "unknown sources" for your browser or file manager. It is a de
 signature; the game needs no permissions and no internet. Every push to `main` also builds an APK in the
 "Android" workflow (Actions → Android → Artifacts).
 Alternatively open the browser version in Chrome and choose "Add to home screen" – it then runs like an app, offline too.
+When an upload key is stored in the repository, the workflow also builds a signed app bundle for Google Play
+(artifact `sunday-league-aab`). Store graphics are in [`docs/store/`](docs/store/).
+
+**Privacy:** the game collects no data – **[privacy policy](https://mrpavian.github.io/sunday-league/datenschutz.html)**.
 
 The game starts in German; pick **English** on first start or any time in the settings (key **O**).
 
@@ -197,3 +201,4 @@ Ideas and bug reports are welcome as issues. Before a pull request please run `n
 allowed; copying, modifying or reusing it only with permission. Libraries used: [three.js](https://github.com/mrdoob/three.js)
 (MIT) and the font [Pixelify Sans](https://fonts.google.com/specimen/Pixelify+Sans) (SIL Open Font License 1.1).
 All clubs, people and places are fictional.
+[Privacy policy](https://mrpavian.github.io/sunday-league/datenschutz.html)

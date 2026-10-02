@@ -428,6 +428,18 @@ export class Clubhouse {
     this.root.hidden = true;
   }
 
+  // Android-Zurück-Taste: erst Auswahl/Spielerkarte schließen, dann zurück auf „Heute".
+  // false = nichts mehr zurückzunehmen (dann geht es ins Hauptmenü).
+  back() {
+    if (this.busy) return true;
+    if (this.pick) this.pick = null;
+    else if (this.openPlayer != null) this.openPlayer = null;
+    else if (this.tab !== 'home') this.tab = 'home';
+    else return false;
+    this.render();
+    return true;
+  }
+
   setBusy(text) {
     this.busy = text;
     this.render();

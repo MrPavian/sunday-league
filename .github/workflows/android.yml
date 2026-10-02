@@ -15,6 +15,8 @@ permissions:
 jobs:
   apk:
     runs-on: ubuntu-latest
+    env:
+      HAS_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }} # im Schritt-„if" sind Secrets nicht lesbar
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,12 +29,36 @@ jobs:
           java-version: 21
       - run: npm ci
       - run: npm run android:sync
+      # Versionsnummer für Google Play: steigt mit jedem Lauf (jeder Upload braucht eine höhere).
+      - name: Version
+        run: |
+          echo "SL_VERSION_CODE=$((100 + ${{ github.run_number }}))" >> "$GITHUB_ENV"
+          echo "SL_VERSION_NAME=0.1.${{ github.run_number }}" >> "$GITHUB_ENV"
       - run: cd android && ./gradlew assembleDebug --no-daemon
       - run: cp android/app/build/outputs/apk/debug/app-debug.apk sunday-league.apk
       - uses: actions/upload-artifact@v4
         with:
           name: sunday-league-apk
           path: sunday-league.apk
+      # Google Play: signiertes App Bundle (.aab). Nur wenn der Upload-Schlüssel als Secret hinterlegt ist
+      # (ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD).
+      - name: Release-Bundle für Google Play
+        if: env.HAS_KEY == 'true'
+        env:
+          SL_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          SL_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          SL_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          export SL_KEYSTORE="$RUNNER_TEMP/upload.jks"
+          cd android && ./gradlew bundleRelease --no-daemon
+          cp app/build/outputs/bundle/release/app-release.aab ../sunday-league.aab
+          rm -f "$RUNNER_TEMP/upload.jks"
+      - if: hashFiles('sunday-league.aab') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: sunday-league-aab
+          path: sunday-league.aab
       - if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
