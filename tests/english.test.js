@@ -74,7 +74,7 @@ describe('English mode', () => {
     if (process.env.DUMP) (await import('node:fs')).writeFileSync(process.env.DUMP + '/events.txt', bad.join('\n'));
     expect(checked).toBeGreaterThan(100);
     expect(bad.slice(0, 40)).toEqual([]);
-  });
+  }, 90000); // geht jedes Ereignis mit vier Karrieren durch – dauert allein gut 20 s
 
   it('a few simulated seasons produce English chat, ledger and chronicle', async () => {
     const c = m.career.createCareer({ seed: 99, coach });

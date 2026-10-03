@@ -92,7 +92,7 @@ export function traceGoal(m, goal) {
     const sub = !(L.starters ?? []).includes(scorer.id) && (L.subsIn ?? []).includes(scorer.id);
     steps.push(tr(`Abschluss ${surname(scorer)}${goal.via === 'header' ? ' per Kopf' : ''}${prof ? ` (${PROFILES[prof].label})` : ''}${sub ? ', eingewechselt' : ''}`, `Finished by ${surname(scorer)}${goal.via === 'header' ? ' with a header' : ''}${prof ? ` (${PROFILES[prof].label})` : ''}${sub ? ', off the bench' : ''}`));
   }
-  steps.push(goal.ownGoal ? tr('Eigentor', 'Own goal') : tr('Tor', 'Goal'));
+  steps.push(goal.ownGoal ? tr('Tor durch Eigentor', 'Goal – own goal') : tr('Tor', 'Goal'));
   return { team, time: goal.time, minute: minuteOf(m, goal.time), steps, causes, how: poss?.how ?? null, lane: poss?.entryLane ?? null, through: !!through };
 }
 

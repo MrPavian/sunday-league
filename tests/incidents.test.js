@@ -36,7 +36,7 @@ describe('match incidents', () => {
         expect(happened, `${venue}/${type}`).toBe(true);
       }
     }
-  }, 60000); // langsame Umgebungen: rechnet drei Plätze voll durch
+  }, 120000); // langsame Umgebungen: rechnet alle Plätze voll durch (gemessen gut 60 s)
 
   it('a thunderstorm leaves the pitch wet; a hurt referee is replaced by a spectator', () => {
     const storm = createMatch({ seed: 3, pitch: PITCHES.rasenplatz, human: false, duration: 60, incidents: true });

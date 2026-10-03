@@ -100,7 +100,9 @@ export function considerCombo(m, keeperDepth) {
   const limit = runLimit(m, keeperDepth);
   const layoff = m.layoffBy?.id === a.id && m.time - m.layoffBy.time < 0.6;
   if (layoff) {
-    // Ablegen und abdrehen: am Gegenspieler vorbei in die Tiefe.
+    // Ablegen und abdrehen: am Gegenspieler vorbei in die Tiefe. Ohne Befehl etwa zwei von drei Malen,
+    // mit „Kombinieren" fast immer (sonst startet jeder nach jeder Ablage – gemessen kein Unterschied mehr).
+    if (!rng.chance(clamp(0.65 * comboK(m, a) ** 1.5, 0, 0.95))) return;
     const opp = opponents(m, a.team).reduce((q, o) => (!q || dist2d(o.pos, a.pos) < dist2d(q.pos, a.pos) ? o : q), null);
     const side = opp ? (opp.pos.z > a.pos.z ? -1 : 1) : a.pos.z > 0 ? -1 : 1;
     const x = Math.min(a.pos.x * s + 5, limit);
@@ -113,12 +115,14 @@ export function considerCombo(m, keeperDepth) {
   // Gegner noch weiter weg steht.
   const eager = styleOf(m, a.team).combo > 1.2;
   const d = dist2d(a.pos, b.pos);
-  if (d < 3 || d > (eager ? 13 : 11) || a.pos.x * s < -pitch.halfLength * 0.1 || a.stamina < 0.3) return;
+  if (d < 3 || d > (eager ? 15 : 11) || a.pos.x * s < -pitch.halfLength * 0.1 || a.stamina < 0.3) return;
   const beat = opponents(m, a.team).some((o) => {
     const rel = (o.pos.x - a.pos.x) * s;
     return rel > 0 && rel < (eager ? 8 : 5) && Math.abs(o.pos.z - a.pos.z) < (eager ? 4.5 : 3);
   });
-  if (!beat) return;
+  // Wer kombinieren soll, spielt den Doppelpass auch ohne Gegenspieler direkt vor sich – sonst bliebe der
+  // Befehl wirkungslos, seit mehr Spiel von selbst entsteht (gemessen ohne: 84, mit: 103 in 108 Spielen).
+  if (!beat && !eager) return;
   const x = Math.min(a.pos.x * s + 7, limit);
   if (x - a.pos.x * s < 2.5) return;
   const z = clamp(a.pos.z + (b.pos.z - a.pos.z) * 0.25, -pitch.halfWidth * 0.85, pitch.halfWidth * 0.85);
@@ -136,13 +140,16 @@ export function comboReturn(m, p) {
   const r = getPlayer(m, c.runner);
   if (!r || r.state !== 'normal' || r.id === m.controlledId) return null;
   const s = attackDir(m, p.team);
-  const fresh = m.time - c.time < RETURN_WAIT + 0.5;
+  // Wer kombinieren soll (Befehl, Kurzpassspiel), wartet kürzer auf den Läufer – gemessen gingen
+  // sonst über die Hälfte der Doppelpässe beim Warten der Wand verloren – und spielt in engere Lücken.
+  const eager = styleOf(m, p.team).combo > 1.2;
+  const fresh = m.time - c.time < RETURN_WAIT + (eager ? 0.15 : 0.5);
   // In den Lauf spielen: ein Stück vor den Läufer Richtung Zielpunkt.
   const to = norm(c.spot.x - r.pos.x, c.spot.z - r.pos.z);
   const ahead = Math.min(2.5, dist2d(r.pos, c.spot) + 1);
   const point = clampToPitch(m.pitch, r.pos.x + to.x * ahead + r.vel.x * 0.2, r.pos.z + to.z * ahead + r.vel.z * 0.2, 1.2);
   // Der Rückpass geht nach vorn in den Raum – nicht zurück zum Läufer, der noch hinten ist.
-  if ((point.x - p.pos.x) * s < 1.5 || dist2d(point, p.pos) < 2 || !laneFree(m, p, point, 1.1)) {
+  if ((point.x - p.pos.x) * s < 1.5 || dist2d(point, p.pos) < 2 || !laneFree(m, p, point, eager ? 0.85 : 1.1)) {
     if (fresh) return 'wait';
     m.combo = null;
     return null;

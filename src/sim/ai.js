@@ -10,6 +10,10 @@ import { fooled } from './tricks.js';
 import { hasProfile } from './profiles.js';
 import { backToGoal, comboK, comboReturn, comboRun, considerCombo, cutbackMate, layoffMate, shotOn } from './combos.js';
 
+// „Stürmer lässt sich fallen": wie weit die Spitze entgegenkommt (0 … 1). Gleitend statt einer harten
+// Schwelle – die Umsetzung sinkt mit der Kraft (fwdDrop 0,51 → 0,48 nach wenigen Minuten). Kombinieren
+// (fwdDrop ≈ 0,2) bleibt bei ≈ 0, der Befehl (≈ 0,5) bei 1.
+const dropK = (st) => clamp((st.fwdDrop - 0.2) / 0.25, 0, 1);
 const LURK_GAP = 8; // m Platz hinter der gegnerischen Abwehr, ab dem der Stürmer vorne lauert
 const CAUGHT_TIME = 0.7; // s: so lange ist nach dem Ballverlust raus, wer vor dem Ball stand
 
@@ -328,10 +332,15 @@ export function anchor(m, p, possession) {
       x = Math.min(Math.max(x * s, bx + 2 - 5 * hold), top) * s;
     }
     else if (p.role === 'fwd') {
-      x = Math.max(x * s, bx + 6 - 4 * st.fwdDrop);
+      // „Stürmer lässt sich fallen" (dropK): kurz vor den Ball, nicht lauern – sonst
+      // schob das Lauern die Spitze fast immer an die letzte Linie zurück (gemessen: kein Unterschied).
+      const d = dropK(st);
+      const drops = d >= 0.5;
+      const normal = Math.max(x * s, bx + 6 - 4 * st.fwdDrop);
+      x = normal + (bx + 3 - normal) * d;
       // In die Tiefe: auf Höhe der letzten Linie lauern, bereit zum Start.
       // Auch ohne Befehl, wenn hinter der gegnerischen Abwehr Platz ist (siehe lurking).
-      if ((st.through > 0.3 || lurking(m, p) > 0) && m.defLine) x = Math.max(x, m.defLine[1 - p.team] * s - 1);
+      if ((st.through > 0.3 || (!drops && lurking(m, p) > 0)) && m.defLine) x = Math.max(x, m.defLine[1 - p.team] * s - 1);
       x = Math.min(x, top) * s;
     }
     // Großfeld mit Abseits: Vorne bleibt man knapp vor der letzten Linie, solange der Ball dahinter ist.
@@ -390,14 +399,15 @@ function supportSpot(m, p, dt) {
   const st = styleOf(m, p.team);
   const demands = hasProfile(p, 'spielmacher') || hasProfile(p, 'ballmagnet');
   const base = clampToPitch(pitch, a.x, a.z, margin);
-  const deep = p.role === 'fwd' ? [[4, 0], [4, 2.5], [4, -2.5]] : [];
+  const drops = p.role === 'fwd' && dropK(st) >= 0.5;
+  const deep = p.role === 'fwd' ? (drops ? [[-2.5, 0], [-2.5, 2.5], [-2.5, -2.5]] : [[4, 0], [4, 2.5], [4, -2.5]]) : [];
   const back = p.role === 'def';
   const offsets = [[0, 0], [3, 0], [-3, 0], [0, 3], [0, -3], [2.5, 2.5], [2.5, -2.5], [-2.5, 2.5], [-2.5, -2.5], ...deep];
   let best = base;
   let bestScore = -Infinity;
   for (const [ox, oz] of offsets) {
     const c = clampToPitch(pitch, base.x + ox * s, base.z + oz, margin);
-    let score = (back ? 0 : s * c.x * 0.05) - len(c.x - base.x, c.z - base.z) * 0.16;
+    let score = (back || drops ? 0 : s * c.x * 0.05) - len(c.x - base.x, c.z - base.z) * 0.16;
     if (!back && (st.focus || st.channel)) score += laneScore(m, p, st, c) * 0.9;
     if (demands) for (const o of m.players) if (o.team !== p.team && dist2d(o.pos, c) < 3) score -= 0.4; // Spielmacher sucht sich freie Räume
     for (const o of m.players) {
@@ -634,7 +644,11 @@ function aiDecide(m, p, oppGoal) {
   // Kurze Spiele: früher abziehen, damit überhaupt was passiert.
   // Auf dem großen Platz dauert der Weg nach vorn länger – dort noch etwas mehr.
   const brisk = (shortGame(m) - 1) * (1 + Math.max(0, pitch.halfLength - 20) / 12) * (m.goalPace ?? 1);
-  const range = 10 + p.attrs.shooting * 5 + (hasTrait(p, 'hammer') ? 4 : 0) + st.shoot + st.risk * 0.8 + Math.max(0, (pitch.halfLength - 20) * 0.45) + brisk * 2.5;
+  // Kleine Plätze (5er): Die Reichweite schrumpft mit der Feldlänge – sonst ist im Park (34 m) jeder
+  // jenseits der Mittellinie schon „in Schussweite" und es gibt fast nur Fernschüsse (gemessen vorher:
+  // 59 % der Schüsse aus mehr als 35 % der Feldlänge). Bezug: 7er-Feld (halbe Länge 26 m) bleibt gleich.
+  const small = Math.min(1, Math.max(0.75, pitch.halfLength / 22));
+  const range = (10 + p.attrs.shooting * 5 + (hasTrait(p, 'hammer') ? 4 : 0) + st.shoot + st.risk * 0.8 + brisk * 2.5) * small + Math.max(0, (pitch.halfLength - 20) * 0.45);
   // An der Grundlinie: flach zurück in den Rückraum, wenn dort einer frei einläuft.
   if (Math.abs(p.pos.z) > pitch.goalHalfWidth * 1.5) {
     const cb = cutbackMate(m, p, oppGoal);
@@ -676,7 +690,7 @@ function aiDecide(m, p, oppGoal) {
     return;
   }
   // Distanzschuss: Wer schießen kann und Platz hat, versucht es auch mal von weiter weg.
-  const longRange = range + 7;
+  const longRange = range + 7 * small;
   const space = !m.players.some((o) => o.team !== p.team && o.role !== 'gk' && dist2d(o.pos, p.pos) < 3 && (o.pos.x - p.pos.x) * toG.x + (o.pos.z - p.pos.z) * toG.z > 0);
   if (!hold && !ownHalf && dGoal >= range && dGoal < longRange && facingDot > 0.5 && space && (p.attrs.shooting > 0.55 || hasTrait(p, 'hammer')) && rng.chance((0.18 + brisk * 0.12) * (1 + 0.3 * st.risk))) {
     const gw = pitch.goalHalfWidth;

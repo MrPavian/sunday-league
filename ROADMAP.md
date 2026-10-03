@@ -660,3 +660,16 @@ Noch nicht begonnen. Die Zahlen in Klammern sind der heutige Stand im Code, dami
   Sprüche). Ausbau vor allem dort, wo sich Texte im Langzeitlauf am häufigsten wiederholen
   (`npm run longrun -- 10 77 --bot` zeigt die meistwiederholten Texte), sowie neue Ereignisse für die
   höheren Ligen (Kreisliga A, Bezirksliga).
+
+### 11.6 Angriffs-KI: Spiel über außen (Voraussetzung für mehrere Trainerbefehle)
+Gemessen (Oktober 2026, `scripts/tactics.mjs`, `scripts/orders-audit.mjs`, je 24 Spiele): 70–86 % aller Angriffe
+laufen durch die Mitte, Pässe von außen in die Mitte gibt es kaum (0,3–0,6 je Spiel). Ein erster Versuch
+(Flügelläufer, Bonus für den freien Flügelmann, Pass in die Mitte) brachte messbar nichts und wurde zurückgenommen.
+Nötig ist ein Umbau des Angriffsverhaltens: Breite im Ballbesitz, Läufe in die Schnittstellen, Annahme im Lauf,
+Flanken- und Rückpass-Entscheidung. Erst danach haben diese Befehle eine sichtbare Wirkung, weil der Gegner nie
+über außen kommt und sich deshalb auch nicht dorthin lenken lässt:
+- „Nach außen lenken" und „Zentrum zumachen" (Gegner-Angriffsseiten unverändert; „Zentrum zumachen" lässt den
+  Gegner immerhin etwas seltener durchkommen)
+- „Links absichern" / „Rechts absichern" (kein messbarer Effekt)
+- „Über außen" wirkt nur mäßig (Flügelanteil 16 % → 24 %)
+- „Konter absichern" wirkt schwach (Konter gegen uns nur auf dem 7er-Feld etwas seltener)

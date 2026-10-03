@@ -71,9 +71,10 @@ export const ORDER_EFFECTS = {
     kompakt: (s) => ({ compact: s.compact * 0.85, defWidth: 0.68, push: s.push - 0.03 }),
     stuermer_fallen: () => ({ fwdDrop: 0.7, fwdHold: 0 }),
   },
+  // Tempo: Bedenkzeit, wie oft abgespielt wird – und Kraft (ruhig spart, schnell kostet).
   tempo: {
-    ruhig: () => ({ tempo: 0.8 }),
-    schnell: () => ({ tempo: 1.2 }),
+    ruhig: (s) => ({ tempo: 0.8, passRate: s.passRate * 0.85, tire: s.tire * 0.9 }),
+    schnell: (s) => ({ tempo: 1.2, passRate: s.passRate * 1.15, tire: s.tire * 1.06 }),
   },
   risk: {
     sicher: () => ({ risk: -1 }),
@@ -149,9 +150,12 @@ export function planMods(m, team) {
     m.modsCache[team] = { mods: base, orders: false };
     return base;
   }
+  // Feste Reihenfolge der Gruppen (Aufbau → Angriff → … → Risiko), nicht die Klickreihenfolge:
+  // Sonst hinge das Ergebnis davon ab, was zuerst gesetzt wurde (z. B. „Ball halten" + „Konter":
+  // lange Bälle 0,45 oder 0,14). So gewinnt immer der speziellere Befehl (Tempo, Risiko, Form).
   let target = base;
-  for (const [group, value] of Object.entries(orders)) {
-    const fx = ORDER_EFFECTS[group]?.[value];
+  for (const group of ORDER_GROUPS) {
+    const fx = orders[group] != null ? ORDER_EFFECTS[group]?.[orders[group]] : null;
     if (fx) target = { ...target, ...fx(target) };
   }
   // Umsetzung: Zahlen wandern nur so weit Richtung Befehl, wie die Mannschaft es kann.

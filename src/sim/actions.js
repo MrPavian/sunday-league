@@ -250,7 +250,10 @@ function pass(m, p, a, fatigue, fromHands) {
     }
     if (ai) score += bondBonus(bondOf(m, p, t));
     // Profile: Den Spielmacher sucht man, der Ballmagnet will ihn sowieso.
-    if (ai && hasProfile(t, 'spielmacher')) score += 0.25;
+    // 0,65 statt 0,25: Seit auf kleinen Plätzen weniger aus der Distanz geschossen wird, bekommt das
+    // zentrale Mittelfeld ohnehin viel mehr Bälle – mit 0,25 fiel der Spielmacher nicht mehr auf
+    // (gemessen 0,97 statt 1,32 mehr Pässe), mit 0,65 wieder 1,27 (96 Spiele, Parkplatz).
+    if (ai && hasProfile(t, 'spielmacher')) score += 0.65;
     if (ai && hasProfile(t, 'ballmagnet')) score += 0.12;
     if (score > bestScore) {
       bestScore = score;
