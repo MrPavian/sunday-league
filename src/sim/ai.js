@@ -14,6 +14,15 @@ import { backToGoal, comboK, comboReturn, comboRun, considerCombo, cutbackMate, 
 // Schwelle – die Umsetzung sinkt mit der Kraft (fwdDrop 0,51 → 0,48 nach wenigen Minuten). Kombinieren
 // (fwdDrop ≈ 0,2) bleibt bei ≈ 0, der Befehl (≈ 0,5) bei 1.
 const dropK = (st) => clamp((st.fwdDrop - 0.2) / 0.25, 0, 1);
+// Ab hier gilt man als „außen" (Anteil der halben Breite); die Zählung der Angriffsseiten
+// (matchlog.js, laneOf) nimmt 0,33.
+export const WIDE_LANE = 0.4;
+// So weit gehen die Außen im Ballbesitz raus (Anteil der halben Breite; Stellschraube, gemessen mit wing-audit).
+export const STRETCH = 0.8;
+// Aus spitzem Winkel (außerhalb des Torraums verlängert) wird nur bis zu dieser Entfernung geschossen (m).
+export const ACUTE_SHOT = 12;
+// Ab hier (Vielfaches der halben Torbreite von der Mitte) gilt der Winkel als spitz.
+export const ACUTE_Z = 3;
 const LURK_GAP = 8; // m Platz hinter der gegnerischen Abwehr, ab dem der Stürmer vorne lauert
 const CAUGHT_TIME = 0.7; // s: so lange ist nach dem Ballverlust raus, wer vor dem Ball stand
 
@@ -309,6 +318,7 @@ export function anchor(m, p, possession) {
   // Strafraumkante, das Mittelfeld davor.
   u = clamp(u, p.role === 'def' ? -0.74 : p.role === 'mid' ? -0.52 : -0.35, 0.82);
   let x = u * pitch.halfLength * s;
+  let boxRun = null; // z-Ziel für den Lauf in den Strafraum (s. u.)
   // Bei eigenem Ballbesitz: Die Abwehr bleibt hinter dem Ball, Mittelfeld und
   // Sturm bieten sich davor an – sonst gibt es keinen Pass nach vorne.
   if (possession) {
@@ -343,15 +353,28 @@ export function anchor(m, p, possession) {
       if ((st.through > 0.3 || (!drops && lurking(m, p) > 0)) && m.defLine) x = Math.max(x, m.defLine[1 - p.team] * s - 1);
       x = Math.min(x, top) * s;
     }
+    // Ball außen im letzten Drittel: Stürmer zwischen die Pfosten, der Mittelfeldmann von der anderen
+    // Seite an den langen Pfosten – sonst kommt jede Flanke ins Leere.
+    const wideBall = Math.abs(ball.pos.z) > pitch.halfWidth * WIDE_LANE && bx > pitch.halfLength * 0.35;
+    const farMid = p.role === 'mid' && Math.sign(p.home.z) === -Math.sign(ball.pos.z) && Math.abs(p.home.z) > pitch.halfWidth * 0.3;
+    if (wideBall && (p.role === 'fwd' || farMid)) {
+      const gx = pitch.halfLength - (p.role === 'fwd' ? 4.5 : 6.5);
+      x = Math.max(x * s, Math.min(gx, top)) * s;
+      boxRun = -Math.sign(ball.pos.z) * (p.role === 'fwd' ? 0.4 : 1.6) * pitch.goalHalfWidth;
+    }
     // Großfeld mit Abseits: Vorne bleibt man knapp vor der letzten Linie, solange der Ball dahinter ist.
     if (pitch.offside && m.defLine && p.role !== 'def') x = Math.min(x * s, Math.max(m.defLine[1 - p.team] * s - OFFSIDE_MARGIN, bx)) * s;
   }
   const width = possession ? st.width : st.defWidth;
   let z = p.home.z * width + ball.pos.z * (possession ? 0.2 : 0.32);
+  // Breite im Ballbesitz: Die Außen (Mittelfeld, Sturm) gehen an die Seitenlinie, auch der ballferne –
+  // vorher rückten sie zur Mitte (gemessen: im Schnitt 0,44 der halben Breite statt 0,55 laut System).
+  if (possession && p.role !== 'def' && Math.abs(p.home.z) > pitch.halfWidth * 0.3 && st.channel !== 'centre') z = Math.sign(p.home.z) * Math.max(Math.abs(z), Math.min(pitch.halfWidth * STRETCH * Math.min(1.15, width), pitch.boundary === 'walls' ? pitch.halfWidth - 2.5 : Infinity)); // an der Mauer prallt sonst jeder Pass ab
   // Angriffsseite: Mittelfeld und Sturm schieben rüber und bieten sich dort an.
   if (possession && st.focus) z += st.focus * s * pitch.halfWidth * (p.role === 'def' ? 0.12 : 0.4);
   // Seite absichern: Der Block verschiebt gegen den Ball dorthin.
   if (!possession && st.cover) z += st.cover * s * pitch.halfWidth * 0.12;
+  if (boxRun != null) z = boxRun;
   z = clamp(z, -pitch.halfWidth * 0.9, pitch.halfWidth * 0.9);
   return { x, z };
 }
@@ -560,8 +583,25 @@ function carryIntent(m, p, oppGoal, wall) {
   const st = styleOf(m, p.team);
   // Flügelspiel: Wer außen ist, bleibt außen und geht bis zur Grundlinie.
   const onWing = Math.abs(p.pos.z) > pitch.halfWidth * 0.4 && (st.cross > 0.7 || st.channel === 'wide' || heeds(m, p, 'wide'));
-  let aimZ = onWing ? p.pos.z * 0.95 : clamp(p.aimZ ?? 0, -pitch.halfWidth * 0.5, pitch.halfWidth * 0.5);
+  // Auch ohne Befehl: Wer außen den Ball hat, bleibt bis zum letzten Drittel außen und zieht erst
+  // dann nach innen – vorher liefen alle sofort zur Mitte (gemessen: 74–86 % der Angriffe zentral).
+  const keepWide = !onWing && st.channel !== 'centre' && Math.abs(p.pos.z) > pitch.halfWidth * WIDE_LANE && Math.abs(p.pos.x - oppGoal.x) > pitch.halfLength * 0.4;
+  // Im letzten Drittel außen und der Flügel vor ihm ist frei: weiter bis zur Grundlinie (dort Flanke
+  // oder Rückpass, aiDecide), statt nach innen in die Abwehr zu laufen.
+  const s1 = attackDir(m, p.team);
+  const flankFree = Math.abs(p.pos.z) > pitch.halfWidth * WIDE_LANE && !m.players.some((o) => o.team !== p.team && o.role !== 'gk' && (o.pos.x - p.pos.x) * s1 > -0.5 && (o.pos.x - p.pos.x) * s1 < 5 && Math.abs(o.pos.z - p.pos.z) < 3);
+  const byline = !onWing && !keepWide && st.channel !== 'centre' && flankFree && Math.abs(p.pos.x - oppGoal.x) > pitch.halfLength * 0.12;
+  let aimZ = onWing || keepWide || byline ? p.pos.z * 0.95 : clamp(p.aimZ ?? 0, -pitch.halfWidth * 0.5, pitch.halfWidth * 0.5);
   if (!onWing && st.channel === 'centre') aimZ *= 0.4;
+  // Mitte zu: Stehen vorn im Korridor zwei Gegner, geht es schräg auf die freiere Seite.
+  if (!onWing && !keepWide && !byline && st.channel !== 'centre' && Math.abs(p.pos.x - oppGoal.x) > pitch.halfLength * 0.4) {
+    const s0 = attackDir(m, p.team);
+    const inLane = (side) => m.players.filter((o) => o.team !== p.team && o.role !== 'gk' && (o.pos.x - p.pos.x) * s0 > 0 && (o.pos.x - p.pos.x) * s0 < 12 && (side === 0 ? Math.abs(o.pos.z - p.pos.z) < 3 : Math.sign(o.pos.z - p.pos.z) === side && Math.abs(o.pos.z - p.pos.z) < 9)).length;
+    if (inLane(0) >= 2) {
+      const side = inLane(1) <= inLane(-1) ? 1 : -1;
+      aimZ = clamp(p.pos.z + side * pitch.halfWidth * 0.5, -pitch.halfWidth * 0.8, pitch.halfWidth * 0.8);
+    }
+  }
   // Angriffsseite: Wer den Ball führt, trägt ihn auf die gewählte Seite – erst kurz
   // vor dem Strafraum zieht er nach innen.
   if (st.focus && Math.abs(p.pos.x - oppGoal.x) > pitch.halfLength * 0.35) aimZ = aimZ * 0.3 + st.focus * attackDir(m, p.team) * pitch.halfWidth * 0.7;
@@ -663,6 +703,26 @@ function aiDecide(m, p, oppGoal) {
     p.pending = { type: 'pass', lofted: 'cross', cone: -0.4, ttl: 0.3 };
     return;
   }
+  // Spitzer Winkel außen, ein Mitspieler im Strafraum: flanken statt aus dem Winkel schießen. Vorher kam
+  // die Schussweite zuerst, und jeder Außen schoss aus 12 m von der Seite (gemessen: 0,4–1,3 Flanken je Spiel).
+  const acute = Math.abs(p.pos.z) > pitch.goalHalfWidth * 2.2 && Math.abs(p.pos.x - oppGoal.x) < pitch.halfLength * 0.4;
+  if (acute && st.channel !== 'centre') {
+    const boxMate = m.players.some((t) => t.team === p.team && t !== p && t.role !== 'gk' && Math.abs(t.pos.x - oppGoal.x) < pitch.halfLength * 0.28 && Math.abs(t.pos.z) < pitch.goalHalfWidth * 2.2);
+    if (rng.chance(clamp(st.cross * (boxMate ? 1.2 : 0.4), 0.15, 0.95))) {
+      p.pending = { type: 'pass', lofted: 'cross', cone: -0.4, ttl: 0.3 };
+      return;
+    }
+  }
+  // Frühe Flanke: außen im letzten Drittel, bedrängt oder kein Weg nach vorn – Ball in den Strafraum.
+  const deepWide = Math.abs(p.pos.z) > pitch.halfWidth * 0.55 && Math.abs(p.pos.x - oppGoal.x) < pitch.halfLength * 0.55 && !acute;
+  if (deepWide && st.channel !== 'centre') {
+    const pressed = m.players.some((o) => o.team !== p.team && o.role !== 'gk' && dist2d(o.pos, p.pos) < 2.5);
+    const runner = m.players.some((t) => t.team === p.team && t !== p && t.role !== 'gk' && Math.abs(t.pos.x - oppGoal.x) < pitch.halfLength * 0.32 && Math.abs(t.pos.z) < pitch.goalHalfWidth * 2.5);
+    if (runner && rng.chance(clamp(st.cross * (pressed ? 0.4 : 0.1), 0.03, 0.9))) {
+      p.pending = { type: 'pass', lofted: 'cross', cone: -0.4, ttl: 0.3 };
+      return;
+    }
+  }
   // Schussauswahl: „hart" wartet auf die bessere Lage, „locker" schießt auch mal überhastet.
   const skill = aiSkill(m, p);
   const facingNeed = skill > 1 ? 0.45 : skill < 1 ? 0 : 0.2;
@@ -677,7 +737,10 @@ function aiDecide(m, p, oppGoal) {
   const hold = !onTarget && ((blockedLane && rng.chance(0.5 - 0.2 * st.risk)) || (justShot && rng.chance(0.6)));
   // Aus der eigenen Hälfte zählt ein Tor nicht – dann gar nicht erst schießen.
   const ownHalf = p.pos.x * attackDir(m, p.team) <= 0.3;
-  if (!hold && !ownHalf && dGoal < range * (skill > 1 ? 0.9 : 1) && facingDot > (onTarget ? -0.3 : facingNeed)) {
+  // Spitzer Winkel: von außen nur aus der Nähe abziehen (gemessen vorher: 12 % der Ballbesitze außen
+  // endeten mit einem Schuss von der Seite, kaum einer mit einer Flanke).
+  const angleOk = Math.abs(p.pos.z) < pitch.goalHalfWidth * ACUTE_Z || dGoal < ACUTE_SHOT * Math.max(1, pitch.halfLength / 26); // Bezug 7er-Feld
+  if (!hold && !ownHalf && angleOk && dGoal < range * (skill > 1 ? 0.9 : 1) && facingDot > (onTarget ? -0.3 : facingNeed)) {
     const gw = pitch.goalHalfWidth;
     p.pending = {
       type: 'shoot',
@@ -692,7 +755,7 @@ function aiDecide(m, p, oppGoal) {
   // Distanzschuss: Wer schießen kann und Platz hat, versucht es auch mal von weiter weg.
   const longRange = range + 7 * small;
   const space = !m.players.some((o) => o.team !== p.team && o.role !== 'gk' && dist2d(o.pos, p.pos) < 3 && (o.pos.x - p.pos.x) * toG.x + (o.pos.z - p.pos.z) * toG.z > 0);
-  if (!hold && !ownHalf && dGoal >= range && dGoal < longRange && facingDot > 0.5 && space && (p.attrs.shooting > 0.55 || hasTrait(p, 'hammer')) && rng.chance((0.18 + brisk * 0.12) * (1 + 0.3 * st.risk))) {
+  if (!hold && !ownHalf && angleOk && dGoal >= range && dGoal < longRange && facingDot > 0.5 && space && (p.attrs.shooting > 0.55 || hasTrait(p, 'hammer')) && rng.chance((0.18 + brisk * 0.12) * (1 + 0.3 * st.risk))) {
     const gw = pitch.goalHalfWidth;
     p.pending = { type: 'shoot', power: 0.95, target: { x: oppGoal.x, z: (rng.chance(0.5) ? 1 : -1) * rng.range(gw * 0.4, gw * 1.0) }, ttl: 0.3 };
     return;
@@ -759,7 +822,9 @@ function aiDecide(m, p, oppGoal) {
     if (t.team !== p.team || t === p || t.role === 'gk' || t.state !== 'normal') return false;
     const ahead = (t.pos.x - p.pos.x) * s;
     const d = dist2d(t.pos, p.pos);
-    if (ahead < 3 || d > 16) return false;
+    // Vorne frei – oder außen frei auf gleicher Höhe (Spiel über die Flügel).
+    const wideLevel = ahead > -2 && Math.abs(t.pos.z) > pitch.halfWidth * WIDE_LANE && Math.abs(t.pos.z - p.pos.z) > 4 && st.channel !== 'centre';
+    if ((ahead < 3 && !wideLevel) || d > 16) return false;
     return !m.players.some((o) => o.team !== p.team && (dist2d(o.pos, t.pos) < 2.5 || distToSegment(o.pos, p.pos, t.pos) < 1.3));
   });
   if (open && rng.chance(Math.min(0.92, (0.25 + 0.35 * p.attrs.passing) * aiSkill(m, p) * st.passRate * selfish))) p.pending = { type: 'pass', ttl: 0.3, cone: -0.3, optional: true };

@@ -156,7 +156,9 @@ export function comboReturn(m, p) {
   }
   c.returned = true;
   m.events.push({ type: 'combo', kind: c.kind, playerId: r.id, wallId: p.id });
-  return { type: 'pass', through: point, targetId: r.id, ttl: 0.3, cone: -1, combo: c.kind };
+  // minDist 0: Gespielt wird in den Lauf (point ist geprüft) – steht der Läufer noch dicht dran, fiel der
+  // Pass sonst auf „keiner frei, nach vorn bolzen“ zurück und ging irgendwohin (auch nach hinten).
+  return { type: 'pass', through: point, targetId: r.id, ttl: 0.3, cone: -1, combo: c.kind, minDist: 0 };
 }
 
 // Laufweg des Kombinationspartners (in updateTactics eingesetzt).

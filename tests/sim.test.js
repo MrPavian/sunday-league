@@ -618,7 +618,9 @@ describe('feel: parries, corners, set pieces', () => {
   it('a high ball in the six-yard box is punched forward, away from goal, or claimed', () => {
     let punches = 0;
     let highCatches = 0;
-    for (const seed of [1, 2, 3, 4, 5, 6]) {
+    // 18 statt 6 Spiele: Mit 6 lag man zufällig mal genau auf der Grenze (gemessen 1,6–1,8 Fausten je Spiel).
+    const seeds = Array.from({ length: 18 }, (_, i) => i + 1);
+    for (const seed of seeds) {
       const m = createMatch({ seed, pitch: PARKING_LOT, human: false });
       for (let i = 0; i < 60 * 600 && m.phase !== 'ended'; i++) {
         stepMatch(m, undefined, DT);
@@ -636,9 +638,9 @@ describe('feel: parries, corners, set pieces', () => {
         m.events.length = 0;
       }
     }
-    expect(punches).toBeGreaterThan(5);
+    expect(punches).toBeGreaterThan(5 * (seeds.length / 6)); // gleiche Rate wie vorher (mehr als 5 in 6 Spielen)
     expect(highCatches).toBeGreaterThan(0);
-  });
+  }, 120000);
 
   it('nobody gets stuck in the corners of a walled pitch', () => {
     const pitch = PITCHES.hinterhof;

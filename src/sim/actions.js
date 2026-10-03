@@ -5,7 +5,10 @@ import { clamp, dist2d, len, norm, rotate } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
 import { ballSpeed } from './ball.js';
 import { attackDir, distToSegment, setControlled, wallPush } from './players.js';
-import { aiSkill, keeperReaction, laneScore } from './ai.js';
+import { aiSkill, keeperReaction, laneScore, WIDE_LANE } from './ai.js';
+
+// Bonus für den freien Mann außen bei der Passwahl der KI (Stellschraube, gemessen mit scripts/orders-audit.mjs).
+export const WIDE_OPEN = 0.55;
 import { knockSpeed } from './knocks.js';
 import { markOffside } from './offside.js';
 import { hasProfile, pressureChaos } from './profiles.js';
@@ -230,7 +233,13 @@ function pass(m, p, a, fatigue, fromHands) {
     const pressed = ai && m.players.some((o) => o.team !== p.team && dist2d(o.pos, p.pos) < 1.8);
     const gkMalus = t.role === 'gk' ? (ai && !pressed ? 2 : 0.8) : 0;
     const st = styleOf(m, p.team);
-    let score = dot - d * (ai ? st.shortPass : 0.035) - gkMalus + (t.pos.x - p.pos.x) * attackDir(m, p.team) * (ai ? st.forward : 0.025);
+    // Die KI schaut sich um: Blickrichtung zählt nur halb (vorher voll – dann ging fast jeder Ball dorthin,
+    // wohin der Ballführende schaute, also zur Mitte). Ein freier Mann außen ist eine echte Option.
+    let score = (ai ? 0.25 + 0.75 * dot : dot) - d * (ai ? st.shortPass : 0.035) - gkMalus + (t.pos.x - p.pos.x) * attackDir(m, p.team) * (ai ? st.forward : 0.025);
+    if (ai && !a.lofted && t.role !== 'gk' && Math.abs(t.pos.z) > pitch.halfWidth * WIDE_LANE && (t.pos.x - p.pos.x) * attackDir(m, p.team) > -1) {
+      const free = !m.players.some((o) => o.team !== p.team && dist2d(o.pos, t.pos) < 3.5);
+      if (free) score += WIDE_OPEN * (st.channel === 'wide' ? 1.6 : st.channel === 'centre' ? 0.3 : 1);
+    }
     // Angriffsseite und -kanal: dorthin wird der Ball eher verteilt (nicht bei Rückpässen).
     if (ai && (st.focus || st.channel) && (t.pos.x - p.pos.x) * attackDir(m, p.team) > -2) score += laneScore(m, p, st, t.pos) * 0.7;
     const riskK = ai ? (1 - 0.35 * st.risk) * (hasProfile(p, 'teamplayer') ? 1.2 : 1) : 1;
@@ -324,7 +333,7 @@ function pass(m, p, a, fatigue, fromHands) {
     m.pass.react = 0.55 - 0.3 * read;
   }
   // Rückpass beim Doppelpass: in den Lauf gespielt, aber kein Ball hinter die Abwehrlinie.
-  m.events.push({ type: 'pass', playerId: p.id, targetId: target?.id ?? null, lofted: !!a.lofted, through: !!(a.through && target && !a.combo), combo: a.combo || undefined });
+  m.events.push({ type: 'pass', playerId: p.id, targetId: target?.id ?? null, lofted: !!a.lofted, cross: a.lofted === 'cross' || undefined, from: { x: p.pos.x, z: p.pos.z }, to: target ? { x: target.pos.x, z: target.pos.z } : null, through: !!(a.through && target && !a.combo), combo: a.combo || undefined });
 }
 
 // Strafraum: Nur hier darf der Torwart den Ball in die Hand nehmen.

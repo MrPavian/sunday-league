@@ -74,7 +74,8 @@ describe('offence: combinations', () => {
     let returns = 0;
     let matches = 0;
     for (const id of ['parkplatz', 'park', 'ascheplatz', 'rasenplatz', 'halle']) {
-      for (const seed of [21, 22, 23, 24]) {
+      // 12 statt 4 Seeds je Platz: Mit 20 Spielen schwankte die Zahl der Rückpässe zu stark (gleiche Rate je Spiel).
+      for (const seed of [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32]) {
         const m = createMatch({ seed, pitch: PITCHES[id], human: false, duration: 240, incidents: false });
         matches++;
         let open = null;
@@ -106,13 +107,14 @@ describe('offence: combinations', () => {
     }
     expect(made.onetwo / matches).toBeGreaterThan(0.6);
     expect(made.layoff / matches).toBeGreaterThan(0.6);
-    expect(made.cutback).toBeGreaterThan(3);
-    expect(returns).toBeGreaterThan(15);
+    // Absolute Mindestzahlen mit der Stichprobe skaliert (vorher 3 bzw. 15 bei 20 Spielen) – gleiche Rate je Spiel.
+    expect(made.cutback).toBeGreaterThan(3 * (matches / 20));
+    expect(returns).toBeGreaterThan(15 * (matches / 20));
     expect(forward).toBe(returns);
     // Die meisten Rückpässe kommen beim Läufer an.
     expect(done.onetwo / made.onetwo).toBeGreaterThan(0.6);
     expect(done.layoff / made.layoff).toBeGreaterThan(0.5);
-  }, 60000);
+  }, 180000);
 
   it('a striker with his back to goal and a marker behind holds the ball up', () => {
     let held = 0;

@@ -668,18 +668,24 @@ Kreis- und Bezirkspokal im K.-o.-System unter der Woche (`src/career/pokal.js`, 
   (`npm run longrun -- 10 77 --bot` zeigt die meistwiederholten Texte), sowie neue Ereignisse für die
   höheren Ligen (Kreisliga A, Bezirksliga).
 
-### 11.6 Angriffs-KI: Spiel über außen (Voraussetzung für mehrere Trainerbefehle)
-Gemessen (Oktober 2026, `scripts/tactics.mjs`, `scripts/orders-audit.mjs`, je 24 Spiele): 70–86 % aller Angriffe
-laufen durch die Mitte, Pässe von außen in die Mitte gibt es kaum (0,3–0,6 je Spiel). Ein erster Versuch
-(Flügelläufer, Bonus für den freien Flügelmann, Pass in die Mitte) brachte messbar nichts und wurde zurückgenommen.
-Nötig ist ein Umbau des Angriffsverhaltens: Breite im Ballbesitz, Läufe in die Schnittstellen, Annahme im Lauf,
-Flanken- und Rückpass-Entscheidung. Erst danach haben diese Befehle eine sichtbare Wirkung, weil der Gegner nie
-über außen kommt und sich deshalb auch nicht dorthin lenken lässt:
-- „Nach außen lenken" und „Zentrum zumachen" (Gegner-Angriffsseiten unverändert; „Zentrum zumachen" lässt den
-  Gegner immerhin etwas seltener durchkommen)
-- „Links absichern" / „Rechts absichern" (kein messbarer Effekt)
-- „Über außen" wirkt nur mäßig (Flügelanteil 16 % → 24 %)
-- „Konter absichern" wirkt schwach (Konter gegen uns nur auf dem 7er-Feld etwas seltener)
+### 11.6 Angriffs-KI: Spiel über außen (umgebaut, Oktober 2026)
+Gemessen mit `scripts/wing-audit.mjs` (Eintritt ins letzte Drittel; „Mitte" = mittleres Drittel der Breite),
+48 Spiele je Platz, vorher → nachher:
+- 7er-Feld: Mitte 82 % → 68 %, Flanken 1,3 → 2,9 je Spiel, Tore 2,9 → 2,7
+- 9er-Feld: Mitte 80 % → 67 %, Flanken 1,1 → 2,8, Tore 2,7 → 2,2 (weniger, aber bessere Schüsse)
+- Großfeld: Mitte 85 % → 78 %, Flanken 0,5 → 1,7, Tore 4,0 → 3,1
+Bezug: In der Bundesliga laufen rund 33 % der Angriffe durch die mittlere *Hälfte* der Breite (Bundesliga
+Match Facts „Attacking Zones"), unser Maß ist strenger (mittleres Drittel).
+Umgesetzt: Breite im Ballbesitz (Außen gehen auf 0,8 der halben Breite, an Mauern mit Abstand), außen bleiben bis
+zum letzten Drittel, bei freiem Flügel bis zur Grundlinie, schräg weg, wenn die Mitte zu ist, Passwahl schaut sich
+um (Blickrichtung zählt weniger, freier Mann außen zählt), Flanke statt Schuss aus spitzem Winkel, Läufe an den
+ersten/langen Pfosten. Verworfen: Spitze weicht zur Seite aus (kostete fast ein Tor je Spiel und die Doppelpässe).
+Nebenbei behoben: Rückpass beim Doppelpass fiel auf „nach vorn bolzen" zurück, wenn der Läufer zu dicht stand.
+Offen:
+- Tore nach Flanken: Flanken werden selten verwertet; dadurch auf großen Plätzen etwas weniger Tore.
+- „Nach außen lenken" / „Zentrum zumachen": ein Versuch (Anlaufen von innen, schmaler Block) änderte die
+  Angriffsseiten des Gegners kaum (68 % → 66–67 %) und kostete eigene Tore – zurückgenommen. Braucht ein echtes
+  Leiten des Ballführenden (Körperstellung, Doppeln außen).
 
 ### 11.7 Pokale (erledigt, Oktober 2026)
 - **Kreispokal** ab der Kreisklasse C: 16 Vereine aus allen Kreisligen, vier K.-o.-Runden mittwochs vor dem
