@@ -55,7 +55,7 @@ export const clubScreens = {
     this.draft ??= { name: club.name, short: club.short, kit: { pattern: 'uni', second: 0xf2efe6, ...club.kit } };
     const d = this.draft;
     const mainSponsor = shirtSponsor(c);
-    const sponsorShown = mainSponsor ? { name: mainSponsor.name, color: sponsorColor(mainSponsor) } : null;
+    const sponsorShown = mainSponsor ? { id: mainSponsor.id, name: mainSponsor.name, color: sponsorColor(mainSponsor) } : null;
     const shirtCss = (k) => `url(${kitPreviewURL(k, sponsorShown)}) center / 100% 100%`;
     const swatches = (part, label) => `
       <div class="swatch-row"><span>${label}</span>${KIT_COLORS.map(

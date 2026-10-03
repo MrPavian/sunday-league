@@ -222,6 +222,53 @@ async function english(b) {
   return ok.done();
 }
 
+// Kreispokal: Spielstand per Aufstieg in die Kreisklasse B, vorgespult bis zur ersten Pokalwoche.
+// Startseite zeigt das Pokalspiel (Mittwoch) vor dem Ligaspiel; Liveticker spielt es, danach Liga.
+export async function pokal(b) {
+  const ok = checker('Kreispokal: Pokalspiel unter der Woche vor dem Ligaspiel, Pokal-Tab mit Runden');
+  const { createCareer, currentFixtures, finishRound, nextSeason, seasonOver } = await import('../../src/career/career.js');
+  const { pokalOf } = await import('../../src/career/pokal.js');
+  const c = createCareer({ seed: 77 });
+  c.level = 2;
+  while (!seasonOver(c)) {
+    for (const f of currentFixtures(c)) {
+      const h = c.clubs.find((x) => x.id === f.home);
+      const a = c.clubs.find((x) => x.id === f.away);
+      f.result = h.human ? { home: 3, away: 0 } : a.human ? { home: 0, away: 3 } : { home: 1, away: 1 };
+    }
+    finishRound(c);
+  }
+  nextSeason(c);
+  const cup = pokalOf(c, 'kreis');
+  ok(!!cup && c.level === 3, `kein Kreispokal nach dem Aufstieg (Stufe ${c.level})`);
+  while (cup && c.round < cup.rounds[0]) finishRound(c);
+  const p = await page(b, 'land', { query: '?notitle&debug', store: { 'sunday-league:career': JSON.stringify(c) } });
+  await click(p, '.career [data-c="continue"]');
+  await p.waitForTimeout(1500);
+  await click(p, '[data-action="area"][data-value="home"]').catch(() => {});
+  ok(!!(await p.waitForSelector('.pokal-card', { timeout: 15000 }).catch(() => null)), 'Pokalspiel fehlt auf der Startseite');
+  ok(!(await p.$('[data-action="onSimulate"]')), 'Ligaspiel wird schon vor dem Pokalspiel angeboten');
+  await click(p, '[data-action="onPokalSimulate"]');
+  await p.waitForTimeout(1000);
+  ok(await visible(p, 'ticker'), 'Liveticker fürs Pokalspiel öffnet nicht');
+  for (let i = 0; i < 300 && (await visible(p, 'ticker')); i++) {
+    await p.evaluate(() => document.querySelector('#ticker .decision button, #ticker [data-action="done"], #ticker [data-action="skip"]')?.click());
+    await p.waitForTimeout(300);
+  }
+  await click(p, '[data-action="area"][data-value="home"]').catch(() => {});
+  ok(!!(await p.waitForSelector('[data-action="onSimulate"]', { state: 'attached', timeout: 20000 }).catch(() => null)), 'nach dem Pokalspiel fehlt das Ligaspiel');
+  ok(!(await p.$('.pokal-card')), 'Pokalspiel steht nach dem Spielen noch da');
+  await click(p, '[data-action="area"][data-value="season"]').catch(() => {});
+  await p.waitForTimeout(400);
+  await click(p, '[data-action="tab"][data-value="cup"]').catch(() => {});
+  await p.waitForTimeout(600);
+  const txt = await p.evaluate(() => document.getElementById('club')?.innerText ?? '');
+  ok(/Kreispokal/.test(txt) && /1\. Runde/.test(txt), 'Pokal-Tab zeigt Kreispokal und 1. Runde nicht');
+  ok(!p.errors.length, `Fehler ${p.errors.slice(0, 2).join(' | ')}`);
+  await p.context().close();
+  return ok.done();
+}
+
 export async function oldSave(b, file) {
   const ok = checker('Alter Spielstand (mit dem Stand vor dem Audit erzeugt): laden, alle Tabs, Liveticker-Runde');
   const p = await page(b, 'land', { query: '?notitle&debug', store: { 'sunday-league:career': readFileSync(file, 'utf8') } });
@@ -472,6 +519,7 @@ export async function run() {
   f += await clubSetup(b);
   f += await eventFold(b);
   f += await saveAtWhistle(b);
+  f += await pokal(b);
   f += await oldSave(b, process.env.E2E_OLD_SAVE ?? fileURLToPath(new URL('./fixtures/save-858e978.json', import.meta.url)));
   await b.close();
   return f;

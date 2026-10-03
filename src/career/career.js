@@ -47,6 +47,7 @@ import { memoryAfterMatch, placeFormers, preMatchMemories, rememberArrival, reme
 import { defaultCrest } from '../ui/crest.js';
 import { clubTactic, normalizeTactic, systemFormation } from '../sim/tactics.js';
 import { shirtSponsor, sponsorColor, SPONSORS } from './sponsors.js';
+import { advancePokale } from './pokal.js';
 
 export const SAVE_VERSION = 1;
 export const POOL_SEED = 1921;
@@ -427,6 +428,7 @@ export function humanFixture(career) {
 
 export function startWeek(career) {
   const prevRumors = career.week?.rumors ?? []; // offene Gerüchte bleiben 2–4 Wochen am Brett
+  advancePokale(career); // Kreis-/Bezirkspokal: anmelden, verpasste Runden ausspielen
   if (seasonOver(career)) {
     career.week = null;
     return;
@@ -608,7 +610,15 @@ export function buildLineup(career, club, format, availability, rng, manual = nu
 
 // Profis (formers[idx].pro) tauchen nie wieder als Amateur auf.
 export const takenIndices = (career) =>
-  new Set([...career.clubs.flatMap((c) => c.squad), ...(career.youth?.prospects ?? []), ...(career.alumni ?? []).map((a) => a.idx), ...Object.entries(career.formers ?? {}).filter(([, f]) => f.pro).map(([k]) => Number(k))]);
+  new Set([
+    ...career.clubs.flatMap((c) => c.squad),
+    ...(career.youth?.prospects ?? []),
+    ...(career.alumni ?? []).map((a) => a.idx),
+    ...Object.entries(career.formers ?? {}).filter(([, f]) => f.pro).map(([k]) => Number(k)),
+    // Gäste aus Turnieren und Pokalen, solange sie dabei sind (sonst spielte einer für zwei Vereine).
+    ...Object.values(career.cups ?? {}).flatMap((t) => (t.stage !== 'done' ? (t.guests ?? []).flatMap((g) => g.squad) : [])),
+    ...Object.values(career.pokale ?? {}).flatMap((t) => (!t.done ? t.guests.flatMap((g) => g.squad) : [])),
+  ]);
 
 function makeRumors(career, rng, count = 3, exclude = []) {
   const pool = getPool();
@@ -908,13 +918,13 @@ export function teamForMatch(career, club, format, availability, rng) {
 // anderen ein fester Betrieb aus dem Ort (manche haben keinen).
 export function clubSponsor(career, club) {
   const mine = shirtSponsor(career);
-  if (club.human) return mine ? { name: mine.name, color: sponsorColor(mine) } : null;
+  if (club.human) return mine ? { id: mine.id, name: mine.name, color: sponsorColor(mine) } : null;
   let h = 7;
   for (const ch of String(club.id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   if (h % 6 === 0) return null;
   const pool = SPONSORS.filter((s) => s.id !== mine?.id && !s.from); // Gegner: Betriebe aus dem Ort
   const s = pool[h % pool.length];
-  return { name: s.name, color: s.color };
+  return { id: s.id, name: s.name, color: s.color };
 }
 
 // Gegner: ein, zwei Leute fehlen immer.

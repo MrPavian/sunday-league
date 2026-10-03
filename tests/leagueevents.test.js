@@ -1,7 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { createCareer } from '../src/career/career.js';
+import { createCareer, humanClub } from '../src/career/career.js';
+import { roundTies, startPokal } from '../src/career/pokal.js';
 import { resolveEvent, rollWeekEvent } from '../src/career/events.js';
 import { AMATEUR_MAX_MONTH, LEAGUE_EVENTS } from '../src/career/leagueevents.js';
+
+// Kreispokal mit eigenem Heimspiel gegen einen Höherklassigen in der laufenden Runde.
+function drawHomeTie(c) {
+  c.level = 2;
+  const cup = startPokal(c, 'kreis');
+  const me = humanClub(c).id;
+  const tie = roundTies(cup).find((t) => t.home === me || t.away === me);
+  const opp = tie.home === me ? tie.away : tie.home;
+  Object.assign(tie, { home: me, away: opp });
+  cup.levels[opp] = 4;
+  c.round = cup.rounds[0];
+}
 
 const rng = { next: () => 0.3, pick: (l) => l[0], chance: () => true, int: (a) => a, range: (a) => a };
 
@@ -14,6 +27,7 @@ describe('Ereignisse der höheren Ligen', () => {
         const c = createCareer({ seed: 3 });
         c.level = 5;
         c.round = 4;
+        if (id === 'pokal_los') drawHomeTie(c); // hängt am echten Pokallos
         const ctx = def.needs(c, rng);
         expect(ctx, id).toBeTruthy();
         c.week.event = { id, ctx, text: def.text(c, ctx), options: def.options.map((o) => o.label), choice: null, result: null };

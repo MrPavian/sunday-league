@@ -7,6 +7,13 @@ import { humanClub } from './career.js';
 import { adjustForm, adjustMood } from './events.js';
 import { book } from './finances.js';
 import { first, outcome, sitOut } from './outcomes.js';
+import { POKALE, pokalClub, pokalOf, roundName, roundTies } from './pokal.js';
+
+const mark = (c, ctx) => {
+  const tie = pokalOf(c, ctx.kind).ties[ctx.i];
+  tie.offered = true;
+  return tie;
+};
 
 const level = (c) => c.level ?? 1;
 const from = (n, extra = () => ({})) => (c, rng) => (level(c) >= n ? extra(c, rng) : null);
@@ -58,13 +65,29 @@ export const LEAGUE_EVENTS = {
     ],
   },
 
+  // Hängt am echten Pokallos: Heimrecht gegen einen Höherklassigen – der will lieber bei sich spielen.
   pokal_los: {
-    weight: 0.8,
-    needs: from(3),
-    text: () => tr('Kreispokal, zweite Runde: Ihr habt Heimrecht gegen einen Landesligisten gezogen. Deren Kassierer ruft an: Gegen 150 € würden sie gern bei sich spielen – „mehr Zuschauer, besserer Platz".', 'County Cup, second round: you have drawn a home tie against a much higher-league side. Their treasurer calls: for €150 they would like to host – "more spectators, better pitch".'),
+    weight: 3,
+    needs: (c) => {
+      const me = humanClub(c).id;
+      for (const kind of ['kreis', 'bezirk']) {
+        const cup = pokalOf(c, kind);
+        if (!cup || cup.done || cup.out) continue;
+        const tie = roundTies(cup).find((t) => !t.result && !t.offered && t.home === me && cup.levels[t.away] > cup.levels[me]);
+        if (tie && cup.rounds[cup.round] >= c.round) return { kind, i: cup.ties.indexOf(tie), opp: pokalClub(c, cup, tie.away).name, cup: POKALE[kind].name, round: roundName(cup) };
+      }
+      return null;
+    },
+    text: (c, ctx) => tr(`${ctx.cup}, ${ctx.round}: Ihr habt Heimrecht gegen ${ctx.opp} gezogen. Deren Kassierer ruft an: Gegen 150 € würden sie gern bei sich spielen – „mehr Zuschauer, besserer Platz".`, `${ctx.cup}, ${ctx.round}: you have drawn a home tie against ${ctx.opp}. Their treasurer calls: for €150 they would like to host – "more spectators, better pitch".`),
     options: [
-      { label: tr('Heimrecht behalten', 'Keep home advantage'), effect: outcome([{ w: 2, run: (c) => (adjustMood(c, 0.08), book(c, tr('Pokalspiel: Getränke und Bratwurst', 'Cup tie: drinks and sausages'), 90), tr('Der Platz ist voll wie nie. Ihr verliert, aber die Bratwurst ist um halb vier ausverkauft.', 'The ground is fuller than ever. You lose, but the sausages sell out by half three.')) }, { w: 1, run: (c) => (adjustMood(c, 0.15), book(c, tr('Pokalspiel: Getränke und Bratwurst', 'Cup tie: drinks and sausages'), 90), tr('Elfmeterschießen. Ihr gewinnt. Das Kreisblatt schreibt von einer Sensation.', 'Penalties. You win. The Gazette calls it a sensation.')) }]) },
-      { label: tr('Verkaufen, 150 € nehmen', 'Sell it, take the €150'), effect: outcome([{ w: 2, run: (c) => (book(c, tr('Heimrecht verkauft', 'Home tie sold'), 150), adjustMood(c, -0.05), tr('150 € für die Kasse. Auf dem großen Kunstrasen seht ihr ziemlich klein aus.', '€150 for the kitty. On their big artificial pitch you look rather small.')) }, { w: 1, run: (c) => (book(c, tr('Heimrecht verkauft', 'Home tie sold'), 150), tr('Geld genommen, Spiel verloren, gut gegessen. Ein fairer Tausch.', 'Took the money, lost the match, ate well. A fair swap.')) }]) },
+      { label: tr('Heimrecht behalten', 'Keep home advantage'), effect: outcome([{ w: 2, run: (c, ctx) => (mark(c, ctx), adjustMood(c, 0.05), tr('Ihr bleibt zu Hause. Der Platzwart mäht extra kurz, die Bude bestellt doppelt Würste.', 'You stay at home. The groundsman cuts the grass extra short, the stand orders twice the sausages.')) }, { w: 1, run: (c, ctx) => (mark(c, ctx), adjustMood(c, 0.08), tr('„Hier spielt ihr nach unseren Regeln." Die Mannschaft freut sich auf den Abend.', '"Here you play by our rules." The team is looking forward to the evening.')) }]) },
+      { label: tr('Verkaufen, 150 € nehmen', 'Sell it, take the €150'), effect: outcome([{ w: 1, run: (c, ctx) => {
+        const tie = mark(c, ctx);
+        [tie.home, tie.away] = [tie.away, tie.home];
+        book(c, tr('Heimrecht verkauft', 'Home tie sold'), 150);
+        adjustMood(c, -0.04);
+        return tr(`150 € für die Kasse. Gespielt wird jetzt bei ${ctx.opp} – auf deren großem Platz.`, `€150 for the kitty. The tie is now at ${ctx.opp} – on their big pitch.`);
+      } }]) },
     ],
   },
 

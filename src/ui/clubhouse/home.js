@@ -21,6 +21,7 @@ import { talk } from '../../career/pub.js';
 import { weatherLine } from '../../career/weather.js';
 import { derbyOf, isDerbyFixture } from '../../career/derby.js';
 import { CUP_NAME, CUPS, cupOf, PRIZES, tournamentOpen, winterCupDue, winterCupRunning } from '../../career/tournament.js';
+import { humanTie, pokalClub, pokalDue, POKALE, pokalOf, roundName } from '../../career/pokal.js';
 import { coachAway, energyLabel, patienceLabel } from '../../career/personal.js';
 import { PITCHES } from '../../sim/pitch.js';
 import { FIT_LOW, fitnessOf, fitnessPct } from '../../career/fitness.js';
@@ -104,7 +105,9 @@ export const homeScreens = {
     ].filter(Boolean);
     const stories = storyLabels(c);
     let actions;
+    const pk = pokalDue(c);
     if (this.busy) actions = `<p class="busy">${this.busy}</p>`;
+    else if (pk && !coachAway(c)) actions = this.pokalCard(pk);
     else if (winterCupDue(c)) actions = `<p class="t-2">${tr('Erst entscheiden: Hallenturnier ja oder nein? Danach geht die Liga weiter.', 'Decide first: indoor tournament, yes or no? Then the league carries on.')}</p>`;
     else if (winterCupRunning(c)) actions = `${button(tr('Zum Hallenturnier', 'To the indoor tournament'), { kind: 'primary big block', action: 'tab', value: 'cup' })}<p class="t-2">${tr('Der nächste Ligaspieltag steigt nach dem Turnier.', 'The next league match is after the tournament.')}</p>`;
     else if (coachAway(c)) actions = `<p class="warn">${tr('Du bist diese Woche nicht da – der Kapitän stellt auf, du bekommst nur das Ergebnis.', 'You are away this week – the captain picks the team, you just get the result.')}</p>${button(tr('Ergebnis abwarten', 'Wait for the result'), { kind: 'secondary big block', action: 'onSimulate' })}`;
@@ -136,6 +139,26 @@ export const homeScreens = {
           <div class="ui-row">${button(tr('Anmelden', 'Enter'), { kind: 'primary', action: 'onCupStart', value: 'halle' })}${button(tr('Diesmal nicht', 'Not this time'), { action: 'onCupSkip', value: 'halle' })}</div></div>` : ''}
         <div class="hub-actions">${actions}</div>
       </article>`;
+  },
+
+  // Pokalspiel unter der Woche: kommt vor dem Ligaspieltag.
+  pokalCard(kind) {
+    const c = this.career;
+    const cup = pokalOf(c, kind);
+    const tie = humanTie(c, kind);
+    const me = humanClub(c).id;
+    const home = tie.home === me;
+    const opp = pokalClub(c, cup, home ? tie.away : tie.home);
+    const lv = (id) => LEAGUES[Math.min(5, cup.levels[id])]?.name ?? tr('Landesliga', 'Regional League');
+    const oppLevel = cup.levels[opp.id];
+    const myLevel = cup.levels[me];
+    const why = oppLevel > myLevel ? tr(' – der Höherklassige muss zu euch', ' – the higher-league side has to come to you') : oppLevel < myLevel ? tr(' – ihr müsst zum Klassentieferen', ' – you have to visit the lower-league side') : '';
+    const format = LEAGUES[Math.min(5, Math.max(2, cup.levels[tie.home]))].format;
+    return `<div class="pokal-card"><p class="t-cap">${tr('Mittwoch, 19:30 Uhr', 'Wednesday, 7:30pm')} · <b>${POKALE[kind].name}</b> · ${roundName(cup, tie.round)}</p>
+      <p class="t-body">${home ? tr('Heimspiel', 'Home') : tr('Auswärts', 'Away')} ${tr('gegen', 'against')} <b>${opp.name}</b> <small>(${lv(opp.id)})</small>${why}.</p>
+      <p class="t-2">${format} ${tr('gegen', 'v')} ${format} · ${tr('bei Unentschieden direkt Elfmeterschießen', 'if level: straight to penalties')} · ${tr('am Sonntag geht die Liga weiter', 'the league carries on on Sunday')}</p>
+      ${button(tr('Anpfiff – an der Seitenlinie', 'Kick-off – on the touchline'), { kind: 'primary big block coach-play', action: 'onPokalCoach', value: kind })}
+      <div class="hub-alt">${button(tr('Liveticker mit Entscheidungen', 'Live ticker with decisions'), { action: 'onPokalSimulate', value: kind })}${button(tr('Selbst spielen', 'Play it yourself'), { kind: 'self-play', action: 'onPokalPlay', value: kind })}</div></div>`;
   },
 
   // Familie & Energie des Spielertrainers als kleine Balken.

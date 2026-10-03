@@ -68,6 +68,7 @@ import { Settings } from './ui/Settings.js';
 import { Ticker } from './ui/Ticker.js';
 import { SaveSlots } from './ui/SaveSlots.js';
 import { prepareRelegationMatch, recordRelegationLeg, startRelegation } from './career/relegation.js';
+import { humanTie, POKALE, pokalOf, preparePokalMatch, recordPokalResult, roundName } from './career/pokal.js';
 import './style.css';
 import './ds.css';
 import './world.css';
@@ -605,6 +606,9 @@ const clubhouse = new Clubhouse(document.getElementById('club'), {
   },
   onCupPlay: (kind = 'stadt') => playCupMatch(kind, 'player'),
   onCupCoach: (kind = 'stadt') => playCupMatch(kind, 'manager'),
+  onPokalPlay: (kind) => playPokalMatch(kind, 'player'),
+  onPokalCoach: (kind) => playPokalMatch(kind, 'manager'),
+  onPokalSimulate: (kind) => tickerPokal(kind),
   onRelPlay: () => playRelegationMatch('player'),
   onRelCoach: () => playRelegationMatch('manager'),
   onRelSimulate: () => tickerRelegation(),
@@ -816,6 +820,37 @@ async function runRound(playedFixture) {
   openClubhouse(currentFixtures(career));
 }
 
+// Kreis-/Bezirkspokal: das Spiel unter der Woche, vor dem Ligaspieltag.
+function playPokalMatch(kind, style = null) {
+  const tie = humanTie(career, kind);
+  if (!tie) return openClubhouse();
+  nextStyle = style;
+  const prepared = preparePokalMatch(career, kind, tie, { human: true, duration: testDuration });
+  careerMatch = { prepared, pokal: true };
+  loadVenue(prepared.pitch.id);
+  clubhouse.hide();
+  setMode('play');
+  showMatch(prepared.match);
+  const cup = pokalOf(career, kind);
+  hud.toast(`${POKALE[kind].name} · ${roundName(cup, tie.round)} · ${tr('Mittwoch, 19:30', 'Wednesday, 7:30pm')}`, 3, 2);
+}
+
+function tickerPokal(kind) {
+  const tie = humanTie(career, kind);
+  if (!tie) return openClubhouse();
+  const prepared = preparePokalMatch(career, kind, tie, { duration: testDuration });
+  clubhouse.hide();
+  ticker.show(prepared, {
+    title: `${POKALE[kind].name} · ${prepared.pitch.name}`,
+    coachTeam: coachTeamOf(prepared),
+    onDone() {
+      recordPokalResult(career, prepared);
+      saveCareer(career);
+      openClubhouse();
+    },
+  });
+}
+
 // Relegation: Hin- oder Rückspiel selbst spielen.
 function playRelegationMatch(style = null) {
   nextStyle = style;
@@ -849,9 +884,10 @@ function tickerRelegation() {
 // Kreisblatt weglegt. Wer die App auf dem Ergebnis-Bildschirm schließt, verliert nichts.
 function commitCareerMatch() {
   if (!careerMatch || careerMatch.committed) return;
-  const { prepared, fixture, cup, relegation } = careerMatch;
+  const { prepared, fixture, cup, relegation, pokal } = careerMatch;
   careerMatch.committed = true;
-  if (relegation) recordRelegationLeg(career, prepared);
+  if (pokal) recordPokalResult(career, prepared);
+  else if (relegation) recordRelegationLeg(career, prepared);
   else if (cup) recordCupResult(career, cup, prepared);
   else recordResult(career, fixture, prepared);
   saveCareer(career);
@@ -872,7 +908,7 @@ const TIME_PARAM = { morgen: 'MORNING', mittag: 'DAY', tag: 'DAY', nachmittag: '
 function updateLighting() {
   if (!venue || !venueRoot) return;
   const mood = moodOf(match);
-  const time = TIME_PARAM ?? pickTimeOfDay(match.seed, venue.id, mood);
+  const time = TIME_PARAM ?? (match.midweek ? 'EVENING' : pickTimeOfDay(match.seed, venue.id, mood)); // Pokal: Mittwochabend unter Flutlicht
   const key = `${venue.id}|${mood}|${time}|${pixel.qualityId}|${venueRoot.uuid}`;
   if (key === lightMood) return;
   lightMood = key;

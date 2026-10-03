@@ -6,6 +6,7 @@ import { crestOf, crestSVG } from '../crest.js';
 import { clubById, humanClub, seasonOver, table } from '../../career/career.js';
 import { dateLabel, matchDate, monthLabel } from '../../career/calendar.js';
 import { CUPS, cupClub, cupOf, groupTable, humanCupMatch, stageName, winterRound } from '../../career/tournament.js';
+import { POKALE, pokalClub, pokalOf, roundName, roundTies } from '../../career/pokal.js';
 import { first, leagueName } from './shared.js';
 
 export const seasonScreens = {
@@ -14,7 +15,28 @@ export const seasonScreens = {
     const trophies = (c.trophies ?? []).length ? `<h4>${tr('Vitrine', 'Trophy cabinet')}</h4><ul class="plain trophies">${c.trophies.map((t) => `<li>${tr('Pokal', 'Trophy')}: ${t.name}</li>`).join('')}</ul>` : '';
     const running = ['halle', 'stadt'].filter((k) => cupOf(c, k) && !cupOf(c, k).skipped);
     const intro = `<p class="empty">${tr(`Zwei Turniere pro Saison: die ${CUPS.halle.name} in der Winterpause (Saisonmitte, ${CUPS.halle.place}, Bande und Handballtore) und die ${CUPS.stadt.name} im Sommer nach dem letzten Spieltag (${CUPS.stadt.place}).`, `Two tournaments per season: the ${CUPS.halle.name} in the winter break (mid-season, ${CUPS.halle.place}, boards and handball goals) and the ${CUPS.stadt.name} in summer after the last matchday (${CUPS.stadt.place}).`)}</p>`;
-    return `${running.length ? running.map((k) => this.cupSection(k)).join('<hr>') : intro}${trophies}`;
+    const pokale = ['kreis', 'bezirk'].filter((k) => pokalOf(c, k)).map((k) => this.pokalSection(k)).join('<hr>');
+    const pokalIntro = (c.level ?? 1) < 2 ? `<p class="empty">${tr('Kreispokal gibt es ab der Kreisklasse C: K.-o.-Runden unter der Woche, Heimrecht für den Klassentieferen.', 'The District Cup starts in Division Three: knockout rounds midweek, home advantage for the lower-league side.')}</p>` : '';
+    return `${pokale}${pokale ? '<hr>' : pokalIntro}${running.length ? running.map((k) => this.cupSection(k)).join('<hr>') : intro}${trophies}`;
+  },
+
+  // Pokal: alle Runden mit Paarungen und Ergebnissen, die nächste Runde mit Datum.
+  pokalSection(kind) {
+    const c = this.career;
+    const cup = pokalOf(c, kind);
+    const me = humanClub(c).id;
+    const name = (id) => pokalClub(c, cup, id)?.short ?? '?';
+    const rounds = [];
+    for (let r = 0; r <= cup.round; r++) {
+      const ties = roundTies(cup, r);
+      if (!ties.length) continue;
+      const when = cup.rounds[r] != null ? dateLabel(matchDate(c, cup.rounds[r])) : '';
+      rounds.push(`<h4>${roundName(cup, r)} <small>${tr('Mittwoch vor dem', 'Wednesday before')} ${when}</small></h4><ul class="plain cup-list">${ties
+        .map((t) => `<li class="${t.home === me || t.away === me ? 'mine' : ''}">${name(t.home)} ${t.result ? `<b>${t.result.home}:${t.result.away}</b>${t.pens ? ` <small>(${t.pens.home}:${t.pens.away} ${tr('i. E.', 'pens')})</small>` : ''}` : '–:–'} ${name(t.away)}</li>`)
+        .join('')}</ul>`);
+    }
+    const state = cup.done ? `<p class="reply ok">${cup.log.at(-1) ?? ''}</p>` : cup.out ? `<p>${tr('Ihr seid raus – die anderen spielen weiter.', 'You are out – the others play on.')}</p>` : `<p>${tr('Ihr seid noch dabei. Das nächste Pokalspiel steht auf der Startseite, sobald die Woche da ist.', 'You are still in. The next cup tie appears on the home page when its week comes.')}</p>`;
+    return `<p class="chat-head">${POKALE[kind].name} ${cup.year} · ${POKALE[kind].size} ${tr('Vereine', 'clubs')} · ${tr('K.-o., Heimrecht für den Klassentieferen', 'knockout, home advantage for the lower-league side')}</p>${state}${rounds.reverse().join('')}`;
   },
 
   cupSection(kind) {

@@ -1,6 +1,8 @@
 // Trikotstoff als winziger Pixel-Atlas (64 × 16): vorne | hinten | Seite links |
 // Seite rechts. Die Spielfigur mappt ihre Quader auf diese Felder, das Vereinsheim
 // zeigt dieselbe Vorderseite als Vorschau. Dazu Sponsor-Brustfeld und Dreck.
+import { GLYPHS, logoFor, wordBars } from './sponsorLogos.js';
+
 export const REGION = { front: 0, back: 16, left: 32, right: 48 };
 
 const css = (n) => `#${(n >>> 0).toString(16).padStart(6, '0').slice(-6)}`;
@@ -22,14 +24,6 @@ const PATTERNS = {
   schulter: (x, y) => y <= 3,
 };
 
-// Kleine Pixel-„Schrift" für das Brustfeld: aus jedem Buchstaben wird ein
-// Säulenmuster. Lesbar ist das auf dem Platz nicht – aber es sieht aus wie ein Logo.
-function wordmark(name) {
-  // Englische Namen wie „The Linden Tree Inn“: ohne Artikel, sonst stünde „TheLi“ auf der Brust.
-  const letters = String(name ?? '').replace(/^The\s+/i, '').replace(/[^A-Za-zÄÖÜäöüß]/g, '').slice(0, 5);
-  return [...letters].map((ch) => ch.charCodeAt(0));
-}
-
 export function sponsorPlate(kit, sponsor) {
   const c = sponsor.color ?? 0xf2efe6;
   // Hebt sich die Sponsorfarbe nicht vom Trikot ab, kommt sie auf ein helles/dunkles Feld.
@@ -37,6 +31,78 @@ export function sponsorPlate(kit, sponsor) {
   const plate = diff < 0.25 ? (luminance(kit.shirt) > 0.5 ? 0x1c1c1c : 0xf2efe6) : null;
   const ink = plate == null ? c : luminance(c) - luminance(plate) > 0.3 || luminance(plate) - luminance(c) > 0.3 ? c : luminance(plate) > 0.5 ? 0x1c1c1c : 0xf2efe6;
   return { plate, ink };
+}
+
+const close = (a, b) => Math.abs(luminance(a) - luminance(b)) < 0.25;
+const contrast = (bg) => (luminance(bg) > 0.5 ? 0x1c1c1c : 0xf2efe6);
+
+// Sponsor auf der Brust (Feld x 3–12, y 6–9): Branchenzeichen plus Schriftmarke, je Sponsor anders
+// angeordnet (sponsorLogos.js). bg: Trikotfarbe unter dem Brustfeld.
+function paintSponsor(ctx, ox, kit, sponsor, bg) {
+  const logo = logoFor(sponsor);
+  const glyph = GLYPHS[logo.glyph] ?? GLYPHS.schild;
+  const gw = glyph[0].length;
+  const gh = glyph.length;
+  const brand = sponsor.color ?? 0xf2efe6;
+  let layout = logo.layout;
+  // Band und Fleck brauchen eine Markenfarbe, die sich vom Trikot abhebt – sonst klassisch mit Feld.
+  if ((layout === 'band' || layout === 'rund') && close(brand, bg)) layout = 'links';
+  const dot = (x, y, c) => {
+    ctx.fillStyle = css(c);
+    ctx.fillRect(ox + x, y, 1, 1);
+  };
+  const drawGlyph = (x0, y0, ink, accent) => glyph.forEach((row, y) => [...row].forEach((ch, x) => ch !== '.' && dot(x0 + x, y0 + y, ch === 'o' ? accent : ink)));
+  const drawBars = (x0, y0, width, rows, ink) =>
+    wordBars(sponsor.name, width, rows).forEach((bar, r) => {
+      for (let x = 0; x < bar.len; x++) if (!bar.gaps.includes(x)) dot(x0 + x, y0 + r * (rows === 1 ? 0 : 2), ink);
+      if (bar.tall) dot(x0, y0 + r * (rows === 1 ? 0 : 2) - 1, ink); // großer Anfangsbuchstabe
+    });
+  const top = 6 + Math.floor((4 - gh) / 2);
+  if (layout === 'band') {
+    // Farbiges Band über die Brust, Zeichen und Marke in der Akzentfarbe ausgespart.
+    ctx.fillStyle = css(brand);
+    ctx.fillRect(ox + 3, 6, 10, 4);
+    const ink = close(logo.accent, brand) ? contrast(brand) : logo.accent;
+    drawGlyph(4, top, ink, close(bg, brand) ? contrast(brand) : bg);
+    drawBars(5 + gw, 7, 12 - (5 + gw), 2, ink);
+    return;
+  }
+  if (layout === 'rund') {
+    // Runder Fleck in Markenfarbe mit Zeichen, daneben die Marke in Markenfarbe.
+    ctx.fillStyle = css(brand);
+    ctx.fillRect(ox + 4, 6, gw + 2, 4);
+    for (const [x, y] of [[4, 6], [5 + gw, 6], [4, 9], [5 + gw, 9]]) dot(x, y, bg); // Ecken abrunden
+    drawGlyph(5, top, close(logo.accent, brand) ? contrast(brand) : logo.accent, contrast(brand));
+    drawBars(7 + gw, 7, 12 - (7 + gw) + 1, 2, close(brand, bg) ? contrast(bg) : brand);
+    return;
+  }
+  const { plate, ink } = sponsorPlate(kit, sponsor);
+  const field = plate ?? bg;
+  if (plate != null) {
+    ctx.fillStyle = css(plate);
+    ctx.fillRect(ox + 3, 6, 10, 4);
+  }
+  const accent = close(logo.accent, field) ? ink : logo.accent;
+  if (layout === 'mitte') {
+    // Zeichen in der Mitte, die Marke als Flügel links und rechts.
+    const gx = 8 - Math.ceil(gw / 2);
+    drawGlyph(gx, top, ink, accent);
+    const wing = Math.max(1, gx - 4);
+    for (let x = 0; x < wing; x++) {
+      dot(gx - 2 - x, 8, ink);
+      dot(gx + gw + 1 + x, 8, ink);
+    }
+    return;
+  }
+  if (layout === 'schrift') {
+    // Nur Schriftzug: zwei Zeilen, darunter ein Schwung in der Akzentfarbe.
+    drawBars(4, 7, 8, 2, ink);
+    for (let x = 0; x < 8; x++) dot(4 + x, x < 2 || x > 5 ? 9 : 8, accent);
+    return;
+  }
+  // links: Zeichen links, Marke rechts daneben.
+  drawGlyph(3, top, ink, accent);
+  drawBars(4 + gw, 7, 12 - (4 + gw) + 1, 2, ink);
 }
 
 // Malt den ganzen Atlas. dirt: 0–1, splats: feste Klecks-Positionen je Spieler.
@@ -51,23 +117,7 @@ export function paintKit(ctx, kit, { sponsor = null, dirt = 0, splats = null, di
         ctx.fillStyle = fn(x, y, face) ? b : a;
         ctx.fillRect(ox + x, y, 1, 1);
       }
-    if (face === 'front' && sponsor) {
-      const { plate, ink } = sponsorPlate(kit, sponsor);
-      if (plate != null) {
-        ctx.fillStyle = css(plate);
-        ctx.fillRect(ox + 3, 6, 10, 4);
-      }
-      ctx.fillStyle = css(ink);
-      const codes = wordmark(sponsor.name);
-      const w = Math.min(8, codes.length * 2);
-      const start = ox + 8 - Math.ceil(w / 2);
-      codes.forEach((code, i) => {
-        if (i * 2 >= w) return;
-        const tall = code % 3 === 0;
-        ctx.fillRect(start + i * 2, tall ? 6 : 7, 1, tall ? 3 : 2);
-      });
-      ctx.fillRect(start, 9, w - 1, 1);
-    }
+    if (face === 'front' && sponsor) paintSponsor(ctx, ox, kit, sponsor, fn(8, 8, face) ? kit.second ?? kit.shirt : kit.shirt);
   });
   if (dirt > 0 && splats) {
     const n = Math.floor(splats.length * Math.min(1, dirt));

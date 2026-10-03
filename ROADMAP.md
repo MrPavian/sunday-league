@@ -612,7 +612,8 @@ teuren Effekte für langsame Rechner ab.
 Die Zahlen in Klammern sind der Stand im Code, damit „mehr" messbar bleibt. Erledigt (Oktober 2026):
 englische Namen, Vereine, Ligen und Sponsoren (11.3, 11.4), mehr deutsche Namen (Namensauflage 6), 60 Sponsoren,
 10 Ereignisse für höhere Ligen (11.5), Torwart-Hechtsprung in Phasen, Vorfälle als Szenen mit Taube (11.1),
-Bratwurst- und Bierbude auf Rasen-, Sport- und Großfeld, an die Zuschauer ab und zu gehen (`src/render/crowd.js`).
+Bratwurst- und Bierbude auf Rasen-, Sport- und Großfeld, an die Zuschauer ab und zu gehen (`src/render/crowd.js`),
+Kreis- und Bezirkspokal im K.-o.-System unter der Woche (`src/career/pokal.js`, siehe 11.7).
 
 ### 11.1 Animationen
 - **Mehr Animationen:** Jubel (mehrere Varianten, Rutschen auf Knien, Trikot über den Kopf), Ärger nach
@@ -628,17 +629,13 @@ Bratwurst- und Bierbude auf Rasen-, Sport- und Großfeld, an die Zuschauer ab un
 - **Vorfälle auf dem Platz animieren:** ✅ Gewitter (alle sprinten mit den Händen über dem Kopf vom Platz, der
   Schiri auch – vorher lief wegen eines Fehlers niemand los), Polizei (Zeigefinger, verschränkte Arme, alle schauen
   hin), Hund mit Herrchen, neue Taube (gleitet ein, pickt, wird verscheucht, fliegt davon);
-  `tests/incidents_scene.test.js`. Noch offen aus der ursprünglichen Liste:
-  - Gewitter: Alle rennen schnell vom Platz, Hände oder Trikot über dem Kopf, einer rutscht aus; Schiri
-    zuerst unterm Vordach. Heute gehen die Spieler nur im Laufschritt zum Seitenrand.
-  - Polizei: Die beiden Polizisten kommen mit Gesten (Hand hoch, Zeigefinger), reden mit dem Trainer,
-    Spieler stehen mit verschränkten Armen herum. Heute gehen sie nur aufs Feld und wieder zurück.
-  - Hund: echtes Rennen und Haken schlagen, Ball im Maul schütteln, Spieler hechten daneben, Herrchen
-    mit Leine winkend. Heute läuft der Hund mit dem Ball, die Spieler laufen hinterher.
-  - **Neu – Taube:** Eine Taube landet auf dem Feld, pickt am Ball oder sitzt auf der Latte, flattert
-    beim Schuss auf; Spieler scheuchen sie. Gibt es noch nicht (nur Vogelgezwitscher im Ton).
-  - Weitere Vorfälle (Rasensprenger, Ball über den Zaun, Autoalarm, Ersatzschiri) mit passenden
-    Reaktionen der Spieler: wegrennen, schimpfen, auf den Zaun klettern, zum Auto zeigen.
+  `tests/incidents_scene.test.js`. Noch offen:
+  - Gewitter: einer rutscht aus; der Schiri ist zuerst unterm Vordach.
+  - Polizei: die Beamten reden mit dem Trainer.
+  - Hund: Haken schlagen, Ball im Maul schütteln, Spieler hechten daneben.
+  - Taube: sitzt auf der Latte und flattert beim Schuss auf.
+  - Rasensprenger, Ball über den Zaun, Autoalarm, Ersatzschiri: Reaktionen der Spieler (wegrennen, schimpfen,
+    auf den Zaun klettern, zum Auto zeigen).
 
 ### 11.2 Grafik und Aussehen der Spieler
 - Figuren mit mehr Varianten: Körperbau (schlank, kräftig, Bauch), Größe, Frisuren, Bärte, Stutzen runter,
@@ -650,17 +647,16 @@ Bratwurst- und Bierbude auf Rasen-, Sport- und Großfeld, an die Zuschauer ab un
 - ✅ Erledigt: englische Namen (Auflage 5, Herkunft nach Zensus 2021), englische Vereine und Ligen, deutsche
   Auflage 6 mit 58 Vornamen und 60 Nachnamen mehr. Ursprünglich: **Mehr Namen:** heute 140 Vornamen, 140 Nachnamen, 11 Herkunftsgruppen und 89 Berufe – Ziel: deutlich mehr
   Vielfalt, damit sich Namen über viele Saisons nicht wiederholen.
-- **Englische Version:** Spieler heißen dort heute wie in der deutschen Version (z. B. Dennis Müller, Kevin
-  Schmitz). Eigene Namenslisten für Englisch, passend zum englischen Amateurfußball.
-- **Vereinsnamen englisch:** Vereine heißen auch in der englischen Version deutsch (z. B. „SV Blau-Weiß
-  Kanalbezirk", „TuS Eichenkamp 1908"; heute 30 KI-Vereine in fünf Ligen). Eigene englische Namen im Stil von
-  Sunday-League-Teams (z. B. „… Athletic", „… United", „Red Lion FC").
 - Alte Spielstände behalten ihre Namen (Namens-Edition wie bisher, siehe `NAME_EDITION`).
 
 ### 11.4 Sponsoren
 - ✅ Erledigt: 60 Sponsoren (12 neue Betriebe, 8 größere Firmen erst ab Kreisklasse B bzw. Kreisliga A), alle mit
   englischem Namen. Ursprünglich: **Mehr Sponsoren:** heute 40 lokale Sponsoren mit Chef und Eigenart – Ziel: mehr Auswahl je Liga und
   Region, dazu englische Sponsoren für die englische Version (heute deutsche Namen wie „Bäckerei Krume").
+
+- ✅ Trikot-Logos statt Anfangsbuchstaben: jeder Sponsor hat ein Branchenzeichen (Brezel, Lenkrad, Schere, Biene …)
+  in Marken- und Akzentfarbe, dazu eine Schriftmarke aus den Wortlängen des Namens; fünf Anordnungen (links,
+  mittig, Band, Fleck, nur Schrift), immer kontrastreich zum Trikot (`src/render/sponsorLogos.js`).
 
 ### 11.5 Ereignisse
 - ✅ Erledigt: 10 Ereignisse für höhere Ligen (`src/career/leagueevents.js`: Sportgericht, Spielverlegung,
@@ -684,3 +680,14 @@ Flanken- und Rückpass-Entscheidung. Erst danach haben diese Befehle eine sichtb
 - „Links absichern" / „Rechts absichern" (kein messbarer Effekt)
 - „Über außen" wirkt nur mäßig (Flügelanteil 16 % → 24 %)
 - „Konter absichern" wirkt schwach (Konter gegen uns nur auf dem 7er-Feld etwas seltener)
+
+### 11.7 Pokale (erledigt, Oktober 2026)
+- **Kreispokal** ab der Kreisklasse C: 16 Vereine aus allen Kreisligen, vier K.-o.-Runden mittwochs vor dem
+  Ligaspieltag. **Bezirkspokal** in der Bezirksliga oder für den Kreispokalsieger der Vorsaison ab Kreisliga A:
+  8 Vereine, auch aus der Landesliga.
+- Regeln wie in vielen Kreisen: Heimrecht für den Klassentieferen, gespielt im Format des Gastgebers,
+  bei Unentschieden direkt Elfmeterschießen (manche Kreise spielen vorher Verlängerung).
+- Eigene Spiele werden gespielt (selbst, Seitenlinie, Liveticker), die übrigen per schnellem Ergebnismodell,
+  das an der Engine gemessen ist (`scripts/pokal-calibrate.mjs`). Heimspiele bringen Theke und kosten Schiri.
+- Das Ereignis „Heimrecht verkaufen" hängt jetzt am echten Los und tauscht wirklich den Spielort.
+- Offen: Verlängerung als Option, Landespokal/DFB-Pokal-Qualifikation, Pokalsieg-Prämien von Sponsoren.
