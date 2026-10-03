@@ -22,7 +22,7 @@ import { createReferee, stepReferee } from './referee.js';
 import { carRule, restartFromOut, startSetPiece } from './setpieces.js';
 import { checkOffside } from './offside.js';
 import { applyHold } from './holding.js';
-import { checkIncident, incidentOnBall, planIncident, stepIncident } from './incidents.js';
+import { checkIncident, incidentOnBall, planIncident, stepIncident, stepLeftovers } from './incidents.js';
 import { resolveTackles, startPoke, startTackle, stateMove } from './tackles.js';
 import { startShootout, stepShootout } from './shootout.js';
 import { stepKnocks } from './knocks.js';
@@ -188,6 +188,7 @@ function step(m, input, dt) {
     // Auch in der Pause vor dem Standard läuft die Zeit für Grätscher und Gefoulte weiter:
     // Sie stehen auf, statt bis zum Anpfiff in der Grätsche zu liegen.
     for (const p of m.players) if (p.state !== 'normal') stateMove(m, p, dt);
+    stepLeftovers(m, dt); // Hund, Taube, Besucher gehen weiter vom Platz, statt in der Luft zu hängen
     if ((m.phaseTimer -= dt) <= 0) m.phase = 'play';
     return;
   }

@@ -821,7 +821,7 @@ function acroPose(bn, kind, t, hipY) {
 // kickPrep 0…1 – Schuss/Pass ist geplant: ausholen (die Simulation führt ihn als „pending“),
 // trick/trickT/trickSide – Trick am Ball, acro/acroT – Fall-/Seitfallzieher, fooled 0…1 –
 // ausgetrickst, steht kurz auf dem falschen Fuß.
-export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot', headPrep = 0, headJump = 1, hit = null, duck = 0, face: faceHint = null, kickPrep = 0, trick = null, trickT = 0, trickSide = 1, acro = null, acroT = 0, fooled = 0, ready = 0, throwT = 0, jump = 0, punch = 0, getUp = null }) {
+export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot', headPrep = 0, headJump = 1, hit = null, duck = 0, face: faceHint = null, kickPrep = 0, trick = null, trickT = 0, trickSide = 1, acro = null, acroT = 0, fooled = 0, ready = 0, throwT = 0, jump = 0, punch = 0, getUp = null, cover = 0, gesture = null }) {
   const bn = model.bones;
   resetPose(model);
   const s = locomotion(model, speed, dt);
@@ -1027,20 +1027,104 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
     acroPose(bn, acro ?? 'fallrueck', acroT, hipY);
     face = 'effort';
   }
-  // Hechtsprung des Torwarts: seitlich flach in die Ecke, Arme lang, Beine hinterher.
+  // Hechtsprung des Torwarts in Phasen (dive.t läuft 0.5 → 0): Abdruck aus den Knien, Flug im Bogen
+  // (hoch oder flach je nach Ballhöhe, dive.high 0…1), Landung auf der Seite – mit gefangenem Ball an
+  // der Brust (dive.caught). Danach steht er auf (dive.rec 0 → 1, nur Darstellung).
   if (dive) {
-    const k = Math.sin(Math.min(1, (0.5 - dive.t) / 0.2) * Math.PI * 0.5);
-    bn.hips.rotation.set(0, 0, dive.side * 1.35 * k);
-    bn.hips.position.x = -dive.side * 0.55 * k;
-    bn.hips.position.y = hipY + 0.25 * k;
-    bn.spine.rotation.set(0, 0, dive.side * 0.12 * k);
-    arm(bn, 'L', -2.95, 0.2, -0.1);
-    arm(bn, 'R', -2.95, 0.2, -0.1);
-    const low = dive.side > 0 ? 'L' : 'R';
-    leg(bn, low, -0.2 * k, 0.7 * k, 0.3);
-    leg(bn, low === 'L' ? 'R' : 'L', 0.1, 0.15, 0.3);
+    const side = dive.side;
+    const high = dive.high ?? 0;
+    const lie = hipY * 0.38;
+    const reach = lerp(-2.35, -3.05, high); // flach: Arme Richtung Boden, hoch: lang über den Kopf
+    const roll = side * lerp(1.3, 1.45, high);
+    const low = side > 0 ? 'L' : 'R';
+    const top = low === 'L' ? 'R' : 'L';
+    // Arme am Ende der Landung: gefangen an der Brust, sonst noch lang.
+    const armEnd = dive.caught ? [-1.05, -0.28, -1.25] : [reach + 0.15, 0.2, -0.1];
+    if (dive.rec != null) {
+      // Aufstehen: von der Seite über ein Knie hoch, eine Hand stützt.
+      const e = smooth(0, 1, dive.rec);
+      const up = Math.sin(e * Math.PI);
+      bn.hips.rotation.set(0, 0, roll * (1 - e));
+      bn.hips.position.x = -side * 0.55 * (1 - e);
+      bn.hips.position.y = lerp(lie, hipY, e);
+      bn.spine.rotation.set(0.2 * (1 - e) + 0.3 * up, 0, side * 0.12 * (1 - e));
+      leg(bn, low, lerp(-0.5, 0, e) - 0.7 * up, lerp(1.2, 0, e) + 0.6 * up, 0.3 * (1 - e));
+      leg(bn, top, lerp(-0.3, 0, e), lerp(0.75, 0, e), 0.3 * (1 - e));
+      arm(bn, low, lerp(armEnd[0], -0.1, e) + 0.4 * up, lerp(armEnd[1], 0.1, e) + 0.5 * up, lerp(armEnd[2], -0.2, e));
+      if (dive.caught) arm(bn, top, -1.05, -0.28, -1.25);
+      else arm(bn, top, lerp(armEnd[0], -0.1, e), lerp(armEnd[1], 0.1, e), lerp(armEnd[2], -0.2, e));
+    } else {
+      const pr = Math.min(1, Math.max(0, 1 - dive.t / 0.5));
+      if (pr < 0.15) {
+        // Abdruck: in die Knie, Gewicht zur Seite, Arme holen Schwung.
+        const f = pr / 0.15;
+        bn.hips.position.y = hipY - 0.16 * f;
+        bn.hips.rotation.set(0, 0, side * 0.35 * f);
+        bn.spine.rotation.set(0.25 * f, 0, side * 0.1 * f);
+        leg(bn, 'L', -0.6 * f, 1.1 * f, -0.4 * f);
+        leg(bn, 'R', -0.6 * f, 1.1 * f, -0.4 * f);
+        arm(bn, 'L', -1.3 * f, 0.6 * f, -0.4 * f);
+        arm(bn, 'R', -1.3 * f, 0.6 * f, -0.4 * f);
+      } else if (pr < 0.65) {
+        // Flug: Körper waagerecht, Hüfte im Bogen, Arme gestreckt zum Ball.
+        const f = (pr - 0.15) / 0.5;
+        const k = Math.sin(Math.min(1, f / 0.4) * Math.PI * 0.5);
+        const ka = Math.sin(Math.min(1, f / 0.55) * Math.PI * 0.5); // Arme strecken sich über den halben Flug
+        bn.hips.rotation.set(0, 0, lerp(side * 0.35, roll, k));
+        bn.hips.position.x = -side * 0.55 * k;
+        bn.hips.position.y = lerp(hipY - 0.16, lie, f) + lerp(0.32, 0.6, high) * Math.sin(f * Math.PI);
+        bn.spine.rotation.set(0.25 * (1 - k), 0, lerp(0.1, 0.12, k) * side);
+        arm(bn, 'L', lerp(-1.3, reach, ka), lerp(0.6, 0.2, ka), lerp(-0.4, -0.1, ka));
+        arm(bn, 'R', lerp(-1.3, reach, ka), lerp(0.6, 0.2, ka), lerp(-0.4, -0.1, ka));
+        leg(bn, low, lerp(-0.6, -0.2, k), lerp(1.1, 0.7, k), lerp(-0.4, 0.3, k));
+        leg(bn, top, lerp(-0.6, 0.1, k), lerp(1.1, 0.15, k), lerp(-0.4, 0.3, k));
+      } else {
+        // Landung: liegt auf der Seite, federt kurz nach; gefangenen Ball zieht er an die Brust.
+        const f = (pr - 0.65) / 0.35;
+        bn.hips.rotation.set(0, 0, roll * (1 + 0.04 * Math.sin(f * Math.PI)));
+        bn.hips.position.x = -side * 0.55;
+        bn.hips.position.y = lie + 0.05 * Math.sin(f * Math.PI * 2) * (1 - f);
+        bn.spine.rotation.set(0.2 * f, 0, side * 0.12);
+        const tuck = dive.caught ? smooth(0, 1, f) : 0;
+        const fwd = reach + 0.15 * f;
+        arm(bn, 'L', lerp(fwd, -1.05, tuck), lerp(0.2, -0.28, tuck), lerp(-0.1, -1.25, tuck));
+        arm(bn, 'R', lerp(fwd, -1.05, tuck), lerp(0.2, -0.28, tuck), lerp(-0.1, -1.25, tuck));
+        leg(bn, low, -0.2 - 0.3 * f, 0.7 + 0.5 * f, 0.3);
+        leg(bn, top, 0.1 - 0.4 * f, 0.15 + 0.6 * f, 0.3);
+      }
+    }
     face = 'effort';
   }
+
+  // Gewitter: Hände über dem Kopf, geduckt (cover 0…1).
+  if (cover > 0 && state === 'normal' && !dive) {
+    arm(bn, 'L', -2.5 * cover, 0.45 * cover, -1.9 * cover);
+    arm(bn, 'R', -2.5 * cover, 0.45 * cover, -1.9 * cover);
+    bn.spine.rotation.x += 0.28 * cover;
+    bn.head.rotation.x += 0.2 * cover;
+    face = 'effort';
+  }
+  // Gesten bei Vorfällen: finger (Zeigefinger hoch, wackelt), arme (verschränkt),
+  // scheuchen (beide Arme fuchteln), rufen (ein Arm winkt hoch über dem Kopf).
+  if (gesture && state === 'normal' && !dive) {
+    model.gestT = (model.gestT ?? 0) + (dt ?? 0);
+    const g = model.gestT;
+    if (gesture === 'finger') {
+      arm(bn, 'R', -1.75, 0.15, -0.55 + Math.sin(g * 9) * 0.3);
+      arm(bn, 'L', -0.15, 0.5, -1.5); // Hand an der Hüfte
+      bn.head.rotation.y += Math.sin(g * 2.2) * 0.15;
+    } else if (gesture === 'arme') {
+      arm(bn, 'L', -0.95, -0.4, -1.95);
+      arm(bn, 'R', -0.95, -0.4, -1.95);
+      bn.spine.rotation.x -= 0.06;
+    } else if (gesture === 'scheuchen') {
+      arm(bn, 'L', -1.3 + Math.sin(g * 11) * 0.55, 0.8, -0.3);
+      arm(bn, 'R', -1.3 + Math.sin(g * 11 + Math.PI) * 0.55, 0.8, -0.3);
+      bn.spine.rotation.x += 0.15;
+    } else if (gesture === 'call') {
+      arm(bn, 'R', -2.8, 0.3 + Math.sin(g * 8) * 0.35, -0.2);
+    }
+  } else model.gestT = 0;
 
   // Torjubel – jeder hat seinen eigenen.
   if (celebrate) {
@@ -1085,7 +1169,7 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
   }
   // Wie hoch der Körper über dem Boden ist (für den Kontaktschatten).
   model.lift = Math.max(0, bn.hips.position.y - hipY);
-  model.grounded = state === 'tackle' || state === 'down' || state === 'acro' || !!dive || (getUp?.k ?? 0) > 0.4;
+  model.grounded = state === 'tackle' || state === 'down' || state === 'acro' || (!!dive && (dive.rec ?? 0) < 0.5) || (getUp?.k ?? 0) > 0.4;
   if (faceHint && !celebrate && face !== 'pain') face = faceHint;
   setFace(model, face);
 }

@@ -98,3 +98,64 @@ describe('Zuschauer 2.0', () => {
     expect(buildCrowd(root, 'halle').n).toBeLessThanOrEqual(MAX_TILES);
   });
 });
+
+describe('Bratwurst- und Bierbude', () => {
+  const withBooth = () => {
+    const root = venue(30);
+    const spot = new THREE.Object3D();
+    spot.userData.boothSpot = { x: 4, z: -18 };
+    root.add(spot);
+    const v = spectatorSlot(createRng(8), { x: 4.2, z: -19.5 });
+    v.userData.crowdSlot.vendor = true;
+    root.add(v);
+    return root;
+  };
+  it('Zuschauer gehen hin, stehen an, kommen zurück – höchstens zwei gleichzeitig, nie Sitzende oder der Wirt', () => {
+    const c = buildCrowd(withBooth(), 'sportplatz');
+    c.setMatch(match(100));
+    const v = new THREE.Vector3();
+    const walkers = new Set();
+    let atCounter = 0;
+    let maxGoing = 0;
+    for (let k = 0; k < 60 * 120; k++) {
+      c.update(1 / 60);
+      let going = 0;
+      for (let i = 0; i < c.shown; i++) {
+        const p = c.boothPose(i, c.time);
+        if (!p) continue;
+        going++;
+        walkers.add(i);
+        expect(c.slots[i].sitting).toBe(false);
+        expect(c.slots[i].vendor).toBeFalsy();
+        if (p.phase === 'warten' && Math.hypot(p.x - 4, p.z + 18) < 1.3) atCounter++;
+      }
+      maxGoing = Math.max(maxGoing, going);
+    }
+    expect(walkers.size).toBeGreaterThanOrEqual(3); // in zwei Minuten mehrere Gänge
+    expect(atCounter).toBeGreaterThan(0);
+    expect(maxGoing).toBeLessThanOrEqual(2);
+    // Wer fertig ist, steht wieder genau auf seinem Platz.
+    for (const i of walkers) {
+      if (c.boothPose(i, c.time)) continue;
+      const m = new THREE.Matrix4();
+      c.body.getMatrixAt(i, m);
+      v.setFromMatrixPosition(m);
+      expect(Math.hypot(v.x - c.slots[i].x, v.z - c.slots[i].z)).toBeLessThan(0.01);
+    }
+  });
+
+  it('ein Tor reißt niemanden vom Weg zur Bude zurück auf den Platz', () => {
+    const c = buildCrowd(withBooth(), 'sportplatz');
+    const m = match(100);
+    c.setMatch(m);
+    let i = -1;
+    for (let k = 0; k < 60 * 30 && i < 0; k++) {
+      c.update(1 / 60);
+      for (let j = 0; j < c.shown; j++) if (c.boothPose(j, c.time)) i = j;
+    }
+    expect(i).toBeGreaterThanOrEqual(0);
+    m.events = [{ type: 'goal', team: 0 }];
+    c.handleEvents(m);
+    expect(c.boothPose(i, c.time)).not.toBeNull();
+  });
+});

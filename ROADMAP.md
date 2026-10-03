@@ -609,7 +609,10 @@ teuren Effekte für langsame Rechner ab.
 
 ## 11. Zukunft: Ausbau-Wünsche (Stand Oktober 2026)
 
-Noch nicht begonnen. Die Zahlen in Klammern sind der heutige Stand im Code, damit „mehr" messbar bleibt.
+Die Zahlen in Klammern sind der Stand im Code, damit „mehr" messbar bleibt. Erledigt (Oktober 2026):
+englische Namen, Vereine, Ligen und Sponsoren (11.3, 11.4), mehr deutsche Namen (Namensauflage 6), 60 Sponsoren,
+10 Ereignisse für höhere Ligen (11.5), Torwart-Hechtsprung in Phasen, Vorfälle als Szenen mit Taube (11.1),
+Bratwurst- und Bierbude auf Rasen-, Sport- und Großfeld, an die Zuschauer ab und zu gehen (`src/render/crowd.js`).
 
 ### 11.1 Animationen
 - **Mehr Animationen:** Jubel (mehrere Varianten, Rutschen auf Knien, Trikot über den Kopf), Ärger nach
@@ -617,12 +620,15 @@ Noch nicht begonnen. Die Zahlen in Klammern sind der heutige Stand im Code, dami
   Aufwärmen am Rand, Zuschauer mit mehr Bewegung.
 - **Bessere Animationen:** weichere Übergänge zwischen Laufen, Schuss und Pass; Fußstellung passend zum Ball;
   sichtbarer Körpereinsatz in Zweikämpfen; Fallen und Aufstehen nach Grätsche und Foul.
-- **Torhüter zuerst:** Hechtsprung mit Abrollen, Fangen in Brust- und Kopfhöhe, Abtauchen in die Ecke, Fausten
+- **Torhüter zuerst:** ✅ Hechtsprung in Phasen (Abdruck, Flugbogen flach/hoch nach Ballhöhe, Landung, gefangener
+  Ball an der Brust, Aufstehen; `tests/keeperanim.test.js`). Offen: Hechtsprung mit Abrollen, Fangen in Brust- und Kopfhöhe, Abtauchen in die Ecke, Fausten
   mit beiden Fäusten, Abwurf und Abschlag mit Ausholen, Herauslaufen und Breitmachen im 1 gegen 1,
   Fehlgriff/Abpraller sichtbar.
 
-- **Vorfälle auf dem Platz animieren:** Die Abläufe gibt es schon als Bewegung (`src/sim/incidents.js`,
-  `src/render/IncidentView.js`), aber ohne eigene Animationen. Ausbauen:
+- **Vorfälle auf dem Platz animieren:** ✅ Gewitter (alle sprinten mit den Händen über dem Kopf vom Platz, der
+  Schiri auch – vorher lief wegen eines Fehlers niemand los), Polizei (Zeigefinger, verschränkte Arme, alle schauen
+  hin), Hund mit Herrchen, neue Taube (gleitet ein, pickt, wird verscheucht, fliegt davon);
+  `tests/incidents_scene.test.js`. Noch offen aus der ursprünglichen Liste:
   - Gewitter: Alle rennen schnell vom Platz, Hände oder Trikot über dem Kopf, einer rutscht aus; Schiri
     zuerst unterm Vordach. Heute gehen die Spieler nur im Laufschritt zum Seitenrand.
   - Polizei: Die beiden Polizisten kommen mit Gesten (Hand hoch, Zeigefinger), reden mit dem Trainer,
@@ -641,7 +647,8 @@ Noch nicht begonnen. Die Zahlen in Klammern sind der heutige Stand im Code, dami
 - Licht und Schatten auf den Figuren verfeinern, Torwarthandschuhe und eigene Torwartkleidung im Detail.
 
 ### 11.3 Namen
-- **Mehr Namen:** heute 140 Vornamen, 140 Nachnamen, 11 Herkunftsgruppen und 89 Berufe – Ziel: deutlich mehr
+- ✅ Erledigt: englische Namen (Auflage 5, Herkunft nach Zensus 2021), englische Vereine und Ligen, deutsche
+  Auflage 6 mit 58 Vornamen und 60 Nachnamen mehr. Ursprünglich: **Mehr Namen:** heute 140 Vornamen, 140 Nachnamen, 11 Herkunftsgruppen und 89 Berufe – Ziel: deutlich mehr
   Vielfalt, damit sich Namen über viele Saisons nicht wiederholen.
 - **Englische Version:** Spieler heißen dort heute wie in der deutschen Version (z. B. Dennis Müller, Kevin
   Schmitz). Eigene Namenslisten für Englisch, passend zum englischen Amateurfußball.
@@ -651,11 +658,15 @@ Noch nicht begonnen. Die Zahlen in Klammern sind der heutige Stand im Code, dami
 - Alte Spielstände behalten ihre Namen (Namens-Edition wie bisher, siehe `NAME_EDITION`).
 
 ### 11.4 Sponsoren
-- **Mehr Sponsoren:** heute 40 lokale Sponsoren mit Chef und Eigenart – Ziel: mehr Auswahl je Liga und
+- ✅ Erledigt: 60 Sponsoren (12 neue Betriebe, 8 größere Firmen erst ab Kreisklasse B bzw. Kreisliga A), alle mit
+  englischem Namen. Ursprünglich: **Mehr Sponsoren:** heute 40 lokale Sponsoren mit Chef und Eigenart – Ziel: mehr Auswahl je Liga und
   Region, dazu englische Sponsoren für die englische Version (heute deutsche Namen wie „Bäckerei Krume").
 
 ### 11.5 Ereignisse
-- **Mehr Ereignisse:** heute rund 80 Ereignisse mit Entscheidungen (Verein 14, Jugend 13, Vereinsleben 13,
+- ✅ Erledigt: 10 Ereignisse für höhere Ligen (`src/career/leagueevents.js`: Sportgericht, Spielverlegung,
+  Kreispokal, Eintritt, erste Fans, Stadionsprecher, Videoanalyse, Testspiel gegen Profi-U23, Geld bis zur
+  DFB-Amateurgrenze, Ordnerdienst); in der Bezirksliga 14 % der Wochenereignisse. Offen: die Chat-Zusagen
+  wiederholen sich am meisten (rund 90-mal in 14 Saisons). Ursprünglich: **Mehr Ereignisse:** heute rund 80 Ereignisse mit Entscheidungen (Verein 14, Jugend 13, Vereinsleben 13,
   Leben 8, Persönliches 8, Sponsoren 7, Geschichten 7, Soziales 5, dazu Derby, Verletzungen, Abwerben,
   Sprüche). Ausbau vor allem dort, wo sich Texte im Langzeitlauf am häufigsten wiederholen
   (`npm run longrun -- 10 77 --bot` zeigt die meistwiederholten Texte), sowie neue Ereignisse für die

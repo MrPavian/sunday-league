@@ -67,8 +67,33 @@ export function buildLawn(root, pitch, rng, scene) {
   sign.position.set(hx, 4.1, -hw - 7.45);
   root.add(sign);
   root.add(makeBench(hx - 2, -hw - 6.5), makeBench(hx + 2, -hw - 6.5));
-  // Bratwurststand
-  root.add(box(2.4, 1.1, 1.2, 0xc9a227, 8, 0.55, -hw - 8), box(2.6, 0.1, 1.5, 0xc0392b, 8, 2.2, -hw - 8), cylinder(0.04, 1.1, 0x555555, 7, 1.65, -hw - 8.6, 4), cylinder(0.04, 1.1, 0x555555, 9, 1.65, -hw - 8.6, 4));
+  // Bratwurst- und Bierbude zwischen Tribüne und Vereinsheim (früher halb in der Tribüne); die Zuschauer
+  // holen sich dort ab und zu etwas (crowd.js, boothSpot).
+  const bx = 11.5;
+  const bz = -hw - 8.4;
+  root.add(
+    box(2.6, 1.05, 1.0, 0xe8dcc0, bx, 0.52, bz + 0.3), // Theke
+    box(2.7, 0.08, 1.15, 0x8a5a3a, bx, 1.08, bz + 0.3), // Holzplatte
+    box(2.6, 2.3, 0.1, 0xc9a227, bx, 1.15, bz - 0.55), // Rückwand
+    box(3.0, 0.12, 1.9, 0xc0392b, bx, 2.45, bz), // Dach
+    box(0.9, 0.12, 0.45, 0x2a2a2a, bx - 0.7, 1.18, bz + 0.25), // Grill
+    cylinder(0.035, 0.35, 0xb0b4b8, bx + 0.7, 1.3, bz + 0.45, 6), // Zapfhahn
+    box(0.25, 0.4, 0.25, 0x6a7078, bx + 0.95, 1.32, bz + 0.15), // Fass
+  );
+  for (const dx of [-1.35, 1.35]) root.add(cylinder(0.04, 1.4, 0x555555, bx + dx, 1.75, bz + 0.75, 4));
+  for (let i = 0; i < 4; i++) root.add(box(0.08, 0.04, 0.08, 0xa0522d, bx - 0.95 + i * 0.13, 1.26, bz + 0.25)); // Würste
+  const booth = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.38), toon(0xffffff, { map: makeSignTextureWide('BRATWURST · BIER', { bg: '#c0392b', fg: '#f4e9c8' }) }));
+  booth.position.set(bx, 2.2, bz + 0.95);
+  root.add(booth);
+  // Rauch über dem Grill: ein paar graue Würfel, die der Crowd-Takt aufsteigen lässt.
+  const smoke = new THREE.Group();
+  for (let i = 0; i < 5; i++) smoke.add(box(0.14, 0.14, 0.14, 0xbfc3c8, 0, 0, 0));
+  smoke.position.set(bx - 0.7, 1.3, bz + 0.25);
+  smoke.userData.boothSmoke = true;
+  root.add(smoke);
+  const spot = new THREE.Object3D();
+  spot.userData.boothSpot = { x: bx, z: bz + 1.35 };
+  root.add(spot);
 
   // Flutlicht und Bäume hinten.
   const masts = [-24 * k, 0, 24 * k];
@@ -85,5 +110,9 @@ export function buildLawn(root, pitch, rng, scene) {
   // Mehr Publikum (sichtbar je nach Besucherzahl): volle Tribünenreihen, Leute am Zaun.
   for (let step = 0; step < 3; step++) for (const o of crowdRow(401 + step, { x0: -8.6, x1: 8.6, z: tz - step * 1.2, y: 0.4 + step * 0.4, n: 12, sitting: true })) root.add(o);
   for (const [x0, x1, s] of [[-31 * k, -11 * k, 411], [11 * k, 31 * k, 412]]) for (const o of crowdRow(s, { x0, x1, z: bandZ - 0.9, n: 6, dz: 0.35, jitter: 0.8 })) root.add(o);
+  // Der Budenwirt steht hinter der Theke (als Letzter, damit sich der Rest der Szene nicht verschiebt).
+  const vendor = makeSpectator(rng, { x: bx + 0.2, z: bz - 0.2, facing: 0 });
+  vendor.userData.crowdSlot.vendor = true; // geht nicht selbst zur Bude
+  root.add(vendor);
   return { viewHeight: 15, bounds: { x: hl + 4, z: 4.5 }, lights };
 }

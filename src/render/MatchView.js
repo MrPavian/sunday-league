@@ -41,7 +41,8 @@ import { WeatherFx } from './weather.js';
 
 // Wiederverwendete Animations-Optionen (keine Objekte pro Figur und Bild).
 const ANIM = {};
-const DIVE = { t: 0, side: 1 };
+const DIVE = { t: 0, side: 1, high: 0, caught: false, rec: null };
+const DIVE_REC = 0.4; // Aufstehen nach dem Hechtsprung (s, nur Darstellung)
 const REF_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal' };
 
 const CELEBRATIONS = ['flugzeug', 'faust', 'tanz', 'rutscher'];
@@ -381,9 +382,14 @@ export class MatchView {
       // Hechtsprung des Torwarts und Rutschen am Boden machen dreckig; Laufen ein wenig.
       if (p.diveAnim > 0 && !this.diving.has(p.id)) {
         this.diving.add(p.id);
+        m.diveHigh = Math.max(0, Math.min(1, (match.ball.pos.y - 0.35) / 1.1)); // flach oder hoch, je nach Ball
+        m.diveRec = null;
         this.soil(p.id, 0.1);
         this.effects.splash(p.pos.x + p.facing.x * 0.6, p.pos.z + p.facing.z * 0.6, 6, 1.3, 1.2);
-      } else if (p.diveAnim <= 0) this.diving.delete(p.id);
+      } else if (p.diveAnim <= 0 && this.diving.has(p.id)) {
+        this.diving.delete(p.id);
+        m.diveRec = { t: 0, side: m.diveSideView ?? 1 }; // gleich aufstehen statt hochzuschnellen
+      }
       if (p.state === 'tackle') this.soil(p.id, dt * 0.15);
       else if (len(p.vel.x, p.vel.z) > 5.5) this.soil(p.id, dt * 0.002);
       let celebrate = null;
@@ -444,8 +450,22 @@ export class MatchView {
       if (p.diveAnim > 0) {
         DIVE.t = p.diveAnim;
         DIVE.side = p.diveSide * (Math.sin(m.group.rotation.y) > 0 ? 1 : -1); // zur Blickrichtung passend
+        DIVE.high = m.diveHigh ?? 0;
+        DIVE.caught = match.ball.holder === p.id;
+        DIVE.rec = null;
+        m.diveSideView = DIVE.side;
         o.dive = DIVE;
-      } else o.dive = null;
+      } else if (m.diveRec && p.state === 'normal' && m.diveRec.t < DIVE_REC) {
+        m.diveRec.t += dt;
+        DIVE.side = m.diveRec.side;
+        DIVE.high = m.diveHigh ?? 0;
+        DIVE.caught = match.ball.holder === p.id;
+        DIVE.rec = Math.min(1, m.diveRec.t / DIVE_REC);
+        o.dive = DIVE;
+      } else {
+        m.diveRec = null;
+        o.dive = null;
+      }
       // Tricks und Akrobatik (Simulation: trick/trickAnim, acro/acroAnim).
       const tk = p.trickAnim > 0 ? TRICKS[p.trick] : null;
       o.trick = tk ? p.trick : null;
@@ -457,6 +477,11 @@ export class MatchView {
       o.fooled = p.fooledUntil > match.time ? 1 - (p.fooledUntil - match.time) / (p.fooledFor || 0.8) : 0;
       o.celebrate = celebrate;
       o.sad = p.mood === 'sad';
+      // Vorfälle: beim Gewitter Hände über den Kopf, bei der Taube scheuchen.
+      const inc = match.incident?.type;
+      o.cover = inc === 'gewitter' && len(p.vel.x, p.vel.z) > 1.5 ? 1 : 0;
+      const pg = inc === 'taube' ? match.pigeon : null;
+      o.gesture = pg && pg.state !== 'gleiten' && Math.hypot(pg.pos.x - p.pos.x, pg.pos.z - p.pos.z) < 2.3 ? 'scheuchen' : null;
       animatePlayer(m, o);
       this.blob(m, p.pos.x, p.pos.z);
     }
@@ -467,6 +492,7 @@ export class MatchView {
       this.referee.group.rotation.y = Math.atan2(r.facing.x, r.facing.z);
       REF_ANIM.speed = len(r.vel.x, r.vel.z);
       REF_ANIM.dt = dt;
+      REF_ANIM.cover = match.incident?.type === 'gewitter' && REF_ANIM.speed > 1.5 ? 1 : 0;
       animatePlayer(this.referee, REF_ANIM);
       if (r.cardAnim > 0) this.referee.arms[1].rotation.x = -2.9; // Karte hoch
       this.blob(this.referee, r.pos.x, r.pos.z);

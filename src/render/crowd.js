@@ -143,6 +143,12 @@ export function buildCrowd(root, venueId = '') {
   const slots = [];
   root.traverse((o) => o.userData.crowdSlot && slots.push(o));
   for (const o of slots) o.parent.remove(o);
+  // Bude (lawn.js): Wo man sich anstellt, und der Rauch über dem Grill.
+  let booth = null;
+  root.traverse((o) => {
+    if (o.userData.boothSpot) booth = { ...o.userData.boothSpot, smoke: booth?.smoke ?? null };
+    if (o.userData.boothSmoke) booth = { ...(booth ?? {}), smoke: o };
+  });
   const seed = [...venueId].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
   // Wer einem früheren Platz zu nahe kommt, fällt weg (Tribünenreihen über alten Plätzen).
   const kept = [];
@@ -151,10 +157,18 @@ export function buildCrowd(root, venueId = '') {
     if (kept.some((k) => Math.hypot(k.x - s.x, k.z - s.z) < 0.5 && Math.abs(k.y - s.y) < 0.3)) continue;
     kept.push(s);
   }
-  return new Crowd(root, kept.slice(0, MAX_TILES).map((s, i) => ({ ...s, i, seed })), venueId);
+  const crowd = new Crowd(root, kept.slice(0, MAX_TILES).map((s, i) => ({ ...s, i, seed })), venueId);
+  if (booth?.x != null) crowd.setBooth(booth);
+  return crowd;
 }
 
-const TYPE = { idle: 0, clap: 1, cheer: 2, wave: 3, lean: 4, point: 5, head: 6, look: 7 };
+// Gang zur Bude: hin (Schritttempo), anstehen, mit Bier oder Wurst zurück.
+export const BOOTH_WALK = 1.3; // m/s
+export const BOOTH_WAIT = 4; // s an der Theke
+export const BOOTH_MAX = 2; // höchstens so viele gleichzeitig unterwegs
+export const boothTrip = (dist) => 2 * (dist / BOOTH_WALK) + BOOTH_WAIT;
+
+const TYPE = { idle: 0, clap: 1, cheer: 2, wave: 3, lean: 4, point: 5, head: 6, look: 7, booth: 8 };
 
 export class Crowd {
   constructor(root, slots, venueId) {
@@ -299,6 +313,69 @@ export class Crowd {
     this.dirty.fill(1);
   }
 
+  setBooth(booth) {
+    this.booth = booth;
+    this.tripStart = new Float32Array(this.n);
+    this.nextTrip = 3; // erste Runde kurz nach Anpfiff
+    this.trips = 0;
+  }
+
+  // Wo steht/geht Zuschauer i auf dem Weg zur Bude? null, wenn er nicht unterwegs ist.
+  boothPose(i, t) {
+    const b = this.booth;
+    if (!b || this.type[i] !== TYPE.booth || this.until[i] <= t) return null;
+    const s = this.slots[i];
+    // Jeder stellt sich etwas versetzt an, damit zwei nicht ineinander stehen.
+    const qx = b.x + (hash(s.seed, s.i + 41) - 0.5) * 1.6;
+    const qz = b.z + hash(s.seed, s.i + 43) * 0.5;
+    const d = Math.hypot(qx - s.x, qz - s.z);
+    const walk = d / BOOTH_WALK;
+    const u = t - this.tripStart[i];
+    let x;
+    let z;
+    let facing;
+    let phase;
+    if (u < walk) {
+      const k = u / walk;
+      x = s.x + (qx - s.x) * k;
+      z = s.z + (qz - s.z) * k;
+      facing = Math.atan2(qx - s.x, qz - s.z);
+      phase = 'hin';
+    } else if (u < walk + BOOTH_WAIT) {
+      x = qx;
+      z = qz;
+      facing = Math.PI; // zur Theke (Bude steht hinter ihm, Richtung -z)
+      phase = 'warten';
+    } else {
+      const k = Math.min(1, (u - walk - BOOTH_WAIT) / walk);
+      x = qx + (s.x - qx) * k;
+      z = qz + (s.z - qz) * k;
+      facing = Math.atan2(s.x - qx, s.z - qz);
+      phase = 'zurueck';
+    }
+    return { x, z, facing, phase, u };
+  }
+
+  // Ab und zu macht sich einer der Stehenden auf den Weg zur Bude (nie mehr als BOOTH_MAX).
+  startTrips(t) {
+    if (!this.booth || t < this.nextTrip) return;
+    this.nextTrip = t + 5 + hash(this.trips, 77) * 9;
+    let going = 0;
+    for (let i = 0; i < this.shown; i++) if (this.type[i] === TYPE.booth && this.until[i] > t) going++;
+    if (going >= BOOTH_MAX) return;
+    const stand = [];
+    for (let i = 0; i < this.shown; i++) if (!this.slots[i].sitting && !this.slots[i].vendor && this.until[i] <= t) stand.push(i);
+    if (!stand.length) return;
+    const i = stand[Math.floor(hash(this.trips, 91) * stand.length)];
+    this.trips++;
+    const s = this.slots[i];
+    const d = Math.hypot(this.booth.x - s.x, this.booth.z - s.z);
+    this.type[i] = TYPE.booth;
+    this.delay[i] = 0;
+    this.tripStart[i] = t;
+    this.until[i] = t + boothTrip(d + 0.8);
+  }
+
   setShown(k) {
     this.shown = Math.max(0, Math.min(this.n, k));
     this.body.count = this.shown;
@@ -310,6 +387,7 @@ export class Crowd {
   react(filter, type, share, dur) {
     for (let i = 0; i < this.shown; i++) {
       if (!filter(i) || hash(this.slots[i].seed, i + this.time * 997) > share) continue;
+      if (this.type[i] === TYPE.booth && this.until[i] > this.time) continue; // läuft gerade zur Bude
       this.type[i] = type;
       this.delay[i] = Math.abs(this.slots[i].x) * 0.035 + hash(i, this.time * 31) * 0.25; // Welle, leicht chaotisch
       this.until[i] = this.time + this.delay[i] + dur * (0.7 + hash(i, 5) * 0.6);
@@ -357,6 +435,14 @@ export class Crowd {
     if (this.acc < step) return;
     this.acc = 0;
     const t = this.time;
+    this.startTrips(t);
+    const smoke = this.booth?.smoke;
+    if (smoke) smoke.children.forEach((c, k) => {
+      const f = (t * 0.35 + k / smoke.children.length) % 1;
+      c.position.set(Math.sin(f * 6 + k) * 0.12, f * 1.8, 0);
+      c.scale.setScalar(0.6 + f * 1.4);
+      c.visible = f < 0.9;
+    });
     // Umgebung: ab und zu klatscht jemand, winkt, lehnt sich vor oder schaut sich um –
     // nie mehr als das Budget gleichzeitig.
     let busy = 0;
@@ -433,15 +519,34 @@ export class Crowd {
     } else if (type === TYPE.look) {
       turn = 0.35 * Math.sin(w * 0.8);
     }
+    const trip = type === TYPE.booth ? this.boothPose(i, this.time) : null;
+    if (trip) {
+      if (trip.phase !== 'warten') {
+        // Gehen: Arme schwingen gegengleich, leichtes Wippen.
+        const g = Math.sin(trip.u * 7);
+        lx = 0.45 * g;
+        rx = -0.45 * g;
+        bob = 0.03 * Math.abs(g);
+      }
+      // Zurück mit Becher oder Wurst in der rechten Hand, Unterarm vor dem Bauch.
+      if (trip.phase === 'zurueck') {
+        rx = -1.1;
+        rz = -0.1;
+      }
+      if (trip.phase === 'warten') {
+        lx = -0.3 + 0.1 * Math.sin(trip.u * 3); // stützt sich auf die Theke
+        rx = trip.u % 2 > 1.4 ? -1.2 : -0.3; // zeigt aufs Angebot
+      }
+    }
     // Ruhe: kaum sichtbares Atmen/Wippen (nur solange jemand aktiv ist, sonst still).
     if (running) bob += 0.012 * Math.sin(w * 2.2);
     const drop = sit ? SIT_DROP : 0;
     const sc = this.scale[i];
     this.sit[i] = sit;
     // Körper
-    this.e.set(lean, s.facing + turn, 0, 'YXZ');
+    this.e.set(lean, (trip ? trip.facing : s.facing) + turn, 0, 'YXZ');
     this.q.setFromEuler(this.e);
-    this.v.set(s.x, s.y + bob, s.z);
+    this.v.set(trip ? trip.x : s.x, (trip ? 0 : s.y) + bob, trip ? trip.z : s.z);
     this.s.set(sc, sc, sc);
     this.m.compose(this.v, this.q, this.s);
     this.body.setMatrixAt(i, this.m);

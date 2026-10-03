@@ -45,13 +45,50 @@ function createDog() {
   return { group, legs, tail, head };
 }
 
-// Hund, Besucher (Polizei, Autobesitzer), Regen und Rasensprenger.
+// Taube: grauer Rumpf, Kopf mit grünlich schillerndem Hals, Schnabel, zwei Flügel zum Schlagen.
+function createPigeon() {
+  const grey = toon(0x8c919c);
+  const dark = toon(0x5a5f6a);
+  const neck = toon(0x4f7a6a);
+  const beak = toon(0xd9b06a);
+  const group = new THREE.Group();
+  const box = (w, h, d, mat, x, y, z, parent = group) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    m.position.set(x, y, z);
+    parent.add(m);
+    return m;
+  };
+  box(0.14, 0.13, 0.24, grey, 0, 0.13, 0);
+  box(0.1, 0.03, 0.1, dark, 0, 0.12, -0.16); // Schwanz
+  const head = new THREE.Group();
+  head.position.set(0, 0.2, 0.1);
+  box(0.09, 0.08, 0.08, neck, 0, 0, 0, head);
+  box(0.08, 0.07, 0.08, grey, 0, 0.06, 0.02, head);
+  box(0.03, 0.02, 0.05, beak, 0, 0.05, 0.08, head);
+  group.add(head);
+  const wings = [];
+  for (const sx of [-1, 1]) {
+    const pivot = new THREE.Group();
+    pivot.position.set(sx * 0.07, 0.17, 0);
+    const w = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.02, 0.16), dark);
+    w.position.x = sx * 0.1;
+    pivot.add(w);
+    group.add(pivot);
+    wings.push({ pivot, sx });
+  }
+  for (const sx of [-0.035, 0.035]) box(0.02, 0.07, 0.02, toon(0xc8606a), sx, 0.035, 0.02);
+  group.scale.setScalar(1.25); // aus der Spielkamera sonst kaum zu sehen
+  return { group, head, wings };
+}
+
+// Hund, Taube, Besucher (Polizei, Autobesitzer, Herrchen), Regen und Rasensprenger.
 export class IncidentView {
   constructor(root, match) {
     this.root = root;
     this.time = 0;
     this.visitors = new Map();
     this.dog = null;
+    this.pigeon = null;
     const { pitch } = match;
     this.area = { x: pitch.halfLength + 6, z: pitch.halfWidth + 6 };
 
@@ -135,6 +172,7 @@ export class IncidentView {
     this.wind.z = env?.windZ ?? 0;
     this.rainRate = env ? Math.max(0.5, env.rain) : 0.8;
     this.syncDog(match.dog, dt);
+    this.syncPigeon(match.pigeon);
     this.syncVisitors(match.visitors ?? [], dt);
     this.syncRain(match.weather === 'rain', dt);
     this.syncFlakes(this.snow, match.weather === 'snow', dt, 1.1, 0.4);
@@ -159,6 +197,25 @@ export class IncidentView {
     d.head.position.y = 0.46 + Math.abs(Math.sin(run)) * 0.02;
   }
 
+  syncPigeon(pg) {
+    if (!pg) {
+      if (this.pigeon) this.pigeon.group.visible = false;
+      return;
+    }
+    this.pigeon ??= createPigeon();
+    if (!this.pigeon.group.parent) this.root.add(this.pigeon.group);
+    const v = this.pigeon;
+    v.group.visible = true;
+    v.group.position.set(pg.pos.x, pg.y, pg.pos.z);
+    v.group.rotation.y = Math.atan2(pg.facing.x, pg.facing.z);
+    // Fliegen: Flügel schlagen; am Boden angelegt, der Kopf nickt beim Picken.
+    const beat = pg.flap ? Math.sin(this.time * 26) * 1.1 : 0;
+    for (const w of v.wings) w.pivot.rotation.z = w.sx * (pg.flap ? 0.3 + beat : -0.1);
+    const peck = pg.flap ? 0 : Math.max(0, Math.sin(this.time * 7));
+    v.head.rotation.x = peck * 0.9;
+    v.head.position.z = 0.1 + peck * 0.03;
+  }
+
   // Besucher (Polizei, Hundebesitzer …) haben eigenen Trikot-Atlas und eigenes Skelett –
   // beides liegt auf der GPU und wird mit der Spielansicht freigegeben.
   dispose() {
@@ -179,7 +236,7 @@ export class IncidentView {
       model.group.visible = true;
       model.group.position.set(v.pos.x, 0, v.pos.z);
       if (v.facing) model.group.rotation.y = Math.atan2(v.facing.x, v.facing.z);
-      animatePlayer(model, { speed: v.vel ? len(v.vel.x, v.vel.z) : 0, dt, kickAnim: 0, headAnim: 0, holding: null, state: 'normal' });
+      animatePlayer(model, { speed: v.vel ? len(v.vel.x, v.vel.z) : 0, dt, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture: v.gesture ?? null });
     }
     for (const [id, model] of this.visitors) if (!seen.has(id)) model.group.visible = false;
   }

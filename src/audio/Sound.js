@@ -265,6 +265,14 @@ export class Sound {
     }
   }
 
+  // Taube: zweimal tiefes, weiches Gurren (sinkender Ton).
+  coo(pan = 0) {
+    const d = this.out(pan);
+    const t = this.ctx.currentTime;
+    this.tone('sine', 420, 330, 0.28, 0.05, d, t);
+    this.tone('sine', 400, 300, 0.4, 0.05, d, t + 0.36);
+  }
+
   thunder() {
     const d = this.out(Math.random() - 0.5);
     const t = this.ctx.currentTime;
@@ -494,10 +502,14 @@ export class Sound {
           if (e.kind === 'hund') this.bark(pan);
           else if (e.kind === 'polizei') this.siren();
           else if (e.kind === 'sprenger') this.hiss();
+          else if (e.kind === 'taube') this.coo(pan);
           else if (e.kind === 'ersatzschiri' || e.kind === 'zaun') this.grumble(pan);
           break;
         case 'bark':
           this.bark(pan);
+          break;
+        case 'coo':
+          this.coo(pan);
           break;
         case 'alarm':
           this.carAlarm(pan);
