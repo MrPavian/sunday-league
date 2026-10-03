@@ -4,7 +4,7 @@
 // wechseln sie in die A-Jugend und werden zu richtigen Spielern.
 import { createRng } from '../core/rng.js';
 import { tr } from '../core/i18n.js';
-import { lastName, personName } from '../data/origins.js';
+import { girlName, lastName, personName } from '../data/origins.js';
 import { generatePlayer, ratePlayer } from '../sim/generator.js';
 import { book } from './finances.js';
 import { addCustomPlayer, humanClub, maxSquad, playerOf } from './career.js';
@@ -44,7 +44,7 @@ function makeKid(c, rng, age, bonus = 0) {
   const q = c.youth.coach.quality;
   return {
     id: `k${c.season}-${Math.floor(rng.next() * 1e9)}`,
-    name: girl ? `${rng.pick(GIRL_NAMES)} ${lastName(rng)}` : personName(rng, age),
+    name: girl ? `${girlName(rng, GIRL_NAMES)} ${lastName(rng)}` : personName(rng, age),
     girl,
     age,
     position: rng.pick(['def', 'mid', 'mid', 'fwd', 'gk']),
@@ -529,7 +529,7 @@ export const ACADEMY_EVENTS = {
       const teams = TEAMS.filter((t) => yt[t.id]?.coach && c.youth.kids.some((k) => teamOfAge(k.age)?.id === t.id));
       if (!teams.length) return null;
       const t = rng.pick(teams);
-      return { team: t.id, host: rng.pick(['TuS Mühlbach', 'SpVgg Hollerbach', 'SV Rot-Weiß Oberdorf', 'TSV Eichenau', 'FC Bergheide']) };
+      return { team: t.id, host: rng.pick(tr(['TuS Mühlbach', 'SpVgg Hollerbach', 'SV Rot-Weiß Oberdorf', 'TSV Eichenau', 'FC Bergheide'], ['Millbrook Youth', 'Hollerbach Colts', 'Oberdorf Red Star', 'Oakbridge Town Youth', 'Heathhill FC'])) };
     },
     text: (c, ctx) => tr(`Einladung: Pfingstturnier beim ${ctx.host} für die ${TEAMS.find((t) => t.id === ctx.team).name}. Zwölf Mannschaften, Startgeld 20 €, Bratwurst inklusive.`, `Invitation: Whitsun tournament at ${ctx.host} for the ${TEAMS.find((t) => t.id === ctx.team).name}. Twelve teams, €20 entry, bratwurst included.`),
     options: [
@@ -657,7 +657,7 @@ export const ACADEMY_EVENTS = {
 };
 
 // --- Abwerben: in beide Richtungen ------------------------------------------------
-const RIVAL_YOUTH = ['JSG Kanalbezirk', 'SV Blau-Weiß (Jugend)', 'FC Viktoria Oststadt', 'Kicker vom Kanal (Jugend)', 'TuS Grünwald'];
+const RIVAL_YOUTH = tr(['JSG Kanalbezirk', 'SV Blau-Weiß (Jugend)', 'FC Viktoria Oststadt', 'Kicker vom Kanal (Jugend)', 'TuS Grünwald'], ['Canal District Juniors', 'Canal District Blues (Youth)', 'Eastgate Victoria', 'Canal Street Kickers (Youth)', 'Greenwood Town']);
 
 // Jede Saison: drei Talente bei anderen Vereinen, von denen man hört.
 export function scoutList(c) {

@@ -12,6 +12,7 @@ import { LIFE_EVENTS } from '../src/career/life.js';
 import { ACADEMY_EVENTS } from '../src/career/academy.js';
 import { SPONSOR_EVENTS } from '../src/career/sponsors.js';
 import { CLUBLIFE_EVENTS } from '../src/career/clublife.js';
+import { LEAGUE_EVENTS } from '../src/career/leagueevents.js';
 import { compensation, COMPENSATION_PER_YEAR, POACH_EVENTS, PRO_CLUBS, proSeasonChance } from '../src/career/poaching.js';
 import { placeFormers } from '../src/career/memory.js';
 
@@ -31,7 +32,7 @@ function benchCareer() {
 
 describe('Ereignisse', () => {
   it('jeder Ereignis-Name kommt nur einmal vor (sonst wird das falsche Ereignis aufgelöst)', () => {
-    const pools = { EVENTS, STORY_STARTS, PERSONAL_EVENTS, SAGA_EVENTS, SOCIAL_EVENTS, BANTER_EVENTS, DERBY_EVENTS, INJURY_EVENTS, LIFE_EVENTS, ACADEMY_EVENTS, SPONSOR_EVENTS, POACH_EVENTS, CLUBLIFE_EVENTS, CRISES };
+    const pools = { EVENTS, STORY_STARTS, PERSONAL_EVENTS, SAGA_EVENTS, SOCIAL_EVENTS, BANTER_EVENTS, DERBY_EVENTS, INJURY_EVENTS, LIFE_EVENTS, ACADEMY_EVENTS, SPONSOR_EVENTS, POACH_EVENTS, LEAGUE_EVENTS, CLUBLIFE_EVENTS, CRISES };
     const seen = {};
     const dupes = [];
     for (const [pool, evs] of Object.entries(pools)) for (const id of Object.keys(evs)) (seen[id] ? dupes.push(`${id}: ${seen[id]} + ${pool}`) : (seen[id] = pool));

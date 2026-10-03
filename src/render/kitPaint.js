@@ -25,7 +25,8 @@ const PATTERNS = {
 // Kleine Pixel-„Schrift" für das Brustfeld: aus jedem Buchstaben wird ein
 // Säulenmuster. Lesbar ist das auf dem Platz nicht – aber es sieht aus wie ein Logo.
 function wordmark(name) {
-  const letters = String(name ?? '').replace(/[^A-Za-zÄÖÜäöüß]/g, '').slice(0, 5);
+  // Englische Namen wie „The Linden Tree Inn“: ohne Artikel, sonst stünde „TheLi“ auf der Brust.
+  const letters = String(name ?? '').replace(/^The\s+/i, '').replace(/[^A-Za-zÄÖÜäöüß]/g, '').slice(0, 5);
   return [...letters].map((ch) => ch.charCodeAt(0));
 }
 

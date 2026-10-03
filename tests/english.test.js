@@ -23,6 +23,7 @@ beforeAll(async () => {
     life: await import('../src/career/life.js'),
     academy: await import('../src/career/academy.js'),
     sponsors: await import('../src/career/sponsors.js'),
+    leagueevents: await import('../src/career/leagueevents.js'),
     i18n: await import('../src/core/i18n.js'),
   };
 });
@@ -36,7 +37,7 @@ describe('English mode', () => {
   });
 
   it('every event text, option and outcome is English', async () => {
-    const regs = [m.events.EVENTS, m.stories.STORY_STARTS, m.personal.PERSONAL_EVENTS, m.sagas.SAGA_EVENTS, m.social.SOCIAL_EVENTS, m.derby.DERBY_EVENTS, m.injuries.INJURY_EVENTS, m.life.LIFE_EVENTS, m.academy.ACADEMY_EVENTS, m.sponsors.SPONSOR_EVENTS];
+    const regs = [m.events.EVENTS, m.stories.STORY_STARTS, m.personal.PERSONAL_EVENTS, m.sagas.SAGA_EVENTS, m.social.SOCIAL_EVENTS, m.derby.DERBY_EVENTS, m.injuries.INJURY_EVENTS, m.life.LIFE_EVENTS, m.academy.ACADEMY_EVENTS, m.sponsors.SPONSOR_EVENTS, m.leagueevents.LEAGUE_EVENTS];
     const bad = [];
     let checked = 0;
     for (const reg of regs) {
@@ -46,6 +47,7 @@ describe('English mode', () => {
           m.sponsors.acceptSponsor(c, 0);
           c.sponsors[0].trait = 'ehrgeizig';
           c.round = 4;
+          if (reg === m.leagueevents.LEAGUE_EVENTS) c.level = 5; // gibt es erst weiter oben
           let ctx;
           try {
             ctx = ev.needs(c, fake);
@@ -61,6 +63,7 @@ describe('English mode', () => {
             m.sponsors.acceptSponsor(cc, 0);
             cc.sponsors[0].trait = 'ehrgeizig';
             cc.round = 4;
+            cc.level = c.level;
             const ctx2 = ev.needs(cc, fake);
             if (!ctx2) return;
             cc.week.event = { id, ctx: ctx2, text: ev.text(cc, ctx2), options: ev.options.map((x) => x.label), choice: null, result: null };

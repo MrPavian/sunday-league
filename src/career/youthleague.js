@@ -23,7 +23,7 @@ export const SICHTUNG_ROUND = 4;
 export const STUETZPUNKT_AGES = [10, 14];
 export const STUETZPUNKT_GROWTH = 0.004; // ein Zusatztraining je Woche
 
-const YOUTH_CLUBS = ['JSG Auetal', 'TuS Mühlbach', 'SpVgg Hollerbach', 'JFV Kreis Nord', 'SV Rot-Weiß Oberdorf', 'TSV Eichenau', 'SG Wiesengrund', 'FC Bergheide', 'DJK Sankt Martin', 'VfB Kirchdorf', 'JSG Am Kanal', 'SC Lindenhof'];
+const YOUTH_CLUBS = tr(['JSG Auetal', 'TuS Mühlbach', 'SpVgg Hollerbach', 'JFV Kreis Nord', 'SV Rot-Weiß Oberdorf', 'TSV Eichenau', 'SG Wiesengrund', 'FC Bergheide', 'DJK Sankt Martin', 'VfB Kirchdorf', 'JSG Am Kanal', 'SC Lindenhof'], ['Auetal Juniors', 'Millbrook Youth', 'Hollerbach Colts', 'North District JFC', 'Oberdorf Red Star', 'Oakbridge Town Youth', 'Meadowground Juniors', 'Heathhill FC', "St Martin's Juniors", 'Churchtown Youth', 'Canal Juniors', 'Lindenhof Colts']);
 
 const hashSeed = (...parts) => parts.reduce((h, p) => (Math.imul(h ^ p, 0x9e3779b1) + 0x7f4a7c15) >>> 0, 0x2545f491);
 const clamp01 = (v) => Math.max(0, Math.min(1, v));

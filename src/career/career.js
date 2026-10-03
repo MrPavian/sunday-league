@@ -1,7 +1,7 @@
 // Karriere: eine Saison in der Freizeitliga. Der Zustand ist reines JSON
 // (speicherbar); Spieler werden nur über ihre Pool-Nummer referenziert.
 import { logGrade, logSeason, monthlyAward, seasonAward } from './awards.js';
-import { tr } from '../core/i18n.js';
+import { getLang, tr } from '../core/i18n.js';
 import { legacySeasonEnd } from './legacy.js';
 import { sponsorResult } from './sponsors.js';
 import { autoTrip } from './trip.js';
@@ -32,7 +32,8 @@ import { absenceFactor, advanceArcs, applyForm, autoResolve, resultMood, rollNot
 import { developYouth, expireYouth, initYouth, retirements, youthIntake } from './youth.js';
 import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFinances, weeklyFinances } from './finances.js';
 
-import { NAME_EDITION } from '../data/names.js';
+import { nameEditionFor, nameLocaleOf } from '../data/names.js';
+import { setNameLocale } from '../data/origins.js';
 import { weeklyBanter } from './banter.js';
 import { matchdaySurprise } from './matchday.js';
 import { TIP_IDS, weeklyTip } from './tips.js';
@@ -66,10 +67,13 @@ export const RECRUIT_BASE = { ok: 0.85, gut: 0.65, stark: 0.45, dorfstar: 0.3, s
 const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 
 let poolCache = null;
-let poolEdition = NAME_EDITION;
+// Ohne Karriere (Freundschaftsspiele): Namen nach Sprache. In einer Karriere gilt ihre Auflage.
+let poolEdition = nameEditionFor(getLang());
+setNameLocale(nameLocaleOf(poolEdition));
 export const getPool = () => (poolCache ??= createPlayerPool({ seed: POOL_SEED, edition: poolEdition }));
 // Alte Spielstände würfeln ihre Spieler mit der ersten Namensauflage.
 export function setNameEdition(edition = 1) {
+  setNameLocale(nameLocaleOf(edition)); // Schiri, Trainer, Kinder … passend zu den Spielern
   if (edition === poolEdition) return;
   poolEdition = edition;
   poolCache = null;
@@ -167,7 +171,8 @@ export function squadPicker(rng, used) {
 }
 
 export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null, leagueSize = 6 } = {}) {
-  setNameEdition(NAME_EDITION);
+  const names = nameEditionFor(getLang());
+  setNameEdition(names);
   const rng = createRng(seed);
   const league = LEAGUES[1];
   const pick = squadPicker(rng, new Set());
@@ -182,7 +187,7 @@ export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null,
 
   const career = {
     version: SAVE_VERSION,
-    names: NAME_EDITION,
+    names,
     seed,
     level: 1,
     league: league.name,
@@ -907,7 +912,7 @@ export function clubSponsor(career, club) {
   let h = 7;
   for (const ch of String(club.id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   if (h % 6 === 0) return null;
-  const pool = SPONSORS.filter((s) => s.id !== mine?.id);
+  const pool = SPONSORS.filter((s) => s.id !== mine?.id && !s.from); // Gegner: Betriebe aus dem Ort
   const s = pool[h % pool.length];
   return { name: s.name, color: s.color };
 }

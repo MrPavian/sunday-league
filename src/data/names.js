@@ -1,5 +1,5 @@
 import { getLang } from '../core/i18n.js';
-import { personIdentity } from './origins.js';
+import { personIdentityDE, personIdentityDE6, personIdentityEN } from './origins.js';
 
 // Erste Auflage der Namen: Alte Spielstände würfeln ihre Spieler damit, damit
 // aus dem Kowalski von gestern nicht plötzlich ein anderer wird.
@@ -73,9 +73,17 @@ export const NAME_EDITIONS = {
   2: { first: FIRST_NAMES, last: LAST_NAMES, jobs: JOBS_V2 },
   3: { first: FIRST_NAMES, last: LAST_NAMES, jobs: PROFESSIONS },
   // Vierte Auflage: stimmige Namen nach Herkunft und Jahrgang (siehe data/origins.js).
-  4: { identity: personIdentity, jobs: PROFESSIONS },
+  4: { identity: personIdentityDE, jobs: PROFESSIONS },
+  // Fünfte Auflage: englische Karriere (siehe data/origins_en.js). Neue Karrieren wählen 4 oder 5 nach Sprache.
+  5: { identity: personIdentityEN, jobs: PROFESSIONS },
+  // Sechste Auflage: deutsche Karriere mit mehr Vor- und Nachnamen.
+  6: { identity: personIdentityDE6, jobs: PROFESSIONS },
 };
-export const NAME_EDITION = 4;
+export const NAME_EDITION = 6;
+export const NAME_EDITION_EN = 5;
+// Welcher Namenssatz zu einer Auflage gehört (für Schiri, Trainer, Kinder … in origins.js).
+export const nameLocaleOf = (edition) => (edition === NAME_EDITION_EN ? 'en' : edition === 6 ? 'de6' : 'de');
+export const nameEditionFor = (lang) => (lang === 'en' ? NAME_EDITION_EN : NAME_EDITION);
 
 export const SKIN_TONES = [0xf1d0b5, 0xe6b894, 0xd29f7a, 0xb57c55, 0x8d5a3b, 0x6b4128];
 export const HAIR_COLORS = [0x2a1d14, 0x4a3222, 0x7a5230, 0xb08850, 0x1a1a1a, 0x8a8a8a, 0xa0522d];

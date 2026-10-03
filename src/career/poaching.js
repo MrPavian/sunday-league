@@ -31,7 +31,12 @@ export const PRO_MAX_AGE = 21;
 export const PRO_GATE = 0.06; // gemessen, siehe oben: 0,17 × 0,06 ≈ 0,01 je Saison bei aktivem Spiel
 export const COMPENSATION_PER_YEAR = 5400;
 
-export const PRO_CLUBS = ['FC Rheinstadt 1899', 'SV Hanseatica Nordhafen', 'Sportverein Elbtal 1904', 'Union Weserland', '1. FC Südbergen', 'Viktoria Lindenhof 07', 'Eintracht Bergmark', 'Athletik-Club Moorhausen', 'Fortuna Sternfeld 1911', 'Rot-Weiß Kaltenbach'];
+// Reihenfolge = Stufe des Leistungszentrums (nlz.js): die ersten vier „Bundesliga", dann 2. und 3. Liga.
+export const PRO_CLUBS_DE = ['FC Rheinstadt 1899', 'SV Hanseatica Nordhafen', 'Sportverein Elbtal 1904', 'Union Weserland', '1. FC Südbergen', 'Viktoria Lindenhof 07', 'Eintracht Bergmark', 'Athletik-Club Moorhausen', 'Fortuna Sternfeld 1911', 'Rot-Weiß Kaltenbach'];
+export const PRO_CLUBS_EN = ['Rhine City 1899', 'North Harbour Hanseatic', 'Elbvale 1904', 'Weserland United', 'Southfell Athletic', 'Lindenhof Villa 07', 'Bergmark Albion', 'Moorhouse Athletic', 'Starfield Wanderers 1911', 'Coldbrook Rangers'];
+export const PRO_CLUBS = tr(PRO_CLUBS_DE, PRO_CLUBS_EN);
+// Platz eines Profivereins in der Liste – auch für Namen aus einem Spielstand in der anderen Sprache.
+export const proClubIndex = (club) => Math.max(PRO_CLUBS_DE.indexOf(club), PRO_CLUBS_EN.indexOf(club));
 
 const euro = (v) => v.toLocaleString('de-DE');
 

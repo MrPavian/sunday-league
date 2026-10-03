@@ -1,3 +1,5 @@
+import { LOCAL_FIRST_EN, LOOK_GROUP_EN, ORIGINS_EN } from './origins_en.js';
+
 // Stimmige Namen: Erst wird die Herkunft gewürfelt, dann passen Vor- und Nachname
 // zueinander – so wie in einer echten Kreisliga-Mannschaft im Ruhrgebiet oder in
 // Bremen. Deutsche Vornamen hängen vom Jahrgang ab (der 45-Jährige heißt Torsten,
@@ -96,26 +98,75 @@ export const ORIGINS = {
 const generation = (age) => (age <= 27 ? 'young' : age <= 40 ? 'mid' : 'old');
 export const germanFirst = (rng, age = 30) => rng.pick(DE_FIRST[generation(age)]);
 
-function pickOrigin(rng) {
-  let r = rng.next() * Object.values(ORIGINS).reduce((s, o) => s + o.w, 0);
-  for (const [id, o] of Object.entries(ORIGINS)) if ((r -= o.w) < 0) return id;
-  return 'de';
+// Ein Namenssatz: Herkunftsgruppen und die „einheimischen" Vornamen nach Jahrgang. Deutsch (Auflage 4)
+// zieht die Zufallszahlen genau wie früher – alte Spielstände behalten ihre Spieler.
+function nameSet(origins, local, fallback) {
+  const localFirst = (rng, age) => rng.pick(local[generation(age)]);
+  const pickOrigin = (rng) => {
+    let r = rng.next() * Object.values(origins).reduce((s, o) => s + o.w, 0);
+    for (const [id, o] of Object.entries(origins)) if ((r -= o.w) < 0) return id;
+    return fallback;
+  };
+  const firstFor = (origin, rng, age) => {
+    const o = origins[origin] ?? origins[fallback];
+    if (!o.first?.length) return localFirst(rng, age);
+    const share = age <= 27 && (o.youngGerman ?? o.youngLocal) != null ? o.youngGerman ?? o.youngLocal : o.germanFirst ?? o.localFirst ?? 0;
+    return rng.chance(share) ? localFirst(rng, age) : rng.pick(o.first);
+  };
+  const originOf = (last) => {
+    for (const [id, o] of Object.entries(origins)) if (o.last.includes(last)) return id;
+    return fallback;
+  };
+  return {
+    identity(rng, age = 30) {
+      const origin = pickOrigin(rng);
+      const last = rng.pick(origins[origin].last);
+      return { name: `${firstFor(origin, rng, age)} ${last}`, origin };
+    },
+    originOf,
+    firstNameFor: (last, rng, age = 17) => firstFor(originOf(last), rng, age),
+    lastName: (rng) => rng.pick(origins[pickOrigin(rng)].last),
+  };
 }
+const DE_SET = nameSet(ORIGINS, DE_FIRST, 'de');
+// Sechste Auflage (neue deutsche Karrieren): mehr Vor- und Nachnamen, damit sich über viele Saisons
+// weniger wiederholt. Gleiche Herkunftsgewichte, gleich viele Zufallszahlen je Name wie Auflage 4.
+const DE_FIRST_MORE = {
+  young: [...DE_FIRST.young, 'Mika', 'Luis', 'Emil', 'Anton', 'Theo', 'Leonard', 'Jakob', 'Vincent', 'Linus', 'Bennet', 'Lasse', 'Silas', 'Jona', 'Erik', 'Joel', 'Marlon', 'Colin', 'Dustin', 'Yannick', 'Steven'],
+  mid: [...DE_FIRST.mid, 'Andre', 'Carsten', 'Christoph', 'Enrico', 'Frank', 'Jens', 'Jörn', 'Kay', 'Marc', 'Mike', 'Ronny', 'Sandro', 'Thilo', 'Torben', 'Ulf', 'Benny', 'Danny', 'Ricardo'],
+  old: [...DE_FIRST.old, 'Hartmut', 'Werner', 'Manfred', 'Wolfgang', 'Dieter', 'Günter', 'Harald', 'Lothar', 'Reinhard', 'Gerd', 'Horst', 'Helmut', 'Siegfried', 'Eckhard', 'Wilfried', 'Ulrich', 'Bernhard', 'Winfried', 'Hans-Jürgen', 'Karl-Heinz'],
+};
+export const DE_LAST_MORE = [
+  ...DE_LAST,
+  'Kruse', 'Brüning', 'Hartwig', 'Schwab', 'Ebert', 'Pape', 'Wilke', 'Lindner', 'Heinz', 'Thiel', 'Kaufmann', 'Walther', 'Büttner', 'Ritter', 'Reuter', 'Hoppe', 'Witt', 'Grimm', 'Sander', 'Bock',
+  'Petersen', 'Jansen', 'Christiansen', 'Lorenzen', 'Thomsen', 'Ahrens', 'Behrens', 'Hinz', 'Kunze', 'Seifert', 'Ulrich', 'Heller', 'Nagel', 'Mohr', 'Kraft', 'Kurz', 'Baum', 'Funk', 'Sturm', 'Blank',
+  'Steffens', 'Tewes', 'Plückebaum', 'Schulte-Döinghaus', 'Kampmann', 'Hülsmann', 'Wienhold', 'Steinkamp', 'Rehbein', 'Hagedorn', 'Wehrmann', 'Feldkamp', 'Möllenbeck', 'Brockhoff', 'Uhlenbrock', 'Dreyer', 'Gieseler', 'Klöckner', 'Pöppelmann', 'Tönnies',
+];
+const DE_SET_MORE = nameSet({ ...ORIGINS, de: { ...ORIGINS.de, last: DE_LAST_MORE } }, DE_FIRST_MORE, 'de');
+const EN_SET = nameSet(ORIGINS_EN, LOCAL_FIRST_EN, 'gb');
 
-function firstFor(origin, rng, age) {
-  const o = ORIGINS[origin] ?? ORIGINS.de;
-  if (!o.first?.length) return germanFirst(rng, age);
-  const share = age <= 27 && o.youngGerman != null ? o.youngGerman : o.germanFirst ?? 0;
-  return rng.chance(share) ? germanFirst(rng, age) : rng.pick(o.first);
-}
+// Welcher Satz gerade gilt, hängt an der Namensauflage der Karriere (career.js, setNameEdition) –
+// nicht an der Sprache: Eine deutsche Karriere behält ihre Namen auch auf Englisch.
+let SET = DE_SET;
+// locale: 'de' (Auflage 4 und älter), 'de6' (Auflage 6, mehr Namen), 'en' (Auflage 5).
+export const setNameLocale = (locale) => {
+  SET = locale === 'en' ? EN_SET : locale === 'de6' ? DE_SET_MORE : DE_SET;
+};
+export const nameLocale = () => (SET === EN_SET ? 'en' : 'de');
+
+// Feste Sätze für den Spielerpool (Auflage 4 deutsch, 5 englisch).
+export const personIdentityDE = DE_SET.identity;
+export const personIdentityEN = EN_SET.identity;
+export const personIdentityDE6 = DE_SET_MORE.identity;
 
 // Ein ganzer Name, passend zum Alter – mit Herkunft, damit das Aussehen dazu passen kann.
-export function personIdentity(rng, age = 30) {
-  const origin = pickOrigin(rng);
-  const last = rng.pick(ORIGINS[origin].last);
-  return { name: `${firstFor(origin, rng, age)} ${last}`, origin };
-}
+export const personIdentity = (rng, age = 30) => SET.identity(rng, age);
 export const personName = (rng, age = 30) => personIdentity(rng, age).name;
+
+// Mädchennamen (Töchter, Frauenteam, Jugend): deutsch aus der Liste der jeweiligen Stelle (unverändert),
+// englisch aus dieser.
+const GIRLS_EN = ['Olivia', 'Amelia', 'Isla', 'Ava', 'Mia', 'Grace', 'Lily', 'Freya', 'Ellie', 'Chloe', 'Sophie', 'Poppy', 'Evie', 'Aisha', 'Priya'];
+export const girlName = (rng, germanList) => rng.pick(nameLocale() === 'en' ? GIRLS_EN : germanList);
 
 // Aussehen nach Herkunft – nur als Wahrscheinlichkeit, mit viel Überlappung: Der Name
 // sagt nicht alles (Jonas Becker kann genauso gut einen ghanaischen Vater haben).
@@ -128,6 +179,11 @@ const SKIN_W = {
   south: [0.08, 0.32, 0.38, 0.18, 0.03, 0.01],
   ar: [0.03, 0.15, 0.35, 0.35, 0.1, 0.02],
   wa: [0, 0.01, 0.04, 0.15, 0.4, 0.4],
+  // Englische Gruppen (origins_en.js): Südasien, Karibik, Mixed, Ostasien.
+  sa: [0.02, 0.1, 0.3, 0.4, 0.15, 0.03],
+  cb: [0, 0.02, 0.08, 0.25, 0.4, 0.25],
+  mix: [0.1, 0.25, 0.3, 0.25, 0.08, 0.02],
+  ea: [0.3, 0.45, 0.2, 0.05, 0, 0],
 };
 // Haarfarben wie HAIR_COLORS: dunkelbraun, braun, hellbraun, blond, schwarz, grau, rot.
 // Grau kommt nicht aus der Herkunft, sondern mit dem Alter.
@@ -139,8 +195,12 @@ const HAIR_W = {
   south: [0.45, 0.22, 0.06, 0.02, 0.25, 0, 0],
   ar: [0.45, 0.15, 0.03, 0.01, 0.36, 0, 0],
   wa: [0.1, 0.02, 0, 0, 0.88, 0, 0],
+  sa: [0.4, 0.1, 0.02, 0, 0.48, 0, 0],
+  cb: [0.15, 0.05, 0, 0, 0.8, 0, 0],
+  mix: [0.35, 0.25, 0.1, 0.05, 0.22, 0, 0.03],
+  ea: [0.15, 0.05, 0, 0, 0.8, 0, 0],
 };
-const LOOK_GROUP = { de: 'de', pl: 'pl', ruhr: 'pl', russ: 'pl', tr: 'tr', yu: 'yu', it: 'south', gr: 'south', pt: 'south', ar: 'ar', wa: 'wa' };
+const LOOK_GROUP = { de: 'de', pl: 'pl', ruhr: 'pl', russ: 'pl', tr: 'tr', yu: 'yu', it: 'south', gr: 'south', pt: 'south', ar: 'ar', wa: 'wa', ...LOOK_GROUP_EN };
 function weighted(rng, weights) {
   let r = rng.next() * weights.reduce((a, b) => a + b, 0);
   for (let i = 0; i < weights.length; i++) if ((r -= weights[i]) < 0) return i;
@@ -154,13 +214,10 @@ export function hairIndex(rng, origin, age) {
 }
 
 // Herkunft eines Nachnamens (für Kinder, Söhne, Verwandte).
-export function originOf(last) {
-  for (const [id, o] of Object.entries(ORIGINS)) if (o.last.includes(last)) return id;
-  return 'de';
-}
+export const originOf = (last) => SET.originOf(last);
 
 // Vorname, der zum Nachnamen passt – z. B. für den Sohn der Vereinslegende.
-export const firstNameFor = (last, rng, age = 17) => firstFor(originOf(last), rng, age);
+export const firstNameFor = (last, rng, age = 17) => SET.firstNameFor(last, rng, age);
 
 // Nur Nachname (Kapitänin des Frauenteams, Trainer des Gegners …).
-export const lastName = (rng) => rng.pick(ORIGINS[pickOrigin(rng)].last);
+export const lastName = (rng) => SET.lastName(rng);

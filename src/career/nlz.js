@@ -15,7 +15,7 @@
 // NLZ-Scouts schauen vor allem an den DFB-Stützpunkten. Ob es klappt, zeigt das Probetraining:
 // Wer nur groß war (Frühentwickler), fällt dort oft durch.
 import { tr } from '../core/i18n.js';
-import { PRO_CLUBS } from './poaching.js';
+import { PRO_CLUBS, proClubIndex } from './poaching.js';
 import { looksStrength } from './kidpersona.js';
 
 export const NLZ_RATES = {
@@ -30,7 +30,7 @@ export const TRIAL_BAR = 0.9; // gemessen: angefragt werden Kinder mit 0,82–1,
 
 // Ausgedachte Vereine mit Leistungszentrum: die ersten vier Bundesliga, dann 2. und 3. Liga.
 export const nlzTier = (club) => {
-  const i = PRO_CLUBS.indexOf(club);
+  const i = proClubIndex(club);
   return i < 4 ? 'bl' : i < 7 ? 'bl2' : 'bl3';
 };
 
