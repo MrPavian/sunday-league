@@ -606,3 +606,57 @@ Kontrast), Dunst mit der Entfernung, Vignette und geordnetes Bayer-Dithering im 
 einen eigenen Look (Regen kühl und gedämpft, Nebel dicht, Hitze warm und hell, Schneedecke und Raureif auf dem
 Boden) und eine eigene Lichtstimmung; ein kühles Gegenlicht hebt die Spieler vom Rasen ab. Taste G schaltet die
 teuren Effekte für langsame Rechner ab.
+
+## 11. Zukunft: Ausbau-Wünsche (Stand Oktober 2026)
+
+Noch nicht begonnen. Die Zahlen in Klammern sind der heutige Stand im Code, damit „mehr" messbar bleibt.
+
+### 11.1 Animationen
+- **Mehr Animationen:** Jubel (mehrere Varianten, Rutschen auf Knien, Trikot über den Kopf), Ärger nach
+  vergebener Chance, Einwurf mit Anlauf, Schiri-Gesten (Karte zeigen, Vorteil), Abklatschen bei Wechseln,
+  Aufwärmen am Rand, Zuschauer mit mehr Bewegung.
+- **Bessere Animationen:** weichere Übergänge zwischen Laufen, Schuss und Pass; Fußstellung passend zum Ball;
+  sichtbarer Körpereinsatz in Zweikämpfen; Fallen und Aufstehen nach Grätsche und Foul.
+- **Torhüter zuerst:** Hechtsprung mit Abrollen, Fangen in Brust- und Kopfhöhe, Abtauchen in die Ecke, Fausten
+  mit beiden Fäusten, Abwurf und Abschlag mit Ausholen, Herauslaufen und Breitmachen im 1 gegen 1,
+  Fehlgriff/Abpraller sichtbar.
+
+- **Vorfälle auf dem Platz animieren:** Die Abläufe gibt es schon als Bewegung (`src/sim/incidents.js`,
+  `src/render/IncidentView.js`), aber ohne eigene Animationen. Ausbauen:
+  - Gewitter: Alle rennen schnell vom Platz, Hände oder Trikot über dem Kopf, einer rutscht aus; Schiri
+    zuerst unterm Vordach. Heute gehen die Spieler nur im Laufschritt zum Seitenrand.
+  - Polizei: Die beiden Polizisten kommen mit Gesten (Hand hoch, Zeigefinger), reden mit dem Trainer,
+    Spieler stehen mit verschränkten Armen herum. Heute gehen sie nur aufs Feld und wieder zurück.
+  - Hund: echtes Rennen und Haken schlagen, Ball im Maul schütteln, Spieler hechten daneben, Herrchen
+    mit Leine winkend. Heute läuft der Hund mit dem Ball, die Spieler laufen hinterher.
+  - **Neu – Taube:** Eine Taube landet auf dem Feld, pickt am Ball oder sitzt auf der Latte, flattert
+    beim Schuss auf; Spieler scheuchen sie. Gibt es noch nicht (nur Vogelgezwitscher im Ton).
+  - Weitere Vorfälle (Rasensprenger, Ball über den Zaun, Autoalarm, Ersatzschiri) mit passenden
+    Reaktionen der Spieler: wegrennen, schimpfen, auf den Zaun klettern, zum Auto zeigen.
+
+### 11.2 Grafik und Aussehen der Spieler
+- Figuren mit mehr Varianten: Körperbau (schlank, kräftig, Bauch), Größe, Frisuren, Bärte, Stutzen runter,
+  Schweißbänder, Brillen-Sportband, Tape am Knöchel.
+- Gesichter mit mehr Ausdruck (Jubel, Ärger, Erschöpfung), Trikots mit Falten und nassem Stoff bei Regen.
+- Licht und Schatten auf den Figuren verfeinern, Torwarthandschuhe und eigene Torwartkleidung im Detail.
+
+### 11.3 Namen
+- **Mehr Namen:** heute 140 Vornamen, 140 Nachnamen, 11 Herkunftsgruppen und 89 Berufe – Ziel: deutlich mehr
+  Vielfalt, damit sich Namen über viele Saisons nicht wiederholen.
+- **Englische Version:** Spieler heißen dort heute wie in der deutschen Version (z. B. Dennis Müller, Kevin
+  Schmitz). Eigene Namenslisten für Englisch, passend zum englischen Amateurfußball.
+- **Vereinsnamen englisch:** Vereine heißen auch in der englischen Version deutsch (z. B. „SV Blau-Weiß
+  Kanalbezirk", „TuS Eichenkamp 1908"; heute 30 KI-Vereine in fünf Ligen). Eigene englische Namen im Stil von
+  Sunday-League-Teams (z. B. „… Athletic", „… United", „Red Lion FC").
+- Alte Spielstände behalten ihre Namen (Namens-Edition wie bisher, siehe `NAME_EDITION`).
+
+### 11.4 Sponsoren
+- **Mehr Sponsoren:** heute 40 lokale Sponsoren mit Chef und Eigenart – Ziel: mehr Auswahl je Liga und
+  Region, dazu englische Sponsoren für die englische Version (heute deutsche Namen wie „Bäckerei Krume").
+
+### 11.5 Ereignisse
+- **Mehr Ereignisse:** heute rund 80 Ereignisse mit Entscheidungen (Verein 14, Jugend 13, Vereinsleben 13,
+  Leben 8, Persönliches 8, Sponsoren 7, Geschichten 7, Soziales 5, dazu Derby, Verletzungen, Abwerben,
+  Sprüche). Ausbau vor allem dort, wo sich Texte im Langzeitlauf am häufigsten wiederholen
+  (`npm run longrun -- 10 77 --bot` zeigt die meistwiederholten Texte), sowie neue Ereignisse für die
+  höheren Ligen (Kreisliga A, Bezirksliga).

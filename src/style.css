@@ -1652,9 +1652,9 @@ line.tb-chalk { stroke-width: 1; }
   .phone-stage .m-hand-back, .phone-stage .m-hand-front { display: none; }
   .phone-stage .lock-time { font-size: 30px; margin: 4px 0; }
   /* Quer: angeheftete Entscheidung links, Verlauf rechts */
-  .phone-stage .m-screen:has(.wa-pinned) { display: grid; grid-template: auto auto minmax(0, 1fr) auto / minmax(0, 1fr) minmax(0, 1fr); }
-  .phone-stage .m-screen:has(.wa-pinned) > .statusbar, .phone-stage .m-screen:has(.wa-pinned) > .wa-head, .phone-stage .m-screen:has(.wa-pinned) > .wa-reply { grid-column: 1 / -1; }
-  .phone-stage .m-screen:has(.wa-pinned) > .wa-pinned { max-height: none; min-height: 0; padding-bottom: 6px; }
+  .phone-stage .m-screen:has(.wa-pinned:not(.mini)) { display: grid; grid-template: auto auto minmax(0, 1fr) auto / minmax(0, 1fr) minmax(0, 1fr); }
+  .phone-stage .m-screen:has(.wa-pinned:not(.mini)) > .statusbar, .phone-stage .m-screen:has(.wa-pinned:not(.mini)) > .wa-head, .phone-stage .m-screen:has(.wa-pinned:not(.mini)) > .wa-reply { grid-column: 1 / -1; }
+  .phone-stage .m-screen:has(.wa-pinned:not(.mini)) > .wa-pinned { max-height: none; min-height: 0; padding-bottom: 6px; }
   .phone-stage .m-screen .statusbar { padding: 2px 10px; }
   .wa-head { padding: 0 6px 2px; }
 }
@@ -1872,3 +1872,12 @@ body.manager #end { padding-bottom: 84px; }
 .staff li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-bottom: 10px; }
 .staff .staff-pick { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
 .staff .staff-pick select { max-width: 100%; }
+
+/* Entschiedene Vereinsentscheidung im Handy: minimieren (schmale Leiste) oder ausblenden. */
+.event-card .label { display: flex; align-items: center; gap: 4px; }
+.event-card .ev-fold { margin-left: auto; display: flex; gap: 2px; }
+.event-card .ev-fold .ui-btn.icon, .event-card.mini > .ui-btn.icon { min-width: var(--touch-min); min-height: var(--touch-min); padding: 0; }
+.event-card.mini { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px; padding: 2px 4px 2px 10px; }
+.event-card.mini .ev-bar { display: grid; gap: 0; min-width: 0; min-height: var(--touch-min); padding: 2px 0; text-align: left; background: none; border: 0; color: inherit; font: inherit; box-shadow: none; }
+.event-card.mini .ev-bar > span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.wa-head > .ui-btn.icon:last-child { margin-left: auto; }

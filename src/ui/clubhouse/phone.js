@@ -45,20 +45,29 @@ export const phoneScreens = {
     const declined = club.squad.filter((idx) => w.availability[idx] === 'no' && !w.nudged.includes(idx) && !c.players[idx].injuryWeeks).filter((idx) => !isCoach(c, idx));
     const ev = w.event;
     const view = ev ? eventView(c, ev) : null;
-    const eventCard = ev
-      ? `<div class="event-card">
-          <p class="label">${ev.story === 'Vereinsleben' ? storyTag(ev.story) : ev.story ? `${tr('Geschichte', 'Story')} · ${storyTag(ev.story)}` : tr('Diese Woche im Verein', 'This week at the club')}</p>
+    // Nach der Entscheidung: Karte erst offen (Ergebnis lesen), dann als schmale Leiste oder ganz weg –
+    // sonst belegt sie auf dem Handy die halbe Anzeige. Zustand je Woche: open | mini | hidden.
+    const weekId = `${c.season}:${c.round}`;
+    if (this.eventFold?.week !== weekId) this.eventFold = { week: weekId, state: ev?.choice != null ? 'mini' : 'open' };
+    const fold = ev && ev.choice !== null ? this.eventFold.state : 'open';
+    const label = ev ? (ev.story === 'Vereinsleben' ? storyTag(ev.story) : ev.story ? `${tr('Geschichte', 'Story')} · ${storyTag(ev.story)}` : tr('Diese Woche im Verein', 'This week at the club')) : '';
+    const foldBtns = `<span class="ev-fold">${button('–', { kind: 'ghost icon', action: 'eventFold', value: 'mini', 'aria-label': tr('Minimieren', 'Minimise'), title: tr('Minimieren', 'Minimise') })}${button('×', { kind: 'ghost icon', action: 'eventFold', value: 'hidden', 'aria-label': tr('Ausblenden', 'Hide'), title: tr('Ausblenden', 'Hide') })}</span>`;
+    const eventCard = !ev || fold === 'hidden'
+      ? ''
+      : fold === 'mini'
+        ? `<div class="event-card mini"><button class="ev-bar" data-action="eventFold" data-value="open" aria-expanded="false"><span class="label">${label}</span><span>➜ ${view.options[ev.choice] ?? ''}</span></button>${button('×', { kind: 'ghost icon', action: 'eventFold', value: 'hidden', 'aria-label': tr('Ausblenden', 'Hide'), title: tr('Ausblenden', 'Hide') })}</div>`
+        : `<div class="event-card">
+          <p class="label">${label}${ev.choice !== null ? foldBtns : ''}</p>
           <p>${view.text}</p>
           ${ev.choice !== null
             ? `<p class="reply ok">➜ ${view.options[ev.choice] ?? ''}: ${ev.result ?? ''}</p>${effectChips(ev.effects)}`
             : this.results
               ? ''
               : `<div class="actions">${view.options.map((o, i) => `<button ${i === 0 ? 'class="primary"' : ''} data-action="event" data-value="${i}">${o}</button>`).join('')}</div>`}
-        </div>`
-      : '';
+        </div>`;
+    const pinChip = ev && ev.choice !== null && fold === 'hidden' ? button('📌', { kind: 'ghost icon', action: 'eventFold', value: 'mini', 'aria-label': tr('Entscheidung wieder anzeigen', 'Show the decision again'), title: tr('Entscheidung wieder anzeigen', 'Show the decision again') }) : '';
     // UI 3.0 Phase 6: Die Gruppe steckt im Handy (in der Hand des Trainers). Beim ersten Blick
     // in einer Woche zeigt es den Sperrbildschirm mit den neuesten Nachrichten – danach direkt den Chat.
-    const weekId = `${c.season}:${c.round}`;
     const pending = ev && ev.choice === null && !this.results;
     if (this.phoneWeek !== weekId) {
       this.phoneWeek = weekId;
@@ -84,8 +93,8 @@ export const phoneScreens = {
       screen = `<div class="statusbar"><span>${timeLabel(lastTime)}</span><span>▮▮▮ ▰</span></div>
         <div class="wa-head">${button('‹', { kind: 'ghost icon', action: 'phone-lock', 'aria-label': tr('Zum Sperrbildschirm', 'To the lock screen') })}
           <span class="wa-crest">${crestSVG(crestOf(club), { size: 26, short: club.short, label: club.name })}</span>
-          <div><b>${groupName}</b><small>${club.squad.length} ${tr('Mitglieder', 'members')}</small></div></div>
-        ${eventCard ? `<div class="wa-pinned">${eventCard}</div>` : ''}<div class="wa-body"><div class="chat">${bubbles}</div></div>
+          <div><b>${groupName}</b><small>${club.squad.length} ${tr('Mitglieder', 'members')}</small></div>${pinChip}</div>
+        ${eventCard ? `<div class="wa-pinned${fold === 'mini' ? ' mini' : ''}">${eventCard}</div>` : ''}<div class="wa-body"><div class="chat">${bubbles}</div></div>
         <div class="wa-reply"><span>${tr('Nachhaken', 'Chase up')} (${w.nudges} ${tr('übrig', 'left')}):</span>${replies}</div>`;
     }
     const buzz = this.phoneView === 'lock' && this.phoneBuzz;

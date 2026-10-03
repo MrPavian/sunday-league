@@ -198,8 +198,11 @@ export class Clubhouse {
         resolveEvent(this.career, Number(value), 'notice');
         haptic('confirm');
         this.h.onChange();
+      } else if (action === 'eventFold') {
+        this.eventFold = { week: `${this.career.season}:${this.career.round}`, state: value };
       } else if (action === 'event') {
         resolveEvent(this.career, Number(value));
+        this.eventFold = { week: `${this.career.season}:${this.career.round}`, state: 'open' }; // Ergebnis einmal zeigen
         haptic('confirm');
         this.h.onChange();
       } else if (action === 'trainUp') {

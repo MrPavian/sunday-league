@@ -316,6 +316,50 @@ export async function clubSetup(b) {
   return ok.done();
 }
 
+// Handy: Nach der Entscheidung lässt sich die angeheftete Karte minimieren und ausblenden
+// (sonst belegt sie die halbe Anzeige), im Hoch- und Querformat.
+export async function eventFold(b) {
+  const ok = checker('Handy: Entscheidung nach der Wahl minimieren und ausblenden (hoch und quer)');
+  for (const size of ['port', 'land']) {
+    const p = await page(b, size, { query: '?notitle&debug&seed=7' }); // Seed 7: gleich in Woche 1 eine Vereinsentscheidung
+    await newCareer(p);
+    await click(p, '[data-action="area"][data-value="phone"]');
+    await p.waitForTimeout(500);
+    if (await p.$('[data-action="phone-open"]')) {
+      await click(p, '[data-action="phone-open"]');
+      await p.waitForTimeout(500);
+    }
+    if (!(await p.$('.wa-pinned [data-action="event"]'))) {
+      ok(false, `${size}: keine offene Entscheidung im Handy`);
+      await p.context().close();
+      continue;
+    }
+    const box = () => p.evaluate(() => {
+      const w = document.querySelector('.wa-pinned')?.getBoundingClientRect();
+      const s = document.querySelector('.m-screen').getBoundingClientRect();
+      return w ? { h: w.height, w: w.width, sh: s.height, sw: s.width } : null;
+    });
+    await click(p, '.wa-pinned [data-action="event"]');
+    await p.waitForTimeout(400);
+    ok(!!(await p.$('.wa-pinned .reply.ok')), `${size}: Ergebnis nach der Wahl nicht sichtbar`);
+    const open = await box();
+    await click(p, '[data-action="eventFold"][data-value="mini"]');
+    await p.waitForTimeout(400);
+    const mini = await box();
+    ok(mini && mini.h < open.h && mini.h <= 70, `${size}: minimiert nicht (${open?.h} → ${mini?.h})`);
+    ok(mini && mini.w > mini.sw * 0.9, `${size}: minimierte Leiste nutzt nicht die volle Breite`);
+    await click(p, '.event-card.mini [data-action="eventFold"][data-value="hidden"]');
+    await p.waitForTimeout(400);
+    ok(!(await box()), `${size}: lässt sich nicht ausblenden`);
+    await click(p, '.wa-head [data-action="eventFold"]');
+    await p.waitForTimeout(400);
+    ok(!!(await p.$('.wa-pinned.mini')), `${size}: 📌 holt die Entscheidung nicht zurück`);
+    ok(!p.errors.length, `${size}: Fehler ${p.errors.slice(0, 2).join(' | ')}`);
+    await p.context().close();
+  }
+  return ok.done();
+}
+
 // Vereinsheim „Heute": Raum mit Fenster (Kamera zeigt dort das ganze Bild) und klassische Kacheln.
 export async function homeViews(b) {
   const ok = checker('Vereinsheim „Heute": Fenster zeigt den Platz, klassische Ansicht per Notizbuch');
@@ -426,6 +470,7 @@ export async function run() {
   f += await english(b);
   f += await homeViews(b);
   f += await clubSetup(b);
+  f += await eventFold(b);
   f += await saveAtWhistle(b);
   f += await oldSave(b, process.env.E2E_OLD_SAVE ?? fileURLToPath(new URL('./fixtures/save-858e978.json', import.meta.url)));
   await b.close();
