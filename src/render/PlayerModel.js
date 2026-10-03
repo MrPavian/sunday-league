@@ -821,7 +821,7 @@ function acroPose(bn, kind, t, hipY) {
 // kickPrep 0…1 – Schuss/Pass ist geplant: ausholen (die Simulation führt ihn als „pending“),
 // trick/trickT/trickSide – Trick am Ball, acro/acroT – Fall-/Seitfallzieher, fooled 0…1 –
 // ausgetrickst, steht kurz auf dem falschen Fuß.
-export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot', headPrep = 0, headJump = 1, hit = null, duck = 0, face: faceHint = null, kickPrep = 0, trick = null, trickT = 0, trickSide = 1, acro = null, acroT = 0, fooled = 0, ready = 0, throwT = 0, jump = 0, punch = 0 }) {
+export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot', headPrep = 0, headJump = 1, hit = null, duck = 0, face: faceHint = null, kickPrep = 0, trick = null, trickT = 0, trickSide = 1, acro = null, acroT = 0, fooled = 0, ready = 0, throwT = 0, jump = 0, punch = 0, getUp = null }) {
   const bn = model.bones;
   resetPose(model);
   const s = locomotion(model, speed, dt);
@@ -1000,6 +1000,29 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
     bn.head.rotation.x = -0.45;
     face = 'pain';
   }
+  // Aufstehen nach Grätsche oder Sturz: k = 1 liegt noch, 0 steht. Erst Oberkörper hoch
+  // (aus der Rückenlage bzw. vom Bauch), dann auf die Hand gestützt in die Hocke, dann hoch.
+  if (getUp) {
+    const u = 1 - getUp.k;
+    const ease = (t) => t * t * (3 - 2 * t);
+    const lie = 1 - ease(Math.min(1, u / 0.45)); // 1 → 0 in der ersten Hälfte
+    const crouch = Math.sin(Math.min(1, u / 0.95) * Math.PI) * (u < 0.5 ? 1 : 1 - ease((u - 0.5) / 0.5) * 0.6);
+    const low = 1 - ease(Math.min(1, Math.max(0, (u - 0.25) / 0.75)));
+    bn.hips.position.y = hipY - (hipY - 0.3) * low;
+    if (getUp.from === 'tackle') {
+      bn.hips.rotation.x = -1.1 * lie;
+      bn.spine.rotation.x = 0.45 * lie + 0.55 * crouch;
+    } else {
+      bn.hips.rotation.x = 1.45 * lie;
+      bn.spine.rotation.x = 0.05 * lie + 0.5 * crouch;
+    }
+    leg(bn, 'L', -1.1 * crouch, 1.7 * crouch, 0.3);
+    leg(bn, 'R', -0.6 * crouch, 1.2 * crouch, 0.3);
+    arm(bn, 'R', 0.9 * crouch, 0.35, -0.2); // stützt sich ab
+    arm(bn, 'L', -0.4 * crouch, 0.6 * crouch, -0.5 * crouch);
+    bn.head.rotation.x = 0.2 * crouch;
+    face = getUp.from === 'down' ? 'pain' : 'effort';
+  }
   if (state === 'acro' || (acro && acroT < 1)) {
     acroPose(bn, acro ?? 'fallrueck', acroT, hipY);
     face = 'effort';
@@ -1062,7 +1085,7 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
   }
   // Wie hoch der Körper über dem Boden ist (für den Kontaktschatten).
   model.lift = Math.max(0, bn.hips.position.y - hipY);
-  model.grounded = state === 'tackle' || state === 'down' || state === 'acro' || !!dive;
+  model.grounded = state === 'tackle' || state === 'down' || state === 'acro' || !!dive || (getUp?.k ?? 0) > 0.4;
   if (faceHint && !celebrate && face !== 'pain') face = faceHint;
   setFace(model, face);
 }

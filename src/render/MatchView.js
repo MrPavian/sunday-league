@@ -1,3 +1,4 @@
+import { GET_UP } from '../sim/tackles.js';
 import * as THREE from 'three';
 import { ACRO, TRICKS } from '../sim/tricks.js';
 import { len } from '../core/math.js';
@@ -438,6 +439,7 @@ export class MatchView {
         }
       }
       o.state = p.state;
+      o.getUp = p.state === 'recover' && p.recoverFrom ? { from: p.recoverFrom, k: Math.max(0, Math.min(1, p.stateTimer / GET_UP[p.recoverFrom])) } : null;
       o.injured = !!p.injury;
       if (p.diveAnim > 0) {
         DIVE.t = p.diveAnim;

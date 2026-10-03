@@ -5,6 +5,8 @@ import { makeConcreteTexture, makeShutterTexture } from '../textures.js';
 
 // Hinterhof zwischen Mietshäusern: Garagentor auf der einen Seite, ein mit
 // Kreide an die Hauswand gemaltes Tor auf der anderen.
+const BOX_DEPTH = 1.6; // Kreide-Torraum vor den Wandtoren (m)
+
 export function buildBackyard(root, pitch, rng, scene) {
   root.add(addLights(scene, { span: 24 }));
   const W = 32;
@@ -71,11 +73,33 @@ export function buildBackyard(root, pitch, rng, scene) {
     root.add(door);
   }
 
+  // Die Tore liegen auf den Stirnwänden – von der Seitenkamera sieht man die Wand nur als Kante.
+  // Deshalb: Torrahmen, der aus der Wand ragt, und ein Kreide-Torraum auf dem Boden davor.
+  const gw = pitch.goalHalfWidth;
+  const gh = pitch.goalHeight;
+  const frame = 0xcfcac0; // heller Beton – hebt sich vom Pflaster ab
+  for (const sz of [-1, 1]) root.add(box(0.45, gh + 0.25, 0.3, frame, wx - 0.22, (gh + 0.25) / 2, sz * (gw + 0.15)));
+  root.add(box(0.45, 0.22, gw * 2 + 0.44, frame, wx - 0.22, gh + 0.14, 0));
+  root.add(box(0.5, 0.12, gw * 2 + 0.6, 0x6e6a64, wx - 0.3, 0.06, 0)); // Bordstein vor der Garage
+  const chalkLine = 0xeeeae0;
+  for (const sx of [-1, 1]) {
+    const line = sx * (wx - 0.02);
+    const front = sx * (wx - BOX_DEPTH);
+    // Mindestens ein Bildpixel breit (bei ~16 px pro Meter): 0,16 m.
+    root.add(box(0.16, 0.012, gw * 2 + 1.2, chalkLine, front, 0.006, 0)); // vordere Linie
+    for (const sz of [-1, 1]) root.add(box(Math.abs(line - front), 0.012, 0.16, chalkLine, (line + front) / 2, 0.006, sz * (gw + 0.6)));
+    root.add(box(0.16, 0.012, gw * 2, chalkLine, sx * (wx - 0.1), 0.006, 0)); // Torlinie
+    root.add(box(Math.abs(line - front) - 0.2, 0.008, gw * 2 + 1.0, 0xb9b6ae, (line + front) / 2, 0.004, 0)); // abgewetzter Torraum
+  }
+
   // Hauswand links mit Kreidetor.
   root.add(box(1.2, 3.2, endDepth, 0xd6c8b0, -wx - 0.6, 1.6, endZ));
   const chalk = 0xf4f2ea;
   for (const s of [-1, 1]) root.add(box(0.02, pitch.goalHeight, 0.08, chalk, -wx + 0.01, pitch.goalHeight / 2, s * pitch.goalHalfWidth));
   root.add(box(0.02, 0.08, pitch.goalHalfWidth * 2 + 0.08, chalk, -wx + 0.01, pitch.goalHeight, 0));
+  // Pfosten zum Anfassen: zwei alte Holzlatten, an die Wand gedübelt – damit man das Tor auch von der Seite sieht.
+  for (const sz of [-1, 1]) root.add(box(0.3, pitch.goalHeight + 0.1, 0.2, 0xe8e2d2, -wx + 0.15, (pitch.goalHeight + 0.1) / 2, sz * (pitch.goalHalfWidth + 0.1)));
+  root.add(box(0.3, 0.2, pitch.goalHalfWidth * 2 + 0.4, 0xe8e2d2, -wx + 0.15, pitch.goalHeight + 0.1, 0));
   root.add(box(0.02, 0.9, 0.6, 0xa0a0a0, -wx + 0.01, 1.6, -4.5)); // Schild "Ballspielen verboten"
   root.add(box(0.03, 0.5, 0.5, 0xc0392b, -wx + 0.02, 1.7, -4.5));
 
@@ -88,5 +112,5 @@ export function buildBackyard(root, pitch, rng, scene) {
   for (let i = 0; i < 4; i++) root.add(makeBush(rng, rng.range(-14, 14), hw + 2.2));
 
   // Kein Flutlicht: abends leuchten nur die Fenster, der Hof bleibt gedämpft.
-  return { viewHeight: 11, bounds: { x: wx + 2, z: 1.5 }, lights: { heads: [], pools: [], field: [wx, hw] } };
+  return { viewHeight: 11, bounds: { x: wx + 3.5, z: 1.5 }, lights: { heads: [], pools: [], field: [wx, hw] } };
 }

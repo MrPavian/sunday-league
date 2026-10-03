@@ -323,6 +323,7 @@ function loadVenue(id) {
   pixel.markShadowsDirty();
   sound.setVenue(venue.id);
   rig.viewHeight = cameraViewHeight(venueInfo.viewHeight);
+  rig.depth = pitch.halfWidth; // Hochformat: Platz an die Bedienleiste rücken (CameraRig.resize)
   resize();
 }
 

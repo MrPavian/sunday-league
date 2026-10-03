@@ -17,6 +17,9 @@ const COMPLAINTS = {
   offenderRef: tr(['Schiri, das war Ball!', 'Was soll das denn?!', 'Der schauspielert doch!'], ['Ref, I got the ball!', 'What was that for?!', 'He\'s diving!']),
 };
 
+// Aufstehen in Sekunden: nach der Grätsche und nach dem Liegen (gefoult, umgerannt).
+export const GET_UP = { tackle: 0.55, down: 0.6 };
+
 export function startTackle(m, p) {
   if (p.state !== 'normal' || p.role === 'gk') return;
   const speed = Math.max(len(p.vel.x, p.vel.z) + 1.5, 6.5);
@@ -58,7 +61,8 @@ export function stateMove(m, p, dt) {
   if ((p.stateTimer -= dt) > 0) return;
   if (p.state === 'tackle') {
     p.state = 'recover';
-    p.stateTimer = 0.55;
+    p.stateTimer = GET_UP.tackle;
+    p.recoverFrom = 'tackle'; // für die Aufsteh-Animation
     const risk = pitch.surface.scrapeChance * (hasTrait(p, 'hart_im_nehmen') ? 0.5 : 1);
     if (rng.chance(risk)) injure(m, p);
   } else if (p.state === 'acro') {
@@ -66,10 +70,16 @@ export function stateMove(m, p, dt) {
   } else if (p.state === 'poke') {
     p.state = 'recover';
     p.stateTimer = 0.25;
+  } else if (p.state === 'down') {
+    // Wer am Boden lag, steht auf (stützt sich hoch) – nicht von jetzt auf gleich.
+    p.state = 'recover';
+    p.stateTimer = GET_UP.down;
+    p.recoverFrom = 'down';
   } else if (p.complainNext) {
     complain(m, p, p.complainNext);
   } else {
     p.state = 'normal';
+    p.recoverFrom = null;
   }
 }
 

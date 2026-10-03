@@ -1,5 +1,9 @@
 import * as THREE from 'three';
 
+// Hochformat: Abstand unter der vorderen Linie (m) und Anteil der Bildhöhe für die Bedienleiste unten.
+const PORTRAIT_FOOT = 1.2;
+const PORTRAIT_BAR = 0.1;
+
 // Orthografische Seitenansicht (~20° Neigung, TV-Perspektive). Die Kameraposition wird im Kameraraum auf das
 // Texelraster gerastet, damit die Pixel beim Scrollen nicht flimmern.
 export class CameraRig {
@@ -11,7 +15,9 @@ export class CameraRig {
     // Stock an der Seitenlinie. Flacher geht mit der Parallelprojektion nicht – der Platz würde
     // zu einem Strich gestaucht.
     this.windowOffset = new THREE.Vector3(0, 7, 24.5);
-    this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 160);
+    // near < 0: Parallelprojektion – Boden vor der Kameraposition (Hochformat, Großfeld) wird nicht
+    // abgeschnitten. Die Tiefe ab der Kamera (Dunst, Himmel im Shader) bleibt für alles andere gleich.
+    this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -40, 160);
     this.camera.position.copy(offset);
     this.camera.lookAt(0, 0, 0);
     this.target = new THREE.Vector3();
@@ -36,7 +42,16 @@ export class CameraRig {
     const aspect = internalWidth / internalHeight;
     // Hochformat (Handy): weiter rauszoomen, damit genug Spielfeld in die Breite passt.
     const h = (this.viewHeight / 2) * Math.max(1, 1.0 / aspect);
-    Object.assign(this.camera, { left: -h * aspect, right: h * aspect, top: h, bottom: -h });
+    // Hochformat: Das Bild ist viel höher als der Platz tief. Statt unter dem Platz eine leere Fläche
+    // zu zeigen (Großfeld: nur Himmelfarbe), sitzt die vordere Linie knapp über der Bedienleiste –
+    // oben bekommt die Kulisse den Platz.
+    let bottom = -h;
+    if (aspect < 1 && this.depth) {
+      const tilt = this.offset.y / this.offset.length();
+      const near = this.depth * tilt + PORTRAIT_FOOT + 2 * h * PORTRAIT_BAR;
+      if (near < h) bottom = -near;
+    }
+    Object.assign(this.camera, { left: -h * aspect, right: h * aspect, top: bottom + 2 * h, bottom });
     this.camera.updateProjectionMatrix();
   }
 

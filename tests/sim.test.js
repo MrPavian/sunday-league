@@ -217,12 +217,13 @@ describe('surfaces', () => {
   it('the AI rarely slides on hard ground', () => {
     const slides = (id) => {
       let n = 0;
-      for (const seed of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) // zwölf Spiele: bei sechs schwankt das Verhältnis zu sehr
-        n += drain(createMatch({ seed, pitch: onSurface(id), human: false }), 300).filter((t) => t === 'slide').length;
+      // 36 Spiele: Bei zwölf schwankt das Verhältnis zu sehr (gemessen 2,3 bis 2,8 je nach Engine-Stand,
+      // mit 36 Spielen stabil bei 3,1).
+      for (let seed = 1; seed <= 36; seed++) n += drain(createMatch({ seed, pitch: onSurface(id), human: false }), 300).filter((t) => t === 'slide').length;
       return n;
     };
     expect(slides('asphalt') * 2.5).toBeLessThan(slides('grass'));
-  });
+  }, 180000);
 });
 
 describe('rules & set pieces', () => {

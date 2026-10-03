@@ -185,6 +185,9 @@ function step(m, input, dt) {
       m.queuedAction = { pass: !!input.pass, loft: !!input.loft };
       m.phaseTimer = Math.min(m.phaseTimer, 0.15);
     }
+    // Auch in der Pause vor dem Standard läuft die Zeit für Grätscher und Gefoulte weiter:
+    // Sie stehen auf, statt bis zum Anpfiff in der Grätsche zu liegen.
+    for (const p of m.players) if (p.state !== 'normal') stateMove(m, p, dt);
     if ((m.phaseTimer -= dt) <= 0) m.phase = 'play';
     return;
   }
