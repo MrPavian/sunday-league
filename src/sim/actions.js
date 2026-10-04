@@ -3,7 +3,7 @@ import { bondBonus, bondOf, isBad } from './bonds.js';
 // Bewegung und Ballkontakte: Laufen, Schuss, Pass, Kopfball, Torwart, Dribbling.
 import { clamp, dist2d, len, norm, rotate } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
-import { ballSpeed } from './ball.js';
+import { BALL_RADIUS, ballSpeed } from './ball.js';
 import { attackDir, distToSegment, setControlled, wallPush } from './players.js';
 import { aiSkill, keeperReaction, laneScore, WIDE_LANE } from './ai.js';
 
@@ -458,13 +458,17 @@ export function keeperSaves(m) {
       // Zur Seite abwehren, flach und zügig – nicht zurück vors eigene Tor und
       // nicht als Kerze über den Keeper.
       const side = Math.sign(ball.pos.z - p.pos.z) || (rng.chance(0.5) ? 1 : -1);
-      // Harte Schüsse lenkt er öfter über die Latte oder ums Tor – dann gibt es Ecke.
-      const tip = hands && pitch.boundary === 'lines' && m.phase !== 'shootout' && rng.chance(clamp(0.15 + (bs - 10) * 0.025, 0.1, 0.45));
+      // Harte Schüsse lenkt er über die Latte oder ums Tor – dann gibt es Ecke. Vorher 0,35–1,05 Ecken je Spiel (40 Spiele
+      // je Platz): nur 12 von 77 Paraden wurden gelenkt, jeder dritte gelenkte Ball blieb vor der Linie liegen.
+      // Bezug: 3,1–3,5 Ecken je Tor (Bundesliga 10,9, Premier League 9,4 Ecken bei je rund 27 Schüssen; soccerstats.com).
+      const tip = hands && pitch.boundary === 'lines' && m.phase !== 'shootout' && rng.chance(clamp(0.3 + (bs - 10) * 0.05, 0.2, 0.9));
       if (tip) {
         const over = Math.abs(ball.pos.z) < pitch.goalHalfWidth * 0.6 || rng.chance(0.5); // mittig nur drüber, nie ins eigene Netz
-        ball.vel.x = -s * rng.range(1.5, 3);
-        ball.vel.z = side * (over ? rng.range(1, 2.5) : rng.range(5, 7));
         ball.vel.y = over ? rng.range(4.5, 6) : rng.range(0.5, 1.5);
+        // Der Ball muss die Linie auch erreichen: Weg bis hinter die Linie, über den Scheitel bzw. in 0,35 s.
+        const toLine = pitch.halfLength + BALL_RADIUS + 0.3 - Math.abs(ball.pos.x);
+        ball.vel.x = -s * Math.max(toLine / (over ? ball.vel.y / 9.81 : 0.35), 1.5);
+        ball.vel.z = side * (over ? rng.range(1, 2.5) : rng.range(5, 7));
       } else {
         ball.vel.x = s * rng.range(3, 5);
         ball.vel.z = side * rng.range(4, 7);
