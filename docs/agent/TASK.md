@@ -31,9 +31,20 @@ fertige Arbeit behalten, den Umfang nicht still erweitern.
 </stop>
 ```
 
+## Reihenfolge (vom Nutzer festgelegt, 2026-10-04)
+1. Animationen: restliche Punkte aus ROADMAP 11.1 (Torwart inkl. Abrollen/Abtauchen, Reaktionen bei Vorfällen,
+   Einwurf mit Anlauf, Aufwärmen am Rand, Zuschauer, weichere Übergänge, Körpereinsatz).
+2. Aussehen (11.2) plus Erweiterungen von Wappen-Editor und Trikots.
+3. Ereignisse (11.5, Wiederholungen im Langzeitlauf).
+4. Pokal: Verlängerung, Landespokal, ein überregionaler Pokal mit erfundenem Namen (nicht „DFB-Pokal") und als
+   Höhepunkt ein Spiel gegen einen Profiverein (ebenfalls erfunden, keine echten Vereine).
+5. Kopfballtore und Ecken, danach eine Prüfung aller Plätze und Spielerstärken auf Auffälligkeiten.
+Unabhängige Bereiche (andere Dateien) dürfen parallel laufen; geliefert wird in dieser Reihenfolge.
+
 ## Laufende Aufgaben (Oktober 2026)
 | Aufgabe | Route | Abnahme |
 |---|---|---|
 | Ecken selten (ROADMAP 11.6) | Sonnet, Worktree `agent-ecken` | Ursache belegt; Ecken je Tor näher an Vergleichswert mit Quelle; Tore im Rauschen; neuer Test; vitest grün |
 | Torwart-Animationen (ROADMAP 11.1) | Sonnet, Worktree `agent-keeper` | Fangen Brust/Kopf, Fausten beidhändig, Abschlag, Breitmachen, Fehlgriff sichtbar (Screenshots); keine neuen Draw Calls; Entscheidungslogik mit Simulation getestet; vitest grün |
 | Gesichter, nasse Trikots, Torwartkleidung (ROADMAP 11.2) | Sonnet, Worktree `agent-faces` | Neue Gesichter im Spiel sichtbar (Screenshots); Erschöpfung aus Ausdauer getestet; keine neuen Draw Calls; vitest grün |
+| Ereignisse: weniger Wiederholungen (ROADMAP 11.5) | Sonnet, Worktree `agent-events` | Langzeitlauf vorher/nachher mit gleichen Seeds: meistwiederholte Texte deutlich seltener; DE und EN vollständig; vitest grün |
