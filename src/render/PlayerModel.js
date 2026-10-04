@@ -678,6 +678,47 @@ function arm(bn, s, fwd, out, elbow) {
   bn[`lowerArm${s}`].rotation.x = elbow;
 }
 
+// Arm zur Pose hin überblenden (w 0 = wie bisher, 1 = ganz die neue Pose).
+function armTo(bn, s, fwd, out, elbow, w) {
+  const up = bn[`upperArm${s}`];
+  up.rotation.x = lerp(up.rotation.x, fwd, w);
+  up.rotation.z = lerp(up.rotation.z, s === 'L' ? -out : out, w);
+  const lo = bn[`lowerArm${s}`];
+  lo.rotation.x = lerp(lo.rotation.x, elbow, w);
+}
+const mix3 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+
+// Torwart-Armwinkel [vor, außen, Ellbogen], jeweils per Gitter-Suche auf einen Zielpunkt der Hand (lokal,
+// x = Seite der linken Hand): Ball an der Brust, Wurf, Abschlag, Fausten.
+const HOLD_ARM = [-1.05, -0.28, -1.25]; // Ball an der Brust
+const THROW_BACK = [-3.0, 0.0, -0.75]; // Hand hinter dem Kopf (0,4 cm)
+const THROW_REL = [-2.55, -0.15, 0]; // Loslassen vor dem Kopf (5 cm)
+const THROW_FOLLOW = [-1.05, 0.05, -0.8]; // Durchschwung tief vor dem Körper (0,6 cm)
+const DROP_HOLD = [-0.75, -0.35, -0.6]; // Ball in der Linken vor dem Bauch (0,4 cm)
+const PUNCH_WIND = [-2.45, -0.35, 0]; // Faust vor der Stirn (0,7 cm)
+const PUNCH_BOTH = [-2.5, -0.35, -0.05]; // beide Fäuste zusammen über dem Kopf (4 cm)
+const PUNCH_ONE = [-2.6, -0.05, -0.05]; // eine Faust außen über dem Kopf (0,9 cm)
+// Fangen: Hände am Ball in Brust-, Kopf- und Kniehöhe (0,5 / 1,6 / 0,5 cm), danach zieht er ihn an die Brust.
+const CATCH = {
+  brust: { arm: [-1.5, -0.25, -0.7], hips: 0, lean: 0.1 },
+  kopf: { arm: [-2.7, -0.25, 0], hips: 0, lean: -0.05 },
+  tief: { arm: [-0.6, -0.25, -0.95], hips: -0.2, lean: 0.5 },
+};
+function catchPose(bn, kind, t) {
+  const c = CATCH[kind];
+  const w = smooth(0, 0.15, t) * (1 - smooth(0.4, 1, t));
+  const a = mix3(HOLD_ARM, c.arm, w);
+  arm(bn, 'L', a[0], a[1], a[2]);
+  arm(bn, 'R', a[0], a[1], a[2]);
+  bn.hips.position.y += c.hips * w;
+  bn.spine.rotation.x += c.lean * w;
+  if (kind === 'kopf') bn.head.rotation.x -= 0.25 * w;
+  if (kind === 'tief') {
+    leg(bn, 'L', -0.6 * w, 1.05 * w, -0.45 * w);
+    leg(bn, 'R', -0.6 * w, 1.05 * w, -0.45 * w);
+  }
+}
+
 // Laufen: Kontakt → Abfedern → Durchschwingen → Abdruck, Arme gegengleich und leicht
 // verzögert, Hüfte kippt und dreht mit, Schultern drehen dagegen, Kopf bleibt ruhig.
 function locomotion(m, speed, dt) {
@@ -867,7 +908,10 @@ function acroPose(bn, kind, t, hipY) {
 // kickPrep 0…1 – Schuss/Pass ist geplant: ausholen (die Simulation führt ihn als „pending“),
 // trick/trickT/trickSide – Trick am Ball, acro/acroT – Fall-/Seitfallzieher, fooled 0…1 –
 // ausgetrickst, steht kurz auf dem falschen Fuß.
-export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot', headPrep = 0, headJump = 1, hit = null, duck = 0, face: faceHint = null, tired = false, kickPrep = 0, trick = null, trickT = 0, trickSide = 1, acro = null, acroT = 0, fooled = 0, ready = 0, throwT = 0, jump = 0, punch = 0, getUp = null, cover = 0, gesture = null }) {
+// Torwart: catchKind 'kopf'|'brust'|'tief' + catchT 0…1 (Fangen, danach zieht er den Ball an die Brust),
+// punchStyle 'beide'|'links'|'rechts' (Fausten), wide 0…1 (Breitmachen im 1 gegen 1), fumble 0…1
+// (Abpraller: Hände klappen zurück), drop 0…1 (Abschlag aus der Hand: Ball fallen lassen, Volley).
+export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot', headPrep = 0, headJump = 1, hit = null, duck = 0, face: faceHint = null, tired = false, kickPrep = 0, trick = null, trickT = 0, trickSide = 1, acro = null, acroT = 0, fooled = 0, ready = 0, throwT = 0, jump = 0, punch = 0, getUp = null, cover = 0, gesture = null, catchKind = null, catchT = 0, punchStyle = 'beide', wide = 0, fumble = 0, drop = 0 }) {
   const bn = model.bones;
   resetPose(model);
   model.bones.hood.scale.setScalar(HIDDEN);
@@ -896,33 +940,53 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
     face = 'effort';
   }
   // Torwart in Bereitschaft: in die Knie, Oberkörper vor, Arme seitlich offen (0…1 eingeblendet).
-  if (ready > 0 && !holding && !dive && state === 'normal') {
+  // Breitmachen (wide): noch tiefer, Beine weit auseinander, Arme waagerecht – macht sich groß vor dem Stürmer.
+  if ((ready > 0 || wide > 0) && !holding && !dive && state === 'normal') {
     // Breitbeinig und Arme weit zur Seite – das liest man aus jeder Blickrichtung.
-    const k = ready * (1 - Math.min(0.5, s * 0.35)); // beim Seitwärtsschieben etwas weniger tief
-    bn.hips.position.y -= 0.17 * k;
+    const sl = 1 - Math.min(0.5, s * 0.35); // beim Seitwärtsschieben etwas weniger tief
+    const k = Math.max(ready, wide) * sl;
+    const w = wide * sl;
+    bn.hips.position.y -= 0.17 * k + 0.07 * w;
     bn.spine.rotation.x += 0.35 * k;
     bn.head.rotation.x -= 0.25 * k;
-    leg(bn, 'L', -0.6 * k, 1.05 * k, -0.45 * k);
-    leg(bn, 'R', -0.6 * k, 1.05 * k, -0.45 * k);
-    bn.upperLegL.rotation.z = -0.28 * k;
-    bn.upperLegR.rotation.z = 0.28 * k;
-    arm(bn, 'L', -0.45 * k, 1.15 * k, -0.55 * k);
-    arm(bn, 'R', -0.45 * k, 1.15 * k, -0.55 * k);
+    leg(bn, 'L', -0.6 * k - 0.15 * w, 1.05 * k + 0.2 * w, -0.45 * k);
+    leg(bn, 'R', -0.6 * k - 0.15 * w, 1.05 * k + 0.2 * w, -0.45 * k);
+    bn.upperLegL.rotation.z = -0.28 * k - 0.3 * w;
+    bn.upperLegR.rotation.z = 0.28 * k + 0.3 * w;
+    // Gitter-Suche: bei w = 1 liegen die Hände waagerecht 0,78 m neben der Mitte (Schulterhöhe).
+    arm(bn, 'L', lerp(-0.45 * k, 0, w), lerp(1.15 * k, 1.6, w), lerp(-0.55 * k, 0, w));
+    arm(bn, 'R', lerp(-0.45 * k, 0, w), lerp(1.15 * k, 1.6, w), lerp(-0.55 * k, 0, w));
     face = 'effort';
   }
-  // Abwurf: Ball über die Schulter nach vorn werfen (throwT 0 → 1).
+  // Abwurf (throwT 0 → 1 über 0,5 s ab dem Loslassen): Arm holt hinter dem Kopf aus, wirft über die
+  // Schulter (Loslassen bei 0,44), folgt durch. Winkel per Gitter-Suche: Hand hinter dem Kopf (0,4 cm),
+  // vor dem Kopf (5 cm), tief vor dem Körper (0,6 cm).
   if (throwT > 0 && !dive && state === 'normal') {
-    const back = throwT < 0.35 ? throwT / 0.35 : 1 - (throwT - 0.35) / 0.65;
-    const swing = throwT < 0.35 ? -2.9 * back : lerp(-2.9, -0.4, (throwT - 0.35) / 0.65);
-    arm(bn, 'R', swing, 0.2, -0.3 - 0.6 * back);
-    arm(bn, 'L', -1.0, 0.35, -0.4);
-    bn.spine.rotation.x += throwT < 0.35 ? -0.18 * back : 0.28 * ((throwT - 0.35) / 0.65);
-    bn.spine.rotation.y += 0.35 * (throwT < 0.35 ? back : 1 - (throwT - 0.35) / 0.65);
+    const C = HOLD_ARM;
+    const e = throwT < 0.18 ? smooth(0, 0.18, throwT) : 1;
+    const ra = throwT < 0.18 ? mix3(C, THROW_BACK, e) : throwT < 0.44 ? mix3(THROW_BACK, THROW_REL, ((throwT - 0.18) / 0.26) ** 2) : mix3(THROW_REL, THROW_FOLLOW, smooth(0.44, 1, throwT));
+    arm(bn, 'R', ra[0], ra[1], ra[2]);
+    arm(bn, 'L', -1.0 - 0.2 * e, 0.35 * e - 0.28 * (1 - e), -0.4 - 0.85 * (1 - e)); // freier Arm zeigt zum Ziel
+    const g = smooth(0.1, 0.44, throwT);
+    bn.spine.rotation.x += throwT < 0.18 ? -0.18 * e : lerp(-0.18, 0.28, smooth(0.18, 1, throwT));
+    bn.spine.rotation.y += throwT < 0.44 ? 0.35 * e - 0.45 * g : lerp(-0.1, -0.2, smooth(0.44, 1, throwT));
+    leg(bn, 'L', -0.5 * g, 0.3 * g, 0);
+    leg(bn, 'R', 0.2 * g, 0.2 * g, 0);
+    face = 'effort';
+  }
+  // Abschlag aus der Hand (drop 0 → 1, Kontakt bei 0,5): der linke Arm hält den Ball vor den Körper,
+  // der rechte gleicht aus, das Schussbein (kickPose) holt aus. Winkel per Gitter-Suche (0,4 cm).
+  if (drop > 0 && !dive && state === 'normal') {
+    const e = smooth(0, 0.3, drop);
+    const a = mix3(HOLD_ARM, DROP_HOLD, e);
+    arm(bn, 'L', a[0], a[1], a[2]);
+    arm(bn, 'R', lerp(HOLD_ARM[0], -0.4, e), lerp(HOLD_ARM[1], 0.9, e), lerp(HOLD_ARM[2], -0.3, e));
     face = 'effort';
   }
   if (holding === 'chest') {
-    arm(bn, 'L', -1.05, -0.28, -1.25);
-    arm(bn, 'R', -1.05, -0.28, -1.25);
+    arm(bn, 'L', ...HOLD_ARM);
+    arm(bn, 'R', ...HOLD_ARM);
+    if (catchKind && catchT < 1) catchPose(bn, catchKind, catchT);
   } else if (holding === 'overhead') {
     arm(bn, 'L', -2.85, 0.12, -0.75); // Einwurf
     arm(bn, 'R', -2.85, 0.12, -0.75);
@@ -942,14 +1006,23 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
     }
     face = 'effort';
   }
-  // Fausten: kurz anwinkeln, dann beide Fäuste nach oben-vorn durchstoßen (punch 0 → 1).
+  // Fausten (punch 0 → 1, der Ball ist beim Start getroffen): aus der Auslage schnellen beide Fäuste
+  // über den Kopf zusammen nach oben-vorn (Ball hoch und mittig), sonst schlägt nur der Arm auf der
+  // Ballseite, der andere hält die Balance. Danach zurück. Winkel per Gitter-Suche (Fäuste 20 cm
+  // auseinander über der Stirn, Abstand 1–4 cm).
   if (punch > 0 && !dive && state === 'normal') {
-    const wind = punch < 0.4;
-    const fwd = wind ? lerp(-1.6, -2.2, punch / 0.4) : lerp(-2.2, -2.7, Math.min(1, (punch - 0.4) / 0.25));
-    const elbow = wind ? -1.6 : lerp(-1.6, 0, Math.min(1, (punch - 0.4) / 0.2));
-    arm(bn, 'L', fwd, 0.08, elbow);
-    arm(bn, 'R', fwd, 0.08, elbow);
-    bn.spine.rotation.x += wind ? -0.1 : 0.15;
+    const strike = smooth(0, 0.15, punch);
+    const back = 1 - smooth(0.5, 1, punch);
+    const both = punchStyle === 'beide';
+    for (const side of ['L', 'R']) {
+      const hit = both || (punchStyle === 'links') === (side === 'L');
+      const from = hit ? PUNCH_WIND : [-0.3, 1.0, -0.3];
+      const to = hit ? (both ? PUNCH_BOTH : PUNCH_ONE) : [-0.3, 1.0, -0.3];
+      const a = mix3(from, to, strike);
+      armTo(bn, side, a[0], a[1], a[2], Math.max(back, 0.001));
+    }
+    bn.spine.rotation.x += (0.15 * strike - 0.1 * (1 - strike)) * back;
+    bn.head.rotation.x -= 0.2 * strike * back;
     face = 'effort';
   }
   if (headAnim > 0 || headPrep > 0) {
@@ -1141,6 +1214,18 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
       }
     }
     face = 'effort';
+  }
+
+  // Abpraller: Hände klappen zurück (neben den Schultern, Ellbogen angewinkelt), Kopf in den Nacken,
+  // überraschtes Gesicht – kurz eingeblendet, auch noch beim Aufstehen nach dem Hechtsprung.
+  // Winkel per Gitter-Suche (Hände 1 cm neben der Schulter, hinter der Brust).
+  if (fumble > 0 && state === 'normal' && (!dive || dive.rec != null)) {
+    const w = smooth(0, 0.2, fumble) * (1 - smooth(0.6, 1, fumble));
+    armTo(bn, 'L', -1.8, 1.55, -1.8, w);
+    armTo(bn, 'R', -1.8, 1.55, -1.8, w);
+    bn.spine.rotation.x -= 0.18 * w;
+    bn.head.rotation.x -= 0.3 * w;
+    face = 'surprised';
   }
 
   // Gewitter: Hände über dem Kopf, geduckt (cover 0…1).

@@ -1,6 +1,8 @@
 // Reaktionen der Figuren auf Schüsse und Tore – nur Darstellung, aus den Ereignissen der Simulation.
 // Ohne three.js und DOM, damit es sich mit der Simulation allein prüfen lässt (tests/reactions.test.js).
 
+import { attackDir } from '../sim/players.js';
+
 // Vergebene Chance: Der Schütze greift sich an den Kopf (Pfosten, Latte, vorbei) oder winkt ab
 // (gehalten); der Torwart ballt nach der Parade kurz die Faust. state merkt sich den letzten Schuss.
 // Liefert [{ id, gesture, time, face? }].
@@ -72,3 +74,44 @@ export function tiredFace(p, was = false) {
   const k = was ? 1.2 : 1;
   return p.stamina < TIRED_STAMINA * k && Math.hypot(p.vel.x, p.vel.z) < TIRED_SPEED * k;
 }
+
+// Torwart-Darstellung (nur Anzeige, aus Ball und Spielern abgeleitet).
+
+// Wie er fängt, je nach Ballhöhe im Moment des Zugreifens: hoch über dem Kopf (ab 1,5 m wie in der
+// Simulation „hoher Ball“), vor der Brust, oder tief vor dem Körper (Bauch/Knie).
+export function catchKind(y) {
+  return y >= 1.5 ? 'kopf' : y >= 0.8 ? 'brust' : 'tief';
+}
+
+// Fausten: kommt der Ball hoch und mittig (seitlicher Abstand zum Torwart in m), schlägt er mit beiden
+// Fäusten zu, sonst nur mit der Seite des Balls: 'beide', 'links' oder 'rechts' (rechts = +x der Figur).
+export function punchStyle(lateral) {
+  return Math.abs(lateral) < 0.5 ? 'beide' : lateral > 0 ? 'rechts' : 'links';
+}
+
+// Breitmachen im 1 gegen 1: 0…1, wenn ein Gegner den Ball am Fuß vor dem eigenen Tor auf ihn zuführt
+// (ab 7 m langsam, ab 4 m ganz). Nur wenn der Torwart nahe seinem Tor steht und frei ist.
+export function wideStance(match, gk) {
+  const ball = match.ball;
+  if (match.phase !== 'play' || ball.holder || gk.state !== 'normal' || gk.diveAnim > 0 || ball.pos.y > 0.8) return 0;
+  const s = attackDir(match, gk.team);
+  if (Math.abs(gk.pos.x + s * match.pitch.halfLength) > 10) return 0;
+  let best = 0;
+  for (const o of match.players) {
+    if (o.team === gk.team || o.role === 'gk' || o.state !== 'normal' || ball.lastTouch !== o.id) continue;
+    if (Math.hypot(o.pos.x - ball.pos.x, o.pos.z - ball.pos.z) > 1.4) continue;
+    if ((o.pos.x - gk.pos.x) * s < -0.3) continue; // nicht hinter ihm
+    const d = Math.hypot(o.pos.x - gk.pos.x, o.pos.z - gk.pos.z);
+    best = Math.max(best, Math.min(1, Math.max(0, (7 - d) / 3)));
+  }
+  return best;
+}
+
+// Abpraller: ein abgewehrter Ball ohne Festhalten (Ereignis „save“ ohne Fausten), der nach vorn wegspringt –
+// die Hände klappen zurück. Lenkt er ihn über die Latte oder ums Tor (Ball fliegt Richtung Torlinie,
+// src/sim/actions.js „tip“), war das Absicht: kein Abpraller. ball = Ball direkt nach dem Ereignis.
+export const isFumble = (e, match) => {
+  if (e.type !== 'save' || e.punch) return false;
+  const gk = match.players.find((p) => p.id === e.playerId);
+  return !gk || match.ball.vel.x * attackDir(match, gk.team) > 0;
+};

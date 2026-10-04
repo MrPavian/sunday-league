@@ -2,7 +2,7 @@ import { GET_UP } from '../sim/tackles.js';
 import * as THREE from 'three';
 import { ACRO, TRICKS } from '../sim/tricks.js';
 import { len } from '../core/math.js';
-import { mateCelebration, refereeSignal, shotReactions, subScene, tiredFace } from './reactions.js';
+import { catchKind, isFumble, mateCelebration, punchStyle, refereeSignal, shotReactions, subScene, tiredFace, wideStance } from './reactions.js';
 import { allPlayers } from '../sim/squad.js';
 import { attackDir } from '../sim/players.js';
 import { BallView } from './BallView.js';
@@ -43,6 +43,10 @@ import { WeatherFx } from './weather.js';
 // Wiederverwendete Animations-Optionen (keine Objekte pro Figur und Bild).
 const ANIM = {};
 const DIVE = { t: 0, side: 1, high: 0, caught: false, rec: null };
+const FUMBLE_T = 0.55; // Abpraller: so lange klappen die Hände zurück (s, zählt erst nach dem Hechtsprung)
+const CATCH_T = 0.5; // Fangen: so lange dauert es, bis der Ball an der Brust liegt (s)
+const HAND = new THREE.Vector3();
+const HAND2 = new THREE.Vector3();
 const DIVE_REC = 0.4; // Aufstehen nach dem Hechtsprung (s, nur Darstellung)
 const REF_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal' };
 const LEAVE_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture: null };
@@ -198,7 +202,25 @@ export class MatchView {
       m.gestT = 0;
       if (r.face) mood(r.id, r.face, r.time);
     }
+    // Torwart: Fangen (je nach Ballhöhe im Moment des Zugreifens), Fausten (beidhändig oder einhändig),
+    // Abpraller – nur Darstellung.
+    for (const p of match.players) {
+      if (p.role !== 'gk') continue;
+      const m = this.models.get(p.id);
+      if (!m) continue;
+      const holds = match.ball.holder === p.id;
+      if (holds && !m.held && match.phase === 'play') (m.catchKind = catchKind(match.ball.pos.y)), (m.catchSince = 0);
+      m.held = holds;
+    }
     for (const e of match.events) {
+      if (e.type === 'save') {
+        const m = this.models.get(e.playerId);
+        const p = find(e.playerId);
+        if (m && p && e.punch) {
+          const a = m.gkAngle ?? m.group.rotation.y;
+          m.punchStyle = punchStyle((match.ball.pos.x - p.pos.x) * Math.cos(a) - (match.ball.pos.z - p.pos.z) * Math.sin(a));
+        } else if (m && isFumble(e, match)) m.fumbleLeft = FUMBLE_T;
+      }
       if (e.type === 'grab' || e.type === 'foul') hitFrom(find(e.victimId), find(e.playerId), e.type === 'foul' ? 1 : 0.7);
       else if (e.type === 'block') hitFrom(find(e.playerId), null, 0.8);
       else if (e.type === 'tackle' || e.type === 'poke_won') {
@@ -374,6 +396,28 @@ export class MatchView {
     this.blobIndex = 0;
   }
 
+  // Der Ball folgt den Händen des Torwarts, solange er fängt, wirft oder den Ball fallen lässt
+  // (die Simulation hat ihn da schon an der Brust bzw. losgeschickt).
+  keeperCarry(m, o) {
+    const bn = m.bones;
+    if (!(o.catchKind || (o.throwT > 0 && o.throwT < 0.44) || (o.drop > 0 && o.drop < 0.5))) return;
+    m.group.updateMatrixWorld(true);
+    if (o.catchKind) {
+      bn.lowerArmL.localToWorld(HAND.set(0, -0.24, 0));
+      bn.lowerArmR.localToWorld(HAND2.set(0, -0.24, 0));
+      this.ballView.holdAt((HAND.x + HAND2.x) / 2, (HAND.y + HAND2.y) / 2 - 0.2, (HAND.z + HAND2.z) / 2);
+    } else if (o.throwT > 0) {
+      bn.lowerArmR.localToWorld(HAND.set(0, -0.36, 0.03));
+      this.ballView.holdAt(HAND.x, HAND.y, HAND.z);
+    } else {
+      // Linke Hand hält den Ball vor den Körper, ab 0,15 fällt er zum Fuß, der ihn bei 0,5 trifft.
+      bn.lowerArmL.localToWorld(HAND.set(0, -0.36, 0));
+      bn.footR.localToWorld(HAND2.set(0, -0.04, 0.2));
+      const f = Math.min(1, Math.max(0, (o.drop - 0.15) / 0.35)) ** 2;
+      this.ballView.holdAt(HAND.x + (HAND2.x - HAND.x) * f, HAND.y + (HAND2.y + 0.1 - HAND.y) * f, HAND.z + (HAND2.z - HAND.z) * f);
+    }
+  }
+
   sync(match, dt) {
     this.time += dt;
     for (const model of this.models.values()) model.group.visible = false;
@@ -451,21 +495,48 @@ export class MatchView {
       // (weich ein- und ausgeblendet), und Abwurf statt Schuss, wenn er aus der Hand wirft.
       o.ready = 0;
       o.throwT = 0;
+      o.drop = 0;
+      o.wide = 0;
+      o.fumble = 0;
+      o.catchKind = null;
+      o.catchT = 0;
       o.jump = p.jumpAnim > 0 ? 1 - p.jumpAnim / 0.5 : 0;
       o.punch = p.punchAnim > 0 ? 1 - p.punchAnim / 0.35 : 0;
+      o.punchStyle = m.punchStyle ?? 'beide';
       if (p.role === 'gk') {
         const goalX = -attackDir(match, p.team) * match.pitch.halfLength;
         const threat = match.phase === 'play' && !match.ball.holder && match.lastTouchTeam !== p.team && Math.hypot(match.ball.pos.x - goalX, match.ball.pos.z) < 12 ? 1 : 0;
         m.readyK = (m.readyK ?? 0) + (threat - (m.readyK ?? 0)) * Math.min(1, dt * 8);
-        o.ready = o.jump > 0 || o.punch > 0 ? 0 : m.readyK;
+        // Breitmachen, wenn ein Gegner mit dem Ball allein auf ihn zukommt (weich ein- und ausgeblendet).
+        m.wideK = (m.wideK ?? 0) + (wideStance(match, p) - (m.wideK ?? 0)) * Math.min(1, dt * 6);
+        const busy = o.jump > 0 || o.punch > 0;
+        o.ready = busy ? 0 : m.readyK;
+        o.wide = busy ? 0 : m.wideK;
+        // Fangen: je nach Ballhöhe Hände vor der Brust, über dem Kopf oder tief; dann Ball an die Brust.
+        if (m.catchKind && match.ball.holder === p.id && (m.catchSince += dt) < CATCH_T) {
+          o.catchKind = m.catchKind;
+          o.catchT = m.catchSince / CATCH_T;
+        } else m.catchKind = null;
+        // Abpraller zählt erst, wenn der Hechtsprung vorbei ist.
+        if (m.fumbleLeft > 0) {
+          if (p.diveAnim <= 0 && p.jumpAnim <= 0) m.fumbleLeft -= dt;
+          o.fumble = Math.max(0, 1 - m.fumbleLeft / FUMBLE_T);
+        }
+        // Abwurf (Arm holt aus, wirft) und Abschlag aus der Hand (Ball fallen lassen, Volley): ab dem
+        // Loslassen in der Simulation; der Ball bleibt in der Hand, bis sie ihn freigibt.
         const rel = match.keeperRelease;
-        const since = rel && rel.id === p.id && !rel.lofted ? match.time - rel.time : 9;
-        if (since < 0.45) {
-          o.throwT = Math.min(1, 0.35 + since / 0.45 * 0.65);
+        const since = rel && rel.id === p.id ? match.time - rel.time : 9;
+        if (since < 0.5 && !rel.lofted) {
+          o.throwT = Math.max(0.001, since / 0.5);
           o.kickAnim = 0;
           o.kickPrep = 0;
+        } else if (since < 0.3 && rel.lofted) {
+          o.drop = Math.max(0.001, since / 0.3);
+          o.kick = 'shot';
+          o.kickAnim = Math.max(0.001, 0.3 - since);
+          o.kickPrep = 0;
         } else if (p.pending?.type === 'pass' && !p.pending.lofted && match.ball.holder === p.id) {
-          o.throwT = 0.2; // Ausholen, solange der Wurf geplant ist
+          o.throwT = 0.18; // Ausholen, solange der Wurf geplant ist
           o.kickPrep = 0;
         }
       }
@@ -512,7 +583,9 @@ export class MatchView {
         m.reactTime -= dt;
         if (!o.gesture && !celebrate && match.ball.holder !== p.id) o.gesture = m.reactGesture;
       }
+      if (o.fumble > 0) o.gesture = null; // erst die Hände zurück, dann erst die Faust
       animatePlayer(m, o);
+      if (p.role === 'gk') this.keeperCarry(m, o);
       this.blob(m, p.pos.x, p.pos.z);
     }
     // Ausgewechselte: abklatschen und vom Platz trotten.
