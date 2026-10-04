@@ -32,7 +32,7 @@ const faceCell = (fi) => [FACE_X + (fi % 7) * FACE, Math.floor(fi / 7) * FACE];
 // 8 Pixel breit, jedes Feld also ungefähr ein Bildschirmpixel. Zeilen: 1–2 Brauen, 3 Augen,
 // 4 Nase, 5–6 Mund, 5–7 Kinn/Bart. Codes: e Auge, k Schlitzauge, b Braue, n Nase, m Mund,
 // o offener Mund, t Zähne, s Stoppeln, h Bart (Haarfarbe).
-export const FACE_PARTS = { eyes: ['dot', 'tall', 'narrow'], brows: ['thin', 'thick', 'mono', 'light'], nose: ['none', 'dot', 'long'], mouth: ['small', 'wide', 'thin'], beard: ['none', 'stubble', 'short', 'full', 'moustache'] };
+export const FACE_PARTS = { eyes: ['dot', 'tall', 'narrow'], brows: ['thin', 'thick', 'mono', 'light'], nose: ['none', 'dot', 'long'], mouth: ['small', 'wide', 'thin'], beard: ['none', 'stubble', 'short', 'full', 'moustache', 'goatee', 'sideburns', 'handlebar'] };
 export function faceArt(expr, f) {
   const g = Array.from({ length: 8 }, () => Array(8).fill('.'));
   const put = (x, y, c) => {
@@ -51,8 +51,19 @@ export function faceArt(expr, f) {
     for (const x of [0, 7]) put(x, 4, 'h');
   }
   if (f.beard === 'moustache') for (let x = 2; x < 6; x++) put(x, 4, 'h');
+  if (f.beard === 'goatee') {
+    // Ziegenbart: nur am Kinn, mit schmalem Streifen unter dem Mund.
+    for (let x = 2; x < 6; x++) put(x, 7, 'h');
+    for (const x of [3, 4]) put(x, 6, 'h');
+  }
+  if (f.beard === 'sideburns') for (const x of [0, 7]) for (let y = 2; y < 6; y++) put(x, y, 'h'); // Koteletten bis zum Mundwinkel
+  if (f.beard === 'handlebar') {
+    // Schnauzer breit: über die ganze Oberlippe, Enden hängen herab.
+    for (let x = 1; x < 7; x++) put(x, 4, 'h');
+    for (const x of [1, 6]) put(x, 5, 'h');
+  }
   // Nase: ein Pixel dunklere Haut (lang: zwei).
-  if (f.nose !== 'none' && f.beard !== 'moustache') put(4, 4, 'n');
+  if (f.nose !== 'none' && f.beard !== 'moustache' && f.beard !== 'handlebar') put(4, 4, 'n');
   if (f.nose === 'long') put(4, 3, 'n');
   // Augen je Ausdruck; Grundform aus dem Baustein.
   const eye = (x) => {
@@ -113,6 +124,11 @@ export function faceFeatures(hash, look) {
   let beard = 'none';
   if (look.beard) beard = ['full', 'short', 'moustache', 'full', 'short'][(hash >>> 19) % 5];
   else if ((hash >>> 19) % 5 === 0) beard = 'stubble';
+  // Neue Bärte nur aus eigenem Würfel (Salz), damit alle übrigen Spieler wie bisher aussehen:
+  // 30 % der Bartträger (≈ 9 % aller) bekommen Ziegenbart oder breiten Schnauzer, 6 % der
+  // Glattrasierten Koteletten (≈ 3 %).
+  if (look.beard && roll(hash, 11, 100) < 30) beard = ['goatee', 'handlebar'][roll(hash, 12, 2)];
+  else if (beard === 'none' && roll(hash, 13, 100) < 6) beard = 'sideburns';
   const light = luminance(look.hair ?? 0) > 0.45;
   return { eyes: pick(FACE_PARTS.eyes, 21), brows: light && !look.bald ? 'light' : pick(['thin', 'thick', 'thin', 'mono', 'thick'], 23), nose: pick(FACE_PARTS.nose, 25), mouth: pick(FACE_PARTS.mouth, 27), beard };
 }
@@ -230,6 +246,12 @@ function paintTile(t) {
 // --- Geometrie --------------------------------------------------------------------
 // Aussehen, das nicht im Spielstand steht (Frisur, Bartform, Körperbau), leitet sich
 // deterministisch aus dem Rest ab – der Spielerpool bleibt unverändert.
+// Eigener Würfel je Merkmal: gleicher Hash + Salz → fester Wert, unabhängig von den alten Bits.
+function roll(hash, salt, n) {
+  let x = Math.imul(hash ^ Math.imul(salt, 0x9e3779b9), 0x7feb352d);
+  x = Math.imul(x ^ (x >>> 15), 0x846ca68b);
+  return ((x ^ (x >>> 16)) >>> 0) % n;
+}
 function lookHash(look) {
   let h = (look.skin ?? 0) ^ ((look.hair ?? 0) << 3) ^ Math.round((look.height ?? 1) * 1000) * 2654435761;
   h = Math.imul(h ^ (h >>> 15), 2246822519);
@@ -374,13 +396,51 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
   };
 
   const b = new Builder();
+  const styleRoll = (hash >>> 3) % 20;
+  const oldStyle = styleRoll < 5 ? 'short' : styleRoll < 9 ? 'sidepart' : styleRoll < 12 ? 'spiky' : styleRoll < 15 ? 'long' : styleRoll < 18 ? 'curly' : styleRoll < 19 ? 'mohawk' : 'buzz';
+  // Neue Frisuren aus eigenem Würfel: 24 % der Haarträger (je 4 % Dutt, Undercut, Afro, Pferdeschwanz,
+  // Vokuhila, kurze Locken); alle anderen behalten ihre bisherige Frisur.
+  const style = roll(hash, 10, 100) < 24 ? ['bun', 'undercut', 'afro', 'ponytail', 'mullet', 'coils'][roll(hash, 14, 6)] : oldStyle;
+  const hairStyle = look.bald ? 'bald' : style;
+  // Zubehör (fest aus dem Aussehen, eigener Würfel je Teil; nicht jeder trägt etwas, etwa 43 % haben mindestens ein Teil):
+  // Stutzen runter 22 %, Schweißband 12 % (Torwart nie, mit Manschette), Knöcheltape 9 %, Handtape 6 %, Sportbrille 4 %.
+  let socksDown = roll(hash, 1, 100) < 22;
+  let sweat = keeper ? 0 : roll(hash, 2, 100) < 12 ? 1 + roll(hash, 3, 2) : 0; // 1 = ein Handgelenk, 2 = beide
+  const sweatSide = roll(hash, 4, 2) ? 'L' : 'R';
+  let tapeFoot = roll(hash, 5, 100) < 9 ? (roll(hash, 6, 2) ? 'L' : 'R') : null;
+  let tapeHand = !keeper && !sweat && roll(hash, 7, 100) < 6 ? (roll(hash, 8, 2) ? 'L' : 'R') : null;
+  let specs = edge !== 'neutral' && roll(hash, 9, 100) < 4; // Schiedsrichter (edge 'neutral') nie mit Brille
+  // Dreiecksbudget (600 je Figur): teure Frisuren lassen nur so viel Zubehör zu, wie noch hineinpasst.
+  // Grundlast je Frisur (inkl. Bart, gemessen als Höchstwert) plus 48 beim Torwart (Manschetten, Polster).
+  const BASE = { curly: 576, spiky: 540, coils: 540, sidepart: 516, long: 516 };
+  let room = 600 - (BASE[hairStyle] ?? 504) - (keeper ? 48 : 0);
+  const cost = () => (socksDown ? 24 : 0) + sweat * 12 + (tapeFoot ? 12 : 0) + (tapeHand ? 12 : 0) + (specs ? 36 : 0);
+  if (cost() > room && specs) specs = false;
+  if (cost() > room && sweat === 2) sweat = 1;
+  if (cost() > room && tapeHand) tapeHand = null;
+  if (cost() > room && sweat) sweat = 0;
+  if (cost() > room && tapeFoot) tapeFoot = null;
+  if (cost() > room && socksDown) socksDown = false;
   // Beine: Hosenbein, Oberschenkel, Knie, Stutzen mit Ring, Schuh mit Ferse und Spitze.
   for (const s of ['L', 'R']) {
     b.add(`upperLeg${s}`, prism(0.19, 0.18, 0.2, 0.21, 0.2), kit.shorts, { at: [0, -0.09, 0], uv: 'leg' });
     b.add(`upperLeg${s}`, prism(0.145 * bulk, 0.13 * bulk, thigh - 0.17, 0.16 * bulk, 0.145 * bulk), skin, { at: [0, -0.19 - (thigh - 0.17) / 2 + 0.01, 0], uv: 'leg' });
     b.box(`lowerLeg${s}`, 0.135, 0.08, 0.15, skin, [0, -0.025, 0.006], { uv: 'leg' });
-    b.add(`lowerLeg${s}`, prism(0.145 * bulk, 0.12 * bulk, shin - 0.06, 0.16 * bulk, 0.13 * bulk), kit.socks, { at: [0, -0.06 - (shin - 0.06) / 2, 0], uv: 'leg' });
-    b.box(`lowerLeg${s}`, 0.15, 0.035, 0.166, accent, [0, -0.1, 0]);
+    if (socksDown) {
+      // Stutzen runtergerollt: Schienbein bis zur Wade frei, Sock nur am Knöchel, Wulst in Streifenfarbe.
+      const L = shin - 0.06;
+      const sockL = L * 0.42;
+      const k = 1 - sockL / L; // Anteil des freien Schienbeins
+      const wCut = 0.12 * bulk + (0.145 - 0.12) * bulk * (1 - k);
+      const dCut = 0.13 * bulk + (0.16 - 0.13) * bulk * (1 - k);
+      b.add(`lowerLeg${s}`, prism(0.145 * bulk, wCut, L - sockL, 0.16 * bulk, dCut), skin, { at: [0, -0.06 - (L - sockL) / 2, 0], uv: 'leg' });
+      b.add(`lowerLeg${s}`, prism(wCut + 0.006, 0.12 * bulk, sockL, dCut + 0.006, 0.13 * bulk), kit.socks, { at: [0, -shin + sockL / 2, 0], uv: 'leg' });
+      b.box(`lowerLeg${s}`, wCut + 0.025, 0.04, dCut + 0.025, accent, [0, -shin + sockL, 0]);
+    } else {
+      b.add(`lowerLeg${s}`, prism(0.145 * bulk, 0.12 * bulk, shin - 0.06, 0.16 * bulk, 0.13 * bulk), kit.socks, { at: [0, -0.06 - (shin - 0.06) / 2, 0], uv: 'leg' });
+      b.box(`lowerLeg${s}`, 0.15, 0.035, 0.166, accent, [0, -0.1, 0]);
+    }
+    if (tapeFoot === s) b.box(`lowerLeg${s}`, 0.152 * Math.min(1, bulk * 0.97 + 0.03), 0.045, 0.17, 0xf4f1e8, [0, -shin + 0.03, 0]); // Tape am Knöchel
     b.box(`foot${s}`, 0.14, 0.09, 0.15, shoe, [0, -ankle + 0.045, -0.01]);
     b.add(`foot${s}`, prism(0.11, 0.135, 0.06, 0.12, 0.16), shoe, { at: [0, -ankle + 0.03, 0.13] }); // Spitze etwas länger (Profil)
   }
@@ -404,6 +464,8 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
     b.add(`upperArm${s}`, prism(0.115 * bulk, 0.11 * bulk, 0.12, 0.12 * bulk, 0.115 * bulk), keeper ? shirt : skin, { at: [out, -0.205, 0] });
     b.add(`lowerArm${s}`, prism(0.11 * bulk, 0.095 * bulk, 0.2, 0.11 * bulk, 0.1 * bulk), keeper ? shirt : skin, { at: [out, -0.1, 0] });
     b.box(`lowerArm${s}`, 0.1, 0.09, 0.115, keeper ? glove : skin, [out, -0.24, 0.005]);
+    if (sweat && (sweat === 2 || s === sweatSide)) b.box(`lowerArm${s}`, 0.122 * Math.min(1, bulk), 0.05, 0.122 * Math.min(1, bulk), accent, [out, -0.18, 0]); // Schweißband
+    if (tapeHand === s) b.box(`lowerArm${s}`, 0.108, 0.03, 0.122, 0xf4f1e8, [out, -0.265, 0.005]); // Tape um die Handfläche
     if (keeper) {
       b.box(`lowerArm${s}`, 0.118, 0.035, 0.13, gloveCuff, [out, -0.185, 0.003]); // Manschette am Handgelenk
       b.box(`lowerArm${s}`, 0.14, 0.09, 0.14, pad, [out, -0.03, -0.01]); // Ellbogenpolster
@@ -424,11 +486,8 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
   const top = headH;
   const hairC = luminance(hair) < 0.12 ? mixHex(hair, 0x4a4038, 0.3) : hair;
   const hairD = mixHex(hairC, 0x000000, 0.18); // Seiten und Nacken etwas dunkler
-  const styleRoll = (hash >>> 3) % 20;
-  const style = styleRoll < 5 ? 'short' : styleRoll < 9 ? 'sidepart' : styleRoll < 12 ? 'spiky' : styleRoll < 15 ? 'long' : styleRoll < 18 ? 'curly' : styleRoll < 19 ? 'mohawk' : 'buzz';
   const cap = (grow, h, y) => b.add('head', prism(headW + grow, headW + grow + 0.005, h, headW + grow, headW + grow + 0.005), hairC, { at: [0, y, 0] });
   const back = (h, y) => b.box('head', headW + 0.015, h, 0.055, hairD, [0, y, -hw]);
-  const hairStyle = look.bald ? 'bald' : style;
   if (hairStyle === 'short') {
     cap(0.018, 0.06, top + 0.01);
     back(0.14, top - 0.08);
@@ -455,6 +514,39 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
     // Locken: unregelmäßige Beulen statt glatter Haube
     for (const [x, y, z, k] of [[-0.1, 0.06, 0.06, 0.1], [0.09, 0.07, 0.05, 0.11], [0, 0.1, 0, 0.12], [-0.08, 0.05, -0.1, 0.1], [0.1, 0.04, -0.08, 0.1], [0.02, 0.07, 0.1, 0.09], [-0.15, -0.03, 0, 0.08], [0.15, -0.02, -0.02, 0.08]])
       b.box('head', k, k * 0.8, k, hairC, [x, top + y - 0.02, z]);
+  } else if (hairStyle === 'bun') {
+    // Männerdutt: nach hinten gekämmt, Knoten oben hinten.
+    cap(0.015, 0.05, top + 0.008);
+    back(0.12, top - 0.07);
+    b.box('head', 0.1, 0.1, 0.1, hairC, [0, top + 0.1, -hw * 0.45]);
+    b.box('head', 0.105, 0.02, 0.105, hairD, [0, top + 0.055, -hw * 0.45]); // Haargummi
+  } else if (hairStyle === 'undercut') {
+    // Seiten kurzgeschoren, oben langes Deckhaar nach hinten.
+    const shave = mixHex(hairC, skin, 0.4);
+    for (const s of [-1, 1]) b.box('head', 0.03, 0.12, headW * 0.82, shave, [s * (hw + 0.004), top - 0.075, -0.01]);
+    b.box('head', headW + 0.008, 0.1, 0.03, shave, [0, top - 0.06, -hw - 0.002]);
+    b.box('head', headW * 0.86, 0.1, headW * 0.9, hairC, [0, top + 0.03, -0.015]);
+  } else if (hairStyle === 'afro') {
+    // Afro: große runde Masse, Stirn bleibt frei.
+    b.box('head', headW + 0.2, 0.19, headW + 0.07, hairC, [0, top + 0.07, -0.05]);
+    b.box('head', headW + 0.1, 0.07, headW + 0.07, hairC, [0, top + 0.19, -0.04]);
+    for (const s of [-1, 1]) b.box('head', 0.07, 0.17, headW * 0.75, hairD, [s * (hw + 0.05), top - 0.06, -0.05]);
+  } else if (hairStyle === 'ponytail') {
+    cap(0.015, 0.05, top + 0.008);
+    back(0.12, top - 0.07);
+    b.box('head', 0.05, 0.05, 0.05, hairD, [0, top - 0.03, -hw - 0.04]); // Zopfgummi
+    b.add('head', prism(0.075, 0.04, 0.24, 0.075, 0.04), hairC, { at: [0, top - 0.16, -hw - 0.075], rot: -0.3 });
+  } else if (hairStyle === 'mullet') {
+    // Vokuhila: vorne kurz, im Nacken lang bis über die Schultern.
+    cap(0.018, 0.06, top + 0.01);
+    b.box('head', headW + 0.025, 0.3, 0.07, hairD, [0, top - 0.15, -hw - 0.01]);
+    for (const s of [-1, 1]) b.box('head', 0.05, 0.1, headW * 0.6, hairC, [s * (hw + 0.012), top - 0.05, -0.03]);
+  } else if (hairStyle === 'coils') {
+    // Kurze Locken: eng anliegende Kappe mit kleinen Knubbeln.
+    cap(0.02, 0.06, top + 0.01);
+    back(0.13, top - 0.075);
+    for (const [x, y, z] of [[-0.08, 0.05, 0.05], [0.08, 0.05, 0.04], [0, 0.07, 0.02], [-0.05, 0.05, -0.07], [0.06, 0.05, -0.07]])
+      b.box('head', 0.075, 0.055, 0.075, hairC, [x, top + y, z]);
   } else if (hairStyle === 'mohawk') {
     b.box('head', 0.08, 0.1, headW, hairC, [0, top + 0.04, 0]);
     b.box('head', headW + 0.01, 0.05, 0.05, hairD, [0, top - 0.12, -hw]);
@@ -473,6 +565,14 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
   // Bart: gemalt im Gesicht (Atlas); nur der Vollbart bekommt etwas Volumen am Kinn.
   const features = faceFeatures(hash, look);
   if (features.beard === 'full') b.box('head', headW * 0.8, 0.075, 0.05, hairC, [0, headH * 0.1, hw - 0.005]);
+  if (features.beard === 'goatee') b.box('head', headW * 0.3, 0.075, 0.05, hairC, [0, headH * 0.07, hw * (jaw + 0.02)]);
+  if (specs) {
+    // Sportbrille: Rahmen oben und unten um die Augenreihe, dunkles Band um den Kopf.
+    const eyeY = headH * 0.57;
+    const frame = 0x1a1d22;
+    for (const dy of [-0.034, 0.034]) b.box('head', headW * 0.86, 0.012, 0.02, frame, [0, eyeY + dy, hw + 0.012]);
+    b.box('head', headW + 0.012, 0.03, headW + 0.012, frame, [0, eyeY + 0.03, 0], { uv: 'white' }); // Sportband
+  }
   if (!useAtlas && look.beard) b.box('head', headW * 0.8, 0.1, 0.07, hair, [0, headH * 0.14, hw - 0.015]);
 
   // Knochen in Ruhelage (Weltlage je Knochen = Summe der Versätze).
@@ -572,6 +672,7 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
     face: 'neutral',
     hairStyle,
     features,
+    extras: { socksDown, sweat, tapeFoot, tapeHand, specs },
     faceStart,
     faceCorners,
     phase: (hash % 628) / 100,
