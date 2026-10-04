@@ -324,7 +324,7 @@ function pass(m, p, a, fatigue, fromHands) {
   p.facing = { x: dir.x, z: dir.z };
   m.lastPass = { playerId: p.id, team: p.team, time: m.time };
   // Offener Pass: Der Adressat läuft dem Ball entgegen (siehe ai.js, receiveSpot).
-  m.pass = target ? { targetId: target.id, kicker: p.id, team: p.team, time: m.time } : null;
+  m.pass = target ? { targetId: target.id, kicker: p.id, team: p.team, time: m.time, cross: a.lofted === 'cross' || undefined } : null;
   // In die Tiefe: Wie lange die Verteidiger zum Umschalten brauchen, hängt an ihrem Zweikampfverhalten.
   if (m.pass && lead && a.lofted !== 'cross') { // Flanke in den Lauf ist kein Steilpass: keine Schrecksekunde der Abwehr
     const defs = m.players.filter((o) => o.team !== p.team && o.role === 'def');
@@ -510,7 +510,10 @@ export function headerTouch(m) {
   const nearGoal = dist2d(p.pos, goal) < Math.max(8, (pitch.penaltyDistance ?? 0) + 2);
   let dir = nearGoal ? norm(goal.x - p.pos.x, goal.z - p.pos.z) : norm(s * 0.8 + p.facing.x * 0.2, p.facing.z * 0.5);
   dir = rotate(dir, rng.gauss() * (0.1 + 0.4 * (1 - skill)) * (monster ? 0.5 : 1));
-  const speed = 4 + 4 * skill + (monster ? 1.5 : 0);
+  // Aufs Tor: Das Tempo der Flanke bleibt erhalten, der Kopf legt bis zu 4,5 m/s drauf (Sprung-/Standkopfball,
+  // MDPI Appl. Sci. 14/946, 2024). Vorher immer 4–8 m/s – der Torwart hielt 14 von 22 Kopfbällen aufs Tor.
+  const incoming = Math.hypot(ball.vel.x, ball.vel.z);
+  const speed = nearGoal ? incoming + 1.5 + 3 * skill + (monster ? 1.5 : 0) : 4 + 4 * skill + (monster ? 1.5 : 0);
   ball.vel.x = dir.x * speed;
   ball.vel.y = nearGoal ? rng.range(-1.5, 0.5) : rng.range(1, 3);
   ball.vel.z = dir.z * speed;

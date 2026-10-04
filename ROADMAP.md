@@ -691,10 +691,30 @@ Das senkte die Schussquote aus guter Lage von 0,65 auf 0,55 (48 Spiele).
 Tore je Spiel, 24 Spiele je Platz, Stand 96fa064 → jetzt: 7er 3,1 → 2,9 · 9er 2,7 → 2,7 · Großfeld 3,6 → 3,9.
 Damit ist der Torverlust aus dem ersten Schritt (2,7 / 2,2 / 3,1) aufgeholt. Mitte jetzt 66 % / 67 % / 81 %,
 Flanken 2,7 / 2,9 / 1,1, von außen in den Strafraum 0,9 / 1,2 / 0,1 je Spiel. Schussquote aus guter Lage 0,61.
+Kopfbälle (dritter Schritt): Vergleichswerte zuerst. Premier League: 1 Tor auf 79–91 Flanken aus dem Spiel,
+gut 20 % kommen an, Flanken aus dem Spiel bringen rund 15 % der Tore (Studie EPL 2011/12, asjp.cerist.dz; Premier
+League 2024/25). Kopfballtore Bundesliga 2025/26: 15,4 %, der tiefste Wert seit 33 Jahren (sportschau.de).
+Kopfbälle: 34 % aufs Tor, rund 11–12 % werden Tore (StatsBomb; WM 2026). Bei uns kamen schon 17–25 % der
+Flanken beim Mitspieler an, und pro Flanke fielen mehr Tore als real. Was fehlte, waren Kopfballtore: 0 in 240
+Spielen (Stand bdc0489).
+Zwei Ursachen behoben:
+- Der Abnehmer eines hohen Balls rechnete mit Rollreibung, obwohl der Ball fast ungebremst fliegt, und lief deshalb
+  zu kurz. Jetzt läuft er zum Landepunkt, bei einer Flanke zum Punkt, an dem sie fallend in Kopfhöhe ankommt.
+  Verworfen: Auch lange Bälle in Kopfhöhe abnehmen. Das kostete fast ein halbes Tor je Spiel.
+- Ein Kopfball aufs Tor flog immer mit 4–8 m/s, und der Torwart hielt 14 von 22. Jetzt behält er das Tempo der Flanke,
+  und der Kopf legt 1,5–4,5 m/s drauf (bis zu 4,5 m/s beim Sprung- oder Standkopfball, MDPI Appl. Sci. 14/946, 2024).
+80 Spiele je Platz, bdc0489 → jetzt (7er / 9er / Großfeld):
+- Tore je Spiel: 2,8 / 2,1 / 2,6 → 3,4 / 2,8 / 3,1
+- Kopfbälle aufs Tor je Spiel: 0,17 / 0,25 / 0,16 → 0,16 / 0,45 / 0,07
+- Kopfballtore: 0 / 0 / 0 % → 0 / 5 / 1 % der Tore
+- Tore nach Flanke: 4 / 6 / 6 % → 2 / 12 / 3 %
+- Schussquote aus guter Lage: 0,61 → 0,67; Doppelpass-Rückgaben: 48 → 54
+Test: `tests/wing.test.js` (9er-Feld, Kopfbälle aufs Tor und Kopfballtore).
 Offen:
-- Flanken selbst bleiben selten ein Tor. Beim Flanken steht nur auf dem 9er-Feld öfter einer im Strafraum (20 %,
-  7er 11 %, Großfeld 12 %), und den ersten Kontakt hat meist der Gegner (38–67 %; `cross-probe`, 24 Spiele je Platz).
-  Die Tore kommen eher über Rückpässe und zweite Bälle.
+- Kopfballtore auf dem 7er-Feld und dem Großfeld bleiben selten (real 15 %). Auf dem Großfeld köpfen die Abnehmer
+  meist mehr als 13 m vom Tor entfernt (17 Kopfbälle nach Flanken, 4 davon aufs Tor; 60 Spiele). Auf dem 7er-Feld
+  kommen 49 von 112 gezielten Flanken nie in Kopfhöhe an den Abnehmer.
+- Ecken sind selten (0,4–1,0 je Spiel), daher kaum Kopfballtore nach Standards.
 - „Nach außen lenken" / „Zentrum zumachen": ein Versuch (Anlaufen von innen, schmaler Block) änderte die
   Angriffsseiten des Gegners kaum (68 % → 66–67 %) und kostete eigene Tore – zurückgenommen. Braucht ein echtes
   Leiten des Ballführenden (Körperstellung, Doppeln außen).

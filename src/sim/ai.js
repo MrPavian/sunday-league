@@ -276,6 +276,21 @@ function receiveSpot(m, p) {
   const k = pitch.surface?.rollFriction ?? 0.7;
   const speed = 4.6 + 2.6 * p.attrs.pace;
   let spot = { x: ball.pos.x, z: ball.pos.z };
+  // Hoher Ball: fliegt fast ungebremst (ball.js: 4 %/s in der Luft) – hin, wo er landet, bei einer Flanke
+  // schon dorthin, wo er in Kopfhöhe ankommt. Mit der Rollreibung lief der Abnehmer zu kurz, dem Passgeber
+  // entgegen. Lange Bälle köpft er nicht: Das kostete den Ball und fast ein halbes Tor je Spiel.
+  if (ball.pos.y > 0.5 || ball.vel.y > 1) {
+    const cross = !!m.pass?.cross;
+    const top = 1.75 * p.look.height + 0.35;
+    for (let t = 0.05; t <= 2.5; t += 0.05) {
+      const y = ball.pos.y + ball.vel.y * t - 4.905 * t * t;
+      spot = { x: ball.pos.x + ball.vel.x * t, z: ball.pos.z + ball.vel.z * t };
+      const head = cross && y > 1.35 && y < top && ball.vel.y - 9.81 * t < 0; // im Fallen in Kopfhöhe
+      if ((head || y <= 0.3) && dist2d(p.pos, spot) <= speed * t + 0.4) break;
+      if (y <= 0.3) break;
+    }
+    return clampToPitch(pitch, spot.x, spot.z, 0.3);
+  }
   for (let t = 0.1; t <= 2.5; t += 0.1) {
     const f = (1 - Math.exp(-k * t)) / k;
     spot = { x: ball.pos.x + ball.vel.x * f, z: ball.pos.z + ball.vel.z * f };
