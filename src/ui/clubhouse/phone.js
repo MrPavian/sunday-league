@@ -4,7 +4,7 @@ import { tr } from '../../core/i18n.js';
 import { effectChips } from '../../career/consequences.js';
 import { button, haptic, icon } from '../ds.js';
 import { lockScreen, phone } from '../world.js';
-import { crestOf, crestSVG } from '../crest.js';
+import { crestExtras, crestOf, crestSVG } from '../crest.js';
 import { humanClub, nudge } from '../../career/career.js';
 import { roleName } from '../../career/youth.js';
 import { eventView, storyTag } from '../../career/events.js';
@@ -92,7 +92,7 @@ export const phoneScreens = {
         : `<em>${tr('niemand', 'nobody')}</em>`;
       screen = `<div class="statusbar"><span>${timeLabel(lastTime)}</span><span>▮▮▮ ▰</span></div>
         <div class="wa-head">${button('‹', { kind: 'ghost icon', action: 'phone-lock', 'aria-label': tr('Zum Sperrbildschirm', 'To the lock screen') })}
-          <span class="wa-crest">${crestSVG(crestOf(club), { size: 26, short: club.short, label: club.name })}</span>
+          <span class="wa-crest">${crestSVG(crestOf(club), { size: 26, short: club.short, year: crestExtras(c).year, label: club.name })}</span>
           <div><b>${groupName}</b><small>${club.squad.length} ${tr('Mitglieder', 'members')}</small></div>${pinChip}</div>
         ${eventCard ? `<div class="wa-pinned${fold === 'mini' ? ' mini' : ''}">${eventCard}</div>` : ''}<div class="wa-body"><div class="chat">${bubbles}</div></div>
         <div class="wa-reply"><span>${tr('Nachhaken', 'Chase up')} (${w.nudges} ${tr('übrig', 'left')}):</span>${replies}</div>`;

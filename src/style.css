@@ -1881,3 +1881,4 @@ body.manager #end { padding-bottom: 84px; }
 .event-card.mini .ev-bar { display: grid; gap: 0; min-width: 0; min-height: var(--touch-min); padding: 2px 0; text-align: left; background: none; border: 0; color: inherit; font: inherit; box-shadow: none; }
 .event-card.mini .ev-bar > span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .wa-head > .ui-btn.icon:last-child { margin-left: auto; }
+.crest-actions button { max-width: 100%; white-space: normal; }

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { pixelTexture, toon, vertexToon } from './materials.js';
-import { makeSplats, paintKit, REGION } from './kitPaint.js';
+import { makeSplats, paintKit, REGION, sleeveColor } from './kitPaint.js';
 
 // Spieler 2.0: eine Low-Poly-Figur aus wenigen, leicht verjüngten Körperteilen –
 // Hüfte, Torso, Kopf, zweiteilige Arme und Beine mit Knie und Ellbogen, Schuhe mit
@@ -335,7 +335,7 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
 
   const skin = look.skin;
   const hair = look.hair;
-  const shirt = ['seiten', 'schulter'].includes(kit.pattern) && kit.second != null ? kit.second : kit.shirt;
+  const shirt = sleeveColor(kit); // Ärmelfarbe: Hauptfarbe oder Zweitfarbe
   const accent = luminance(kit.shirt) > 0.55 ? 0x1c1c1c : 0xf4f1e8;
   // Torwart: Handschuhe in Signalfarbe (hebt sich von Trikot, Haut und Rasen ab), dunkle Manschette
   // und Ellbogenpolster – alles Quader im selben Mesh, keine zusätzlichen Draw Calls.

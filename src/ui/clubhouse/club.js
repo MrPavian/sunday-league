@@ -6,8 +6,8 @@ import { museum } from '../../career/museum.js';
 import { clubLife, FEE_NAMES, neighborText } from '../../career/clublife.js';
 import { reviewHTML } from '../review.js';
 import { button, esc } from '../ds.js';
-import { CREST_COLORS, CREST_DIVISIONS, CREST_SHAPES, CREST_SYMBOLS, crestOf, crestSVG, defaultCrest, FIGURES } from '../crest.js';
-import { humanClub, KIT_COLORS, KIT_PATTERNS, kitEditable, updateCrest, playerOf, table } from '../../career/career.js';
+import { CREST_BAND_TEXTS, CREST_COLORS, CREST_DIVISIONS, CREST_SHAPES, CREST_SYMBOLS, crestExtras, crestOf, crestSVG, defaultCrest, FIGURES } from '../crest.js';
+import { humanClub, KIT_COLLARS, KIT_COLORS, KIT_PATTERNS, KIT_SLEEVES, kitEditable, updateCrest, playerOf, table } from '../../career/career.js';
 import { FINES, KIT_COST, MEMBER_FEE, SLOTS } from '../../career/finances.js';
 import { DESTINATIONS } from '../../career/trip.js';
 import { build, canBuild, facilities, FACILITIES } from '../../career/facilities.js';
@@ -52,7 +52,7 @@ export const clubScreens = {
     const c = this.career;
     const club = humanClub(c);
     const editable = founding || kitEditable(c);
-    this.draft ??= { name: club.name, short: club.short, kit: { pattern: 'uni', second: 0xf2efe6, ...club.kit } };
+    this.draft ??= { name: club.name, short: club.short, kit: { pattern: 'uni', second: 0xf2efe6, collar: 'standard', sleeves: 'main', ...club.kit } };
     const d = this.draft;
     const mainSponsor = shirtSponsor(c);
     const sponsorShown = mainSponsor ? { id: mainSponsor.id, name: mainSponsor.name, color: sponsorColor(mainSponsor) } : null;
@@ -76,8 +76,14 @@ export const clubScreens = {
           <div class="swatch-row"><span>${tr('Muster', 'Pattern')}</span>${Object.entries(KIT_PATTERNS)
             .map(([id, label]) => `<button class="${d.kit.pattern === id ? 'active' : ''}" data-action="kitPattern" data-value="${id}" ${editable ? '' : 'disabled'}>${label}</button>`)
             .join('')}</div>
+          <div class="swatch-row"><span>${tr('Kragen', 'Collar')}</span>${Object.entries(KIT_COLLARS)
+            .map(([id, label]) => `<button class="${(d.kit.collar ?? 'standard') === id ? 'active' : ''}" data-action="kitCollar" data-value="${id}" ${editable ? '' : 'disabled'}>${label}</button>`)
+            .join('')}</div>
+          <div class="swatch-row"><span>${tr('Ärmel', 'Sleeves')}</span>${Object.entries(KIT_SLEEVES)
+            .map(([id, label]) => `<button class="${(d.kit.sleeves ?? 'main') === id ? 'active' : ''}" data-action="kitSleeves" data-value="${id}" ${editable ? '' : 'disabled'}>${label}</button>`)
+            .join('')}</div>
           ${swatches('shirt', tr('Trikot', 'Shirt'))}
-          ${d.kit.pattern !== 'uni' ? swatches('second', tr('2. Farbe', '2nd colour')) : ''}
+          ${d.kit.pattern !== 'uni' || d.kit.sleeves === 'second' ? swatches('second', tr('2. Farbe', '2nd colour')) : ''}
           ${swatches('shorts', tr('Hose', 'Shorts'))}
           ${swatches('socks', tr('Stutzen', 'Socks'))}
           ${this.clubNote ? `<p class="warn">${this.clubNote}</p>` : ''}
@@ -111,6 +117,8 @@ export const clubScreens = {
       const [slot, col] = value.split(':');
       d.colors[slot] = Number(col);
     } else if (action === 'crestBand') d.band = !d.band;
+    else if (action === 'crestBandText') (d.band = true), (d.bandText = value);
+    else if (action === 'crestStars') d.stars = !(d.stars ?? true);
     else if (action === 'crestSlot') this.crestSlot = value;
     else if (action === 'crestRandom') {
       const seed = { id: `${club.id}-${Math.random()}`, kit: { shirt: d.colors.field, second: d.colors.second } };
@@ -129,7 +137,8 @@ export const clubScreens = {
     const club = { ...humanClub(this.career), ...(founding && this.draft ? { name: this.draft.name || humanClub(this.career).name, short: this.draft.short || humanClub(this.career).short } : {}) };
     const d = this.crestDraft ?? crestOf(club);
     const slot = this.crestSlot ?? 'field';
-    const mini = (patch) => crestSVG({ ...d, ...patch, colors: d.colors }, { size: 30, short: club.short });
+    const extra = crestExtras(this.career);
+    const mini = (patch) => crestSVG({ ...d, ...patch, colors: d.colors }, { size: 30, short: club.short, year: extra.year });
     const choice = (action, entries, current, patch) =>
       entries.map(([id, label]) => `<button class="crest-choice ${current === id ? 'active' : ''}" data-action="${action}" data-value="${id}" title="${label}">${mini(patch(id))}<small>${label}</small></button>`).join('');
     const symbols = Object.entries(CREST_SYMBOLS);
@@ -137,11 +146,12 @@ export const clubScreens = {
     return `
       <div class="crest-editor">
         <div class="crest-preview">
-          ${crestSVG(d, { size: 150, short: club.short, label: club.name })}
+          ${crestSVG(d, { size: 150, short: club.short, year: extra.year, stars: extra.stars, label: club.name })}
           <b>${club.name}</b>
           <div class="crest-actions">
             <button data-action="crestRandom">${tr('Würfeln', 'Shuffle')}</button>
             <button data-action="crestBand" class="${d.band ? 'active' : ''}">${tr('Schriftband', 'Name band')}</button>
+            <button data-action="crestStars" class="${d.stars ?? true ? 'active' : ''}" title="${tr('Ein Stern je Meisterschaft, bis zu fünf', 'One star per league title, up to five')}">${tr('Sterne', 'Stars')} (${extra.stars})</button>
             ${this.crestDraft ? `<button data-action="crestReset">${tr('Verwerfen', 'Discard')}</button>` : ''}
             ${founding ? '' : `<button class="primary" data-action="crestSave" ${this.crestDraft ? '' : 'disabled'}>${tr('Wappen übernehmen', 'Use this crest')}</button>`}
           </div>
@@ -152,6 +162,8 @@ export const clubScreens = {
           <div class="crest-grid">${choice('crestShape', Object.entries(CREST_SHAPES), d.shape, (id) => ({ shape: id }))}</div>
           <h4>${tr('Teilung', 'Division')}</h4>
           <div class="crest-grid">${choice('crestDivision', Object.entries(CREST_DIVISIONS), d.division, (id) => ({ division: id }))}</div>
+          <h4>${tr('Schriftband', 'Name band')}</h4>
+          <div class="swatch-row">${Object.entries(CREST_BAND_TEXTS).map(([id, label]) => `<button class="${d.band && (d.bandText ?? 'short') === id ? 'active' : ''}" data-action="crestBandText" data-value="${id}">${label}</button>`).join('')}</div>
           <h4>${tr('Symbole', 'Symbols')}</h4>
           <div class="crest-grid">${choice('crestSymbol', symbols.filter(([id]) => !FIGURES.has(id)), d.symbol, (id) => ({ symbol: id }))}</div>
           <h4>${tr('Figuren', 'Figures')}</h4>
@@ -251,7 +263,7 @@ export const clubScreens = {
     const records = mu.records.length ? `<ul class="plain">${mu.records.map((r) => `<li><b>${r.label}:</b> ${r.text}</li>`).join('')}</ul>` : empty(tr('Rekorde entstehen mit der Zeit.', 'Records come with time.'));
     const legends = mu.legends.length ? `<ol class="plain">${mu.legends.map((l) => `<li><span>${l.name}${l.active ? '' : ` <small>(${tr('ehemalig', 'former')})</small>`}</span><b>${l.goals} ${plural(l.goals, 'Tor', 'Tore', 'goal', 'goals')} · ${l.apps} ${plural(l.apps, 'Spiel', 'Spiele', 'app', 'apps')}</b></li>`).join('')}</ol>` : empty(tr('Noch keine Legenden.', 'No legends yet.'));
     const kits = `<div class="archive">${mu.kits.map((k) => `<figure><span class="kit-mini" style="background:url(${kitPreviewURL(k.kit)}) center/100% 100%"></span><figcaption>S${k.season}${k.now ? tr(' (aktuell)', ' (current)') : ''}</figcaption></figure>`).join('')}</div>`;
-    const crests = mu.crests.length ? `<div class="archive">${mu.crests.map((k) => `<figure>${crestSVG(k.crest, { size: 40, short: club.short })}<figcaption>S${k.season}${k.now ? tr(' (aktuell)', ' (current)') : ''}</figcaption></figure>`).join('')}</div>` : '';
+    const crests = mu.crests.length ? `<div class="archive">${mu.crests.map((k) => `<figure>${crestSVG(k.crest, { size: 40, short: club.short, year: crestExtras(c).year })}<figcaption>S${k.season}${k.now ? tr(' (aktuell)', ' (current)') : ''}</figcaption></figure>`).join('')}</div>` : '';
     return `<div class="museum">
       <section><h4>${tr('Vitrine', 'Trophy cabinet')}</h4>${trophies}</section>
       <section><h4>${tr('Ehrentafel', 'Roll of honour')}</h4>${awards}</section>
