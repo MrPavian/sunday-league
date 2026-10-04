@@ -681,8 +681,20 @@ zum letzten Drittel, bei freiem Flügel bis zur Grundlinie, schräg weg, wenn di
 um (Blickrichtung zählt weniger, freier Mann außen zählt), Flanke statt Schuss aus spitzem Winkel, Läufe an den
 ersten/langen Pfosten. Verworfen: Spitze weicht zur Seite aus (kostete fast ein Tor je Spiel und die Doppelpässe).
 Nebenbei behoben: Rückpass beim Doppelpass fiel auf „nach vorn bolzen" zurück, wenn der Läufer zu dicht stand.
+Flankenverwertung (zweiter Schritt): Läufe in den Strafraum beginnen früher (Ball außen ab 20 % der halben Länge
+vor der Mitte) und werden gesprintet. Steht die Spitze nah am Ball, bleibt sie Anspielstation, und nur der ballferne
+Außen läuft ein. Geflankt wird aus spitzem Winkel nur noch, wenn einer im Strafraum steht oder der Flankengeber
+bedrängt ist. Die Flanke geht auf den Laufpunkt des Abnehmers, nicht auf seine jetzige Stelle. Kopfbälle aufs Tor
+reichen jetzt bis knapp hinter den Elfmeterpunkt; vorher galten fest 8 m, auf dem Großfeld (Elfmeter 11 m) gab es
+deshalb keine Kopfbälle aufs Tor. Verworfen: den Läufer stur auf seinen Punkt steuern, ohne Gegnern auszuweichen.
+Das senkte die Schussquote aus guter Lage von 0,65 auf 0,55 (48 Spiele).
+Tore je Spiel, 24 Spiele je Platz, Stand 96fa064 → jetzt: 7er 3,1 → 2,9 · 9er 2,7 → 2,7 · Großfeld 3,6 → 3,9.
+Damit ist der Torverlust aus dem ersten Schritt (2,7 / 2,2 / 3,1) aufgeholt. Mitte jetzt 66 % / 67 % / 81 %,
+Flanken 2,7 / 2,9 / 1,1, von außen in den Strafraum 0,9 / 1,2 / 0,1 je Spiel. Schussquote aus guter Lage 0,61.
 Offen:
-- Tore nach Flanken: Flanken werden selten verwertet; dadurch auf großen Plätzen etwas weniger Tore.
+- Flanken selbst bleiben selten ein Tor. Beim Flanken steht nur auf dem 9er-Feld öfter einer im Strafraum (20 %,
+  7er 11 %, Großfeld 12 %), und den ersten Kontakt hat meist der Gegner (38–67 %; `cross-probe`, 24 Spiele je Platz).
+  Die Tore kommen eher über Rückpässe und zweite Bälle.
 - „Nach außen lenken" / „Zentrum zumachen": ein Versuch (Anlaufen von innen, schmaler Block) änderte die
   Angriffsseiten des Gegners kaum (68 % → 66–67 %) und kostete eigene Tore – zurückgenommen. Braucht ein echtes
   Leiten des Ballführenden (Körperstellung, Doppeln außen).

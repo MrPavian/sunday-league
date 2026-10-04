@@ -23,6 +23,8 @@ export const STRETCH = 0.8;
 export const ACUTE_SHOT = 12;
 // Ab hier (Vielfaches der halben Torbreite von der Mitte) gilt der Winkel als spitz.
 export const ACUTE_Z = 3;
+// Ab hier (Anteil der halben Länge in der gegnerischen Hälfte) laufen Spitze und ballferner Außen in den Strafraum, wenn der Ball außen ist.
+export const BOX_RUN_FROM = 0.2;
 const LURK_GAP = 8; // m Platz hinter der gegnerischen Abwehr, ab dem der Stürmer vorne lauert
 const CAUGHT_TIME = 0.7; // s: so lange ist nach dem Ballverlust raus, wer vor dem Ball stand
 
@@ -184,7 +186,9 @@ export function updateTactics(m, dt) {
           const j = overlap(m, p);
           spot.x = Math.min(spot.x * s, cap + (Math.min(ball.pos.x * s + 2, pitch.halfLength - 3) - cap) * j) * s;
         }
-        m.tactics[p.id] = { type: 'support', ...clampToPitch(pitch, spot.x, spot.z, 0.5) };
+        // Lauf in den Strafraum wird gesprintet (wie ein Lauf beim Doppelpass) – im Trab kam der Stürmer
+        // erst nach der Flanke an.
+        m.tactics[p.id] = { type: spot.box ? 'run' : 'support', ...clampToPitch(pitch, spot.x, spot.z, 0.5) };
       }
       // Kombination: Der Passgeber sprintet in den Raum für den Rückpass.
       const run = comboRun(m, team);
@@ -355,9 +359,10 @@ export function anchor(m, p, possession) {
     }
     // Ball außen im letzten Drittel: Stürmer zwischen die Pfosten, der Mittelfeldmann von der anderen
     // Seite an den langen Pfosten – sonst kommt jede Flanke ins Leere.
-    const wideBall = Math.abs(ball.pos.z) > pitch.halfWidth * WIDE_LANE && bx > pitch.halfLength * 0.35;
+    const wideBall = Math.abs(ball.pos.z) > pitch.halfWidth * WIDE_LANE && bx > pitch.halfLength * BOX_RUN_FROM;
     const farMid = p.role === 'mid' && Math.sign(p.home.z) === -Math.sign(ball.pos.z) && Math.abs(p.home.z) > pitch.halfWidth * 0.3;
-    if (wideBall && (p.role === 'fwd' || farMid)) {
+    // Steht die Spitze nah am Ball, bleibt sie Anspielstation (Doppelpass, Ablage) – dann läuft nur der ballferne Außen.
+    if (wideBall && ((p.role === 'fwd' && dist2d(p.pos, ball.pos) > 9) || farMid)) {
       const gx = pitch.halfLength - (p.role === 'fwd' ? 4.5 : 6.5);
       x = Math.max(x * s, Math.min(gx, top)) * s;
       boxRun = -Math.sign(ball.pos.z) * (p.role === 'fwd' ? 0.4 : 1.6) * pitch.goalHalfWidth;
@@ -376,7 +381,7 @@ export function anchor(m, p, possession) {
   if (!possession && st.cover) z += st.cover * s * pitch.halfWidth * 0.12;
   if (boxRun != null) z = boxRun;
   z = clamp(z, -pitch.halfWidth * 0.9, pitch.halfWidth * 0.9);
-  return { x, z };
+  return boxRun != null ? { x, z, box: true } : { x, z };
 }
 
 // Lauert dieser Stürmer gegen den Ball vorne? Je mehr Platz hinter der gegnerischen
@@ -408,6 +413,11 @@ function staysBack(m, p, st) {
 function supportSpot(m, p, dt) {
   const { ball, pitch, rng } = m;
   p.supportTimer = (p.supportTimer ?? 0) - dt;
+  const boxNow = (p.role === 'fwd' || p.role === 'mid') && Math.abs(ball.pos.z) > pitch.halfWidth * WIDE_LANE && ball.pos.x * attackDir(m, p.team) > pitch.halfLength * BOX_RUN_FROM;
+  if (boxNow !== !!p.boxState) {
+    p.boxState = boxNow;
+    p.supportTimer = 0; // Ball kommt nach außen (oder wieder weg): sofort neu entscheiden
+  }
   if (p.supportSpot && p.supportTimer > 0) return { ...p.supportSpot };
 
   const s = attackDir(m, p.team);
@@ -419,6 +429,8 @@ function supportSpot(m, p, dt) {
   // eine freie Anspielstation in der Nähe – der Raum darf genutzt werden, die
   // Position bleibt erkennbar.
   const a = anchor(m, p, true);
+  // Lauf in den Strafraum (Ball außen im letzten Drittel): direkt hin, nicht den Gegnern ausweichen – sonst
+  // mied der Stürmer genau den Raum, in den die Flanke kommt (gemessen: 13,5 m statt 3 m vor der Torlinie).
   const st = styleOf(m, p.team);
   const demands = hasProfile(p, 'spielmacher') || hasProfile(p, 'ballmagnet');
   const base = clampToPitch(pitch, a.x, a.z, margin);
@@ -446,6 +458,11 @@ function supportSpot(m, p, dt) {
       bestScore = score;
       best = c;
     }
+  }
+  if (a.box) {
+    p.supportSpot = { ...best, box: true };
+    p.supportTimer = 0.25;
+    return { ...p.supportSpot };
   }
   p.supportSpot = { ...best };
   p.supportTimer = 1.0 + rng.next() * 0.4; // seltener umentscheiden = ruhigeres Bild
@@ -650,6 +667,15 @@ function carryIntent(m, p, oppGoal, wall) {
   return { move: { x: dir.x * pace, z: dir.z * pace }, sprint: space && p.stamina > 0.5 && Math.abs(p.pos.x - oppGoal.x) > 8 };
 }
 
+// Flanke in den Lauf: Wer läuft gerade in den Strafraum (Laufziel aus supportSpot)? Ziel ist sein Laufpunkt,
+// nicht seine jetzige Stelle – vorher landeten Flanken im Schnitt 9–16 m neben der Tormitte.
+function crossInto(m, p, oppGoal) {
+  const runners = m.players.filter((t) => t.team === p.team && t !== p && t.state === 'normal' && t.supportSpot?.box && m.tactics[t.id]?.type === 'run');
+  if (!runners.length) return { type: 'pass', lofted: 'cross', cone: -0.4, ttl: 0.3 };
+  const r = runners.reduce((a, b) => (dist2d(a.supportSpot, oppGoal) < dist2d(b.supportSpot, oppGoal) ? a : b));
+  return { type: 'pass', lofted: 'cross', cone: -1, ttl: 0.3, targetId: r.id, through: { x: r.supportSpot.x, z: r.supportSpot.z } };
+}
+
 function aiDecide(m, p, oppGoal) {
   const { rng, pitch } = m;
   if (wallPush(pitch, m.ball.pos, 1.2).corner) {
@@ -708,8 +734,11 @@ function aiDecide(m, p, oppGoal) {
   const acute = Math.abs(p.pos.z) > pitch.goalHalfWidth * 2.2 && Math.abs(p.pos.x - oppGoal.x) < pitch.halfLength * 0.4;
   if (acute && st.channel !== 'centre') {
     const boxMate = m.players.some((t) => t.team === p.team && t !== p && t.role !== 'gk' && Math.abs(t.pos.x - oppGoal.x) < pitch.halfLength * 0.28 && Math.abs(t.pos.z) < pitch.goalHalfWidth * 2.2);
-    if (rng.chance(clamp(st.cross * (boxMate ? 1.2 : 0.4), 0.15, 0.95))) {
-      p.pending = { type: 'pass', lofted: 'cross', cone: -0.4, ttl: 0.3 };
+    // Ohne Abnehmer im Strafraum nur, wenn er bedrängt wird – sonst kurz warten, bis einer da ist
+    // (gemessen: bei 92 % der Flanken stand keiner im Strafraum).
+    const pressedA = m.players.some((o) => o.team !== p.team && o.role !== 'gk' && dist2d(o.pos, p.pos) < 2.2);
+    if ((boxMate || pressedA) && rng.chance(clamp(st.cross * (boxMate ? 1.2 : 0.6), 0.15, 0.95))) {
+      p.pending = crossInto(m, p, oppGoal);
       return;
     }
   }
@@ -719,7 +748,7 @@ function aiDecide(m, p, oppGoal) {
     const pressed = m.players.some((o) => o.team !== p.team && o.role !== 'gk' && dist2d(o.pos, p.pos) < 2.5);
     const runner = m.players.some((t) => t.team === p.team && t !== p && t.role !== 'gk' && Math.abs(t.pos.x - oppGoal.x) < pitch.halfLength * 0.32 && Math.abs(t.pos.z) < pitch.goalHalfWidth * 2.5);
     if (runner && rng.chance(clamp(st.cross * (pressed ? 0.4 : 0.1), 0.03, 0.9))) {
-      p.pending = { type: 'pass', lofted: 'cross', cone: -0.4, ttl: 0.3 };
+      p.pending = crossInto(m, p, oppGoal);
       return;
     }
   }

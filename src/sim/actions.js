@@ -326,14 +326,14 @@ function pass(m, p, a, fatigue, fromHands) {
   // Offener Pass: Der Adressat läuft dem Ball entgegen (siehe ai.js, receiveSpot).
   m.pass = target ? { targetId: target.id, kicker: p.id, team: p.team, time: m.time } : null;
   // In die Tiefe: Wie lange die Verteidiger zum Umschalten brauchen, hängt an ihrem Zweikampfverhalten.
-  if (m.pass && lead) {
+  if (m.pass && lead && a.lofted !== 'cross') { // Flanke in den Lauf ist kein Steilpass: keine Schrecksekunde der Abwehr
     const defs = m.players.filter((o) => o.team !== p.team && o.role === 'def');
     const read = defs.length ? defs.reduce((s2, o) => s2 + o.attrs.tackling, 0) / defs.length : 0.5;
     m.pass.through = true;
     m.pass.react = 0.55 - 0.3 * read;
   }
   // Rückpass beim Doppelpass: in den Lauf gespielt, aber kein Ball hinter die Abwehrlinie.
-  m.events.push({ type: 'pass', playerId: p.id, targetId: target?.id ?? null, lofted: !!a.lofted, cross: a.lofted === 'cross' || undefined, from: { x: p.pos.x, z: p.pos.z }, to: target ? { x: target.pos.x, z: target.pos.z } : null, through: !!(a.through && target && !a.combo), combo: a.combo || undefined });
+  m.events.push({ type: 'pass', playerId: p.id, targetId: target?.id ?? null, lofted: !!a.lofted, cross: a.lofted === 'cross' || undefined, from: { x: p.pos.x, z: p.pos.z }, to: target ? { x: target.pos.x, z: target.pos.z } : null, through: !!(a.through && target && !a.combo && a.lofted !== 'cross'), combo: a.combo || undefined });
 }
 
 // Strafraum: Nur hier darf der Torwart den Ball in die Hand nehmen.
@@ -506,7 +506,8 @@ export function headerTouch(m) {
 
   const s = attackDir(m, p.team);
   const goal = { x: s * pitch.halfLength, z: rng.range(-pitch.goalHalfWidth * 0.8, pitch.goalHalfWidth * 0.8) };
-  const nearGoal = dist2d(p.pos, goal) < 8;
+  // Aufs Tor geköpft wird bis knapp hinter den Elfmeterpunkt (Großfeld 11 m) – fest 8 m hieß dort: nie.
+  const nearGoal = dist2d(p.pos, goal) < Math.max(8, (pitch.penaltyDistance ?? 0) + 2);
   let dir = nearGoal ? norm(goal.x - p.pos.x, goal.z - p.pos.z) : norm(s * 0.8 + p.facing.x * 0.2, p.facing.z * 0.5);
   dir = rotate(dir, rng.gauss() * (0.1 + 0.4 * (1 - skill)) * (monster ? 0.5 : 1));
   const speed = 4 + 4 * skill + (monster ? 1.5 : 0);
