@@ -1,7 +1,7 @@
 // Reaktionen der Figuren (nur Darstellung): Nach einem vergebenen Schuss greift sich der Schütze an den Kopf
 // oder winkt ab, der Torwart ballt nach der Parade die Faust; beim Tor bilden die Mitspieler eine Traube.
 import { describe, expect, it } from 'vitest';
-import { catchKind, isFumble, mateCelebration, punchStyle, refereeSignal, shotReactions, SUB_FIVE, SUB_WALK, subScene, tiredFace, wideStance } from '../src/render/reactions.js';
+import { catchKind, DUEL_FAR, duelPairs, foeBearing, isFumble, kickFoot, THROW_RUN, throwInRun, mateCelebration, punchStyle, refereeSignal, shotReactions, SUB_FIVE, SUB_WALK, subScene, tiredFace, wideStance } from '../src/render/reactions.js';
 import { attackDir } from '../src/sim/players.js';
 import { createMatch, matchDuration, stepMatch } from '../src/sim/match.js';
 import { PITCHES } from '../src/sim/pitch.js';
@@ -179,4 +179,52 @@ describe('Erschöpfung im Gesicht', () => {
     expect(tired).toBeLessThan(frames * 0.5);
     expect(ever.size).toBeLessThan(all.size);
   }, 180000);
+
+  it('Spielfluss: Einwurf-Anlauf endet am Punkt, Zweikämpfe nur Gegner nah am Ball, Schussfuß nach Ballseite', () => {
+    let runs = 0;
+    let duels = 0;
+    let feet = new Set();
+    for (const seed of [5, 6, 7]) {
+      const m = createMatch({ seed, pitch: PITCHES.rasenplatz, human: false, duration: 300, aiCoach: false });
+      let prevU = 0;
+      while (m.phase !== 'ended') {
+        stepMatch(m, undefined, 1 / 60);
+        m.events.length = 0;
+        const r = throwInRun(m);
+        if (r) {
+          runs++;
+          const p = m.players.find((q) => q.id === r.id);
+          expect(m.ball.holder).toBe(r.id);
+          expect(r.off).toBeGreaterThanOrEqual(0);
+          expect(r.off).toBeLessThanOrEqual(2.4 + 1e-9);
+          // hinter ihm bleibt es auf dem Platz, am Ende des Anlaufs steht er auf dem Punkt
+          expect(Math.abs(p.pos.x - r.dir * r.off)).toBeLessThanOrEqual(m.pitch.halfLength - 0.3 + 1e-9);
+          if (r.u >= 1) expect(r.off).toBe(0);
+          expect(r.u).toBeGreaterThanOrEqual(prevU - 1e-9);
+          prevU = r.u;
+        } else prevU = 0;
+        for (const d of duelPairs(m)) {
+          duels++;
+          const a = m.players.find((q) => q.id === d.id);
+          const b = m.players.find((q) => q.id === d.foe);
+          expect(a.team).not.toBe(b.team);
+          expect(Math.hypot(a.pos.x - b.pos.x, a.pos.z - b.pos.z)).toBeLessThan(DUEL_FAR);
+          expect(d.k).toBeGreaterThan(0);
+          expect(d.k).toBeLessThanOrEqual(1);
+        }
+        for (const p of m.players) if (p.kickAnim > 0.29) feet.add(kickFoot(p, m.ball, 1));
+      }
+    }
+    expect(runs).toBeGreaterThan(30); // mehrere Einwürfe mit Anlauf
+    expect(duels).toBeGreaterThan(0);
+    expect(feet.size).toBe(2); // beide Füße kommen vor
+  }, 120000);
+
+  it('Richtungshelfer: Gegner rechts/links/vorn/hinten, Anlaufdauer', () => {
+    expect(foeBearing(0, 1, 0)).toBeCloseTo(Math.PI / 2, 5); // Blick +z, Gegner bei +x: rechts
+    expect(foeBearing(0, 0, 1)).toBeCloseTo(0, 5);
+    expect(Math.abs(foeBearing(0, 0, -1))).toBeCloseTo(Math.PI, 5);
+    expect(foeBearing(Math.PI / 2, 0, -1)).toBeCloseTo(Math.PI / 2, 5); // Blick +x, Gegner bei -z: rechts
+    expect(THROW_RUN).toBeGreaterThan(1);
+  });
 });

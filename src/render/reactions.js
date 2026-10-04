@@ -115,3 +115,69 @@ export const isFumble = (e, match) => {
   const gk = match.players.find((p) => p.id === e.playerId);
   return !gk || match.ball.vel.x * attackDir(match, gk.team) > 0;
 };
+
+// --- Spielfluss (nur Darstellung) -------------------------------------------------------
+
+const clamp01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
+const smoothstep = (a, b, x) => {
+  const t = clamp01((x - a) / (b - a));
+  return t * t * (3 - 2 * t);
+};
+
+// Einwurf mit Anlauf: Der Werfer steht in der Simulation von Anfang an auf dem Punkt und hält den Ball.
+// Gezeigt wird er die ersten THROW_RUN Sekunden nach dem Pfiff ein paar Schritte weiter hinten an der
+// Linie, er läuft an und steht dann am Punkt – dort wirft er. Liefert null, wenn kein Anlauf läuft, sonst
+// { id, u (0 → 1 Fortschritt), dir (Richtung des Anlaufs entlang der Linie, ±1), off (Meter hinter dem Punkt),
+// speed (m/s), turn (0 → 1: von der Laufrichtung in die Wurfrichtung drehen) }. Hinten bleibt es auf dem Platz.
+export const THROW_RUN = 1.5;
+export const THROW_STEPS = 2.4;
+const THROW_PAUSE = 1.0; // Pause vor dem Einwurf in der Simulation (setpieces.js FREEZE)
+export function throwInRun(match) {
+  const sp = match.setPiece;
+  if (!sp || sp.type !== 'throwin' || sp.taken || (match.phase !== 'setpiece' && match.phase !== 'play')) return null;
+  const p = match.players.find((q) => q.id === sp.takerId);
+  if (!p || match.ball.holder !== p.id || p.state !== 'normal') return null;
+  const dir = attackDir(match, sp.team);
+  // Die Spielzeit steht in der Pause vor dem Wurf (Simulation: 1 s); danach läuft sie weiter.
+  const since = match.phase === 'setpiece' ? THROW_PAUSE - match.phaseTimer : THROW_PAUSE + match.time - sp.time;
+  const u = clamp01(since / THROW_RUN);
+  const back = Math.max(0, Math.min(THROW_STEPS, match.pitch.halfLength - 0.3 + dir * p.pos.x));
+  return { id: p.id, u, dir, off: back * (1 - u) ** 1.5, speed: ((back * 1.5) / THROW_RUN) * (1 - u) ** 0.5, turn: smoothstep(0.6, 1, u) };
+}
+
+// Mit welchem Fuß geschossen wird: liegt der Ball deutlich rechts (links) neben der Blickrichtung, mit
+// diesem Fuß, sonst bleibt es beim bisherigen (prev ±1). Standbein steht dann neben dem Ball.
+export function kickFoot(p, ball, prev = 1) {
+  const lateral = (ball.pos.x - p.pos.x) * p.facing.z - (ball.pos.z - p.pos.z) * p.facing.x;
+  return lateral > 0.12 ? 1 : lateral < -0.12 ? -1 : prev;
+}
+
+// Zweikampf um den Ball: Der Ballführende (letzter Kontakt war Dribbling, Ball am Fuß) und der nächste Gegner, wenn sie
+// Schulter an Schulter stehen (ab DUEL_FAR m Abstand beginnt das Anlehnen, ab DUEL_NEAR voll). Liefert je
+// Beteiligtem { id, foe, k 0…1, shield: schirmt den Ball ab (nur der Ballführende, Simulation: p.shielding) }.
+export const DUEL_NEAR = 0.8;
+export const DUEL_FAR = 1.4;
+export function duelPairs(match) {
+  const out = [];
+  const ball = match.ball;
+  if (match.phase !== 'play' || ball.holder || ball.pos.y > 0.8) return out;
+  const c = match.players.find((q) => q.id === ball.lastTouch);
+  if (!c || c.role === 'gk' || c.state !== 'normal' || ball.lastAction !== 'dribble' || Math.hypot(c.pos.x - ball.pos.x, c.pos.z - ball.pos.z) > 1.5) return out;
+  let foe = null;
+  let fd = DUEL_FAR;
+  for (const o of match.players) {
+    if (o.team === c.team || o.role === 'gk' || (o.state !== 'normal' && o.state !== 'poke')) continue;
+    const d = Math.hypot(o.pos.x - c.pos.x, o.pos.z - c.pos.z);
+    if (d < fd) (fd = d), (foe = o);
+  }
+  if (!foe) return out;
+  const k = clamp01((DUEL_FAR - fd) / (DUEL_FAR - DUEL_NEAR));
+  out.push({ id: c.id, foe: foe.id, k, shield: !!c.shielding }, { id: foe.id, foe: c.id, k, shield: false });
+  return out;
+}
+
+// Richtung zum Gegner in der Figur (0 = vorn, positiv = rechts), aus Blickwinkel a (Bogenmaß, wie
+// group.rotation.y) und Versatz (dx, dz) zum Gegner.
+export function foeBearing(a, dx, dz) {
+  return Math.atan2(dx * Math.cos(a) - dz * Math.sin(a), dx * Math.sin(a) + dz * Math.cos(a));
+}

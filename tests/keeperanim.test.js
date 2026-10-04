@@ -10,12 +10,12 @@ const pose = (m, dive) => {
   const b = m.bones;
   return { y: b.hips.position.y, x: b.hips.position.x, roll: b.hips.rotation.z, armL: b.upperArmL.rotation.x, armR: b.upperArmR.rotation.x, elbowL: b.lowerArmL.rotation.x, kneeL: b.lowerLegL.rotation.x, kneeR: b.lowerLegR.rotation.x };
 };
-// Ganzer Ablauf in Bildern: Sprung (0.5 s) und Aufstehen (0.4 s).
+// Ganzer Ablauf in Bildern: Sprung (0.5 s) und Abrollen/Aufstehen (0.8 s, MatchView DIVE_REC).
 function sequence(opts) {
   const m = createPlayerModel(look, kit, { keeper: true });
   const frames = [];
   for (let t = 0.5; t > 0; t -= DT) frames.push(pose(m, { t, side: 1, ...opts }));
-  for (let r = 0; r <= 1; r += DT / 0.4) frames.push(pose(m, { t: 0, side: 1, ...opts, rec: Math.min(1, r) }));
+  for (let r = 0; r <= 1; r += DT / 0.8) frames.push(pose(m, { t: 0, side: 1, ...opts, rec: Math.min(1, r) }));
   return { m, frames };
 }
 
