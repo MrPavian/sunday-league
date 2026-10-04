@@ -483,6 +483,7 @@ function updatePendingSwitch(m) {
 
 // Torjubel: Der Torschütze läuft zur Eckfahne, die Mitspieler hinterher,
 // die anderen trotten mit hängenden Köpfen zurück.
+const SCORER_STOP = 1.4; // Restzeit des Jubels (s), ab der der Torschütze stehen bleibt
 function celebrate(m, dt) {
   const { pitch } = m;
   const scorer = getPlayer(m, m.lastGoal?.scorerId);
@@ -491,11 +492,13 @@ function celebrate(m, dt) {
     let target = null;
     let speed = 0;
     if (p.mood === 'scorer') {
+      // Gut eine Sekunde abdrehen, dann stehen bleiben und jubeln – sonst holten ihn die Mitspieler nie ein
+      // (vorher bei 13 von 62 Toren einer näher als 1,6 m, Median 7 m; 30 Spiele 7er-Feld).
       target = { x: s * (pitch.halfLength - 3), z: pitch.halfWidth * 0.6 };
-      speed = 6;
+      speed = m.phaseTimer > SCORER_STOP ? 6 : 0;
     } else if (p.mood === 'celebrate' && p.role !== 'gk' && scorer) {
       target = scorer.pos;
-      speed = dist2d(p.pos, scorer.pos) > 1.2 ? 5 : 0;
+      speed = dist2d(p.pos, scorer.pos) > 1.2 ? 6.5 : 0; // sprinten zum Torschützen
     } else if (p.mood === 'sad') {
       target = p.home;
       speed = 1.2;
