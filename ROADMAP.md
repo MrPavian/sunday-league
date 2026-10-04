@@ -710,6 +710,17 @@ Zwei Ursachen behoben:
 - Tore nach Flanke: 4 / 6 / 6 % → 2 / 12 / 3 %
 - Schussquote aus guter Lage: 0,61 → 0,67; Doppelpass-Rückgaben: 48 → 54
 Test: `tests/wing.test.js` (9er-Feld, Kopfbälle aufs Tor und Kopfballtore).
+Flankenarten nach Feldgröße (vierter Schritt). Vorgabe aus der Praxis: Auf dem 7er-Feld kommen Flanken eher flach,
+halbhoch aus dem Halbfeld, oder der Ball wird über die Abwehr gelupft. Hohe Flanken sind auf den größeren Feldern
+häufiger. Belastbare Zahlen zum Anteil flacher und hoher Flanken habe ich nicht gefunden, darum entscheidet die Lage:
+flach, wenn der Weg am Boden zum Laufpunkt frei ist (auf dem 7er überall, sonst nur nah der Grundlinie); halbhoch aus
+dem Halbfeld und auf dem 7er-Feld; sonst hoch. Lupfer über die Abwehr gab es schon (Pass in die Tiefe, gelupft, wenn
+zugestellt): 7er 1,3, 9er 3,0–3,3, Großfeld 2,8 je Spiel.
+80 Spiele je Platz, Flanken je Spiel flach / halbhoch / hoch (Tore danach):
+- 7er: vorher nur hoch 2,31 (6) → 0,69 (2) / 1,39 (6) / 0,45 (0); Tore 3,40 → 3,14 (im Rauschen, ±0,27)
+- 9er: hoch 2,94 (27) → 0,10 (2) / 1,04 (9) / 1,71 (17); Tore 2,80 → 2,66
+- Großfeld: hoch 1,26 (7) → 0,05 (1) / 0,15 (1) / 0,95 (3); Tore 3,09 → 3,19
+Schussquote aus guter Lage 0,66, Doppelpass-Rückgaben 64. Test: `tests/wing.test.js` (Flankenart passt zum Feld).
 Offen:
 - Kopfballtore auf dem 7er-Feld und dem Großfeld bleiben selten (real 15 %). Auf dem Großfeld köpfen die Abnehmer
   meist mehr als 13 m vom Tor entfernt (17 Kopfbälle nach Flanken, 4 davon aufs Tor; 60 Spiele). Auf dem 7er-Feld

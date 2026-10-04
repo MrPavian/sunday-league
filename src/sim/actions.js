@@ -324,16 +324,18 @@ function pass(m, p, a, fatigue, fromHands) {
   p.facing = { x: dir.x, z: dir.z };
   m.lastPass = { playerId: p.id, team: p.team, time: m.time };
   // Offener Pass: Der Adressat läuft dem Ball entgegen (siehe ai.js, receiveSpot).
-  m.pass = target ? { targetId: target.id, kicker: p.id, team: p.team, time: m.time, cross: a.lofted === 'cross' || undefined } : null;
+  // Flache Hereingabe (a.low) zählt als Flanke, ist aber ein Pass am Boden.
+  const isCross = a.lofted === 'cross' || !!a.low;
+  m.pass = target ? { targetId: target.id, kicker: p.id, team: p.team, time: m.time, cross: isCross || undefined } : null;
   // In die Tiefe: Wie lange die Verteidiger zum Umschalten brauchen, hängt an ihrem Zweikampfverhalten.
-  if (m.pass && lead && a.lofted !== 'cross') { // Flanke in den Lauf ist kein Steilpass: keine Schrecksekunde der Abwehr
+  if (m.pass && lead && !isCross) { // Flanke in den Lauf ist kein Steilpass: keine Schrecksekunde der Abwehr
     const defs = m.players.filter((o) => o.team !== p.team && o.role === 'def');
     const read = defs.length ? defs.reduce((s2, o) => s2 + o.attrs.tackling, 0) / defs.length : 0.5;
     m.pass.through = true;
     m.pass.react = 0.55 - 0.3 * read;
   }
   // Rückpass beim Doppelpass: in den Lauf gespielt, aber kein Ball hinter die Abwehrlinie.
-  m.events.push({ type: 'pass', playerId: p.id, targetId: target?.id ?? null, lofted: !!a.lofted, cross: a.lofted === 'cross' || undefined, from: { x: p.pos.x, z: p.pos.z }, to: target ? { x: target.pos.x, z: target.pos.z } : null, through: !!(a.through && target && !a.combo && a.lofted !== 'cross'), combo: a.combo || undefined });
+  m.events.push({ type: 'pass', playerId: p.id, targetId: target?.id ?? null, lofted: !!a.lofted, cross: isCross || undefined, crossKind: isCross ? (a.low ? 'flach' : a.driven ? 'halbhoch' : 'hoch') : undefined, from: { x: p.pos.x, z: p.pos.z }, to: target ? { x: target.pos.x, z: target.pos.z } : null, through: !!(a.through && target && !a.combo && !isCross), combo: a.combo || undefined });
 }
 
 // Strafraum: Nur hier darf der Torwart den Ball in die Hand nehmen.

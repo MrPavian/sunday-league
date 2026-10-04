@@ -5,13 +5,16 @@ import { createMatch, matchDuration, stepMatch } from '../src/sim/match.js';
 import { PITCHES } from '../src/sim/pitch.js';
 
 function audit(venue, n) {
-  const a = { L: 0, M: 0, R: 0, cross: 0, goals: 0, wideShots: 0, shots: 0, hdrGoal: 0, hdrOnGoal: 0 };
+  const a = { L: 0, M: 0, R: 0, cross: 0, goals: 0, wideShots: 0, shots: 0, hdrGoal: 0, hdrOnGoal: 0, kinds: { flach: 0, halbhoch: 0, hoch: 0 } };
   for (let i = 0; i < n; i++) {
     const m = createMatch({ seed: 900 + i, pitch: PITCHES[venue], human: false, duration: matchDuration(PITCHES[venue]), aiCoach: false });
     while (m.phase !== 'ended') {
       stepMatch(m, undefined, 1 / 60);
       for (const e of m.events) {
-        if (e.type === 'pass' && e.cross) a.cross++;
+        if (e.type === 'pass' && e.cross) {
+          a.cross++;
+          a.kinds[e.crossKind ?? 'hoch']++;
+        }
         else if (e.type === 'goal') {
           a.goals++;
           if (e.via === 'header' && !e.ownGoal) a.hdrGoal++;
@@ -22,7 +25,7 @@ function audit(venue, n) {
     for (const p of m.log.poss) if (p.entryLane) a[p.entryLane === 'left' ? 'L' : p.entryLane === 'right' ? 'R' : 'M']++;
   }
   const entries = a.L + a.M + a.R;
-  return { centre: a.M / entries, left: a.L / entries, right: a.R / entries, crosses: a.cross / n, goals: a.goals / n, hdrGoals: a.hdrGoal, hdrOnGoal: a.hdrOnGoal / n };
+  return { centre: a.M / entries, left: a.L / entries, right: a.R / entries, crosses: a.cross / n, goals: a.goals / n, hdrGoals: a.hdrGoal, hdrOnGoal: a.hdrOnGoal / n, kinds: a.kinds };
 }
 
 describe('Spiel über außen', () => {
@@ -43,4 +46,14 @@ describe('Spiel über außen', () => {
     expect(r.hdrGoals).toBeGreaterThan(0); // gemessen 5 % der Tore, rund 3 in 24 Spielen
     expect(r.goals).toBeGreaterThan(2.2);
   }, 240000);
+
+  // Flankenarten nach Feldgröße: Auf dem 7er-Feld kommen Flanken eher flach oder halbhoch, auf dem Großfeld hoch.
+  // Gemessen (80 Spiele): 7er flach 0,69 / halbhoch 1,39 / hoch 0,45 je Spiel; Großfeld 0,05 / 0,15 / 0,95.
+  it('Flankenart passt zum Feld: 7er flach/halbhoch, Großfeld hoch', () => {
+    const k7 = audit('rasenplatz', 16).kinds;
+    expect(k7.flach + k7.halbhoch).toBeGreaterThan(2 * k7.hoch);
+    expect(k7.flach).toBeGreaterThan(0);
+    const k11 = audit('grossfeld', 16).kinds;
+    expect(k11.hoch).toBeGreaterThan(2 * (k11.flach + k11.halbhoch));
+  }, 300000);
 });

@@ -684,11 +684,23 @@ function carryIntent(m, p, oppGoal, wall) {
 
 // Flanke in den Lauf: Wer läuft gerade in den Strafraum (Laufziel aus supportSpot)? Ziel ist sein Laufpunkt,
 // nicht seine jetzige Stelle – vorher landeten Flanken im Schnitt 9–16 m neben der Tormitte.
+// Art der Hereingabe nach Lage: flach, wenn der Weg am Boden frei ist; halbhoch aus dem Halbfeld; sonst hoch.
+// Auf dem 7er-Feld (kleines Tor, wenig Platz im Strafraum) kommen Flanken eher flach oder halbhoch, hohe
+// Flanken sind dort die Ausnahme – auf den größeren Feldern die Regel.
 function crossInto(m, p, oppGoal) {
+  const { pitch } = m;
   const runners = m.players.filter((t) => t.team === p.team && t !== p && t.state === 'normal' && t.supportSpot?.box && m.tactics[t.id]?.type === 'run');
-  if (!runners.length) return { type: 'pass', lofted: 'cross', cone: -0.4, ttl: 0.3 };
+  const small = (pitch.format ?? 7) <= 7;
+  const halfSpace = Math.abs(p.pos.z) < pitch.halfWidth * 0.62;
+  if (!runners.length) return small ? { type: 'pass', lofted: 'cross', driven: true, cone: -0.4, ttl: 0.3 } : { type: 'pass', lofted: 'cross', cone: -0.4, ttl: 0.3 };
   const r = runners.reduce((a, b) => (dist2d(a.supportSpot, oppGoal) < dist2d(b.supportSpot, oppGoal) ? a : b));
-  return { type: 'pass', lofted: 'cross', cone: -1, ttl: 0.3, targetId: r.id, through: { x: r.supportSpot.x, z: r.supportSpot.z } };
+  const spot = { x: r.supportSpot.x, z: r.supportSpot.z };
+  const base = { type: 'pass', cone: -1, ttl: 0.3, targetId: r.id, through: spot };
+  const lane = !m.players.some((o) => o.team !== p.team && o.state === 'normal' && distToSegment(o.pos, p.pos, spot) < 1.3 && dist2d(o.pos, p.pos) > 1);
+  const byline = Math.abs(p.pos.x - oppGoal.x) < pitch.halfLength * 0.2;
+  if (lane && (small || byline)) return { ...base, low: true };
+  if (small || halfSpace) return { ...base, lofted: 'cross', driven: true };
+  return { ...base, lofted: 'cross' };
 }
 
 function aiDecide(m, p, oppGoal) {
@@ -741,7 +753,7 @@ function aiDecide(m, p, oppGoal) {
   }
   // Flügelspiel: Außen in Tornähe wird geflankt, nicht aus spitzem Winkel geschossen.
   if ((st.cross > 0.7 || heeds(m, p, 'wide')) && Math.abs(p.pos.z) > pitch.goalHalfWidth * 2.2 && Math.abs(p.pos.x - oppGoal.x) < pitch.halfLength * 0.45 && rng.chance(0.75)) {
-    p.pending = { type: 'pass', lofted: 'cross', cone: -0.4, ttl: 0.3 };
+    p.pending = crossInto(m, p, oppGoal);
     return;
   }
   // Spitzer Winkel außen, ein Mitspieler im Strafraum: flanken statt aus dem Winkel schießen. Vorher kam
@@ -840,7 +852,7 @@ function aiDecide(m, p, oppGoal) {
   // Außen an der Grundlinie: Flanke in die Mitte.
   const wide = Math.abs(p.pos.z) > pitch.halfWidth * (st.cross > 0.7 ? 0.45 : 0.55) && Math.abs(p.pos.x - oppGoal.x) < pitch.halfLength * (st.cross > 0.7 ? 0.5 : 0.4);
   if (wide && rng.chance(heeds(m, p, 'wide') ? 0.85 : st.cross)) {
-    p.pending = { type: 'pass', lofted: 'cross', cone: -0.3, ttl: 0.3 };
+    p.pending = crossInto(m, p, oppGoal);
     return;
   }
   const underPressure = m.players.some((o) => {
