@@ -53,6 +53,7 @@ describe('Spieler 2.0', () => {
       { speed: 0, celebrate: 'trikot' }, { speed: 3, celebrate: 'trikot' }, { speed: 0, celebrate: 'ohr' }, { speed: 0, celebrate: 'ruecken' },
       { speed: 0, celebrate: 'brust' }, { speed: 0, celebrate: 'umarmen' }, { speed: 4, celebrate: 'hinterher' },
       { speed: 0, gesture: 'haende' }, { speed: 3, gesture: 'haende' }, { speed: 0, gesture: 'abwinken' }, { speed: 0, gesture: 'geballt' }, { speed: 0, gesture: 'zeigen' }, { speed: 0, gesture: 'abklatschen' },
+      ...['schulter', 'schimpfen', 'wade', 'klettern', 'zaun'].flatMap((g) => [{ speed: 0, gesture: g }, { speed: 2, gesture: g }]),
       { speed: 0, sad: true }, { speed: 4, injured: true }, { speed: 0, tired: true }, { speed: 2, tired: true },
       // Torwart: Fangen, Fausten, Abwurf, Abschlag, Breitmachen, Abpraller (auch mit Hechtsprung und Aufstehen)
       ...['kopf', 'brust', 'tief'].flatMap((k) => [0, 0.3, 0.7, 1].map((t) => ({ speed: 0, holding: 'chest', catchKind: k, catchT: t }))),
@@ -111,6 +112,26 @@ describe('Spieler 2.0', () => {
     animatePlayer(m, { speed: 0, dt: 1 / 60, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture: 'haende' });
     expect(m.bones.upperArmL.rotation.x).toBeLessThan(-2);
     expect(m.bones.upperArmR.rotation.x).toBeLessThan(-2);
+  });
+
+  it('Vorfall-Gesten: Achselzucken öffnet die Arme seitlich, Zaun und Klettern heben die Hände, Zerrung beugt den Oberkörper', () => {
+    const m = createPlayerModel(look, kit);
+    const pose = (gesture, frames = 30) => {
+      m.gestT = 0;
+      for (let k = 0; k < frames; k++) animatePlayer(m, { ...base, speed: 0, gesture });
+    };
+    pose('schulter');
+    expect(m.bones.upperArmR.rotation.z).toBeGreaterThan(0.6);
+    expect(m.bones.upperArmL.rotation.z).toBeLessThan(-0.6);
+    pose('zaun');
+    expect(m.bones.upperArmL.rotation.x).toBeLessThan(-0.9);
+    pose('klettern');
+    expect(Math.min(m.bones.upperArmL.rotation.x, m.bones.upperArmR.rotation.x)).toBeLessThan(-1.4);
+    pose('wade');
+    expect(m.bones.spine.rotation.x).toBeGreaterThan(0.6);
+    pose('schimpfen');
+    expect(m.bones.upperArmR.rotation.x).toBeLessThan(-1.5);
+    expect(m.face).toBe('angry');
   });
 
   it('Torwart: Kopf-Fang hält die Hände über den Kopf, Breitmachen spreizt Arme und Beine, Abpraller klappt die Hände hoch', () => {

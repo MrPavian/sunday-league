@@ -2,7 +2,7 @@ import { GET_UP } from '../sim/tackles.js';
 import * as THREE from 'three';
 import { ACRO, TRICKS } from '../sim/tricks.js';
 import { len } from '../core/math.js';
-import { catchKind, isFumble, mateCelebration, punchStyle, refereeSignal, shotReactions, subScene, tiredFace, wideStance } from './reactions.js';
+import { catchKind, incidentPose, isFumble, mateCelebration, punchStyle, refereePose, refereeSignal, shotReactions, subScene, tiredFace, wideStance } from './reactions.js';
 import { allPlayers } from '../sim/squad.js';
 import { attackDir } from '../sim/players.js';
 import { BallView } from './BallView.js';
@@ -48,6 +48,7 @@ const CATCH_T = 0.5; // Fangen: so lange dauert es, bis der Ball an der Brust li
 const HAND = new THREE.Vector3();
 const HAND2 = new THREE.Vector3();
 const DIVE_REC = 0.4; // Aufstehen nach dem Hechtsprung (s, nur Darstellung)
+const INC_POSE = { gesture: null, cover: 0, lift: 0 };
 const REF_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal' };
 const LEAVE_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture: null };
 
@@ -421,7 +422,9 @@ export class MatchView {
   sync(match, dt) {
     this.time += dt;
     for (const model of this.models.values()) model.group.visible = false;
+    let idx = -1;
     for (const p of match.players) {
+      idx++;
       const m = this.models.get(p.id);
       m.group.visible = true;
       m.group.position.set(p.pos.x, 0, p.pos.z);
@@ -573,11 +576,11 @@ export class MatchView {
       o.fooled = p.fooledUntil > match.time ? 1 - (p.fooledUntil - match.time) / (p.fooledFor || 0.8) : 0;
       o.celebrate = celebrate;
       o.sad = p.mood === 'sad';
-      // Vorfälle: beim Gewitter Hände über den Kopf, bei der Taube scheuchen.
-      const inc = match.incident?.type;
-      o.cover = inc === 'gewitter' && len(p.vel.x, p.vel.z) > 1.5 ? 1 : 0;
-      const pg = inc === 'taube' ? match.pigeon : null;
-      o.gesture = pg && pg.state !== 'gleiten' && Math.hypot(pg.pos.x - p.pos.x, pg.pos.z - p.pos.z) < 2.3 ? 'scheuchen' : null;
+      // Vorfälle (reactions.js incidentPose): Hände über dem Kopf, scheuchen, zeigen, klettern am Zaun …
+      const ip = match.incident ? incidentPose(match, p, idx, INC_POSE) : null;
+      o.cover = ip ? ip.cover : 0;
+      o.gesture = ip ? ip.gesture : null;
+      m.group.position.y = ip ? ip.lift : 0;
       // Nach dem Schuss: Hände an den Kopf, abwinken, Faust des Torwarts (nur Darstellung, aus Ereignissen).
       if (m.reactTime > 0) {
         m.reactTime -= dt;
@@ -623,6 +626,7 @@ export class MatchView {
         }
       }
       REF_ANIM.cover = match.incident?.type === 'gewitter' && REF_ANIM.speed > 1.5 ? 1 : 0;
+      REF_ANIM.gesture = refereePose(match) ?? REF_ANIM.gesture;
       animatePlayer(this.referee, REF_ANIM);
       if (r.cardAnim > 0) this.referee.arms[1].rotation.x = -2.9; // Karte hoch
       this.blob(this.referee, r.pos.x, r.pos.z);
