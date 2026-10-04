@@ -2,6 +2,7 @@
 // Ohne three.js und DOM, damit es sich mit der Simulation allein prüfen lässt (tests/reactions.test.js).
 
 import { attackDir } from '../sim/players.js';
+import { CLIMB } from '../sim/incidents.js';
 
 // Vergebene Chance: Der Schütze greift sich an den Kopf (Pfosten, Latte, vorbei) oder winkt ab
 // (gehalten); der Torwart ballt nach der Parade kurz die Faust. state merkt sich den letzten Schuss.
@@ -115,3 +116,79 @@ export const isFumble = (e, match) => {
   const gk = match.players.find((p) => p.id === e.playerId);
   return !gk || match.ball.vel.x * attackDir(match, gk.team) > 0;
 };
+
+// Vorfälle: Wie die Figuren auf dem Platz reagieren (nur Darstellung, aus dem Stand der Simulation: wer rennt,
+// wer steht, wer ist am Zaun). Gesten: PlayerModel.js. Liefert { gesture, cover, lift } – das Objekt wird
+// wiederverwendet (out), also nicht aufheben. i = Platz in match.players (die Simulation verteilt Rollen nach i).
+const POSE = { gesture: null, cover: 0, lift: 0 };
+
+// Höhe am Zaun in m: hoch (CLIMB.up), oben (CLIMB.top), wieder runter (CLIMB.down); ct = Zeit seit dem Ankommen.
+export function climbLift(ct) {
+  if (!(ct > 0)) return 0;
+  const { up, top, down, height } = CLIMB;
+  const ease = (t) => t * t * (3 - 2 * t);
+  if (ct < up) return height * ease(ct / up);
+  if (ct < up + top) return height;
+  return ct < up + top + down ? height * (1 - ease((ct - up - top) / down)) : 0;
+}
+
+export function incidentPose(match, p, i, out = POSE) {
+  out.gesture = null;
+  out.cover = 0;
+  out.lift = 0;
+  const inc = match.incident;
+  if (!inc || p.state !== 'normal') return out;
+  const speed = Math.hypot(p.vel.x, p.vel.z);
+  const { pitch } = match;
+  switch (inc.type) {
+    case 'gewitter':
+      // Rennen mit den Händen über dem Kopf; unterm Vordach angekommen frieren sie (Arme verschränkt).
+      if (speed > 1.5) out.cover = 1;
+      else if (p.pos.z < -pitch.halfWidth - 1 && i % 2) out.gesture = 'arme';
+      break;
+    case 'sprenger':
+      // Wer nass wird, rennt weg (Hände vors Gesicht); die anderen zeigen auf den Sprenger oder schimpfen.
+      if (speed > 1.5) out.cover = 1;
+      else out.gesture = i % 3 === 0 ? 'schimpfen' : i % 3 === 1 ? 'zeigen' : null;
+      break;
+    case 'hund':
+      if (match.dog && p.role !== 'gk' && Math.hypot(match.dog.pos.x - p.pos.x, match.dog.pos.z - p.pos.z) < 3) out.gesture = 'scheuchen';
+      break;
+    case 'taube': {
+      const pg = match.pigeon;
+      if (pg && pg.state !== 'gleiten' && Math.hypot(pg.pos.x - p.pos.x, pg.pos.z - p.pos.z) < 2.3) out.gesture = 'scheuchen';
+      break;
+    }
+    case 'zaun': {
+      const { climber, fence } = inc;
+      if (!climber || !fence) break;
+      if (p.id === climber.id) {
+        if (climber.ct > 0 && !climber.done) {
+          out.gesture = 'klettern';
+          out.lift = climbLift(climber.ct);
+        }
+      } else if (inc.helpers.includes(p.id)) {
+        if (Math.hypot(fence.x - p.pos.x, fence.z - p.pos.z) < 2.2) out.gesture = 'zaun';
+      } else if (match.ball.lastTouch === p.id) out.gesture = 'haende';
+      else if (inc.lost && i % 3 === 0 && speed < 1) out.gesture = 'schimpfen';
+      break;
+    }
+    case 'autoalarm':
+      // Der Schütze fasst sich an den Kopf, die anderen zeigen aufs Auto.
+      out.gesture = match.ball.lastTouch === p.id ? 'haende' : i % 4 === 3 ? null : 'zeigen';
+      break;
+    case 'polizei':
+      if (match.visitors?.some((v) => v.gesture && v.id.startsWith('polizei')) && i % 3 === 0) out.gesture = 'arme';
+      break;
+    case 'ersatzschiri': {
+      const r = match.referee;
+      if (r && inc.helpers.includes(p.id) && Math.hypot(r.pos.x - p.pos.x, r.pos.z - p.pos.z) < 2.5) out.gesture = 'schulter';
+      else if (i % 2) out.gesture = 'arme';
+      break;
+    }
+  }
+  return out;
+}
+
+// Der verletzte Schiri hält sich den Oberschenkel, bis ein Zuschauer die Pfeife nimmt.
+export const refereePose = (match) => (match.incident?.type === 'ersatzschiri' ? 'wade' : null);

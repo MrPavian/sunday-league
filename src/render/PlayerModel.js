@@ -687,6 +687,12 @@ function armTo(bn, s, fwd, out, elbow, w) {
   lo.rotation.x = lerp(lo.rotation.x, elbow, w);
 }
 const mix3 = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+// Armwinkel [vor, außen, Ellbogen] der Vorfall-Gesten, jeweils per Gitter-Suche auf einen Zielpunkt der Hand (Abstände bei der Geste):
+const SHRUG = [-0.15, 0.77, -0.83];
+const FIST_HIGH = [-2.4, 0.07, -0.03];
+const FIST_LOW = [-1.63, 0.15, -0.65];
+const CLIMB_HIGH = [-2.65, -0.15, -0.6];
+const CLIMB_MID = [-1.53, -0.13, -0.93];
 
 // Torwart-Armwinkel [vor, außen, Ellbogen], jeweils per Gitter-Suche auf einen Zielpunkt der Hand (lokal,
 // x = Seite der linken Hand): Ball an der Brust, Wurf, Abschlag, Fausten.
@@ -1237,7 +1243,8 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
     face = 'effort';
   }
   // Gesten bei Vorfällen: finger (Zeigefinger hoch, wackelt), arme (verschränkt),
-  // scheuchen (beide Arme fuchteln), rufen (ein Arm winkt hoch über dem Kopf).
+  // scheuchen (beide Arme fuchteln), rufen (ein Arm winkt hoch über dem Kopf), schulter (Achselzucken),
+  // schimpfen (Faust schüttelt), wade (Zerrung), klettern (am Zaun hoch), zaun (Hände am Zaun).
   if (gesture && state === 'normal' && !dive) {
     model.gestT = (model.gestT ?? 0) + (dt ?? 0);
     const g = model.gestT;
@@ -1277,6 +1284,47 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
     } else if (gesture === 'geballt') {
       // Gehalten: Faust auf Brusthöhe, kurz angezogen.
       arm(bn, 'R', -0.9 - Math.min(1, g / 0.25) * 0.5, 0.2, -1.9);
+    } else if (gesture === 'schulter') {
+      // Achselzucken: beide Hände seitlich auf Hüfthöhe, die Schultern wippen (Gitter-Suche, 0,2 cm).
+      const w = Math.sin(g * 4) * 0.06;
+      arm(bn, 'L', SHRUG[0], SHRUG[1] + w, SHRUG[2]);
+      arm(bn, 'R', SHRUG[0], SHRUG[1] + w, SHRUG[2]);
+      bn.head.rotation.z += Math.sin(g * 2) * 0.12;
+    } else if (gesture === 'schimpfen') {
+      // Schimpfen: Faust schüttelt vor dem Gesicht (zwischen Kopfhöhe und Brust, Gitter-Suche 1,7 und 0,5 cm),
+      // die andere Hand in der Hüfte (0,6 cm).
+      const a = mix3(FIST_LOW, FIST_HIGH, 0.5 + 0.5 * Math.sin(g * 11));
+      arm(bn, 'R', a[0], a[1], a[2]);
+      arm(bn, 'L', 0.55, 0.2, -1.3);
+      bn.spine.rotation.x += 0.08;
+      bn.head.rotation.y += Math.sin(g * 5) * 0.12;
+      face = 'angry';
+    } else if (gesture === 'wade') {
+      // Zerrung: Oberkörper vor, die rechte Hand am Oberschenkel (Gitter-Suche, 0,6 cm), linkes Bein angewinkelt, humpelt.
+      bn.spine.rotation.x += 0.7;
+      bn.head.rotation.x -= 0.35;
+      bn.hips.position.y += Math.sin(g * 4) * 0.015 - 0.04;
+      arm(bn, 'R', -0.4, -0.2, -0.28);
+      arm(bn, 'L', -0.1, 0.5, -0.5);
+      leg(bn, 'L', -0.3, 1.2, 0.3);
+      face = 'pain';
+    } else if (gesture === 'klettern') {
+      // Am Zaun hoch: die Hände greifen abwechselnd nach oben (Gitter-Suche, 0,6 und 0,4 cm), die Knie ziehen nach.
+      const w = 0.5 + 0.5 * Math.sin(g * 5);
+      const hi = mix3(CLIMB_MID, CLIMB_HIGH, w);
+      const lo = mix3(CLIMB_MID, CLIMB_HIGH, 1 - w);
+      arm(bn, 'R', hi[0], hi[1], hi[2]);
+      arm(bn, 'L', lo[0], lo[1], lo[2]);
+      leg(bn, 'R', -1.0 * (1 - w) - 0.15, 1.1 * (1 - w), 0.2);
+      leg(bn, 'L', -1.0 * w - 0.15, 1.1 * w, 0.2);
+      bn.head.rotation.x -= 0.3;
+      face = 'effort';
+    } else if (gesture === 'zaun') {
+      // Beide Hände am Zaun auf Brusthöhe (Gitter-Suche, 0,8 cm), der Kopf schaut hin und her.
+      arm(bn, 'L', -1.05, 0.05, -1.2);
+      arm(bn, 'R', -1.05, 0.05, -1.2);
+      bn.spine.rotation.x += 0.08;
+      bn.head.rotation.y += Math.sin(g * 1.7) * 0.35;
     }
   } else model.gestT = 0;
 
