@@ -28,6 +28,8 @@ export function coachOf(club) {
 }
 
 const feudOf = (c, id) => c.feuds?.[id] ?? 0;
+// Text-Variante ohne Zufallsstrom: aus Verein, Saison und Runde abgeleitet, damit der Spielablauf gleich bleibt.
+const spin = (list, ...n) => list[Math.abs([...n.join('|')].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) | 0, 7)) % list.length];
 
 // Wochenbeginn: Vorbericht aus dem Kreisblatt – je nach Typ und Vorgeschichte.
 export function preMatchVoice(c, opponent, chat) {
@@ -40,8 +42,8 @@ export function preMatchVoice(c, opponent, chat) {
   const feud = feudOf(c, opponent.id);
   const last = [...(c.meetings?.[opponent.id] ?? [])].pop();
   let quote;
-  if (feud <= -2) quote = tr('Mit denen haben wir noch eine Rechnung offen. Das weiß jeder.', 'We have a score to settle with that lot. Everyone knows it.');
-  else if (feud >= 2) quote = tr('Faire Truppe, netter Verein. Aber Sonntag gibt es nichts geschenkt.', 'Fair bunch, decent club. But nothing is free on Sunday.');
+  if (feud <= -2) quote = spin(tr(['Mit denen haben wir noch eine Rechnung offen. Das weiß jeder.', 'Da steht noch was aus. Sonntag wird abgerechnet.', 'Das Hinspiel vergessen wir nicht. Die anderen auch nicht.', 'Die haben uns letztes Mal ausgelacht. Das vergisst keiner.', 'Mit dem Schiri reden wir danach. Erst mal die drei Punkte.', 'Ich sag nur: Revanche. Mehr sag ich nicht.', 'Die kennen uns, wir kennen die. Das gibt keinen Tanzabend.'], ['We have a score to settle with that lot. Everyone knows it.', 'There is unfinished business. Sunday we settle up.', 'We have not forgotten the last meeting. Neither have they.', 'They laughed at us last time. Nobody forgets that.', 'We will talk to the ref afterwards. Three points first.', 'All I will say: revenge. Nothing more.', 'They know us, we know them. This will be no dance evening.']), opponent.id, c.season, c.round);
+  else if (feud >= 2) quote = spin(tr(['Faire Truppe, netter Verein. Aber Sonntag gibt es nichts geschenkt.', 'Mit denen trinkt man gern ein Bier. Nach dem Abpfiff.', 'Sympathischer Verein. Leider auch ordentlich Qualität.', 'Respekt vor denen. Aber verlieren dürfen sie trotzdem.', 'Das wird ein sauberes Spiel. Die Wurst danach ist schon bestellt.', 'Die kann man nicht nicht mögen. Sonntag müssen wir es trotzdem versuchen.', 'Fairplay-Pokal gehört denen, die Punkte uns.'], ['Fair bunch, decent club. But nothing is free on Sunday.', 'Good lads to have a beer with. After the final whistle.', 'Likeable club. Sadly also decent quality.', 'Respect for them. They are still allowed to lose, though.', 'This will be a clean game. The sausage afterwards is already ordered.', 'You cannot not like them. Sunday we have to try anyway.', 'The fair play cup is theirs, the points ours.']), opponent.id, c.season, c.round);
   else if (last && last.ga > last.gf) quote = tr(`Letztes Mal haben wir ${last.ga}:${last.gf} gewonnen. Warum sollte es diesmal anders sein?`, `Last time we won ${last.ga}-${last.gf}. Why would it be any different?`);
   else if (coach.type === 'grossmaul') quote = ours > theirs ? tr('Die stehen hinter uns, und da gehören sie auch hin.', 'They are below us and that is where they belong.') : tr('Tabelle lügt. Sonntag sieht man, wer kicken kann.', 'The table lies. Sunday will show who can play.');
   else if (coach.type === 'stratege') quote = tr('Wir haben sie dreimal auf Video angeschaut. Also das eine Video, das es gibt.', 'We watched them three times on video. Well, the one video there is.');
