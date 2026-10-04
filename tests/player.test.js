@@ -54,6 +54,13 @@ describe('Spieler 2.0', () => {
       { speed: 0, celebrate: 'brust' }, { speed: 0, celebrate: 'umarmen' }, { speed: 4, celebrate: 'hinterher' },
       { speed: 0, gesture: 'haende' }, { speed: 3, gesture: 'haende' }, { speed: 0, gesture: 'abwinken' }, { speed: 0, gesture: 'geballt' }, { speed: 0, gesture: 'zeigen' }, { speed: 0, gesture: 'abklatschen' },
       { speed: 0, sad: true }, { speed: 4, injured: true },
+      // Torwart: Fangen, Fausten, Abwurf, Abschlag, Breitmachen, Abpraller (auch mit Hechtsprung und Aufstehen)
+      ...['kopf', 'brust', 'tief'].flatMap((k) => [0, 0.3, 0.7, 1].map((t) => ({ speed: 0, holding: 'chest', catchKind: k, catchT: t }))),
+      ...['beide', 'links', 'rechts'].flatMap((st) => [0.05, 0.3, 0.8].map((t) => ({ speed: 0, punch: t, jump: 0.5, punchStyle: st }))),
+      ...[0.001, 0.18, 0.3, 0.44, 0.8, 1].map((t) => ({ speed: 0, throwT: t })),
+      ...[0.001, 0.2, 0.5, 1].map((t) => ({ speed: 0, drop: t, kickAnim: 0.3 * (1 - t) + 0.001, kick: 'shot' })),
+      { speed: 0, wide: 1, ready: 1 }, { speed: 3, wide: 0.5 }, { speed: 0, ready: 0.4, wide: 0.2 },
+      ...[0.1, 0.4, 0.9].map((t) => ({ speed: 0, fumble: t })), { speed: 0, fumble: 0.3, dive: { t: 0, side: 1, high: 0.5, caught: false, rec: 0.3 } },
     ];
     for (const o of poses) {
       const input = { ...base, ...o };
@@ -91,5 +98,32 @@ describe('Spieler 2.0', () => {
     animatePlayer(m, { speed: 0, dt: 1 / 60, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture: 'haende' });
     expect(m.bones.upperArmL.rotation.x).toBeLessThan(-2);
     expect(m.bones.upperArmR.rotation.x).toBeLessThan(-2);
+  });
+
+  it('Torwart: Kopf-Fang hält die Hände über den Kopf, Breitmachen spreizt Arme und Beine, Abpraller klappt die Hände hoch', () => {
+    const m = createPlayerModel(look, kit, { keeper: true });
+    const pose = (o) => animatePlayer(m, { ...base, speed: 0, ...o });
+    pose({ holding: 'chest', catchKind: 'kopf', catchT: 0.2 });
+    expect(m.bones.upperArmL.rotation.x).toBeLessThan(-2.5);
+    pose({ holding: 'chest', catchKind: 'brust', catchT: 0.2 });
+    const brust = m.bones.upperArmL.rotation.x;
+    expect(brust).toBeLessThan(-1.3);
+    expect(brust).toBeGreaterThan(-2);
+    pose({ holding: 'chest', catchKind: 'kopf', catchT: 1 }); // fertig gefangen: Ball an der Brust
+    expect(m.bones.upperArmL.rotation.x).toBeCloseTo(-1.05, 5);
+    pose({ ready: 1 });
+    const ready = { arm: m.bones.upperArmR.rotation.z, leg: m.bones.upperLegR.rotation.z, hip: m.bones.hips.position.y };
+    pose({ ready: 1, wide: 1 });
+    expect(m.bones.upperArmR.rotation.z).toBeGreaterThan(ready.arm);
+    expect(m.bones.upperLegR.rotation.z).toBeGreaterThan(ready.leg);
+    expect(m.bones.hips.position.y).toBeLessThan(ready.hip);
+    pose({ punch: 0.3, jump: 0.5, punchStyle: 'beide' });
+    expect(m.bones.upperArmL.rotation.x).toBeCloseTo(m.bones.upperArmR.rotation.x, 5);
+    expect(m.bones.upperArmL.rotation.x).toBeLessThan(-2.4);
+    pose({ punch: 0.3, jump: 0.5, punchStyle: 'links' });
+    expect(m.bones.upperArmL.rotation.x).toBeLessThan(-2.4);
+    expect(m.bones.upperArmR.rotation.x).toBeGreaterThan(-1);
+    pose({ fumble: 0.4 });
+    expect(m.bones.upperArmL.rotation.x).toBeLessThan(-1.7);
   });
 });
