@@ -694,6 +694,50 @@ const FIST_LOW = [-1.63, 0.15, -0.65];
 const CLIMB_HIGH = [-2.65, -0.15, -0.6];
 const CLIMB_MID = [-1.53, -0.13, -0.93];
 
+// Schicht über der Laufbewegung: Pose merken, Schicht setzen, dann zur gemerkten hin überblenden
+// (w 1 = ganz die Schicht). So springt nichts beim Wechsel zwischen Laufen, Ausholen und Schuss.
+function snapPose(m) {
+  const a = (m.snap ??= new Float32Array(BONES.length * 3 + 3));
+  let i = 0;
+  for (const n of BONES) {
+    const r = m.bones[n].rotation;
+    a[i++] = r.x;
+    a[i++] = r.y;
+    a[i++] = r.z;
+  }
+  const p = m.bones.hips.position;
+  a[i++] = p.x;
+  a[i++] = p.y;
+  a[i] = p.z;
+  return a;
+}
+function mixPose(m, a, w) {
+  let i = 0;
+  for (const n of BONES) {
+    const r = m.bones[n].rotation;
+    r.x = lerp(a[i], r.x, w);
+    r.y = lerp(a[i + 1], r.y, w);
+    r.z = lerp(a[i + 2], r.z, w);
+    i += 3;
+  }
+  const p = m.bones.hips.position;
+  p.x = lerp(a[i], p.x, w);
+  p.y = lerp(a[i + 1], p.y, w);
+  p.z = lerp(a[i + 2], p.z, w);
+}
+
+// Einwurf mit Anlauf: Arme [vor, außen, Ellbogen] – jeweils per Gitter-Suche auf einen Zielpunkt der
+// Hand (Mitte der beiden Hände = Ballmitte): Ball vor dem Bauch beim Anlauf (0,5 cm), hinter dem Kopf
+// (1 cm), Loslassen vor der Stirn (4 cm), Durchschwung vor dem Körper (0,3 cm).
+const IN_CARRY = [-0.25, -0.7, -1.8];
+const IN_BACK = [-3.45, -0.3, -0.8];
+const IN_REL = [-2.8, -0.25, 0];
+const IN_FOLLOW = [-1.15, -0.3, -0.95];
+export const IN_REL_AT = 0.22; // Loslassen (Anteil des Wurfs tinT)
+// Arme beim Anlauf: erst Ball vor dem Bauch, dann nach hinten über den Kopf (u 0 → 1).
+const inRunArm = (u) => (u < 0.35 ? IN_CARRY : mix3(IN_CARRY, IN_BACK, smooth(0.35, 0.75, u)));
+const inRunLean = (u) => lerp(0.1, -0.15, smooth(0.35, 0.75, u));
+
 // Torwart-Armwinkel [vor, außen, Ellbogen], jeweils per Gitter-Suche auf einen Zielpunkt der Hand (lokal,
 // x = Seite der linken Hand): Ball an der Brust, Wurf, Abschlag, Fausten.
 const HOLD_ARM = [-1.05, -0.28, -1.25]; // Ball an der Brust
@@ -776,7 +820,9 @@ function locomotion(m, speed, dt) {
 }
 
 // Schuss und Pass: Ausholen → Kontakt → Durchziehen → zurück. power 1 Schuss, ~0,55 Pass.
-function kickPose(bn, t, power) {
+// foot +1 rechtes, -1 linkes Schussbein. Das Standbein steht beim Kontakt neben dem Ball (Gitter-Suche:
+// Sohle flach auf dem Boden, Fußmitte 28 cm (Pass) bzw. 34 cm (Schuss) vor der Hüfte, 24–26 cm zur Seite).
+function kickPose(bn, t, power, foot = 1) {
   const P = power;
   let thigh;
   let knee;
@@ -807,14 +853,21 @@ function kickPose(bn, t, power) {
     twist = lerp(-0.22 * P, 0, u);
     lean = lerp(0.2 * P, 0.08, u);
   }
-  leg(bn, 'R', thigh, knee, t < 0.5 ? 0.35 : 0.2);
-  leg(bn, 'L', -0.12, 0.28, -0.1); // Standbein leicht gebeugt
-  bn.spine.rotation.y = twist;
+  const kick = foot > 0 ? 'R' : 'L';
+  const plant = foot > 0 ? 'L' : 'R';
+  leg(bn, kick, thigh, knee, t < 0.5 ? 0.35 : 0.2);
+  // Standbein: aus leichter Beugung in die Stellung neben dem Ball, Hüfte sinkt mit.
+  const w = smooth(0, 0.5, t);
+  const q = clamp01((P - 0.55) / 0.45); // 0 Pass … 1 Schuss
+  leg(bn, plant, lerp(-0.12, lerp(-0.8, -0.55, q), w), lerp(0.28, lerp(0.85, 0.25, q), w), lerp(-0.1, lerp(-0.05, 0.27, q), w));
+  bn[`upperLeg${plant}`].rotation.z = (plant === 'L' ? -0.2 : 0.2) * w;
+  bn.hips.position.y -= lerp(0.12, 0.08, q) * w;
+  bn.spine.rotation.y = twist * foot;
   bn.spine.rotation.x = lean;
-  bn.hips.rotation.y = -twist * 0.5;
+  bn.hips.rotation.y = -twist * 0.5 * foot;
   // Arme gleichen aus: der gegenüberliegende nach vorn-außen, der andere zurück.
-  arm(bn, 'L', -0.45 * P, 0.55 * P, -0.5);
-  arm(bn, 'R', 0.35 * P, 0.35 * P, -0.4);
+  arm(bn, plant, -0.45 * P, 0.55 * P, -0.5);
+  arm(bn, kick, 0.35 * P, 0.35 * P, -0.4);
   bn.head.rotation.x = 0.18; // Blick auf den Ball
 }
 
@@ -917,7 +970,11 @@ function acroPose(bn, kind, t, hipY) {
 // Torwart: catchKind 'kopf'|'brust'|'tief' + catchT 0…1 (Fangen, danach zieht er den Ball an die Brust),
 // punchStyle 'beide'|'links'|'rechts' (Fausten), wide 0…1 (Breitmachen im 1 gegen 1), fumble 0…1
 // (Abpraller: Hände klappen zurück), drop 0…1 (Abschlag aus der Hand: Ball fallen lassen, Volley).
-export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot', headPrep = 0, headJump = 1, hit = null, duck = 0, face: faceHint = null, tired = false, kickPrep = 0, trick = null, trickT = 0, trickSide = 1, acro = null, acroT = 0, fooled = 0, ready = 0, throwT = 0, jump = 0, punch = 0, getUp = null, cover = 0, gesture = null, catchKind = null, catchT = 0, punchStyle = 'beide', wide = 0, fumble = 0, drop = 0 }) {
+// Fluss: kickTail 1 → 0 (Ausklingen nach dem Schuss, weich zurück ins Laufen), kickFoot ±1 (rechtes/linkes
+// Schussbein, je nach Ballseite), tinRun 0…1 (Einwurf: Anlauf und Ballhalten hinter dem Kopf), tinT 0…1 (Wurf, Loslassen
+// bei IN_REL_AT), duel 0…1 (Zweikampf: Schulter rein) mit duelDir (Richtung des Gegners, Bogenmaß von vorn
+// nach rechts), duelShield 0…1 (Ball abschirmen: Rücken zum Gegner) und duelPush 0…1 (Kontakt: kurzer Stoß).
+export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot', headPrep = 0, headJump = 1, hit = null, duck = 0, face: faceHint = null, tired = false, kickPrep = 0, trick = null, trickT = 0, trickSide = 1, acro = null, acroT = 0, fooled = 0, ready = 0, throwT = 0, jump = 0, punch = 0, getUp = null, cover = 0, gesture = null, catchKind = null, catchT = 0, punchStyle = 'beide', wide = 0, fumble = 0, drop = 0, kickTail = 0, kickFoot = 1, tinRun = 0, tinT = 0, duel = 0, duelDir = 0, duelShield = 0, duelPush = 0 }) {
   const bn = model.bones;
   resetPose(model);
   model.bones.hood.scale.setScalar(HIDDEN);
@@ -937,12 +994,19 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
   }
   model.plaster.visible = hurt;
 
-  if (kickAnim > 0) {
-    kickPose(bn, 1 - kickAnim / 0.3, kick === 'pass' ? 0.55 : 1);
-    face = 'effort';
-  } else if (kickPrep > 0) {
-    // Ausholen, solange der Schuss/Pass geplant ist (vor dem Abflug des Balls).
-    kickPose(bn, 0.35 * Math.min(1, kickPrep), kick === 'pass' ? 0.55 : 1);
+  // Schuss/Pass als Schicht über dem Laufen: Ausholen (kickPrep) blendet ein, Kontakt und Durchschwung
+  // (kickAnim), danach klingt es aus (kickTail) und geht weich ins Laufen zurück. Eine Aktion ohne
+  // Ausholen blendet in ~3 Bildern ein.
+  const kTarget = kickAnim > 0 ? 1 : kickTail > 0 ? smooth(0, 1, kickTail) : smooth(0, 1, kickPrep);
+  const kPrev = model.kickW ?? 0;
+  model.kickW = kTarget > kPrev && dt > 0 ? Math.min(kTarget, kPrev + dt / 0.05) : kTarget;
+  if (model.kickW > 0 && (state === 'normal' || state === 'poke')) {
+    const t0 = 1 - kickAnim / 0.3;
+    // Nach dem Kontakt (0,47) läuft der Durchschwung etwas langsamer, das Ausklingen hängt sich bei 0,8 an.
+    const kt = kickAnim > 0 ? (t0 < 0.47 ? t0 : 0.47 + (t0 - 0.47) * 0.62) : kickTail > 0 ? 0.8 + 0.2 * (1 - kickTail) : 0.35 * Math.min(1, kickPrep);
+    const base = snapPose(model);
+    kickPose(bn, kt, kick === 'pass' ? 0.55 : 1, kickFoot);
+    mixPose(model, base, model.kickW);
     face = 'effort';
   }
   // Torwart in Bereitschaft: in die Knie, Oberkörper vor, Arme seitlich offen (0…1 eingeblendet).
@@ -989,7 +1053,38 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
     arm(bn, 'R', lerp(HOLD_ARM[0], -0.4, e), lerp(HOLD_ARM[1], 0.9, e), lerp(HOLD_ARM[2], -0.3, e));
     face = 'effort';
   }
-  if (holding === 'chest') {
+  // Einwurf mit Anlauf: Ball erst vor dem Bauch, dann hinter dem Kopf (tinRun), beide Arme werfen über
+  // den Kopf nach vorn (tinT, Loslassen bei IN_REL_AT), der Schwung zieht den Oberkörper nach, ein Fuß
+  // steigt vor, das andere Bein schleift nach.
+  if ((tinRun > 0 || tinT > 0) && state === 'normal' && !dive) {
+    let a = inRunArm(tinRun);
+    let lean = inRunLean(tinRun);
+    let g = 0;
+    if (tinT > 0) {
+      const toRel = smooth(0, IN_REL_AT, tinT);
+      const to = tinT < IN_REL_AT ? mix3(IN_BACK, IN_REL, toRel) : mix3(IN_REL, IN_FOLLOW, smooth(IN_REL_AT, 1, tinT));
+      const leanTo = tinT < IN_REL_AT ? lerp(-0.15, 0.2, toRel) : lerp(0.2, 0.35, smooth(IN_REL_AT, 1, tinT));
+      const into = smooth(0, 0.08, tinT); // aus der Haltung des Anlaufs heraus, auch bei frühem Wurf
+      a = mix3(a, to, into);
+      lean = lerp(lean, leanTo, into);
+      g = toRel;
+    }
+    const w = smooth(0, 0.1, tinRun); // die ersten Bilder aus der Laufbewegung heraus
+    armTo(bn, 'L', a[0], a[1], a[2], w);
+    armTo(bn, 'R', a[0], a[1], a[2], w);
+    bn.spine.rotation.x = lerp(bn.spine.rotation.x, lean + 0.12 * s, w);
+    bn.head.rotation.x = -0.1 * g;
+    if (g > 0) {
+      bn.upperLegL.rotation.x = lerp(bn.upperLegL.rotation.x, -0.5, g);
+      bn.lowerLegL.rotation.x = lerp(bn.lowerLegL.rotation.x, 0.35, g);
+      bn.footL.rotation.x = lerp(bn.footL.rotation.x, 0.1, g);
+      bn.upperLegR.rotation.x = lerp(bn.upperLegR.rotation.x, 0.4, g);
+      bn.lowerLegR.rotation.x = lerp(bn.lowerLegR.rotation.x, 0.55, g);
+      bn.footR.rotation.x = lerp(bn.footR.rotation.x, 0.7, g);
+      bn.hips.position.y -= 0.05 * g;
+    }
+    face = 'effort';
+  } else if (holding === 'chest') {
     arm(bn, 'L', ...HOLD_ARM);
     arm(bn, 'R', ...HOLD_ARM);
     if (catchKind && catchT < 1) catchPose(bn, catchKind, catchT);
@@ -1065,6 +1160,38 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
     bn.upperArmL.rotation.z -= 1.0 * k;
     bn.upperArmR.rotation.z += 0.6 * k;
     face = 'surprised';
+  }
+
+  // Zweikampf um den Ball: Schulter rein. Der Oberkörper dreht die Schulter zum Gegner (duelDir: 0 = vorn,
+  // positiv = rechts), lehnt sich gegen ihn, die Beine gehen breit und tief, der Arm auf seiner Seite ist
+  // als Ellbogen vorgeschoben, der andere gleicht aus. Abschirmen (duelShield): Rücken zum Gegner, Arme
+  // seitlich-hinten als Abstand. Armwinkel per Gitter-Suche: Faust 5 cm von Schulterhöhe vor der Brust
+  // (Ellbogen raus), freier Arm 6 cm von waagerecht seitlich, Abschirm-Arm 0,2 cm.
+  if (duel > 0 && state === 'normal' && !dive) {
+    const k = duel;
+    const near = duelDir >= 0 ? 'R' : 'L';
+    const far = near === 'R' ? 'L' : 'R';
+    const side = near === 'R' ? 1 : -1;
+    // Schulter in Richtung Gegner drehen (höchstens ~40°), Oberkörper gegen ihn lehnen.
+    const turn = Math.max(-0.7, Math.min(0.7, duelDir - side * 1.5708));
+    const push = duelPush;
+    bn.spine.rotation.y += turn * 0.9 * k;
+    bn.hips.rotation.y -= turn * 0.3 * k;
+    bn.spine.rotation.x += lerp(0.2 + 0.15 * push, 0.3, duelShield) * k;
+    bn.spine.rotation.z -= 0.2 * Math.sin(duelDir) * k * (1 + push);
+    bn.head.rotation.x -= 0.12 * k;
+    bn.hips.position.y -= (0.06 + 0.03 * push) * k;
+    bn.upperLegL.rotation.z -= 0.12 * k;
+    bn.upperLegR.rotation.z += 0.12 * k;
+    bn.lowerLegL.rotation.x += 0.25 * k;
+    bn.lowerLegR.rotation.x += 0.25 * k;
+    armTo(bn, near, lerp(-0.95, -1.3, push), 1.35, -2.2, k);
+    armTo(bn, far, 0.75, 1.1, -0.05, k);
+    if (duelShield > 0) {
+      armTo(bn, near, 0.6, 0.6, 0, duelShield * k);
+      armTo(bn, far, 0.6, 0.6, 0, duelShield * k);
+    }
+    face = 'effort';
   }
 
   // Kontakt (Rempler, Zweikampf, Ball an den Körper): kurz zurückweichen, Schulter dreht weg,
@@ -1161,24 +1288,34 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
     const high = dive.high ?? 0;
     const lie = hipY * 0.38;
     const reach = lerp(-2.35, -3.05, high); // flach: Arme Richtung Boden, hoch: lang über den Kopf
-    const roll = side * lerp(1.3, 1.45, high);
+    const roll = side * lerp(1.75, 1.45, high); // flach: Kopf unter der Hüfte, Abtauchen in die tiefe Ecke
     const low = side > 0 ? 'L' : 'R';
     const top = low === 'L' ? 'R' : 'L';
     // Arme am Ende der Landung: gefangen an der Brust, sonst noch lang.
     const armEnd = dive.caught ? [-1.05, -0.28, -1.25] : [reach + 0.15, 0.2, -0.1];
     if (dive.rec != null) {
-      // Aufstehen: von der Seite über ein Knie hoch, eine Hand stützt.
-      const e = smooth(0, 1, dive.rec);
-      const up = Math.sin(e * Math.PI);
-      bn.hips.rotation.set(0, 0, roll * (1 - e));
-      bn.hips.position.x = -side * 0.55 * (1 - e);
-      bn.hips.position.y = lerp(lie, hipY, e);
-      bn.spine.rotation.set(0.2 * (1 - e) + 0.3 * up, 0, side * 0.12 * (1 - e));
-      leg(bn, low, lerp(-0.5, 0, e) - 0.7 * up, lerp(1.2, 0, e) + 0.6 * up, 0.3 * (1 - e));
-      leg(bn, top, lerp(-0.3, 0, e), lerp(0.75, 0, e), 0.3 * (1 - e));
-      arm(bn, low, lerp(armEnd[0], -0.1, e) + 0.4 * up, lerp(armEnd[1], 0.1, e) + 0.5 * up, lerp(armEnd[2], -0.2, e));
-      if (dive.caught) arm(bn, top, -1.05, -0.28, -1.25);
-      else arm(bn, top, lerp(armEnd[0], -0.1, e), lerp(armEnd[1], 0.1, e), lerp(armEnd[2], -0.2, e));
+      // Abrollen und Aufstehen: aus der Seitenlage über die Schulter auf den Rücken (A), dann
+      // über die Hocke hoch (u); eine Hand stützt. Der gefangene Ball bleibt an der Brust.
+      const e = dive.rec;
+      const A = smooth(0, 0.4, e);
+      const u = clamp01((e - 0.4) / 0.6);
+      const lieK = 1 - smooth(0, 0.5, u);
+      const up = Math.sin(u * Math.PI) ** 2;
+      const stand = smooth(0, 1, u);
+      bn.hips.rotation.set(-1.35 * A * lieK, 0, roll * (1 - A));
+      bn.hips.position.x = -side * (0.55 + 0.25 * A) * (1 - stand);
+      bn.hips.position.y = lerp(lerp(lie, 0.3, A), hipY, stand) + 0.1 * up;
+      bn.spine.rotation.set(0.2 * (1 - A) + 0.5 * up, 0, side * 0.12 * (1 - A));
+      bn.head.rotation.x = 0.35 * A * lieK;
+      leg(bn, low, lerp(-0.5, -1.1, A) * (1 - stand), lerp(1.2, 1.8, A) * (1 - stand), 0.3 * (1 - stand));
+      leg(bn, top, lerp(-0.3, -0.7, A) * (1 - stand), lerp(0.75, 1.3, A) * (1 - stand), 0.3 * (1 - stand));
+      if (dive.caught) {
+        arm(bn, 'L', -1.05, -0.28, -1.25);
+        arm(bn, 'R', -1.05, -0.28, -1.25);
+      } else {
+        arm(bn, low, lerp(armEnd[0], 0.9, A) * (1 - stand) + -0.1 * stand + 0.4 * up, lerp(armEnd[1], 0.35, A) * (1 - stand) + 0.1 * stand, lerp(armEnd[2], -0.2, A) * (1 - stand));
+        arm(bn, top, lerp(armEnd[0], -0.4, A) * (1 - stand) - 0.1 * stand, lerp(armEnd[1], 0.6, A) * (1 - stand) + 0.1 * stand, lerp(armEnd[2], -0.5, A) * (1 - stand));
+      }
     } else {
       const pr = Math.min(1, Math.max(0, 1 - dive.t / 0.5));
       if (pr < 0.15) {
@@ -1194,11 +1331,11 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
       } else if (pr < 0.65) {
         // Flug: Körper waagerecht, Hüfte im Bogen, Arme gestreckt zum Ball.
         const f = (pr - 0.15) / 0.5;
-        const k = Math.sin(Math.min(1, f / 0.4) * Math.PI * 0.5);
+        const k = Math.sin(Math.min(1, f / 0.6) * Math.PI * 0.5);
         const ka = Math.sin(Math.min(1, f / 0.55) * Math.PI * 0.5); // Arme strecken sich über den halben Flug
         bn.hips.rotation.set(0, 0, lerp(side * 0.35, roll, k));
         bn.hips.position.x = -side * 0.55 * k;
-        bn.hips.position.y = lerp(hipY - 0.16, lie, f) + lerp(0.32, 0.6, high) * Math.sin(f * Math.PI);
+        bn.hips.position.y = lerp(hipY - 0.16, lie, f) + lerp(0.1, 0.6, high) * Math.sin(f * Math.PI);
         bn.spine.rotation.set(0.25 * (1 - k), 0, lerp(0.1, 0.12, k) * side);
         arm(bn, 'L', lerp(-1.3, reach, ka), lerp(0.6, 0.2, ka), lerp(-0.4, -0.1, ka));
         arm(bn, 'R', lerp(-1.3, reach, ka), lerp(0.6, 0.2, ka), lerp(-0.4, -0.1, ka));
