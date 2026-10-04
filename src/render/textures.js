@@ -1,4 +1,19 @@
 import { pixelTexture } from './materials.js';
+import { cameraViewHeight, currentQuality, LADDER, QUALITY } from './quality.js';
+
+// Texeldichte des Bodens: so fein wie die Bildschirmpixel der niedrigsten Stufe der Plattform (die
+// Automatik kann im Spiel herunterschalten – feiner als der Bildschirm flimmert der Boden beim Schwenk,
+// weil die Textur ohne Mipmaps pixelgenau abgetastet wird). Vorher fest 12 Texel/m: auf dem 7er-Rasen
+// ≈ 2,3 Bildschirmpixel je Texel, gröber als die Figuren. Obergrenze für den Speicher: 3,2 Mio. Texel
+// (≈ 13 MB auf der GPU; Großfeld dann ≈ 17 Texel/m).
+export const GROUND_TEXELS_MAX = 3_200_000;
+export function groundTexels(width, depth, viewHeight) {
+  const ladder = LADDER[currentQuality().platform] ?? LADDER.pc;
+  const minHeight = Math.min(...ladder.map((id) => QUALITY[id].internalHeight));
+  const screen = Math.floor(minHeight / cameraViewHeight(viewHeight));
+  const budget = Math.floor(Math.sqrt(GROUND_TEXELS_MAX / (width * depth)));
+  return Math.max(12, Math.min(24, screen, budget));
+}
 
 // Asphalt mit Flicken, Rissen, Ölflecken, Parkbuchten und einer
 // Kreide-Mittellinie, die Kinder draufgemalt haben.
@@ -211,7 +226,17 @@ function painter(rng, { width, depth, texelsPerMeter = 12, base, noise = 14 }) {
     ctx.putImageData(img, 0, 0);
     return pixelTexture(canvas);
   };
-  return { put, blob, line, circle, tint, speckle, tufts, finish, W, H, px, py };
+  // Jedes Texel mit Weltkoordinaten: fn(x, z) liefert [Farbe, Deckkraft] oder nichts.
+  const field = (fn) => {
+    for (let y = 0; y < H; y++) {
+      const z = (y + 0.5) / texelsPerMeter - depth / 2;
+      for (let x = 0; x < W; x++) {
+        const r = fn((x + 0.5) / texelsPerMeter - width / 2, z);
+        if (r) put(x, y, r[0], r[1]);
+      }
+    }
+  };
+  return { put, blob, line, circle, tint, speckle, tufts, field, finish, W, H, px, py, tpm: texelsPerMeter };
 }
 
 // Betonplatten im Hinterhof: Fugen, Unkraut, Kreide-Hüpfkästchen.
@@ -243,31 +268,33 @@ export function makeConcreteTexture(rng, { width, depth }) {
 
 // Parkwiese: ungleichmäßiges Grün, Klee, Gänseblümchen, kahle Stellen vor den
 // "Toren", Maulwurfshügel und ein Trampelpfad.
-export function makeParkGrassTexture(rng, { width, depth, goalX }) {
-  const p = painter(rng, { width, depth, base: [92, 128, 64], noise: 20 });
+export function makeParkGrassTexture(rng, { width, depth, goalX, texelsPerMeter = 12 }) {
+  const k = (texelsPerMeter / 12) ** 2;
+  const p = painter(rng, { width, depth, texelsPerMeter, base: [92, 128, 64], noise: 20 });
   p.tint(7, [80, 118, 56], [112, 148, 74], 0.65);
   p.tint(2.2, [86, 124, 60], [104, 140, 70], 0.3);
   for (let k = 0; k < 70; k++) p.blob(rng.range(-width / 2, width / 2), rng.range(-depth / 2, depth / 2), rng.range(0.4, 1.8), rng.pick([[104, 142, 70], [74, 110, 52], [118, 144, 76]]), 0.45, 0.6);
   for (let k = 0; k < 18; k++) p.blob(rng.range(-width / 2, width / 2), rng.range(-depth / 2, depth / 2), rng.range(0.3, 0.7), [66, 104, 58], 0.6, 0.85); // Klee
-  p.tufts(1400, [62, 96, 44], 0.55);
+  p.tufts(Math.round(1400 * k), [62, 96, 44], 0.55);
+  p.tufts(Math.round(400 * k), [116, 150, 80], 0.3);
   // Kahle Stellen vor den Rucksack-Toren und am Anstoß.
   for (const s of [-1, 1]) {
     for (let k = 0; k < 9; k++) p.blob(s * (goalX - 0.8) + rng.range(-1.2, 1.2), rng.range(-1.8, 1.8), rng.range(0.4, 1.1), [132, 108, 74], 0.75, 0.75);
     p.blob(s * (goalX - 0.6), 0, 0.9, [120, 96, 64], 0.8, 0.85);
-    p.speckle(40, [[150, 128, 96]], [s * goalX - 2, s * goalX + 2, -2, 2]);
+    p.speckle(Math.round(40 * k), [[150, 128, 96]], [s * goalX - 2, s * goalX + 2, -2, 2]);
   }
   p.blob(0, 0, 0.9, [120, 112, 70], 0.55, 0.7);
   for (let k = 0; k < 8; k++) p.blob(rng.range(-width / 3, width / 3), rng.range(-depth / 3, depth / 3), 0.2, [96, 72, 50], 1, 1); // Maulwurf
   // Gänseblümchen und Löwenzahn.
-  p.speckle(520, [[246, 244, 236], [246, 244, 236], [238, 236, 226], [244, 206, 52]]);
+  p.speckle(Math.round(520 * k), [[246, 244, 236], [246, 244, 236], [238, 236, 226], [244, 206, 52]]);
   // Trampelpfad hinten
   for (let x = -width / 2; x < width / 2; x += 0.3) p.blob(x, -depth / 2 + 3 + Math.sin(x * 0.2) * 1.2, 0.7, [170, 150, 110], 0.9, 0.9);
   return p.finish();
 }
 
 // Ascheplatz: rotbraun, gesprenkelt, Pfützen, verwaschene Kreidelinien.
-export function makeAshTexture(rng, { width, depth, pitch }) {
-  const p = painter(rng, { width, depth, base: [150, 82, 58], noise: 26 });
+export function makeAshTexture(rng, { width, depth, pitch, texelsPerMeter = 12 }) {
+  const p = painter(rng, { width, depth, texelsPerMeter, base: [150, 82, 58], noise: 26 });
   p.tint(6, [138, 74, 52], [162, 92, 64], 0.5);
   // Rechenspuren vom Platzwart: feine, leicht geschwungene Bahnen.
   for (let z = -depth / 2; z < depth / 2; z += 0.5) {
@@ -293,42 +320,70 @@ export function makeAshTexture(rng, { width, depth, pitch }) {
 function drawPitchLines(p, pitch, worn) {
   const chalk = [236, 232, 222];
   const { halfLength: hl, halfWidth: hw } = pitch;
+  const t = Math.max(2, Math.round(0.15 * p.tpm)); // ≈ 15 cm breit, mindestens 2 Texel (bei 12 Texel/m wie bisher 3)
   const box = Math.min(8, pitch.goalHalfWidth * 2.4 + 2);
   const depth = Math.min(8, hl * 0.3);
-  p.line(-hl, -hw, hl, -hw, chalk, 0.8, 0.03, 3);
-  p.line(-hl, hw, hl, hw, chalk, 0.8, 0.03, 3);
-  p.line(-hl, -hw, -hl, hw, chalk, 0.8, 0.03, 3);
-  p.line(hl, -hw, hl, hw, chalk, 0.8, 0.03, 3);
-  p.line(0, -hw, 0, hw, chalk, 0.75, 0.03, 3);
+  p.line(-hl, -hw, hl, -hw, chalk, 0.8, 0.03, t);
+  p.line(-hl, hw, hl, hw, chalk, 0.8, 0.03, t);
+  p.line(-hl, -hw, -hl, hw, chalk, 0.8, 0.03, t);
+  p.line(hl, -hw, hl, hw, chalk, 0.8, 0.03, t);
+  p.line(0, -hw, 0, hw, chalk, 0.75, 0.03, t);
   p.circle(0, 0, Math.min(5, hw * 0.3), chalk, 0.75);
   for (const s of [-1, 1]) {
     const x = s * hl;
-    p.line(x, -box, x - s * depth, -box, chalk, 0.75, 0.03, 3);
-    p.line(x, box, x - s * depth, box, chalk, 0.75, 0.03, 3);
-    p.line(x - s * depth, -box, x - s * depth, box, chalk, 0.75, 0.03, 3);
+    p.line(x, -box, x - s * depth, -box, chalk, 0.75, 0.03, t);
+    p.line(x, box, x - s * depth, box, chalk, 0.75, 0.03, t);
+    p.line(x - s * depth, -box, x - s * depth, box, chalk, 0.75, 0.03, t);
     p.blob(x - s * (depth + 1), 0, 0.12, chalk, 0.9, 1);
     if (worn) p.blob(x - s * 0.8, 0, 1.4, worn, 0.5, 0.7);
   }
 }
 
-// Gepflegter Rasen mit Mähstreifen – der erste "richtige" Platz.
-export function makeLawnTexture(rng, { width, depth, pitch }) {
-  const p = painter(rng, { width, depth, base: [78, 128, 60], noise: 14 });
+// Gepflegter Rasen mit Mähmuster je Platz – nur Streifen oder Ringe, keine Karos: 7er-Rasen Streifen (3 m),
+// Sportplatz Ringe um den Anstoßpunkt (4 m), Großfeld
+// breite Bahnen (5,25 m = 20 Bahnen auf 105 m). Halme und Büschel in der Texeldichte, außerhalb der
+// Linien längeres, dunkleres Gras mit Klee, Abnutzung vor den Toren und im Mittelkorridor.
+export function makeLawnTexture(rng, { width, depth, pitch, texelsPerMeter = 12 }) {
+  const t = texelsPerMeter;
+  const k = (t / 12) ** 2; // Mengen in Texeln wachsen mit der Fläche in Texeln
+  const p = painter(rng, { width, depth, texelsPerMeter: t, base: [78, 128, 60], noise: 16 });
+  const { halfLength: hl, halfWidth: hw } = pitch;
   p.tint(9, [72, 120, 56], [90, 140, 66], 0.45);
-  for (let x = -width / 2; x < width / 2; x += 3) {
-    if (Math.round((x + width / 2) / 3) % 2) continue;
-    for (let z = -depth / 2; z < depth / 2; z += 0.25) p.line(x, z, x + 3, z, [88, 142, 68], 0.55, 0, 3);
+  p.tint(2.5, [76, 124, 58], [88, 136, 64], 0.22);
+  const light = [90, 145, 70];
+  const mow = pitch.id === 'grossfeld' ? (x) => Math.floor((x + hl) / 5.25) % 2 === 0 : pitch.id === 'sportplatz' ? (x, z) => Math.floor(Math.hypot(x, z) / 4) % 2 === 0 : (x) => Math.floor((x + width / 2) / 3) % 2 === 0;
+  const rough = [66, 110, 50];
+  p.field((x, z) => {
+    const out = Math.max(Math.abs(x) - hl, Math.abs(z) - hw);
+    if (out > 1.2) return [rough, 0.38]; // längeres Gras neben dem Platz
+    return mow(x, z) ? [light, 0.5] : null;
+  });
+  // Halme: dunkle Büschel und helle Spitzen, außerhalb der Linien dichter.
+  p.tufts(Math.round(1500 * k), [62, 104, 48], 0.42);
+  p.tufts(Math.round(500 * k), [104, 154, 78], 0.3);
+  for (let i = 0; i < Math.round(1200 * k); i++) {
+    const x = rng.range(-width / 2, width / 2);
+    const z = rng.range(-depth / 2, depth / 2);
+    if (Math.max(Math.abs(x) - hl, Math.abs(z) - hw) > 1.2) p.blob(x, z, 0.06, [58, 98, 44], 0.5, 0.7);
   }
-  p.tufts(900, [62, 104, 48], 0.4);
+  for (let i = 0; i < 14; i++) {
+    // Klee und Gänseblümchen im Randgras
+    const side = rng.next() < 0.5 ? -1 : 1;
+    p.blob(rng.range(-hl, hl), side * (hw + rng.range(1.6, depth / 2 - hw - 0.5)), rng.range(0.25, 0.6), [70, 112, 58], 0.55, 0.8);
+  }
+  p.speckle(Math.round(90 * k), [[244, 242, 232], [244, 242, 232], [244, 206, 52]], [-width / 2, width / 2, hw + 1.6, depth / 2]);
+  p.speckle(Math.round(60 * k), [[244, 242, 232], [244, 206, 52]], [-width / 2, width / 2, -depth / 2, -hw - 1.6]);
   // Abgenutzt vor den Toren, am Elfmeterpunkt und am Anstoßpunkt.
   for (const s of [-1, 1]) {
-    for (let k = 0; k < 9; k++) p.blob(s * (pitch.halfLength - 1.2) + rng.range(-1.4, 1.4), rng.range(-2, 2), rng.range(0.4, 1.1), [118, 104, 66], 0.6, 0.72);
-    p.blob(s * (pitch.halfLength - 0.7), 0, 0.8, [128, 108, 70], 0.7, 0.85);
-    p.speckle(30, [[140, 120, 84]], [s * pitch.halfLength - 2.5, s * pitch.halfLength + 0.5, -2, 2]);
+    for (let i = 0; i < 9; i++) p.blob(s * (hl - 1.2) + rng.range(-1.4, 1.4), rng.range(-2, 2), rng.range(0.4, 1.1), [118, 104, 66], 0.6, 0.72);
+    p.blob(s * (hl - 0.7), 0, 0.8, [128, 108, 70], 0.7, 0.85);
+    p.speckle(Math.round(30 * k), [[140, 120, 84]], [s * hl - 2.5, s * hl + 0.5, -2, 2]);
   }
   p.blob(0, 0, 0.8, [100, 110, 62], 0.5, 0.7);
+  // Mittelkorridor von Strafraum zu Strafraum: hier wird am meisten gelaufen – etwas heller, stumpfer.
+  for (let i = 0; i < 26; i++) p.blob(rng.range(-hl * 0.65, hl * 0.65), rng.range(-hw * 0.25, hw * 0.25), rng.range(0.6, 1.4), [102, 124, 66], 0.16, 0.6);
   // Trampelpfad des Linienrichters an der Seitenlinie.
-  for (let x = -pitch.halfLength; x < pitch.halfLength; x += 0.4) p.blob(x, pitch.halfWidth + 0.8, 0.35, [104, 118, 66], 0.4, 0.6);
+  for (let x = -hl; x < hl; x += 0.4) p.blob(x, hw + 0.8, 0.35, [104, 118, 66], 0.4, 0.6);
   drawPitchLines(p, pitch, null);
   return p.finish();
 }

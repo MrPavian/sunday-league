@@ -83,6 +83,10 @@ const postFragment = /* glsl */ `
   uniform float frost;
   uniform float mist;        // Bodennebel (0…1)
   uniform float heatHaze;    // Hitzeflimmern (0…1)
+  uniform float rimLight;    // Lichtkante an Figuren (Stärke)
+  uniform vec2 rimDir;       // Sonnenrichtung im Bild (Kameraraum x, y)
+  uniform float cloudAmount; // Wolkenschatten (0 = keine, bedeckt oder abends)
+  uniform vec2 cloudShift;   // wie weit die Wolken gezogen sind (Meter)
   // Phase 7: Bloom nur aus Lichtquellen (Kennung im Alphakanal, siehe materials.js LIGHT_CODE).
   uniform sampler2D tBloom;
   uniform float bloomIntensity;
@@ -166,7 +170,10 @@ const postFragment = /* glsl */ `
     // damit er zur Pixelart passt statt als weicher Grauschleier.
     float fogF = smoothstep(fogStart, fogEnd, d) * fogAmount;
     if (mist > 0.0 && !sky) fogF = max(fogF, mist * (1.0 - smoothstep(0.0, 2.5, wp.y)) * smoothstep(fogStart * 0.7, fogEnd, d) * 0.7);
-    fogF = clamp(floor(fogF * 6.0 + bay) / 6.0, 0.0, 1.0);
+    // Echter Nebel in sechs Stufen (Pixelart); der feine Hauch Luft sonst in 24 – mit sechs lag über der
+    // hinteren Platzhälfte ein grobes Punktraster (Stufe 0 ↔ 1/6 im Bayer-Wechsel).
+    float fogSteps = fogAmount > 0.3 || mist > 0.0 ? 6.0 : 24.0;
+    fogF = clamp(floor(fogF * fogSteps + bay) / fogSteps, 0.0, 1.0);
 
     // Silhouette: zweite Ableitung der Tiefe. Ebenen – auch der schräg gesehene
     // Boden – haben keine; nur wo ein Nachbar hinter einer Kante liegt, springt sie.
@@ -220,7 +227,21 @@ const postFragment = /* glsl */ `
     } else if (edge) {
       // Zuschauer (Kennung 0,94) treten zurück: schwächere Silhouette als Kulisse und Figuren.
       c *= 1.0 - depthEdgeStrength * (noCover ? 0.6 : 1.0);
-    } else if (crease > creaseMin) {
+    }
+    #if EDGES >= 1
+    // Lichtkante: Auf der Sonnenseite einer Figur ein Pixel innen hinter der Außenkante aufhellen
+    // (Pixelart-„Selout“) – zwei Abfragen nur für Figurenpixel, Richtung aus dem Sonnenstand.
+    if (character && !edge && rimLight > 0.0) {
+      vec2 sx = vec2(sign(rimDir.x) * 2.0 * texel.x, 0.0);
+      vec2 sy = vec2(0.0, sign(rimDir.y) * 2.0 * texel.y);
+      float ax = texture2D(tColor, uv + sx).a;
+      float ay = texture2D(tColor, uv + sy).a;
+      float rx = step(0.1, abs(ax - id)) * step(d + 0.3, getDepth(uv + sx)) * abs(rimDir.x);
+      float ry = step(0.1, abs(ay - id)) * step(d + 0.3, getDepth(uv + sy)) * abs(rimDir.y);
+      c *= 1.0 + rimLight * max(rx, ry);
+    }
+    #endif
+    if (!edge && crease > creaseMin) {
       // Nasse Kleidung glänzt an den Kanten etwas mehr.
       c *= 1.0 + normalEdgeStrength * (character ? 1.0 + 0.8 * clamp(wetness, 0.0, 1.0) : 1.0);
     }
@@ -277,6 +298,18 @@ const postFragment = /* glsl */ `
       c = mix(c, vec3(1.0), frost * 0.8 * onGround * upF * step(0.994, hash21(fc + 17.0)));
       #endif
     }
+
+    #if CLOUDS == 1
+    // Wolkenschatten: große, langsam ziehende Flecken über Boden, Figuren und Kulisse – aus der
+    // Weltposition, ohne Zusatz-Durchgang. Drei gerasterte Stufen, weiche Kante per Bayer.
+    if (cloudAmount > 0.0 && !sky) {
+      vec2 cp = (wp.xz + cloudShift) * 0.055;
+      float cn = vnoise(cp) * 0.65 + vnoise(cp * 2.7 + 13.0) * 0.35;
+      float sh = smoothstep(0.62 - 0.22 * cloudAmount, 0.75 - 0.22 * cloudAmount, cn);
+      sh = clamp(floor(sh * 3.0 + bay) / 3.0, 0.0, 1.0);
+      c *= 1.0 - 0.24 * sh * step(0.01, cloudAmount); // Menge = Bedeckung, Schatten selbst gleich dunkel
+    }
+    #endif
 
     float lit = 1.0; // wie viel Flutlicht hier ankommt (für Glanzpunkte)
 
@@ -513,11 +546,15 @@ export class PixelRenderer {
         frost: { value: 0 },
         mist: { value: 0 },
         heatHaze: { value: 0 },
+        rimLight: { value: 0 },
+        rimDir: { value: new THREE.Vector2(-1, 0.4) },
+        cloudAmount: { value: 0 },
+        cloudShift: { value: new THREE.Vector2() },
         tBloom: { value: null },
         bloomIntensity: { value: 0 },
         ditherOrigin: { value: new THREE.Vector2() },
       },
-      defines: { AO_SAMPLES: 16, BLOOM: 1, EDGES: 2, FLOOD: 2, HALO: 1, WETFX: 1, MAX_LIGHTS },
+      defines: { AO_SAMPLES: 16, BLOOM: 1, EDGES: 2, FLOOD: 2, HALO: 1, WETFX: 1, CLOUDS: 1, MAX_LIGHTS },
       depthTest: false,
       depthWrite: false,
     });
@@ -602,6 +639,8 @@ export class PixelRenderer {
     const u = this.postMaterial.uniforms;
     u.floodAmount.value = L.flood;
     u.floodField.value = L.floodField;
+    this.sunDir = new THREE.Vector3(...L.sun.dir).normalize();
+    u.rimLight.value = L.flood ? 0.08 : 0.16; // unter Flutlicht kommt das Licht von überall
     const f = lights?.field ?? [20, 12];
     u.field.value.set(f[0], f[1], 1.5, 7);
     const pools = lights?.pools ?? [];
@@ -630,6 +669,12 @@ export class PixelRenderer {
     u.frost.value = w.frost;
     u.mist.value = w.fog;
     u.heatHaze.value = w.heat * (this.quality.heatHaze ?? 0);
+    // Wolkenschatten: bei Sonne locker, bei Hitze wenige, bei Regen, Nebel, Schnee keine (bedeckt,
+    // nur diffuses Licht), abends unter Flutlicht keine; Zuggeschwindigkeit wächst mit dem Wind.
+    const overcast = Math.min(1, 2 * (w.rain + w.fog + w.snow));
+    u.cloudAmount.value = w.indoor ? 0 : (w.heat > 0 ? 0.3 : 0.6) * (1 - overcast) * (w.frost > 0 ? 0.6 : 1) * (1 - u.floodAmount.value);
+    const drift = (2.5 + 1.2 * Math.hypot(w.windX ?? 0, w.windZ ?? 0)) * w.time;
+    u.cloudShift.value.set(drift * 0.94, drift * 0.33);
     u.groundWet.value.set(g.wetDark, g.wetSat, g.glint, g.streak);
     u.groundMisc.value.set(g.spots, g.sky, g.snow, 0);
     u.snowShade.value.set(g.snowShade[0], g.snowShade[1], g.snowShade[2]);
@@ -651,7 +696,7 @@ export class PixelRenderer {
     if (!q.dither) look.dither = 0;
     // Shader-Varianten nur je Qualitätsstufe, nie je Wetter oder Spielort.
     const defs = this.postMaterial.defines;
-    const want = { AO_SAMPLES: ao, BLOOM: bloom ? 1 : 0, EDGES: q.edges === false ? 0 : q.edges === 1 ? 1 : 2, FLOOD: q.flood ?? 2, HALO: q.halo === false ? 0 : 1, WETFX: q.wetFx === false ? 0 : 1 };
+    const want = { AO_SAMPLES: ao, BLOOM: bloom ? 1 : 0, EDGES: q.edges === false ? 0 : q.edges === 1 ? 1 : 2, FLOOD: q.flood ?? 2, HALO: q.halo === false ? 0 : 1, WETFX: q.wetFx === false ? 0 : 1, CLOUDS: q.clouds === false ? 0 : 1 };
     if (Object.entries(want).some(([k, v]) => defs[k] !== v)) {
       Object.assign(defs, want);
       this.postMaterial.needsUpdate = true;
@@ -842,6 +887,10 @@ export class PixelRenderer {
   render(scene, camera, { moving = true } = {}) {
     const r = this.renderer;
     const u = this.postMaterial.uniforms;
+    if (this.sunDir) {
+      const v = (this._sv ??= new THREE.Vector3()).copy(this.sunDir).transformDirection(camera.matrixWorldInverse);
+      u.rimDir.value.set(v.x, v.y).normalize();
+    }
     u.cameraNear.value = camera.near;
     u.cameraFar.value = camera.far;
     u.frustum.value.set((camera.right - camera.left) / camera.zoom, (camera.top - camera.bottom) / camera.zoom);

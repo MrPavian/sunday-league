@@ -48,6 +48,28 @@ async function variants(b, label, list, query) {
   return ok.done();
 }
 
+// Grafik-Budget je Spielort (ANDROID_MEDIUM): Draw Calls und Dreiecke dürfen höchstens rund 10 % über dem
+// Stand nach dem Grafik-Ausbau liegen (Rasen, Wolken, Lichtkante, Platzrand; gemessen 98/103/106/69/72 Draw
+// Calls, 31,5/40,5/50,1/22,7/16,9 Tsd. Dreiecke; vorher 93/97/100/67/73). Echte Bildraten misst das nicht –
+// dafür fehlt hier die Grafikkarte –, aber was die Szene kostet, kann nicht unbemerkt wachsen.
+const BUDGET = { rasenplatz: [108, 35000], sportplatz: [113, 44500], grossfeld: [117, 55000], ascheplatz: [76, 25000], park: [79, 18600] };
+async function budget(b) {
+  const ok = checker(`Grafik-Budget je Spielort (${Object.keys(BUDGET).length})`);
+  const seen = [];
+  for (const [venue, [calls, tris]] of Object.entries(BUDGET)) {
+    const p = await page(b, 'land', { query: `?venue=${venue}&notitle&trainer&debug&dauer=60&seed=4&quality=ANDROID_MEDIUM` });
+    await p.waitForTimeout(3000);
+    const r = await p.evaluate(() => new Promise((res) => requestAnimationFrame(() => res({ calls: __sl.renderer.info.render.calls, tris: __sl.renderer.info.render.triangles }))));
+    ok(r.calls <= calls, `${venue}: ${r.calls} Draw Calls > ${calls}`);
+    ok(r.tris <= tris, `${venue}: ${r.tris} Dreiecke > ${tris}`);
+    ok(!p.errors.length, `${venue}: Fehler ${p.errors.slice(0, 2).join(' | ')}`);
+    seen.push(`${venue} ${r.calls}dc/${(r.tris / 1000).toFixed(1)}k`);
+    await p.context().close();
+  }
+  console.log('  ', seen.join(' · '));
+  return ok.done();
+}
+
 async function qualities(b) {
   const ok = checker(`Qualitätsstufen (${QUALITIES.length})`);
   const seen = {};
@@ -509,6 +531,7 @@ export async function run() {
   f += await title(b);
   f += await friendlySelf(b);
   f += await qualities(b);
+  f += await budget(b);
   f += await variants(b, `Wetter (${WEATHER.length})`, WEATHER, (w) => `?venue=rasenplatz&notitle&trainer&debug&dauer=30&wetter=${w}`);
   f += await variants(b, `Tageszeiten (${TIMES.length})`, TIMES, (z) => `?venue=ascheplatz&notitle&trainer&debug&dauer=30&zeit=${z}`);
   f += await incidents(b);

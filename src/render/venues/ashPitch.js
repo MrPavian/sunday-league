@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { toon } from '../materials.js';
-import { addLights, box, cylinder, ground, makeBench, makeFence, makeFloodlight, makeGoalFrame, makeTree } from '../props.js';
+import { addLights, box, cylinder, ground, makeBench, makeFence, makeFloodlight, makeGoalFrame, makeSideline, makeTree } from '../props.js';
 import { crowdRow, makeSpectator } from '../spectators.js';
-import { makeAshTexture, makeSignTextureWide } from '../textures.js';
+import { groundTexels, makeAshTexture, makeSignTextureWide } from '../textures.js';
 
 // Ascheplatz vom SV Grün-Weiß: Jugendtore, Ballfangzaun, Flutlicht,
 // Vereinsheim im Container und die üblichen drei Zuschauer.
@@ -10,7 +10,7 @@ export function buildAshPitch(root, pitch, rng, scene) {
   root.add(addLights(scene));
   const W = 56;
   const D = 40;
-  root.add(ground(W, D, toon(0xffffff, { map: makeAshTexture(rng, { width: W, depth: D, pitch }) })));
+  root.add(ground(W, D, toon(0xffffff, { map: makeAshTexture(rng, { width: W, depth: D, pitch, texelsPerMeter: groundTexels(W, D, 13) }) })));
   root.add(ground(200, 200, toon(0x5d7a42), -0.02));
 
   const { halfLength: hl, goalHalfWidth: gw, goalHeight: gh } = pitch;
@@ -20,6 +20,9 @@ export function buildAshPitch(root, pitch, rng, scene) {
   const left = makeGoalFrame(gw, gh, -1);
   left.position.x = -hl;
   root.add(left);
+
+  // Eckfahnen (Farben der übrigen Kulisse: kein zusätzlicher Draw Call).
+  root.add(makeSideline(pitch, rng, { benches: false, gear: false, pole: 0xd0d0d0, flag: 0x2e8b57 }));
 
   // Ballfangzäune hinter den Toren, niedriger Zaun hinten, Geländer vorne.
   for (const s of [-1, 1]) root.add(makeFence(s * (hl + 3.5), -16, s * (hl + 3.5), 16, 5, 0x3d6b4a));

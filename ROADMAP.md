@@ -616,6 +616,13 @@ Bratwurst- und Bierbude auf Rasen-, Sport- und Großfeld, an die Zuschauer ab un
 Kreis- und Bezirkspokal im K.-o.-System unter der Woche (`src/career/pokal.js`, siehe 11.7).
 
 ### 11.1 Animationen
+- ✅ Erledigt (Oktober 2026, `src/render/reactions.js`, `tests/reactions.test.js`): vier neue Jubel (Trikot über
+  den Kopf, Hand ans Ohr, Daumen auf den Rücken, Faust aufs Wappen), Mitspieler laufen mit erhobenem Arm zum
+  Torschützen und bilden eine Traube; nach vergebener Chance Hände an den Kopf (Pfosten, Latte, vorbei) oder
+  abwinken (gehalten), der Torwart ballt nach der Parade die Faust; der Schiri zeigt an (Ecke, Abstoß und
+  Elfmeter zum Punkt, Freistoß und Einwurf in Angriffsrichtung, nach dem Tor zur Mitte); beim Wechsel klatschen
+  beide ab, der Ausgewechselte trottet vom Platz. Armwinkel für Kopf, Ohr und Rücken per Gitter-Suche an der
+  Figur bestimmt (Hand höchstens 2 cm vom Ziel). Nur Darstellung, die Simulation bleibt unverändert.
 - **Mehr Animationen:** Jubel (mehrere Varianten, Rutschen auf Knien, Trikot über den Kopf), Ärger nach
   vergebener Chance, Einwurf mit Anlauf, Schiri-Gesten (Karte zeigen, Vorteil), Abklatschen bei Wechseln,
   Aufwärmen am Rand, Zuschauer mit mehr Bewegung.
@@ -638,6 +645,23 @@ Kreis- und Bezirkspokal im K.-o.-System unter der Woche (`src/career/pokal.js`, 
     auf den Zaun klettern, zum Auto zeigen).
 
 ### 11.2 Grafik und Aussehen der Spieler
+- ✅ Grafik-Ausbau (Oktober 2026), ohne mehr Szenen-Durchgänge:
+  - Rasen: Texeldichte passend zu den Bildschirmpixeln der niedrigsten Stufe (PC 18, Android 17 statt 12
+    Texel/m; Großfeld 17 wegen der Obergrenze von 3,2 Mio. Texeln). Feiner wird es nicht, sonst flimmert der
+    Boden beim Schwenk. Halme, Randgras mit Klee und Gänseblümchen, Mähmuster je Platz (nur Streifen oder Ringe: 7er
+    Streifen, Sportplatz Ringe um den Anstoßpunkt, Großfeld breite Bahnen), Abnutzung im Mittelkorridor, Kreidelinien etwa 15 cm breit
+    (vorher 25 cm). `tests/groundtexels.test.js`.
+  - Ziehende Wolkenschatten im Post-Pass: bei Sonne locker, bei Hitze wenige, bei Regen, Nebel, Schnee und abends
+    keine, schneller bei Wind. Aus auf ANDROID_LOW. Nebenbei behoben: Der leichte Dunst lag als grobes
+    Punktraster über der hinteren Platzhälfte (6 statt 24 Stufen).
+  - Figuren: Lichtkante auf der Sonnenseite (aus dem Sonnenstand, nur Figurenpixel), Falten im Trikot,
+    Körperbau schmal bis kräftig (±10 %).
+  - Platzrand: Eckfahnen auf allen Plätzen (vorher keine), Trainerbänke mit Plexiglashaube auf der Gegenseite,
+    auf der Kameraseite nur Flaches (Getränkekisten, Taschen, Ballnetz, Hütchen).
+  - Kosten (ANDROID_MEDIUM, gemessen im Browser ohne Grafikkarte): Draw Calls 93/97/100/67/73 → 98/103/106/69/72
+    (Rasen, Sportplatz, Großfeld, Asche, Park), Dreiecke +6 %, Bodentextur Großfeld 12 statt 6 MB.
+    Obergrenzen im e2e-Test „Grafik-Budget je Spielort“. Echte Bildraten auf dem Handy sind ungeprüft
+    (kein Gerät hier).
 - Figuren mit mehr Varianten: Körperbau (schlank, kräftig, Bauch), Größe, Frisuren, Bärte, Stutzen runter,
   Schweißbänder, Brillen-Sportband, Tape am Knöchel.
 - Gesichter mit mehr Ausdruck (Jubel, Ärger, Erschöpfung), Trikots mit Falten und nassem Stoff bei Regen.

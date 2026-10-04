@@ -50,6 +50,9 @@ describe('Spieler 2.0', () => {
       { speed: 3, state: 'tackle' }, { speed: 0, state: 'down' }, { speed: 0, state: 'complain' },
       { speed: 0, dive: { t: 0.3, side: -1 } }, { speed: 0, holding: 'chest' }, { speed: 0, holding: 'overhead' },
       { speed: 0, celebrate: 'flugzeug' }, { speed: 0, celebrate: 'faust' }, { speed: 0, celebrate: 'tanz' }, { speed: 3, celebrate: 'rutscher' },
+      { speed: 0, celebrate: 'trikot' }, { speed: 3, celebrate: 'trikot' }, { speed: 0, celebrate: 'ohr' }, { speed: 0, celebrate: 'ruecken' },
+      { speed: 0, celebrate: 'brust' }, { speed: 0, celebrate: 'umarmen' }, { speed: 4, celebrate: 'hinterher' },
+      { speed: 0, gesture: 'haende' }, { speed: 3, gesture: 'haende' }, { speed: 0, gesture: 'abwinken' }, { speed: 0, gesture: 'geballt' }, { speed: 0, gesture: 'zeigen' }, { speed: 0, gesture: 'abklatschen' },
       { speed: 0, sad: true }, { speed: 4, injured: true },
     ];
     for (const o of poses) {
@@ -69,5 +72,24 @@ describe('Spieler 2.0', () => {
     const m = createPlayerModel(look, kit);
     posePlayer(m, { sitting: true });
     expect(m.bones.hips.position.y).toBeLessThan(m.rest.hips[1]);
+  });
+
+  it('Trikot über den Kopf: nur beim Jubel „trikot" sichtbar, danach wieder weg', () => {
+    const m = createPlayerModel(look, kit);
+    const base = { speed: 0, dt: 1 / 60, kickAnim: 0, headAnim: 0, holding: null, state: 'normal' };
+    expect(m.bones.hood.scale.x).toBeLessThan(0.01);
+    animatePlayer(m, { ...base, celebrate: 'trikot' });
+    expect(m.bones.hood.scale.x).toBe(1);
+    animatePlayer(m, { ...base, celebrate: 'faust' });
+    expect(m.bones.hood.scale.x).toBeLessThan(0.01);
+    animatePlayer(m, base);
+    expect(m.bones.hood.scale.x).toBeLessThan(0.01);
+  });
+
+  it('Hände an den Kopf: beide Hände über Schulterhöhe', () => {
+    const m = createPlayerModel(look, kit);
+    animatePlayer(m, { speed: 0, dt: 1 / 60, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture: 'haende' });
+    expect(m.bones.upperArmL.rotation.x).toBeLessThan(-2);
+    expect(m.bones.upperArmR.rotation.x).toBeLessThan(-2);
   });
 });

@@ -2,14 +2,14 @@ import * as THREE from 'three';
 import { toon } from '../materials.js';
 import { addLights, box, ground, lampHead, makeBackpack, makeBench, makeBin, makeBush, makeCone, makeDog, makeJacketPile, makeLamp, makeTree } from '../props.js';
 import { crowdRow, makeSpectator } from '../spectators.js';
-import { makeParkGrassTexture } from '../textures.js';
+import { groundTexels, makeParkGrassTexture } from '../textures.js';
 
 // Stadtpark: Rucksäcke und Hütchen als Tore, die Seitenlinie denkt man sich.
 export function buildPark(root, pitch, rng, scene) {
   root.add(addLights(scene));
   const W = 70;
   const D = 52;
-  root.add(ground(W, D, toon(0xffffff, { map: makeParkGrassTexture(rng, { width: W, depth: D, goalX: pitch.halfLength }) })));
+  root.add(ground(W, D, toon(0xffffff, { map: makeParkGrassTexture(rng, { width: W, depth: D, goalX: pitch.halfLength, texelsPerMeter: groundTexels(W, D, 12.5) }) })));
   root.add(ground(200, 200, toon(0x5f8a45), -0.02));
 
   const { halfLength: hl, halfWidth: hw, goalHalfWidth: gw } = pitch;

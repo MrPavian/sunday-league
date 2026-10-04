@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { toon } from '../materials.js';
-import { addLights, box, cylinder, ground, makeBench, makeDog, makeFence, makeFloodlight, makeGoalFrame, makeTree } from '../props.js';
+import { addLights, box, cylinder, ground, makeBench, makeDog, makeFence, makeFloodlight, makeGoalFrame, makeSideline, makeTree } from '../props.js';
 import { crowdRow, makeSpectator } from '../spectators.js';
-import { makeLawnTexture, makeSignTextureWide } from '../textures.js';
+import { groundTexels, makeLawnTexture, makeSignTextureWide } from '../textures.js';
 
 // Lokale Sponsoren – selbst gemalte Banden, wie sie auf jedem Dorfplatz hängen.
 const SPONSORS = [
@@ -25,7 +25,7 @@ export function buildLawn(root, pitch, rng, scene) {
   root.add(addLights(scene, { span: 40 * k }));
   const W = 2 * hl + 20;
   const D = 2 * hw + 16;
-  root.add(ground(W, D, toon(0xffffff, { map: makeLawnTexture(rng, { width: W, depth: D, pitch }) })));
+  root.add(ground(W, D, toon(0xffffff, { map: makeLawnTexture(rng, { width: W, depth: D, pitch, texelsPerMeter: groundTexels(W, D, 15) }) })));
   root.add(ground(220, 220, toon(0x5d7a42), -0.02));
 
   for (const s of [-1, 1]) {
@@ -34,6 +34,8 @@ export function buildLawn(root, pitch, rng, scene) {
     root.add(goal);
     root.add(makeFence(s * (hl + 3.5), -hw - 2, s * (hl + 3.5), hw + 2, 5, 0x3d6b4a));
   }
+
+  root.add(makeSideline(pitch, rng));
 
   // Banden an der Gegengerade.
   const bandZ = -hw - 2.2;

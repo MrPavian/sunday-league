@@ -10,9 +10,10 @@ import { makeSplats, paintKit, REGION } from './kitPaint.js';
 // Team-Atlas: Spieler eines Teams teilen sich Textur und Material (1 Draw Call je
 // Spieler statt vorher etwa sieben), Dreck bleibt trotzdem pro Spieler.
 
-export const BONES = ['root', 'hips', 'spine', 'head', 'upperArmL', 'lowerArmL', 'upperArmR', 'lowerArmR', 'upperLegL', 'lowerLegL', 'footL', 'upperLegR', 'lowerLegR', 'footR'];
+export const BONES = ['root', 'hips', 'spine', 'head', 'upperArmL', 'lowerArmL', 'upperArmR', 'lowerArmR', 'upperLegL', 'lowerLegL', 'footL', 'upperLegR', 'lowerLegR', 'footR', 'hood'];
+const HIDDEN = 0.001; // Maßstab ausgeblendeter Teile (Trikot über dem Kopf)
 const B = Object.fromEntries(BONES.map((n, i) => [n, i]));
-const PARENT = { hips: 'root', spine: 'hips', head: 'spine', upperArmL: 'spine', lowerArmL: 'upperArmL', upperArmR: 'spine', lowerArmR: 'upperArmR', upperLegL: 'hips', lowerLegL: 'upperLegL', footL: 'lowerLegL', upperLegR: 'hips', lowerLegR: 'upperLegR', footR: 'lowerLegR' };
+const PARENT = { hips: 'root', spine: 'hips', head: 'spine', upperArmL: 'spine', lowerArmL: 'upperArmL', upperArmR: 'spine', lowerArmR: 'upperArmR', upperLegL: 'hips', lowerLegL: 'upperLegL', footL: 'lowerLegL', upperLegR: 'hips', lowerLegR: 'upperLegR', footR: 'lowerLegR', hood: 'head' };
 
 // --- Team-Atlas -------------------------------------------------------------------
 // Je Spieler eine Kachel 128 × 16: Trikot (64 × 16: vorn | hinten | links | rechts,
@@ -307,6 +308,8 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
   const shoulderK = vary(6, 0.025);
   const legK = vary(9, 0.02);
   const headK = vary(12, 0.025);
+  // Körperbau (fest je Spieler): schmal bis kräftig, ±10 % an Armen, Beinen und Oberkörper.
+  const bulk = vary(18, 0.05);
   const useAtlas = textured && typeof document !== 'undefined';
   const own = useAtlas && !atlas;
   if (own) atlas = new KitAtlas(kit, { sponsor, capacity: 1, edge });
@@ -345,15 +348,16 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
     lowerLegR: [0, -thigh, 0],
     footL: [0, -shin, 0],
     footR: [0, -shin, 0],
+    hood: [0, 0, 0],
   };
 
   const b = new Builder();
   // Beine: Hosenbein, Oberschenkel, Knie, Stutzen mit Ring, Schuh mit Ferse und Spitze.
   for (const s of ['L', 'R']) {
     b.add(`upperLeg${s}`, prism(0.19, 0.18, 0.2, 0.21, 0.2), kit.shorts, { at: [0, -0.09, 0], uv: 'leg' });
-    b.add(`upperLeg${s}`, prism(0.145, 0.13, thigh - 0.17, 0.16, 0.145), skin, { at: [0, -0.19 - (thigh - 0.17) / 2 + 0.01, 0], uv: 'leg' });
+    b.add(`upperLeg${s}`, prism(0.145 * bulk, 0.13 * bulk, thigh - 0.17, 0.16 * bulk, 0.145 * bulk), skin, { at: [0, -0.19 - (thigh - 0.17) / 2 + 0.01, 0], uv: 'leg' });
     b.box(`lowerLeg${s}`, 0.135, 0.08, 0.15, skin, [0, -0.025, 0.006], { uv: 'leg' });
-    b.add(`lowerLeg${s}`, prism(0.145, 0.12, shin - 0.06, 0.16, 0.13), kit.socks, { at: [0, -0.06 - (shin - 0.06) / 2, 0], uv: 'leg' });
+    b.add(`lowerLeg${s}`, prism(0.145 * bulk, 0.12 * bulk, shin - 0.06, 0.16 * bulk, 0.13 * bulk), kit.socks, { at: [0, -0.06 - (shin - 0.06) / 2, 0], uv: 'leg' });
     b.box(`lowerLeg${s}`, 0.15, 0.035, 0.166, accent, [0, -0.1, 0]);
     b.box(`foot${s}`, 0.14, 0.09, 0.15, shoe, [0, -ankle + 0.045, -0.01]);
     b.add(`foot${s}`, prism(0.11, 0.135, 0.06, 0.12, 0.16), shoe, { at: [0, -ankle + 0.03, 0.13] }); // Spitze etwas länger (Profil)
@@ -363,7 +367,7 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
 
   // Hüfte (Hose) und verjüngter Torso: Schultern breiter als Taille.
   b.add('hips', prism(0.36 + belly * 0.1, 0.38 + belly * 0.08, 0.17, 0.25 + belly * 0.07, 0.24 + belly * 0.05), kit.shorts, { at: [0, 0.02, 0], uv: 'leg' });
-  const torsoTop = (0.45 + belly * 0.05) * shoulderK;
+  const torsoTop = (0.45 + belly * 0.05) * shoulderK * (0.5 + 0.5 * bulk);
   const torsoBot = 0.37 + belly * 0.13;
   // Brust oben etwas tiefer als früher: kräftigeres Seitenprofil.
   b.add('spine', prism(torsoTop, torsoBot, torsoH, 0.285 + belly * 0.04, 0.24 + belly * 0.1, { front: belly * 0.07 }), useAtlas ? 0xffffff : kit.shirt, { at: [0, torsoH / 2, 0.005], uv: 'kit' });
@@ -375,8 +379,8 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
   for (const s of ['L', 'R']) {
     const out = s === 'L' ? -0.01 : 0.01;
     b.add(`upperArm${s}`, prism(0.16, 0.14, 0.17, 0.17, 0.15), shirt, { at: [out, -0.06, 0] });
-    b.add(`upperArm${s}`, prism(0.115, 0.11, 0.12, 0.12, 0.115), keeper ? shirt : skin, { at: [out, -0.205, 0] });
-    b.add(`lowerArm${s}`, prism(0.11, 0.095, 0.2, 0.11, 0.1), keeper ? shirt : skin, { at: [out, -0.1, 0] });
+    b.add(`upperArm${s}`, prism(0.115 * bulk, 0.11 * bulk, 0.12, 0.12 * bulk, 0.115 * bulk), keeper ? shirt : skin, { at: [out, -0.205, 0] });
+    b.add(`lowerArm${s}`, prism(0.11 * bulk, 0.095 * bulk, 0.2, 0.11 * bulk, 0.1 * bulk), keeper ? shirt : skin, { at: [out, -0.1, 0] });
     b.box(`lowerArm${s}`, 0.1, 0.09, 0.115, keeper ? glove : skin, [out, -0.24, 0.005]);
   }
 
@@ -437,6 +441,9 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
     for (const s of [-1, 1]) b.box('head', 0.025, 0.06, headW * 0.5, hairD, [s * (hw + 0.005), top * 0.62, -0.07]); // Haarkranz
     b.box('head', headW + 0.01, 0.06, 0.04, hairD, [0, top * 0.62, -hw]);
   }
+  // Jubel „Trikot über den Kopf": Stoff über Kopf und Nacken, sonst unsichtbar (Knochen auf ~0 skaliert).
+  b.add('hood', prism(headW + 0.07, headW * jaw + 0.06, headH + 0.1, headW + 0.07, headW * jaw + 0.08), shirt, { at: [0, headH / 2 + 0.02, 0.005] });
+  b.box('hood', 0.04, 0.05, headW + 0.06, mixHex(shirt, 0x000000, 0.2), [0, headH + 0.06, 0]); // Saum oben
   // Bart: gemalt im Gesicht (Atlas); nur der Vollbart bekommt etwas Volumen am Kinn.
   const features = faceFeatures(hash, look);
   if (features.beard === 'full') b.box('head', headW * 0.8, 0.075, 0.05, hairC, [0, headH * 0.1, hw - 0.005]);
@@ -520,6 +527,7 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
   mesh.add(bones.root);
   mesh.updateMatrixWorld(true);
   mesh.bind(new THREE.Skeleton(BONES.map((n) => bones[n])));
+  bones.hood.scale.setScalar(HIDDEN); // erst nach dem Binden (sonst nicht umkehrbar)
 
   const group = new THREE.Group();
   group.add(mesh);
@@ -824,6 +832,7 @@ function acroPose(bn, kind, t, hipY) {
 export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot', headPrep = 0, headJump = 1, hit = null, duck = 0, face: faceHint = null, kickPrep = 0, trick = null, trickT = 0, trickSide = 1, acro = null, acroT = 0, fooled = 0, ready = 0, throwT = 0, jump = 0, punch = 0, getUp = null, cover = 0, gesture = null }) {
   const bn = model.bones;
   resetPose(model);
+  model.bones.hood.scale.setScalar(HIDDEN);
   const s = locomotion(model, speed, dt);
   const hipY = model.rest.hips[1];
   let face = s > 0.85 ? 'effort' : 'neutral';
@@ -1123,6 +1132,28 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
       bn.spine.rotation.x += 0.15;
     } else if (gesture === 'call') {
       arm(bn, 'R', -2.8, 0.3 + Math.sin(g * 8) * 0.35, -0.2);
+    } else if (gesture === 'haende') {
+      // Vergeben: beide Hände an den Kopf, Kopf in den Nacken.
+      // Winkel per Gitter-Suche: Hand liegt oben auf dem Kopf (Abstand < 1 cm).
+      arm(bn, 'L', -2.5, -0.4, -1.3);
+      arm(bn, 'R', -2.5, -0.4, -1.3);
+      bn.head.rotation.x -= 0.3;
+      bn.spine.rotation.x -= 0.08;
+    } else if (gesture === 'abwinken') {
+      // Ärger: ein Arm schlägt nach unten durch die Luft.
+      const k = Math.min(1, g / 0.35);
+      arm(bn, 'R', -1.6 + 1.5 * k, 0.35, -0.4);
+      bn.spine.rotation.x += 0.1 * k;
+    } else if (gesture === 'abklatschen') {
+      // Wechsel: rechte Hand hoch nach vorn, zum Abklatschen.
+      arm(bn, 'R', -2.4, 0.2, -0.35);
+    } else if (gesture === 'zeigen') {
+      // Schiri: gestreckter Arm nach vorn, Blick mit.
+      arm(bn, 'R', -1.55, 0.05, -0.05);
+      arm(bn, 'L', 0.05, 0.12, -0.1);
+    } else if (gesture === 'geballt') {
+      // Gehalten: Faust auf Brusthöhe, kurz angezogen.
+      arm(bn, 'R', -0.9 - Math.min(1, g / 0.25) * 0.5, 0.2, -1.9);
     }
   } else model.gestT = 0;
 
@@ -1158,6 +1189,39 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
     } else if (celebrate === 'rutscher') {
       arm(bn, 'L', -2.8, 0.3, -0.2);
       arm(bn, 'R', -2.8, 0.3, -0.2);
+    } else if (celebrate === 'trikot') {
+      // Trikot über den Kopf, die Hände halten es oben fest.
+      arm(bn, 'L', -2.75, 0.2, -1.25);
+      arm(bn, 'R', -2.75, 0.2, -1.25);
+      bn.spine.rotation.x = -0.12;
+      bn.hood.scale.setScalar(1);
+    } else if (celebrate === 'ohr') {
+      // Hand ans Ohr: „Ich hör nix!" – zu den Zuschauern gedreht, Oberkörper geneigt.
+      arm(bn, 'R', -2.3, -0.4, -2.0); // Hand am Ohr (Gitter-Suche, 1 cm)
+      arm(bn, 'L', -0.35, 1.15, -0.25);
+      bn.spine.rotation.z = -0.18 + Math.sin(t * 2) * 0.05;
+      bn.head.rotation.z = -0.22;
+    } else if (celebrate === 'ruecken') {
+      // Daumen über die Schultern auf Name und Nummer hinten.
+      arm(bn, 'L', -2.6, -1.2, -2.2); // Hand hinter der Schulter (Gitter-Suche, 2 cm)
+      arm(bn, 'R', -2.6, -1.2, -2.2);
+      bn.spine.rotation.x = -0.18;
+      bn.head.rotation.x = -0.35;
+    } else if (celebrate === 'brust') {
+      // Faust schlägt aufs Wappen, die andere Hand ballt sich.
+      arm(bn, 'L', -1.15 - Math.max(0, Math.sin(t * 5)) * 0.3, -0.05, -2.45);
+      arm(bn, 'R', -0.6, 0.55, -1.4);
+      bn.spine.rotation.x = -0.1;
+      bn.head.rotation.x = -0.3;
+    } else if (celebrate === 'umarmen') {
+      // Traube um den Torschützen: Arme um ihn herum, alle hüpfen.
+      arm(bn, 'L', -1.7, 0.75, -0.9);
+      arm(bn, 'R', -1.7, 0.75, -0.9);
+      bn.hips.position.y += Math.abs(Math.sin(t * 6)) * 0.09;
+      bn.spine.rotation.x = 0.12;
+    } else if (celebrate === 'hinterher') {
+      // Zum Torschützen laufen, ein Arm oben.
+      arm(bn, 'R', -2.9, 0.25, -0.15);
     }
   } else if (sad) {
     // Gegentor: Kopf runter, Schultern hängen, Hände in die Hüften.

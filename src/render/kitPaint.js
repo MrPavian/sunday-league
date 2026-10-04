@@ -106,6 +106,13 @@ function paintSponsor(ctx, ox, kit, sponsor, bg) {
 }
 
 // Malt den ganzen Atlas. dirt: 0–1, splats: feste Klecks-Positionen je Spieler.
+const FOLDS = {
+  front: [[0, 3, 1, 4], [15, 3, 1, 4], [3, 11, 1, 2], [4, 13, 2, 1], [12, 11, 1, 2], [10, 13, 2, 1], [0, 15, 16, 1]],
+  back: [[0, 3, 1, 4], [15, 3, 1, 4], [6, 12, 1, 2], [9, 12, 1, 2], [0, 15, 16, 1]],
+  left: [[0, 2, 16, 1], [5, 9, 1, 3], [10, 10, 1, 3], [0, 15, 16, 1]],
+  right: [[0, 2, 16, 1], [5, 10, 1, 3], [10, 9, 1, 3], [0, 15, 16, 1]],
+};
+
 export function paintKit(ctx, kit, { sponsor = null, dirt = 0, splats = null, dirtColor = 0x5b4a2e, x0 = 0, faces = ['front', 'back', 'left', 'right'] } = {}) {
   const fn = PATTERNS[kit.pattern] ?? PATTERNS.uni;
   const a = css(kit.shirt);
@@ -117,6 +124,12 @@ export function paintKit(ctx, kit, { sponsor = null, dirt = 0, splats = null, di
         ctx.fillStyle = fn(x, y, face) ? b : a;
         ctx.fillRect(ox + x, y, 1, 1);
       }
+    // Falten: unter den Armen, an der Taille und ein Zug schräg zur Hüfte – leicht dunkler, damit der
+    // Stoff nicht wie eine glatte Fläche wirkt.
+    ctx.fillStyle = '#000000';
+    ctx.globalAlpha = 0.14;
+    for (const [x, y, w, h] of FOLDS[face] ?? []) ctx.fillRect(ox + x, y, w, h);
+    ctx.globalAlpha = 1;
     if (face === 'front' && sponsor) paintSponsor(ctx, ox, kit, sponsor, fn(8, 8, face) ? kit.second ?? kit.shirt : kit.shirt);
   });
   if (dirt > 0 && splats) {

@@ -2,6 +2,7 @@ import { GET_UP } from '../sim/tackles.js';
 import * as THREE from 'three';
 import { ACRO, TRICKS } from '../sim/tricks.js';
 import { len } from '../core/math.js';
+import { mateCelebration, refereeSignal, shotReactions, subScene } from './reactions.js';
 import { allPlayers } from '../sim/squad.js';
 import { attackDir } from '../sim/players.js';
 import { BallView } from './BallView.js';
@@ -44,8 +45,9 @@ const ANIM = {};
 const DIVE = { t: 0, side: 1, high: 0, caught: false, rec: null };
 const DIVE_REC = 0.4; // Aufstehen nach dem Hechtsprung (s, nur Darstellung)
 const REF_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal' };
+const LEAVE_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture: null };
 
-const CELEBRATIONS = ['flugzeug', 'faust', 'tanz', 'rutscher'];
+const CELEBRATIONS = ['flugzeug', 'faust', 'tanz', 'rutscher', 'trikot', 'ohr', 'ruecken', 'brust'];
 
 // Jeder Spieler hat "seinen" Jubel – fest an der ID, damit er wiedererkennbar ist.
 function celebrationFor(id) {
@@ -62,6 +64,8 @@ export class MatchView {
     this.root = new THREE.Group();
     scene.add(this.root);
     this.models = new Map();
+    this.shotState = {}; // letzter Schuss (für die Reaktion danach)
+    this.leaving = []; // Ausgewechselte auf dem Weg vom Platz (nur Darstellung)
     this.softGround = !match.pitch.surface.hard;
     // Ein Atlas (Textur + Material) je Team und Trikot: Feldspieler, Torwart.
     const everyone = allPlayers(match);
@@ -150,6 +154,13 @@ export class MatchView {
     this.ballView.handle(match);
     // Dreck: Grätschen, Fouls und Stürze hinterlassen Spuren.
     for (const e of match.events) {
+      if (e.type === 'sub') {
+        // Abklatschen an der Mittellinie, dann trottet der Ausgewechselte raus.
+        const inc = match.players.find((q) => q.id === e.inId);
+        if (inc && this.models.has(e.outId)) this.leaving.push({ id: e.outId, x: inc.pos.x, z: inc.pos.z, t: 0 });
+        const mi = this.models.get(e.inId);
+        if (mi) Object.assign(mi, { reactGesture: 'abklatschen', reactTime: 0.6, gestT: 0 });
+      }
       if (e.type === 'slide' || e.type === 'scrape') this.soil(e.playerId, 0.12);
       else if (e.type === 'tackle' || e.type === 'poke_won') this.soil(e.playerId, 0.03);
       else if (e.type === 'foul') this.soil(e.victimId, 0.1);
@@ -177,6 +188,16 @@ export class MatchView {
       m.faceHint = face;
       m.faceTime = time;
     };
+    const sig = refereeSignal(match, attackDir);
+    if (sig) this.refSignal = sig;
+    for (const r of shotReactions(this.shotState, match)) {
+      const m = this.models.get(r.id);
+      if (!m) continue;
+      m.reactGesture = r.gesture;
+      m.reactTime = r.time;
+      m.gestT = 0;
+      if (r.face) mood(r.id, r.face, r.time);
+    }
     for (const e of match.events) {
       if (e.type === 'grab' || e.type === 'foul') hitFrom(find(e.victimId), find(e.playerId), e.type === 'foul' ? 1 : 0.7);
       else if (e.type === 'block') hitFrom(find(e.playerId), null, 0.8);
@@ -395,6 +416,7 @@ export class MatchView {
       let celebrate = null;
       if (p.mood === 'scorer' || p.mood === 'celebrate') {
         celebrate = m.celebration === 'rutscher' && !this.softGround ? 'flugzeug' : m.celebration;
+        celebrate = mateCelebration(match, p, celebrate);
       }
       this.headerPrep(p, m, match.ball, dt);
       this.kickPrep(p, m, match.ball, dt);
@@ -482,9 +504,29 @@ export class MatchView {
       o.cover = inc === 'gewitter' && len(p.vel.x, p.vel.z) > 1.5 ? 1 : 0;
       const pg = inc === 'taube' ? match.pigeon : null;
       o.gesture = pg && pg.state !== 'gleiten' && Math.hypot(pg.pos.x - p.pos.x, pg.pos.z - p.pos.z) < 2.3 ? 'scheuchen' : null;
+      // Nach dem Schuss: Hände an den Kopf, abwinken, Faust des Torwarts (nur Darstellung, aus Ereignissen).
+      if (m.reactTime > 0) {
+        m.reactTime -= dt;
+        if (!o.gesture && !celebrate && match.ball.holder !== p.id) o.gesture = m.reactGesture;
+      }
       animatePlayer(m, o);
       this.blob(m, p.pos.x, p.pos.z);
     }
+    // Ausgewechselte: abklatschen und vom Platz trotten.
+    this.leaving = this.leaving.filter((l) => {
+      const m = this.models.get(l.id);
+      const sc = subScene(l, dt);
+      if (sc.done || !m || match.players.some((q) => q.id === l.id)) return false;
+      m.group.visible = true;
+      m.group.position.set(sc.x, 0, sc.z);
+      m.group.rotation.y = sc.angle;
+      LEAVE_ANIM.speed = sc.speed;
+      LEAVE_ANIM.dt = dt;
+      LEAVE_ANIM.gesture = sc.gesture;
+      animatePlayer(m, LEAVE_ANIM);
+      this.blob(m, sc.x, sc.z);
+      return true;
+    });
     const r = match.referee;
     if (r && this.referee && r.name !== this.refereeName) this.buildReferee(r);
     if (r && this.referee) {
@@ -492,6 +534,18 @@ export class MatchView {
       this.referee.group.rotation.y = Math.atan2(r.facing.x, r.facing.z);
       REF_ANIM.speed = len(r.vel.x, r.vel.z);
       REF_ANIM.dt = dt;
+      // Zeigt an, wohin es geht (Ecke, Abstoß, Elfmeter, Freistoß, Einwurf, nach dem Tor zur Mitte).
+      const sg = this.refSignal;
+      REF_ANIM.gesture = null;
+      if (sg && sg.time > 0) {
+        sg.time -= dt;
+        const dx = sg.x - r.pos.x;
+        const dz = sg.z - r.pos.z;
+        if (Math.hypot(dx, dz) > 0.5) {
+          this.referee.group.rotation.y = Math.atan2(dx, dz);
+          REF_ANIM.gesture = 'zeigen';
+        }
+      }
       REF_ANIM.cover = match.incident?.type === 'gewitter' && REF_ANIM.speed > 1.5 ? 1 : 0;
       animatePlayer(this.referee, REF_ANIM);
       if (r.cardAnim > 0) this.referee.arms[1].rotation.x = -2.9; // Karte hoch

@@ -300,3 +300,51 @@ export function applyLighting(root, scene, L) {
     }
   });
 }
+
+// Platzrand: Eckfahnen an allen vier Ecken, auf der Gegenseite zwei Trainerbänke mit Dach (dort
+// verdecken sie kein Spiel), auf der Kameraseite nur Flaches: Sporttaschen, Getränkekisten mit
+// Flaschen, ein Ballnetz, Hütchen. Nur Farben, die die Kulisse schon nutzt – mergeStatic legt alles
+// zu den vorhandenen Draw Calls (je Material einer).
+export function makeSideline(pitch, rng, { benches = true, gear = true, pole = 0xe8dcc0, flag = 0xc9a227 } = {}) {
+  const { halfLength: hl, halfWidth: hw } = pitch;
+  const g = new THREE.Group();
+  for (const sx of [-1, 1])
+    for (const sz of [-1, 1]) {
+      g.add(box(0.06, 1.5, 0.06, pole, sx * hl, 0.75, sz * hw)); // Stange
+      g.add(box(0.03, 0.32, 0.46, flag, sx * hl, 1.32, sz * hw - 0.23 * sz)); // Fahne, zum Platz hin
+    }
+  if (benches) {
+    const k = hl / 26;
+    for (const side of [-1, 1]) {
+      const x = side * 5.5 * k;
+      const z = -hw - 1.5;
+      // Plexiglas-Haube (hell) auf dunklem Rahmen.
+      g.add(
+        box(2.6, 1.3, 0.06, 0xd8e0e0, x, 0.65, z - 0.42), // Rückwand
+        box(2.7, 0.06, 1.0, 0xd8e0e0, x, 1.33, z - 0.05), // Dach
+        box(0.06, 1.3, 0.9, 0xd8e0e0, x - 1.3, 0.65, z - 0.05),
+        box(0.06, 1.3, 0.9, 0xd8e0e0, x + 1.3, 0.65, z - 0.05),
+        box(2.72, 0.05, 0.05, 0x4a5058, x, 1.37, z + 0.45), // Dachkante
+        box(2.4, 0.08, 0.4, 0x8a5a3a, x, 0.45, z - 0.15), // Sitzbank
+        box(2.4, 0.42, 0.06, 0x3a3a3a, x, 0.22, z - 0.3),
+      );
+      // Getränkekiste und Tasche vor der Bank
+      g.add(box(0.42, 0.3, 0.3, 0xc0392b, x + 0.8, 0.15, z + 0.55), box(0.6, 0.28, 0.3, 0x2a2a2a, x - 0.7, 0.14, z + 0.55));
+    }
+  }
+  if (!gear) return g;
+  // Kameraseite: alles unter einem halben Meter, damit nichts das Spiel an der Linie verdeckt.
+  const near = hw + 1.4;
+  const spots = [-0.62, -0.35, 0.3, 0.58].map((f) => f * hl + rng.range(-1.5, 1.5));
+  spots.forEach((x, i) => {
+    if (i % 2 === 0) {
+      g.add(box(0.42, 0.3, 0.3, 0xc0392b, x, 0.15, near)); // Getränkekiste
+      for (let b = 0; b < 3; b++) g.add(cylinder(0.035, 0.22, 0xd8e0e0, x - 0.12 + b * 0.12, 0.41, near, 4)); // Flaschen
+      g.add(box(0.6, 0.28, 0.3, rng.next() < 0.5 ? 0x2a2a2a : 0x4a5058, x + 0.7, 0.14, near + 0.15)); // Sporttasche
+    } else {
+      g.add(box(0.5, 0.45, 0.5, 0xe8dcc0, x, 0.23, near + 0.1)); // Ballnetz voller Bälle
+      for (let c = 0; c < 4; c++) g.add(box(0.14, 0.12, 0.14, 0xc9a227, x + 0.8 + c * 0.35, 0.06, near - 0.1)); // Hütchen
+    }
+  });
+  return g;
+}
