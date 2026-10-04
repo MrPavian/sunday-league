@@ -93,6 +93,26 @@ export function memoryAfterMatch(c, prepared) {
   return unique;
 }
 
+// Text-Variante ohne Zufallsstrom: aus Spieler, Saison und Runde abgeleitet, damit der Spielablauf gleich bleibt.
+const spin = (list, ...n) => list[Math.abs([...n.join('|')].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) | 0, 7)) % list.length];
+function reunion(c, idx, opponent, f) {
+  const n = firstName(c, idx);
+  const g = f.goals;
+  const de = [
+    `Sonntag gibt's ein Wiedersehen: ${n} spielt jetzt bei ${opponent.short}. ${g ? `${g} Tore hat er für uns gemacht.` : 'Getroffen hat er bei uns nie.'}`,
+    `${n} läuft Sonntag für ${opponent.short} auf. ${g ? `${g} Tore für uns, mal sehen, ob er sich benimmt.` : 'Bei uns hat er nie getroffen, bei denen bestimmt auch nicht.'}`,
+    `Na, wer kommt Sonntag mit ${opponent.short}? ${n}. ${g ? `Der hat uns ${g} Tore geschossen.` : 'Der hat bei uns nie getroffen.'}`,
+    `Alter Bekannter: ${n} ist jetzt bei ${opponent.short}. ${g ? `${g} Tore für uns, jetzt gegen uns.` : 'Ohne Tor für uns, aber mit großer Klappe.'}`,
+  ];
+  const en = [
+    `A reunion on Sunday: ${n} plays for ${opponent.short} now. ${g ? `He scored ${g} for us.` : 'Never scored for us.'}`,
+    `${n} turns out for ${opponent.short} on Sunday. ${g ? `${g} goals for us, let's see if he behaves.` : 'Never scored for us, probably will not for them either.'}`,
+    `Guess who comes with ${opponent.short} on Sunday? ${n}. ${g ? `He scored ${g} for us.` : 'Never scored for us.'}`,
+    `An old acquaintance: ${n} is at ${opponent.short} now. ${g ? `${g} goals for us, now against us.` : 'No goals for us, but a big mouth.'}`,
+  ];
+  return tr(spin(de, idx, c.season, c.round), spin(en, idx, c.season, c.round));
+}
+
 // Wochenbeginn: Vorbericht im Chat, wenn Geschichte im Spiel ist.
 export function preMatchMemories(c, opponent, chat) {
   if (!opponent) return;
@@ -104,7 +124,7 @@ export function preMatchMemories(c, opponent, chat) {
   if (formers.length) {
     const idx = formers[0];
     const f = c.formers[idx];
-    chat.push({ from: talker, text: f.grumpy ? tr(`Wisst ihr, wer bei ${opponent.short} spielt? ${firstName(c, idx)}. Der ist damals im Streit gegangen. Dem zeigen wir's.`, `Guess who plays for ${opponent.short}? ${firstName(c, idx)}. Left us after a row. Let's show him.`) : tr(`Sonntag gibt's ein Wiedersehen: ${firstName(c, idx)} spielt jetzt bei ${opponent.short}. ${f.goals ? `${f.goals} Tore hat er für uns gemacht.` : 'Getroffen hat er bei uns nie.'}`, `A reunion on Sunday: ${firstName(c, idx)} plays for ${opponent.short} now. ${f.goals ? `He scored ${f.goals} for us.` : 'Never scored for us.'}`), time: 'Mi 19:12', memory: true });
+    chat.push({ from: talker, text: f.grumpy ? tr(`Wisst ihr, wer bei ${opponent.short} spielt? ${firstName(c, idx)}. Der ist damals im Streit gegangen. Dem zeigen wir's.`, `Guess who plays for ${opponent.short}? ${firstName(c, idx)}. Left us after a row. Let's show him.`) : reunion(c, idx, opponent, f), time: 'Mi 19:12', memory: true });
   } else if (nemesis.length) {
     const idx = nemesis[0];
     chat.push({ from: talker, text: tr(`Achtung: ${surname(c, idx)} von ${opponent.short} hat uns schon ${c.nemesis[idx]} Dinger eingeschenkt. Einer klebt Sonntag an ihm.`, `Heads up: ${surname(c, idx)} from ${opponent.short} has put ${c.nemesis[idx]} past us. Someone stays glued to him on Sunday.`), time: 'Mi 19:12', memory: true });
