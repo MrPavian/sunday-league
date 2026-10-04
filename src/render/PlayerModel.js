@@ -17,19 +17,21 @@ const PARENT = { hips: 'root', spine: 'hips', head: 'spine', upperArmL: 'spine',
 
 // --- Team-Atlas -------------------------------------------------------------------
 // Je Spieler eine Kachel 128 × 16: Trikot (64 × 16: vorn | hinten | links | rechts,
-// siehe kitPaint.js), sechs Gesichter à 8 × 8 und drei Hilfspixel (weiß, Beinfarbe mit
+// siehe kitPaint.js), acht Gesichter à 8 × 8 (sieben oben, das achte darunter) und drei Hilfspixel (weiß, Beinfarbe mit
 // Dreck, Pflaster). Mehrere Kacheln untereinander ergeben den Atlas eines Teams.
 const TILE_W = 128;
 const TILE_H = 16;
 const FACE_X = 64;
 const FACE = 8;
 const UTIL_X = 120; // weiß | Bein (Dreck) | Pflaster
-export const FACES = ['neutral', 'happy', 'angry', 'pain', 'sad', 'effort', 'surprised'];
+export const FACES = ['neutral', 'happy', 'angry', 'pain', 'sad', 'effort', 'surprised', 'exhausted'];
+// Zelle eines Gesichts in der Kachel (x, y): die ersten sieben oben, der Rest eine Reihe tiefer.
+const faceCell = (fi) => [FACE_X + (fi % 7) * FACE, Math.floor(fi / 7) * FACE];
 // Pixelgesichter 8 × 8 aus wenigen Bausteinen je Spieler (fest aus dem Aussehen): Augen,
 // Brauen, Nase, Mund, Bart – kombiniert mit dem Ausdruck. Bei ~30 px/m ist ein Gesicht etwa
 // 8 Pixel breit, jedes Feld also ungefähr ein Bildschirmpixel. Zeilen: 1–2 Brauen, 3 Augen,
 // 4 Nase, 5–6 Mund, 5–7 Kinn/Bart. Codes: e Auge, k Schlitzauge, b Braue, n Nase, m Mund,
-// o offener Mund, s Stoppeln, h Bart (Haarfarbe).
+// o offener Mund, t Zähne, s Stoppeln, h Bart (Haarfarbe).
 export const FACE_PARTS = { eyes: ['dot', 'tall', 'narrow'], brows: ['thin', 'thick', 'mono', 'light'], nose: ['none', 'dot', 'long'], mouth: ['small', 'wide', 'thin'], beard: ['none', 'stubble', 'short', 'full', 'moustache'] };
 export function faceArt(expr, f) {
   const g = Array.from({ length: 8 }, () => Array(8).fill('.'));
@@ -54,6 +56,7 @@ export function faceArt(expr, f) {
   if (f.nose === 'long') put(4, 3, 'n');
   // Augen je Ausdruck; Grundform aus dem Baustein.
   const eye = (x) => {
+    if (expr === 'exhausted') return put(x, 3, 'k'), put(x, 4, 'n'); // halb zu, Ringe darunter
     if (expr === 'pain') return put(x, 3, 'k'), put(x + (x < 4 ? -1 : 1), 3, 'k');
     if (expr === 'surprised' || f.eyes === 'tall') return put(x, 3, 'e'), put(x, 2, expr === 'surprised' ? 'e' : g[2][x]);
     if (f.eyes === 'narrow') return put(x, 3, 'e'), put(x + (x < 4 ? -1 : 1), 3, 'k');
@@ -67,7 +70,8 @@ export function faceArt(expr, f) {
     if (f.brows === 'light' && expr === 'neutral') return;
     for (const [x, y] of pts) put(x, y, 'b');
   };
-  if (expr === 'angry') brow([[1, 1], [2, 2], [6, 1], [5, 2], ...(thick ? [[3, 2], [4, 2]] : [])]);
+  if (expr === 'angry') brow([[1, 1], [2, 2], [3, 2], [6, 1], [5, 2], [4, 2], [1, 2], [6, 2]]);
+  else if (expr === 'exhausted') brow([[1, 1], [2, 2], [6, 1], [5, 2]]);
   else if (expr === 'sad' || expr === 'pain') brow([[1, 2], [2, 1], [6, 2], [5, 1]]);
   else if (expr === 'surprised') brow([[1, 0], [2, 0], [5, 0], [6, 0]]);
   else if (expr === 'effort') brow([[1, 2], [2, 2], [5, 2], [6, 2], ...(thick ? [[3, 2], [4, 2]] : [])]);
@@ -76,10 +80,20 @@ export function faceArt(expr, f) {
   // Mund je Ausdruck; neutrale Form aus dem Baustein.
   const w = f.mouth === 'wide' ? [2, 5] : [3, 4];
   if (expr === 'happy') {
-    put(w[0] - (w[0] === 3 ? 1 : 0), 5, 'm');
-    put(w[1] + (w[1] === 4 ? 1 : 0), 5, 'm');
-    for (let x = 3; x <= 4; x++) put(x, 6, 'm');
-  } else if (expr === 'angry') for (let x = 2; x <= 5; x++) put(x, 5, 'o');
+    // Jubel: weit offener Mund mit Zähnen oben, Mundwinkel hoch.
+    for (const x of [1, 6]) put(x, 4, 'm');
+    for (let x = 2; x <= 5; x++) put(x, 5, 't');
+    for (let x = 2; x <= 5; x++) put(x, 6, 'o');
+  } else if (expr === 'exhausted') {
+    // Hechelnd: Mund offen, Unterkiefer hängt.
+    for (let x = 2; x <= 5; x++) put(x, 5, 'o');
+    for (let x = 3; x <= 4; x++) put(x, 6, 'o');
+  } else if (expr === 'angry') {
+    // Zähne zusammengebissen, Mundwinkel nach unten.
+    for (let x = 2; x <= 5; x++) put(x, 5, 't');
+    for (const x of [1, 6]) put(x, 5, 'o');
+    for (const x of [2, 5]) put(x, 6, 'o');
+  }
   else if (expr === 'pain') {
     for (let x = 2; x <= 5; x++) put(x, 5, 'o');
     put(2, 6, 'm');
@@ -110,6 +124,8 @@ export const EDGE_CODE = { home: 0.25, away: 0.5, neutral: 0.7 };
 
 const css = (n) => `#${(n >>> 0).toString(16).padStart(6, '0').slice(-6)}`;
 const luminance = (hex) => (0.299 * ((hex >> 16) & 255) + 0.587 * ((hex >> 8) & 255) + 0.114 * (hex & 255)) / 255;
+// Grünlich/gelblich (Rasenfarben): Signalgelb würde darin verschwinden.
+const greenish = (c) => ((c >> 8) & 255) > ((c >> 16) & 255) * 0.9 && ((c >> 8) & 255) > (c & 255) * 1.2 && luminance(c) > 0.3;
 const mixHex = (a, b, t) => {
   const c = (s) => [(s >> 16) & 255, (s >> 8) & 255, s & 255];
   const x = c(a);
@@ -165,7 +181,7 @@ function paintTile(t) {
   const y0 = tile * TILE_H;
   ctx.save();
   ctx.translate(0, y0);
-  paintKit(ctx, atlas.kit, { sponsor: atlas.sponsor, dirt: t.dirt, splats: t.splats, dirtColor: t.dirtColor });
+  paintKit(ctx, atlas.kit, { sponsor: atlas.sponsor, dirt: t.dirt, splats: t.splats, dirtColor: t.dirtColor, wet: t.wet });
   if (t.number != null) {
     // Erst ein Pixel Rand in Gegenfarbe, dann die Ziffern – lesbar auch auf Ringeln.
     const digits = String(t.number).slice(0, 2).split('').map(Number);
@@ -181,12 +197,13 @@ function paintTile(t) {
       }
     }
   }
-  const pal = { e: 0x1a1716, k: mixHex(t.skin, 0x1a1716, 0.55), b: t.brow, n: mixHex(t.skin, 0x000000, 0.22), m: t.mouth, o: mixHex(t.skin, 0x2a0e0a, 0.8), s: mixHex(t.skin, t.hairColor, 0.4), h: t.hairColor };
+  const pal = { e: 0x1a1716, k: mixHex(t.skin, 0x1a1716, 0.55), b: t.brow, n: mixHex(t.skin, 0x000000, 0.22), m: t.mouth, o: mixHex(t.skin, 0x2a0e0a, 0.8), t: 0xf2eee2, s: mixHex(t.skin, t.hairColor, 0.4), h: t.hairColor };
   // Gleichfarbige Läufe einer Zeile als ein Rechteck – pixelgleich, aber weit weniger Canvas-Aufrufe.
   const fill = {};
   const style = (ch) => (fill[ch] ??= css(pal[ch] ?? t.skin));
   FACES.forEach((id, fi) => {
     const art = t.faceArt[id];
+    const [fx, fy] = faceCell(fi);
     for (let y = 0; y < FACE; y++) {
       const row = art[y];
       for (let x = 0; x < FACE; ) {
@@ -194,7 +211,7 @@ function paintTile(t) {
         let end = x + 1;
         while (end < FACE && row[end] === ch) end++;
         ctx.fillStyle = style(ch);
-        ctx.fillRect(FACE_X + fi * FACE + x, y, end - x, 1);
+        ctx.fillRect(fx + x, fy + y, end - x, 1);
         x = end;
       }
     }
@@ -290,9 +307,10 @@ function kitUV(g, atlas, tile) {
 // 0/1 für links/rechts und unten/oben (aus der Box-UV beim Bau, fest gespeichert).
 function faceUV(uv, start, corners, atlas, tile, face) {
   const fi = FACES.indexOf(face);
-  const x0 = (FACE_X + fi * FACE) / TILE_W;
-  const x1 = (FACE_X + (fi + 1) * FACE) / TILE_W;
-  const vTop = 1 - (tile * TILE_H) / atlas.canvas.height;
+  const [fx, fy] = faceCell(fi);
+  const x0 = fx / TILE_W;
+  const x1 = (fx + FACE) / TILE_W;
+  const vTop = 1 - (tile * TILE_H + fy) / atlas.canvas.height;
   const v1 = vTop - FACE / atlas.canvas.height;
   for (let i = 0; i < 6; i++) uv.setXY(start + i, corners[i * 2] ? x1 : x0, corners[i * 2 + 1] ? vTop : v1);
 }
@@ -319,7 +337,11 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
   const hair = look.hair;
   const shirt = ['seiten', 'schulter'].includes(kit.pattern) && kit.second != null ? kit.second : kit.shirt;
   const accent = luminance(kit.shirt) > 0.55 ? 0x1c1c1c : 0xf4f1e8;
-  const glove = 0xeeeeea;
+  // Torwart: Handschuhe in Signalfarbe (hebt sich von Trikot, Haut und Rasen ab), dunkle Manschette
+  // und Ellbogenpolster – alles Quader im selben Mesh, keine zusätzlichen Draw Calls.
+  const glove = greenish(shirt) ? 0xff7a1a : 0xc6ff2a;
+  const gloveCuff = 0x1c1c1c;
+  const pad = mixHex(shirt, 0x000000, 0.4);
   const shoe = 0x1f1f1f;
 
   // Maße (Meter, vor dem Größenfaktor): Kopf ~12 % größer als früher, Beine etwas kürzer.
@@ -382,6 +404,10 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
     b.add(`upperArm${s}`, prism(0.115 * bulk, 0.11 * bulk, 0.12, 0.12 * bulk, 0.115 * bulk), keeper ? shirt : skin, { at: [out, -0.205, 0] });
     b.add(`lowerArm${s}`, prism(0.11 * bulk, 0.095 * bulk, 0.2, 0.11 * bulk, 0.1 * bulk), keeper ? shirt : skin, { at: [out, -0.1, 0] });
     b.box(`lowerArm${s}`, 0.1, 0.09, 0.115, keeper ? glove : skin, [out, -0.24, 0.005]);
+    if (keeper) {
+      b.box(`lowerArm${s}`, 0.118, 0.035, 0.13, gloveCuff, [out, -0.185, 0.003]); // Manschette am Handgelenk
+      b.box(`lowerArm${s}`, 0.14, 0.09, 0.14, pad, [out, -0.03, -0.01]); // Ellbogenpolster
+    }
   }
 
   // Kopf: oben breiter als am Kinn (Kieferform je Spieler), vorne das Pixelgesicht, Ohren
@@ -566,6 +592,7 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
       splats: makeSplats(),
       shown: 0,
       dirt: 0,
+      wet: 0,
       dirtColor: 0x5b4a2e,
       plaster: false,
     };
@@ -577,13 +604,24 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
 
 // Gesicht wechseln: nur sechs UV-Paare der Kopf-Vorderseite.
 export function setFace(model, face) {
-  if (model.face === face || !model.cloth || model.faceStart < 0) return;
-  model.face = face;
+  if (model.face === face) return;
+  model.face = face; // auch ohne Atlas (Tests ohne DOM) merken
+  if (!model.cloth || model.faceStart < 0) return;
   const uv = model.mesh.geometry.attributes.uv;
   faceUV(uv, model.faceStart, model.faceCorners, model.cloth.atlas, model.cloth.tile, face);
   uv.clearUpdateRanges();
   uv.addUpdateRange(model.faceStart * 2, 12);
   uv.needsUpdate = true;
+}
+
+// Nasser Stoff: wet 0–1 in vier Stufen, damit nur selten neu gemalt wird.
+export function setKitWet(model, wet) {
+  const c = model.cloth;
+  if (!c) return;
+  const level = Math.round(Math.min(1, Math.max(0, wet)) * 4) / 4;
+  if (level === c.wet) return;
+  c.wet = level;
+  paintTile(c);
 }
 
 // Dreck aufs Trikot: dirt 0–1. Neu gemalt wird nur, wenn ein Klecks dazukommt.
@@ -825,11 +863,11 @@ function acroPose(bn, kind, t, hipY) {
 // Zusätzlich zur Simulation (nur Darstellung, von MatchView abgeleitet):
 // headPrep 0…1 – Kopfball kommt gleich (Anlauf, Absprung, Kopf zurück), headJump 0…1 – wie
 // hoch nach dem Kontakt gesprungen wird, hit { t 0…1, side } – kurzer Kontakt/Rempler,
-// duck 0…1 – Torwart duckt sich weg, face – Ausdruck für einen Moment (z. B. überrascht),
+// tired – ausgepumpt (reactions.js tiredFace), duck 0…1 – Torwart duckt sich weg, face – Ausdruck für einen Moment (z. B. überrascht),
 // kickPrep 0…1 – Schuss/Pass ist geplant: ausholen (die Simulation führt ihn als „pending“),
 // trick/trickT/trickSide – Trick am Ball, acro/acroT – Fall-/Seitfallzieher, fooled 0…1 –
 // ausgetrickst, steht kurz auf dem falschen Fuß.
-export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot', headPrep = 0, headJump = 1, hit = null, duck = 0, face: faceHint = null, kickPrep = 0, trick = null, trickT = 0, trickSide = 1, acro = null, acroT = 0, fooled = 0, ready = 0, throwT = 0, jump = 0, punch = 0, getUp = null, cover = 0, gesture = null }) {
+export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot', headPrep = 0, headJump = 1, hit = null, duck = 0, face: faceHint = null, tired = false, kickPrep = 0, trick = null, trickT = 0, trickSide = 1, acro = null, acroT = 0, fooled = 0, ready = 0, throwT = 0, jump = 0, punch = 0, getUp = null, cover = 0, gesture = null }) {
   const bn = model.bones;
   resetPose(model);
   model.bones.hood.scale.setScalar(HIDDEN);
@@ -1234,6 +1272,7 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
   // Wie hoch der Körper über dem Boden ist (für den Kontaktschatten).
   model.lift = Math.max(0, bn.hips.position.y - hipY);
   model.grounded = state === 'tackle' || state === 'down' || state === 'acro' || (!!dive && (dive.rec ?? 0) < 0.5) || (getUp?.k ?? 0) > 0.4;
+  if (tired && face === 'neutral') face = 'exhausted'; // steht oder trabt, aber ausgepumpt
   if (faceHint && !celebrate && face !== 'pain') face = faceHint;
   setFace(model, face);
 }

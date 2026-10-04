@@ -113,7 +113,7 @@ const FOLDS = {
   right: [[0, 2, 16, 1], [5, 10, 1, 3], [10, 9, 1, 3], [0, 15, 16, 1]],
 };
 
-export function paintKit(ctx, kit, { sponsor = null, dirt = 0, splats = null, dirtColor = 0x5b4a2e, x0 = 0, faces = ['front', 'back', 'left', 'right'] } = {}) {
+export function paintKit(ctx, kit, { sponsor = null, dirt = 0, splats = null, dirtColor = 0x5b4a2e, wet = 0, x0 = 0, faces = ['front', 'back', 'left', 'right'] } = {}) {
   const fn = PATTERNS[kit.pattern] ?? PATTERNS.uni;
   const a = css(kit.shirt);
   const b = css(kit.second ?? kit.shirt);
@@ -132,6 +132,7 @@ export function paintKit(ctx, kit, { sponsor = null, dirt = 0, splats = null, di
     ctx.globalAlpha = 1;
     if (face === 'front' && sponsor) paintSponsor(ctx, ox, kit, sponsor, fn(8, 8, face) ? kit.second ?? kit.shirt : kit.shirt);
   });
+  if (wet > 0) paintWet(ctx, wet, x0, faces);
   if (dirt > 0 && splats) {
     const n = Math.floor(splats.length * Math.min(1, dirt));
     ctx.fillStyle = css(dirtColor);
@@ -144,6 +145,28 @@ export function paintKit(ctx, kit, { sponsor = null, dirt = 0, splats = null, di
     }
     ctx.globalAlpha = 1;
   }
+}
+
+// Nasser Stoff (wet 0–1): Multiplizieren macht Farbe dunkler und satter, dazu zeichnen sich Falten
+// und die Stellen, wo der Stoff klebt (Schultern, Brust, Saum), kräftiger ab. Nur Pixel im Atlas.
+const CLING = { front: [[0, 0, 16, 2], [2, 5, 3, 2], [11, 8, 3, 2], [1, 12, 14, 1]], back: [[0, 0, 16, 2], [3, 6, 4, 2], [9, 9, 4, 2], [1, 12, 14, 1]], left: [[0, 0, 16, 2], [3, 6, 2, 4], [1, 12, 14, 1]], right: [[0, 0, 16, 2], [11, 6, 2, 4], [1, 12, 14, 1]] };
+function paintWet(ctx, wet, x0, names) {
+  const count = names.length;
+  ctx.save();
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.globalAlpha = Math.min(1, wet);
+  ctx.fillStyle = '#b0b5c2'; // grau-feucht; mit #9096a8 wurde der weiße Sponsorfleck blaugrau
+  ctx.fillRect(x0, 0, count * 16, 16);
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = '#000000';
+  for (let fi = 0; fi < count; fi++) {
+    const ox = x0 + fi * 16;
+    ctx.globalAlpha = 0.2 * wet;
+    for (const [x, y, w, h] of FOLDS[names[fi]] ?? []) ctx.fillRect(ox + x, y, w, h);
+    ctx.globalAlpha = 0.14 * wet;
+    for (const [x, y, w, h] of CLING[names[fi]] ?? []) ctx.fillRect(ox + x, y, w, h);
+  }
+  ctx.restore();
 }
 
 // Klecks-Positionen: vor allem unten und an den Seiten, dort, wo man beim Grätschen aufschlägt.

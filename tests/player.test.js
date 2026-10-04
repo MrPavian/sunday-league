@@ -53,7 +53,7 @@ describe('Spieler 2.0', () => {
       { speed: 0, celebrate: 'trikot' }, { speed: 3, celebrate: 'trikot' }, { speed: 0, celebrate: 'ohr' }, { speed: 0, celebrate: 'ruecken' },
       { speed: 0, celebrate: 'brust' }, { speed: 0, celebrate: 'umarmen' }, { speed: 4, celebrate: 'hinterher' },
       { speed: 0, gesture: 'haende' }, { speed: 3, gesture: 'haende' }, { speed: 0, gesture: 'abwinken' }, { speed: 0, gesture: 'geballt' }, { speed: 0, gesture: 'zeigen' }, { speed: 0, gesture: 'abklatschen' },
-      { speed: 0, sad: true }, { speed: 4, injured: true },
+      { speed: 0, sad: true }, { speed: 4, injured: true }, { speed: 0, tired: true }, { speed: 2, tired: true },
     ];
     for (const o of poses) {
       const input = { ...base, ...o };
@@ -66,6 +66,19 @@ describe('Spieler 2.0', () => {
       }
       expect(FACES).toContain(m.face);
     }
+  });
+
+  it('Erschöpfung: Gesicht „exhausted“ nur im Stand/Trab, nicht über Schmerz oder Anstrengung', () => {
+    const m = createPlayerModel(look, kit);
+    const base = { speed: 0, dt: 1 / 60, kickAnim: 0, headAnim: 0, holding: null, state: 'normal' };
+    animatePlayer(m, { ...base, tired: true });
+    expect(m.face).toBe('exhausted');
+    animatePlayer(m, { ...base, tired: false });
+    expect(m.face).toBe('neutral');
+    animatePlayer(m, { ...base, tired: true, injured: true });
+    expect(m.face).toBe('pain');
+    animatePlayer(m, { ...base, speed: 7, tired: true });
+    expect(m.face).toBe('effort');
   });
 
   it('Zuschauer-Pose: sitzen senkt die Hüfte', () => {

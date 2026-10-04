@@ -1,7 +1,7 @@
 // Reaktionen der Figuren (nur Darstellung): Nach einem vergebenen Schuss greift sich der Schütze an den Kopf
 // oder winkt ab, der Torwart ballt nach der Parade die Faust; beim Tor bilden die Mitspieler eine Traube.
 import { describe, expect, it } from 'vitest';
-import { mateCelebration, refereeSignal, shotReactions, SUB_FIVE, SUB_WALK, subScene } from '../src/render/reactions.js';
+import { mateCelebration, refereeSignal, shotReactions, SUB_FIVE, SUB_WALK, subScene, tiredFace } from '../src/render/reactions.js';
 import { attackDir } from '../src/sim/players.js';
 import { createMatch, matchDuration, stepMatch } from '../src/sim/match.js';
 import { PITCHES } from '../src/sim/pitch.js';
@@ -76,4 +76,49 @@ describe('Reaktionen nach Schüssen und Toren', () => {
     expect(last.z).toBeGreaterThan(9.4 + 2); // jenseits der Linie
     expect(subScene(sub, 0.2).done).toBe(true);
   });
+});
+
+describe('Erschöpfung im Gesicht', () => {
+  it('Schwellen mit Hysterese, Sprint und Verletzte zeigen sie nicht', () => {
+    const p = { stamina: 0.2, vel: { x: 0, z: 0 }, state: 'normal' };
+    expect(tiredFace(p)).toBe(true);
+    expect(tiredFace({ ...p, stamina: 0.5 })).toBe(false);
+    expect(tiredFace({ ...p, vel: { x: 6, z: 0 } })).toBe(false);
+    expect(tiredFace({ ...p, state: 'tackle' })).toBe(false);
+    expect(tiredFace({ ...p, injury: { severity: 1 } })).toBe(false);
+    const edge = { ...p, stamina: 0.34 };
+    expect(tiredFace(edge, false)).toBe(false);
+    expect(tiredFace(edge, true)).toBe(true);
+  });
+
+  it('in echten Spielen werden Spieler müde, aber nicht alle, und nur im Stand oder Trab', () => {
+    let tired = 0;
+    let frames = 0;
+    const ever = new Set();
+    const all = new Set();
+    for (const seed of [5]) {
+      const m = createMatch({ seed, pitch: PITCHES.rasenplatz, human: false, duration: 240, aiCoach: false });
+      const was = new Map();
+      let n = 0;
+      while (m.phase !== 'ended') {
+        stepMatch(m, undefined, 1 / 60);
+        if (++n % 20) continue; // alle 1/3 s genügt
+        for (const p of m.players) {
+          const t = tiredFace(p, was.get(p.id));
+          was.set(p.id, t);
+          frames++;
+          all.add(seed + p.id);
+          if (t) {
+            tired++;
+            ever.add(seed + p.id);
+            expect(Math.hypot(p.vel.x, p.vel.z)).toBeLessThan(3.2 * 1.2);
+            expect(p.stamina).toBeLessThan(0.3 * 1.2);
+          }
+        }
+      }
+    }
+    expect(tired).toBeGreaterThan(0);
+    expect(tired).toBeLessThan(frames * 0.5);
+    expect(ever.size).toBeLessThan(all.size);
+  }, 180000);
 });

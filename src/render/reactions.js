@@ -62,3 +62,13 @@ export function subScene(sub, dt) {
   if (w > SUB_WALK) return { done: true };
   return { x: sub.x + 0.55, z: sub.z + out * w * 1.5, angle: out > 0 ? 0 : Math.PI, speed: 1.5, gesture: null };
 }
+
+// Ausgepumpt: niedrige Ausdauer und er steht oder trabt (Sprint zeigt Anstrengung, keine Erschöpfung).
+// was = war er es im Bild davor – weite Schwellen verhindern Flackern an der Grenze.
+export const TIRED_STAMINA = 0.3;
+export const TIRED_SPEED = 3.2;
+export function tiredFace(p, was = false) {
+  if (p.state !== 'normal' || p.injury) return false;
+  const k = was ? 1.2 : 1;
+  return p.stamina < TIRED_STAMINA * k && Math.hypot(p.vel.x, p.vel.z) < TIRED_SPEED * k;
+}

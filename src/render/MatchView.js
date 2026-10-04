@@ -2,11 +2,11 @@ import { GET_UP } from '../sim/tackles.js';
 import * as THREE from 'three';
 import { ACRO, TRICKS } from '../sim/tricks.js';
 import { len } from '../core/math.js';
-import { mateCelebration, refereeSignal, shotReactions, subScene } from './reactions.js';
+import { mateCelebration, refereeSignal, shotReactions, subScene, tiredFace } from './reactions.js';
 import { allPlayers } from '../sim/squad.js';
 import { attackDir } from '../sim/players.js';
 import { BallView } from './BallView.js';
-import { animatePlayer, createPlayerModel, disposeKit, KitAtlas, setKitDirt } from './PlayerModel.js';
+import { animatePlayer, createPlayerModel, disposeKit, KitAtlas, setKitDirt, setKitWet } from './PlayerModel.js';
 import { keepAlpha, pixelTexture } from './materials.js';
 
 let flameTex = null;
@@ -299,13 +299,13 @@ export class MatchView {
     this.blobs.dispose();
   }
 
-  // Nasse Spieler und nasser Ball: Stoff und Leder etwas dunkler (ein Materialfaktor je
-  // Team-Atlas, keine neue Textur). Den feuchten Glanz an Kanten gibt der Post-Shader.
+  // Nasse Spieler und nasser Ball: Trikots malen ihre Nässe in den Atlas (setKitWet: satter, Falten,
+  // klebende Stellen), dazu ein leichter Materialfaktor je Team-Atlas. Glanz an Kanten: Post-Shader.
   syncWetLook() {
     const w = Math.round(Math.min(1, this.weather.state.wet) * 20) / 20;
     if (w === this.wetLook) return;
     this.wetLook = w;
-    for (const a of this.atlases.values()) a.material?.color.setScalar(1 - 0.14 * w);
+    for (const a of this.atlases.values()) a.material?.color.setScalar(1 - 0.06 * w); // der Rest steckt im Atlas (setKitWet)
     this.referee?.mesh?.material.color.setScalar(1 - 0.12 * w);
     // Ball: nass etwas dunkler, im Schnee etwas heller (hebt sich vom Weiß durch seine Kante ab).
     const snow = this.weather.state.snow > 0.3 ? 0.06 : 0;
@@ -436,6 +436,9 @@ export class MatchView {
       o.hit = m.hitInfo && m.hitInfo.t < 1 ? m.hitInfo : null;
       o.duck = m.duck > 0 ? 1 - m.duck : 0;
       o.face = m.faceTime > 0 ? m.faceHint : null;
+      m.tired = tiredFace(p, m.tired);
+      o.tired = m.tired;
+      setKitWet(m, this.wetLook);
       // Ausgeholt wird vorher (kickPrep, solange die Simulation den Schuss plant); der Ball fliegt
       // im ersten Schritt los – die Beinbewegung steht dann im Durchschwung: Treffpunkt ≈ Abflug.
       o.kickAnim = p.kickAnim * 0.53;

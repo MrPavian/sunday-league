@@ -10,9 +10,10 @@ const players = (n, seed = 4) => {
 };
 
 describe('Player 2.0 Polish – Gesichter, Frisuren, Reaktionen (nur Darstellung)', () => {
-  it('Gesichter: 7 Ausdrücke à 8 × 8 passen in die Atlas-Kachel, jedes Gesicht ist 8 × 8', () => {
-    expect(FACES).toEqual(['neutral', 'happy', 'angry', 'pain', 'sad', 'effort', 'surprised']);
-    expect(64 + FACES.length * 8).toBeLessThanOrEqual(120); // Kachel: Gesichter vor den Hilfspixeln
+  it('Gesichter: 8 Ausdrücke à 8 × 8 passen in die Atlas-Kachel, jedes Gesicht ist 8 × 8', () => {
+    expect(FACES).toEqual(['neutral', 'happy', 'angry', 'pain', 'sad', 'effort', 'surprised', 'exhausted']);
+    expect(64 + Math.min(7, FACES.length) * 8).toBeLessThanOrEqual(120); // Kachel: Gesichter vor den Hilfspixeln
+    expect(Math.ceil(FACES.length / 7) * 8).toBeLessThanOrEqual(16); // weitere Reihen passen in die Kachelhöhe
     for (const e of FACES) {
       const art = faceArt(e, { eyes: 'tall', brows: 'mono', nose: 'long', mouth: 'wide', beard: 'full' });
       expect(art).toHaveLength(8);
