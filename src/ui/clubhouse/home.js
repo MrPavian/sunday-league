@@ -9,7 +9,7 @@ import { button, icon } from '../ds.js';
 import { clubScene } from '../ClubScene.js';
 import { phone } from '../world.js';
 import { homeView } from '../prefs.js';
-import { crestOf, crestSVG } from '../crest.js';
+import { crestExtras, crestOf, crestSVG } from '../crest.js';
 import { relegationNeeded, relegationOf } from '../../career/relegation.js';
 import { LEAGUES } from '../../career/clubs.js';
 import { clubById, humanClub, leagueOf, humanFixture, playerOf, seasonOver, table } from '../../career/career.js';
@@ -118,9 +118,9 @@ export const homeScreens = {
       <article class="ui-card match hub-match" style="--kit:${hex(club.kit.shirt)}">
         <p class="t-cap">${tr('Sonntag, 10:30 Uhr', 'Sunday, 10:30')} · ${tr('Spieltag', 'Matchday')} ${c.round + 1}${isDerbyFixture(c, f) ? ` · <b class="derby">${derbyOf(c).name}</b>` : ''}</p>
         <div class="hub-vs">
-          <span>${crestSVG(crestOf(hc), { size: 44, short: hc.short, label: hc.name })}<b>${hc.short}</b></span>
+          <span>${crestSVG(crestOf(hc), { size: 44, short: hc.short, ...(hc.human ? crestExtras(c) : {}), label: hc.name })}<b>${hc.short}</b></span>
           <i>–</i>
-          <span>${crestSVG(crestOf(ac), { size: 44, short: ac.short, label: ac.name })}<b>${ac.short}</b></span>
+          <span>${crestSVG(crestOf(ac), { size: 44, short: ac.short, ...(ac.human ? crestExtras(c) : {}), label: ac.name })}<b>${ac.short}</b></span>
         </div>
         <p class="t-body hub-opp">${home ? tr('Heimspiel', 'Home') : tr('Auswärts', 'Away')} ${tr('gegen', 'against')} <b>${opp.name}</b></p>
         <p class="t-2">${venue.name} · ${venue.surface.name} · ${venue.format} ${tr('gegen', 'v')} ${venue.format}</p>
