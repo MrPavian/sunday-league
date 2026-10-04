@@ -19,6 +19,8 @@ Messskripte für Spielverhalten: `scripts/wing-audit.mjs [N] [Platz]`, `scripts/
 - Syntax oder „lädt ohne Fehler" beweist keine Funktion.
 - Tests nie abschwächen; größere Stichprobe nur mit mitwachsender Schwelle.
 - Höchstens eine schwere Messung parallel zu e2e (4 Kerne; sonst Bildstau-Fehlalarme), mit `nice`.
+- Lieferung (APK, PC-Datei, Artifact) erst, wenn alle laufenden Unteragenten fertig, ihre Diffs geprüft und
+  zusammengeführt sind (Nutzervorgabe 2026-10-04) – vorher Qualitätsprüfung des Gesamtstands.
 - Vor jedem Commit: vitest + build + e2e grün. Lieferkette danach: APK (`npm run android:apk` baut aus der
   Arbeitskopie – fremde Änderungen vorher wegstashen), PC-Datei, Artifact.
 
