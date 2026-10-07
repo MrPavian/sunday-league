@@ -219,6 +219,34 @@ function lawn(pitch) {
   };
 }
 
+// Stadion (Bundespokal): Bande rundum ohne Lücke, die Ränge sind voll. Alle gehen runter vom Rasen in den Streifen
+// zwischen Seitenlinie und Bande (zwischen den Trainerbänken) – erst senkrecht raus, dann an ihren Platz.
+function stadium(pitch) {
+  const { halfLength: hl, halfWidth: hw } = pitch;
+  const k = hl / 26;
+  const bench = 5.5 * k;
+  const free = bench - 1.75; // bis hier reicht der freie Streifen zwischen den Bänken
+  const rows = [-hw - 0.75, -hw - 1.35, -hw - 1.95];
+  const slots = rows
+    .flatMap((z, r) => range(-Math.floor(free) + (r === 1 ? 0.5 : 0), Math.floor(free) - (r === 1 ? 0.5 : 0), 1).map((x) => ({ x, z })))
+    .sort((a, b) => Math.abs(a.x) - Math.abs(b.x) || b.z - a.z);
+  const obstacles = [rc(-hl - 1, hl + 1, -hw - 2.5, -hw - 2.3)]; // Bande auf der Tribünenseite
+  for (const s of [-1, 1]) obstacles.push(around(s * bench, -hw - 1.45, 1.4, 0.6)); // Trainerbänke mit Plexihaube
+  for (const s of [-1, 1]) obstacles.push(rc(s * (hl + 4.2) - 0.1, s * (hl + 4.2) + 0.1, -hw - 2, hw + 2)); // Ballfangzäune
+  for (const x of [-hl, hl]) for (const z of [-hw, hw]) obstacles.push(around(x, z, 0.1)); // Eckfahnen
+  const gates = (slot) => [[{ x: slot.x, z: -hw - 0.3 }]];
+  return {
+    text: tr('Gewitter! Alle runter vom Rasen an die Bande, bis es nachlässt.', 'Thunderstorm! Everyone off the grass to the boards until it eases off.'),
+    face: { x: 0, z: 1 },
+    axis: 'x',
+    slots,
+    obstacles,
+    gates,
+    exitZ: -hw - 0.3,
+    exitHalf: hl - 0.5,
+  };
+}
+
 // Unbekannter Spielort: zwei Reihen hinter der Seitenlinie, ohne Hindernisse.
 function fallback(pitch) {
   const { halfWidth: hw, halfLength: hl } = pitch;
@@ -233,11 +261,12 @@ function fallback(pitch) {
   };
 }
 
-const BUILD = { hinterhof: backyard, parkplatz: lot, park, ascheplatz: ash, rasenplatz: lawn, sportplatz: lawn, grossfeld: lawn };
+// Pokal-Kulissen: Das Stadion hat einen eigenen Unterstand, das Großfeld mit Zusatztribüne ist das Großfeld (base).
+const BUILD = { hinterhof: backyard, parkplatz: lot, park, ascheplatz: ash, rasenplatz: lawn, sportplatz: lawn, grossfeld: lawn, stadion: stadium };
 const cache = new WeakMap();
 export function shelterFor(pitch) {
   let s = cache.get(pitch);
-  if (!s) cache.set(pitch, (s = (BUILD[pitch.id] ?? fallback)(pitch)));
+  if (!s) cache.set(pitch, (s = (BUILD[pitch.id] ?? BUILD[pitch.base] ?? fallback)(pitch)));
   return s;
 }
 

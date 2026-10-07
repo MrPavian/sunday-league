@@ -2,11 +2,13 @@
 // Tribünenstufen oder Kisten zu laufen – und stehen dort mit Abstand. Je Spielort mehrere Seeds.
 import { describe, expect, it } from 'vitest';
 import { createMatch, stepMatch } from '../src/sim/match.js';
-import { PITCHES } from '../src/sim/pitch.js';
+import { BUND_PITCHES, PITCHES as BASE_PITCHES } from '../src/sim/pitch.js';
+
+const PITCHES = { ...BASE_PITCHES, ...BUND_PITCHES };
 import { INFLATE, SLOT_GAP, shelterFor } from '../src/sim/shelter.js';
 
 const DT = 1 / 60;
-const VENUES = ['hinterhof', 'parkplatz', 'park', 'ascheplatz', 'rasenplatz', 'sportplatz', 'grossfeld'];
+const VENUES = ['hinterhof', 'parkplatz', 'park', 'ascheplatz', 'rasenplatz', 'sportplatz', 'grossfeld', 'stadion', 'grossfeld_tribuene'];
 const SEEDS = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 const BODY = 0.12; // so weit darf ein Körper höchstens in ein Hindernis ragen (Körpermitte gilt)
 
