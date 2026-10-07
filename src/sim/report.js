@@ -2,6 +2,7 @@
 // Gegner? Aus Protokoll (matchlog.js) und Situationschronik (situations.js) – in
 // Sätzen, nicht in Zahlen. Für Halbzeit und Abpfiff.
 import { tr } from '../core/i18n.js';
+import { footballMinute } from './minute.js';
 import { planMods } from './plan.js';
 import { orderLabel } from './commands.js';
 
@@ -156,7 +157,7 @@ export function postMatch(m, team, traces) {
 // Großchance: Abschluss aus höchstens 7 m. Konterchance: Schuss binnen 8 s nach Ballgewinn
 // im eigenen Drittel. Unter Druck: ein Gegenspieler näher als 1,5 m.
 export const BIG_CHANCE_DIST = 7;
-const minuteAt = (m, t) => Math.min(90, Math.floor((t / m.duration) * 90) + 1);
+const minuteAt = (m, t) => footballMinute(m, t);
 
 export function chanceStats(m, team) {
   const L = m.log;

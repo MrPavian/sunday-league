@@ -46,13 +46,18 @@ const CROWD_BY_PITCH = { hinterhof: 3, parkplatz: 6, park: 9, ascheplatz: 15, ra
 // halves: eigene Halbzeitlängen je Platz aus den Einstellungen (überschreiben die Vorgabe).
 // cupShare: Anteil der Spieldauer bei Turnierspielen (Standard 75 %).
 // subs: Wechselregel ('liga' | 'frei' | 'begrenzt'), siehe subRuleFor.
-export const MATCH = { length: 'kurz', duration: MATCH_LENGTHS.kurz, halves: null, cupShare: 0.75, subs: 'liga' };
+// pokalExtra: Pokal-Unentschieden → false: direkt Elfmeterschießen (Standard), true: erst Verlängerung.
+export const MATCH = { length: 'kurz', duration: MATCH_LENGTHS.kurz, halves: null, cupShare: 0.75, subs: 'liga', pokalExtra: false };
+// Verlängerung wie im echten Fußball: 2 × 15 Minuten bei 2 × 45, also ein Drittel der regulären Spielzeit
+// (je Hälfte ein Drittel der Halbzeit), umgerechnet auf die Spielzeit des jeweiligen Formats.
+export const EXTRA_SHARE = 1 / 3;
+export const extraTimeSeconds = (duration) => Math.max(2, 2 * Math.round((duration * EXTRA_SHARE) / 2));
 export const HALF_MIN = 45;
 export const HALF_MAX = 600;
-export const presetHalf = (pitch, length) => 15 * Math.round(((HALF_BY_PITCH[pitch?.id] ?? 120) * (LENGTH_SCALE[length] ?? 1)) / 15); // auf Viertelminuten
+export const presetHalf = (pitch, length) => 15 * Math.round(((HALF_BY_PITCH[pitch?.base ?? pitch?.id] ?? 120) * (LENGTH_SCALE[length] ?? 1)) / 15); // auf Viertelminuten
 // Ohne Angabe gilt die Einstellung (eigene Werte vor der Vorgabe); mit Angabe die reine Vorgabe.
 export function matchDuration(pitch, length) {
-  const custom = length ? null : MATCH.halves?.[pitch?.id];
+  const custom = length ? null : MATCH.halves?.[pitch?.base ?? pitch?.id];
   return 2 * (custom ?? presetHalf(pitch, length ?? MATCH.length));
 }
 
@@ -129,7 +134,7 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = tr
     incident: null,
     incidents: [],
     weather: pitch.visual ?? null, // rain | snow | fog | frost | leaves
-    crowd: CROWD_BY_PITCH[pitch.id] ?? 8, // Zuschauer (Karriere und Turnier setzen eigene Zahlen)
+    crowd: CROWD_BY_PITCH[pitch.base ?? pitch.id] ?? 8, // Zuschauer (Karriere und Turnier setzen eigene Zahlen)
     homeTeam: 0,
   };
   // Spielplan aus dem Vereinsheim: Befehle, mit denen die Mannschaft aufläuft.
@@ -215,14 +220,32 @@ function step(m, input, dt) {
     aiCoachHalftime(m, 1);
     return;
   }
-  if (m.time >= m.duration) {
+  if (m.extra?.stage === 1 && m.time >= m.extra.mid) {
+    m.extra.stage = 2; // Seitenwechsel nach der ersten Hälfte der Verlängerung
+    m.phase = 'halftime';
+    m.phaseTimer = 2;
+    m.events.push({ type: 'extratime_half' });
+    return;
+  }
+  if (m.time >= (m.extra?.end ?? m.duration)) {
     // K.-o.-Spiel unentschieden und der Mensch spielt mit: Elfmeterschießen.
     // Mit Hinspiel (Relegation) zählt das Gesamtergebnis.
     const agg = m.aggregate ?? [0, 0];
-    if (m.knockout && m.humanTeam !== null && m.score[0] + agg[0] === m.score[1] + agg[1]) {
-      m.events.push({ type: 'fulltime_draw' });
-      startShootout(m);
-      return;
+    if (m.knockout && m.score[0] + agg[0] === m.score[1] + agg[1]) {
+      // Verlängerung (nur wenn der Wettbewerb sie vorsieht), danach Elfmeterschießen.
+      if (m.extraTime && !m.extra) {
+        const total = extraTimeSeconds(m.duration);
+        m.extra = { stage: 1, total, mid: m.duration + total / 2, end: m.duration + total };
+        m.phase = 'halftime';
+        m.phaseTimer = 3;
+        m.events.push({ type: 'extratime_start' });
+        return;
+      }
+      if (m.humanTeam !== null) {
+        m.events.push({ type: 'fulltime_draw' });
+        startShootout(m);
+        return;
+      }
     }
     m.phase = 'ended';
     m.events.push({ type: 'end' });

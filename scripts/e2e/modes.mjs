@@ -52,7 +52,9 @@ async function variants(b, label, list, query) {
 // Stand nach dem Grafik-Ausbau liegen (Rasen, Wolken, Lichtkante, Platzrand; gemessen 98/103/106/69/72 Draw
 // Calls, 31,5/40,5/50,1/22,7/16,9 Tsd. Dreiecke; vorher 93/97/100/67/73). Echte Bildraten misst das nicht –
 // dafür fehlt hier die Grafikkarte –, aber was die Szene kostet, kann nicht unbemerkt wachsen.
-const BUDGET = { rasenplatz: [108, 35000], sportplatz: [113, 44500], grossfeld: [117, 55000], ascheplatz: [76, 25000], park: [79, 18600] };
+// Überregionaler Pokal (nur für diese Spiele): Großfeld mit Stahlrohrtribüne gemessen 110 Draw Calls / 56,1 Tsd. Dreiecke
+// (ANDROID_MEDIUM, Großfeld ohne Tribüne 106 / 50,3), Stadion mit Rängen rundum 89 / 53,2 – jeweils rund 10 % Luft.
+const BUDGET = { rasenplatz: [108, 35000], sportplatz: [113, 44500], grossfeld: [117, 55000], grossfeld_tribuene: [121, 62000], stadion: [98, 58500], ascheplatz: [76, 25000], park: [79, 18600] };
 async function budget(b) {
   const ok = checker(`Grafik-Budget je Spielort (${Object.keys(BUDGET).length})`);
   const seen = [];

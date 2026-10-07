@@ -4,12 +4,13 @@
 // Frage, ob eine Entscheidung das Spiel sichtbar verändert hat (vorher/nachher).
 // Nur Auswertung, keine Wirkung aufs Spiel.
 import { tr } from '../core/i18n.js';
+import { footballMinute } from './minute.js';
 import { orderLabel } from './commands.js';
 import { hasProfile, PROFILES } from './profiles.js';
 import { findAnyPlayer } from './squad.js';
 import { windowOf } from './situations.js';
 
-const minuteOf = (m, t) => Math.min(90, Math.floor((t / m.duration) * 90) + 1);
+const minuteOf = (m, t) => footballMinute(m, t);
 const surname = (p) => p?.name.split(' ').slice(-1)[0] ?? '?';
 const laneWord = (lane) => (lane === 'left' ? tr('über links', 'down the left') : lane === 'right' ? tr('über rechts', 'down the right') : tr('durch die Mitte', 'through the middle'));
 const HOW = {
