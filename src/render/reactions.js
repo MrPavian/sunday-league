@@ -3,6 +3,7 @@
 
 import { attackDir } from '../sim/players.js';
 import { CLIMB } from '../sim/incidents.js';
+import { subsLeft, usableBench } from '../sim/squad.js';
 
 // Vergebene Chance: Der Schütze greift sich an den Kopf (Pfosten, Latte, vorbei) oder winkt ab
 // (gehalten); der Torwart ballt nach der Parade kurz die Faust. state merkt sich den letzten Schuss.
@@ -64,6 +65,136 @@ export function subScene(sub, dt) {
   const w = sub.t - SUB_FIVE;
   if (w > SUB_WALK) return { done: true };
   return { x: sub.x + 0.55, z: sub.z + out * w * 1.5, angle: out > 0 ? 0 : Math.PI, speed: 1.5, gesture: null };
+}
+
+// --- Zuschauer (nur Darstellung) ---------------------------------------------------------
+// Wie die Menge auf ein Ereignis reagiert, je nach Anhängerschaft. Liefert [{ who, kind, share, dur }]:
+// who = Anhänger dieser Mannschaft (0/1), 'neutral' oder 'all'; kind = Bewegung (crowd.js); share = Anteil der
+// Betroffenen (0…1), dur = Dauer in s. state merkt sich den letzten Schuss (für Pfosten, Parade, vorbei).
+// Anteile und Dauern sind gewählt, nicht gemessen.
+export const CHANCE_NEAR = 8; // „Chance“: Schuss aus höchstens so vielen Metern plus 0,3 · halbe Platzlänge vom Tor
+export const isChance = (match, p) => {
+  const gx = attackDir(match, p.team) * match.pitch.halfLength;
+  return Math.hypot(gx - p.pos.x, p.pos.z) <= CHANCE_NEAR + 0.3 * match.pitch.halfLength;
+};
+export function crowdCues(state, match, e) {
+  const last = state.lastShot && match.time - state.lastShot.time <= 3 ? state.lastShot : null;
+  switch (e.type) {
+    case 'goal': {
+      const sc = e.ownGoal ? 1 - e.team : e.team;
+      state.lastShot = null;
+      return [{ who: sc, kind: 'cheer', share: 0.95, dur: 4 }, { who: 'neutral', kind: 'clap', share: 0.6, dur: 3 }, { who: 1 - sc, kind: 'head', share: 0.45, dur: 2.5 }];
+    }
+    case 'shot': {
+      const p = match.players?.find((q) => q.id === e.playerId);
+      if (!p) return [];
+      state.lastShot = { team: p.team, time: match.time };
+      if (!e.acro && !isChance(match, p)) return [{ who: 'all', kind: 'lean', share: 0.3, dur: 1.2 }];
+      // Chance: die Anhänger des Schützen stehen auf und recken die Arme, die anderen halten die Luft an.
+      return [{ who: p.team, kind: 'rise', share: 0.55, dur: 1.8 }, { who: 'neutral', kind: 'lean', share: e.acro ? 0.6 : 0.4, dur: 1.2 }, { who: 1 - p.team, kind: 'lean', share: 0.35, dur: 1.2 }];
+    }
+    case 'save': {
+      const k = match.players?.find((q) => q.id === e.playerId);
+      if (!k) return [{ who: 'all', kind: 'clap', share: 0.3, dur: 1.8 }];
+      return [{ who: 1 - k.team, kind: 'head', share: last ? 0.5 : 0.2, dur: 1.6 }, { who: k.team, kind: 'clap', share: 0.45, dur: 1.8 }, { who: 'neutral', kind: 'clap', share: 0.3, dur: 1.5 }];
+    }
+    case 'post':
+    case 'bar':
+      return last ? [{ who: last.team, kind: 'head', share: 0.7, dur: 1.6 }, { who: 1 - last.team, kind: 'lean', share: 0.3, dur: 1 }, { who: 'neutral', kind: 'head', share: 0.4, dur: 1.4 }] : [{ who: 'all', kind: 'head', share: 0.4, dur: 1.6 }];
+    case 'out':
+      return e.restart === 'goalkick' && last && e.team !== last.team ? [{ who: last.team, kind: 'head', share: 0.4, dur: 1.4 }] : [];
+    case 'trick':
+      return e.ok ? [{ who: 'all', kind: 'clap', share: 0.22, dur: 1.4 }] : [];
+    case 'foul':
+    case 'card':
+      return [{ who: 'all', kind: 'point', share: 0.18, dur: 1.5 }];
+    default:
+      return [];
+  }
+}
+
+// --- Aufwärmen am Rand (nur Darstellung) --------------------------------------------------
+// Auswechselspieler laufen hinter der Seitenlinie (Gegenseite, neben den Bänken) hin und her, hopsen und
+// dehnen sich. Die Simulation weiß davon nichts: Wer aufwärmt, steht dort in match.bench und hat kein Spiel.
+// Plätze mit Auswechselbank bzw. Platz hinter der Linie (die anderen Spielorte haben keinen Streifen).
+// Der Park hat keine Bank und hätte das Grafik-Budget (e2e) mit zusätzlichen Figuren gerissen: dort kein Aufwärmen.
+export const WARMUP_PITCHES = ['rasenplatz', 'sportplatz', 'grossfeld', 'ascheplatz'];
+export const WARMUP_HOME = 1; // so viele der Heimmannschaft (je Figur ≈ 2 Draw Calls und ≈ 0,9 Tsd. Dreiecke, gemessen; mehr passt nicht ins Budget des Ascheplatzes)
+export const WARMUP_AWAY = 1; // und so viele des Gasts
+export const WARMUP_LANE = 0.6; // Abstand der Bahnen hinter der Linie (m): zwei Figuren berühren sich im Vorbeilaufen nicht
+
+// Wer wärmt sich auf? Höchstens count Bankspieler der Mannschaft, die noch eingewechselt werden dürfen:
+// zuerst der geplante Einwechselspieler (Wechsel ist angesagt), dann der, den die KI für den müdesten
+// Feldspieler nehmen würde (gleiche Position), dann der Rest der Bank in Bankreihenfolge.
+// exclude: Ausgewechselte (sie sitzen jetzt, sie wärmen sich nicht gleich wieder auf).
+export function warmupPicks(match, team, count, exclude = null) {
+  if (count <= 0 || !match.bench || subsLeft(match, team) <= 0) return [];
+  const pool = usableBench(match, team).filter((b) => !exclude?.has(b.id));
+  if (!pool.length) return [];
+  const out = [];
+  const take = (b) => b && !out.includes(b) && out.length < count && out.push(b);
+  const plan = match.subPlan?.[team];
+  if (plan) take(pool.find((b) => b.id === plan.inId));
+  let tired = null;
+  for (const p of match.players) if (p.team === team && p.role !== 'gk' && (!tired || p.stamina < tired.stamina)) tired = p;
+  if (tired) take(pool.find((b) => b.position === tired.role));
+  for (const b of pool) take(b);
+  return out;
+}
+
+// Streifen hinter der Seitenlinie der Gegenseite (z < 0, Kamera steht auf der anderen Seite): von x0 bis x1,
+// neben der Bank der Mannschaft (Mannschaft 0 links, 1 rechts – unabhängig vom Seitenwechsel), lane = Bahn.
+// null, wo es keinen Platz gibt. Maße im Verhältnis zur Platzlänge: Bank steht bei ±5,5·hl/26, Eckfahne bei hl.
+export function warmupSpot(match, team, lane = 0) {
+  const { pitch } = match;
+  if (!pitch || !WARMUP_PITCHES.includes(pitch.id)) return null;
+  const s = team === 0 ? -1 : 1;
+  const a = s * pitch.halfLength * 0.31;
+  const b = s * pitch.halfLength * 0.65;
+  return { x0: Math.min(a, b), x1: Math.max(a, b), z: -pitch.halfWidth - 0.5 - lane * WARMUP_LANE };
+}
+
+// Ablauf eines Aufwärmers, Dauern in s (gewählt, nicht gemessen: lockeres Traben ist der Hauptteil, dazwischen
+// kurze Übungen; ein Durchgang dauert gut eine Minute, dann beginnt er von vorn). speed in m/s.
+export const WARMUP_PLAN = [
+  { name: 'trab', dur: 10, speed: 2.2 },
+  { name: 'dehnen', dur: 6, speed: 0 }, // Oberschenkel, erst ein Bein, nach der Hälfte das andere
+  { name: 'hopser', dur: 5, speed: 2.4 },
+  { name: 'kreisen', dur: 5, speed: 0 }, // Hüftkreisen
+  { name: 'trab', dur: 8, speed: 2.2 },
+  { name: 'armkreisen', dur: 5, speed: 0 },
+];
+export const WARMUP_CYCLE = WARMUP_PLAN.reduce((a, p) => a + p.dur, 0);
+
+// Zustand: { x0, x1, z, t, u (0…1 Ort auf dem Streifen), dir (±1), angle }. Schreibt ins Ergebnisobjekt out
+// (wird wiederverwendet, keine Allokation je Bild): { x, z, angle, speed, gesture, step }.
+// gesture: PlayerModel-Geste oder null (beim Dehnen erst links, nach der Hälfte rechts); step: Index im Plan.
+export function warmupStep(w, dt, out = {}) {
+  w.t += dt;
+  let t = w.t % WARMUP_CYCLE;
+  let i = 0;
+  while (t >= WARMUP_PLAN[i].dur) t -= WARMUP_PLAN[i++].dur;
+  const ph = WARMUP_PLAN[i];
+  const len = Math.max(0.1, w.x1 - w.x0);
+  w.u ??= 0;
+  w.dir ??= 1;
+  if (ph.speed > 0) {
+    w.u += (w.dir * ph.speed * dt) / len;
+    if (w.u > 1) (w.u = 1), (w.dir = -1);
+    else if (w.u < 0) (w.u = 0), (w.dir = 1);
+  }
+  // Blickrichtung: beim Laufen entlang der Linie (nach dem Wenden weich gedreht), beim Dehnen im Profil (man sieht,
+  // wie der Fuß zum Gesäß geht), bei den anderen Übungen zum Spielfeld (+z, zur Kamera).
+  const want = ph.speed > 0 || ph.name === 'dehnen' ? w.dir * (Math.PI / 2) : 0;
+  const d = Math.atan2(Math.sin(want - (w.angle ?? want)), Math.cos(want - (w.angle ?? want)));
+  w.angle = (w.angle ?? want) + d * Math.min(1, dt * 6);
+  out.x = w.x0 + w.u * len;
+  out.z = w.z;
+  out.angle = w.angle;
+  out.speed = ph.speed;
+  out.gesture = ph.name === 'trab' ? null : ph.name === 'dehnen' ? (t > ph.dur / 2 ? 'dehnenR' : 'dehnenL') : ph.name;
+  out.step = i;
+  return out;
 }
 
 // Ausgepumpt: niedrige Ausdauer und er steht oder trabt (Sprint zeigt Anstrengung, keine Erschöpfung).

@@ -1557,6 +1557,41 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
       leg(bn, 'L', -1.0 * w - 0.15, 1.1 * w, 0.2);
       bn.head.rotation.x -= 0.3;
       face = 'effort';
+    } else if (gesture === 'dehnenL' || gesture === 'dehnenR') {
+      // Aufwärmen, Oberschenkel dehnen: Standbein trägt, das andere Knie ist angewinkelt, die Hand der Seite hält
+      // den Fuß am Gesäß, der andere Arm hält das Gleichgewicht (Winkel geschätzt, am Bild geprüft).
+      const hold = gesture === 'dehnenL' ? 'L' : 'R';
+      const free = hold === 'L' ? 'R' : 'L';
+      leg(bn, hold, 0.12, 2.35, 0.5);
+      arm(bn, hold, 0.55, 0.12, -0.25);
+      arm(bn, free, -0.4, 0.6, -0.2);
+      bn.spine.rotation.x += 0.05;
+      bn.hips.position.y -= 0.02;
+      bn.spine.rotation.z += (hold === 'L' ? 1 : -1) * Math.sin(g * 2) * 0.02;
+    } else if (gesture === 'kreisen') {
+      // Hüftkreisen: Hände in die Hüften, Stand breit, der Oberkörper beschreibt einen Kreis.
+      arm(bn, 'L', 0.1, 0.55, -1.5);
+      arm(bn, 'R', 0.1, 0.55, -1.5);
+      bn.upperLegL.rotation.z = -0.12;
+      bn.upperLegR.rotation.z = 0.12;
+      bn.spine.rotation.x += 0.16 * Math.sin(g * 3.2);
+      bn.spine.rotation.z += 0.16 * Math.cos(g * 3.2);
+      bn.head.rotation.x -= 0.06 * Math.sin(g * 3.2);
+    } else if (gesture === 'armkreisen') {
+      // Arme seitlich/vorn kreisen lassen, locker im Stand.
+      const r = -g * 5;
+      arm(bn, 'L', r, 0.12, 0);
+      arm(bn, 'R', r, 0.12, 0);
+      bn.spine.rotation.x -= 0.03;
+    } else if (gesture === 'hopser') {
+      // Hopserlauf (Skippings): Knie hoch im Wechsel, ein kleiner Sprung je Schritt, Arme schwingen gegengleich.
+      for (const [side, p] of [['L', model.phase], ['R', model.phase + Math.PI]]) {
+        const up = Math.max(0, Math.sin(p));
+        leg(bn, side, -0.15 - 0.95 * up, 0.25 + 1.0 * up, 0.2 * up);
+        arm(bn, side, 0.9 * Math.cos(p) * (side === 'L' ? 1 : -1), 0.12, -0.7);
+      }
+      bn.hips.position.y += 0.07 * Math.abs(Math.sin(model.phase));
+      bn.spine.rotation.x -= 0.04;
     } else if (gesture === 'zaun') {
       // Beide Hände am Zaun auf Brusthöhe (Gitter-Suche, 0,8 cm), der Kopf schaut hin und her.
       arm(bn, 'L', -1.05, 0.05, -1.2);

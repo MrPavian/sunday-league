@@ -2,7 +2,7 @@ import { GET_UP } from '../sim/tackles.js';
 import * as THREE from 'three';
 import { ACRO, TRICKS } from '../sim/tricks.js';
 import { len } from '../core/math.js';
-import { catchKind, duelPairs, foeBearing, incidentPose, isFumble, kickFoot, mateCelebration, punchStyle, refereePose, refereeSignal, shotReactions, subScene, throwInRun, tiredFace, wideStance } from './reactions.js';
+import { catchKind, duelPairs, foeBearing, incidentPose, isFumble, kickFoot, mateCelebration, punchStyle, refereePose, refereeSignal, shotReactions, subScene, throwInRun, tiredFace, warmupPicks, warmupSpot, warmupStep, WARMUP_AWAY, WARMUP_HOME, wideStance } from './reactions.js';
 import { allPlayers } from '../sim/squad.js';
 import { attackDir } from '../sim/players.js';
 import { BallView } from './BallView.js';
@@ -55,6 +55,9 @@ const DUEL_OFF = 5;
 const DUEL_BURST = 0.45; // Kontakt (Zweikampf gewonnen, Festhalten, Block): so lange der Stoß nachwirkt (s)
 const INC_POSE = { gesture: null, cover: 0, lift: 0 };
 const REF_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal' };
+const WARM_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture: null };
+const WARM_OUT = {};
+const WARM_RECHECK = 1; // so oft (s) wird neu gewählt, wer sich aufwärmt
 const LEAVE_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture: null };
 
 const CELEBRATIONS = ['flugzeug', 'faust', 'tanz', 'rutscher', 'trikot', 'ohr', 'ruecken', 'brust'];
@@ -86,6 +89,11 @@ export class MatchView {
     this.models = new Map();
     this.shotState = {}; // letzter Schuss (für die Reaktion danach)
     this.leaving = []; // Ausgewechselte auf dem Weg vom Platz (nur Darstellung)
+    // Aufwärmen am Rand: Ersatzspieler hinter der Seitenlinie (reactions.js warmupPicks/warmupStep). ?warmup=0 schaltet es ab (zum Messen).
+    this.warm = [];
+    this.warmLeft = 0;
+    this.warmOut = new Set(); // Ausgewechselte: wärmen sich nicht gleich wieder auf
+    this.warmOn = typeof location === 'undefined' || new URLSearchParams(location.search).get('warmup') !== '0';
     this.softGround = !match.pitch.surface.hard;
     // Ein Atlas (Textur + Material) je Team und Trikot: Feldspieler, Torwart.
     const everyone = allPlayers(match);
@@ -178,6 +186,7 @@ export class MatchView {
       if (e.type === 'sub') {
         // Abklatschen an der Mittellinie, dann trottet der Ausgewechselte raus.
         const inc = match.players.find((q) => q.id === e.inId);
+        this.warmOut.add(e.outId);
         if (inc && this.models.has(e.outId)) this.leaving.push({ id: e.outId, x: inc.pos.x, z: inc.pos.z, t: 0 });
         const mi = this.models.get(e.inId);
         if (mi) Object.assign(mi, { reactGesture: 'abklatschen', reactTime: 0.6, gestT: 0 });
@@ -516,6 +525,45 @@ export class MatchView {
     }
   }
 
+  // Wer sich am Rand aufwärmen soll (alle WARM_RECHECK s neu): Heim WARMUP_HOME, Gast WARMUP_AWAY Bankspieler.
+  // Wer schon dabei ist, bleibt (Zustand bleibt erhalten), wer eingewechselt wurde, fällt heraus.
+  pickWarmers(match) {
+    const next = [];
+    const home = match.homeTeam ?? 0;
+    for (const team of [home, 1 - home]) {
+      const picks = warmupPicks(match, team, team === home ? WARMUP_HOME : WARMUP_AWAY, this.warmOut);
+      picks.forEach((b, lane) => {
+        if (!this.models.has(b.id)) return;
+        const old = this.warm.find((w) => w.id === b.id);
+        if (old && old.lane === lane) return next.push(old);
+        const spot = warmupSpot(match, team, lane);
+        // Jeder fängt an anderer Stelle im Ablauf an, damit nicht alle dasselbe tun.
+        if (spot) next.push({ id: b.id, team, lane, st: { x0: spot.x0, x1: spot.x1, z: spot.z, t: 14 * lane + 23 * team, u: 0.15 + 0.5 * lane } });
+      });
+    }
+    this.warm = next;
+  }
+
+  // Aufwärmer zeichnen: laufen, hopsen, dehnen (nur Darstellung, die Simulation kennt sie nur als Bankspieler).
+  warmup(match, dt) {
+    if (!this.warmOn) return;
+    if ((this.warmLeft -= dt) <= 0) (this.warmLeft = WARM_RECHECK), this.pickWarmers(match);
+    if (match.incident?.type === 'gewitter' || match.phase === 'ended') return;
+    for (const w of this.warm) {
+      const m = this.models.get(w.id);
+      if (!m || match.players.some((q) => q.id === w.id)) continue; // gerade eingewechselt: bis zur nächsten Wahl nichts zeichnen
+      const o = warmupStep(w.st, dt, WARM_OUT);
+      m.group.visible = true;
+      m.group.position.set(o.x, 0, o.z);
+      m.group.rotation.y = o.angle;
+      WARM_ANIM.speed = o.speed;
+      WARM_ANIM.dt = dt;
+      WARM_ANIM.gesture = o.gesture;
+      animatePlayer(m, WARM_ANIM);
+      this.blob(m, o.x, o.z);
+    }
+  }
+
   sync(match, dt) {
     this.time += dt;
     for (const model of this.models.values()) model.group.visible = false;
@@ -719,6 +767,7 @@ export class MatchView {
       else this.throwInCarry(m, o);
       this.blob(m, p.pos.x, p.pos.z);
     }
+    this.warmup(match, dt);
     // Ausgewechselte: abklatschen und vom Platz trotten.
     this.leaving = this.leaving.filter((l) => {
       const m = this.models.get(l.id);
