@@ -110,18 +110,20 @@ describe('Player 2.0 Polish – Gesichter, Frisuren, Reaktionen (nur Darstellung
     expect(keptBeard).toBeGreaterThan(0.6);
   });
 
-  it('Dreiecke-Obergrenze 600 gilt für alle Spieler, über 1000+ Looks aus mehreren Seeds', () => {
+  it('Dreiecke-Obergrenze 700 gilt für alle Spieler und Torhüter, über 1000+ Looks aus mehreren Seeds', () => {
     let n = 0;
     let max = 0;
     for (const seed of [31, 32, 33, 34, 35, 36]) {
       for (const p of players(250, seed)) {
-        const m = createPlayerModel(p.look, kit);
-        max = Math.max(max, m.mesh.geometry.attributes.position.count / 3);
-        n++;
+        for (const keeper of [false, true]) {
+          const m = createPlayerModel(p.look, kit, { keeper });
+          max = Math.max(max, m.mesh.geometry.attributes.position.count / 3);
+          n++;
+        }
       }
     }
     expect(n).toBeGreaterThanOrEqual(1000);
-    expect(max).toBeLessThanOrEqual(600);
+    expect(max).toBeLessThanOrEqual(700);
   });
 
   it('Schiedsrichter (edge neutral) trägt nie eine Sportbrille', () => {
@@ -130,7 +132,7 @@ describe('Player 2.0 Polish – Gesichter, Frisuren, Reaktionen (nur Darstellung
 
   it('Dreiecke bleiben im Rahmen (Low Poly)', () => {
     const tris = players(200, 11).map((p) => createPlayerModel(p.look, kit).mesh.geometry.attributes.position.count / 3);
-    expect(Math.max(...tris)).toBeLessThanOrEqual(600);
+    expect(Math.max(...tris)).toBeLessThanOrEqual(700);
   });
 
   it('neue Posen (Kontakt, Ducken, Kopfball-Vorbereitung, Ausholen) verändern die Pose und kehren zurück', () => {

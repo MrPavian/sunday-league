@@ -410,10 +410,10 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
   let tapeFoot = roll(hash, 5, 100) < 9 ? (roll(hash, 6, 2) ? 'L' : 'R') : null;
   let tapeHand = !keeper && !sweat && roll(hash, 7, 100) < 6 ? (roll(hash, 8, 2) ? 'L' : 'R') : null;
   let specs = edge !== 'neutral' && roll(hash, 9, 100) < 4; // Schiedsrichter (edge 'neutral') nie mit Brille
-  // Dreiecksbudget (600 je Figur): teure Frisuren lassen nur so viel Zubehör zu, wie noch hineinpasst.
+  // Dreiecksbudget (700 je Figur, auch Torwart): teure Frisuren lassen nur so viel Zubehör zu, wie noch hineinpasst.
   // Grundlast je Frisur (inkl. Bart, gemessen als Höchstwert) plus 48 beim Torwart (Manschetten, Polster).
   const BASE = { curly: 576, spiky: 540, coils: 540, sidepart: 516, long: 516 };
-  let room = 600 - (BASE[hairStyle] ?? 504) - (keeper ? 48 : 0);
+  let room = 700 - (BASE[hairStyle] ?? 504) - (keeper ? 48 : 0);
   const cost = () => (socksDown ? 24 : 0) + sweat * 12 + (tapeFoot ? 12 : 0) + (tapeHand ? 12 : 0) + (specs ? 36 : 0);
   if (cost() > room && specs) specs = false;
   if (cost() > room && sweat === 2) sweat = 1;
