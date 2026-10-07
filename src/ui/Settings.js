@@ -2,6 +2,7 @@ import { getLang, LANGS, tr } from '../core/i18n.js';
 import { ACTION_LABELS, REBINDABLE, bindingOf, keyName, resetBindings, setBinding } from '../input/Input.js';
 import { HALF_MAX, HALF_MIN, matchDuration, presetHalf } from '../sim/match.js';
 import { PITCHES } from '../sim/pitch.js';
+import { BUND_NAME } from '../career/bundespokal.js';
 
 // Halbzeit je Platz: Voreinstellung als Ausgangspunkt, dann pro Platz in Viertelminuten anpassbar.
 const clock = (sec) => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}`;
@@ -108,6 +109,9 @@ export class Settings {
         <h4>${tr('Turnierspiele', 'Cup matches')}</h4>
         <div class="choice">${toggle('cupshare', s.cupShort, tr('Kürzer (75 %)', 'Shorter (75 %)'), tr('Volle Länge', 'Full length'))}</div>
         <p class="hint">${tr('Gilt für alle Spiele, auch die simulierten der Liga. Beim Turnier spielt man mehrere Partien am Stück – deshalb standardmäßig kürzer. Kraft und Torgefahr passen sich der Dauer an – müde werden die Jungs so oder so.', 'Applies to every match, including the simulated league games. At a cup you play several games in a row – so they are shorter by default. Stamina and scoring adapt to the length – the lads get tired either way.')}</p>
+        <h4>${tr('Unentschieden im Pokal', 'Level after normal time in cup ties')}</h4>
+        <div class="choice"><button class="${s.pokalExtra ? '' : 'active'}" data-action="pokalextra" data-value="direct">${tr('Direkt Elfmeterschießen', 'Straight to penalties')}</button><button class="${s.pokalExtra ? 'active' : ''}" data-action="pokalextra" data-value="extra">${tr('Verlängerung, dann Elfmeterschießen', 'Extra time, then penalties')}</button></div>
+        <p class="hint">${tr(`Gilt für Kreis-, Bezirks- und Landespokal sowie den ${BUND_NAME} – eigene Spiele (selbst, Seitenlinie, Liveticker) und die schnell gerechneten der anderen. Die Verlängerung dauert ein Drittel der regulären Spielzeit (wie 2 × 15 bei 2 × 45 Minuten), auf die Spielzeit des Platzes umgerechnet. Standard wie bisher: direkt Elfmeterschießen.`, `Applies to the District, County and State Cup and the ${BUND_NAME} – your own ties (playing, touchline, live ticker) and the quickly simulated others. Extra time lasts a third of the regular playing time (like 2 × 15 on top of 2 × 45 minutes), scaled to the length of the pitch. Default as before: straight to penalties.`)}</p>
         <h4>${tr('Auswechseln', 'Substitutions')}</h4>
         <div class="choice">${[['liga', tr('Je nach Liga', 'By league')], ['frei', tr('Immer frei', 'Always rolling')], ['begrenzt', tr('Immer begrenzt', 'Always limited')]].map(([id, label]) => `<button class="${s.subs === id ? 'active' : ''}" data-action="subs" data-value="${id}">${label}</button>`).join('')}</div>
         <p class="hint">${tr('Frei: fliegend wechseln, wer draußen war, darf wieder rein – so läuft es in der Freizeitliga und bei Freundschaftsspielen. Begrenzt: vier Wechsel pro Spiel, raus ist raus – so zählt der Schiri ab der Kreisklasse. Verletzte müssen immer runter; ohne Ersatz geht es in Unterzahl weiter.', 'Rolling: swap freely, and anyone who came off can go back on – that is how the recreational league and friendlies work. Limited: four substitutions per match, once off stays off – that is what the referee counts from the district league up. Injured players always have to come off; without a replacement you play a man down.')}</p>

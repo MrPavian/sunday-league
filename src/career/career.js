@@ -47,7 +47,8 @@ import { memoryAfterMatch, placeFormers, preMatchMemories, rememberArrival, reme
 import { defaultCrest } from '../ui/crest.js';
 import { clubTactic, normalizeTactic, systemFormation } from '../sim/tactics.js';
 import { shirtSponsor, sponsorColor, SPONSORS } from './sponsors.js';
-import { advancePokale } from './pokal.js';
+import { advancePokale, bundChat } from './pokal.js';
+import { bundVenueEvent } from './bundevents.js';
 
 export const SAVE_VERSION = 1;
 export const POOL_SEED = 1921;
@@ -491,6 +492,7 @@ export function startWeek(career) {
   const talker = club.squad.find((idx) => availability[idx] === 'yes' && !isCoach(career, idx));
   if (talker != null) chat.push({ from: talker, text: rng.pick(WEATHER_CHAT[weather.id]), time: 'Sa 09:40' });
   career.week = { availability, chat, nudges: NUDGES_PER_WEEK, nudged: [], lineup: null, training: null, event: null, weather };
+  bundChat(career, chat); // überregionaler Pokal: Auslosung, Vorfreude, Spieltag
   preMatchMemories(career, opponent, chat); // „Wisst ihr, wer bei denen spielt?"
   preMatchVoice(career, opponent, chat); // der Gegnertrainer im Kreisblatt
   const prev = career.fixtures[career.round - 1]?.find((f) => (f.home === club.id || f.away === club.id) && f.result);
@@ -500,6 +502,7 @@ export function startWeek(career) {
   advanceArcs(career);
   personalWeek(career);
   weeklyBanter(career); // Sprüche im Chat – mit Folgen
+  bundVenueEvent(career); // Spielortwahl vor dem Heimspiel im überregionalen Pokal
   rollWeekEvent(career);
   rollNotice(career); // Schwarzes Brett: kleines Vereinsleben-Thema
   sagaChat(career);

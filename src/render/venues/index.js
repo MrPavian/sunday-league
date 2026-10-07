@@ -1,11 +1,12 @@
 import { tr } from '../../core/i18n.js';
-import { PITCHES } from '../../sim/pitch.js';
+import { BUND_PITCHES, PITCHES } from '../../sim/pitch.js';
 import { buildAshPitch } from './ashPitch.js';
 import { buildBackyard } from './backyard.js';
 import { buildLawn } from './lawn.js';
 import { buildPark } from './park.js';
 import { buildParkingLot } from './parkingLot.js';
 import { buildHall } from './hall.js';
+import { buildStadium } from './stadium.js';
 
 // Spielorte: Simulationsdaten + Szenenaufbau + Text fürs Auswahlmenü.
 export const VENUES = [
@@ -56,6 +57,21 @@ export const VENUES = [
     pitch: PITCHES.halle,
     build: buildHall,
     tagline: tr('Winter in der Sporthalle: Bande, Handballtore, glatter Boden. Grätschen brennt.', 'Winter in the sports hall: boards, handball goals, slippery floor. Slide tackles burn.'),
+  },
+  // Nur für den überregionalen Pokal (hidden: nicht im Menü).
+  {
+    id: 'grossfeld_tribuene',
+    hidden: true,
+    pitch: BUND_PITCHES.grossfeld_tribuene,
+    build: buildLawn,
+    tagline: tr('Großfeld mit Stahlrohrtribüne für den Profibesuch.', 'Full-size pitch with a scaffold stand for the professional visitors.'),
+  },
+  {
+    id: 'stadion',
+    hidden: true,
+    pitch: BUND_PITCHES.stadion,
+    build: buildStadium,
+    tagline: tr('Das große Stadion in der Nähe: Ränge rundum, Flutlicht.', 'The big stadium nearby: stands all round, floodlights.'),
   },
 ];
 

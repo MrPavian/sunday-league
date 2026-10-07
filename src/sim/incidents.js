@@ -80,7 +80,7 @@ export function planIncident(m, seed) {
   m.incidentRng = rng;
   m.incidents = [];
   if (!rng.chance(INCIDENT_CHANCE)) return null;
-  let list = VENUE_INCIDENTS[m.pitch.id] ?? ['gewitter'];
+  let list = VENUE_INCIDENTS[m.pitch.base ?? m.pitch.id] ?? ['gewitter'];
   if (!m.referee) list = list.filter((t) => t !== 'ersatzschiri');
   return { type: rng.pick(list), at: rng.range(0.12, 0.85) * m.duration };
 }

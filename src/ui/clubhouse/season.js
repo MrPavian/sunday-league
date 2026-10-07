@@ -6,18 +6,28 @@ import { crestOf, crestSVG } from '../crest.js';
 import { clubById, humanClub, seasonOver, table } from '../../career/career.js';
 import { dateLabel, matchDate, monthLabel } from '../../career/calendar.js';
 import { CUPS, cupClub, cupOf, groupTable, humanCupMatch, stageName, winterRound } from '../../career/tournament.js';
-import { POKALE, pokalClub, pokalOf, roundName, roundTies } from '../../career/pokal.js';
+import { POKALE, POKAL_KINDS, pokalClub, pokalEligible, pokalOf, roundName, roundTies, sponsorPraemie, tieOnPens } from '../../career/pokal.js';
+import { BUND_VENUES, levelName } from '../../career/bundespokal.js';
+import { MATCH } from '../../sim/match.js';
 import { first, leagueName } from './shared.js';
+
+const bundVenueLine = (cup) => {
+  const tie = cup.ties.at(-1);
+  if (!tie || tie.result || cup.done) return '';
+  const key = tie.venue ?? (tie.home?.startsWith('pokal-') ? 'stadium' : 'own');
+  const label = { own: tr('eigener Platz', 'own pitch'), stands: tr('eigener Platz mit Stahlrohrtribüne', 'own pitch with scaffold stand'), stadium: tr('großes Stadion', 'big stadium') }[key];
+  return `<p class="t-2">${tr('Spielort', 'Venue')}: <b>${label}</b> <small>(${BUND_VENUES[key].cap} ${tr('Plätze', 'places')})</small></p>`;
+};
 
 export const seasonScreens = {
   tab_cup() {
     const c = this.career;
-    const trophies = (c.trophies ?? []).length ? `<h4>${tr('Vitrine', 'Trophy cabinet')}</h4><ul class="plain trophies">${c.trophies.map((t) => `<li>${tr('Pokal', 'Trophy')}: ${t.name}</li>`).join('')}</ul>` : '';
+    const trophies = (c.trophies ?? []).length ? `<h4>${tr('Vitrine', 'Trophy cabinet')}</h4><ul class="plain trophies">${c.trophies.map((t) => `<li>${t.kind === 'foto' ? '' : `${tr('Pokal', 'Trophy')}: `}${t.name}</li>`).join('')}</ul>` : '';
     const running = ['halle', 'stadt'].filter((k) => cupOf(c, k) && !cupOf(c, k).skipped);
     const intro = `<p class="empty">${tr(`Zwei Turniere pro Saison: die ${CUPS.halle.name} in der Winterpause (Saisonmitte, ${CUPS.halle.place}, Bande und Handballtore) und die ${CUPS.stadt.name} im Sommer nach dem letzten Spieltag (${CUPS.stadt.place}).`, `Two tournaments per season: the ${CUPS.halle.name} in the winter break (mid-season, ${CUPS.halle.place}, boards and handball goals) and the ${CUPS.stadt.name} in summer after the last matchday (${CUPS.stadt.place}).`)}</p>`;
-    const pokale = ['kreis', 'bezirk'].filter((k) => pokalOf(c, k)).map((k) => this.pokalSection(k)).join('<hr>');
+    const pokale = POKAL_KINDS.filter((k) => pokalOf(c, k)).map((k) => this.pokalSection(k)).join('<hr>');
     const pokalIntro = (c.level ?? 1) < 2 ? `<p class="empty">${tr('Kreispokal gibt es ab der Kreisklasse C: K.-o.-Runden unter der Woche, Heimrecht für den Klassentieferen.', 'The District Cup starts in Division Three: knockout rounds midweek, home advantage for the lower-league side.')}</p>` : '';
-    return `${pokale}${pokale ? '<hr>' : pokalIntro}${running.length ? running.map((k) => this.cupSection(k)).join('<hr>') : intro}${trophies}`;
+    return `${pokale}${pokale ? '<hr>' : pokalIntro}${this.pokalWeg()}${running.length ? running.map((k) => this.cupSection(k)).join('<hr>') : intro}${trophies}`;
   },
 
   // Pokal: alle Runden mit Paarungen und Ergebnissen, die nächste Runde mit Datum.
@@ -31,12 +41,35 @@ export const seasonScreens = {
       const ties = roundTies(cup, r);
       if (!ties.length) continue;
       const when = cup.rounds[r] != null ? dateLabel(matchDate(c, cup.rounds[r])) : '';
-      rounds.push(`<h4>${roundName(cup, r)} <small>${tr('Mittwoch vor dem', 'Wednesday before')} ${when}</small></h4><ul class="plain cup-list">${ties
-        .map((t) => `<li class="${t.home === me || t.away === me ? 'mine' : ''}">${name(t.home)} ${t.result ? `<b>${t.result.home}:${t.result.away}</b>${t.pens ? ` <small>(${t.pens.home}:${t.pens.away} ${tr('i. E.', 'pens')})</small>` : ''}` : '–:–'} ${name(t.away)}</li>`)
+      rounds.push(`<h4>${roundName(cup, r)} <small>${POKALE[kind].saturday ? tr('Samstag vor dem', 'Saturday before') : tr('Mittwoch vor dem', 'Wednesday before')} ${when}</small></h4><ul class="plain cup-list">${ties
+        .map((t) => `<li class="${t.home === me || t.away === me ? 'mine' : ''}">${name(t.home)} ${t.result ? `<b>${t.result.home}:${t.result.away}</b>${t.et ? ` <small>${tr('n. V.', 'a.e.t.')}</small>` : ''}${t.pens ? ` <small>${tieOnPens(t)}</small>` : ''}` : '–:–'} ${name(t.away)}</li>`)
         .join('')}</ul>`);
     }
-    const state = cup.done ? `<p class="reply ok">${cup.log.at(-1) ?? ''}</p>` : cup.out ? `<p>${tr('Ihr seid raus – die anderen spielen weiter.', 'You are out – the others play on.')}</p>` : `<p>${tr('Ihr seid noch dabei. Das nächste Pokalspiel steht auf der Startseite, sobald die Woche da ist.', 'You are still in. The next cup tie appears on the home page when its week comes.')}</p>`;
-    return `<p class="chat-head">${POKALE[kind].name} ${cup.year} · ${POKALE[kind].size} ${tr('Vereine', 'clubs')} · ${tr('K.-o., Heimrecht für den Klassentieferen', 'knockout, home advantage for the lower-league side')}</p>${state}${rounds.reverse().join('')}`;
+    const state = cup.done ? `<p class="reply ok">${cup.log.slice(-3).join(' ')}</p>` : cup.out ? `<p>${tr('Ihr seid raus – die anderen spielen weiter.', 'You are out – the others play on.')}</p>` : `<p>${tr('Ihr seid noch dabei. Das nächste Pokalspiel steht auf der Startseite, sobald die Woche da ist.', 'You are still in. The next cup tie appears on the home page when its week comes.')}</p>`;
+    const guest = kind === 'bund' ? cup.guests.at(-1) : null;
+    const rules = kind === 'bund'
+      ? tr(`sechs Runden, jede gegen einen Profiverein · 11 gegen 11 · Runde 1 mit Heimrecht für den Amateur · Samstag`, `six rounds, each against a professional club · 11 v 11 · round 1 at home for the amateurs · Saturday`)
+      : tr('K.-o., Heimrecht für den Klassentieferen', 'knockout, home advantage for the lower-league side');
+    const prize = sponsorPraemie(c, kind);
+    const prizeLine = `<p class="t-2">${tr('Prämie des Hauptsponsors', 'Main sponsor bonus')}: ${prize ? tr(`${prize.amount} € bei ${kind === 'bund' ? 'Sieg in Runde 1 (danach je Runde weiter)' : 'Pokalsieg'} (${prize.sponsor.name})`, `€${prize.amount} for ${kind === 'bund' ? 'winning round 1 (more for every round after)' : 'winning the cup'} (${prize.sponsor.name})`) : tr('ohne Hauptsponsor keine', 'none without a main sponsor')}</p>`;
+    const extra = `<p class="t-2">${tr('Bei Unentschieden', 'If level')}: ${MATCH.pokalExtra ? tr('Verlängerung, dann Elfmeterschießen', 'extra time, then penalties') : tr('direkt Elfmeterschießen', 'straight to penalties')} <small>(${tr('Einstellungen', 'Settings')})</small></p>`;
+    const vs = guest ? `<p class="t-2">${tr('Gegner', 'Opponents')}: <b>${guest.name}</b> <small>(${levelName(cup.levels[guest.id])})</small></p>` : '';
+    return `<p class="chat-head">${POKALE[kind].name} ${cup.year} · ${POKALE[kind].size === 2 ? '' : `${POKALE[kind].size} ${tr('Vereine', 'clubs')} · `}${rules}</p>${vs}${kind === 'bund' ? bundVenueLine(cup) : ''}${state}${prizeLine}${extra}${rounds.reverse().join('')}`;
+  },
+
+  // Der Weg nach oben: Kreispokal → Bezirkspokal → Landespokal → überregionaler Pokal, mit Stand dieser Saison.
+  pokalWeg() {
+    const c = this.career;
+    if ((c.level ?? 1) < 2) return '';
+    const me = humanClub(c).id;
+    const step = (kind) => {
+      const cup = pokalOf(c, kind);
+      const state = cup ? (cup.done ? (cup.winner === me ? tr('gewonnen', 'won') : cup.out ? tr('ausgeschieden', 'out') : tr('beendet', 'finished')) : cup.out ? tr('ausgeschieden', 'out') : tr('läuft', 'running')) : pokalEligible(c, kind) ? tr('dabei', 'in') : tr('nicht qualifiziert', 'not qualified');
+      return `<li class="${cup && !cup.out ? 'mine' : ''}"><b>${POKALE[kind].name}</b> <small>${state}</small></li>`;
+    };
+    const next = (kind, q) => (c[q] === c.season + 1 ? ` <small>(${tr('nächste Saison', 'next season')}: ${POKALE[kind].name})</small>` : '');
+    return `<h4>${tr('Der Weg nach oben', 'The road up')}</h4><ul class="plain cup-list">${POKAL_KINDS.map(step).join('')}</ul>
+      <p class="t-2">${tr(`Sieger des Kreispokals${next('bezirk', 'pokalQual')} kommen in den Bezirkspokal${next('land', 'landQual')}, dessen Sieger in den Landespokal${next('bund', 'bundQual')}, dessen Sieger im Folgejahr zum ${POKALE.bund.name} – sechs Runden gegen Profivereine.`, `District Cup winners${next('bezirk', 'pokalQual')} enter the County Cup${next('land', 'landQual')}, whose winners enter the State Cup${next('bund', 'bundQual')}, whose winners go on to the ${POKALE.bund.name} the following year – six rounds against professional clubs.`)}</p><hr>`;
   },
 
   cupSection(kind) {

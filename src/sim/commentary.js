@@ -5,11 +5,12 @@ import { TRICKS } from './tricks.js';
 import { MATCH_INJURIES } from './knocks.js';
 import { bondOf, isBad, isGood } from './bonds.js';
 import { tr } from '../core/i18n.js';
+import { footballMinute } from './minute.js';
 import { createRng } from '../core/rng.js';
 import { attackDir } from './players.js';
 import { findAnyPlayer } from './squad.js';
 
-export const tickerMinute = (m, t = m.time) => Math.min(90, Math.floor((t / m.duration) * 90) + 1);
+export const tickerMinute = (m, t = m.time) => footballMinute(m, t);
 const scoreText = (m) => tr(`${m.score[0]}:${m.score[1]}`, `${m.score[0]}-${m.score[1]}`);
 const last = (p) => p.name.split(' ').slice(1).join(' ') || p.name;
 
@@ -241,6 +242,14 @@ export function createCommentator(m, seed = 1) {
         case 'halftime':
           resolveShot('wide');
           add(tr(`Halbzeit. Es steht ${scoreText(m)}. Kurz durchschnaufen, Wasser aus dem Kanister.`, `Half-time. It's ${scoreText(m)}. A breather and some water from the jerry can.`), 'whistle');
+          break;
+        case 'extratime_start':
+          resolveShot('wide');
+          add(tr(`Nach 90 Minuten ${scoreText(m)}. Verlängerung! Zweimal ${Math.round(m.extra.total / 2 / m.duration * 90)} Minuten, die Beine werden schwer.`, `${scoreText(m)} after 90 minutes. Extra time! Two halves of ${Math.round(m.extra.total / 2 / m.duration * 90)} minutes, and the legs are getting heavy.`), 'whistle');
+          break;
+        case 'extratime_half':
+          resolveShot('wide');
+          add(tr(`Seitenwechsel in der Verlängerung. Es steht ${scoreText(m)}.`, `Ends swapped in extra time. It's ${scoreText(m)}.`), 'whistle');
           break;
         case 'end':
           resolveShot('wide');

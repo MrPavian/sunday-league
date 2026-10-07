@@ -1,4 +1,5 @@
 import { tr } from '../core/i18n.js';
+import { halfLabel } from './Hud.js';
 import { stepMatch } from '../sim/match.js';
 import { createCommentator, tickerMinute } from '../sim/commentary.js';
 import { answer, checkDecision, createTouchline, mentalityLabel } from '../sim/touchline.js';
@@ -170,7 +171,7 @@ export class Ticker {
       list.prepend(li);
     }
     this.root.querySelector('.score').textContent = `${m.score[0]} : ${m.score[1]}`;
-    const clock = m.phase === 'ended' ? tr('Abpfiff', 'Full time') : m.phase === 'halftime' ? tr('Halbzeit', 'Half-time') : `${m.half}${tr('. Halbzeit', m.half === 1 ? 'st half' : 'nd half')} · ${tickerMinute(m)}'`;
+    const clock = m.phase === 'ended' ? tr('Abpfiff', 'Full time') : m.phase === 'halftime' ? (m.extra ? tr('Pause · Verlängerung', 'Break · extra time') : tr('Halbzeit', 'Half-time')) : `${halfLabel(m)} · ${tickerMinute(m)}'`;
     this.root.querySelector('.clock').textContent = this.tl ? `${clock} · ${tr('Ausrichtung', 'Approach')}: ${mentalityLabel(m)}` : clock;
     if (m.phase === 'ended' && !this.endShown) this.updateControls();
   }

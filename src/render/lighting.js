@@ -86,6 +86,12 @@ export const VENUES = {
   rasenplatz: { sky: 0x9ec4de, ground: 0x4a6a3a, sunMul: 1.06, hemiMul: 1, wet: 0.85, surface: 'grass', weather: { puddles: 0.7, splash: 1, snow: 1, footprints: true }, flood: 'stadium', post: { tint: [1.0, 1.01, 0.99], saturation: 1.05, contrast: 1.03, brightness: 1 } },
   sportplatz: { sky: 0x9ec4de, ground: 0x4a6a3a, sunMul: 1.06, hemiMul: 1, wet: 0.85, surface: 'grass', weather: { puddles: 0.7, splash: 1, snow: 1, footprints: true }, flood: 'stadium', post: { tint: [1.0, 1.01, 0.99], saturation: 1.05, contrast: 1.03, brightness: 1 } },
   grossfeld: { sky: 0x9ec4de, ground: 0x4a6a3a, sunMul: 1.06, hemiMul: 1, wet: 0.85, surface: 'grass', weather: { puddles: 0.7, splash: 1, snow: 1, footprints: true }, flood: 'stadium', post: { tint: [1.0, 1.01, 0.99], saturation: 1.05, contrast: 1.03, brightness: 1 } },
+  get stadion() {
+    return this.grossfeld;
+  },
+  get grossfeld_tribuene() {
+    return this.grossfeld;
+  },
   halle: { sky: 0xdfe6ea, ground: 0xb08a58, sunMul: 1, hemiMul: 1, wet: 0, surface: 'wood', weather: { puddles: 0, splash: 0, snow: 0, footprints: false }, flood: 'none', indoor: true, post: { tint: [1.03, 1.0, 0.97], saturation: 1.0, contrast: 1.02, brightness: 1 } },
 };
 // Wie hell das Spielfeld abends selbst ist (1 = ganz im Flutlicht), je Flutlichtart.

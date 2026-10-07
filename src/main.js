@@ -68,7 +68,7 @@ import { Settings } from './ui/Settings.js';
 import { Ticker } from './ui/Ticker.js';
 import { SaveSlots } from './ui/SaveSlots.js';
 import { prepareRelegationMatch, recordRelegationLeg, startRelegation } from './career/relegation.js';
-import { humanTie, POKALE, pokalOf, preparePokalMatch, recordPokalResult, roundName } from './career/pokal.js';
+import { humanTie, POKALE, pokalOf, pokalWhen, preparePokalMatch, recordPokalResult, roundName } from './career/pokal.js';
 import './style.css';
 import './ds.css';
 import './world.css';
@@ -264,6 +264,7 @@ try {
   const halves = JSON.parse(localStorage.getItem('sunday-league:halves') ?? 'null');
   if (halves && typeof halves === 'object') MATCH.halves = halves;
   if (localStorage.getItem('sunday-league:cupshare') === '1') MATCH.cupShare = 1;
+  if (localStorage.getItem('sunday-league:pokalextra') === '1') MATCH.pokalExtra = true;
   if (['frei', 'begrenzt'].includes(localStorage.getItem('sunday-league:subs'))) MATCH.subs = localStorage.getItem('sunday-league:subs');
   if (localStorage.getItem('sunday-league:leaguesize') === '6') leagueSize = 6;
   const storedMode = localStorage.getItem('sunday-league:mode');
@@ -377,7 +378,7 @@ function setMode(next) {
 
 const saveInfo = () => (career ? `${humanClub(career).name}, ${tr('Spieltag', 'matchday')} ${Math.min(career.round + 1, career.fixtures.length)}` : null);
 
-const menu = new Menu(document.getElementById('menu'), VENUES, {
+const menu = new Menu(document.getElementById('menu'), VENUES.filter((v) => !v.hidden), {
   onStyle() {
     managerMode = !managerMode;
     remember('sunday-league:mode', managerMode ? 'manager' : 'player');
@@ -409,7 +410,7 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
   onSettings() {
     menu.paused = true;
     settings.show({
-      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe, difficulty, autoSwitch: autoSwitchDefense, manager: managerMode, touch: TOUCH, length: MATCH.halves ? 'custom' : MATCH.length, cupShort: MATCH.cupShare < 1, subs: MATCH.subs, coachLevel: coachLevel(), homeView: homeView(), haptics: hapticsOn(), leagueSize: career ? career.nextLeagueSize ?? career.leagueSize ?? 6 : leagueSize, leagueSizeNow: career?.leagueSize ?? null }),
+      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe, difficulty, autoSwitch: autoSwitchDefense, manager: managerMode, touch: TOUCH, length: MATCH.halves ? 'custom' : MATCH.length, cupShort: MATCH.cupShare < 1, pokalExtra: MATCH.pokalExtra, subs: MATCH.subs, coachLevel: coachLevel(), homeView: homeView(), haptics: hapticsOn(), leagueSize: career ? career.nextLeagueSize ?? career.leagueSize ?? 6 : leagueSize, leagueSizeNow: career?.leagueSize ?? null }),
       onLang: switchLanguage,
       onChange(key, value) {
         if (key === 'sound' && sound.muted !== (value === 'off')) sound.toggleMute();
@@ -470,6 +471,10 @@ const menu = new Menu(document.getElementById('menu'), VENUES, {
         if (key === 'cupshare') {
           MATCH.cupShare = value === 'on' ? 0.75 : 1;
           remember('sunday-league:cupshare', MATCH.cupShare === 1 ? '1' : '0');
+        }
+        if (key === 'pokalextra') {
+          MATCH.pokalExtra = value === 'extra';
+          remember('sunday-league:pokalextra', MATCH.pokalExtra ? '1' : '0');
         }
         if (key === 'mode') {
           managerMode = value === 'manager';
@@ -832,7 +837,7 @@ function playPokalMatch(kind, style = null) {
   setMode('play');
   showMatch(prepared.match);
   const cup = pokalOf(career, kind);
-  hud.toast(`${POKALE[kind].name} · ${roundName(cup, tie.round)} · ${tr('Mittwoch, 19:30', 'Wednesday, 7:30pm')}`, 3, 2);
+  hud.toast(`${POKALE[kind].name} · ${roundName(cup, tie.round)} · ${pokalWhen(kind)}`, 3, 2);
 }
 
 function tickerPokal(kind) {

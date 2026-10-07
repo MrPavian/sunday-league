@@ -764,4 +764,11 @@ Offen:
 - Eigene Spiele werden gespielt (selbst, Seitenlinie, Liveticker), die übrigen per schnellem Ergebnismodell,
   das an der Engine gemessen ist (`scripts/pokal-calibrate.mjs`). Heimspiele bringen Theke und kosten Schiri.
 - Das Ereignis „Heimrecht verkaufen" hängt jetzt am echten Los und tauscht wirklich den Spielort.
-- Offen: Verlängerung als Option, Landespokal/DFB-Pokal-Qualifikation, Pokalsieg-Prämien von Sponsoren.
+- **Verlängerung** als Einstellung (Spiel → Unentschieden im Pokal): ein Drittel der Spielzeit (2 × 15 bei 2 × 45), in
+  der Engine (`m.extra`) und im schnellen Modell (Torerwartung × 1/3); Standard bleibt direkt Elfmeterschießen.
+- **Landespokal** (8 Vereine inkl. fiktiver Oberligisten) für den Bezirkspokalsieger der Vorsaison;
+  **Bundespokal** (Name zentral: `BUND_NAME` in `src/career/bundespokal.js`) für den Landespokalsieger: sechs Samstagsrunden,
+  jede gegen einen fiktiven Zweit- oder Erstligisten, Spielortwahl (eigener Platz / Stahlrohrtribüne / Stadion),
+  Rundenprämie (verdoppelt sich je Runde) und Eintrittsteilung nach dem Vorbild des realen Pokals, Foto mit dem Star in der Vitrine.
+- **Sponsorenprämien** des Trikotsponsors für Pokalsiege als Vielfaches seines Saisonziel-Bonus (`PRAEMIE`).
+- Offen: Gegner und Profis im Bundespokal nur bis zum Finale als Einzelspiele (kein vollständiges 64er-Feld).

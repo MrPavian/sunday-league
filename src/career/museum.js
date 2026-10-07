@@ -1,6 +1,7 @@
 // Vereinsmuseum: Was der Verein erlebt hat – Pokale, Meisterschaften, Auszeichnungen,
 // Rekorde, Vereinslegenden und das Archiv der Trikots und Wappen.
 import { tr } from '../core/i18n.js';
+import { BUND_NAME } from './bundespokal.js';
 import { humanClub, playerOf } from './career.js';
 
 export function museum(c) {
@@ -18,6 +19,9 @@ export function museum(c) {
   const records = [];
   if (best && best.gf > best.ga) records.push({ label: tr('Höchster Sieg', 'Biggest win'), text: `${best.gf}:${best.ga} ${tr('gegen', 'v')} ${best.opp} (S${best.season})` });
   if (worst && worst.gf < worst.ga) records.push({ label: tr('Höchste Niederlage', 'Heaviest defeat'), text: `${worst.gf}:${worst.ga} ${tr('gegen', 'v')} ${worst.opp} (S${worst.season})` });
+  for (const g of (c.bundGames ?? []).filter((x) => x.won || x.close)) {
+    records.push({ label: g.won ? tr(`${BUND_NAME}: Sensation`, `${BUND_NAME}: sensation`) : tr(`${BUND_NAME}: achtbar verloren`, `${BUND_NAME}: honourable defeat`), text: `${g.gf}:${g.ga}${g.et ? ` ${tr('n. V.', 'a.e.t.')}` : ''}${g.pens ? ` (${g.pens} ${tr('i. E.', 'on pens')})` : ''} ${tr('gegen den Profiverein', 'v professional club')} ${g.opp} (S${g.season})` });
+  }
   const nemesis = Object.entries(c.nemesis ?? {}).sort((a, b) => b[1] - a[1])[0];
   if (nemesis && nemesis[1] >= 2) records.push({ label: tr('Angstgegner', 'Bogeyman'), text: `${playerOf(c, Number(nemesis[0]))?.name ?? '?'} – ${nemesis[1]} ${tr('Tore gegen uns', 'goals against us')}` });
 
