@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { emissiveToon, toon } from '../materials.js';
 import { addLights, box, ground, makeBike, makeBin, makeBush } from '../props.js';
 import { makeConcreteTexture, makeShutterTexture } from '../textures.js';
+import { GEO } from '../../sim/shelter.js';
 
 // Hinterhof zwischen Mietshäusern: Garagentor auf der einen Seite, ein mit
 // Kreide an die Hauswand gemaltes Tor auf der anderen.
@@ -25,10 +26,13 @@ export function buildBackyard(root, pitch, rng, scene) {
   root.add(box(W + 4, 11, 0.7, 0xcdb89a, 0, 5.5, facadeZ));
   root.add(box(W + 4, 0.4, 1.0, 0x8a7a66, 0, 11.1, facadeZ));
   const floors = [2.6, 5.4, 8.2];
+  const B = GEO.backyard;
   let omaPlaced = false;
   for (const y of floors) {
     for (let x = -14; x <= 14; x += 2.8) {
       const lit = rng.chance(0.15);
+      // Im Erdgeschoss ist unterm Vordach der Hauseingang statt der Fenster (der Zufall oben bleibt gleich).
+      if (y === floors[0] && x > B.roofX0 && x < B.roofX1) continue;
       const win = box(1.0, 1.3, 0.1, lit ? 0xe8d9a0 : 0x3d5068, x, y, facadeZ + 0.36);
       if (lit) win.material = emissiveToon(0xe8d9a0, 0xffd890, 0.9); // abends erleuchtet
       root.add(win);
@@ -43,6 +47,10 @@ export function buildBackyard(root, pitch, rng, scene) {
       }
     }
   }
+  // Hauseingang: graue Tür, darüber ein Vordach auf zwei Stützen – hierher flüchten alle beim Gewitter.
+  root.add(box(B.doorW, B.doorH, 0.12, 0x6b6f73, B.doorX, B.doorH / 2, facadeZ + 0.36));
+  root.add(box(B.roofX1 - B.roofX0, 0.12, B.roofDepth, 0x8a7a66, (B.roofX0 + B.roofX1) / 2, B.roofY, -hw + B.roofDepth / 2));
+  for (const x of [B.roofX0 + 0.1, B.roofX1 - 0.1]) root.add(box(0.1, B.roofY - 0.06, 0.1, 0x7a7a7a, x, (B.roofY - 0.06) / 2, -hw + B.roofDepth - 0.1));
   for (const x of [-8.4, 5.6]) {
     root.add(box(2.4, 0.15, 1.1, 0x9a948a, x, 4.6, facadeZ + 0.9));
     root.add(box(2.4, 0.8, 0.06, 0x6b6f73, x, 5.05, facadeZ + 1.42));

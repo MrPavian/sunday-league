@@ -8,6 +8,7 @@ import { clamp, dist2d, norm, rotate } from '../core/math.js';
 import { SKIN_TONES } from '../data/names.js';
 import { personName } from '../data/origins.js';
 import { attackDir, clampToPitch } from './players.js';
+import { planRoute, planShelter, shelterFor } from './shelter.js';
 import { startSetPiece } from './setpieces.js';
 import { stateMove } from './tackles.js';
 
@@ -41,7 +42,6 @@ const DURATION = { hund: 8, zaun: 9, autoalarm: 6, polizei: 9, gewitter: 8, spre
 // Beim Gewitter wird gesprintet (vorher 3,5 m/s – sah nach Spaziergang aus); Sprinttempo der Spieler liegt bei 7.
 const STORM_RUN = 6.2;
 const REF_RUN = 6.8; // der Schiri ist zuerst unterm Vordach
-const ROOF_Z = 1; // „unterm Vordach“: so weit hinter der Seitenlinie (m)
 const SPRINKLER_REACH = 8.5; // so nah an einem Sprenger wird man nass und rennt weg
 export const SPRINKLER_SPOTS = [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]]; // Anteile von Länge und Breite
 // Zaun: Klettern (Sekunden hoch, oben, runter) und Zaunhöhe – die Darstellung (reactions.js) liest dieselben Zeiten.
@@ -195,14 +195,25 @@ function beginIncident(m, type, info = {}) {
     text = tr('Die Nachbarin hat die Polizei gerufen. Zwei Beamte schauen vorbei …', 'The neighbour has called the police. Two officers wander over …');
   } else if (type === 'gewitter') {
     m.weather = 'rain';
-    // Der Schiri rennt sofort, die Spieler brauchen einen Moment – keiner ist vor ihm unterm Vordach.
-    // Einer rutscht auf dem nassen Boden aus: der Nächste zum Rand, der noch mindestens 4 m davon weg ist.
-    const roof = -pitch.halfWidth - ROOF_Z;
-    const refT = m.referee ? Math.max(0, m.referee.pos.z - roof) / REF_RUN : 0;
-    inc.delay = m.players.map((p, i) => Math.max(0.45 + (i % 4) * 0.12, refT + 0.15 + (i % 4) * 0.05 - Math.max(0, p.pos.z - roof) / STORM_RUN));
-    const slipper = m.players.map((p, i) => ({ p, i })).filter(({ p }) => p.role !== 'gk' && p.pos.z - roof >= 4).sort((a, b) => a.p.pos.z - b.p.pos.z)[0];
+    // Der Schiri rennt sofort, die Spieler brauchen einen Moment – keiner ist vor ihm im Unterstand.
+    // Wege und Plätze: shelter.js (Dach des Spielorts, Umwege um Wände, Autos, Banden, Bänke).
+    // Einer rutscht auf dem nassen Boden aus: der Nächste zum Unterstand, der noch mindestens 6 m davon weg ist.
+    const sh = shelterFor(pitch);
+    const hasRef = !!m.referee;
+    const ents = hasRef ? [m.referee, ...m.players] : m.players;
+    const plan = planShelter(pitch, ents, hasRef);
+    const off = hasRef ? 1 : 0;
+    const refT = hasRef ? plan[0].len / REF_RUN : 0;
+    inc.routes = new Map(plan.map((o, j) => [j === 0 && hasRef ? 'ref' : ents[j].id, { slot: o.slot, pts: o.pts, k: 0 }]));
+    inc.sheltered = new Set();
+    inc.face = sh.face;
+    inc.delay = m.players.map((p, i) => Math.max(0.45 + (i % 4) * 0.12, refT + 0.5 + (i % 4) * 0.05 - plan[i + off].len / STORM_RUN));
+    const slipper = m.players.map((p, i) => ({ p, i, len: plan[i + off].len })).filter(({ p, len }) => p.role !== 'gk' && len >= 6).sort((a, b) => a.len - b.len)[0];
     if (slipper) inc.slip = { id: slipper.p.id, at: inc.delay[slipper.i] + 0.35, done: false, side: slipper.i % 2 ? 1 : -1 };
-    text = tr('Gewitter! Alle unter das Vordach, bis es nachlässt.', 'Thunderstorm! Everyone under the canopy until it eases off.');
+    // Der Vorfall dauert, bis auch der Letzte angekommen ist (Großfeld: weite Wege), plus Zeit zum Verschnaufen.
+    const arrive = Math.max(refT, ...m.players.map((p, i) => inc.delay[i] + plan[i + off].len / STORM_RUN)) + (slipper ? 1.6 : 0);
+    inc.timer = Math.max(inc.timer, arrive + 2.5);
+    text = sh.text;
     m.events.push({ type: 'lightning' });
   } else if (type === 'sprenger') {
     m.sprinklers = true;
@@ -256,7 +267,7 @@ export function stepIncident(m, dt) {
 
   if (inc.type === 'hund') stepDog(m, dt);
   if (inc.type === 'taube') stepPigeon(m, dt);
-  if (inc.type === 'gewitter' && m.referee) walk(m.referee, { x: m.referee.pos.x, z: -pitch.halfWidth - 3.5 }, REF_RUN, dt);
+  if (inc.type === 'gewitter' && m.referee) followRoute(inc, inc.routes.get('ref'), m.referee, 'ref', REF_RUN, dt);
   if (inc.type === 'gewitter' && Math.floor(inc.t / 2.8) !== Math.floor((inc.t - dt) / 2.8)) m.events.push({ type: 'lightning' });
   if (inc.type === 'autoalarm' && Math.floor(inc.t / 1.4) !== Math.floor((inc.t - dt) / 1.4)) m.events.push({ type: 'alarm' });
   if (inc.type === 'ersatzschiri' && m.referee) walk(m.referee, { x: m.referee.pos.x, z: -pitch.halfWidth - 3 }, 1.1, dt);
@@ -266,22 +277,34 @@ export function stepIncident(m, dt) {
     // Gestürzte (Rutscher, Hechtsprung nach dem Hund) liegen und stehen auf wie nach einem Foul.
     if (p.state !== 'normal') {
       stateMove(m, p, dt);
+      if (inc.routes) inc.routes.get(p.id).stale = true;
       continue;
     }
     let target = null;
     let speed = 0;
     if (inc.type === 'gewitter') {
-      // Drei Reihen am Rand (früher p.index – das gab es nicht, das Ziel war NaN und keiner lief los).
-      if (inc.t >= inc.delay[i]) {
-        target = { x: p.pos.x, z: -pitch.halfWidth - 2 - (i % 3) * 0.8 };
-        speed = STORM_RUN;
-      }
       const slip = inc.slip;
+      const route = inc.routes.get(p.id);
       if (slip && !slip.done && slip.id === p.id && inc.t >= slip.at) {
         slip.done = true;
-        tumble(p, norm(0.3 * slip.side, -1), 5.5, 0.8);
+        // Rutscht in Laufrichtung (seitlich versetzt); danach wird der Weg vom neuen Standort aus geplant.
+        const leg = route.pts[Math.min(route.k, route.pts.length - 1)];
+        const dir = norm(leg.x - p.pos.x, leg.z - p.pos.z);
+        tumble(p, norm(dir.x - 0.3 * slip.side * dir.z, dir.z + 0.3 * slip.side * dir.x), 5.5, 0.8);
+        route.stale = true;
         continue;
       }
+      if (route.stale) {
+        route.pts = planRoute(shelterFor(pitch), p.pos, route.slot);
+        route.k = 0;
+        route.stale = false;
+      }
+      if (inc.t >= inc.delay[i]) followRoute(inc, route, p, p.id, STORM_RUN, dt);
+      else {
+        p.vel.x *= 0.85;
+        p.vel.z *= 0.85;
+      }
+      continue;
     } else if (inc.type === 'sprenger') {
       // Wer in den Strahl gerät, rennt zum Rand; die anderen schauen zu.
       const jet = nearestJet(pitch, p.pos);
@@ -440,6 +463,34 @@ function walk(e, target, speed, dt) {
   e.facing = dir;
   e.pos.x += e.vel.x * dt;
   e.pos.z += e.vel.z * dt;
+}
+
+// Setzt e genau auf das Ziel, wenn es in diesem Schritt erreicht wird (kein Rest, damit die Plätze stimmen).
+function glide(e, t, speed, dt) {
+  const d = dist2d(e.pos, t);
+  if (d < 1e-6) {
+    e.vel.x = e.vel.z = 0;
+    return true;
+  }
+  const dir = { x: (t.x - e.pos.x) / d, z: (t.z - e.pos.z) / d };
+  const v = Math.min(speed, d / dt);
+  e.vel.x = dir.x * v;
+  e.vel.z = dir.z * v;
+  e.facing = dir;
+  e.pos.x += e.vel.x * dt;
+  e.pos.z += e.vel.z * dt;
+  return v * dt >= d - 1e-9;
+}
+
+// Gewitter: über die Wegpunkte zum Platz im Unterstand, dort zum Spielfeld schauen.
+function followRoute(inc, route, e, id, speed, dt) {
+  if (route.k < route.pts.length) {
+    if (glide(e, route.pts[route.k], speed, dt)) route.k++;
+    if (route.k < route.pts.length) return;
+  }
+  e.vel.x = e.vel.z = 0;
+  e.facing = { ...inc.face };
+  inc.sheltered.add(id);
 }
 
 function stepVisitors(m, dt) {

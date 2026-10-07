@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { toon } from '../materials.js';
 import { addLights, box, ground, lampHead, makeBackpack, makeBench, makeBin, makeBush, makeCone, makeDog, makeJacketPile, makeLamp, makeTree } from '../props.js';
 import { crowdRow, makeSpectator } from '../spectators.js';
+import { GEO } from '../../sim/shelter.js';
 import { groundTexels, makeParkGrassTexture } from '../textures.js';
 
 // Stadtpark: Rucksäcke und Hütchen als Tore, die Seitenlinie denkt man sich.
@@ -60,6 +61,13 @@ export function buildPark(root, pitch, rng, scene) {
   const lamps = [-18, 0, 18];
   for (const x of lamps) root.add(makeLamp(x, -15.5, 4));
   root.add(makeBin(12, -14.6, 0x3a5a3a));
+  // Pavillon am Weg (Holz, Dach in Laternengrau): Unterstand beim Gewitter, offen zur Wiese hin.
+  const P = GEO.park;
+  const pw = P.x1 - P.x0;
+  const pd = P.z1 - P.z0;
+  root.add(box(pw + 0.4, 0.12, pd + 0.3, 0x4d5358, (P.x0 + P.x1) / 2, P.y, (P.z0 + P.z1) / 2 + 0.05));
+  root.add(box(pw, P.y, 0.1, 0x7a5a3a, (P.x0 + P.x1) / 2, P.y / 2, P.z0));
+  for (const x of [P.x0 + 0.1, P.x1 - 0.1]) for (const z of [P.z0 + 0.1, P.z1 - 0.1]) root.add(box(0.1, P.y, 0.1, 0x7a5a3a, x, P.y / 2, z));
   // Picknickdecke am Rand
   root.add(box(2, 0.02, 1.6, 0xc85a5a, -22, 0.01, -8), box(0.5, 0.3, 0.35, 0xc9a227, -21.6, 0.15, -8.2));
 

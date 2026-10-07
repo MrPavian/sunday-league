@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { toon } from '../materials.js';
 import { addLights, box, cylinder, ground, makeBench, makeDog, makeFence, makeFloodlight, makeGoalFrame, makeSideline, makeTree } from '../props.js';
 import { crowdRow, makeSpectator } from '../spectators.js';
+import { GEO, bandeX, BANDE_W } from '../../sim/shelter.js';
 import { groundTexels, makeLawnTexture, makeSignTextureWide } from '../textures.js';
 
 // Lokale Sponsoren – selbst gemalte Banden, wie sie auf jedem Dorfplatz hängen.
@@ -39,18 +40,23 @@ export function buildLawn(root, pitch, rng, scene) {
 
   // Banden an der Gegengerade.
   const bandZ = -hw - 2.2;
+  // In der Mitte vor der Tribüne bleibt eine Lücke (Bandenfelder gapBoards): hier laufen alle beim Gewitter durch.
   SPONSORS.forEach(([text, bg, fg], i) => {
-    const x = -hl + 3 + i * ((hl * 2 - 6) / (SPONSORS.length - 1));
-    const board = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 0.8), toon(0xffffff, { map: makeSignTextureWide(text, { bg, fg }) }));
+    if (GEO.lawn.gapBoards.includes(i)) return;
+    const x = bandeX(hl, i);
+    const board = new THREE.Mesh(new THREE.PlaneGeometry(BANDE_W, 0.8), toon(0xffffff, { map: makeSignTextureWide(text, { bg, fg }) }));
     board.position.set(x, 0.45, bandZ);
-    root.add(board, box(5.6, 0.85, 0.08, 0x3a3a3a, x, 0.43, bandZ - 0.05));
+    root.add(board, box(BANDE_W, 0.85, 0.08, 0x3a3a3a, x, 0.43, bandZ - 0.05));
   });
 
   // Kleine Tribüne mit drei Stufen und Dach.
   const tz = -hw - 5;
   for (let step = 0; step < 3; step++) root.add(box(18, 0.4, 1.2, 0x9a9690, 0, 0.2 + step * 0.4, tz - step * 1.2));
-  root.add(box(18.6, 0.12, 4.6, 0x4a5058, 0, 3.6, tz - 1.2));
+  // Das Dach reicht nach vorn bis kurz hinter die Bande: darunter ist vor den Stufen Platz für alle (Gewitter).
+  const roofFront = tz + 5 - GEO.lawn.roofFront;
+  root.add(box(18.6, 0.12, roofFront - (tz - 3.5), 0x4a5058, 0, 3.6, (roofFront + tz - 3.5) / 2));
   for (const x of [-9, 0, 9]) root.add(cylinder(0.08, 3.6, 0x4a5058, x, 1.8, tz - 3.2, 6));
+  for (const s of [-1, 1]) root.add(cylinder(0.08, 3.6, 0x4a5058, s * GEO.lawn.postX, 1.8, roofFront - 0.1, 6));
   for (let i = 0; i < 12; i++) {
     const step = i % 3;
     root.add(makeSpectator(rng, { x: -8 + rng.range(0, 16), z: tz - step * 1.2, sitting: true, y: 0.4 + step * 0.4 }));
