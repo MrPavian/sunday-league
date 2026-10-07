@@ -332,6 +332,7 @@ Liga- und Vereinsnamen bleiben fiktiv (keine Lizenzen nötig); regionale Variant
 **Meilenstein M7:** Content-complete Beta → Early Access
 
 ### Phase 8 – Post-Launch
+Wird erst auf ausdrücklichen Auftrag des Nutzers bearbeitet (Couch-Koop, Online-Liga, Editoren/Modding).
 - [ ] Couch-Koop & lokales Versus
 - [ ] Online-Freizeitliga mit Freunden
 - [ ] Einzelspieler-Karriere

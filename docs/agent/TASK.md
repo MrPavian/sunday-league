@@ -41,6 +41,10 @@ fertige Arbeit behalten, den Umfang nicht still erweitern.
 5. Kopfballtore und Ecken, danach eine Prüfung aller Plätze und Spielerstärken auf Auffälligkeiten.
 Unabhängige Bereiche (andere Dateien) dürfen parallel laufen; geliefert wird in dieser Reihenfolge.
 
+## Gesperrt bis zum ausdrücklichen Auftrag (vom Nutzer festgelegt, 2026-10-07)
+Couch-Koop, Online-Liga mit Freunden, Editoren und Modding (ROADMAP Phase 8) bleiben auf der Roadmap, werden
+aber erst bearbeitet, wenn der Nutzer das ausdrücklich beauftragt. Nicht von sich aus vorschlagen oder anfangen.
+
 ## Laufende Aufgaben (Oktober 2026)
 | Aufgabe | Route | Abnahme |
 |---|---|---|
