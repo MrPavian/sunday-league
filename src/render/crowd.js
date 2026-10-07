@@ -17,6 +17,7 @@ import { createRng } from '../core/rng.js';
 import { pixelTexture, toon } from './materials.js';
 import { currentQuality } from './quality.js';
 import { DECAL_CODE } from './weather.js';
+import { crowdCues } from './reactions.js';
 
 const ATLAS = 32;
 const CELL = 4;
@@ -168,7 +169,12 @@ export const BOOTH_WAIT = 4; // s an der Theke
 export const BOOTH_MAX = 2; // höchstens so viele gleichzeitig unterwegs
 export const boothTrip = (dist) => 2 * (dist / BOOTH_WALK) + BOOTH_WAIT;
 
-const TYPE = { idle: 0, clap: 1, cheer: 2, wave: 3, lean: 4, point: 5, head: 6, look: 7, booth: 8 };
+// rise: bei einer Chance aufstehen und die Arme recken; shift: Gewicht von einem Bein aufs andere;
+// follow: dem Ball mit dem Kopf folgen.
+const TYPE = { idle: 0, clap: 1, cheer: 2, wave: 3, lean: 4, point: 5, head: 6, look: 7, booth: 8, rise: 9, shift: 10, follow: 11 };
+const KIND = { clap: TYPE.clap, cheer: TYPE.cheer, lean: TYPE.lean, head: TYPE.head, point: TYPE.point, rise: TYPE.rise };
+const YAW_MAX = 0.8; // so weit dreht sich ein Zuschauer zum Ball (Bogenmaß)
+const YAW_EASE = 0.3; // Anteil der Restdrehung je Takt
 
 export class Crowd {
   constructor(root, slots, venueId) {
@@ -178,6 +184,7 @@ export class Crowd {
     this.slots = slots.map((s) => ({ ...s, rank: hash(s.seed, s.i) })).sort((a, b) => a.rank - b.rank);
     const n = this.slots.length;
     this.n = n;
+    this.cueState = {}; // letzter Schuss für die Reaktionen (reactions.js crowdCues)
     this.stats = { people: n, shown: 0, active: 0, calls: n ? 2 : 0 };
     if (!n) return;
 
@@ -228,6 +235,7 @@ export class Crowd {
     this.speed = new Float32Array(n);
     this.fan = new Int8Array(n); // 0 Heim, 1 Gast, -1 neutral
     this.scale = new Float32Array(n);
+    this.yaw = new Float32Array(n); // Kopf-/Körperdrehung zum Ball, weich nachgeführt
     this.dirty = new Uint8Array(n);
     this.active = new Uint8Array(n);
     this.slots.forEach((s, i) => {
@@ -398,23 +406,7 @@ export class Crowd {
   handleEvents(match) {
     if (!this.n) return;
     for (const e of match.events) {
-      if (e.type === 'goal') {
-        const scorer = e.ownGoal ? 1 - e.team : e.team;
-        const side = scorer === this.home ? 0 : 1;
-        this.react((i) => this.fan[i] === side, TYPE.cheer, 0.95, 4);
-        this.react((i) => this.fan[i] === -1, TYPE.clap, 0.6, 3);
-        this.react((i) => this.fan[i] === 1 - side, TYPE.head, 0.45, 2.5);
-      } else if (e.type === 'shot') {
-        this.react(() => true, TYPE.lean, e.acro ? 0.6 : 0.35, 1.2);
-      } else if (e.type === 'trick' && e.ok) {
-        this.react(() => true, TYPE.clap, 0.22, 1.4); // Szenenapplaus
-      } else if (e.type === 'post' || e.type === 'bar') {
-        this.react(() => true, TYPE.head, 0.5, 1.6);
-      } else if (e.type === 'save') {
-        this.react(() => true, TYPE.clap, 0.3, 1.8);
-      } else if (e.type === 'foul' || e.type === 'card') {
-        this.react(() => true, TYPE.point, 0.18, 1.5);
-      } else if (e.type === 'end') {
+      if (e.type === 'end') {
         const [a, b] = match.score;
         const win = a === b ? -1 : (a > b ? 0 : 1) === this.home ? 0 : 1;
         if (win < 0) this.react(() => true, TYPE.clap, 0.5, 4);
@@ -422,6 +414,12 @@ export class Crowd {
           this.react((i) => this.fan[i] === win, TYPE.cheer, 0.85, 5);
           this.react((i) => this.fan[i] !== win, TYPE.clap, 0.25, 3);
         }
+        continue;
+      }
+      for (const c of crowdCues(this.cueState, match, e)) {
+        // Anhänger einer Mannschaft: fan 0 = Heim, 1 = Gast (je nach homeTeam), -1 neutral.
+        const side = typeof c.who === 'number' ? (c.who === this.home ? 0 : 1) : c.who === 'neutral' ? -1 : null;
+        this.react(side === null ? () => true : (i) => this.fan[i] === side, KIND[c.kind], c.share, c.dur);
       }
     }
   }
@@ -452,9 +450,10 @@ export class Crowd {
       const i = Math.floor(hash(Math.floor(t * 3), k * 7919) * this.shown);
       if (this.until[i] > t) continue;
       const r = hash(i, Math.floor(t));
-      this.type[i] = r < 0.35 ? TYPE.look : r < 0.6 ? TYPE.clap : r < 0.8 ? TYPE.lean : TYPE.wave;
+      // Meist wippt jemand von einem Bein aufs andere oder schaut dem Ball nach; seltener klatscht, winkt oder lehnt einer.
+      this.type[i] = r < 0.3 ? TYPE.follow : r < 0.55 ? TYPE.shift : r < 0.7 ? TYPE.look : r < 0.82 ? TYPE.clap : r < 0.92 ? TYPE.lean : TYPE.wave;
       this.delay[i] = 0;
-      this.until[i] = t + 1.2 + r * 2.5;
+      this.until[i] = t + 1.2 + r * 2.5 + (this.type[i] === TYPE.shift || this.type[i] === TYPE.follow ? 2 : 0);
       busy++;
     }
     let active = 0;
@@ -463,7 +462,7 @@ export class Crowd {
       if (!on && !this.dirty[i]) continue; // Stillstehende nicht anfassen
       if (!on && this.type[i] !== TYPE.idle) this.type[i] = TYPE.idle;
       this.pose(i);
-      this.dirty[i] = on ? 1 : 0; // nach dem Ende einmal in die Ruhepose
+      this.dirty[i] = on || Math.abs(this.yaw[i]) > 0.01 ? 1 : 0; // nach dem Ende, bis die Drehung zurück ist, einmal in die Ruhepose
       if (on) active++;
     }
     this.stats.active = active;
@@ -486,6 +485,9 @@ export class Crowd {
     let bob = 0;
     let lean = 0;
     let turn = 0;
+    let roll = 0;
+    let sway = 0;
+    let watch = false; // dem Ball folgen
     // Arme: vor (negativ) / seitlich (außen positiv)
     let lx = 0.05;
     let lz = 0.03;
@@ -498,7 +500,7 @@ export class Crowd {
       lz = rz = -0.15 + 0.4 * c;
     } else if (type === TYPE.cheer) {
       sit = 0; // Sitzende springen beim Tor auf
-      bob = 0.07 * Math.abs(Math.sin(w * 6));
+      bob = 0.13 * Math.abs(Math.sin(w * 6)); // springt
       lx = rx = -2.75 + 0.2 * Math.sin(w * 6);
       lz = rz = 0.35;
       lean = -0.08;
@@ -518,7 +520,23 @@ export class Crowd {
       lean = 0.05;
     } else if (type === TYPE.look) {
       turn = 0.35 * Math.sin(w * 0.8);
+    } else if (type === TYPE.rise) {
+      sit = 0; // steht auf, beugt sich vor, Arme hoch (Hände halb über dem Kopf)
+      lean = 0.12;
+      bob = 0.02 * Math.abs(Math.sin(w * 5));
+      lx = rx = -2.2 + 0.15 * Math.sin(w * 5);
+      lz = rz = 0.25;
+      watch = true;
+    } else if (type === TYPE.shift) {
+      // Gewicht verlagern: Becken pendelt langsam zur Seite, Oberkörper neigt sich gegen.
+      roll = 0.05 * Math.sin(w * 0.9);
+      sway = 0.035 * Math.sin(w * 0.9);
+      bob = -0.008 * Math.abs(Math.sin(w * 0.9));
+      watch = true;
+    } else if (type === TYPE.follow) {
+      watch = true;
     }
+    if (type === TYPE.lean) watch = true;
     const trip = type === TYPE.booth ? this.boothPose(i, this.time) : null;
     if (trip) {
       if (trip.phase !== 'warten') {
@@ -540,13 +558,22 @@ export class Crowd {
     }
     // Ruhe: kaum sichtbares Atmen/Wippen (nur solange jemand aktiv ist, sonst still).
     if (running) bob += 0.012 * Math.sin(w * 2.2);
+    // Drehung zum Ball (Winkel relativ zur Blickrichtung des Platzes, begrenzt), weich nachgeführt und wieder zurück.
+    let want = 0;
+    const ball = this.match?.ball;
+    if (watch && ball) {
+      const d = Math.atan2(ball.pos.x - s.x, ball.pos.z - s.z) - s.facing;
+      want = Math.max(-YAW_MAX, Math.min(YAW_MAX, Math.atan2(Math.sin(d), Math.cos(d))));
+    }
+    this.yaw[i] += (want - this.yaw[i]) * YAW_EASE;
+    turn += this.yaw[i];
     const drop = sit ? SIT_DROP : 0;
     const sc = this.scale[i];
     this.sit[i] = sit;
     // Körper
-    this.e.set(lean, (trip ? trip.facing : s.facing) + turn, 0, 'YXZ');
+    this.e.set(lean, (trip ? trip.facing : s.facing) + turn, roll, 'YXZ');
     this.q.setFromEuler(this.e);
-    this.v.set(trip ? trip.x : s.x, (trip ? 0 : s.y) + bob, trip ? trip.z : s.z);
+    this.v.set((trip ? trip.x : s.x) + sway, (trip ? 0 : s.y) + bob, trip ? trip.z : s.z);
     this.s.set(sc, sc, sc);
     this.m.compose(this.v, this.q, this.s);
     this.body.setMatrixAt(i, this.m);
