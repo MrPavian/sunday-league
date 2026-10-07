@@ -142,9 +142,9 @@ export function incidentPose(match, p, i, out = POSE) {
   const { pitch } = match;
   switch (inc.type) {
     case 'gewitter':
-      // Rennen mit den Händen über dem Kopf; unterm Vordach angekommen frieren sie (Arme verschränkt).
+      // Rennen mit den Händen über dem Kopf; im Unterstand angekommen frieren sie (Arme verschränkt).
       if (speed > 1.5) out.cover = 1;
-      else if (p.pos.z < -pitch.halfWidth - 1 && i % 2) out.gesture = 'arme';
+      else if (inc.sheltered?.has(p.id) && i % 2) out.gesture = 'arme';
       break;
     case 'sprenger':
       // Wer nass wird, rennt weg (Hände vors Gesicht); die anderen zeigen auf den Sprenger oder schimpfen.

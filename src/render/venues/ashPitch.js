@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { toon } from '../materials.js';
 import { addLights, box, cylinder, ground, makeBench, makeFence, makeFloodlight, makeGoalFrame, makeSideline, makeTree } from '../props.js';
 import { crowdRow, makeSpectator } from '../spectators.js';
+import { GEO } from '../../sim/shelter.js';
 import { groundTexels, makeAshTexture, makeSignTextureWide } from '../textures.js';
 
 // Ascheplatz vom SV Grün-Weiß: Jugendtore, Ballfangzaun, Flutlicht,
@@ -35,10 +36,11 @@ export function buildAshPitch(root, pitch, rng, scene) {
   for (const x of masts) root.add(makeFloodlight(x, -18.5, 14, 2.4));
 
   // Auswechselbänke mit Dach.
-  for (const x of [-5, 5]) {
-    root.add(makeBench(x, -15.6));
-    root.add(box(3, 0.08, 1.4, 0x2f4f3a, x, 2.1, -15.4), box(3, 2.1, 0.06, 0x2f4f3a, x, 1.05, -16.1));
-  }
+  // Ein durchgehendes Dach über beiden Bänken: Unterstand beim Gewitter.
+  const A = GEO.ash;
+  for (const x of [-5, 5]) root.add(makeBench(x, -15.6));
+  root.add(box(A.x * 2, 0.08, A.z1 - A.z0, 0x2f4f3a, 0, A.y, (A.z0 + A.z1) / 2), box(A.x * 2, A.y, 0.06, 0x2f4f3a, 0, A.y / 2, A.z0));
+  for (const s of [-1, 1]) root.add(box(0.1, A.y, 0.1, 0x2f4f3a, s * (A.x - 0.1), A.y / 2, A.z1 - 0.1));
 
   // Vereinsheim-Container mit Schild und Fahne.
   root.add(box(9, 2.8, 3, 0x3f7a4a, -10, 1.4, -21.5));
