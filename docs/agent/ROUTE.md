@@ -1,5 +1,8 @@
 # ROUTE.md – Sonnet zuerst oder Opus zuerst?
 
+Grundteilung (Nutzer, 2026-10-08): Sonnet leitet und baut, Haiku erkundet parallel, Opus berät nur bei
+Planprüfung, wiederholtem Fehler und Abschlussprüfung (siehe CLAUDE.md „Modellwahl").
+
 Startregel, kein allgemeiner Benchmark. Modell nach Form der Aufgabe und nach eigenen Ergebnissen
 (`COST_LOG.md`) wählen.
 
