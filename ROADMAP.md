@@ -624,6 +624,23 @@ Kreis- und Bezirkspokal im K.-o.-System unter der Woche (`src/career/pokal.js`, 
   Elfmeter zum Punkt, Freistoß und Einwurf in Angriffsrichtung, nach dem Tor zur Mitte); beim Wechsel klatschen
   beide ab, der Ausgewechselte trottet vom Platz. Armwinkel für Kopf, Ohr und Rücken per Gitter-Suche an der
   Figur bestimmt (Hand höchstens 2 cm vom Ziel). Nur Darstellung, die Simulation bleibt unverändert.
+- ✅ Zweite Runde (Oktober 2026, alles nur Darstellung, Simulation unverändert bis auf den Jubel):
+  - Weitere Jubel (Trikot über den Kopf, Hand ans Ohr, Rücken, Brust, Umarmen, Hinterherlaufen), Gesten (Hände an
+    den Kopf, abwinken, geballte Faust, zeigen, abklatschen, Schulterzucken, schimpfen, Wade halten).
+  - Torschütze bleibt nach gut einer Sekunde stehen, Mitspieler sprinten hin: Traube in 41 von 62 Toren (7er,
+    vorher 13).
+  - Einwurf mit Anlauf, Fußstellung beim Schuss, Standbein, Körpereinsatz im Zweikampf, flacher Hechtsprung mit
+    Abrollen; Torwart fängt in Kopf-, Brust- oder Bodenhöhe, faustet ein- oder beidhändig, Abwurf und Abschlag mit
+    Ausholen, macht sich im 1 gegen 1 breit, Abpraller nach Fehlgriff sichtbar.
+  - Erschöpftes Gesicht, nasse Trikots bei Regen, Torwarthandschuhe in Signalfarbe mit Manschetten.
+  - Aufwärmen am Rand: je ein Auswechselspieler pro Team (Trab, Dehnen, Hopserlauf, Hüftkreisen, Armkreisen), zuerst
+    der angesagte Einwechsler. Zuschauer verlagern das Gewicht, folgen dem Ball, stehen bei Chancen auf und springen
+    beim Tor ihrer Mannschaft. Draw Calls +4 auf Plätzen mit Bank, alle unter dem Budget. Offen: Beim Dehnen
+    greift die Hand nicht sichtbar an den Fuß.
+  - Vorfälle: Gewitter mit echtem Unterstand je Spielort (`src/sim/shelter.js`: Hauseingang mit Vordach, Vordach
+    am Getränkemarkt, Pavillon, Bankdach, Bandenlücke und Tribünendach, im Stadion der Streifen vor der Bande);
+    erst runter vom Feld, dann außen herum, keiner läuft durch Wand, Auto oder Bande (`tests/storm_shelter.test.js`).
+    Polizei redet mit dem Trainer, Hund schlägt Haken, Taube sitzt auf der Latte, Zaun-Kletterer mit Helfern.
 - **Mehr Animationen:** Jubel (mehrere Varianten, Rutschen auf Knien, Trikot über den Kopf), Ärger nach
   vergebener Chance, Einwurf mit Anlauf, Schiri-Gesten (Karte zeigen, Vorteil), Abklatschen bei Wechseln,
   Aufwärmen am Rand, Zuschauer mit mehr Bewegung.
@@ -663,6 +680,12 @@ Kreis- und Bezirkspokal im K.-o.-System unter der Woche (`src/career/pokal.js`, 
     (Rasen, Sportplatz, Großfeld, Asche, Park), Dreiecke +6 %, Bodentextur Großfeld 12 statt 6 MB.
     Obergrenzen im e2e-Test „Grafik-Budget je Spielort“. Echte Bildraten auf dem Handy sind ungeprüft
     (kein Gerät hier).
+- ✅ Figuren (Oktober 2026): sechs neue Frisuren (Dutt, Undercut, Afro, Pferdeschwanz, Vokuhila, kurze Locken),
+  drei Bärte (Ziegenbart, Koteletten, breiter Schnauzer), Stutzen runter 22 %, Schweißband 12 %, Knöcheltape 9 %,
+  Handtape 6 %, Sportbrille 4 % (nie beim Schiri). Höchstens 700 Dreiecke je Figur, auch beim Torwart
+  (`tests/looks.test.js`). Etwa 29 % der vorhandenen Spieler bekommen dadurch eine andere Frisur oder einen anderen Bart.
+- ✅ Wappen: Schriftband (Kürzel, Gründungsjahr oder beides), Meistersterne aus der Vereinsgeschichte, 8 neue Motive.
+  Trikots: Muster diagonal, breit, Verlauf, Ärmel; Kragen (rund, V, Polo) und Ärmel in Zweitfarbe.
 - Figuren mit mehr Varianten: Körperbau (schlank, kräftig, Bauch), Größe, Frisuren, Bärte, Stutzen runter,
   Schweißbänder, Brillen-Sportband, Tape am Knöchel.
 - Gesichter mit mehr Ausdruck (Jubel, Ärger, Erschöpfung), Trikots mit Falten und nassem Stoff bei Regen.
@@ -684,6 +707,11 @@ Kreis- und Bezirkspokal im K.-o.-System unter der Woche (`src/career/pokal.js`, 
   mittig, Band, Fleck, nur Schrift), immer kontrastreich zum Trikot (`src/render/sponsorLogos.js`).
 
 ### 11.5 Ereignisse
+- ✅ Oktober 2026: Chat-Zusagen 22 → 112 Varianten, Verspätungen, Wetter-Chat, Teamchat-Antworten, Kreisblatt-Zitate
+  und Wiedersehen gestreckt; häufigster Text im Langzeitlauf 53 → 14-mal. 12 neue Saison-Ereignisse
+  (`src/career/seasonevents.js`: Aufstiegsfeier, Abstiegskrise, Abschiedsspiel, Urlaub vor dem Finale, Firmenlauf,
+  Platzsperre, Flutlicht defekt, Trainerschein, Kabine undicht, Schiri-Mangel, Hospitation, Lizenzpflicht) und ein
+  eigenes Derby-Rückspiel; das häufigste Ereignis macht nur noch 13 % statt 25–27 % aus.
 - ✅ Erledigt: 10 Ereignisse für höhere Ligen (`src/career/leagueevents.js`: Sportgericht, Spielverlegung,
   Kreispokal, Eintritt, erste Fans, Stadionsprecher, Videoanalyse, Testspiel gegen Profi-U23, Geld bis zur
   DFB-Amateurgrenze, Ordnerdienst); in der Bezirksliga 14 % der Wochenereignisse. Offen: die Chat-Zusagen
