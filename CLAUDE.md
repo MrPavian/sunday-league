@@ -15,10 +15,17 @@ Opus nur, wenn eine Prüfung einen Grund liefert.** Route am Anfang wählen, nur
 - `docs/agent/CHECKS.md` – bevor behauptet wird, dass etwas funktioniert.
 - `docs/agent/CONTEXT.md` – bevor große Dateien oder lange Verläufe geladen werden.
 
-## Modellwahl
-- Sonnet für umrissene, gut beschriebene Umsetzung (Unteragent `model: sonnet`), Haiku für Suchen und
-  mechanische Änderungen (`model: haiku`). Ein Auftrag je Unteragent.
-- Opus für ungelöste Architektur- oder Reparaturfragen und nach einem belegten Sonnet-Fehlschlag (ESCALATE.md).
+## Modellwahl (vom Nutzer festgelegt, 2026-10-08): „Sonnet baut. Haiku erkundet. Opus überprüft."
+- **Sonnet leitet und schreibt den Code**: Hauptsitzung auf Sonnet; Umsetzung durch Sonnet selbst oder Unteragenten
+  `model: sonnet`. Ein Auftrag je Unteragent.
+- **Haiku erkundet**: Dateien, Doku, Suchen, Fundstellen, mechanische Änderungen parallel über Unteragenten
+  `model: haiku` – deren Ergebnis ist eine knappe Zusammenfassung mit Pfaden, keine Dateiinhalte.
+- **Opus berät nur bei wichtigen Entscheidungen** (Unteragent `model: opus`, mit kompakter Übergabe nach
+  CONTEXT.md): (1) einen Plan prüfen, bevor er umgesetzt wird, (2) einen wiederholten Fehler lösen (gleiche
+  Prüfung zweimal rot trotz geänderter Hypothese, ESCALATE.md), (3) vor Abschluss/Lieferung prüfen, dass nichts
+  übersehen wurde. Sonst kein Opus – Opus-Kontext sparen.
+- Läuft die Hauptsitzung (noch) auf Opus, hält sie sich an dieselbe Teilung: planen, Aufträge vergeben,
+  prüfen – nicht selbst lange erkunden oder umsetzen.
 - Wechsel nur nach Beleg, nicht weil eine Aufgabe groß klingt. Das Modell der Hauptsitzung kann von hier aus
   nicht umgeschaltet werden – dann empfehlen, nie einen Wechsel behaupten.
 

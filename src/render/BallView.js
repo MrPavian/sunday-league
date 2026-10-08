@@ -42,6 +42,10 @@ export class BallView {
     // Kontakt-Versatz: Die Simulation schießt aus bis zu 0,75–1 m Abstand. Fürs Auge startet
     // der Ball am Fuß (bzw. Kopf) und holt seine echte Bahn in KICK_BLEND Sekunden ein.
     this.off = { x: 0, y: 0, z: 0, t: 1 };
+    // In der Hand des Torwarts (Fangen, Wurf, Abschlag): MatchView meldet je Bild die Handposition, der
+    // Ball folgt ihr und löst sich weich, wenn keine Meldung mehr kommt (carryW 0…1).
+    this.carry = { x: 0, y: 0, z: 0, on: false };
+    this.carryW = 0;
 
     // Schweif: wenige Punkte hinter dem Ball, vorne 3 Pixel, hinten 1 – in Ballfarbe, halbtransparent.
     this.trailN = q.ballTrail ?? 0;
@@ -146,6 +150,15 @@ export class BallView {
     return this.shakeT > 0 ? this.shakeSign : 0;
   }
 
+  // Ball für dieses Bild in die Hand legen (Weltposition der Ballmitte).
+  holdAt(x, y, z) {
+    const c = this.carry;
+    c.x = x;
+    c.y = y;
+    c.z = z;
+    c.on = true;
+  }
+
   // Jedes Bild: Ball an die Simulationsposition, Drehung, Stauchen, Schweif, Netze.
   // blob(x, z, scale, density) setzt den Kontaktschatten (MatchView, gleicher Draw Call wie die Spieler).
   sync(match, dt, blob) {
@@ -171,9 +184,18 @@ export class BallView {
       w = Math.max(0, 1 - o.t / KICK_BLEND);
       w *= w;
     }
-    const bx = b.pos.x + o.x * w;
-    const bz = b.pos.z + o.z * w;
-    g.position.set(bx, b.pos.y + o.y * w - BALL_RADIUS + BALL_VISUAL_RADIUS * sy, bz);
+    let bx = b.pos.x + o.x * w;
+    let bz = b.pos.z + o.z * w;
+    let by = b.pos.y + o.y * w;
+    const c = this.carry;
+    this.carryW += ((c.on ? 1 : 0) - this.carryW) * Math.min(1, dt * (c.on ? 40 : 14));
+    if (this.carryW > 0.002) {
+      bx += (c.x - bx) * this.carryW;
+      by += (c.y - by) * this.carryW;
+      bz += (c.z - bz) * this.carryW;
+    }
+    c.on = false;
+    g.position.set(bx, by - BALL_RADIUS + BALL_VISUAL_RADIUS * sy, bz);
     rollBall(this.mesh, b.vel, dt, air);
 
     // Kontaktschatten: am Boden klein und satt, je höher desto größer und lichter (gerastert).

@@ -8,7 +8,7 @@ import { tr } from '../core/i18n.js';
 import { clubById, currentLineup, humanClub, humanFixture, playerOf, seasonOver, table } from '../career/career.js';
 import { dateLabel, matchDate } from '../career/calendar.js';
 import { systemsFor, STYLES as PLAY_STYLES } from '../sim/tactics.js';
-import { crestOf, crestSVG } from './crest.js';
+import { crestExtras, crestOf, crestSVG } from './crest.js';
 import { esc, hex } from './ds.js';
 
 const ROLE = { gk: '#e8742a', def: '#4fa3e0', mid: '#6fbf73', fwd: '#d9534f' };
@@ -75,7 +75,7 @@ export function clubScene(c, { results = null, classic = false } = {}) {
     obj('cs-bag', { action: 'tab', value: 'lineup', art: `<span class="cs-sportbag" style="--k:${hex(club.kit.shirt)}"><i></i></span>`, label: tr('Sporttasche', 'Kit bag'), info: opp ? `${tr('Aufstellung gegen', 'Line-up v')} ${opp.short}` : tr('Aufstellung', 'Line-up') }),
     obj('cs-phone', { action: 'tab', value: 'chat', art: `<span class="cs-mobile${pending ? ' lit' : ''}"><i></i></span>`, label: tr('Handy', 'Phone'), info: phoneInfo, badge: pending }),
     obj('cs-paper', { action: 'tab', value: 'museum', art: `<span class="cs-news"><i>KREISBLATT</i><b>${lastRes ? esc(lastRes.split(' ')[1]) : '—'}</b></span>`, label: tr('Kreisblatt', 'Gazette'), info: lastRes ? esc(lastRes) : tr('Noch kein Spiel', 'No game yet') }),
-    obj('cs-folder', { action: 'tab', value: 'cash', art: `<span class="cs-mappe">${crestSVG(crestOf(club), { size: 22, short: club.short, label: club.name })}</span>`, label: tr('Vereinsmappe', 'Club folder'), info: `${tr('Kasse', 'Kitty')} ${euro(c.cash ?? 0)}` }),
+    obj('cs-folder', { action: 'tab', value: 'cash', art: `<span class="cs-mappe">${crestSVG(crestOf(club), { size: 22, short: club.short, year: crestExtras(c).year, label: club.name })}</span>`, label: tr('Vereinsmappe', 'Club folder'), info: `${tr('Kasse', 'Kitty')} ${euro(c.cash ?? 0)}` }),
     obj('cs-beer', { action: 'tab', value: 'pub', art: `<span class="cs-coaster"><i></i></span>`, label: tr('Stammtisch', 'Regulars\' table'), info: tr('Kneipe', 'Pub') }),
     obj('cs-notebook', { action: 'onSettings', art: `<span class="cs-book"><i></i></span>`, label: tr('Notizbuch', 'Notebook'), info: tr('Einstellungen', 'Settings') }),
   ].join('');

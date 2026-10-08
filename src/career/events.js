@@ -18,6 +18,8 @@ import { SPONSOR_EVENTS } from './sponsors.js';
 import { POACH_EVENTS } from './poaching.js';
 import { CLUBLIFE_EVENTS } from './clublife.js';
 import { LEAGUE_EVENTS } from './leagueevents.js';
+import { BUND_EVENTS } from './bundevents.js';
+import { SEASON_EVENTS } from './seasonevents.js';
 import { applyTwist } from './twists.js';
 import { canLose, joinRival, leaveTeam, outcome, sitOut } from './outcomes.js';
 import { isCoach } from './personal.js';
@@ -597,7 +599,7 @@ export function rollWeekEvent(career) {
   const candidates = [];
   const storySeason = new Set(career.eventLog.filter((e) => e.season === career.season).map((e) => e.id));
   const storiesFull = arcsOf(career).length >= 3;
-  for (const [id, ev] of [...Object.entries(EVENTS), ...Object.entries(STORY_STARTS), ...Object.entries(PERSONAL_EVENTS), ...Object.entries(SAGA_EVENTS), ...Object.entries(SOCIAL_EVENTS), ...Object.entries(BANTER_EVENTS), ...Object.entries(DERBY_EVENTS), ...Object.entries(INJURY_EVENTS), ...Object.entries(LIFE_EVENTS), ...Object.entries(ACADEMY_EVENTS), ...Object.entries(SPONSOR_EVENTS), ...Object.entries(POACH_EVENTS), ...Object.entries(LEAGUE_EVENTS)]) { // Vereinsleben hängt am Schwarzen Brett
+  for (const [id, ev] of [...Object.entries(EVENTS), ...Object.entries(STORY_STARTS), ...Object.entries(PERSONAL_EVENTS), ...Object.entries(SAGA_EVENTS), ...Object.entries(SOCIAL_EVENTS), ...Object.entries(BANTER_EVENTS), ...Object.entries(DERBY_EVENTS), ...Object.entries(INJURY_EVENTS), ...Object.entries(LIFE_EVENTS), ...Object.entries(ACADEMY_EVENTS), ...Object.entries(SPONSOR_EVENTS), ...Object.entries(POACH_EVENTS), ...Object.entries(LEAGUE_EVENTS), ...Object.entries(SEASON_EVENTS)]) { // Vereinsleben hängt am Schwarzen Brett
     if (recent.has(id)) continue;
     if (STORY_STARTS[id] && (storiesFull || storySeason.has(id))) continue; // jede Geschichte höchstens einmal pro Saison
     const ctx = ev.needs(career, rng);
@@ -606,7 +608,7 @@ export function rollWeekEvent(career) {
   if (!candidates.length) return null;
   let r = rng.next() * candidates.reduce((s, c) => s + c.ev.weight, 0);
   // In der Derbywoche geht es um nichts anderes (bisher konnte ein Zufallsereignis dazwischenfunken).
-  const chosen = (derbyThisWeek(career) && candidates.find((c) => c.id === 'derby_woche')) || candidates.find((c) => (r -= c.ev.weight) < 0) || candidates[0];
+  const chosen = (derbyThisWeek(career) && candidates.find((c) => DERBY_EVENTS[c.id])) || candidates.find((c) => (r -= c.ev.weight) < 0) || candidates[0];
   const event = { id: chosen.id, ctx: chosen.ctx, text: chosen.ev.text(career, chosen.ctx), options: chosen.ev.options.map((o) => o.label), choice: null, result: null, story: STORY_STARTS[chosen.id] ? 'Neue Geschichte' : PERSONAL_EVENTS[chosen.id] ? 'Privat' : SAGA_EVENTS[chosen.id] ? 'Vereinsgeschichte' : null };
   career.week.event = event;
   career.eventLog.push({ id: chosen.id, season: career.season, round: career.round });
@@ -615,7 +617,7 @@ export function rollWeekEvent(career) {
 }
 
 const eventDef = (career, id) =>
-  EVENTS[id] ?? STORY_STARTS[id] ?? PERSONAL_EVENTS[id] ?? SAGA_EVENTS[id] ?? SOCIAL_EVENTS[id] ?? BANTER_EVENTS[id] ?? DERBY_EVENTS[id] ?? INJURY_EVENTS[id] ?? LIFE_EVENTS[id] ?? ACADEMY_EVENTS[id] ?? SPONSOR_EVENTS[id] ?? POACH_EVENTS[id] ?? LEAGUE_EVENTS[id] ?? CLUBLIFE_EVENTS[id] ?? CRISES[id] ?? storyDecision(career, id);
+  EVENTS[id] ?? STORY_STARTS[id] ?? PERSONAL_EVENTS[id] ?? SAGA_EVENTS[id] ?? SOCIAL_EVENTS[id] ?? BANTER_EVENTS[id] ?? DERBY_EVENTS[id] ?? INJURY_EVENTS[id] ?? LIFE_EVENTS[id] ?? ACADEMY_EVENTS[id] ?? SPONSOR_EVENTS[id] ?? POACH_EVENTS[id] ?? LEAGUE_EVENTS[id] ?? BUND_EVENTS[id] ?? SEASON_EVENTS[id] ?? CLUBLIFE_EVENTS[id] ?? CRISES[id] ?? storyDecision(career, id);
 
 // Feste Etiketten über dem Ereignis (Geschichten haben eigene Namen).
 const STORY_TAGS = { 'Neue Geschichte': 'New story', Privat: 'Private', Vereinsgeschichte: 'Club history', Vereinsleben: 'Club life' };

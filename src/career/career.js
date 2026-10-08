@@ -47,7 +47,8 @@ import { memoryAfterMatch, placeFormers, preMatchMemories, rememberArrival, reme
 import { defaultCrest } from '../ui/crest.js';
 import { clubTactic, normalizeTactic, systemFormation } from '../sim/tactics.js';
 import { shirtSponsor, sponsorColor, SPONSORS } from './sponsors.js';
-import { advancePokale } from './pokal.js';
+import { advancePokale, bundChat } from './pokal.js';
+import { bundVenueEvent } from './bundevents.js';
 
 export const SAVE_VERSION = 1;
 export const POOL_SEED = 1921;
@@ -491,6 +492,7 @@ export function startWeek(career) {
   const talker = club.squad.find((idx) => availability[idx] === 'yes' && !isCoach(career, idx));
   if (talker != null) chat.push({ from: talker, text: rng.pick(WEATHER_CHAT[weather.id]), time: 'Sa 09:40' });
   career.week = { availability, chat, nudges: NUDGES_PER_WEEK, nudged: [], lineup: null, training: null, event: null, weather };
+  bundChat(career, chat); // überregionaler Pokal: Auslosung, Vorfreude, Spieltag
   preMatchMemories(career, opponent, chat); // „Wisst ihr, wer bei denen spielt?"
   preMatchVoice(career, opponent, chat); // der Gegnertrainer im Kreisblatt
   const prev = career.fixtures[career.round - 1]?.find((f) => (f.home === club.id || f.away === club.id) && f.result);
@@ -500,6 +502,7 @@ export function startWeek(career) {
   advanceArcs(career);
   personalWeek(career);
   weeklyBanter(career); // Sprüche im Chat – mit Folgen
+  bundVenueEvent(career); // Spielortwahl vor dem Heimspiel im überregionalen Pokal
   rollWeekEvent(career);
   rollNotice(career); // Schwarzes Brett: kleines Vereinsleben-Thema
   sagaChat(career);
@@ -798,9 +801,12 @@ export function releasePlayer(career, idx, { force = false } = {}) {
 
 export const KIT_COLORS = [0xf2efe6, 0x1c1c1c, 0xc8352f, 0x8c2f2f, 0xe8742a, 0xe0b020, 0x2e6b3a, 0x5cc46a, 0x2f6fb5, 0x1d2b44, 0x4fa3e0, 0x6b4f8c, 0x9a6b4f, 0x8a9096];
 export const KIT_PATTERNS = tr(
-  { uni: 'Uni', streifen: 'Längsstreifen', nadel: 'Nadelstreifen', ringel: 'Ringel', brustring: 'Brustring', haelften: 'Halb/halb', schaerpe: 'Schärpe', karo: 'Karo', chevron: 'Winkel', seiten: 'Seitenbahnen', schulter: 'Schulterpasse' },
-  { uni: 'Plain', streifen: 'Stripes', nadel: 'Pinstripes', ringel: 'Hoops', brustring: 'Chest band', haelften: 'Halves', schaerpe: 'Sash', karo: 'Checks', chevron: 'Chevron', seiten: 'Side panels', schulter: 'Shoulder yoke' },
+  { uni: 'Uni', streifen: 'Längsstreifen', nadel: 'Nadelstreifen', ringel: 'Ringel', brustring: 'Brustring', haelften: 'Halb/halb', schaerpe: 'Schärpe', karo: 'Karo', chevron: 'Winkel', seiten: 'Seitenbahnen', schulter: 'Schulterpasse', diagonal: 'Diagonalstreifen', breit: 'Breite Querstreifen', verlauf: 'Farbverlauf', aermel: 'Ärmelfeld' },
+  { uni: 'Plain', streifen: 'Stripes', nadel: 'Pinstripes', ringel: 'Hoops', brustring: 'Chest band', haelften: 'Halves', schaerpe: 'Sash', karo: 'Checks', chevron: 'Chevron', seiten: 'Side panels', schulter: 'Shoulder yoke', diagonal: 'Diagonal stripes', breit: 'Wide hoops', verlauf: 'Gradient', aermel: 'Sleeve panels' },
 );
+// Kragenart und Ärmelfarbe: optionale Felder am Trikot (alte Stände: Standard / Hauptfarbe).
+export const KIT_COLLARS = tr({ standard: 'Schlicht', rund: 'Rundhals', v: 'V-Ausschnitt', polo: 'Polokragen' }, { standard: 'Plain', rund: 'Crew neck', v: 'V-neck', polo: 'Polo collar' });
+export const KIT_SLEEVES = tr({ main: 'Hauptfarbe', second: '2. Farbe' }, { main: 'Main colour', second: '2nd colour' });
 
 // Trikots werden vor Saisonbeginn bestellt – danach ist die Saison gelaufen.
 export const kitEditable = (career) => career.round === 0;

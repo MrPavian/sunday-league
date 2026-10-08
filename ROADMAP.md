@@ -332,6 +332,7 @@ Liga- und Vereinsnamen bleiben fiktiv (keine Lizenzen nötig); regionale Variant
 **Meilenstein M7:** Content-complete Beta → Early Access
 
 ### Phase 8 – Post-Launch
+Wird erst auf ausdrücklichen Auftrag des Nutzers bearbeitet (Couch-Koop, Online-Liga, Editoren/Modding).
 - [ ] Couch-Koop & lokales Versus
 - [ ] Online-Freizeitliga mit Freunden
 - [ ] Einzelspieler-Karriere
@@ -623,6 +624,23 @@ Kreis- und Bezirkspokal im K.-o.-System unter der Woche (`src/career/pokal.js`, 
   Elfmeter zum Punkt, Freistoß und Einwurf in Angriffsrichtung, nach dem Tor zur Mitte); beim Wechsel klatschen
   beide ab, der Ausgewechselte trottet vom Platz. Armwinkel für Kopf, Ohr und Rücken per Gitter-Suche an der
   Figur bestimmt (Hand höchstens 2 cm vom Ziel). Nur Darstellung, die Simulation bleibt unverändert.
+- ✅ Zweite Runde (Oktober 2026, alles nur Darstellung, Simulation unverändert bis auf den Jubel):
+  - Weitere Jubel (Trikot über den Kopf, Hand ans Ohr, Rücken, Brust, Umarmen, Hinterherlaufen), Gesten (Hände an
+    den Kopf, abwinken, geballte Faust, zeigen, abklatschen, Schulterzucken, schimpfen, Wade halten).
+  - Torschütze bleibt nach gut einer Sekunde stehen, Mitspieler sprinten hin: Traube in 41 von 62 Toren (7er,
+    vorher 13).
+  - Einwurf mit Anlauf, Fußstellung beim Schuss, Standbein, Körpereinsatz im Zweikampf, flacher Hechtsprung mit
+    Abrollen; Torwart fängt in Kopf-, Brust- oder Bodenhöhe, faustet ein- oder beidhändig, Abwurf und Abschlag mit
+    Ausholen, macht sich im 1 gegen 1 breit, Abpraller nach Fehlgriff sichtbar.
+  - Erschöpftes Gesicht, nasse Trikots bei Regen, Torwarthandschuhe in Signalfarbe mit Manschetten.
+  - Aufwärmen am Rand: je ein Auswechselspieler pro Team (Trab, Dehnen, Hopserlauf, Hüftkreisen, Armkreisen), zuerst
+    der angesagte Einwechsler. Zuschauer verlagern das Gewicht, folgen dem Ball, stehen bei Chancen auf und springen
+    beim Tor ihrer Mannschaft. Draw Calls +4 auf Plätzen mit Bank, alle unter dem Budget. Offen: Beim Dehnen
+    greift die Hand nicht sichtbar an den Fuß.
+  - Vorfälle: Gewitter mit echtem Unterstand je Spielort (`src/sim/shelter.js`: Hauseingang mit Vordach, Vordach
+    am Getränkemarkt, Pavillon, Bankdach, Bandenlücke und Tribünendach, im Stadion der Streifen vor der Bande);
+    erst runter vom Feld, dann außen herum, keiner läuft durch Wand, Auto oder Bande (`tests/storm_shelter.test.js`).
+    Polizei redet mit dem Trainer, Hund schlägt Haken, Taube sitzt auf der Latte, Zaun-Kletterer mit Helfern.
 - **Mehr Animationen:** Jubel (mehrere Varianten, Rutschen auf Knien, Trikot über den Kopf), Ärger nach
   vergebener Chance, Einwurf mit Anlauf, Schiri-Gesten (Karte zeigen, Vorteil), Abklatschen bei Wechseln,
   Aufwärmen am Rand, Zuschauer mit mehr Bewegung.
@@ -662,6 +680,12 @@ Kreis- und Bezirkspokal im K.-o.-System unter der Woche (`src/career/pokal.js`, 
     (Rasen, Sportplatz, Großfeld, Asche, Park), Dreiecke +6 %, Bodentextur Großfeld 12 statt 6 MB.
     Obergrenzen im e2e-Test „Grafik-Budget je Spielort“. Echte Bildraten auf dem Handy sind ungeprüft
     (kein Gerät hier).
+- ✅ Figuren (Oktober 2026): sechs neue Frisuren (Dutt, Undercut, Afro, Pferdeschwanz, Vokuhila, kurze Locken),
+  drei Bärte (Ziegenbart, Koteletten, breiter Schnauzer), Stutzen runter 22 %, Schweißband 12 %, Knöcheltape 9 %,
+  Handtape 6 %, Sportbrille 4 % (nie beim Schiri). Höchstens 700 Dreiecke je Figur, auch beim Torwart
+  (`tests/looks.test.js`). Etwa 29 % der vorhandenen Spieler bekommen dadurch eine andere Frisur oder einen anderen Bart.
+- ✅ Wappen: Schriftband (Kürzel, Gründungsjahr oder beides), Meistersterne aus der Vereinsgeschichte, 8 neue Motive.
+  Trikots: Muster diagonal, breit, Verlauf, Ärmel; Kragen (rund, V, Polo) und Ärmel in Zweitfarbe.
 - Figuren mit mehr Varianten: Körperbau (schlank, kräftig, Bauch), Größe, Frisuren, Bärte, Stutzen runter,
   Schweißbänder, Brillen-Sportband, Tape am Knöchel.
 - Gesichter mit mehr Ausdruck (Jubel, Ärger, Erschöpfung), Trikots mit Falten und nassem Stoff bei Regen.
@@ -683,6 +707,11 @@ Kreis- und Bezirkspokal im K.-o.-System unter der Woche (`src/career/pokal.js`, 
   mittig, Band, Fleck, nur Schrift), immer kontrastreich zum Trikot (`src/render/sponsorLogos.js`).
 
 ### 11.5 Ereignisse
+- ✅ Oktober 2026: Chat-Zusagen 22 → 112 Varianten, Verspätungen, Wetter-Chat, Teamchat-Antworten, Kreisblatt-Zitate
+  und Wiedersehen gestreckt; häufigster Text im Langzeitlauf 53 → 14-mal. 12 neue Saison-Ereignisse
+  (`src/career/seasonevents.js`: Aufstiegsfeier, Abstiegskrise, Abschiedsspiel, Urlaub vor dem Finale, Firmenlauf,
+  Platzsperre, Flutlicht defekt, Trainerschein, Kabine undicht, Schiri-Mangel, Hospitation, Lizenzpflicht) und ein
+  eigenes Derby-Rückspiel; das häufigste Ereignis macht nur noch 13 % statt 25–27 % aus.
 - ✅ Erledigt: 10 Ereignisse für höhere Ligen (`src/career/leagueevents.js`: Sportgericht, Spielverlegung,
   Kreispokal, Eintritt, erste Fans, Stadionsprecher, Videoanalyse, Testspiel gegen Profi-U23, Geld bis zur
   DFB-Amateurgrenze, Ordnerdienst); in der Bezirksliga 14 % der Wochenereignisse. Offen: die Chat-Zusagen
@@ -754,6 +783,20 @@ Offen:
   Angriffsseiten des Gegners kaum (68 % → 66–67 %) und kostete eigene Tore – zurückgenommen. Braucht ein echtes
   Leiten des Ballführenden (Körperstellung, Doppeln außen).
 
+### 11.6a Gesamtprüfung der Match-Engine (Oktober 2026)
+Messskript `scripts/match-audit.mjs <Platz> <ww|ws|ss|bp> [Spiele] [Wurzel]` (KI gegen KI, Seeds 900+i, der Stärkere wechselt die Seite).
+Einwürfe je Spiel vorher → nachher (80 Spiele, Paarung schwach–schwach): Park 2,1 → 7,1 · Asche 2,1 → 8,6 · 7er 3,5 → 8,5 · 9er 2,5 → 7,5 ·
+Großfeld 1,5 → 3,2. Ursache: Die Abwehr hatte keinen Befreiungsschlag (unter Druck ging der Ball an irgendeinen Mitspieler oder blind in die
+Mitte); Ballführer und Anspielstationen liegen im Schnitt bei 0,29 der halben Breite, die Außenlinie wird kaum erreicht. Mit breiteren Außen
+(STRETCH, Klemmen, Abstand der Anspielstationen) änderten sich die Einwürfe nicht (je 24–48 Spiele). Neu: Abwehr schlägt bedrängt im eigenen
+Drittel den Ball schräg Richtung Seitenlinie (`CLEAR_ZONE`, `CLEAR_CHANCE`, gewählt). Schussquote aus guter Lage 0,63 → 0,62, Doppelpass-Rückgaben 50 → 51.
+Tore aus Ecken (Eckenphase endet bei Abstoß/Einwurf oder Spiel des Gegners): Großfeld 17,5 %, 9er 7,4 %, 7er 5,6 % der Ecken; 90 % der
+Kopfballtore auf dem Großfeld fallen nach Ecken, deshalb gehen Kopfballtore und Tore aus Ecken nur gemeinsam zurück. Ein Torwart, der Flanken im
+Strafraum fängt, senkte Großfeld/9er/7er auf 11/6/5 % bei Kopfballtoren 5,0/4,2/1,6 % (vorher 8,8/6,9/3,0) – nicht übernommen, weil er die
+Handregel (Hände nur im Torraum, tests/keeper.test.js) aufhebt. Torzuordnung: Lenkt der Torwart oder ein Verteidiger einen Schuss ins Netz (letzter
+Schuss höchstens 3 s her), zählt das Tor für den Schützen; vorher waren 25–35 % der Tore auf dem Großfeld „Eigentore" (real rund 5 %).
+Bundespokal neu kalibriert (400 Spiele je Zeile, Kader „mittel"): Aufschlag Zweitligist 0,28 → 0,23, Erstligist 0,26 → 0,19; Weiterkommen 4,8 % / 3,5 %.
+
 ### 11.7 Pokale (erledigt, Oktober 2026)
 - **Kreispokal** ab der Kreisklasse C: 16 Vereine aus allen Kreisligen, vier K.-o.-Runden mittwochs vor dem
   Ligaspieltag. **Bezirkspokal** in der Bezirksliga oder für den Kreispokalsieger der Vorsaison ab Kreisliga A:
@@ -763,4 +806,11 @@ Offen:
 - Eigene Spiele werden gespielt (selbst, Seitenlinie, Liveticker), die übrigen per schnellem Ergebnismodell,
   das an der Engine gemessen ist (`scripts/pokal-calibrate.mjs`). Heimspiele bringen Theke und kosten Schiri.
 - Das Ereignis „Heimrecht verkaufen" hängt jetzt am echten Los und tauscht wirklich den Spielort.
-- Offen: Verlängerung als Option, Landespokal/DFB-Pokal-Qualifikation, Pokalsieg-Prämien von Sponsoren.
+- **Verlängerung** als Einstellung (Spiel → Unentschieden im Pokal): ein Drittel der Spielzeit (2 × 15 bei 2 × 45), in
+  der Engine (`m.extra`) und im schnellen Modell (Torerwartung × 1/3); Standard bleibt direkt Elfmeterschießen.
+- **Landespokal** (8 Vereine inkl. fiktiver Oberligisten) für den Bezirkspokalsieger der Vorsaison;
+  **Bundespokal** (Name zentral: `BUND_NAME` in `src/career/bundespokal.js`) für den Landespokalsieger: sechs Samstagsrunden,
+  jede gegen einen fiktiven Zweit- oder Erstligisten, Spielortwahl (eigener Platz / Stahlrohrtribüne / Stadion),
+  Rundenprämie (verdoppelt sich je Runde) und Eintrittsteilung nach dem Vorbild des realen Pokals, Foto mit dem Star in der Vitrine.
+- **Sponsorenprämien** des Trikotsponsors für Pokalsiege als Vielfaches seines Saisonziel-Bonus (`PRAEMIE`).
+- Offen: Gegner und Profis im Bundespokal nur bis zum Finale als Einzelspiele (kein vollständiges 64er-Feld).

@@ -2,10 +2,11 @@ import * as THREE from 'three';
 import { toon } from '../materials.js';
 import { addLights, box, cylinder, ground, makeBench, makeDog, makeFence, makeFloodlight, makeGoalFrame, makeSideline, makeTree } from '../props.js';
 import { crowdRow, makeSpectator } from '../spectators.js';
+import { GEO, bandeX, BANDE_W } from '../../sim/shelter.js';
 import { groundTexels, makeLawnTexture, makeSignTextureWide } from '../textures.js';
 
 // Lokale Sponsoren – selbst gemalte Banden, wie sie auf jedem Dorfplatz hängen.
-const SPONSORS = [
+export const SPONSORS = [
   ['BÄCKEREI KRUME', '#c9a227', '#2a2620'],
   ['FAHRSCHULE VOLLGAS', '#c0392b', '#ffffff'],
   ['DÖNER SULTAN', '#1f5e3a', '#f4e9c8'],
@@ -39,21 +40,42 @@ export function buildLawn(root, pitch, rng, scene) {
 
   // Banden an der Gegengerade.
   const bandZ = -hw - 2.2;
+  // In der Mitte vor der Tribüne bleibt eine Lücke (Bandenfelder gapBoards): hier laufen alle beim Gewitter durch.
   SPONSORS.forEach(([text, bg, fg], i) => {
-    const x = -hl + 3 + i * ((hl * 2 - 6) / (SPONSORS.length - 1));
-    const board = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 0.8), toon(0xffffff, { map: makeSignTextureWide(text, { bg, fg }) }));
+    if (GEO.lawn.gapBoards.includes(i)) return;
+    const x = bandeX(hl, i);
+    const board = new THREE.Mesh(new THREE.PlaneGeometry(BANDE_W, 0.8), toon(0xffffff, { map: makeSignTextureWide(text, { bg, fg }) }));
     board.position.set(x, 0.45, bandZ);
-    root.add(board, box(5.6, 0.85, 0.08, 0x3a3a3a, x, 0.43, bandZ - 0.05));
+    root.add(board, box(BANDE_W, 0.85, 0.08, 0x3a3a3a, x, 0.43, bandZ - 0.05));
   });
 
   // Kleine Tribüne mit drei Stufen und Dach.
   const tz = -hw - 5;
   for (let step = 0; step < 3; step++) root.add(box(18, 0.4, 1.2, 0x9a9690, 0, 0.2 + step * 0.4, tz - step * 1.2));
-  root.add(box(18.6, 0.12, 4.6, 0x4a5058, 0, 3.6, tz - 1.2));
+  // Das Dach reicht nach vorn bis kurz hinter die Bande: darunter ist vor den Stufen Platz für alle (Gewitter).
+  const roofFront = tz + 5 - GEO.lawn.roofFront;
+  root.add(box(18.6, 0.12, roofFront - (tz - 3.5), 0x4a5058, 0, 3.6, (roofFront + tz - 3.5) / 2));
   for (const x of [-9, 0, 9]) root.add(cylinder(0.08, 3.6, 0x4a5058, x, 1.8, tz - 3.2, 6));
+  for (const s of [-1, 1]) root.add(cylinder(0.08, 3.6, 0x4a5058, s * GEO.lawn.postX, 1.8, roofFront - 0.1, 6));
   for (let i = 0; i < 12; i++) {
     const step = i % 3;
     root.add(makeSpectator(rng, { x: -8 + rng.range(0, 16), z: tz - step * 1.2, sitting: true, y: 0.4 + step * 0.4 }));
+  }
+  // Zusatztribüne (Pokalspiel gegen einen Profi): Stahlrohrtribüne mit Sitzreihen auf der Gegengerade neben der kleinen
+  // Tribüne (auf der Kameraseite würde sie das Spielfeld verdecken).
+  if (pitch.extraStand) {
+    const sx = -28;
+    const sz0 = -hw - 5;
+    for (let step = 0; step < 6; step++) {
+      const y = 0.7 + step * 0.7;
+      const z = sz0 - step * 1.1;
+      root.add(box(26, 0.12, 1.1, 0xb8bcc2, sx, y, z)); // Sitzbohlen
+      for (const x of [-12, -6, 0, 6, 12]) root.add(cylinder(0.05, y, 0x9aa0a6, sx + x, y / 2, z, 5)); // Stützrohre
+      root.add(box(26, 0.05, 0.05, 0x9aa0a6, sx, y + 0.6, z - 0.5)); // Geländer
+    }
+    for (const x of [-13, 13]) root.add(cylinder(0.06, 5, 0x9aa0a6, sx + x, 2.5, sz0 - 2.8, 5)); // Treppenholme
+    root.add(box(26.4, 0.06, 7.2, 0x5a6068, sx, 5.7, sz0 - 3.3)); // Dachplane
+    for (let step = 0; step < 6; step++) for (const o of crowdRow(430 + step, { x0: sx - 11.5, x1: sx + 11.5, z: sz0 - step * 1.1, y: 0.7 + step * 0.7, n: 40, jitter: 0.02, sitting: true })) root.add(o);
   }
   // Ein paar stehen am Zaun, einer mit Hund.
   root.add(makeSpectator(rng, { x: 14 * k, z: bandZ - 0.8 }));
@@ -65,7 +87,7 @@ export function buildLawn(root, pitch, rng, scene) {
   root.add(box(12, 3.4, 5, 0x9a4a38, hx, 1.7, -hw - 10));
   root.add(box(12.6, 0.3, 5.6, 0x3a3a3a, hx, 3.5, -hw - 10));
   for (const x of [-4, 0, 4]) root.add(box(1.4, 1.1, 0.05, 0xd8e0e0, hx + x, 2, -hw - 7.48));
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(8, 0.8), toon(0xffffff, { map: makeSignTextureWide(pitch.id === 'grossfeld' ? 'STADION AM KANAL' : pitch.id === 'sportplatz' ? 'SPORTANLAGE KANALWIESE' : 'SPORTPLATZ WALDESRUH', { bg: '#f2efe6', fg: '#2a2620' }) }));
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(8, 0.8), toon(0xffffff, { map: makeSignTextureWide((pitch.base ?? pitch.id) === 'grossfeld' ? 'STADION AM KANAL' : pitch.id === 'sportplatz' ? 'SPORTANLAGE KANALWIESE' : 'SPORTPLATZ WALDESRUH', { bg: '#f2efe6', fg: '#2a2620' }) }));
   sign.position.set(hx, 4.1, -hw - 7.45);
   root.add(sign);
   root.add(makeBench(hx - 2, -hw - 6.5), makeBench(hx + 2, -hw - 6.5));

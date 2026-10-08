@@ -10,7 +10,7 @@ beforeAll(() => {
   globalThis.document ??= { createElement: () => ({ width: 0, height: 0, getContext: () => ({ fillRect() {}, set fillStyle(v) {} }) }) };
 });
 
-const TYPES = { idle: 0, clap: 1, cheer: 2, head: 6 };
+const TYPES = { idle: 0, clap: 1, cheer: 2, lean: 4, head: 6, rise: 9, shift: 10, follow: 11 };
 function venue(n = 30) {
   const root = new THREE.Group();
   const rng = createRng(5);
@@ -74,6 +74,30 @@ describe('Zuschauer 2.0', () => {
     expect(max).toBeLessThanOrEqual(Math.floor(c.shown * c.budget) + 2);
   });
 
+  it('volle Hütte (Stadion): mehr als MAX_TILES Leute, schlanke Figuren, weiter zwei Meshes; Heim und Gast gemischt; Tor-Jubel wirkt', () => {
+    const root = new THREE.Group();
+    const rng = createRng(5);
+    for (let i = 0; i < 700; i++) root.add(spectatorSlot(rng, { x: -50 + (i % 100) * 1.0, z: -40 - Math.floor(i / 100) * 1.2, sitting: true, y: 0.5 + Math.floor(i / 100) * 0.5 }));
+    const c = buildCrowd(root, 'stadion');
+    expect(c.n).toBeGreaterThan(MAX_TILES * 5);
+    expect(root.children.filter((o) => o.isInstancedMesh)).toHaveLength(2);
+    expect(c.stats.calls).toBe(2);
+    const tris = (m) => m.geometry.attributes.position.count / 3;
+    expect(tris(c.body) + 2 * tris(c.arms)).toBeLessThanOrEqual(16); // statt rund 260 Dreiecke je Person
+    const full = buildCrowd(venue(40), 'rasenplatz');
+    expect(tris(full.body)).toBeGreaterThan(tris(c.body) * 10);
+    const m = match(3000);
+    c.setMatch(m);
+    expect(c.shown).toBe(c.n);
+    const fans = [...c.fan].slice(0, c.shown);
+    expect(fans.filter((f) => f === 0).length).toBeGreaterThan(c.n * 0.2);
+    expect(fans.filter((f) => f === 1).length).toBeGreaterThan(c.n * 0.15);
+    m.events.push({ type: 'goal', team: 0, ownGoal: false });
+    c.handleEvents(m);
+    const cheering = fans.filter((f, i) => f === 0 && c.type[i] === TYPES.cheer).length;
+    expect(cheering).toBeGreaterThan(fans.filter((f) => f === 0).length * 0.7);
+  });
+
   it('Tor: die Fans des Torschützen jubeln, zeitversetzt; ohne Eingriff ins Spiel', () => {
     const c = buildCrowd(venue(40), 'rasenplatz');
     const m = match(100);
@@ -89,6 +113,54 @@ describe('Zuschauer 2.0', () => {
     expect(delays.size).toBeGreaterThan(3); // nicht alle gleichzeitig
     c.update(0.5);
     expect(c.stats.active).toBeGreaterThan(0);
+  });
+
+  it('Chance: die Fans des Schützen stehen auf (auch Sitzende), die anderen nicht; folgen dem Ball und kommen zurück', () => {
+    const c = buildCrowd(venue(40), 'rasenplatz');
+    const m = match(100);
+    const shooter = { id: 'a', team: 1, pos: { x: 22, z: 0 } }; // Gast greift nach -x an (attackDir), Tor bei -26
+    shooter.pos.x = -22;
+    m.players = [shooter];
+    m.time = 5;
+    m.pitch = { halfLength: 26, halfWidth: 17 };
+    m.ball = { pos: { x: -20, z: 8 } };
+    c.setMatch(m);
+    m.events = [{ type: 'shot', playerId: 'a' }];
+    c.handleEvents(m);
+    const guests = [...c.fan].map((f, i) => [f, i]).filter(([f, i]) => f === 1 && i < c.shown);
+    const rising = guests.filter(([, i]) => c.type[i] === TYPES.rise);
+    expect(rising.length).toBeGreaterThan(0);
+    expect([...c.fan].some((f, i) => f === 0 && i < c.shown && c.type[i] === TYPES.rise)).toBe(false);
+    // Aufstehen: Sitzende stehen in der Pose (iSit = 0), Dreh zum Ball.
+    c.time += 0.5;
+    const i = rising[0][1];
+    c.until[i] = c.time + 5;
+    c.delay[i] = 0;
+    for (let k = 0; k < 20; k++) c.pose(i);
+    expect(c.sit[i]).toBe(0);
+    const s = c.slots[i];
+    const want = Math.max(-0.8, Math.min(0.8, Math.atan2(m.ball.pos.x - s.x, m.ball.pos.z - s.z) - s.facing));
+    expect(c.yaw[i]).toBeCloseTo(Math.atan2(Math.sin(want), Math.cos(want)), 2);
+    // Danach (kein Typ mehr) dreht er zurück.
+    c.until[i] = 0;
+    c.type[i] = TYPES.idle;
+    for (let k = 0; k < 40; k++) c.pose(i);
+    expect(Math.abs(c.yaw[i])).toBeLessThan(0.01);
+  });
+
+  it('Umgebung: einige wippen von Bein zu Bein, andere folgen dem Ball – nur im Budget', () => {
+    const c = buildCrowd(venue(40), 'rasenplatz');
+    const m = match(100);
+    m.ball = { pos: { x: 5, z: 0 } };
+    c.setMatch(m);
+    const seen = new Set();
+    for (let k = 0; k < 60 * 60; k++) {
+      c.update(1 / 60);
+      for (let i = 0; i < c.shown; i++) if (c.until[i] > c.time) seen.add(c.type[i]);
+      expect(c.stats.active).toBeLessThanOrEqual(Math.floor(c.shown * c.budget) + 2);
+    }
+    expect(seen.has(TYPES.shift)).toBe(true);
+    expect(seen.has(TYPES.follow)).toBe(true);
   });
 
   it('Reihen am Zaun verändern den Spielort-Zufall nicht und passen in den Atlas', () => {

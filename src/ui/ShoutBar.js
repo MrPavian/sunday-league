@@ -6,7 +6,7 @@ import { ORDER_GROUPS, orderOf } from '../sim/plan.js';
 import { chanceStats } from '../sim/report.js';
 import { tacticLabel } from '../sim/tactics.js';
 import { button, esc, haptic, icon, Sheet, versus } from './ds.js';
-import { matchMinute } from './Hud.js';
+import { halfLabel, matchMinute } from './Hud.js';
 import { chatCount, coachChat } from './benchChat.js';
 
 // Trainer-Modus (UI 2.0): Das Spielfeld steht im Vordergrund. Unten nur drei Knöpfe –
@@ -118,7 +118,7 @@ export class ShoutBar {
     const [a, b] = m.teams;
     return `
       <div class="info-score"><span>${esc(a.short ?? a.name)}</span><b class="t-score">${m.score[0]} : ${m.score[1]}</b><span>${esc(b.short ?? b.name)}</span></div>
-      <p class="t-2 info-sub">${m.half}${tr('. Halbzeit', m.half === 1 ? 'st half' : 'nd half')} · ${matchMinute(m, m.time)}' · ${esc(m.pitch.name)} · ${esc(m.pitch.surface.name)}${m.referee ? ` · ${tr('Schiri', 'Referee')}: ${esc(m.referee.name)}` : ''}</p>
+      <p class="t-2 info-sub">${halfLabel(m)} · ${matchMinute(m, m.time)}' · ${esc(m.pitch.name)} · ${esc(m.pitch.surface.name)}${m.referee ? ` · ${tr('Schiri', 'Referee')}: ${esc(m.referee.name)}` : ''}</p>
       <div class="ui-stack tight">${rows}</div>
       <p class="ui-section-title">${tr('Aufstellung & Befehle', 'Shape & orders')}</p>
       <p class="t-2">${m.teams.map((t, i) => `${esc(t.short ?? t.name)}: ${tacticLabel(m.plan?.[i], m.pitch.format)}`).join(' – ')}</p>

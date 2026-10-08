@@ -58,8 +58,8 @@ export function weeklyFitness(c, playerOf, humanSquad) {
 
 // Nach einem Spiel: Wer lange auf dem Platz stand, hat etwas weniger im Tank. In der Liga
 // ist das bis Sonntag wieder weg – im Turnier (mehrere Spiele ohne Woche dazwischen) nicht.
-export function afterMatchFitness(c, idx, share, factor = 1) {
-  if (share > 0) adjustFitness(c, idx, -MATCH_COST * Math.min(1, share) * factor);
+export function afterMatchFitness(c, idx, share, factor = 1, maxShare = 1) {
+  if (share > 0) adjustFitness(c, idx, -MATCH_COST * Math.min(maxShare, share) * factor);
 }
 
 // Zurück aus der Verletzung: erst einmal nicht bei 100 % – je länger raus, desto weniger

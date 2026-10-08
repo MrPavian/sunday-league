@@ -518,6 +518,8 @@ export class Sound {
           this.thunder();
           break;
         case 'halftime':
+        case 'extratime_start':
+        case 'extratime_half':
           this.whistle('long');
           break;
         case 'end':

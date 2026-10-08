@@ -5,7 +5,7 @@ import { dist2d, norm } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
 import { TEAM_PRESETS } from '../data/teams.js';
 import { applyJobPerks } from '../data/jobs.js';
-import { bodyBlock, carryBall, dribbleTouch, headerTouch, keeperSaves, movePlayer, separatePlayers, tryExecute } from './actions.js';
+import { bodyBlock, carryBall, dribbleTouch, headerTouch, keeperSaves, movePlayer, separatePlayers, SHOT_CREDIT, tryExecute } from './actions.js';
 import { keeperIntent, outfieldIntent, updateTactics } from './ai.js';
 import { createBall, stepBall } from './ball.js';
 import { formationSpot } from './formation.js';
@@ -46,13 +46,18 @@ const CROWD_BY_PITCH = { hinterhof: 3, parkplatz: 6, park: 9, ascheplatz: 15, ra
 // halves: eigene Halbzeitlängen je Platz aus den Einstellungen (überschreiben die Vorgabe).
 // cupShare: Anteil der Spieldauer bei Turnierspielen (Standard 75 %).
 // subs: Wechselregel ('liga' | 'frei' | 'begrenzt'), siehe subRuleFor.
-export const MATCH = { length: 'kurz', duration: MATCH_LENGTHS.kurz, halves: null, cupShare: 0.75, subs: 'liga' };
+// pokalExtra: Pokal-Unentschieden → false: direkt Elfmeterschießen (Standard), true: erst Verlängerung.
+export const MATCH = { length: 'kurz', duration: MATCH_LENGTHS.kurz, halves: null, cupShare: 0.75, subs: 'liga', pokalExtra: false };
+// Verlängerung wie im echten Fußball: 2 × 15 Minuten bei 2 × 45, also ein Drittel der regulären Spielzeit
+// (je Hälfte ein Drittel der Halbzeit), umgerechnet auf die Spielzeit des jeweiligen Formats.
+export const EXTRA_SHARE = 1 / 3;
+export const extraTimeSeconds = (duration) => Math.max(2, 2 * Math.round((duration * EXTRA_SHARE) / 2));
 export const HALF_MIN = 45;
 export const HALF_MAX = 600;
-export const presetHalf = (pitch, length) => 15 * Math.round(((HALF_BY_PITCH[pitch?.id] ?? 120) * (LENGTH_SCALE[length] ?? 1)) / 15); // auf Viertelminuten
+export const presetHalf = (pitch, length) => 15 * Math.round(((HALF_BY_PITCH[pitch?.base ?? pitch?.id] ?? 120) * (LENGTH_SCALE[length] ?? 1)) / 15); // auf Viertelminuten
 // Ohne Angabe gilt die Einstellung (eigene Werte vor der Vorgabe); mit Angabe die reine Vorgabe.
 export function matchDuration(pitch, length) {
-  const custom = length ? null : MATCH.halves?.[pitch?.id];
+  const custom = length ? null : MATCH.halves?.[pitch?.base ?? pitch?.id];
   return 2 * (custom ?? presetHalf(pitch, length ?? MATCH.length));
 }
 
@@ -129,7 +134,7 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = tr
     incident: null,
     incidents: [],
     weather: pitch.visual ?? null, // rain | snow | fog | frost | leaves
-    crowd: CROWD_BY_PITCH[pitch.id] ?? 8, // Zuschauer (Karriere und Turnier setzen eigene Zahlen)
+    crowd: CROWD_BY_PITCH[pitch.base ?? pitch.id] ?? 8, // Zuschauer (Karriere und Turnier setzen eigene Zahlen)
     homeTeam: 0,
   };
   // Spielplan aus dem Vereinsheim: Befehle, mit denen die Mannschaft aufläuft.
@@ -200,8 +205,11 @@ function step(m, input, dt) {
     if ((m.phaseTimer -= dt) > 0) return;
     // Seitenwechsel, kurz durchschnaufen, die andere Mannschaft stößt an.
     swapSides(m);
-    for (const p of m.players) p.stamina = Math.min(p.fitness ?? 1, p.stamina + 0.25); // mehr als fit wird keiner
-    startSetPiece(m, { type: 'kickoff', team: 1 });
+    // Pause vor der Verlängerung: nur kurze Erholung; zur Halbzeit der Verlängerung nur eine Trinkpause (Regel 7).
+    const rest = !m.extra ? 0.25 : m.extra.stage === 1 ? 0.25 * EXTRA_SHARE : 0;
+    if (rest) for (const p of m.players) p.stamina = Math.min(p.fitness ?? 1, p.stamina + rest); // mehr als fit wird keiner
+    // Anstoß: 2. Hälfte Team 1; Verlängerung 1. Hälfte Team 1, 2. Hälfte das andere Team (Regel 8).
+    startSetPiece(m, { type: 'kickoff', team: m.extra?.stage === 2 ? 0 : 1 });
     return;
   }
 
@@ -215,14 +223,32 @@ function step(m, input, dt) {
     aiCoachHalftime(m, 1);
     return;
   }
-  if (m.time >= m.duration) {
+  if (m.extra?.stage === 1 && m.time >= m.extra.mid) {
+    m.extra.stage = 2; // Seitenwechsel nach der ersten Hälfte der Verlängerung
+    m.phase = 'halftime';
+    m.phaseTimer = 2;
+    m.events.push({ type: 'extratime_half' });
+    return;
+  }
+  if (m.time >= (m.extra?.end ?? m.duration)) {
     // K.-o.-Spiel unentschieden und der Mensch spielt mit: Elfmeterschießen.
     // Mit Hinspiel (Relegation) zählt das Gesamtergebnis.
     const agg = m.aggregate ?? [0, 0];
-    if (m.knockout && m.humanTeam !== null && m.score[0] + agg[0] === m.score[1] + agg[1]) {
-      m.events.push({ type: 'fulltime_draw' });
-      startShootout(m);
-      return;
+    if (m.knockout && m.score[0] + agg[0] === m.score[1] + agg[1]) {
+      // Verlängerung (nur wenn der Wettbewerb sie vorsieht), danach Elfmeterschießen.
+      if (m.extraTime && !m.extra) {
+        const total = extraTimeSeconds(m.duration);
+        m.extra = { stage: 1, total, mid: m.duration + total / 2, end: m.duration + total };
+        m.phase = 'halftime';
+        m.phaseTimer = 3;
+        m.events.push({ type: 'extratime_start' });
+        return;
+      }
+      if (m.humanTeam !== null) {
+        m.events.push({ type: 'fulltime_draw' });
+        startShootout(m);
+        return;
+      }
     }
     m.phase = 'ended';
     m.events.push({ type: 'end' });
@@ -427,8 +453,14 @@ function humanIntent(m, p, input, dt) {
 }
 
 function onGoal(m, team) {
-  const scorer = m.ball.lastTouch && getPlayer(m, m.ball.lastTouch);
-  const ownGoal = !!scorer && scorer.team !== team;
+  let scorer = m.ball.lastTouch && getPlayer(m, m.ball.lastTouch);
+  let ownGoal = !!scorer && scorer.team !== team;
+  // Abgefälschter oder vom Torwart ins Netz gelenkter Schuss: Das Tor gehört dem Schützen (siehe SHOT_CREDIT).
+  const shot = m.lastShot?.[team];
+  if (ownGoal && shot && m.time - shot.time < SHOT_CREDIT) {
+    scorer = getPlayer(m, shot.id) ?? scorer;
+    ownGoal = scorer.team !== team;
+  }
   // Tore zählen nur aus der gegnerischen Hälfte: Kam der letzte Ball des Torschützen von
   // der Mittellinie oder aus der eigenen Hälfte, gibt es Abstoß für den Gegner.
   const from = m.touchFrom;
@@ -483,6 +515,7 @@ function updatePendingSwitch(m) {
 
 // Torjubel: Der Torschütze läuft zur Eckfahne, die Mitspieler hinterher,
 // die anderen trotten mit hängenden Köpfen zurück.
+const SCORER_STOP = 1.4; // Restzeit des Jubels (s), ab der der Torschütze stehen bleibt
 function celebrate(m, dt) {
   const { pitch } = m;
   const scorer = getPlayer(m, m.lastGoal?.scorerId);
@@ -491,11 +524,13 @@ function celebrate(m, dt) {
     let target = null;
     let speed = 0;
     if (p.mood === 'scorer') {
+      // Gut eine Sekunde abdrehen, dann stehen bleiben und jubeln – sonst holten ihn die Mitspieler nie ein
+      // (vorher bei 13 von 62 Toren einer näher als 1,6 m, Median 7 m; 30 Spiele 7er-Feld).
       target = { x: s * (pitch.halfLength - 3), z: pitch.halfWidth * 0.6 };
-      speed = 6;
+      speed = m.phaseTimer > SCORER_STOP ? 6 : 0;
     } else if (p.mood === 'celebrate' && p.role !== 'gk' && scorer) {
       target = scorer.pos;
-      speed = dist2d(p.pos, scorer.pos) > 1.2 ? 5 : 0;
+      speed = dist2d(p.pos, scorer.pos) > 1.2 ? 6.5 : 0; // sprinten zum Torschützen
     } else if (p.mood === 'sad') {
       target = p.home;
       speed = 1.2;

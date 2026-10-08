@@ -9,11 +9,12 @@ function audit(venue, n) {
   for (let i = 0; i < n; i++) {
     const m = createMatch({ seed: 900 + i, pitch: PITCHES[venue], human: false, duration: matchDuration(PITCHES[venue]), aiCoach: false });
     while (m.phase !== 'ended') {
+      const corner = m.setPiece?.type === 'corner' && !m.setPiece.taken; // Eckstöße zählen als Flanken, aber nicht zur Flankenart
       stepMatch(m, undefined, 1 / 60);
       for (const e of m.events) {
         if (e.type === 'pass' && e.cross) {
           a.cross++;
-          a.kinds[e.crossKind ?? 'hoch']++;
+          if (!corner) a.kinds[e.crossKind ?? 'hoch']++;
         }
         else if (e.type === 'goal') {
           a.goals++;

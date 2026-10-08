@@ -43,7 +43,7 @@ export const CREST_DIVISIONS = tr(
 );
 
 // Symbole und Figuren als 12 × 12 Pixel: # Symbolfarbe, + Randfarbe (Details).
-const BITMAPS = {
+const BITMAPS_BASE = {
   ball: ['....####....', '..########..', '.####++####.', '.###++++###.', '##+##++##+##', '#+++####+++#', '#++######++#', '##+######+##', '.###+##+###.', '.##++##++##.', '..###++###..', '....####....'],
   stern: ['.....##.....', '.....##.....', '....####....', '....####....', '############', '.##########.', '..########..', '...######...', '...######...', '..###..###..', '..##....##..', '.#........#.'],
   krone: ['............', '#....##....#', '##..####..##', '###.####.###', '############', '############', '#+##+##+##+#', '############', '############', '............', '############', '############'],
@@ -69,9 +69,22 @@ const BITMAPS = {
   eule: ['.#........#.', '.##########.', '##++####++##', '#+##+##+##+#', '##++####++##', '.####++####.', '.##########.', '.###+##+###.', '.##########.', '..########..', '..##....##..', '.##......##.'],
   baer: ['##........##', '###.####.###', '############', '############', '##+######+##', '############', '####++++####', '.###++++###.', '..##+##+##..', '...######...', '............', '............'],
 };
+
+// Dazu: Dorf und Acker – passend zu Amateurvereinen.
+const BITMAPS_EXTRA = {
+  spaten: ['...######...', '...#....#...', '...######...', '.....##.....', '.....##.....', '.....##.....', '.....##.....', '...######...', '..########..', '..########..', '...######...', '....####....'],
+  traktor: ['.........#..', '.####....#..', '.#..#....#..', '.#..######..', '.##########.', '.##########.', '.++++..####.', '++++++.####.', '++##++...++.', '++##++..+##+', '++++++..+##+', '.++++....++.'],
+  windrad: ['.....##.....', '.....##.....', '.....##.....', '.....##.....', '....#++#....', '..##.##.##..', '.##..##..##.', '##...##...##', '.....##.....', '.....##.....', '....####....', '...######...'],
+  kirche: ['.....##.....', '....####....', '.....##.....', '....####....', '...######...', '...##++##...', '...##++##...', '...######...', '############', '###++##++###', '###++##++###', '###+####+###'],
+  burg: ['#.#.#..#.#.#', '############', '.####..####.', '.##+#..#+##.', '.####..####.', '############', '.##########.', '.##########.', '.####++####.', '.###++++###.', '.###++++###.', '############'],
+  aehre: ['.....##.....', '.#...##...#.', '.##..##..##.', '..##.##.##..', '.#...##...#.', '.##..##..##.', '..##.##.##..', '.....##.....', '.....##.....', '.....##.....', '....####....', '...##..##...'],
+  glocke: ['.....##.....', '...######...', '..########..', '..########..', '..########..', '.##########.', '.##########.', '.##########.', '############', '############', '.....++.....', '.....++.....'],
+  hufeisen: ['............', '###......###', '##+#....#+##', '###......###', '##+#....#+##', '###......###', '##+#....#+##', '###......###', '.###....###.', '.####..####.', '..########..', '...######...'],
+};
+const BITMAPS = { ...BITMAPS_BASE, ...BITMAPS_EXTRA };
 export const CREST_SYMBOLS = tr(
-  { ball: 'Ball', stern: 'Stern', krone: 'Krone', anker: 'Anker', herz: 'Herz', blitz: 'Blitz', schluessel: 'Schlüssel', klee: 'Kleeblatt', haemmer: 'Hämmer', rad: 'Rad', krug: 'Bierkrug', brezel: 'Brezel', turm: 'Turm', baum: 'Tanne', welle: 'Wellen', pferd: 'Pferd', adler: 'Adler', loewe: 'Löwe', fuchs: 'Fuchs', kuh: 'Kuh', hahn: 'Hahn', fisch: 'Fisch', eule: 'Eule', baer: 'Bär', keins: 'Nichts' },
-  { ball: 'Ball', stern: 'Star', krone: 'Crown', anker: 'Anchor', herz: 'Heart', blitz: 'Lightning', schluessel: 'Key', klee: 'Clover', haemmer: 'Hammers', rad: 'Wheel', krug: 'Beer mug', brezel: 'Pretzel', turm: 'Tower', baum: 'Fir tree', welle: 'Waves', pferd: 'Horse', adler: 'Eagle', loewe: 'Lion', fuchs: 'Fox', kuh: 'Cow', hahn: 'Rooster', fisch: 'Fish', eule: 'Owl', baer: 'Bear', keins: 'None' },
+  { ball: 'Ball', stern: 'Stern', krone: 'Krone', anker: 'Anker', herz: 'Herz', blitz: 'Blitz', schluessel: 'Schlüssel', klee: 'Kleeblatt', haemmer: 'Hämmer', rad: 'Rad', krug: 'Bierkrug', brezel: 'Brezel', turm: 'Turm', baum: 'Tanne', welle: 'Wellen', pferd: 'Pferd', adler: 'Adler', loewe: 'Löwe', fuchs: 'Fuchs', kuh: 'Kuh', hahn: 'Hahn', fisch: 'Fisch', eule: 'Eule', baer: 'Bär', spaten: 'Spaten', traktor: 'Traktor', windrad: 'Windrad', kirche: 'Kirche', burg: 'Burg', aehre: 'Ähre', glocke: 'Glocke', hufeisen: 'Hufeisen', keins: 'Nichts' },
+  { ball: 'Ball', stern: 'Star', krone: 'Crown', anker: 'Anchor', herz: 'Heart', blitz: 'Lightning', schluessel: 'Key', klee: 'Clover', haemmer: 'Hammers', rad: 'Wheel', krug: 'Beer mug', brezel: 'Pretzel', turm: 'Tower', baum: 'Fir tree', welle: 'Waves', pferd: 'Horse', adler: 'Eagle', loewe: 'Lion', fuchs: 'Fox', kuh: 'Cow', hahn: 'Rooster', fisch: 'Fish', eule: 'Owl', baer: 'Bear', spaten: 'Spade', traktor: 'Tractor', windrad: 'Wind turbine', kirche: 'Church', burg: 'Castle', aehre: 'Wheat ear', glocke: 'Bell', hufeisen: 'Horseshoe', keins: 'None' },
 );
 export const FIGURES = new Set(['pferd', 'adler', 'loewe', 'fuchs', 'kuh', 'hahn', 'fisch', 'eule', 'baer']);
 
@@ -100,15 +113,46 @@ function symbolRects(id, color, detail, { x = 14, y = 16, cell = 3 } = {}) {
 }
 
 let uid = 0;
-// crest: { shape, division, symbol, colors: { field, second, border, symbol }, band }
-export function crestSVG(crest, { size = 48, label = '', short = '' } = {}) {
+// Schriftband je Form: [Oberkante, größte Textbreite]. Spitze Formen: Band höher, Text schmaler.
+const BAND_AT = { schild: [50, 38], banner: [42, 46], sechseck: [48, 46], spitz: [40, 32], raute: [40, 32], wimpel: [26, 26], rund: [48, 40], oval: [48, 42], franz: [48, 44] };
+export const CREST_BAND_TEXTS = tr({ short: 'Kürzel', year: 'Jahr', both: 'Beides' }, { short: 'Short name', year: 'Year', both: 'Both' });
+export const MAX_STARS = 5;
+
+// Meistersterne und Gründungsjahr der Karriere: Titel = Platz 1 in der Saisonhistorie.
+export const crestExtras = (career) => ({ stars: Math.min(MAX_STARS, (career?.history ?? []).filter((h) => h.pos === 1).length), year: career?.founded ?? 2004 });
+
+// Fünfzackstern im 6er-Raster, Mitte bei cx.
+const starPath = (cx, cy, r) => {
+  const pts = Array.from({ length: 10 }, (_, i) => {
+    const a = (-90 + i * 36) * (Math.PI / 180);
+    const rr = i % 2 ? r * 0.42 : r;
+    return `${(cx + Math.cos(a) * rr).toFixed(1)} ${(cy + Math.sin(a) * rr).toFixed(1)}`;
+  });
+  return `M${pts.join(' L')} Z`;
+};
+
+// crest: { shape, division, symbol, colors: { field, second, border, symbol }, band, bandText, stars }
+// stars: Zahl der Meistersterne (über dem Wappen), year: Gründungsjahr fürs Band.
+export function crestSVG(crest, { size = 48, label = '', short = '', stars = 0, year = null } = {}) {
   const c = normalizeCrest(crest);
   const id = `cr${++uid}`;
   const path = SHAPES[c.shape] ?? SHAPES.schild;
-  const band = c.band && short ? `<rect x="0" y="50" width="64" height="11" fill="${css(c.colors.border)}"/><text x="32" y="59" text-anchor="middle" font-family="'SL Ziffern', 'Pixelify Sans', monospace" font-size="10" font-weight="700" fill="${css(c.colors.field)}">${String(short).slice(0, 4).replace(/[<&>"]/g, '')}</text>` : '';
-  const symY = c.band && short ? 12 : 17;
+  const word = String(short).slice(0, 4).replace(/[<&>"]/g, '');
+  const yr = year ? String(year) : '';
+  const text = c.bandText === 'year' && yr ? yr : c.bandText === 'both' && yr && word ? `${word} ${yr.slice(-2)}` : word || yr;
+  const hasBand = c.band && text;
+  // textLength nur, wenn der Text nicht ins Band passt – sonst verzerrt das Stauchen die schmalen
+  // Ziffern. Schrift: Pixelify auch für Ziffern – die Trikot-Ziffern (SL Ziffern) sind bei 10 px
+  // unleserlich (eine „4“ sah aus wie „d“).
+  const [by, bw] = BAND_AT[c.shape] ?? [50, 46];
+  const band = hasBand ? `<rect x="0" y="${by}" width="64" height="11" fill="${css(c.colors.border)}"/><text x="32" y="${by + 9}" text-anchor="middle" font-family="'Pixelify Sans', monospace" font-size="10" font-weight="700" ${text.length * 6.5 > bw ? `textLength="${bw}" lengthAdjust="spacingAndGlyphs"` : ''} fill="${css(c.colors.field)}">${text}</text>` : '';
+  const symY = hasBand ? Math.max(4, Math.min(12, by - 36)) : 17;
   const symbol = c.symbol && c.symbol !== 'keins' ? symbolRects(c.symbol, c.colors.symbol, c.colors.border, { y: symY }) : '';
-  return `<svg class="crest-svg" width="${size}" height="${Math.round((size * 72) / 64)}" viewBox="0 0 64 72" role="img" aria-label="${label.replace(/"/g, '')}"><defs><clipPath id="${id}"><path d="${path}"/></clipPath></defs><g clip-path="url(#${id})"><rect width="64" height="72" fill="${css(c.colors.field)}"/><g fill="${css(c.colors.second)}">${DIVISIONS[c.division] ?? ''}</g><g shape-rendering="crispEdges">${symbol}</g>${band}</g><path d="${path}" fill="none" stroke="${css(c.colors.border)}" stroke-width="4" stroke-linejoin="round"/></svg>`;
+  const n = c.stars ? Math.min(MAX_STARS, Math.max(0, stars | 0)) : 0;
+  const top = n ? -11 : 0;
+  const starSvg = n ? `<g fill="${css(0xe0b020)}" stroke="#1c1c1c" stroke-width="1" stroke-linejoin="round">${Array.from({ length: n }, (_, i) => `<path d="${starPath(32 + (i - (n - 1) / 2) * 11, -5, 5)}"/>`).join('')}</g>` : '';
+  const h = 72 - top;
+  return `<svg class="crest-svg" width="${size}" height="${Math.round((size * h) / 64)}" viewBox="0 ${top} 64 ${h}" role="img" aria-label="${label.replace(/"/g, '')}"><defs><clipPath id="${id}"><path d="${path}"/></clipPath></defs>${starSvg}<g clip-path="url(#${id})"><rect width="64" height="72" fill="${css(c.colors.field)}"/><g fill="${css(c.colors.second)}">${DIVISIONS[c.division] ?? ''}</g><g shape-rendering="crispEdges">${symbol}</g>${band}</g><path d="${path}" fill="none" stroke="${css(c.colors.border)}" stroke-width="4" stroke-linejoin="round"/></svg>`;
 }
 
 export function normalizeCrest(crest) {
@@ -122,7 +166,7 @@ export function defaultCrest(club) {
   for (const ch of String(club.id ?? club.name ?? '')) h = (Math.imul(h, 31) + ch.charCodeAt(0)) >>> 0;
   const shapes = Object.keys(SHAPES);
   const divisions = ['keine', 'gespalten', 'geteilt', 'schraeg', 'balken', 'pfahl', 'sparren', 'geviert'];
-  const symbols = Object.keys(BITMAPS);
+  const symbols = Object.keys(BITMAPS_BASE); // nur die alten: Standardwappen bleiben stabil
   const kit = club.kit ?? {};
   const field = kit.shirt ?? 0x2e6b3a;
   const second = kit.second ?? kit.shorts ?? 0xf2efe6;
@@ -133,6 +177,8 @@ export function defaultCrest(club) {
     symbol: symbols[(h >>> 8) % symbols.length],
     colors: { field, second: second === field ? (light(field) ? 0x1c1c1c : 0xf2efe6) : second, border: 0x1c1c1c, symbol: light(field) && light(second) ? 0x1c1c1c : 0xe0b020 },
     band: (h >>> 12) % 3 === 0,
+    bandText: 'short',
+    stars: true,
   };
 }
 

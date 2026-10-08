@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { toon } from '../materials.js';
 import { addLights, box, cylinder, ground, group, lampHead, makeBackpack, makeCar, makeCrates, makeDog, makeFence, makeJacketPile, makeLamp, makeTree } from '../props.js';
 import { crowdRow, makeSpectator } from '../spectators.js';
+import { GEO } from '../../sim/shelter.js';
 import { makeAsphaltTexture, makeShutterTexture, makeSignTexture } from '../textures.js';
 
 const LOT_W = 56;
@@ -44,6 +45,10 @@ export function buildParkingLot(root, pitch, rng, scene) {
   sign.position.set(pitch.wallX - 0.02, 4.1, 0);
   root.add(sign);
   for (const z of [-9, 9]) root.add(box(0.1, 1.2, 3.2, 0x7ea2b8, pitch.wallX - 0.02, 2.2, z));
+  // Vordach über dem Rolltor (Farbe vom Dach des Marktes): hier stellen sich alle beim Gewitter unter.
+  const L = GEO.lot;
+  root.add(box(L.depth, 0.12, L.halfWidth * 2, 0x6e5a48, pitch.wallX - L.depth / 2, L.y, 0));
+  for (const z of [-1, 1]) root.add(box(0.12, L.y, 0.12, 0x6e5a48, pitch.wallX - L.depth + 0.1, L.y / 2, z * (L.halfWidth - 0.2)));
   root.add(makeCrates(pitch.wallX - 0.5, 4.2));
   root.add(makeCrates(pitch.wallX - 0.5, -6.4));
 

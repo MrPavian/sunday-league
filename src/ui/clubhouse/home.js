@@ -9,7 +9,7 @@ import { button, icon } from '../ds.js';
 import { clubScene } from '../ClubScene.js';
 import { phone } from '../world.js';
 import { homeView } from '../prefs.js';
-import { crestOf, crestSVG } from '../crest.js';
+import { crestExtras, crestOf, crestSVG } from '../crest.js';
 import { relegationNeeded, relegationOf } from '../../career/relegation.js';
 import { LEAGUES } from '../../career/clubs.js';
 import { clubById, humanClub, leagueOf, humanFixture, playerOf, seasonOver, table } from '../../career/career.js';
@@ -21,7 +21,9 @@ import { talk } from '../../career/pub.js';
 import { weatherLine } from '../../career/weather.js';
 import { derbyOf, isDerbyFixture } from '../../career/derby.js';
 import { CUP_NAME, CUPS, cupOf, PRIZES, tournamentOpen, winterCupDue, winterCupRunning } from '../../career/tournament.js';
-import { humanTie, pokalClub, pokalDue, POKALE, pokalOf, roundName } from '../../career/pokal.js';
+import { humanTie, pokalClub, pokalDue, POKALE, pokalOf, pokalWhen, roundName } from '../../career/pokal.js';
+import { levelName } from '../../career/bundespokal.js';
+import { MATCH } from '../../sim/match.js';
 import { coachAway, energyLabel, patienceLabel } from '../../career/personal.js';
 import { PITCHES } from '../../sim/pitch.js';
 import { FIT_LOW, fitnessOf, fitnessPct } from '../../career/fitness.js';
@@ -118,9 +120,9 @@ export const homeScreens = {
       <article class="ui-card match hub-match" style="--kit:${hex(club.kit.shirt)}">
         <p class="t-cap">${tr('Sonntag, 10:30 Uhr', 'Sunday, 10:30')} · ${tr('Spieltag', 'Matchday')} ${c.round + 1}${isDerbyFixture(c, f) ? ` · <b class="derby">${derbyOf(c).name}</b>` : ''}</p>
         <div class="hub-vs">
-          <span>${crestSVG(crestOf(hc), { size: 44, short: hc.short, label: hc.name })}<b>${hc.short}</b></span>
+          <span>${crestSVG(crestOf(hc), { size: 44, short: hc.short, ...(hc.human ? crestExtras(c) : {}), label: hc.name })}<b>${hc.short}</b></span>
           <i>–</i>
-          <span>${crestSVG(crestOf(ac), { size: 44, short: ac.short, label: ac.name })}<b>${ac.short}</b></span>
+          <span>${crestSVG(crestOf(ac), { size: 44, short: ac.short, ...(ac.human ? crestExtras(c) : {}), label: ac.name })}<b>${ac.short}</b></span>
         </div>
         <p class="t-body hub-opp">${home ? tr('Heimspiel', 'Home') : tr('Auswärts', 'Away')} ${tr('gegen', 'against')} <b>${opp.name}</b></p>
         <p class="t-2">${venue.name} · ${venue.surface.name} · ${venue.format} ${tr('gegen', 'v')} ${venue.format}</p>
@@ -149,14 +151,15 @@ export const homeScreens = {
     const me = humanClub(c).id;
     const home = tie.home === me;
     const opp = pokalClub(c, cup, home ? tie.away : tie.home);
-    const lv = (id) => LEAGUES[Math.min(5, cup.levels[id])]?.name ?? tr('Landesliga', 'Regional League');
+    const lv = (id) => levelName(cup.levels[id], LEAGUES[Math.min(5, cup.levels[id])]?.name);
     const oppLevel = cup.levels[opp.id];
     const myLevel = cup.levels[me];
-    const why = oppLevel > myLevel ? tr(' – der Höherklassige muss zu euch', ' – the higher-league side has to come to you') : oppLevel < myLevel ? tr(' – ihr müsst zum Klassentieferen', ' – you have to visit the lower-league side') : '';
-    const format = LEAGUES[Math.min(5, Math.max(2, cup.levels[tie.home]))].format;
-    return `<div class="pokal-card"><p class="t-cap">${tr('Mittwoch, 19:30 Uhr', 'Wednesday, 7:30pm')} · <b>${POKALE[kind].name}</b> · ${roundName(cup, tie.round)}</p>
+    const why = kind === 'bund' ? (!home ? tr(' – ihr müsst zum Profi ins große Stadion', ' – you have to visit the professionals in their big stadium') : tr(' – Heimrecht für den Amateur, volle Hütte', ' – home advantage for the amateurs, packed ground')) : oppLevel > myLevel ? tr(' – der Höherklassige muss zu euch', ' – the higher-league side has to come to you') : oppLevel < myLevel ? tr(' – ihr müsst zum Klassentieferen', ' – you have to visit the lower-league side') : '';
+    const format = kind === 'bund' ? 11 : LEAGUES[Math.min(5, Math.max(2, cup.levels[tie.home]))].format;
+    return `<div class="pokal-card"><p class="t-cap">${pokalWhen(kind)} · <b>${POKALE[kind].name}</b> · ${roundName(cup, tie.round)}</p>
       <p class="t-body">${home ? tr('Heimspiel', 'Home') : tr('Auswärts', 'Away')} ${tr('gegen', 'against')} <b>${opp.name}</b> <small>(${lv(opp.id)})</small>${why}.</p>
-      <p class="t-2">${format} ${tr('gegen', 'v')} ${format} · ${tr('bei Unentschieden direkt Elfmeterschießen', 'if level: straight to penalties')} · ${tr('am Sonntag geht die Liga weiter', 'the league carries on on Sunday')}</p>
+      ${kind === 'bund' ? `<p class="t-2">${tr('Spielort', 'Venue')}: <b>${{ own: tr('eigener Platz', 'own pitch'), stands: tr('eigener Platz mit Stahlrohrtribüne', 'own pitch with scaffold stand'), stadium: tr('großes Stadion', 'big stadium') }[home ? tie.venue ?? 'own' : 'stadium']}</b></p>` : ''}
+      <p class="t-2">${format} ${tr('gegen', 'v')} ${format} · ${MATCH.pokalExtra ? tr('bei Unentschieden Verlängerung, dann Elfmeterschießen', 'if level: extra time, then penalties') : tr('bei Unentschieden direkt Elfmeterschießen', 'if level: straight to penalties')} · ${tr('am Sonntag geht die Liga weiter', 'the league carries on on Sunday')}</p>
       ${button(tr('Anpfiff – an der Seitenlinie', 'Kick-off – on the touchline'), { kind: 'primary big block coach-play', action: 'onPokalCoach', value: kind })}
       <div class="hub-alt">${button(tr('Liveticker mit Entscheidungen', 'Live ticker with decisions'), { action: 'onPokalSimulate', value: kind })}${button(tr('Selbst spielen', 'Play it yourself'), { kind: 'self-play', action: 'onPokalPlay', value: kind })}</div></div>`;
   },

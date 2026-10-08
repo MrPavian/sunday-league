@@ -7,6 +7,7 @@ import { adjustForm, adjustMood } from './events.js';
 import { outcome, first, sitOut, trait } from './outcomes.js';
 import { pubState } from './pub.js';
 import { chronicle } from './sagas.js';
+import { clubLife } from './clublife.js';
 import { tr } from '../core/i18n.js';
 
 export const derbyOf = (c) => leagueOf(c).derby ?? null;
@@ -18,6 +19,17 @@ export function isDerbyFixture(c, f) {
   return !!f && !!rival && ((f.home === me && f.away === rival) || (f.away === me && f.home === rival));
 }
 export const derbyThisWeek = (c) => isDerbyFixture(c, humanFixture(c));
+// Hinspiel = erste Saisonhälfte, Rückspiel = zweite. Das Rückspiel hat sein eigenes Ereignis (die Messung zeigte:
+// zweimal pro Saison dieselbe Entscheidung war mit gut einem Viertel aller Wochenereignisse das häufigste Ereignis).
+export const isReturnLeg = (c) => c.round >= Math.ceil((c.fixtures?.length ?? 10) / 2);
+// Ergebnis des Hinspiels aus Sicht der Menschen, falls es schon gespielt ist.
+function firstLegResult(c) {
+  const me = humanClub(c).id;
+  const half = Math.ceil((c.fixtures?.length ?? 10) / 2);
+  for (const round of (c.fixtures ?? []).slice(0, half))
+    for (const f of round) if (isDerbyFixture(c, f) && f.result) return f.home === me ? [f.result.home, f.result.away] : [f.result.away, f.result.home];
+  return null;
+}
 
 // Nach dem Derby: Bilanz, doppelte Stimmung, ab und zu ein Chronik-Eintrag.
 export function derbyResult(c, gf, ga) {
@@ -39,7 +51,7 @@ const hothead = (c) => humanClub(c).squad.find((idx) => trait(c, idx, 'meckerer'
 export const DERBY_EVENTS = {
   derby_woche: {
     weight: 80,
-    needs: (c) => (derbyThisWeek(c) ? { club: derbyRivalId(c) } : null),
+    needs: (c) => (derbyThisWeek(c) && !isReturnLeg(c) ? { club: derbyRivalId(c) } : null),
     text: (c) => {
       const d = c.derbyRecord;
       const bilanz = d && d.w + d.d + d.l ? tr(` Bisherige Bilanz: ${d.w} Siege, ${d.d} Remis, ${d.l} Niederlagen.`, ` Record so far: ${d.w} wins, ${d.d} draws, ${d.l} defeats.`) : '';
@@ -73,6 +85,48 @@ export const DERBY_EVENTS = {
           { w: 2, run: (c) => (adjustMood(c, -0.08), tr('Die lachen euch aus: „Grillen? Wir grillen euch auf dem Platz."', 'They laugh at you: "Barbecue? We\'ll grill you on the pitch."')) },
           { w: 1, run: (c, ctx, rng) => (addRumor(c, rng, tr('Nach eurem Angebot meldet sich einer von drüben: „Ich hab die Nase voll bei denen, {first} hier. Nehmt ihr mich?"', 'After your offer, one of theirs gets in touch: "I\'ve had enough of that lot, {first} here. Will you take me?"')) ? tr('Einer von deren Spielern meldet sich privat bei dir. Er will wechseln – steht jetzt bei den Transfers.', 'One of their players messages you privately. He wants to switch – he is now on the transfer list.') : tr('Die sagen weder ja noch nein.', 'They say neither yes nor no.')) },
           { w: 1, run: (c) => (adjustMood(c, 0.03), tr('Die beiden Wirte streiten jetzt, wer grillen darf. Das Derby hat ein Vorspiel.', 'The two landlords are now arguing over who gets to do the grilling. The derby has a warm-up act.')) },
+        ]),
+      },
+    ],
+  },
+  // Rückspiel: Das Hinspiel ist gespielt, jetzt geht es um Revanche oder Titelverteidigung.
+  derby_rueckspiel: {
+    weight: 80,
+    needs: (c) => {
+      if (!derbyThisWeek(c) || !isReturnLeg(c)) return null;
+      const r = firstLegResult(c);
+      return { club: derbyRivalId(c), res: r ? (r[0] > r[1] ? 'w' : r[0] < r[1] ? 'l' : 'd') : 'none', score: r ? `${r[0]}:${r[1]}` : '' };
+    },
+    text: (c, ctx) => {
+      const name = derbyOf(c).name;
+      const rival = opp(c).name;
+      if (ctx.res === 'w') return tr(`${name}, Rückspiel! Das Hinspiel gegen ${rival} habt ihr ${ctx.score} gewonnen – jetzt wollen die Revanche. Auf dem Zaun vor ihrem Platz hängt schon ein Laken.`, `${name}, return leg! You won the first game against ${rival} ${ctx.score} – now they want revenge. A bedsheet already hangs on the fence outside their ground.`);
+      if (ctx.res === 'l') return tr(`${name}, Rückspiel! Das Hinspiel gegen ${rival} habt ihr ${ctx.score} verloren. Im Vereinsheim steht seitdem ein Kalender, auf dem der Sonntag rot angestrichen ist.`, `${name}, return leg! You lost the first game against ${rival} ${ctx.score}. Since then there has been a calendar in the clubhouse with the Sunday ringed in red.`);
+      if (ctx.res === 'd') return tr(`${name}, Rückspiel! Das Hinspiel gegen ${rival} endete ${ctx.score}. Beide Dörfer behaupten, das Remis sei ein Sieg gewesen.`, `${name}, return leg! The first game against ${rival} ended ${ctx.score}. Both villages claim the draw was a win.`);
+      return tr(`${name}, Rückspiel gegen ${rival}! Das Hinspiel kennt keiner mehr so genau, nur das Bier danach.`, `${name}, return leg against ${rival}! Nobody remembers the first game very well, only the beer afterwards.`);
+    },
+    options: [
+      {
+        label: tr('Videoabend: Hinspiel noch mal anschauen', 'Video night: watch the first game again'),
+        effect: outcome([
+          { w: 3, run: (c) => { for (const idx of humanClub(c).squad) adjustForm(c, idx, 0.15); adjustMood(c, 0.04); return tr('Zwei Stunden Zeitlupe. Jeder sieht seine Fehler und die der anderen. Am Ende schreibt der Kapitän drei Dinge an die Tafel.', 'Two hours of slow motion. Everyone sees his own mistakes and those of the others. In the end the captain writes three things on the board.'); } },
+          { w: 1, run: (c) => (adjustMood(c, 0.02), tr('Der Beamer zeigt nur die Wiese vor dem Spiel. Alle lachen sich frei – besser als jede Taktikbesprechung.', 'The projector only shows the grass before the game. Everyone laughs it off – better than any tactics talk.')) },
+          { w: (c, ctx) => (ctx.res === 'l' ? 1.5 : 0), run: (c) => (adjustMood(c, -0.05), tr('Die Niederlage in Zeitlupe reißt alte Wunden auf. Der Torwart verlässt nach dem dritten Gegentor den Raum.', 'The defeat in slow motion reopens old wounds. The keeper leaves the room after the third goal.')) },
+        ]),
+      },
+      {
+        label: tr('Fanbus organisieren (35 €)', 'Organise a fan coach (€35)'),
+        effect: outcome([
+          { w: 3, run: (c) => (book(c, tr('Fanbus zum Derby', 'Fan coach to the derby'), -35), adjustMood(c, 0.1), tr('Ein Bus voller Rentner mit Schals und Thermoskannen. Sie singen Lieder, die es erst seit 1962 gibt.', 'A coach full of pensioners with scarves and flasks. They sing songs that only date back to 1962.')) },
+          { w: 1, run: (c) => (book(c, tr('Fanbus zum Derby', 'Fan coach to the derby'), -35), clubLife(c).supporters++, adjustMood(c, 0.08), tr('Die Fahrt war so schön, dass zwei Fahrgäste gleich in den Förderverein eintreten.', 'The trip was so enjoyable that two passengers join the supporters\' club straight away.')) },
+          { w: 0.7, run: (c) => (book(c, tr('Fanbus zum Derby', 'Fan coach to the derby'), -35), book(c, tr('Verbandsstrafe: Pyrotechnik', 'League fine: pyrotechnics'), -40), adjustMood(c, 0.05), tr('Im Bus liegt eine Bengalo-Packung. 40 € Strafe vom Kreis. Der Busfahrer sagt, er habe nichts gesehen.', 'There is a pack of flares on the coach. €40 fine from the league. The driver says he saw nothing.')) },
+        ]),
+      },
+      {
+        label: tr('Ein Spiel wie jedes andere', 'A game like any other'),
+        effect: outcome([
+          { w: 2, run: (c) => { for (const idx of humanClub(c).squad) adjustForm(c, idx, 0.1); return tr('Du lässt die Woche so laufen wie jede andere. Die Gelassenheit überträgt sich – bis Samstagabend.', 'You run the week like any other. The calm rubs off – until Saturday evening.'); } },
+          { w: 1, run: (c) => (adjustMood(c, -0.03), tr('„Ein Spiel wie jedes andere?" In der Kabine schüttelt man den Kopf. Für die Leute hier ist es das Spiel des Jahres.', '"A game like any other?" Heads shake in the dressing room. For people here it is the game of the year.')) },
         ]),
       },
     ],

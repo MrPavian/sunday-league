@@ -94,8 +94,12 @@ describe('offence: combinations', () => {
           if (back) {
             open.checked = true;
             const wall = m.players.find((x) => x.id === open.wall);
-            returns++;
-            if (m.ball.vel.x * attackDir(m, wall.team) > 0) forward++;
+            // Hat ein Gegner den Ball im selben Schritt abgefangen (Zweikampf um den Pass), sagt die Ballgeschwindigkeit
+            // nichts mehr über die Richtung des Passes: Dieser Rückpass wird gar nicht gezählt (weder als Rückgabe noch nach vorn).
+            if (m.ball.lastTouch === wall.id) {
+              returns++;
+              if (m.ball.vel.x * attackDir(m, wall.team) > 0) forward++;
+            }
           }
           m.events.length = 0;
           if (open && m.time - open.time > 0.05 && m.ball.lastTouch === open.id) {

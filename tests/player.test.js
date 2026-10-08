@@ -53,7 +53,22 @@ describe('Spieler 2.0', () => {
       { speed: 0, celebrate: 'trikot' }, { speed: 3, celebrate: 'trikot' }, { speed: 0, celebrate: 'ohr' }, { speed: 0, celebrate: 'ruecken' },
       { speed: 0, celebrate: 'brust' }, { speed: 0, celebrate: 'umarmen' }, { speed: 4, celebrate: 'hinterher' },
       { speed: 0, gesture: 'haende' }, { speed: 3, gesture: 'haende' }, { speed: 0, gesture: 'abwinken' }, { speed: 0, gesture: 'geballt' }, { speed: 0, gesture: 'zeigen' }, { speed: 0, gesture: 'abklatschen' },
-      { speed: 0, sad: true }, { speed: 4, injured: true },
+      ...['schulter', 'schimpfen', 'wade', 'klettern', 'zaun'].flatMap((g) => [{ speed: 0, gesture: g }, { speed: 2, gesture: g }]),
+      { speed: 0, sad: true }, { speed: 4, injured: true }, { speed: 0, tired: true }, { speed: 2, tired: true },
+      // Torwart: Fangen, Fausten, Abwurf, Abschlag, Breitmachen, Abpraller (auch mit Hechtsprung und Aufstehen)
+      ...['kopf', 'brust', 'tief'].flatMap((k) => [0, 0.3, 0.7, 1].map((t) => ({ speed: 0, holding: 'chest', catchKind: k, catchT: t }))),
+      ...['beide', 'links', 'rechts'].flatMap((st) => [0.05, 0.3, 0.8].map((t) => ({ speed: 0, punch: t, jump: 0.5, punchStyle: st }))),
+      ...[0.001, 0.18, 0.3, 0.44, 0.8, 1].map((t) => ({ speed: 0, throwT: t })),
+      ...[0.001, 0.2, 0.5, 1].map((t) => ({ speed: 0, drop: t, kickAnim: 0.3 * (1 - t) + 0.001, kick: 'shot' })),
+      { speed: 0, wide: 1, ready: 1 }, { speed: 3, wide: 0.5 }, { speed: 0, ready: 0.4, wide: 0.2 },
+      // Spielfluss: Einwurf mit Anlauf, Zweikampf, Schussbein links/rechts, Ausklingen, Abrollen nach dem Hechtsprung
+      ...[0.001, 0.3, 0.6, 1].map((u) => ({ speed: 3 * (1 - u), tinRun: u })),
+      ...[0.001, 0.1, 0.22, 0.5, 1].map((t) => ({ speed: 0, tinRun: 1, tinT: t })),
+      ...[-3, -1.2, 0, 1.2, 3].flatMap((d) => [{ speed: 1, duel: 1, duelDir: d, duelPush: 1 }, { speed: 0, duel: 0.5, duelDir: d, duelShield: 1 }]),
+      ...[-1, 1].flatMap((f) => [{ speed: 2, kickPrep: 1, kickFoot: f }, { speed: 2, kickAnim: 0.15, kickFoot: f, kick: 'pass' }, { speed: 2, kickTail: 0.5, kickFoot: f }]),
+      ...[0, 1].flatMap((h) => [0.45, 0.2, 0.01].map((t) => ({ speed: 0, dive: { t, side: -1, high: h, caught: false, rec: null } }))),
+      ...[0, 0.2, 0.4, 0.7, 1].flatMap((r) => [0, 1].flatMap((h) => [true, false].map((c) => ({ speed: 0, dive: { t: 0, side: 1, high: h, caught: c, rec: r } })))),
+      ...[0.1, 0.4, 0.9].map((t) => ({ speed: 0, fumble: t })), { speed: 0, fumble: 0.3, dive: { t: 0, side: 1, high: 0.5, caught: false, rec: 0.3 } },
     ];
     for (const o of poses) {
       const input = { ...base, ...o };
@@ -66,6 +81,19 @@ describe('Spieler 2.0', () => {
       }
       expect(FACES).toContain(m.face);
     }
+  });
+
+  it('Erschöpfung: Gesicht „exhausted“ nur im Stand/Trab, nicht über Schmerz oder Anstrengung', () => {
+    const m = createPlayerModel(look, kit);
+    const base = { speed: 0, dt: 1 / 60, kickAnim: 0, headAnim: 0, holding: null, state: 'normal' };
+    animatePlayer(m, { ...base, tired: true });
+    expect(m.face).toBe('exhausted');
+    animatePlayer(m, { ...base, tired: false });
+    expect(m.face).toBe('neutral');
+    animatePlayer(m, { ...base, tired: true, injured: true });
+    expect(m.face).toBe('pain');
+    animatePlayer(m, { ...base, speed: 7, tired: true });
+    expect(m.face).toBe('effort');
   });
 
   it('Zuschauer-Pose: sitzen senkt die Hüfte', () => {
@@ -91,5 +119,127 @@ describe('Spieler 2.0', () => {
     animatePlayer(m, { speed: 0, dt: 1 / 60, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture: 'haende' });
     expect(m.bones.upperArmL.rotation.x).toBeLessThan(-2);
     expect(m.bones.upperArmR.rotation.x).toBeLessThan(-2);
+  });
+
+  it('Vorfall-Gesten: Achselzucken öffnet die Arme seitlich, Zaun und Klettern heben die Hände, Zerrung beugt den Oberkörper', () => {
+    const m = createPlayerModel(look, kit);
+    const pose = (gesture, frames = 30) => {
+      m.gestT = 0;
+      for (let k = 0; k < frames; k++) animatePlayer(m, { ...base, speed: 0, gesture });
+    };
+    pose('schulter');
+    expect(m.bones.upperArmR.rotation.z).toBeGreaterThan(0.6);
+    expect(m.bones.upperArmL.rotation.z).toBeLessThan(-0.6);
+    pose('zaun');
+    expect(m.bones.upperArmL.rotation.x).toBeLessThan(-0.9);
+    pose('klettern');
+    expect(Math.min(m.bones.upperArmL.rotation.x, m.bones.upperArmR.rotation.x)).toBeLessThan(-1.4);
+    pose('wade');
+    expect(m.bones.spine.rotation.x).toBeGreaterThan(0.6);
+    pose('schimpfen');
+    expect(m.bones.upperArmR.rotation.x).toBeLessThan(-1.5);
+    expect(m.face).toBe('angry');
+  });
+
+  it('Torwart: Kopf-Fang hält die Hände über den Kopf, Breitmachen spreizt Arme und Beine, Abpraller klappt die Hände hoch', () => {
+    const m = createPlayerModel(look, kit, { keeper: true });
+    const pose = (o) => animatePlayer(m, { ...base, speed: 0, ...o });
+    pose({ holding: 'chest', catchKind: 'kopf', catchT: 0.2 });
+    expect(m.bones.upperArmL.rotation.x).toBeLessThan(-2.5);
+    pose({ holding: 'chest', catchKind: 'brust', catchT: 0.2 });
+    const brust = m.bones.upperArmL.rotation.x;
+    expect(brust).toBeLessThan(-1.3);
+    expect(brust).toBeGreaterThan(-2);
+    pose({ holding: 'chest', catchKind: 'kopf', catchT: 1 }); // fertig gefangen: Ball an der Brust
+    expect(m.bones.upperArmL.rotation.x).toBeCloseTo(-1.05, 5);
+    pose({ ready: 1 });
+    const ready = { arm: m.bones.upperArmR.rotation.z, leg: m.bones.upperLegR.rotation.z, hip: m.bones.hips.position.y };
+    pose({ ready: 1, wide: 1 });
+    expect(m.bones.upperArmR.rotation.z).toBeGreaterThan(ready.arm);
+    expect(m.bones.upperLegR.rotation.z).toBeGreaterThan(ready.leg);
+    expect(m.bones.hips.position.y).toBeLessThan(ready.hip);
+    pose({ punch: 0.3, jump: 0.5, punchStyle: 'beide' });
+    expect(m.bones.upperArmL.rotation.x).toBeCloseTo(m.bones.upperArmR.rotation.x, 5);
+    expect(m.bones.upperArmL.rotation.x).toBeLessThan(-2.4);
+    pose({ punch: 0.3, jump: 0.5, punchStyle: 'links' });
+    expect(m.bones.upperArmL.rotation.x).toBeLessThan(-2.4);
+    expect(m.bones.upperArmR.rotation.x).toBeGreaterThan(-1);
+    pose({ fumble: 0.4 });
+    expect(m.bones.upperArmL.rotation.x).toBeLessThan(-1.7);
+  });
+
+  // Übergänge ohne Sprünge: größte Winkeländerung eines Knochens von Bild zu Bild (60 Bilder/s). Gemessen:
+  // Der Laufzyklus selbst springt wegen seiner acht Posen je Schritt-Paar bis 0,64 rad (Knie), die
+  // Schwelle 0,7 verlangt also, dass kein Übergang schlechter ist als ein Laufschritt. Der Schlag
+  // (Schwung des Beins im Kontakt, ~0,15 s Pose-Zeit) ist gewollt hart und ausgenommen.
+  const jump = (m, frames, skip = () => false) => {
+    let worst = 0;
+    let prev = null;
+    frames.forEach((o, i) => {
+      animatePlayer(m, { ...base, ...o });
+      const cur = BONES.flatMap((n) => [m.bones[n].rotation.x, m.bones[n].rotation.y, m.bones[n].rotation.z]);
+      if (prev && !skip(o, i)) worst = Math.max(worst, ...cur.map((v, k) => Math.abs(v - prev[k])));
+      prev = cur;
+    });
+    return worst;
+  };
+  it('Laufen → Schuss/Pass → Laufen springt nicht (außer dem Schlag selbst)', () => {
+    for (const kick of ['shot', 'pass']) for (const foot of [1, -1]) {
+      const m = createPlayerModel(look, kit);
+      const frames = [];
+      for (let i = 0; i < 20; i++) frames.push({ speed: 4 });
+      for (let i = 1; i <= 8; i++) frames.push({ speed: 4, kickPrep: i / 8, kick, kickFoot: foot });
+      for (let i = 0; i < 10; i++) frames.push({ speed: 3, kickAnim: 0.159 * (1 - i / 10) + 0.001, kick, kickFoot: foot, kickPrep: 1 });
+      for (let i = 0; i < 14; i++) frames.push({ speed: 3, kickTail: 1 - i / 13, kick, kickFoot: foot });
+      for (let i = 0; i < 10; i++) frames.push({ speed: 3 });
+      // ohne Ausholen: Schuss aus dem Lauf
+      for (let i = 0; i < 10; i++) frames.push({ speed: 4, kickAnim: 0.159 * (1 - i / 10) + 0.001, kick, kickFoot: foot });
+      for (let i = 0; i < 14; i++) frames.push({ speed: 4, kickTail: 1 - i / 13, kick, kickFoot: foot });
+      expect(jump(m, frames, (o) => o.kickAnim > 0), `${kick} ${foot}`).toBeLessThan(0.7);
+    }
+  });
+
+  it('Einwurf: Anlauf, Halten und Wurf ohne Sprünge, Hände hinter dem Kopf und beim Loslassen darüber', () => {
+    const m = createPlayerModel(look, kit);
+    const frames = [];
+    for (let i = 0; i < 20; i++) frames.push({ speed: 0 });
+    for (let i = 1; i <= 60; i++) frames.push({ speed: 3 * Math.min(1, i / 8) * (1 - i / 60), tinRun: i / 60 });
+    for (let i = 1; i <= 25; i++) frames.push({ speed: 0, tinRun: 1, tinT: i / 25 });
+    expect(jump(m, frames)).toBeLessThan(0.7);
+    animatePlayer(m, { ...base, speed: 0, tinRun: 1 });
+    expect(m.bones.upperArmL.rotation.x).toBeLessThan(-3); // Arme hinter dem Kopf
+    animatePlayer(m, { ...base, speed: 0, tinRun: 1, tinT: 0.22 });
+    expect(m.bones.upperArmL.rotation.x).toBeLessThan(-2.5);
+    expect(m.bones.upperArmR.rotation.x).toBeCloseTo(m.bones.upperArmL.rotation.x, 5); // beide Arme
+  });
+
+  it('Zweikampf: Oberkörper dreht zur Seite des Gegners', () => {
+    const m = createPlayerModel(look, kit);
+    for (let i = 0; i < 5; i++) animatePlayer(m, { ...base, speed: 0, duel: 1, duelDir: 1.2 });
+    const right = m.bones.spine.rotation.z;
+    for (let i = 0; i < 5; i++) animatePlayer(m, { ...base, speed: 0, duel: 1, duelDir: -1.2 });
+    expect(Math.sign(m.bones.spine.rotation.z)).toBe(-Math.sign(right));
+    expect(m.bones.spine.rotation.x).toBeGreaterThan(0.1); // lehnt sich hinein
+  });
+
+  it('Torwart: flacher Ball taucht tiefer ab als hoher, danach Abrollen auf den Rücken', () => {
+    const m = createPlayerModel(look, kit, { keeper: true });
+    const lowest = (high) => {
+      let y = Infinity;
+      for (let t = 0.45; t > 0; t -= 0.05) {
+        animatePlayer(m, { ...base, dive: { t, side: 1, high, caught: false, rec: null } });
+        y = Math.min(y, m.bones.hips.position.y);
+        if (t < 0.3 && high === 0) expect(m.bones.hips.position.y).toBeLessThan(0.6);
+      }
+      return y;
+    };
+    expect(lowest(0)).toBeLessThanOrEqual(lowest(1));
+    let maxBack = 0;
+    for (let r = 0; r <= 1; r += 0.05) {
+      animatePlayer(m, { ...base, dive: { t: 0, side: 1, high: 0, caught: false, rec: r } });
+      maxBack = Math.max(maxBack, -m.bones.hips.rotation.x);
+    }
+    expect(maxBack).toBeGreaterThan(1);
+    expect(m.bones.hips.rotation.x).toBeCloseTo(0, 5); // steht am Ende
   });
 });

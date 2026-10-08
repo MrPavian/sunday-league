@@ -2,11 +2,11 @@ import { GET_UP } from '../sim/tackles.js';
 import * as THREE from 'three';
 import { ACRO, TRICKS } from '../sim/tricks.js';
 import { len } from '../core/math.js';
-import { mateCelebration, refereeSignal, shotReactions, subScene } from './reactions.js';
+import { catchKind, duelPairs, foeBearing, incidentPose, isFumble, kickFoot, mateCelebration, punchStyle, refereePose, refereeSignal, shotReactions, subScene, throwInRun, tiredFace, warmupPicks, warmupSpot, warmupStep, WARMUP_AWAY, WARMUP_HOME, wideStance } from './reactions.js';
 import { allPlayers } from '../sim/squad.js';
 import { attackDir } from '../sim/players.js';
 import { BallView } from './BallView.js';
-import { animatePlayer, createPlayerModel, disposeKit, KitAtlas, setKitDirt } from './PlayerModel.js';
+import { animatePlayer, createPlayerModel, disposeKit, IN_REL_AT, KitAtlas, setKitDirt, setKitWet } from './PlayerModel.js';
 import { keepAlpha, pixelTexture } from './materials.js';
 
 let flameTex = null;
@@ -43,8 +43,21 @@ import { WeatherFx } from './weather.js';
 // Wiederverwendete Animations-Optionen (keine Objekte pro Figur und Bild).
 const ANIM = {};
 const DIVE = { t: 0, side: 1, high: 0, caught: false, rec: null };
-const DIVE_REC = 0.4; // Aufstehen nach dem Hechtsprung (s, nur Darstellung)
+const FUMBLE_T = 0.55; // Abpraller: so lange klappen die Hände zurück (s, zählt erst nach dem Hechtsprung)
+const CATCH_T = 0.5; // Fangen: so lange dauert es, bis der Ball an der Brust liegt (s)
+const HAND = new THREE.Vector3();
+const HAND2 = new THREE.Vector3();
+const DIVE_REC = 0.8; // Abrollen und Aufstehen nach dem Hechtsprung (s, nur Darstellung)
+const IN_T = 0.42; // Einwurf: Wurf vom Loslassen der Haltung bis zum Durchschwung (s)
+const KICK_TAIL = 0.22; // Schuss/Pass: Ausklingen nach dem Durchschwung (s)
+const DUEL_ON = 8; // Zweikampf: wie schnell das Anlehnen ein- und ausgeblendet wird (1/s)
+const DUEL_OFF = 5;
+const DUEL_BURST = 0.45; // Kontakt (Zweikampf gewonnen, Festhalten, Block): so lange der Stoß nachwirkt (s)
+const INC_POSE = { gesture: null, cover: 0, lift: 0 };
 const REF_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal' };
+const WARM_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture: null };
+const WARM_OUT = {};
+const WARM_RECHECK = 1; // so oft (s) wird neu gewählt, wer sich aufwärmt
 const LEAVE_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture: null };
 
 const CELEBRATIONS = ['flugzeug', 'faust', 'tanz', 'rutscher', 'trikot', 'ohr', 'ruecken', 'brust'];
@@ -56,6 +69,16 @@ function celebrationFor(id) {
   return CELEBRATIONS[h % CELEBRATIONS.length];
 }
 
+// Schussfuß, wenn der Ball mittig liegt: fest an der ID (jeder fünfte ist Linksfuß).
+function footFor(id) {
+  let h = 7;
+  for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return h % 5 === 0 ? -1 : 1;
+}
+
+// Winkel a nach b auf kürzestem Weg überblenden (t 0 → 1).
+const lerpAngle = (a, b, t) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * t;
+
 // Überträgt den Simulationszustand auf die 3D-Modelle. Auch Ersatzspieler
 // bekommen ein Modell – sichtbar ist nur, wer auf dem Platz steht.
 export class MatchView {
@@ -66,6 +89,11 @@ export class MatchView {
     this.models = new Map();
     this.shotState = {}; // letzter Schuss (für die Reaktion danach)
     this.leaving = []; // Ausgewechselte auf dem Weg vom Platz (nur Darstellung)
+    // Aufwärmen am Rand: Ersatzspieler hinter der Seitenlinie (reactions.js warmupPicks/warmupStep). ?warmup=0 schaltet es ab (zum Messen).
+    this.warm = [];
+    this.warmLeft = 0;
+    this.warmOut = new Set(); // Ausgewechselte: wärmen sich nicht gleich wieder auf
+    this.warmOn = typeof location === 'undefined' || new URLSearchParams(location.search).get('warmup') !== '0';
     this.softGround = !match.pitch.surface.hard;
     // Ein Atlas (Textur + Material) je Team und Trikot: Feldspieler, Torwart.
     const everyone = allPlayers(match);
@@ -87,6 +115,7 @@ export class MatchView {
       const number = p.role === 'gk' ? 1 : (Number(String(p.id).split('-')[1]) || 0) + 1;
       const model = createPlayerModel(p.look, kit, { number, keeper: p.role === 'gk', sponsor: team.sponsor ?? null, atlas: typeof document !== 'undefined' ? atlasFor(p) : null });
       model.celebration = celebrationFor(p.id);
+      model.footPref = footFor(p.id);
       if (p.hot) {
         // In Form: eine kleine Pixelflamme über dem Kopf.
         model.flame = new THREE.Sprite(keepAlpha(new THREE.SpriteMaterial({ map: flameTexture(), transparent: true, depthWrite: false })));
@@ -157,6 +186,7 @@ export class MatchView {
       if (e.type === 'sub') {
         // Abklatschen an der Mittellinie, dann trottet der Ausgewechselte raus.
         const inc = match.players.find((q) => q.id === e.inId);
+        this.warmOut.add(e.outId);
         if (inc && this.models.has(e.outId)) this.leaving.push({ id: e.outId, x: inc.pos.x, z: inc.pos.z, t: 0 });
         const mi = this.models.get(e.inId);
         if (mi) Object.assign(mi, { reactGesture: 'abklatschen', reactTime: 0.6, gestT: 0 });
@@ -198,9 +228,33 @@ export class MatchView {
       m.gestT = 0;
       if (r.face) mood(r.id, r.face, r.time);
     }
+    // Torwart: Fangen (je nach Ballhöhe im Moment des Zugreifens), Fausten (beidhändig oder einhändig),
+    // Abpraller – nur Darstellung.
+    for (const p of match.players) {
+      if (p.role !== 'gk') continue;
+      const m = this.models.get(p.id);
+      if (!m) continue;
+      const holds = match.ball.holder === p.id;
+      if (holds && !m.held && match.phase === 'play') (m.catchKind = catchKind(match.ball.pos.y)), (m.catchSince = 0);
+      m.held = holds;
+    }
     for (const e of match.events) {
-      if (e.type === 'grab' || e.type === 'foul') hitFrom(find(e.victimId), find(e.playerId), e.type === 'foul' ? 1 : 0.7);
-      else if (e.type === 'block') hitFrom(find(e.playerId), null, 0.8);
+      if (e.type === 'save') {
+        const m = this.models.get(e.playerId);
+        const p = find(e.playerId);
+        if (m && p && e.punch) {
+          const a = m.gkAngle ?? m.group.rotation.y;
+          m.punchStyle = punchStyle((match.ball.pos.x - p.pos.x) * Math.cos(a) - (match.ball.pos.z - p.pos.z) * Math.sin(a));
+        } else if (m && isFumble(e, match)) m.fumbleLeft = FUMBLE_T;
+      }
+      if (e.type === 'grab' || e.type === 'foul') {
+        hitFrom(find(e.victimId), find(e.playerId), e.type === 'foul' ? 1 : 0.7);
+        this.burst(e.playerId, e.victimId);
+        this.burst(e.victimId, e.playerId);
+      } else if (e.type === 'block') {
+        hitFrom(find(e.playerId), null, 0.8);
+        this.burst(e.playerId, match.ball.lastTouch);
+      }
       else if (e.type === 'tackle' || e.type === 'poke_won') {
         // Wer den Ball verloren hat: der nächste Gegner am Zweikampf.
         const p = find(e.playerId);
@@ -213,7 +267,11 @@ export class MatchView {
           if (d < bd) (bd = d), (best = q);
         }
         hitFrom(best, p, 0.75);
-        if (best) mood(best.id, 'angry', 0.8);
+        if (best) {
+          mood(best.id, 'angry', 0.8);
+          this.burst(p.id, best.id);
+          this.burst(best.id, p.id);
+        }
       } else if (e.type === 'beaten') mood(e.playerId, 'surprised', 0.7);
       else if (e.type === 'trick' && !e.ok) mood(e.playerId, 'angry', 0.7);
       else if (e.type === 'post' || e.type === 'bar') {
@@ -221,6 +279,47 @@ export class MatchView {
         if (gk) mood(gk.id, 'surprised', 0.9);
       }
     }
+  }
+
+  // Zweikampf: Schulter rein (reactions.js duelPairs, dazu der Stoß nach Ereignissen). Das Anlehnen blendet
+  // weich ein und aus; die Richtung zum Gegner (in der Figur) wird geglättet, damit sie nicht zuckt.
+  duelState(m, p, o, match, duels, angle, dt) {
+    let want = 0;
+    let foe = null;
+    let shield = 0;
+    for (const d of duels) if (d.id === p.id) (want = d.k), (foe = d.foe), (shield = d.shield ? 1 : 0);
+    const b = m.duelBurst;
+    if (b && (b.t -= dt) > 0) {
+      want = 1;
+      foe ??= b.foe;
+    } else m.duelBurst = null;
+    const k = m.duelK ?? 0;
+    m.duelK = k + (want - k) * Math.min(1, dt * (want > k ? DUEL_ON : DUEL_OFF));
+    m.duelPush = b ? Math.max(0, b.t / DUEL_BURST) : Math.max(0, (m.duelPush ?? 0) - dt / DUEL_BURST);
+    m.duelShield = (m.duelShield ?? 0) + (shield - (m.duelShield ?? 0)) * Math.min(1, dt * 6);
+    o.duel = 0;
+    o.duelPush = 0;
+    if (foe != null) m.duelFoe = foe;
+    const f = m.duelK > 0.01 && m.duelFoe != null ? match.players.find((q) => q.id === m.duelFoe) : null;
+    if (!f) return void (m.duelX = m.duelZ = null);
+    const dx = f.pos.x - p.pos.x;
+    const dz = f.pos.z - p.pos.z;
+    const l = Math.hypot(dx, dz) || 1;
+    // Richtung in der Figur als Vektor glätten (kein Wrap bei ±180°), dann als Winkel weitergeben.
+    const bearing = foeBearing(angle, dx / l, dz / l);
+    const c = Math.min(1, dt * 10);
+    m.duelX = (m.duelX ?? Math.sin(bearing)) + (Math.sin(bearing) - (m.duelX ?? Math.sin(bearing))) * c;
+    m.duelZ = (m.duelZ ?? Math.cos(bearing)) + (Math.cos(bearing) - (m.duelZ ?? Math.cos(bearing))) * c;
+    o.duel = m.duelK;
+    o.duelDir = Math.atan2(m.duelX, m.duelZ);
+    o.duelShield = m.duelShield;
+    o.duelPush = m.duelPush;
+  }
+
+  // Kontakt im Zweikampf: kurzer Stoß (Schulter rein), auch wenn der Ball danach schon weg ist.
+  burst(id, foeId) {
+    const m = id != null && this.models.get(id);
+    if (m && foeId != null) m.duelBurst = { t: DUEL_BURST, foe: foeId };
   }
 
   // Kopfball kommt: Der Ball fliegt in Kopfhöhe auf den Spieler zu (aus Ballposition und
@@ -299,13 +398,13 @@ export class MatchView {
     this.blobs.dispose();
   }
 
-  // Nasse Spieler und nasser Ball: Stoff und Leder etwas dunkler (ein Materialfaktor je
-  // Team-Atlas, keine neue Textur). Den feuchten Glanz an Kanten gibt der Post-Shader.
+  // Nasse Spieler und nasser Ball: Trikots malen ihre Nässe in den Atlas (setKitWet: satter, Falten,
+  // klebende Stellen), dazu ein leichter Materialfaktor je Team-Atlas. Glanz an Kanten: Post-Shader.
   syncWetLook() {
     const w = Math.round(Math.min(1, this.weather.state.wet) * 20) / 20;
     if (w === this.wetLook) return;
     this.wetLook = w;
-    for (const a of this.atlases.values()) a.material?.color.setScalar(1 - 0.14 * w);
+    for (const a of this.atlases.values()) a.material?.color.setScalar(1 - 0.06 * w); // der Rest steckt im Atlas (setKitWet)
     this.referee?.mesh?.material.color.setScalar(1 - 0.12 * w);
     // Ball: nass etwas dunkler, im Schnee etwas heller (hebt sich vom Weiß durch seine Kante ab).
     const snow = this.weather.state.snow > 0.3 ? 0.06 : 0;
@@ -374,13 +473,110 @@ export class MatchView {
     this.blobIndex = 0;
   }
 
+  // Einwurf: Anlauf, Ballhalten und Wurf des Werfers (nur Darstellung). Die Simulation hält ihn auf dem
+  // Punkt; er wird bis zu THROW_STEPS dahinter gezeigt und läuft an. Nach dem Loslassen läuft der Wurf
+  // IN_T Sekunden (m.inSince), der Fortschritt des Anlaufs (m.inU) bleibt dafür erhalten.
+  throwInState(m, p, match, tin, dt) {
+    const mine = tin && tin.id === p.id ? tin : null;
+    const sp = match.setPiece;
+    const holds = match.ball.holder === p.id && p.role !== 'gk' && sp?.type === 'throwin' && sp.takerId === p.id;
+    if (m.heldIn && !holds && p.kickAnim > 0) m.inSince = 0; // Ball losgelassen: Wurf beginnt
+    m.heldIn = holds;
+    if (m.inSince != null && (m.inSince += dt) > IN_T) (m.inSince = null), (m.inU = 0);
+    if (mine) (m.inDir = mine.dir), (m.inU = mine.u);
+    const prev = m.inOff ?? 0;
+    const target = mine ? mine.off : 0;
+    // Wirft er früher, als der Anlauf dauert, schiebt er sich schnell an den Punkt (kein Sprung).
+    m.inOff = target >= prev ? target : Math.max(target, prev - 6 * dt);
+    m.inSpeed = dt > 0 ? Math.min(7, Math.max(0, (prev - m.inOff) / dt)) : 0;
+    m.inTurn = mine ? mine.turn : 1;
+  }
+
+  // Der Ball liegt in beiden Händen (Mitte der Hände = Ballmitte), solange der Werfer anläuft und ausholt.
+  throwInCarry(m, o) {
+    if (!(o.tinRun > 0 && !(o.tinT > IN_REL_AT))) return;
+    const bn = m.bones;
+    m.group.updateMatrixWorld(true);
+    bn.lowerArmL.localToWorld(HAND.set(0, -0.24, 0));
+    bn.lowerArmR.localToWorld(HAND2.set(0, -0.24, 0));
+    this.ballView.holdAt((HAND.x + HAND2.x) / 2, (HAND.y + HAND2.y) / 2, (HAND.z + HAND2.z) / 2);
+  }
+
+  // Der Ball folgt den Händen des Torwarts, solange er fängt, wirft oder den Ball fallen lässt
+  // (die Simulation hat ihn da schon an der Brust bzw. losgeschickt).
+  keeperCarry(m, o) {
+    const bn = m.bones;
+    const dived = !!(o.dive && o.dive.caught);
+    if (!(o.catchKind || dived || (o.throwT > 0 && o.throwT < 0.44) || (o.drop > 0 && o.drop < 0.5))) return;
+    m.group.updateMatrixWorld(true);
+    if (o.catchKind || dived) {
+      bn.lowerArmL.localToWorld(HAND.set(0, -0.24, 0));
+      bn.lowerArmR.localToWorld(HAND2.set(0, -0.24, 0));
+      this.ballView.holdAt((HAND.x + HAND2.x) / 2, (HAND.y + HAND2.y) / 2 - 0.2, (HAND.z + HAND2.z) / 2);
+    } else if (o.throwT > 0) {
+      bn.lowerArmR.localToWorld(HAND.set(0, -0.36, 0.03));
+      this.ballView.holdAt(HAND.x, HAND.y, HAND.z);
+    } else {
+      // Linke Hand hält den Ball vor den Körper, ab 0,15 fällt er zum Fuß, der ihn bei 0,5 trifft.
+      bn.lowerArmL.localToWorld(HAND.set(0, -0.36, 0));
+      bn.footR.localToWorld(HAND2.set(0, -0.04, 0.2));
+      const f = Math.min(1, Math.max(0, (o.drop - 0.15) / 0.35)) ** 2;
+      this.ballView.holdAt(HAND.x + (HAND2.x - HAND.x) * f, HAND.y + (HAND2.y + 0.1 - HAND.y) * f, HAND.z + (HAND2.z - HAND.z) * f);
+    }
+  }
+
+  // Wer sich am Rand aufwärmen soll (alle WARM_RECHECK s neu): Heim WARMUP_HOME, Gast WARMUP_AWAY Bankspieler.
+  // Wer schon dabei ist, bleibt (Zustand bleibt erhalten), wer eingewechselt wurde, fällt heraus.
+  pickWarmers(match) {
+    const next = [];
+    const home = match.homeTeam ?? 0;
+    for (const team of [home, 1 - home]) {
+      const picks = warmupPicks(match, team, team === home ? WARMUP_HOME : WARMUP_AWAY, this.warmOut);
+      picks.forEach((b, lane) => {
+        if (!this.models.has(b.id)) return;
+        const old = this.warm.find((w) => w.id === b.id);
+        if (old && old.lane === lane) return next.push(old);
+        const spot = warmupSpot(match, team, lane);
+        // Jeder fängt an anderer Stelle im Ablauf an, damit nicht alle dasselbe tun.
+        if (spot) next.push({ id: b.id, team, lane, st: { x0: spot.x0, x1: spot.x1, z: spot.z, t: 14 * lane + 23 * team, u: 0.15 + 0.5 * lane } });
+      });
+    }
+    this.warm = next;
+  }
+
+  // Aufwärmer zeichnen: laufen, hopsen, dehnen (nur Darstellung, die Simulation kennt sie nur als Bankspieler).
+  warmup(match, dt) {
+    if (!this.warmOn) return;
+    if ((this.warmLeft -= dt) <= 0) (this.warmLeft = WARM_RECHECK), this.pickWarmers(match);
+    if (match.incident?.type === 'gewitter' || match.phase === 'ended') return;
+    for (const w of this.warm) {
+      const m = this.models.get(w.id);
+      if (!m || match.players.some((q) => q.id === w.id)) continue; // gerade eingewechselt: bis zur nächsten Wahl nichts zeichnen
+      const o = warmupStep(w.st, dt, WARM_OUT);
+      m.group.visible = true;
+      m.group.position.set(o.x, 0, o.z);
+      m.group.rotation.y = o.angle;
+      WARM_ANIM.speed = o.speed;
+      WARM_ANIM.dt = dt;
+      WARM_ANIM.gesture = o.gesture;
+      animatePlayer(m, WARM_ANIM);
+      this.blob(m, o.x, o.z);
+    }
+  }
+
   sync(match, dt) {
     this.time += dt;
     for (const model of this.models.values()) model.group.visible = false;
+    let idx = -1;
+    const tin = throwInRun(match);
+    const duels = duelPairs(match);
     for (const p of match.players) {
+      idx++;
       const m = this.models.get(p.id);
       m.group.visible = true;
-      m.group.position.set(p.pos.x, 0, p.pos.z);
+      this.throwInState(m, p, match, tin, dt);
+      const px = p.pos.x - (m.inOff > 0.001 ? m.inDir * m.inOff : 0); // Anlauf des Einwerfers: hinter dem Punkt
+      m.group.position.set(px, 0, p.pos.z);
       // Torwart: Oberkörper zum Ball, auch wenn er seitlich an der Linie entlang schiebt – nur wenn
       // er den Ball selbst am Fuß hat, sich wirft oder weit läuft, zeigt er in Laufrichtung.
       let angle = Math.atan2(p.facing.x, p.facing.z);
@@ -398,6 +594,8 @@ export class MatchView {
         angle = p.diveAnim > 0 ? prev : prev + d * Math.min(1, dt * 10);
         m.gkAngle = angle;
       }
+      // Einwerfer: im Anlauf läuft er längs der Linie, dreht erst am Punkt in die Wurfrichtung.
+      if (m.inOff > 0.001) angle = lerpAngle(m.inDir * (Math.PI / 2), angle, m.inTurn);
       m.group.rotation.y = angle;
       if (m.flame) m.flame.scale.y = 0.4 + Math.sin(this.time * 12 + p.pos.x) * 0.04; // flackert
       // Hechtsprung des Torwarts und Rutschen am Boden machen dreckig; Laufen ein wenig.
@@ -429,13 +627,16 @@ export class MatchView {
       if (m.faceTime > 0) m.faceTime -= dt;
       // Ein wiederverwendetes Optionsobjekt statt 22 neuer pro Bild (animatePlayer liest nur).
       const o = ANIM;
-      o.speed = len(p.vel.x, p.vel.z);
+      o.speed = m.inOff > 0.001 ? m.inSpeed : len(p.vel.x, p.vel.z);
       o.dt = dt;
       o.headPrep = m.headPrep;
       o.headJump = m.headJump ?? 0;
       o.hit = m.hitInfo && m.hitInfo.t < 1 ? m.hitInfo : null;
       o.duck = m.duck > 0 ? 1 - m.duck : 0;
       o.face = m.faceTime > 0 ? m.faceHint : null;
+      m.tired = tiredFace(p, m.tired);
+      o.tired = m.tired;
+      setKitWet(m, this.wetLook);
       // Ausgeholt wird vorher (kickPrep, solange die Simulation den Schuss plant); der Ball fliegt
       // im ersten Schritt los – die Beinbewegung steht dann im Durchschwung: Treffpunkt ≈ Abflug.
       o.kickAnim = p.kickAnim * 0.53;
@@ -444,25 +645,62 @@ export class MatchView {
       o.kick = (p.kickAnim > 0 ? match.ball.lastTouch === p.id && match.ball.lastAction === 'shoot' : p.pending?.type === 'shoot') ? 'shot' : 'pass';
       o.headAnim = p.headAnim;
       o.holding = match.ball.holder === p.id ? (p.role === 'gk' ? 'chest' : 'overhead') : null;
+      // Einwurf: Anlauf (tinRun) und Wurf (tinT) ersetzen die starre Haltung über dem Kopf.
+      o.tinRun = 0;
+      o.tinT = 0;
+      if (m.inSince != null) (o.tinT = Math.max(0.001, m.inSince / IN_T)), (o.tinRun = Math.max(0.001, m.inU ?? 1));
+      else if (tin && tin.id === p.id) o.tinRun = Math.max(0.001, tin.u);
+      if (o.tinRun > 0) {
+        o.holding = null;
+        o.kickAnim = 0;
+        o.kickPrep = 0;
+      }
       // Torwart: Bereitschaft, wenn der Gegner mit dem Ball vor dem eigenen Tor auftaucht
       // (weich ein- und ausgeblendet), und Abwurf statt Schuss, wenn er aus der Hand wirft.
       o.ready = 0;
       o.throwT = 0;
+      o.drop = 0;
+      o.wide = 0;
+      o.fumble = 0;
+      o.catchKind = null;
+      o.catchT = 0;
       o.jump = p.jumpAnim > 0 ? 1 - p.jumpAnim / 0.5 : 0;
       o.punch = p.punchAnim > 0 ? 1 - p.punchAnim / 0.35 : 0;
+      o.punchStyle = m.punchStyle ?? 'beide';
       if (p.role === 'gk') {
         const goalX = -attackDir(match, p.team) * match.pitch.halfLength;
         const threat = match.phase === 'play' && !match.ball.holder && match.lastTouchTeam !== p.team && Math.hypot(match.ball.pos.x - goalX, match.ball.pos.z) < 12 ? 1 : 0;
         m.readyK = (m.readyK ?? 0) + (threat - (m.readyK ?? 0)) * Math.min(1, dt * 8);
-        o.ready = o.jump > 0 || o.punch > 0 ? 0 : m.readyK;
+        // Breitmachen, wenn ein Gegner mit dem Ball allein auf ihn zukommt (weich ein- und ausgeblendet).
+        m.wideK = (m.wideK ?? 0) + (wideStance(match, p) - (m.wideK ?? 0)) * Math.min(1, dt * 6);
+        const busy = o.jump > 0 || o.punch > 0;
+        o.ready = busy ? 0 : m.readyK;
+        o.wide = busy ? 0 : m.wideK;
+        // Fangen: je nach Ballhöhe Hände vor der Brust, über dem Kopf oder tief; dann Ball an die Brust.
+        if (m.catchKind && match.ball.holder === p.id && (m.catchSince += dt) < CATCH_T) {
+          o.catchKind = m.catchKind;
+          o.catchT = m.catchSince / CATCH_T;
+        } else m.catchKind = null;
+        // Abpraller zählt erst, wenn der Hechtsprung vorbei ist.
+        if (m.fumbleLeft > 0) {
+          if (p.diveAnim <= 0 && p.jumpAnim <= 0) m.fumbleLeft -= dt;
+          o.fumble = Math.max(0, 1 - m.fumbleLeft / FUMBLE_T);
+        }
+        // Abwurf (Arm holt aus, wirft) und Abschlag aus der Hand (Ball fallen lassen, Volley): ab dem
+        // Loslassen in der Simulation; der Ball bleibt in der Hand, bis sie ihn freigibt.
         const rel = match.keeperRelease;
-        const since = rel && rel.id === p.id && !rel.lofted ? match.time - rel.time : 9;
-        if (since < 0.45) {
-          o.throwT = Math.min(1, 0.35 + since / 0.45 * 0.65);
+        const since = rel && rel.id === p.id ? match.time - rel.time : 9;
+        if (since < 0.5 && !rel.lofted) {
+          o.throwT = Math.max(0.001, since / 0.5);
           o.kickAnim = 0;
           o.kickPrep = 0;
+        } else if (since < 0.3 && rel.lofted) {
+          o.drop = Math.max(0.001, since / 0.3);
+          o.kick = 'shot';
+          o.kickAnim = Math.max(0.001, 0.3 - since);
+          o.kickPrep = 0;
         } else if (p.pending?.type === 'pass' && !p.pending.lofted && match.ball.holder === p.id) {
-          o.throwT = 0.2; // Ausholen, solange der Wurf geplant ist
+          o.throwT = 0.18; // Ausholen, solange der Wurf geplant ist
           o.kickPrep = 0;
         }
       }
@@ -499,19 +737,37 @@ export class MatchView {
       o.fooled = p.fooledUntil > match.time ? 1 - (p.fooledUntil - match.time) / (p.fooledFor || 0.8) : 0;
       o.celebrate = celebrate;
       o.sad = p.mood === 'sad';
-      // Vorfälle: beim Gewitter Hände über den Kopf, bei der Taube scheuchen.
-      const inc = match.incident?.type;
-      o.cover = inc === 'gewitter' && len(p.vel.x, p.vel.z) > 1.5 ? 1 : 0;
-      const pg = inc === 'taube' ? match.pigeon : null;
-      o.gesture = pg && pg.state !== 'gleiten' && Math.hypot(pg.pos.x - p.pos.x, pg.pos.z - p.pos.z) < 2.3 ? 'scheuchen' : null;
+      // Vorfälle (reactions.js incidentPose): Hände über dem Kopf, scheuchen, zeigen, klettern am Zaun …
+      const ip = match.incident ? incidentPose(match, p, idx, INC_POSE) : null;
+      o.cover = ip ? ip.cover : 0;
+      o.gesture = ip ? ip.gesture : null;
+      m.group.position.y = ip ? ip.lift : 0;
       // Nach dem Schuss: Hände an den Kopf, abwinken, Faust des Torwarts (nur Darstellung, aus Ereignissen).
       if (m.reactTime > 0) {
         m.reactTime -= dt;
         if (!o.gesture && !celebrate && match.ball.holder !== p.id) o.gesture = m.reactGesture;
       }
+      if (o.fumble > 0) o.gesture = null; // erst die Hände zurück, dann erst die Faust
+      // Schuss und Pass: Schussbein nach der Ballseite (beim Ausholen festgelegt), danach klingt die
+      // Bewegung aus, statt in die Laufbewegung zu springen.
+      if (o.kickAnim > 0 || o.kickPrep > 0) {
+        if (!m.kickOn) m.kickSide = kickFoot(p, match.ball, m.footPref);
+        m.kickOn = true;
+      } else m.kickOn = false;
+      if (o.kickAnim > 0) (m.kickTail = 0), (m.kickWas = true), (m.kickKind = o.kick);
+      else if (m.kickWas) (m.kickWas = false), (m.kickTail = 1);
+      else if (m.kickTail > 0) m.kickTail = Math.max(0, m.kickTail - dt / KICK_TAIL);
+      if (p.state !== 'normal') m.kickTail = 0;
+      o.kickTail = m.kickTail ?? 0;
+      o.kickFoot = m.kickSide ?? 1;
+      if (o.kickAnim <= 0 && o.kickTail > 0) o.kick = m.kickKind;
+      this.duelState(m, p, o, match, duels, angle, dt);
       animatePlayer(m, o);
+      if (p.role === 'gk') this.keeperCarry(m, o);
+      else this.throwInCarry(m, o);
       this.blob(m, p.pos.x, p.pos.z);
     }
+    this.warmup(match, dt);
     // Ausgewechselte: abklatschen und vom Platz trotten.
     this.leaving = this.leaving.filter((l) => {
       const m = this.models.get(l.id);
@@ -547,6 +803,7 @@ export class MatchView {
         }
       }
       REF_ANIM.cover = match.incident?.type === 'gewitter' && REF_ANIM.speed > 1.5 ? 1 : 0;
+      REF_ANIM.gesture = refereePose(match) ?? REF_ANIM.gesture;
       animatePlayer(this.referee, REF_ANIM);
       if (r.cardAnim > 0) this.referee.arms[1].rotation.x = -2.9; // Karte hoch
       this.blob(this.referee, r.pos.x, r.pos.z);

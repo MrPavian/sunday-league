@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { len } from '../core/math.js';
+import { SPRINKLER_SPOTS } from '../sim/incidents.js';
 import { keepAlpha, toon } from './materials.js';
 import { currentQuality } from './quality.js';
 import { animatePlayer, createPlayerModel, disposeKit } from './PlayerModel.js';
@@ -153,7 +154,7 @@ export class IncidentView {
     this.sprinklers.visible = false;
     this.jets = [];
     const water = keepAlpha(new THREE.PointsMaterial({ color: 0xcfe8ff, size: 3, sizeAttenuation: false, transparent: true, opacity: 0.85 }));
-    for (const [sx, sz] of [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]]) {
+    for (const [sx, sz] of SPRINKLER_SPOTS) {
       const g = new THREE.BufferGeometry();
       g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(90 * 3), 3));
       const pts = new THREE.Points(g, water);
@@ -195,6 +196,9 @@ export class IncidentView {
     d.legs.forEach((leg, i) => (leg.rotation.x = Math.sin(run + (i % 2 ? Math.PI : 0) + (i > 1 ? 0.8 : 0)) * 0.7));
     d.tail.rotation.y = Math.sin(this.time * 22) * 0.6;
     d.head.position.y = 0.46 + Math.abs(Math.sin(run)) * 0.02;
+    // Haken: Der Körper neigt sich in die Kurve; mit dem Ball im Maul schüttelt er den Kopf.
+    d.group.rotation.z = Math.max(-0.5, Math.min(0.5, -(dog.turn ?? 0) * 9));
+    d.head.rotation.y = dog.hasBall ? Math.sin(this.time * 26) * 0.55 : 0;
   }
 
   syncPigeon(pg) {
@@ -211,8 +215,11 @@ export class IncidentView {
     // Fliegen: Flügel schlagen; am Boden angelegt, der Kopf nickt beim Picken.
     const beat = pg.flap ? Math.sin(this.time * 26) * 1.1 : 0;
     for (const w of v.wings) w.pivot.rotation.z = w.sx * (pg.flap ? 0.3 + beat : -0.1);
-    const peck = pg.flap ? 0 : Math.max(0, Math.sin(this.time * 7));
+    // Auf der Latte sitzt sie still und dreht den Kopf hin und her.
+    const perched = pg.state === 'latte';
+    const peck = pg.flap || perched ? 0 : Math.max(0, Math.sin(this.time * 7));
     v.head.rotation.x = peck * 0.9;
+    v.head.rotation.y = perched ? Math.sin(this.time * 1.3) * 0.7 : 0;
     v.head.position.z = 0.1 + peck * 0.03;
   }
 

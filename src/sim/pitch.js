@@ -127,6 +127,13 @@ export const BIG_PITCH = {
   surface: SURFACES.grass,
 };
 
+// Nur für den überregionalen Pokal (nicht in PITCHES, damit sie in Einstellungen und Freundschaftsspielen nicht auftauchen):
+// derselbe Rasen wie das Großfeld (base), anderer Rahmen. Zusatztribüne: Stahlrohrtribüne am eigenen Platz.
+// Stadion: größeres Stadion in der Nähe mit Rängen rundum und Flutlicht.
+export const STADIUM = { ...BIG_PITCH, id: 'stadion', base: 'grossfeld', name: tr('Kanal-Arena', 'Canal Arena') };
+export const BIG_PITCH_STANDS = { ...BIG_PITCH, id: 'grossfeld_tribuene', base: 'grossfeld', extraStand: true };
+export const BUND_PITCHES = { stadion: STADIUM, grossfeld_tribuene: BIG_PITCH_STANDS };
+
 export const HALL = {
   id: 'halle',
   name: tr('Sporthalle Kanalschule', 'Kanalschule Sports Hall'),

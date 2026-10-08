@@ -262,6 +262,7 @@ function acrobatic(m, p, kind, toGoal, dGoal, untrained = false) {
   m.lastAcro = { id: p.id, kind, time: m.time };
   m.events.push({ type: 'shot', playerId: p.id, power: clean ? 0.9 : 0.5, acro: kind });
   (m.lastShotAt ??= [-9, -9])[p.team] = m.time;
+  (m.lastShot ??= [null, null])[p.team] = { id: p.id, time: m.time }; // wie markShooter (actions.js; dort importiert, hier wäre es zirkulär)
   m.shotTime = m.time;
 }
 

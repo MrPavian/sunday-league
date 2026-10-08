@@ -17,6 +17,7 @@ import { createRng } from '../core/rng.js';
 import { pixelTexture, toon } from './materials.js';
 import { currentQuality } from './quality.js';
 import { DECAL_CODE } from './weather.js';
+import { crowdCues } from './reactions.js';
 
 const ATLAS = 32;
 const CELL = 4;
@@ -99,6 +100,36 @@ function assemble(parts) {
   return geo;
 }
 
+// Schlanke Variante für die vollen Ränge (Stadion, Tribünenplatz): flache Teile statt Quader – 12 statt rund 260 Dreiecke
+// je Person, sonst würde eine volle Hütte das Dreiecksbudget sprengen. Gleiche Maße, Palette und Haltungen wie oben.
+function assemblePlanes(parts) {
+  const pos = [];
+  const nor = [];
+  const uv = [];
+  const part = [];
+  for (const [w, h, x, y, tex, p = 0] of parts) {
+    const g = new THREE.PlaneGeometry(w, h).toNonIndexed();
+    g.translate(x, y, 0);
+    pos.push(...g.attributes.position.array);
+    nor.push(...g.attributes.normal.array);
+    const t = texUV(tex);
+    for (let i = 0; i < g.attributes.position.count; i++) {
+      uv.push(...t);
+      part.push(p);
+    }
+    g.dispose();
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  geo.setAttribute('aPart', new THREE.Float32BufferAttribute(part, 1));
+  return geo;
+}
+// Rumpf, Kopf, Haare (immer) und Beine (nur stehend) – 4 Flächen; Arm: eine Fläche.
+const bodyGeometryLite = () => assemblePlanes([[0.4, 0.52, 0, 1.18, 'top'], [0.24, 0.26, 0, 1.62, 'skin'], [0.26, 0.1, 0, 1.78, 'hair'], [0.26, 0.78, 0, 0.45, 'bottom', 1]]);
+const armGeometryLite = () => assemblePlanes([[0.11, 0.46, 0, -0.22, 'top']]);
+
 // Körper: Füße bei y = 0, Blick nach +z. Maße wie ein Spieler von der Stange – bewusst schlicht.
 function bodyGeometry() {
   return assemble([
@@ -139,6 +170,9 @@ function patch(shader) {
 
 // --- Aufbau ---------------------------------------------------------------------------
 // Sammelt alle Platzhalter unter root ein und baut daraus die Menge.
+// Volle Hütte: Stadion und Tribünenplatz des überregionalen Pokals zeigen mehr als MAX_TILES Leute (schlanke Figuren,
+// siehe oben). Die Menge bleibt eine instanzierte Gruppe (2 Draw Calls); Leute ab MAX_TILES teilen sich die Farbpaletten der ersten.
+export const CROWD_CAP = { stadion: 1100, grossfeld_tribuene: 520 };
 export function buildCrowd(root, venueId = '') {
   const slots = [];
   root.traverse((o) => o.userData.crowdSlot && slots.push(o));
@@ -157,7 +191,7 @@ export function buildCrowd(root, venueId = '') {
     if (kept.some((k) => Math.hypot(k.x - s.x, k.z - s.z) < 0.5 && Math.abs(k.y - s.y) < 0.3)) continue;
     kept.push(s);
   }
-  const crowd = new Crowd(root, kept.slice(0, MAX_TILES).map((s, i) => ({ ...s, i, seed })), venueId);
+  const crowd = new Crowd(root, kept.slice(0, CROWD_CAP[venueId] ?? MAX_TILES).map((s, i) => ({ ...s, i, seed })), venueId);
   if (booth?.x != null) crowd.setBooth(booth);
   return crowd;
 }
@@ -168,7 +202,12 @@ export const BOOTH_WAIT = 4; // s an der Theke
 export const BOOTH_MAX = 2; // höchstens so viele gleichzeitig unterwegs
 export const boothTrip = (dist) => 2 * (dist / BOOTH_WALK) + BOOTH_WAIT;
 
-const TYPE = { idle: 0, clap: 1, cheer: 2, wave: 3, lean: 4, point: 5, head: 6, look: 7, booth: 8 };
+// rise: bei einer Chance aufstehen und die Arme recken; shift: Gewicht von einem Bein aufs andere;
+// follow: dem Ball mit dem Kopf folgen.
+const TYPE = { idle: 0, clap: 1, cheer: 2, wave: 3, lean: 4, point: 5, head: 6, look: 7, booth: 8, rise: 9, shift: 10, follow: 11 };
+const KIND = { clap: TYPE.clap, cheer: TYPE.cheer, lean: TYPE.lean, head: TYPE.head, point: TYPE.point, rise: TYPE.rise };
+const YAW_MAX = 0.8; // so weit dreht sich ein Zuschauer zum Ball (Bogenmaß)
+const YAW_EASE = 0.3; // Anteil der Restdrehung je Takt
 
 export class Crowd {
   constructor(root, slots, venueId) {
@@ -178,6 +217,7 @@ export class Crowd {
     this.slots = slots.map((s) => ({ ...s, rank: hash(s.seed, s.i) })).sort((a, b) => a.rank - b.rank);
     const n = this.slots.length;
     this.n = n;
+    this.cueState = {}; // letzter Schuss für die Reaktionen (reactions.js crowdCues)
     this.stats = { people: n, shown: 0, active: 0, calls: n ? 2 : 0 };
     if (!n) return;
 
@@ -196,8 +236,11 @@ export class Crowd {
     depth.onBeforeCompile = patch;
     depth.customProgramCacheKey = () => 'crowd-depth';
 
-    const body = bodyGeometry();
-    const arm = armGeometry();
+    const lite = venueId in CROWD_CAP;
+    this.lite = lite;
+    const body = lite ? bodyGeometryLite() : bodyGeometry();
+    const arm = lite ? armGeometryLite() : armGeometry();
+    if (lite) this.material.side = THREE.DoubleSide; // flache Teile: auch von hinten sichtbar (Ränge gegenüber der Kamera)
     this.tile = new Float32Array(n * 2);
     this.armTile = new Float32Array(n * 4);
     this.sit = new Float32Array(n);
@@ -208,7 +251,7 @@ export class Crowd {
     arm.setAttribute('iSit', new THREE.InstancedBufferAttribute(this.armSit, 1));
     this.body = new THREE.InstancedMesh(body, this.material, n);
     this.arms = new THREE.InstancedMesh(arm, this.material, n * 2);
-    this.body.castShadow = true;
+    this.body.castShadow = !lite; // die volle Hütte wirft keine Einzelschatten (Dreiecksbudget)
     this.body.customDepthMaterial = depth;
     this.arms.castShadow = false; // Schatten der Arme sähe man nicht – spart einen Durchgang
     for (const m of [this.body, this.arms]) {
@@ -228,13 +271,14 @@ export class Crowd {
     this.speed = new Float32Array(n);
     this.fan = new Int8Array(n); // 0 Heim, 1 Gast, -1 neutral
     this.scale = new Float32Array(n);
+    this.yaw = new Float32Array(n); // Kopf-/Körperdrehung zum Ball, weich nachgeführt
     this.dirty = new Uint8Array(n);
     this.active = new Uint8Array(n);
     this.slots.forEach((s, i) => {
       const r = hash(s.seed, s.i + 101);
       // Anhänger: links eher Heim, rechts gemischt – eine grobe Fankurve, kein Stadion.
       const home = s.x < 0 ? 0.7 : 0.45;
-      this.fan[i] = r < home ? 0 : r < home + 0.3 ? 1 : -1;
+      this.fan[i] = i >= MAX_TILES ? this.fan[i % MAX_TILES] : r < home ? 0 : r < home + 0.3 ? 1 : -1; // wer eine Palette teilt, trägt dieselben Vereinsfarben
       this.phase[i] = hash(s.seed, s.i + 7) * 6.28;
       this.speed[i] = 0.8 + hash(s.seed, s.i + 13) * 0.5;
       this.scale[i] = s.look?.height ?? 1;
@@ -398,23 +442,7 @@ export class Crowd {
   handleEvents(match) {
     if (!this.n) return;
     for (const e of match.events) {
-      if (e.type === 'goal') {
-        const scorer = e.ownGoal ? 1 - e.team : e.team;
-        const side = scorer === this.home ? 0 : 1;
-        this.react((i) => this.fan[i] === side, TYPE.cheer, 0.95, 4);
-        this.react((i) => this.fan[i] === -1, TYPE.clap, 0.6, 3);
-        this.react((i) => this.fan[i] === 1 - side, TYPE.head, 0.45, 2.5);
-      } else if (e.type === 'shot') {
-        this.react(() => true, TYPE.lean, e.acro ? 0.6 : 0.35, 1.2);
-      } else if (e.type === 'trick' && e.ok) {
-        this.react(() => true, TYPE.clap, 0.22, 1.4); // Szenenapplaus
-      } else if (e.type === 'post' || e.type === 'bar') {
-        this.react(() => true, TYPE.head, 0.5, 1.6);
-      } else if (e.type === 'save') {
-        this.react(() => true, TYPE.clap, 0.3, 1.8);
-      } else if (e.type === 'foul' || e.type === 'card') {
-        this.react(() => true, TYPE.point, 0.18, 1.5);
-      } else if (e.type === 'end') {
+      if (e.type === 'end') {
         const [a, b] = match.score;
         const win = a === b ? -1 : (a > b ? 0 : 1) === this.home ? 0 : 1;
         if (win < 0) this.react(() => true, TYPE.clap, 0.5, 4);
@@ -422,6 +450,12 @@ export class Crowd {
           this.react((i) => this.fan[i] === win, TYPE.cheer, 0.85, 5);
           this.react((i) => this.fan[i] !== win, TYPE.clap, 0.25, 3);
         }
+        continue;
+      }
+      for (const c of crowdCues(this.cueState, match, e)) {
+        // Anhänger einer Mannschaft: fan 0 = Heim, 1 = Gast (je nach homeTeam), -1 neutral.
+        const side = typeof c.who === 'number' ? (c.who === this.home ? 0 : 1) : c.who === 'neutral' ? -1 : null;
+        this.react(side === null ? () => true : (i) => this.fan[i] === side, KIND[c.kind], c.share, c.dur);
       }
     }
   }
@@ -452,9 +486,10 @@ export class Crowd {
       const i = Math.floor(hash(Math.floor(t * 3), k * 7919) * this.shown);
       if (this.until[i] > t) continue;
       const r = hash(i, Math.floor(t));
-      this.type[i] = r < 0.35 ? TYPE.look : r < 0.6 ? TYPE.clap : r < 0.8 ? TYPE.lean : TYPE.wave;
+      // Meist wippt jemand von einem Bein aufs andere oder schaut dem Ball nach; seltener klatscht, winkt oder lehnt einer.
+      this.type[i] = r < 0.3 ? TYPE.follow : r < 0.55 ? TYPE.shift : r < 0.7 ? TYPE.look : r < 0.82 ? TYPE.clap : r < 0.92 ? TYPE.lean : TYPE.wave;
       this.delay[i] = 0;
-      this.until[i] = t + 1.2 + r * 2.5;
+      this.until[i] = t + 1.2 + r * 2.5 + (this.type[i] === TYPE.shift || this.type[i] === TYPE.follow ? 2 : 0);
       busy++;
     }
     let active = 0;
@@ -463,7 +498,7 @@ export class Crowd {
       if (!on && !this.dirty[i]) continue; // Stillstehende nicht anfassen
       if (!on && this.type[i] !== TYPE.idle) this.type[i] = TYPE.idle;
       this.pose(i);
-      this.dirty[i] = on ? 1 : 0; // nach dem Ende einmal in die Ruhepose
+      this.dirty[i] = on || Math.abs(this.yaw[i]) > 0.01 ? 1 : 0; // nach dem Ende, bis die Drehung zurück ist, einmal in die Ruhepose
       if (on) active++;
     }
     this.stats.active = active;
@@ -486,6 +521,9 @@ export class Crowd {
     let bob = 0;
     let lean = 0;
     let turn = 0;
+    let roll = 0;
+    let sway = 0;
+    let watch = false; // dem Ball folgen
     // Arme: vor (negativ) / seitlich (außen positiv)
     let lx = 0.05;
     let lz = 0.03;
@@ -498,7 +536,7 @@ export class Crowd {
       lz = rz = -0.15 + 0.4 * c;
     } else if (type === TYPE.cheer) {
       sit = 0; // Sitzende springen beim Tor auf
-      bob = 0.07 * Math.abs(Math.sin(w * 6));
+      bob = 0.13 * Math.abs(Math.sin(w * 6)); // springt
       lx = rx = -2.75 + 0.2 * Math.sin(w * 6);
       lz = rz = 0.35;
       lean = -0.08;
@@ -518,7 +556,23 @@ export class Crowd {
       lean = 0.05;
     } else if (type === TYPE.look) {
       turn = 0.35 * Math.sin(w * 0.8);
+    } else if (type === TYPE.rise) {
+      sit = 0; // steht auf, beugt sich vor, Arme hoch (Hände halb über dem Kopf)
+      lean = 0.12;
+      bob = 0.02 * Math.abs(Math.sin(w * 5));
+      lx = rx = -2.2 + 0.15 * Math.sin(w * 5);
+      lz = rz = 0.25;
+      watch = true;
+    } else if (type === TYPE.shift) {
+      // Gewicht verlagern: Becken pendelt langsam zur Seite, Oberkörper neigt sich gegen.
+      roll = 0.05 * Math.sin(w * 0.9);
+      sway = 0.035 * Math.sin(w * 0.9);
+      bob = -0.008 * Math.abs(Math.sin(w * 0.9));
+      watch = true;
+    } else if (type === TYPE.follow) {
+      watch = true;
     }
+    if (type === TYPE.lean) watch = true;
     const trip = type === TYPE.booth ? this.boothPose(i, this.time) : null;
     if (trip) {
       if (trip.phase !== 'warten') {
@@ -540,13 +594,22 @@ export class Crowd {
     }
     // Ruhe: kaum sichtbares Atmen/Wippen (nur solange jemand aktiv ist, sonst still).
     if (running) bob += 0.012 * Math.sin(w * 2.2);
+    // Drehung zum Ball (Winkel relativ zur Blickrichtung des Platzes, begrenzt), weich nachgeführt und wieder zurück.
+    let want = 0;
+    const ball = this.match?.ball;
+    if (watch && ball) {
+      const d = Math.atan2(ball.pos.x - s.x, ball.pos.z - s.z) - s.facing;
+      want = Math.max(-YAW_MAX, Math.min(YAW_MAX, Math.atan2(Math.sin(d), Math.cos(d))));
+    }
+    this.yaw[i] += (want - this.yaw[i]) * YAW_EASE;
+    turn += this.yaw[i];
     const drop = sit ? SIT_DROP : 0;
     const sc = this.scale[i];
     this.sit[i] = sit;
     // Körper
-    this.e.set(lean, (trip ? trip.facing : s.facing) + turn, 0, 'YXZ');
+    this.e.set(lean, (trip ? trip.facing : s.facing) + turn, roll, 'YXZ');
     this.q.setFromEuler(this.e);
-    this.v.set(trip ? trip.x : s.x, (trip ? 0 : s.y) + bob, trip ? trip.z : s.z);
+    this.v.set((trip ? trip.x : s.x) + sway, (trip ? 0 : s.y) + bob, trip ? trip.z : s.z);
     this.s.set(sc, sc, sc);
     this.m.compose(this.v, this.q, this.s);
     this.body.setMatrixAt(i, this.m);

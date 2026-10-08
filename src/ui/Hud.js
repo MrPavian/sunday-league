@@ -11,6 +11,7 @@ import { findAnyPlayer } from '../sim/squad.js';
 import { REF_TRAITS } from '../sim/referee.js';
 import { attackDir, getPlayer } from '../sim/match.js';
 import { shootoutScore } from '../sim/shootout.js';
+import { footballMinute } from '../sim/minute.js';
 import { crestOf, crestSVG } from './crest.js';
 import { SHOUTS } from '../sim/coach.js';
 import { orderLabel } from '../sim/commands.js';
@@ -20,7 +21,9 @@ import { hex } from './ds.js';
 
 
 // Anzeige in "Fußballminuten": die Spielzeit wird auf 90 Minuten hochgerechnet.
-export const matchMinute = (match, t) => Math.min(90, Math.floor((t / match.duration) * 90) + 1);
+export const matchMinute = (match, t) => footballMinute(match, t);
+// „1. Halbzeit" / „Verlängerung" für die Uhr.
+export const halfLabel = (match) => (match.extra ? tr('Verlängerung', 'Extra time') : `${match.half}${tr('. Halbzeit', match.half === 1 ? 'st half' : 'nd half')}`);
 
 export class Hud {
   constructor(root) {
@@ -204,7 +207,9 @@ export class Hud {
           2.8,
           3,
         );
-      } else if (e.type === 'fulltime_draw') this.toast(tr(`Unentschieden – ${match.pitch.id === 'halle' ? 'Siebenmeterschießen' : 'Elfmeterschießen'}!`, 'All square – penalties!'), 2.5, 6);
+      } else if (e.type === 'extratime_start') this.toast(tr(`VERLÄNGERUNG – ${match.score[0]}:${match.score[1]} nach der regulären Spielzeit`, `EXTRA TIME – ${match.score[0]}-${match.score[1]} after normal time`), 3, 6);
+      else if (e.type === 'extratime_half') this.toast(tr('Seitenwechsel in der Verlängerung', 'Switching ends in extra time'), 2.5, 4);
+      else if (e.type === 'fulltime_draw') this.toast(tr(`Unentschieden – ${match.pitch.id === 'halle' ? 'Siebenmeterschießen' : 'Elfmeterschießen'}!`, 'All square – penalties!'), 2.5, 6);
       else if (e.type === 'shootout_kick') {
         const shooter = findAnyPlayer(match, e.shooterId);
         const mine = e.team === match.humanTeam;
@@ -239,7 +244,7 @@ export class Hud {
       const dots = (t) => so.kicks[t].map((k) => (k ? '●' : '○')).join('') || '–';
       const [pa, pb] = shootoutScore(so);
       this.$('.clock').textContent = `${tr('i. E.', 'pens')} ${pa}:${pb} · ${dots(0)} | ${dots(1)}`;
-    } else this.$('.clock').textContent = `${match.half}${tr('. Halbzeit', match.half === 1 ? 'st half' : 'nd half')} · ${matchMinute(match, match.time)}'`;
+    } else this.$('.clock').textContent = `${halfLabel(match)} · ${matchMinute(match, match.time)}'`;
 
     if (this.toastTimer > 0 && (this.toastTimer -= dt) <= 0) this.hideToast();
 

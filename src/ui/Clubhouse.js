@@ -7,7 +7,7 @@ import { coachLevel, homeView, setCoachLevel } from './prefs.js';
 import { button, haptic, icon, tabs as uiTabs } from './ds.js';
 import { TacticBoard } from './TacticBoard.js';
 import { bindFlips, phone } from './world.js';
-import { crestOf, crestSVG } from './crest.js';
+import { crestExtras, crestOf, crestSVG } from './crest.js';
 import { appointStaff, releaseStaff } from '../career/staff.js';
 
 // Was im Vereinsheim scrollt (je nach Bildschirmgröße das Fenster, der Inhalt oder die Mappe).
@@ -128,6 +128,8 @@ export class Clubhouse {
         const [part, color] = value.split(':');
         this.draft.kit[part] = Number(color);
       } else if (action === 'kitPattern') this.draft.kit.pattern = value;
+      else if (action === 'kitCollar') this.draft.kit.collar = value;
+      else if (action === 'kitSleeves') this.draft.kit.sleeves = value;
       else if (action.startsWith('crest')) this.crestAction(action, value);
       else if (action === 'foundClub') {
         updateClub(this.career, this.draft ?? {}, { free: true });
@@ -529,7 +531,7 @@ export class Clubhouse {
         <nav class="club-rail" aria-label="${tr('Bereiche', 'Sections')}">${rail}</nav>
         <div class="club-main">
           <header class="club-top">
-            <div class="club-id">${crestSVG(crestOf(club), { size: 34, short: club.short, label: club.name })}<div><h2>${club.name}</h2>
+            <div class="club-id">${crestSVG(crestOf(club), { size: 34, short: club.short, ...crestExtras(this.career), label: club.name })}<div><h2>${club.name}</h2>
             <small>${leagueName(c)} · ${tr('Saison', 'Season')} ${c.season} · ${over ? tr('Saison beendet', 'Season over') : `${this.results ? tr('Ergebnisse', 'Results') : tr('Woche vor', 'Week before')} ${tr('Spieltag', 'matchday')} ${roundNo} / ${c.fixtures.length}`}</small></div></div>
             <div class="club-tools">${this.h.onSettings ? button(icon('gear'), { kind: 'ghost icon', action: 'onSettings', 'aria-label': tr('Einstellungen', 'Settings'), title: tr('Einstellungen', 'Settings') }) : ''}${button(icon('exit'), { kind: 'ghost icon', action: 'onMenu', 'aria-label': tr('Hauptmenü', 'Main menu'), title: tr('Hauptmenü', 'Main menu') })}</div>
           </header>

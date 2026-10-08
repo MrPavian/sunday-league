@@ -351,7 +351,7 @@ export function makeLawnTexture(rng, { width, depth, pitch, texelsPerMeter = 12 
   p.tint(9, [72, 120, 56], [90, 140, 66], 0.45);
   p.tint(2.5, [76, 124, 58], [88, 136, 64], 0.22);
   const light = [90, 145, 70];
-  const mow = pitch.id === 'grossfeld' ? (x) => Math.floor((x + hl) / 5.25) % 2 === 0 : pitch.id === 'sportplatz' ? (x, z) => Math.floor(Math.hypot(x, z) / 4) % 2 === 0 : (x) => Math.floor((x + width / 2) / 3) % 2 === 0;
+  const mow = (pitch.base ?? pitch.id) === 'grossfeld' ? (x) => Math.floor((x + hl) / 5.25) % 2 === 0 : pitch.id === 'sportplatz' ? (x, z) => Math.floor(Math.hypot(x, z) / 4) % 2 === 0 : (x) => Math.floor((x + width / 2) / 3) % 2 === 0;
   const rough = [66, 110, 50];
   p.field((x, z) => {
     const out = Math.max(Math.abs(x) - hl, Math.abs(z) - hw);
