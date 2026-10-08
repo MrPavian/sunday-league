@@ -195,6 +195,8 @@ function aimAssist(m, p, dir) {
   return norm(dx, z - p.pos.z);
 }
 
+export const CORNER_SCATTER = 2.5;
+export const CROSS_VMAX = { driven: 24, high: 27 };
 function pass(m, p, a, fatigue, fromHands) {
   const { ball, rng, pitch } = m;
   const eye = hasTrait(p, 'gutes_auge');
@@ -289,9 +291,14 @@ function pass(m, p, a, fatigue, fromHands) {
     vy = ownHalf ? 2 : 0.5;
   } else {
     // Pass in die Tiefe (lead): nicht in den Fuß, sondern in den Raum vor dem Läufer.
-    const lx = clamp(lead ? lead.x : target.pos.x + target.vel.x * 0.35, -pitch.halfLength, pitch.halfLength);
+    const lx0 = clamp(lead ? lead.x : target.pos.x + target.vel.x * 0.35, -pitch.halfLength, pitch.halfLength);
     const edge = pitch.boundary === 'lines' ? 1.5 : 0.5;
-    const lz = clamp(lead ? lead.z : target.pos.z + target.vel.z * 0.35, -pitch.halfWidth + edge, pitch.halfWidth - edge);
+    const lz0 = clamp(lead ? lead.z : target.pos.z + target.vel.z * 0.35, -pitch.halfWidth + edge, pitch.halfWidth - edge);
+    // Eckstoß: Die Flanke landet nicht auf den Zentimeter beim Mitspieler, sondern streut um den Zielpunkt (Standardabweichung
+    // in Metern, gewählt, nicht gemessen; sonst fiel aus gut 13 % der Ecken ein Tor, real sind es 3–5 %).
+    const sc = a.zone && a.lofted ? CORNER_SCATTER * (1.4 - p.attrs.passing) : 0;
+    const lx = lx0 + rng.gauss() * sc;
+    const lz = clamp(lz0 + rng.gauss() * sc, -pitch.halfWidth + edge, pitch.halfWidth - edge);
     const d = len(lx - p.pos.x, lz - p.pos.z);
     dir = norm(lx - p.pos.x, lz - p.pos.z);
     if (a.lofted) {
@@ -301,6 +308,15 @@ function pass(m, p, a, fatigue, fromHands) {
       vy = a.driven ? clamp(1.5 + d * 0.1, 2, 3.2) : clamp(3 + d * 0.22, 4, 8);
       const flight = (vy + Math.sqrt(Math.max(0, vy * vy - 2 * 9.81 * (arrive - 0.11)))) / 9.81;
       speed = d / Math.max(0.4, flight);
+      // Zu weit für den Bogen: Bei vy 3 und 20 m ergab die Rechnung 50 m/s (Ecke auf dem Großfeld bis 129 m/s). Höchsttempo
+      // einer Flanke: 24 m/s scharf, 27 m/s hoch (gewählt, nicht gemessen); der Bogen wird dann so hoch, dass der Ball
+      // zum Zeitpunkt t = d / v in der Ankunftshöhe ist: vy = (h - 0,11) / t + g t / 2.
+      const vmax = a.driven ? CROSS_VMAX.driven : CROSS_VMAX.high;
+      if (speed > vmax) {
+        const t = d / vmax;
+        vy = (arrive - 0.11) / t + 4.905 * t;
+        speed = vmax;
+      }
     } else if (lead) {
       // In den Lauf: so dosiert, dass er kurz hinter dem Zielpunkt ausrollt.
       const k = pitch.surface?.rollFriction ?? 0.7;
@@ -485,6 +501,13 @@ export function keeperSaves(m) {
   }
 }
 
+// Höchsttempo eines Kopfballs aufs Tor: 22 m/s (rund 80 km/h), gewählt, nicht gemessen. Vorher folgte es der Flanke (bis 27 m/s).
+export const HEAD_VMAX = 22;
+export const HEAD_DUEL = { dist: 1.5, factor: 0.6 };
+export const HEAD_MISS = 0.45;
+// Zielstreuung eines Kopfballs aufs Tor (Bogenmaß, zusätzlich zur Streuung durch die Kopfballstärke): real kommen nur rund 34 % der
+// Kopfbälle aufs Tor (StatsBomb); der Wert 0,3 ist gewählt, nicht gemessen.
+export const HEAD_AIM = 0.3;
 // Kopfball: hohe Bälle in Reichweite. Vorne aufs Tor, hinten weg vom Tor.
 export function headerTouch(m) {
   const { ball, rng, pitch } = m;
@@ -508,18 +531,40 @@ export function headerTouch(m) {
   p.headAnim = 0.3;
   const monster = hasTrait(p, 'kopfball');
   const skill = clamp(p.attrs.heading + (monster ? 0.2 : 0), 0, 1);
-  if (!rng.chance(0.35 + 0.4 * skill)) return; // verpasst – Ball fliegt weiter
+  // Bedrängt (Gegner im Nacken): Der Kopfball gelingt seltener – bei Ecken steht jedem Angreifer ein Verteidiger gegenüber.
+  // Faktor 0,6 gewählt, nicht gemessen; Maßstab war der Anteil der Ecken, aus denen ein Tor fällt (real rund 3–5 %).
+  const marked = m.players.some((o) => o.team !== p.team && o.role !== 'gk' && o.state === 'normal' && dist2d(o.pos, p.pos) < HEAD_DUEL.dist);
+  if (!rng.chance((0.35 + 0.4 * skill) * (marked ? HEAD_DUEL.factor : 1))) return; // verpasst – Ball fliegt weiter
 
   const s = attackDir(m, p.team);
   const goal = { x: s * pitch.halfLength, z: rng.range(-pitch.goalHalfWidth * 0.8, pitch.goalHalfWidth * 0.8) };
   // Aufs Tor geköpft wird bis knapp hinter den Elfmeterpunkt (Großfeld 11 m) – fest 8 m hieß dort: nie.
   const nearGoal = dist2d(p.pos, goal) < Math.max(8, (pitch.penaltyDistance ?? 0) + 2);
   let dir = nearGoal ? norm(goal.x - p.pos.x, goal.z - p.pos.z) : norm(s * 0.8 + p.facing.x * 0.2, p.facing.z * 0.5);
-  dir = rotate(dir, rng.gauss() * (0.1 + 0.4 * (1 - skill)) * (monster ? 0.5 : 1));
+  dir = rotate(dir, rng.gauss() * ((nearGoal ? HEAD_AIM : 0.1) + 0.4 * (1 - skill)) * (monster ? 0.5 : 1));
   // Aufs Tor: Das Tempo der Flanke bleibt erhalten, der Kopf legt bis zu 4,5 m/s drauf (Sprung-/Standkopfball,
   // MDPI Appl. Sci. 14/946, 2024). Vorher immer 4–8 m/s – der Torwart hielt 14 von 22 Kopfbällen aufs Tor.
   const incoming = Math.hypot(ball.vel.x, ball.vel.z);
-  const speed = nearGoal ? incoming + 1.5 + 3 * skill + (monster ? 1.5 : 0) : 4 + 4 * skill + (monster ? 1.5 : 0);
+  // Verteidiger köpft am eigenen Tor, ein Gegner im Nacken: Nicht jede Klärung geht sauber nach vorn. Der Ball wird
+  // nur verlängert, behält seine Richtung (um bis zu etwa 30 Grad abgelenkt) und fliegt hinter die eigene Grundlinie
+  // oder ins Seitenaus. Anteil gewählt, nicht gemessen: steigt mit Bedrängnis und sinkt mit Kopfballstärke.
+  const own = -s;
+  if (!nearGoal && ball.vel.x * own > 0 && p.pos.x * own > pitch.halfLength * 0.45 && incoming > 3) {
+    const pressed = m.players.some((o) => o.team !== p.team && o.role !== 'gk' && o.state === 'normal' && dist2d(o.pos, p.pos) < 2);
+    if (pressed && rng.chance(HEAD_MISS * (1.3 - skill))) {
+      const d2 = rotate(norm(ball.vel.x, ball.vel.z), rng.gauss() * 0.5);
+      const v = Math.max(5, incoming * rng.range(0.6, 0.9));
+      ball.vel.x = d2.x * v;
+      ball.vel.z = d2.z * v;
+      ball.vel.y = rng.range(1, 3);
+      ball.lastTouch = p.id;
+      ball.lastAction = 'header';
+      m.lastTouchTeam = p.team;
+      m.events.push({ type: 'header', playerId: p.id, onGoal: false });
+      return;
+    }
+  }
+  const speed = nearGoal ? Math.min(incoming + 1.5 + 3 * skill + (monster ? 1.5 : 0), HEAD_VMAX) : 4 + 4 * skill + (monster ? 1.5 : 0);
   ball.vel.x = dir.x * speed;
   ball.vel.y = nearGoal ? rng.range(-1.5, 0.5) : rng.range(1, 3);
   ball.vel.z = dir.z * speed;
@@ -613,6 +658,39 @@ function passBeatsPresser(m, c) {
   return true;
 }
 
+// Abgefälscht: Ein Gegner kommt an einen harten Ball, der aufs eigene Tor fliegt, und kann ihn nicht
+// kontrollieren. Ein streifender Kontakt wirft den Ball nicht zurück (das war die frühere Abprallregel,
+// Faktor -0,35), sondern lenkt ihn aus der Richtung ab: er behält den größeren Teil von Tempo und
+// Richtung. So gehen abgefälschte Schüsse, Flanken und Pässe auch mal hinter die eigene Grundlinie
+// (Ecke) oder zur Seite (Einwurf). Die Spanne (Ablenkwinkel, 45–75 % des Tempos) ist gewählt, nicht gemessen.
+export const DEFLECT = { wideMin: 1.5, wideMax: 7, keepMin: 0.45, keepMax: 0.75 };
+function deflect(m, p, prevTeam) {
+  const { ball, rng } = m;
+  if (prevTeam === null || prevTeam === p.team || m.pitch.boundary !== 'lines') return false; // nur Plätze mit Linien (dort gibt es Ecken)
+  const own = -attackDir(m, p.team); // Richtung des eigenen Tors
+  if (ball.vel.x * own <= 0 || p.pos.x * own <= 0) return false; // nur Bälle aufs eigene Tor, in der eigenen Hälfte
+  const keep = rng.range(DEFLECT.keepMin, DEFLECT.keepMax);
+  // Wohin: an den Pfosten vorbei (Zielpunkt auf der Grundlinie neben dem Tor), aber nicht mehr als etwa 85 Grad
+  // aus der Flugrichtung gedreht. Ein Ball, der abgefälscht wird und doch ins Tor geht, ist selten (Eigentor).
+  const gx = own * m.pitch.halfLength;
+  const wide = m.pitch.goalHalfWidth + rng.range(DEFLECT.wideMin, DEFLECT.wideMax);
+  const inc = norm(ball.vel.x, ball.vel.z);
+  const toward = (zt) => norm(gx - p.pos.x, zt - p.pos.z);
+  // Die Seite, die näher an der Flugrichtung liegt (weniger Drehung).
+  const cosOf = (v) => v.x * inc.x + v.z * inc.z;
+  const dPos = toward(wide);
+  const dNeg = toward(-wide);
+  let d = cosOf(dPos) > cosOf(dNeg) ? dPos : dNeg;
+  if (rng.chance(0.3)) d = d === dPos ? dNeg : dPos; // auch die andere Seite kommt vor
+  if (cosOf(d) < 0.09) d = norm(inc.x + d.x * 0.5, inc.z + d.z * 0.5);
+  const h = Math.hypot(ball.vel.x, ball.vel.z) * keep;
+  ball.vel.x = d.x * h;
+  ball.vel.z = d.z * h;
+  ball.vel.y = 1 + rng.next() * 3; // vom Schienbein oder Fuß auch mal hoch
+  ball.lastAction = 'block'; // kein Ballführen danach
+  return true;
+}
+
 export function dribbleTouch(m) {
   const { ball, rng, pitch } = m;
   if (ball.holder || ball.pos.y > 0.7) return;
@@ -644,6 +722,7 @@ export function dribbleTouch(m) {
   const fatigue = 1 - p.stamina;
   const calm = hasTrait(p, 'ballsicher') || hasTrait(p, 'ex_profi') ? 0.5 : 1;
   const bs = ballSpeed(ball);
+  const prevTeam = m.lastTouchTeam;
   p.kickCooldown = 0.2 + rng.next() * 0.12;
   ball.lastTouch = p.id;
   ball.lastAction = 'dribble';
@@ -654,6 +733,7 @@ export function dribbleTouch(m) {
   // Harte Bälle verspringen gerne mal.
   const pControl = clamp(0.45 + 0.5 * tech - (bs - 9) * 0.03, 0.2, 0.98);
   if (bs > 9 && !rng.chance(pControl)) {
+    if (deflect(m, p, prevTeam)) return;
     ball.vel.x *= -0.35;
     ball.vel.z = ball.vel.z * -0.35 + rng.gauss() * 2;
     ball.vel.y = 0.5 + rng.next() * 1.5;

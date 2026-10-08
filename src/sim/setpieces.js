@@ -4,7 +4,8 @@
 import { clamp, dist2d, len, norm } from '../core/math.js';
 import { attackDir, clampToPitch, getPlayer, setControlled, teamAttacking } from './players.js';
 import { processSubs } from './squad.js';
-import { keeperZone } from './ai.js';
+import { styleOf } from './plan.js';
+import { cornerSpots, keeperZone } from './ai.js';
 import { keeperBox } from './actions.js';
 
 // Elfmeterpunkt: im Kleinfeld näher dran als auf dem großen Platz.
@@ -91,6 +92,7 @@ export function startSetPiece(m, { type, team, spot = { x: 0, z: 0 }, takerId = 
   m.setPiece = { type, team, takerId: taker.id, time: m.time, taken: false };
   m.offside = null;
   m.wallIds = type === 'freekick' ? buildWall(m, team, spot) : null;
+  if (type === 'corner') lineUpCorner(m, team, taker);
   m.events.push({ type: 'setpiece', kind: type, team, playerId: taker.id });
 }
 
@@ -199,4 +201,48 @@ function buildWall(m, team, spot) {
     p.facing = { x: -dir.x, z: -dir.z };
   });
   return men.map((p) => p.id);
+}
+
+// Ecke: Die Mannschaften stehen im Strafraum, bevor getreten wird. Die Pause vor dem Standard ist kurz (1,3 s) und
+// eingefroren, und von der Mittellinie kommt keiner rechtzeitig an – gemessen mit dem Ecken-Messskript: bei den meisten
+// Ecken stand kein Mitspieler im Strafraum (Großfeld: Flanke im Schnitt 44 m vom Tor beim ersten Kontakt). Wie bei der
+// Mauer (buildWall) werden die Spieler deshalb hingestellt. Anzahl der Angreifer gewählt, nicht gemessen: 7er 2, 9er 2,
+// Großfeld 3 (im Profifußball stehen rund vier bis sechs Angreifer im Strafraum); jedem steht ein Verteidiger gegenüber.
+export const CORNER_ATTACKERS = { 5: 1, 7: 2, 9: 2, 11: 3 };
+function lineUpCorner(m, team, taker) {
+  const { pitch } = m;
+  const n = CORNER_ATTACKERS[pitch.format] ?? 0;
+  if (!n) return;
+  const s = attackDir(m, team);
+  const spots = cornerSpots(m, team);
+  const dropping = styleOf(m, team).fwdDrop >= 0.4; // „Stürmer lässt sich fallen“: Der Befehl gilt auch bei Ecken
+  const free = (p) => p.state === 'normal' && p.role !== 'gk' && p.id !== taker.id;
+  // Die Angreifer: wer schon am weitesten vorn steht, aber keine Abwehrspieler.
+  const attackers = m.players
+    .filter((p) => p.team === team && free(p) && p.role !== 'def' && !(dropping && p.role === 'fwd'))
+    .sort((a, b) => b.pos.x * s - a.pos.x * s)
+    .slice(0, n);
+  const zMax = pitch.boundary === 'lines' ? pitch.halfWidth - 0.5 : pitch.halfWidth - 0.3;
+  const placed = [];
+  attackers.forEach((p, i) => {
+    const sp = spots[i];
+    p.pos.x = clamp(sp.x + m.rng.range(-0.15, 0.15), -pitch.wallX + 0.3, pitch.wallX - 0.3);
+    p.pos.z = clamp(sp.z + m.rng.range(-0.15, 0.15), -zMax, zMax);
+    p.facing = { x: -s, z: 0 };
+    placed.push(p);
+  });
+  // Die Verteidiger: der nächste Gegenspieler stellt sich einen Meter vor den Angreifer, Richtung eigenes Tor.
+  const taken = new Set();
+  // Ein Verteidiger mehr als Angreifer: er sichert den ersten Pfosten (Raumdeckung), wie es die Abwehr bei Ecken tut.
+  const spots2 = placed.concat([{ pos: { x: spots[0].x, z: spots[0].z } }]);
+  for (const a of spots2) {
+    const d = m.players
+      .filter((p) => p.team !== team && free(p) && !taken.has(p.id))
+      .sort((x, y) => dist2d(x.pos, a.pos) - dist2d(y.pos, a.pos))[0];
+    if (!d) break;
+    taken.add(d.id);
+    d.pos.x = clamp(a.pos.x + s * 1.0, -pitch.wallX + 0.3, pitch.wallX - 0.3);
+    d.pos.z = clamp(a.pos.z + Math.sign(-a.pos.z || 1) * 0.3, -zMax, zMax);
+    d.facing = { x: -s, z: 0 };
+  }
 }
