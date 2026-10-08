@@ -25,4 +25,11 @@ describe('Ecken', () => {
   it('9er-Feld: mehr Ecken je Spiel als vorher', () => {
     expect(corners('sportplatz', 16)).toBeGreaterThan(0.9); // gemessen 1,06, vorher 0,69
   }, 240000);
+  // Ecken aus dem Spiel (Block, Abfälschen, Klärung unter Druck, Mannschaften im Strafraum): vorher 2,2 / 1,65 / 0,51 je Spiel.
+  it('7er-Feld: über 3 Ecken je Spiel', () => {
+    expect(corners('rasenplatz', 16)).toBeGreaterThan(3); // gemessen 4,4 (80 Spiele)
+  }, 240000);
+  it('Großfeld: über 1,5 Ecken je Spiel (vorher 0,5)', () => {
+    expect(corners('grossfeld', 12)).toBeGreaterThan(1.5); // gemessen 2,6 (80 Spiele)
+  }, 400000);
 });

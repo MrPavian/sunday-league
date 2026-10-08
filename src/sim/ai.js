@@ -242,17 +242,20 @@ function shoutTactics(m, team, players, defending, ball) {
   }
 }
 
-function cornerSpots(m, team) {
+export function cornerSpots(m, team) {
   const { pitch, ball } = m;
   const s = attackDir(m, team);
   const gx = s * pitch.halfLength;
   const side = Math.sign(ball.pos.z) || 1;
   const gw = pitch.goalHalfWidth;
+  // Auf dem Großfeld (Strafraum 16,5 m tief, Elfmeterpunkt 11 m) liegen die Laufziele weiter draußen als auf dem Kleinfeld.
+  const k = Math.max(1, pitch.halfLength / 35);
+  const pd = pitch.penaltyDistance ?? Math.min(6, pitch.halfLength * 0.3);
   return [
-    { x: gx - s * 2, z: side * gw * 1.1 }, // erster Pfosten
-    { x: gx - s * 3.5, z: -side * gw * 1.3 }, // langer Pfosten
-    { x: gx - s * Math.min(6, pitch.halfLength * 0.3), z: 0 }, // Elfmeterpunkt
-    { x: gx - s * Math.min(9, pitch.halfLength * 0.45), z: -side * 1.5 }, // Strafraumkante
+    { x: gx - s * 2 * k, z: side * gw * 1.1 }, // erster Pfosten
+    { x: gx - s * 3.5 * k, z: -side * gw * 1.3 }, // langer Pfosten
+    { x: gx - s * pd, z: 0 }, // Elfmeterpunkt
+    { x: gx - s * (pd + 3), z: -side * 1.5 }, // Strafraumkante
   ];
 }
 
