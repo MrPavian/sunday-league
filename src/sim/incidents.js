@@ -208,8 +208,17 @@ function beginIncident(m, type, info = {}) {
     inc.sheltered = new Set();
     inc.face = sh.face;
     inc.delay = m.players.map((p, i) => Math.max(0.45 + (i % 4) * 0.12, refT + 0.5 + (i % 4) * 0.05 - plan[i + off].len / STORM_RUN));
+    // Runter vom offenen Platz geht es sofort (nach kurzer Schrecksekunde): Wer warten muss, damit der Schiri zuerst
+    // im Unterstand ist, wartet hinter der Linie am Ausstiegspunkt, nicht mitten auf dem Feld. Ankunft bleibt gleich.
+    inc.react = m.players.map((p, i) => 0.45 + (i % 4) * 0.12);
+    m.players.forEach((p, i) => {
+      const r = inc.routes.get(p.id);
+      const e = r.pts[0];
+      r.exit = sh.exitZ !== undefined && r.pts.length > 1 && Math.abs(e.z - sh.exitZ) < 1e-6 && inc.delay[i] > inc.react[i];
+      if (r.exit) r.resume = inc.delay[i] + Math.hypot(e.x - p.pos.x, e.z - p.pos.z) / STORM_RUN;
+    });
     const slipper = m.players.map((p, i) => ({ p, i, len: plan[i + off].len })).filter(({ p, len }) => p.role !== 'gk' && len >= 6).sort((a, b) => a.len - b.len)[0];
-    if (slipper) inc.slip = { id: slipper.p.id, at: inc.delay[slipper.i] + 0.35, done: false, side: slipper.i % 2 ? 1 : -1 };
+    if (slipper) inc.slip = { id: slipper.p.id, at: Math.min(inc.delay[slipper.i], inc.react[slipper.i]) + 0.35, done: false, side: slipper.i % 2 ? 1 : -1 };
     // Der Vorfall dauert, bis auch der Letzte angekommen ist (Großfeld: weite Wege), plus Zeit zum Verschnaufen.
     const arrive = Math.max(refT, ...m.players.map((p, i) => inc.delay[i] + plan[i + off].len / STORM_RUN)) + (slipper ? 1.6 : 0);
     inc.timer = Math.max(inc.timer, arrive + 2.5);
@@ -298,8 +307,11 @@ export function stepIncident(m, dt) {
         route.pts = planRoute(shelterFor(pitch), p.pos, route.slot);
         route.k = 0;
         route.stale = false;
+        route.exit = false;
       }
-      if (inc.t >= inc.delay[i]) followRoute(inc, route, p, p.id, STORM_RUN, dt);
+      if (route.exit && route.k === 0 && inc.t >= inc.react[i]) {
+        if (glide(p, route.pts[0], STORM_RUN, dt)) route.k = 1; // raus hinter die Linie, dort kurz warten
+      } else if (inc.t >= (route.exit ? route.resume : inc.delay[i])) followRoute(inc, route, p, p.id, STORM_RUN, dt);
       else {
         p.vel.x *= 0.85;
         p.vel.z *= 0.85;
