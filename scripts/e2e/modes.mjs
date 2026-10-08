@@ -54,6 +54,7 @@ async function variants(b, label, list, query) {
 // dafür fehlt hier die Grafikkarte –, aber was die Szene kostet, kann nicht unbemerkt wachsen.
 // Überregionaler Pokal (nur für diese Spiele): Großfeld mit Stahlrohrtribüne gemessen 110 Draw Calls / 56,1 Tsd. Dreiecke
 // (ANDROID_MEDIUM, Großfeld ohne Tribüne 106 / 50,3), Stadion mit Rängen rundum 89 / 53,2 – jeweils rund 10 % Luft.
+// Bei diesen beiden Orten mit voller Menge (295 bzw. 954 Zuschauer) gemessen: 107 / 35,9 Tsd. und 88 / 40,9 Tsd. (Menge = 2 Draw Calls).
 const BUDGET = { rasenplatz: [108, 35000], sportplatz: [113, 44500], grossfeld: [117, 55000], grossfeld_tribuene: [121, 62000], stadion: [98, 58500], ascheplatz: [76, 25000], park: [79, 18600] };
 async function budget(b) {
   const ok = checker(`Grafik-Budget je Spielort (${Object.keys(BUDGET).length})`);
@@ -61,6 +62,12 @@ async function budget(b) {
   for (const [venue, [calls, tris]] of Object.entries(BUDGET)) {
     const p = await page(b, 'land', { query: `?venue=${venue}&notitle&trainer&debug&dauer=60&seed=4&quality=ANDROID_MEDIUM` });
     await p.waitForTimeout(3000);
+    // Ohne Karriere zeigt das Testspiel nur 80 Zuschauer; Stadion und Tribünenplatz des überregionalen Pokals sind aber voll
+    // (match.crowd bis 3500). Gemessen wird deshalb mit der ganzen Menge (schlechtester Fall, mehr als jede Qualitätsstufe zeigt).
+    if (venue === 'stadion' || venue === 'grossfeld_tribuene') {
+      await p.evaluate(() => __sl.crowd.setShown(__sl.crowd.n));
+      await p.waitForTimeout(500);
+    }
     const r = await p.evaluate(() => new Promise((res) => requestAnimationFrame(() => res({ calls: __sl.renderer.info.render.calls, tris: __sl.renderer.info.render.triangles }))));
     ok(r.calls <= calls, `${venue}: ${r.calls} Draw Calls > ${calls}`);
     ok(r.tris <= tris, `${venue}: ${r.tris} Dreiecke > ${tris}`);

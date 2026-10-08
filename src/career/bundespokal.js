@@ -15,8 +15,8 @@ export const OBERLIGA = [
   { id: 'ol-tannenhoehe', name: tr('VfR Tannenhöhe', 'Firhill Rovers'), short: tr('VTH', 'FHR'), kit: { shirt: 0x58c9a5, shorts: 0x1f2a44, socks: 0x58c9a5, pattern: 'uni' }, keeperKit: { shirt: 0xc0392b, shorts: 0x1c1c1c, socks: 0xc0392b }, tiers: { gut: 0.12, stark: 0.41, dorfstar: 0.32, superstar: 0.14, legende: 0.01 } },
 ];
 
-// Fiktive Profivereine (Stufe 8) für die erste Runde des überregionalen Pokals. Kader: nur die oberen Klassen
-// des Spielerpools (Dorfstar bis Legende) – siehe PROFI_TIERS.
+// Fiktive Profivereine (Kader der Stufen 8 und 9, siehe PROFI_KLASSEN) für alle Runden des überregionalen Pokals.
+// Kader: nur die oberen Klassen des Spielerpools (Dorfstar bis Legende).
 export const PROFIS = [
   { id: 'profi-kaiserstein', name: tr('FC Kaiserstein 1903', 'Kaiserstone Athletic'), short: tr('FKS', 'KSA'), kit: { shirt: 0x1f8a8a, shorts: 0x14233a, socks: 0x1f8a8a, pattern: 'uni' }, keeperKit: { shirt: 0xf0d34a, shorts: 0x14233a, socks: 0xf0d34a } },
   { id: 'profi-rheinbogen', name: tr('Sporting Rheinbogen', 'Rhinebend Sporting'), short: tr('SRB', 'RBS'), kit: { shirt: 0xe58a1f, shorts: 0x3a2a20, socks: 0xe58a1f, pattern: 'uni' }, keeperKit: { shirt: 0x5b3a8c, shorts: 0x1c1c1c, socks: 0x5b3a8c } },
@@ -83,12 +83,7 @@ export const BUND_PRIZE_WINNER = 20.4;
 // Hauptsponsor: Vielfache seines Saisonziel-Bonus für jede gewonnene Runde (siehe PRAEMIE in pokal.js).
 export const BUND_SPONSOR = [3, 1, 1, 1, 1, 3];
 export const BUND_ROUND_NAMES = () => [tr('1. Runde', 'First round'), tr('2. Runde', 'Second round'), tr('Achtelfinale', 'Round of 16'), tr('Viertelfinale', 'Quarter-final'), tr('Halbfinale', 'Semi-final'), tr('Finale', 'Final')];
-export const BUND_CROWD_MAX = 3500;
-export const BUND_CROWD = 4;
-
-// Eintrittspreis- und Theken-Logik bleibt die normale (finances.js); nur die Zuschauerzahl ist höher.
-
-const pickBy = (list, n) => list[n % list.length];
+// Eintrittspreis- und Theken-Logik bleibt die normale (finances.js); die Zuschauerzahl ist die des Spiels (match.crowd).
 
 // Texte rund um das Spiel gegen den Profi. {opp} = Profiverein, {club} = eigener Verein.
 export const BUND_TEXT = {
@@ -137,5 +132,4 @@ export const BUND_TEXT = {
   loss: (opp, club, score) => [
     tr(`Kreisblatt: ${opp} setzt sich im ${BUND_NAME} erwartbar durch (${score}). ${club} bekommt Applaus von beiden Seiten – und eine volle Kasse.`, `Kreisblatt: ${opp} win as expected in the ${BUND_NAME} (${score}). ${club} get applause from both sides – and a full till.`),
   ],
-  pick: pickBy,
 };

@@ -97,6 +97,51 @@ describe('Verlängerung: Ablauf in der Engine', () => {
     expect(m.phase).toBe('shootout');
   });
 
+  it('Pausen: Erholung nur kurz vor der Verlängerung, keine zur Halbzeit der Verlängerung; Anstoß der Verlängerungs-Hälften wechselt', () => {
+    const m = createMatch({ seed: 4, pitch: PITCHES.hinterhof, duration: 120, human: true });
+    m.knockout = true;
+    m.extraTime = true;
+    const pauses = [];
+    let was = null;
+    let prev = new Map();
+    let guard = 0;
+    while (m.phase !== 'ended' && m.phase !== 'shootout' && guard++ < 60 * 600) {
+      if (m.time >= m.duration - 0.5 || m.extra) m.score = [1, 1];
+      stepMatch(m, undefined, 1 / 60);
+      if (was === 'halftime' && m.phase === 'setpiece') pauses.push({ gain: Math.max(...m.players.filter((p) => prev.has(p.id)).map((p) => p.stamina - prev.get(p.id))), team: m.setPiece.team }); // größter Zuwachs: wer schon fit ist, wird gekappt
+      if (m.phase === 'halftime') {
+        if (was !== 'halftime') for (const p of m.players) p.stamina = 0.1; // Ausgangswert jeder Pause
+        prev = new Map(m.players.map((p) => [p.id, p.stamina]));
+      }
+      was = m.phase;
+      m.events.length = 0;
+    }
+    expect(pauses).toHaveLength(3); // Halbzeit, vor der Verlängerung, Halbzeit der Verlängerung
+    const [half, before, mid] = pauses;
+    expect(half.gain).toBeCloseTo(0.25, 5);
+    expect(before.gain).toBeCloseTo(0.25 * EXTRA_SHARE, 5);
+    expect(mid.gain).toBeCloseTo(0, 10); // nur Trinkpause
+    expect(half.team).toBe(1); // 2. Halbzeit: das andere Team als beim Anstoß
+    expect(mid.team).not.toBe(before.team); // 2. Hälfte der Verlängerung: das andere Team als in der 1.
+  });
+
+  it('Fitness nach Verlängerung: wer alles spielt, zahlt ein Drittel mehr; ohne Verlängerung unverändert', () => {
+    const cost = (extra) => {
+      const c = at(5, 3);
+      const idx = humanClub(c).squad[0];
+      c.players[idx].fitness = 1;
+      const f0 = c.players[idx].fitness;
+      const p = { match: { duration: 100, extra: extra ? {} : undefined, bench: [[], []], sentOff: [], players: [{ id: 'x', poolIndex: idx }], stats: { players: { x: { seconds: extra ? 100 * (1 + EXTRA_SHARE) : 100 } } }, score: [1, 0] }, tie: { result: null }, kind: 'kreis' };
+      const cup = startPokal(c, 'kreis');
+      p.tie = roundTies(cup)[0];
+      recordPokalResult(c, p);
+      return f0 - c.players[idx].fitness;
+    };
+    const plain = cost(false);
+    expect(plain).toBeGreaterThan(0);
+    expect(cost(true) / plain).toBeCloseTo(1 + EXTRA_SHARE, 5);
+  });
+
   it('ohne Mensch (Liveticker): nach der Verlängerung ist Schluss, das Elfmeterschießen rechnet pokal.js', () => {
     const { m, events } = drawnMatch({ extraTime: true, human: false });
     expect(m.phase).toBe('ended');
@@ -635,6 +680,83 @@ describe('Überregionaler Pokal: mehrere Runden, Spielort, Einnahmen', () => {
     expect(results.own.mood).toBeGreaterThan(results.stands.mood - 1e-9);
     expect(results.stadium.mood).toBeLessThan(0); // kein Heimgefühl
     expect(results.own.mood).toBeGreaterThan(0);
+  });
+
+  it('Spielort-Ereignis nach dem Spiel: weder Miete noch Stimmung, Ort bleibt; vor dem Anpfiff gilt „eigener Platz"', () => {
+    // (1) Spiel schon gespielt, Ereignis noch offen → Auto-Auflösung beim Wochenwechsel bucht nichts mehr.
+    const c = bundCareer(7);
+    c.cash = 1000;
+    const cup = startPokal(c, 'bund');
+    c.round = cup.rounds[0];
+    c.week = { chat: [], event: null, availability: {} };
+    bundVenueEvent(c);
+    cup.ties[0].result = { home: 1, away: 2 };
+    const mood0 = c.mood ?? 0;
+    const led0 = c.ledger.length;
+    resolveEvent(c, 0); // Umzug ins Stadion
+    expect(c.cash).toBe(1000);
+    expect(c.ledger).toHaveLength(led0);
+    expect(c.mood ?? 0).toBe(mood0);
+    expect(cup.ties[0].venue).toBeNull();
+    // (2) Anpfiff mit offenem Ereignis: automatisch „eigener Platz", Ereignis ist beantwortet.
+    const d = bundCareer(7);
+    const dcup = startPokal(d, 'bund');
+    d.round = dcup.rounds[0];
+    d.week = { chat: [], event: null, availability: {} };
+    bundVenueEvent(d);
+    expect(d.week.event.choice).toBeNull();
+    const p = preparePokalMatch(d, 'bund', dcup.ties[0]);
+    expect(d.week.event.choice).toBe(2);
+    expect(dcup.ties[0].venue).toBe('own');
+    expect(p.bund.venue).toBe('own');
+  });
+
+  it('Abrechnung = Anzeige: Zuschauerzahl der Buchung ist match.crowd; Tribüne/Stadion ohne zusätzliche Platzmiete, eigener Platz mit', () => {
+    const net = {};
+    for (const [choice, key] of [[0, 'stadium'], [1, 'stands'], [2, 'own']]) {
+      const c = bundCareer(9);
+      const cup = startPokal(c, 'bund');
+      c.round = cup.rounds[0];
+      c.week = { chat: [], event: null, availability: {} };
+      bundVenueEvent(c);
+      resolveEvent(c, choice);
+      const n0 = c.ledger.length;
+      const p = preparePokalMatch(c, 'bund', cup.ties[0], { duration: 60 });
+      simulateSync(p);
+      recordPokalResult(c, p);
+      const rows = c.ledger.slice(n0);
+      const sum = (re) => rows.filter((l) => re.test(l.text)).reduce((t, l) => t + l.amount, 0);
+      const crowdRows = rows.filter((l) => /Getränke|Drinks|Eintrittsanteil|Gate share/.test(l.text));
+      expect(crowdRows).toHaveLength(2);
+      for (const l of crowdRows) expect(l.text).toContain(`(${p.match.crowd} `); // genau die angezeigte Zahl
+      net[key] = { crowd: p.match.crowd, gate: sum(/Eintrittsanteil|Gate share/), theke: sum(/Getränke|Drinks/), pitchRent: sum(/Platzmiete|Pitch rent/), total: 0 };
+    }
+    expect(net.own.pitchRent).toBeLessThan(0);
+    expect(net.stands.pitchRent).toBe(0);
+    expect(net.stadium.pitchRent).toBe(0);
+    expect(net.stadium.crowd).toBeGreaterThan(net.stands.crowd);
+    expect(net.stands.crowd).toBeGreaterThan(net.own.crowd);
+  }, 180_000);
+
+  it('Chat: Tribünen-Meldung nur bei gemieteter Tribüne im Heimspiel, „Parkplatz voll" nicht auswärts', () => {
+    const run = (setup, left) => {
+      const c = bundCareer(12);
+      const cup = startPokal(c, 'bund');
+      setup(cup, humanClub(c).id);
+      c.round = cup.rounds[0] - left;
+      c.season = c.season;
+      const chat = [];
+      cup.drawn = cup.round;
+      bundChat(c, chat);
+      return chat.filter((x) => x.press).map((x) => x.text);
+    };
+    const hype = /Tieflader|low-loader|Bürgermeister|mayor|Reporter/;
+    expect(run((cup) => { cup.ties[0].venue = 'stands'; }, 1).some((t) => hype.test(t))).toBe(true);
+    expect(run((cup) => { cup.ties[0].venue = 'own'; }, 1)).toHaveLength(0);
+    const away = (cup, me) => Object.assign(cup.ties[0], { home: cup.ties[0].away, away: me, venue: 'stadium' });
+    expect(run(away, 1)).toHaveLength(0);
+    expect(run(away, 0)).toHaveLength(0); // Spieltag auswärts: kein Parkplatz-Text
+    expect(run((cup) => { cup.ties[0].venue = 'own'; }, 0)).toHaveLength(1);
   });
 
   it('Auswärtsspiel: kein Ereignis, großes Stadion', () => {

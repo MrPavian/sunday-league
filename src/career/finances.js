@@ -52,10 +52,7 @@ export function matchFinances(career, fixture, prepared, level) {
   if (!homeHuman) awayTravel(career, fixture);
   if (!homeHuman && prepared.bund) {
     // Auswärts beim Profi: Anteil am Eintritt des großen Stadions (Getränke behält der Gastgeber).
-    const rngA = createRng(career.seed + career.season * 97 + career.round * 13);
-    const baseA = Math.round((level > 4 ? rngA.int(80, 200) : level > 3 ? rngA.int(45, 90) : level > 2 ? rngA.int(30, 60) : level > 1 ? rngA.int(18, 40) : rngA.int(5, 14)));
-    const bvA = BUND_VENUES.stadium;
-    const fansA = Math.min(bvA.cap, Math.round(baseA * bvA.mul));
+    const fansA = prepared.match.crowd; // die Zahl, die im Stadion angezeigt wird
     book(career, tr(`Eintrittsanteil ${BUND_GATE_SHARE * 100} % (${fansA} Zuschauer im Stadion)`, `Gate share ${BUND_GATE_SHARE * 100} % (${fansA} spectators in the stadium)`), Math.round(fansA * ENTRY_FEE * BUND_GATE_SHARE));
   }
   const m = prepared.match;
@@ -82,7 +79,7 @@ export function matchFinances(career, fixture, prepared, level) {
     const weatherFans = { sonne: 1.2, hitze: 0.9, regen: 0.6, wind: 0.85, nebel: 0.8, frost: 0.7, schnee: 0.5 }[career.week?.weather?.id] ?? 1;
     const base = Math.round((level > 4 ? rng.int(80, 200) : level > 3 ? rng.int(45, 90) : level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14)) * press * weatherFans * fansMul(career));
     const bv = prepared.bund ? BUND_VENUES[prepared.bund.venue] : null; // überregionaler Pokal: Spielort bestimmt die Kulisse
-    const fans = bv ? Math.min(bv.cap, Math.max(base, Math.round(base * bv.mul))) : base;
+    const fans = bv ? prepared.match.crowd : base; // Bundespokal: die angezeigte Zuschauerzahl des Spiels wird abgerechnet
     career.flags ??= {};
     career.flags.fans = { round: career.round, n: fans }; // für die Unterschriftenlisten
     const wirt = (career.staff?.wirt ? 1.3 : 1) * salesMul(career); // Wirt, Grill & Theke
@@ -93,7 +90,8 @@ export function matchFinances(career, fixture, prepared, level) {
     else if (level > 4) book(career, tr(`Eintritt (${fans} Zuschauer)`, `Gate money (${fans} spectators)`), Math.round(fans * ENTRY_FEE));
     if (level > 1) {
       book(career, tr('Schiri-Gebühr', 'Referee fee'), -20 - (level - 2) * 10);
-      book(career, career.staff?.platzwart ? tr('Platzmiete (Platzwart macht vieles selbst)', 'Pitch rent (groundsman does a lot himself)') : tr('Platzmiete Waldesruh', 'Pitch rent Waldesruh'), career.staff?.platzwart ? -7.5 : -15);
+      // Tribüne oder Stadion kosten ihre eigene Miete (bundevents.js) – dann keine zusätzliche Platzmiete.
+      if (!(bv && bv.rentUnits > 0)) book(career, career.staff?.platzwart ? tr('Platzmiete (Platzwart macht vieles selbst)', 'Pitch rent (groundsman does a lot himself)') : tr('Platzmiete Waldesruh', 'Pitch rent Waldesruh'), career.staff?.platzwart ? -7.5 : -15);
     }
   }
 }

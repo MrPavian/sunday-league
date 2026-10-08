@@ -2,8 +2,8 @@
 // Kreispokal: ab der Kreisklasse C (Stufe 2), 16 Vereine aus allen Kreisligen. Bezirkspokal: in der
 // Bezirksliga – oder für den Kreispokalsieger der Vorsaison ab Kreisliga A –, 8 Vereine.
 // Landespokal: für den Bezirkspokalsieger der Vorsaison (ab Kreisliga A), 8 Vereine mit Landes- und Oberligisten.
-// Überregionaler Pokal (BUND_NAME): für den Landespokalsieger der Vorsaison. Für Amateure endet er nach
-// Runde 1 – dem Heimspiel gegen einen fiktiven Profiverein (Begründung bei POKALE.bund).
+// Überregionaler Pokal (BUND_NAME): für den Landespokalsieger der Vorsaison. Sechs Runden (samstags) gegen fiktive
+// Zweit- und Erstligisten; jede Niederlage beendet den Wettbewerb (siehe bundRoundEnd).
 // Regeln wie in vielen Kreisen (z. B. Durchführungsbestimmungen Kreispokal Pforzheim 2025/26, FVN):
 // Heimrecht hat der klassentiefere Verein, sonst der zuerst gezogene; steht es nach der regulären
 // Spielzeit unentschieden, folgt standardmäßig direkt Elfmeterschießen (manche Kreise spielen erst
@@ -20,6 +20,7 @@ import { isCoach } from './personal.js';
 import { adjustMood } from './events.js';
 import { BUND_AWAY, BUND_ERST, BUND_NAME, BUND_PRIZE, BUND_PRIZE_WINNER, BUND_ROUND_NAMES, BUND_SPONSOR, BUND_TEXT, BUND_VENUES, OBERLIGA, PROFI_ATTRS, PROFI_KLASSEN, PROFIS } from './bundespokal.js';
 import { afterMatchFitness } from './fitness.js';
+import { bundVenueAutoResolve } from './bundevents.js';
 import { book, homeUnit, matchFinances } from './finances.js';
 import { chronicle, yearOf } from './sagas.js';
 import { adjustRel, shirtSponsor } from './sponsors.js';
@@ -28,12 +29,9 @@ import { applyWeather } from './weather.js';
 // Zufallssalze je Pokal (kreis/bezirk wie vor Einführung der übrigen Pokale, damit alte Auslosungen gleich bleiben):
 // [Teilnehmer, Auslosung, Spiel, Rundenabschluss].
 const SALT = { kreis: [11, 3, 1, 7], bezirk: [23, 5, 2, 13], land: [37, 17, 3, 19], bund: [41, 19, 4, 23] };
-// Bundespokal – Entscheidung zur Länge: Für Amateure endet er nach Runde 1. Runde 2 wäre wieder ein Profi
-// (in der Engine mit < 10 % Siegchance, siehe Messung), die Fortsetzung bräuchte eine Profiliga-Simulation
-// mit Spielplan, Kader und Wirtschaft der übrigen Vereine, die es hier nicht gibt, und die Woche würde mit
-// bis zu 4 Pokalen überfüllt (bei 6er-Liga hat die Saison nur 8 freie Wochen). Der Sieg über den Profi ist der
-// Höhepunkt: Der Verein „zieht in die zweite Runde ein" (Prämie des Hauptsponsors), das Ausscheiden dort
-// wird nicht gespielt.
+// Bundespokal – Länge: sechs Runden (BUND_ROUND_NAMES) gegen Profis; die Runde nach dem Sieg wird sofort neu gelost.
+// Den Heimvorteil gibt das Los (BUND_AWAY), den Spielort bei Heimspielen das Ereignis bund_spielort (bundevents.js).
+// Die übrigen Paarungen der Runde rechnet das schnelle Modell (quickTie); der Rundenabschluss steht in bundRoundEnd.
 export const POKALE = {
   kreis: { name: tr('Kreispokal', 'District Cup'), size: 16, slots: [0.2, 0.4, 0.62, 0.85] },
   bezirk: { name: tr('Bezirkspokal', 'County Cup'), size: 8, slots: [0.3, 0.55, 0.78] },
@@ -191,6 +189,7 @@ export const pokalDue = (c) => KINDS.map((k) => (humanTie(c, k) ? k : null)).fin
 
 export function preparePokalMatch(c, kind, tie, { human = false, duration } = {}) {
   const cup = pokalOf(c, kind);
+  if (kind === 'bund') bundVenueAutoResolve(c, cup.ties.indexOf(tie)); // offene Spielortfrage: vor dem Anpfiff gilt „eigener Platz"
   const home = pokalClub(c, cup, tie.home);
   const away = pokalClub(c, cup, tie.away);
   const homeLevel = cup.levels[tie.home];
@@ -241,7 +240,7 @@ export function recordPokalResult(c, prepared) {
   const cup = pokalOf(c, kind);
   for (const p of [...m.players, ...m.bench.flat(), ...(m.sentOff ?? [])]) {
     const st = m.stats.players[p.id];
-    if (p.poolIndex != null && st?.seconds > 0) afterMatchFitness(c, p.poolIndex, st.seconds / (m.duration || st.seconds), m.extra ? 1 + EXTRA_SHARE : 1); // Verlängerung kostet ein Drittel mehr Kraft. Doppelbelastung: bis Sonntag keine Erholung (die kommt erst zum Wochenwechsel)
+    if (p.poolIndex != null && st?.seconds > 0) afterMatchFitness(c, p.poolIndex, Math.min(1 + EXTRA_SHARE, st.seconds / (m.duration || st.seconds)), 1, 1 + EXTRA_SHARE); // Anteil an der Spielzeit: mit Verlängerung bis 4/3, wer die Verlängerung ganz spielt, zahlt ein Drittel mehr. Doppelbelastung: bis Sonntag keine Erholung (die kommt erst zum Wochenwechsel)
   }
   const [s0, s1] = m.score;
   tie.result = prepared.humanIsAway ? { home: s1, away: s0 } : { home: s0, away: s1 };
@@ -422,11 +421,11 @@ export function bundChat(c, chat) {
     say(rng.pick(BUND_TEXT.chat(opp)), 'Mo 07:52');
     say(rng.pick(BUND_TEXT.chat(opp)), 'Mo 09:10');
   } else if (left > 0) {
-    chat.push({ from: null, text: rng.pick(BUND_TEXT.hype(opp)), time: 'Do 06:30', press: true });
+    if (tie.home === club.id && tie.venue === 'stands') chat.push({ from: null, text: rng.pick(BUND_TEXT.hype(opp)), time: 'Do 06:30', press: true }); // Tribüne per Tieflader: nur, wenn sie wirklich gemietet wurde
     say(rng.pick(BUND_TEXT.chat(opp)), 'Do 18:20');
   }
   if (left === 0) {
-    chat.push({ from: null, text: rng.pick(BUND_TEXT.matchday(opp)), time: 'Fr 17:45', press: true });
+    if (tie.home === club.id) chat.push({ from: null, text: rng.pick(BUND_TEXT.matchday(opp)), time: 'Fr 17:45', press: true });
     say(rng.pick(BUND_TEXT.chat(opp)), 'Fr 18:30');
   }
 }

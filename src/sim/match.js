@@ -205,8 +205,11 @@ function step(m, input, dt) {
     if ((m.phaseTimer -= dt) > 0) return;
     // Seitenwechsel, kurz durchschnaufen, die andere Mannschaft stößt an.
     swapSides(m);
-    for (const p of m.players) p.stamina = Math.min(p.fitness ?? 1, p.stamina + 0.25); // mehr als fit wird keiner
-    startSetPiece(m, { type: 'kickoff', team: 1 });
+    // Pause vor der Verlängerung: nur kurze Erholung; zur Halbzeit der Verlängerung nur eine Trinkpause (Regel 7).
+    const rest = !m.extra ? 0.25 : m.extra.stage === 1 ? 0.25 * EXTRA_SHARE : 0;
+    if (rest) for (const p of m.players) p.stamina = Math.min(p.fitness ?? 1, p.stamina + rest); // mehr als fit wird keiner
+    // Anstoß: 2. Hälfte Team 1; Verlängerung 1. Hälfte Team 1, 2. Hälfte das andere Team (Regel 8).
+    startSetPiece(m, { type: 'kickoff', team: m.extra?.stage === 2 ? 0 : 1 });
     return;
   }
 
