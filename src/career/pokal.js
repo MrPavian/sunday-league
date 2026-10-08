@@ -270,8 +270,8 @@ function logTie(c, cup, tie) {
 export const QUICK = { base: 1.4, perPoint: 0.03, home: 0.3 };
 // Gegen Profis (Stärkeunterschied bis −30 statt höchstens ±15) ist die Steigung steiler: an der Engine gemessen
 // (scripts/bundespokal-calibrate.mjs, 400 Spiele je Zeile) kommt der Amateur gegen Zweit-/Erstligisten auf
-// 4,5 / 2,8 % (Kader „mittel") und 6,8 / 5,0 % (Kader „bezirk", der stärkste Bezirksligist); das schnelle Modell
-// liefert mit perPoint 0,04 3,4 / 3,0 und 5,6 / 4,5 % (mit 0,035: 5,8 / 5,2 und 8,5 / 7,1 %, mit 0,045: 2,1 / 1,5 und 3,2 / 2,6 %).
+// 4,8 / 3,5 % (Kader „mittel") und 5,3 / 3,8 % (Kader „bezirk", der stärkste Bezirksligist); das schnelle Modell
+// liefert mit perPoint 0,04 4,7 / 4,4 % (Kader „mittel", 4800 Würfe; mit 0,035: 7,6 / 6,9 %, mit 0,045: 3,1 / 2,9 %).
 export const QUICK_BUND = { perPoint: 0.04 };
 const strength = (c, club, n) => {
   const r = club.squad.map((i) => playerOf(c, i).rating).sort((a, b) => b - a).slice(0, n);

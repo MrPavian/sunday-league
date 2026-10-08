@@ -706,9 +706,9 @@ describe('Überregionaler Pokal: mehrere Runden, Spielort, Einnahmen', () => {
 });
 
 // Außenseiterchance gegen die Profis: gemessen mit scripts/bundespokal-calibrate.mjs, je 400 Spiele, beide Mannschaften von der
-// KI. Kader „mittel" (Zugänge, wie sie ein Bezirksligist anwirbt): Zweitligist 4,5 %, Erstligist 2,8 %; Zielband 3–5 %.
+// KI. Kader „mittel" (Zugänge, wie sie ein Bezirksligist anwirbt): Zweitligist 4,8 %, Erstligist 3,5 %; Zielband 3–5 %.
 describe('Außenseiterchance gegen Profis (gemessen)', () => {
-  const MEASURED = { zweit: 0.045, erst: 0.028 };
+  const MEASURED = { zweit: 0.048, erst: 0.035 };
   const TIERS = { ok: 0.14, gut: 0.33, stark: 0.3, dorfstar: 0.16, superstar: 0.06, legende: 0.01 };
   const setup = (seed, klass) => {
     BUND_ERST[0] = klass === 'erst' ? 1 : 0;

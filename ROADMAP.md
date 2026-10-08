@@ -755,6 +755,20 @@ Offen:
   Angriffsseiten des Gegners kaum (68 % → 66–67 %) und kostete eigene Tore – zurückgenommen. Braucht ein echtes
   Leiten des Ballführenden (Körperstellung, Doppeln außen).
 
+### 11.6a Gesamtprüfung der Match-Engine (Oktober 2026)
+Messskript `scripts/match-audit.mjs <Platz> <ww|ws|ss|bp> [Spiele] [Wurzel]` (KI gegen KI, Seeds 900+i, der Stärkere wechselt die Seite).
+Einwürfe je Spiel vorher → nachher (80 Spiele, Paarung schwach–schwach): Park 2,1 → 7,1 · Asche 2,1 → 8,6 · 7er 3,5 → 8,5 · 9er 2,5 → 7,5 ·
+Großfeld 1,5 → 3,2. Ursache: Die Abwehr hatte keinen Befreiungsschlag (unter Druck ging der Ball an irgendeinen Mitspieler oder blind in die
+Mitte); Ballführer und Anspielstationen liegen im Schnitt bei 0,29 der halben Breite, die Außenlinie wird kaum erreicht. Mit breiteren Außen
+(STRETCH, Klemmen, Abstand der Anspielstationen) änderten sich die Einwürfe nicht (je 24–48 Spiele). Neu: Abwehr schlägt bedrängt im eigenen
+Drittel den Ball schräg Richtung Seitenlinie (`CLEAR_ZONE`, `CLEAR_CHANCE`, gewählt). Schussquote aus guter Lage 0,63 → 0,62, Doppelpass-Rückgaben 50 → 51.
+Tore aus Ecken (Eckenphase endet bei Abstoß/Einwurf oder Spiel des Gegners): Großfeld 17,5 %, 9er 7,4 %, 7er 5,6 % der Ecken; 90 % der
+Kopfballtore auf dem Großfeld fallen nach Ecken, deshalb gehen Kopfballtore und Tore aus Ecken nur gemeinsam zurück. Ein Torwart, der Flanken im
+Strafraum fängt, senkte Großfeld/9er/7er auf 11/6/5 % bei Kopfballtoren 5,0/4,2/1,6 % (vorher 8,8/6,9/3,0) – nicht übernommen, weil er die
+Handregel (Hände nur im Torraum, tests/keeper.test.js) aufhebt. Torzuordnung: Lenkt der Torwart oder ein Verteidiger einen Schuss ins Netz (letzter
+Schuss höchstens 3 s her), zählt das Tor für den Schützen; vorher waren 25–35 % der Tore auf dem Großfeld „Eigentore" (real rund 5 %).
+Bundespokal neu kalibriert (400 Spiele je Zeile, Kader „mittel"): Aufschlag Zweitligist 0,28 → 0,23, Erstligist 0,26 → 0,19; Weiterkommen 4,8 % / 3,5 %.
+
 ### 11.7 Pokale (erledigt, Oktober 2026)
 - **Kreispokal** ab der Kreisklasse C: 16 Vereine aus allen Kreisligen, vier K.-o.-Runden mittwochs vor dem
   Ligaspieltag. **Bezirkspokal** in der Bezirksliga oder für den Kreispokalsieger der Vorsaison ab Kreisliga A:

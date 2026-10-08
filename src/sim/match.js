@@ -5,7 +5,7 @@ import { dist2d, norm } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
 import { TEAM_PRESETS } from '../data/teams.js';
 import { applyJobPerks } from '../data/jobs.js';
-import { bodyBlock, carryBall, dribbleTouch, headerTouch, keeperSaves, movePlayer, separatePlayers, tryExecute } from './actions.js';
+import { bodyBlock, carryBall, dribbleTouch, headerTouch, keeperSaves, movePlayer, separatePlayers, SHOT_CREDIT, tryExecute } from './actions.js';
 import { keeperIntent, outfieldIntent, updateTactics } from './ai.js';
 import { createBall, stepBall } from './ball.js';
 import { formationSpot } from './formation.js';
@@ -450,8 +450,14 @@ function humanIntent(m, p, input, dt) {
 }
 
 function onGoal(m, team) {
-  const scorer = m.ball.lastTouch && getPlayer(m, m.ball.lastTouch);
-  const ownGoal = !!scorer && scorer.team !== team;
+  let scorer = m.ball.lastTouch && getPlayer(m, m.ball.lastTouch);
+  let ownGoal = !!scorer && scorer.team !== team;
+  // Abgefälschter oder vom Torwart ins Netz gelenkter Schuss: Das Tor gehört dem Schützen (siehe SHOT_CREDIT).
+  const shot = m.lastShot?.[team];
+  if (ownGoal && shot && m.time - shot.time < SHOT_CREDIT) {
+    scorer = getPlayer(m, shot.id) ?? scorer;
+    ownGoal = scorer.team !== team;
+  }
   // Tore zählen nur aus der gegnerischen Hälfte: Kam der letzte Ball des Torschützen von
   // der Mittellinie oder aus der eigenen Hälfte, gibt es Abstoß für den Gegner.
   const from = m.touchFrom;

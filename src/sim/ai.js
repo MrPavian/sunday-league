@@ -866,6 +866,11 @@ function aiDecide(m, p, oppGoal) {
     return d < 2.2 && (dx * toG.x + dz * toG.z) / (d || 1) > 0.2;
   });
   const selfish = hasProfile(p, 'solist') || hasProfile(p, 'ballmagnet') ? 0.75 : hasProfile(p, 'teamplayer') ? 1.2 : 1;
+  // Befreiungsschlag: Bedrängt im eigenen Drittel schlägt die Abwehr den Ball lieber weg, als ihn im Aufbau zu verlieren.
+  if (underPressure && pitch.boundary === 'lines' && p.role === 'def' && p.pos.x * s0 < -pitch.halfLength * CLEAR_ZONE && rng.chance(CLEAR_CHANCE * (1.2 - p.attrs.passing) * (1 - 0.3 * st.risk))) {
+    p.pending = { type: 'pass', ttl: 0.3, cone: -0.2, clear: true };
+    return;
+  }
   if (underPressure && rng.chance(Math.min(0.95, (0.45 + 0.4 * p.attrs.passing) * aiSkill(m, p) * st.passRate * (1 - 0.2 * st.risk) * selfish))) {
     p.pending = { type: 'pass', ttl: 0.3, cone: -0.2 };
     return;
@@ -971,6 +976,10 @@ function openMate(m, gk) {
   }
   return best;
 }
+
+// Befreiungsschlag der Abwehr: im eigenen Drittel (Anteil der halben Länge), Grundchance je Entscheidung unter Druck (gewählt, nicht gemessen).
+export const CLEAR_ZONE = 0.3;
+export const CLEAR_CHANCE = 0.5;
 
 export function keeperIntent(m, p, dt) {
   const { ball, pitch } = m;

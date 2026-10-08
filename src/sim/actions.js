@@ -169,6 +169,7 @@ function shoot(m, p, a, fatigue) {
   if (a.placed && m.setPiece?.type === 'penalty' && m.setPiece.takerId === p.id) m.penaltyKick = m.time;
   m.events.push({ type: 'shot', playerId: p.id, power });
   (m.lastShotAt ??= [-9, -9])[p.team] = m.time;
+  markShooter(m, p);
   m.shotTime = m.time; // Der Torwart braucht einen Moment, bis er die Richtung erkennt.
 }
 
@@ -195,7 +196,16 @@ function aimAssist(m, p, dir) {
   return norm(dx, z - p.pos.z);
 }
 
+// Wer zuletzt aufs Tor geschossen oder geköpft hat: Lenkt der Gegner (Torwart, Verteidiger) den Ball danach ins Tor, bekommt der
+// Schütze das Tor und kein Eigentor, wenn der Schuss höchstens SHOT_CREDIT Sekunden her ist (Zeit gewählt, nicht gemessen;
+// vorher waren 25–35 % der Tore auf dem Großfeld „Eigentore", real rund 5 %: Fußballregel – abgefälschte Schüsse zählen für den Schützen).
+export const SHOT_CREDIT = 3;
+export function markShooter(m, p) {
+  (m.lastShot ??= [null, null])[p.team] = { id: p.id, time: m.time };
+}
 export const CORNER_SCATTER = 2.5;
+// Befreiungsschlag: Tempo (m/s) und Steigung (m/s) – gewählt, nicht gemessen.
+export const CLEAR = { speed: 15, vy: 5 };
 export const CROSS_VMAX = { driven: 24, high: 27 };
 function pass(m, p, a, fatigue, fromHands) {
   const { ball, rng, pitch } = m;
@@ -211,7 +221,7 @@ function pass(m, p, a, fatigue, fromHands) {
   // Ecke mit Ansage: kurz, erster Pfosten oder langer Pfosten – der Mitspieler,
   // der der Zielzone am nächsten steht, wird angespielt.
   const zone = a.zone ? cornerZone(m, p, a.zone) : null;
-  for (const t of m.players) {
+  for (const t of (a.clear ? [] : m.players)) {
     if (t.team !== p.team || t === p || t.state === 'down') continue;
     if (a.targetId && t.id !== a.targetId) continue;
     if (zone) {
@@ -285,10 +295,12 @@ function pass(m, p, a, fatigue, fromHands) {
     // Aus der eigenen Hälfte weit nach vorne, in der gegnerischen in die Mitte.
     const s = attackDir(m, p.team);
     const ownHalf = p.pos.x * s < 0;
-    const aim = ownHalf ? { x: s * pitch.halfLength * 0.5, z: 0 } : { x: p.pos.x + s * 4, z: -p.pos.z * 0.5 };
+    // Befreiungsschlag (a.clear): hoch und weit schräg nach vorn auf die Seitenlinie zu, weg vom Tor und von der Mitte.
+    const clearSide = Math.sign(p.pos.z) || (rng.chance(0.5) ? 1 : -1);
+    const aim = a.clear && pitch.boundary === 'lines' ? { x: p.pos.x + s * pitch.halfLength * 0.35, z: clearSide * (pitch.halfWidth + 3) } : ownHalf ? { x: s * pitch.halfLength * 0.5, z: 0 } : { x: p.pos.x + s * 4, z: -p.pos.z * 0.5 };
     dir = p.id === m.controlledId ? { ...p.facing } : rotate(norm(aim.x - p.pos.x, aim.z - p.pos.z), rng.gauss() * 0.25);
-    speed = outfieldThrow ? 9 : ownHalf ? 11 : 7;
-    vy = ownHalf ? 2 : 0.5;
+    speed = a.clear ? CLEAR.speed : outfieldThrow ? 9 : ownHalf ? 11 : 7;
+    vy = a.clear ? CLEAR.vy : ownHalf ? 2 : 0.5;
   } else {
     // Pass in die Tiefe (lead): nicht in den Fuß, sondern in den Raum vor dem Läufer.
     const lx0 = clamp(lead ? lead.x : target.pos.x + target.vel.x * 0.35, -pitch.halfLength, pitch.halfLength);
@@ -572,6 +584,7 @@ export function headerTouch(m) {
   ball.lastAction = 'header';
   m.lastTouchTeam = p.team;
   p.facing = dir;
+  if (nearGoal) markShooter(m, p);
   m.events.push({ type: 'header', playerId: p.id, onGoal: nearGoal });
 }
 
