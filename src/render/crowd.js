@@ -100,6 +100,36 @@ function assemble(parts) {
   return geo;
 }
 
+// Schlanke Variante für die vollen Ränge (Stadion, Tribünenplatz): flache Teile statt Quader – 12 statt rund 260 Dreiecke
+// je Person, sonst würde eine volle Hütte das Dreiecksbudget sprengen. Gleiche Maße, Palette und Haltungen wie oben.
+function assemblePlanes(parts) {
+  const pos = [];
+  const nor = [];
+  const uv = [];
+  const part = [];
+  for (const [w, h, x, y, tex, p = 0] of parts) {
+    const g = new THREE.PlaneGeometry(w, h).toNonIndexed();
+    g.translate(x, y, 0);
+    pos.push(...g.attributes.position.array);
+    nor.push(...g.attributes.normal.array);
+    const t = texUV(tex);
+    for (let i = 0; i < g.attributes.position.count; i++) {
+      uv.push(...t);
+      part.push(p);
+    }
+    g.dispose();
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  geo.setAttribute('aPart', new THREE.Float32BufferAttribute(part, 1));
+  return geo;
+}
+// Rumpf, Kopf, Haare (immer) und Beine (nur stehend) – 4 Flächen; Arm: eine Fläche.
+const bodyGeometryLite = () => assemblePlanes([[0.4, 0.52, 0, 1.18, 'top'], [0.24, 0.26, 0, 1.62, 'skin'], [0.26, 0.1, 0, 1.78, 'hair'], [0.26, 0.78, 0, 0.45, 'bottom', 1]]);
+const armGeometryLite = () => assemblePlanes([[0.11, 0.46, 0, -0.22, 'top']]);
+
 // Körper: Füße bei y = 0, Blick nach +z. Maße wie ein Spieler von der Stange – bewusst schlicht.
 function bodyGeometry() {
   return assemble([
@@ -140,6 +170,9 @@ function patch(shader) {
 
 // --- Aufbau ---------------------------------------------------------------------------
 // Sammelt alle Platzhalter unter root ein und baut daraus die Menge.
+// Volle Hütte: Stadion und Tribünenplatz des überregionalen Pokals zeigen mehr als MAX_TILES Leute (schlanke Figuren,
+// siehe oben). Die Menge bleibt eine instanzierte Gruppe (2 Draw Calls); Leute ab MAX_TILES teilen sich die Farbpaletten der ersten.
+export const CROWD_CAP = { stadion: 1100, grossfeld_tribuene: 520 };
 export function buildCrowd(root, venueId = '') {
   const slots = [];
   root.traverse((o) => o.userData.crowdSlot && slots.push(o));
@@ -158,7 +191,7 @@ export function buildCrowd(root, venueId = '') {
     if (kept.some((k) => Math.hypot(k.x - s.x, k.z - s.z) < 0.5 && Math.abs(k.y - s.y) < 0.3)) continue;
     kept.push(s);
   }
-  const crowd = new Crowd(root, kept.slice(0, MAX_TILES).map((s, i) => ({ ...s, i, seed })), venueId);
+  const crowd = new Crowd(root, kept.slice(0, CROWD_CAP[venueId] ?? MAX_TILES).map((s, i) => ({ ...s, i, seed })), venueId);
   if (booth?.x != null) crowd.setBooth(booth);
   return crowd;
 }
@@ -203,8 +236,11 @@ export class Crowd {
     depth.onBeforeCompile = patch;
     depth.customProgramCacheKey = () => 'crowd-depth';
 
-    const body = bodyGeometry();
-    const arm = armGeometry();
+    const lite = venueId in CROWD_CAP;
+    this.lite = lite;
+    const body = lite ? bodyGeometryLite() : bodyGeometry();
+    const arm = lite ? armGeometryLite() : armGeometry();
+    if (lite) this.material.side = THREE.DoubleSide; // flache Teile: auch von hinten sichtbar (Ränge gegenüber der Kamera)
     this.tile = new Float32Array(n * 2);
     this.armTile = new Float32Array(n * 4);
     this.sit = new Float32Array(n);
@@ -215,7 +251,7 @@ export class Crowd {
     arm.setAttribute('iSit', new THREE.InstancedBufferAttribute(this.armSit, 1));
     this.body = new THREE.InstancedMesh(body, this.material, n);
     this.arms = new THREE.InstancedMesh(arm, this.material, n * 2);
-    this.body.castShadow = true;
+    this.body.castShadow = !lite; // die volle Hütte wirft keine Einzelschatten (Dreiecksbudget)
     this.body.customDepthMaterial = depth;
     this.arms.castShadow = false; // Schatten der Arme sähe man nicht – spart einen Durchgang
     for (const m of [this.body, this.arms]) {
@@ -242,7 +278,7 @@ export class Crowd {
       const r = hash(s.seed, s.i + 101);
       // Anhänger: links eher Heim, rechts gemischt – eine grobe Fankurve, kein Stadion.
       const home = s.x < 0 ? 0.7 : 0.45;
-      this.fan[i] = r < home ? 0 : r < home + 0.3 ? 1 : -1;
+      this.fan[i] = i >= MAX_TILES ? this.fan[i % MAX_TILES] : r < home ? 0 : r < home + 0.3 ? 1 : -1; // wer eine Palette teilt, trägt dieselben Vereinsfarben
       this.phase[i] = hash(s.seed, s.i + 7) * 6.28;
       this.speed[i] = 0.8 + hash(s.seed, s.i + 13) * 0.5;
       this.scale[i] = s.look?.height ?? 1;

@@ -75,7 +75,7 @@ export function buildLawn(root, pitch, rng, scene) {
     }
     for (const x of [-13, 13]) root.add(cylinder(0.06, 5, 0x9aa0a6, sx + x, 2.5, sz0 - 2.8, 5)); // Treppenholme
     root.add(box(26.4, 0.06, 7.2, 0x5a6068, sx, 5.7, sz0 - 3.3)); // Dachplane
-    for (let step = 0; step < 6; step++) for (const o of crowdRow(430 + step, { x0: sx - 11.5, x1: sx + 11.5, z: sz0 - step * 1.1, y: 0.7 + step * 0.7, n: 11, sitting: true })) root.add(o);
+    for (let step = 0; step < 6; step++) for (const o of crowdRow(430 + step, { x0: sx - 11.5, x1: sx + 11.5, z: sz0 - step * 1.1, y: 0.7 + step * 0.7, n: 40, jitter: 0.02, sitting: true })) root.add(o);
   }
   // Ein paar stehen am Zaun, einer mit Hund.
   root.add(makeSpectator(rng, { x: 14 * k, z: bandZ - 0.8 }));

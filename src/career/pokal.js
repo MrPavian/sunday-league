@@ -268,10 +268,10 @@ function logTie(c, cup, tie) {
 // Gemessen (120 Spiele, Okt. 2026): 1,40 Tore je Team; Heimsiege Engine 20/38/78 %, Modell 21/49/71 %
 // bei Stärkeunterschied < −5 / −5…5 / > 5.
 export const QUICK = { base: 1.4, perPoint: 0.03, home: 0.3 };
-// Gegen Profis (Stärkeunterschied bis −26 statt höchstens ±15) ist die Steigung steiler: an der Engine gemessen
-// (scripts/bundespokal-calibrate.mjs, 160–200 Spiele je Zeile) kommt der Amateur gegen Zweit-/Erstligisten auf
-// 10,6 / 8,5 % (Kader „mittel") und 15,0 / 10,0 % (Kader „bezirk", der stärkste Bezirksligist); das schnelle Modell
-// liefert mit perPoint 0,04 13,3 / 5,7 und 18,6 / 9,2 % (mit 0,03: 22,7 / 13,8 und 27,2 / 18,0 %).
+// Gegen Profis (Stärkeunterschied bis −30 statt höchstens ±15) ist die Steigung steiler: an der Engine gemessen
+// (scripts/bundespokal-calibrate.mjs, 400 Spiele je Zeile) kommt der Amateur gegen Zweit-/Erstligisten auf
+// 4,5 / 2,8 % (Kader „mittel") und 6,8 / 5,0 % (Kader „bezirk", der stärkste Bezirksligist); das schnelle Modell
+// liefert mit perPoint 0,04 3,4 / 3,0 und 5,6 / 4,5 % (mit 0,035: 5,8 / 5,2 und 8,5 / 7,1 %, mit 0,045: 2,1 / 1,5 und 3,2 / 2,6 %).
 export const QUICK_BUND = { perPoint: 0.04 };
 const strength = (c, club, n) => {
   const r = club.squad.map((i) => playerOf(c, i).rating).sort((a, b) => b - a).slice(0, n);

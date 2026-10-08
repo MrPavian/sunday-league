@@ -74,6 +74,30 @@ describe('Zuschauer 2.0', () => {
     expect(max).toBeLessThanOrEqual(Math.floor(c.shown * c.budget) + 2);
   });
 
+  it('volle Hütte (Stadion): mehr als MAX_TILES Leute, schlanke Figuren, weiter zwei Meshes; Heim und Gast gemischt; Tor-Jubel wirkt', () => {
+    const root = new THREE.Group();
+    const rng = createRng(5);
+    for (let i = 0; i < 700; i++) root.add(spectatorSlot(rng, { x: -50 + (i % 100) * 1.0, z: -40 - Math.floor(i / 100) * 1.2, sitting: true, y: 0.5 + Math.floor(i / 100) * 0.5 }));
+    const c = buildCrowd(root, 'stadion');
+    expect(c.n).toBeGreaterThan(MAX_TILES * 5);
+    expect(root.children.filter((o) => o.isInstancedMesh)).toHaveLength(2);
+    expect(c.stats.calls).toBe(2);
+    const tris = (m) => m.geometry.attributes.position.count / 3;
+    expect(tris(c.body) + 2 * tris(c.arms)).toBeLessThanOrEqual(16); // statt rund 260 Dreiecke je Person
+    const full = buildCrowd(venue(40), 'rasenplatz');
+    expect(tris(full.body)).toBeGreaterThan(tris(c.body) * 10);
+    const m = match(3000);
+    c.setMatch(m);
+    expect(c.shown).toBe(c.n);
+    const fans = [...c.fan].slice(0, c.shown);
+    expect(fans.filter((f) => f === 0).length).toBeGreaterThan(c.n * 0.2);
+    expect(fans.filter((f) => f === 1).length).toBeGreaterThan(c.n * 0.15);
+    m.events.push({ type: 'goal', team: 0, ownGoal: false });
+    c.handleEvents(m);
+    const cheering = fans.filter((f, i) => f === 0 && c.type[i] === TYPES.cheer).length;
+    expect(cheering).toBeGreaterThan(fans.filter((f) => f === 0).length * 0.7);
+  });
+
   it('Tor: die Fans des Torschützen jubeln, zeitversetzt; ohne Eingriff ins Spiel', () => {
     const c = buildCrowd(venue(40), 'rasenplatz');
     const m = match(100);

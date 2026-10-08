@@ -9,12 +9,15 @@ import { createCareer, humanClub, playerOf, simulateSync, squadPicker, SQUAD_SHA
 import { LEAGUES } from '../src/career/clubs.js';
 import { MATCH } from '../src/sim/match.js';
 import { createRng } from '../src/core/rng.js';
-import { BUND_ERST } from '../src/career/bundespokal.js';
+import { BUND_ERST, PROFI_KLASSEN } from '../src/career/bundespokal.js';
 import { pokalClub, pokalOf, preparePokalMatch, recordPokalResult, startPokal, tieWinner } from '../src/career/pokal.js';
 
 const N = +process.argv[2] || 200;
 const KLASSE = process.argv[4] === 'erst' ? 1 : 0;
 BUND_ERST[0] = KLASSE;
+// Erprobung: ZWEIT_BOOST=0.18 ERST_BOOST=0.23 überschreibt PROFI_KLASSEN.*.boost.
+if (process.env.ZWEIT_BOOST) PROFI_KLASSEN.zweit.boost = +process.env.ZWEIT_BOOST;
+if (process.env.ERST_BOOST) PROFI_KLASSEN.erst.boost = +process.env.ERST_BOOST;
 const SQUAD = process.argv[3] ?? 'bezirk';
 MATCH.pokalExtra = process.argv.includes('extra');
 const TIERS = { bezirk: LEAGUES[5].clubs[0].tiers, mittel: { ok: 0.14, gut: 0.33, stark: 0.3, dorfstar: 0.16, superstar: 0.06, legende: 0.01 }, stark: { gut: 0.1, stark: 0.4, dorfstar: 0.3, superstar: 0.18, legende: 0.02 } }[SQUAD];
