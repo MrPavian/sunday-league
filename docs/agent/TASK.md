@@ -41,6 +41,13 @@ fertige Arbeit behalten, den Umfang nicht still erweitern.
 5. Kopfballtore und Ecken, danach eine Prüfung aller Plätze und Spielerstärken auf Auffälligkeiten.
 Unabhängige Bereiche (andere Dateien) dürfen parallel laufen; geliefert wird in dieser Reihenfolge.
 
+## Nächste Wünsche (vom Nutzer festgelegt, 2026-10-08)
+1. Fouls und Elfmeter (deutlich zu selten; real recherchierte Vergleichswerte, Karten, Vorteil, Sperren).
+2. Mehr und verbesserte Spieleranimationen (u. a. Fallen nach Foul, Reklamieren, Karte zeigen, Dehnen am Rand).
+3. Ausbau der Ereignisse.
+4. Ausbau des Sponsorings.
+Parallel möglich: 1 (Sim) mit 4 (Karriere); danach 2 (baut auf 1 auf) und 3.
+
 ## Gesperrt bis zum ausdrücklichen Auftrag (vom Nutzer festgelegt, 2026-10-07)
 Couch-Koop, Online-Liga mit Freunden, Editoren und Modding (ROADMAP Phase 8) bleiben auf der Roadmap, werden
 aber erst bearbeitet, wenn der Nutzer das ausdrücklich beauftragt. Nicht von sich aus vorschlagen oder anfangen.
