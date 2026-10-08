@@ -33,10 +33,13 @@ export const PROFIS = [
 // dazu ein Aufschlag auf jede Fähigkeit (0…1-Skala) über denselben Weg wie die Entwicklung der eigenen Spieler
 // (career.players[idx].delta) – Profis trainieren hauptberuflich, und der Pool allein reicht nicht: seine besten Klassen
 // (Superstar, Legende) liegen kaum über den stärksten Amateurkadern. Die Werte sind GEMESSEN, nicht gesetzt: siehe
-// scripts/bundespokal-calibrate.mjs und die Weiterkommchancen im Bericht/Test (tests/pokal2.test.js).
+// scripts/bundespokal-calibrate.mjs, je 400 Spiele, KI gegen KI, Runde 1 mit Heimrecht des Amateurs. Ziel laut Vorgabe: 3–5 %.
+// Weiterkommchance des Amateurs (Kader „mittel" = Zugänge eines Bezirksligisten / „bezirk" = stärkster Bezirksligist):
+// Zweitligist (+0,28) 4,5 % / 6,8 %, Erstligist (+0,26) 2,8 % / 5,0 %. Der stärkere Kader liegt je Liga etwa 1,5–2 × höher;
+// mit einem Wert je Liga lassen sich beide Kader nicht ins Band 3–5 % legen. Tests: tests/pokal2.test.js.
 export const PROFI_KLASSEN = {
-  zweit: { level: 8, boost: 0.12, tiers: { gut: 0.05, stark: 0.3, dorfstar: 0.45, superstar: 0.2 } },
-  erst: { level: 9, boost: 0.15, tiers: { stark: 0.1, dorfstar: 0.42, superstar: 0.45, legende: 0.03 } },
+  zweit: { level: 8, boost: 0.28, tiers: { gut: 0.05, stark: 0.3, dorfstar: 0.45, superstar: 0.2 } },
+  erst: { level: 9, boost: 0.26, tiers: { stark: 0.1, dorfstar: 0.42, superstar: 0.45, legende: 0.03 } },
 };
 export const PROFI_ATTRS = ['pace', 'stamina', 'technique', 'passing', 'shooting', 'tackling', 'heading', 'keeping'];
 // Chance, dass der Gegner der Runde ein Erstligist ist (sonst Zweitligist): früh meist Zweitligist, ab Halbfinale Erstligist.

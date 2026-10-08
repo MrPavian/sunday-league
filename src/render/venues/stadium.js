@@ -48,12 +48,12 @@ export function buildStadium(root, pitch, rng, scene) {
       for (const x of [-hl - 1, -hl / 2, 0, hl / 2, hl + 1]) root.add(cylinder(0.14, 7.6, 0x4a5058, x, 3.8, z0 + s * 9.2, 6));
       root.add(box(2 * hl + 6, 3.4, 0.3, 0x3a4048, 0, 2.2, z0 + s * (ROWS * 1.2 + 0.3))); // Rückwand
     }
-    for (let r = 0; r < ROWS - (s < 0 ? 2 : 1); r++) for (const o of crowdRow(501 + r + (s > 0 ? 20 : 0), { x0: -hl - 1, x1: hl + 1, z: z0 + s * r * 1.2, y: 0.5 + r * rise, n: 22, sitting: true, facing: s > 0 ? Math.PI : 0 })) root.add(o);
+    for (let r = 0; r < ROWS - (s < 0 ? 2 : 1); r++) for (const o of crowdRow(501 + r + (s > 0 ? 20 : 0), { x0: -hl - 1, x1: hl + 1, z: z0 + s * r * 1.2, y: 0.5 + r * rise, n: s < 0 ? 110 : 70, sitting: true })) root.add(o);
   }
   for (const s of [-1, 1]) {
     const x0 = s * (hl + 8);
     for (let r = 0; r < 6; r++) root.add(box(1.2, 0.5, 2 * hw + 4, r % 2 ? 0x8d9399 : 0x9aa0a6, x0 + s * r * 1.2, 0.25 + r * 0.55, 0));
-    for (let r = 0; r < 4; r++) for (let i = 0; i < 10; i++) root.add(makeSpectator(rng, { x: x0 + s * r * 1.2, z: -hw + 1 + (i * (2 * hw - 2)) / 9, y: 0.5 + r * 0.55, sitting: true, facing: s > 0 ? Math.PI / 2 : -Math.PI / 2 }));
+    for (let r = 0; r < 3; r++) for (let i = 0; i < 14; i++) root.add(makeSpectator(rng, { x: x0 + s * r * 1.2, z: -hw + 1 + (i * (2 * hw - 2)) / 13, y: 0.5 + r * 0.55, sitting: true }));
   }
 
   // Flutlichtmasten in den Ecken.

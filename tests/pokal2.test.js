@@ -320,7 +320,22 @@ describe('Überregionaler Pokal gegen einen Profiverein', () => {
     expect(PROFIS.length).toBeGreaterThanOrEqual(4);
     expect(new Set(PROFIS.map((p) => p.id)).size).toBe(PROFIS.length);
     for (const k of Object.values(PROFI_KLASSEN)) expect(Object.keys(k.tiers).every((t) => ['gut', 'stark', 'dorfstar', 'superstar', 'legende'].includes(t))).toBe(true);
-    expect(PROFI_KLASSEN.erst.boost).toBeGreaterThan(PROFI_KLASSEN.zweit.boost);
+    // Der Zweitligist hat schwächere Klassen und bekommt dafür etwas mehr Aufschlag (gemessen auf 3–5 %): die Kader-Stärke bleibt Erst > Zweit.
+    const top11 = (c, club) => club.squad.map((i) => playerOf(c, i).rating).sort((x, y) => y - x).slice(0, 11).reduce((t, x) => t + x, 0) / 11;
+    const avg = {};
+    const saved = BUND_ERST[0];
+    for (const [klass, v] of [['zweit', 0], ['erst', 1]]) {
+      BUND_ERST[0] = v;
+      let sum = 0;
+      for (let seed = 1; seed <= 12; seed++) {
+        const c = at(5, seed);
+        c.bundQual = c.season;
+        sum += top11(c, startPokal(c, 'bund').guests[0]);
+      }
+      avg[klass] = sum / 12;
+    }
+    BUND_ERST[0] = saved;
+    expect(avg.erst).toBeGreaterThan(avg.zweit);
     expect(PROFIS.length).toBeGreaterThanOrEqual(6); // je Runde ein anderer Verein
   });
 
@@ -690,10 +705,10 @@ describe('Überregionaler Pokal: mehrere Runden, Spielort, Einnahmen', () => {
   });
 });
 
-// Außenseiterchance gegen die Profis: gemessen mit scripts/bundespokal-calibrate.mjs (Kader „mittel" = Zugänge, wie sie
-// ein Bezirksligist anwirbt): Zweitligist 10,6 % (160 Spiele), Erstligist 8,5 % (200 Spiele); beide Mannschaften von der KI.
+// Außenseiterchance gegen die Profis: gemessen mit scripts/bundespokal-calibrate.mjs, je 400 Spiele, beide Mannschaften von der
+// KI. Kader „mittel" (Zugänge, wie sie ein Bezirksligist anwirbt): Zweitligist 4,5 %, Erstligist 2,8 %; Zielband 3–5 %.
 describe('Außenseiterchance gegen Profis (gemessen)', () => {
-  const MEASURED = { zweit: 0.106, erst: 0.085 };
+  const MEASURED = { zweit: 0.045, erst: 0.028 };
   const TIERS = { ok: 0.14, gut: 0.33, stark: 0.3, dorfstar: 0.16, superstar: 0.06, legende: 0.01 };
   const setup = (seed, klass) => {
     BUND_ERST[0] = klass === 'erst' ? 1 : 0;
@@ -728,11 +743,13 @@ describe('Außenseiterchance gegen Profis (gemessen)', () => {
     }
     expect(QUICK_BUND.perPoint).toBeGreaterThan(0.03); // steiler als gegen Amateure
     expect(rate.zweit).toBeGreaterThan(rate.erst);
-    for (const klass of ['zweit', 'erst']) expect(Math.abs(rate[klass] - MEASURED[klass])).toBeLessThan(0.06);
+    // Toleranz 2 Prozentpunkte: Standardfehler der Engine-Messung bei n = 400 ≈ 1 Punkt, des Schnellmodells (4800 Würfe) ≈ 0,3.
+    for (const klass of ['zweit', 'erst']) expect(Math.abs(rate[klass] - MEASURED[klass])).toBeLessThan(0.02);
+    for (const klass of ['zweit', 'erst']) expect(rate[klass]).toBeLessThan(0.06); // unter der Obergrenze des Zielbands (5 %) plus Messfehler
   });
 
-  it('Engine: der Amateur gewinnt selten, aber nicht nie – Profis schießen deutlich mehr Tore (40 Spiele)', () => {
-    const N = 40;
+  it('Engine: der Amateur gewinnt selten – Profis schießen deutlich mehr Tore (60 Spiele)', () => {
+    const N = 60; // Obergrenze p0 + 4σ, σ = √(p0(1−p0)/N) ≈ 0,027 → 0,045 + 0,107 = 0,15 (höchstens 9 Siege)
     let win = 0;
     let gf = 0;
     let ga = 0;
@@ -749,7 +766,7 @@ describe('Außenseiterchance gegen Profis (gemessen)', () => {
     const rate = win / N;
     const sigma = Math.sqrt((MEASURED.zweit * (1 - MEASURED.zweit)) / N);
     expect(rate).toBeLessThanOrEqual(MEASURED.zweit + 4 * sigma); // Band um den gemessenen Wert (≈ 0,30 oben)
-    expect(ga).toBeGreaterThan(gf * 1.5); // gemessen: 3,0 : 0,9 Tore je Spiel
+    expect(ga).toBeGreaterThan(gf * 3); // gemessen: 4,4 : 0,7 Tore je Spiel
     expect(gf + ga).toBeGreaterThan(N); // das Spiel läuft, es fallen Tore
   }, 600_000);
 });
