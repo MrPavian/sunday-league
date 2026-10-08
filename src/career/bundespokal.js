@@ -34,12 +34,14 @@ export const PROFIS = [
 // (career.players[idx].delta) – Profis trainieren hauptberuflich, und der Pool allein reicht nicht: seine besten Klassen
 // (Superstar, Legende) liegen kaum über den stärksten Amateurkadern. Die Werte sind GEMESSEN, nicht gesetzt: siehe
 // scripts/bundespokal-calibrate.mjs, je 400 Spiele, KI gegen KI, Runde 1 mit Heimrecht des Amateurs. Ziel laut Vorgabe: 3–5 %.
-// Weiterkommchance des Amateurs (Kader „mittel" = Zugänge eines Bezirksligisten / „bezirk" = stärkster Bezirksligist):
-// Zweitligist (+0,28) 4,5 % / 6,8 %, Erstligist (+0,26) 2,8 % / 5,0 %. Der stärkere Kader liegt je Liga etwa 1,5–2 × höher;
-// mit einem Wert je Liga lassen sich beide Kader nicht ins Band 3–5 % legen. Tests: tests/pokal2.test.js.
+// Weiterkommchance des Amateurs (Kader „mittel" = Zugänge eines Bezirksligisten / „bezirk" = stärkster Bezirksligist), je 400 Spiele,
+// nach den Engine-Änderungen bei Ecken, Kopfbällen, Befreiungsschlag und Torzuordnung neu gemessen: Zweitligist (+0,23) 4,8 % / 5,3 %,
+// Erstligist (+0,19) 3,5 % / 3,8 %. Mit den früheren Werten (+0,28 / +0,26) lag „mittel" bei 3,0 / 0,5 % (HEAD, 200 Spiele) und 1,5 / 2,0 %
+// (200 Spiele) – unter dem Band. Der stärkere Kader liegt je Liga etwas höher; mit einem Wert je Liga lassen sich beide Kader nur grob ins
+// Band 3–5 % legen. Tests: tests/pokal2.test.js.
 export const PROFI_KLASSEN = {
-  zweit: { level: 8, boost: 0.28, tiers: { gut: 0.05, stark: 0.3, dorfstar: 0.45, superstar: 0.2 } },
-  erst: { level: 9, boost: 0.26, tiers: { stark: 0.1, dorfstar: 0.42, superstar: 0.45, legende: 0.03 } },
+  zweit: { level: 8, boost: 0.23, tiers: { gut: 0.05, stark: 0.3, dorfstar: 0.45, superstar: 0.2 } },
+  erst: { level: 9, boost: 0.19, tiers: { stark: 0.1, dorfstar: 0.42, superstar: 0.45, legende: 0.03 } },
 };
 export const PROFI_ATTRS = ['pace', 'stamina', 'technique', 'passing', 'shooting', 'tackling', 'heading', 'keeping'];
 // Chance, dass der Gegner der Runde ein Erstligist ist (sonst Zweitligist): früh meist Zweitligist, ab Halbfinale Erstligist.
