@@ -1,7 +1,7 @@
 // Reaktionen der Figuren (nur Darstellung): Nach einem vergebenen Schuss greift sich der Schütze an den Kopf
 // oder winkt ab, der Torwart ballt nach der Parade die Faust; beim Tor bilden die Mitspieler eine Traube.
 import { describe, expect, it } from 'vitest';
-import { catchKind, DUEL_FAR, duelPairs, foeBearing, isFumble, kickFoot, THROW_RUN, throwInRun, mateCelebration, punchStyle, refereeSignal, shotReactions, SUB_FIVE, SUB_WALK, subScene, tiredFace, wideStance, crowdCues, isChance, warmupPicks, warmupSpot, warmupStep, WARMUP_AWAY, WARMUP_CYCLE, WARMUP_HOME, WARMUP_LANE, WARMUP_PLAN } from '../src/render/reactions.js';
+import { advantageGesture, BOOK_FOR, CARD_AT, CARD_HOLD, cardGesture, consolers, dribbleCarry, FALL, FALL_TOTAL, foulFrame, foulLayout, foulPlace, foulPlan, isAerial, penaltyGoal, poseTime, refCrowd, variation, walkOffStart, walkOffStep, WALK_MAX, whistleTimes, catchKind, DUEL_FAR, duelPairs, foeBearing, isFumble, kickFoot, THROW_RUN, throwInRun, mateCelebration, punchStyle, refereeSignal, shotReactions, SUB_FIVE, SUB_WALK, subScene, tiredFace, wideStance, crowdCues, isChance, warmupPicks, warmupSpot, warmupStep, WARMUP_AWAY, WARMUP_CYCLE, WARMUP_HOME, WARMUP_LANE, WARMUP_PLAN } from '../src/render/reactions.js';
 import { LIMITED_SUBS } from '../src/sim/squad.js';
 import { attackDir } from '../src/sim/players.js';
 import { createMatch, matchDuration, stepMatch } from '../src/sim/match.js';
@@ -394,3 +394,229 @@ describe('Zuschauer-Reaktionen auf Spielereignisse', () => {
     expect(crowdCues({}, m, { type: 'pass' })).toEqual([]);
   });
 });
+
+// --- Fouls, Pfiff, Karten (nur Darstellung) ---
+describe('Fouls sichtbar machen', () => {
+  const ev = (kind, type = 'foul', extra = {}) => ({ type, kind, playerId: 'p1-3', victimId: 'p0-5', ...extra });
+
+  it('Variation ist fest aus den Kennungen: gleich bei gleicher Eingabe, gestreut über 0…1, nie aus der Simulation', () => {
+    expect(variation('a', 'b')).toBe(variation('a', 'b'));
+    expect(variation('a', 'b')).not.toBe(variation('b', 'a'));
+    const xs = Array.from({ length: 400 }, (_, i) => variation(`0-${i % 11}`, `1-${i}`, 'push'));
+    expect(Math.min(...xs)).toBeGreaterThanOrEqual(0);
+    expect(Math.max(...xs)).toBeLessThan(1);
+    const mean = xs.reduce((a, b) => a + b, 0) / xs.length;
+    expect(mean).toBeGreaterThan(0.4);
+    expect(mean).toBeLessThan(0.6);
+  });
+
+  it('jede Art hat ihre Szene: Trikot rücklings, Schubsen seitlich, Beinstellen nach vorn, Kopfballduell mit Sprung', () => {
+    const fam = (kind, ctx = {}) => {
+      const seen = new Set();
+      for (let i = 0; i < 60; i++) seen.add(foulPlan({ ...ev(kind), playerId: `1-${i}` }, ctx).vicAct);
+      return [...seen];
+    };
+    expect(fam('shirt').every((a) => /Rueck$/.test(a))).toBe(true);
+    expect(fam('shirt')).toContain('sturzRueck');
+    expect(fam('push').every((a) => /Seite$/.test(a))).toBe(true);
+    expect(fam('trip').every((a) => /Vorn$/.test(a))).toBe(true);
+    expect(fam('push', { air: true }).every((a) => /Luft$/.test(a))).toBe(true);
+    expect(fam('hold').some((a) => a.startsWith('sturz'))).toBe(true);
+    const sides = new Set(Array.from({ length: 30 }, (_, i) => foulPlan({ ...ev('push'), victimId: `0-${i}` }).s));
+    expect([...sides].sort()).toEqual([-1, 1]); // fällt mal nach links, mal nach rechts
+    expect(foulPlan(ev('shirt')).offAct).toBe('ziehen');
+    expect(foulPlan(ev('push')).offAct).toBe('schubsen');
+    expect(foulPlan(ev('push'), { air: true }).offAct).toBe('schubsenLuft');
+    expect(foulPlan(ev('trip')).offAct).toBe('beinstellen');
+    // ohne Pfiff (no_call, Vorteil): nur Taumeln, kein Sturz; Grätsche/Stochern: der Foulende zeigt keinen Griff
+    for (const type of ['no_call', 'advantage']) for (const kind of ['shirt', 'push', 'trip', 'hold']) expect(foulPlan(ev(kind, type)).fall).toBe(false);
+    expect(foulPlan(ev('tackle'), { slide: true }).offAct).toBeNull();
+    expect(foulPlan(ev('tackle'), { slide: true }).vicAct).toBe('sturzSeite');
+    expect(foulPlan(ev('tackle', 'no_call'), { slide: true }).vicAct).toBeNull(); // liegt laut Simulation (down)
+    expect(foulPlan(ev('poke')).vicAct).toBe('sturzVorn');
+    // liegt er laut Simulation weiter (verletzt): der Sturz endet im Liegen
+    const hurt = foulPlan(ev('trip'), { hurtDown: true });
+    expect(hurt.dur).toBeCloseTo(FALL.yank + FALL.down + FALL.lie, 5);
+    expect(foulPlan(ev('tackle'), { poke: true, hurtDown: true }).dur).toBeCloseTo(hurt.dur, 5); // auch das Stochern endet im Liegen
+  });
+
+  it('Zeitverlauf: Sturz dauert FALL_TOTAL (Gefoulter steht vor dem Freistoß nach 1,3 s + Rest), Elfmeter liegt länger, danach keine Pose', () => {
+    expect(FALL_TOTAL).toBeLessThan(1.6);
+    const plan = foulPlan(ev('trip'));
+    const out = {};
+    foulFrame(plan, 0, out);
+    expect(out.vW).toBe(0); // beginnt weich
+    foulFrame(plan, 0.5, out);
+    expect(out.vAct).toBe(plan.vicAct);
+    expect(out.vW).toBe(1);
+    foulFrame(plan, plan.dur + 0.01, out);
+    expect(out.vAct).toBeNull();
+    expect(out.oAct).toBeNull();
+    const pen = foulPlan(ev('trip', 'foul', { penalty: true }));
+    expect(pen.dur).toBeCloseTo(plan.dur + 0.5, 5);
+    // die Pose hält die Liegephase an, danach läuft sie weiter und endet gleichzeitig mit dem Sturz
+    const lieEnd = FALL.yank + FALL.down + FALL.lie;
+    expect(poseTime(pen, lieEnd + 0.3)).toBeCloseTo(lieEnd, 3);
+    expect(poseTime(pen, pen.dur)).toBeCloseTo(FALL_TOTAL, 5);
+    expect(poseTime(plan, 0.77)).toBe(0.77);
+    // Gesten danach: Foulender hebt die Hände schon vor dem Aufstehen des Gefoulten, der reklamiert erst, wenn er steht
+    const w = whistleTimes(plan);
+    expect(w.off[0]).toBeLessThan(w.vic[0]);
+    expect(w.vic[0]).toBeGreaterThan(FALL.yank + FALL.down);
+    expect(whistleTimes(plan, true).vic).toBeNull();
+  });
+
+  it('Wege und Aufstellung: alle Werte endlich, der Foulende steht im Griffabstand, Gefoulter wird weggezogen/gestoßen', () => {
+    for (const kind of ['shirt', 'hold', 'push', 'trip', 'tackle', 'poke']) for (const air of [false, true]) for (const type of ['foul', 'no_call']) for (const s of [-1, 1]) {
+      const plan = { ...foulPlan(ev(kind, type), { air }), s };
+      for (let t = 0; t <= plan.dur + 0.2; t += 1 / 30) {
+        const fr = foulFrame(plan, t, {});
+        const pl = foulPlace({ x: 3, z: -2, yaw: 0.7 }, fr, {});
+        for (const v of [fr.vx, fr.vz, fr.ox, fr.oz, fr.oyaw, fr.vT, fr.oT, fr.vW, fr.oW, pl.vx, pl.vz, pl.ox, pl.oz, pl.oyaw]) expect(Number.isFinite(v), `${kind} ${t}`).toBe(true);
+        expect(Math.hypot(fr.vx, fr.vz)).toBeLessThan(1.6);
+        expect(fr.vW).toBeGreaterThanOrEqual(0);
+        expect(fr.vW).toBeLessThanOrEqual(1);
+      }
+      const lay = foulLayout(plan);
+      if (plan.offAct) expect(Math.hypot(lay.x, lay.z)).toBeGreaterThan(0.45);
+      else expect(lay).toBeNull();
+    }
+    // Trikot: Gefoulter nach vorn, Foulender hinter ihm; nach dem Zug liegt V hinter seiner Ausgangsstelle
+    const sh = { ...foulPlan(ev('shirt')), fall: true, vicAct: 'sturzRueck' };
+    const f0 = foulFrame(sh, 0.05, {});
+    const f1 = foulFrame(sh, 0.5, {});
+    expect(f0.oz).toBeLessThan(0);
+    expect(f1.vz).toBeLessThan(-0.3);
+  });
+
+  it('Schiri: Karte erst kurz nach dem Pfiff, dann Notizbuch, Gelb-Rot zeigt erst Gelb dann Rot', () => {
+    for (const color of ['yellow', 'red']) {
+      expect(cardGesture(color, 0)).toBeNull();
+      expect(cardGesture(color, CARD_AT + 0.2)).toBe(color === 'yellow' ? 'karteGelb' : 'karteRot');
+      expect(cardGesture(color, CARD_AT + CARD_HOLD + 0.2)).toBe('notizbuch');
+      expect(cardGesture(color, CARD_AT + CARD_HOLD + BOOK_FOR + 0.1)).toBeNull();
+    }
+    const yr = [0.5, 1.0, 1.6, 2.2].map((t) => cardGesture('yellowred', t));
+    expect(yr[0]).toBe('karteGelb');
+    expect(yr).toContain('karteRot');
+    expect(yr.indexOf('karteRot')).toBeGreaterThan(yr.indexOf('karteGelb'));
+    const state = { advHold: 0 };
+    expect(advantageGesture(state, { advantage: null, time: 5 })).toBeNull();
+    expect(advantageGesture(state, { advantage: { team: 0 }, time: 5 })).toBe('vorteil');
+    state.advHold = 0.5;
+    expect(advantageGesture(state, { advantage: null, time: 5.1 })).toBe('vorteil'); // mindestens kurz sichtbar
+  });
+
+  it('Ausgeschlossener: steht zuerst, geht dann langsam zur nächsten Seitenlinie und ist fertig, sobald er dahinter ist', () => {
+    const pitch = PITCHES.rasenplatz;
+    for (const z of [8, -9, 0]) {
+      const w = walkOffStart(pitch, { x: 4, z });
+      const out = {};
+      walkOffStep(w, 0.5, out);
+      expect(out.gesture).toBe('kopfschuetteln');
+      expect(out.speed).toBe(0);
+      let t = 0.5;
+      let prev = out.z;
+      while (!out.done && t < WALK_MAX + 1) {
+        walkOffStep(w, 1 / 30, out);
+        t += 1 / 30;
+        expect(Math.abs(out.z - prev)).toBeLessThan(0.2); // höchstens Gehtempo, kein Sprung
+        prev = out.z;
+      }
+      expect(out.done).toBe(true);
+      expect(Math.abs(out.z)).toBeGreaterThan(pitch.halfWidth + 1.5);
+      expect(out.gesture).toBe('abgang');
+      expect(Math.sign(out.z)).toBe(z >= 0 ? 1 : -1);
+      expect(out.x).toBe(4);
+    }
+  });
+
+  it('Mitspieler am Schiri, Trösten, Jubel der Gegner, Elfmetertor, Kopfballduell, Ballführung (echtes Spiel)', () => {
+    const m = createMatch({ seed: 11, pitch: PITCHES.rasenplatz, human: false, duration: 120, aiCoach: false });
+    for (let i = 0; i < 600; i++) stepMatch(m, undefined, 1 / 60);
+    m.events.length = 0;
+    const off = m.players.find((p) => p.team === 1 && p.role !== 'gk');
+    const vic = m.players.find((p) => p.team === 0 && p.role !== 'gk');
+    const crowd = refCrowd(m, off.id, vic.id, m.referee, true);
+    expect(crowd.length).toBeLessThanOrEqual(3);
+    for (const c of crowd) {
+      const p = m.players.find((q) => q.id === c.id);
+      expect([off.id, vic.id]).not.toContain(c.id);
+      expect(p.role).not.toBe('gk');
+      expect(Math.hypot(c.x - p.pos.x, c.z - p.pos.z)).toBeLessThanOrEqual(6.01); // höchstens ein paar Schritte
+      expect(Math.hypot(c.x - m.referee.pos.x, c.z - m.referee.pos.z)).toBeGreaterThan(1.9); // nicht in den Schiri hinein
+    }
+    expect(refCrowd(m, off.id, vic.id, null)).toEqual([]);
+    const cons = consolers(m, off);
+    expect(cons.filter((c) => c.kind === 'troesten').length).toBeLessThanOrEqual(1);
+    for (const c of cons) {
+      const p = m.players.find((q) => q.id === c.id);
+      expect(p.role).not.toBe('gk');
+      if (c.kind === 'jubel') expect(p.team).not.toBe(off.team);
+      else expect(p.team).toBe(off.team);
+    }
+    // Elfmetertor: das Tor nach dem Pfiff der Mannschaft, nicht nach einer Parade
+    const st = {};
+    expect(penaltyGoal(st, { type: 'setpiece', kind: 'penalty', team: 0 })).toBe(false);
+    expect(penaltyGoal(st, { type: 'goal', team: 0 })).toBe(true);
+    expect(penaltyGoal(st, { type: 'goal', team: 0 })).toBe(false);
+    penaltyGoal(st, { type: 'setpiece', kind: 'penalty', team: 0 });
+    penaltyGoal(st, { type: 'save' });
+    expect(penaltyGoal(st, { type: 'goal', team: 0 })).toBe(false);
+    penaltyGoal(st, { type: 'setpiece', kind: 'penalty', team: 0 });
+    expect(penaltyGoal(st, { type: 'goal', team: 1 })).toBe(false);
+    // Kopfballduell nur mit Ball in Kopfhöhe in der Nähe
+    expect(isAerial({ x: 0, y: 1.8, z: 0 }, { x: 1, z: 1 })).toBe(true);
+    expect(isAerial({ x: 0, y: 0.3, z: 0 }, { x: 1, z: 1 })).toBe(false);
+    expect(isAerial({ x: 9, y: 1.8, z: 0 }, { x: 1, z: 1 })).toBe(false);
+    expect(isAerial(null, { x: 0, z: 0 })).toBe(false);
+    // Ballführung: nur wer den Ball dribbelt, am Fuß, in Bewegung
+    const p = m.players.find((q) => q.role !== 'gk');
+    m.ball.holder = null;
+    Object.assign(m.ball, { lastTouch: p.id, lastAction: 'dribble' });
+    m.ball.pos.x = p.pos.x + 0.4;
+    m.ball.pos.z = p.pos.z;
+    m.ball.pos.y = 0.11;
+    p.state = 'normal';
+    p.vel.x = 3;
+    expect(dribbleCarry(m, p)).toBe(1);
+    p.vel.x = 0;
+    expect(dribbleCarry(m, p)).toBe(0);
+    p.vel.x = 3;
+    m.ball.lastAction = 'shoot';
+    expect(dribbleCarry(m, p)).toBe(0);
+  });
+
+  it('echte Spiele: jedes Foul-, Vorteil- und Karten-Ereignis ergibt eine endliche Szene, die Simulation bleibt unberührt', () => {
+    const kinds = new Set();
+    const cards = new Set();
+    let foulsSeen = 0;
+    for (const seed of [21, 22, 23, 24, 25, 26]) {
+      const run = (withView) => {
+        const m = createMatch({ seed, pitch: PITCHES.rasenplatz, human: false, duration: 420, aiCoach: false });
+        const state = {};
+        while (m.phase !== 'ended') {
+          stepMatch(m, undefined, 1 / 60);
+          if (withView)
+            for (const e of m.events) {
+              if (e.type === 'foul' || e.type === 'no_call' || e.type === 'advantage') {
+                const plan = foulPlan(e, { air: e.kind === 'push', hurtDown: false });
+                kinds.add(`${e.type}:${e.kind}`);
+                foulsSeen++;
+                const fr = foulFrame(plan, 0.5, {});
+                expect(Number.isFinite(fr.vx + fr.vz + fr.ox + fr.oz)).toBe(true);
+              } else if (e.type === 'card') cards.add(`${e.color}:${e.reason}`);
+              penaltyGoal(state, e);
+              advantageGesture(state, m);
+            }
+          m.events.length = 0;
+        }
+        return `${m.score}|${m.time.toFixed(3)}|${m.stats.teams[0].shots}|${m.stats.teams[1].shots}|${m.rng.next()}`;
+      };
+      expect(run(true)).toBe(run(false)); // die Darstellung zieht keinen Zufall, ändert nichts
+    }
+    expect(foulsSeen).toBeGreaterThan(8);
+    expect(kinds.size).toBeGreaterThanOrEqual(3);
+  });
+});
+

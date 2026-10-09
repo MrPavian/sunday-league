@@ -48,7 +48,7 @@ export function refereeSignal(match, attackDir) {
   let sig = null;
   for (const e of match.events) {
     if (e.type === 'goal') sig = { x: 0, z: 0, time: 1.6 };
-    else if (e.type === 'setpiece' && (e.kind === 'corner' || e.kind === 'goalkick' || e.kind === 'penalty')) sig = { x: match.ball.pos.x, z: match.ball.pos.z, time: 1.4 };
+    else if (e.type === 'setpiece' && (e.kind === 'corner' || e.kind === 'goalkick' || e.kind === 'penalty')) sig = { x: match.ball.pos.x, z: match.ball.pos.z, time: 1.4, kind: e.kind };
     else if (e.type === 'setpiece' && (e.kind === 'freekick' || e.kind === 'throwin')) sig = { x: r.pos.x + attackDir(match, e.team) * 10, z: r.pos.z, time: 1.2 };
   }
   return sig;
@@ -388,4 +388,274 @@ export function duelPairs(match) {
 // group.rotation.y) und Versatz (dx, dz) zum Gegner.
 export function foeBearing(a, dx, dz) {
   return Math.atan2(dx * Math.cos(a) - dz * Math.sin(a), dx * Math.sin(a) + dz * Math.cos(a));
+}
+
+// --- Fouls, Pfiff, Karten (nur Darstellung) ----------------------------------------------------------
+// Die Simulation meldet foul/no_call/advantage/card nur als Ereignis. Wie es aussieht, wird hier aus den Ereignissen
+// abgeleitet – ohne Zufall aus der Simulation: Variation kommt aus den Kennungen (variation()), nie aus match.rng.
+// Zeiten sind Sekunden Spielzeit seit dem Ereignis (SIM_STEP je Simulationsschritt, wie in main.js STEP), damit
+// Tempo und Pausen mitlaufen. Maße in Metern bei Figurgröße 1; Werte „gewählt, nicht gemessen", die Griffabstände
+// (FOUL_REACH) per Gitter-Suche an der Figur festgelegt (tests/player.test.js prüft Hand ≤ 3 cm am Ziel).
+
+export const SIM_STEP = 1 / 60;
+
+// Feste Variation 0…1 aus beliebigen Kennungen (FNV-1a) – dieselben Spieler und Art geben immer dieselbe Szene.
+export function variation(...keys) {
+  let h = 2166136261;
+  for (const c of keys.join('|')) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0;
+  h = Math.imul(h ^ (h >>> 15), 2246822519) >>> 0;
+  h = Math.imul(h ^ (h >>> 13), 3266489917) >>> 0;
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+
+// Zeiten des Sturzes (PlayerModel.js fallPose): Ruck/Stoß, Fall, Liegen, Aufstehen; Taumeln dauert stumble.
+// Zusammen ≈ 1,46 s – kurz genug, dass der Gefoulte beim Freistoß (Pause 1,3 s) wieder steht.
+export const FALL = { yank: 0.3, down: 0.32, lie: 0.22, up: 0.62, stumble: 0.95 };
+export const FALL_TOTAL = FALL.yank + FALL.down + FALL.lie + FALL.up;
+
+// Abstand Mitte Foulender → Mitte Gefoulter beim Griff (Figurgröße 1): Gitter-Suche, siehe PlayerModel.js (GRIP).
+export const FOUL_REACH = { ziehen: 0.8, festhalten: 0.64, schubsen: 0.58, schubsenLuft: 0.56, beinstellen: 0.52 };
+
+// Welche Szene zeigt dieses Foul? e = foul | no_call | advantage; ctx:
+//   air     Kopfballduell (der Ball war vor dem Pfiff in Kopfhöhe beim Gefoulten),
+//   slide   der Foulende rutscht (Sim-Zustand tackle: seine Grätsche zeigt MatchView selbst),
+//   poke    er stochert (Sim-Zustand poke),
+//   hurtDown der Gefoulte liegt laut Simulation (state down: verletzt oder umgesäbelt).
+// Liefert { kind, stopped, air, offAct, vicAct, s (Sturzseite ±1), vr (Variation), hold (zusätzliche Liegezeit), layout }.
+export function foulPlan(e, ctx = {}) {
+  const kind = e.kind ?? 'tackle';
+  const stopped = e.type === 'foul';
+  const vr = variation(e.playerId, e.victimId, kind, 'v');
+  const s = variation(e.playerId, e.victimId, kind, 's') < 0.5 ? -1 : 1;
+  const air = !!ctx.air && (kind === 'push' || kind === 'hold' || kind === 'shirt');
+  let offAct = null;
+  let vicAct = null;
+  if (kind === 'shirt') (offAct = 'ziehen'), (vicAct = stopped && vr < 0.55 ? 'sturzRueck' : 'taumelRueck');
+  else if (kind === 'hold') (offAct = 'festhalten'), (vicAct = stopped && vr < 0.4 ? 'sturzRueck' : 'taumelSeite');
+  else if (kind === 'push') (offAct = air ? 'schubsenLuft' : 'schubsen'), (vicAct = air ? (stopped ? 'sturzLuft' : 'taumelLuft') : stopped && vr < 0.7 ? 'sturzSeite' : 'taumelSeite');
+  else if (kind === 'trip') (offAct = 'beinstellen'), (vicAct = stopped ? 'sturzVorn' : 'taumelVorn');
+  else if (kind === 'poke') vicAct = stopped ? 'sturzVorn' : 'taumelVorn';
+  else if (kind === 'tackle') vicAct = ctx.slide ? (stopped ? 'sturzSeite' : null) : stopped ? 'sturzVorn' : 'taumelVorn';
+  if (ctx.hurtDown) vicAct = vicAct && vicAct.startsWith('sturz') ? vicAct : null; // liegt er sowieso, übernimmt die Simulation
+  if (ctx.slide || ctx.poke) offAct = null;
+  const fall = vicAct && vicAct.startsWith('sturz');
+  const lieEnd = FALL.yank + FALL.down + FALL.lie;
+  const hold = fall && e.penalty && !ctx.hurtDown ? 0.5 : 0;
+  // Liegt er laut Simulation weiter (verletzt), endet der Sturz im Liegen: danach übernimmt die Pose der Simulation.
+  return { kind, stopped, air, offAct, vicAct, s, vr, penalty: !!e.penalty, hold, fall: !!fall, dur: fall ? (ctx.hurtDown ? lieEnd : FALL_TOTAL + hold) : FALL.stumble + 0.2 };
+}
+
+// Zeit in der Sturzpose: bei Elfmeter bleibt der Gefoulte länger liegen (hold), danach geht es weiter wie sonst.
+export function poseTime(plan, t) {
+  if (!plan.hold) return t;
+  const lieEnd = FALL.yank + FALL.down + FALL.lie;
+  return t < lieEnd ? t : t < lieEnd + plan.hold ? lieEnd - 1e-4 : t - plan.hold;
+}
+
+// Aufstellung beim Griff im Rahmen des Gefoulten (x: +x zur Seite des „R"-Knochens, z: nach vorn) mit Blickrichtung des
+// Foulenden relativ zum Gefoulten (Bogenmaß). Der Foulende steht dazu entgegen der Fallrichtung s.
+export function foulLayout(plan) {
+  const r = FOUL_REACH;
+  switch (plan.offAct) {
+    case 'ziehen': return { x: 0, z: -r.ziehen, yaw: 0 };
+    case 'festhalten': return { x: 0, z: -r.festhalten, yaw: 0 };
+    case 'schubsen': return { x: -plan.s * r.schubsen, z: 0, yaw: plan.s * (Math.PI / 2) };
+    case 'schubsenLuft': return { x: -plan.s * r.schubsenLuft, z: -0.15, yaw: plan.s * (Math.PI / 2) };
+    case 'beinstellen': return { x: 0.21 * plan.s, z: r.beinstellen, yaw: Math.PI };
+    default: return null; // Grätsche/Stochern: der Foulende bleibt, wo ihn die Simulation hat
+  }
+}
+
+const sm = (a, b, x) => {
+  const t = clamp01((x - a) / (b - a));
+  return t * t * (3 - 2 * t);
+};
+
+// Pose und Weg beider Beteiligten zur Zeit t seit dem Foul. Schreibt ins Objekt out (wiederverwendbar, keine Allokation):
+//   vAct/oAct  Name der Pose (PlayerModel.js animatePlayer: act) oder null, vT/oT Posenzeit, vW/oW Überblendung 0…1,
+//   vx, vz     Verschiebung des Gefoulten im eigenen Rahmen (x seitlich, z nach vorn, in m), ox, oz die des Foulenden
+//              im Rahmen des Gefoulten, oyaw Zusatzdrehung des Foulenden, lay: Anteil der Aufstellung (1 = Griffabstand).
+export function foulFrame(plan, t, out = {}) {
+  const T = plan.dur;
+  const pt = poseTime(plan, t);
+  out.vAct = plan.vicAct && t < T ? plan.vicAct : null;
+  out.vT = pt;
+  const edge = (t0, t1) => sm(0, 0.08, t0) * (1 - sm(t1 - 0.2, t1, t0)); // weich ein, weich aus
+  out.vW = out.vAct ? edge(t, T) : 0;
+  const OT = plan.fall ? 0.85 : 0.7;
+  out.oAct = plan.offAct && t < OT ? plan.offAct : null;
+  out.oT = t;
+  out.oW = out.oAct ? edge(t, OT) : 0;
+  out.vx = out.vz = out.ox = out.oz = out.oyaw = 0;
+  const s = plan.s;
+  const v = plan.vicAct;
+  // Weg des Gefoulten (relativ zur Stelle beim Pfiff): zuerst vom Griff gezogen/gestoßen, dann der Sturz selbst.
+  const pull = sm(0.04, FALL.yank, t);
+  const fall = plan.fall ? sm(FALL.yank, FALL.yank + FALL.down, t) : 0;
+  const stag = plan.fall ? 0 : Math.sin(Math.PI * clamp01(t / FALL.stumble));
+  if (v === 'sturzRueck' || v === 'sturzLuft') out.vz = -0.22 * pull - 0.36 * fall;
+  else if (v === 'taumelRueck' || v === 'taumelLuft') out.vz = -0.3 * stag;
+  else if (v === 'sturzSeite') out.vx = s * (0.08 * pull + 0.55 * fall);
+  else if (v === 'taumelSeite') out.vx = s * 0.3 * stag;
+  else if (v === 'sturzVorn') out.vz = 0.25 * pull + 0.55 * fall + 0.55 * sm(FALL.yank + FALL.down, FALL.yank + FALL.down + FALL.lie, t);
+  else if (v === 'taumelVorn') out.vz = 0.5 * stag;
+  // Foulender: bleibt am Gefoulten (zieht, schiebt) und gibt dann den Weg frei.
+  const lay = foulLayout(plan);
+  out.lay = lay ? 1 : 0;
+  if (lay) {
+    const rel = sm(0.34, 0.7, t); // lässt los, geht aus dem Weg
+    out.ox = lay.x + out.vx;
+    out.oz = lay.z + out.vz;
+    out.oyaw = lay.yaw;
+    if (plan.offAct === 'ziehen' || plan.offAct === 'festhalten') {
+      out.ox += s * 0.85 * rel * (plan.fall ? 1 : 0.4);
+      out.oz += (plan.fall ? 0.2 : 0.1) * rel;
+    } else if (plan.offAct === 'schubsen' || plan.offAct === 'schubsenLuft') {
+      out.ox = lay.x + out.vx * 0.55 - s * 0.1 * rel;
+      out.oz = lay.z + out.vz * 0.55;
+    } else if (plan.offAct === 'beinstellen') {
+      out.ox += -s * 0.8 * sm(0.18, 0.5, t);
+      out.oz = lay.z + (plan.fall ? 0.1 : 0) - 0.2 * sm(0.15, 0.5, t) + out.vz * 0.1;
+    }
+  }
+  return out;
+}
+
+// Weltlage beider Beteiligten aus Stelle und Blickrichtung des Gefoulten beim Foul (v0 = { x, z, yaw }) und foulFrame().
+// Rahmen: lokal +z = Blickrichtung (sin yaw, cos yaw), lokal +x = (cos yaw, −sin yaw). Schreibt ins Ergebnisobjekt out
+// { vx, vz, vyaw, ox, oz, oyaw }.
+export function foulPlace(v0, fr, out = {}) {
+  const c = Math.cos(v0.yaw);
+  const s = Math.sin(v0.yaw);
+  out.vx = v0.x + fr.vx * c + fr.vz * s;
+  out.vz = v0.z - fr.vx * s + fr.vz * c;
+  out.vyaw = v0.yaw;
+  out.ox = v0.x + fr.ox * c + fr.oz * s;
+  out.oz = v0.z - fr.ox * s + fr.oz * c;
+  out.oyaw = v0.yaw + fr.oyaw;
+  return out;
+}
+
+// Kopfballduell? Der Ball war vor dem Pfiff (Bild davor, prevBall) in Kopfhöhe nahe beim Gefoulten.
+export const isAerial = (prevBall, pos) => !!prevBall && prevBall.y >= 1.1 && Math.hypot(prevBall.x - pos.x, prevBall.z - pos.z) < 2.6;
+
+// Wer geht zum Schiri? Bis zu zwei Mitspieler des Foulenden (Protest), einer der Gefoulten-Mannschaft bei Elfmeter oder
+// Karte (fordert sie). Nur Feldspieler im Umkreis von 16 m um den Schiri, nie die Beteiligten. Liefert [{ id, kind: 'protest' | 'fordern', x, z }]
+// mit dem Ziel: 2 m vor dem Schiri auf der Linie von der eigenen Stelle (Wege höchstens 6 m: es ist Darstellung, die Simulation hält sie fest).
+export function refCrowd(match, offId, vicId, ref, demand = false) {
+  if (!ref) return [];
+  const off = match.players.find((p) => p.id === offId);
+  const vic = match.players.find((p) => p.id === vicId);
+  if (!off || !vic) return [];
+  const near = (team, n) =>
+    match.players
+      .filter((p) => p.team === team && p.id !== offId && p.id !== vicId && p.role !== 'gk' && p.state === 'normal')
+      .map((p) => ({ p, d: Math.hypot(ref.pos.x - p.pos.x, ref.pos.z - p.pos.z) }))
+      .filter((c) => c.d < 16 && c.d > 2.5)
+      .sort((a, b) => a.d - b.d)
+      .slice(0, n);
+  const out = [];
+  const go = ({ p, d }, kind) => {
+    const k = Math.min(6, d - 2) / d;
+    out.push({ id: p.id, kind, x: p.pos.x + (ref.pos.x - p.pos.x) * k, z: p.pos.z + (ref.pos.z - p.pos.z) * k });
+  };
+  for (const c of near(off.team, demand ? 1 : 2)) go(c, 'protest');
+  if (demand) for (const c of near(vic.team, 1)) go(c, 'fordern');
+  return out;
+}
+
+// Zeitplan der Gesten nach dem Pfiff (Sekunden seit dem Foul): Foulender hebt die Hände („war nix“), der Gefoulte
+// reklamiert, sobald er steht (nicht, wenn er liegen bleibt). Liefert { off: [t0, t1], vic: [t0, t1] }.
+export function whistleTimes(plan, hurt = false) {
+  return { off: [plan.fall ? 0.6 : 0.35, plan.fall ? 2.6 : 2.2], vic: hurt ? null : [plan.fall ? Math.min(plan.dur, FALL_TOTAL) - 0.1 : 0.7, plan.dur + 1.4] };
+}
+
+// Schiri-Gesten nach einer Karte (Sekunden seit dem Ereignis): kurz nach dem Pfiff Karte hoch (gelb/rot, bei Gelb-Rot erst
+// Gelb, dann Rot), danach zückt er das Notizbuch. null = keine Geste.
+export const CARD_AT = 0.35;
+export const CARD_HOLD = 1.2;
+export const BOOK_FOR = 1.6;
+export function cardGesture(color, t) {
+  const a = CARD_AT;
+  if (t < a) return null;
+  if (color === 'yellowred') {
+    if (t < a + CARD_HOLD * 0.75) return 'karteGelb';
+    if (t < a + CARD_HOLD * 1.5) return 'karteRot';
+    return t < a + CARD_HOLD * 1.5 + BOOK_FOR ? 'notizbuch' : null;
+  }
+  if (t < a + CARD_HOLD) return color === 'yellow' ? 'karteGelb' : 'karteRot';
+  return t < a + CARD_HOLD + BOOK_FOR ? 'notizbuch' : null;
+}
+
+// Vorteil: der Schiri streckt die Arme nach vorn, solange die Simulation den Vorteil offen hält (match.advantage), mindestens
+// 0,8 s ab dem Ereignis. state merkt sich den Beginn.
+export function advantageGesture(state, match) {
+  if (match.advantage) state.advSince ??= match.time;
+  else if (state.advSince != null && (state.advHold ?? 0) <= 0) state.advSince = null;
+  return match.advantage || (state.advHold ?? 0) > 0 ? 'vorteil' : null;
+}
+
+// Ausgeschlossen: steht kurz mit dem Kopf in der Hand und schüttelt ihn, geht dann langsam zur nächsten Seitenlinie
+// (Kamera-Seite, wenn er in deren Hälfte steht), bis er hinter ihr verschwindet. Der Weg ist gerade, quer zur Linie.
+// Liefert { x, z, angle, speed, gesture, done } aus w = { x, z, t, dirZ, len } (Anfang x, z); schreibt ins Ergebnis out.
+export const WALK_STAND = 1.4;
+export const WALK_SPEED = 1.7;
+export const WALK_MAX = 18;
+export function walkOffStart(pitch, pos) {
+  const dirZ = pos.z >= 0 ? 1 : -1;
+  return { x: pos.x, z: pos.z, t: 0, dirZ, len: Math.max(1, pitch.halfWidth + 2.4 - pos.z * dirZ) };
+}
+export function walkOffStep(w, dt, out = {}) {
+  w.t += dt;
+  const moving = w.t > WALK_STAND;
+  const u = Math.max(0, w.t - WALK_STAND);
+  const k = clamp01(u / 0.8); // beginnt langsam: in 0,8 s auf Gehtempo
+  const walked = WALK_SPEED * (u < 0.8 ? (0.5 * u * u) / 0.8 : 0.4 + (u - 0.8));
+  const d = Math.max(0, Math.min(w.len, walked));
+  out.x = w.x;
+  out.z = w.z + w.dirZ * d;
+  out.angle = w.dirZ > 0 ? 0 : Math.PI;
+  out.speed = moving ? WALK_SPEED * Math.max(0.15, k) : 0;
+  out.gesture = moving ? 'abgang' : 'kopfschuetteln';
+  out.done = d >= w.len || w.t > WALK_MAX;
+  return out;
+}
+
+// Wer tröstet oder schimpft? Die beiden nächsten Mitspieler (Feldspieler) des Ausgeschlossenen im Umkreis von 14 m: der erste
+// legt die Hand auf die Schulter und geht mit (kind 'troesten', s = Seite), der zweite fasst sich an den Kopf (kind 'schimpfen').
+// Die Gegner in der Nähe reißen die Faust (kind 'jubel', bis zu zwei, Abstand ≤ 18 m).
+export function consolers(match, off) {
+  const mates = (team, same, max, n) =>
+    match.players
+      .filter((p) => (p.team === team) === same && p.role !== 'gk' && p.state === 'normal')
+      .map((p) => ({ p, d: Math.hypot(p.pos.x - off.pos.x, p.pos.z - off.pos.z) }))
+      .filter((c) => c.d < max)
+      .sort((a, b) => a.d - b.d)
+      .slice(0, n);
+  const out = [];
+  mates(off.team, true, 14, 2).forEach((c, i) => out.push({ id: c.p.id, kind: i === 0 ? 'troesten' : 'schimpfen', s: variation(c.p.id, off.id) < 0.5 ? -1 : 1 }));
+  for (const c of mates(off.team, false, 18, 2)) out.push({ id: c.p.id, kind: 'jubel', s: 1 });
+  return out;
+}
+// Lage des tröstenden Mitspielers im Rahmen des Gehenden: schräg hinter ihm auf der Seite s (Gitter-Suche, siehe PlayerModel TROESTEN).
+export const CONSOLE_AT = { side: 0.35, behind: 0.4 };
+
+// Elfmeter verwandelt? state merkt sich einen Elfmeterpfiff (Ereignis setpiece/penalty), das nächste Tor bis zum Anstoß ist ein
+// Elfmetertor. Liefert true für das Torereignis e, sonst false.
+export function penaltyGoal(state, e) {
+  if (e.type === 'setpiece') state.penalty = e.kind === 'penalty' ? e.team : null;
+  else if (e.type === 'goal') {
+    const pen = state.penalty != null && state.penalty === e.team && !e.ownGoal;
+    state.penalty = null;
+    return pen;
+  } else if (e.type === 'save' || e.type === 'post' || e.type === 'bar' || e.type === 'out') state.penalty = null;
+  return false;
+}
+
+// Ballführung: der Spieler führt den Ball am Fuß (letzter Kontakt Dribbling, Ball in Fußnähe, in Bewegung). 0 oder 1;
+// MatchView glättet.
+export function dribbleCarry(match, p) {
+  const b = match.ball;
+  if (b.holder || b.lastTouch !== p.id || b.lastAction !== 'dribble' || b.pos.y > 0.5 || p.state !== 'normal' || p.role === 'gk') return 0;
+  return Math.hypot(b.pos.x - p.pos.x, b.pos.z - p.pos.z) < 1.5 && Math.hypot(p.vel.x, p.vel.z) > 0.8 ? 1 : 0;
 }
