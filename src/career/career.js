@@ -30,6 +30,7 @@ import { weeklyStaff } from './staff.js';
 import { childrenGrowUp, coachAway, initCoach, isCoach, personalWeek, seasonPersonal, weeklyPersonal } from './personal.js';
 import { absenceFactor, advanceArcs, applyForm, autoResolve, resultMood, rollNotice, rollWeekEvent, weeklyMood } from './events.js';
 import { developYouth, expireYouth, initYouth, retirements, youthIntake } from './youth.js';
+import { applyCards, banGames, banReason, isBanned, resetYellows, tickBans } from './suspensions.js';
 import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFinances, weeklyFinances } from './finances.js';
 
 import { nameEditionFor, nameLocaleOf } from '../data/names.js';
@@ -258,6 +259,7 @@ export function nextSeason(career) {
   }
 
   const own = rows[pos - 1];
+  resetYellows(career); // neue Saison, neue Gelbzähler (offene Sperren bleiben)
   closeSeasonFinances(career, { wins: own.w, goals: own.gf, rank: pos, cards: career.seasonCards });
 
   const newLevel = promoted ? level + 1 : relegated ? level - 1 : level;
@@ -467,10 +469,14 @@ export function startWeek(career) {
     let text;
     if (isCoach(career, idx)) {
       // Du selbst: kein Chat-Eintrag, du bist da – außer du fällst aus.
-      availability[idx] = coachAway(career) ? 'no' : 'yes';
+      availability[idx] = coachAway(career) || isBanned(career, idx) ? 'no' : 'yes'; // auch der Spielertrainer kann gesperrt sein
       continue;
     }
-    if (rec.injuryWeeks > 0) {
+    if (isBanned(career, idx)) {
+      const n = banGames(career, idx);
+      status = 'no';
+      text = tr(`Gesperrt (${banReason(rec.ban.reason)}) – noch ${n} ${n === 1 ? 'Spiel' : 'Spiele'}. Ich steh am Zaun und motze.`, `Suspended (${banReason(rec.ban.reason)}) – ${n} more ${n === 1 ? 'game' : 'games'}. I'll be at the fence, grumbling.`);
+    } else if (rec.injuryWeeks > 0) {
       status = 'no';
       text = rec.injury && rec.injuryWeeks > 1 ? tr(`Noch ${rec.injuryWeeks} Wochen raus (${rec.injury.label}). Ich komm aber gucken.`, `Out for ${rec.injuryWeeks} more weeks (${rec.injury.label}). I'll come and watch though.`) : fresh(INJURED);
     } else if (rec.awayWeeks > 0) {
@@ -522,7 +528,7 @@ export function startWeek(career) {
 export function nudge(career, idx) {
   const w = career.week;
   if (!w || w.nudges <= 0 || w.availability[idx] !== 'no' || w.nudged.includes(idx) || isCoach(career, idx)) return null;
-  if (career.players[idx].injuryWeeks > 0) return null;
+  if (career.players[idx].injuryWeeks > 0 || isBanned(career, idx)) return null;
   const rng = createRng(hashSeed(career.seed, career.round, idx, 7));
   w.nudges--;
   w.nudged.push(idx);
@@ -570,7 +576,7 @@ export function setClubTactic(career, format, { system, style } = {}) {
 
 export function buildLineup(career, club, format, availability, rng, manual = null) {
   const formation = systemFormation(format, tacticOf(club, format).system);
-  const avail = club.squad.filter((idx) => availability[idx] !== 'no');
+  const avail = club.squad.filter((idx) => availability[idx] !== 'no' && !isBanned(career, idx)); // Gesperrte spielen nie, auch wenn ein Ereignis die Zusage zurückholt
   const starters = avail.filter((idx) => availability[idx] !== 'late');
   const late = avail.filter((idx) => availability[idx] === 'late');
   const helpers = [];
@@ -1034,6 +1040,7 @@ export function recordResult(career, fixture, prepared) {
   const humanId = humanClub(career).id;
   if (fixture.home === humanId || fixture.away === humanId) {
     rollInjuries(career, prepared); // Zerrung bis Kreuzband
+    applyCards(career, prepared); // Sperren aus Rot, Gelb-Rot, fünf Gelben
     memoryAfterMatch(career, prepared); // „ausgerechnet der Ex"
     heirMoments(career); // erstes Tor des Juniors
     afterMatchVoice(career, prepared, fixture.home === humanId ? fixture.away : fixture.home);
@@ -1063,6 +1070,7 @@ export function finishRound(career) {
   weeklyFacilities(career);
   clubLifeWeek(career); // Förderverein, Beitrag, Kassenwart
   weeklyFitness(career, playerOf, humanClub(career).squad); // erst erholen …
+  tickBans(career); // ein Sperrspiel abgesessen
   for (const [key, rec] of Object.entries(career.players)) {
     if (rec.injuryWeeks > 0) {
       rec.injuryWeeks--;

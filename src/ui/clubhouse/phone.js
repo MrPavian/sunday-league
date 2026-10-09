@@ -9,6 +9,7 @@ import { humanClub, nudge } from '../../career/career.js';
 import { roleName } from '../../career/youth.js';
 import { eventView, storyTag } from '../../career/events.js';
 import { isCoach } from '../../career/personal.js';
+import { isBanned } from '../../career/suspensions.js';
 import { STATUS, first, timeLabel } from './shared.js';
 
 export const phoneScreens = {
@@ -42,7 +43,7 @@ export const phoneScreens = {
         return `<div class="bubble"><b>${p.name}</b>${msg.text}<time>${timeLabel(msg.time)}</time>${status ? `<i class="st ${status[1]}"></i>` : ''}</div>`;
       })
       .join('');
-    const declined = club.squad.filter((idx) => w.availability[idx] === 'no' && !w.nudged.includes(idx) && !c.players[idx].injuryWeeks).filter((idx) => !isCoach(c, idx));
+    const declined = club.squad.filter((idx) => w.availability[idx] === 'no' && !w.nudged.includes(idx) && !c.players[idx].injuryWeeks && !isBanned(c, idx)).filter((idx) => !isCoach(c, idx));
     const ev = w.event;
     const view = ev ? eventView(c, ev) : null;
     // Nach der Entscheidung: Karte erst offen (Ergebnis lesen), dann als schmale Leiste oder ganz weg –

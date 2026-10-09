@@ -22,6 +22,7 @@ import { createReferee, stepReferee } from './referee.js';
 import { carRule, restartFromOut, startSetPiece } from './setpieces.js';
 import { checkOffside } from './offside.js';
 import { applyHold } from './holding.js';
+import { settleAdvantage, stepAdvantage, stepContactFouls } from './fouls.js';
 import { checkIncident, incidentOnBall, planIncident, stepIncident, stepLeftovers } from './incidents.js';
 import { resolveTackles, startPoke, startTackle, stateMove } from './tackles.js';
 import { startShootout, stepShootout } from './shootout.js';
@@ -159,6 +160,7 @@ export function stepMatch(m, input = NO_INPUT, dt) {
   }
   restBench(m, dt);
   step(m, input, dt);
+  settleAdvantage(m);
   if (m.phase === 'play' || m.phase === 'setpiece') stepReferee(m, dt);
   trackStep(m, dt);
   stepLog(m);
@@ -311,7 +313,9 @@ function step(m, input, dt) {
   }
   if (m.phase !== 'play') return;
   separatePlayers(m);
+  if (stepContactFouls(m, dt)) return;
   if (resolveTackles(m)) return;
+  if (stepAdvantage(m)) return;
 
   if (ball.holder) {
     const h = getPlayer(m, ball.holder);
@@ -330,6 +334,7 @@ function step(m, input, dt) {
 
   keeperSaves(m);
   if (!acrobaticTouch(m)) headerTouch(m);
+  if (m.phase !== 'play') return; // Foul im Kopfballduell: Pfiff, der Standard steht schon
   bodyBlock(m);
   if (!humanTrick(m)) dribbleTouch(m);
   carryBall(m, dt);

@@ -13,6 +13,7 @@ import { knockSpeed } from './knocks.js';
 import { markOffside } from './offside.js';
 import { hasProfile, pressureChaos } from './profiles.js';
 import { fooled, tryTrick } from './tricks.js';
+import { headerDuelFoul } from './fouls.js';
 
 export const REACH = 0.75;
 
@@ -539,6 +540,7 @@ export function headerTouch(m) {
     }
   }
   if (!p) return;
+  if (headerDuelFoul(m, p)) return; // Schubsen im Kopfballduell: Pfiff (bei Ecken und Flanken fallen so viele Elfmeter)
   p.kickCooldown = 0.35;
   p.headAnim = 0.3;
   const monster = hasTrait(p, 'kopfball');

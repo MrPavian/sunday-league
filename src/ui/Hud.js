@@ -159,16 +159,21 @@ export class Hud {
       else if (e.type === 'whiff') this.toast(tr(`Luftloch von ${first}!`, `Air shot from ${first}!`), 1.4);
       else if (e.type === 'foul') {
         const victim = findAnyPlayer(match, e.victimId);
-        this.toast(tr(`${e.kind === 'hold' ? 'Festhalten' : 'Foul'} von ${first}! Freistoß für ${short(victim.team)}`, `${e.kind === 'hold' ? 'Holding' : 'Foul'} by ${first}! Free kick to ${short(victim.team)}`), 1.8, 2);
+        const de = { hold: 'Festhalten', shirt: 'Trikotzupfen', push: e.offensive ? 'Stürmerfoul' : 'Schubsen', trip: 'Beinstellen' }[e.kind] ?? 'Foul';
+        const en = { hold: 'Holding', shirt: 'Shirt pull', push: e.offensive ? 'Attacker foul' : 'Push', trip: 'Trip' }[e.kind] ?? 'Foul';
+        const what = e.penalty ? tr('ELFMETER', 'PENALTY') : e.dogso ? tr('Notbremse', 'Professional foul') : null;
+        this.toast(what ? tr(`${what}! ${de} von ${first}`, `${what}! ${en} by ${first}`) : tr(`${de} von ${first}! Freistoß für ${short(victim.team)}`, `${en} by ${first}! Free kick to ${short(victim.team)}`), 1.8, 2);
       } else if (e.type === 'car') this.toast(tr(`Ans Auto, ${first}! Ball für ${short(e.team)}`, `Off a car, ${first}! Ball to ${short(e.team)}`), 1.8, 2);
       else if (e.type === 'out') {
         const text = tr({ throwin: 'Einwurf', corner: 'Ecke', goalkick: 'Abstoß' }, { throwin: 'Throw-in', corner: 'Corner', goalkick: 'Goal kick' })[e.restart];
         this.toast(`${text} ${short(e.team)}`, 1.2);
       } else if (e.type === 'complain') this.toast(`${first}: „${e.line}“`, 1.6, 2);
       else if (e.type === 'card') {
-        const text = e.color === 'yellow' ? tr(`Gelb für ${p.name}${e.reason === 'meckern' ? ' – wegen Meckern' : ''}`, `Yellow for ${p.name}${e.reason === 'meckern' ? ' – for dissent' : ''}`) : tr(`GELB-ROT! ${p.name} muss runter`, `SECOND YELLOW! ${p.name} is off`);
+        const text = e.color === 'yellow' ? tr(`Gelb für ${p.name}${e.reason === 'meckern' ? ' – wegen Meckern' : ''}`, `Yellow for ${p.name}${e.reason === 'meckern' ? ' – for dissent' : ''}`) : e.color === 'red' ? tr(`ROT! ${p.name} – ${e.reason === 'dogso' ? 'Notbremse' : 'grobes Foul'}`, `RED! ${p.name} – ${e.reason === 'dogso' ? 'professional foul' : 'serious foul play'}`) : tr(`GELB-ROT! ${p.name} muss runter`, `SECOND YELLOW! ${p.name} is off`);
         this.toast(text, 2, 3);
       } else if (e.type === 'no_call') this.toast(tr('Schiri lässt laufen!', 'Ref waves play on!'), 1.2, 2);
+      else if (e.type === 'advantage') this.toast(tr('Vorteil!', 'Advantage!'), 1.4, 2);
+      else if (e.type === 'advantage_over' && !e.ok) this.toast(tr('Kein Vorteil – Rückpfiff, Freistoß', 'No advantage – back for the free kick'), 1.6, 2);
       else if (e.type === 'no_goal') this.toast(tr('Kein Tor – aus der eigenen Hälfte geschossen! Abstoß', 'No goal – shot from inside their own half! Goal kick'), 2, 3);
       else if (e.type === 'post') this.toast(tr('Pfosten!', 'Off the post!'), 1.2);
       else if (e.type === 'bar') this.toast(tr('Latte!', 'Off the bar!'), 1.2);

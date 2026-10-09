@@ -31,6 +31,7 @@ import { jobName } from '../../data/names.js';
 import { tierById } from '../../data/tiers.js';
 import { POSITIONS } from '../../sim/generator.js';
 import { STATUS, first, formArrow } from './shared.js';
+import { banGames, banLabel, banReason, isBanned, yellowCount, YELLOW_LIMIT } from '../../career/suspensions.js';
 
 const roleLabelCap = (role) => (role === 'jugendleiter' ? tr('Jugendleiter', 'Youth director') : STAFF_ROLES[role].name);
 
@@ -57,6 +58,7 @@ export const teamScreens = {
   sundayChip(idx, withFit = true) {
     const c = this.career;
     const r = c.players[idx];
+    if (isBanned(c, idx)) return `<span class="ui-chip" style="--c:#d9534f" title="${banReason(r.ban.reason)}">${banLabel(c, idx)}</span>`;
     if (r.injuryWeeks) return `<span class="ui-chip" style="--c:#d9534f" title="${r.injury?.label ?? tr('verletzt', 'injured')}">${r.injury ? `${r.injury.label} · ${r.injuryWeeks} ${tr('Wo.', 'wks')}` : tr('verletzt', 'injured')}</span>`;
     const st = c.week ? STATUS[c.week.availability[idx]] : null;
     const color = st && { yes: '#5cc46a', no: '#d9534f', late: '#e0b020' }[st[1]];
@@ -172,7 +174,7 @@ export const teamScreens = {
           <div>
             <h3 class="t-h2">${p.name}${this.nameMarks(idx, p, r)}</h3>
             <p class="t-body">${POSITIONS[p.position]} · <span class="badge" style="--c:${tier.color}">${tier.name}</span></p>
-            <div class="ui-chips">${this.sundayChip(idx)}</div>
+            <div class="ui-chips">${this.sundayChip(idx)}${yellowCount(c, idx) ? `<span class="ui-chip" style="--c:#e0b020" title="${tr('Gelbe Karten in der Liga – bei 5 gibt es eine Sperre', 'Yellow cards in the league – five means a ban')}">${tr('Gelb', 'Yellow')} ${yellowCount(c, idx)}/${YELLOW_LIMIT}</span>` : ''}</div>
           </div>
         </div>
         ${uiTabs([['overview', tr('Übersicht', 'Overview')], ['attrs', tr('Attribute', 'Attributes')], ['stats', tr('Statistik', 'Stats')]], tab, 'profileTab')}
@@ -309,7 +311,7 @@ export const teamScreens = {
       .join('');
     // Wer kann rein? Alle mit Zusage, die nicht schon spielen (wie früher in der Auswahlliste).
     const avail = humanClub(c).squad
-      .filter((idx) => c.week.availability[idx] === 'yes' && !lineup.includes(idx))
+      .filter((idx) => c.week.availability[idx] === 'yes' && !lineup.includes(idx) && !isBanned(c, idx))
       .map((idx) => ({ idx, p: this.p(idx) }))
       .sort((a, b) => b.p.rating - a.p.rating);
     const late = bench.filter((idx) => c.week.availability[idx] === 'late');
@@ -317,6 +319,8 @@ export const teamScreens = {
       ...avail.map(({ idx, p }) => `<button class="lp-bench${pick?.idx === idx ? ' picked' : ''}" data-action="benchPick" data-value="${idx}" data-drop="bench:${idx}" data-drag="bench:${idx}" aria-pressed="${pick?.idx === idx}"><b>${p.rating}</b><span>${p.name}</span><small>${POSITIONS[p.position]}</small></button>`),
       ...late.map((idx) => `<span class="lp-bench late"><b>${this.p(idx).rating}</b><span>${this.p(idx).name}</span><small>${tr('kommt zur 2. Halbzeit', 'arrives for the 2nd half')}</small></span>`),
     ].join('');
+    const banned = humanClub(c).squad.filter((idx) => isBanned(c, idx));
+    const bannedNote = banned.length ? `<p class="warn lp-banned">${tr('Gesperrt', 'Suspended')}: ${banned.map((idx) => `${this.p(idx).name} (${banReason(c.players[idx].ban.reason)}, ${banGames(c, idx)})`).join(' · ')}</p>` : '';
     const gkIdx = formation.findIndex((f) => f.role === 'gk');
     const keeper = lineup[gkIdx] != null ? this.p(lineup[gkIdx]) : null;
     const keeperNote = keeper && keeper.position !== 'gk' ? `<p class="warn">${tr(`Kein Torwart da – ${keeper.name.split(' ')[0]} muss ran. Handschuhe liegen im Kofferraum.`, `No keeper – ${keeper.name.split(' ')[0]} has to go in goal. The gloves are in the boot.`)}</p>` : '';
@@ -338,7 +342,7 @@ export const teamScreens = {
         <div class="lp-stage">
           <div class="lp-board m-board"><div class="lp-pitch" aria-label="${tr('Magnettafel', 'Magnet board')}"><i class="lp-box l"></i><i class="lp-box r"></i><i class="lp-mid"></i>${tokens}</div><span class="tray" aria-hidden="true"></span></div>
           <div class="lp-benchcol"><p class="ui-section-title">${tr('Bank', 'Bench')} · ${tr('verfügbar', 'available')}</p>
-          <div class="lp-benchrow">${benchChips || `<p class="t-2">${tr('niemand', 'nobody')}</p>`}</div></div>
+          <div class="lp-benchrow">${benchChips || `<p class="t-2">${tr('niemand', 'nobody')}</p>`}</div>${bannedNote}</div>
         </div>
         <p class="t-2 lp-hint" aria-live="polite">${hint}</p>
         ${keeperNote}
