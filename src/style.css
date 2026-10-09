@@ -741,6 +741,14 @@ button.successor.new { border-style: dashed; }
 li.sponsor { margin-bottom: 8px; }
 li.sponsor .rel { display: block; height: 5px; background: #2a2f33; margin: 4px 0 2px; }
 li.sponsor .rel i { display: block; height: 100%; background: #c9a227; }
+li.sponsor .goal, li.sponsor .wish { margin: 4px 0; }
+li.sponsor .meter { display: block; height: 4px; background: #2a2f33; margin: 2px 0; }
+li.sponsor .meter i { display: block; height: 100%; background: #6f8fa8; }
+li.sponsor .meter i.ok { background: #5cc46a; }
+li.sponsor .wish .ok { color: #5cc46a; }
+li.sponsor .actions { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
+.rumor .wish { margin: 0; font-size: 12px; opacity: 0.85; }
+.rumor .actions button[disabled] { opacity: 0.4; }
 
 /* Vereinsheim-Ausbau */
 .facilities { margin: 12px 0; }

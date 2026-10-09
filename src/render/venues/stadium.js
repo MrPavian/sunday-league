@@ -3,7 +3,7 @@ import { toon } from '../materials.js';
 import { addLights, box, cylinder, ground, makeFence, makeFloodlight, makeGoalFrame, makeSideline } from '../props.js';
 import { crowdRow, makeSpectator } from '../spectators.js';
 import { groundTexels, makeLawnTexture, makeSignTextureWide } from '../textures.js';
-import { SPONSORS } from './lawn.js';
+import { bandBoards, SPONSORS } from './lawn.js';
 
 // Stadion für den überregionalen Pokal: Ränge rundum, Banden rundherum, vier Flutlichtmasten in den Ecken.
 // Nur für diese Spiele (nicht im Menü). Statische Kulisse wird verschmolzen (mergeStatic), die Zuschauer laufen
@@ -25,7 +25,7 @@ export function buildStadium(root, pitch, rng, scene) {
   // Banden rundum: lange Seiten mit Sponsoren, hinter den Toren eine durchgehende Bande.
   for (const s of [-1, 1]) {
     const bz = s * (hw + 2.4);
-    SPONSORS.forEach(([text, bg, fg], i) => {
+    bandBoards(pitch, 3).forEach(([text, bg, fg], i) => {
       const x = -hl + 4 + i * ((hl * 2 - 8) / (SPONSORS.length - 1));
       const board = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 0.9), toon(0xffffff, { map: makeSignTextureWide(text, { bg, fg }) }));
       board.position.set(x, 0.5, bz - s * 0.05);

@@ -24,7 +24,7 @@ export function buildHall(root, pitch, rng, scene) {
   root.add(box(wallX * 2, 0.9, 0.12, bande, 0, 0.45, -hw - 0.1));
   root.add(box(wallX * 2, 0.9, 0.12, bande, 0, 0.45, hw + 0.1));
   for (const s of [-1, 1]) root.add(box(0.12, 0.9, hw * 2 + 0.3, bande, s * wallX, 0.45, 0));
-  for (const [x, text] of [[-10, 'SPORTHAUS KANAL'], [0, 'BÄCKEREI KRUME'], [10, 'HALLENCUP']]) {
+  for (const [x, text] of [[-10, 'SPORTHAUS KANAL'], [0, pitch.sponsorAds?.bande ? pitch.sponsorAds.bande.name.toUpperCase() : 'BÄCKEREI KRUME'], [10, 'HALLENCUP']]) {
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(7, 0.6), toon(0xffffff, { map: makeSignTextureWide(text, { bg: '#1f3a6b' }) }));
     sign.position.set(x, 0.5, -hw - 0.17);
     root.add(sign);

@@ -104,7 +104,7 @@ export class MatchView {
         const team = match.teams[p.team];
         const kit = p.role === 'gk' ? team.keeperKit : team.kit;
         const capacity = everyone.filter((q) => q.team === p.team && (q.role === 'gk') === (p.role === 'gk')).length;
-        this.atlases.set(key, new KitAtlas(kit, { sponsor: team.sponsor ?? null, capacity, edge: p.team === 0 ? 'home' : 'away' }));
+        this.atlases.set(key, new KitAtlas(kit, { sponsor: team.sponsor ?? null, sleeve: team.sleeve ?? null, capacity, edge: p.team === 0 ? 'home' : 'away' }));
       }
       return this.atlases.get(key);
     };
@@ -113,7 +113,7 @@ export class MatchView {
       const kit = p.role === 'gk' ? team.keeperKit : team.kit;
       // Rückennummer: Position in der Aufstellung (Torwart die 1).
       const number = p.role === 'gk' ? 1 : (Number(String(p.id).split('-')[1]) || 0) + 1;
-      const model = createPlayerModel(p.look, kit, { number, keeper: p.role === 'gk', sponsor: team.sponsor ?? null, atlas: typeof document !== 'undefined' ? atlasFor(p) : null });
+      const model = createPlayerModel(p.look, kit, { number, keeper: p.role === 'gk', sponsor: team.sponsor ?? null, sleeve: team.sleeve ?? null, atlas: typeof document !== 'undefined' ? atlasFor(p) : null });
       model.celebration = celebrationFor(p.id);
       model.footPref = footFor(p.id);
       if (p.hot) {

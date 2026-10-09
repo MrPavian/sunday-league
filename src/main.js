@@ -23,6 +23,7 @@ import {
   saveCareer,
   simulate,
 } from './career/career.js';
+import { venueExtras } from './career/sponsors.js';
 import { applyChallengeRewards } from './career/rewards.js';
 import { advanceCup, CUPS, cupOf, currentCupMatches, humanCupMatch, prepareCupMatch, recordCupResult, skipTournament, startTournament } from './career/tournament.js';
 import { CHALLENGES, challengeById, createChallengeMatch, evaluateChallenge, loadProgress, recordChallenge, saveProgress } from './challenges/challenges.js';
@@ -303,15 +304,20 @@ let challengeRun = null; // { def, ctx } während einer Challenge
 const challengeScreen = new ChallengeScreen(document.getElementById('challenges'));
 const creator = new CoachCreator(document.getElementById('creator'));
 
-function loadVenue(id) {
-  if (venue?.id === id) return;
+let venueAdKey = null;
+let venueAds = null; // Bandenwerbung und Platzname des Karriere-Heimplatzes (null: Vorgabe des Spielorts)
+function loadVenue(id, ads = null) {
+  const adKey = ads ? JSON.stringify(ads) : '';
+  if (venue?.id === id && (venueAdKey ?? '') === adKey) return;
+  venueAdKey = adKey;
+  venueAds = ads;
   venue = venueById(id);
   if (venueRoot) {
     scene.remove(venueRoot);
     disposeTree(venueRoot);
   }
   // Testschalter: ?surface=grass|ash|… spielt den Platz mit anderer Physik.
-  pitch = { ...venue.pitch, surface: SURFACES[params.get('surface')] ?? venue.pitch.surface };
+  pitch = { ...venue.pitch, surface: SURFACES[params.get('surface')] ?? venue.pitch.surface, sponsorAds: venueAds };
   venueRoot = new THREE.Group();
   lightMood = null;
   venueInfo = venue.build(venueRoot, pitch, createRng(venue.id.length * 7919), scene);
@@ -699,7 +705,7 @@ function openClubhouse(results = null) {
   setMode('club');
   endScreen.hide();
   // Im Hintergrund kickt irgendwer auf dem eigenen Platz.
-  loadVenue(humanClub(career).venue);
+  loadVenue(humanClub(career).venue, venueExtras(career));
   startMatch(false);
   clubhouse.show(career, { results });
   if (!results) resumeRound();
@@ -725,7 +731,7 @@ function playCareerMatch(style = null) {
   const fixture = humanFixture(career);
   const prepared = prepareMatch(career, fixture, { human: true, duration: testDuration });
   careerMatch = { prepared, fixture };
-  loadVenue(clubById(career, fixture.home).venue);
+  loadVenue(clubById(career, fixture.home).venue, clubById(career, fixture.home).human ? venueExtras(career) : null);
   clubhouse.hide();
   setMode('play');
   showMatch(prepared.match);

@@ -46,7 +46,7 @@ import { relsMap } from '../sim/bonds.js';
 import { memoryAfterMatch, placeFormers, preMatchMemories, rememberArrival, rememberDeparture, tagStories } from './memory.js';
 import { defaultCrest } from '../ui/crest.js';
 import { clubTactic, normalizeTactic, systemFormation } from '../sim/tactics.js';
-import { shirtSponsor, sponsorColor, SPONSORS } from './sponsors.js';
+import { shirtSponsor, sleeveSponsor, sponsorColor, SPONSORS } from './sponsors.js';
 import { advancePokale, bundChat } from './pokal.js';
 import { bundVenueEvent } from './bundevents.js';
 
@@ -917,7 +917,7 @@ export function teamForMatch(career, club, format, availability, rng) {
   const regular = [...lineup, ...bench].filter((idx) => !helpers.includes(idx));
   const rels = club.human ? relsMap(relationsAmong(career, regular)) : {};
   for (const p of players) if ((career.players[p.poolIndex]?.form ?? 0) >= 0.3) p.hot = true;
-  return { rels, name: club.name, short: club.short, kit: club.kit, keeperKit: club.keeperKit, crest: club.crest ?? defaultCrest(club), tactic: tacticOf(club, format), sponsor: clubSponsor(career, club), players, helpers };
+  return { rels, name: club.name, short: club.short, kit: club.kit, keeperKit: club.keeperKit, crest: club.crest ?? defaultCrest(club), tactic: tacticOf(club, format), sponsor: clubSponsor(career, club), sleeve: club.human ? clubSleeve(career) : null, players, helpers };
 }
 
 // Wer steht vorne auf dem Trikot? Beim eigenen Verein der Trikotsponsor, bei den
@@ -931,6 +931,12 @@ export function clubSponsor(career, club) {
   const pool = SPONSORS.filter((s) => s.id !== mine?.id && !s.from); // Gegner: Betriebe aus dem Ort
   const s = pool[h % pool.length];
   return { id: s.id, name: s.name, color: s.color };
+}
+
+// Ärmelsponsor des eigenen Vereins (klein auf dem Ärmel); die anderen Vereine haben keinen.
+export function clubSleeve(career) {
+  const s = sleeveSponsor(career);
+  return s ? { id: s.id, name: s.name, color: sponsorColor(s) } : null;
 }
 
 // Gegner: ein, zwei Leute fehlen immer.
@@ -1042,7 +1048,7 @@ export function recordResult(career, fixture, prepared) {
   const human = humanClub(career).id;
   if (fixture.home === human) resultMood(career, fixture.result.home, fixture.result.away);
   else if (fixture.away === human) resultMood(career, fixture.result.away, fixture.result.home);
-  if (fixture.home === human) sponsorResult(career, fixture.result.home, fixture.result.away);
+  if (fixture.home === human) sponsorResult(career, fixture.result.home, fixture.result.away, true);
   else if (fixture.away === human) sponsorResult(career, fixture.result.away, fixture.result.home);
   if (isDerbyFixture(career, fixture)) {
     const homeHuman = fixture.home === human;

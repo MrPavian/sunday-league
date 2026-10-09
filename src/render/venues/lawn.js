@@ -17,6 +17,18 @@ export const SPONSORS = [
   ['DACHDECKEREI KOWALSKI', '#8a5a3a', '#f4e9c8'],
 ];
 
+// Bandenfelder eines Spielorts: die Dorfsponsoren, aber im Karrierespiel hängt auf einem freien Feld der Bandenpartner
+// des Vereins (pitch.sponsorAds.bande). Gleiche Felder, gleiche Meshes – kein zusätzlicher Draw Call.
+const AD_BOARD = 2;
+export function bandBoards(pitch, index = AD_BOARD) {
+  const ad = pitch?.sponsorAds?.bande;
+  if (!ad) return SPONSORS;
+  const lum = (c) => (0.299 * ((c >> 16) & 255) + 0.587 * ((c >> 8) & 255) + 0.114 * (c & 255)) / 255;
+  const css = (n) => `#${(n >>> 0).toString(16).padStart(6, '0').slice(-6)}`;
+  const board = [ad.name.toUpperCase(), css(ad.color), lum(ad.color) > 0.55 ? '#2a2620' : '#ffffff'];
+  return SPONSORS.map((b, i) => (i === index ? board : b));
+}
+
 // Sportplatz Waldesruh: der erste "richtige" Platz in der Kreisklasse –
 // Rasen, Tribüne mit drei Stufen, Banden, Vereinsheim aus Backstein.
 export function buildLawn(root, pitch, rng, scene) {
@@ -41,7 +53,7 @@ export function buildLawn(root, pitch, rng, scene) {
   // Banden an der Gegengerade.
   const bandZ = -hw - 2.2;
   // In der Mitte vor der Tribüne bleibt eine Lücke (Bandenfelder gapBoards): hier laufen alle beim Gewitter durch.
-  SPONSORS.forEach(([text, bg, fg], i) => {
+  bandBoards(pitch).forEach(([text, bg, fg], i) => {
     if (GEO.lawn.gapBoards.includes(i)) return;
     const x = bandeX(hl, i);
     const board = new THREE.Mesh(new THREE.PlaneGeometry(BANDE_W, 0.8), toon(0xffffff, { map: makeSignTextureWide(text, { bg, fg }) }));
@@ -87,7 +99,7 @@ export function buildLawn(root, pitch, rng, scene) {
   root.add(box(12, 3.4, 5, 0x9a4a38, hx, 1.7, -hw - 10));
   root.add(box(12.6, 0.3, 5.6, 0x3a3a3a, hx, 3.5, -hw - 10));
   for (const x of [-4, 0, 4]) root.add(box(1.4, 1.1, 0.05, 0xd8e0e0, hx + x, 2, -hw - 7.48));
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(8, 0.8), toon(0xffffff, { map: makeSignTextureWide((pitch.base ?? pitch.id) === 'grossfeld' ? 'STADION AM KANAL' : pitch.id === 'sportplatz' ? 'SPORTANLAGE KANALWIESE' : 'SPORTPLATZ WALDESRUH', { bg: '#f2efe6', fg: '#2a2620' }) }));
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(8, 0.8), toon(0xffffff, { map: makeSignTextureWide(pitch.sponsorAds?.arena ? pitch.sponsorAds.arena.toUpperCase() : (pitch.base ?? pitch.id) === 'grossfeld' ? 'STADION AM KANAL' : pitch.id === 'sportplatz' ? 'SPORTANLAGE KANALWIESE' : 'SPORTPLATZ WALDESRUH', { bg: '#f2efe6', fg: '#2a2620' }) }));
   sign.position.set(hx, 4.1, -hw - 7.45);
   root.add(sign);
   root.add(makeBench(hx - 2, -hw - 6.5), makeBench(hx + 2, -hw - 6.5));
