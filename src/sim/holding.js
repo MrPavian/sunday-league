@@ -3,8 +3,7 @@
 // und ist ein Foul, wenn es jemand sieht.
 import { dist2d, norm } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
-import { judgeFoul, refereeSees } from './referee.js';
-import { startSetPiece } from './setpieces.js';
+import { callFoul } from './fouls.js';
 
 const SHIELD_REACH = 1.3;
 const GRAB_REACH = 1.0;
@@ -55,15 +54,10 @@ export function applyHold(m, p, active, dt) {
   if (p.holdTime < 0.4) return false;
   const perSecond = m.referee ? 0.9 : 0.55;
   if (!m.rng.chance(perSecond * dt)) return false;
-  if (!refereeSees(m, target.pos)) {
-    m.events.push({ type: 'no_call', playerId: p.id, victimId: target.id });
-    p.holdTime = 0;
-    return false;
-  }
-  m.events.push({ type: 'foul', playerId: p.id, victimId: target.id, kind: 'hold' });
-  judgeFoul(m, p, hasTrait(p, 'meckerer') ? 0.3 : 0.2);
-  p.holdingId = null;
+  // Festhalten ist kein Fall für den Vorteil: der Schiri pfeift (oder hat es nicht gesehen).
+  const res = callFoul(m, p, target, { kind: 'hold', sev: hasTrait(p, 'meckerer') ? 0.3 : 0.2, noAdvantage: true });
   p.holdTime = 0;
-  startSetPiece(m, { type: 'freekick', team: target.team, spot: { x: target.pos.x, z: target.pos.z }, takerId: target.id });
+  if (res === 'none') return false;
+  p.holdingId = null;
   return true;
 }

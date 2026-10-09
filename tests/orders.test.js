@@ -45,7 +45,7 @@ describe('Befehle springen an', () => {
     const ahead = (order) => {
       let rel = 0;
       let n = 0;
-      for (const seed of [701, 702]) {
+      for (const seed of [701, 702, 703, 704, 705, 706]) { // größere Stichprobe (vorher 2 Seeds), gleiche Schwelle: mit Fouls und Standards ist das Ergebnis je Spiel streuender
         const m = createMatch({ seed, pitch: PITCHES.rasenplatz, human: false });
         if (order) setOrder(m, 0, 'shape', order);
         for (let i = 0; i < 60 * 240; i++) {
@@ -62,5 +62,5 @@ describe('Befehle springen an', () => {
       return rel / n;
     };
     expect(ahead('stuermer_fallen')).toBeLessThan(ahead(null) * 0.7);
-  }, 120000);
+  }, 360000);
 });

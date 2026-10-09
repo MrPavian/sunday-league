@@ -20,6 +20,7 @@ import { isCoach } from './personal.js';
 import { adjustMood } from './events.js';
 import { BUND_AWAY, BUND_ERST, BUND_NAME, BUND_PRIZE, BUND_PRIZE_WINNER, BUND_ROUND_NAMES, BUND_SPONSOR, BUND_TEXT, BUND_VENUES, OBERLIGA, PROFI_ATTRS, PROFI_KLASSEN, PROFIS } from './bundespokal.js';
 import { afterMatchFitness } from './fitness.js';
+import { applyCards } from './suspensions.js';
 import { bundVenueAutoResolve } from './bundevents.js';
 import { book, homeUnit, matchFinances } from './finances.js';
 import { chronicle, yearOf } from './sagas.js';
@@ -250,6 +251,7 @@ export function recordPokalResult(c, prepared) {
     const pens = so?.done ? shootoutScore(so) : penalties(m.teams, createRng((c.seed * 7 + cup.ties.indexOf(tie) * 131 + 9) >>> 0));
     tie.pens = prepared.humanIsAway ? { home: pens[1], away: pens[0] } : { home: pens[0], away: pens[1] };
   }
+  applyCards(c, prepared, { league: false }); // Rot wirkt auch im Pokal; Gelbe zählen nur im Ligabetrieb
   matchFinances(c, tie, prepared, kind === 'bund' ? c.level ?? 1 : cup.levels[tie.home]); // Heimspiel: Theke, Schiri, Platzmiete; auswärts: Sprit
   logTie(c, cup, tie);
   afterHumanTie(c, kind);

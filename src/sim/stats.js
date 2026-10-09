@@ -66,6 +66,7 @@ export function trackStep(m, dt) {
           stats.teams[team].yellow++;
         } else {
           ps(stats, id).red++;
+          ps(stats, id).redKind = e.color === 'red' ? e.reason : 'yellowred'; // für Sperren in der Karriere: 'dogso' | 'serious' | 'yellowred'
           stats.teams[team].red++;
         }
         break;
@@ -132,6 +133,9 @@ export function headline(m, grades) {
   const w = names[winner];
   const l = names[1 - winner];
   if (cars >= 5) return tr(`Parkplatz-Chaos: ${w} gewinnt, die Autos leiden`, `Car park chaos: ${w} win, the cars suffer`);
+  const sentId = Object.entries(m.stats.players).find(([, p]) => p.red)?.[0];
+  const sent = sentId && findAnyPlayer(m, sentId);
+  if (sent && diff <= 2) return sent.team === winner ? tr(`${w} gewinnt trotz Platzverweis für ${surname(sent)}`, `${w} win despite the sending-off of ${surname(sent)}`) : tr(`${w} nutzt den Platzverweis gegen ${surname(sent)}`, `${w} make the most of ${surname(sent)}'s red card`);
   if (diff >= 4) return tr(`${w} überrollt ${l} mit ${Math.max(a, b)}:${Math.min(a, b)}`, `${w} flatten ${l} ${Math.max(a, b)}-${Math.min(a, b)}`);
   if (whiffs >= 8) return tr(`Luftlöcher und Leidenschaft – ${w} gewinnt das Stolperduell`, `Air shots and passion – ${w} win the stumble-fest`);
   if (diff === 1) return tr(`${w} zittert sich zum ${Math.max(a, b)}:${Math.min(a, b)}${potm ? ` – ${surname(potm)} überragt` : ''}`, `${w} scrape a nervy ${Math.max(a, b)}-${Math.min(a, b)}${potm ? ` – ${surname(potm)} outstanding` : ''}`);

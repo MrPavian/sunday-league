@@ -170,11 +170,25 @@ export function createCommentator(m, seed = 1) {
         case 'foul': {
           const p = who(e.playerId);
           const v = who(e.victimId);
-          if (e.penalty) add(pick(tr(['ELFMETER! {p} legt {v} im Strafraum.', 'Strafstoß! {p} holt {v} von den Beinen.', 'Der Pfiff ist eindeutig: Elfmeter nach Foul von {p} an {v}.'], ['PENALTY! {p} brings down {v} in the box.', 'Spot kick! {p} takes {v}\'s legs away.', 'No doubt about it: penalty after {p} fouls {v}.']), { p: surname(p), v: surname(v) }), 'foul');
+          const a = { p: surname(p), v: surname(v) };
+          if (e.penalty) add(pick(tr(['ELFMETER! {p} legt {v} im Strafraum.', 'Strafstoß! {p} holt {v} von den Beinen.', 'Der Pfiff ist eindeutig: Elfmeter nach Foul von {p} an {v}.'], ['PENALTY! {p} brings down {v} in the box.', 'Spot kick! {p} takes {v}\'s legs away.', 'No doubt about it: penalty after {p} fouls {v}.']), a), 'foul');
+          else if (e.dogso) add(pick(tr(['Notbremse! {p} stoppt {v} als letzter Mann.', '{p} zieht die Notbremse gegen {v} – klare Torchance dahin.'], ['Professional foul! {p} stops {v} as the last man.', '{p} pulls the emergency brake on {v} – a clear chance gone.']), a), 'foul');
+          else if (e.offensive) add(pick(tr(['Stürmerfoul! {p} schubst {v} weg. Freistoß.', '{p} stößt {v} im Luftduell – Freistoß für die Abwehr.'], ['Foul by the attacker! {p} shoves {v}. Free kick.', '{p} pushes {v} in the air – free kick to the defence.']), a), 'foul');
           else if (e.kind === 'hold') add(tr(`${surname(p)} hält ${surname(v)} am Trikot fest – Freistoß.`, `${surname(p)} tugs ${surname(v)}'s shirt – free kick.`), 'foul');
-          else add(pick(tr(['Foul von {p} an {v}. Freistoß.', '{p} erwischt {v} am Knöchel. Freistoß.', '{p} geht zu hart rein – {v} liegt.'], ['Foul by {p} on {v}. Free kick.', '{p} catches {v} on the ankle. Free kick.', '{p} goes in too hard – {v} is down.']), { p: surname(p), v: surname(v) }), 'foul');
+          else if (e.kind === 'shirt') add(pick(tr(['{p} zieht {v} am Trikot zurück. Freistoß.', '{v} will weg – {p} hält ihn fest. Pfiff.'], ['{p} pulls {v} back by the shirt. Free kick.', '{v} is off – {p} drags him back. Whistle.']), a), 'foul');
+          else if (e.kind === 'push') add(pick(tr(['{p} schubst {v} – Freistoß.', 'Rempler von {p} gegen {v}. Der Schiri pfeift.'], ['{p} shoves {v} – free kick.', 'A barge from {p} on {v}. The ref blows.']), a), 'foul');
+          else if (e.kind === 'trip') add(pick(tr(['{p} stellt {v} das Bein. Freistoß.', '{v} kommt an {p} nicht vorbei – und stolpert über dessen Bein.'], ['{p} sticks a leg out and trips {v}. Free kick.', '{v} cannot get past {p} – and goes over his leg.']), a), 'foul');
+          else add(pick(tr(['Foul von {p} an {v}. Freistoß.', '{p} erwischt {v} am Knöchel. Freistoß.', '{p} geht zu hart rein – {v} liegt.'], ['Foul by {p} on {v}. Free kick.', '{p} catches {v} on the ankle. Free kick.', '{p} goes in too hard – {v} is down.']), a), 'foul');
           break;
         }
+        case 'advantage': {
+          const a = { p: surname(who(e.playerId)), v: surname(who(e.victimId)) };
+          add(pick(tr(['Foul von {p} an {v} – aber Vorteil! Der Schiri winkt weiter.', 'Vorteil! {v} bleibt am Ball, der Schiri lässt laufen.'], ['Foul by {p} on {v} – but advantage! The ref waves play on.', 'Advantage! {v} keeps the ball, the ref lets it run.']), a), 'foul');
+          break;
+        }
+        case 'advantage_over':
+          if (!e.ok) add(tr('Der Vorteil ist weg – Rückpfiff, Freistoß am Tatort.', 'The advantage is gone – back for the free kick.'), 'foul');
+          break;
         case 'injury': {
           const p = who(e.playerId);
           const label = MATCH_INJURIES[e.kind]?.label ?? '';
@@ -196,8 +210,10 @@ export function createCommentator(m, seed = 1) {
           break;
         case 'card': {
           const name = surname(who(e.playerId));
-          if (e.color === 'yellow') add(tr(`Gelb für ${name}.`, `Yellow card for ${name}.`), 'card');
-          else add(tr(`Gelb-Rot! ${name} muss vom Platz.`, `Second yellow! ${name} is sent off.`), 'red');
+          const late = e.late ? tr(' Nachträglich, nach dem Vorteil.', ' Shown after the advantage.') : '';
+          if (e.color === 'yellow') add(tr(`Gelb für ${name}.${late}`, `Yellow card for ${name}.${late}`), 'card');
+          else if (e.color === 'red') add(e.reason === 'dogso' ? tr(`Rot! ${name} sieht für die Notbremse die Rote Karte.${late}`, `Red card! ${name} is sent off for the professional foul.${late}`) : tr(`Rot! ${name} fliegt nach einem groben Foul vom Platz.${late}`, `Red card! ${name} is sent off for serious foul play.${late}`), 'red');
+          else add(tr(`Gelb-Rot! ${name} muss vom Platz.${late}`, `Second yellow! ${name} is sent off.${late}`), 'red');
           break;
         }
         case 'setpiece':
