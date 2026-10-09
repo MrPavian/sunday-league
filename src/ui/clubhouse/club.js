@@ -12,7 +12,8 @@ import { spielberichtStreng } from '../../career/spielbericht.js';
 import { FINES, KIT_COST, MEMBER_FEE, SLOTS } from '../../career/finances.js';
 import { DESTINATIONS } from '../../career/trip.js';
 import { build, canBuild, facilities, FACILITIES } from '../../career/facilities.js';
-import { bossOf, goalProgress, goalText, lineOf, negotiate, relLabel, shirtSponsor, sponsorColor, TRAITS as SPONSOR_TRAITS } from '../../career/sponsors.js';
+import { arenaOf, BRANCHEN, bossOf, cancelCost, goalStatus, goalText, lineOf, relLabel, shirtSponsor, sponsorColor, sponsorDef, termChance, TERMS, termWeekly, TRAITS as SPONSOR_TRAITS, WISHES, wishCost, wishLabel } from '../../career/sponsors.js';
+import { newWish } from '../../career/sponsorwish.js';
 import { chronicleData, yearOf } from '../../career/sagas.js';
 import { coachPlaying, legacy } from '../../career/legacy.js';
 import { childAge, coachName, familyText, STYLES } from '../../career/personal.js';
@@ -278,23 +279,54 @@ export const clubScreens = {
   tab_cash() {
     const c = this.career;
     const club = humanClub(c);
+    const termWord = (t) => (t === 1 ? tr('1 Saison', '1 season') : tr(`${t} Saisons`, `${t} seasons`));
+    const willing = (p) => (p >= 0.7 ? tr('gern', 'gladly') : p >= 0.45 ? tr('vielleicht', 'maybe') : tr('eher nicht', 'unlikely'));
     const offers = c.round === 0 && c.offers.length
       ? c.offers
-          .map(
-            (o, i) => `<article class="rumor" style="--c:${o.renew ? '#5cc46a' : '#c9a227'}"><div class="who"><b>${o.name}</b> <em>${SLOTS[o.slot]}${o.renew ? tr(' · Verlängerung', ' · renewal') : ''}</em>
-              <small>${lineOf(o)} · ${bossOf(o)}, ${SPONSOR_TRAITS[o.trait]?.name ?? SPONSOR_TRAITS.treu.name}</small></div>
-              <p>${euro(o.weekly)} ${tr('pro Spieltag', 'per matchday')} · ${tr('Bonus', 'bonus')} ${euro(o.bonus)} ${tr('bei', 'for')}: ${goalText(o.goal)}</p>
-              <div class="actions"><button class="primary" data-action="sponsor" data-value="${i}">${tr('Unterschreiben', 'Sign')}</button>${o.negotiated ? '' : `<button data-action="negotiate" data-value="${i}">${tr('Nachverhandeln', 'Negotiate')}</button>`}</div></article>`,
-          )
+          .map((o, i) => {
+            const wish = newWish(sponsorDef(o.id) ?? o, c.season);
+            const terms = TERMS.map((t) => {
+              const refused = (o.refused ?? []).includes(t);
+              const hint = t > 1 ? ` <small>(${willing(termChance(o, t))})</small>` : '';
+              return `<button class="${t === 1 ? 'primary' : ''}" data-action="sponsor" data-value="${i}:${t}" ${refused ? 'disabled' : ''}>${tr('Unterschreiben', 'Sign')} · ${termWord(t)} · ${euro(termWeekly(o, t))}${hint}</button>`;
+            }).join('');
+            return `<article class="rumor" style="--c:${o.renew ? '#5cc46a' : '#c9a227'}"><div class="who"><b>${o.name}</b> <em>${SLOTS[o.slot]}${o.renew ? tr(' · Verlängerung', ' · renewal') : ''}</em>
+              <small>${BRANCHEN[o.branche ?? sponsorDef(o.id)?.branche] ?? ''} · ${lineOf(o)} · ${bossOf(o)}, ${SPONSOR_TRAITS[o.trait]?.name ?? SPONSOR_TRAITS.treu.name}</small></div>
+              <p>${euro(o.weekly)} ${tr('pro Spieltag bei 1 Saison; länger gebunden gibt es weniger pro Woche, dafür ist der Vertrag sicher.', 'per matchday on 1 season; a longer commitment pays less per week but is secure.')}</p>
+              <p>${tr('Bonus', 'bonus')} ${euro(o.bonus)} ${tr('bei', 'for')}: ${goalText(o.goal)}</p>
+              <p class="wish">${tr('Wunsch', 'Wish')}: ${wishLabel(wish)}</p>
+              <div class="actions">${terms}${o.negotiated ? '' : `<button data-action="negotiate" data-value="${i}">${tr('Nachverhandeln', 'Negotiate')}</button>`}<button data-action="sponsorDecline" data-value="${i}">${tr('Ablehnen', 'Decline')}</button></div></article>`;
+          })
           .join('')
       : '';
     const active = c.sponsors.length
       ? c.sponsors
-          .map(
-            (s) => `<li class="sponsor"><b>${s.name}</b> <small>${SLOTS[s.slot]}${s.seasons ? tr(` · ${s.seasons + 1}. Saison`, ` · season ${s.seasons + 1}`) : ''}</small><br>
-              ${euro(s.weekly)}${tr('/Spieltag', '/matchday')}${s.pause > 0 ? tr(` <em>(setzt ${s.pause} Wochen aus)</em>`, ` <em>(pausing for ${s.pause} weeks)</em>`) : s.owed ? tr(` <em>(schuldet ${euro(s.owed)})</em>`, ` <em>(owes ${euro(s.owed)})</em>`) : ''} · ${tr('Bonus', 'bonus')} ${euro(s.bonus)} ${tr('bei', 'for')} ${goalText(s.goal)} <small>(${goalProgress(c, s.goal)})</small>
-              <span class="rel"><i style="width:${s.rel ?? 50}%"></i></span><small>${bossOf(s)} ${tr('ist', 'is')} ${relLabel(s.rel ?? 50)}</small></li>`,
-          )
+          .map((s, i) => {
+            const g = goalStatus(c, s.goal);
+            const left = s.left ?? 1;
+            const term = s.term ?? 1;
+            const wish = s.wish;
+            const w = WISHES[wish?.kind];
+            const cost = wishCost(wish, s.weekly);
+            const wishState = !wish
+              ? ''
+              : wish.done
+                ? `<span class="ok">${tr('erfüllt', 'done')}</span>`
+                : w.kind === 'spiel'
+                  ? `<small>${wish.count} / ${wish.n}</small>`
+                  : `<button data-action="sponsorWish" data-value="${i}">${w.act}${cost ? ` (${euro(cost)})` : ` (${tr('gratis', 'free')})`}</button>`;
+            const penalty = cancelCost(c, s);
+            const ask = this.cancelAsk === i;
+            const tags = [BRANCHEN[s.branche ?? sponsorDef(s.id)?.branche] ?? '', s.exclusive ? tr('Konkurrenzschutz', 'exclusivity') : '', arenaOf(c) && c.arena.id === s.id ? c.arena.name : ''].filter(Boolean).join(' · ');
+            return `<li class="sponsor"><b>${s.name}</b> <small>${SLOTS[s.slot]}${s.seasons ? tr(` · ${s.seasons + 1}. Saison zusammen`, ` · season ${s.seasons + 1} together`) : ''}${tags ? ` · ${tags}` : ''}</small><br>
+              <small>${tr('Vertrag', 'Contract')}: ${term > 1 ? tr(`Saison ${term - left + 1} von ${term}`, `season ${term - left + 1} of ${term}`) : tr('läuft bis Saisonende', 'runs to the end of the season')}</small><br>
+              ${euro(s.weekly)}${tr('/Spieltag', '/matchday')}${s.pause > 0 ? tr(` <em>(setzt ${s.pause} Wochen aus)</em>`, ` <em>(pausing for ${s.pause} weeks)</em>`) : s.owed ? tr(` <em>(schuldet ${euro(s.owed)})</em>`, ` <em>(owes ${euro(s.owed)})</em>`) : ''}
+              <div class="goal"><small>${tr('Saisonziel', 'Season goal')}: ${goalText(s.goal)} · ${tr('Bonus', 'bonus')} ${euro(s.bonus)} · ${g.text}${g.ok ? ' ✓' : ''}</small>
+                <span class="meter"><i class="${g.ok ? 'ok' : ''}" style="width:${g.pct}%"></i></span></div>
+              ${wish ? `<div class="wish"><small>${tr('Wunsch', 'Wish')}: ${wishLabel(wish)}</small> ${wishState}</div>` : ''}
+              <span class="rel"><i style="width:${s.rel ?? 50}%"></i></span><small>${bossOf(s)} ${tr('ist', 'is')} ${relLabel(s.rel ?? 50)} (${s.rel ?? 50}/100)</small>
+              <div class="actions"><button data-action="sponsorCancel" data-value="${i}">${ask ? tr(`Wirklich kündigen? Strafe ${euro(penalty)}`, `Really terminate? Penalty ${euro(penalty)}`) : tr('Kündigen', 'Terminate')}</button></div></li>`;
+          })
           .join('')
       : `<li><em>${tr('noch keine Sponsoren', 'no sponsors yet')}</em></li>`;
     const sinners = Object.entries(c.fines)
@@ -310,6 +342,7 @@ export const clubScreens = {
       .join('');
     return `
       <div class="cash-head"><span>${tr('Mannschaftskasse', 'Team kitty')}</span><b class="${c.cash < 0 ? 'minus' : ''}">${euro(c.cash)}</b>
+        ${arenaOf(c) ? `<small>${tr('Sportplatz', 'Ground')}: ${arenaOf(c)}</small>` : ''}
         <small>${tr('Ziel: Saisonabschlussfahrt (ab', 'Goal: end-of-season trip (from')} ${euro(DESTINATIONS.kegeltour.cost)})${c.spirit ? tr(' · Stimmung nach der letzten Fahrt: bestens (weniger Absagen)', ' · spirits after the last trip: excellent (fewer drop-outs)') : ''}</small></div>
       <div class="cash-grid">
         <section><h4>${tr('Sponsoren', 'Sponsors')}</h4><ul class="plain">${active}</ul>

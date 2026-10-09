@@ -18,7 +18,7 @@ import { appointCoach, startCourse } from '../career/youthteams.js';
 import { acceptSponsor, bookTrip, KIT_COST } from '../career/finances.js';
 import { tripChoose } from '../career/trip.js';
 import { build } from '../career/facilities.js';
-import { negotiate } from '../career/sponsors.js';
+import { cancelSponsor, declineOffer, fulfillWish, negotiate } from '../career/sponsors.js';
 import { inviteTrialist, runStation, startTraining } from '../career/training.js';
 import { promoteProspect } from '../career/youth.js';
 import { setPate, toggleTrainUp } from '../career/bridge.js';
@@ -152,7 +152,22 @@ export class Clubhouse {
         build(this.career, id, mode);
         this.h.onChange();
       } else if (action === 'sponsor') {
-        acceptSponsor(this.career, Number(value));
+        const [i, term] = value.split(':');
+        acceptSponsor(this.career, Number(i), Number(term) || 1);
+        this.h.onChange();
+      } else if (action === 'sponsorDecline') {
+        declineOffer(this.career, Number(value));
+        this.h.onChange();
+      } else if (action === 'sponsorWish') {
+        const res = fulfillWish(this.career, Number(value));
+        if (res === 'nocash') this.career.sponsorNote = tr('Zu wenig in der Kasse für diesen Wunsch.', 'Not enough in the kitty for that wish.');
+        this.h.onChange();
+      } else if (action === 'sponsorCancel') {
+        // Erst nachfragen (zeigt die Vertragsstrafe), beim zweiten Klick wird gekündigt.
+        if (this.cancelAsk === Number(value)) {
+          cancelSponsor(this.career, Number(value));
+          this.cancelAsk = null;
+        } else this.cancelAsk = Number(value);
         this.h.onChange();
       } else if (action === 'training') {
         startTraining(this.career);

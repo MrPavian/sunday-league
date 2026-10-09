@@ -1,5 +1,5 @@
 import { createCareer, currentFixtures, finishRound, humanClub, maxSquad, migrateCareer, nextSeason, nudge, playerOf, prepareMatch, recordResult, recruit, scoutRumor, seasonOver, simulateSync } from '../src/career/career.js';
-import { acceptSponsor } from '../src/career/sponsors.js';
+import { acceptSponsor, fulfillWish } from '../src/career/sponsors.js';
 import { build, canBuild, FACILITIES } from '../src/career/facilities.js';
 import { promoteProspect } from '../src/career/youth.js';
 import { table } from '../src/career/career.js';
@@ -9,6 +9,7 @@ import { appointStaff, holderOf, ROLES, squadCandidates } from '../src/career/st
 // --staff=outside: alle freien Ämter per Aushang (Pauschale), --staff=squad: aus dem Kader (umsonst).
 const STAFF = (process.argv.find((a) => a.startsWith('--staff=')) ?? '').split('=')[1] ?? '';
 const SEASONS = +process.argv[2] || 8, seed = +process.argv[3] || 4242;
+const TERM = +((process.argv.find((a) => a.startsWith('--term=')) ?? '').split('=')[1] ?? 1) || 1, WISHES = process.argv.includes('--wishes');
 const BOT = process.argv.includes('--bot'); // spielt wie ein aktiver Mensch: holt Leute, baut aus, nimmt Sponsoren
 const log = { recruited: 0, promoted: 0, built: [], sponsors: 0 };
 const money = {}; // Einnahmen/Ausgaben je Liga und Kategorie
@@ -27,7 +28,9 @@ function bot(c) {
   for (const idx of humanClub(c).squad) if (w.availability[idx] === 'no') nudge(c, idx);
   (w.rumors ?? []).forEach((r, i) => { if (humanClub(c).squad.length < maxSquad(c) && r.status === 'open') { scoutRumor(c, i); if (recruit(c, i)) log.recruited++; } });
   for (const idx of [...(c.youth?.prospects ?? [])].sort((a, b) => playerOf(c, b).rating - playerOf(c, a).rating)) if (humanClub(c).squad.length < maxSquad(c) - 1 && playerOf(c, idx).rating >= 42 && promoteProspect(c, idx, maxSquad(c))) log.promoted++;
-  for (let i = (c.offers ?? []).length - 1; i >= 0; i--) if (acceptSponsor(c, i)) log.sponsors++;
+  // --term=N: Laufzeit beim Unterschreiben (fällt auf 1 zurück, wenn der Sponsor sich nicht so lange bindet); --wishes: Wünsche erfüllen.
+  for (let i = (c.offers ?? []).length - 1; i >= 0; i--) if ((TERM > 1 && acceptSponsor(c, i, TERM)) || acceptSponsor(c, i)) log.sponsors++;
+  if (WISHES) c.sponsors.forEach((s, i) => { if (s.wish && !s.wish.done) fulfillWish(c, i); });
   for (const id of Object.keys(FACILITIES)) if (canBuild(c, id) && c.cash > FACILITIES[id].cost * 1.4 && build(c, id, 'handwerker')) log.built.push(`${id}@S${c.season}`);
 }
 const t0 = Date.now();

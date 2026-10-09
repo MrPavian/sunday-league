@@ -397,6 +397,9 @@ export function makeSignTextureWide(text, { bg = '#1f5e3a', fg = '#f4e9c8', widt
   ctx.fillRect(0, 0, width, 20);
   ctx.fillStyle = fg;
   ctx.font = 'bold 12px monospace';
+  // Lange Firmennamen (Sponsoren) schrumpfen, bis sie ins Feld passen; die bisherigen Texte bleiben unverändert.
+  const need = ctx.measureText(text).width;
+  if (need > width - 8) ctx.font = `bold ${Math.max(7, Math.floor((12 * (width - 8)) / need))}px monospace`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, width / 2, 11);

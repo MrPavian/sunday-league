@@ -125,6 +125,26 @@ function paintSponsor(ctx, ox, kit, sponsor, bg) {
   drawBars(4 + gw, 7, 12 - (4 + gw) + 1, 2, ink);
 }
 
+// Ärmelsponsor: ein 8 × 8 Feld im Atlas (Zelle SLEEVE_CELL), auf den Ärmel der Figur gemappt. Markenfarbe mit
+// Rand in Gegenfarbe und dem Schriftzug als Balken – keine neue Textur, kein zusätzlicher Draw Call.
+export const SLEEVE_CELL = [72, 8];
+export function paintSleeve(ctx, sponsor, sleeve) {
+  const [x0, y0] = SLEEVE_CELL;
+  const brand = sponsor.color ?? 0xf2efe6;
+  // Hebt sich die Markenfarbe nicht vom Ärmel ab, kommt sie auf ein helles/dunkles Feld.
+  const field = Math.abs(luminance(brand) - luminance(sleeve)) < 0.25 ? (luminance(sleeve) > 0.5 ? 0x1c1c1c : 0xf2efe6) : brand;
+  const ink = Math.abs(luminance(field) - luminance(brand)) > 0.3 ? brand : contrast(field);
+  const edge = contrast(field);
+  ctx.fillStyle = css(edge);
+  ctx.fillRect(x0, y0, 8, 8);
+  ctx.fillStyle = css(field);
+  ctx.fillRect(x0 + 1, y0 + 1, 6, 6);
+  ctx.fillStyle = css(ink === field ? edge : ink);
+  wordBars(sponsor.name, 4, 2).forEach((bar, r) => {
+    for (let x = 0; x < bar.len; x++) if (!bar.gaps.includes(x)) ctx.fillRect(x0 + 2 + x, y0 + 2 + r * 2, 1, 1);
+  });
+}
+
 // Malt den ganzen Atlas. dirt: 0–1, splats: feste Klecks-Positionen je Spieler.
 const FOLDS = {
   front: [[0, 3, 1, 4], [15, 3, 1, 4], [3, 11, 1, 2], [4, 13, 2, 1], [12, 11, 1, 2], [10, 13, 2, 1], [0, 15, 16, 1]],

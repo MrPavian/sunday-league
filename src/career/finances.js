@@ -1,7 +1,7 @@
 // Mannschaftskasse, Strafenkatalog, Sponsoren und die Saisonabschlussfahrt.
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
-import { closeSponsors, paySponsors } from './sponsors.js';
+import { closeSponsors, normalizeSponsors, paySponsors } from './sponsors.js';
 import { fansMul, salesMul, travelMul } from './facilities.js';
 import { playerOf } from './career.js';
 import { tripSpirit } from './trip.js';
@@ -30,6 +30,7 @@ export function initFinances(career) {
   career.cash ??= START_CASH;
   career.ledger ??= [];
   career.sponsors ??= [];
+  normalizeSponsors(career);
   career.offers ??= [];
   career.fines ??= {};
   career.seasonCards ??= 0;

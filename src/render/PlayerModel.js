@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { pixelTexture, toon, vertexToon } from './materials.js';
-import { makeSplats, paintKit, REGION, sleeveColor } from './kitPaint.js';
+import { makeSplats, paintKit, paintSleeve, REGION, SLEEVE_CELL, sleeveColor } from './kitPaint.js';
 
 // Spieler 2.0: eine Low-Poly-Figur aus wenigen, leicht verjüngten Körperteilen –
 // Hüfte, Torso, Kopf, zweiteilige Arme und Beine mit Knie und Ellbogen, Schuhe mit
@@ -151,9 +151,10 @@ const mixHex = (a, b, t) => {
 
 export class KitAtlas {
   // capacity: wie viele Spieler (Kacheln); edge: Kantenkennung (siehe EDGE_CODE).
-  constructor(kit, { sponsor = null, capacity = 1, edge = null } = {}) {
+  constructor(kit, { sponsor = null, sleeve = null, capacity = 1, edge = null } = {}) {
     this.kit = kit;
     this.sponsor = sponsor;
+    this.sleeve = sleeve; // Ärmelsponsor (nur der eigene Verein)
     this.capacity = capacity;
     this.used = 0;
     this.refs = 0;
@@ -198,6 +199,7 @@ function paintTile(t) {
   ctx.save();
   ctx.translate(0, y0);
   paintKit(ctx, atlas.kit, { sponsor: atlas.sponsor, dirt: t.dirt, splats: t.splats, dirtColor: t.dirtColor, wet: t.wet });
+  if (atlas.sleeve) paintSleeve(ctx, atlas.sleeve, sleeveColor(atlas.kit));
   if (t.number != null) {
     // Erst ein Pixel Rand in Gegenfarbe, dann die Ziffern – lesbar auch auf Ringeln.
     const digits = String(t.number).slice(0, 2).split('').map(Number);
@@ -341,7 +343,7 @@ function faceUV(uv, start, corners, atlas, tile, face) {
 // Aussehen; Frisur, Schulterbreite, Beinlänge und Kopfgröße leiten sich daraus ab.
 // atlas: gemeinsamer Team-Atlas (sonst bekommt die Figur einen eigenen).
 // edge: Kantenkennung für den Post-Shader (nur Spieler und Schiri).
-export function createPlayerModel(look, kit, { number = null, keeper = false, sponsor = null, textured = true, atlas = null, edge = null } = {}) {
+export function createPlayerModel(look, kit, { number = null, keeper = false, sponsor = null, sleeve = null, textured = true, atlas = null, edge = null } = {}) {
   const hash = lookHash(look);
   const belly = look.belly ?? 0;
   const vary = (shift, step) => 1 + (((hash >>> shift) % 5) - 2) * step;
@@ -352,7 +354,7 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
   const bulk = vary(18, 0.05);
   const useAtlas = textured && typeof document !== 'undefined';
   const own = useAtlas && !atlas;
-  if (own) atlas = new KitAtlas(kit, { sponsor, capacity: 1, edge });
+  if (own) atlas = new KitAtlas(kit, { sponsor, sleeve, capacity: 1, edge });
   const tile = useAtlas ? atlas.allocate() : 0;
 
   const skin = look.skin;
@@ -461,6 +463,8 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
   for (const s of ['L', 'R']) {
     const out = s === 'L' ? -0.01 : 0.01;
     b.add(`upperArm${s}`, prism(0.16, 0.14, 0.17, 0.17, 0.15), shirt, { at: [out, -0.06, 0] });
+    // Ärmelsponsor: flaches Feld außen am Ärmel (eigene Zelle im Atlas, im selben Netz – kein Draw Call mehr).
+    if (useAtlas && atlas.sleeve) b.box(`upperArm${s}`, 0.012, 0.085, 0.085, 0xffffff, [out + (s === 'L' ? -0.081 : 0.081), -0.065, 0], { uv: 'sleeve' });
     b.add(`upperArm${s}`, prism(0.115 * bulk, 0.11 * bulk, 0.12, 0.12 * bulk, 0.115 * bulk), keeper ? shirt : skin, { at: [out, -0.205, 0] });
     b.add(`lowerArm${s}`, prism(0.11 * bulk, 0.095 * bulk, 0.2, 0.11 * bulk, 0.1 * bulk), keeper ? shirt : skin, { at: [out, -0.1, 0] });
     b.box(`lowerArm${s}`, 0.1, 0.09, 0.115, keeper ? glove : skin, [out, -0.24, 0.005]);
@@ -611,7 +615,7 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
     pos.set(g.attributes.position.array, o * 3);
     nor.set(g.attributes.normal.array, o * 3);
     // Texturierte Stellen tragen ihre Farbe in der Textur – Ecke weiß.
-    const white = useAtlas && (part.uv === 'kit' || part.uv === 'plaster');
+    const white = useAtlas && (part.uv === 'kit' || part.uv === 'plaster' || part.uv === 'sleeve');
     c.setHex(white ? 0xffffff : part.color);
     for (let i = 0; i < n; i++) {
       col[(o + i) * 3] = c.r;
@@ -624,6 +628,14 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
       if (part.uv === 'kit') {
         kitUV(g, atlas, tile);
         uvs.set(g.attributes.uv.array, o * 2);
+      } else if (part.uv === 'sleeve') {
+        // Jede Seite des flachen Quaders zeigt die ganze 8 × 8 Zelle des Ärmelsponsors.
+        const [cx, cy] = SLEEVE_CELL;
+        const uv = g.attributes.uv;
+        for (let i = 0; i < n; i++) {
+          const [u, v] = atlas.uv(tile, cx + 0.5 + uv.getX(i) * 7, cy + 0.5 + (1 - uv.getY(i)) * 7);
+          uvs.set([u, v], (o + i) * 2);
+        }
       } else {
         const t = texel(UTIL_X + (part.uv === 'leg' ? 1 : part.uv === 'plaster' ? 2 : 0));
         for (let i = 0; i < n; i++) uvs.set(t, (o + i) * 2);
