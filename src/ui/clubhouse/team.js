@@ -1,6 +1,7 @@
 // MANNSCHAFT: Kader (Karten), Spielerprofil, Aufstellung (Magnettafel), Taktik, Training, Jugend, Transfers.
 // Methoden des Vereinsheims (this = Clubhouse), aus Clubhouse.js herausgelöst – Verhalten unverändert.
 import { tr } from '../../core/i18n.js';
+import { spielberichtStreng, statusFor } from '../../career/spielbericht.js';
 import { kitPreviewURL } from '../../render/kitPaint.js';
 import { STYLES as PLAY_STYLES, systemsFor } from '../../sim/tactics.js';
 import { jobFits, styleFit } from '../../sim/fit.js';
@@ -58,8 +59,8 @@ export const teamScreens = {
     const c = this.career;
     const r = c.players[idx];
     if (r.injuryWeeks) return `<span class="ui-chip" style="--c:#d9534f" title="${r.injury?.label ?? tr('verletzt', 'injured')}">${r.injury ? `${r.injury.label} · ${r.injuryWeeks} ${tr('Wo.', 'wks')}` : tr('verletzt', 'injured')}</span>`;
-    const st = c.week ? STATUS[c.week.availability[idx]] : null;
-    const color = st && { yes: '#5cc46a', no: '#d9534f', late: '#e0b020' }[st[1]];
+    const st = c.week ? STATUS[statusFor(c, c.week.availability[idx])] : null;
+    const color = st && { yes: '#5cc46a', no: '#d9534f', late: '#e0b020', bench: '#e0b020' }[st[1]];
     return `${st ? `<span class="ui-chip" style="--c:${color}">${st[0]}</span>` : ''}${withFit ? fitChip(c, idx) : ''}`;
   },
 
@@ -77,11 +78,11 @@ export const teamScreens = {
     const cards = this.squadOrder()
       .map((idx) => `<div class="deck-slot">${this.collector(idx)}</div>`)
       .join('');
-    const count = { yes: 0, no: 0, late: 0 };
-    for (const idx of club.squad) if (c.week?.availability[idx]) count[c.week.availability[idx]]++;
+    const count = { yes: 0, no: 0, late: 0, bench: 0 };
+    for (const idx of club.squad) if (c.week?.availability[idx]) count[statusFor(c, c.week.availability[idx])]++;
     return `
       <div class="squad-head">
-        <p class="t-2">${club.squad.length} ${tr('Spieler', 'players')}${c.week ? ` · ${count.yes} ${tr('Zusagen', 'in')} · ${count.late} ${tr('später', 'late')} · ${count.no} ${tr('Absagen', 'out')}` : ''}</p>
+        <p class="t-2">${club.squad.length} ${tr('Spieler', 'players')}${c.week ? ` · ${count.yes} ${tr('Zusagen', 'in')} ${spielberichtStreng(c) ? '' : ` · ${count.late} ${tr('später', 'late')}`} · ${count.no} ${tr('Absagen', 'out')}` : ''}</p>
         <div class="squad-sort">${segmented('sort', [['rating', tr('Stärke', 'Rating')], ['pos', tr('Position', 'Position')]], this.squadSort === 'pos' ? 'pos' : 'rating', { action: 'squadSort' })}</div>
       </div>
       <div class="squad-deck">${cards}</div>`;
@@ -281,7 +282,7 @@ export const teamScreens = {
     if (!c.week || this.results) return `<p class="empty">${tr('Die Aufstellung für den nächsten Spieltag gibt es nach dem Wochenstart.', 'The line-up for the next matchday is available once the week starts.')}</p>`;
     const { formation, lineup, bench, tactic } = currentLineup(c);
     const benchList = bench.length
-      ? bench.map((idx) => `<li>${this.p(idx).name}${c.week.availability[idx] === 'late' ? tr(' <em>(kommt zur 2. Halbzeit)</em>', ' <em>(arrives for the 2nd half)</em>') : ''}</li>`).join('')
+      ? bench.map((idx) => `<li>${this.p(idx).name}${statusFor(c, c.week.availability[idx]) === 'late' ? tr(' <em>(kommt zur 2. Halbzeit)</em>', ' <em>(arrives for the 2nd half)</em>') : ''}</li>`).join('')
       : `<li><em>${tr('niemand', 'nobody')}</em></li>`;
     if (coachAway(c)) return `<p class="warn">${tr('Du bist diese Woche nicht da. Der Kapitän stellt auf – nach bestem Wissen und Gewissen.', 'You are away this week. The captain picks the team – to the best of his knowledge.')}</p><h4>${tr('Bank', 'Bench')}</h4><ul class="bench">${benchList}</ul>`;
     const ROLE = tr({ gk: 'Tor', def: 'Abwehr', mid: 'Mitte', fwd: 'Sturm' }, { gk: 'GK', def: 'Def', mid: 'Mid', fwd: 'Att' });
@@ -312,7 +313,7 @@ export const teamScreens = {
       .filter((idx) => c.week.availability[idx] === 'yes' && !lineup.includes(idx))
       .map((idx) => ({ idx, p: this.p(idx) }))
       .sort((a, b) => b.p.rating - a.p.rating);
-    const late = bench.filter((idx) => c.week.availability[idx] === 'late');
+    const late = bench.filter((idx) => statusFor(c, c.week.availability[idx]) === 'late');
     const benchChips = [
       ...avail.map(({ idx, p }) => `<button class="lp-bench${pick?.idx === idx ? ' picked' : ''}" data-action="benchPick" data-value="${idx}" data-drop="bench:${idx}" data-drag="bench:${idx}" aria-pressed="${pick?.idx === idx}"><b>${p.rating}</b><span>${p.name}</span><small>${POSITIONS[p.position]}</small></button>`),
       ...late.map((idx) => `<span class="lp-bench late"><b>${this.p(idx).rating}</b><span>${this.p(idx).name}</span><small>${tr('kommt zur 2. Halbzeit', 'arrives for the 2nd half')}</small></span>`),

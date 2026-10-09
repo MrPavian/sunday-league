@@ -3,6 +3,7 @@
 // (Stimmung, Eigenschaften, Kadergröße); `if` schließt einen Ausgang ganz aus.
 import { rememberNewClub } from './memory.js';
 import { hasTrait } from '../data/traits.js';
+import { statusFor } from './spielbericht.js';
 import { humanClub, joinSquad, MIN_SQUAD, playerOf, releasePlayer } from './career.js';
 
 // outcome([{ w, if, run }]) → effect(c, ctx, rng) für eine Event-Option.
@@ -40,7 +41,7 @@ export function joinRival(c, idx, rivalId) {
 }
 
 export const sitOut = (c, idx, status = 'no') => {
-  if (c.week?.availability[idx] !== undefined) c.week.availability[idx] = status;
+  if (c.week?.availability[idx] !== undefined) c.week.availability[idx] = statusFor(c, status); // Stufe ≥ 4: 'late' → 'no'
 };
 
 export { joinSquad };

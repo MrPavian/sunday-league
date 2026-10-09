@@ -1,6 +1,16 @@
 // Überraschungen am Spieltag: Schiri nicht da, einer steckt im Stau, der Platz ist
 // doppelt vergeben … Höchstens eine pro Spiel, nur bei eigenen Partien.
 import { tr } from '../core/i18n.js';
+import { setControlled } from '../sim/players.js';
+import { spielberichtStreng } from './spielbericht.js';
+
+// Wer von der Bank startet für einen Ausfall? Nicht verletzt, nicht schon benutzt, nicht selbst noch unterwegs;
+// bevorzugt dieselbe Rolle, dann der Stärkste (wie die Aufstellung nach Stärke).
+function replacement(m, team, out = null) {
+  const ok = m.bench[team].filter((b) => b.position !== 'gk' && !b.late && !b.usedUp && !b.mustLeave);
+  const score = (b) => (out && b.position === out.position ? 1000 : 0) + (b.rating ?? 0);
+  return ok.sort((a, b) => score(b) - score(a))[0] ?? null;
+}
 
 const SURPRISES = [
   {
@@ -15,13 +25,32 @@ const SURPRISES = [
   {
     id: 'stau',
     w: 1.2,
-    if: (m, team) => m.players.filter((p) => p.team === team && p.role !== 'gk').length > 2,
-    run: (m, team, rng) => {
+    // Ab Kreisliga A zählt der Spielbericht: Ohne Ersatzmann bleibt die Mannschaft nicht dauerhaft
+    // in Unterzahl – dann gibt es die Überraschung dort nicht.
+    if: (m, team, level) => m.players.filter((p) => p.team === team && p.role !== 'gk').length > 2 && (!spielberichtStreng(level) || !!replacement(m, team)),
+    run: (m, team, rng, level) => {
       const outfield = m.players.filter((p) => p.team === team && p.role !== 'gk');
       const p = rng.pick(outfield);
+      const sub = replacement(m, team, p);
+      const strict = spielberichtStreng(level);
       m.players.splice(m.players.indexOf(p), 1);
+      if (sub) {
+        // Der Beste von der Bank rückt auf seinen Platz – niemand fängt in Unterzahl an.
+        m.bench[team].splice(m.bench[team].indexOf(sub), 1);
+        Object.assign(sub, { role: p.role, home: p.home, formationEntry: p.formationEntry, pos: { ...p.pos }, vel: { x: 0, z: 0 }, facing: { ...p.facing }, state: 'normal', stateTimer: 0 });
+        m.players.push(sub);
+        if (m.controlledId === p.id) setControlled(m, sub.id);
+        if (!strict) {
+          // Kreisklassen: Der Nachzügler kommt zur 2. Halbzeit auf die Bank (einwechselbar ab Pause).
+          p.late = true;
+          m.bench[team].push(p);
+        }
+        return strict
+          ? tr(`${p.name} steckt auf der A2 im Stau und kommt zu spät – er steht nicht mehr auf dem Spielbericht. ${sub.name} rückt für ihn in die Startelf.`, `${p.name} is stuck in traffic on the motorway and arrives too late – he is not on the match report. ${sub.name} steps into the starting line-up for him.`)
+          : tr(`${p.name} steckt auf der A2 im Stau. ${sub.name} rückt für ihn in die Startelf, ${p.name} kommt zur zweiten Halbzeit auf die Bank.`, `${p.name} is stuck in traffic on the motorway. ${sub.name} steps into the starting line-up for him; ${p.name} joins the bench for the second half.`);
+      }
       m.lateArrival = { player: p, at: m.duration * 0.33 };
-      return tr(`${p.name} steckt auf der A2 im Stau. Bis er da ist, spielen wir einen Mann weniger.`, `${p.name} is stuck in traffic on the motorway. Until he gets here we are a man down.`);
+      return tr(`${p.name} steckt auf der A2 im Stau. Niemand auf der Bank, bis er da ist, spielen wir einen Mann weniger.`, `${p.name} is stuck in traffic on the motorway. Nobody on the bench, so until he gets here we are a man down.`);
     },
   },
   {
@@ -53,13 +82,13 @@ const SURPRISES = [
 
 // team: Index der eigenen Mannschaft im Spiel.
 // only: nur diese Überraschung zulassen (Testschalter ?stau in main.js).
-export function matchdaySurprise(m, team, rng, chance = 0.28, only = null) {
+export function matchdaySurprise(m, team, rng, chance = 0.28, only = null, level = 1) {
   if (!rng.chance(chance)) return null;
-  const list = SURPRISES.filter((s) => (!only || s.id === only) && (!s.if || s.if(m, team)));
+  const list = SURPRISES.filter((s) => (!only || s.id === only) && (!s.if || s.if(m, team, level)));
   if (!list.length) return null;
   let r = rng.next() * list.reduce((s, x) => s + x.w, 0);
   const pick = list.find((x) => (r -= x.w) < 0) ?? list[0];
-  const text = pick.run(m, team, rng);
+  const text = pick.run(m, team, rng, level);
   m.surprise = { id: pick.id, text };
   return m.surprise;
 }

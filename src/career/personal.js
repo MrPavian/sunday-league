@@ -7,6 +7,7 @@ import { book } from './finances.js';
 import { addCustomPlayer, getPool, humanClub, maxSquad, playerOf } from './career.js';
 import { generatePlayer, ratePlayer } from '../sim/generator.js';
 import { adjustMood } from './events.js';
+import { lateOr, statusFor } from './spielbericht.js';
 import { jobName } from '../data/names.js';
 import { trainingRelief } from './facilities.js';
 import { appointTreasurer } from './clublife.js';
@@ -300,7 +301,8 @@ export const PERSONAL_EVENTS = {
           : tr(`${partnerOf(c)}: „Sonntag hab ich Karten fürs Konzert in der Stadt. Für uns beide."`, `${partnerOf(c)}: "I've got tickets for a concert in town on Sunday. For both of us."`),
     options: [
       { label: tr('Familie geht vor – Sonntag bin ich raus', 'Family comes first – I am out on Sunday'), effect: (c) => (sendAway(c, 1), adjustPatience(c, 20), tr('Der Kapitän stellt auf. Du machst Fotos und schickst heimlich Nachrichten.', 'The captain picks the team. You take photos and secretly send messages.')) },
-      { label: tr('Nur zur 2. Halbzeit kommen', 'Only come for the 2nd half'), effect: (c) => (adjustPatience(c, 8), c.coach.idx != null && c.week.availability[c.coach.idx] === 'yes' && (c.week.availability[c.coach.idx] = 'late'), tr('Kompromiss. Du kommst in der Pause, noch mit Glitzer im Gesicht.', 'Compromise. You arrive at half-time, still with glitter on your face.')) },
+      // Ab Kreisliga A zählt der Spielbericht: Wer zum Anpfiff fehlt, steht nicht drin – „zur 2. Halbzeit" gibt es nicht.
+      { label: (c) => lateOr(c, tr('Nur zur 2. Halbzeit kommen', 'Only come for the 2nd half'), tr('Erst zum Abpfiff kommen', 'Only come for the final whistle')), effect: (c) => (adjustPatience(c, 8), c.coach.idx != null && c.week.availability[c.coach.idx] === 'yes' && (c.week.availability[c.coach.idx] = statusFor(c, 'late')), lateOr(c, tr('Kompromiss. Du kommst in der Pause, noch mit Glitzer im Gesicht.', 'Compromise. You arrive at half-time, still with glitter on your face.'), tr('Kompromiss. Du kommst erst zum Abpfiff, noch mit Glitzer im Gesicht – im Spielbericht steht der Kapitän.', 'Compromise. You only arrive for the final whistle, still with glitter on your face – the captain is on the match report.'))) },
       { label: tr('Fußball geht vor', 'Football comes first'), effect: (c) => (adjustPatience(c, -12), tr('Die Stimmung zu Hause ist … frostig.', 'The atmosphere at home is … frosty.')) },
     ],
   },

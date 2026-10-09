@@ -327,6 +327,38 @@ export const LATE = tr(
   ],
 );
 
+// Ab Kreisliga A: Der elektronische Spielbericht ist vor dem Anpfiff zu – wer später kommt, spielt nicht.
+export const LATE_STRICT = tr(
+  [
+    'Schaffe es nicht rechtzeitig zum Anpfiff, sorry. Spielt ohne mich.',
+    'Komme zu spät, der Spielbericht ist dann schon zu.',
+    'Taufe zieht sich, bin nicht vor dem Anpfiff da. Streicht mich aus dem Bericht.',
+    'Der Bus fährt sonntags nur stündlich, ich komm zu spät. Tragt mich nicht ein.',
+    'Muss erst den Kleinen zum Handball bringen, bin nicht pünktlich. Ohne mich.',
+    'Zug hat Verspätung, bis zum Anpfiff schaffe ich es nicht. Dann darf ich eh nicht mehr rein.',
+    'Schlüssel weg, Auto weg, Laune weg. Ich bin nicht rechtzeitig da.',
+    'Bin beim Schwiegerelternfrühstück gefangen. Zum Anpfiff nicht da, also nicht im Bericht.',
+    'Transporter muss noch zurück, ich komme nach dem Anpfiff. Schreibt mich bitte raus.',
+    'Schaffe es nicht vor dem Anpfiff, nach Freigabe des Spielberichts ist eh zu. Viel Erfolg!',
+    'Komme zu spät, Mülltonnen und so. Ich schaue von der Bande zu.',
+    'Nicht pünktlich da, sorry. Ich bring dafür den Kasten für nachher mit.',
+  ],
+  [
+    'Won’t make it in time for kick-off, sorry. Play without me.',
+    'I’ll be too late, the match report will be closed by then.',
+    'The christening is dragging on, I won’t be there before kick-off. Take me off the report.',
+    'The bus only runs hourly on Sundays, I’ll be late. Don’t put me down.',
+    'Got to take the little one to handball first, I won’t be on time. Count me out.',
+    'Train’s delayed, I won’t make kick-off. They won’t let me on after that anyway.',
+    'Keys gone, car gone, mood gone. I won’t be there in time.',
+    'Stuck at breakfast with the in-laws. Not there for kick-off, so not on the report.',
+    'Got to return the van, I’ll come after kick-off. Please take me off the sheet.',
+    'Won’t make it before kick-off, and once the report is signed off that’s it. Good luck!',
+    'Running late, bins and all that. I’ll watch from the touchline.',
+    'Not there on time, sorry. I’ll bring the crate for afterwards though.',
+  ],
+);
+
 export const INJURED = tr(
   ['Knie ist noch offen von letzter Woche. Setze aus.', 'Das Knie… nächste Woche wieder.', 'Die Wade macht zu. Lieber eine Woche Pause.', 'Physio sagt nein. Ich sag auch nein.'],
   ['Knee is still raw from last week. Sitting this one out.', 'The knee… back next week.', 'Calf is tight. Better take a week off.', 'Physio says no. I say no too.'],

@@ -270,6 +270,7 @@ describe('matchday surprises', async () => {
     let tested = false;
     for (let seed = 1; seed < 80 && !tested; seed++) {
       const m = createMatch({ seed: 4, pitch: PITCHES.rasenplatz, human: false, duration: 60 });
+      m.bench[0] = []; // ohne Ersatzmann: Unterzahl bis zur Ankunft (mit Bank rückt einer nach, s. tests/lateplay.test.js)
       matchdaySurprise(m, 0, createRng(seed), 1);
       if (m.surprise?.id !== 'stau') continue;
       const before = m.players.filter((p) => p.team === 0).length;

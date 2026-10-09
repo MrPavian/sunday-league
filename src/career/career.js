@@ -12,7 +12,7 @@ import { createMatch, MATCH, stepMatch } from '../sim/match.js';
 import { PITCHES } from '../sim/pitch.js';
 import { allPlayers, subRuleFor } from '../sim/squad.js';
 import { gradePlayers } from '../sim/stats.js';
-import { absenceChance, DECLINE_TEXT, FAREWELL, INJURED, JOIN_TEXT, LATE, noReasons, NUDGE_NO, NUDGE_YES, RUMOR_SOURCES, YES } from './chat.js';
+import { absenceChance, DECLINE_TEXT, FAREWELL, INJURED, JOIN_TEXT, LATE, LATE_STRICT, noReasons, NUDGE_NO, NUDGE_YES, RUMOR_SOURCES, YES } from './chat.js';
 import { EXTRA_CLUBS, HUMAN_CLUB_DEFAULT, LEAGUES, leagueClubs, MAX_LEVEL } from './clubs.js';
 import { autoRelegation, relegationOutcome } from './relegation.js';
 import { applyPubToTeam } from './pub.js';
@@ -36,6 +36,7 @@ import { nameEditionFor, nameLocaleOf } from '../data/names.js';
 import { setNameLocale } from '../data/origins.js';
 import { weeklyBanter } from './banter.js';
 import { matchdaySurprise } from './matchday.js';
+import { spielberichtStreng, statusFor } from './spielbericht.js';
 import { TIP_IDS, weeklyTip } from './tips.js';
 import { fenceVoice, heirIntake, heirMoments } from './generations.js';
 import { archiveReview } from './review.js';
@@ -480,8 +481,9 @@ export function startWeek(career) {
       status = 'no';
       text = fresh(noReasons(p.profession));
     } else if (rng.chance(0.07)) {
-      status = 'late';
-      text = fresh(LATE);
+      // Gleiche Zahl Ziehungen in jeder Liga; ab Kreisliga A kommt kein „später" mehr in Frage.
+      status = statusFor(career, 'late');
+      text = fresh(spielberichtStreng(career) ? LATE_STRICT : LATE);
     } else {
       text = fresh(YES);
     }
@@ -570,9 +572,11 @@ export function setClubTactic(career, format, { system, style } = {}) {
 
 export function buildLineup(career, club, format, availability, rng, manual = null) {
   const formation = systemFormation(format, tacticOf(club, format).system);
-  const avail = club.squad.filter((idx) => availability[idx] !== 'no');
-  const starters = avail.filter((idx) => availability[idx] !== 'late');
-  const late = avail.filter((idx) => availability[idx] === 'late');
+  const st = (idx) => statusFor(career, availability[idx]); // alter Stand: 'late' ab Kreisliga A = fehlt
+  const avail = club.squad.filter((idx) => st(idx) !== 'no');
+  const starters = avail.filter((idx) => st(idx) !== 'late' && st(idx) !== 'bench');
+  const late = avail.filter((idx) => st(idx) === 'late');
+  const benched = avail.filter((idx) => st(idx) === 'bench'); // Strafbank ab Kreisliga A: im Bericht, ab Anpfiff einwechselbar
   const helpers = [];
   const pool = getPool();
   while (starters.length < formation.length) {
@@ -606,7 +610,7 @@ export function buildLineup(career, club, format, availability, rng, manual = nu
     free.sort((a, b) => score(b) - score(a));
     lineup[i] = free.shift();
   });
-  return { lineup, bench: [...free, ...late], late, helpers };
+  return { lineup, bench: [...free, ...benched, ...late], late, helpers };
 }
 
 // --- Gerüchteküche & Transfers -------------------------------------------------------
@@ -677,6 +681,8 @@ export function migrateCareer(career) {
     if (def && club.kit && club.kit.pattern === undefined && def.kit.pattern) club.kit = { ...club.kit, pattern: def.kit.pattern, second: def.kit.second };
   }
   career.level ??= 1;
+  // Alter Stand aus Stufe ≥ 4 mit „kommt später": Spielbericht ist zu, er fehlt.
+  if (career.week?.availability) for (const k of Object.keys(career.week.availability)) career.week.availability[k] = statusFor(career, career.week.availability[k]);
   career.leagueSize ??= 6;
   career.mood ??= 0;
   career.flags ??= {};
@@ -974,7 +980,7 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   // Derby: hitziger, mehr Karten – außer man hat sich aufs faire Grillen geeinigt.
   match.derby = (isDerbyFixture(career, fixture) && !career.week?.derbyFair) || grudgeMatch(career, home.human ? away.id : home.id);
   // Eigenes Spiel: Manchmal kommt am Spieltag etwas dazwischen.
-  if (home.human || away.human) matchdaySurprise(match, humanIsAway || home.human ? 0 : 1, createRng(hashSeed(career.seed, career.season, career.round, 77)));
+  if (home.human || away.human) matchdaySurprise(match, humanIsAway || home.human ? 0 : 1, createRng(hashSeed(career.seed, career.season, career.round, 77)), 0.28, null, career.level ?? 1);
   // Zuschauer am Zaun – für die Geräuschkulisse (die Kasse zählt nach dem Spiel selbst).
   const level = career.level ?? 1;
   const fans = level > 4 ? rng.int(80, 200) : level > 3 ? rng.int(45, 90) : level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14);

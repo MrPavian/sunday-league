@@ -8,6 +8,7 @@ import { reviewHTML } from '../review.js';
 import { button, esc } from '../ds.js';
 import { CREST_BAND_TEXTS, CREST_COLORS, CREST_DIVISIONS, CREST_SHAPES, CREST_SYMBOLS, crestExtras, crestOf, crestSVG, defaultCrest, FIGURES } from '../crest.js';
 import { humanClub, KIT_COLLARS, KIT_COLORS, KIT_PATTERNS, KIT_SLEEVES, kitEditable, updateCrest, playerOf, table } from '../../career/career.js';
+import { spielberichtStreng } from '../../career/spielbericht.js';
 import { FINES, KIT_COST, MEMBER_FEE, SLOTS } from '../../career/finances.js';
 import { DESTINATIONS } from '../../career/trip.js';
 import { build, canBuild, facilities, FACILITIES } from '../../career/facilities.js';
@@ -313,7 +314,7 @@ export const clubScreens = {
       <div class="cash-grid">
         <section><h4>${tr('Sponsoren', 'Sponsors')}</h4><ul class="plain">${active}</ul>
           ${c.sponsorNote && c.round === 0 ? `<p class="reply ok">${c.sponsorNote}</p>` : ''}${offers ? `<h4>${tr('Angebote für diese Saison', 'Offers for this season')}</h4><div class="rumors">${offers}</div>` : c.round === 0 ? '' : `<p class="empty">${tr('Neue Angebote gibt es vor der nächsten Saison.', 'New offers come before next season.')}</p>`}</section>
-        <section><h4>${tr('Strafenkatalog', 'Fines list')}</h4><ul class="plain fines">${FINES.map((f) => `<li>${f.label} <b>${euro(f.amount)}</b></li>`).join('')}</ul>
+        <section><h4>${tr('Strafenkatalog', 'Fines list')}</h4><ul class="plain fines">${FINES.map((f) => `<li>${f.strict && spielberichtStreng(c) ? f.strict : f.label} <b>${euro(f.amount)}</b></li>`).join('')}</ul>
           <h4>${tr('Sünderkartei', 'Hall of shame')}</h4><ol class="plain">${sinners || `<li><em>${tr('alle brav', 'all well behaved')}</em></li>`}</ol></section>
         <section><h4>${tr('Kassenbuch', 'Ledger')}</h4><ul class="plain ledger">${ledger || `<li><em>${tr('noch keine Buchungen', 'no entries yet')}</em></li>`}</ul></section>
       </div>`;

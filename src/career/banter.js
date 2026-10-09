@@ -91,7 +91,7 @@ export function weeklyBanter(c) {
     const rec = c.players[idx];
     const st = w.availability[idx];
     if (st === 'no' && !(rec.injuryWeeks > 0) && !(rec.awayWeeks > 0)) rec.noStreak = (rec.noStreak ?? 0) + 1;
-    else if (st === 'yes' || st === 'late') rec.noStreak = 0;
+    else if (st === 'yes' || st === 'late' || st === 'bench') rec.noStreak = 0;
   }
   const me = humanClub(c).id;
   const last = c.fixtures[c.round - 1]?.find((f) => f.home === me || f.away === me);

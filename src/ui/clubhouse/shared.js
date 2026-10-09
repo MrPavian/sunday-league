@@ -2,7 +2,7 @@
 import { tr } from '../../core/i18n.js';
 import { leagueOf } from '../../career/career.js';
 
-export const STATUS = { yes: [tr('Zusage', 'In'), 'yes'], no: [tr('Absage', 'Out'), 'no'], late: [tr('Kommt später', 'Coming late'), 'late'] };
+export const STATUS = { yes: [tr('Zusage', 'In'), 'yes'], no: [tr('Absage', 'Out'), 'no'], late: [tr('Kommt später', 'Coming late'), 'late'], bench: [tr('Auf der Bank', 'On the bench'), 'bench'] };
 export { hex } from '../ds.js';
 export const first = (name) => name.split(' ')[0];
 // Dart: je näher an der Mitte, desto mehr Punkte (max. 60 pro Wurf).

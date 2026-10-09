@@ -1,6 +1,7 @@
 // HEUTE: Vereinsheim-Raum, nächstes Spiel, Ergebnisse, Saisonende und Aushang.
 // Methoden des Vereinsheims (this = Clubhouse), aus Clubhouse.js herausgelöst – Verhalten unverändert.
 import { tr } from '../../core/i18n.js';
+import { spielberichtStreng } from '../../career/spielbericht.js';
 import { effectChips } from '../../career/consequences.js';
 import { seasonReview } from '../../career/review.js';
 import { reviewHTML } from '../review.js';
@@ -129,7 +130,7 @@ export const homeScreens = {
         <p class="t-2 weather">${weatherLine(c.week?.weather)}</p>
         <div class="ui-chips hub-facts">
           <span class="ui-chip" style="--c:#5cc46a" title="${tr('Zusagen', 'in')}">${count('yes')} ${tr('Zusagen', 'in')}</span>
-          ${count('late') ? `<span class="ui-chip" style="--c:#e0b020">${count('late')} ${tr('später', 'late')}</span>` : ''}
+          ${count('late') && !spielberichtStreng(c) ? `<span class="ui-chip" style="--c:#e0b020">${count('late')} ${tr('später', 'late')}</span>` : ''}
           <span class="ui-chip" style="--c:#d9534f">${count('no')} ${tr('Absagen', 'out')}</span>
           <span class="ui-chip plain">${tr('Stimmung', 'Spirit')}: <b class="mood mood-${moodLabel(c.mood ?? 0)}">${moodText(c.mood ?? 0)}</b></span>
         </div>

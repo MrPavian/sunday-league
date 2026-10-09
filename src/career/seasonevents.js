@@ -11,6 +11,7 @@ import { adjustForm, adjustMood } from './events.js';
 import { book } from './finances.js';
 import { hasFacility } from './facilities.js';
 import { canLose, first, leaveTeam, outcome, sitOut } from './outcomes.js';
+import { lateOr } from './spielbericht.js';
 import { adjustEnergy, adjustPatience, isCoach } from './personal.js';
 import { setRelation } from './relations.js';
 import { chronicle } from './sagas.js';
@@ -241,7 +242,7 @@ export const SEASON_EVENTS = {
         effect: outcome([
           { w: 3, run: (c) => (book(c, tr('Platzmiete Ausweichplatz', 'Pitch hire: alternative ground'), -60), adjustMood(c, -0.02), tr('Der Nachbarverein stellt den Platz. Ihr müsst nur die Linien selbst kreiden.', 'The neighbouring club lends you the pitch. You only have to chalk the lines yourselves.')) },
           { w: 1, run: (c) => (book(c, tr('Platzmiete Ausweichplatz', 'Pitch hire: alternative ground'), -60), adjustMood(c, 0.06), tr('Kunstrasen! Die Jungs spielen wie auf Schienen. Einer fragt, ob man den nicht kaufen kann.', 'Artificial turf! The lads play as if on rails. One asks if you can buy it.')) },
-          { w: 1, run: (c, ctx, rng) => { book(c, tr('Platzmiete Ausweichplatz', 'Pitch hire: alternative ground'), -60); const [a, b] = some(c, rng, 2); if (a != null) sitOut(c, a, 'late'); if (b != null) sitOut(c, b, 'late'); return tr('Der Schlüssel zum Nachbarplatz ist beim Wirt. Der Wirt ist beim Angeln. Zwei kommen erst zur zweiten Halbzeit.', 'The key to the other pitch is with the landlord. The landlord is out fishing. Two turn up only for the second half.'); } },
+          { w: 1, run: (c, ctx, rng) => { book(c, tr('Platzmiete Ausweichplatz', 'Pitch hire: alternative ground'), -60); const [a, b] = some(c, rng, 2); if (a != null) sitOut(c, a, 'late'); if (b != null) sitOut(c, b, 'late'); return lateOr(c, tr('Der Schlüssel zum Nachbarplatz ist beim Wirt. Der Wirt ist beim Angeln. Zwei kommen erst zur zweiten Halbzeit.', 'The key to the other pitch is with the landlord. The landlord is out fishing. Two turn up only for the second half.'), tr('Der Schlüssel zum Nachbarplatz ist beim Wirt. Der Wirt ist beim Angeln. Zwei kommen zu spät und stehen nicht auf dem Spielbericht.', 'The key to the other pitch is with the landlord. The landlord is out fishing. Two turn up too late and are not on the match report.')); } },
         ]),
       },
       {

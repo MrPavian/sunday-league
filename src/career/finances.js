@@ -17,7 +17,7 @@ export const MEMBER_FEE = 3; // pro Spieler und Spieltag
 export const FINES = [
   { id: 'whiff', label: tr('Luftloch', 'Air shot'), amount: 1 },
   { id: 'car', label: tr('Ans Auto geschossen', 'Hit a car'), amount: 2 },
-  { id: 'late', label: tr('Zu spät / erst zur 2. Halbzeit', 'Late / only for the 2nd half'), amount: 5 },
+  { id: 'late', label: tr('Zu spät / erst zur 2. Halbzeit', 'Late / only for the 2nd half'), strict: tr('Zu spät (nicht auf dem Spielbericht)', 'Late (not on the match report)'), amount: 5 },
   { id: 'yellow', label: tr('Gelbe Karte', 'Yellow card'), amount: 5 },
   { id: 'ownGoal', label: tr('Eigentor (Runde für alle)', 'Own goal (round for everyone)'), amount: 10 },
   { id: 'red', label: tr('Gelb-Rot', 'Second yellow'), amount: 15 },

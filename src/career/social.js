@@ -7,6 +7,7 @@ import { humanClub, playerOf } from './career.js';
 import { derbyRivalId } from './derby.js';
 import { adjustForm, adjustMood } from './events.js';
 import { canLose, first, joinRival, leaveTeam, outcome, sitOut, trait } from './outcomes.js';
+import { lateOr } from './spielbericht.js';
 import { isCoach } from './personal.js';
 import { relationOf, relationsAmong, relationsOfPlayer, setRelation } from './relations.js';
 import { tr } from '../core/i18n.js';
@@ -35,21 +36,21 @@ export const SOCIAL_EVENTS = {
         ]),
       },
       {
-        label: tr('Beide eine Halbzeit auf die Bank', 'Both benched for a half'),
+        label: (c) => lateOr(c, tr('Beide eine Halbzeit auf die Bank', 'Both benched for a half'), tr('Beide auf die Bank setzen', 'Put both on the bench')),
         effect: outcome([
           {
             w: 3,
             run: (c, ctx) => {
               for (const idx of [ctx.a, ctx.b]) {
                 c.players[idx].grumpy = 2;
-                sitOut(c, idx, 'late');
+                sitOut(c, idx, 'bench');
               }
               adjustMood(c, 0.03);
-              return tr('Ansage vor versammelter Mannschaft. Die beiden sitzen Sonntag zur ersten Halbzeit draußen – nebeneinander.', 'A word in front of the whole squad. Both of them sit out the first half on Sunday – side by side.');
+              return lateOr(c, tr('Ansage vor versammelter Mannschaft. Die beiden sitzen Sonntag zur ersten Halbzeit draußen – nebeneinander.', 'A word in front of the whole squad. Both of them sit out the first half on Sunday – side by side.'), tr('Ansage vor versammelter Mannschaft. Die beiden sitzen Sonntag auf der Bank – nebeneinander.', 'A word in front of the whole squad. Both of them sit on the bench on Sunday – side by side.'));
             },
           },
-          { w: 1, run: (c, ctx) => (sitOut(c, ctx.a, 'late'), sitOut(c, ctx.b, 'late'), setRelation(c, ctx.a, ctx.b, null), tr('Auf der Bank fangen sie an zu reden. Nach dem Spiel lachen sie zusammen über den Schiri.', 'On the bench they start talking. After the game they are laughing together about the ref.')) },
-          { w: 1, run: (c, ctx) => (sitOut(c, ctx.a, 'late'), sitOut(c, ctx.b), tr(`${first(c, ctx.b)} findet die Strafe unfair und kommt gar nicht erst.`, `${first(c, ctx.b)} thinks the punishment is unfair and does not turn up at all.`)) },
+          { w: 1, run: (c, ctx) => (sitOut(c, ctx.a, 'bench'), sitOut(c, ctx.b, 'bench'), setRelation(c, ctx.a, ctx.b, null), tr('Auf der Bank fangen sie an zu reden. Nach dem Spiel lachen sie zusammen über den Schiri.', 'On the bench they start talking. After the game they are laughing together about the ref.')) },
+          { w: 1, run: (c, ctx) => (sitOut(c, ctx.a, 'bench'), sitOut(c, ctx.b), tr(`${first(c, ctx.b)} findet die Strafe unfair und kommt gar nicht erst.`, `${first(c, ctx.b)} thinks the punishment is unfair and does not turn up at all.`)) },
           { w: (c) => (canLose(c) ? 0.6 : 0), run: (c, ctx) => (leaveTeam(c, ctx.a) ? tr(`${first(c, ctx.a)} lässt sich das nicht bieten: „Such dir einen anderen Deppen." Weg.`, `${first(c, ctx.a)} will not stand for it: "Find yourself another mug." Gone.`) : tr('Beide murren.', 'Both sulk.')) },
         ]),
       },
@@ -163,7 +164,7 @@ export const SOCIAL_EVENTS = {
           { w: (c, ctx) => (ctx.kind === 'mobber' ? 1 : 0), run: (c, ctx) => (clearPast(c), setRelation(c, ctx.a, ctx.b, null), (c.players[ctx.b].loyal = true), adjustMood(c, 0.08), tr(`Überraschend ehrliches Gespräch. ${first(c, ctx.a)} hatte es damals zu Hause selbst schwer. Die beiden reden jetzt normal miteinander.`, `Surprisingly honest conversation. ${first(c, ctx.a)} had it rough at home back then too. The two are now on normal terms.`)) },
           { w: (c, ctx) => (ctx.kind === 'mobber' ? 0.5 : 0), run: (c, ctx) => (clearPast(c), setRelation(c, ctx.a, ctx.b, 'kumpel'), adjustMood(c, 0.1), tr('Es wird ein langer Abend. Am Ende liegen sich beide in den Armen. Keiner in der Kabine glaubt es.', 'It turns into a long evening. By the end they are hugging it out. Nobody in the dressing room believes it.')) },
           { w: (c, ctx) => (ctx.kind === 'schulfreund' ? 3 : 0), run: (c, ctx) => (clearPast(c), adjustForm(c, ctx.a, 0.4), adjustForm(c, ctx.b, 0.4), tr('Das alte Sturmduo ist zurück. Sie finden sich auf dem Platz blind.', 'The old strike partnership is back. They find each other on the pitch with their eyes closed.')) },
-          { w: (c, ctx) => (ctx.kind === 'schulfreund' ? 1 : 0), run: (c, ctx) => (clearPast(c), sitOut(c, ctx.a, 'late'), sitOut(c, ctx.b, 'late'), tr('Das Wiedersehen wird Samstagnacht ausgiebig gefeiert. Sonntag kommen beide erst zur zweiten Halbzeit.', 'The reunion is thoroughly celebrated on Saturday night. Sunday, both turn up only for the second half.')) },
+          { w: (c, ctx) => (ctx.kind === 'schulfreund' ? 1 : 0), run: (c, ctx) => (clearPast(c), sitOut(c, ctx.a, 'late'), sitOut(c, ctx.b, 'late'), lateOr(c, tr('Das Wiedersehen wird Samstagnacht ausgiebig gefeiert. Sonntag kommen beide erst zur zweiten Halbzeit.', 'The reunion is thoroughly celebrated on Saturday night. Sunday, both turn up only for the second half.'), tr('Das Wiedersehen wird Samstagnacht ausgiebig gefeiert. Sonntag kommen beide zu spät und stehen nicht mehr auf dem Spielbericht – sie schauen von der Bande zu.', 'The reunion is thoroughly celebrated on Saturday night. Sunday, both turn up too late and are not on the match report – they watch from the touchline.'))) },
           { w: (c, ctx) => (ctx.kind === 'schulfreund' ? 1 : 0), run: (c, ctx) => (clearPast(c), setRelation(c, ctx.a, ctx.b, 'rivalen'), tr('Beim dritten Bier kommt raus, wer damals wem die Freundin ausgespannt hat. Plötzlich ist die Stimmung weg.', 'By the third beer it comes out who stole whose girlfriend back then. Suddenly the mood is gone.')) },
         ]),
       },
@@ -268,7 +269,7 @@ export const SOCIAL_EVENTS = {
         effect: outcome([
           { w: 4, run: (c, ctx) => (setRelation(c, ctx.a, ctx.b, 'kumpel'), tr('Aus Mitspielern werden Kumpels. Auf dem Platz finden sie sich blind.', 'Teammates become mates. On the pitch they find each other with their eyes closed.')) },
           { w: 1, run: (c, ctx) => (setRelation(c, ctx.a, ctx.b, 'kumpel'), adjustMood(c, 0.05), tr('Die beiden organisieren gleich einen Mannschaftsabend. Alle kommen.', 'The two go and organise a team night out. Everyone comes.')) },
-          { w: 1, run: (c, ctx) => (setRelation(c, ctx.a, ctx.b, 'kumpel'), sitOut(c, ctx.a, 'late'), sitOut(c, ctx.b, 'late'), tr('Beim Grillen wurde es spät. Sonntag kommen beide zur zweiten Halbzeit.', 'The barbecue ran late. Sunday, both turn up for the second half.')) },
+          { w: 1, run: (c, ctx) => (setRelation(c, ctx.a, ctx.b, 'kumpel'), sitOut(c, ctx.a, 'late'), sitOut(c, ctx.b, 'late'), lateOr(c, tr('Beim Grillen wurde es spät. Sonntag kommen beide zur zweiten Halbzeit.', 'The barbecue ran late. Sunday, both turn up for the second half.'), tr('Beim Grillen wurde es spät. Sonntag kommen beide zu spät und stehen nicht auf dem Spielbericht.', 'The barbecue ran late. Sunday, both turn up too late and are not on the match report.'))) },
           { w: (c, ctx) => (trait(c, ctx.a, 'meckerer') || trait(c, ctx.b, 'meckerer') ? 1 : 0.3), run: (c, ctx) => (setRelation(c, ctx.a, ctx.b, 'rivalen'), tr('Die Fahrgemeinschaft endet im Streit über die Musik im Auto. Jetzt fahren sie getrennt – und reden nicht mehr.', 'The car share ends in an argument over the music. Now they drive separately – and do not talk.')) },
         ]),
       },

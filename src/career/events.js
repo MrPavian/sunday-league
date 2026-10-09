@@ -22,6 +22,7 @@ import { BUND_EVENTS } from './bundevents.js';
 import { SEASON_EVENTS } from './seasonevents.js';
 import { applyTwist } from './twists.js';
 import { canLose, joinRival, leaveTeam, outcome, sitOut } from './outcomes.js';
+import { lateOr } from './spielbericht.js';
 import { isCoach } from './personal.js';
 import { adjustFitness } from './fitness.js';
 import { setRelation } from './relations.js';
@@ -100,6 +101,8 @@ function pickSubject(career, rng, filter = () => true) {
 
 // --- Die Ereignisse ------------------------------------------------------------------
 // needs(career, rng) → Kontext oder null (dann passt das Ereignis gerade nicht).
+// Antwort-Beschriftung: Text oder Funktion (career) → Text (Stufe-abhängige Antworten).
+const labelOf = (o, career) => (typeof o.label === 'function' ? o.label(career) : o.label);
 // options[i].effect(career, ctx, rng) → Ergebnistext.
 
 export const EVENTS = {
@@ -336,11 +339,11 @@ export const EVENTS = {
         ]),
       },
       {
-        label: tr('Erste Halbzeit auf die Bank', 'Bench him for the first half'),
+        label: (c) => lateOr(c, tr('Erste Halbzeit auf die Bank', 'Bench him for the first half'), tr('Auf die Bank setzen', 'Put him on the bench')),
         effect: outcome([
-          { w: 3, run: (c, ctx) => (sitOut(c, ctx.s, 'late'), tr(`${first(c, ctx.s)} kommt zur zweiten Halbzeit – mit Sonnenbrille.`, `${first(c, ctx.s)} comes on for the second half – in sunglasses.`)) },
-          { w: 1, run: (c, ctx) => (sitOut(c, ctx.s, 'late'), (c.players[ctx.s].grumpy = 1), tr(`${first(c, ctx.s)} findet das übertrieben und schmollt auf der Bank.`, `${first(c, ctx.s)} thinks that is over the top and sulks on the bench.`)) },
-          { w: 1, run: (c, ctx) => (sitOut(c, ctx.s, 'late'), adjustForm(c, ctx.s, 0.4), tr(`${first(c, ctx.s)} will sich rehabilitieren und kommt wie ein Tier aus der Kabine.`, `${first(c, ctx.s)} wants to make amends and comes out of the dressing room like an animal.`)) },
+          { w: 3, run: (c, ctx) => (sitOut(c, ctx.s, 'bench'), lateOr(c, tr(`${first(c, ctx.s)} kommt zur zweiten Halbzeit – mit Sonnenbrille.`, `${first(c, ctx.s)} comes on for the second half – in sunglasses.`), tr(`${first(c, ctx.s)} sitzt auf der Bank – mit Sonnenbrille.`, `${first(c, ctx.s)} sits on the bench – in sunglasses.`))) },
+          { w: 1, run: (c, ctx) => (sitOut(c, ctx.s, 'bench'), (c.players[ctx.s].grumpy = 1), lateOr(c, tr(`${first(c, ctx.s)} findet das übertrieben und schmollt auf der Bank.`, `${first(c, ctx.s)} thinks that is over the top and sulks on the bench.`), tr(`${first(c, ctx.s)} findet das übertrieben und schmollt auf der Bank.`, `${first(c, ctx.s)} thinks that is over the top and sulks on the bench.`))) },
+          { w: 1, run: (c, ctx) => (sitOut(c, ctx.s, 'bench'), adjustForm(c, ctx.s, 0.4), lateOr(c, tr(`${first(c, ctx.s)} will sich rehabilitieren und kommt wie ein Tier aus der Kabine.`, `${first(c, ctx.s)} wants to make amends and comes out of the dressing room like an animal.`), tr(`${first(c, ctx.s)} will sich rehabilitieren und brennt auf der Bank darauf, eingewechselt zu werden.`, `${first(c, ctx.s)} wants to make amends and is itching on the bench to be brought on.`))) },
         ]),
       },
       {
@@ -609,7 +612,7 @@ export function rollWeekEvent(career) {
   let r = rng.next() * candidates.reduce((s, c) => s + c.ev.weight, 0);
   // In der Derbywoche geht es um nichts anderes (bisher konnte ein Zufallsereignis dazwischenfunken).
   const chosen = (derbyThisWeek(career) && candidates.find((c) => DERBY_EVENTS[c.id])) || candidates.find((c) => (r -= c.ev.weight) < 0) || candidates[0];
-  const event = { id: chosen.id, ctx: chosen.ctx, text: chosen.ev.text(career, chosen.ctx), options: chosen.ev.options.map((o) => o.label), choice: null, result: null, story: STORY_STARTS[chosen.id] ? 'Neue Geschichte' : PERSONAL_EVENTS[chosen.id] ? 'Privat' : SAGA_EVENTS[chosen.id] ? 'Vereinsgeschichte' : null };
+  const event = { id: chosen.id, ctx: chosen.ctx, text: chosen.ev.text(career, chosen.ctx), options: chosen.ev.options.map((o) => labelOf(o, career)), choice: null, result: null, story: STORY_STARTS[chosen.id] ? 'Neue Geschichte' : PERSONAL_EVENTS[chosen.id] ? 'Privat' : SAGA_EVENTS[chosen.id] ? 'Vereinsgeschichte' : null };
   career.week.event = event;
   career.eventLog.push({ id: chosen.id, season: career.season, round: career.round });
   if (career.eventLog.length > 40) career.eventLog.shift();
@@ -629,7 +632,7 @@ export function eventView(career, e) {
   const def = e.id.startsWith('story:') ? null : eventDef(career, e.id);
   if (!def?.text) return { text: e.text, options: e.options };
   try {
-    return { text: def.text(career, e.ctx ?? {}), options: def.options.map((o) => o.label) };
+    return { text: def.text(career, e.ctx ?? {}), options: def.options.map((o) => labelOf(o, career)) };
   } catch {
     return { text: e.text, options: e.options };
   }

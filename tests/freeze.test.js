@@ -16,6 +16,7 @@ import { createRng } from '../src/core/rng.js';
 function stauMatch(duration = 90) {
   for (let s = 1; s < 500; s++) {
     const m = createMatch({ seed: s, pitch: PITCHES.ascheplatz, human: true, duration, incidents: true });
+    m.bench[0] = []; // ohne Ersatzmann kommt er später aufs Feld (mit Bank rückt einer nach)
     if (matchdaySurprise(m, 0, createRng(s), 1)?.id === 'stau') return m;
   }
   throw new Error('kein Stau-Seed');

@@ -7,6 +7,7 @@ import { humanClub, playerOf, table } from './career.js';
 import { adjustMood } from './events.js';
 import { book } from './finances.js';
 import { first, outcome, sitOut } from './outcomes.js';
+import { lateOr } from './spielbericht.js';
 import { isCoach } from './personal.js';
 import { chronicle } from './sagas.js';
 
@@ -522,7 +523,7 @@ export const SPONSOR_EVENTS = {
         label: tr('Alle hin, wir feiern mit', 'Everyone goes, we party too'),
         effect: outcome([
           { w: 3, run: withSponsor((c, ctx, rng, s) => (adjustRel(s, 12), adjustMood(c, 0.06), tr('Freibier, Musik vom Band, die Jungs singen das Vereinslied. Der Sponsor ist entzückt.', 'Free beer, music off a playlist, the lads sing the club song. The sponsor is delighted.'))) },
-          { w: 1.5, run: withSponsor((c, ctx, rng, s) => { const s2 = rng.pick(mates(c)); sitOut(c, s2, 'late'); return (adjustRel(s, 10), tr(`Wurde lang. ${first(c, s2)} kommt Sonntag erst zur zweiten Halbzeit.`, `It was a late one. ${first(c, s2)} only turns up for the second half on Sunday.`)); }) },
+          { w: 1.5, run: withSponsor((c, ctx, rng, s) => { const s2 = rng.pick(mates(c)); sitOut(c, s2, 'late'); return (adjustRel(s, 10), lateOr(c, tr(`Wurde lang. ${first(c, s2)} kommt Sonntag erst zur zweiten Halbzeit.`, `It was a late one. ${first(c, s2)} only turns up for the second half on Sunday.`), tr(`Wurde lang. ${first(c, s2)} kommt Sonntag zu spät und steht nicht mehr auf dem Spielbericht.`, `It was a late one. ${first(c, s2)} turns up too late on Sunday and is not on the match report.`))); }) },
           { w: 1, run: withSponsor((c, ctx, rng, s) => (adjustRel(s, -8), tr('Einer hält eine Rede über den Sponsor. Leider die ehrliche Version.', 'Someone gives a speech about the sponsor. Unfortunately the honest version.'))) },
           { w: 1, run: withSponsor((c, ctx, rng, s, boss) => (adjustRel(s, 18), book(c, tr(`Spende von ${s.name} (Jubiläumslaune)`, `Donation from ${s.name} (anniversary mood)`), 40), tr(`Um Mitternacht zückt ${boss} das Portemonnaie: 40 € für die Mannschaftskasse.`, `At midnight ${boss} gets his wallet out: €40 for the team kitty.`))) },
         ]),
