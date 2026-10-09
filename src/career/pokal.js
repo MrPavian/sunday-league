@@ -251,7 +251,7 @@ export function recordPokalResult(c, prepared) {
     const pens = so?.done ? shootoutScore(so) : penalties(m.teams, createRng((c.seed * 7 + cup.ties.indexOf(tie) * 131 + 9) >>> 0));
     tie.pens = prepared.humanIsAway ? { home: pens[1], away: pens[0] } : { home: pens[0], away: pens[1] };
   }
-  applyCards(c, prepared, { league: false }); // Rot wirkt auch im Pokal; Gelbe zählen nur im Ligabetrieb
+  applyCards(c, prepared, { league: false, beforeLeague: true }); // Rot wirkt auch im Pokal; Gelbe zählen nur im Ligabetrieb
   matchFinances(c, tie, prepared, kind === 'bund' ? c.level ?? 1 : cup.levels[tie.home]); // Heimspiel: Theke, Schiri, Platzmiete; auswärts: Sprit
   logTie(c, cup, tie);
   afterHumanTie(c, kind);

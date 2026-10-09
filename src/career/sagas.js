@@ -51,7 +51,7 @@ export const SAGA_EVENTS = {
       if (c.season < 2 || s.platz || s.platzDone || c.round < 1 || c.round > 3) return null;
       return { venue: PITCHES[humanClub(c).venue].name };
     },
-    text: (c, ctx) => tr(`Kreisblatt, Seite 3: Die Stadt prüft den Verkauf von „${ctx.venue}" an einen Investor. Geplant: 40 Eigentumswohnungen.`, `The Kreisblatt, page 3: the town is considering selling "${ctx.venue}" to an investor. Planned: 40 flats.`),
+    text: (c, ctx) => tr(`Kreisblatt, Seite 3: Die Stadt prüft den Verkauf von „${ctx.venue}" an einen Investor. Geplant: 40 Eigentumswohnungen.`, `The District Gazette, page 3: the town is considering selling "${ctx.venue}" to an investor. Planned: 40 flats.`),
     options: [
       {
         label: tr('Bürgerinitiative starten', 'Start a residents’ campaign'),

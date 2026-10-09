@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { tr } from '../../core/i18n.js';
 import { toon } from '../materials.js';
 import { addLights, box, cylinder, ground, group, lampHead, makeBackpack, makeCar, makeCrates, makeDog, makeFence, makeJacketPile, makeLamp, makeTree } from '../props.js';
 import { crowdRow, makeSpectator } from '../spectators.js';
@@ -40,7 +41,7 @@ export function buildParkingLot(root, pitch, rng, scene) {
   shutter.rotation.y = -Math.PI / 2;
   shutter.position.set(pitch.wallX - 0.01, 1.6, 0);
   root.add(shutter);
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(9, 1.4), toon(0xffffff, { map: makeSignTexture('GETRÄNKE HOFFMANN') }));
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(9, 1.4), toon(0xffffff, { map: makeSignTexture(tr('GETRÄNKE HOFFMANN', 'HOFFMANN DRINKS')) }));
   sign.rotation.y = -Math.PI / 2;
   sign.position.set(pitch.wallX - 0.02, 4.1, 0);
   root.add(sign);

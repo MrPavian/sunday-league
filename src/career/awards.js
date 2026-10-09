@@ -45,15 +45,15 @@ function announce(career, award, playerOf, post = true) {
   const who = `${award.name} (${award.club.short})`;
   const text =
     award.kind === 'season'
-      ? tr(`Kreisblatt: Spieler der Saison ist ${who} – Ø Note ${gradeText(award.avg)}.`, `Kreisblatt: Player of the Season is ${who} – average grade ${gradeText(award.avg)}.`)
-      : tr(`Kreisblatt: Spieler des Monats ist ${who} – Ø Note ${gradeText(award.avg)} in ${award.games} Spielen.`, `Kreisblatt: Player of the Month is ${who} – average grade ${gradeText(award.avg)} in ${award.games} games.`);
+      ? tr(`Kreisblatt: Spieler der Saison ist ${who} – Ø Note ${gradeText(award.avg)}.`, `District Gazette: Player of the Season is ${who} – average grade ${gradeText(award.avg)}.`)
+      : tr(`Kreisblatt: Spieler des Monats ist ${who} – Ø Note ${gradeText(award.avg)} in ${award.games} Spielen.`, `District Gazette: Player of the Month is ${who} – average grade ${gradeText(award.avg)} in ${award.games} games.`);
   const line = mine ? `${text} ${tr('Die Runde geht heute auf ihn.', 'The drinks are on him tonight.')}` : text;
   if (post) career.week?.chat.splice(1, 0, { from: null, text: line, time: 'Mo 08:15' });
   award.text = line;
   if (mine) {
     adjustMood(career, 0.05);
     adjustForm(career, award.idx, 0.3);
-    chronicle(career, award.kind === 'season' ? tr(`${playerOf(award.idx).name} wird Spieler der Saison im Kreisblatt.`, `${playerOf(award.idx).name} is named Player of the Season by the Kreisblatt.`) : tr(`${playerOf(award.idx).name} ist Spieler des Monats (Spieltag ${award.round}).`, `${playerOf(award.idx).name} is Player of the Month (matchday ${award.round}).`));
+    chronicle(career, award.kind === 'season' ? tr(`${playerOf(award.idx).name} wird Spieler der Saison im Kreisblatt.`, `${playerOf(award.idx).name} is named Player of the Season by the District Gazette.`) : tr(`${playerOf(award.idx).name} ist Spieler des Monats (Spieltag ${award.round}).`, `${playerOf(award.idx).name} is Player of the Month (matchday ${award.round}).`));
   }
 }
 

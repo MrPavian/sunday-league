@@ -46,6 +46,7 @@ describe('Sperrliste verjährt (Fehler: Pool schrumpfte über lange Karrieren)',
       for (const slot of slotsFor(c.level)) expect(c.offers.some((o) => o.slot === slot), `Saison ${c.season} ${slot}`).toBe(true);
       signAll(c);
       expect(c.sponsors.length).toBe(slotsFor(c.level).length);
+      c.cash = 1e6; // die Vertragsstrafe muss bezahlbar sein, sonst bleibt der Vertrag (cancelSponsor → 'nocash')
       while (c.sponsors.length) cancelSponsor(c, 0); // jede Kündigung sperrt den Sponsor
       c.offers = [];
       maxBans = Math.max(maxBans, liveBans(c).length);
@@ -174,6 +175,7 @@ describe('Angebot ablehnen und eigene Kündigung', () => {
     a.left = 3;
     const penalty = cancelCost(c, a);
     expect(penalty).toBeGreaterThan(cancelCost(c, { ...a, left: 1 }));
+    c.cash = Math.max(c.cash, penalty); // Strafe muss bezahlbar sein
     const cash = c.cash;
     const relB = b.rel;
     const offers = c.offers.length;

@@ -18,6 +18,7 @@ import { canLose, first, leaveTeam, outcome, sitOut } from './outcomes.js';
 import { lateOr } from './spielbericht.js';
 import { adjustEnergy, isCoach } from './personal.js';
 import { setRelation } from './relations.js';
+import { isBanned } from './suspensions.js';
 import { clampN, clubLife } from './clublife.js';
 
 const level = (c) => c.level ?? 1;
@@ -32,7 +33,7 @@ const hurt = (c, idx, weeks = 1) => {
 const supporters = (c, d) => (clubLife(c).supporters = Math.max(0, clubLife(c).supporters + d));
 const neighbors = (c, d) => (clubLife(c).neighbors = clampN(clubLife(c).neighbors + d));
 const some = (c, rng, n) => {
-  const pool = [...squad(c)];
+  const pool = squad(c).filter((i) => !isBanned(c, i)); // Gesperrte nicht für „kommt zu spät / fehlt“ ziehen
   const out = [];
   while (pool.length && out.length < n) out.push(pool.splice(Math.floor(rng.next() * pool.length), 1)[0]);
   return out;
@@ -75,7 +76,7 @@ function followUp(id, def) {
 }
 
 const lowerHalf = (c, rng) => {
-  const list = squad(c).filter((i) => !(c.players[i]?.injuryWeeks > 0) && !(c.players[i]?.awayWeeks > 0));
+  const list = squad(c).filter((i) => !(c.players[i]?.injuryWeeks > 0) && !(c.players[i]?.awayWeeks > 0) && !isBanned(c, i));
   list.sort((a, b) => playerOf(c, a).rating - playerOf(c, b).rating);
   const pool = list.slice(0, Math.max(1, Math.ceil(list.length / 2)));
   return pool.length ? rng.pick(pool) : null;

@@ -7,7 +7,7 @@ import { spielberichtStreng } from './spielbericht.js';
 // Wer von der Bank startet für einen Ausfall? Nicht verletzt, nicht schon benutzt, nicht selbst noch unterwegs;
 // bevorzugt dieselbe Rolle, dann der Stärkste (wie die Aufstellung nach Stärke).
 function replacement(m, team, out = null) {
-  const ok = m.bench[team].filter((b) => b.position !== 'gk' && !b.late && !b.usedUp && !b.mustLeave);
+  const ok = m.bench[team].filter((b) => b.position !== 'gk' && !b.late && !b.penalty && !b.usedUp && !b.mustLeave);
   const score = (b) => (out && b.position === out.position ? 1000 : 0) + (b.rating ?? 0);
   return ok.sort((a, b) => score(b) - score(a))[0] ?? null;
 }

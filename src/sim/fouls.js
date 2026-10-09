@@ -34,7 +34,7 @@ import { attackDir, getPlayer } from './players.js';
 import { decideCard, REF_TRAITS, refereeSees, showCard } from './referee.js';
 import { penaltySpot, startSetPiece } from './setpieces.js';
 
-// Alle Werte „gewählt, nicht gemessen" und dann gegen die Bezugsgrößen aus dem Bericht eingestellt (Messung: _probe/fouls.mjs).
+// Alle Werte „gewählt, nicht gemessen" und dann gegen die Bezugsgrößen aus dem Bericht eingestellt (Messung: scripts/foul-audit.mjs).
 export const FOUL = {
   // Ziehen/Schubsen/Beinstellen am Ballführenden: Chance je Sekunde Körperkontakt (Gegner näher als CONTACT).
   contactPerSec: 0.07,

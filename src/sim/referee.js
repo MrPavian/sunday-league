@@ -9,7 +9,7 @@ import { switchToNearestOnTeam } from './players.js';
 
 // sees: Sichtchance, cards: Gelbe-Karten-Strenge, dissent: Meckern-Karten, red: Strenge bei groben Fouls (direkte Rote),
 // advantage: Neigung zum Vorteil (Faktor auf FOUL.advantage in fouls.js). Alle Faktoren gewählt, nicht gemessen:
-// Reihenfolge der Strenge stimmt mit dem Namen überein; Messung der Wirkung steht im Bericht (scripts: _probe/fouls.mjs).
+// Reihenfolge der Strenge stimmt mit dem Namen überein; Messung der Wirkung steht im Bericht (scripts/foul-audit.mjs).
 export const REF_TRAITS = {
   pingelig: { name: tr('pingelig', 'fussy'), sees: 0.97, cards: 1.5, dissent: 0.25, red: 1.4, advantage: 0.4 },
   laesst_laufen: { name: tr('lässt gern laufen', 'lets it flow'), sees: 0.7, cards: 0.5, dissent: 0.05, red: 0.7, advantage: 1.5 },

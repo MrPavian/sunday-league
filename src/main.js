@@ -838,7 +838,8 @@ function playPokalMatch(kind, style = null) {
   nextStyle = style;
   const prepared = preparePokalMatch(career, kind, tie, { human: true, duration: testDuration });
   careerMatch = { prepared, pokal: true };
-  loadVenue(prepared.pitch.id);
+  const ownGround = prepared.home.human && (kind !== 'bund' || prepared.bund?.venue === 'own'); // Heimspiel auf dem eigenen Platz: Vereinsbande wie in der Liga (nicht im fremden Stadion)
+  loadVenue(prepared.pitch.id, ownGround ? venueExtras(career) : null);
   clubhouse.hide();
   setMode('play');
   showMatch(prepared.match);

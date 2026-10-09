@@ -55,15 +55,15 @@ export const DERBY_EVENTS = {
     text: (c) => {
       const d = c.derbyRecord;
       const bilanz = d && d.w + d.d + d.l ? tr(` Bisherige Bilanz: ${d.w} Siege, ${d.d} Remis, ${d.l} Niederlagen.`, ` Record so far: ${d.w} wins, ${d.d} draws, ${d.l} defeats.`) : '';
-      return tr(`${derbyOf(c).name}! Sonntag gegen ${opp(c).name}. Deren Trainer im Kreisblatt: „Die sind eine Thekenmannschaft mit Ball."${bilanz}`, `${derbyOf(c).name}! Sunday against ${opp(c).name}. Their manager in the Kreisblatt: "They're a pub team with a ball."${bilanz}`);
+      return tr(`${derbyOf(c).name}! Sonntag gegen ${opp(c).name}. Deren Trainer im Kreisblatt: „Die sind eine Thekenmannschaft mit Ball."${bilanz}`, `${derbyOf(c).name}! Sunday against ${opp(c).name}. Their manager in the District Gazette: "They're a pub team with a ball."${bilanz}`);
     },
     options: [
       {
-        label: tr('Kampfansage zurück – im Kreisblatt', 'Fire back – in the Kreisblatt'),
+        label: tr('Kampfansage zurück – im Kreisblatt', 'Fire back – in the District Gazette'),
         effect: outcome([
           { w: 3, run: (c) => { adjustMood(c, 0.12); for (const idx of humanClub(c).squad) adjustForm(c, idx, 0.2); return tr('Die Gruppe explodiert vor Vorfreude. Jeder will spielen, keiner sagt ab.', 'The group explodes with anticipation. Everyone wants to play, nobody drops out.'); } },
           { w: 2, run: (c) => ((pubState(c).intel = { club: derbyRivalId(c), mods: { stamina: 0.04, tackling: 0.03 } }), tr('Die Antwort hängt jetzt in deren Kabine. Die sind heiß – vielleicht zu heiß für euch.', 'Your reply is now pinned up in their dressing room. They are fired up – maybe too fired up for you.')) },
-          { w: 1.5, run: (c) => ((c.flags.pressWeeks = Math.max(c.flags.pressWeeks ?? 0, 2)), adjustMood(c, 0.06), tr('Das Kreisblatt macht eine Doppelseite draus. Am Sonntag kommt die halbe Stadt.', 'The Kreisblatt makes a double-page spread of it. Sunday, half the town turns up.')) },
+          { w: 1.5, run: (c) => ((c.flags.pressWeeks = Math.max(c.flags.pressWeeks ?? 0, 2)), adjustMood(c, 0.06), tr('Das Kreisblatt macht eine Doppelseite draus. Am Sonntag kommt die halbe Stadt.', 'The District Gazette makes a double-page spread of it. Sunday, half the town turns up.')) },
           { w: 1, run: (c) => (adjustMood(c, 0.05), tr('Nachts haben die euer Tor pink angemalt. Die Jungs lachen – und wollen Rache auf dem Platz.', 'Overnight they painted your goal pink. The lads laugh – and want revenge on the pitch.')) },
           { w: (c) => (hothead(c) != null ? 1 : 0), run: (c) => { const h = hothead(c); sitOut(c, h); return tr(`${first(c, h)} hat auf Facebook nachgelegt – mit Worten, die der Verband nicht lustig findet. Eine Woche gesperrt, ausgerechnet fürs Derby.`, `${first(c, h)} piled on on Facebook – with words the league does not find funny. A one-week ban, right for the derby.`); } },
           { w: 0.6, run: (c) => (book(c, tr('Verbandsstrafe: Derby-Provokation', 'League fine: derby provocation'), -20), adjustMood(c, 0.08), tr('Der Kreis findet die Kampfansage „unsportlich": 20 € Strafe. Die Kabine findet sie großartig.', 'The league finds the challenge "unsporting": €20 fine. The dressing room thinks it is brilliant.')) },

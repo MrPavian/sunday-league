@@ -84,7 +84,7 @@ export const teamScreens = {
     for (const idx of club.squad) if (c.week?.availability[idx]) count[statusFor(c, c.week.availability[idx])]++;
     return `
       <div class="squad-head">
-        <p class="t-2">${club.squad.length} ${tr('Spieler', 'players')}${c.week ? ` · ${count.yes} ${tr('Zusagen', 'in')} ${spielberichtStreng(c) ? '' : ` · ${count.late} ${tr('später', 'late')}`} · ${count.no} ${tr('Absagen', 'out')}` : ''}</p>
+        <p class="t-2">${club.squad.length} ${tr('Spieler', 'players')}${c.week ? ` · ${count.yes} ${tr('Zusagen', 'in')} ${spielberichtStreng(c) ? '' : ` · ${count.late} ${tr('später', 'late')}`} · ${count.bench ? ` · ${count.bench} ${tr('Strafbank', 'penalty bench')}` : ''} · ${count.no} ${tr('Absagen', 'out')}` : ''}</p>
         <div class="squad-sort">${segmented('sort', [['rating', tr('Stärke', 'Rating')], ['pos', tr('Position', 'Position')]], this.squadSort === 'pos' ? 'pos' : 'rating', { action: 'squadSort' })}</div>
       </div>
       <div class="squad-deck">${cards}</div>`;
@@ -320,6 +320,8 @@ export const teamScreens = {
       ...avail.map(({ idx, p }) => `<button class="lp-bench${pick?.idx === idx ? ' picked' : ''}" data-action="benchPick" data-value="${idx}" data-drop="bench:${idx}" data-drag="bench:${idx}" aria-pressed="${pick?.idx === idx}"><b>${p.rating}</b><span>${p.name}</span><small>${POSITIONS[p.position]}</small></button>`),
       ...late.map((idx) => `<span class="lp-bench late"><b>${this.p(idx).rating}</b><span>${this.p(idx).name}</span><small>${tr('kommt zur 2. Halbzeit', 'arrives for the 2nd half')}</small></span>`),
     ].join('');
+    const penalty = bench.filter((idx) => statusFor(c, c.week.availability[idx]) === 'bench'); // Strafbank (ab Stufe 4): nicht in der Startelf, ab Anpfiff einwechselbar
+    const penaltyChips = penalty.map((idx) => `<span class="lp-bench late"><b>${this.p(idx).rating}</b><span>${this.p(idx).name}</span><small>${POSITIONS[this.p(idx).position]}</small></span>`).join('');
     const banned = humanClub(c).squad.filter((idx) => isBanned(c, idx));
     const bannedNote = banned.length ? `<p class="warn lp-banned">${tr('Gesperrt', 'Suspended')}: ${banned.map((idx) => `${this.p(idx).name} (${banReason(c.players[idx].ban.reason)}, ${banGames(c, idx)})`).join(' · ')}</p>` : '';
     const gkIdx = formation.findIndex((f) => f.role === 'gk');
@@ -343,7 +345,7 @@ export const teamScreens = {
         <div class="lp-stage">
           <div class="lp-board m-board"><div class="lp-pitch" aria-label="${tr('Magnettafel', 'Magnet board')}"><i class="lp-box l"></i><i class="lp-box r"></i><i class="lp-mid"></i>${tokens}</div><span class="tray" aria-hidden="true"></span></div>
           <div class="lp-benchcol"><p class="ui-section-title">${tr('Bank', 'Bench')} · ${tr('verfügbar', 'available')}</p>
-          <div class="lp-benchrow">${benchChips || `<p class="t-2">${tr('niemand', 'nobody')}</p>`}</div>${bannedNote}</div>
+          <div class="lp-benchrow">${benchChips || `<p class="t-2">${tr('niemand', 'nobody')}</p>`}</div>${penaltyChips ? `<p class="ui-section-title">${tr('Auf der Bank (Strafbank)', 'On the bench (penalty bench)')}</p><div class="lp-benchrow">${penaltyChips}</div>` : ''}${bannedNote}</div>
         </div>
         <p class="t-2 lp-hint" aria-live="polite">${hint}</p>
         ${keeperNote}

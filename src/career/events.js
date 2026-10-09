@@ -25,6 +25,7 @@ import { applyTwist } from './twists.js';
 import { canLose, joinRival, leaveTeam, outcome, sitOut } from './outcomes.js';
 import { lateOr } from './spielbericht.js';
 import { isCoach } from './personal.js';
+import { isBanned } from './suspensions.js';
 import { adjustFitness } from './fitness.js';
 import { setRelation } from './relations.js';
 
@@ -93,10 +94,11 @@ export function absenceFactor(career, idx) {
 
 const first = (career, idx) => playerOf(career, idx).name.split(' ')[0];
 const squad = (career) => humanClub(career).squad;
+const playing = (career) => squad(career).filter((idx) => !isBanned(career, idx)); // Gesperrte fehlen Sonntag ohnehin – nicht für „fällt aus“-Texte wählen
 const say = (career, from, text, time = 'Sa 11:20') => career.week.chat.push({ from, text, time });
 
 function pickSubject(career, rng, filter = () => true) {
-  const list = squad(career).filter((idx) => filter(idx, playerOf(career, idx), career.players[idx]));
+  const list = playing(career).filter((idx) => filter(idx, playerOf(career, idx), career.players[idx]));
   return list.length ? rng.pick(list) : null;
 }
 
@@ -200,7 +202,7 @@ export const EVENTS = {
             w: 1,
             run: (c, ctx, rng) => {
               book(c, tr('Brötchen für den Arbeitseinsatz', 'Rolls for the work party'), -10);
-              const s = rng.pick(squad(c));
+              const s = rng.pick(playing(c));
               c.players[s].injuryWeeks = Math.max(c.players[s].injuryWeeks, 1);
               sitOut(c, s);
               return tr(`${first(c, s)} ist die Leiter runtergefallen. Nichts gebrochen, aber Sonntag fällt er aus.`, `${first(c, s)} fell off the ladder. Nothing broken, but he misses Sunday.`);
@@ -547,7 +549,7 @@ export const EVENTS = {
         effect: outcome([
           { w: 3, run: (c, ctx) => (book(c, tr(`Turniersieg bei ${ctx.sponsor}`, `Tournament win at ${ctx.sponsor}`), 40), adjustMood(c, 0.1), tr('Turniersieg! 40 € Preisgeld.', 'Tournament win! €40 prize money.')) },
           { w: 2, run: () => tr('Im Halbfinale raus. Aber die Bratwurst war gut.', 'Out in the semi-final. But the bratwurst was good.') },
-          { w: 1, run: (c, ctx, rng) => { const s = rng.pick(squad(c)); c.players[s].injuryWeeks = 1; sitOut(c, s); return tr(`Im Finale verdreht sich ${first(c, s)} den Knöchel. Sonntag fehlt er.`, `In the final ${first(c, s)} twists his ankle. He misses Sunday.`); } },
+          { w: 1, run: (c, ctx, rng) => { const s = rng.pick(playing(c)); c.players[s].injuryWeeks = 1; sitOut(c, s); return tr(`Im Finale verdreht sich ${first(c, s)} den Knöchel. Sonntag fehlt er.`, `In the final ${first(c, s)} twists his ankle. He misses Sunday.`); } },
           { w: 1, run: (c, ctx) => (book(c, tr(`Sonderprämie von ${ctx.sponsor}`, `Special bonus from ${ctx.sponsor}`), 80), adjustMood(c, 0.12), tr(`Turniersieg, und der Chef von ${ctx.sponsor} verdoppelt das Preisgeld: 80 €!`, `Tournament win, and the boss of ${ctx.sponsor} doubles the prize money: €80!`)) },
           { w: 0.6, run: (c, ctx) => (adjustMood(c, -0.05), tr(`Ihr verliert gegen die Buchhaltung von ${ctx.sponsor}. Das wird noch lange erzählt.`, `You lose to the accounts department of ${ctx.sponsor}. That will be talked about for a long time.`)) },
         ]),

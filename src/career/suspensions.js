@@ -33,13 +33,16 @@ export const banLabel = (c, idx) => {
   return n ? tr(`gesperrt · ${n} ${n === 1 ? 'Spiel' : 'Spiele'}`, `suspended · ${n} ${n === 1 ? 'game' : 'games'}`) : '';
 };
 
-function addBan(rec, games, reason, round) {
-  rec.ban = { games: (rec.ban?.games ?? 0) + games, reason, round };
+function addBan(rec, games, reason, round, season) {
+  rec.ban = { games: (rec.ban?.games ?? 0) + games, reason, round, season };
 }
 
 // Nach einem Pflichtspiel des eigenen Vereins: Karten auswerten. league: Gelbe zählen nur im Ligabetrieb (nicht im Pokal).
+// beforeLeague: Spiel liegt in der Woche VOR dem Ligaspiel (Pokal mittwochs/samstags, Hallenturnier) – dann ist schon das
+// Ligaspiel derselben Woche das erste Sperrspiel (Sperrrunde = Vorwoche, damit der Wochenwechsel es mitzählt) und der Spieler
+// ist im Wochenchat ab sofort abgemeldet.
 // Gibt die neuen Sperren zurück ([{ idx, games, reason }]); Meldungen gehen ins Kreisblatt (c.pendingNews).
-export function applyCards(c, prepared, { league = true } = {}) {
+export function applyCards(c, prepared, { league = true, beforeLeague = false } = {}) {
   const m = prepared.match;
   if (!m?.teams || !m.stats?.players) return []; // unvollständiges Spiel (z. B. in Tests): nichts auszuwerten
   const me = humanClub(c);
@@ -63,13 +66,17 @@ export function applyCards(c, prepared, { league = true } = {}) {
     }
     if (!reason) continue;
     const games = BAN_GAMES[reason];
-    addBan(rec, games, reason, c.round);
+    addBan(rec, games, reason, beforeLeague ? c.round - 1 : c.round, c.season ?? 1);
+    if (beforeLeague && c.week?.availability) {
+      c.week.availability[idx] = 'no';
+      c.week.chat?.push({ from: idx, text: tr(`Gesperrt (${banReason(reason)}) – schon am Sonntag. Ich steh am Zaun und motze.`, `Suspended (${banReason(reason)}) – already on Sunday. I'll be at the fence, grumbling.`), time: 'Sa 22:00' });
+    }
     out.push({ idx, games, reason });
     const name = playerOf(c, idx).name;
     (c.pendingNews ??= []).push(
       reason === 'yellows'
-        ? tr(`Kreisblatt: ${name} sieht gegen ${oppName} die fünfte Gelbe und fehlt am Sonntag gesperrt.`, `Kreisblatt: ${name} picks up his fifth yellow against ${oppName} and is suspended on Sunday.`)
-        : tr(`Kreisblatt: ${name} muss gegen ${oppName} vom Platz (${banReason(reason)}) und ist ${games} ${games === 1 ? 'Spiel' : 'Spiele'} gesperrt.`, `Kreisblatt: ${name} is sent off against ${oppName} (${banReason(reason)}) and banned for ${games} ${games === 1 ? 'game' : 'games'}.`),
+        ? tr(`Kreisblatt: ${name} sieht gegen ${oppName} die fünfte Gelbe und fehlt am Sonntag gesperrt.`, `District Gazette: ${name} picks up his fifth yellow against ${oppName} and is suspended on Sunday.`)
+        : tr(`Kreisblatt: ${name} muss gegen ${oppName} vom Platz (${banReason(reason)}) und ist ${games} ${games === 1 ? 'Spiel' : 'Spiele'} gesperrt.`, `District Gazette: ${name} is sent off against ${oppName} (${banReason(reason)}) and banned for ${games} ${games === 1 ? 'game' : 'games'}.`),
     );
   }
   return out;
@@ -79,7 +86,7 @@ export function applyCards(c, prepared, { league = true } = {}) {
 export function tickBans(c) {
   for (const rec of Object.values(c.players)) {
     if (!(rec.ban?.games > 0)) continue;
-    if (rec.ban.round === c.round) continue;
+    if (rec.ban.round === c.round && (rec.ban.season ?? c.season ?? 1) === (c.season ?? 1)) continue; // Saison mitgespeichert: eine Sperre aus Vorsaison-Runde n gilt nicht als „diese Woche“
     rec.ban.games--;
     if (rec.ban.games <= 0) rec.ban = null;
   }
@@ -87,5 +94,5 @@ export function tickBans(c) {
 
 // Saisonende: Gelbzähler gehen auf null, offene Sperren bleiben (wie im Verband: werden in die neue Spielzeit übernommen).
 export function resetYellows(c) {
-  for (const rec of Object.values(c.players)) rec.yellows = 0;
+  for (const rec of Object.values(c.players)) if (rec.yellows) rec.yellows = 0;
 }

@@ -49,7 +49,7 @@ export function preMatchVoice(c, opponent, chat) {
   else if (coach.type === 'stratege') quote = tr('Wir haben sie dreimal auf Video angeschaut. Also das eine Video, das es gibt.', 'We watched them three times on video. Well, the one video there is.');
   else if (coach.type === 'oldschool') quote = tr('Grätschen, laufen, Mund halten. So haben wir das früher gemacht.', 'Tackle, run, keep your mouth shut. That is how we used to do it.');
   else quote = tr('Hauptsache, hinterher gibt es ein Bier mit denen.', 'As long as we have a beer with them afterwards.');
-  chat.push({ from: null, text: tr(`Kreisblatt: Trainer ${coach.name} (${opponent.short}): „${quote}“`, `Kreisblatt: ${opponent.short} manager ${coach.name}: “${quote}”`), time: 'Do 06:30', press: true });
+  chat.push({ from: null, text: tr(`Kreisblatt: Trainer ${coach.name} (${opponent.short}): „${quote}“`, `District Gazette: ${opponent.short} manager ${coach.name}: “${quote}”`), time: 'Do 06:30', press: true });
 }
 
 // Hitzige Vorgeschichte: Das Spiel wird wie ein Derby gepfiffen.
@@ -92,8 +92,8 @@ export function afterMatchVoice(c, prepared, oppId) {
   if (news) (c.pendingNews ??= []).push(news);
   // Taktik und Bedingungen: Das Kreisblatt lobt den klugen Schachzug – oder wundert sich.
   const fit = m.fits?.[t];
-  if (fit?.score > 0 && gf > ga) (c.pendingNews ??= []).push(tr(`Kreisblatt: Kluger Schachzug des Trainers. ${fit.reasons.find((r) => r.score > 0)?.text ?? ''}.`, `Kreisblatt: A clever move by the manager. ${fit.reasons.find((r) => r.score > 0)?.text ?? ''}.`));
-  else if (fit?.score < 0 && gf < ga) (c.pendingNews ??= []).push(tr(`Kreisblatt: Man wundert sich über die Taktik. ${fit.reasons.find((r) => r.score < 0)?.text ?? ''}.`, `Kreisblatt: Eyebrows raised at the tactics. ${fit.reasons.find((r) => r.score < 0)?.text ?? ''}.`));
+  if (fit?.score > 0 && gf > ga) (c.pendingNews ??= []).push(tr(`Kreisblatt: Kluger Schachzug des Trainers. ${fit.reasons.find((r) => r.score > 0)?.text ?? ''}.`, `District Gazette: A clever move by the manager. ${fit.reasons.find((r) => r.score > 0)?.text ?? ''}.`));
+  else if (fit?.score < 0 && gf < ga) (c.pendingNews ??= []).push(tr(`Kreisblatt: Man wundert sich über die Taktik. ${fit.reasons.find((r) => r.score < 0)?.text ?? ''}.`, `District Gazette: Eyebrows raised at the tactics. ${fit.reasons.find((r) => r.score < 0)?.text ?? ''}.`));
   return news;
 }
 

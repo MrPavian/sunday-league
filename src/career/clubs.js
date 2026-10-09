@@ -271,8 +271,8 @@ export const EXTRA_CLUBS = {
     },
     {
       id: 'intermailand',
-      name: tr('Inter Mailänder Straße', "Inter Milan Road"),
-      short: tr('IMS', 'IMR'),
+      name: tr('SV Mühlenstraße 04', "Millbrook Road Athletic"),
+      short: tr('SMS', 'MRA'),
       venue: 'parkplatz',
       kit: { shirt: 0x1d3b6e, shorts: 0x1c1c1c, socks: 0x1d3b6e, pattern: 'streifen', second: 0x1c1c1c },
       keeperKit: { shirt: 0xe0b020, shorts: 0x1c1c1c, socks: 0xe0b020 },

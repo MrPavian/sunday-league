@@ -88,18 +88,18 @@ export const BUND_ROUND_NAMES = () => [tr('1. Runde', 'First round'), tr('2. Run
 // Texte rund um das Spiel gegen den Profi. {opp} = Profiverein, {club} = eigener Verein.
 export const BUND_TEXT = {
   draw: (opp, club) => [
-    tr(`Kreisblatt: Sensation im Los! ${club} bekommt im ${BUND_NAME} ${opp} zugelost – Heimrecht auf dem Großfeld. „Der Platzwart hat schon geweint."`, `Kreisblatt: sensation in the draw! ${club} get ${opp} in the ${BUND_NAME} – at home on the big pitch. "The groundsman has already cried."`),
-    tr(`Kreisblatt, Titelseite: ${opp} kommt! Im ${BUND_NAME} wartet auf ${club} ein Profiverein. Die Stadt spricht über nichts anderes mehr.`, `Kreisblatt, front page: ${opp} are coming! A professional side awaits ${club} in the ${BUND_NAME}. The town talks about nothing else.`),
-    tr(`Kreisblatt: ${club} trifft im ${BUND_NAME} auf ${opp}. Der Wirt rechnet schon mit der doppelten Menge Bratwurst.`, `Kreisblatt: ${club} face ${opp} in the ${BUND_NAME}. The bar manager is already planning on double the sausages.`),
+    tr(`Kreisblatt: Sensation im Los! ${club} bekommt im ${BUND_NAME} ${opp} zugelost – Heimrecht auf dem Großfeld. „Der Platzwart hat schon geweint."`, `District Gazette: sensation in the draw! ${club} get ${opp} in the ${BUND_NAME} – at home on the big pitch. "The groundsman has already cried."`),
+    tr(`Kreisblatt, Titelseite: ${opp} kommt! Im ${BUND_NAME} wartet auf ${club} ein Profiverein. Die Stadt spricht über nichts anderes mehr.`, `District Gazette, front page: ${opp} are coming! A professional side awaits ${club} in the ${BUND_NAME}. The town talks about nothing else.`),
+    tr(`Kreisblatt: ${club} trifft im ${BUND_NAME} auf ${opp}. Der Wirt rechnet schon mit der doppelten Menge Bratwurst.`, `District Gazette: ${club} face ${opp} in the ${BUND_NAME}. The bar manager is already planning on double the sausages.`),
   ],
   drawLater: (opp, club, round) => [
-    tr(`Kreisblatt: Auslosung ${round} im ${BUND_NAME}: ${club} trifft auf ${opp}. „Wir haben das Wunder nicht bestellt, aber wir nehmen es.“`, `Kreisblatt: ${round} draw in the ${BUND_NAME}: ${club} face ${opp}. "We didn't order the miracle, but we'll take it."`),
-    tr(`Kreisblatt: Das Los will es: ${club} gegen ${opp} im ${round}. Der Bürgermeister hat schon beim Verband angerufen.`, `Kreisblatt: the draw has spoken: ${club} v ${opp} in the ${round}. The mayor has already phoned the association.`),
+    tr(`Kreisblatt: Auslosung ${round} im ${BUND_NAME}: ${club} trifft auf ${opp}. „Wir haben das Wunder nicht bestellt, aber wir nehmen es.“`, `District Gazette: ${round} draw in the ${BUND_NAME}: ${club} face ${opp}. "We didn't order the miracle, but we'll take it."`),
+    tr(`Kreisblatt: Das Los will es: ${club} gegen ${opp} im ${round}. Der Bürgermeister hat schon beim Verband angerufen.`, `District Gazette: the draw has spoken: ${club} v ${opp} in the ${round}. The mayor has already phoned the association.`),
   ],
   hype: (opp) => [
-    tr(`Kreisblatt: Die Tribünen kommen morgen per Tieflader. Karten für das Spiel gegen ${opp} sind seit Montag vergriffen.`, `Kreisblatt: the temporary stands arrive tomorrow on a low-loader. Tickets for the match against ${opp} have been gone since Monday.`),
-    tr(`Kreisblatt: Bürgermeister kündigt an, den Anstoß selbst auszuführen. Ordnungsamt prüft die Absperrung für das Spiel gegen ${opp}.`, `Kreisblatt: the mayor says he will take the kick-off himself. The council checks the barriers for the match against ${opp}.`),
-    tr(`Kreisblatt: Reporter aus der Landeshauptstadt angekündigt – ${opp} reist mit eigenem Bus an.`, `Kreisblatt: reporters from the state capital announced – ${opp} are travelling in their own coach.`),
+    tr(`Kreisblatt: Die Tribünen kommen morgen per Tieflader. Karten für das Spiel gegen ${opp} sind seit Montag vergriffen.`, `District Gazette: the temporary stands arrive tomorrow on a low-loader. Tickets for the match against ${opp} have been gone since Monday.`),
+    tr(`Kreisblatt: Bürgermeister kündigt an, den Anstoß selbst auszuführen. Ordnungsamt prüft die Absperrung für das Spiel gegen ${opp}.`, `District Gazette: the mayor says he will take the kick-off himself. The council checks the barriers for the match against ${opp}.`),
+    tr(`Kreisblatt: Reporter aus der Landeshauptstadt angekündigt – ${opp} reist mit eigenem Bus an.`, `District Gazette: reporters from the state capital announced – ${opp} are travelling in their own coach.`),
   ],
   matchday: (opp) => [
     tr(`Samstag, Spieltag: ${opp} ist da. Der Parkplatz war um zwölf Uhr voll, die Wiese dahinter auch.`, `Saturday, match day: ${opp} have arrived. The car park was full at noon, so was the meadow behind it.`),
@@ -114,22 +114,22 @@ export const BUND_TEXT = {
     tr(`Ich nehme mir Samstag frei. Der Chef ist selbst Fan von ${opp}.`, `I'm taking Saturday off. My boss is a ${opp} fan himself.`),
   ],
   win: (opp, club, score) => [
-    tr(`Kreisblatt, Sonderausgabe: SENSATION! ${club} wirft Profiverein ${opp} aus dem ${BUND_NAME} (${score}). Der Platzsturm blieb aus – nur, weil die Absperrung gehalten hat.`, `Kreisblatt special edition: SENSATION! ${club} knock professional side ${opp} out of the ${BUND_NAME} (${score}). The pitch invasion only failed because the barriers held.`),
-    tr(`Kreisblatt: Das Wunder von ${club}! ${opp} verliert im ${BUND_NAME} mit ${score}. Der Torwart wird auf Schultern aus dem Stadion getragen.`, `Kreisblatt: the miracle of ${club}! ${opp} lose in the ${BUND_NAME} ${score}. The goalkeeper is carried off on shoulders.`),
+    tr(`Kreisblatt, Sonderausgabe: SENSATION! ${club} wirft Profiverein ${opp} aus dem ${BUND_NAME} (${score}). Der Platzsturm blieb aus – nur, weil die Absperrung gehalten hat.`, `District Gazette special edition: SENSATION! ${club} knock professional side ${opp} out of the ${BUND_NAME} (${score}). The pitch invasion only failed because the barriers held.`),
+    tr(`Kreisblatt: Das Wunder von ${club}! ${opp} verliert im ${BUND_NAME} mit ${score}. Der Torwart wird auf Schultern aus dem Stadion getragen.`, `District Gazette: the miracle of ${club}! ${opp} lose in the ${BUND_NAME} ${score}. The goalkeeper is carried off on shoulders.`),
   ],
   winLater: (opp, club, score, round) => [
-    tr(`Kreisblatt: Das Märchen geht weiter! ${club} schlägt ${opp} (${score}) und steht im ${round} des ${BUND_NAME}s. Die Stadt feiert bis in den Morgen.`, `Kreisblatt: the fairy tale goes on! ${club} beat ${opp} (${score}) and are into the ${round} of the ${BUND_NAME}. The town celebrates until morning.`),
-    tr(`Kreisblatt, Sonderseite: Schon wieder ein Profi weniger. ${club} ringt ${opp} nieder (${score}) – ${round} im ${BUND_NAME}.`, `Kreisblatt, special page: one more professional side down. ${club} see off ${opp} (${score}) – ${round} of the ${BUND_NAME}.`),
+    tr(`Kreisblatt: Das Märchen geht weiter! ${club} schlägt ${opp} (${score}) und steht im ${round} des ${BUND_NAME}s. Die Stadt feiert bis in den Morgen.`, `District Gazette: the fairy tale goes on! ${club} beat ${opp} (${score}) and are into the ${round} of the ${BUND_NAME}. The town celebrates until morning.`),
+    tr(`Kreisblatt, Sonderseite: Schon wieder ein Profi weniger. ${club} ringt ${opp} nieder (${score}) – ${round} im ${BUND_NAME}.`, `District Gazette, special page: one more professional side down. ${club} see off ${opp} (${score}) – ${round} of the ${BUND_NAME}.`),
   ],
   tickets: (opp) => [
     tr(`Kartenansturm: Der Vorverkauf für das Spiel gegen ${opp} war nach 40 Minuten ausverkauft. Der Kassierer hat die Schlange bis zur Bäckerei gezählt.`, `Ticket rush: advance sales for the match against ${opp} were sold out in 40 minutes. The treasurer counted the queue as far as the bakery.`),
     tr(`Auf dem Schwarzmarkt (Pinnwand im Vereinsheim) werden Karten für das Spiel gegen ${opp} schon für das Dreifache gehandelt. Der Vorstand ist entsetzt und geschmeichelt.`, `On the black market (the clubhouse noticeboard) tickets for the match against ${opp} are already going for three times the price. The board is appalled and flattered.`),
   ],
   closeLoss: (opp, club, score) => [
-    tr(`Kreisblatt: Erhobenen Hauptes ausgeschieden. ${club} verlangt ${opp} im ${BUND_NAME} alles ab (${score}). „So sieht Amateurfußball aus."`, `Kreisblatt: out with heads held high. ${club} push ${opp} all the way in the ${BUND_NAME} (${score}). "That is what amateur football looks like."`),
-    tr(`Kreisblatt: Fast die Sensation! ${club} unterliegt ${opp} nur knapp (${score}). Der Gästetrainer lobt: „Die hatten uns am Rande einer Niederlage."`, `Kreisblatt: almost a sensation! ${club} lose narrowly to ${opp} (${score}). The visiting manager says: "They had us on the brink."`),
+    tr(`Kreisblatt: Erhobenen Hauptes ausgeschieden. ${club} verlangt ${opp} im ${BUND_NAME} alles ab (${score}). „So sieht Amateurfußball aus."`, `District Gazette: out with heads held high. ${club} push ${opp} all the way in the ${BUND_NAME} (${score}). "That is what amateur football looks like."`),
+    tr(`Kreisblatt: Fast die Sensation! ${club} unterliegt ${opp} nur knapp (${score}). Der Gästetrainer lobt: „Die hatten uns am Rande einer Niederlage."`, `District Gazette: almost a sensation! ${club} lose narrowly to ${opp} (${score}). The visiting manager says: "They had us on the brink."`),
   ],
   loss: (opp, club, score) => [
-    tr(`Kreisblatt: ${opp} setzt sich im ${BUND_NAME} erwartbar durch (${score}). ${club} bekommt Applaus von beiden Seiten – und eine volle Kasse.`, `Kreisblatt: ${opp} win as expected in the ${BUND_NAME} (${score}). ${club} get applause from both sides – and a full till.`),
+    tr(`Kreisblatt: ${opp} setzt sich im ${BUND_NAME} erwartbar durch (${score}). ${club} bekommt Applaus von beiden Seiten – und eine volle Kasse.`, `District Gazette: ${opp} win as expected in the ${BUND_NAME} (${score}). ${club} get applause from both sides – and a full till.`),
   ],
 };

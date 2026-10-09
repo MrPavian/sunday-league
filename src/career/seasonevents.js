@@ -13,6 +13,7 @@ import { hasFacility } from './facilities.js';
 import { canLose, first, leaveTeam, outcome, sitOut } from './outcomes.js';
 import { lateOr } from './spielbericht.js';
 import { adjustEnergy, adjustPatience, isCoach } from './personal.js';
+import { isBanned } from './suspensions.js';
 import { setRelation } from './relations.js';
 import { chronicle } from './sagas.js';
 import { adjustRel } from './sponsors.js';
@@ -36,7 +37,7 @@ const standing = (c) => {
 };
 // Zufällige, verschiedene Spieler aus dem Kader (ohne dich selbst).
 const some = (c, rng, n) => {
-  const pool = [...squad(c)];
+  const pool = squad(c).filter((i) => !isBanned(c, i)); // Gesperrte nicht für „kommt zu spät / fehlt“ ziehen
   const out = [];
   while (pool.length && out.length < n) out.push(pool.splice(Math.floor(rng.next() * pool.length), 1)[0]);
   return out;

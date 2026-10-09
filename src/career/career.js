@@ -616,7 +616,7 @@ export function buildLineup(career, club, format, availability, rng, manual = nu
     free.sort((a, b) => score(b) - score(a));
     lineup[i] = free.shift();
   });
-  return { lineup, bench: [...free, ...benched, ...late], late, helpers };
+  return { lineup, bench: [...free, ...benched, ...late], late, helpers, penalty: benched };
 }
 
 // --- Gerüchteküche & Transfers -------------------------------------------------------
@@ -914,10 +914,11 @@ function helperOf(career, club, idx) {
 
 export function teamForMatch(career, club, format, availability, rng) {
   const manual = club.human ? career.week?.lineup : null;
-  const { lineup, bench, late, helpers } = buildLineup(career, club, format, availability, rng, manual);
+  const { lineup, bench, late, helpers, penalty } = buildLineup(career, club, format, availability, rng, manual);
   const players = [...lineup, ...bench].map((idx) => {
     const p = helpers.includes(idx) ? helperOf(career, club, idx) : applyForm(copyPlayer(playerOf(career, idx)), career.players[idx], club.human ? career.mood ?? 0 : 0);
     if (late.includes(idx)) p.late = true;
+    if (penalty.includes(idx)) p.penalty = true; // Strafbank: kein Nachrücker bei Überraschungen am Spieltag
     const fit = helpers.includes(idx) ? 1 : fitnessOf(career, idx);
     if (fit < 1) p.fitness = fit; // Startausdauer im Spiel
     return p;

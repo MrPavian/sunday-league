@@ -10,6 +10,7 @@ import { book, KIT_COST } from './finances.js';
 import { first, outcome, sitOut } from './outcomes.js';
 import { lateOr } from './spielbericht.js';
 import { isCoach } from './personal.js';
+import { isBanned } from './suspensions.js';
 import { chronicle } from './sagas.js';
 import { BRANCHEN, newWish, WISH_PENALTY, WISHES, wishCost, wishLabel } from './sponsorwish.js';
 
@@ -284,6 +285,7 @@ export function cancelSponsor(career, i) {
   const s = career.sponsors[i];
   if (!s) return false;
   const cost = cancelCost(career, s);
+  if (cost > career.cash) return 'nocash'; // Strafe nicht bezahlbar: Vertrag bleibt
   career.sponsors = career.sponsors.filter((x) => x !== s);
   if (cost) book(career, tr(`Vertragsstrafe ${s.name}`, `Contract penalty ${s.name}`), -cost);
   banSponsor(career, s.id);
@@ -513,7 +515,7 @@ function dropSponsor(c, s) {
   if (c.arena?.id === s.id) c.arena = null;
 }
 
-const mates = (c) => humanClub(c).squad.filter((idx) => !isCoach(c, idx));
+const mates = (c) => humanClub(c).squad.filter((idx) => !isCoach(c, idx) && !isBanned(c, idx)); // Gesperrte spielen Sonntag nicht – kein „kommt zu spät“ für sie
 const pickSponsor = (c, rng, f = () => true) => {
   const list = (c.sponsors ?? []).filter(f);
   return list.length ? rng.pick(list) : null;
@@ -777,7 +779,7 @@ export const SPONSOR_EVENTS = {
         effect: outcome([
           { w: 3, run: (c) => (book(c, tr('Sponsorenabend (Grill)', 'Sponsors\' evening (grill)'), -15), c.sponsors.forEach((s) => adjustRel(s, 6)), adjustMood(c, 0.03), tr('Rauch, Bier, Vereinslieder. So mögen sie es im Ort.', 'Smoke, beer, club songs. That is how they like it in town.')) },
           { w: 1.5, run: (c) => (book(c, tr('Sponsorenabend (Grill)', 'Sponsors\' evening (grill)'), -15), c.sponsors.forEach((s) => adjustRel(s, 3)), tr('Nett, aber niemand erinnert sich später daran.', 'Nice, but nobody remembers it later.')) },
-          { w: 1, run: (c, ctx, rng) => { const s2 = rng.pick(mates(c)); sitOut(c, s2, 'late'); return (book(c, tr('Sponsorenabend (Grill)', 'Sponsors\' evening (grill)'), -15), c.sponsors.forEach((s) => adjustRel(s, 5)), tr(`${first(c, s2)} hatte Zapfdienst und kommt Sonntag erst zur zweiten Halbzeit.`, `${first(c, s2)} was on the taps and only arrives for the second half on Sunday.`)); } },
+          { w: 1, run: (c, ctx, rng) => { const s2 = rng.pick(mates(c)); sitOut(c, s2, 'late'); return (book(c, tr('Sponsorenabend (Grill)', 'Sponsors\' evening (grill)'), -15), c.sponsors.forEach((s) => adjustRel(s, 5)), lateOr(c, tr(`${first(c, s2)} hatte Zapfdienst und kommt Sonntag erst zur zweiten Halbzeit.`, `${first(c, s2)} was on the taps and only arrives for the second half on Sunday.`), tr(`${first(c, s2)} hatte Zapfdienst und kommt Sonntag zu spät – er steht nicht mehr auf dem Spielbericht.`, `${first(c, s2)} was on the taps and turns up too late on Sunday – he is not on the match report.`))); } },
         ]),
       },
       {

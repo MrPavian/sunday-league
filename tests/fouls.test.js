@@ -9,6 +9,10 @@ import { callFoul, FOUL, isLastMan, settleAdvantage, stepAdvantage } from '../sr
 import { decideCard, REF_TRAITS } from '../src/sim/referee.js';
 import { allPlayers } from '../src/sim/squad.js';
 import { applyCards, banGames, isBanned, tickBans, resetYellows, YELLOW_LIMIT } from '../src/career/suspensions.js';
+import { setLang } from '../src/core/i18n.js';
+import { EXTRA_CLUBS } from '../src/career/clubs.js';
+import { matchdaySurprise } from '../src/career/matchday.js';
+import { SPONSOR_EVENTS, cancelSponsor } from '../src/career/sponsors.js';
 import { buildLineup, createCareer, finishRound, humanClub, humanFixture, loadCareer, prepareMatch, saveCareer, simulateSync, startWeek } from '../src/career/career.js';
 
 const DT = 1 / 60;
@@ -353,5 +357,128 @@ describe('Sperren in der Karriere', () => {
     const back = loadCareer(storage);
     expect(banGames(back, idx)).toBe(2);
     expect(back.players[idx].ban.reason).toBe('dogso');
+  });
+});
+
+describe('Sperren: Pokal vor dem Ligaspiel, Ereignisse, Strafbank', () => {
+  const played = (seed = 3) => {
+    const c = createCareer({ seed });
+    const prepared = prepareMatch(c, humanFixture(c), { duration: 20 });
+    simulateSync(prepared);
+    const squad = humanClub(c).squad;
+    const p = allPlayers(prepared.match).find((q) => squad.includes(q.poolIndex) && q.poolIndex !== c.coach.idx);
+    const st = prepared.match.stats.players[p.id] ?? (prepared.match.stats.players[p.id] = {});
+    Object.assign(st, { seconds: 10, yellow: 0, red: 0 });
+    return { c, prepared, st, idx: p.poolIndex };
+  };
+
+  it('Pokal-Rot (1 Spiel) vor dem Ligaspiel: genau ein Ligaspiel verpasst, nicht zwei', () => {
+    const { c, prepared, st, idx } = played();
+    Object.assign(st, { red: 1, redKind: 'dogso' });
+    applyCards(c, prepared, { league: false, beforeLeague: true });
+    expect(banGames(c, idx)).toBe(1);
+    expect(c.week.availability[idx]).toBe('no'); // schon im Wochenchat abgemeldet
+    expect(c.week.chat.some((msg) => msg.from === idx && /Gesperrt|Suspended/.test(msg.text))).toBe(true);
+    const club = humanClub(c);
+    expect(buildLineup(c, club, 7, c.week.availability, createRng(1), [idx]).lineup).not.toContain(idx); // Sonntag fehlt er (1. Sperrspiel)
+    finishRound(c); // das Ligaspiel zählt als abgesessen
+    expect(isBanned(c, idx)).toBe(false);
+    expect(c.players[idx].ban).toBeNull();
+  });
+
+  it('Pokal-Rot für grobes Foul (2 Spiele): Ligaspiel derselben Woche + das nächste', () => {
+    const { c, prepared, st, idx } = played();
+    Object.assign(st, { red: 1, redKind: 'serious' });
+    applyCards(c, prepared, { league: false, beforeLeague: true });
+    finishRound(c);
+    expect(banGames(c, idx)).toBe(1);
+    finishRound(c);
+    expect(isBanned(c, idx)).toBe(false);
+  });
+
+  it('Liga-Rot bleibt unverändert: erst die Folgewoche ist das erste Sperrspiel', () => {
+    const { c, prepared, st, idx } = played();
+    Object.assign(st, { red: 1, redKind: 'dogso' });
+    applyCards(c, prepared);
+    expect(c.players[idx].ban.round).toBe(c.round);
+    tickBans(c);
+    expect(banGames(c, idx)).toBe(1);
+    c.round++;
+    tickBans(c);
+    expect(isBanned(c, idx)).toBe(false);
+  });
+
+  it('die Sperre merkt sich die Saison: gleiche Rundennummer in der nächsten Saison blockiert das Abzählen nicht', () => {
+    const { c, idx } = played();
+    c.players[idx].ban = { games: 1, reason: 'serious', round: 4, season: 1 };
+    c.season = 2;
+    c.round = 4;
+    tickBans(c);
+    expect(isBanned(c, idx)).toBe(false);
+  });
+
+  it('resetYellows schreibt nur vorhandene Zähler', () => {
+    const { c, idx } = played();
+    for (const rec of Object.values(c.players)) delete rec.yellows;
+    c.players[idx].yellows = 2;
+    resetYellows(c);
+    expect(c.players[idx].yellows).toBe(0);
+    expect(Object.values(c.players).filter((r) => 'yellows' in r)).toHaveLength(1);
+  });
+
+  it('Sponsorenabend (Grill): Gesperrte werden nie als Nachzügler gezogen, Text folgt dem Spielbericht', () => {
+    const c = createCareer({ seed: 3 });
+    const club = humanClub(c);
+    const mates = club.squad.filter((i) => i !== c.coach.idx);
+    const free = mates[0];
+    for (const i of mates.slice(1)) c.players[i].ban = { games: 1, reason: 'serious', round: c.round - 1, season: c.season };
+    startWeek(c);
+    c.sponsors = [{ ...c.offers[0], rel: 50, left: 1, term: 1 }];
+    const grill = SPONSOR_EVENTS.sponsor_abend.options[1].effect;
+    for (let seed = 1; seed <= 60; seed++) {
+      grill(c, {}, createRng(seed));
+      for (const i of mates.slice(1)) expect(c.week.availability[i]).toBe('no');
+    }
+    expect(['yes', 'late', 'bench', 'no']).toContain(c.week.availability[free]);
+  });
+
+  it('Kündigung eines Sponsors: ohne Geld für die Vertragsstrafe bleibt der Vertrag', () => {
+    const c = createCareer({ seed: 4 });
+    c.sponsors = [{ ...c.offers[0], rel: 50, left: 3, term: 3, weekly: 20 }];
+    c.cash = 0;
+    expect(cancelSponsor(c, 0)).toBe('nocash');
+    expect(c.sponsors).toHaveLength(1);
+    expect(c.cash).toBe(0);
+  });
+
+  it('Stau-Nachrücker nimmt keinen Strafbank-Spieler von der Bank', () => {
+    const mk = (id, extra = {}) => ({ id, team: 0, role: 'mid', position: 'mid', rating: 50, pos: { x: 0, z: 0 }, facing: { x: 1, z: 0 }, ...extra });
+    const m = {
+      duration: 600,
+      players: [mk(1, { role: 'gk', position: 'gk' }), mk(2), mk(3), mk(4)],
+      bench: [[mk(10, { rating: 90, penalty: true }), mk(11, { rating: 40 })], []],
+    };
+    const res = matchdaySurprise(m, 0, createRng(5), 1, 'stau', 1);
+    expect(res.id).toBe('stau');
+    expect(m.players.some((p) => p.id === 10)).toBe(false);
+    expect(m.players.some((p) => p.id === 11)).toBe(true);
+  });
+
+  it('englische Zeitungsmeldung im Handy-Chat trägt den englischen Zeitungsnamen, nicht „Kreisblatt“', () => {
+    const { c, prepared, st } = played();
+    Object.assign(st, { red: 1, redKind: 'serious' });
+    try {
+      setLang('en');
+      applyCards(c, prepared);
+    } finally {
+      setLang('de');
+    }
+    expect(c.pendingNews[0]).toMatch(/^District Gazette:/);
+    expect(c.pendingNews[0]).not.toMatch(/Kreisblatt/);
+  });
+
+  it('keine Vereinsnamen mit Bezug zu echten Clubs (Inter Mailand)', () => {
+    const names = Object.values(EXTRA_CLUBS).flat().flatMap((x) => [x.name, x.short]);
+    for (const n of names) expect(n).not.toMatch(/inter|milan|mailand/i);
   });
 });

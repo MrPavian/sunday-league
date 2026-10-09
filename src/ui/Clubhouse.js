@@ -165,7 +165,7 @@ export class Clubhouse {
       } else if (action === 'sponsorCancel') {
         // Erst nachfragen (zeigt die Vertragsstrafe), beim zweiten Klick wird gekündigt.
         if (this.cancelAsk === Number(value)) {
-          cancelSponsor(this.career, Number(value));
+          if (cancelSponsor(this.career, Number(value)) === 'nocash') this.career.sponsorNote = tr('Zu wenig in der Kasse für die Vertragsstrafe.', 'Not enough in the kitty for the contract penalty.');
           this.cancelAsk = null;
         } else this.cancelAsk = Number(value);
         this.h.onChange();

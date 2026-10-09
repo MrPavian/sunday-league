@@ -9,7 +9,7 @@ import { LEAGUE_EVENTS } from '../src/career/leagueevents.js';
 import { SPONSOR_EVENTS } from '../src/career/sponsors.js';
 import { createRng } from '../src/core/rng.js';
 import { spielberichtStreng } from '../src/career/spielbericht.js';
-import { AWAY, CHAINS, FOLLOW, IDS, awayRound, scene } from './localscenes.js';
+import { CHAINS, FOLLOW, IDS, awayRound, scene } from './localscenes.js';
 
 const stateOf = (c) => JSON.stringify({ cash: c.cash, mood: c.mood, players: c.players, avail: c.week.availability, flags: c.flags, club: c.clubLife, rel: c.relations, coach: c.coach, squad: humanClub(c).squad });
 

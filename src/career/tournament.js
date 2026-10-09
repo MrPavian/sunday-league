@@ -170,7 +170,7 @@ export function recordCupResult(c, m, prepared) {
     const st = mm.stats.players[p.id];
     if (p.poolIndex != null && st?.seconds > 0) afterMatchFitness(c, p.poolIndex, st.seconds / (mm.duration || st.seconds), 1.6);
   }
-  applyCards(c, prepared, { league: false });
+  applyCards(c, prepared, { league: false, beforeLeague: true });
   m.result = prepared.humanIsAway ? { home: s1, away: s0 } : { home: s0, away: s1 };
   if (m.stage !== 'A' && m.stage !== 'B' && m.result.home === m.result.away) {
     // Selbst geschossen? Dann zählt das echte Elfmeterschießen, sonst wird gewürfelt.

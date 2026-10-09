@@ -68,7 +68,7 @@ export function heirMoments(c) {
     if ((rec.goals ?? 0) + (rec.total?.goals ?? 0) < 1) continue;
     rec.heirGoal = true;
     const p = playerOf(c, idx);
-    const text = tr(`Kreisblatt: Wie der Vater, so der Sohn – ${p.name} trifft zum ersten Mal. ${firstName(p.parentName)} stand am Zaun und hat geweint. Sagt er selbst.`, `Kreisblatt: Like father, like son – ${p.name} scores his first goal. ${firstName(p.parentName)} was at the fence in tears. His words.`);
+    const text = tr(`Kreisblatt: Wie der Vater, so der Sohn – ${p.name} trifft zum ersten Mal. ${firstName(p.parentName)} stand am Zaun und hat geweint. Sagt er selbst.`, `District Gazette: Like father, like son – ${p.name} scores his first goal. ${firstName(p.parentName)} was at the fence in tears. His words.`);
     (c.pendingNews ??= []).push(text);
     chronicle(c, tr(`Erstes Tor von ${p.name} – wie früher sein Vater ${p.parentName}.`, `First goal for ${p.name} – just like his father ${p.parentName} used to.`));
     out.push(text);

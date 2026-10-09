@@ -126,7 +126,7 @@ const T = {
     { w: (c) => (canLose(c) ? 0.3 : 0), run: (c, s, rng) => { const x = rng.pick(humanClub(c).squad); return leaveTeam(c, x) ? tr(`${first(c, x)} ist gegen die Fusion und tritt aus.`, `${first(c, x)} is against the merger and quits.`) : ''; } },
   ],
   frauen: [
-    { w: 1, run: (c) => (adjustMood(c, 0.04), tr('Das Kreisblatt schreibt einen Artikel darüber.', 'The Kreisblatt writes an article about it.')) },
+    { w: 1, run: (c) => (adjustMood(c, 0.04), tr('Das Kreisblatt schreibt einen Artikel darüber.', 'The District Gazette writes an article about it.')) },
     { w: 0.6, run: (c) => (book(c, tr('Spende für das Frauenteam', 'Donation for the women\'s team'), 30), tr('Eine Firma spendet 30 € für die Frauen.', 'A company donates €30 to the women\'s team.')) },
     { w: 0.4, run: (c) => (adjustMood(c, -0.03), tr('Zwei Alte am Stammtisch murren. Der Rest ignoriert sie.', 'Two old-timers at the regulars\' table grumble. Everyone else ignores them.')) },
   ],

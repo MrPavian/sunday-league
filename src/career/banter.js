@@ -62,7 +62,7 @@ const T = {
   ),
   praise: tr(
     ['Geiles Spiel letzte Woche, {to}!', '{to} hat Sonntag gespielt wie ein junger Gott. Wer hätte das gedacht.', 'Note {grade} im Kreisblatt, {to}. Das hängt bei Oma an der Wand.'],
-    ['Cracking game last week, {to}!', '{to} played like a young god on Sunday. Who would have thought.', 'Grade {grade} in the Kreisblatt, {to}. Gran will frame that.'],
+    ['Cracking game last week, {to}!', '{to} played like a young god on Sunday. Who would have thought.', 'Grade {grade} in the District Gazette, {to}. Gran will frame that.'],
   ),
   blame: tr(
     ['Wer hat eigentlich hinten gepennt? Ich sag nur {to}.', '{to}, Sonntag warst du keine Hilfe. Ehrlich.', 'Das {score} geht auf deine Kappe, {to}.'],

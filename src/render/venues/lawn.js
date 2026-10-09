@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { tr } from '../../core/i18n.js';
 import { toon } from '../materials.js';
 import { addLights, box, cylinder, ground, makeBench, makeDog, makeFence, makeFloodlight, makeGoalFrame, makeSideline, makeTree } from '../props.js';
 import { crowdRow, makeSpectator } from '../spectators.js';
@@ -7,14 +8,14 @@ import { groundTexels, makeLawnTexture, makeSignTextureWide } from '../textures.
 
 // Lokale Sponsoren – selbst gemalte Banden, wie sie auf jedem Dorfplatz hängen.
 export const SPONSORS = [
-  ['BÄCKEREI KRUME', '#c9a227', '#2a2620'],
-  ['FAHRSCHULE VOLLGAS', '#c0392b', '#ffffff'],
-  ['DÖNER SULTAN', '#1f5e3a', '#f4e9c8'],
-  ['AUTOHAUS BRENNER', '#2c4f8a', '#ffffff'],
-  ['GETRÄNKE HOFFMANN', '#1f5e3a', '#f4e9c8'],
-  ['PHYSIO AM MARKT', '#f2efe6', '#2c4f8a'],
-  ['FRISEUR SCHNITTIG', '#6b4f8c', '#ffffff'],
-  ['DACHDECKEREI KOWALSKI', '#8a5a3a', '#f4e9c8'],
+  [tr('BÄCKEREI KRUME', 'CRUMBS BAKERY'), '#c9a227', '#2a2620'],
+  [tr('FAHRSCHULE VOLLGAS', 'FULL THROTTLE DRIVING SCHOOL'), '#c0392b', '#ffffff'],
+  [tr('DÖNER SULTAN', 'SULTAN KEBABS'), '#1f5e3a', '#f4e9c8'],
+  [tr('AUTOHAUS BRENNER', 'BRENNER MOTORS'), '#2c4f8a', '#ffffff'],
+  [tr('GETRÄNKE HOFFMANN', 'HOFFMANN DRINKS'), '#1f5e3a', '#f4e9c8'],
+  [tr('PHYSIO AM MARKT', 'MARKET SQUARE PHYSIO'), '#f2efe6', '#2c4f8a'],
+  [tr('FRISEUR SCHNITTIG', 'SHARP CUTS HAIR'), '#6b4f8c', '#ffffff'],
+  [tr('DACHDECKEREI KOWALSKI', 'KOWALSKI ROOFING'), '#8a5a3a', '#f4e9c8'],
 ];
 
 // Bandenfelder eines Spielorts: die Dorfsponsoren, aber im Karrierespiel hängt auf einem freien Feld der Bandenpartner
