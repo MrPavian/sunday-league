@@ -48,6 +48,10 @@ Unabhängige Bereiche (andere Dateien) dürfen parallel laufen; geliefert wird i
 4. Ausbau des Sponsorings.
 Parallel möglich: 1 (Sim) mit 4 (Karriere); danach 2 (baut auf 1 auf) und 3.
 
+## Danach (vom Nutzer festgelegt, 2026-10-09)
+Nach der Lieferung von Fouls/Animationen/Ereignissen/Sponsoring: Ereignisse für die noch dünnen Bereiche –
+Training und Ehrenamt in Saisonmitte und -ende, Schiri in der untersten Liga (Messung: scripts/events-audit.mjs).
+
 ## Gesperrt bis zum ausdrücklichen Auftrag (vom Nutzer festgelegt, 2026-10-07)
 Couch-Koop, Online-Liga mit Freunden, Editoren und Modding (ROADMAP Phase 8) bleiben auf der Roadmap, werden
 aber erst bearbeitet, wenn der Nutzer das ausdrücklich beauftragt. Nicht von sich aus vorschlagen oder anfangen.
