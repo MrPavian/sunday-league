@@ -369,7 +369,11 @@ function startMatch(human) {
   // Testschalter: ?elfmeter (mit ?dauer=2) – Freundschaftsspiel als K.-o.-Spiel, bei Remis Elfmeterschießen.
   if (human && params.has('elfmeter')) m.knockout = true;
   // Testschalter: ?stau – Spieltags-Überraschung „Stau" wie in der Karriere (einer kommt nach einem Drittel).
-  if (human && params.has('stau')) matchdaySurprise(m, 0, createRng(m.seed ?? 1), 1, 'stau');
+  // Ohne Bank, damit der Nachzügler wirklich später aufs Feld kommt (mit Bank rückt einer nach – wie tests/freeze.test.js).
+  if (human && params.has('stau')) {
+    m.bench[0] = [];
+    matchdaySurprise(m, 0, createRng(m.seed ?? 1), 1, 'stau');
+  }
   showMatch(m);
 }
 
