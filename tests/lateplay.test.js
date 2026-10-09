@@ -5,6 +5,7 @@ import { SOCIAL_EVENTS } from '../src/career/social.js';
 import { LIFE_EVENTS } from '../src/career/life.js';
 import { SEASON_EVENTS } from '../src/career/seasonevents.js';
 import { SPONSOR_EVENTS } from '../src/career/sponsors.js';
+import { LOCAL_EVENTS } from '../src/career/localevents.js';
 import { PERSONAL_EVENTS } from '../src/career/personal.js';
 import { LATE, LATE_STRICT } from '../src/career/chat.js';
 import { FINES } from '../src/career/finances.js';
@@ -18,7 +19,7 @@ import { PITCHES } from '../src/sim/pitch.js';
 
 // Ab Kreisliga A (Stufe 4) gilt der elektronische Spielbericht: Wer zum Anpfiff nicht da ist, spielt nicht.
 const SECOND_HALF = /zweiten? Halbzeit|2\. Halbzeit|ersten Halbzeit|second half|2nd half|first half|zur Halbzeit|in der Pause|arrive[sd]? at half-time/i;
-const REGISTRIES = { ...EVENTS, ...SOCIAL_EVENTS, ...LIFE_EVENTS, ...SEASON_EVENTS, ...SPONSOR_EVENTS, ...PERSONAL_EVENTS };
+const REGISTRIES = { ...EVENTS, ...SOCIAL_EVENTS, ...LIFE_EVENTS, ...SEASON_EVENTS, ...LOCAL_EVENTS, ...SPONSOR_EVENTS, ...PERSONAL_EVENTS };
 const startLang = getLang();
 afterAll(() => setLang(startLang));
 
