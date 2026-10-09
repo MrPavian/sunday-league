@@ -2,8 +2,8 @@ import { GET_UP } from '../sim/tackles.js';
 import * as THREE from 'three';
 import { ACRO, TRICKS } from '../sim/tricks.js';
 import { len } from '../core/math.js';
-import { catchKind, duelPairs, foeBearing, incidentPose, isFumble, kickFoot, mateCelebration, punchStyle, refereePose, refereeSignal, shotReactions, subScene, throwInRun, tiredFace, warmupPicks, warmupSpot, warmupStep, WARMUP_AWAY, WARMUP_HOME, wideStance } from './reactions.js';
-import { allPlayers } from '../sim/squad.js';
+import { advantageGesture, cardGesture, catchKind, CONSOLE_AT, consolers, dribbleCarry, duelPairs, foeBearing, foulFrame, foulPlace, foulPlan, incidentPose, isAerial, isFumble, kickFoot, mateCelebration, penaltyGoal, punchStyle, refCrowd, refereePose, refereeSignal, shotReactions, SIM_STEP, subScene, throwInRun, tiredFace, walkOffStart, walkOffStep, warmupPicks, warmupSpot, warmupStep, WARMUP_AWAY, WARMUP_HOME, whistleTimes, wideStance } from './reactions.js';
+import { allPlayers, findAnyPlayer } from '../sim/squad.js';
 import { attackDir } from '../sim/players.js';
 import { BallView } from './BallView.js';
 import { animatePlayer, createPlayerModel, disposeKit, IN_REL_AT, KitAtlas, setKitDirt, setKitWet } from './PlayerModel.js';
@@ -60,6 +60,16 @@ const WARM_OUT = {};
 const WARM_RECHECK = 1; // so oft (s) wird neu gewählt, wer sich aufwärmt
 const LEAVE_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture: null };
 
+const CUE = { g: null, w: 0, x: 0, z: 0, yaw: 0, s: 1, kind: null, speed: -1 };
+const FOUL_OUT = { x: 0, z: 0, yaw: 0, act: null, actT: 0, actW: 0, on: false };
+const WALK_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture: null, actS: 1 };
+const WALK_OUT = {};
+const CUE_RUN = 0.8; // Mitspieler am Schiri: so lange (s) dauert der Hin- und der Rückweg
+const smoothstep = (a, b, x) => {
+  const t = x <= a ? 0 : x >= b ? 1 : (x - a) / (b - a);
+  return t * t * (3 - 2 * t);
+};
+
 const CELEBRATIONS = ['flugzeug', 'faust', 'tanz', 'rutscher', 'trikot', 'ohr', 'ruecken', 'brust'];
 
 // Jeder Spieler hat "seinen" Jubel – fest an der ID, damit er wiedererkennbar ist.
@@ -89,6 +99,17 @@ export class MatchView {
     this.models = new Map();
     this.shotState = {}; // letzter Schuss (für die Reaktion danach)
     this.leaving = []; // Ausgewechselte auf dem Weg vom Platz (nur Darstellung)
+    // Fouls, Pfiff, Karten (reactions.js): Szenen der Beteiligten, Gesten der anderen, Ausgeschlossene auf dem Weg vom Platz.
+    this.shown = new Map(); // zuletzt gezeigte Stelle je Figur { x, z, yaw }: so ist beim Pfiff noch zu sehen, wo wer stand
+    this.prevBall = { x: 0, y: 0, z: 0 };
+    this.fouls = [];
+    this.cues = new Map();
+    this.walkers = [];
+    this.refCue = null;
+    this.refState = { advHold: 0 };
+    this.penState = {};
+    this.clock = 0; // Spielzeit-Uhr der Darstellung (s): zählt Simulationsschritte, auch in der Pause vor einem Standard
+    this.steps = 0;
     // Aufwärmen am Rand: Ersatzspieler hinter der Seitenlinie (reactions.js warmupPicks/warmupStep). ?warmup=0 schaltet es ab (zum Messen).
     this.warm = [];
     this.warmLeft = 0;
@@ -171,7 +192,7 @@ export class MatchView {
   buildReferee(r) {
     if (this.referee) this.root.remove(this.referee.group);
     if (this.referee) disposeKit(this.referee);
-    this.referee = createPlayerModel(r.look, r.kit ?? { shirt: 0x1c1c1c, shorts: 0x1c1c1c, socks: 0x1c1c1c }, { edge: 'neutral' });
+    this.referee = createPlayerModel(r.look, r.kit ?? { shirt: 0x1c1c1c, shorts: 0x1c1c1c, socks: 0x1c1c1c }, { edge: 'neutral', referee: true });
     this.refereeName = r.name;
     this.wetLook = -1; // Nässe auch auf den neuen Schiri
     this.root.add(this.referee.group);
@@ -179,8 +200,10 @@ export class MatchView {
 
   // Einmalige Effekte zu den Ereignissen dieses Schritts (vor dem Leeren der Liste).
   handleEvents(match) {
+    this.steps++;
     this.effects.handle(match);
     this.ballView.handle(match);
+    this.foulFx(match);
     // Dreck: Grätschen, Fouls und Stürze hinterlassen Spuren.
     for (const e of match.events) {
       if (e.type === 'sub') {
@@ -279,6 +302,156 @@ export class MatchView {
         if (gk) mood(gk.id, 'surprised', 0.9);
       }
     }
+  }
+
+  // Fouls sichtbar machen (nur Darstellung, reactions.js): aus foul/no_call/advantage/card eine Szene für Gefoulten und Foulenden,
+  // Gesten für alle anderen, Weg vom Platz bei Rot. Die Simulation wird nicht berührt; Variation kommt aus den Kennungen.
+  foulFx(match) {
+    const ref = match.referee;
+    for (const e of match.events) {
+      if (penaltyGoal(this.penState, e) && e.scorerId) {
+        const m = this.models.get(e.scorerId);
+        if (m) m.penaltyGoal = true;
+      }
+    }
+    const cards = match.events.filter((e) => e.type === 'card');
+    for (const e of match.events) {
+      if (e.type === 'advantage') this.refState.advHold = 0.8;
+      if (e.type !== 'foul' && e.type !== 'no_call' && e.type !== 'advantage') continue;
+      const v = findAnyPlayer(match, e.victimId);
+      const o = findAnyPlayer(match, e.playerId);
+      const sv = v && this.shown.get(v.id);
+      if (!v || !o || !sv || !this.shown.get(o.id)) continue;
+      const myCards = cards.filter((c) => c.playerId === o.id);
+      const sentOff = myCards.some((c) => c.color !== 'yellow');
+      const plan = foulPlan(e, { air: isAerial(this.prevBall, sv), slide: o.state === 'tackle', poke: o.state === 'poke', hurtDown: v.state === 'down' });
+      if (sentOff) plan.offAct = null; // der Ausgeschlossene geht gleich – kein Griff mehr
+      this.fouls = this.fouls.filter((f) => f.vId !== v.id && f.oId !== o.id);
+      this.fouls.push({ plan, vId: v.id, oId: o.id, t: 0, v0: { x: sv.x, z: sv.z, yaw: sv.yaw }, a0: { x: v.pos.x, z: v.pos.z }, cur: { x: 0, z: 0, yaw: 0 }, fr: {}, pl: {} });
+      if (e.type !== 'foul') continue;
+      // Nach dem Pfiff: Foulender hebt die Hände, der Gefoulte reklamiert, ein, zwei Mitspieler gehen zum Schiri.
+      const wt = whistleTimes(plan, v.state === 'down');
+      if (!sentOff) this.addCue(o.id, { g: 'unschuld', from: wt.off[0], to: wt.off[1] });
+      if (wt.vic) this.addCue(v.id, { g: 'reklamieren', from: wt.vic[0], to: wt.vic[1] });
+      if (ref)
+        for (const c of refCrowd(match, o.id, v.id, ref, plan.penalty || myCards.length > 0)) {
+          const p = findAnyPlayer(match, c.id);
+          this.addCue(c.id, { g: c.kind === 'protest' ? 'reklamieren' : 'schulter', from: 0.3, to: 2.6, mv: { x0: p.pos.x, z0: p.pos.z, x1: c.x, z1: c.z }, face: { x: ref.pos.x, z: ref.pos.z } });
+        }
+    }
+    for (const e of match.events) {
+      if (e.type !== 'card') continue;
+      const p = findAnyPlayer(match, e.playerId);
+      const sh = p && this.shown.get(p.id);
+      this.refCue = { color: e.color, t: 0, x: sh ? sh.x : 0, z: sh ? sh.z : 0 };
+      if (e.color === 'yellow' || !sh) continue;
+      // Rot (auch Gelb-Rot): Kopf in die Hand, langsam zur Seitenlinie; Mitspieler trösten und schimpfen, die Gegner jubeln.
+      const wk = { id: p.id, w: walkOffStart(match.pitch, sh), out: {}, delay: 0 };
+      walkOffStep(wk.w, 0, wk.out);
+      this.walkers.push(wk);
+      for (const c of consolers(match, p)) {
+        if (c.kind === 'troesten') this.addCue(c.id, { g: 'troesten', from: 0.8, to: 6, follow: p.id, s: c.s });
+        else if (c.kind === 'schimpfen') this.addCue(c.id, { g: 'haende', from: 0.5, to: 3 });
+        else this.addCue(c.id, { g: 'jubel', from: 0.6, to: 2.2 });
+      }
+    }
+  }
+
+  addCue(id, cue) {
+    cue.from += this.clock;
+    cue.to += this.clock;
+    const list = this.cues.get(id) ?? [];
+    this.cues.set(id, list.filter((c) => c.to > this.clock).concat(cue));
+  }
+
+  // Szenen und Gesten eine Spanne weiterschalten (sdt: Spielzeit seit dem letzten Bild, 0 in der Pause).
+  stepFx(match, sdt) {
+    this.clock += sdt;
+    this.refState.advHold = Math.max(0, this.refState.advHold - sdt);
+    for (const f of this.fouls) {
+      f.t += sdt;
+      const v = findAnyPlayer(match, f.vId);
+      // Ohne Pfiff läuft die Simulation weiter: Der Ort der Szene wandert mit ihr.
+      f.cur.x = f.v0.x + (f.plan.stopped || !v ? 0 : v.pos.x - f.a0.x);
+      f.cur.z = f.v0.z + (f.plan.stopped || !v ? 0 : v.pos.z - f.a0.z);
+      f.cur.yaw = f.v0.yaw;
+      foulFrame(f.plan, f.t, f.fr);
+      foulPlace(f.cur, f.fr, f.pl);
+    }
+    this.fouls = this.fouls.filter((f) => f.t < f.plan.dur + 0.15);
+    for (const w of this.walkers) {
+      if ((w.delay -= sdt) > 0) continue;
+      walkOffStep(w.w, sdt, w.out);
+    }
+    this.walkers = this.walkers.filter((w) => !w.out.done);
+    if (this.refCue && (this.refCue.t += sdt) > 9) this.refCue = null;
+  }
+
+  // Wo und wie die Szene die Figur p zeigt: schreibt FOUL_OUT { on, x, z, yaw, act, actT, actW, actS, actVr } (sonst on = false).
+  foulOf(p, simX, simZ, simYaw) {
+    const o = FOUL_OUT;
+    o.on = false;
+    for (const f of this.fouls) {
+      const isV = f.vId === p.id;
+      if (!isV && f.oId !== p.id) continue;
+      const { plan, fr, pl, t } = f;
+      const T = plan.dur;
+      if (!isV && !fr.lay) continue; // Grätsche/Stochern: der Foulende bleibt, wie ihn die Simulation zeigt
+      const w = isV ? smoothstep(T - 0.35, T, t) : smoothstep(plan.stopped ? 0.5 : T - 0.4, plan.stopped ? 1.2 : T, t);
+      const x = isV ? pl.vx : pl.ox;
+      const z = isV ? pl.vz : pl.oz;
+      const yaw = isV ? pl.vyaw : pl.oyaw;
+      o.on = true;
+      o.x = x + (simX - x) * w;
+      o.z = z + (simZ - z) * w;
+      o.yaw = lerpAngle(yaw, simYaw, w);
+      o.act = isV ? fr.vAct : fr.oAct;
+      o.actT = isV ? fr.vT : fr.oT;
+      o.actW = isV ? fr.vW : fr.oW;
+      o.actS = plan.s;
+      o.actVr = plan.vr;
+    }
+    return o;
+  }
+
+  // Gesten der anderen (Protest am Schiri, Trösten, Jubel): liefert die aktive Geste von p oder null; verschiebt dabei die Stelle
+  // nach CUE (x, z, yaw, w = Anteil der Verschiebung 0…1).
+  cueOf(p, simX, simZ, simYaw) {
+    const list = this.cues.get(p.id);
+    const o = CUE;
+    o.g = null;
+    o.w = 0;
+    o.speed = -1;
+    if (!list) return o;
+    for (const c of list) {
+      if (this.clock < c.from || this.clock >= c.to) continue;
+      o.g = c.g;
+      o.s = c.s ?? 1;
+      o.kind = c.g;
+      if (c.mv) {
+        const e = smoothstep(c.from, c.from + CUE_RUN, this.clock) * (1 - smoothstep(c.to - CUE_RUN, c.to, this.clock));
+        o.x = simX + (c.mv.x1 - c.mv.x0) * e;
+        o.z = simZ + (c.mv.z1 - c.mv.z0) * e;
+        o.yaw = lerpAngle(simYaw, Math.atan2(c.face.x - o.x, c.face.z - o.z), smoothstep(c.from, c.from + 0.4, this.clock));
+        o.w = e > 0 ? 1 : 0;
+      } else if (c.follow) {
+        const wk = this.walkers.find((q) => q.id === c.follow);
+        if (!wk || wk.delay > 0) continue;
+        const e = smoothstep(c.from, c.from + 1.2, this.clock) * (1 - smoothstep(c.to - 1, c.to, this.clock));
+        const a = wk.out.angle ?? 0;
+        const wx = wk.w.x;
+        const wz = wk.out.z ?? wk.w.z;
+        const lx = -CONSOLE_AT.side * o.s; // der Gehende steht rechts (s = 1) bzw. links neben ihm, etwas vor ihm
+        const lz = -CONSOLE_AT.behind;
+        o.x = simX + (wx + lx * Math.cos(a) + lz * Math.sin(a) - simX) * e;
+        o.z = simZ + (wz - lx * Math.sin(a) + lz * Math.cos(a) - simZ) * e;
+        o.yaw = lerpAngle(simYaw, a, e);
+        o.w = e > 0 ? 1 : 0;
+        o.speed = e > 0.5 ? (wk.out.speed ?? 0) : -1;
+      }
+      break;
+    }
+    return o;
   }
 
   // Zweikampf: Schulter rein (reactions.js duelPairs, dazu der Stoß nach Ereignissen). Das Anlehnen blendet
@@ -566,6 +739,9 @@ export class MatchView {
 
   sync(match, dt) {
     this.time += dt;
+    const sdt = this.steps * SIM_STEP; // Spielzeit seit dem letzten Bild (0 bei Pause)
+    this.steps = 0;
+    this.stepFx(match, sdt);
     for (const model of this.models.values()) model.group.visible = false;
     let idx = -1;
     const tin = throwInRun(match);
@@ -597,6 +773,18 @@ export class MatchView {
       // Einwerfer: im Anlauf läuft er längs der Linie, dreht erst am Punkt in die Wurfrichtung.
       if (m.inOff > 0.001) angle = lerpAngle(m.inDir * (Math.PI / 2), angle, m.inTurn);
       m.group.rotation.y = angle;
+      // Foul-Szene (Sturz, Griff) oder Geste am Schiri/Gehenden verschiebt und dreht die Figur gegenüber der Simulation.
+      const fo = this.foulOf(p, px, p.pos.z, angle);
+      const cu = fo.on ? null : this.cueOf(p, px, p.pos.z, angle);
+      let ovSpeed = -1;
+      if (fo.on || cu.w) {
+        const src = fo.on ? fo : cu;
+        const sh = this.shown.get(p.id);
+        m.group.position.x = src.x;
+        m.group.position.z = src.z;
+        m.group.rotation.y = src.yaw;
+        ovSpeed = cu && cu.speed >= 0 ? cu.speed : sh && dt > 0 ? Math.min(7, Math.hypot(src.x - sh.x, src.z - sh.z) / dt) : 0;
+      }
       if (m.flame) m.flame.scale.y = 0.4 + Math.sin(this.time * 12 + p.pos.x) * 0.04; // flackert
       // Hechtsprung des Torwarts und Rutschen am Boden machen dreckig; Laufen ein wenig.
       if (p.diveAnim > 0 && !this.diving.has(p.id)) {
@@ -615,7 +803,8 @@ export class MatchView {
       if (p.mood === 'scorer' || p.mood === 'celebrate') {
         celebrate = m.celebration === 'rutscher' && !this.softGround ? 'flugzeug' : m.celebration;
         celebrate = mateCelebration(match, p, celebrate);
-      }
+        if (p.mood === 'scorer' && m.penaltyGoal) celebrate = 'schrei'; // Elfmeter verwandelt
+      } else m.penaltyGoal = false;
       this.headerPrep(p, m, match.ball, dt);
       this.kickPrep(p, m, match.ball, dt);
       this.keeperDuck(p, m, match.ball, dt);
@@ -628,6 +817,15 @@ export class MatchView {
       // Ein wiederverwendetes Optionsobjekt statt 22 neuer pro Bild (animatePlayer liest nur).
       const o = ANIM;
       o.speed = m.inOff > 0.001 ? m.inSpeed : len(p.vel.x, p.vel.z);
+      if (ovSpeed >= 0 && (fo.on ? fo.act !== 'sturzRueck' : true)) o.speed = Math.max(o.speed, ovSpeed);
+      o.act = fo.on ? fo.act : null;
+      o.actT = fo.on ? fo.actT : 0;
+      o.actW = fo.on ? fo.actW : 1;
+      o.actS = fo.on ? fo.actS : cu && cu.g ? cu.s : 1;
+      o.actVr = fo.on ? fo.actVr : 0;
+      m.carryK = (m.carryK ?? 0) + (dribbleCarry(match, p) - (m.carryK ?? 0)) * Math.min(1, dt * 7);
+      o.carry = m.carryK;
+      o.slideT = p.state === 'tackle' ? Math.max(0, Math.min(1, 1 - p.stateTimer / 0.45)) : -1;
       o.dt = dt;
       o.headPrep = m.headPrep;
       o.headJump = m.headJump ?? 0;
@@ -735,12 +933,14 @@ export class MatchView {
       o.acro = ac ? p.acro : null;
       o.acroT = ac ? 1 - Math.max(0, p.acroAnim) / ac.time : 0;
       o.fooled = p.fooledUntil > match.time ? 1 - (p.fooledUntil - match.time) / (p.fooledFor || 0.8) : 0;
+      if (cu && cu.g === 'jubel' && !celebrate) celebrate = 'faust';
       o.celebrate = celebrate;
       o.sad = p.mood === 'sad';
       // Vorfälle (reactions.js incidentPose): Hände über dem Kopf, scheuchen, zeigen, klettern am Zaun …
       const ip = match.incident ? incidentPose(match, p, idx, INC_POSE) : null;
       o.cover = ip ? ip.cover : 0;
       o.gesture = ip ? ip.gesture : null;
+      if (!o.gesture && cu && cu.g && cu.g !== 'jubel') o.gesture = cu.g;
       m.group.position.y = ip ? ip.lift : 0;
       // Nach dem Schuss: Hände an den Kopf, abwinken, Faust des Torwarts (nur Darstellung, aus Ereignissen).
       if (m.reactTime > 0) {
@@ -765,9 +965,25 @@ export class MatchView {
       animatePlayer(m, o);
       if (p.role === 'gk') this.keeperCarry(m, o);
       else this.throwInCarry(m, o);
-      this.blob(m, p.pos.x, p.pos.z);
+      const sh = this.shown.get(p.id);
+      if (sh) (sh.x = m.group.position.x), (sh.z = m.group.position.z), (sh.yaw = m.group.rotation.y);
+      else this.shown.set(p.id, { x: m.group.position.x, z: m.group.position.z, yaw: m.group.rotation.y });
+      this.blob(m, m.group.position.x, m.group.position.z);
     }
     this.warmup(match, dt);
+    // Ausgeschlossene: Kopf schütteln, dann langsam zur Seitenlinie (reactions.js walkOffStep).
+    for (const w of this.walkers) {
+      const m = this.models.get(w.id);
+      if (!m) continue;
+      m.group.visible = true;
+      m.group.position.set(w.out.x, 0, w.out.z);
+      m.group.rotation.y = w.out.angle;
+      WALK_ANIM.speed = w.out.speed;
+      WALK_ANIM.dt = dt;
+      WALK_ANIM.gesture = w.out.gesture;
+      animatePlayer(m, WALK_ANIM);
+      this.blob(m, w.out.x, w.out.z);
+    }
     // Ausgewechselte: abklatschen und vom Platz trotten.
     this.leaving = this.leaving.filter((l) => {
       const m = this.models.get(l.id);
@@ -802,12 +1018,24 @@ export class MatchView {
           REF_ANIM.gesture = 'zeigen';
         }
       }
+      if (sg && sg.time > 0 && sg.kind === 'penalty' && REF_ANIM.gesture) REF_ANIM.gesture = 'punkt'; // Elfmeter: Arm schräg zum Punkt
       REF_ANIM.cover = match.incident?.type === 'gewitter' && REF_ANIM.speed > 1.5 ? 1 : 0;
       REF_ANIM.gesture = refereePose(match) ?? REF_ANIM.gesture;
+      // Vorteil (beide Arme nach vorn), Karte (Arm hoch, farbige Karte in der Faust), danach das Notizbuch.
+      const adv = advantageGesture(this.refState, match);
+      if (adv) REF_ANIM.gesture = adv;
+      const rc = this.refCue;
+      const cg = rc ? cardGesture(rc.color, rc.t) : null;
+      if (cg) {
+        REF_ANIM.gesture = cg;
+        this.referee.group.rotation.y = Math.atan2(rc.x - r.pos.x, rc.z - r.pos.z);
+      }
       animatePlayer(this.referee, REF_ANIM);
-      if (r.cardAnim > 0) this.referee.arms[1].rotation.x = -2.9; // Karte hoch
       this.blob(this.referee, r.pos.x, r.pos.z);
     }
+    this.prevBall.x = match.ball.pos.x;
+    this.prevBall.y = match.ball.pos.y;
+    this.prevBall.z = match.ball.pos.z;
     this.ballView.sync(match, dt, this.ballBlob);
     this.endBlobs();
     this.weather.update(match, dt);

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { pixelTexture, toon, vertexToon } from './materials.js';
 import { makeSplats, paintKit, paintSleeve, REGION, SLEEVE_CELL, sleeveColor } from './kitPaint.js';
+import { FALL } from './reactions.js';
 
 // Spieler 2.0: eine Low-Poly-Figur aus wenigen, leicht verjüngten Körperteilen –
 // Hüfte, Torso, Kopf, zweiteilige Arme und Beine mit Knie und Ellbogen, Schuhe mit
@@ -12,8 +13,12 @@ import { makeSplats, paintKit, paintSleeve, REGION, SLEEVE_CELL, sleeveColor } f
 
 export const BONES = ['root', 'hips', 'spine', 'head', 'upperArmL', 'lowerArmL', 'upperArmR', 'lowerArmR', 'upperLegL', 'lowerLegL', 'footL', 'upperLegR', 'lowerLegR', 'footR', 'hood'];
 const HIDDEN = 0.001; // Maßstab ausgeblendeter Teile (Trikot über dem Kopf)
-const B = Object.fromEntries(BONES.map((n, i) => [n, i]));
-const PARENT = { hips: 'root', spine: 'hips', head: 'spine', upperArmL: 'spine', lowerArmL: 'upperArmL', upperArmR: 'spine', lowerArmR: 'upperArmR', upperLegL: 'hips', lowerLegL: 'upperLegL', footL: 'lowerLegL', upperLegR: 'hips', lowerLegR: 'upperLegR', footR: 'lowerLegR', hood: 'head' };
+// Nur der Schiri hat drei Knochen mehr: Gelbe und Rote Karte in der Faust, Notizbuch in der Linken (je ein Quader im selben
+// Netz, ausgeblendet bis zur Geste – keine zusätzlichen Draw Calls).
+export const REF_BONES = ['cardY', 'cardR', 'book'];
+const ALL_BONES = [...BONES, ...REF_BONES];
+const B = Object.fromEntries(ALL_BONES.map((n, i) => [n, i]));
+const PARENT = { cardY: 'lowerArmR', cardR: 'lowerArmR', book: 'lowerArmL', hips: 'root', spine: 'hips', head: 'spine', upperArmL: 'spine', lowerArmL: 'upperArmL', upperArmR: 'spine', lowerArmR: 'upperArmR', upperLegL: 'hips', lowerLegL: 'upperLegL', footL: 'lowerLegL', upperLegR: 'hips', lowerLegR: 'upperLegR', footR: 'lowerLegR', hood: 'head' };
 
 // --- Team-Atlas -------------------------------------------------------------------
 // Je Spieler eine Kachel 128 × 16: Trikot (64 × 16: vorn | hinten | links | rechts,
@@ -343,7 +348,7 @@ function faceUV(uv, start, corners, atlas, tile, face) {
 // Aussehen; Frisur, Schulterbreite, Beinlänge und Kopfgröße leiten sich daraus ab.
 // atlas: gemeinsamer Team-Atlas (sonst bekommt die Figur einen eigenen).
 // edge: Kantenkennung für den Post-Shader (nur Spieler und Schiri).
-export function createPlayerModel(look, kit, { number = null, keeper = false, sponsor = null, sleeve = null, textured = true, atlas = null, edge = null } = {}) {
+export function createPlayerModel(look, kit, { number = null, keeper = false, sponsor = null, sleeve = null, textured = true, atlas = null, edge = null, referee = false } = {}) {
   const hash = lookHash(look);
   const belly = look.belly ?? 0;
   const vary = (shift, step) => 1 + (((hash >>> shift) % 5) - 2) * step;
@@ -395,6 +400,9 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
     footL: [0, -shin, 0],
     footR: [0, -shin, 0],
     hood: [0, 0, 0],
+    cardY: [0, 0, 0],
+    cardR: [0, 0, 0],
+    book: [0, -0.24, 0.005], // sitzt in der linken Hand
   };
 
   const b = new Builder();
@@ -474,6 +482,15 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
       b.box(`lowerArm${s}`, 0.118, 0.035, 0.13, gloveCuff, [out, -0.185, 0.003]); // Manschette am Handgelenk
       b.box(`lowerArm${s}`, 0.14, 0.09, 0.14, pad, [out, -0.03, -0.01]); // Ellbogenpolster
     }
+  }
+
+  if (referee) {
+    // Karten in der rechten Faust (über der Hand, Breitseite nach vorn), Notizbuch in der linken Hand: Quader im Netz,
+    // bis zur Geste auf ~0 skaliert. Gelb und Rot sind zwei Quader auf eigenen Knochen.
+    b.box('cardY', 0.13, 0.19, 0.012, 0xffd21f, [0.01, -0.33, 0.045]);
+    b.box('cardR', 0.13, 0.19, 0.012, 0xd61f1f, [0.01, -0.33, 0.045]);
+    b.box('book', 0.13, 0.17, 0.02, 0x1d1d22, [0, -0.02, 0.07]); // Einband
+    b.box('book', 0.115, 0.155, 0.014, 0xf1ecdc, [0, -0.02, 0.084]); // Seiten
   }
 
   // Kopf: oben breiter als am Kinn (Kieferform je Spieler), vorne das Pixelgesicht, Ohren
@@ -582,7 +599,8 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
   // Knochen in Ruhelage (Weltlage je Knochen = Summe der Versätze).
   const bones = {};
   const world = {};
-  for (const n of BONES) {
+  const names = referee ? ALL_BONES : BONES;
+  for (const n of names) {
     const bone = new THREE.Bone();
     bone.name = n;
     bones[n] = bone;
@@ -664,8 +682,9 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
   mesh.frustumCulled = false; // Posen (Hechtsprung, Grätsche) reichen über die Ruhelage hinaus
   mesh.add(bones.root);
   mesh.updateMatrixWorld(true);
-  mesh.bind(new THREE.Skeleton(BONES.map((n) => bones[n])));
+  mesh.bind(new THREE.Skeleton(names.map((n) => bones[n])));
   bones.hood.scale.setScalar(HIDDEN); // erst nach dem Binden (sonst nicht umkehrbar)
+  for (const n of REF_BONES) bones[n]?.scale.setScalar(HIDDEN);
 
   const group = new THREE.Group();
   group.add(mesh);
@@ -773,6 +792,7 @@ const lerp = (a, b, t) => a + (b - a) * t;
 function resetPose(m) {
   const bn = m.bones;
   for (const n of BONES) bn[n].rotation.set(0, 0, 0);
+  for (const n of REF_BONES) if (bn[n]) (bn[n].rotation.set(0, 0, 0), bn[n].scale.setScalar(HIDDEN));
   const r = m.rest.hips;
   bn.hips.position.set(r[0], r[1], r[2]);
 }
@@ -806,6 +826,18 @@ const FIST_HIGH = [-2.4, 0.07, -0.03];
 const FIST_LOW = [-1.63, 0.15, -0.65];
 const CLIMB_HIGH = [-2.65, -0.15, -0.6];
 const CLIMB_MID = [-1.53, -0.13, -0.93];
+// Neue Gesten (Foul, Pfiff, Schiri) – [vor, außen, Ellbogen]. UNSCHULD/REKLAMIEREN/VORTEIL sind Haltungen ohne Ziel am Gegner;
+// TROESTEN (Hand auf der Schulter), KARTE (gestreckt über dem Kopf), BUCH_L/BUCH_R (Hände am Notizbuch) und PUNKT (Zeigen zum Boden)
+// per Gitter-Suche, Abstände im Test (tests/player.test.js).
+export const UNSCHULD = [-1.05, 0.55, -1.15];
+export const REKLAMIEREN = [-0.35, 1.25, -0.2];
+export const VORTEIL = [-1.5, 0.25, -0.08];
+export const TROESTEN = [-0.99, -0.67, -1.08];
+export const KARTE = [-3.05, 0.12, -0.05];
+export const BUCH_L = [-0.5, -0.5, -1.2];
+export const BUCH_R = [-0.93, -0.96, -0.52]; // Hand auf der Seite des Buchs (Gitter-Suche, 0,1 cm)
+export const DEHNEN = { thigh: 0.7, knee: 2.5, foot: 0.2, arm: [0.7, -0.36, -0.51] }; // Hand am Fußgelenk (Gitter-Suche, 0,1 cm)
+export const PUNKT = [-0.95, 0.1, -0.05];
 
 // Schicht über der Laufbewegung: Pose merken, Schicht setzen, dann zur gemerkten hin überblenden
 // (w 1 = ganz die Schicht). So springt nichts beim Wechsel zwischen Laufen, Ausholen und Schuss.
@@ -884,7 +916,7 @@ function catchPose(bn, kind, t) {
 
 // Laufen: Kontakt → Abfedern → Durchschwingen → Abdruck, Arme gegengleich und leicht
 // verzögert, Hüfte kippt und dreht mit, Schultern drehen dagegen, Kopf bleibt ruhig.
-function locomotion(m, speed, dt) {
+function locomotion(m, speed, dt, carry = 0) {
   const bn = m.bones;
   const s = clamp01(speed / 7.5); // 0 Stand … 1 Sprint
   const move = smooth(0.15, 1.4, speed); // Übergang aus dem Stand
@@ -893,21 +925,24 @@ function locomotion(m, speed, dt) {
   const ph = Math.round(m.phase / STEP) * STEP;
   const cp = Math.cos(ph);
   const sp = Math.sin(ph);
-  const at = (0.28 + 0.5 * s) * move;
-  const ak = (0.35 + 1.05 * s) * move;
+  // Mit Ball am Fuß: kürzere, flachere Schritte, der Ball wird bei jedem Schritt angetippt (Fuß streckt sich nach vorn).
+  const cr = carry * move;
+  const at = (0.28 + 0.5 * s) * move * (1 - 0.22 * cr);
+  const ak = (0.35 + 1.05 * s) * move * (1 - 0.3 * cr);
   for (const [side, p] of [['L', ph], ['R', ph + Math.PI]]) {
     const thigh = -at * Math.cos(p);
     const sw = Math.sin(p - Math.PI); // > 0: Schwungbein
     const knee = sw > 0 ? 0.08 + ak * sw : 0.08 + 0.18 * s * move * Math.sin(p);
-    const foot = sw > 0 ? 0.25 * s * move : -(thigh + knee) * 0.8;
+    const foot = sw > 0 ? 0.25 * s * move - 0.35 * cr * Math.sin(p - Math.PI + 0.5) : -(thigh + knee) * 0.8;
     leg(bn, side, thigh, knee, foot);
   }
   // Arme: Gegenbewegung zum Bein, beim Sprint weiter und stärker angewinkelt.
   const lag = 0.35;
-  const aa = (0.18 + 0.7 * s) * move;
-  const elbow = -(0.25 + 1.05 * s) * move - 0.12;
-  arm(bn, 'L', aa * Math.cos(ph - lag), 0.1 + 0.04 * s, elbow);
-  arm(bn, 'R', -aa * Math.cos(ph - lag), 0.1 + 0.04 * s, elbow);
+  const aa = (0.18 + 0.7 * s) * move * (1 - 0.45 * cr);
+  const elbow = -(0.25 + 1.05 * s) * move - 0.12 - 0.25 * cr;
+  const aOut = 0.1 + 0.04 * s + 0.2 * cr; // Arme etwas vom Körper weg: Balance beim Führen des Balls
+  arm(bn, 'L', aa * Math.cos(ph - lag), aOut, elbow);
+  arm(bn, 'R', -aa * Math.cos(ph - lag), aOut, elbow);
   // Hüfte: federt zweimal je Schrittpaar, kippt zum Standbein, dreht mit dem Bein.
   const bob = (0.012 + 0.04 * s) * move;
   bn.hips.position.y += -bob * (0.5 + 0.5 * Math.cos(2 * ph - 0.6));
@@ -915,8 +950,9 @@ function locomotion(m, speed, dt) {
   bn.hips.rotation.y = 0.14 * s * move * cp;
   bn.spine.rotation.y = -0.22 * s * move * cp;
   bn.spine.rotation.z = -0.03 * s * move * sp;
-  bn.spine.rotation.x = 0.04 + 0.2 * s * move;
-  bn.head.rotation.x = -bn.spine.rotation.x * 0.7;
+  bn.spine.rotation.x = 0.04 + 0.2 * s * move + 0.1 * cr;
+  bn.head.rotation.x = -bn.spine.rotation.x * 0.7 + 0.42 * cr; // der Blick geht zum Ball
+  bn.hips.position.y -= 0.03 * cr;
   bn.head.rotation.y = -bn.spine.rotation.y * 0.5 - bn.hips.rotation.y * 0.5;
   // Stand: atmen, Gewicht verlagern, Arme locker.
   const still = 1 - move;
@@ -1073,6 +1109,250 @@ function acroPose(bn, kind, t, hipY) {
   }
 }
 
+// --- Fouls: Stürze, Aufstehen, Griffe (nur Darstellung) ---------------------------------------------------
+// Die Simulation meldet ein Foul nur als Ereignis; wie es aussieht, entscheidet MatchView mit reactions.js (foulPlan). Zeit ts in
+// Sekunden seit Beginn der Szene (Zeiten: reactions.js FALL). Die Winkel der Griffe stehen bei den Konstanten weiter unten;
+// sie liegen per Gitter-Suche auf einem Zielpunkt am Gegner, der dazu im Abstand FOUL_REACH steht (reactions.js).
+
+// Liegen und Aufstehen: Lage (hips.rotation.x), Hüfthöhe, Haltung von Beinen [Oberschenkel, Knie, Fuß], Armen und Kopf.
+// Seitenlage: legs[0] ist das untere Bein (Seite des Sturzes), legs[1] das obere.
+const LIE = {
+  tackle: { rx: -1.1, y: 0.3, spine: 0.45, head: 0.35, legs: [[-0.45, 0.02, 0.3], [0.15, 1.45, 0.2]], armL: [-0.4, 1.1, -0.5], armR: [0.7, 0.35, -0.2] },
+  down: { rx: 1.45, y: 0.2, spine: 0.05, head: -0.45, legs: [[0.05, 0.35, 0.4], [0.1, 0.1, 0.4]], armL: [-2.5, 0.35, -0.35], armR: [-2.2, 0.5, -0.6] },
+  back: { rx: -1.45, y: 0.22, spine: -0.1, head: 0.4, legs: [[-0.45, 1.2, 0.3], [-0.55, 1.4, 0.3]], armL: [0.55, 1.0, -0.2], armR: [0.5, 1.1, -0.2] },
+  side: { rx: 0, y: 0.25, spine: 0.15, head: 0.1, legs: [[-0.5, 1.2, 0.3], [-0.3, 0.75, 0.3]], armL: [0.9, 0.4, -0.2], armR: [-0.6, 0.5, -0.5] }, // L = unterer Arm
+  crouch: { rx: 0, y: 0.3, spine: 0.5, head: 0.2, legs: [[-1.1, 1.7, 0.3], [-0.6, 1.2, 0.3]], armL: [-0.4, 0.6, -0.5], armR: [0.9, 0.35, -0.2] },
+};
+const ease3 = (t) => t * t * (3 - 2 * t);
+
+// Aufstehen aus der Lage `from` (u 0 liegt … 1 steht): erst der Oberkörper hoch bzw. aufsetzen, dann auf eine Hand gestützt
+// in die Hocke, dann hoch. Die Haltung geht weich von der Lage in die Hocke (kein Sprung in den Beinen). s: Sturzseite (±1).
+function risePose(bn, from, u, hipY, s = 1) {
+  const L = LIE[from];
+  const lie = 1 - ease3(Math.min(1, u / 0.45)); // 1 → 0 in der ersten Hälfte
+  const crouch = Math.sin(Math.min(1, u / 0.95) * Math.PI) * (u < 0.5 ? 1 : 1 - ease3((u - 0.5) / 0.5) * 0.6);
+  const low = 1 - ease3(Math.min(1, Math.max(0, (u - 0.25) / 0.75)));
+  const ls = 1 - ease3(Math.min(1, u / 0.6)); // Anteil der Liegehaltung in Beinen und Armen
+  const yLow = 0.3 + (L.y - 0.3) * lie;
+  bn.hips.position.y = hipY - (hipY - yLow) * low;
+  bn.hips.rotation.x = L.rx * lie;
+  bn.hips.rotation.z = from === 'side' ? -s * 1.45 * lie : 0;
+  bn.spine.rotation.x = L.spine * lie + (from === 'tackle' ? 0.55 : 0.5) * crouch;
+  const order = from === 'side' && s > 0 ? ['R', 'L'] : ['L', 'R']; // Seitenlage: das untere Bein zuerst
+  order.forEach((b, k) => {
+    const l = L.legs[k];
+    const cr = b === 'L' ? [-1.1 * crouch, 1.7 * crouch] : [-0.6 * crouch, 1.2 * crouch];
+    let th = lerp(cr[0], l[0], ls);
+    if (from === 'back') th += (-1.9 - bn.hips.rotation.x - l[0]) * ls; // aufgesetzt bleiben die Knie oben
+    leg(bn, b, th, lerp(cr[1], l[1], ls), lerp(0.3, l[2], ls));
+  });
+  const armR = from === 'side' && s > 0 ? L.armL : L.armR; // Seitenlage: L.armL ist der untere Arm (Seite des Sturzes)
+  const armL = from === 'side' && s > 0 ? L.armR : L.armL;
+  arm(bn, 'R', lerp(0.9 * crouch, armR[0], ls), lerp(0.35, armR[1], ls), lerp(-0.2, armR[2], ls)); // stützt sich ab
+  arm(bn, 'L', lerp(-0.4 * crouch, armL[0], ls), lerp(0.6 * crouch, armL[1], ls), lerp(-0.5 * crouch, armL[2], ls));
+  bn.head.rotation.x = lerp(0.2 * crouch, L.head, ls);
+}
+
+// Sturz (depth 1) und Taumeln (depth 0). fam: 'back' (rücklings), 'side' (zur Seite s; rotation.z < 0 fällt nach +x),
+// 'fwd' (vornüber; vr < 0,5 rollt ab, sonst Bauchrutscher). vr 0…1: Variation (Armrudern, Stärke) – nie Zufall.
+function fallPose(bn, fam, ts, depth, s, vr, hipY) {
+  const { yank, down, lie, up } = FALL;
+  const t2 = yank + down;
+  const t3 = t2 + lie;
+  const fl = Math.sin(ts * 21 + vr * 6) * (0.18 + 0.1 * vr); // Rudern der Arme
+  const A = s > 0 ? 'L' : 'R'; // vorn: die Seite spiegelt mit der Fallrichtung s
+  const Bn = s > 0 ? 'R' : 'L';
+  if (depth < 1) {
+    // Taumeln: aus dem Gleichgewicht, ein Ausfallschritt fängt ihn ab, er richtet sich wieder auf.
+    const p = Math.sin(Math.PI * clamp01(ts / FALL.stumble)) ** 1.3;
+    const q = (0.7 + 0.3 * vr) * p;
+    if (fam === 'back') {
+      bn.hips.rotation.x -= 0.2 * q;
+      bn.spine.rotation.x -= 0.32 * q;
+      bn.head.rotation.x -= 0.2 * q;
+      leg(bn, 'L', 0.55 * q, 0.5 * q, 0.2);
+      leg(bn, 'R', -0.45 * q, 0.35 * q, 0);
+      arm(bn, 'L', -0.9 * q + fl * q, 0.95 * q, -0.3);
+      arm(bn, 'R', -0.9 * q - fl * q, 0.95 * q, -0.3);
+    } else if (fam === 'side') {
+      const lo = s > 0 ? 'R' : 'L';
+      const hi = s > 0 ? 'L' : 'R';
+      bn.spine.rotation.z -= s * 0.42 * q;
+      bn.hips.rotation.z += s * 0.14 * q;
+      bn.hips.position.y -= 0.05 * q;
+      bn[`upperLeg${lo}`].rotation.z += s * 0.55 * q;
+      leg(bn, hi, 0.2 * q, 0.5 * q, 0.1);
+      arm(bn, lo, -0.2, 1.45 * q, -0.15);
+      arm(bn, hi, -0.2 + fl * q, 0.9 * q, -0.4);
+    } else {
+      bn.spine.rotation.x += 0.55 * q;
+      bn.hips.rotation.x += 0.18 * q;
+      bn.head.rotation.x -= 0.25 * q;
+      leg(bn, A, -0.9 * q, 0.5 * q, 0.1);
+      leg(bn, Bn, 0.4 * q, 0.7 * q, 0.3);
+      arm(bn, 'L', -1.7 * q + fl * q, 0.5 * q, -0.15);
+      arm(bn, 'R', -1.7 * q - fl * q, 0.5 * q, -0.15);
+    }
+    return;
+  }
+  const y = ease3(clamp01(ts / yank));
+  const d = ease3(clamp01((ts - yank) / down));
+  const l = clamp01((ts - t2) / lie);
+  const u = clamp01((ts - t3) / up);
+  if (fam === 'back') {
+    if (ts >= t3) return risePose(bn, 'back', u, hipY);
+    bn.hips.rotation.x = -0.22 * y * (1 - d) - 1.45 * d;
+    bn.hips.position.y = hipY - (hipY - 0.22) * smooth(0.1, 1, d) - 0.03 * y * (1 - d) + 0.025 * Math.sin(l * Math.PI);
+    bn.spine.rotation.x = -0.25 * y * (1 - d) - 0.1 * d;
+    bn.head.rotation.x = -0.2 * y * (1 - d) + lerp(0.6, 0.4, l) * d;
+    const aL = mix3([(-1.05 + fl) * y, 0.8 * y, -0.3 * y], LIE.back.armL, d);
+    const aR = mix3([(-1.05 - fl) * y, 0.8 * y, -0.3 * y], LIE.back.armR, d);
+    arm(bn, 'L', aL[0], aL[1], aL[2]);
+    arm(bn, 'R', aR[0], aR[1], aR[2]);
+    const t0 = mix3([0.3 * y, 0.4 * y, 0.2 * y], LIE.back.legs[0], d);
+    const t1 = mix3([-0.3 * y, 0.5 * y, 0.1 * y], LIE.back.legs[1], d);
+    leg(bn, 'L', t0[0], t0[1], t0[2]);
+    leg(bn, 'R', t1[0], t1[1], t1[2]);
+  } else if (fam === 'side') {
+    if (ts >= t3) return risePose(bn, 'side', u, hipY, s);
+    const lo = s > 0 ? 'R' : 'L';
+    const hi = s > 0 ? 'L' : 'R';
+    bn.hips.rotation.z = -s * (0.14 * y * (1 - d) + 1.45 * d);
+    bn.hips.position.y = hipY - (hipY - 0.25) * smooth(0.1, 1, d) - 0.04 * y * (1 - d) + 0.02 * Math.sin(l * Math.PI);
+    bn.spine.rotation.z = -s * 0.4 * y * (1 - d);
+    bn.spine.rotation.x = 0.15 * d;
+    bn.head.rotation.x = 0.1 * d;
+    const w = mix3([0.2 * y, 0.5 * y, 0.1 * y], LIE.side.legs[0], d);
+    const w2 = mix3([0.2 * y, 0.5 * y, 0.1 * y], LIE.side.legs[1], d);
+    leg(bn, lo, w[0], w[1], w[2]);
+    leg(bn, hi, w2[0], w2[1], w2[2]);
+    bn[`upperLeg${lo}`].rotation.z += s * 0.5 * y * (1 - d);
+    const aLo = mix3([-0.2 * y, 1.45 * y, -0.15 * y], LIE.side.armL, d);
+    const aHi = mix3([(-0.2 + fl) * y, 0.9 * y, -0.4 * y], LIE.side.armR, d);
+    arm(bn, lo, aLo[0], aLo[1], aLo[2]);
+    arm(bn, hi, aHi[0], aHi[1], aHi[2]);
+  } else if (vr >= 0.5) {
+    // Bauchrutscher: nach vorn auf die Hände und den Bauch, die Beine kommen hinterher.
+    if (ts >= t3) return risePose(bn, 'down', u, hipY);
+    bn.hips.rotation.x = 0.3 * y * (1 - d) + LIE.down.rx * d;
+    bn.hips.position.y = hipY - (hipY - 0.2) * smooth(0.05, 1, d) - 0.04 * y * (1 - d);
+    bn.spine.rotation.x = 0.5 * y * (1 - d) + 0.05 * d;
+    bn.head.rotation.x = -0.3 * y * (1 - d) + LIE.down.head * d;
+    const aL = mix3([-1.7 * y + fl * y, 0.5 * y, -0.15 * y], LIE.down.armL, d);
+    const aR = mix3([-1.7 * y - fl * y, 0.5 * y, -0.15 * y], LIE.down.armR, d);
+    arm(bn, 'L', aL[0], aL[1], aL[2]);
+    arm(bn, 'R', aR[0], aR[1], aR[2]);
+    const t0 = mix3([-0.9 * y, 0.5 * y, 0.1 * y], LIE.down.legs[0], d);
+    const t1 = mix3([0.4 * y, 0.7 * y, 0.3 * y], LIE.down.legs[1], d);
+    leg(bn, A, t0[0], t0[1], t0[2]);
+    leg(bn, Bn, t1[0], t1[1], t1[2]);
+  } else {
+    // Abrollen: Hände auf den Boden, über die Schulter eingerollt, hockend wieder oben (hips.rotation.x läuft 0,3 → 2π).
+    if (ts >= t3) return risePose(bn, 'crouch', u, hipY);
+    const t0 = yank * 0.6;
+    const rp = clamp01((ts - t0) / (t3 - t0));
+    const th = 0.3 * y + (TAU - 0.3) * ease3(rp);
+    const e = smooth(0.75, 1, rp);
+    const tuck = smooth(0, 0.3, rp);
+    bn.hips.rotation.x = th;
+    bn.hips.position.y = lerp(lerp(hipY - 0.12 * y, 0.25 + 0.32 * Math.cos(th) ** 2, smooth(0, 0.8, th)), LIE.crouch.y, e);
+    bn.spine.rotation.x = lerp(lerp(0.4 * y, 1.2, tuck), LIE.crouch.spine, e);
+    bn.head.rotation.x = lerp(0.5 * tuck, LIE.crouch.head, e);
+    const a = mix3(mix3([-1.9 + fl, 0.45, -0.1], [-2.4, 0.4, -0.9], tuck), LIE.crouch.armR, e);
+    arm(bn, 'L', a[0], a[1], a[2]);
+    arm(bn, 'R', a[0], a[1], a[2]);
+    const lg0 = mix3(mix3([-0.9 * y, 0.4 * y, 0.2], [-1.4, 1.7, 0.2], tuck), LIE.crouch.legs[0], e);
+    const lg1 = mix3(mix3([0.3 * y, 0.6 * y, 0.3], [-1.2, 1.7, 0.3], tuck), LIE.crouch.legs[1], e);
+    leg(bn, A, lg0[0], lg0[1], lg0[2]);
+    leg(bn, Bn, lg1[0], lg1[1], lg1[2]);
+  }
+}
+
+// Griffe des Foulenden: Armwinkel [vor, außen, Ellbogen] (rechter Arm; links spiegelt arm() selbst) bzw. Bein
+// [Oberschenkel, Knie, Fuß, Abspreizen]. Per Gitter-Suche (scratchpad/tools/solve.mjs) auf Zielpunkte am Gefoulten gelegt, der im
+// Abstand FOUL_REACH (reactions.js) steht. A = Griff, B = gezogen/gestoßen (der Gefoulte hat sich dabei bewegt).
+export const GRIP = {
+  ziehenA: [-1.11, -0.23, -1.3],
+  ziehenB: [-1.1, -0.14, -0.05],
+  festhaltenA: [-0.43, -0.39, -1.52],
+  festhaltenB: [-0.71, -0.2, -0.17],
+  schubsenA: [-1.02, -0.5, -1.35],
+  schubsenB: [-1.77, -0.33, -0.59],
+  luft: [-0.9, -0.5, -1.21],
+  bein: [-1.25, 1.05, 0.3, 0],
+};
+// Poseneinträge für act: ['fall', Familie, Tiefe (1 Sturz, 0 Taumeln)] oder ['grip'] (Griff des Foulenden).
+export const ACTS = {
+  sturzRueck: ['fall', 'back', 1],
+  taumelRueck: ['fall', 'back', 0],
+  sturzSeite: ['fall', 'side', 1],
+  taumelSeite: ['fall', 'side', 0],
+  sturzVorn: ['fall', 'fwd', 1],
+  taumelVorn: ['fall', 'fwd', 0],
+  sturzLuft: ['fall', 'air', 1],
+  taumelLuft: ['fall', 'air', 0],
+  ziehen: ['grip'],
+  festhalten: ['grip'],
+  schubsen: ['grip'],
+  schubsenLuft: ['grip'],
+  beinstellen: ['grip'],
+};
+const legTo = (bn, s, th, kn, ft, w) => {
+  bn[`upperLeg${s}`].rotation.x = lerp(bn[`upperLeg${s}`].rotation.x, th, w);
+  bn[`lowerLeg${s}`].rotation.x = lerp(bn[`lowerLeg${s}`].rotation.x, kn, w);
+  bn[`foot${s}`].rotation.x = lerp(bn[`foot${s}`].rotation.x, ft, w);
+};
+
+// Haltung des Foulenden beim Griff (ts Sekunden seit dem Foul). s ±1: mit welcher Seite er greift bzw. zur Fallseite.
+function foulActPose(bn, act, ts, s, vr) {
+  const hand = s > 0 ? 'R' : 'L';
+  const other = s > 0 ? 'L' : 'R';
+  const reach = ease3(clamp01((ts - 0.02) / 0.1));
+  const pu = ease3(clamp01((ts - 0.12) / 0.18)); // Zug/Stoß: 0 beim Griff (0,12 s), 1 bei 0,3 s
+  const rl = ease3(clamp01((ts - 0.42) / 0.22));
+  const k = reach * (1 - rl); // Griff ein, nach dem Loslassen aus
+  if (act === 'ziehen' || act === 'festhalten') {
+    const hold = act === 'festhalten';
+    const A = mix3(hold ? GRIP.festhaltenA : GRIP.ziehenA, hold ? GRIP.festhaltenB : GRIP.ziehenB, pu);
+    armTo(bn, hand, A[0], A[1], A[2], k);
+    armTo(bn, other, hold ? A[0] : -0.3, hold ? A[1] : 0.9, hold ? A[2] : -0.4, k);
+    bn.spine.rotation.x += (0.28 - 0.45 * pu) * k;
+    bn.head.rotation.x += 0.1 * k;
+    bn.hips.position.y -= (0.04 + 0.03 * pu) * k;
+    legTo(bn, 'L', -0.7, 0.5, 0.2, k);
+    legTo(bn, 'R', 0.45, 0.35, 0.1, k);
+  } else if (act === 'schubsen') {
+    const A = mix3(GRIP.schubsenA, GRIP.schubsenB, pu);
+    armTo(bn, 'L', A[0], A[1], A[2], k);
+    armTo(bn, 'R', A[0], A[1], A[2], k);
+    bn.spine.rotation.x += (0.18 + 0.2 * pu) * k;
+    bn.hips.position.y -= (0.04 + 0.04 * pu) * k;
+    legTo(bn, s > 0 ? 'L' : 'R', -0.85, 0.6, 0.2, k);
+    legTo(bn, s > 0 ? 'R' : 'L', 0.5, 0.4, 0.1, k);
+  } else if (act === 'schubsenLuft') {
+    // Beide springen; der Arm auf der Schulter des Gegners drückt ihn weg.
+    const air = Math.sin(Math.PI * clamp01(ts / 0.5));
+    bn.hips.position.y += 0.3 * air;
+    armTo(bn, hand, GRIP.luft[0], GRIP.luft[1], GRIP.luft[2], k);
+    armTo(bn, other, -0.6, 0.8, -0.4, k);
+    legTo(bn, 'L', -0.9 * air, 1.1 * air, 0.3, 1);
+    legTo(bn, 'R', 0.1 * air, 0.7 * air, 0.3, 1);
+    bn.spine.rotation.x -= 0.1 * k;
+  } else if (act === 'beinstellen') {
+    // Bein schnellt seitlich-vor in die Schienbeine des Gegners, der Standfuß trägt, die Arme gleichen aus.
+    const lo = ease3(clamp01((ts - 0.01) / 0.04)) * (1 - rl);
+    const sw = s > 0 ? 'R' : 'L';
+    const st = s > 0 ? 'L' : 'R';
+    legTo(bn, sw, GRIP.bein[0], GRIP.bein[1], GRIP.bein[2], lo);
+    bn[`upperLeg${sw}`].rotation.z += s * GRIP.bein[3] * lo;
+    legTo(bn, st, 0.1, 0.55, 0.1, lo);
+    bn.hips.position.y -= 0.05 * lo;
+    bn.spine.rotation.x += 0.1 * lo;
+    armTo(bn, 'L', -0.3, 0.95, -0.35, lo);
+    armTo(bn, 'R', -0.3, 0.95, -0.35, lo);
+  }
+}
+
 // Zusätzlich zur Simulation (nur Darstellung, von MatchView abgeleitet):
 // headPrep 0…1 – Kopfball kommt gleich (Anlauf, Absprung, Kopf zurück), headJump 0…1 – wie
 // hoch nach dem Kontakt gesprungen wird, hit { t 0…1, side } – kurzer Kontakt/Rempler,
@@ -1087,11 +1367,13 @@ function acroPose(bn, kind, t, hipY) {
 // Schussbein, je nach Ballseite), tinRun 0…1 (Einwurf: Anlauf und Ballhalten hinter dem Kopf), tinT 0…1 (Wurf, Loslassen
 // bei IN_REL_AT), duel 0…1 (Zweikampf: Schulter rein) mit duelDir (Richtung des Gegners, Bogenmaß von vorn
 // nach rechts), duelShield 0…1 (Ball abschirmen: Rücken zum Gegner) und duelPush 0…1 (Kontakt: kurzer Stoß).
-export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot', headPrep = 0, headJump = 1, hit = null, duck = 0, face: faceHint = null, tired = false, kickPrep = 0, trick = null, trickT = 0, trickSide = 1, acro = null, acroT = 0, fooled = 0, ready = 0, throwT = 0, jump = 0, punch = 0, getUp = null, cover = 0, gesture = null, catchKind = null, catchT = 0, punchStyle = 'beide', wide = 0, fumble = 0, drop = 0, kickTail = 0, kickFoot = 1, tinRun = 0, tinT = 0, duel = 0, duelDir = 0, duelShield = 0, duelPush = 0 }) {
+// Fouls: act (Name der Pose, ACTS), actT (Sekunden seit dem Foul), actS (Seite ±1), actVr (Variation 0…1, nie Zufall), actW (Überblendung 0…1);
+// carry 0…1 – Ballführung (kurze Schritte, Blick zum Ball); slideT 0…1 – Fortschritt der Grätsche (weich hineinrutschen).
+export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot', headPrep = 0, headJump = 1, hit = null, duck = 0, face: faceHint = null, tired = false, kickPrep = 0, trick = null, trickT = 0, trickSide = 1, acro = null, acroT = 0, fooled = 0, ready = 0, throwT = 0, jump = 0, punch = 0, getUp = null, cover = 0, gesture = null, catchKind = null, catchT = 0, punchStyle = 'beide', wide = 0, fumble = 0, drop = 0, kickTail = 0, kickFoot = 1, tinRun = 0, tinT = 0, duel = 0, duelDir = 0, duelShield = 0, duelPush = 0, act = null, actT = 0, actS = 1, actVr = 0, actW = 1, carry = 0, slideT = -1 }) {
   const bn = model.bones;
   resetPose(model);
   model.bones.hood.scale.setScalar(HIDDEN);
-  const s = locomotion(model, speed, dt);
+  const s = locomotion(model, speed, dt, carry);
   const hipY = model.rest.hips[1];
   let face = s > 0.85 ? 'effort' : 'neutral';
 
@@ -1240,20 +1522,27 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
     face = 'effort';
   }
   if (headAnim > 0 || headPrep > 0) {
-    // Kopfball: vorbereiten (abspringen, Oberkörper und Kopf zurück) → nach vorn schnappen →
-    // KONTAKT bei t = 0,5 (höchster Punkt, Kopf schnellt vor) → landen. Vor dem Kontakt
-    // treibt headPrep die Bewegung (MatchView sieht den Ball kommen), danach der Kopfball
-    // der Simulation (headAnim 0,3 → 0).
+    // Kopfball: Anlauf und Absprung (Knie federn kurz ein, dann strecken sich die Beine, ein Knie zieht hoch, die Arme
+    // schwingen mit) → Oberkörper und Kopf zurück → nach vorn schnappen → KONTAKT bei t = 0,5 (höchster Punkt, Kopf schnellt
+    // vor) → Landung (Knie federn ab, Arme gehen auseinander) → aufrichten. Vor dem Kontakt treibt headPrep die Bewegung
+    // (MatchView sieht den Ball kommen), danach der Kopfball der Simulation (headAnim 0,3 → 0).
     const t = headAnim > 0 ? 0.5 + 0.5 * (1 - headAnim / 0.3) : 0.5 * Math.min(1, headPrep);
-    const jump = headAnim > 0 ? headJump : 1;
-    bn.hips.position.y += Math.sin(t * Math.PI) * 0.32 * jump;
+    const jmp = headAnim > 0 ? headJump : 1;
+    const air = Math.sin(Math.min(1, t < 0.5 ? t : 0.5 + (t - 0.5) * 1.25) * Math.PI); // nach dem Kontakt geht es schneller runter
+    const crouchIn = (1 - smooth(0, 0.16, t)) * (headPrep > 0 && headAnim <= 0 ? smooth(0, 0.05, t) : 0); // Einfedern vor dem Absprung
+    const land = smooth(0.74, 0.9, t) * (1 - smooth(0.93, 1, t)); // Aufkommen: tief in die Knie, dann hoch
+    bn.hips.position.y += air * 0.32 * jmp - 0.07 * crouchIn * jmp - 0.09 * land * jmp;
     const snap = t < 0.38 ? -(t / 0.38) : t < 0.55 ? lerp(-1, 1, (t - 0.38) / 0.17) : lerp(1, 0.2, (t - 0.55) / 0.45);
-    bn.spine.rotation.x = 0.35 * snap;
+    bn.spine.rotation.x = 0.35 * snap + 0.12 * land;
     bn.head.rotation.x = 0.4 * snap;
-    arm(bn, 'L', -0.7, 0.55, -0.6);
-    arm(bn, 'R', -0.7, 0.55, -0.6);
-    leg(bn, 'L', -0.35, 0.8, 0.3);
-    leg(bn, 'R', 0.1, 0.9, 0.3);
+    const up = air * jmp;
+    // Beine: in der Luft Schere (ein Knie hoch, das andere angezogen), bei der Landung beide Knie gebeugt.
+    leg(bn, 'L', -0.35 - 0.55 * up - 0.25 * land, 0.8 + 0.3 * up + 0.35 * land, 0.3);
+    leg(bn, 'R', 0.1 - 0.15 * up - 0.15 * land, 0.9 + 0.1 * up + 0.3 * land, 0.3);
+    // Arme: schwingen beim Absprung nach oben-außen, beim Kontakt zur Seite für Balance, bei der Landung nach unten.
+    const sw = 1 - smooth(0.5, 0.85, t);
+    arm(bn, 'L', lerp(-0.7, -1.45, up * sw), lerp(0.55, 0.95, up), -0.6 + 0.3 * up * sw);
+    arm(bn, 'R', lerp(-0.7, -1.45, up * sw), lerp(0.55, 0.95, up), -0.6 + 0.3 * up * sw);
     face = 'effort';
   }
 
@@ -1336,6 +1625,7 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
 
   // Grätsche: Füße voran, führendes Bein gestreckt, das andere angewinkelt, eine Hand stützt.
   if (state === 'tackle') {
+    const slideBase = slideT >= 0 ? snapPose(model) : null; // aus dem Lauf weich in die Grätsche
     bn.hips.position.y = 0.3;
     bn.hips.rotation.x = -1.1;
     bn.hips.rotation.y = 0;
@@ -1345,6 +1635,7 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
     arm(bn, 'R', 0.7, 0.35, -0.2);
     arm(bn, 'L', -0.4, 1.1, -0.5);
     bn.head.rotation.x = 0.35;
+    if (slideBase) mixPose(model, slideBase, smooth(0, 0.2, slideT));
     face = 'effort';
   } else if (state === 'complain') {
     // Meckern: Arme hoch, fuchteln.
@@ -1369,24 +1660,7 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
   // Aufstehen nach Grätsche oder Sturz: k = 1 liegt noch, 0 steht. Erst Oberkörper hoch
   // (aus der Rückenlage bzw. vom Bauch), dann auf die Hand gestützt in die Hocke, dann hoch.
   if (getUp) {
-    const u = 1 - getUp.k;
-    const ease = (t) => t * t * (3 - 2 * t);
-    const lie = 1 - ease(Math.min(1, u / 0.45)); // 1 → 0 in der ersten Hälfte
-    const crouch = Math.sin(Math.min(1, u / 0.95) * Math.PI) * (u < 0.5 ? 1 : 1 - ease((u - 0.5) / 0.5) * 0.6);
-    const low = 1 - ease(Math.min(1, Math.max(0, (u - 0.25) / 0.75)));
-    bn.hips.position.y = hipY - (hipY - 0.3) * low;
-    if (getUp.from === 'tackle') {
-      bn.hips.rotation.x = -1.1 * lie;
-      bn.spine.rotation.x = 0.45 * lie + 0.55 * crouch;
-    } else {
-      bn.hips.rotation.x = 1.45 * lie;
-      bn.spine.rotation.x = 0.05 * lie + 0.5 * crouch;
-    }
-    leg(bn, 'L', -1.1 * crouch, 1.7 * crouch, 0.3);
-    leg(bn, 'R', -0.6 * crouch, 1.2 * crouch, 0.3);
-    arm(bn, 'R', 0.9 * crouch, 0.35, -0.2); // stützt sich ab
-    arm(bn, 'L', -0.4 * crouch, 0.6 * crouch, -0.5 * crouch);
-    bn.head.rotation.x = 0.2 * crouch;
+    risePose(bn, getUp.from, 1 - getUp.k, hipY);
     face = getUp.from === 'down' ? 'pain' : 'effort';
   }
   if (state === 'acro' || (acro && acroT < 1)) {
@@ -1495,7 +1769,8 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
   // Gesten bei Vorfällen: finger (Zeigefinger hoch, wackelt), arme (verschränkt),
   // scheuchen (beide Arme fuchteln), rufen (ein Arm winkt hoch über dem Kopf), schulter (Achselzucken),
   // schimpfen (Faust schüttelt), wade (Zerrung), klettern (am Zaun hoch), zaun (Hände am Zaun).
-  if (gesture && state === 'normal' && !dive) {
+  if (gesture && (state === 'normal' || (state === 'recover' && gesture === 'reklamieren')) && !dive) {
+    if (model.gestName !== gesture) (model.gestName = gesture), (model.gestT = 0); // jede Geste beginnt bei null
     model.gestT = (model.gestT ?? 0) + (dt ?? 0);
     const g = model.gestT;
     if (gesture === 'finger') {
@@ -1571,15 +1846,14 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
       face = 'effort';
     } else if (gesture === 'dehnenL' || gesture === 'dehnenR') {
       // Aufwärmen, Oberschenkel dehnen: Standbein trägt, das andere Knie ist angewinkelt, die Hand der Seite hält
-      // den Fuß am Gesäß, der andere Arm hält das Gleichgewicht (Winkel geschätzt, am Bild geprüft).
+      // den Fuß am Gesäß, der andere Arm hält das Gleichgewicht (Winkel per Gitter-Suche: Hand am Fußgelenk).
       const hold = gesture === 'dehnenL' ? 'L' : 'R';
       const free = hold === 'L' ? 'R' : 'L';
-      leg(bn, hold, 0.12, 2.35, 0.5);
-      arm(bn, hold, 0.55, 0.12, -0.25);
+      leg(bn, hold, DEHNEN.thigh, DEHNEN.knee, DEHNEN.foot);
+      arm(bn, hold, ...DEHNEN.arm);
       arm(bn, free, -0.4, 0.6, -0.2);
       bn.spine.rotation.x += 0.05;
       bn.hips.position.y -= 0.02;
-      bn.spine.rotation.z += (hold === 'L' ? 1 : -1) * Math.sin(g * 2) * 0.02;
     } else if (gesture === 'kreisen') {
       // Hüftkreisen: Hände in die Hüften, Stand breit, der Oberkörper beschreibt einen Kreis.
       arm(bn, 'L', 0.1, 0.55, -1.5);
@@ -1610,8 +1884,85 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
       arm(bn, 'R', -1.05, 0.05, -1.2);
       bn.spine.rotation.x += 0.08;
       bn.head.rotation.y += Math.sin(g * 1.7) * 0.35;
+    } else if (gesture === 'unschuld') {
+      // Foulender nach dem Pfiff, „war doch nichts“: beide offenen Hände vor der Brust, Achselzucken, Kopfschütteln.
+      const k = smooth(0, 0.18, g);
+      const w = Math.sin(g * 6) * 0.06;
+      armTo(bn, 'L', UNSCHULD[0] + w, UNSCHULD[1], UNSCHULD[2], k);
+      armTo(bn, 'R', UNSCHULD[0] - w, UNSCHULD[1], UNSCHULD[2], k);
+      bn.head.rotation.y += Math.sin(g * 5) * 0.28 * k;
+      bn.head.rotation.z += Math.sin(g * 2.5) * 0.1 * k;
+      bn.spine.rotation.x -= 0.05 * k;
+      face = 'surprised';
+    } else if (gesture === 'reklamieren') {
+      // Gefoulter: Arme weit auseinander, „Schiri, das ist doch ein Foul!“ – Kopf zum Schiri, nickt scharf.
+      const k = smooth(0, 0.2, g);
+      const w = Math.sin(g * 7) * 0.08;
+      armTo(bn, 'L', REKLAMIEREN[0] + w, REKLAMIEREN[1], REKLAMIEREN[2], k);
+      armTo(bn, 'R', REKLAMIEREN[0] - w, REKLAMIEREN[1], REKLAMIEREN[2], k);
+      bn.spine.rotation.x += 0.06 * k;
+      bn.head.rotation.x += 0.05 * Math.sin(g * 7) * k;
+      face = 'angry';
+    } else if (gesture === 'troesten') {
+      // Mitspieler legt dem Ausgeschlossenen die Hand auf die Schulter (Gitter-Suche auf die Schulter, actS = Seite).
+      const k = smooth(0, 0.3, g);
+      armTo(bn, actS > 0 ? 'R' : 'L', TROESTEN[0], TROESTEN[1], TROESTEN[2], k);
+      armTo(bn, actS > 0 ? 'L' : 'R', 0.1, 0.55, -1.5, k); // andere Hand in der Hüfte
+      bn.head.rotation.x += 0.25 * k;
+      bn.spine.rotation.z += actS * 0.06 * k;
+      face = 'sad';
+    } else if (gesture === 'kopfschuetteln') {
+      // Roter Karte: eine Hand an den Kopf, die andere in der Hüfte, der Kopf schüttelt sich, Blick zu Boden.
+      const k = smooth(0, 0.25, g);
+      armTo(bn, 'R', -2.5, -0.4, -1.3, k);
+      armTo(bn, 'L', 0.1, 0.55, -1.5, k);
+      bn.head.rotation.x += 0.3 * k;
+      bn.head.rotation.y += Math.sin(g * 6) * 0.3 * k;
+      bn.spine.rotation.x += 0.12 * k;
+      face = 'sad';
+    } else if (gesture === 'abgang') {
+      // Langsam vom Platz: Kopf gesenkt, Schultern hängen, Arme schlaff.
+      const k = smooth(0, 0.4, g);
+      armTo(bn, 'L', 0.12, 0.14, -0.12, k);
+      armTo(bn, 'R', 0.12, 0.14, -0.12, k);
+      bn.spine.rotation.x += 0.2 * k;
+      bn.head.rotation.x += 0.4 * k;
+      bn.head.rotation.y += Math.sin(g * 1.4) * 0.12 * k;
+      face = 'sad';
+    } else if (gesture === 'vorteil') {
+      // Schiri: Vorteil – beide Arme nach vorn gestreckt, Handflächen nach unten, leicht schwenkend.
+      const k = smooth(0, 0.15, g);
+      const w = Math.sin(g * 4) * 0.07;
+      armTo(bn, 'L', VORTEIL[0] + w, VORTEIL[1], VORTEIL[2], k);
+      armTo(bn, 'R', VORTEIL[0] - w, VORTEIL[1], VORTEIL[2], k);
+      bn.spine.rotation.x -= 0.05 * k;
+    } else if (gesture === 'karteGelb' || gesture === 'karteRot') {
+      // Schiri: Karte hoch, der Arm gestreckt über den Kopf (Gitter-Suche: Faust über der Schulter), die Linke an der Hüfte.
+      const k = smooth(0, 0.25, g);
+      const w = Math.sin(g * 5) * 0.03;
+      armTo(bn, 'R', KARTE[0] + w, KARTE[1], KARTE[2], k);
+      armTo(bn, 'L', 0.1, 0.4, -1.1, k);
+      bn.spine.rotation.x -= 0.07 * k;
+      bn.head.rotation.x -= 0.1 * k;
+      const card = bn[gesture === 'karteGelb' ? 'cardY' : 'cardR'];
+      if (card) card.scale.setScalar(k > 0.05 ? 1 : HIDDEN);
+    } else if (gesture === 'notizbuch') {
+      // Schiri nach der Karte: das Notizbuch vor der Brust in der Linken, die Rechte schreibt (Namen und Nummer).
+      const k = smooth(0, 0.3, g);
+      armTo(bn, 'L', BUCH_L[0], BUCH_L[1], BUCH_L[2], k);
+      const sc = Math.sin(g * 14) * 0.015;
+      armTo(bn, 'R', BUCH_R[0] + sc, BUCH_R[1], BUCH_R[2] + sc, k);
+      bn.spine.rotation.x += 0.1 * k;
+      bn.head.rotation.x += 0.38 * k;
+      if (bn.book) bn.book.scale.setScalar(k > 0.05 ? 1 : HIDDEN);
+    } else if (gesture === 'punkt') {
+      // Schiri: Elfmeter – der Arm zeigt gestreckt schräg nach unten zum Punkt, die andere Hand an der Hüfte.
+      const k = smooth(0, 0.2, g);
+      armTo(bn, 'R', PUNKT[0], PUNKT[1], PUNKT[2], k);
+      armTo(bn, 'L', 0.1, 0.4, -1.1, k);
+      bn.spine.rotation.x += 0.1 * k;
     }
-  } else model.gestT = 0;
+  } else (model.gestT = 0), (model.gestName = null);
 
   // Torjubel – jeder hat seinen eigenen.
   if (celebrate) {
@@ -1678,6 +2029,13 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
     } else if (celebrate === 'hinterher') {
       // Zum Torschützen laufen, ein Arm oben.
       arm(bn, 'R', -2.9, 0.25, -0.15);
+    } else if (celebrate === 'schrei') {
+      // Elfmeter verwandelt: die Anspannung fällt ab – beide Fäuste geballt an die Hüften gezogen, Kopf in den Nacken, Schrei.
+      arm(bn, 'L', -0.55 + Math.sin(t * 6) * 0.08, 0.45, -1.9);
+      arm(bn, 'R', -0.55 - Math.sin(t * 6) * 0.08, 0.45, -1.9);
+      bn.spine.rotation.x = -0.2;
+      bn.head.rotation.x = -0.5;
+      bn.hips.position.y += Math.abs(Math.sin(t * 5)) * 0.07;
     }
   } else if (sad) {
     // Gegentor: Kopf runter, Schultern hängen, Hände in die Hüften.
@@ -1687,9 +2045,32 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
     arm(bn, 'R', 0.1, 0.55, -1.5);
     face = 'sad';
   }
+  // Foul: Sturz, Taumeln und Griffe (act, nur Darstellung; reactions.js foulPlan/foulFrame) – überlagern alles andere, weich ein
+  // und aus (actW). Liegt der Gefoulte laut Simulation (state down), spielt nur der Sturz selbst; danach übernimmt die Sim-Pose.
+  let actGround = false;
+  const spec = act && actW > 0 && !dive && state !== 'tackle' && state !== 'acro' ? ACTS[act] : null;
+  if (spec) {
+    const base = snapPose(model);
+    if (spec[0] === 'fall') {
+      fallPose(bn, spec[1] === 'air' ? 'back' : spec[1], actT, spec[2], actS, actVr, hipY);
+      if (spec[1] === 'air') {
+        // Im Kopfballduell springen beide: bis zur Landung in der Luft, Beine angezogen, die Arme rudern.
+        const air = Math.sin(Math.PI * clamp01(actT / 0.42));
+        bn.hips.position.y += 0.3 * air;
+        legTo(bn, 'L', -0.9, 1.1, 0.3, 0.8 * air);
+        legTo(bn, 'R', 0.1, 0.7, 0.3, 0.8 * air);
+      }
+      actGround = spec[2] === 1 && actT > FALL.yank + FALL.down * 0.5 && actT < FALL.yank + FALL.down + FALL.lie + FALL.up * 0.35;
+      face = actT < FALL.yank + FALL.down + FALL.lie ? (spec[2] === 1 ? 'pain' : 'surprised') : 'pain';
+    } else {
+      foulActPose(bn, act, actT, actS, actVr);
+      face = 'effort';
+    }
+    mixPose(model, base, actW);
+  }
   // Wie hoch der Körper über dem Boden ist (für den Kontaktschatten).
   model.lift = Math.max(0, bn.hips.position.y - hipY);
-  model.grounded = state === 'tackle' || state === 'down' || state === 'acro' || (!!dive && (dive.rec ?? 0) < 0.5) || (getUp?.k ?? 0) > 0.4;
+  model.grounded = actGround || state === 'tackle' || state === 'down' || state === 'acro' || (!!dive && (dive.rec ?? 0) < 0.5) || (getUp?.k ?? 0) > 0.4;
   if (tired && face === 'neutral') face = 'exhausted'; // steht oder trabt, aber ausgepumpt
   if (faceHint && !celebrate && face !== 'pain') face = faceHint;
   setFace(model, face);
