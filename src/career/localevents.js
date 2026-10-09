@@ -821,3 +821,6 @@ export const LOCAL_EVENTS = {
 export function chainDue(c) {
   return Object.entries(LOCAL_EVENTS).some(([id, ev]) => ev.followUp && ev.needs(c, { next: () => 0.5, pick: (l) => l[0] }));
 }
+
+// Hilfen für weitere Ereignis-Dateien (src/career/phaseevents.js), damit Merker und Ketten überall gleich laufen.
+export { local, followUp, startChain, dueLink, endChain, doneThisSeason, markDone, level, rounds, squad, team, hurt, supporters, neighbors, some, opponentName, fixtureOf };

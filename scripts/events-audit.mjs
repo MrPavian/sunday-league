@@ -19,14 +19,14 @@ export const FAMILIES = {
   'Platz & Anlage': 'arbeitseinsatz nachbar platz_verkauf frauen_platz flutlicht_defekt kabine_undicht flutlicht_strom putzdienst einbruch nachbarn ordnungsamt kunstrasen_petition',
   'Fans & Publikum': 'trommler stadionsprecher eintritt foerderverein ordnerdienst fanclub_gruendung fanclub_bus altherren_ultras',
   Presse: 'presse reporter_woche reportage_erscheint',
-  'Schiri & Disziplin': 'schiri_beschwerde schiri_mangel sportgericht schiri_neuling',
-  'Ehrenamt & Vorstand': 'mitgliederversammlung kassenpruefung vorstand_kasse ehrung trainerschein lizenzpflicht hospitation ae_forderung jubilaeum platzwart_ruhestand platzwart_nachfolge',
+  'Schiri & Disziplin': 'schiri_beschwerde schiri_mangel sportgericht schiri_neuling selbst_pfeifen dorf_schiri kreis_schiri',
+  'Ehrenamt & Vorstand': 'mitgliederversammlung kassenpruefung vorstand_kasse ehrung trainerschein lizenzpflicht hospitation ae_forderung jubilaeum platzwart_ruhestand platzwart_nachfolge kassenwart_belege platzwart_krank jugendleiter_ueberlastet jugendleiter_bilanz helfer_abschluss',
   'Mannschaft & Kabine': 'streit allueren bankfrust trikots_eingelaufen rivalen_zoff freundin_ausgespannt alte_geschichte geheimnis_auf neue_freunde chat_zoff dauerabsager comeback frauen fusion',
   'Wechsel & Abwerben': 'abwerbeversuch profivertrag profi_scout profi_rueckkehr angebot leihanfrage leihe_rueckkehr',
   Sponsoren: 'firmenturnier firmenlauf sponsor_',
-  'Saisonziel & Tabelle': 'aufstiegsfeier abstiegskrise abschiedsspiel urlaub_finale',
+  'Saisonziel & Tabelle': 'aufstiegsfeier abstiegskrise abschiedsspiel urlaub_finale ziel_nachverhandeln ziel_zwischenbilanz',
   Gesundheit: 'diagnose invaliditaet',
-  'Training & Taktik': 'videoanalyse trainingslager waldlauf',
+  'Training & Taktik': 'videoanalyse trainingslager waldlauf platz_unter_wasser flutlicht_dunkel fitness_app elfmeter_training',
   Pokal: 'pokal_los bund_spielort',
 };
 const EXTRA = (process.env.EXTRA_FAMILIES ? JSON.parse(process.env.EXTRA_FAMILIES) : {});

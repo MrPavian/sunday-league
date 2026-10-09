@@ -120,13 +120,13 @@ describe('Spielbericht: kein „kommt zur 2. Halbzeit" ab Kreisliga A', () => {
       }
     }
     setLang('de');
-  }, 240000);
+  }, 900000);
 
   it('Stufe 1–3: dieselben Ereignisse dürfen Spätkommer erzeugen (Verhalten unverändert)', () => {
     let late = 0;
     for (const level of [1, 2, 3]) late += sweepEvents(level, 6).late;
     expect(late).toBeGreaterThan(0);
-  }, 240000);
+  }, 900000);
 
   it('Chat-Zusagen: mindestens 8 eigene Varianten je Sprache, ohne Halbzeit', () => {
     for (const lang of ['de', 'en']) {

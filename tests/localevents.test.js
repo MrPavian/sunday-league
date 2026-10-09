@@ -241,8 +241,9 @@ describe('Lokale Ereignisse: im Wochenlauf', () => {
           weeks++;
           const e = c.week?.event;
           if (e && LOCAL_EVENTS[e.id]) counts[e.id] = (counts[e.id] ?? 0) + 1;
-          if (e && CHAINS[e.id]) started[e.id] = (started[e.id] ?? 0) + 1;
           if (e && e.choice === null) resolveEvent(c, seed % e.options.length);
+          // Gezählt wird, wenn die Antwort die Kette wirklich startet (nicht jede Antwort tut das, z. B. „Absagen“).
+          if (e && CHAINS[e.id] && c.flags.chain?.[CHAINS[e.id]]) started[e.id] = (started[e.id] ?? 0) + 1;
           for (const f of c.fixtures[c.round]) f.result = { home: 1, away: 1 };
           finishRound(c);
         }
