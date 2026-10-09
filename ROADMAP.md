@@ -721,6 +721,12 @@ Kreis- und Bezirkspokal im K.-o.-System unter der Woche (`src/career/pokal.js`, 
   (`npm run longrun -- 10 77 --bot` zeigt die meistwiederholten Texte), sowie neue Ereignisse für die
   höheren Ligen (Kreisliga A, Bezirksliga).
 
+- ✅ Oktober 2026, Ausbau der Ereignisse: Messung `node scripts/events-audit.mjs 60 8` (Familien, Ligen, Saisonphasen) zeigte
+  die dünnsten Stellen (Presse, Wetter, Schiri-Nachwuchs, Wechsel, Fans, Training, Gegner, Platzwart, Vereinsheim, Familie).
+  20 neue Ereignisse in `src/career/localevents.js`, davon fünf Ketten mit Folge-Ereignis Wochen später (Reporter → Reportage,
+  Leihe → Rückkehr, Fanclub → Fanbus, Platzwart-Ruhestand → Nachfolge, Wirt kündigt → neuer Wirt); je Saison höchstens einmal,
+  Verspätungen laufen über `sitOut(…, 'late')`/`lateOr` (ab Stufe 4 kein „später"). Verschiedene Ereignisse im Messlauf 83 → 101.
+
 ### 11.6 Angriffs-KI: Spiel über außen (umgebaut, Oktober 2026)
 Gemessen mit `scripts/wing-audit.mjs` (Eintritt ins letzte Drittel; „Mitte" = mittleres Drittel der Breite),
 48 Spiele je Platz, vorher → nachher:
