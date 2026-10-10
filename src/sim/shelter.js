@@ -162,7 +162,7 @@ function ash(pitch) {
     rc(-hl - 3.6, hl + 3.6, -17.1, -16.9), // Zaun hinten
     rc(hl + 3.4, hl + 3.6, -16, 16), // Ballfangzäune
     rc(-hl - 3.6, -hl - 3.4, -16, 16),
-    rc(-25, 25, 16.4, 16.6), // Geländer vorn
+    { ...rc(-25, 25, 16.4, 16.6), low: true }, // Geländer vorn (knapp hüfthoch: ein Hund läuft darunter durch)
     rc(-25, 25, -18.4, -17.2), // Zuschauer am Zaun
     rc(-14.7, -5.3, -23, -20), // Vereinsheim-Container
     ...[-18, 0, 18].map((x) => around(x, -18.5, 0.3)), // Flutlichtmasten
@@ -351,3 +351,93 @@ export function planShelter(pitch, ents, hasRef) {
 }
 
 export { pathLength };
+
+// --- Freie Wege für alle anderen Vorfälle -----------------------------------------------
+// Taube, Hund, Sprenger, Polizei, Autoalarm, Ersatzschiri und Zaun nutzen dieselben Hindernisse wie das Gewitter
+// (shelterFor(pitch).obstacles): Wer ein Ziel hat, geht nur auf freiem Weg dorthin (Umweg um die Ecken der
+// aufgeblasenen Rechtecke) und bleibt stehen, wenn das Ziel hinter einem Hindernis liegt oder es keinen Weg gibt.
+// Rein rechnerisch, ohne Zufall.
+
+// Die Hindernisse für Figuren am Boden; Hunde laufen unter niedrigen (low) Geländern durch.
+export function walkObstacles(pitch, dog = false) {
+  const sh = shelterFor(pitch);
+  if (!dog) return sh.obstacles;
+  return (sh.groundObstacles ??= sh.obstacles.filter((r) => !r.low));
+}
+
+export const blockedBy = (obs, p, e = INFLATE) => obs.find((r) => inside(r, p, e)) ?? null;
+
+// Ist die Strecke a→b frei (mit Abstand e)? Wer bei a schon im aufgeblasenen Hindernis steht, darf dort heraus.
+export function pathClear(obs, a, b, e = INFLATE) {
+  for (const r of obs) if (!inside(r, a, e) && hits(r, a, b, e)) return false;
+  return true;
+}
+
+// Nächster freier Punkt zu p (aus den aufgeblasenen Rechtecken herausgeschoben); p selbst, wenn es schon frei ist.
+export function freePoint(obs, p, e = INFLATE) {
+  let q = { x: p.x, z: p.z };
+  for (let n = 0; n < 12; n++) {
+    const r = blockedBy(obs, q, e);
+    if (!r) return q;
+    const c = e + 0.04;
+    const opts = [{ x: r.x0 - c, z: q.z }, { x: r.x1 + c, z: q.z }, { x: q.x, z: r.z0 - c }, { x: q.x, z: r.z1 + c }];
+    opts.sort((a, b) => Math.hypot(a.x - q.x, a.z - q.z) - Math.hypot(b.x - q.x, b.z - q.z));
+    q = opts[0];
+  }
+  return blockedBy(obs, q, e) ? null : q;
+}
+
+// Nächster Wegpunkt von from nach to: to selbst bei freier Linie, sonst die erste Ecke eines kürzesten Umwegs
+// (Dijkstra über die Ecken der aufgeblasenen Hindernisse). null: Ziel liegt in einem Hindernis oder ist nicht erreichbar.
+export function freeStep(obs, from, to) {
+  if (!obs.length) return to;
+  if (blockedBy(obs, to)) return null;
+  if (pathClear(obs, from, to)) return to;
+  const c = INFLATE + 0.1; // die Ecken liegen etwas weiter draußen, damit die Kanten dazwischen frei bleiben
+  const pad = 4;
+  const bx0 = Math.min(from.x, to.x) - pad;
+  const bx1 = Math.max(from.x, to.x) + pad;
+  const bz0 = Math.min(from.z, to.z) - pad;
+  const bz1 = Math.max(from.z, to.z) + pad;
+  const nodes = [];
+  for (const r of obs) {
+    if (r.x1 + c < bx0 || r.x0 - c > bx1 || r.z1 + c < bz0 || r.z0 - c > bz1) continue;
+    for (const p of [{ x: r.x0 - c, z: r.z0 - c }, { x: r.x1 + c, z: r.z0 - c }, { x: r.x0 - c, z: r.z1 + c }, { x: r.x1 + c, z: r.z1 + c }]) {
+      if (!blockedBy(obs, p)) nodes.push(p);
+    }
+  }
+  nodes.sort((a, b) => Math.hypot(a.x - from.x, a.z - from.z) + Math.hypot(a.x - to.x, a.z - to.z) - (Math.hypot(b.x - from.x, b.z - from.z) + Math.hypot(b.x - to.x, b.z - to.z)));
+  nodes.length = Math.min(nodes.length, 60);
+  const pts = [from, ...nodes, to]; // 0 = Start, letzter = Ziel
+  const goal = pts.length - 1;
+  const dist = pts.map(() => Infinity);
+  const prev = pts.map(() => -1);
+  const done = pts.map(() => false);
+  dist[0] = 0;
+  for (;;) {
+    let u = -1;
+    for (let i = 0; i < pts.length; i++) if (!done[i] && dist[i] < Infinity && (u < 0 || dist[i] < dist[u])) u = i;
+    if (u < 0) return null;
+    if (u === goal) break;
+    done[u] = true;
+    for (let v = 1; v < pts.length; v++) {
+      if (done[v]) continue;
+      const d = dist[u] + Math.hypot(pts[v].x - pts[u].x, pts[v].z - pts[u].z);
+      if (d >= dist[v]) continue;
+      if (!pathClear(obs, pts[u], pts[v])) continue;
+      dist[v] = d;
+      prev[v] = u;
+    }
+  }
+  // Der Weg rückwärts; erste Ecke, die nicht schon (fast) erreicht ist – sonst bliebe die Figur an der Ecke stehen.
+  const path = [];
+  for (let i = goal; i > 0; i = prev[i]) path.unshift(pts[i]);
+  const far = path.find((q) => Math.hypot(q.x - from.x, q.z - from.z) > 0.3 && pathClear(obs, from, q, INFLATE - 0.15));
+  return far ?? path[0];
+}
+
+// Harte Sicherung gegen Durchlaufen: schneidet die Strecke a→b (ohne Aufblähen) ein Hindernis, das a nicht schon enthält?
+export function crossesObstacle(obs, a, b) {
+  for (const r of obs) if (!inside(r, a, 0) && hits(r, a, b, 0)) return true;
+  return false;
+}

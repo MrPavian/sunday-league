@@ -8,7 +8,7 @@ import { clamp, dist2d, norm, rotate } from '../core/math.js';
 import { SKIN_TONES } from '../data/names.js';
 import { personName } from '../data/origins.js';
 import { attackDir, clampToPitch } from './players.js';
-import { planRoute, planShelter, shelterFor } from './shelter.js';
+import { GEO, blockedBy, crossesObstacle, freePoint, freeStep, pathClear, planRoute, planShelter, shelterFor, walkObstacles } from './shelter.js';
 import { startSetPiece } from './setpieces.js';
 import { stateMove } from './tackles.js';
 
@@ -167,7 +167,11 @@ function beginIncident(m, type, info = {}) {
     ball.vel.x = ball.vel.y = ball.vel.z = 0;
     m.dog = { pos: { x: clamp(ball.pos.x + side * 8, -pitch.halfLength, pitch.halfLength), z: pitch.halfWidth + 3 }, facing: { x: -side, z: -1 }, speed: 0, hasBall: false, leaving: false, target: null, retarget: 0 };
     // Herrchen rennt hinterher und ruft (feste Figur, damit der Zufallsstrom gleich bleibt).
-    m.visitors.push({ id: 'herrchen', look: OWNER_LOOK, kit: OWNER_KIT, pos: { x: m.dog.pos.x + side * 3, z: pitch.halfWidth + 4 }, target: { ...m.dog.pos }, speed: 4.2, follow: 'dog', gesture: 'call' });
+    // Er startet dort, wo der Weg zum Hund frei ist (am Ascheplatz steht das Geländer dazwischen: dann auf der Platzseite).
+    const obsH = walkObstacles(pitch);
+    const ox = m.dog.pos.x + side * 3;
+    const oz = [4, 3.5, 3, 2.5, 2].map((d) => pitch.halfWidth + d).find((z) => !blockedBy(obsH, { x: ox, z }) && pathClear(obsH, { x: ox, z }, m.dog.pos)) ?? pitch.halfWidth + 4;
+    m.visitors.push({ id: 'herrchen', look: OWNER_LOOK, kit: OWNER_KIT, pos: { x: ox, z: oz }, target: { ...m.dog.pos }, speed: 4.2, follow: 'dog', gesture: 'call' });
     text = r.pick(tr(['Ein Hund! Er schnappt sich den Ball …', 'Hund auf dem Platz! „BELLO! HIER!"', 'Ein Dackel stürmt aufs Feld und will mitspielen.'], ['A dog! He grabs the ball …', 'Dog on the pitch! "REX! HERE, BOY!"', 'A dachshund storms the pitch and wants to join in.']));
   } else if (type === 'zaun') {
     const lost = r.chance(0.5);
@@ -175,6 +179,17 @@ function beginIncident(m, type, info = {}) {
     m.ballHidden = true;
     // Einer klettert rüber (der Nächste), zwei stehen mit den Händen am Zaun, der Rest geht langsam hin.
     const fence = { x: info.side * Math.min(pitch.wallX - 0.5, pitch.halfLength + 4), z: clamp(ball.pos.z, -pitch.halfWidth + 1, pitch.halfWidth - 1) };
+    // Der Kletterer und die zwei Helfer brauchen am Zaun freien Platz (nicht in Kisten, Jackenhaufen …): sonst ein Stück weiter.
+    const obs = walkObstacles(pitch);
+    const z0 = fence.z;
+    for (const dz of [0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6, -6, 8, -8]) {
+      const z = clamp(z0 + dz, -pitch.halfWidth + 1, pitch.halfWidth - 1);
+      const spots = [-0.45, -0.5].flatMap((dx) => [0, 1.1, -1.1].map((oz) => ({ x: fence.x + info.side * dx, z: z + oz })));
+      if (spots.every((q) => !obs.some((rc) => q.x > rc.x0 - 0.45 && q.x < rc.x1 + 0.45 && q.z > rc.z0 - 0.45 && q.z < rc.z1 + 0.45))) {
+        fence.z = z;
+        break;
+      }
+    }
     const near = m.players.filter((p) => p.role !== 'gk').sort((a, b) => dist2d(a.pos, fence) - dist2d(b.pos, fence));
     inc.fence = fence;
     inc.climber = { id: near[0]?.id ?? null, ct: -1, done: !near[0] };
@@ -182,7 +197,7 @@ function beginIncident(m, type, info = {}) {
     text = lost ? tr('Ball über den Zaun. Der Nachbar: „Den kriegt ihr nicht wieder!"', 'Ball over the fence. The neighbour: "You\'re not getting that back!"') : tr('Ball über den Zaun! Einer klettert rüber …', 'Ball over the fence! Someone climbs over …');
   } else if (type === 'autoalarm') {
     const z = Math.sign(info.z || 1) * (pitch.halfWidth + 6);
-    m.visitors.push({ id: 'besitzer', look: look(r), kit: CIVIL_KIT, pos: { x: clamp(info.x ?? 0, -pitch.halfLength, pitch.halfLength) + 6, z }, target: { x: info.x ?? 0, z: Math.sign(info.z || 1) * (pitch.halfWidth + 1.2) }, speed: 3.2 });
+    m.visitors.push({ id: 'besitzer', look: look(r), kit: CIVIL_KIT, pos: { x: clamp(info.x ?? 0, -pitch.halfLength, pitch.halfLength) + 6, z }, target: freePoint(walkObstacles(pitch), { x: info.x ?? 0, z: Math.sign(info.z || 1) * (pitch.halfWidth + 1.2) }) ?? { x: clamp(info.x ?? 0, -pitch.halfLength, pitch.halfLength) + 6, z }, speed: 3.2 }); // am Auto, nicht im Auto
     text = tr('Autoalarm! Der Besitzer kommt aus dem Getränkemarkt gerannt.', 'Car alarm! The owner comes running out of the drinks market.');
   } else if (type === 'polizei') {
     const x0 = -pitch.wallX + 1;
@@ -191,7 +206,10 @@ function beginIncident(m, type, info = {}) {
     const spot = coachSpot(m);
     const coach = m.teams?.[m.humanTeam ?? 0]?.kit;
     m.visitors.push({ id: 'trainer', look: COACH_LOOK, kit: { shirt: coach?.shirt ?? 0x2a3a52, shorts: 0x1f2a44, socks: coach?.socks ?? 0x222222 }, pos: { ...spot }, target: { ...spot }, speed: 1.5, reactNear: true });
-    for (const [i, dx, dz] of [[0, -1.2, 0.5], [1, -2.5, 1.4]]) m.visitors.push({ id: `polizei${i}`, look: look(r, { bald: false, beard: false }), kit: POLICE_KIT, pos: { x: x0, z: spot.z + 1.2 * (i ? 1 : -1) * 0.6 }, target: { x: spot.x + dx, z: spot.z + dz }, speed: 2.8, onArrive: i === 0 ? 'finger' : 'arme' });
+    // Im Hinterhof ist die Haustür der einzige Zugang (Wände ringsum); sonst kommen sie am Rand herein. Weg und Abgang: derselbe Punkt.
+    const door = pitch.id === 'hinterhof' ? { x: GEO.backyard.doorX, z: -pitch.halfWidth + 0.45 } : null;
+    for (const [i, dx, dz] of [[0, -1.2, 0.5], [1, -2.5, 1.4]]) m.visitors.push({ id: `polizei${i}`, look: look(r, { bald: false, beard: false }), kit: POLICE_KIT, pos: door ? { x: door.x + (i ? 0.45 : -0.45), z: door.z } : { x: x0, z: spot.z + 1.2 * (i ? 1 : -1) * 0.6 }, target: { x: spot.x + dx, z: spot.z + dz }, speed: 2.8, onArrive: i === 0 ? 'finger' : 'arme' });
+    if (walkObstacles(pitch).length) for (const v of m.visitors) if (v.id.startsWith('polizei')) v.home = { ...v.pos };
     text = tr('Die Nachbarin hat die Polizei gerufen. Zwei Beamte schauen vorbei …', 'The neighbour has called the police. Two officers wander over …');
   } else if (type === 'gewitter') {
     m.weather = 'rain';
@@ -279,7 +297,7 @@ export function stepIncident(m, dt) {
   if (inc.type === 'gewitter' && m.referee) followRoute(inc, inc.routes.get('ref'), m.referee, 'ref', REF_RUN, dt);
   if (inc.type === 'gewitter' && Math.floor(inc.t / 2.8) !== Math.floor((inc.t - dt) / 2.8)) m.events.push({ type: 'lightning' });
   if (inc.type === 'autoalarm' && Math.floor(inc.t / 1.4) !== Math.floor((inc.t - dt) / 1.4)) m.events.push({ type: 'alarm' });
-  if (inc.type === 'ersatzschiri' && m.referee) walk(m.referee, { x: m.referee.pos.x, z: -pitch.halfWidth - 3 }, 1.1, dt);
+  if (inc.type === 'ersatzschiri' && m.referee) walkFree(m, m.referee, { x: m.referee.pos.x, z: -pitch.halfWidth - 3 }, 1.1, dt);
   const climber = inc.type === 'zaun' ? inc.climber : null;
 
   for (const [i, p] of m.players.entries()) {
@@ -322,7 +340,7 @@ export function stepIncident(m, dt) {
       const jet = nearestJet(pitch, p.pos);
       if (inc.t >= inc.delay[i] && (inc.fled.has(p.id) || jet.d < SPRINKLER_REACH)) {
         inc.fled.add(p.id);
-        target = { x: p.pos.x, z: -pitch.halfWidth - 2 - (i % 3) * 0.8 };
+        target = freePoint(walkObstacles(pitch), { x: p.pos.x, z: -pitch.halfWidth - 2 - (i % 3) * 0.8 }) ?? p.pos; // nicht durch Bande und Bänke
         speed = 5;
       } else p.facing = norm(jet.x - p.pos.x, jet.z - p.pos.z);
     } else if (inc.type === 'hund' && m.dog && p.role !== 'gk' && dist2d(p.pos, m.dog.pos) < 9) {
@@ -336,10 +354,9 @@ export function stepIncident(m, dt) {
       }
     } else if (inc.type === 'taube' && m.pigeon && m.pigeon.state !== 'gleiten' && p.role !== 'gk' && dist2d(p.pos, m.pigeon.pos) < 7) {
       // Hin und mit den Armen scheuchen – aber nicht drauftreten.
-      if (dist2d(p.pos, m.pigeon.pos) > 1.6) {
-        target = m.pigeon.pos;
-        speed = 2.6;
-      } else p.facing = norm(m.pigeon.pos.x - p.pos.x, m.pigeon.pos.z - p.pos.z);
+      // Sitzt sie hinter einem Hindernis (Bande, Zaun, Garage …) oder gibt es keinen freien Weg, bleibt er stehen und winkt.
+      if (dist2d(p.pos, m.pigeon.pos) > 1.6 && walkFree(m, p, m.pigeon.pos, 2.6, dt)) continue;
+      p.facing = norm(m.pigeon.pos.x - p.pos.x, m.pigeon.pos.z - p.pos.z);
     } else if (inc.type === 'polizei') {
       // Alle drehen sich zu den Beamten um.
       const cop = m.visitors.find((v) => v.gesture && v.id.startsWith('polizei'));
@@ -350,8 +367,10 @@ export function stepIncident(m, dt) {
       if (climber && p.id === climber.id) {
         // Zum Zaun, dort hoch (die Höhe liest die Darstellung aus climber.ct), oben schauen, wieder runter.
         const base = { x: fence.x - side * 0.45, z: fence.z };
-        if (climber.ct < 0 && dist2d(p.pos, base) > 0.3) {
-          walk(p, base, 5.5, dt);
+        // Am Ballfangzaun selbst (gewollt) endet der freie Weg eine Handbreit davor; erst dort steigt er hoch.
+        const stand = freePoint(walkObstacles(pitch), base) ?? base;
+        if (!climber.done && climber.ct < 0 && dist2d(p.pos, stand) > 0.3) {
+          if (!walkFree(m, p, stand, 5.5, dt)) climber.done = true; // Weg zugestellt: er gibt auf, statt durch Hindernisse zu gehen
           continue;
         }
         if (!climber.done) {
@@ -363,11 +382,12 @@ export function stepIncident(m, dt) {
           if (climber.ct >= CLIMB.up + CLIMB.top + CLIMB.down) climber.done = true;
         }
       } else if (inc.helpers.includes(p.id)) {
-        target = { x: fence.x - side * 0.5, z: fence.z + (inc.helpers[0] === p.id ? 1.1 : -1.1) };
+        target = freePoint(walkObstacles(pitch), { x: fence.x - side * 0.5, z: fence.z + (inc.helpers[0] === p.id ? 1.1 : -1.1) }) ?? p.pos;
         speed = 4.5;
         if (dist2d(p.pos, target) <= 0.8) p.facing = { x: side, z: 0 };
       } else {
-        const spot = clampToPitch(pitch, fence.x - side * (4 + (i % 4) * 1.2), fence.z + ((i % 5) - 2) * 1.3, 0.5);
+        const w = clampToPitch(pitch, fence.x - side * (4 + (i % 4) * 1.2), fence.z + ((i % 5) - 2) * 1.3, 0.5);
+        const spot = freePoint(walkObstacles(pitch), w) ?? w;
         target = spot;
         speed = 2.2;
         if (dist2d(p.pos, spot) <= 0.8) p.facing = { x: side, z: 0 };
@@ -379,16 +399,15 @@ export function stepIncident(m, dt) {
     } else if (inc.type === 'ersatzschiri' && m.referee) {
       const ref = m.referee;
       if (inc.helpers.includes(p.id)) {
-        target = { x: ref.pos.x + (inc.helpers[0] === p.id ? -1.1 : 1.1), z: ref.pos.z + 0.9 };
+        const w = { x: ref.pos.x + (inc.helpers[0] === p.id ? -1.1 : 1.1), z: ref.pos.z + 0.9 };
+        target = freePoint(walkObstacles(pitch), w) ?? w;
         speed = 3.2;
       }
       p.facing = norm(ref.pos.x - p.pos.x, ref.pos.z - p.pos.z);
     }
-    if (target && dist2d(p.pos, target) > 0.8) walk(p, target, speed, dt);
-    else {
-      p.vel.x *= 0.85;
-      p.vel.z *= 0.85;
-    }
+    if (target && dist2d(p.pos, target) > 0.8 && walkFree(m, p, target, speed, dt)) continue;
+    p.vel.x *= 0.85;
+    p.vel.z *= 0.85;
   }
   const dogBusy = inc.type === 'hund' && m.dog && !m.dog.hasBall && inc.t < 14;
   const climbBusy = climber && !climber.done && inc.t < 16;
@@ -424,7 +443,7 @@ function endIncident(m, r) {
   } else if (inc.type === 'polizei') {
     text = r.pick(tr(['„Aber nicht mehr so laut, Jungs." Weiter geht\'s.', 'Die Beamten gucken noch ein bisschen zu. Einer nickt anerkennend.'], ['"Keep it down a bit, lads." Play on.', 'The officers watch for a while. One of them nods approvingly.']));
     for (const v of m.visitors) {
-      v.target = v.id === 'trainer' ? { x: v.pos.x + 3, z: v.pos.z } : { x: -pitch.wallX - 2, z: v.pos.z };
+      v.target = v.id === 'trainer' ? { x: v.pos.x + 3, z: v.pos.z } : v.home ?? { x: -pitch.wallX - 2, z: v.pos.z };
       v.gesture = null;
       v.reactNear = false;
     }
@@ -494,6 +513,38 @@ function glide(e, t, speed, dt) {
   return v * dt >= d - 1e-9;
 }
 
+// Wie walk, aber nur auf freiem Weg (Hindernisse des Spielorts, siehe shelter.js): Umweg um Ecken, und wer das Ziel nicht
+// erreichen kann (es liegt in oder hinter einem Hindernis), bleibt stehen. Rückgabe: false = steht fest.
+// Der Wegpunkt wird einige Bilder lang gemerkt (spart Rechenzeit), nichts davon liegt im Spielstand.
+const plans = new WeakMap();
+function walkFree(m, e, target, speed, dt, dog = false) {
+  const obs = walkObstacles(m.pitch, dog);
+  if (!obs.length) {
+    walk(e, target, speed, dt);
+    return true;
+  }
+  let pl = plans.get(e);
+  if (!pl || pl.n-- <= 0 || Math.hypot(pl.to.x - target.x, pl.to.z - target.z) > 0.4 || (pl.wp && (dist2d(e.pos, pl.wp) < 0.35 || !pathClear(obs, e.pos, pl.wp)))) {
+    pl = { to: { x: target.x, z: target.z }, wp: freeStep(obs, e.pos, target), n: 15 };
+    plans.set(e, pl);
+  }
+  if (!pl.wp) {
+    e.vel.x = e.vel.z = 0;
+    return false;
+  }
+  const x = e.pos.x;
+  const z = e.pos.z;
+  walk(e, pl.wp, speed, dt);
+  if (crossesObstacle(obs, { x, z }, e.pos)) {
+    e.pos.x = x;
+    e.pos.z = z;
+    e.vel.x = e.vel.z = 0;
+    pl.n = 0;
+    return false;
+  }
+  return true;
+}
+
 // Gewitter: über die Wegpunkte zum Platz im Unterstand, dort zum Spielfeld schauen.
 function followRoute(inc, route, e, id, speed, dt) {
   if (route.k < route.pts.length) {
@@ -514,7 +565,9 @@ function stepVisitors(m, dt) {
       const off = v.gesture ? 1.2 : 0.8;
       v.target = { x: m.dog.pos.x - m.dog.facing.x * off, z: m.dog.pos.z - m.dog.facing.z * off };
     }
-    walk(v, v.target, v.speed, dt);
+    const moved = dist2d(v.pos, v.target) < 0.3 || walkFree(m, v, v.target, v.speed, dt);
+    // Kommt ein Besucher nach dem Vorfall nicht weiter (zugestellter Weg, kein Ausgang), geht er unbemerkt ab.
+    v.stuck = moved || m.incident ? 0 : (v.stuck ?? 0) + dt;
     if (v.onArrive && dist2d(v.pos, v.target) < 0.3) {
       v.gesture = v.onArrive;
       v.onArrive = null;
@@ -641,7 +694,7 @@ function stepDog(m, dt) {
     dog.speed = 6.5;
     if (r.chance(0.5)) m.events.push({ type: 'bark' });
   }
-  moveDog(dog, dt);
+  moveDog(dog, dt, walkObstacles(pitch, true));
   if (dog.hasBall) {
     // Schüttelt den Ball im Maul: schnell hin und her, quer zur Laufrichtung.
     const shake = Math.sin(dog.t * 26) * 0.07;
@@ -652,7 +705,7 @@ function stepDog(m, dt) {
   }
 }
 
-function moveDog(dog, dt) {
+function moveDog(dog, dt, obs = []) {
   if (!dog.target) return;
   const d = dist2d(dog.pos, dog.target);
   if (d < 0.1) return;
@@ -664,8 +717,17 @@ function moveDog(dog, dt) {
   dog.facing = norm(dog.facing.x * 0.8 + dir.x * 0.2, dog.facing.z * 0.8 + dir.z * 0.2);
   dog.turn = was.x * dog.facing.z - was.z * dog.facing.x; // + = dreht nach links (Neigung in der Kurve)
   const step = Math.min(d, dog.speed * dt);
-  dog.pos.x += dog.facing.x * step;
-  dog.pos.z += dog.facing.z * step;
+  // Nicht durch Bande, Zäune, Bänke: an der Kante entlangrutschen, sonst stehen bleiben und ein neues Ziel suchen.
+  const from = { x: dog.pos.x, z: dog.pos.z };
+  const nx = dog.pos.x + dog.facing.x * step;
+  const nz = dog.pos.z + dog.facing.z * step;
+  const to = [{ x: nx, z: nz }, { x: nx, z: from.z }, { x: from.x, z: nz }].find((q) => !crossesObstacle(obs, from, q));
+  dog.blocked = to ? 0 : (dog.blocked ?? 0) + dt;
+  if (!to) dog.retarget = 0;
+  else {
+    dog.pos.x = to.x;
+    dog.pos.z = to.z;
+  }
 }
 
 // Nach dem Vorfall: Hund und Besucher verlassen die Szene, während weitergespielt wird.
@@ -673,8 +735,8 @@ export function stepLeftovers(m, dt) {
   if (m.dog?.leaving) {
     m.dog.target = { x: m.dog.pos.x, z: m.pitch.halfWidth + 12 };
     m.dog.speed = 5;
-    moveDog(m.dog, dt);
-    if (m.dog.pos.z > m.pitch.halfWidth + 10) m.dog = null;
+    moveDog(m.dog, dt, walkObstacles(m.pitch, true));
+    if (m.dog.pos.z > m.pitch.halfWidth + 10 || m.dog.blocked > 1.5) m.dog = null; // kein Ausgang: unbemerkt weg
   }
   if (m.pigeon && ['anflug', 'latte', 'auf', 'wartet'].includes(m.pigeon.state)) perchFlight(m, m.pigeon, dt);
   if (m.pigeon?.state === 'weg') {
@@ -688,6 +750,6 @@ export function stepLeftovers(m, dt) {
   }
   if (m.visitors?.length) {
     stepVisitors(m, dt);
-    m.visitors = m.visitors.filter((v) => (v.follow === 'dog' && m.dog) || dist2d(v.pos, v.target) > 0.3); // Herrchen geht erst mit dem Hund
+    m.visitors = m.visitors.filter((v) => ((v.follow === 'dog' && m.dog) || dist2d(v.pos, v.target) > 0.3) && (v.stuck ?? 0) < 1.5); // Herrchen geht erst mit dem Hund
   }
 }
