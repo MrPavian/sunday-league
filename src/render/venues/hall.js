@@ -37,6 +37,26 @@ export function buildHall(root, pitch, rng, scene) {
     root.add(sign);
   }
 
+  // Fangnetze hinter den Toren (pitch.catchNet, gleiche Maße und Neigung wie in der Simulation, catchNetX): von der Bande bis zur
+  // Netzhöhe, Tor plus Rand breit, oben zum Feld geneigt (von der Kamera aus sähe ein senkrechtes Netz nur wie eine Linie aus).
+  // Nur Einzelboxen in Farben, die die Halle schon nutzt – mergeStatic backt sie in vorhandene Draw Calls.
+  if (pitch.catchNet) {
+    const { height: nh, margin, boardHeight: bh, lean } = pitch.catchNet;
+    const nz = gw + margin;
+    const netCol = 0x5a7a6a;
+    const rise = nh - bh;
+    const slant = Math.atan(lean);
+    const len = rise * Math.hypot(1, lean);
+    for (const s of [-1, 1]) {
+      const xAt = (y) => s * (wallX - 0.06 - lean * (y - bh));
+      const tilt = (m) => ((m.rotation.z = s * slant), m);
+      for (let z = -nz; z <= nz + 0.01; z += 0.4) root.add(tilt(box(0.04, len, 0.04, netCol, xAt((nh + bh) / 2), (nh + bh) / 2, z)));
+      for (let y = bh + 0.4; y < nh; y += 0.4) root.add(box(0.05, 0.05, nz * 2, netCol, xAt(y), y, 0));
+      root.add(box(0.08, 0.08, nz * 2 + 0.1, bande, xAt(nh), nh, 0)); // Oberseil
+      for (const z of [-nz - 0.05, nz + 0.05]) root.add(tilt(box(0.1, len, 0.1, bande, xAt((nh + bh) / 2), (nh + bh) / 2, z))); // Pfosten
+    }
+  }
+
   // Hallenwände: unten Prallschutz, oben hell, dazu die Sprossenwand.
   root.add(box(W, 2.4, 0.3, 0x5a7a6a, 0, 1.2, -hw - 4.5), box(W, 6, 0.3, 0xd8d4c8, 0, 5.4, -hw - 4.5));
   for (let x = -20; x <= -8; x += 1.2) root.add(box(0.1, 2.6, 0.1, 0xc09060, x, 1.3, -hw - 4.2));
@@ -64,5 +84,5 @@ export function buildHall(root, pitch, rng, scene) {
 
   // Volle Klappbänke beim Hallenturnier (sichtbar je nach Besucherzahl).
   for (let r = 0; r < 3; r++) for (const o of crowdRow(501 + r, { x0: -10.4, x1: 18.4, z: -hw - 1.4 - r * 0.85, y: 0.525 + r * 0.45, n: 16, sitting: true, jitter: 0.2 })) root.add(o);
-  return { viewHeight: 12, bounds: { x: hl + 2, z: 2.5 } };
+  return { viewHeight: 12, bounds: { x: hl + 4, z: 2.5 } };
 }

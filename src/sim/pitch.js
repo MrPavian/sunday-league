@@ -147,6 +147,13 @@ export const HALL = {
   boundary: 'walls',
   carRule: false,
   referee: true,
+  // Hallencup: vorwiegend flach gespielt, hoch nur vorm Tor (sonst flöge der Ball dauernd über die Bande).
+  // shotNear: Abstand zur Torlinie (m), bis zu dem ein Schuss hoch gehen darf; shotVy: höchste Steigung (m/s)
+  // eines Schusses weiter weg. Werte gewählt, nicht gemessen (Messung: scripts/flat-audit.mjs).
+  flatPlay: { shotNear: 8, shotVy: 0.8 },
+  // Fangnetz hinter den Toren (Bande bis height, Breite Tor + je margin), lehnt oben um lean (m je m Höhe) zum Feld:
+  // Der Ball prallt nicht ab, sondern bleibt hängen und fällt. Maße gewählt, nicht gemessen.
+  catchNet: { height: 4.5, margin: 2, boardHeight: 0.9, lean: 0.2 },
   surface: SURFACES.hall,
 };
 

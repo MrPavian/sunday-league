@@ -185,7 +185,7 @@ function performTrick(m, p, kind, victim, opt = {}) {
     } else {
       dir = fwd; // hinten hochgelupft, über den Gegner
       v = Math.max(4.5, speed + 1.5);
-      vy = 3.6;
+      vy = m.pitch.flatPlay ? 1.6 : 3.6; // Halle: nur flach über das Bein gehoben
       ball.pos.y = Math.max(ball.pos.y, 0.3);
     }
     ball.vel.x = dir.x * v;
