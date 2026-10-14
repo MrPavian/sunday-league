@@ -15,6 +15,7 @@ import { applyFit } from './fit.js';
 import { generateTeam } from './generator.js';
 import { PARKING_LOT } from './pitch.js';
 import { attackDir, clampToPitch, getPlayer, setControlled, teamAttacking } from './players.js';
+import { applyPositionMalus } from './position.js';
 import { makeEntity, requestSub, restBench, subRuleFor, swapSides } from './squad.js';
 import { shout } from './coach.js';
 import { createStats, trackStep } from './stats.js';
@@ -90,6 +91,7 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = tr
       const entry = formation[i] ?? formation.find((f) => f.role === pl.position) ?? formation[formation.length - 1];
       const p = makeEntity(pl, ti, i, entry.role, formationSpot(pitch, entry, ti));
       p.formationEntry = entry;
+      applyPositionMalus(p); // positionsfremd = schwächer (position.js)
       if (i < formation.length) players.push(p);
       else bench[ti].push(p);
     });

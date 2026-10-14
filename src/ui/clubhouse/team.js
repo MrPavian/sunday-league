@@ -11,6 +11,8 @@ import { button, haptic, icon, segmented, tabs as uiTabs } from '../ds.js';
 import { ATTR_LABELS } from '../PoolBrowser.js';
 import { isLight, playerCard as collectorCard, trainerCard } from '../world.js';
 import { planTarget } from '../../sim/plan.js';
+import { oopInfo, oopText } from '../../sim/position.js';
+import { famAt } from '../../career/positions.js';
 import { jobPerk } from '../../data/jobs.js';
 import { awardLabel } from '../../career/awards.js';
 import { FIT_LOW, fitnessCap, fitnessOf, fitnessPct, fitnessShown } from '../../career/fitness.js';
@@ -301,12 +303,13 @@ export const teamScreens = {
       .map((slot, i) => {
         const idx = lineup[i];
         const p = idx != null ? this.p(idx) : null;
-        const off = p && p.position !== slot.role && !(slot.role === 'mid' && p.position !== 'gk');
+        const info = p ? oopInfo(p, slot.role, famAt(c, idx, slot.role)) : null;
+        const off = !!info;
         const picked = pick?.slot === i;
         return `<button class="lp-token role-${slot.role}${picked ? ' picked' : ''}${p ? '' : ' standin'}${snap.has(i) ? ' snap' : ''}" data-action="slotPick" data-value="${i}" data-drop="slot:${i}" data-drag="slot:${i}" style="--x:${left(slot.x)}%;--y:${top(slot.z)}%" aria-pressed="${picked}" aria-label="${ROLE[slot.role]}: ${p ? p.name : tr('Aushilfe', 'Stand-in')}">
           <span class="lp-shirt">${p ? p.rating : '?'}</span>
           <span class="lp-name">${p ? p.name.split(' ').at(-1) : tr('Aushilfe', 'Stand-in')}</span>${idx != null && fitnessShown(fitnessOf(c, idx)) ? `<span class="lp-fit${fitnessOf(c, idx) < FIT_LOW ? ' low' : ''}" title="${tr('Fitness', 'Fitness')}">${fitnessPct(fitnessOf(c, idx))} %</span>` : ''}
-          <span class="lp-role${off ? ' off' : ''}">${ROLE[slot.role]}${off ? ` · ${POSITIONS[p.position]}` : ''}</span>
+          <span class="lp-role${off ? ' off' : ''}"${off ? ` title="${oopText(info)}"` : ''}>${ROLE[slot.role]}${off ? ` · ${POSITIONS[p.position]}` : ''}</span>
         </button>`;
       })
       .join('');
@@ -327,6 +330,9 @@ export const teamScreens = {
     const gkIdx = formation.findIndex((f) => f.role === 'gk');
     const keeper = lineup[gkIdx] != null ? this.p(lineup[gkIdx]) : null;
     const keeperNote = keeper && keeper.position !== 'gk' ? `<p class="warn">${tr(`Kein Torwart da – ${keeper.name.split(' ')[0]} muss ran. Handschuhe liegen im Kofferraum.`, `No keeper – ${keeper.name.split(' ')[0]} has to go in goal. The gloves are in the boot.`)}</p>` : '';
+    // Positionsfremd: wer wo wie viel verliert, samt Gewöhnung (sim/position.js, career/positions.js).
+    const oopLines = formation.map((slot, i) => (lineup[i] != null ? [lineup[i], oopInfo(this.p(lineup[i]), slot.role, famAt(c, lineup[i], slot.role))] : null)).filter((x) => x?.[1]);
+    const oopNote = oopLines.length ? `<p class="warn lp-oop">${oopLines.map(([idx, info]) => `${shortName(c, idx)}: ${oopText(info)}`).join(' · ')}</p>` : '';
     const chem = chemistry(c, lineup);
     const chemLine = chem.pairs.length
       ? `<p class="chem ${chem.score < 0 ? 'bad' : 'good'}">${tr('Teamchemie', 'Chemistry')} ${chem.score > 0 ? '+' : ''}${chem.score}: ${chem.pairs.map((pr) => `${shortName(c, pr.a)} & ${shortName(c, pr.b)} (${REL[pr.type].plural})`).join(' · ')}</p>`
@@ -349,6 +355,7 @@ export const teamScreens = {
         </div>
         <p class="t-2 lp-hint" aria-live="polite">${hint}</p>
         ${keeperNote}
+        ${oopNote}
         ${chemLine}
       </div>`;
   },
