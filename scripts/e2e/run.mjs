@@ -8,6 +8,13 @@ import { BASE } from './lib.mjs';
 const SUITES = { ui: () => import('./ui.mjs'), match: () => import('./match.mjs'), memory: () => import('./memory.mjs'), modes: () => import('./modes.mjs') };
 const pick = process.argv.slice(2).filter((a) => SUITES[a]);
 const port = new URL(BASE).port;
+// Läuft auf dem Port schon ein Server (z. B. aus einem anderen Worktree), würde gegen dessen Build getestet:
+// --strictPort lässt unseren Server dann still scheitern. Also vorher abbrechen.
+const busy = await fetch(BASE).then(() => true, () => false);
+if (busy) {
+  console.error(`Port ${port} ist schon belegt – fremder Server? Erst beenden (oder E2E_BASE setzen).`);
+  process.exit(2);
+}
 const server = spawn('npx', ['vite', 'preview', '--port', port, '--strictPort'], { stdio: 'ignore' });
 let fails = 0;
 try {
