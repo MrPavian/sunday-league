@@ -2,7 +2,7 @@
 // Ohne three.js und DOM, damit es sich mit der Simulation allein prüfen lässt (tests/reactions.test.js).
 
 import { attackDir } from '../sim/players.js';
-import { CLIMB } from '../sim/incidents.js';
+import { CLIMB, FAN_CLIMB } from '../sim/incidents.js';
 import { subsLeft, usableBench } from '../sim/squad.js';
 
 // Vergebene Chance: Der Schütze greift sich an den Kopf (Pfosten, Latte, vorbei) oder winkt ab
@@ -263,6 +263,19 @@ export function climbLift(ct) {
   return ct < up + top + down ? height * (1 - ease((ct - up - top) / down)) : 0;
 }
 
+// Fan über die Hallenbande: Höhe in m aus der Zeit seit dem Absprung (ct): hoch auf die Bande, oben, runter.
+export function fanLift(ct) {
+  if (!(ct > 0)) return 0;
+  const { up, top, down, height } = FAN_CLIMB;
+  const ease = (t) => t * t * (3 - 2 * t);
+  if (ct < up) return height * ease(ct / up);
+  if (ct < up + top) return height;
+  return ct < up + top + down ? height * (1 - ease((ct - up - top) / down)) : 0;
+}
+
+// Höhe eines Besuchers (nur der Fan klettert).
+export const visitorLift = (v) => (v.climbCt > 0 ? fanLift(v.climbCt) : 0);
+
 export function incidentPose(match, p, i, out = POSE) {
   out.gesture = null;
   out.cover = 0;
@@ -311,6 +324,14 @@ export function incidentPose(match, p, i, out = POSE) {
     case 'polizei':
       if (match.visitors?.some((v) => v.gesture && v.id.startsWith('polizei')) && i % 3 === 0) out.gesture = 'arme';
       break;
+    case 'fan': {
+      // Der Torwart streckt abwehrend die offenen Hände vor, solange der Fan auf ihn zukommt; die anderen halten sich den Kopf oder zeigen.
+      const f = inc.fan;
+      if (!f || f.stage === 'warten' || f.stage === 'klettern') break;
+      if (p.id === f.keeperId && (f.stage === 'jagd' || f.stage === 'kuss')) out.gesture = 'unschuld';
+      else if (speed < 1.5) out.gesture = i % 3 === 0 ? 'haende' : i % 3 === 1 ? 'zeigen' : null;
+      break;
+    }
     case 'ersatzschiri': {
       const r = match.referee;
       if (r && inc.helpers.includes(p.id) && Math.hypot(r.pos.x - p.pos.x, r.pos.z - p.pos.z) < 2.5) out.gesture = 'schulter';

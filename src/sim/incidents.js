@@ -22,7 +22,7 @@ export const VENUE_INCIDENTS = {
   rasenplatz: ['sprenger', 'ersatzschiri', 'hund', 'gewitter', 'zaun', 'taube'],
   sportplatz: ['sprenger', 'ersatzschiri', 'hund', 'gewitter', 'zaun', 'taube'],
   grossfeld: ['sprenger', 'ersatzschiri', 'hund', 'gewitter', 'zaun', 'taube'],
-  halle: ['ersatzschiri', 'polizei'], // drinnen kein Wetter; die Polizei kommt wegen der Musik aus der Kabine
+  halle: ['ersatzschiri', 'fan'], // drinnen kein Wetter, keine Polizei, keine Taube: dafür ein betrunkener Fan über der Bande
 };
 
 // Kurzbericht fürs Kreisblatt ({min} = Spielminute).
@@ -35,10 +35,12 @@ const REPORTS = {
   gewitter: tr('Ab der {min}. Minute ging ein Gewitter nieder, danach ging es auf nassem Boden weiter.', 'From minute {min} a thunderstorm broke; play went on on a wet pitch.'),
   sprenger: tr('In der {min}. Minute sprang die Beregnungsanlage an.', 'In minute {min} the sprinklers came on.'),
   ersatzschiri: tr('Der Schiri musste in der {min}. Minute verletzt raus, ein Zuschauer pfiff zu Ende.', 'The referee went off injured in minute {min}; a spectator finished the game.'),
+  fan_kiss: tr('In der {min}. Minute sprang ein angetrunkener Fan über die Bande und wollte den Torwart küssen. Der Ordner führte ihn hinaus.', 'In minute {min} a tipsy fan jumped the boards to kiss the goalkeeper. A steward led him out.'),
+  fan_ball: tr('In der {min}. Minute sprang ein angetrunkener Fan über die Bande und klaute den Ball. Der Ordner führte ihn hinaus.', 'In minute {min} a tipsy fan jumped the boards and stole the ball. A steward led him out.'),
   taube: tr('In der {min}. Minute landete eine Taube neben dem Ball und ließ sich nur ungern verscheuchen.', 'In minute {min} a pigeon landed next to the ball and was in no hurry to be shooed away.'),
 };
 
-const DURATION = { hund: 8, zaun: 9, autoalarm: 6, polizei: 9, gewitter: 8, sprenger: 5, ersatzschiri: 6, taube: 6 };
+const DURATION = { hund: 8, zaun: 9, autoalarm: 6, polizei: 9, gewitter: 8, sprenger: 5, ersatzschiri: 6, taube: 6, fan: 7 };
 // Beim Gewitter wird gesprintet (vorher 3,5 m/s – sah nach Spaziergang aus); Sprinttempo der Spieler liegt bei 7.
 const STORM_RUN = 6.2;
 const REF_RUN = 6.8; // der Schiri ist zuerst unterm Vordach
@@ -46,6 +48,21 @@ const SPRINKLER_REACH = 8.5; // so nah an einem Sprenger wird man nass und rennt
 export const SPRINKLER_SPOTS = [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]]; // Anteile von Länge und Breite
 // Zaun: Klettern (Sekunden hoch, oben, runter) und Zaunhöhe – die Darstellung (reactions.js) liest dieselben Zeiten.
 export const CLIMB = { up: 1.3, top: 1.5, down: 1.0, height: 1.5 };
+// Fan über die Hallenbande (0,9 m): Zeit bis zum Sprung, hoch, oben, runter, Bandenhöhe – reactions.js liest dieselben Werte.
+export const FAN_CLIMB = { wait: 0.9, up: 0.55, top: 0.3, down: 0.5, height: 0.9 };
+const FAN_RUN = 4.4; // betrunken: langsamer als die Spieler (Sprint 5,4), schlägt Haken
+const FAN_CARRY = 4.0; // mit dem Ball
+const FAN_ESCORT = 2.4; // wird abgeführt
+const CHASE_RUN = 5.4;
+const STEWARD_RUN = 5.0;
+const CATCH = 1.0; // so nah muss einer sein, um ihn zu packen
+const FAN_KISS = 2.6; // so lange hängt er am Torwart, wenn ihn keiner packt
+const FAN_GIVE_UP = 18; // spätestens dann ist er außer Puste
+const REF_LIMP = 2.2; // der Schiri mit Zerrung
+const FAN_LOOK = { skin: SKIN_TONES[1], hair: 0x5a3a22, bald: false, beard: true, belly: 0.9, height: 1 };
+const FAN_KIT = { shirt: 0x9a2a2a, shorts: 0x34425a, socks: 0x222222 }; // Vereinstrikot über dem Bauch, Jeans
+const STEWARD_KIT = { shirt: 0xe8c21a, shorts: 0x222a3a, socks: 0x222222 }; // gelbe Warnweste
+const STEWARD_LOOK = { skin: SKIN_TONES[0], hair: 0x2a1d14, bald: false, beard: false, belly: 0.5, height: 1.02 };
 const DOG_LUNGE = 2.2; // so nah am Hund hechten Spieler nach dem Ball im Maul
 const OWNER_LOOK = { skin: SKIN_TONES[1], hair: 0x5a3a22, bald: false, beard: false, belly: 0.5, height: 1 };
 const OWNER_KIT = { shirt: 0x4a6a3a, shorts: 0x34425a, socks: 0x222222 }; // grüne Regenjacke
@@ -101,6 +118,10 @@ export function checkIncident(m, dt) {
     return true;
   }
   if (plan.type === 'autoalarm') return false; // wartet auf einen Treffer ans Auto
+  if (plan.type === 'fan' && !shelterFor(m.pitch).climb) {
+    m.incidentPlan = null; // Testschalter auf einem Platz ohne Bande: kein Fan
+    return false;
+  }
   if (plan.type === 'taube') return stepPerch(m);
   beginIncident(m, plan.type);
   return true;
@@ -265,7 +286,30 @@ function beginIncident(m, type, info = {}) {
   } else if (type === 'ersatzschiri') {
     // Zwei Spieler laufen zum Schiri, die anderen schauen hin.
     inc.helpers = m.players.filter((p) => p.role !== 'gk').sort((a, b) => dist2d(a.pos, m.referee.pos) - dist2d(b.pos, m.referee.pos)).slice(0, 2).map((p) => p.id);
+    // Mit Bandentür (Halle): Der Schiri humpelt durch die Tür zur Bank, ein Zuschauer kommt von draußen durch dieselbe Tür.
+    const door = shelterFor(pitch).door;
+    if (door) {
+      const name = personName(r, r.int(30, 70));
+      inc.exit = { k: 0, stuck: 0, done: false, pts: [door.in, door.out, { x: door.x + 2.2, z: pitch.halfWidth + 1.35 }], standIn: { name, look: look(r, { belly: r.range(0.5, 1) }) } };
+    }
     text = tr(`${m.referee.name} greift sich an die Wade – Zerrung. Wer kann pfeifen?`, `${m.referee.name} clutches his calf – a strain. Who can referee?`);
+  } else if (type === 'fan') {
+    // Ein angetrunkener Fan steigt hinter der Bande auf die Bande und springt aufs Parkett: zum Torwart (Kuss) oder zum Ball.
+    const sh = shelterFor(pitch);
+    const gks = m.players.filter((p) => p.role === 'gk');
+    const kiss = gks.length > 0 && r.chance(0.5);
+    const keeper = kiss ? r.pick(gks) : null;
+    const x0 = r.range(-6, 12);
+    const fanLook = look(r, { belly: r.range(0.6, 1), beard: r.chance(0.5) });
+    ball.holder = null;
+    ball.pos.y = 0.11;
+    ball.vel.x = ball.vel.y = ball.vel.z = 0;
+    inc.fan = { mode: kiss ? 'kiss' : 'ball', keeperId: keeper?.id ?? null, stage: 'warten', t: 0, ct: 0, st: 0, chase: 0, carry: 0, g: 0, retarget: 0, k: 0, wp: 0, chasers: [], done: false, aim: null };
+    m.visitors.push({ id: 'fan', look: { ...FAN_LOOK, ...fanLook }, kit: FAN_KIT, pos: { x: x0, z: sh.climb.from }, target: { x: x0, z: sh.climb.from }, speed: 0, manual: true, facing: { x: 0, z: 1 }, gesture: 'geballt', climbCt: 0 });
+    text = kiss
+      ? r.pick(tr(['Ein Fan springt über die Bande! Er will zum Torwart …', 'Betrunkener Fan auf dem Parkett – er hat nur Augen für den Torwart.'], ['A fan jumps the boards! He is heading for the goalkeeper …', 'Drunk fan on the parquet – he only has eyes for the goalkeeper.']))
+      : r.pick(tr(['Ein Fan springt über die Bande und schnappt sich den Ball!', 'Betrunkener Fan auf dem Parkett – er will den Ball haben.'], ['A fan jumps the boards and goes for the ball!', 'Drunk fan on the parquet – he wants the ball.']));
+    m.events.push({ type: 'fan_jump' });
   }
   inc.text = text;
   m.events.push({ type: 'incident', kind: type, stage: 'start', text });
@@ -297,7 +341,12 @@ export function stepIncident(m, dt) {
   if (inc.type === 'gewitter' && m.referee) followRoute(inc, inc.routes.get('ref'), m.referee, 'ref', REF_RUN, dt);
   if (inc.type === 'gewitter' && Math.floor(inc.t / 2.8) !== Math.floor((inc.t - dt) / 2.8)) m.events.push({ type: 'lightning' });
   if (inc.type === 'autoalarm' && Math.floor(inc.t / 1.4) !== Math.floor((inc.t - dt) / 1.4)) m.events.push({ type: 'alarm' });
-  if (inc.type === 'ersatzschiri' && m.referee) walkFree(m, m.referee, { x: m.referee.pos.x, z: -pitch.halfWidth - 3 }, 1.1, dt);
+  if (inc.type === 'ersatzschiri' && m.referee) {
+    if (inc.exit) stepRefExit(m, inc, dt);
+    else walkFree(m, m.referee, { x: m.referee.pos.x, z: -pitch.halfWidth - 3 }, 1.1, dt);
+  }
+  const fanF = inc.type === 'fan' ? inc.fan : null;
+  if (fanF) stepFan(m, dt);
   const climber = inc.type === 'zaun' ? inc.climber : null;
 
   for (const [i, p] of m.players.entries()) {
@@ -396,10 +445,27 @@ export function stepIncident(m, dt) {
       // Alle schauen zum Auto.
       const side = Math.sign(inc.info.z || 1);
       p.facing = norm((inc.info.x ?? 0) - p.pos.x, (inc.info.z ?? side * (pitch.halfWidth + 3)) - p.pos.z);
+    } else if (fanF) {
+      const fan = m.visitors.find((v) => v.id === 'fan');
+      if (fan) {
+        p.facing = norm(fan.pos.x - p.pos.x, fan.pos.z - p.pos.z);
+        const going = ['jagd', 'kuss', 'beute'].includes(fanF.stage);
+        if (going && fanF.chasers.includes(p.id)) {
+          target = freePoint(walkObstacles(pitch), fan.pos) ?? p.pos;
+          speed = CHASE_RUN;
+        } else if (fanF.stage === 'raus' && fanF.chasers.includes(p.id)) {
+          const door = shelterFor(pitch).door;
+          target = { x: door.in.x + (fanF.chasers[0] === p.id ? -1.0 : 1.0), z: door.in.z - 0.8 }; // wer ihn gepackt hat, begleitet ihn bis zur Tür
+          speed = 3.5;
+        }
+      }
     } else if (inc.type === 'ersatzschiri' && m.referee) {
       const ref = m.referee;
       if (inc.helpers.includes(p.id)) {
-        const w = { x: ref.pos.x + (inc.helpers[0] === p.id ? -1.1 : 1.1), z: ref.pos.z + 0.9 };
+        // Draußen vor der Bandentür bleiben die Helfer an der Tür (nie hinter der Bande).
+        const door = shelterFor(pitch).door;
+        const out = door && ref.pos.z > pitch.halfWidth - 0.3;
+        const w = out ? { x: door.in.x + (inc.helpers[0] === p.id ? -1.0 : 1.0), z: door.in.z - 0.6 } : { x: ref.pos.x + (inc.helpers[0] === p.id ? -1.1 : 1.1), z: ref.pos.z + 0.9 };
         target = freePoint(walkObstacles(pitch), w) ?? w;
         speed = 3.2;
       }
@@ -411,8 +477,176 @@ export function stepIncident(m, dt) {
   }
   const dogBusy = inc.type === 'hund' && m.dog && !m.dog.hasBall && inc.t < 14;
   const climbBusy = climber && !climber.done && inc.t < 16;
-  if (inc.timer > 0 || dogBusy || climbBusy) return;
+  const fanBusy = fanF && !fanF.done && inc.t < 60;
+  const exitBusy = inc.exit && !(inc.exit.done && m.visitors.some((v) => v.id === 'ersatz' && dist2d(v.pos, inc.exit.pts[0]) < 0.6)) && inc.t < 40;
+  if (inc.timer > 0 || dogBusy || climbBusy || fanBusy || exitBusy) return;
   endIncident(m, r);
+}
+
+// Schiri in der Halle: humpelt durch die Bandentür zur Bank. Der Zuschauer kommt, sobald er draußen ist, von außen durch dieselbe Tür.
+function stepRefExit(m, inc, dt) {
+  const e = inc.exit;
+  const ref = m.referee;
+  const door = shelterFor(m.pitch).door;
+  if (e.k < e.pts.length) {
+    const t = e.pts[e.k];
+    if (dist2d(ref.pos, t) < 0.3) e.k++;
+    else if (!walkFree(m, ref, t, REF_LIMP, dt)) {
+      e.stuck += dt;
+      if (e.stuck > 2) e.k = e.pts.length; // zugestellt: bleibt, wo er ist
+    } else e.stuck = 0;
+  }
+  if (e.k >= e.pts.length) {
+    ref.vel.x = ref.vel.z = 0;
+    ref.facing = { x: 0, z: -1 };
+    e.done = true;
+  }
+  if (e.k >= 2 && !m.visitors.some((v) => v.id === 'ersatz')) {
+    const hw = m.pitch.halfWidth;
+    m.visitors.push({ id: 'ersatz', look: e.standIn.look, kit: STAND_IN_KIT, pos: { x: door.x - 3.8, z: hw + 2.6 }, target: { ...door.in }, speed: 3.0 });
+  }
+}
+
+// Fan: warten, über die Bande, zum Torwart oder zum Ball, gepackt, hinausgeführt. Ohne Zufall außer den Zielen mit dem Ball (incidentRng).
+function stepFan(m, dt) {
+  const inc = m.incident;
+  const f = inc.fan;
+  const { pitch, ball } = m;
+  const sh = shelterFor(pitch);
+  const obs = walkObstacles(pitch);
+  const fan = m.visitors.find((v) => v.id === 'fan');
+  if (!fan) {
+    f.done = true;
+    return;
+  }
+  const hw = pitch.halfWidth;
+  f.t += dt;
+  const mkSteward = () => m.visitors.push({ id: 'ordner', look: STEWARD_LOOK, kit: STEWARD_KIT, pos: { x: sh.door.x + 4, z: hw + 2.4 }, target: { x: sh.door.x + 4, z: hw + 2.4 }, speed: STEWARD_RUN, manual: true, facing: { x: 0, z: -1 } });
+  const steward = m.visitors.find((v) => v.id === 'ordner');
+  const wobble = (target, speed, mag) => {
+    const goal = freePoint(obs, target) ?? fan.pos;
+    const d = dist2d(fan.pos, goal);
+    let aim = goal;
+    if (d > 2) {
+      const w = rotate(norm(goal.x - fan.pos.x, goal.z - fan.pos.z), Math.sin(inc.t * 4.2) * mag);
+      aim = clampToPitch(pitch, fan.pos.x + w.x * 3, fan.pos.z + w.z * 3, 0.6);
+    }
+    walkFree(m, fan, aim, speed, dt);
+  };
+  const keeper = f.keeperId ? m.players.find((p) => p.id === f.keeperId) : null;
+  const near = (p, q, d) => dist2d(p.pos, q.pos) < d;
+  // Gepackt wird er erst am Ziel: nach einem Moment am Torwart, bzw. nachdem er den Ball ein Stück getragen hat (vorher weicht er aus).
+  const caught = () => (f.stage === 'kuss' ? f.st >= 1.2 : f.stage === 'beute' && f.carry >= 2) && ((steward && near(steward, fan, CATCH)) || m.players.some((p) => p.state === 'normal' && f.chasers.includes(p.id) && near(p, fan, CATCH)));
+  // Wer ihn jagt: die zwei nächsten Feldspieler (alle halbe Sekunde neu).
+  if (['jagd', 'kuss', 'beute'].includes(f.stage) && (f.k -= dt) <= 0) {
+    f.k = 0.5;
+    f.chasers = m.players.filter((p) => p.role !== 'gk' && p.state === 'normal').sort((a, b) => dist2d(a.pos, fan.pos) - dist2d(b.pos, fan.pos)).slice(0, 2).map((p) => p.id);
+  }
+  if (m.referee) m.referee.facing = norm(fan.pos.x - m.referee.pos.x, fan.pos.z - m.referee.pos.z);
+  if (steward && ['jagd', 'kuss', 'beute', 'gefasst'].includes(f.stage)) {
+    walkFree(m, steward, freePoint(obs, fan.pos) ?? steward.pos, STEWARD_RUN, dt);
+    steward.gesture = null;
+  }
+  const grab = () => {
+    if (f.stage === 'beute') {
+      // Der Ball fällt, wo er gepackt wird.
+      const spot = clampToPitch(pitch, fan.pos.x, fan.pos.z, 1);
+      ball.pos.x = spot.x;
+      ball.pos.z = spot.z;
+      ball.pos.y = 0.11;
+      ball.vel.x = ball.vel.y = ball.vel.z = 0;
+    }
+    f.stage = 'gefasst';
+    f.g = 0;
+    fan.vel.x = fan.vel.z = 0;
+    fan.gesture = 'unschuld';
+    m.events.push({ type: 'fan_caught' });
+  };
+
+  if (f.stage === 'warten') {
+    if (f.t >= FAN_CLIMB.wait) f.stage = 'klettern';
+  } else if (f.stage === 'klettern') {
+    f.ct += dt;
+    const total = FAN_CLIMB.up + FAN_CLIMB.top + FAN_CLIMB.down;
+    const u = Math.min(1, f.ct / total);
+    const k = u * u * (3 - 2 * u);
+    const z1 = -hw + 0.55; // landet knapp hinter der Bande (auch aufgebläht frei)
+    fan.pos.z = sh.climb.from + (z1 - sh.climb.from) * k;
+    fan.climbCt = f.ct;
+    fan.gesture = 'klettern';
+    fan.vel.x = fan.vel.z = 0;
+    fan.facing = { x: 0, z: 1 };
+    if (f.ct >= total) {
+      f.stage = 'jagd';
+      f.ct = 0;
+      fan.climbCt = 0;
+      fan.gesture = null;
+      mkSteward();
+    }
+  } else if (f.stage === 'jagd') {
+    f.chase += dt;
+    const target = keeper ? keeper.pos : ball.pos;
+    wobble(target, FAN_RUN, 0.5);
+    fan.gesture = null;
+    if (f.chase > FAN_GIVE_UP) grab();
+    else if (keeper && dist2d(fan.pos, keeper.pos) < 0.9) {
+      f.stage = 'kuss';
+      f.st = 0;
+    } else if (!keeper && dist2d(fan.pos, ball.pos) < 0.7) {
+      f.stage = 'beute';
+      f.retarget = 0;
+      f.carry = 0;
+      m.events.push({ type: 'fan_ball' });
+    }
+  } else if (f.stage === 'kuss') {
+    f.chase += dt;
+    f.st += dt;
+    const d = norm(keeper.pos.x - fan.pos.x, keeper.pos.z - fan.pos.z);
+    fan.facing = d;
+    fan.vel.x = fan.vel.z = 0;
+    fan.gesture = 'troesten';
+    if (caught() || f.st >= FAN_KISS || f.chase > FAN_GIVE_UP) grab();
+  } else if (f.stage === 'beute') {
+    f.chase += dt;
+    f.carry += dt;
+    if ((f.retarget -= dt) <= 0) {
+      f.retarget = 1.1;
+      const r = m.incidentRng;
+      f.aim = { x: r.range(-pitch.halfLength, pitch.halfLength) * 0.8, z: r.range(-hw, hw) * 0.8 };
+    }
+    wobble(f.aim, FAN_CARRY, 0.8);
+    fan.gesture = 'geballt';
+    ball.holder = null;
+    ball.pos.x = fan.pos.x + fan.facing.x * 0.45;
+    ball.pos.z = fan.pos.z + fan.facing.z * 0.45;
+    ball.pos.y = 0.28;
+    ball.vel.x = ball.vel.y = ball.vel.z = 0;
+    if (caught() || f.chase > FAN_GIVE_UP) grab();
+  } else if (f.stage === 'gefasst') {
+    f.g += dt;
+    fan.vel.x = fan.vel.z = 0;
+    if (f.g >= 1 && (!steward || near(steward, fan, 1.6) || f.g > 5)) {
+      f.stage = 'raus';
+      f.wp = 0;
+    }
+  } else if (f.stage === 'raus') {
+    // Zur Tür und hinaus; der Ordner geht hinter ihm her.
+    const pts = [sh.door.in, sh.door.out];
+    const t = pts[Math.min(f.wp, pts.length - 1)];
+    if (dist2d(fan.pos, t) < 0.3 && f.wp < pts.length - 1) f.wp++;
+    else if (!walkFree(m, fan, t, FAN_ESCORT, dt)) f.stuck = (f.stuck ?? 0) + dt;
+    fan.gesture = 'abgang';
+    if (steward) {
+      const behind = { x: fan.pos.x - fan.facing.x * 0.8, z: fan.pos.z - fan.facing.z * 0.8 };
+      walkFree(m, steward, freePoint(obs, behind) ?? steward.pos, STEWARD_RUN, dt);
+      steward.gesture = dist2d(steward.pos, fan.pos) < 1.4 ? 'troesten' : null;
+    }
+    if ((f.wp >= pts.length - 1 && dist2d(fan.pos, t) < 0.3) || (f.stuck ?? 0) > 3) {
+      f.done = true;
+      f.stage = 'fertig';
+      fan.vel.x = fan.vel.z = 0;
+    }
+  }
 }
 
 function endIncident(m, r) {
@@ -459,12 +693,21 @@ function endIncident(m, r) {
   } else if (inc.type === 'taube') {
     if (m.pigeon) m.pigeon.state = 'weg';
     text = tr('Die Taube fliegt beleidigt davon. Weiter!', 'The pigeon flies off in a huff. Play on!');
+  } else if (inc.type === 'fan') {
+    m.visitors = m.visitors.filter((v) => !v.manual);
+    text = inc.fan.mode === 'kiss'
+      ? tr('Der Fan ist draußen, der Torwart wischt sich die Wange ab. Weiter!', 'The fan is out; the keeper wipes his cheek. Play on!')
+      : tr('Der Ordner hat den Fan hinausgeführt, der Ball ist wieder im Spiel. Weiter!', 'The steward has led the fan out and the ball is back in play. Play on!');
   } else if (inc.type === 'ersatzschiri') {
-    const name = personName(r, r.int(30, 70));
-    m.referee = { ...m.referee, name, trait: 'zuschauer', kit: STAND_IN_KIT, look: look(r, { belly: r.range(0.5, 1) }), pos: { x: 0, z: -pitch.halfWidth - 1 }, vel: { x: 0, z: 0 } };
+    // Halle: Der Zuschauer ist schon durch die Bandentür hereingekommen und pfeift von dort aus; sonst taucht er hinter der Linie auf.
+    const si = inc.exit?.standIn;
+    const name = si?.name ?? personName(r, r.int(30, 70));
+    const here = si ? m.visitors.find((v) => v.id === 'ersatz') : null;
+    m.referee = { ...m.referee, name, trait: 'zuschauer', kit: STAND_IN_KIT, look: si?.look ?? look(r, { belly: r.range(0.5, 1) }), pos: here ? { x: here.pos.x, z: here.pos.z } : { x: 0, z: -pitch.halfWidth - 1 }, vel: { x: 0, z: 0 } };
+    if (si) m.visitors = m.visitors.filter((v) => v.id !== 'ersatz');
     text = tr(`Zuschauer ${name} übernimmt die Pfeife. Das kann ja was werden.`, `Spectator ${name} takes the whistle. This should be interesting.`);
   }
-  m.incidents.push({ type: inc.type, time: inc.time, report: REPORTS[inc.type === 'zaun' && inc.lost ? 'zaun_weg' : inc.type], cost: inc.type === 'zaun' && inc.lost ? 15 : 0 });
+  m.incidents.push({ type: inc.type, time: inc.time, report: REPORTS[inc.type === 'zaun' && inc.lost ? 'zaun_weg' : inc.type === 'fan' ? `fan_${inc.fan.mode}` : inc.type], cost: inc.type === 'zaun' && inc.lost ? 15 : 0 });
   m.incident = null;
   m.events.push({ type: 'incident', kind: inc.type, stage: 'end', text });
   if (inc.resume) {
@@ -560,6 +803,7 @@ function stepVisitors(m, dt) {
   for (const v of m.visitors ?? []) {
     v.vel ??= { x: 0, z: 0 };
     v.facing ??= { x: 1, z: 0 };
+    if (v.manual) continue; // wird vom Vorfall selbst bewegt (Fan, Ordner)
     if (v.follow === 'dog' && m.dog) {
       // Hinter dem Hund her; ist der Vorfall vorbei, geht es mit ihm vom Platz.
       const off = v.gesture ? 1.2 : 0.8;

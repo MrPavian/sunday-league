@@ -10,7 +10,7 @@ import { crossesObstacle, shelterFor, walkObstacles } from '../src/sim/shelter.j
 const PITCHES = { ...BASE_PITCHES, ...BUND_PITCHES };
 const DT = 1 / 60;
 const BODY = 0.12; // so weit darf ein Körper höchstens in ein Hindernis ragen (Körpermitte gilt, wie beim Gewitter)
-const VENUES = ['hinterhof', 'parkplatz', 'park', 'ascheplatz', 'rasenplatz', 'sportplatz', 'grossfeld', 'stadion', 'grossfeld_tribuene'];
+const VENUES = ['hinterhof', 'parkplatz', 'park', 'ascheplatz', 'rasenplatz', 'sportplatz', 'grossfeld', 'stadion', 'grossfeld_tribuene', 'halle'];
 const typesOf = (venue) => VENUE_INCIDENTS[PITCHES[venue].base ?? venue].filter((t) => t !== 'gewitter');
 const SEEDS = [3, 4, 5, 6, 7, 8];
 
@@ -34,6 +34,10 @@ function check(m, prev, label) {
   const sh = shelterFor(m.pitch);
   for (const f of figures(m)) {
     if (climber && f.id === climber.id && climber.ct >= 0) continue; // am Ballfangzaun: gewollt
+    if (f.id === 'fan' && m.incident?.fan?.stage === 'klettern') {
+      prev.set(f.id, { x: f.pos.x, z: f.pos.z }); // Sprung über die Hallenbande: gewollt, danach zählt der Weg wieder ab hier
+      continue;
+    }
     const obs = f.dog ? walkObstacles(m.pitch, true) : sh.obstacles;
     const hit = obs.find((r) => within(r, f.pos));
     const where = `${label} ${f.id} bei ${f.pos.x.toFixed(2)},${f.pos.z.toFixed(2)} t=${m.incident?.t?.toFixed(2)}`;
@@ -86,7 +90,7 @@ describe('Vorfälle: nicht durch Hindernisse', () => {
 
   // Taube am Rand: Sie sitzt in der Ecke, an der Linie, hinter der Linie, auf Bande, Garage, Zaun. Dazu stehen drei Spieler
   // nahe dran. Wer sie nicht auf freiem Weg erreicht, bleibt stehen.
-  for (const venue of VENUES) {
+  for (const venue of VENUES.filter((v) => VENUE_INCIDENTS[PITCHES[v].base ?? v].includes('taube'))) {
     it(`${venue}/taube: Taube am Rand oder hinter einem Hindernis, keiner läuft durch`, () => {
       const { halfLength: hl, halfWidth: hw } = PITCHES[venue];
       const spots = [];

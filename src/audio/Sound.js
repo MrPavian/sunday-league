@@ -504,6 +504,13 @@ export class Sound {
           else if (e.kind === 'sprenger') this.hiss();
           else if (e.kind === 'taube') this.coo(pan);
           else if (e.kind === 'ersatzschiri' || e.kind === 'zaun') this.grumble(pan);
+          else if (e.kind === 'fan') this.cheer(0.6); // die Halle johlt
+          break;
+        case 'fan_jump':
+          this.cheer(0.8);
+          break;
+        case 'fan_caught':
+          this.whistle('short');
           break;
         case 'bark':
           this.bark(pan);

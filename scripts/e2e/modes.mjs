@@ -14,7 +14,7 @@ const TIMES = ['morgen', 'mittag', 'nachmittag', 'abend'];
 // Autoalarm brauchen ein auslösendes Ereignis (Ball fliegt drüber, Auto fährt vorbei).
 // Seed je Vorfall fest: Der Autoalarm geht nur mit 60 % je Autotreffer los – mit Seed 15 trifft der
 // Ball früh ein Auto und der Alarm kommt (bei 3 s; Seed 13 passte bis zur Flankenverwertung).
-const INCIDENTS = { hund: 'park', zaun: 'hinterhof', autoalarm: 'parkplatz', polizei: 'hinterhof', gewitter: 'park', sprenger: 'rasenplatz', ersatzschiri: 'rasenplatz', taube: 'park' };
+const INCIDENTS = { hund: 'park', zaun: 'hinterhof', autoalarm: 'parkplatz', polizei: 'hinterhof', gewitter: 'park', sprenger: 'rasenplatz', ersatzschiri: 'rasenplatz', taube: 'park', fan: 'halle' };
 const INCIDENT_SEED = { autoalarm: 15 };
 const TABS = [['home'], ['team', 'squad'], ['team', 'lineup'], ['team', 'tactic'], ['team', 'training'], ['team', 'youth'], ['team', 'transfers'], ['season', 'table'], ['season', 'fixtures'], ['season', 'cup'], ['club', 'cash'], ['club', 'club'], ['club', 'museum'], ['pub'], ['phone', 'chat']];
 

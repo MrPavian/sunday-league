@@ -3,6 +3,7 @@ import { len } from '../core/math.js';
 import { SPRINKLER_SPOTS } from '../sim/incidents.js';
 import { keepAlpha, toon } from './materials.js';
 import { currentQuality } from './quality.js';
+import { visitorLift } from './reactions.js';
 import { animatePlayer, createPlayerModel, disposeKit } from './PlayerModel.js';
 
 // Volle Wetterdichte; die Qualitätsstufe (quality.js: weather) nimmt davon einen Anteil.
@@ -241,7 +242,7 @@ export class IncidentView {
         this.root.add(model.group);
       }
       model.group.visible = true;
-      model.group.position.set(v.pos.x, 0, v.pos.z);
+      model.group.position.set(v.pos.x, visitorLift(v), v.pos.z); // Fan: Höhe beim Sprung über die Bande
       if (v.facing) model.group.rotation.y = Math.atan2(v.facing.x, v.facing.z);
       animatePlayer(model, { speed: v.vel ? len(v.vel.x, v.vel.z) : 0, dt, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture: v.gesture ?? null });
     }

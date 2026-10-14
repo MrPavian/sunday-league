@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { tr } from '../../core/i18n.js';
 import { emissiveToon, toon } from '../materials.js';
 import { addLights, box, ground, makeBench, makeGoalFrame } from '../props.js';
+import { GEO } from '../../sim/shelter.js';
 import { crowdRow, makeSpectator } from '../spectators.js';
 import { makeHallTexture, makeSignTextureWide } from '../textures.js';
 
@@ -23,7 +24,12 @@ export function buildHall(root, pitch, rng, scene) {
   // Weiße Bande rund ums Feld, mit Werbung vom Sponsor.
   const bande = 0xf2efe6;
   root.add(box(wallX * 2, 0.9, 0.12, bande, 0, 0.45, -hw - 0.1));
-  root.add(box(wallX * 2, 0.9, 0.12, bande, 0, 0.45, hw + 0.1));
+  // Vorn mit Tür (GEO.hall, shelter.js): Schiri, Ordner und Platzverweise gehen durch die Lücke, nicht durch die Bande.
+  const door = GEO.hall;
+  const left = door.doorX - door.doorW / 2 + wallX;
+  const right = wallX - (door.doorX + door.doorW / 2);
+  root.add(box(left, 0.9, 0.12, bande, -wallX + left / 2, 0.45, hw + 0.1));
+  root.add(box(right, 0.9, 0.12, bande, wallX - right / 2, 0.45, hw + 0.1));
   for (const s of [-1, 1]) root.add(box(0.12, 0.9, hw * 2 + 0.3, bande, s * wallX, 0.45, 0));
   for (const [x, text] of [[-10, 'SPORTHAUS KANAL'], [0, pitch.sponsorAds?.bande ? pitch.sponsorAds.bande.name.toUpperCase() : tr('BÄCKEREI KRUME', 'CRUMBS BAKERY')], [10, 'HALLENCUP']]) {
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(7, 0.6), toon(0xffffff, { map: makeSignTextureWide(text, { bg: '#1f3a6b' }) }));

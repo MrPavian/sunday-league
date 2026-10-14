@@ -22,6 +22,9 @@ export const GEO = {
   ash: { x: 6.6, z0: -16.1, z1: -13.6, y: 2.6 },
   // Park: Pavillon an der Hinterseite.
   park: { x0: -5.0, x1: 1.2, z0: -15.0, z1: -12.3, y: 2.8 },
+  // Halle: Tür in der Bande auf der Kameraseite (src/render/venues/hall.js: Bande vorn in zwei Teilen, Lücke bei doorX);
+  // Hallenmaße W × D wie dort (Boden, Seitenwände, Hinterwand).
+  hall: { doorX: 0, doorW: 1.8, w: 48, d: 30 },
 };
 
 const rc = (x0, x1, z0, z1) => ({ x0, x1, z0, z1 });
@@ -247,6 +250,46 @@ function stadium(pitch) {
   };
 }
 
+
+// Sporthalle: Hindernisse aus der Kulisse (src/render/venues/hall.js, Zeilenangaben beziehen sich auf diese Datei).
+// Auf dem Parkett liegt nur die Bande (0,9 m hoch, weiß, 0,12 m dick): Wer drinnen ist, kommt nur durch die Tür vorn heraus.
+// Draußen (Auswechselbänke vorn, Gang hinter der Bande, Tribüne) stehen Bänke, Stufen und die Hallenwände.
+function hall(pitch) {
+  const { halfWidth: hw, wallX: wx } = pitch;
+  const g = GEO.hall;
+  const t = 0.06; // halbe Bandendicke (box(…, 0.12, …))
+  const obstacles = [
+    rc(-wx - t, wx + t, -hw - 0.1 - t, -hw - 0.1 + t), // Bande hinten: box(wallX * 2, 0.9, 0.12, …, -hw - 0.1)
+    rc(-wx - t, g.doorX - g.doorW / 2, hw + 0.1 - t, hw + 0.1 + t), // Bande vorn links der Tür
+    rc(g.doorX + g.doorW / 2, wx + t, hw + 0.1 - t, hw + 0.1 + t), // Bande vorn rechts der Tür (Lücke = Bandentür)
+    rc(-wx - t, -wx + t, -hw - 0.15, hw + 0.15), // Bande links: box(0.12, 0.9, hw * 2 + 0.3, …, -wallX, 0)
+    rc(wx - t, wx + t, -hw - 0.15, hw + 0.15), // Bande rechts
+    rc(-g.w / 2 - 0.15, g.w / 2 + 0.15, -hw - 4.5 - 0.15, -hw - 4.5 + 0.15), // Hinterwand: box(W, 6, 0.3, …, -hw - 4.5)
+    rc(-g.w / 2 - 0.15, -g.w / 2 + 0.15, -g.d / 2, g.d / 2), // Seitenwand links: box(0.3, 8, D, …, -W / 2)
+    rc(g.w / 2 - 0.15, g.w / 2 + 0.15, -g.d / 2, g.d / 2), // Seitenwand rechts
+    rc(-g.w / 2 - 0.15, g.w / 2 + 0.15, g.d / 2 - 0.15, g.d / 2 + 0.15), // Boden endet bei D / 2 (vorn keine Wand gezeichnet)
+    rc(-20.1, -7.9, -hw - 4.15 - 0.12, -hw - 4.15 + 0.05), // Sprossenwand (Holme x −20 … −8 bei z = −hw − 4,2; Sprossen 12,2 m breit)
+    rc(-11, 19, -hw - 1.4 - 2 * 0.85 - 0.4, -hw - 1.4 + 0.4), // Tribüne: drei Stufen box(30, 0.35, 0.8, …, x = 4, z = −hw − 1,4 − r · 0,85) samt Klappbänken
+  ];
+  for (const x of [-5, 5]) obstacles.push(around(x, hw + 1.1, 0.9, 0.25)); // Auswechselbänke: makeBench(x, hw + 1.1) – 1,8 × 0,45 m
+  // Platz im Streifen vor der Bande (Kameraseite), nur für den Notfall (Gewitter wird in der Halle nicht ausgelost).
+  const z0 = hw + 2.4;
+  const z1 = hw + 3.2;
+  const slots = [...range(-6, 6, 1).map((x) => ({ x, z: z0 })), ...range(-5.5, 5.5, 1).map((x) => ({ x, z: z1 }))].sort((a, b) => Math.abs(a.x) - Math.abs(b.x) || a.z - b.z);
+  const gates = () => [[{ x: g.doorX, z: hw - 0.5 }, { x: g.doorX, z: hw + 0.9 }, { x: g.doorX, z: z0 - 0.4 }]];
+  return {
+    text: tr('Alarm in der Halle! Alle raus durch die Bandentür.', 'Alarm in the hall! Everyone out through the boards door.'),
+    face: { x: 0, z: -1 },
+    axis: 'x',
+    slots,
+    obstacles,
+    gates,
+    door: { x: g.doorX, w: g.doorW, in: { x: g.doorX, z: hw - 0.9 }, out: { x: g.doorX, z: hw + 1.2 } },
+    // Wo die Bande hinten überstiegen werden kann (der Gang dahinter ist 0,85 m breit, die Tribüne steht direkt dahinter).
+    climb: { z: -hw - 0.1, from: -hw - 0.75, h: 0.9 },
+  };
+}
+
 // Unbekannter Spielort: zwei Reihen hinter der Seitenlinie, ohne Hindernisse.
 function fallback(pitch) {
   const { halfWidth: hw, halfLength: hl } = pitch;
@@ -262,7 +305,7 @@ function fallback(pitch) {
 }
 
 // Pokal-Kulissen: Das Stadion hat einen eigenen Unterstand, das Großfeld mit Zusatztribüne ist das Großfeld (base).
-const BUILD = { hinterhof: backyard, parkplatz: lot, park, ascheplatz: ash, rasenplatz: lawn, sportplatz: lawn, grossfeld: lawn, stadion: stadium };
+const BUILD = { hinterhof: backyard, parkplatz: lot, park, ascheplatz: ash, rasenplatz: lawn, sportplatz: lawn, grossfeld: lawn, stadion: stadium, halle: hall };
 const cache = new WeakMap();
 export function shelterFor(pitch) {
   let s = cache.get(pitch);
