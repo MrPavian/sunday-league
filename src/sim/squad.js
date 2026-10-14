@@ -5,6 +5,7 @@
 import { dist2d } from '../core/math.js';
 import { formationSpot } from './formation.js';
 import { setControlled } from './players.js';
+import { applyPositionMalus, bestForRole, posGrade } from './position.js';
 
 export const FREE_SUBS = { limit: Infinity, reentry: true };
 export const LIMITED_SUBS = { limit: 4, reentry: false };
@@ -104,6 +105,7 @@ function leaveInjured(m, p) {
     const goalX = p.home.x;
     const keeper = mates.reduce((a, b) => (Math.abs(b.pos.x - goalX) < Math.abs(a.pos.x - goalX) ? b : a));
     Object.assign(keeper, { role: 'gk', home: p.home, formationEntry: p.formationEntry });
+    applyPositionMalus(keeper); // Feldspieler im Tor
   }
   if (m.controlledId === p.id) {
     const next = mates.filter((q) => q.role !== 'gk').sort((a, b) => dist2d(a.pos, m.ball.pos) - dist2d(b.pos, m.ball.pos))[0];
@@ -119,7 +121,8 @@ export function processSubs(m) {
     // 1. Verletzte zuerst – egal, wer coacht.
     for (const hurt of m.players.filter((p) => p.team === team && p.mustLeave)) {
       const pool = subsLeft(m, team) > 0 ? usableBench(m, team) : [];
-      const incoming = pool.find((b) => (hurt.role === 'gk' ? b.position === 'gk' : b.position === hurt.role)) ?? pool.find((b) => b.position !== 'gk') ?? pool[0];
+      // Dieselbe Rolle zuerst, sonst der mit dem kleinsten Positionsabzug (ein Feldspieler ersetzt keinen Torwart, wenn es anders geht).
+      const incoming = pool.length ? bestForRole(hurt.role === 'gk' ? pool : pool.filter((b) => b.position !== 'gk').length ? pool.filter((b) => b.position !== 'gk') : pool, hurt.role) : null;
       if (incoming) substitute(m, hurt, incoming, { forced: true });
       else leaveInjured(m, hurt);
     }
@@ -147,9 +150,11 @@ export function processSubs(m) {
     if (!tired) continue;
     // Die KI wechselt erst, wenn jemand wirklich platt ist.
     if (!human && (tired.stamina > 0.45 || m.rng.next() < 0.3)) continue;
-    const fresh = human ? ready : ready.filter((b) => b.stamina > tired.stamina + 0.2);
+    // Die KI wechselt nur auf die eigene Position. Gibt es keinen frischen Ersatz dafür, bleibt der Müde draußen
+    // (ein Nachbar oder gar ein Feldspieler auf weiter Position wäre mit Abzug oft schlechter als der Müde).
+    const fresh = human ? ready : ready.filter((b) => b.stamina > tired.stamina + 0.2 && posGrade(b.position, tired.role) === 'own');
     if (!fresh.length) continue;
-    const incoming = fresh.find((b) => b.position === tired.role) ?? fresh.reduce((a, b) => (b.stamina > a.stamina ? b : a));
+    const incoming = bestForRole(fresh, tired.role); // Position vor Frische, sonst kleinster Abzug
     substitute(m, tired, incoming);
   }
 }
@@ -174,6 +179,7 @@ export function substitute(m, out, incoming, { forced = false } = {}) {
     pending: null,
     mood: null,
   });
+  applyPositionMalus(incoming); // neue Rolle = neue Werte (Einwechsler auf fremder Position)
   out.pending = null;
   out.charging = false;
   out.charge = 0;

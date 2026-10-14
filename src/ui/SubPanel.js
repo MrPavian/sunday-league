@@ -1,6 +1,7 @@
 import { tr } from '../core/i18n.js';
 import { MATCH_INJURIES } from '../sim/knocks.js';
 import { POSITIONS } from '../sim/generator.js';
+import { oopInfo, oopText } from '../sim/position.js';
 import { PROFILES, profilesOf } from '../sim/profiles.js';
 import { trickLine } from '../sim/tricks.js';
 import { planSub, requestSub, subsLeft } from '../sim/squad.js';
@@ -116,15 +117,20 @@ export class SubPanel {
     const ruleText = Number.isFinite(rule.limit)
       ? tr(`Noch ${left} von ${rule.limit} Wechseln · raus ist raus`, `${left} of ${rule.limit} substitutions left · once off, stays off`)
       : tr('Fliegend wechseln · Rückwechsel erlaubt', 'Rolling substitutions · players may go back on');
+    const swapOutRole = outs.find((p) => p.id === this.outId)?.role ?? null;
     const row = (p, kind, selected) => {
       const knock = p.knock ? ` <em class="sub-knock">✚ ${esc(MATCH_INJURIES[p.knock.kind]?.label ?? '')}</em>` : '';
       const role = POSITIONS[kind === 'out' ? p.role : p.position] ?? '';
       const prof = [...profilesOf(p).map((id) => PROFILES[id].label), trickLine(p)].filter(Boolean).join(' · ');
+      // Positionsfremd: draußen gilt die aktuelle Rolle, auf der Bank die Rolle des Ausgewählten.
+      const target = kind === 'out' ? p.role : swapOutRole;
+      const info = kind === 'out' ? p.oop : target ? oopInfo(p, target, p.posFam?.[target] ?? 0) : null;
+      const oop = info ? `<small class="sub-oop" title="${esc(oopText(info))}">⚠ ${esc(oopText(info))}</small>` : '';
       const tips = (kind === 'out' ? this.outTips : this.inTips)?.get(p.id) ?? [];
       const tip = tips.length ? `<small class="sub-tip ${kind}">${kind === 'in' ? tr('Passt jetzt', 'Good call now') : tr('Raus?', 'Take off?')}: ${esc(tips.join(', '))}</small>` : '';
       // Als Spielerkarte: Kopf in Vereinsfarbe, Name, Position, Kraftbalken; gewählt = Stempel.
       const mark = selected ? `<span class="m-stamp sub-mark${kind === 'in' ? ' ok' : ''}" style="--tilt:-8deg">${kind === 'in' ? tr('Rein', 'On') : tr('Raus', 'Off')}</span>` : '';
-      return `<button class="sub-row sub-card${selected ? ' active' : ''}${this.col === kind ? ' col' : ''}" data-action="${kind}" data-value="${p.id}" aria-pressed="${selected}"><span class="sub-name">${esc(p.name)}${knock}</span><small>${esc(role)}</small>${prof ? `<small class="sub-prof">${esc(prof)}</small>` : ''}${tip}${bar(p.stamina)}${mark}</button>`;
+      return `<button class="sub-row sub-card${selected ? ' active' : ''}${this.col === kind ? ' col' : ''}" data-action="${kind}" data-value="${p.id}" aria-pressed="${selected}"><span class="sub-name">${esc(p.name)}${knock}</span><small>${esc(role)}</small>${prof ? `<small class="sub-prof">${esc(prof)}</small>` : ''}${oop}${tip}${bar(p.stamina)}${mark}</button>`;
     };
     const swapOut = outs.find((p) => p.id === this.outId);
     const swapIn = ins.find((p) => p.id === this.inId);

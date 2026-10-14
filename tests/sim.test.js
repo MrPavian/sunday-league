@@ -600,7 +600,8 @@ describe('feel: parries, corners, set pieces', () => {
   it('a parry goes out low and wide, not up over the keeper', () => {
     let parries = 0;
     let maxY = 0;
-    for (const seed of [1, 2, 3]) {
+    // 6 statt 3 Spiele, Schwelle von 5 auf 10 mitgewachsen (gleiche Rate je Spiel, CLAUDE.md): mit 3 lag man auf der Grenze.
+    for (const seed of [1, 2, 3, 4, 5, 6]) {
       const m = createMatch({ seed, pitch: PARKING_LOT, human: false });
       let watch = 0;
       for (let i = 0; i < 60 * 600 && m.phase !== 'ended'; i++) {
@@ -614,7 +615,7 @@ describe('feel: parries, corners, set pieces', () => {
         m.events.length = 0;
       }
     }
-    expect(parries).toBeGreaterThan(5);
+    expect(parries).toBeGreaterThan(10);
     expect(maxY).toBeLessThan(1.9);
   });
 

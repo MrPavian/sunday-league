@@ -8,6 +8,8 @@ import { autoTrip } from './trip.js';
 import { absenceMul as facilityAbsence, fansMul, recruitBonus, weeklyFacilities, youthExtra, youthGrowthMul } from './facilities.js';
 import { createRng } from '../core/rng.js';
 import { createPlayerPool, ratePlayer } from '../sim/generator.js';
+import { slotRating } from '../sim/position.js';
+import { afterMatchPositions, deliverGrumbles, famAt, migratePositions, posFamOf } from './positions.js';
 import { createMatch, MATCH, stepMatch } from '../sim/match.js';
 import { PITCHES } from '../sim/pitch.js';
 import { allPlayers, subRuleFor } from '../sim/squad.js';
@@ -204,6 +206,7 @@ export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null,
     history: [],
     mood: 0,
     flags: {},
+    pendingGrumble: [],
     arcs: [],
     week: null,
   };
@@ -389,7 +392,7 @@ function aiTurnover(career, clubs, pick) {
   return [];
 }
 
-const freshRecord = () => ({ apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 });
+const freshRecord = () => ({ apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0, posXp: {} });
 
 function weighted(rng, weights) {
   const entries = Object.entries(weights);
@@ -611,7 +614,8 @@ export function buildLineup(career, club, format, availability, rng, manual = nu
       const k = 1 + 0.08 * (career.players[idx]?.form ?? 0);
       // Fitness: Wer nicht ganz fit ist, startet mit weniger Puste – bei 70 % gut 6 % Abzug.
       const fit = 0.8 + 0.2 * fitnessOf(career, idx);
-      return ratePlayer({ ...p, position: slot.role }) * k * fit + (p.position === slot.role ? 5 : 0);
+      // Positionsfremd: Abzug mit Gewöhnung (sim/position.js) – die Elf meidet fremde Positionen von selbst.
+      return slotRating(p, slot.role, famAt(career, idx, slot.role)) * k * fit + (p.position === slot.role ? 5 : 0);
     };
     free.sort((a, b) => score(b) - score(a));
     lineup[i] = free.shift();
@@ -692,6 +696,7 @@ export function migrateCareer(career) {
   career.leagueSize ??= 6;
   career.mood ??= 0;
   career.flags ??= {};
+  migratePositions(career); // Gewöhnung an fremde Positionen (alte Stände: leer)
   initFinances(career);
   initYouth(career);
   initCoach(career);
@@ -917,6 +922,7 @@ export function teamForMatch(career, club, format, availability, rng) {
   const { lineup, bench, late, helpers, penalty } = buildLineup(career, club, format, availability, rng, manual);
   const players = [...lineup, ...bench].map((idx) => {
     const p = helpers.includes(idx) ? helperOf(career, club, idx) : applyForm(copyPlayer(playerOf(career, idx)), career.players[idx], club.human ? career.mood ?? 0 : 0);
+    p.posFam = posFamOf(career, idx); // Gewöhnung je Rolle für position.js
     if (late.includes(idx)) p.late = true;
     if (penalty.includes(idx)) p.penalty = true; // Strafbank: kein Nachrücker bei Überraschungen am Spieltag
     const fit = helpers.includes(idx) ? 1 : fitnessOf(career, idx);
@@ -1056,6 +1062,7 @@ export function recordResult(career, fixture, prepared) {
     applyCards(career, prepared); // Sperren aus Rot, Gelb-Rot, fünf Gelben
     memoryAfterMatch(career, prepared); // „ausgerechnet der Ex"
     heirMoments(career); // erstes Tor des Juniors
+    afterMatchPositions(career, m, humanClub(career).squad); // Gewöhnung & Murren (positions.js)
     afterMatchVoice(career, prepared, fixture.home === humanId ? fixture.away : fixture.home);
   }
   matchFinances(career, fixture, prepared, career.level ?? 1);
@@ -1095,6 +1102,7 @@ export function finishRound(career) {
   const staffNotes = weeklyStaff(career, { squad: humanClub(career).squad }); // Pauschalen, freie Ämter
   career.round++;
   startWeek(career);
+  if (career.week) deliverGrumbles(career, career.week.chat); // Murren wegen fremder Position
   for (const text of staffNotes) career.week?.chat.push({ from: null, text, time: 'Mo 08:00' });
   // Versprochene Einsätze für Neuzugänge: nach zwei Spieltagen abrechnen.
   checkPromises(career, humanClub(career).squad, (idx, text) => career.week?.chat.push({ from: idx, text, time: 'Mo 08:15' }));
