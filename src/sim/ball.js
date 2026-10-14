@@ -90,11 +90,27 @@ export function stepBall(ball, pitch, dt) {
     if (!event && pitch.carRule && ((ball.lastAction === 'shoot' && impact > 6) || impact > 13)) event = { type: 'car', x: pos.x, z: pos.z };
   }
   const xMax = pitch.wallX - BALL_RADIUS;
-  if (Math.abs(pos.x) > xMax) {
+  const netX = catchNetX(pitch, pos);
+  if (netX !== null && Math.abs(pos.x) > netX) {
+    // Fangnetz hinter dem Tor: Der Ball bleibt hängen und fällt zurück, statt von der Wand abzuprallen.
+    pos.x = Math.sign(pos.x) * netX;
+    vel.x = -vel.x * 0.06;
+    vel.y *= 0.25;
+    vel.z *= 0.4;
+  } else if (Math.abs(pos.x) > xMax) {
     pos.x = Math.sign(pos.x) * xMax;
     vel.x = -vel.x * 0.5;
   }
   return event;
+}
+
+// Fangnetz hinter dem Tor (nur Hallen mit pitch.catchNet): x-Betrag der Netzfläche in der Höhe des Balls, sonst null.
+// Das Netz steht über der Bande bis zur Netzhöhe, quer über Tor plus Rand, und lehnt oben zum Feld. Darüber und
+// daneben gilt weiter die Wand. Die Darstellung (render/venues/hall.js) liest dieselben Maße.
+export function catchNetX(pitch, pos) {
+  const net = pitch.catchNet;
+  if (!net || Math.abs(pos.z) >= pitch.goalHalfWidth + net.margin || pos.y <= net.boardHeight || pos.y >= net.height) return null;
+  return pitch.wallX - BALL_RADIUS - net.lean * (pos.y - net.boardHeight);
 }
 
 // Pfosten (senkrechte Zylinder) und Latte (waagerechter Zylinder). Die

@@ -93,9 +93,15 @@ export function separatePlayers(m) {
   for (const p of ps) clampPlayer(m.pitch, p, p.pos.x, p.pos.z);
 }
 
+// Hallencup (pitch.flatPlay): Hohe Pässe, Flanken und Abschläge werden zu Bodenpässen (Flanke: flache Hereingabe).
+export function flatten(pitch, a) {
+  if (!pitch.flatPlay || !a?.lofted) return a;
+  return { ...a, lofted: undefined, driven: undefined, ...(a.lofted === 'cross' ? { low: true } : null) };
+}
+
 export function tryExecute(m, p) {
   const { ball } = m;
-  const a = p.pending;
+  const a = flatten(m.pitch, p.pending);
   const holds = ball.holder === p.id;
   if (p.state !== 'normal') return;
   if (!holds) {
@@ -162,7 +168,10 @@ function shoot(m, p, a, fatigue) {
   // Direktabnahme und Schuss aus der Drehung sind schwerer zu platzieren.
   dir = rotate(dir, rng.gauss() * sigma * (a.placed ? 0.35 : pressureChaos(m, p)) * (a.first ? 1.2 : 1) * (a.turn ? 1.25 : 1));
   const speed = (8 + 18 * power) * (0.85 + 0.15 * p.attrs.shooting) * (hammer ? 1.15 : 1);
-  const vy = 0.8 + 5 * power * power + Math.abs(rng.gauss()) * 1.2 * (1 - p.attrs.shooting) * power;
+  let vy = 0.8 + 5 * power * power + Math.abs(rng.gauss()) * 1.2 * (1 - p.attrs.shooting) * power;
+  // Halle: hoch nur vorm Tor, weiter weg bleibt der Schuss flach.
+  const flat = m.pitch.flatPlay;
+  if (flat && Math.abs(p.pos.x - attackDir(m, p.team) * m.pitch.halfLength) > flat.shotNear) vy = Math.min(vy, flat.shotVy);
   ball.vel.x = dir.x * speed;
   ball.vel.y = vy;
   ball.vel.z = dir.z * speed;
@@ -301,7 +310,7 @@ function pass(m, p, a, fatigue, fromHands) {
     const aim = a.clear && pitch.boundary === 'lines' ? { x: p.pos.x + s * pitch.halfLength * 0.35, z: clearSide * (pitch.halfWidth + 3) } : ownHalf ? { x: s * pitch.halfLength * 0.5, z: 0 } : { x: p.pos.x + s * 4, z: -p.pos.z * 0.5 };
     dir = p.id === m.controlledId ? { ...p.facing } : rotate(norm(aim.x - p.pos.x, aim.z - p.pos.z), rng.gauss() * 0.25);
     speed = a.clear ? CLEAR.speed : outfieldThrow ? 9 : ownHalf ? 11 : 7;
-    vy = a.clear ? CLEAR.vy : ownHalf ? 2 : 0.5;
+    vy = pitch.flatPlay ? 0.3 : a.clear ? CLEAR.vy : ownHalf ? 2 : 0.5;
   } else {
     // Pass in die Tiefe (lead): nicht in den Fuß, sondern in den Raum vor dem Läufer.
     const lx0 = clamp(lead ? lead.x : target.pos.x + target.vel.x * 0.35, -pitch.halfLength, pitch.halfLength);
@@ -338,7 +347,7 @@ function pass(m, p, a, fatigue, fromHands) {
     } else {
       // Flache Pässe mit Zug – ein lahmer Pass wird in der Kreisklasse abgefangen.
       speed = clamp(3.5 + d * 0.75, 5.5, 16);
-      vy = d > 16 ? 3.5 : 0.2;
+      vy = d > 16 && !pitch.flatPlay ? 3.5 : 0.2;
     }
     const sigma = (0.02 + 0.12 * (1 - p.attrs.passing) + 0.05 * fatigue) * (eye ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.6 : 1) * (hasProfile(p, 'spielmacher') ? 0.85 : 1) * pressureChaos(m, p);
     dir = rotate(dir, rng.gauss() * sigma);
@@ -701,7 +710,7 @@ function deflect(m, p, prevTeam) {
   const h = Math.hypot(ball.vel.x, ball.vel.z) * keep;
   ball.vel.x = d.x * h;
   ball.vel.z = d.z * h;
-  ball.vel.y = 1 + rng.next() * 3; // vom Schienbein oder Fuß auch mal hoch
+  ball.vel.y = (1 + rng.next() * 3) * (m.pitch.flatPlay ? 0.4 : 1); // vom Schienbein oder Fuß auch mal hoch (Halle: kaum)
   ball.lastAction = 'block'; // kein Ballführen danach
   return true;
 }
