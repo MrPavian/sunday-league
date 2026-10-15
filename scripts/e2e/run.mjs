@@ -15,7 +15,8 @@ if (busy) {
   console.error(`Port ${port} ist schon belegt – fremder Server? Erst beenden (oder E2E_BASE setzen).`);
   process.exit(2);
 }
-const server = spawn('npx', ['vite', 'preview', '--port', port, '--strictPort'], { stdio: 'ignore' });
+// Eigene Prozessgruppe: server.kill() traf nur npx, der Vite-Server darunter lief weiter und belegte den Port.
+const server = spawn('npx', ['vite', 'preview', '--port', port, '--strictPort'], { stdio: 'ignore', detached: true });
 let fails = 0;
 try {
   for (let i = 0; i < 60; i++) {
@@ -30,7 +31,9 @@ try {
     console.log(`  (${name}: ${((Date.now() - t0) / 1000).toFixed(0)} s)`);
   }
 } finally {
-  server.kill();
+  try {
+    process.kill(-server.pid);
+  } catch {}
 }
 console.log(fails ? `\n${fails} Prüfung(en) fehlgeschlagen` : '\nAlle Browser-Prüfungen bestanden');
 process.exit(fails ? 1 : 0);
