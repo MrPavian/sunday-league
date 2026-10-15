@@ -3,6 +3,7 @@
 
 import { attackDir } from '../sim/players.js';
 import { CLIMB, FAN_CLIMB } from '../sim/incidents.js';
+import { GEO } from '../sim/shelter.js';
 import { subsLeft, usableBench } from '../sim/squad.js';
 
 // Vergebene Chance: Der Schütze greift sich an den Kopf (Pfosten, Latte, vorbei) oder winkt ab
@@ -275,6 +276,33 @@ export function fanLift(ct) {
 
 // Höhe eines Besuchers (nur der Fan klettert).
 export const visitorLift = (v) => (v.climbCt > 0 ? fanLift(v.climbCt) : 0);
+
+// Bandentür der Halle (GEO.hall): Zielöffnung 0 (zu) … 1 (ganz auf) aus den Orten der Personen, die gerade hindurch wollen.
+// Die Tür ist in der vorderen Bande (z = halfWidth + 0,1). Wer seitlich innerhalb der Türbreite plus Rand steht, öffnet sie ab
+// OPEN_FROM Abstand zur Bandenlinie ganz bis OPEN_FULL; weiter weg bleibt sie zu. Rein und ohne Zufall; die Glättung (Schwingen)
+// macht die Ansicht. Der Ball spielt keine Rolle: Die Bande prallt ihn auch bei offener Tür ab (ball.js, siehe hall.js).
+export const BOARD_DOOR = { openFrom: 1.6, openFull: 0.8, side: 0.4 };
+export function boardDoorTarget(points, halfWidth, door = GEO.hall) {
+  const lineZ = halfWidth + 0.1;
+  const reach = door.doorW / 2 + BOARD_DOOR.side;
+  let open = 0;
+  for (const p of points) {
+    if (Math.abs(p.x - door.doorX) > reach) continue;
+    const t = (BOARD_DOOR.openFrom - Math.abs(p.z - lineZ)) / (BOARD_DOOR.openFrom - BOARD_DOOR.openFull);
+    open = Math.max(open, Math.min(1, Math.max(0, t)));
+  }
+  return open;
+}
+
+// Wer geht in der Halle durch die Tür? Besucher (Ersatzschiri, Ordner, Fan) immer; der Schiri nur, solange er durch die Tür
+// abgeht (Vorfall mit exit) – sonst liefe er beim normalen Pfeifen nahe der Bande die Tür auf.
+export function boardDoorPeople(match) {
+  const out = [];
+  for (const v of match.visitors ?? []) out.push(v.pos);
+  const inc = match.incident;
+  if (inc?.exit && match.referee) out.push(match.referee.pos);
+  return out;
+}
 
 export function incidentPose(match, p, i, out = POSE) {
   out.gesture = null;

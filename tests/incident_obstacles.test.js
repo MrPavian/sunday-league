@@ -61,6 +61,9 @@ function run(venue, type, seed, tweak) {
     if (m.incidentPlan && m.time > 2) {
       if (type === 'autoalarm') incidentOnBall(m, { type: 'car', x: 4, z: m.pitch.halfWidth + 1 });
       if (type === 'zaun' && m.pitch.boundary !== 'walls') incidentOnBall(m, { type: 'out', flying: true, x: m.pitch.halfLength + 2, z: 0 });
+      // Ohne Aus (Hinterhof, Parkplatz) löst ein hoher Ball an der Mauer aus (checkIncident). Ob der im Spiel von selbst kommt, hängt vom
+      // Spielverlauf (und damit von der Ballphysik) ab; der Test prüft die Wege, nicht den Zufall: Ball einmal hoch an die Mauer legen.
+      if (type === 'zaun' && m.pitch.boundary === 'walls' && !m.ball.holder) Object.assign(m.ball.pos, { x: m.pitch.halfLength - 0.5, y: 1.5, z: 0 });
     }
     stepMatch(m, undefined, DT);
     if (m.incident && !seen) {

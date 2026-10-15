@@ -3,7 +3,8 @@ import { len } from '../core/math.js';
 import { SPRINKLER_SPOTS } from '../sim/incidents.js';
 import { keepAlpha, toon } from './materials.js';
 import { currentQuality } from './quality.js';
-import { visitorLift } from './reactions.js';
+import { boardDoorPeople, boardDoorTarget, visitorLift } from './reactions.js';
+import { buildBoardDoor } from './venues/hall.js';
 import { animatePlayer, createPlayerModel, disposeKit } from './PlayerModel.js';
 
 // Volle Wetterdichte; die Qualitätsstufe (quality.js: weather) nimmt davon einen Anteil.
@@ -165,6 +166,15 @@ export class IncidentView {
       this.jets.push(pts);
     }
     root.add(this.sprinklers);
+
+    // Bandentür der Halle: geschlossen die meiste Zeit, schwingt auf, solange jemand durchgeht (boardDoorTarget).
+    this.door = null;
+    this.doorOpen = 0;
+    if (pitch.id === 'halle') {
+      this.door = buildBoardDoor(pitch);
+      this.door.setOpen(0);
+      root.add(this.door.group);
+    }
   }
 
   // env: Umgebungszustand aus weather.js (Wind, Regenstärke); ohne: windstill.
@@ -180,6 +190,17 @@ export class IncidentView {
     this.syncFlakes(this.snow, match.weather === 'snow', dt, 1.1, 0.4);
     this.syncFlakes(this.leaves, match.weather === 'leaves', dt, 0.8, 1.2);
     this.syncSprinklers(!!match.sprinklers);
+    this.syncDoor(match, dt);
+  }
+
+  // Tür weich auf- und zuschwingen (Glättung hier, Ziel aus der reinen Funktion in reactions.js).
+  syncDoor(match, dt) {
+    if (!this.door) return;
+    const target = boardDoorTarget(boardDoorPeople(match), match.pitch.halfWidth);
+    const k = 1 - Math.exp(-dt * 7);
+    this.doorOpen += (target - this.doorOpen) * k;
+    if (Math.abs(target - this.doorOpen) < 0.002) this.doorOpen = target;
+    this.door.setOpen(this.doorOpen);
   }
 
   syncDog(dog, dt) {
