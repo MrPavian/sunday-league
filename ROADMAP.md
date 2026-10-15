@@ -820,3 +820,10 @@ Bundespokal neu kalibriert (400 Spiele je Zeile, Kader „mittel"): Aufschlag Zw
   Rundenprämie (verdoppelt sich je Runde) und Eintrittsteilung nach dem Vorbild des realen Pokals, Foto mit dem Star in der Vitrine.
 - **Sponsorenprämien** des Trikotsponsors für Pokalsiege als Vielfaches seines Saisonziel-Bonus (`PRAEMIE`).
 - Offen: Gegner und Profis im Bundespokal nur bis zum Finale als Einzelspiele (kein vollständiges 64er-Feld).
+
+### 11.8 Spielmechanik und Ballphysik feilen (vom Nutzer gewünscht, 2026-10-15)
+Nach der Hallen-Torquote (stärkere Flachschüsse, Bandenpässe): Spielmechanik und Ballphysik auf **allen Plätzen**
+durchgehen. Vorgehen wie bei 11.6a: erst messen (KI gegen KI, feste Seeds, je Platz), Befunde mit realen
+Vergleichswerten und Quellen belegen, dann gezielt ändern; andere Plätze bleiben bei platzspezifischen
+Änderungen bitgleich. Kandidaten (zu prüfen, nicht beschlossen): Ballrollen und Reibung je Untergrund, Abpraller
+und Effet, Annahme und Ballmitnahme, Schusshärte und Flugkurven, Zweikämpfe und Laufwege.
