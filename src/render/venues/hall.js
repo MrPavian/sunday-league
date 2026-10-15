@@ -4,6 +4,8 @@ import { emissiveToon, toon } from '../materials.js';
 import { addLights, box, ground, makeBench, makeGoalFrame } from '../props.js';
 import { GEO } from '../../sim/shelter.js';
 import { crowdRow, makeSpectator } from '../spectators.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { vertexToon } from '../materials.js';
 import { makeHallTexture, makeSignTextureWide } from '../textures.js';
 
 // Sporthalle der Kanalschule: Parkett mit bunten Linien, weiße Bande, Handballtore,
@@ -25,6 +27,8 @@ export function buildHall(root, pitch, rng, scene) {
   const bande = 0xf2efe6;
   root.add(box(wallX * 2, 0.9, 0.12, bande, 0, 0.45, -hw - 0.1));
   // Vorn mit Tür (GEO.hall, shelter.js): Schiri, Ordner und Platzverweise gehen durch die Lücke, nicht durch die Bande.
+  // Die Lücke ist in der Kulisse leer; die Tür selbst (buildBoardDoor, unten) baut die IncidentView als eigenes bewegtes Mesh,
+  // damit mergeStatic sie nicht einbackt. Der Ball prallt an der Bandenlinie auch an der Tür ab (ball.js: zMax gilt überall).
   const door = GEO.hall;
   const left = door.doorX - door.doorW / 2 + wallX;
   const right = wallX - (door.doorX + door.doorW / 2);
@@ -85,4 +89,44 @@ export function buildHall(root, pitch, rng, scene) {
   // Volle Klappbänke beim Hallenturnier (sichtbar je nach Besucherzahl).
   for (let r = 0; r < 3; r++) for (const o of crowdRow(501 + r, { x0: -10.4, x1: 18.4, z: -hw - 1.4 - r * 0.85, y: 0.525 + r * 0.45, n: 16, sitting: true, jitter: 0.2 })) root.add(o);
   return { viewHeight: 12, bounds: { x: hl + 4, z: 2.5 } };
+}
+
+// Bandentür: ein Mesh (Eckenfarben, ein Draw Call) aus Türblatt in Bandenfarbe, drei Scharnieren und einem Griff.
+// Der Drehpunkt (Gruppe) sitzt am Scharnier links (x = doorX - doorW / 2) in der Bandenlinie; sie schwingt nach außen (+z, weg vom Feld),
+// damit sie nie ins Spielfeld ragt. setOpen(0…1) dreht bis rund 100°.
+const DOOR_ANGLE = 1.75;
+export function buildBoardDoor(pitch) {
+  const g = GEO.hall;
+  const w = g.doorW - 0.03; // kleine Fuge zur Bande
+  const hinge = 0x6b6b6b;
+  const parts = [];
+  const add = (bw, bh, bd, color, x, y, z) => {
+    const geo = new THREE.BoxGeometry(bw, bh, bd).toNonIndexed();
+    geo.translate(x, y, z);
+    const c = new THREE.Color(color);
+    const n = geo.attributes.position.count;
+    const arr = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) c.toArray(arr, i * 3);
+    geo.setAttribute('color', new THREE.BufferAttribute(arr, 3));
+    geo.deleteAttribute('uv');
+    parts.push(geo);
+  };
+  add(w, 0.9, 0.12, 0xf2efe6, 0.015 + w / 2, 0.45, 0); // Türblatt
+  add(w - 0.16, 0.05, 0.125, 0xd9d4c4, 0.015 + w / 2, 0.45, 0); // abgesetzter Querstreifen als Fuge/Füllung
+  for (const y of [0.12, 0.45, 0.78]) add(0.07, 0.1, 0.16, hinge, 0.04, y, 0); // Scharniere
+  add(0.18, 0.06, 0.18, hinge, 0.015 + w - 0.16, 0.5, 0); // Griff
+  const mesh = new THREE.Mesh(mergeGeometries(parts, false), vertexToon());
+  for (const geo of parts) geo.dispose();
+  mesh.castShadow = false;
+  mesh.receiveShadow = true;
+  mesh.userData.keep = true;
+  const pivot = new THREE.Group();
+  pivot.position.set(g.doorX - g.doorW / 2, 0, pitch.halfWidth + 0.1);
+  pivot.add(mesh);
+  return {
+    group: pivot,
+    setOpen(k) {
+      pivot.rotation.y = -DOOR_ANGLE * Math.max(0, Math.min(1, k)); // minus: das freie Ende schwingt nach +z
+    },
+  };
 }
