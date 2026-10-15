@@ -1,7 +1,7 @@
 // KI: Wer läuft an, wer sichert ab, wer deckt, wer läuft sich frei.
 import { clamp, dist2d, len, norm } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
-import { ballSpeed } from './ball.js';
+import { BALL_RADIUS, BOARD_BOUNCE, ballSpeed } from './ball.js';
 import { attackDir, clampToPitch, distToSegment, getPlayer, wallPush } from './players.js';
 import { heeds } from './coach.js';
 import { HAND_ZONE, inHandZone, keeperBox, shortGame } from './actions.js';
@@ -294,9 +294,12 @@ function receiveSpot(m, p) {
     }
     return clampToPitch(pitch, spot.x, spot.z, 0.3);
   }
+  // Bandenpass (m.pass.board): Solange der Ball noch zur Bande läuft, ist der Weg hinter der Bande nur halb so schnell in z.
+  const board = m.pass?.board && Math.sign(ball.vel.z) === m.pass.board ? m.pass.board * (pitch.halfWidth - BALL_RADIUS) : null;
   for (let t = 0.1; t <= 2.5; t += 0.1) {
     const f = (1 - Math.exp(-k * t)) / k;
     spot = { x: ball.pos.x + ball.vel.x * f, z: ball.pos.z + ball.vel.z * f };
+    if (board !== null && (spot.z - board) * m.pass.board > 0) spot.z = board - (spot.z - board) * BOARD_BOUNCE;
     if (dist2d(p.pos, spot) <= speed * t + 0.4) break;
   }
   return clampToPitch(pitch, spot.x, spot.z, 0.3);

@@ -150,7 +150,13 @@ export const HALL = {
   // Hallencup: vorwiegend flach gespielt, hoch nur vorm Tor (sonst flöge der Ball dauernd über die Bande).
   // shotNear: Abstand zur Torlinie (m), bis zu dem ein Schuss hoch gehen darf; shotVy: höchste Steigung (m/s)
   // eines Schusses weiter weg. Werte gewählt, nicht gemessen (Messung: scripts/flat-audit.mjs).
-  flatPlay: { shotNear: 8, shotVy: 0.8 },
+  // shotBoost: 1.28Schusstempo-Faktor, aimBoost: Streuungs-Faktor (< 1 = genauer). Die Flachschüsse waren zu leicht zu halten
+  // (Tore je Spiel 2,18 -> 1,48); Werte gewählt und mit scripts/flat-audit.mjs nachgemessen.
+  flatPlay: { shotNear: 8, shotVy: 0.8, shotBoost: 1.2, aimBoost: 0.7 },
+  // Bandenspiel der KI: Die Bande als Mitspieler (Pass, Doppelpass mit der Bande, Abpraller). blockLane: Abstand (m) eines
+  // Gegners zur Passlinie, ab dem der direkte Weg als zugestellt gilt; clearLane: so frei muss der Weg über die Bande sein;
+  // maxDetour: Umweg gegenüber der Luftlinie (Faktor) und maxLen: längster Weg (m). Gewählt, gemessen mit scripts/board-audit.mjs.
+  boardPlay: { blockLane: 1.3, clearLane: 1.1, maxDetour: 1.8, maxLen: 20, shotBlockLane: 0.9 },
   // Fangnetz hinter den Toren (Bande bis height, Breite Tor + je margin), lehnt oben um lean (m je m Höhe) zum Feld:
   // Der Ball prallt nicht ab, sondern bleibt hängen und fällt. Maße gewählt, nicht gemessen.
   catchNet: { height: 4.5, margin: 2, boardHeight: 0.9, lean: 0.2 },

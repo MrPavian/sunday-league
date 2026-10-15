@@ -29,6 +29,9 @@ export function trackStep(m, dt) {
       case 'pass':
         ps(stats, id).passes++;
         break;
+      case 'bandenpass':
+        stats.teams[team].boardPasses = (stats.teams[team].boardPasses ?? 0) + 1;
+        break;
       case 'tackle':
       case 'poke_won':
         ps(stats, id).tackles++;

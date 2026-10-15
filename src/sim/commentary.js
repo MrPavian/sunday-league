@@ -243,6 +243,13 @@ export function createCommentator(m, seed = 1) {
           else if (e.kind === 'cutback' && rng.chance(0.5)) add(pick(tr(['{a} geht bis zur Grundlinie und legt flach zurück auf {w}.', 'Rückpass in den Rückraum – {w} läuft ein.'], ['{a} gets to the byline and cuts it back for {w}.', 'Cut-back into the danger zone – {w} arrives.']), { a, w }), 'chance');
           break;
         }
+        case 'bandenpass': {
+          const a = surname(who(e.playerId));
+          const w = e.targetId ? surname(who(e.targetId)) : '';
+          if (e.kind === 'shot' && rng.chance(0.5)) add(pick(tr(['{a} versucht es über die Bande – der Abpraller soll es richten.', '{a} zieht über die Bande ab, am Verteidiger vorbei.'], ['{a} tries it off the boards, around the defender.', '{a} shoots off the boards to get past the defender.']), { a }), 'chance');
+          else if (e.kind === 'pass' && rng.chance(0.5)) add(pick(tr(['{a} spielt über die Bande auf {w} – der Gegner schaut zu.', 'Bandenpass von {a}: {w} wird freigespielt.', '{a} nimmt die Bande als Mitspieler und findet {w}.'], ['{a} plays it off the boards to {w} – the marker is left standing.', 'Board pass from {a}: {w} is found.', '{a} uses the boards as a team-mate and finds {w}.']), { a, w }), 'chance');
+          break;
+        }
         case 'whiff':
           if (rng.chance(0.5)) add(tr(`Luftloch von ${surname(who(e.playerId))}! Der Ball bleibt einfach liegen.`, `Air shot from ${surname(who(e.playerId))}! The ball just sits there.`));
           break;

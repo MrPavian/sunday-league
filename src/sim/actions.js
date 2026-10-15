@@ -3,7 +3,7 @@ import { bondBonus, bondOf, isBad } from './bonds.js';
 // Bewegung und Ballkontakte: Laufen, Schuss, Pass, Kopfball, Torwart, Dribbling.
 import { clamp, dist2d, len, norm, rotate } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
-import { BALL_RADIUS, ballSpeed } from './ball.js';
+import { BALL_RADIUS, ballSpeed, boardRoute } from './ball.js';
 import { attackDir, distToSegment, setControlled, wallPush } from './players.js';
 import { aiSkill, keeperReaction, laneScore, WIDE_LANE } from './ai.js';
 
@@ -159,6 +159,10 @@ function shoot(m, p, a, fatigue) {
   // Zielhilfe für den Menschen: Wer grob aufs Tor zielt, wird in den Rahmen gezogen –
   // die Ecke bestimmt er weiter selbst über die Laufrichtung.
   if (!a.target && p.id === m.controlledId) dir = aimAssist(m, p, dir);
+  const flat = m.pitch.flatPlay;
+  // Halle: Abpraller über die Bande, wenn ein Gegner den direkten Schuss zustellt (nur KI, nur mit Ziel).
+  const board = a.target && !a.placed ? boardChoice(m, p, a.target, true) : null;
+  if (board) dir = norm(board.aim.x - p.pos.x, board.aim.z - p.pos.z);
   const power = clamp(a.power ?? 0.5, 0.1, 1);
   // Streuung: Technik, Müdigkeit, Wucht. Die KI streut etwas mehr als der Mensch,
   // der selbst zielt – sonst treffen Amateure wie Profis.
@@ -166,11 +170,10 @@ function shoot(m, p, a, fatigue) {
   // Elfmeter: in Ruhe platziert, ohne Gegner am Fuß – deutlich weniger Streuung.
   // Ebene 3: Wer bedrängt abzieht, streut mehr – nervöse Spieler noch mehr.
   // Direktabnahme und Schuss aus der Drehung sind schwerer zu platzieren.
-  dir = rotate(dir, rng.gauss() * sigma * (a.placed ? 0.35 : pressureChaos(m, p)) * (a.first ? 1.2 : 1) * (a.turn ? 1.25 : 1));
-  const speed = (8 + 18 * power) * (0.85 + 0.15 * p.attrs.shooting) * (hammer ? 1.15 : 1);
+  dir = rotate(dir, rng.gauss() * sigma * (a.placed ? 0.35 : pressureChaos(m, p)) * (a.first ? 1.2 : 1) * (a.turn ? 1.25 : 1) * (flat?.aimBoost ?? 1));
+  const speed = (8 + 18 * power) * (0.85 + 0.15 * p.attrs.shooting) * (hammer ? 1.15 : 1) * (flat?.shotBoost ?? 1);
   let vy = 0.8 + 5 * power * power + Math.abs(rng.gauss()) * 1.2 * (1 - p.attrs.shooting) * power;
   // Halle: hoch nur vorm Tor, weiter weg bleibt der Schuss flach.
-  const flat = m.pitch.flatPlay;
   if (flat && Math.abs(p.pos.x - attackDir(m, p.team) * m.pitch.halfLength) > flat.shotNear) vy = Math.min(vy, flat.shotVy);
   ball.vel.x = dir.x * speed;
   ball.vel.y = vy;
@@ -178,6 +181,7 @@ function shoot(m, p, a, fatigue) {
   p.facing = dir;
   if (a.placed && m.setPiece?.type === 'penalty' && m.setPiece.takerId === p.id) m.penaltyKick = m.time;
   m.events.push({ type: 'shot', playerId: p.id, power });
+  if (board) m.events.push({ type: 'bandenpass', kind: 'shot', playerId: p.id, targetId: null });
   (m.lastShotAt ??= [-9, -9])[p.team] = m.time;
   markShooter(m, p);
   m.shotTime = m.time; // Der Torwart braucht einen Moment, bis er die Richtung erkennt.
@@ -299,6 +303,7 @@ function pass(m, p, a, fatigue, fromHands) {
   let dir;
   let speed;
   let vy;
+  let board = null;
   const lead = target && a.through && target.id === a.targetId ? a.through : null;
   if (!target) {
     // Keiner frei? Dann eben nach vorne gebolzt – grob Richtung Tor.
@@ -321,8 +326,10 @@ function pass(m, p, a, fatigue, fromHands) {
     const sc = a.zone && a.lofted ? CORNER_SCATTER * (1.4 - p.attrs.passing) : 0;
     const lx = lx0 + rng.gauss() * sc;
     const lz = clamp(lz0 + rng.gauss() * sc, -pitch.halfWidth + edge, pitch.halfWidth - edge);
-    const d = len(lx - p.pos.x, lz - p.pos.z);
-    dir = norm(lx - p.pos.x, lz - p.pos.z);
+    // Halle: Ist der direkte Weg zugestellt, kommt aber ein Ball über die Bande an, wird die Bande angespielt.
+    board = !a.lofted && !lead && !a.zone && target ? boardChoice(m, p, { x: lx, z: lz }, false) : null;
+    const d = board ? board.len : len(lx - p.pos.x, lz - p.pos.z);
+    dir = board ? norm(board.aim.x - p.pos.x, board.aim.z - p.pos.z) : norm(lx - p.pos.x, lz - p.pos.z);
     if (a.lofted) {
       // Hoher Ball: Flanken kommen auf Kopfhöhe, sonst landet er vor den Füßen.
       // Scharf an den ersten Pfosten: flacher und schneller.
@@ -364,7 +371,7 @@ function pass(m, p, a, fatigue, fromHands) {
   // Offener Pass: Der Adressat läuft dem Ball entgegen (siehe ai.js, receiveSpot).
   // Flache Hereingabe (a.low) zählt als Flanke, ist aber ein Pass am Boden.
   const isCross = a.lofted === 'cross' || !!a.low;
-  m.pass = target ? { targetId: target.id, kicker: p.id, team: p.team, time: m.time, cross: isCross || undefined } : null;
+  m.pass = target ? { targetId: target.id, kicker: p.id, team: p.team, time: m.time, cross: isCross || undefined, board: board?.side } : null;
   // In die Tiefe: Wie lange die Verteidiger zum Umschalten brauchen, hängt an ihrem Zweikampfverhalten.
   if (m.pass && lead && !isCross) { // Flanke in den Lauf ist kein Steilpass: keine Schrecksekunde der Abwehr
     const defs = m.players.filter((o) => o.team !== p.team && o.role === 'def');
@@ -374,6 +381,27 @@ function pass(m, p, a, fatigue, fromHands) {
   }
   // Rückpass beim Doppelpass: in den Lauf gespielt, aber kein Ball hinter die Abwehrlinie.
   m.events.push({ type: 'pass', playerId: p.id, targetId: target?.id ?? null, lofted: !!a.lofted, cross: isCross || undefined, crossKind: isCross ? (a.low ? 'flach' : a.driven ? 'halbhoch' : 'hoch') : undefined, from: { x: p.pos.x, z: p.pos.z }, to: target ? { x: target.pos.x, z: target.pos.z } : null, through: !!(a.through && target && !a.combo && !isCross), combo: a.combo || undefined });
+  if (board) m.events.push({ type: 'bandenpass', kind: 'pass', playerId: p.id, targetId: target.id });
+}
+
+// Bandenspiel (pitch.boardPlay, nur KI): Der direkte Weg nach `to` ist zugestellt, aber ein Ball über die Längsbande kommt an.
+// Rückgabe { side, bounce, aim, len } (siehe boardRoute in ball.js) oder null. Für Schüsse zählt der Torwart nicht als Sperre.
+function boardChoice(m, p, to, shot) {
+  const { pitch } = m;
+  const bp = pitch.boardPlay;
+  if (!bp || p.id === m.controlledId) return null;
+  const opps = m.players.filter((o) => o.team !== p.team && !(shot && o.role === 'gk') && dist2d(o.pos, p.pos) > 0.7);
+  const blocked = (a, b, lane) => opps.some((o) => distToSegment(o.pos, a, b) < lane);
+  if (!blocked(p.pos, to, shot ? bp.shotBlockLane : bp.blockLane)) return null;
+  const direct = dist2d(p.pos, to);
+  let best = null;
+  for (const side of [-1, 1]) {
+    const r = boardRoute(pitch, p.pos, to, side);
+    if (!r || r.len > bp.maxLen || r.len > direct * bp.maxDetour + 4 || Math.abs(r.bounce.x) > pitch.halfLength - 1) continue;
+    if (blocked(p.pos, r.bounce, bp.clearLane) || blocked(r.bounce, to, bp.clearLane)) continue;
+    if (!best || r.len < best.len) best = { ...r, side };
+  }
+  return best;
 }
 
 // Strafraum: Nur hier darf der Torwart den Ball in die Hand nehmen.
