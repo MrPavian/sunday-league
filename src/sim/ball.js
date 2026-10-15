@@ -1,6 +1,8 @@
 export const BALL_RADIUS = 0.11;
 const G = 9.81;
 const POST_RADIUS = 0.06;
+// Bande an der Längsseite (boundary 'walls'): Der Ball behält BOARD_BOUNCE seiner Quergeschwindigkeit, die Längsgeschwindigkeit bleibt.
+export const BOARD_BOUNCE = 0.5;
 
 export function createBall() {
   return {
@@ -85,7 +87,7 @@ export function stepBall(ball, pitch, dt) {
   if (Math.abs(pos.z) > zMax) {
     const impact = Math.abs(vel.z);
     pos.z = Math.sign(pos.z) * zMax;
-    vel.z = -vel.z * 0.5;
+    vel.z = -vel.z * BOARD_BOUNCE;
     // Nur richtige Schüsse/Pässe zählen, nicht das Dribbeln an der Stoßstange.
     if (!event && pitch.carRule && ((ball.lastAction === 'shoot' && impact > 6) || impact > 13)) event = { type: 'car', x: pos.x, z: pos.z };
   }
@@ -165,3 +167,17 @@ function collideFrame(ball, pitch, prevX) {
 }
 
 const sideOf = (dx, prevDx) => (Math.sign(dx) !== Math.sign(prevDx) && prevDx !== 0 ? -dx || Math.sign(prevDx) * 1e-3 : dx);
+
+// Bandenpass: Wo prallt ein Ball von `from` ab, der über die Längsbande (side = +1/-1) nach `to` laufen soll? Mit der Rückprallzahl
+// BOARD_BOUNCE ist die Strecke hinter der Bande nur halb so schnell in z: Gespiegelt wird daher mit Faktor 1/BOARD_BOUNCE
+// (virtuelles Ziel in z: zw + (zw - to.z) / BOARD_BOUNCE). Liefert { bounce, aim (virtuelles Ziel), len (Weg über die Bande) } oder null.
+export function boardRoute(pitch, from, to, side) {
+  const zw = side * (pitch.halfWidth - BALL_RADIUS);
+  const d1 = Math.abs(zw - from.z);
+  const d2 = Math.abs(zw - to.z);
+  if (side * (zw - from.z) <= 0 || side * (zw - to.z) <= 0) return null; // beide müssen vor der Bande stehen
+  const aimZ = zw + (zw - to.z) / BOARD_BOUNCE;
+  const f = d1 / (d1 + d2 / BOARD_BOUNCE);
+  const bounce = { x: from.x + (to.x - from.x) * f, z: zw };
+  return { bounce, aim: { x: to.x, z: aimZ }, len: Math.hypot(bounce.x - from.x, d1) + Math.hypot(to.x - bounce.x, d2) };
+}
