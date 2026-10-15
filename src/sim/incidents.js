@@ -67,7 +67,14 @@ const DOG_LUNGE = 2.2; // so nah am Hund hechten Spieler nach dem Ball im Maul
 const OWNER_LOOK = { skin: SKIN_TONES[1], hair: 0x5a3a22, bald: false, beard: false, belly: 0.5, height: 1 };
 const OWNER_KIT = { shirt: 0x4a6a3a, shorts: 0x34425a, socks: 0x222222 }; // grüne Regenjacke
 export const INCIDENT_TYPES = Object.keys(DURATION);
-const POLICE_KIT = { shirt: 0x2c3e66, shorts: 0x1f2a44, socks: 0x111111 };
+// Polizeiuniform nach deutschem Vorbild: Jacke/Hemd in mittlerem Polizeiblau, dunkelblaue Hose, dunkle Schuhe,
+// dazu die Schirmmütze (look.hat = 'polizei', siehe PlayerModel). Heller als der schwarze Schiri, damit man sie nicht verwechselt.
+// Quellen: Landespolizei Sachsen, Uniform seit 2009 (blaue Jacke, blaue Hose, helles Hemd):
+//   https://sachsen.museum-digital.de/pdf/object/9756.pdf?lang=de
+// Bundestagspolizei/Bundespolizei (Blau in mehreren Tönen, Hemd, Jacke, Mütze):
+//   https://www.bundestag.de/dokumente/textarchiv/2018/kw41-bundestagspolizei-572666
+export const POLICE_KIT = { shirt: 0x4469b0, shorts: 0x1f3566, socks: 0x111111 };
+export const POLICE_HAT = 'polizei';
 const CIVIL_KIT = { shirt: 0x8a4b2a, shorts: 0x34425a, socks: 0x222222 };
 export const COACH_LOOK = { skin: SKIN_TONES[0], hair: 0x3a2a1a, bald: false, beard: true, belly: 0.6, height: 1 };
 export const STAND_IN_KIT = { shirt: 0x8c8c86, shorts: 0x34425a, socks: 0x222222 }; // graue Kapuzenjacke, Jeans
@@ -229,7 +236,7 @@ function beginIncident(m, type, info = {}) {
     m.visitors.push({ id: 'trainer', look: COACH_LOOK, kit: { shirt: coach?.shirt ?? 0x2a3a52, shorts: 0x1f2a44, socks: coach?.socks ?? 0x222222 }, pos: { ...spot }, target: { ...spot }, speed: 1.5, reactNear: true });
     // Im Hinterhof ist die Haustür der einzige Zugang (Wände ringsum); sonst kommen sie am Rand herein. Weg und Abgang: derselbe Punkt.
     const door = pitch.id === 'hinterhof' ? { x: GEO.backyard.doorX, z: -pitch.halfWidth + 0.45 } : null;
-    for (const [i, dx, dz] of [[0, -1.2, 0.5], [1, -2.5, 1.4]]) m.visitors.push({ id: `polizei${i}`, look: look(r, { bald: false, beard: false }), kit: POLICE_KIT, pos: door ? { x: door.x + (i ? 0.45 : -0.45), z: door.z } : { x: x0, z: spot.z + 1.2 * (i ? 1 : -1) * 0.6 }, target: { x: spot.x + dx, z: spot.z + dz }, speed: 2.8, onArrive: i === 0 ? 'finger' : 'arme' });
+    for (const [i, dx, dz] of [[0, -1.2, 0.5], [1, -2.5, 1.4]]) m.visitors.push({ id: `polizei${i}`, look: { ...look(r, { bald: false, beard: false }), hat: POLICE_HAT }, kit: POLICE_KIT, pos: door ? { x: door.x + (i ? 0.45 : -0.45), z: door.z } : { x: x0, z: spot.z + 1.2 * (i ? 1 : -1) * 0.6 }, target: { x: spot.x + dx, z: spot.z + dz }, speed: 2.8, onArrive: i === 0 ? 'finger' : 'arme' });
     if (walkObstacles(pitch).length) for (const v of m.visitors) if (v.id.startsWith('polizei')) v.home = { ...v.pos };
     text = tr('Die Nachbarin hat die Polizei gerufen. Zwei Beamte schauen vorbei …', 'The neighbour has called the police. Two officers wander over …');
   } else if (type === 'gewitter') {

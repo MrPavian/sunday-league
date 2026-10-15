@@ -509,7 +509,18 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
   const hairD = mixHex(hairC, 0x000000, 0.18); // Seiten und Nacken etwas dunkler
   const cap = (grow, h, y) => b.add('head', prism(headW + grow, headW + grow + 0.005, h, headW + grow, headW + grow + 0.005), hairC, { at: [0, y, 0] });
   const back = (h, y) => b.box('head', headW + 0.015, h, 0.055, hairD, [0, y, -hw]);
-  if (hairStyle === 'short') {
+  if (look.hat === 'polizei') {
+    // Polizei-Schirmmütze (ersetzt die Frisur; nur Nacken und Seiten bleiben als Haar sichtbar).
+    // Dunkelblauer Kopfteil mit etwas breiterer Tellerplatte, schwarzer Schirm vorn, kleines helles Abzeichen.
+    const crown = 0x24386e;
+    const band = 0x1a2a54;
+    back(0.1, top - 0.07);
+    for (const s of [-1, 1]) b.box('head', 0.03, 0.08, headW * 0.5, hairD, [s * (hw + 0.006), top - 0.1, -0.05]);
+    b.add('head', prism(headW + 0.04, headW + 0.045, 0.09, headW + 0.04, headW + 0.045), band, { at: [0, top - 0.005, 0] });
+    b.box('head', headW + 0.08, 0.045, headW + 0.07, crown, [0, top + 0.06, -0.005]); // Tellerplatte
+    b.box('head', headW * 0.85, 0.022, 0.1, 0x0c0c0e, [0, top - 0.04, hw + 0.06]); // Schirm
+    b.box('head', 0.04, 0.045, 0.01, 0xe8e2c8, [0, top + 0.005, hw + 0.026]); // Abzeichen
+  } else if (hairStyle === 'short') {
     cap(0.018, 0.06, top + 0.01);
     back(0.14, top - 0.08);
     for (const s of [-1, 1]) b.box('head', 0.075, 0.04, 0.03, hairC, [s * (hw - 0.045), top - 0.02, hw + 0.004]); // Haaransatz mit Kerbe
