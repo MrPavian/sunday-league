@@ -134,13 +134,19 @@ export const STADIUM = { ...BIG_PITCH, id: 'stadion', base: 'grossfeld', name: t
 export const BIG_PITCH_STANDS = { ...BIG_PITCH, id: 'grossfeld_tribuene', base: 'grossfeld', extraStand: true };
 export const BUND_PITCHES = { stadion: STADIUM, grossfeld_tribuene: BIG_PITCH_STANDS };
 
+const HALL_GOAL_DEPTH = 1.0;
 export const HALL = {
+  goalDepth: HALL_GOAL_DEPTH,
   id: 'halle',
   name: tr('Sporthalle Kanalschule', 'Kanalschule Sports Hall'),
   format: 5,
   halfLength: 18,
   halfWidth: 9.5, // Bande
-  wallX: 19.3, // Bande hinter den Toren
+  // Bande direkt hinter den Toren: Torlinie + Tortiefe (goalDepth, unten) + halbe Bandendicke (0,06). Die Netztiefe ist die der
+  // Darstellung (render/venues/hall.js, 1,0 m); die IHF-Richtlinie zum Handballtor nennt hinter der Torlinie oben 0,9 m und unten 1,1 m
+  // (je ±0,1 m, Rules of the Game 2005/2010, Tor Regel 1:2: https://www2.handball.ee/est/info/rules_ofthe_game_01.08.05.pdf), 1,0 m liegt
+  // in der Toleranz (Strandhandball: 0,8 m oben, 1,0 m unten). Netzrückseite liegt an der Bandeninnenseite: kein Streifen dahinter.
+  wallX: 18 + HALL_GOAL_DEPTH + 0.06,
   goalHalfWidth: 1.5, // Handballtor 3 × 2 m
   goalHeight: 2.0,
   goalType: 'frame',

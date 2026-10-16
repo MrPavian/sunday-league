@@ -18,7 +18,7 @@ export function buildHall(root, pitch, rng, scene) {
   root.add(ground(W, D, toon(0xffffff, { map: makeHallTexture(rng, { width: W, depth: D, pitch }) })));
 
   for (const s of [-1, 1]) {
-    const goal = makeGoalFrame(gw, gh, s, 1.0);
+    const goal = makeGoalFrame(gw, gh, s, pitch.goalDepth);
     goal.position.x = s * hl;
     root.add(goal);
   }
