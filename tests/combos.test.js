@@ -77,7 +77,10 @@ describe('offence: combinations', () => {
       // 24 statt 4 Seeds je Platz: Mit 20 Spielen schwankte die Zahl der Rückpässe zu stark (gleiche Rate je Spiel).
       // Nach der neuen Rollphysik lagen 60 Spiele knapp unter der Schwelle (42 statt 45, Alt-Physik je nach Seedmenge 43-56):
       // Mit 120 Spielen 100 Rückpässe (Schwelle 90), Alt-Physik ebenfalls 100.
-      for (let seed = 21; seed < 45; seed++) {
+      // 48 Seeds je Platz (240 Spiele): Mit 21-44 lagen Main und Rollphysik-Stand bei 90 bzw. 100 Rückpässen (Schwelle 90),
+      // mit 45-68 bei 123 bzw. 113 – zusammen beide 213. Die Rate (~0,89 je Spiel) liegt über der Schwelle (0,75 je Spiel),
+      // 120 Spiele streuten nur zu stark. Schwelle wächst mit matches mit.
+      for (let seed = 21; seed < 69; seed++) {
         const m = createMatch({ seed, pitch: PITCHES[id], human: false, duration: 240, incidents: false });
         matches++;
         let open = null;
@@ -120,7 +123,7 @@ describe('offence: combinations', () => {
     // Die meisten Rückpässe kommen beim Läufer an.
     expect(done.onetwo / made.onetwo).toBeGreaterThan(0.6);
     expect(done.layoff / made.layoff).toBeGreaterThan(0.5);
-  }, 360000);
+  }, 900000);
 
   it('a striker with his back to goal and a marker behind holds the ball up', () => {
     let held = 0;
