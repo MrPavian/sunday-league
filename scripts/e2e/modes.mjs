@@ -15,7 +15,10 @@ const TIMES = ['morgen', 'mittag', 'nachmittag', 'abend'];
 // Seed je Vorfall fest: Der Autoalarm geht nur mit 60 % je Autotreffer los – mit Seed 15 trifft der
 // Ball früh ein Auto und der Alarm kommt (bei 3 s; Seed 13 passte bis zur Flankenverwertung).
 const INCIDENTS = { hund: 'park', zaun: 'hinterhof', autoalarm: 'parkplatz', polizei: 'hinterhof', gewitter: 'park', sprenger: 'rasenplatz', ersatzschiri: 'rasenplatz', taube: 'park', fan: 'halle' };
-const INCIDENT_SEED = { autoalarm: 15 };
+// Autoalarm und Zaun brauchen einen Treffer ans Auto bzw. einen hohen Ball – das hängt vom Spielverlauf ab (Rate in Node
+// gemessen: Autoalarm 26 von 30 Seeds, alte wie neue Ballphysik). Der Browser-Test prüft den Ablauf, nicht die Rate: bis zu
+// drei Seeds, der erste mit Vorfall zählt. Die Rate prüfen die Unit-Tests.
+const INCIDENT_SEED = { autoalarm: [15, 7, 21], zaun: [11, 7, 21] };
 const TABS = [['home'], ['team', 'squad'], ['team', 'lineup'], ['team', 'tactic'], ['team', 'training'], ['team', 'youth'], ['team', 'transfers'], ['season', 'table'], ['season', 'fixtures'], ['season', 'cup'], ['club', 'cash'], ['club', 'club'], ['club', 'museum'], ['pub'], ['phone', 'chat']];
 
 const frame = (p) => p.evaluate(() => globalThis.__sl?.diag?.frame ?? -1);
@@ -103,15 +106,20 @@ export async function incidents(b) {
   for (const [v, venue] of Object.entries(INCIDENTS)) {
     // Fester Seed und volle Spielzeit: Zaun/Autoalarm brauchen ein auslösendes Ereignis, das mit
     // zufälligem Seed in einem kurzen Spiel mal kam und mal nicht (Test war Glückssache).
-    const p = await page(b, 'land', { query: `?venue=${venue}&notitle&trainer&debug&dauer=120&seed=${INCIDENT_SEED[v] ?? 11}&incident=${v}`, store: { 'sunday-league:tempo': 'schnell' } });
+    let p = null;
     let seen = false;
-    for (let i = 0; i < 400 && !seen; i++) {
-      seen = await p.evaluate((t) => __sl.match.incident?.type === t, v);
-      if (!seen && (await p.evaluate(() => __sl.match.phase === 'ended'))) break;
-      if (!seen) {
-        await p.evaluate(() => document.querySelector('.half-panel [data-action="go"]')?.click());
-        await p.waitForTimeout(500);
+    for (const seed of INCIDENT_SEED[v] ?? [11]) {
+      if (p) await p.context().close();
+      p = await page(b, 'land', { query: `?venue=${venue}&notitle&trainer&debug&dauer=120&seed=${seed}&incident=${v}`, store: { 'sunday-league:tempo': 'schnell' } });
+      for (let i = 0; i < 400 && !seen; i++) {
+        seen = await p.evaluate((t) => __sl.match.incident?.type === t, v);
+        if (!seen && (await p.evaluate(() => __sl.match.phase === 'ended'))) break;
+        if (!seen) {
+          await p.evaluate(() => document.querySelector('.half-panel [data-action="go"]')?.click());
+          await p.waitForTimeout(500);
+        }
       }
+      if (seen) break;
     }
     ok(seen, `${v} (${venue}): Vorfall tritt nicht auf`);
     ok(await toEnd(p, 240), `${v}: kein Abpfiff`);
