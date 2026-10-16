@@ -76,7 +76,7 @@ export function roughness(m, p) {
   let r = tiredMul(p);
   if (m.derby) r *= 1.3;
   const behind = m.score[1 - p.team] - m.score[p.team];
-  if (behind > 0) r *= 1 + Math.min(0.5, 0.2 * behind); // Frust: wer hinten liegt, wird ruppiger
+  if (behind > 0 && m.frustration !== false) r *= 1 + Math.min(0.5, 0.2 * behind); // Frust: wer hinten liegt, wird ruppiger
   if (hasTrait(p, 'hart_im_nehmen')) r *= 1.4;
   if (hasTrait(p, 'meckerer')) r *= 1.15;
   return r;

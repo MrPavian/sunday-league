@@ -1,7 +1,7 @@
 // KI: Wer läuft an, wer sichert ab, wer deckt, wer läuft sich frei.
 import { clamp, dist2d, len, norm } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
-import { BALL_RADIUS, BOARD_BOUNCE, ballSpeed } from './ball.js';
+import { BALL_RADIUS, BOARD_BOUNCE, ballSpeed, rollDistance } from './ball.js';
 import { attackDir, clampToPitch, distToSegment, getPlayer, wallPush } from './players.js';
 import { heeds } from './coach.js';
 import { HAND_ZONE, inHandZone, keeperBox, shortGame } from './actions.js';
@@ -273,10 +273,9 @@ function incomingPass(m, team) {
 }
 
 // Wo erreicht der Adressat den rollenden Ball am frühesten? Der Ball wird mit
-// grober Reibung vorausberechnet; der Spieler läuft zum ersten erreichbaren Punkt.
+// dem Bodenmodell aus ball.js (Rollwiderstand + Luftwiderstand ∝ v²) vorausberechnet; der Spieler läuft zum ersten erreichbaren Punkt.
 function receiveSpot(m, p) {
   const { ball, pitch } = m;
-  const k = pitch.surface?.rollFriction ?? 0.7;
   const speed = 4.6 + 2.6 * p.attrs.pace;
   let spot = { x: ball.pos.x, z: ball.pos.z };
   // Hoher Ball: fliegt fast ungebremst (ball.js: 4 %/s in der Luft) – hin, wo er landet, bei einer Flanke
@@ -296,8 +295,9 @@ function receiveSpot(m, p) {
   }
   // Bandenpass (m.pass.board): Solange der Ball noch zur Bande läuft, ist der Weg hinter der Bande nur halb so schnell in z.
   const board = m.pass?.board && Math.sign(ball.vel.z) === m.pass.board ? m.pass.board * (pitch.halfWidth - BALL_RADIUS) : null;
+  const v0 = Math.hypot(ball.vel.x, ball.vel.z);
   for (let t = 0.1; t <= 2.5; t += 0.1) {
-    const f = (1 - Math.exp(-k * t)) / k;
+    const f = v0 > 1e-6 ? rollDistance(v0, t, pitch.surface) / v0 : 0; // Anteil der Anfangsgeschwindigkeit als Weg
     spot = { x: ball.pos.x + ball.vel.x * f, z: ball.pos.z + ball.vel.z * f };
     if (board !== null && (spot.z - board) * m.pass.board > 0) spot.z = board - (spot.z - board) * BOARD_BOUNCE;
     if (dist2d(p.pos, spot) <= speed * t + 0.4) break;

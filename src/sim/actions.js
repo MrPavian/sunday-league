@@ -3,7 +3,7 @@ import { bondBonus, bondOf, isBad } from './bonds.js';
 // Bewegung und Ballkontakte: Laufen, Schuss, Pass, Kopfball, Torwart, Dribbling.
 import { clamp, dist2d, len, norm, rotate } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
-import { BALL_RADIUS, ballSpeed, boardRoute } from './ball.js';
+import { BALL_RADIUS, ballSpeed, boardRoute, rollSpeedFor } from './ball.js';
 import { attackDir, distToSegment, setControlled, wallPush } from './players.js';
 import { aiSkill, keeperReaction, laneScore, WIDE_LANE } from './ai.js';
 
@@ -347,9 +347,8 @@ function pass(m, p, a, fatigue, fromHands) {
         speed = vmax;
       }
     } else if (lead) {
-      // In den Lauf: so dosiert, dass er kurz hinter dem Zielpunkt ausrollt.
-      const k = pitch.surface?.rollFriction ?? 0.7;
-      speed = clamp(k * (d + 2.5), 6, 15);
+      // In den Lauf: so dosiert, dass er kurz (2,5 m) hinter dem Zielpunkt ausrollt (Bodenmodell aus ball.js).
+      speed = clamp(rollSpeedFor(d + 2.5, 0, pitch.surface), 6, 15);
       vy = 0.2;
     } else {
       // Flache Pässe mit Zug – ein lahmer Pass wird in der Kreisklasse abgefangen.

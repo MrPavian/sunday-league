@@ -5,7 +5,7 @@ import { createMatch, getPlayer, stepMatch } from '../src/sim/match.js';
 import { PITCHES } from '../src/sim/pitch.js';
 import { attackDir } from '../src/sim/players.js';
 import { applyHold } from '../src/sim/holding.js';
-import { callFoul, FOUL, isLastMan, settleAdvantage, stepAdvantage } from '../src/sim/fouls.js';
+import { callFoul, FOUL, isLastMan, roughness, settleAdvantage, stepAdvantage } from '../src/sim/fouls.js';
 import { decideCard, REF_TRAITS } from '../src/sim/referee.js';
 import { allPlayers } from '../src/sim/squad.js';
 import { applyCards, banGames, isBanned, tickBans, resetYellows, YELLOW_LIMIT } from '../src/career/suspensions.js';
@@ -480,5 +480,22 @@ describe('Sperren: Pokal vor dem Ligaspiel, Ereignisse, Strafbank', () => {
   it('keine Vereinsnamen mit Bezug zu echten Clubs (Inter Mailand)', () => {
     const names = Object.values(EXTRA_CLUBS).flat().flatMap((x) => [x.name, x.short]);
     for (const n of names) expect(n).not.toMatch(/inter|milan|mailand/i);
+  });
+});
+
+describe('Frust bei Rückstand', () => {
+  it('wer hinten liegt, wird ruppiger; mit frustration: false (Fairness-Test) nicht', () => {
+    const m = createMatch({ seed: 5, pitch: PITCHES.parkplatz, human: false, aiCoach: false });
+    const p = m.players.find((q) => q.team === 0 && q.role !== 'gk');
+    const base = roughness(m, p);
+    m.score = [0, 2];
+    expect(roughness(m, p)).toBeGreaterThan(base * 1.3);
+    m.score = [2, 0];
+    expect(roughness(m, p)).toBeCloseTo(base, 10); // Führung ändert nichts
+    const f = createMatch({ seed: 5, pitch: PITCHES.parkplatz, human: false, aiCoach: false, frustration: false });
+    const q = f.players.find((x) => x.team === 0 && x.role !== 'gk');
+    const b0 = roughness(f, q);
+    f.score = [0, 3];
+    expect(roughness(f, q)).toBe(b0);
   });
 });

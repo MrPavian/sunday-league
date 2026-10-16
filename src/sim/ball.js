@@ -1,8 +1,18 @@
+import { SURFACES } from './surfaces.js';
+
 export const BALL_RADIUS = 0.11;
 const G = 9.81;
 const POST_RADIUS = 0.06;
 // Bande an der Längsseite (boundary 'walls'): Der Ball behält BOARD_BOUNCE seiner Quergeschwindigkeit, die Längsgeschwindigkeit bleibt.
 export const BOARD_BOUNCE = 0.5;
+
+// Rollen am Boden: konstanter Rollwiderstand (surface.rollDecel, m/s²) plus Luftwiderstand ∝ v² (ROLL_DRAG, 1/m):
+//   dv/dt = -(rollDecel + ROLL_DRAG · v²)
+// Vorher bremste der Boden überwiegend ∝ v (exp) – schnelle Pässe wurden zu stark gebremst (mech-audit-2026-10, Befund 2).
+// ROLL_DRAG gewählt, nicht gemessen (real ca. 0,01-0,013 1/m für einen Fußball); die Bodenwerte sind auf die kleinen Plätze
+// geeicht (15 m/s auf Rasen rollen rund 30 m), nicht auf echte Strecken. In der Luft bleibt es bei 4 %/s (siehe stepBall):
+// quadratischer Luftwiderstand im Flug würde Schuss- und Flankentempo (aus der Wurfparabel ohne Widerstand berechnet) verfälschen.
+export const ROLL_DRAG = 0.012;
 
 export function createBall() {
   return {
@@ -56,7 +66,7 @@ export function stepBall(ball, pitch, dt) {
   if (h > 0) {
     let next;
     if (onGround) {
-      next = Math.max(0, h * Math.exp(-surface.rollFriction * dt) - surface.rollDecel * dt);
+      next = Math.max(0, h - (surface.rollDecel + ROLL_DRAG * h * h) * dt);
     } else {
       next = h * (1 - 0.04 * dt);
     }
@@ -104,6 +114,53 @@ export function stepBall(ball, pitch, dt) {
     vel.x = -vel.x * 0.5;
   }
   return event;
+}
+
+// ---- Rollstrecke (geschlossene Form des Bodenmodells aus stepBall; ohne Wind, Bande und Abpraller) ----
+// Mit u = v²: du/dx = -2 (rollDecel + ROLL_DRAG · u)  →  u(x) = (u0 + c) · e^(-2 ROLL_DRAG x) - c,  c = rollDecel / ROLL_DRAG.
+// Fehlt der Untergrund (Testplätze ohne surface), gilt Rasen.
+const rollC = (surface) => (surface ?? SURFACES.grass).rollDecel / ROLL_DRAG;
+
+// Geschwindigkeit nach d Metern Rollen bei Startgeschwindigkeit v0 (0, wenn der Ball vorher steht).
+export function rollSpeedAfter(v0, d, surface) {
+  const c = rollC(surface);
+  const u = (v0 * v0 + c) * Math.exp(-2 * ROLL_DRAG * d) - c;
+  return u > 0 ? Math.sqrt(u) : 0;
+}
+
+// Weg bis zum Stillstand.
+export function rollStopDistance(v0, surface) {
+  return Math.log(1 + (v0 * v0) / rollC(surface)) / (2 * ROLL_DRAG);
+}
+
+// Zeit, in der der Ball d Meter rollt (bis zum Stillstand, wenn d weiter reicht als die Stoppstrecke: dann Infinity).
+export function rollTime(v0, d, surface) {
+  const a = (surface ?? SURFACES.grass).rollDecel;
+  const w = Math.sqrt(ROLL_DRAG / a);
+  const vEnd = rollSpeedAfter(v0, d, surface);
+  if (vEnd <= 0) return Infinity;
+  return (Math.atan(v0 * w) - Math.atan(vEnd * w)) / (w * a);
+}
+
+// Weg, den der Ball in t Sekunden zurücklegt (θ = atan(v · √(ROLL_DRAG / rollDecel)) läuft linear mit √(rollDecel · ROLL_DRAG) auf 0).
+export function rollDistance(v0, t, surface) {
+  const a = (surface ?? SURFACES.grass).rollDecel;
+  const th0 = Math.atan(v0 * Math.sqrt(ROLL_DRAG / a));
+  const th = Math.max(0, th0 - Math.sqrt(a * ROLL_DRAG) * t);
+  return Math.log(Math.cos(th) / Math.cos(th0)) / ROLL_DRAG;
+}
+
+// Zeit bis zum Stillstand.
+export function rollStopTime(v0, surface) {
+  const a = (surface ?? SURFACES.grass).rollDecel;
+  const w = Math.sqrt(ROLL_DRAG / a);
+  return Math.atan(v0 * w) / (w * a);
+}
+
+// Umkehrung: Startgeschwindigkeit, mit der der Ball nach d Metern noch vEnd m/s hat (vEnd = 0: kommt gerade an).
+export function rollSpeedFor(d, vEnd, surface) {
+  const c = rollC(surface);
+  return Math.sqrt((vEnd * vEnd + c) * Math.exp(2 * ROLL_DRAG * d) - c);
 }
 
 // Fangnetz hinter dem Tor (nur Hallen mit pitch.catchNet): x-Betrag der Netzfläche in der Höhe des Balls, sonst null.

@@ -41,11 +41,11 @@ describe('match incidents', () => {
   it('a thunderstorm leaves the pitch wet; a hurt referee is replaced by a spectator', () => {
     const storm = createMatch({ seed: 3, pitch: PITCHES.rasenplatz, human: false, duration: 60, incidents: true });
     storm.incidentPlan = { type: 'gewitter', at: 2 };
-    const grip = storm.pitch.surface.rollFriction;
+    const grip = storm.pitch.surface.rollDecel;
     play(storm);
     expect(storm.weather).toBe('rain');
     expect(storm.pitch.surface.wet).toBe(true);
-    expect(storm.pitch.surface.rollFriction).toBeLessThan(grip);
+    expect(storm.pitch.surface.rollDecel).toBeLessThan(grip);
 
     const ref = createMatch({ seed: 4, pitch: PITCHES.rasenplatz, human: false, duration: 60, incidents: true });
     ref.incidentPlan = { type: 'ersatzschiri', at: 2 };

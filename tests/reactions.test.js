@@ -581,6 +581,7 @@ describe('Fouls sichtbar machen', () => {
     p.vel.x = 3;
     expect(dribbleCarry(m, p)).toBe(1);
     p.vel.x = 0;
+    p.vel.z = 0; // Stand aus dem laufenden Spiel: sonst läuft der Spieler quer (vel.z) und zählt als in Bewegung
     expect(dribbleCarry(m, p)).toBe(0);
     p.vel.x = 3;
     m.ball.lastAction = 'shoot';

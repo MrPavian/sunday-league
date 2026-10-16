@@ -29,6 +29,18 @@ describe('Vorfälle als Szene', () => {
     expect(m.referee.pos.z).toBeLessThan(-hw);
   });
 
+  // Früher schafften es nur 2 von 12 Aufstellungen binnen 5 s (letzter Spieler bei -15,5 statt -17): Reaktionszeit bis 0,8 s
+  // und 6,2 m/s reichen für 32 m nicht. Jetzt 7,2 m/s und 0,35-0,5 s Schrecksekunde – für jede Startaufstellung.
+  it('Gewitter: nach 5 s ist auf dem Rasenplatz bei jeder Aufstellung (Seeds 1-12) keiner mehr auf der Fläche', () => {
+    for (let seed = 1; seed <= 12; seed++) {
+      const m = start('gewitter', 'rasenplatz', seed);
+      run(m, 5);
+      const hw = m.pitch.halfWidth;
+      for (const p of m.players) expect(p.pos.z, `${seed}/${p.id}`).toBeLessThan(-hw);
+      expect(m.referee.pos.z, `${seed}/Schiri`).toBeLessThan(-hw);
+    }
+  }, 120000);
+
   it('Polizei: angekommen droht einer mit dem Finger, der andere verschränkt die Arme; alle schauen hin', () => {
     const m = start('polizei', 'hinterhof');
     run(m, 6);

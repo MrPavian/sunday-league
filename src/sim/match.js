@@ -68,7 +68,7 @@ const NO_INPUT = { move: { x: 0, z: 0 }, sprint: false, shootHeld: false, pass: 
 const BENCH_ROLES = { 4: ['mid', 'fwd'], 5: ['def', 'mid', 'fwd'], 7: ['def', 'mid', 'fwd'], 9: ['gk', 'def', 'mid', 'fwd'], 11: ['gk', 'def', 'def', 'mid', 'mid', 'fwd', 'fwd'] };
 
 // human: false → beide Teams von der KI gesteuert (Simulation ungespielter Partien).
-export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = true, human = true, duration, incidents = false, aiCoach = true } = {}) {
+export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = true, human = true, duration, incidents = false, aiCoach = true, frustration = true } = {}) {
   const rng = createRng(seed);
   duration ??= matchDuration(pitch);
   const format = pitch.format ?? 5;
@@ -104,6 +104,7 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = tr
     players,
     bench,
     seed,
+    frustration, // Rückstand macht ruppiger (fouls.js roughness); nur für Fairness-Tests abschaltbar
     aiCoach, // KI-Trainer stellen während des Spiels um (aicoach.js)
     subRequests: [false, false],
     subRule: subRuleFor(MATCH.subs),

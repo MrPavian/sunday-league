@@ -6,7 +6,7 @@
 import { createMatch, matchDuration, stepMatch } from '../src/sim/match.js';
 import { PITCHES, STADIUM } from '../src/sim/pitch.js';
 import { SURFACES } from '../src/sim/surfaces.js';
-import { stepBall, createBall, BALL_RADIUS } from '../src/sim/ball.js';
+import { stepBall, createBall, BALL_RADIUS, ROLL_DRAG } from '../src/sim/ball.js';
 
 const mode = process.argv[2] ?? 'phys';
 const DT = 1 / 60;
@@ -30,7 +30,7 @@ if (mode === 'phys') {
         if (t10 === null && b.pos.x >= 10) { t10 = t; v10 = b.vel.x; }
         if (b.vel.x === 0) break;
       }
-      r.roll[v0] = { dist: +b.pos.x.toFixed(1), time: +t.toFixed(1), t5: t5 && +t5.toFixed(2), v5: v5 && +v5.toFixed(1), t10: t10 && +t10.toFixed(2), v10: v10 && +v10.toFixed(1), meanDecel: +(v0 / t).toFixed(2), initDecel: +(s.rollFriction * v0 + s.rollDecel).toFixed(2) };
+      r.roll[v0] = { dist: +b.pos.x.toFixed(1), time: +t.toFixed(1), t5: t5 && +t5.toFixed(2), v5: v5 && +v5.toFixed(1), t10: t10 && +t10.toFixed(2), v10: v10 && +v10.toFixed(1), meanDecel: +(v0 / t).toFixed(2), initDecel: +(ROLL_DRAG * v0 * v0 + s.rollDecel).toFixed(2) };
     }
     // Abprall senkrecht: Fall aus 2 m (FIFA-Test), Verhältnis der Höhe.
     for (const h0 of [2, 4]) {
