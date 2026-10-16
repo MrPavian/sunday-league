@@ -27,6 +27,9 @@ export const ACUTE_Z = 3;
 export const BOX_RUN_FROM = 0.2;
 const LURK_GAP = 8; // m Platz hinter der gegnerischen Abwehr, ab dem der Stürmer vorne lauert
 const CAUGHT_TIME = 0.7; // s: so lange ist nach dem Ballverlust raus, wer vor dem Ball stand
+const BIG_PITCH_HL = 30; // halbe Länge (m), ab der die Schussreichweite gedeckelt wird (Sportplatz, Großfeld, Stadion)
+const BIG_RANGE_CAP = 30; // m: größte Schussreichweite auf großen Plätzen (gemessen, 40 Spiele Großfeld: Median ~24 m, p90 ~28 m)
+const BIG_LONG_EXTRA = 0; // m: Distanzschuss-Band über der Reichweite – dort 0 (die Reichweite selbst ist schon der Fernschuss)
 
 // Schwierigkeitsgrad: Nur der Gegner des Menschen spielt klüger oder nachsichtiger –
 // schneller entscheiden, entschlossener in den Zweikampf, öfter der kluge Pass.
@@ -747,7 +750,11 @@ function aiDecide(m, p, oppGoal) {
   // jenseits der Mittellinie schon „in Schussweite" und es gibt fast nur Fernschüsse (gemessen vorher:
   // 59 % der Schüsse aus mehr als 35 % der Feldlänge). Bezug: 7er-Feld (halbe Länge 26 m) bleibt gleich.
   const small = Math.min(1, Math.max(0.75, pitch.halfLength / 22));
-  const range = (10 + p.attrs.shooting * 5 + (hasTrait(p, 'hammer') ? 4 : 0) + st.shoot + st.risk * 0.8 + brisk * 2.5) * small + Math.max(0, (pitch.halfLength - 20) * 0.45);
+  const bigPitch = pitch.halfLength > BIG_PITCH_HL;
+  const rawRange = (10 + p.attrs.shooting * 5 + (hasTrait(p, 'hammer') ? 4 : 0) + st.shoot + st.risk * 0.8 + brisk * 2.5) * small + Math.max(0, (pitch.halfLength - 20) * 0.45);
+  // Große Plätze (halbe Länge > 30 m): Reichweite deckeln. Ungedeckelt wuchs sie mit Platzlänge und Raffung auf ~40 m
+  // (gemessen: Median 31 m, p90 43 m; echte Profiligen im Mittel ~17 m, CIES 2018/19). Kleinere Plätze bleiben unverändert.
+  const range = bigPitch ? Math.min(rawRange, BIG_RANGE_CAP) : rawRange;
   // An der Grundlinie: flach zurück in den Rückraum, wenn dort einer frei einläuft.
   if (Math.abs(p.pos.z) > pitch.goalHalfWidth * 1.5) {
     const cb = cutbackMate(m, p, oppGoal);
@@ -815,7 +822,7 @@ function aiDecide(m, p, oppGoal) {
     return;
   }
   // Distanzschuss: Wer schießen kann und Platz hat, versucht es auch mal von weiter weg.
-  const longRange = range + 7 * small;
+  const longRange = range + (bigPitch ? BIG_LONG_EXTRA : 7 * small);
   const space = !m.players.some((o) => o.team !== p.team && o.role !== 'gk' && dist2d(o.pos, p.pos) < 3 && (o.pos.x - p.pos.x) * toG.x + (o.pos.z - p.pos.z) * toG.z > 0);
   if (!hold && !ownHalf && angleOk && dGoal >= range && dGoal < longRange && facingDot > 0.5 && space && (p.attrs.shooting > 0.55 || hasTrait(p, 'hammer')) && rng.chance((0.18 + brisk * 0.12) * (1 + 0.3 * st.risk))) {
     const gw = pitch.goalHalfWidth;
