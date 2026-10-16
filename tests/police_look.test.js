@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createMatch, stepMatch } from '../src/sim/match.js';
 import { PITCHES } from '../src/sim/pitch.js';
 import { POLICE_KIT } from '../src/sim/incidents.js';
-import { createPlayerModel } from '../src/render/PlayerModel.js';
+import { BONES, createPlayerModel } from '../src/render/PlayerModel.js';
 
 const lum = (hex) => (0.299 * ((hex >> 16) & 255) + 0.587 * ((hex >> 8) & 255) + 0.114 * (hex & 255)) / 255;
 const REF_KIT = { shirt: 0x1c1c1c, shorts: 0x1c1c1c, socks: 0x1c1c1c }; // wie MatchView (Schiri-Standard)
@@ -36,5 +36,31 @@ describe('Polizei-Aussehen', () => {
     expect(hat.mesh.geometry.attributes.position.count / 3).toBeLessThan(700);
     expect(hat.mesh.isSkinnedMesh).toBe(true);
     expect(hat.group.children.filter((c) => c.isMesh || c.isSkinnedMesh).length).toBe(plain.group.children.filter((c) => c.isMesh || c.isSkinnedMesh).length);
+  });
+
+  it('lange Hose: Unterschenkel in Hosenfarbe, Schuhe dunkel, gleiches Netz im Dreiecksbudget', () => {
+    const idx = Object.fromEntries(BONES.map((n, i) => [n, i]));
+    // Farben je Knochen (Vertexfarben, ohne Atlas): hips = Hosenfarbe, foot = Schuh.
+    const colors = (model, bone) => {
+      const g = model.mesh.geometry, set = new Set();
+      for (let i = 0; i < g.attributes.position.count; i++) {
+        if (g.attributes.skinIndex.getX(i) !== idx[bone]) continue;
+        set.add([g.attributes.color.getX(i), g.attributes.color.getY(i), g.attributes.color.getZ(i)].map((v) => v.toFixed(4)).join(','));
+      }
+      return set;
+    };
+    const cop = createPlayerModel({ ...look, hat: 'polizei' }, POLICE_KIT, { textured: false });
+    const trousers = colors(cop, 'hips');
+    expect(trousers.size).toBe(1);
+    for (const s of ['L', 'R']) {
+      expect([...colors(cop, `lowerLeg${s}`)]).toEqual([...trousers]); // Knie bis Knöchel: nur Hosenfarbe, keine Haut/Stutzen
+      expect([...colors(cop, `upperLeg${s}`)]).toEqual([...trousers]);
+      expect(colors(cop, `foot${s}`).has([...trousers][0])).toBe(false); // Schuh bleibt eigene (dunkle) Farbe
+    }
+    const shorts = createPlayerModel({ ...look, hat: 'polizei' }, { ...POLICE_KIT, trousers: false }, { textured: false });
+    expect(colors(shorts, 'lowerLegL').size).toBeGreaterThan(0);
+    expect([...colors(shorts, 'lowerLegL')]).not.toEqual([...trousers]);
+    expect(cop.mesh.geometry.attributes.position.count / 3).toBeLessThan(700);
+    expect(cop.mesh.geometry.attributes.position.count).toBeLessThanOrEqual(shorts.mesh.geometry.attributes.position.count);
   });
 });

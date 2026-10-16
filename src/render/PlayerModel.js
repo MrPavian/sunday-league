@@ -431,11 +431,17 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
   if (cost() > room && sweat) sweat = 0;
   if (cost() > room && tapeFoot) tapeFoot = null;
   if (cost() > room && socksDown) socksDown = false;
+  // Lange Hose (kit.trousers, z. B. Polizei, Ordner, Trainer, Jeans): Oberschenkel, Knie und Unterschenkel in Hosenfarbe
+  // (kit.shorts) statt Haut/Stutzen – gleiche Teile, gleiches Netz, keine Zusatzdreiecke; Stutzen, Ring und Tape entfallen.
+  const trousers = !!kit.trousers;
+  const legCol = trousers ? kit.shorts : skin;
+  const shinCol = trousers ? kit.shorts : kit.socks;
+  if (trousers) { socksDown = false; tapeFoot = null; }
   // Beine: Hosenbein, Oberschenkel, Knie, Stutzen mit Ring, Schuh mit Ferse und Spitze.
   for (const s of ['L', 'R']) {
     b.add(`upperLeg${s}`, prism(0.19, 0.18, 0.2, 0.21, 0.2), kit.shorts, { at: [0, -0.09, 0], uv: 'leg' });
-    b.add(`upperLeg${s}`, prism(0.145 * bulk, 0.13 * bulk, thigh - 0.17, 0.16 * bulk, 0.145 * bulk), skin, { at: [0, -0.19 - (thigh - 0.17) / 2 + 0.01, 0], uv: 'leg' });
-    b.box(`lowerLeg${s}`, 0.135, 0.08, 0.15, skin, [0, -0.025, 0.006], { uv: 'leg' });
+    b.add(`upperLeg${s}`, prism(0.145 * bulk, 0.13 * bulk, thigh - 0.17, 0.16 * bulk, 0.145 * bulk), legCol, { at: [0, -0.19 - (thigh - 0.17) / 2 + 0.01, 0], uv: 'leg' });
+    b.box(`lowerLeg${s}`, 0.135, 0.08, 0.15, legCol, [0, -0.025, 0.006], { uv: 'leg' });
     if (socksDown) {
       // Stutzen runtergerollt: Schienbein bis zur Wade frei, Sock nur am Knöchel, Wulst in Streifenfarbe.
       const L = shin - 0.06;
@@ -447,15 +453,15 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
       b.add(`lowerLeg${s}`, prism(wCut + 0.006, 0.12 * bulk, sockL, dCut + 0.006, 0.13 * bulk), kit.socks, { at: [0, -shin + sockL / 2, 0], uv: 'leg' });
       b.box(`lowerLeg${s}`, wCut + 0.025, 0.04, dCut + 0.025, accent, [0, -shin + sockL, 0]);
     } else {
-      b.add(`lowerLeg${s}`, prism(0.145 * bulk, 0.12 * bulk, shin - 0.06, 0.16 * bulk, 0.13 * bulk), kit.socks, { at: [0, -0.06 - (shin - 0.06) / 2, 0], uv: 'leg' });
-      b.box(`lowerLeg${s}`, 0.15, 0.035, 0.166, accent, [0, -0.1, 0]);
+      b.add(`lowerLeg${s}`, prism(0.145 * bulk, 0.12 * bulk, shin - 0.06, 0.16 * bulk, 0.13 * bulk), shinCol, { at: [0, -0.06 - (shin - 0.06) / 2, 0], uv: 'leg' });
+      if (!trousers) b.box(`lowerLeg${s}`, 0.15, 0.035, 0.166, accent, [0, -0.1, 0]);
     }
     if (tapeFoot === s) b.box(`lowerLeg${s}`, 0.152 * Math.min(1, bulk * 0.97 + 0.03), 0.045, 0.17, 0xf4f1e8, [0, -shin + 0.03, 0]); // Tape am Knöchel
     b.box(`foot${s}`, 0.14, 0.09, 0.15, shoe, [0, -ankle + 0.045, -0.01]);
     b.add(`foot${s}`, prism(0.11, 0.135, 0.06, 0.12, 0.16), shoe, { at: [0, -ankle + 0.03, 0.13] }); // Spitze etwas länger (Profil)
   }
   // Pflaster auf dem rechten Schienbein (Farbe kommt aus dem Atlas).
-  b.box('lowerLegR', 0.1, 0.07, 0.02, 0xffffff, [0, -0.16, 0.074], { uv: 'plaster' });
+  if (!trousers) b.box('lowerLegR', 0.1, 0.07, 0.02, 0xffffff, [0, -0.16, 0.074], { uv: 'plaster' });
 
   // Hüfte (Hose) und verjüngter Torso: Schultern breiter als Taille.
   b.add('hips', prism(0.36 + belly * 0.1, 0.38 + belly * 0.08, 0.17, 0.25 + belly * 0.07, 0.24 + belly * 0.05), kit.shorts, { at: [0, 0.02, 0], uv: 'leg' });

@@ -300,13 +300,19 @@ const postFragment = /* glsl */ `
     }
 
     #if CLOUDS == 1
-    // Wolkenschatten: große, langsam ziehende Flecken über Boden, Figuren und Kulisse – aus der
-    // Weltposition, ohne Zusatz-Durchgang. Drei gerasterte Stufen, weiche Kante per Bayer.
+    // Wolkenschatten: große, ruhig ziehende Flecken über Boden, Figuren und Kulisse – aus der
+    // Weltposition, ohne Zusatz-Durchgang und ohne zusätzliche Noise-Abfragen. Zwei Stufen (also Hell/Halb/Voll),
+    // Kante weich über ein 4×4-Bayer-Muster, das an den WOLKEN verankert ist (Weltposition + Zug, nicht am
+    // Bildschirm): das Raster wandert mit dem Schatten mit, die Kante kriecht und flimmert nicht mehr.
     if (cloudAmount > 0.0 && !sky) {
-      vec2 cp = (wp.xz + cloudShift) * 0.055;
+      vec2 cq = wp.xz + cloudShift;
+      vec2 cp = cq * 0.055;
       float cn = vnoise(cp) * 0.65 + vnoise(cp * 2.7 + 13.0) * 0.35;
-      float sh = smoothstep(0.62 - 0.22 * cloudAmount, 0.75 - 0.22 * cloudAmount, cn);
-      sh = clamp(floor(sh * 3.0 + bay) / 3.0, 0.0, 1.0);
+      float sh = smoothstep(0.58 - 0.22 * cloudAmount, 0.78 - 0.22 * cloudAmount, cn); // breitere Kante als früher (0,13 → 0,20)
+      vec2 bp = mod(floor(cq / 0.12), 4.0); // feste Rasterzelle 12 cm im Wolkenraum (zoomunabhängig, etwa ein Bildpunkt)
+      vec2 b2 = mod(bp, 2.0), b1 = floor(bp * 0.5);
+      float cb = fract(b2.x * 0.5 + b2.y * b2.y * 0.75) * 0.25 + fract(b1.x * 0.5 + b1.y * b1.y * 0.75) + 0.03; // Bayer 4×4 per Rechnung
+      sh = clamp(floor(sh * 2.0 + cb) / 2.0, 0.0, 1.0);
       c *= 1.0 - 0.24 * sh * step(0.01, cloudAmount); // Menge = Bedeckung, Schatten selbst gleich dunkel
     }
     #endif
@@ -673,7 +679,10 @@ export class PixelRenderer {
     // nur diffuses Licht), abends unter Flutlicht keine; Zuggeschwindigkeit wächst mit dem Wind.
     const overcast = Math.min(1, 2 * (w.rain + w.fog + w.snow));
     u.cloudAmount.value = w.indoor ? 0 : (w.heat > 0 ? 0.3 : 0.6) * (1 - overcast) * (w.frost > 0 ? 0.6 : 1) * (1 - u.floodAmount.value);
-    const drift = (2.5 + 1.2 * Math.hypot(w.windX ?? 0, w.windZ ?? 0)) * w.time;
+    // Zugtempo: 0,7 m/s Grundtempo + 0,25 m/s je Windstärke (früher 2,5 + 1,2: wirkte zu hastig; gemessen bei Wind ~0,3
+    // früher ≈ 2,8 m/s, jetzt ≈ 0,8 m/s). w.time zählt echte Bildsekunden (weather.update(dt) mit dem Bild-dt, nicht
+    // Spieltempo/Zeitraffer) – das Tempo bleibt also bei „schnell“ und in verkürzten Spielen gleich.
+    const drift = (0.7 + 0.25 * Math.hypot(w.windX ?? 0, w.windZ ?? 0)) * w.time;
     u.cloudShift.value.set(drift * 0.94, drift * 0.33);
     u.groundWet.value.set(g.wetDark, g.wetSat, g.glint, g.streak);
     u.groundMisc.value.set(g.spots, g.sky, g.snow, 0);

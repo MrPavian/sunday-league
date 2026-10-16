@@ -60,8 +60,8 @@ const FAN_KISS = 2.6; // so lange hängt er am Torwart, wenn ihn keiner packt
 const FAN_GIVE_UP = 18; // spätestens dann ist er außer Puste
 const REF_LIMP = 2.2; // der Schiri mit Zerrung
 const FAN_LOOK = { skin: SKIN_TONES[1], hair: 0x5a3a22, bald: false, beard: true, belly: 0.9, height: 1 };
-const FAN_KIT = { shirt: 0x9a2a2a, shorts: 0x34425a, socks: 0x222222 }; // Vereinstrikot über dem Bauch, Jeans
-const STEWARD_KIT = { shirt: 0xe8c21a, shorts: 0x222a3a, socks: 0x222222 }; // gelbe Warnweste
+const FAN_KIT = { shirt: 0x9a2a2a, shorts: 0x34425a, socks: 0x222222, trousers: true }; // Vereinstrikot über dem Bauch, Jeans
+const STEWARD_KIT = { shirt: 0xe8c21a, shorts: 0x222a3a, socks: 0x222222, trousers: true }; // gelbe Warnweste
 const STEWARD_LOOK = { skin: SKIN_TONES[0], hair: 0x2a1d14, bald: false, beard: false, belly: 0.5, height: 1.02 };
 const DOG_LUNGE = 2.2; // so nah am Hund hechten Spieler nach dem Ball im Maul
 const OWNER_LOOK = { skin: SKIN_TONES[1], hair: 0x5a3a22, bald: false, beard: false, belly: 0.5, height: 1 };
@@ -73,11 +73,11 @@ export const INCIDENT_TYPES = Object.keys(DURATION);
 //   https://sachsen.museum-digital.de/pdf/object/9756.pdf?lang=de
 // Bundestagspolizei/Bundespolizei (Blau in mehreren Tönen, Hemd, Jacke, Mütze):
 //   https://www.bundestag.de/dokumente/textarchiv/2018/kw41-bundestagspolizei-572666
-export const POLICE_KIT = { shirt: 0x4469b0, shorts: 0x1f3566, socks: 0x111111 };
+export const POLICE_KIT = { shirt: 0x4469b0, shorts: 0x1f3566, socks: 0x111111, trousers: true }; // lange dunkelblaue Hose
 export const POLICE_HAT = 'polizei';
 const CIVIL_KIT = { shirt: 0x8a4b2a, shorts: 0x34425a, socks: 0x222222 };
 export const COACH_LOOK = { skin: SKIN_TONES[0], hair: 0x3a2a1a, bald: false, beard: true, belly: 0.6, height: 1 };
-export const STAND_IN_KIT = { shirt: 0x8c8c86, shorts: 0x34425a, socks: 0x222222 }; // graue Kapuzenjacke, Jeans
+export const STAND_IN_KIT = { shirt: 0x8c8c86, shorts: 0x34425a, socks: 0x222222, trousers: true }; // graue Kapuzenjacke, Jeans
 
 // Wo der Trainer des eigenen Teams am Rand steht (ohne Außenraum, bei Hauswänden knapp innerhalb der Linie).
 export function coachSpot(m) {
@@ -233,7 +233,7 @@ function beginIncident(m, type, info = {}) {
     // die Arme, der Trainer zuckt mit den Schultern (sobald sie bei ihm sind).
     const spot = coachSpot(m);
     const coach = m.teams?.[m.humanTeam ?? 0]?.kit;
-    m.visitors.push({ id: 'trainer', look: COACH_LOOK, kit: { shirt: coach?.shirt ?? 0x2a3a52, shorts: 0x1f2a44, socks: coach?.socks ?? 0x222222 }, pos: { ...spot }, target: { ...spot }, speed: 1.5, reactNear: true });
+    m.visitors.push({ id: 'trainer', look: COACH_LOOK, kit: { shirt: coach?.shirt ?? 0x2a3a52, shorts: 0x1f2a44, socks: coach?.socks ?? 0x222222, trousers: true }, pos: { ...spot }, target: { ...spot }, speed: 1.5, reactNear: true });
     // Im Hinterhof ist die Haustür der einzige Zugang (Wände ringsum); sonst kommen sie am Rand herein. Weg und Abgang: derselbe Punkt.
     const door = pitch.id === 'hinterhof' ? { x: GEO.backyard.doorX, z: -pitch.halfWidth + 0.45 } : null;
     for (const [i, dx, dz] of [[0, -1.2, 0.5], [1, -2.5, 1.4]]) m.visitors.push({ id: `polizei${i}`, look: { ...look(r, { bald: false, beard: false }), hat: POLICE_HAT }, kit: POLICE_KIT, pos: door ? { x: door.x + (i ? 0.45 : -0.45), z: door.z } : { x: x0, z: spot.z + 1.2 * (i ? 1 : -1) * 0.6 }, target: { x: spot.x + dx, z: spot.z + dz }, speed: 2.8, onArrive: i === 0 ? 'finger' : 'arme' });
