@@ -469,12 +469,8 @@ export function stepIncident(m, dt) {
     } else if (inc.type === 'ersatzschiri' && m.referee) {
       const ref = m.referee;
       if (inc.helpers.includes(p.id)) {
-        // Draußen vor der Bandentür bleiben die Helfer an der Tür (nie hinter der Bande).
-        const door = shelterFor(pitch).door;
-        const out = door && ref.pos.z > pitch.halfWidth - 0.3;
-        const w = out ? { x: door.in.x + (inc.helpers[0] === p.id ? -1.0 : 1.0), z: door.in.z - 0.6 } : { x: ref.pos.x + (inc.helpers[0] === p.id ? -1.1 : 1.1), z: ref.pos.z + 0.9 };
-        target = freePoint(walkObstacles(pitch), w) ?? w;
-        speed = 3.2;
+        stepEscort(m, inc, p, dt);
+        continue;
       }
       p.facing = norm(ref.pos.x - p.pos.x, ref.pos.z - p.pos.z);
     }
@@ -793,6 +789,86 @@ function walkFree(m, e, target, speed, dt, dog = false) {
     return false;
   }
   return true;
+}
+
+// Begleiter des verletzten Schiris: feste Plätze links/rechts neben ihm (quer zu seiner Gehrichtung), Geschwindigkeit
+// = Schiri-Tempo + sanfte Korrektur zum Platz, Beschleunigung begrenzt, Blick in Gehrichtung (bei Stillstand zum Schiri)
+// und nur mit begrenzter Drehrate. Früher: Ziel hinter dem Schiri, Tempo 3,2 gegen 1,1 und ein Totbereich von 0,8 m ->
+// Ruck-Laufen mit Blick-Sprung um fast 180 Grad fast in jedem Schritt (siehe tests/escort_jitter.test.js).
+export const ESCORT = { side: 1.05, back: 0.25, gain: 2.2, maxSpeed: 3.2, accel: 6, turn: 7, far: 3.5 };
+
+function stepEscort(m, inc, p, dt) {
+  const ref = m.referee;
+  const pitch = m.pitch;
+  const es = (inc.escort ??= { dir: { x: 0, z: -1 }, side: new Map() });
+  // Gehrichtung des Schiris, geglättet (steht er, bleibt die letzte Richtung).
+  const rv = Math.hypot(ref.vel.x, ref.vel.z);
+  if (rv > 0.3 && es.t !== inc.t) {
+    es.t = inc.t;
+    const k = Math.min(1, dt * 6);
+    es.dir = norm(es.dir.x + (ref.vel.x / rv - es.dir.x) * k, es.dir.z + (ref.vel.z / rv - es.dir.z) * k);
+  }
+  const dir = es.dir;
+  const perp = { x: dir.z, z: -dir.x };
+  // Seite einmal festlegen: der Erste nimmt die Seite, auf der er steht; der Zweite die andere.
+  if (!es.side.has(p.id)) {
+    const cr = (p.pos.x - ref.pos.x) * perp.x + (p.pos.z - ref.pos.z) * perp.z;
+    const taken = [...es.side.values()][0];
+    es.side.set(p.id, taken ? -taken : cr >= 0 ? 1 : -1);
+  }
+  const sd = es.side.get(p.id);
+  // Draußen vor der Bandentür bleiben die Helfer an der Tür (nie hinter der Bande).
+  const door = shelterFor(pitch).door;
+  const out = door && ref.pos.z > pitch.halfWidth - 0.3;
+  const w = out
+    ? { x: door.in.x + sd * ESCORT.side, z: door.in.z - 0.6 }
+    : { x: ref.pos.x + perp.x * sd * ESCORT.side - dir.x * ESCORT.back, z: ref.pos.z + perp.z * sd * ESCORT.side - dir.z * ESCORT.back };
+  const obs = walkObstacles(pitch);
+  const slot = freePoint(obs, w) ?? w;
+  const ex = slot.x - p.pos.x;
+  const ez = slot.z - p.pos.z;
+  const d = Math.hypot(ex, ez);
+  let vx;
+  let vz;
+  if (d > ESCORT.far) {
+    // weit weg: auf dem Hindernis-freien Weg dem Platz zu
+    const wp = freeStep(obs, p.pos, slot) ?? slot;
+    const n = norm(wp.x - p.pos.x, wp.z - p.pos.z);
+    vx = n.x * ESCORT.maxSpeed;
+    vz = n.z * ESCORT.maxSpeed;
+  } else {
+    const fx = out ? 0 : ref.vel.x;
+    const fz = out ? 0 : ref.vel.z;
+    vx = fx + ex * ESCORT.gain;
+    vz = fz + ez * ESCORT.gain;
+  }
+  const vm = Math.hypot(vx, vz);
+  if (vm > ESCORT.maxSpeed) (vx *= ESCORT.maxSpeed / vm), (vz *= ESCORT.maxSpeed / vm);
+  // Beschleunigung begrenzen
+  const dx = vx - p.vel.x;
+  const dz = vz - p.vel.z;
+  const dm = Math.hypot(dx, dz);
+  const lim = ESCORT.accel * dt;
+  if (dm > lim) (vx = p.vel.x + (dx / dm) * lim), (vz = p.vel.z + (dz / dm) * lim);
+  const x0 = p.pos.x;
+  const z0 = p.pos.z;
+  p.pos.x += vx * dt;
+  p.pos.z += vz * dt;
+  if (crossesObstacle(obs, { x: x0, z: z0 }, p.pos)) {
+    p.pos.x = x0;
+    p.pos.z = z0;
+    vx = vz = 0;
+  }
+  p.vel.x = vx;
+  p.vel.z = vz;
+  // Blick: in Gehrichtung (wenn er wirklich geht), sonst zum Schiri; mit Drehrate, kürzester Weg.
+  const sp = Math.hypot(vx, vz);
+  const want = sp > 0.5 ? { x: vx / sp, z: vz / sp } : norm(ref.pos.x - p.pos.x, ref.pos.z - p.pos.z);
+  const a0 = Math.atan2(p.facing.x, p.facing.z);
+  const aw = Math.atan2(want.x, want.z);
+  const da = Math.atan2(Math.sin(aw - a0), Math.cos(aw - a0));
+  const a1 = a0 + clamp(da, -ESCORT.turn * dt, ESCORT.turn * dt);
+  p.facing = { x: Math.sin(a1), z: Math.cos(a1) };
 }
 
 // Gewitter: über die Wegpunkte zum Platz im Unterstand, dort zum Spielfeld schauen.
