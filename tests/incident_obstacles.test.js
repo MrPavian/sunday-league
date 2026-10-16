@@ -49,7 +49,7 @@ function check(m, prev, label) {
   return null;
 }
 
-// Spielt den Vorfall und danach, bis Hund und Besucher weg sind; Autoalarm und Zaun ohne Mauer werden per Ballereignis ausgelöst.
+// Spielt den Vorfall und danach, bis Hund und Besucher weg sind; Autoalarm und Zaun ohne Mauer werden per Ballereignis ausgelöst; an Mauer-Plätzen (Hinterhof) kommt der Zaun-Vorfall von selbst, sonst ab Sekunde 30 per Ballereignis (der Ball fliegt nicht in jedem Spielverlauf binnen 80 s über die Mauer – Seed 7 nach der Körper-Änderung).
 function run(venue, type, seed, tweak) {
   const m = createMatch({ seed, pitch: PITCHES[venue], human: false, duration: 80, incidents: true });
   m.incidentPlan = { type, at: 2 };
@@ -60,7 +60,7 @@ function run(venue, type, seed, tweak) {
   for (let i = 0; i < 60 * 200 && m.phase !== 'ended'; i++) {
     if (m.incidentPlan && m.time > 2) {
       if (type === 'autoalarm') incidentOnBall(m, { type: 'car', x: 4, z: m.pitch.halfWidth + 1 });
-      if (type === 'zaun' && m.pitch.boundary !== 'walls') incidentOnBall(m, { type: 'out', flying: true, x: m.pitch.halfLength + 2, z: 0 });
+      if (type === 'zaun' && (m.pitch.boundary !== 'walls' || m.time > 30)) incidentOnBall(m, { type: 'out', flying: true, x: m.pitch.halfLength + 2, z: 0 });
     }
     stepMatch(m, undefined, DT);
     if (m.incident && !seen) {

@@ -8,6 +8,7 @@ import { landAcro } from './tricks.js';
 import { hasProfile } from './profiles.js';
 import { judgeDissent } from './referee.js';
 import { callFoul, FOUL } from './fouls.js';
+import { PINGPONG, STRENGTH_FX, strengthOf } from './strength.js';
 
 const COMPLAINTS = {
   lost: tr(['Foul! Das war doch Foul!', 'Schiri! Ach, gibt ja keinen…', 'Hallo?! Mann gespielt!'], ['Foul! That was a foul!', 'Ref! Oh wait, there isn\'t one…', 'Hello?! You went for the man!']),
@@ -106,6 +107,10 @@ function knockBall(m, p, spread, minSpeed, maxSpeed) {
   ball.vel.x = dir.x * speed;
   ball.vel.y = 0.3;
   ball.vel.z = dir.z * speed;
+  // Ping-Pong-Bremse C (pingpong-audit-2026-10.md, Variante „tacklelock“): Wem der Ball weggestochert/-gegrätscht wird, darf
+  // ihn PINGPONG.tackleLock lang nicht per Berührung zurückholen. Nur der Verlierer (nicht jeder Gegner in 2,5 m wie im Audit).
+  const lost = ball.lastTouch != null ? getPlayer(m, ball.lastTouch) : null;
+  if (lost && lost.team !== p.team) lost.kickCooldown = Math.max(lost.kickCooldown, PINGPONG.tackleLock);
   ball.lastTouch = p.id;
   ball.lastAction = 'tackle';
   m.lastTouchTeam = p.team;
@@ -130,7 +135,7 @@ export function resolveTackles(m) {
         m.events.push({ type: 'tackle', playerId: p.id });
       } else {
         const win = contested
-          ? clamp(0.32 + 0.45 * p.attrs.tackling - 0.35 * opp.attrs.technique - (hasTrait(opp, 'ballsicher') ? 0.1 : 0) - (opp.shielding ? 0.25 : 0) + (hasProfile(p, 'kaempfer') ? 0.08 : 0) + (hasProfile(opp, 'nervoes') ? 0.05 : 0), 0.1, 0.9)
+          ? clamp(0.32 + 0.45 * p.attrs.tackling - 0.35 * opp.attrs.technique - (hasTrait(opp, 'ballsicher') ? 0.1 : 0) - (opp.shielding ? STRENGTH_FX.pokeShieldBase + STRENGTH_FX.pokeShieldPerStrength * strengthOf(opp) : 0) + STRENGTH_FX.poke * (strengthOf(p) - strengthOf(opp)) + (hasProfile(p, 'kaempfer') ? 0.08 : 0) + (hasProfile(opp, 'nervoes') ? 0.05 : 0), 0.1, 0.9)
           : 0.95;
         p.tackleWon = rng.chance(win) ? true : 'missed';
         if (p.tackleWon === true) {

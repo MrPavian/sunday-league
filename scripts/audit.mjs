@@ -70,7 +70,7 @@ export const SERIES = {
   keeper_good: { str: [70, 70], keeper: [0.9, 0.5] },
   keeper_bad: { str: [70, 70], keeper: [0.3, 0.5] },
   // Kontrollierte Spielerwerte: alle Feldspieler von Team 0 auf einen Wert (Gegner Ø 70)
-  ...Object.fromEntries(['passing', 'technique', 'tackling', 'shooting', 'pace', 'stamina'].flatMap((a) => [
+  ...Object.fromEntries(['passing', 'technique', 'tackling', 'shooting', 'pace', 'stamina', 'strength'].flatMap((a) => [
     [`${a}_lo`, { str: [70, 70], set: [{ [a]: 0.3 }, null] }],
     [`${a}_mid`, { str: [70, 70], set: [{ [a]: 0.55 }, null] }],
     [`${a}_hi`, { str: [70, 70], set: [{ [a]: 0.8 }, null] }],
@@ -79,7 +79,7 @@ export const SERIES = {
   equal_ai: { str: [70, 70], aiCoach: true },
 };
 
-const ATTRS = ['pace', 'stamina', 'technique', 'passing', 'shooting', 'tackling', 'heading', 'keeping'];
+const ATTRS = ['pace', 'stamina', 'technique', 'passing', 'shooting', 'tackling', 'heading', 'keeping', 'strength'];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const mean = (xs) => xs.reduce((s, x) => s + x, 0) / Math.max(1, xs.length);
 

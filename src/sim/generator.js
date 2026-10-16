@@ -7,6 +7,7 @@ import { HAIR_COLORS, NAME_EDITIONS, PROFESSIONS, SKIN_TONES } from '../data/nam
 import { hairIndex, personIdentity, skinIndex } from '../data/origins.js';
 import { RANDOM_TRAIT_IDS } from '../data/traits.js';
 import { rollTier, tierById } from '../data/tiers.js';
+import { deriveStrength } from './strength.js';
 
 export const POSITIONS = tr({ gk: 'Torwart', def: 'Abwehr', mid: 'Mittelfeld', fwd: 'Sturm', fan: 'Zuschauer' }, { gk: 'Goalkeeper', def: 'Defence', mid: 'Midfield', fwd: 'Attack', fan: 'Spectator' });
 
@@ -22,7 +23,10 @@ const FOCUS = {
   fwd: { shooting: 0.08, pace: 0.05, tackling: -0.08 },
 };
 
-const ATTRS = ['pace', 'stamina', 'technique', 'passing', 'shooting', 'tackling', 'heading', 'keeping'];
+// Fähigkeiten, die gewürfelt werden. „strength" (Körper) steht bewusst NICHT hier: ein weiterer Wurf je Spieler
+// würde den Zufallsstrom des ganzen Pools (Namen, Looks, Werte) verschieben. Er wird ohne Zufallsstrom aus Aussehen
+// und Position abgeleitet (strength.js, deriveStrength).
+const ROLL_ATTRS = ['pace', 'stamina', 'technique', 'passing', 'shooting', 'tackling', 'heading', 'keeping'];
 
 const STORIES = {
   superstar: [
@@ -95,9 +99,9 @@ function generateLegend(rng, role, names) {
   const arch = rng.pick(fitting.length ? fitting : LEGEND_ARCHETYPES);
   const age = rng.int(32, 42);
   const attrs = {};
-  for (const k of ATTRS) attrs[k] = clamp(arch.attrs[k] + rng.gauss() * 0.02, 0.05, 0.98);
+  for (const k of ROLL_ATTRS) attrs[k] = clamp(arch.attrs[k] + rng.gauss() * 0.02, 0.05, 0.98);
   const id = names.identity ? names.identity(rng, age) : { name: names.person ? names.person(rng, age) : `${rng.pick(names.first)} ${rng.pick(names.last)}`, origin: null };
-  return {
+  const legend = {
     name: id.name,
     age,
     profession: rng.pick(['Privatier', 'Hat eine Fußballschule', 'Teilhaber im Autohaus', 'Gelegentlich TV-Experte']),
@@ -110,6 +114,9 @@ function generateLegend(rng, role, names) {
     traits: [...arch.traits],
     look: makeLook(rng, age, arch.look, id.origin),
   };
+  // Körper: Archetyp-Wert, sonst aus dem Aussehen (kein weiterer Zufallswurf, siehe ROLL_ATTRS).
+  legend.attrs.strength = arch.attrs.strength ?? deriveStrength(legend);
+  return legend;
 }
 
 export function generatePlayer(rng, { role = 'mid', tier = null, tierWeights = null, names = { identity: personIdentity, jobs: PROFESSIONS } } = {}) {
@@ -122,7 +129,7 @@ export function generatePlayer(rng, { role = 'mid', tier = null, tierWeights = n
     const [lo, hi] = t.range;
     const focus = FOCUS[role] ?? {};
     const attrs = {};
-    for (const k of ATTRS) attrs[k] = clamp(rng.range(lo, hi) + rng.gauss() * 0.04 + (focus[k] ?? 0), 0.08, 0.92);
+    for (const k of ROLL_ATTRS) attrs[k] = clamp(rng.range(lo, hi) + rng.gauss() * 0.04 + (focus[k] ?? 0), 0.08, 0.92);
     if (role !== 'gk') attrs.keeping = 0.1 + rng.next() * 0.2;
     if (age > 32) {
       attrs.pace = clamp(attrs.pace - 0.1, 0.08, 1);
@@ -142,6 +149,8 @@ export function generatePlayer(rng, { role = 'mid', tier = null, tierWeights = n
       traits: pickTraits(rng, t.traits),
       look: makeLook(rng, age, {}, id.origin),
     };
+    // Körper aus Größe, Bauch, Alter und Position (ohne Zufallsstrom): siehe strength.js.
+    player.attrs.strength = deriveStrength(player);
   }
   player.rating = ratePlayer(player);
   return player;

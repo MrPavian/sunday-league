@@ -2,8 +2,10 @@
 // ohne Ball hält er den nächsten Gegner am Trikot fest. Das bremst den Gegner –
 // und ist ein Foul, wenn es jemand sieht.
 import { dist2d, norm } from '../core/math.js';
+import { clamp } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
 import { callFoul } from './fouls.js';
+import { STRENGTH_FX, strengthOf } from './strength.js';
 
 const SHIELD_REACH = 1.3;
 const GRAB_REACH = 1.0;
@@ -48,6 +50,8 @@ export function applyHold(m, p, active, dt) {
   p.holdingId = target.id;
   p.holdTime += dt;
   target.heldUntil = m.time + 0.12;
+  // Der Stärkere bremst den Schwächeren stärker (Tempofaktor des Gehaltenen, siehe movePlayer). Mitte 0,5 = wie bisher 0,45.
+  target.heldFactor = clamp(STRENGTH_FX.heldBase - STRENGTH_FX.held * (strengthOf(p) - strengthOf(target)), STRENGTH_FX.heldMin, STRENGTH_FX.heldMax);
   p.facing = norm(target.pos.x - p.pos.x, target.pos.z - p.pos.z);
 
   // Je länger, desto auffälliger. Ohne Schiri beschwert sich der Gehaltene selbst.

@@ -6,6 +6,7 @@ import { createRng } from '../core/rng.js';
 import { book } from './finances.js';
 import { addCustomPlayer, getPool, humanClub, maxSquad, playerOf } from './career.js';
 import { generatePlayer, ratePlayer } from '../sim/generator.js';
+import { deriveStrength } from '../sim/strength.js';
 import { adjustMood } from './events.js';
 import { lateOr, statusFor } from './spielbericht.js';
 import { jobName } from '../data/names.js';
@@ -59,7 +60,7 @@ export const STYLES = {
   wuehler: { role: 'fwd', name: tr('Wühler', 'Grafter'), desc: tr('Schnell, kopfballstark, nervt jeden Verteidiger.', 'Quick, good in the air, annoys every defender.'), mods: { pace: 0.1, heading: 0.08, technique: -0.04 }, trait: 'kopfball' },
   spielmacher: { role: 'mid', name: tr('Spielmacher', 'Playmaker'), desc: tr('Sieht den Pass, den sonst keiner sieht.', 'Sees the pass nobody else sees.'), mods: { passing: 0.12, technique: 0.08, pace: -0.05 }, trait: 'gutes_auge' },
   dauerlaeufer: { role: 'mid', name: tr('Dauerläufer', 'Box-to-box'), desc: tr('Läuft 90 Minuten, auch wenn es nur 60 sind.', 'Runs for 90 minutes, even when there are only 60.'), mods: { stamina: 0.14, tackling: 0.05, shooting: -0.04 }, trait: 'pferdelunge' },
-  ausputzer: { role: 'def', name: tr('Ausputzer', 'Stopper'), desc: tr('Klärt alles. Notfalls auf den Parkplatz.', 'Clears everything. Into the car park if need be.'), mods: { tackling: 0.12, heading: 0.06, technique: -0.05 }, trait: 'hart_im_nehmen' },
+  ausputzer: { role: 'def', name: tr('Ausputzer', 'Stopper'), desc: tr('Klärt alles. Notfalls auf den Parkplatz.', 'Clears everything. Into the car park if need be.'), mods: { tackling: 0.12, heading: 0.06, technique: -0.05, strength: 0.1 }, trait: 'hart_im_nehmen' },
   libero: { role: 'def', name: tr('Libero', 'Sweeper'), desc: tr('Organisiert hinten und spielt den ersten Ball.', 'Organises the back line and plays the first pass.'), mods: { passing: 0.08, tackling: 0.06, technique: 0.04, pace: -0.06 }, trait: 'anfuehrer' },
   torwart: { role: 'gk', name: tr('Torwart', 'Goalkeeper'), desc: tr('Einer muss ja. Und du hältst wirklich gern.', 'Someone has to. And you genuinely like saving shots.'), mods: { keeping: 0.12 }, trait: null },
 };
@@ -80,7 +81,7 @@ export function createCoachPlayer(input, seed = 1) {
   const rng = createRng((seed * 131 + 7) >>> 0);
   const p = generatePlayer(rng, { role: style.role, tier: 'gut' });
   const age = Math.max(18, Math.min(55, Math.round(input.age ?? 32)));
-  for (const [k, v] of Object.entries(style.mods)) p.attrs[k] = clampAttr(p.attrs[k] + v);
+  for (const [k, v] of Object.entries(style.mods)) if (k !== 'strength') p.attrs[k] = clampAttr(p.attrs[k] + v);
   // Das Alter: schneller mit 20, abgeklärter mit 40.
   p.attrs.pace = clampAttr(p.attrs.pace - Math.max(0, age - 30) * 0.012 + Math.max(0, 25 - age) * 0.01);
   p.attrs.stamina = clampAttr(p.attrs.stamina - Math.max(0, age - 33) * 0.01);
@@ -99,6 +100,8 @@ export function createCoachPlayer(input, seed = 1) {
     look,
     custom: 'coach',
   };
+  // Körper: aus Alter/Aussehen/Position des fertigen Avatars (nicht des gewürfelten Rohlings), dazu der Spielertyp.
+  player.attrs = { ...player.attrs, strength: clampAttr(deriveStrength(player) + (style.mods.strength ?? 0)) };
   player.rating = ratePlayer(player);
   return player;
 }
@@ -120,6 +123,7 @@ function createKidPlayer(child, coach, parent, age, seed) {
     look: { ...p.look, skin: parent.look.skin, hair: rng.chance(0.6) ? parent.look.hair : p.look.hair, bald: false, beard: false },
     custom: 'kid',
   };
+  player.attrs = { ...player.attrs, strength: deriveStrength(player) }; // Alter/Aussehen wurden oben überschrieben
   player.rating = ratePlayer(player);
   return player;
 }

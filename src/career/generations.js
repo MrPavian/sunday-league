@@ -6,10 +6,10 @@ import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { firstNameFor } from '../data/origins.js';
 import { generatePlayer, ratePlayer } from '../sim/generator.js';
+import { ATTR_KEYS as ATTRS, deriveStrength } from '../sim/strength.js';
 import { addCustomPlayer, humanClub, playerOf } from './career.js';
 import { chronicle } from './sagas.js';
 
-const ATTRS = ['pace', 'stamina', 'technique', 'passing', 'shooting', 'tackling', 'heading', 'keeping'];
 const TIER_UP = { ok: 'gut', gut: 'stark', stark: 'stark', dorfstar: 'dorfstar', legende: 'dorfstar' };
 
 const lastName = (name) => name.split(' ').slice(-1)[0];
@@ -47,6 +47,8 @@ export function heirIntake(c, rng = createRng((c.seed * 257 + c.season * 31 + 11
     parentIdx: a.idx,
     parentName: a.name,
   };
+  // Alter und Aussehen sind jetzt andere als beim Würfeln: Körper neu ableiten (Papas Stärke vererbt sich nicht).
+  player.attrs = { ...player.attrs, strength: deriveStrength(player) };
   player.rating = ratePlayer(player);
   const idx = addCustomPlayer(c, player);
   c.players[idx] = { apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0, heirOf: a.idx };

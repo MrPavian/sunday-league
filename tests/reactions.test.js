@@ -581,6 +581,7 @@ describe('Fouls sichtbar machen', () => {
     p.vel.x = 3;
     expect(dribbleCarry(m, p)).toBe(1);
     p.vel.x = 0;
+    p.vel.z = 0; // steht wirklich still (der Spieler kann nach den 600 Schritten seitlich laufen – hängt vom Spielverlauf ab)
     expect(dribbleCarry(m, p)).toBe(0);
     p.vel.x = 3;
     m.ball.lastAction = 'shoot';

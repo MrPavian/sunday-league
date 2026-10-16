@@ -9,6 +9,7 @@ import { absenceMul as facilityAbsence, fansMul, recruitBonus, weeklyFacilities,
 import { createRng } from '../core/rng.js';
 import { createPlayerPool, ratePlayer } from '../sim/generator.js';
 import { slotRating } from '../sim/position.js';
+import { ATTR_KEYS, ensureStrength } from '../sim/strength.js';
 import { afterMatchPositions, deliverGrumbles, famAt, migratePositions, posFamOf } from './positions.js';
 import { createMatch, MATCH, stepMatch } from '../sim/match.js';
 import { PITCHES } from '../sim/pitch.js';
@@ -90,12 +91,18 @@ const CUSTOM = new Map();
 export function registerCustomPlayers(career) {
   setNameEdition(career.names ?? 1);
   CUSTOM.clear();
-  for (const [k, p] of Object.entries(career.custom ?? {})) CUSTOM.set(Number(k), p);
+  // Alte Spielstände kennen den Körper („strength") noch nicht: aus Aussehen/Alter/Position nachtragen (strength.js,
+  // ohne Zufallsstrom, also immer derselbe Wert). Pool-Spieler haben ihn von Haus aus.
+  for (const [k, p] of Object.entries(career.custom ?? {})) {
+    ensureStrength(p);
+    CUSTOM.set(Number(k), p);
+  }
 }
 export function addCustomPlayer(career, player) {
   career.custom ??= {};
   const idx = CUSTOM_BASE + Object.keys(career.custom).length;
   const p = { ...player, poolIndex: idx };
+  ensureStrength(p);
   career.custom[idx] = p;
   CUSTOM.set(idx, p);
   return idx;
@@ -103,7 +110,6 @@ export function addCustomPlayer(career, player) {
 export const poolPlayer = (index) => CUSTOM.get(index) ?? getPool().get(index);
 const rawPlayer = (career, idx) => career.custom?.[idx] ?? poolPlayer(idx);
 
-const ATTR_KEYS = ['pace', 'stamina', 'technique', 'passing', 'shooting', 'tackling', 'heading', 'keeping'];
 
 // Spieler, wie er in dieser Karriere gerade ist: Pool-Grundwerte plus
 // Entwicklung, und jede Saison ein Jahr älter.
@@ -114,7 +120,7 @@ export function playerOf(career, idx) {
   const extra = career.players[idx]?.addTraits; // z. B. „Ex-Profi" nach der Rückkehr
   if (!delta && years === 0 && !career.players[idx]?.job && !extra) return base;
   const attrs = { ...base.attrs };
-  if (delta) for (const k of ATTR_KEYS) attrs[k] = Math.max(0.05, Math.min(0.98, attrs[k] + (delta[k] ?? 0)));
+  if (delta) for (const k of ATTR_KEYS) if (attrs[k] != null) attrs[k] = Math.max(0.05, Math.min(0.98, attrs[k] + (delta[k] ?? 0)));
   const age = base.age + years;
   // Aus Schülern werden mit der Zeit Studenten oder Azubis.
   const job = career.players[idx]?.job; // Jobwechsel aus einer Lebensgeschichte
@@ -128,6 +134,7 @@ export function playerOf(career, idx) {
 export function developPlayers(career) {
   const club = humanClub(career);
   const rng = createRng(hashSeed(career.seed, career.season, 17));
+  const strRng = createRng(hashSeed(career.seed, career.season, 18));
   const report = [];
   for (const idx of club.squad) {
     const rec = career.players[idx];
@@ -138,9 +145,13 @@ export function developPlayers(career) {
     const growth = (age <= 20 ? 0.045 : age <= 23 ? 0.025 : age <= 29 ? 0.006 : 0) * coach * (age <= 23 ? youthGrowthMul(career) : 1);
     rec.delta ??= {};
     for (const k of ATTR_KEYS) {
-      let d = growth * practice * (0.5 + rng.next());
+      // Körper würfelt aus einem eigenen Strom: ein neunter Wurf je Spieler in rng würde die Entwicklung aller
+      // folgenden Spieler (und alter Spielstände) verschieben.
+      let d = growth * practice * (0.5 + (k === 'strength' ? strRng : rng).next());
       if (age >= 31 && (k === 'pace' || k === 'stamina')) d -= age >= 34 ? 0.035 : 0.015;
-      if (age >= 34 && k !== 'pace' && k !== 'stamina') d -= 0.008;
+      // Körper: wächst wie die anderen bis Ende 20 (growth oben), baut ab 31 langsam ab – halb so schnell wie Tempo/Ausdauer.
+      if (age >= 31 && k === 'strength') d -= age >= 34 ? 0.018 : 0.008;
+      if (age >= 34 && k !== 'pace' && k !== 'stamina' && k !== 'strength') d -= 0.008;
       rec.delta[k] = (rec.delta[k] ?? 0) + d;
     }
     report.push({ idx, before: before.rating });
