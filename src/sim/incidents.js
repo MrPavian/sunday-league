@@ -42,8 +42,8 @@ const REPORTS = {
 
 const DURATION = { hund: 8, zaun: 9, autoalarm: 6, polizei: 9, gewitter: 8, sprenger: 5, ersatzschiri: 6, taube: 6, fan: 7 };
 // Beim Gewitter wird gesprintet (vorher 3,5 m/s – sah nach Spaziergang aus); Sprinttempo der Spieler liegt bei 7.
-const STORM_RUN = 6.2;
-const REF_RUN = 6.8; // der Schiri ist zuerst unterm Vordach
+const STORM_RUN = 7.2;
+const REF_RUN = 7.6; // der Schiri ist zuerst unterm Vordach
 const SPRINKLER_REACH = 8.5; // so nah an einem Sprenger wird man nass und rennt weg
 export const SPRINKLER_SPOTS = [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]]; // Anteile von Länge und Breite
 // Zaun: Klettern (Sekunden hoch, oben, runter) und Zaunhöhe – die Darstellung (reactions.js) liest dieselben Zeiten.
@@ -253,10 +253,10 @@ function beginIncident(m, type, info = {}) {
     inc.routes = new Map(plan.map((o, j) => [j === 0 && hasRef ? 'ref' : ents[j].id, { slot: o.slot, pts: o.pts, k: 0 }]));
     inc.sheltered = new Set();
     inc.face = sh.face;
-    inc.delay = m.players.map((p, i) => Math.max(0.45 + (i % 4) * 0.12, refT + 0.5 + (i % 4) * 0.05 - plan[i + off].len / STORM_RUN));
+    inc.delay = m.players.map((p, i) => Math.max(0.35 + (i % 4) * 0.05, refT + 0.5 + (i % 4) * 0.05 - plan[i + off].len / STORM_RUN));
     // Runter vom offenen Platz geht es sofort (nach kurzer Schrecksekunde): Wer warten muss, damit der Schiri zuerst
     // im Unterstand ist, wartet hinter der Linie am Ausstiegspunkt, nicht mitten auf dem Feld. Ankunft bleibt gleich.
-    inc.react = m.players.map((p, i) => 0.45 + (i % 4) * 0.12);
+    inc.react = m.players.map((p, i) => 0.35 + (i % 4) * 0.05);
     m.players.forEach((p, i) => {
       const r = inc.routes.get(p.id);
       const e = r.pts[0];
@@ -728,7 +728,7 @@ function endIncident(m, r) {
 
 export function wetSurface(s, grip) {
   if (s.wet) return s;
-  return { ...s, wet: true, name: `${s.name} (${tr('nass', 'wet')})`, rollFriction: s.rollFriction * grip, rollDecel: s.rollDecel * grip, bumpiness: s.bumpiness * 1.3, slideDamp: s.slideDamp * 0.75, scrapeChance: s.scrapeChance * 0.6 };
+  return { ...s, wet: true, name: `${s.name} (${tr('nass', 'wet')})`, rollDecel: s.rollDecel * grip, bumpiness: s.bumpiness * 1.3, slideDamp: s.slideDamp * 0.75, scrapeChance: s.scrapeChance * 0.6 };
 }
 
 function walk(e, target, speed, dt) {

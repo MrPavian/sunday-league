@@ -74,8 +74,10 @@ describe('offence: combinations', () => {
     let returns = 0;
     let matches = 0;
     for (const id of ['parkplatz', 'park', 'ascheplatz', 'rasenplatz', 'halle']) {
-      // 12 statt 4 Seeds je Platz: Mit 20 Spielen schwankte die Zahl der Rückpässe zu stark (gleiche Rate je Spiel).
-      for (const seed of [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32]) {
+      // 24 statt 4 Seeds je Platz: Mit 20 Spielen schwankte die Zahl der Rückpässe zu stark (gleiche Rate je Spiel).
+      // Nach der neuen Rollphysik lagen 60 Spiele knapp unter der Schwelle (42 statt 45, Alt-Physik je nach Seedmenge 43-56):
+      // Mit 120 Spielen 100 Rückpässe (Schwelle 90), Alt-Physik ebenfalls 100.
+      for (let seed = 21; seed < 45; seed++) {
         const m = createMatch({ seed, pitch: PITCHES[id], human: false, duration: 240, incidents: false });
         matches++;
         let open = null;
@@ -118,7 +120,7 @@ describe('offence: combinations', () => {
     // Die meisten Rückpässe kommen beim Läufer an.
     expect(done.onetwo / made.onetwo).toBeGreaterThan(0.6);
     expect(done.layoff / made.layoff).toBeGreaterThan(0.5);
-  }, 180000);
+  }, 360000);
 
   it('a striker with his back to goal and a marker behind holds the ball up', () => {
     let held = 0;
@@ -139,7 +141,8 @@ describe('offence: the coach can ask for combination play', () => {
   it('„Kombinieren" brings clearly more one-twos and lay-offs', () => {
     const count = (orders) => {
       const r = { onetwo: 0, layoff: 0, layoff_pass: 0 };
-      for (let i = 0; i < 36; i++) {
+      // 108 statt 36 Spiele je Befehl: Das Verhältnis der Ablagen schwankt um die Schwelle 1,2 (36 Spiele: 1,19-1,24; 108 Spiele: 1,29).
+      for (let i = 0; i < 108; i++) {
         const m = createMatch({ seed: 300 + i, pitch: PITCHES.parkplatz, human: false, duration: 150, aiCoach: false });
         for (const o of orders) setOrder(m, 0, ...o.split(':'));
         while (m.phase !== 'ended') {
@@ -155,5 +158,5 @@ describe('offence: the coach can ask for combination play', () => {
     expect(asked.onetwo).toBeGreaterThan(free.onetwo * 1.6);
     expect(asked.layoff_pass).toBeGreaterThan(free.layoff_pass * 1.2);
     expect(asked.onetwo + asked.layoff).toBeGreaterThan((free.onetwo + free.layoff) * 1.4);
-  }, 120000);
+  }, 600000);
 });

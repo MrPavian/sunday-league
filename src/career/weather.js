@@ -58,9 +58,9 @@ export function applyWeather(pitch, w) {
   if (!w || pitch.id === 'halle') return pitch;
   const def = WEATHER[w.id];
   let s = pitch.surface;
-  if (def.grip) s = { ...s, wet: true, name: `${s.name} (${tr('nass', 'wet')})`, rollFriction: s.rollFriction * def.grip, rollDecel: s.rollDecel * def.grip, bumpiness: s.bumpiness * 1.3, slideDamp: s.slideDamp * 0.75, scrapeChance: s.scrapeChance * 0.6 };
+  if (def.grip) s = { ...s, wet: true, name: `${s.name} (${tr('nass', 'wet')})`, rollDecel: s.rollDecel * def.grip, bumpiness: s.bumpiness * 1.3, slideDamp: s.slideDamp * 0.75, scrapeChance: s.scrapeChance * 0.6 };
   if (def.frost) s = { ...s, name: `${s.name} (${tr('gefroren', 'frozen')})`, bounce: Math.min(0.8, s.bounce * 1.25), bumpiness: s.bumpiness * 1.7, scrapeChance: Math.min(0.9, s.scrapeChance + 0.3), slideDamp: s.slideDamp * 1.3 };
-  if (def.snow) s = { ...s, name: `${s.name} (${tr('Schnee', 'snow')})`, rollFriction: s.rollFriction * 1.9, rollDecel: s.rollDecel * 1.6, bounce: s.bounce * 0.6, bumpiness: s.bumpiness * 1.4, scrapeChance: s.scrapeChance * 0.3 };
+  if (def.snow) s = { ...s, name: `${s.name} (${tr('Schnee', 'snow')})`, rollDecel: s.rollDecel * 1.9, bounce: s.bounce * 0.6, bumpiness: s.bumpiness * 1.4, scrapeChance: s.scrapeChance * 0.3 };
   return {
     ...pitch,
     surface: s,
