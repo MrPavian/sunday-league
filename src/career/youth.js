@@ -3,6 +3,7 @@
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { hasTrait } from '../data/traits.js';
+import { ATTR_KEYS } from '../sim/strength.js';
 import { onPromote } from './bridge.js';
 
 const YOUTH_MAX_AGE = 19;
@@ -58,7 +59,7 @@ export function developYouth(career, factor = () => 1) {
     const rec = career.players[idx];
     rec.delta ??= {};
     const f = factor(idx);
-    for (const k of ['pace', 'stamina', 'technique', 'passing', 'shooting', 'tackling', 'heading', 'keeping']) {
+    for (const k of ATTR_KEYS) {
       rec.delta[k] = (rec.delta[k] ?? 0) + 0.035 * (0.6 + q) * f;
     }
   }

@@ -362,3 +362,209 @@ Stochern gew.+Grätsche gew./Spiel
 | f_steal | 5.1 | 5.3 | 11.9 | 4.7 | 4.9 | 9.8 | 8.6 | 6.7 |
 | f_ctl | 4.5 | 6.0 | 12.4 | 6.0 | 6.8 | 10.3 | 7.5 | 7.0 |
 | f_combo | 4.4 | 5.5 | 11.2 | 4.5 | 6.3 | 11.4 | 9.3 | 7.0 |
+
+
+## 7. Umsetzung A + B und Körper (Stand 2026-10-16, Messung am Spiel selbst)
+Code: `src/sim/strength.js` (Konstanten `PINGPONG`, `STRENGTH_FX`, Ableitung `deriveStrength`), `actions.js` (`shielded`, `dribbleTouch`, `headerTouch`), `tackles.js`, `holding.js`.
+- **A** Verlierer einer Berührung darf den Ball 0.6 s nicht per Berührung zurückholen (`PINGPONG.loserLock`). **B** Gewinner 0.6 s geschützt, Klauchance halbiert (`winnerProtect`, `protectedStealMul`).
+  Umgesetzt wie der Audit-Prototyp (jede Berührung, die den Ball vom Gegner holt, nicht nur Dribbelklau: Abfangen eines Passes eingeschlossen).
+- **C** (`PINGPONG.tackleLock`, nur der Verlierer eines gewonnenen Stochern/einer Grätsche): gemessen, bringt nichts über A+B hinaus (Anteil <1 s ±1 Punkt, im Rauschen), Wert bleibt 0 (aus).
+- **Körper** („strength“, UI Körper/Strength): Wirkung mittelwertneutral (Differenzen bzw. Mitte 0,5), daher keine Verschiebung der Gesamtwerte, nur Stärkere gegen Schwächere. Konstanten siehe `STRENGTH_FX`.
+Messung: `PP_CFG=base|ab|abs|abc node scripts/mech-audit.mjs match <Platz> 40` und `node scripts/pingpong-audit.mjs run <Platz> 40`, Seeds 900+i, 40 Spiele je Platz. `base` reproduziert den Stand vor der Änderung bitgleich
+(geprüft gegen eine Kopie von HEAD, mech-audit halle/rasenplatz 4 Spiele). Stichproben-Rauschen Tore/Spiel etwa ±0,4.
+
+### mech-audit (40 Spiele je Platz): base = vorher, ab = A+B, abs = A+B+Körper, abc = A+B+C
+
+flips
+| Platz | base | ab | abs | abc |
+|---|---|---|---|---|
+| hinterhof | 130.7 | 111.5 | 115.33 | 114.3 |
+| halle | 126.92 | 106.65 | 105.08 | 106.92 |
+| park | 151.95 | 135.53 | 135.53 | 133.8 |
+| parkplatz | 137.63 | 117.53 | 117.2 | 117.97 |
+| ascheplatz | 152.1 | 135.5 | 136.65 | 135.05 |
+| rasenplatz | 152.45 | 138.22 | 136.97 | 137.75 |
+| sportplatz | 126.2 | 118.25 | 118.85 | 113.72 |
+| grossfeld | 109.85 | 99.75 | 101.1 | 98.85 |
+
+quick
+| Platz | base | ab | abs | abc |
+|---|---|---|---|---|
+| hinterhof | 52.1 | 43.2 | 44.3 | 43.9 |
+| halle | 51.1 | 40.4 | 38.9 | 39.7 |
+| park | 49.1 | 42.1 | 41.5 | 40.3 |
+| parkplatz | 47.2 | 36.6 | 36.9 | 37.1 |
+| ascheplatz | 44.7 | 35 | 35.2 | 35.5 |
+| rasenplatz | 37.3 | 32.1 | 31.1 | 30.5 |
+| sportplatz | 30.8 | 23.8 | 24.3 | 23.1 |
+| grossfeld | 27.2 | 21 | 21.7 | 20.4 |
+
+goals
+| Platz | base | ab | abs | abc |
+|---|---|---|---|---|
+| hinterhof | 3.2 | 3.13 | 2.98 | 2.65 |
+| halle | 2.17 | 2.02 | 2.1 | 2.02 |
+| park | 2 | 2.17 | 1.9 | 2.17 |
+| parkplatz | 1.8 | 2.17 | 2.38 | 2.2 |
+| ascheplatz | 3.08 | 3.15 | 3.42 | 3.05 |
+| rasenplatz | 3.9 | 3.33 | 3.23 | 3.77 |
+| sportplatz | 3.42 | 3.4 | 3.1 | 3.02 |
+| grossfeld | 3.75 | 4.17 | 4.1 | 3.9 |
+
+shots
+| Platz | base | ab | abs | abc |
+|---|---|---|---|---|
+| hinterhof | 47 | 46.35 | 45.13 | 45.9 |
+| halle | 29.02 | 27.23 | 26.02 | 26.07 |
+| park | 24.2 | 22.5 | 22.98 | 23.57 |
+| parkplatz | 25.68 | 24.1 | 24.6 | 24.43 |
+| ascheplatz | 27.48 | 24.27 | 25.05 | 24 |
+| rasenplatz | 32.5 | 32.33 | 31.25 | 31.95 |
+| sportplatz | 27.43 | 26.18 | 26.85 | 26.73 |
+| grossfeld | 26.2 | 27.15 | 27.13 | 26.8 |
+
+pass
+| Platz | base | ab | abs | abc |
+|---|---|---|---|---|
+| hinterhof | 73.1 | 74.1 | 72.4 | 73.5 |
+| halle | 71.4 | 72.4 | 70.8 | 71.3 |
+| park | 69.7 | 70.3 | 69.9 | 70.5 |
+| parkplatz | 70.7 | 72 | 70.2 | 71 |
+| ascheplatz | 71.8 | 71.7 | 71.1 | 71.9 |
+| rasenplatz | 73.6 | 73.9 | 72.3 | 73.9 |
+| sportplatz | 76.1 | 75 | 75.7 | 76.5 |
+| grossfeld | 69.1 | 70.9 | 70.2 | 71 |
+
+slide
+| Platz | base | ab | abs | abc |
+|---|---|---|---|---|
+| hinterhof | 55 | 55.8 | 55.6 | 54.9 |
+| halle | 61.8 | 65.1 | 66.3 | 67.3 |
+| park | 63.7 | 64.3 | 67.4 | 63.1 |
+| parkplatz | 50.2 | 56.8 | 52.4 | 49.7 |
+| ascheplatz | 62.9 | 60.2 | 57.3 | 56.7 |
+| rasenplatz | 60.8 | 63.6 | 58.7 | 59.3 |
+| sportplatz | 58.3 | 60.9 | 60.9 | 61.5 |
+| grossfeld | 57.8 | 54.6 | 57.1 | 60.2 |
+
+poke
+| Platz | base | ab | abs | abc |
+|---|---|---|---|---|
+| hinterhof | 28.4 | 28.7 | 30 | 28.1 |
+| halle | 36.5 | 31.9 | 33.9 | 30.3 |
+| park | 26.5 | 38.4 | 27.7 | 29.4 |
+| parkplatz | 29.1 | 31.2 | 28.2 | 32.6 |
+| ascheplatz | 25.6 | 28.5 | 26.9 | 34.9 |
+| rasenplatz | 29 | 28.2 | 26.9 | 28.4 |
+| sportplatz | 28.3 | 28.8 | 30.3 | 23.1 |
+| grossfeld | 35 | 33.3 | 31.3 | 33 |
+
+fouls
+| Platz | base | ab | abs | abc |
+|---|---|---|---|---|
+| hinterhof | 4.22 | 3.7 | 3.58 | 3.88 |
+| halle | 4.78 | 4.72 | 4.7 | 4.4 |
+| park | 7.42 | 6.4 | 7.15 | 7.42 |
+| parkplatz | 4.83 | 4.35 | 4.55 | 4.55 |
+| ascheplatz | 5.03 | 5.15 | 5.17 | 4.3 |
+| rasenplatz | 6.45 | 6.5 | 6.53 | 6.6 |
+| sportplatz | 6.63 | 6.4 | 6.8 | 6.47 |
+| grossfeld | 4.88 | 4.5 | 4.88 | 4.47 |
+
+
+### pingpong-audit (40 Spiele je Platz, ohne Standards)
+
+Wechsel/Spiel (ohne Standards)
+| Platz | base | ab | abs |
+|---|---|---|---|
+| hinterhof | 128.6 | 109.6 | 113.3 |
+| halle | 125.3 | 105.3 | 103.5 |
+| park | 131.1 | 116.2 | 114.0 |
+| parkplatz | 133.2 | 113.5 | 112.3 |
+| ascheplatz | 128.9 | 115.2 | 114.7 |
+| rasenplatz | 126.1 | 110.8 | 110.4 |
+| sportplatz | 99.6 | 93.8 | 93.3 |
+| grossfeld | 85.8 | 75.9 | 75.5 |
+
+schnell % (ohne Standards)
+| Platz | base | ab | abs |
+|---|---|---|---|
+| hinterhof | 52.6 | 43.4 | 44.3 |
+| halle | 50.8 | 40.0 | 38.4 |
+| park | 50.0 | 42.4 | 41.4 |
+| parkplatz | 48.5 | 38.0 | 38.1 |
+| ascheplatz | 46.4 | 36.0 | 36.2 |
+| rasenplatz | 39.8 | 33.1 | 32.3 |
+| sportplatz | 33.2 | 24.9 | 24.8 |
+| grossfeld | 29.7 | 22.1 | 22.5 |
+
+A-B-A gleicher Spieler % der schnellen
+| Platz | base | ab | abs |
+|---|---|---|---|
+| hinterhof | 54.5 | 42.4 | 43.1 |
+| halle | 58.6 | 44.3 | 43.6 |
+| park | 57.8 | 48.6 | 47.0 |
+| parkplatz | 61.5 | 50.2 | 48.7 |
+| ascheplatz | 59.1 | 50.5 | 50.5 |
+| rasenplatz | 62.7 | 54.5 | 52.7 |
+| sportplatz | 66.9 | 59.9 | 58.3 |
+| grossfeld | 67.3 | 59.4 | 57.7 |
+
+Tore/Spiel
+| Platz | base | ab | abs |
+|---|---|---|---|
+| hinterhof | 3.2 | 3.1 | 3.0 |
+| halle | 2.2 | 2.0 | 2.1 |
+| park | 2.0 | 2.2 | 1.9 |
+| parkplatz | 1.8 | 2.2 | 2.4 |
+| ascheplatz | 3.1 | 3.1 | 3.4 |
+| rasenplatz | 3.9 | 3.3 | 3.2 |
+| sportplatz | 3.4 | 3.4 | 3.1 |
+| grossfeld | 3.8 | 4.2 | 4.1 |
+
+Schüsse/Spiel
+| Platz | base | ab | abs |
+|---|---|---|---|
+| hinterhof | 47.0 | 46.4 | 45.1 |
+| halle | 29.0 | 27.2 | 26.0 |
+| park | 24.2 | 22.5 | 23.0 |
+| parkplatz | 25.7 | 24.1 | 24.6 |
+| ascheplatz | 27.5 | 24.3 | 25.1 |
+| rasenplatz | 32.5 | 32.3 | 31.3 |
+| sportplatz | 27.4 | 26.2 | 26.9 |
+| grossfeld | 26.2 | 27.1 | 27.1 |
+
+Pässe/Spiel
+| Platz | base | ab | abs |
+|---|---|---|---|
+| hinterhof | 75.8 | 69.6 | 71.3 |
+| halle | 81.9 | 79.5 | 82.5 |
+| park | 104.1 | 104.9 | 106.5 |
+| parkplatz | 94.0 | 93.9 | 92.4 |
+| ascheplatz | 114.5 | 113.3 | 114.3 |
+| rasenplatz | 121.0 | 120.0 | 120.8 |
+| sportplatz | 112.3 | 110.9 | 111.0 |
+| grossfeld | 93.4 | 93.1 | 92.0 |
+
+Stochern gew.+Grätsche gew./Spiel
+| Platz | base | ab | abs |
+|---|---|---|---|
+| hinterhof | 4.3 | 4.0 | 4.5 |
+| halle | 6.2 | 5.5 | 5.8 |
+| park | 11.9 | 12.4 | 12.1 |
+| parkplatz | 5.5 | 5.7 | 5.0 |
+| ascheplatz | 6.2 | 6.1 | 5.7 |
+| rasenplatz | 12.0 | 11.4 | 10.9 |
+| sportplatz | 8.8 | 10.2 | 10.2 |
+| grossfeld | 7.3 | 6.3 | 6.6 |
+
+
+### Körper-Wirkung bei extremem Unterschied (40 Spiele, Team 0 alle Feldspieler Körper x, Team 1 y; Rasenplatz / Halle)
+Tore je Spiel und Schüsse je Spiel (Team 0 : Team 1): Rasenplatz 0,5/0,5: 2,4:1,6 Tore, 16,5:16,1 Schüsse; 0,8/0,2: 3,1:1,3 Tore, 24,3:10,4 Schüsse; 0,2/0,8: 1,6:2,1 Tore, 11,4:22,2 Schüsse.
+Halle 0,5/0,5: 1,1:0,8, 15,9:13,6; 0,8/0,2: 1,7:0,6, 23,2:6,3; 0,2/0,8: 0,5:1,6, 6,3:24,3. Ein Unterschied von 0,6 im Mannschaftsmittel kommt im Pool nie vor (1 sigma des Teammittels etwa 0,03-0,04);
+einzelne Duelle mit 0,2-0,3 Unterschied schon. Regler: `STRENGTH_FX.duel` (0,4), `shieldPerStrength` (0,4), `poke` (0,3).
+
+### Bundespokal-Kontrolle
+Zwischenmessung mit Profi-Aufschlag auch auf Körper (inzwischen zurückgenommen: `bundespokal.js` bleibt unverändert, Profis haben ihren abgeleiteten Körper ohne Aufschlag): Weiter-Chance des Amateurs in % bei 1200 Spielen je Zeile
+(±1,0 Punkte): Zweitligist „mittel“ 3,0 / „bezirk“ 5,4; Erstligist „mittel“ 2,4 / „bezirk“ 5,5 (Stand davor, 400 Spiele: 4,8 / 5,3 und 3,5 / 3,8). Mit dem Stand ohne Körper-Aufschlag ist die Kalibrierung noch offen und wird
+nach dem Zusammenführen aller Änderungen einmal gemessen (`node scripts/bundespokal-calibrate.mjs 400 <bezirk|mittel> <zweit|erst>`, neu: `SEED0=400` verschiebt die Seeds für zusätzliche Läufe).

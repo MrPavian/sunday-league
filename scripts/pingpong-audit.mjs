@@ -10,6 +10,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { applyPreset } from './pp-presets.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const mode = process.argv[2];
@@ -54,6 +55,7 @@ async function loadSim() {
   }
   const u = (p) => import(pathToFileURL(path.join(base, p)).href);
   const [match, pitchMod] = await Promise.all([u('src/sim/match.js'), u('src/sim/pitch.js')]);
+  await applyPreset(pathToFileURL(base).href); // PP_CFG=base|ab|abc|abs|abcs|s
   return { ...match, ...pitchMod };
 }
 
@@ -162,7 +164,7 @@ async function run() {
   const sim = await loadSim();
   const pitch = venue === 'stadion' ? sim.STADIUM : sim.PITCHES[venue];
   if (!pitch) throw new Error(`Platz ${venue}?`);
-  const R = { venue, N, fix: opt('fix') ?? '', simSec: 0, flips: 0, quick: 0, quickFollowed: 0, allCause: {}, quickCause: {}, quickPair: {}, causeFollowed: {}, gapHist: {}, ev: {}, samePlayer: 0, teammate: 0, lockRetake: 0, readyHist: {}, sameReadyHist: {}, ownGapHist: {}, chains: {}, nearAll: [0, 0, 0, 0, 0], nearQuick: [0, 0, 0, 0, 0], scrumQuick: 0, scrumAll: 0, wallQuick: 0, wallAll: 0, restartAll: 0, restartQuick: 0, prevNearQuick: 0, prevNearAll: 0, keepsAfter: 0, firstCause: {}, touchSetsOnly: 0 };
+  const R = { venue, N, fix: (opt('fix') ?? '') || (process.env.PP_CFG ?? ''), simSec: 0, flips: 0, quick: 0, quickFollowed: 0, allCause: {}, quickCause: {}, quickPair: {}, causeFollowed: {}, gapHist: {}, ev: {}, samePlayer: 0, teammate: 0, lockRetake: 0, readyHist: {}, sameReadyHist: {}, ownGapHist: {}, chains: {}, nearAll: [0, 0, 0, 0, 0], nearQuick: [0, 0, 0, 0, 0], scrumQuick: 0, scrumAll: 0, wallQuick: 0, wallAll: 0, restartAll: 0, restartQuick: 0, prevNearQuick: 0, prevNearAll: 0, keepsAfter: 0, firstCause: {}, touchSetsOnly: 0 };
   const S = { wallT: null, ev: R.ev };
   for (let i = 0; i < N; i++) {
     const { flips, simSec } = playMatch(sim, pitch, 900 + i, S);

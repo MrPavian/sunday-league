@@ -13,6 +13,7 @@ import { knockSpeed } from './knocks.js';
 import { markOffside } from './offside.js';
 import { hasProfile, pressureChaos } from './profiles.js';
 import { fooled, tryTrick } from './tricks.js';
+import { PINGPONG, STRENGTH_FX, strengthOf } from './strength.js';
 import { headerDuelFoul } from './fouls.js';
 
 export const REACH = 0.75;
@@ -27,7 +28,7 @@ export function movePlayer(m, p, intent, dt, leaders) {
   let maxSpeed = (4.6 + 2.6 * p.attrs.pace + (hasTrait(p, 'schnell') ? 0.6 : 0)) * (0.72 + 0.28 * p.stamina);
   if (sprint) maxSpeed *= 1.28;
   if (p.shielding) maxSpeed *= 0.55; // Körper zwischen Gegner und Ball
-  if (p.heldUntil > m.time) maxSpeed *= 0.45; // wird am Trikot festgehalten
+  if (p.heldUntil > m.time) maxSpeed *= p.heldFactor ?? STRENGTH_FX.heldBase; // wird am Trikot festgehalten (Körper des Halters/Gehaltenen: holding.js)
   if (p.holdingId != null) maxSpeed *= 0.7;
   if (fooled(m, p)) maxSpeed *= 0.35; // ausgetrickst: steht kurz falsch
   if (p.injury) maxSpeed *= 1 - 0.03 * p.injury.severity * (hasTrait(p, 'hart_im_nehmen') ? 0.3 : 1);
@@ -584,8 +585,14 @@ export function headerTouch(m) {
   const skill = clamp(p.attrs.heading + (monster ? 0.2 : 0), 0, 1);
   // Bedrängt (Gegner im Nacken): Der Kopfball gelingt seltener – bei Ecken steht jedem Angreifer ein Verteidiger gegenüber.
   // Faktor 0,6 gewählt, nicht gemessen; Maßstab war der Anteil der Ecken, aus denen ein Tor fällt (real rund 3–5 %).
-  const marked = m.players.some((o) => o.team !== p.team && o.role !== 'gk' && o.state === 'normal' && dist2d(o.pos, p.pos) < HEAD_DUEL.dist);
-  if (!rng.chance((0.35 + 0.4 * skill) * (marked ? HEAD_DUEL.factor : 1))) return; // verpasst – Ball fliegt weiter
+  // Körper: Gegen den kräftigsten Decker im Nacken zählt der Unterschied (Mitte 0,5 = wie bisher, STRENGTH_FX.head).
+  let duel = 1;
+  for (const o of m.players) {
+    if (o.team === p.team || o.role === 'gk' || o.state !== 'normal' || dist2d(o.pos, p.pos) >= HEAD_DUEL.dist) continue;
+    const f = clamp(HEAD_DUEL.factor + STRENGTH_FX.head * (strengthOf(p) - strengthOf(o)), 0.2, 1);
+    duel = Math.min(duel, f);
+  }
+  if (!rng.chance((0.35 + 0.4 * skill) * duel)) return; // verpasst – Ball fliegt weiter
 
   const s = attackDir(m, p.team);
   const goal = { x: s * pitch.halfLength, z: rng.range(-pitch.goalHalfWidth * 0.8, pitch.goalHalfWidth * 0.8) };
@@ -655,7 +662,12 @@ function shielded(m, p) {
   if (ball.lastAction !== 'dribble' || ball.lastTouch === p.id) return false;
   const carrier = m.players.find((c) => c.id === ball.lastTouch);
   if (!carrier || carrier.team === p.team || carrier.state !== 'normal' || dist2d(carrier.pos, ball.pos) > REACH * 1.5) return false;
-  const steal = clamp(0.3 + 0.3 * p.attrs.tackling - 0.3 * carrier.attrs.technique - (carrier.shielding ? 0.2 : 0) - (carrier.id === m.controlledId ? 0.08 : 0), 0.05, 0.5);
+  // Körper (strength.js): Abschirmen im Stehen hängt am eigenen Körper (vorher fest 0,2), im Duell zählt der Unterschied.
+  const shield = carrier.shielding ? STRENGTH_FX.shieldBase + STRENGTH_FX.shieldPerStrength * strengthOf(carrier) : 0;
+  let steal = clamp(0.3 + 0.3 * p.attrs.tackling - 0.3 * carrier.attrs.technique - shield - (carrier.id === m.controlledId ? 0.08 : 0) + STRENGTH_FX.duel * (strengthOf(p) - strengthOf(carrier)), 0.05, 0.5);
+  // Ping-Pong-Bremse B (docs/agent/pingpong-audit-2026-10.md, Mechanismus 1): Wer den Ball gerade per Berührung gewonnen hat,
+  // ist kurz geschützt – die Klauchance halbiert sich. Ohne Schutz nahm der Ex-Ballführer ihn im 0,35-s-Takt zurück.
+  if (carrier.protectUntil > m.time) steal *= PINGPONG.protectedStealMul;
   if (rng.chance(steal)) return false;
   p.kickCooldown = 0.35;
   return true;
@@ -776,6 +788,14 @@ export function dribbleTouch(m) {
   const bs = ballSpeed(ball);
   const prevTeam = m.lastTouchTeam;
   p.kickCooldown = 0.2 + rng.next() * 0.12;
+  // Ping-Pong-Bremse A + B (docs/agent/pingpong-audit-2026-10.md, Mechanismus 1, Varianten „losslock“ und „winlock“):
+  // Wer den Ball per Berührung vom Gegner holt, ist kurz geschützt (B, siehe shielded); der Verlierer darf ihn
+  // PINGPONG.loserLock lang nicht per Berührung zurückholen (A). Rein zeitliche Sperren, kein Zufallsstrom.
+  const loser = ball.lastTouch != null ? m.players.find((q) => q.id === ball.lastTouch) : null;
+  if (loser && loser.team !== p.team) {
+    loser.kickCooldown = Math.max(loser.kickCooldown, PINGPONG.loserLock);
+    p.protectUntil = m.time + PINGPONG.winnerProtect;
+  }
   ball.lastTouch = p.id;
   ball.lastAction = 'dribble';
   m.events.push({ type: 'touch', playerId: p.id });

@@ -10,9 +10,12 @@ import { LEAGUES } from '../src/career/clubs.js';
 import { MATCH } from '../src/sim/match.js';
 import { createRng } from '../src/core/rng.js';
 import { BUND_ERST, PROFI_KLASSEN } from '../src/career/bundespokal.js';
+import { applyPreset } from './pp-presets.mjs';
 import { pokalClub, pokalOf, preparePokalMatch, recordPokalResult, startPokal, tieWinner } from '../src/career/pokal.js';
 
+await applyPreset(); // PP_CFG=base|ab|… (Körper/Ping-Pong-Schalter, siehe pp-presets.mjs)
 const N = +process.argv[2] || 200;
+const SEED0 = +process.env.SEED0 || 0; // Versatz der Seeds (1000 + SEED0 + i): mehrere Läufe mit neuen Seeds zusammenzählen
 const KLASSE = process.argv[4] === 'erst' ? 1 : 0;
 BUND_ERST[0] = KLASSE;
 // Erprobung: ZWEIT_BOOST=0.18 ERST_BOOST=0.23 überschreibt PROFI_KLASSEN.*.boost.
@@ -25,11 +28,11 @@ const top = (c, club, n) => club.squad.map((i) => playerOf(c, i).rating).sort((a
 let win = 0, draw = 0, lose = 0, regWin = 0, goalsF = 0, goalsA = 0, et = 0, str = 0, strP = 0;
 const t0 = Date.now();
 for (let i = 0; i < N; i++) {
-  const c = createCareer({ seed: 1000 + i });
+  const c = createCareer({ seed: 1000 + SEED0 + i });
   c.level = 5;
   c.bundQual = c.season;
   const me = humanClub(c);
-  me.squad = squadPicker(createRng(77 + i), new Set())(TIERS, SQUAD_SHAPES.xxl);
+  me.squad = squadPicker(createRng(77 + SEED0 + i), new Set())(TIERS, SQUAD_SHAPES.xxl);
   for (const idx of me.squad) c.players[idx] ??= { apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 };
   const cup = startPokal(c, 'bund');
   const tie = cup.ties[0];

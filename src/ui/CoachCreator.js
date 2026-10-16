@@ -5,7 +5,7 @@ import { createCoachPlayer, RELATIONS, STYLES } from '../career/personal.js';
 import { POSITIONS } from '../sim/generator.js';
 import { esc, hex } from './ds.js';
 
-const ATTR_LABELS = tr({ pace: 'Tempo', stamina: 'Ausdauer', technique: 'Technik', passing: 'Passen', shooting: 'Schuss', tackling: 'Zweikampf', heading: 'Kopfball', keeping: 'Torwart' }, { pace: 'Pace', stamina: 'Stamina', technique: 'Technique', passing: 'Passing', shooting: 'Shooting', tackling: 'Tackling', heading: 'Heading', keeping: 'Goalkeeping' });
+const ATTR_LABELS = tr({ pace: 'Tempo', stamina: 'Ausdauer', technique: 'Technik', passing: 'Passen', shooting: 'Schuss', tackling: 'Zweikampf', heading: 'Kopfball', keeping: 'Torwart', strength: 'Körper' }, { pace: 'Pace', stamina: 'Stamina', technique: 'Technique', passing: 'Passing', shooting: 'Shooting', tackling: 'Tackling', heading: 'Heading', keeping: 'Goalkeeping', strength: 'Strength' });
 const JOBS = [...PROFESSIONS.filter((j) => !j.startsWith('Azubi') && !j.startsWith('Student')), 'Mechatroniker', 'Polizist', 'Koch', 'Landschaftsgärtner', 'Erzieher', 'Vertriebler'];
 
 // Neue Karriere: Du legst deinen Spielertrainer selbst an.

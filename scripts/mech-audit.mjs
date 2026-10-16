@@ -7,6 +7,9 @@ import { createMatch, matchDuration, stepMatch } from '../src/sim/match.js';
 import { PITCHES, STADIUM } from '../src/sim/pitch.js';
 import { SURFACES } from '../src/sim/surfaces.js';
 import { stepBall, createBall, BALL_RADIUS } from '../src/sim/ball.js';
+import { applyPreset } from './pp-presets.mjs';
+
+const CFG = await applyPreset(); // PP_CFG=base|ab|abc|abs|abcs|s (Körper/Ping-Pong-Schalter, siehe pp-presets.mjs)
 
 const mode = process.argv[2] ?? 'phys';
 const DT = 1 / 60;
@@ -202,7 +205,7 @@ const per = (x) => +(x / N).toFixed(2);
 const pct = (a, b) => (b ? +((100 * a) / b).toFixed(1) : 0);
 const resolved = A.passDone + A.passLost + A.passOut;
 console.log(JSON.stringify({
-  venue, N, durationSec: matchDuration(pitch), simSecPerGame: +(A.simSec / N).toFixed(0), playSecPerGame: +(A.playSec / N).toFixed(0),
+  cfg: CFG, venue, N, durationSec: matchDuration(pitch), simSecPerGame: +(A.simSec / N).toFixed(0), playSecPerGame: +(A.playSec / N).toFixed(0),
   perGame: { goals: per(A.goals), shots: per(A.shots), passes: per(A.passes), touches: per(A.touches), headers: per(A.headers), saves: per(A.saves), catches: per(A.catches), beaten: per(A.beaten), throwins: per(A.throwins), corners: per(A.corners), goalkicks: per(A.goalkicks), fouls: per(A.fouls), slides: per(A.slide), slidesWon: per(A.tackle), pokes: per(A.poke), pokesWon: per(A.pokeWon), whiffs: per(A.whiff), miscontrols: per(A.miscontrol), flips: per(A.flips), flipsUnder1s: per(A.flipsQuick1), flipsUnder2s: per(A.flipsQuick2), stuck4s: per(A.stuckEvents), stillSec: per(A.stillSec), heldSec: per(A.heldSec) },
   per90min: { goals: +(A.goals / N * 5400 / (A.simSec / N)).toFixed(2), shots: +(A.shots / N * 5400 / (A.simSec / N)).toFixed(1) },
   rates: { passCompletePct: pct(A.passDone, resolved), passIntercepted: pct(A.passLost, resolved), passOutPct: pct(A.passOut, resolved), passUnresolvedPct: pct(A.passUnres, A.passes), shotsOnTargetEvtPct: pct(A.onEvt, A.shots), shotsOnTargetGeoPct: pct(A.shotsOnGeo, A.shots), shotGoalPct: pct(A.goals - A.ownGoals, A.shots), saveOrCatchPerOnTarget: pct(A.saves + A.catches, A.shotsOnGeo), duelWinSlidePct: pct(A.tackle, A.slide), pokeWonPct: pct(A.pokeWon, A.poke), flipUnder1sPct: pct(A.flipsQuick1, A.flips), miscontrolPerTouchPct: pct(A.miscontrol, A.touches), airSharePct: pct(A.airSec, A.playSec), stillSharePct: pct(A.stillSec, A.playSec), loftedSharePct: pct(A.loftedPass, A.passes), throughSharePct: pct(A.lead, A.passes) },

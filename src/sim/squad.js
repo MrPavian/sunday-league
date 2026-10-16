@@ -35,6 +35,7 @@ export function makeEntity(pl, team, index, role, home) {
     charging: false,
     pending: null,
     kickCooldown: 0,
+    protectUntil: 0, // Ballgewinn per Berührung: bis dahin halbe Klauchance (strength.js PINGPONG)
     kickAnim: 0,
     headAnim: 0,
     diveAnim: 0,

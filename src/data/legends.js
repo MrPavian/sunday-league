@@ -7,7 +7,7 @@ export const LEGEND_ARCHETYPES = [
     id: 'abwehrturm',
     title: tr('Der Abwehrturm', 'The Defensive Tower'),
     role: 'def',
-    attrs: { pace: 0.46, stamina: 0.42, technique: 0.74, passing: 0.8, shooting: 0.55, tackling: 0.93, heading: 0.94, keeping: 0.2 },
+    attrs: { pace: 0.46, stamina: 0.42, technique: 0.74, passing: 0.8, shooting: 0.55, tackling: 0.93, heading: 0.94, keeping: 0.2, strength: 0.9 },
     traits: ['ex_profi', 'kopfball', 'anfuehrer'],
     look: { height: 1.1, belly: 0.35 },
     story: (c) =>
@@ -17,7 +17,7 @@ export const LEGEND_ARCHETYPES = [
     id: 'zehner',
     title: tr('Der Zehner', 'The Number Ten'),
     role: 'mid',
-    attrs: { pace: 0.42, stamina: 0.36, technique: 0.96, passing: 0.95, shooting: 0.78, tackling: 0.35, heading: 0.45, keeping: 0.2 },
+    attrs: { pace: 0.42, stamina: 0.36, technique: 0.96, passing: 0.95, shooting: 0.78, tackling: 0.35, heading: 0.45, keeping: 0.2, strength: 0.42 },
     traits: ['ex_profi', 'gutes_auge', 'ballsicher'],
     look: { height: 0.96, belly: 0.25 },
     story: (c) =>
@@ -27,7 +27,7 @@ export const LEGEND_ARCHETYPES = [
     id: 'knipser',
     title: tr('Der Knipser', 'The Poacher'),
     role: 'fwd',
-    attrs: { pace: 0.52, stamina: 0.4, technique: 0.8, passing: 0.62, shooting: 0.96, tackling: 0.3, heading: 0.82, keeping: 0.2 },
+    attrs: { pace: 0.52, stamina: 0.4, technique: 0.8, passing: 0.62, shooting: 0.96, tackling: 0.3, heading: 0.82, keeping: 0.2, strength: 0.68 },
     traits: ['ex_profi', 'hammer'],
     look: { height: 1.02, belly: 0.4 },
     story: (c) =>
@@ -37,7 +37,7 @@ export const LEGEND_ARCHETYPES = [
     id: 'torwart',
     title: tr('Die Torwartlegende', 'The Goalkeeping Legend'),
     role: 'gk',
-    attrs: { pace: 0.4, stamina: 0.5, technique: 0.6, passing: 0.7, shooting: 0.5, tackling: 0.4, heading: 0.5, keeping: 0.95 },
+    attrs: { pace: 0.4, stamina: 0.5, technique: 0.6, passing: 0.7, shooting: 0.5, tackling: 0.4, heading: 0.5, keeping: 0.95, strength: 0.65 },
     traits: ['ex_profi', 'anfuehrer'],
     look: { height: 1.08, belly: 0.3 },
     story: (c) =>
@@ -47,7 +47,7 @@ export const LEGEND_ARCHETYPES = [
     id: 'staubsauger',
     title: tr('Der Staubsauger', 'The Hoover'),
     role: 'mid',
-    attrs: { pace: 0.66, stamina: 0.93, technique: 0.7, passing: 0.78, shooting: 0.5, tackling: 0.88, heading: 0.6, keeping: 0.2 },
+    attrs: { pace: 0.66, stamina: 0.93, technique: 0.7, passing: 0.78, shooting: 0.5, tackling: 0.88, heading: 0.6, keeping: 0.2, strength: 0.78 },
     traits: ['ex_profi', 'pferdelunge', 'hart_im_nehmen'],
     look: { height: 0.98, belly: 0.1 },
     story: (c) =>
@@ -57,7 +57,7 @@ export const LEGEND_ARCHETYPES = [
     id: 'fluegelflitzer',
     title: tr('Der Flügelflitzer', 'The Wing Wizard'),
     role: 'fwd',
-    attrs: { pace: 0.72, stamina: 0.55, technique: 0.88, passing: 0.8, shooting: 0.7, tackling: 0.3, heading: 0.4, keeping: 0.2 },
+    attrs: { pace: 0.72, stamina: 0.55, technique: 0.88, passing: 0.8, shooting: 0.7, tackling: 0.3, heading: 0.4, keeping: 0.2, strength: 0.36 },
     traits: ['ex_profi', 'schnell'],
     look: { height: 0.94, belly: 0.15 },
     story: (c) =>
