@@ -430,5 +430,21 @@ export function makeHallTexture(rng, { width, depth, pitch }) {
   }
   p.line(0, -hw, 0, hw, blue, 0.9, 0.03, 3);
   p.circle(0, 0, 3, red, 0.8);
+  // Außerhalb der Bande liegt kein Parkett, sondern blaugrauer Hallen-PVC in Bahnen (Nähte alle 2 m, Stoß leicht dunkler),
+  // direkt an der Bande ein dunkler Gummistreifen (Prallschutz/Laufweg). Gleiche Textur, kein zusätzlicher Draw Call.
+  const { wallX } = pitch;
+  const bz = hw + 0.1; // Bandenmitte hinten/vorn
+  p.field((x, z) => {
+    const ax = Math.abs(x);
+    const az = Math.abs(z);
+    if (ax <= wallX && az <= bz) return null; // Spielfeld: Parkett bleibt
+    const d = Math.max(ax - wallX, az - bz); // Abstand zur Bandenkante
+    const h = Math.sin(x * 91.7 + z * 57.3) * 43758.5;
+    const n = (h - Math.floor(h) - 0.5) * 8; // fester Pixelraster-Schimmer
+    if (d < 0.7) return [[58 + n, 64 + n, 74 + n], 1]; // Gummistreifen
+    const seam = Math.abs(((x + 1000) % 2) - 1) > 0.96 || Math.abs(((z + 1000) % 3.2) - 1.6) > 1.55;
+    const c = seam ? [74, 90, 112] : [100 + n, 118 + n, 140 + n];
+    return [c, 1];
+  });
   return p.finish();
 }
