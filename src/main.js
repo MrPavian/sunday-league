@@ -28,7 +28,8 @@ import { advanceCup, CUPS, cupOf, currentCupMatches, humanCupMatch, prepareCupMa
 import { createRng } from './core/rng.js';
 import { matchdaySurprise } from './career/matchday.js';
 import { INCIDENT_TYPES } from './sim/incidents.js';
-import { haptic, hapticsOn, setHaptics } from './ui/ds.js';
+import { button, haptic, hapticsOn, setHaptics, Sheet } from './ui/ds.js';
+import { checkWhatsNew, whatsNewLatestHtml } from './ui/whatsnew.js';
 import { Input } from './input/Input.js';
 import { CameraRig } from './render/CameraRig.js';
 import { MatchView } from './render/MatchView.js';
@@ -860,12 +861,34 @@ if (params.get('venue')) {
   openMenu();
   // Allererster Start: erst die Sprache wählen, dann das Startbild.
   const firstRun = !langChosen() && !params.get('lang');
-  const showTitle = () => {
-    if (params.has('notitle')) return;
+  // „Was ist neu": einmal nach einem Update, nie beim allerersten Start, nie im Spiel (hier ist immer das Menü offen).
+  const whatsNew = new Sheet({ id: 'whatsnew-sheet', onClose: () => setTimeout(() => (menu.paused = settings.root.hidden ? false : true), 0) });
+  whatsNew.el.addEventListener('click', (e) => {
+    if (!e.target.closest('[data-action="wn-all"]')) return;
+    whatsNew.close();
+    settings.page = 'neu';
+    menu.onSettings();
+  });
+  const maybeWhatsNew = () => {
+    if (mode !== 'menu' || !checkWhatsNew({ isNewPlayer: firstRun })) return;
+    const { title: t, body } = whatsNewLatestHtml();
     menu.paused = true;
-    title.show(() => setTimeout(() => (menu.paused = false), 0));
+    whatsNew.open({
+      title: `${tr('Was ist neu', 'What’s new')}: ${t}`,
+      body,
+      footer: `${button(tr('Alle Änderungen', 'All changes'), { kind: 'secondary', action: 'wn-all' })}${button(tr('Weiter', 'Continue'), { kind: 'primary', action: 'sheet-close' })}`,
+    });
+  };
+  const showTitle = () => {
+    if (params.has('notitle')) return maybeWhatsNew();
+    menu.paused = true;
+    title.show(() => {
+      setTimeout(() => (menu.paused = false), 0);
+      maybeWhatsNew();
+    });
   };
   if (firstRun) {
+    checkWhatsNew({ isNewPlayer: true }); // neuer Spieler: Version nur merken
     menu.paused = true;
     settings.show({ onLang: switchLanguage }, { firstRun: true }); // lädt neu, danach kommt das Startbild
   } else showTitle();

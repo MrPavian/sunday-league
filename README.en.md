@@ -188,6 +188,10 @@ Playable prototype: the match from 4 v 4 to 11 v 11, a full career across five l
 youth and life systems are done. Fully playable in German and English, in the browser and as an Android APK.
 Still open: a desktop build and a signed store version.
 
+## Changes
+
+What has changed is listed in the [changelog](CHANGELOG.en.md) (also in the game under Settings → What's new) · [Deutsches Änderungsprotokoll](CHANGELOG.md).
+
 ## Contributing
 
 Ideas and bug reports are welcome as issues. Before a pull request please run `npm test` and `npm run build`.

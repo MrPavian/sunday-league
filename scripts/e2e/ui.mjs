@@ -1,7 +1,8 @@
 // Oberfläche in vier Größen: jeder Bereich/Tab des Vereinsheims öffnet ohne Fehler, ohne seitliches
 // Scrollen, auf Touch ohne Schaltflächen unter 44 px; dazu die wichtigsten Interaktionen und eine
 // Karriere-Runde per Liveticker bis zur nächsten Woche.
-import { checker, click, hScroll, launch, newCareer, page, settle, SIZES, smallTargets, visible } from './lib.mjs';
+import { CHANGELOG, NEWEST_ID } from '../../src/data/changelog.js';
+import { BASE, checker, click, hScroll, launch, newCareer, page, settle, SIZES, smallTargets, visible } from './lib.mjs';
 
 const TABS = [['home'], ['team', 'squad'], ['team', 'lineup'], ['team', 'tactic'], ['team', 'training'], ['team', 'youth'], ['team', 'transfers'], ['season', 'table'], ['season', 'fixtures'], ['season', 'cup'], ['club', 'cash'], ['club', 'club'], ['club', 'museum'], ['pub'], ['phone', 'chat']];
 // Bewusst schmal: Tageskästchen im Kalender (große Spieltag-Knöpfe darunter sind die Alternative).
@@ -50,7 +51,7 @@ async function screens(b, size) {
   await p.waitForTimeout(300);
   ok(await visible(p, 'settings'), 'Einstellungen öffnen nicht');
   // Reines Managerspiel: keine Seite „Steuerung", kein Spielmodus, keine Schwierigkeit/Auto-Wechsel.
-  ok((await p.$$eval('.nb-tabs [data-value]', (e) => e.map((x) => x.dataset.value))).join() === 'spiel,ton,grafik', 'Notizbuch: Seiten sind nicht Spiel, Ton, Grafik');
+  ok((await p.$$eval('.nb-tabs [data-value]', (e) => e.map((x) => x.dataset.value))).join() === 'spiel,ton,grafik,neu', 'Notizbuch: Seiten sind nicht Spiel, Ton, Grafik, Was ist neu');
   ok(!(await p.$('.nb-page .keys')) && !(await p.$('[data-action="mode"], [data-action="difficulty"], [data-action="autoswitch"], [data-action="bind"]')), 'Einstellungen zeigen noch Selbstspiel-Optionen');
   await click(p, '.settings-panel [data-action="back"]');
   await p.waitForTimeout(300);
@@ -84,6 +85,70 @@ async function mainMenu(b, size) {
   return ok.done();
 }
 
+// „Was ist neu": Fenster einmal nach einem Update (alte gemerkte Version), nicht für neue Spieler, nicht nach
+// dem Neuladen; die Einstellungen führen alle Einträge in beiden Sprachen auf.
+async function whatsNew(b, size, shots) {
+  const ok = checker(`Was ist neu (${size})`);
+  const KEY = 'sunday-league:seenChangelog';
+  const sheetOpen = (p) => p.evaluate(() => !!document.querySelector('#whatsnew-sheet.open') && !document.getElementById('whatsnew-sheet').hidden);
+  // Alter Stand: Fenster erscheint mit der neuesten Lieferung, merkt sich die Version, kommt nach Neuladen nicht wieder.
+  let p = await page(b, size, { store: { [KEY]: '2026-09-25' } });
+  ok(await sheetOpen(p), 'Fenster erscheint bei alter Version nicht');
+  ok((await p.textContent('#whatsnew-sheet')).includes(CHANGELOG[0].de.title), 'Fenster zeigt die neueste Lieferung nicht');
+  ok(!(await hScroll(p)), 'Fenster: seitliches Scrollen');
+  if (SIZES[size].touch) ok(!(await smallTargets(p, '#whatsnew-sheet button')).length, 'Fenster: Schaltflächen < 44 px');
+  if (shots) await p.screenshot({ path: `${shots}/popup-${size}.png` });
+  ok((await p.evaluate((k) => localStorage.getItem(k), KEY)) === NEWEST_ID, 'Version wird nicht gemerkt');
+  await p.reload();
+  await p.waitForTimeout(1500);
+  ok(!(await sheetOpen(p)), 'Fenster erscheint nach dem Neuladen noch einmal');
+  // „Alle Änderungen" öffnet die Liste in den Einstellungen.
+  await p.evaluate((k) => localStorage.setItem(k, '2026-09-25'), KEY);
+  await p.reload();
+  await p.waitForTimeout(1500);
+  await click(p, '#whatsnew-sheet [data-action="wn-all"]');
+  await p.waitForTimeout(600);
+  ok((await visible(p, 'settings')) && (await p.$('.nb-page .wn-entry')) !== null, '„Alle Änderungen" öffnet die Liste nicht');
+  await p.context().close();
+  // Erststart (leerer Speicher, Sprachwahl): kein Fenster, Version wird still gemerkt.
+  p = await browserFirstRun(b, size);
+  ok(!(await sheetOpen(p)), 'Erststart: Fenster erscheint');
+  ok((await p.evaluate((k) => localStorage.getItem(k), KEY)) === NEWEST_ID, 'Erststart: Version nicht still gemerkt');
+  await p.context().close();
+  // Einstellungen: Liste mit allen Einträgen, Deutsch und Englisch.
+  for (const lang of ['de', 'en']) {
+    p = await page(b, size, { query: `?notitle&lang=${lang}` });
+    await click(p, '#menu .settings-link');
+    await p.waitForTimeout(400);
+    await click(p, '.nb-tabs [data-value="neu"]');
+    await p.waitForTimeout(300);
+    ok((await p.$$('.nb-page .wn-entry')).length === CHANGELOG.length, `${lang}: Liste zeigt nicht alle ${CHANGELOG.length} Einträge`);
+    const text = await p.textContent('.nb-page');
+    ok(text.includes(lang === 'de' ? CHANGELOG[0].de.title : CHANGELOG[0].en.title) && text.includes(lang === 'de' ? CHANGELOG.at(-1).de.title : CHANGELOG.at(-1).en.title), `${lang}: Titel fehlen`);
+    ok((await p.textContent('.nb-tabs')).includes(lang === 'de' ? 'Was ist neu' : 'What’s new'), `${lang}: Reiter falsch beschriftet`);
+    ok(!(await hScroll(p)), `${lang}: Liste: seitliches Scrollen`);
+    if (SIZES[size].touch) ok(!(await smallTargets(p, '.settings-panel button')).length, `${lang}: Einstellungen: Schaltflächen < 44 px`);
+    if (shots) await p.screenshot({ path: `${shots}/list-${lang}-${size}.png` });
+    ok(!p.errors.length, `Seitenfehler: ${p.errors.join(' | ')}`);
+    await p.context().close();
+  }
+  return ok.done();
+}
+
+// Erststart: leerer Speicher, keine Sprachwahl; nach der Wahl lädt das Spiel neu.
+async function browserFirstRun(b, size) {
+  const s = SIZES[size];
+  const ctx = await b.newContext({ viewport: { width: s.width, height: s.height }, hasTouch: s.touch, isMobile: s.touch });
+  const p = await ctx.newPage();
+  p.errors = [];
+  p.on('pageerror', (e) => p.errors.push(e.message));
+  await p.goto(`${BASE}/?notitle`);
+  await p.waitForTimeout(1500);
+  await p.click('.first-run [data-value="de"]');
+  await p.waitForTimeout(2500);
+  return p;
+}
+
 async function tickerRound(b) {
   const ok = checker('Karriere-Runde per Liveticker bis zur nächsten Woche');
   const p = await page(b, 'land');
@@ -111,6 +176,7 @@ export async function run({ sizes = Object.keys(SIZES) } = {}) {
   let fails = 0;
   for (const s of sizes) fails += await mainMenu(b, s);
   for (const s of sizes) fails += await screens(b, s);
+  for (const s of sizes) fails += await whatsNew(b, s, process.env.E2E_SHOTS);
   fails += await tickerRound(b);
   await b.close();
   return fails;

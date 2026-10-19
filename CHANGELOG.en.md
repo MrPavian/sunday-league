@@ -1,0 +1,235 @@
+# Changelog
+
+[Deutsche Version → CHANGELOG.md](CHANGELOG.md) · [Back to the README](README.en.md)
+
+What has changed in Sunday League – newest delivery first, in plain player language.
+The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
+In the game, the same highlights are under **Settings → What's new**.
+
+## 2026-10-19 – Pure manager game
+
+### New
+- The main menu now has just three entries: **Career**, **Saves** and **Settings**. A match plays in the background as scenery, without any controls.
+- Every match with your own team is coached either from the touchline (shouts, tactics, substitutions, half-time) or via the live ticker. Penalty shoot-outs are simulated.
+
+### Improved
+- Old saves load as usual.
+
+### Fixed
+- Typing the club name (for example with the space bar) no longer triggers the match controls.
+
+### Removed
+- Playing yourself (keyboard, gamepad, touch stick) together with the play-mode switch, difficulty, auto-switch and key bindings.
+- The friendly match with pitch choice, the challenges with their rewards and the browsable player pool.
+
+## 2026-10-16 – Hall floor, ball physics, strength
+
+### New
+- New player attribute **Strength**: height, build, position and age help decide who shields the ball, wins a duel or wins the header. Old saves get the value automatically.
+- In the sports hall, the floor outside the boards now has its own surface, and the boards sit right behind the goal.
+
+### Improved
+- The ball rolls more realistically: rolling resistance plus air resistance instead of an even slow-down. The AI's passes are tuned to it.
+- On the full-size pitch nobody shoots from 40 metres any more: shots come from 30 metres at most, and shot distances are much more realistic.
+- Fast back-and-forth exchanges (ping-pong) are rarer: whoever loses the ball is briefly locked out, whoever wins it is briefly protected.
+- In a thunderstorm everyone clears the pitch faster.
+- The stand-in referee's escorts walk calmly beside him instead of twitching.
+- The police wear long trousers; cloud shadows drift more calmly across the grass.
+
+## 2026-10-15 – Hall and police
+
+### New
+- The hall has board passes: teams play the ball off the boards. The board door swings open when someone walks through.
+- The police now wear blue with a peaked cap and can no longer be mistaken for the referee.
+
+### Improved
+- The hall is higher-scoring (about 2 goals per match on average instead of 1.5), and low shots have more punch.
+- The ball bounces livelier on concrete and asphalt, and a bit lower in the hall, like futsal.
+
+## 2026-10-14 – Out of position and hall play
+
+### New
+- **Out of position:** a player who is not on his position loses strength – the further from his own role, the more. After a few matches he gets used to it, and some grumble in the team chat. Line-up and substitution board show a note.
+- In the hall, a drunk fan climbs over the boards instead of the police – until the steward leads him out through the door.
+
+### Improved
+- The hall is played flatter: high balls only near the goal, with catch nets behind the goals.
+- The AI now only substitutes like for like.
+
+### Fixed
+- In the hall, the referee and players walked through the boards; there are now obstacles and a board door.
+
+## 2026-10-09 – Fouls, sponsors, 42 new events
+
+### New
+- **Fouls with consequences:** shirt pulling, shoving, tripping and shoves in header duels. The referee sometimes plays the advantage and shows a straight red (last-man foul, serious foul play).
+- **Suspensions** in the career – shown in squad, line-up, chat and the district paper.
+- Sponsors with **terms of 1 to 3 seasons**, termination against a penalty, and one wish per season (for example autograph session, youth camp or home wins). Board partners on the boards, sleeve sponsor on the upper arm.
+- 42 new events: 20 with five multi-part chains (such as reporter week, fan club, groundsman retirement), 14 for training, volunteering, referee in the recreational league and season goal, 8 around sponsoring.
+- New animations: fouls are visible, there are scenes after the whistle (innocent gesture, protesting, consoling after a red), the referee shows advantage and cards clearly, plus a header with take-off, a softer slide tackle and stretching.
+
+### Improved
+- From the Kreisliga A up, nobody turns up only for the second half (the electronic match report opens early). If a starter is missing, the best-fitting substitute steps in automatically.
+
+### Fixed
+- Blocked sponsors never came back; now they expire after three seasons.
+- A red card in the cup or hall tournament shortly before a league match suspended two league matches instead of one.
+- Nobody walks through boards, benches, cars or walls any more when pigeons, dogs, fences or police are involved (report of 10 October).
+- Several English texts and a club name reminiscent of a real club were corrected.
+
+## 2026-10-08 – Corners, headers and the nationwide cup
+
+### New
+- 12 new season events (promotion party, relegation crisis, farewell match, company run, pitch closure and more) and a dedicated event for the derby return leg.
+
+### Improved
+- **Corners and headers** on all pitches: hard shots are deflected more often, crosses are slower and more accurate, and at corners attackers and defenders stand in the box. Clearly more corners and headed goals.
+- Under pressure in their own third, defenders now simply clear the ball (clearance).
+- In the national cup the pros are stronger (an average district-league side advances about 3–5 % of the time), and the stadium is fuller.
+- In a thunderstorm, whoever has to wait for the referee waits behind the line instead of on the pitch.
+
+### Fixed
+- Deflected shots into the net count for the shooter and no longer as an own goal.
+- National cup: attendance and settlement now match, no double pitch rent any more.
+- Extra time: a short rest before extra time, and the kick-off changes sides.
+
+## 2026-10-07 – Cup expansion and thunderstorms
+
+### New
+- **Cup:** when level, you choose in the settings between going straight to penalties and extra time. New are the State Cup and the **National Cup** against fictional pro clubs – with venue choice, stadium and sponsor bonuses.
+- Warming up at the touchline and livelier spectators.
+
+### Improved
+- In a thunderstorm every venue has real shelters, including the stadium and the full-size pitch with the extra stand.
+- The player figures may be a little more detailed.
+
+### Fixed
+- In a thunderstorm nobody runs through house walls, cars or boards any more.
+
+## 2026-10-04 – Looks, goalkeeper and flow of play
+
+### New
+- Looks: six new hairstyles, three beards, socks down, sweatband, tape and sports glasses. Faces show exhaustion, joy and anger, and shirts get wet.
+- Crests with a lettered banner (initials and year), champion stars and eight motifs; kits with four patterns, collar types and sleeves in the second colour.
+- Goal celebration with a pile-on: the scorer stands still, his teammates sprint over.
+- Goalkeeper: catching by ball height, punching with one or both hands, throw and goal kick, spreading wide, rebounds.
+- Three kinds of crosses depending on pitch size (low, medium, high), runs into the box and headers after crosses.
+- New incident reactions (storm slip, police at the manager, pigeon on the crossbar, dog, fence, sprinkler, car alarm, stand-in referee).
+- More variety in team chat replies (52 instead of 22 variants) and new events (confirmations, delays, weather chat, district-paper quotes, reunions).
+
+### Improved
+- Flow of play: throw-in with a run-up, smoother transitions between running, shooting and passing, body contact in duels; the goalkeeper dives and rolls off.
+- Grass, clouds, figures and the edge of the pitch look better.
+
+## 2026-10-03 – Midweek cups and wing play
+
+### New
+- **District Cup and County Cup** as knockouts in midweek; sponsor logos on the kits.
+- English names, clubs, leagues and sponsors (60 sponsors), more events for higher leagues.
+- A bratwurst and beer stand at the pitch; backyard goals are visible.
+
+### Improved
+- Attacks go down the wings more often – with width, wing play to the byline and crosses instead of shots from a tight angle.
+- The goalkeeper's dive runs in phases; players get up after a slide tackle or fall.
+- In portrait on a phone there is no empty area any more; a decided club decision can be minimised.
+- Tactical commands were checked: order does not matter, tempo works, “drop the strikers” takes effect.
+
+## 2026-10-02 – Club founding and Android
+
+### New
+- **Founding meeting:** colour choice without a jump, you fill the honorary posts yourself.
+- The Android app as a download (always the latest version) and preparation for the Play Store.
+
+## 2026-10-01 – Youth, fitness and the Bezirksliga
+
+### New
+- **Kreisliga A** as the fourth league (9 against 9) and the **Bezirksliga** (11 against 11 on the full-size pitch, with offside and expense allowances).
+- **Youth:** league play with a table, match festivals, Whitsun tournament and DFB base; children develop differently (early and late developers, school stress, parent types); move to a performance centre with a training fee; the bridge from U19 to the first team through training with the squad, maturity and mentors.
+- **Fitness:** 50 to 100 percent per player; starting stamina and injury risk affect the line-up.
+- Poaching attempts, pro contracts and recruiting as a conversation over two to four weeks.
+
+### Improved
+- “Pick automatically” considers strength in the position and form.
+- The clubhouse window is bigger and closer.
+- The manager editor starts with an empty profession field.
+
+## 2026-09-30 – The clubhouse as a room
+
+### New
+- **New interface (“UI 3.0”):** the clubhouse is a room with a tactics board, a window onto the pitch and a desk. The squad is a deck of player cards, the line-up a magnet board, the team chat lives in the manager's phone, plus district-paper pages, pinboard, wall calendar, folder and notebook.
+- The coach's bench gets its own area.
+- Goalkeeper animations, high balls with a jump, punching under pressure.
+- Attack: shooting from a good position, one-two, lay-off, back pass and the “Combine” order.
+
+### Improved
+- Game and menus use less memory and processing time; muted sound no longer uses processing time.
+- Goals only count from the opponent's half.
+
+### Fixed
+- Two memory leaks when changing venue and with incident visitors.
+
+## 2026-09-29 – Manager mode 2.0 and new design
+
+### New
+- **New design system** with two-level navigation, the club overview “Today”, player cards and the line-up on the pitch, a tactics board with a pitch, and a vibration setting. The in-match manager view gets its own display.
+- Manager mode 2.0: passing, the cost of attacking, playing styles and an endgame card.
+
+### Fixed
+- The game froze when the late arrival from the traffic jam joined mid-match.
+
+## 2026-09-28 – Graphics 2.0 and manager mode 2.0
+
+### New
+- **Graphics 2.0** in seven phases: an integer pixel grid with quality levels, light and atmosphere, new players, spectators, environment and weather, ball and effects, image post-processing.
+- **Manager mode 2.0:** orders with real effect, situation map, half-time talk, opposing managers, player profiles, “Your match” with chains of causes, match plan and beginner/advanced view, substitution hints.
+- Tricks and acrobatics: step-over, heel flick, Zidane trick, Jay-Jay lob, fall and side-fall scissor kicks.
+- Numbers in a dedicated, easier-to-read digit font.
+
+## 2026-09-27 – Atmosphere in the ground
+
+### New
+- Atmosphere: spectators, shouts, murmurs, applause, goal horn and echo.
+- In-match injuries with forced substitution and playing a man down, a substitution board and substitution rules per league.
+- A second decision slot for club life on the pinboard.
+- Half length adjustable per pitch (from the backyard at 2 × 1:30 to the grass pitch at 2 × 2:30) and selectable tournament length.
+
+### Improved
+- Leagues with 8 teams and 14 matchdays are possible.
+- Consistent player names (origin first, first name by birth year); the look fits the name.
+- Manager shouts reduced to four real calls.
+
+### Fixed
+- The corner to the near post works again.
+
+## 2026-09-26 – Club life, tactics and Android
+
+### New
+- **Three ways to play:** play yourself, manager in 3D, or the live ticker with decisions. In manager mode you shout instructions from the touchline.
+- **Android app** and installable web app.
+- **Club life:** decisions around the clubhouse with lasting consequences, a team chat that matters, club memory (former players at rivals, bogey teams, flashbacks), relationships on the pitch, opposing managers in the district paper, matchday surprises (referee missing, traffic jam, pitch double-booked, granny with cake).
+- A season goal from the board with mid-term report, club museum with display case and honours board, season review as a district-paper special, generations (the club legend's son).
+- Positional play and tactics: systems, playing styles, zonal defending.
+- Crest editor, more names, professions with bonuses, sponsors and kit patterns; a title picture of Sunday morning on the village green.
+- The default match length is 2 × 2 minutes, selectable up to 2 × 5.
+
+### Improved
+- Venue cards with their ground, particle effects per surface, player figures with a face, hairstyles and shirt numbers.
+- Phone layout, and on weak devices effects switch off automatically.
+- The AI plays forward with the ball instead of back to the goalkeeper; the goalkeeper only catches inside his own box.
+- A long-term test over several seasons uncovered weaknesses in the cash flow and the competition, which were fixed.
+
+## 2026-09-25 – The beginning
+
+Day one: a prototype with a car-park match became a game with a career in one go.
+
+### New
+- **Venues:** backyard, city park, ash pitch, grass pitch, hall tournament in the winter break; 5-a-side and 7-a-side.
+- **Career:** seasons in the Freizeitliga Kanalbezirk with promotion and relegation up to Kreisklasse B (with play-offs), transfers through the rumour mill, a team cash box with a fines catalogue, sponsors, a youth department, a clubhouse to expand, the regulars' pub, a summer city championship.
+- **Life stories:** events with many outcomes, derbies, relationship drama, long-term stories (selling the ground, anniversary, merger) and the end of a career with a successor.
+- Weather and seasons, match incidents (dog, fence, car alarm, police, thunderstorm, sprinkler, stand-in referee), hobby referees with cards.
+- A complete **English translation** with language choice, saves with three slots plus export and import.
+- Live ticker for simulated matches, designing free kicks and corners yourself, penalty shoot-outs in the tournament.
+
+### Improved
+- The feel of play: active teammates, real passing with aiming help, a goalkeeper with reaction time, a more compact defence, one-on-ones.
+- Graphics: contact shadows, colour correction, weather looks, backlight.
