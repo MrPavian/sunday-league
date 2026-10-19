@@ -2,6 +2,7 @@
 // PLAYWRIGHT_PATH, dem Projekt oder der globalen Installation geladen. Grafik per SwiftShader –
 // Bildzeiten sind damit nicht aussagekräftig, Ablauf, Ressourcen und Fehler schon.
 import { createRequire } from 'node:module';
+import { NEWEST_ID } from '../../src/data/changelog.js';
 
 const require = createRequire(import.meta.url);
 export function playwright() {
@@ -37,12 +38,13 @@ export async function page(browser, size = 'land', { query = '?notitle', store =
   p.on('pageerror', (e) => p.errors.push(e.message));
   p.on('console', (m) => m.type() === 'error' && m.text().includes('sl-diag') && p.errors.push(m.text()));
   await p.goto(`${BASE}/?notitle`);
-  await p.evaluate((st) => {
+  await p.evaluate(({ st, newest }) => {
     localStorage.clear();
     localStorage.setItem('sunday-league:lang', 'de');
     localStorage.setItem('sunday-league:fx', '0');
-    for (const [k, v] of Object.entries(st)) localStorage.setItem(k, v);
-  }, store);
+    localStorage.setItem('sunday-league:seenChangelog', newest); // sonst verdeckt „Was ist neu" das Menü
+    for (const [k, v] of Object.entries(st)) (v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v));
+  }, { st: store, newest: NEWEST_ID });
   await p.goto(`${BASE}/${query}`);
   await p.waitForTimeout(2000);
   return p;

@@ -2,6 +2,7 @@ import { getLang, LANGS, tr } from '../core/i18n.js';
 import { HALF_MAX, HALF_MIN, matchDuration, presetHalf } from '../sim/match.js';
 import { PITCHES } from '../sim/pitch.js';
 import { BUND_NAME } from '../career/bundespokal.js';
+import { whatsNewListHtml } from './whatsnew.js';
 
 // Halbzeit je Platz: Voreinstellung als Ausgangspunkt, dann pro Platz in Viertelminuten anpassbar.
 const clock = (sec) => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}`;
@@ -125,8 +126,9 @@ export class Settings {
         <div class="choice">${toggle('safekits', !s.safeKits, tr('Vereinsfarben', 'Club colours'), tr('Farbenblind-sicher', 'Colour-blind safe'))}</div>
         <p class="hint">${tr('Blau gegen Orange mit hellen und dunklen Hosen – gut unterscheidbar auch bei Rot-Grün-Schwäche. Nur die Anzeige ändert sich.', 'Blue against orange with light and dark shorts – easy to tell apart even with red-green colour blindness. Only the display changes.')}</p>
       `,
+      neu: `<div class="wn-list">${whatsNewListHtml()}</div>`,
     };
-    const tabs = [['spiel', tr('Spiel', 'Game')], ['ton', tr('Ton & Vibration', 'Sound & vibration')], ['grafik', tr('Grafik & Sprache', 'Display & language')]];
+    const tabs = [['spiel', tr('Spiel', 'Game')], ['ton', tr('Ton & Vibration', 'Sound & vibration')], ['grafik', tr('Grafik & Sprache', 'Display & language')], ['neu', tr('Was ist neu', 'What’s new')]];
     const page = pages[this.page] ? this.page : 'spiel';
     this.root.innerHTML = `
       <div class="settings-panel notebook">

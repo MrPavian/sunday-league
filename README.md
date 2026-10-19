@@ -338,6 +338,10 @@ Relegation und die Vereins-, Jugend- und Lebenssysteme sind fertig. Das Spiel is
 spielbar, im Browser und als Android-APK. Offen sind unter anderem ein Desktop-Build und eine signierte
 Store-Version. Details im [Projektüberblick](docs/OVERVIEW.md#8-stand-und-grenzen).
 
+## Änderungen
+
+Was sich geändert hat, steht im [Änderungsprotokoll](CHANGELOG.md) (auch im Spiel unter Einstellungen → Was ist neu) · [English changelog](CHANGELOG.en.md).
+
 ## Mitmachen
 
 Ideen und Fehlerberichte sind als Issue willkommen. Vor einem Pull Request bitte `npm test` und
