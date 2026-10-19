@@ -870,7 +870,13 @@ und der Ämterbesetzung auf.
 **Offene Punkte aus 11.1–11.8 abarbeiten**
 - Großfeld: zu hohe Torquote je Schuss (20 % statt real 10–12 %), seltene Kopfballtore, seltene Ecken.
 - Futsal-Ball Größe 4 in der Halle (eigener Ballradius je Platz).
-- „Nach außen lenken" mit echtem Leiten des Ballführenden.
+- „Nach außen lenken" mit echtem Leiten des Ballführenden. Vorlage: Steuerungsverhalten aus Yuka
+  (https://github.com/Mugen87/yuka, MIT, z. B. Interpose/Offset-Pursuit) – nur das Prinzip in die eigene,
+  deterministische Engine übernehmen, die Bibliothek nicht einbinden.
+- KI-Trainerentscheidungen (wann wechseln, umstellen) weicher machen; Idee: Fuzzy-Logik wie in Yuka, ebenfalls
+  nur als Vorlage.
+- Später, falls ein großes Effektpaket kommt (Pyro, Feuerwerk beim Aufstieg, Konfetti): zuerst mit dem eigenen
+  Effects-System; three.quarks (https://github.com/Alchemist0823/three.quarks, MIT) nur, wenn das nicht reicht.
 - Torwart-Animationen (Abrollen, Fangen Brust/Kopf, Fausten beidhändig, Abschlag mit Ausholen, Breitmachen,
   sichtbarer Fehlgriff), Dehnen greift an den Fuß, Reaktionen bei Sprenger/Autoalarm/Zaun, Ausrutschen beim Gewitter.
 - Chat-Zusagen wiederholen sich am häufigsten.
