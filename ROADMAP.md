@@ -838,6 +838,16 @@ Freundschaftsspiel, Platzwahl, Challenges (samt Belohnungen), Spielerpool-Browse
 Schwierigkeit und Auto-Wechsel entfernt; `Input` liefert nur noch Trainer-Tasten. Die Match-Engine (`src/sim/`) ist
 unverändert (Golden bitgleich); Testspiele über die Debug-URLs laufen immer im Trainer-Modus.
 
+**Spielertrainer bleibt** (vom Nutzer bestätigt, 2026-10-19): Die eigene Figur steht weiter im Kader (von der KI
+gesteuert), mit Karriereende, Kindern und Nachfolge. **Neu:** beim Karrierestart wählbar „Spielertrainer" oder
+„nur Trainer" (ohne eigene Spielerfigur; Kader-, Nachfolge- und Generationen-Logik müssen beide Fälle kennen).
+
+**Nach dem Trainerposten** (vom Nutzer gewünscht, 2026-10-19): Geht die eigene Figur „in Rente" oder wechselt als
+Spieler zu den Alten Herren, engagiert man den neuen Trainer selbst (Kandidaten mit Stil, Gehalt, Ruf; Gespräch)
+und spielt weiter – wahlweise in einem Vereinsamt, z. B. als **Präsident** (Finanzen, Ausbau, Sponsoren,
+Trainerwahl, Ziele vorgeben, Trainer entlassen) statt an der Seitenlinie. Baut auf `generations.js`/`staff.js`
+und der Ämterbesetzung auf.
+
 **Neue Mannschaften**
 - **Alte Herren** als zweites Team im Verein (eigener Kader aus Ü32/Ex-Spielern, eigene Runde, wenig Training).
 - **Frauenteam** wahlweise: im Spiel als Option gründen, wenn genug Geld vorhanden ist (Startkosten, Trikots,
