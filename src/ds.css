@@ -293,8 +293,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focu
 
 /* Finger statt Maus: jedes Bedienelement mindestens 44 px. */
 @media (pointer: coarse) {
-  #menu button, #pool button, .club-panel button, .settings-panel button, .saves-panel button, .ticker-panel button,
-  .sub-panel button, .plan-panel button, .half-panel button, .creator button, .challenge button, .challenge-panel button,
+  #menu button, .club-panel button, .settings-panel button, .saves-panel button, .ticker-panel button,
+  .sub-panel button, .plan-panel button, .half-panel button, .creator button,
   #end button, .coach-card button, .club-panel select, .lineup select, .pub select, .sub-row {
     min-height: var(--touch-min);
   }

@@ -24,9 +24,7 @@ import {
   simulate,
 } from './career/career.js';
 import { venueExtras } from './career/sponsors.js';
-import { applyChallengeRewards } from './career/rewards.js';
 import { advanceCup, CUPS, cupOf, currentCupMatches, humanCupMatch, prepareCupMatch, recordCupResult, skipTournament, startTournament } from './career/tournament.js';
-import { CHALLENGES, challengeById, createChallengeMatch, evaluateChallenge, loadProgress, recordChallenge, saveProgress } from './challenges/challenges.js';
 import { createRng } from './core/rng.js';
 import { matchdaySurprise } from './career/matchday.js';
 import { INCIDENT_TYPES } from './sim/incidents.js';
@@ -44,19 +42,17 @@ import { moodOf, pickTimeOfDay, resolveLighting } from './render/lighting.js';
 import { setEmissiveLevel } from './render/materials.js';
 import { disposeTree, mergeStatic } from './render/merge.js';
 import { applyColorSafeKits } from './render/colorSafe.js';
-import { VENUES, venueById } from './render/venues/index.js';
+import { venueById } from './render/venues/index.js';
 import { createMatch, HALF_MAX, HALF_MIN, MATCH, MATCH_LENGTHS, matchDuration, stepMatch } from './sim/match.js';
 import { PITCHES } from './sim/pitch.js';
 import { SURFACES } from './sim/surfaces.js';
 import { applyWeather, WEATHER } from './career/weather.js';
-import { ChallengeScreen } from './ui/Challenges.js';
 import { Clubhouse } from './ui/Clubhouse.js';
 import { succeed } from './career/legacy.js';
 import { CoachCreator } from './ui/CoachCreator.js';
 import { EndScreen } from './ui/EndScreen.js';
 import { Hud } from './ui/Hud.js';
 import { Menu } from './ui/Menu.js';
-import { PoolBrowser } from './ui/PoolBrowser.js';
 import { TitleScreen } from './ui/TitleScreen.js';
 import { ShoutBar } from './ui/ShoutBar.js';
 import { SubPanel } from './ui/SubPanel.js';
@@ -186,7 +182,7 @@ const scene = new THREE.Scene();
 // ?debug: Renderer und Szene für die Browser-Konsole (Draw Calls, Speicher).
 // ?ds – Übersicht des Designsystems (UI 2.0), nur zum Prüfen.
 if (params.has('ds')) import('./ui/StyleGuide.js').then((m) => m.showStyleGuide());
-if (params.has('debug')) globalThis.__sl = { renderer: pixel.renderer, pixel, scene, THREE, rig, get match() { return match; }, get view() { return view; }, get crowd() { return crowd; }, get weather() { return view?.weather; }, get sound() { return sound; } };
+if (params.has('debug')) globalThis.__sl = { renderer: pixel.renderer, pixel, scene, THREE, rig, get match() { return match; }, get view() { return view; }, get crowd() { return crowd; }, get weather() { return view?.weather; }, get sound() { return sound; }, showVenue: (id) => (loadVenue(id), startMatch(false)) };
 // Nur mit ?debug: Herzschlag und „letztes System" je Bild – zeigt bei einem Hänger, wo es stand.
 // Reine Diagnose: setzt nichts zurück und startet nichts neu.
 const DIAG = params.has('debug') ? { frame: 0, simStep: 0, sys: '-', stalls: 0, errors: [] } : null;
@@ -240,7 +236,6 @@ shoutBar.onPlan = () => {
 let drainInput = false; // nach dem Schließen der Wechseltafel: liegengebliebene Tasten verwerfen
 const endScreen = new EndScreen(document.getElementById('end'));
 const sound = new Sound();
-const poolBrowser = new PoolBrowser(document.getElementById('pool'));
 const settings = new Settings(document.getElementById('settings'));
 // Ältere Einbettungen kennen den Container fürs Startbild noch nicht.
 const titleRoot = document.getElementById('title') ?? document.body.appendChild(Object.assign(document.createElement('div'), { id: 'title', hidden: true }));
@@ -249,18 +244,11 @@ const saveSlots = new SaveSlots(document.getElementById('saves'));
 
 let colorSafe = false;
 let leagueSize = 8; // neue Karrieren: 8 Teams, 14 Spieltage
-let difficulty = 'normal';
-let autoSwitchDefense = false;
-// Auf Handy und Tablet gibt es keine Tastatur: dort ist man Trainer an der Seitenlinie.
+// Handy und Tablet: eigenes Layout (Bedienleiste, kein Tastaturhinweis). Gespielt wird immer als Trainer.
 const TOUCH = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
-let managerMode = TOUCH;
-// Für das nächste Spiel gewählt (Vereinsheim-Knopf) – sonst gilt die Einstellung.
-let nextStyle = null;
 if (TOUCH) document.body.classList.add('touch');
 try {
   colorSafe = localStorage.getItem('sunday-league:safekits') === '1';
-  difficulty = ['easy', 'normal', 'hard'].includes(localStorage.getItem('sunday-league:difficulty')) ? localStorage.getItem('sunday-league:difficulty') : 'normal';
-  autoSwitchDefense = localStorage.getItem('sunday-league:autoswitch') === '1';
   MATCH.length = MATCH_LENGTHS[localStorage.getItem('sunday-league:length')] ? localStorage.getItem('sunday-league:length') : 'kurz';
   const halves = JSON.parse(localStorage.getItem('sunday-league:halves') ?? 'null');
   if (halves && typeof halves === 'object') MATCH.halves = halves;
@@ -268,9 +256,6 @@ try {
   if (localStorage.getItem('sunday-league:pokalextra') === '1') MATCH.pokalExtra = true;
   if (['frei', 'begrenzt'].includes(localStorage.getItem('sunday-league:subs'))) MATCH.subs = localStorage.getItem('sunday-league:subs');
   if (localStorage.getItem('sunday-league:leaguesize') === '6') leagueSize = 6;
-  const storedMode = localStorage.getItem('sunday-league:mode');
-  if (storedMode) managerMode = storedMode === 'manager';
-  if (params.has('trainer')) managerMode = true;
 } catch {
   // egal
 }
@@ -300,8 +285,6 @@ let view = null;
 let mode = 'menu'; // menu | play | club
 let career = loadCareer();
 let careerMatch = null; // { prepared, fixture } während eines Karrierespiels
-let challengeRun = null; // { def, ctx } während einer Challenge
-const challengeScreen = new ChallengeScreen(document.getElementById('challenges'));
 const creator = new CoachCreator(document.getElementById('creator'));
 
 let venueAdKey = null;
@@ -339,11 +322,9 @@ function showMatch(m) {
   endScreen.hide();
   view?.dispose();
   applyColorSafeKits(m, colorSafe);
-  m.difficulty = difficulty;
-  m.autoSwitchDefense = autoSwitchDefense;
-  const style = nextStyle ?? (managerMode ? 'manager' : 'player');
-  nextStyle = null;
-  if (style === 'manager' && m.humanTeam !== null) enableManager(m);
+  // Reines Managerspiel: Wo es eine eigene Mannschaft gibt, steht man an der Seitenlinie (Trainer-Modus);
+  // die KI steuert alle Spieler beider Teams. Ohne eigene Mannschaft läuft nur die Kulisse im Hintergrund.
+  if (m.humanTeam !== null) enableManager(m);
   match = m;
   view = new MatchView(scene, match);
   pixel.setWeather(view.weather.state);
@@ -356,6 +337,7 @@ function showMatch(m) {
   else shoutBar.hide();
 }
 
+// human: Testspiel mit eigener Mannschaft (Trainer-Modus, nur über die Test-URLs); false: Kulisse.
 function startMatch(human) {
   // Testschalter: ?wetter=regen|schnee|nebel|frost|wind|hitze|laub
   const w = params.get('wetter');
@@ -384,43 +366,19 @@ function setMode(next) {
   document.body.classList.toggle('in-club', next === 'club');
 }
 
-// --- Menü & Freundschaftsspiel -------------------------------------------------
+// --- Hauptmenü ---------------------------------------------------------------------
 
 const saveInfo = () => (career ? `${humanClub(career).name}, ${tr('Spieltag', 'matchday')} ${Math.min(career.round + 1, career.fixtures.length)}` : null);
 
-const menu = new Menu(document.getElementById('menu'), VENUES.filter((v) => !v.hidden), {
-  onStyle() {
-    managerMode = !managerMode;
-    remember('sunday-league:mode', managerMode ? 'manager' : 'player');
-    menu.setStyle(managerMode, TOUCH);
-  },
-  onSelect(id) {
-    loadVenue(id);
-    startMatch(false); // KI-Vorschau im Hintergrund
-  },
-  onStart(id) {
-    careerMatch = null;
-    loadVenue(id);
-    menu.hide();
-    setMode('play');
-    startMatch(true);
-  },
-  onPool() {
-    menu.paused = true;
-    poolBrowser.show(() => setTimeout(() => (menu.paused = false), 0));
-  },
+const menu = new Menu(document.getElementById('menu'), {
   onCareer() {
     menu.hide();
     openClubhouse();
   },
-  onChallenges() {
-    menu.paused = true;
-    openChallenges();
-  },
   onSettings() {
     menu.paused = true;
     settings.show({
-      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe, difficulty, autoSwitch: autoSwitchDefense, manager: managerMode, touch: TOUCH, length: MATCH.halves ? 'custom' : MATCH.length, cupShort: MATCH.cupShare < 1, pokalExtra: MATCH.pokalExtra, subs: MATCH.subs, coachLevel: coachLevel(), homeView: homeView(), haptics: hapticsOn(), leagueSize: career ? career.nextLeagueSize ?? career.leagueSize ?? 6 : leagueSize, leagueSizeNow: career?.leagueSize ?? null }),
+      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe, length: MATCH.halves ? 'custom' : MATCH.length, cupShort: MATCH.cupShare < 1, pokalExtra: MATCH.pokalExtra, subs: MATCH.subs, coachLevel: coachLevel(), homeView: homeView(), haptics: hapticsOn(), leagueSize: career ? career.nextLeagueSize ?? career.leagueSize ?? 6 : leagueSize, leagueSizeNow: career?.leagueSize ?? null }),
       onLang: switchLanguage,
       onChange(key, value) {
         if (key === 'sound' && sound.muted !== (value === 'off')) sound.toggleMute();
@@ -441,11 +399,6 @@ const menu = new Menu(document.getElementById('menu'), VENUES.filter((v) => !v.h
         if (key === 'haptics') {
           setHaptics(value === 'on');
           haptic('select');
-        }
-        if (key === 'keys') hud.refreshHelp();
-        if (key === 'difficulty') {
-          difficulty = value;
-          remember('sunday-league:difficulty', value);
         }
         if (key === 'length' && MATCH_LENGTHS[value]) {
           // Voreinstellung wählen: setzt alle Plätze zurück auf die Vorgabe.
@@ -485,14 +438,6 @@ const menu = new Menu(document.getElementById('menu'), VENUES.filter((v) => !v.h
         if (key === 'pokalextra') {
           MATCH.pokalExtra = value === 'extra';
           remember('sunday-league:pokalextra', MATCH.pokalExtra ? '1' : '0');
-        }
-        if (key === 'mode') {
-          managerMode = value === 'manager';
-          remember('sunday-league:mode', value);
-        }
-        if (key === 'autoswitch') {
-          autoSwitchDefense = value === 'on';
-          remember('sunday-league:autoswitch', autoSwitchDefense ? '1' : '0');
         }
       },
       onBack() {
@@ -586,12 +531,12 @@ function openMenu() {
   setMode('menu');
   endScreen.hide();
   clubhouse.hide();
-  challengeScreen.hide();
-  challengeRun = null;
   setTimeout(() => (menu.paused = false), 0);
   menu.setCareer(saveInfo());
-  menu.setStyle(managerMode, TOUCH);
-  menu.show(venue?.id ?? params.get('venue') ?? 'parkplatz');
+  // Kulisse: KI-Spiel auf dem zuletzt geladenen Platz (sonst Parkplatz).
+  loadVenue(venue?.id ?? params.get('venue') ?? 'parkplatz');
+  startMatch(false);
+  menu.show();
 }
 
 // --- Karriere ------------------------------------------------------------------
@@ -600,8 +545,7 @@ const clubhouse = new Clubhouse(document.getElementById('club'), {
   onMenu: openMenu,
   onSettings: () => menu.onSettings(),
   onChange: () => saveCareer(career),
-  onPlay: () => playCareerMatch('player'),
-  onCoach: () => playCareerMatch('manager'),
+  onCoach: () => playCareerMatch(),
   onSimulate: () => tickerRound(),
   onNextWeek() {
     finishRound(career);
@@ -619,13 +563,10 @@ const clubhouse = new Clubhouse(document.getElementById('club'), {
     saveCareer(career);
     openClubhouse();
   },
-  onCupPlay: (kind = 'stadt') => playCupMatch(kind, 'player'),
-  onCupCoach: (kind = 'stadt') => playCupMatch(kind, 'manager'),
-  onPokalPlay: (kind) => playPokalMatch(kind, 'player'),
-  onPokalCoach: (kind) => playPokalMatch(kind, 'manager'),
+  onCupCoach: (kind = 'stadt') => playCupMatch(kind),
+  onPokalCoach: (kind) => playPokalMatch(kind),
   onPokalSimulate: (kind) => tickerPokal(kind),
-  onRelPlay: () => playRelegationMatch('player'),
-  onRelCoach: () => playRelegationMatch('manager'),
+  onRelCoach: () => playRelegationMatch(),
   onRelSimulate: () => tickerRelegation(),
   onCupSimulate: (kind = 'stadt') => tickerCup(kind),
   onNewCoach() {
@@ -659,53 +600,7 @@ function saveOnLeave() {
 document.addEventListener('visibilitychange', () => document.hidden && saveOnLeave());
 window.addEventListener('pagehide', saveOnLeave);
 
-// Offene Challenge-Belohnungen landen in der Karriere, sobald es eine gibt.
-function redeemRewards() {
-  if (!career) return [];
-  const progress = loadProgress();
-  const applied = applyChallengeRewards(career, progress);
-  if (applied.length) {
-    saveCareer(career);
-    saveProgress(progress);
-  }
-  return applied;
-}
-
-// --- Challenges ------------------------------------------------------------------
-
-function openChallenges() {
-  setMode('menu');
-  menu.hide();
-  endScreen.hide();
-  challengeRun = null;
-  challengeScreen.showList(CHALLENGES, loadProgress(), { onStart: startChallenge, onBack: openMenu });
-}
-
-function startChallenge(id) {
-  const def = challengeById(id);
-  challengeScreen.hide();
-  loadVenue(def.venue);
-  const { match: m, ctx } = createChallengeMatch(def, seed++);
-  challengeRun = { def, ctx };
-  careerMatch = null;
-  setMode('play');
-  showMatch(m);
-  hud.toast(`${def.title}: ${def.goals[0].text}`, 3, 3);
-}
-
-function finishChallenge(m) {
-  const { def, ctx } = challengeRun;
-  const evaluation = evaluateChallenge(def, m, ctx);
-  const progress = loadProgress();
-  const { firstClear } = recordChallenge(progress, def, evaluation.stars);
-  saveProgress(progress);
-  const applied = redeemRewards();
-  setMode('menu');
-  challengeScreen.showResult(def, m, evaluation, { firstClear, applied, hasCareer: !!career }, { onStart: startChallenge, onList: openChallenges, onBack: openMenu });
-}
-
 function openClubhouse(results = null) {
-  redeemRewards();
   setMode('club');
   endScreen.hide();
   // Im Hintergrund kickt irgendwer auf dem eigenen Platz.
@@ -730,8 +625,7 @@ function resumeRound() {
   }
 }
 
-function playCareerMatch(style = null) {
-  nextStyle = style;
+function playCareerMatch() {
   const fixture = humanFixture(career);
   const prepared = prepareMatch(career, fixture, { human: true, duration: testDuration });
   careerMatch = { prepared, fixture };
@@ -745,9 +639,8 @@ function playCareerMatch(style = null) {
   }
 }
 
-// Stadtmeisterschaft: eigenes Spiel selbst spielen, der Rest läuft im Hintergrund.
-function playCupMatch(kind, style = null) {
-  nextStyle = style;
+// Stadtmeisterschaft: eigenes Spiel an der Seitenlinie, der Rest läuft im Hintergrund.
+function playCupMatch(kind) {
   const m = humanCupMatch(career, kind);
   if (!m) return runCupRound(null, kind);
   const prepared = prepareCupMatch(career, m, { human: true, duration: testDuration });
@@ -836,10 +729,9 @@ async function runRound(playedFixture) {
 }
 
 // Kreis-/Bezirkspokal: das Spiel unter der Woche, vor dem Ligaspieltag.
-function playPokalMatch(kind, style = null) {
+function playPokalMatch(kind) {
   const tie = humanTie(career, kind);
   if (!tie) return openClubhouse();
-  nextStyle = style;
   const prepared = preparePokalMatch(career, kind, tie, { human: true, duration: testDuration });
   careerMatch = { prepared, pokal: true };
   const ownGround = prepared.home.human && (kind !== 'bund' || prepared.bund?.venue === 'own'); // Heimspiel auf dem eigenen Platz: Vereinsbande wie in der Liga (nicht im fremden Stadion)
@@ -867,9 +759,8 @@ function tickerPokal(kind) {
   });
 }
 
-// Relegation: Hin- oder Rückspiel selbst spielen.
-function playRelegationMatch(style = null) {
-  nextStyle = style;
+// Relegation: Hin- oder Rückspiel an der Seitenlinie.
+function playRelegationMatch() {
   startRelegation(career);
   const prepared = prepareRelegationMatch(career, { human: true, duration: testDuration });
   careerMatch = { prepared, relegation: true };
@@ -959,8 +850,12 @@ try {
 }
 
 if (params.get('venue')) {
+  // Testschalter (scripts/e2e): ?venue=… startet direkt ein Testspiel im Trainer-Modus – nicht über die Oberfläche erreichbar.
+  careerMatch = null;
   loadVenue(params.get('venue'));
-  menu.onStart(venue.id);
+  menu.hide();
+  setMode('play');
+  startMatch(true);
 } else {
   openMenu();
   // Allererster Start: erst die Sprache wählen, dann das Startbild.
@@ -1072,11 +967,10 @@ function frame(now) {
           // egal
         }
       }
-      if (match.phase === 'ended' && intent.restart && !challengeRun) {
+      if (match.phase === 'ended' && intent.restart) {
         if (careerMatch) finishCareerMatch();
         else startMatch(true);
-      } else if (intent.menu && challengeRun) openChallenges();
-      else if (intent.menu && !careerMatch) openMenu();
+      } else if (intent.menu && !careerMatch) openMenu();
     } else if (match.phase === 'ended') {
       startMatch(false);
     }
@@ -1087,10 +981,7 @@ function frame(now) {
     view.handleEvents(match);
     crowd?.handleEvents(match);
     if (mode === 'play') sound.handle(match, rig.target.x);
-    if (mode === 'play' && challengeRun && match.events.some((e) => e.type === 'end')) {
-      const ended = match;
-      setTimeout(() => ended === match && challengeRun && finishChallenge(ended), 1200);
-    } else if (mode === 'play' && match.events.some((e) => e.type === 'end')) {
+    if (mode === 'play' && match.events.some((e) => e.type === 'end')) {
       const ended = match;
       commitCareerMatch();
       // Karrierespiel: Das Menü führt hier nirgends hin (das Ergebnis zählt) – Knopf weg.
@@ -1190,7 +1081,7 @@ function backToast(text) {
 const pressEscape = () => window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape', key: 'Escape', bubbles: true }));
 function onAndroidBack(exitApp) {
   if (document.querySelector('.ui-sheet:not([hidden])')) return pressEscape();
-  for (const id of ['settings', 'saves', 'pool', 'challenges']) if (!document.getElementById(id)?.hidden) return pressEscape();
+  for (const id of ['settings', 'saves']) if (!document.getElementById(id)?.hidden) return pressEscape();
   if (subPanel.isOpen) return subPanel.close();
   if (planPanel.isOpen) return planPanel.close();
   if (halfPanel.isOpen) return; // Halbzeit: erst entscheiden
@@ -1203,7 +1094,7 @@ function onAndroidBack(exitApp) {
       if (match.phase === 'ended') return finishCareerMatch();
       return backToast(tr('Das Spiel läuft – zurück ins Vereinsheim nach dem Abpfiff.', 'The match is on – back to the clubhouse after the final whistle.'));
     }
-    return challengeRun ? openChallenges() : openMenu();
+    return openMenu();
   }
   if (mode === 'club') {
     if (!document.getElementById('ticker')?.hidden) return; // Liveticker: dort entscheidet man selbst

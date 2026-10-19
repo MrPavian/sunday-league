@@ -18,8 +18,8 @@ Sunday, 10:30, drizzle, seven spectators, two of them dogs.
 
 ## Play now
 
-**In the browser:** **<https://mrpavian.github.io/sunday-league/>** – on PC with keyboard or gamepad, on a phone as
-the manager on the touchline. Your save lives in the browser (export/import under *Saves*).
+**In the browser:** **<https://mrpavian.github.io/sunday-league/>** – on PC with keyboard, on a phone by touch.
+You always play as the manager on the touchline. Your save lives in the browser (export/import under *Saves*).
 
 **On Android (APK):** **[Download sunday-league.apk](https://github.com/MrPavian/sunday-league/releases/latest/download/sunday-league.apk)**
 (always the latest version, see [Releases](https://github.com/MrPavian/sunday-league/releases)). Copy it to your phone,
@@ -52,8 +52,8 @@ You are the **player-manager** of SV Sonntagsschuss in the Kanalbezirk recreatio
 parcel couriers, dentists, apprentices and early retirees. Every week the group chat asks "Who can make Sunday?",
 and the answers depend on life: shift work, a sick kid, a job out of town, a hangover from a stag do.
 
-You play the match yourself – side-on, with real ball feel, misplaced passes and air shots – manage it from the
-touchline, or follow it as a live ticker. In between you run the club: money, sponsors, recruiting, youth teams,
+You are the manager: you coach the match from the touchline – watching, shouting, changing tactics and making
+substitutions – or follow it as a live ticker. There is no controlling players yourself. In between you run the club: money, sponsors, recruiting, youth teams,
 the clubhouse. And at some point the knees creak and the next generation takes over.
 
 **The tone:** warm with dry humour. The game never laughs at its characters – the comedy comes from everyday life.
@@ -63,8 +63,8 @@ the clubhouse. And at some point the knees creak and the next generation takes o
 ## Features
 
 ### On the pitch
-- **Three ways to experience a match:** play it yourself, coach from the touchline (shouts, subs, a situation
-  engine that reads the game and offers three big choices), or a live ticker with decisions
+- **Two ways to experience a match:** coach from the touchline (shouts, subs, a situation engine that reads the
+  game and offers three big choices), or a live ticker with decisions. The AI plays for both teams
 - **Eight venues with their own physics:** paving slabs, tarmac, park grass, cinders, grass and a sports hall –
   from 4 v 4 in the backyard via 7- and 9-a-side up to **11 v 11 on a full-size pitch (105 × 68 m) with offside**
 - **Tactics per format:** e.g. 2-3-1 on 7-a-side, 3-3-2 on 9-a-side, 4-4-2, 4-3-3, 4-2-3-1 or 3-5-2 on the big
@@ -73,7 +73,7 @@ the clubhouse. And at some point the knees creak and the next generation takes o
   good positions; keepers punch high balls clear
 - **Offside** only on the full-size pitch: what counts is the position at the pass; none from throw-ins, goal
   kicks and corners – and without linesmen the referee misses one now and then
-- **Set pieces you shape yourself:** free kicks with a wall, corners short or to either post, penalties and shoot-outs
+- **Set pieces:** free kicks with a wall, corners short or to either post, penalties and shoot-outs – your players take them, you watch
 - **Weather with consequences:** heat drains stamina, rain lengthens slide tackles, wind blows crosses off course,
   frost hardens the ground, snow stops the ball
 - **Incidents:** a dog steals the ball, the sprinkler comes on, the police arrive about the noise
@@ -143,27 +143,22 @@ the clubhouse. And at some point the knees creak and the next generation takes o
 
 ## Controls
 
-Right hand runs, left hand plays.
+You do not control players: the AI plays for both teams and you are the manager. On a phone the buttons are
+Tactics, Subs, Info and Assistant.
 
-| Action | Keyboard | Gamepad |
-|---|---|---|
-| Run | arrow keys | left stick |
-| Sprint | Shift | RB / RT |
-| Shoot (hold = harder) | W | X |
-| Low pass | S | A |
-| High ball / cross | E | B |
-| Hold: shield the ball, or grab an opponent (foul risk!) | A | LT |
-| Slide tackle | D | Y |
-| Poke (standing tackle) | Z | R3 |
-| Switch player | Q | LB |
-| Substitutions board | X | Back |
-| Help on/off | H | – |
-| Sound on/off | N | – |
-| Graphics effects on/off | G | – |
-| Screenshot (PNG) | F2 | – |
-| Settings | O | – |
+| Action | Key |
+|---|---|
+| Shouts: press, defend, push up, use the wings | 1–4 |
+| Answer the assistant's situation card | 1–3 |
+| Substitutions board | X (gamepad: Back) |
+| Tempo (calm / normal / fast) | C |
+| Help on/off | H |
+| Sound on/off | N |
+| Graphics effects on/off | G |
+| Screenshot (PNG) | F2 |
+| Back to the menu (test URLs only) | Esc / M |
 
-In the menu: **K** career, **C** challenges, **P** player pool, **L** saves (3 slots, export/import), **O** settings.
+In the main menu: **Enter** or **K** career (continue or new), **L** saves (3 slots, export/import), **O** settings.
 
 ---
 

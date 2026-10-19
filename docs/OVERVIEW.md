@@ -24,7 +24,7 @@ Die ausführliche Ideensammlung und Roadmap steht in [ROADMAP.md](../ROADMAP.md)
 |---|---|
 | **Genre** | Fußballspiel mit Vereinsmanagement und Lebenssimulation |
 | **Perspektive** | Seitenansicht (TV-Kamera, orthografisch), 3D-Modelle im Pixelart-Look |
-| **Plattform** | Browser auf dem PC (Tastatur und Gamepad); Desktop-Build geplant |
+| **Plattform** | Browser auf dem PC (Tastatur) und auf dem Handy (Touch); Desktop-Build geplant |
 | **Technik** | JavaScript (ES-Module), three.js 0.186, Vite 8, Vitest |
 | **Sprache** | Deutsch, Englisch (wählbar beim Start und in den Einstellungen) |
 | **Umfang** | ca. 14 000 Zeilen Spielcode, 2 200 Zeilen Tests (133 Tests) |
@@ -56,8 +56,9 @@ Personen und Orte sind erfunden und spielen in einer fiktiven deutschen Region r
 
 ### Zwei Spielhälften
 
-- **Das Match:** echtes Spielen in Echtzeit mit 60-Hz-Simulation – laufen, passen, schießen, grätschen,
-  Gegner festhalten. Jede Partie lässt sich auch simulieren.
+- **Das Match:** Echtzeit-Simulation mit 60 Hz. Die KI steuert alle Spieler beider Mannschaften, du bist Trainer an
+  der Seitenlinie (Zurufe, Taktik, Wechsel) oder verfolgst die Partie im Liveticker. Spieler selbst steuern gibt es nicht
+  (reines Managerspiel).
 - **Die Woche:** Vereinsheim als Menü mit Tabs – Chatgruppe, Kneipe, Kader, Aufstellung, Transfers,
   Training, Jugend, Tabelle, Turnier, Verein, Kasse, Spielplan.
 
@@ -71,8 +72,8 @@ flowchart LR
     B --> C[Ereignis der Woche<br/>mit Entscheidung]
     C --> D[Training, Kneipe,<br/>Transfers, Ausbau]
     D --> E{Spieltag}
-    E -->|selbst spielen| F[Match]
-    E -->|simulieren| F
+    E -->|Trainer an der Seitenlinie| F[Match]
+    E -->|Liveticker| F
     F --> G[Ergebnisse, Strafen,<br/>Verletzungen, Sponsoren]
     G --> A
     G -.->|letzter Spieltag| H[Saisonende]
@@ -89,7 +90,7 @@ flowchart LR
    und Vereinsheim. Du kannst dreimal nachhaken.
 3. Laufende Geschichten gehen weiter, dann kommt höchstens ein neues Ereignis mit Entscheidung.
 4. Du stellst auf, gehst in die Kneipe, richtest ein Open Training aus, baust am Vereinsheim.
-5. Spieltag: selbst spielen oder simulieren. Danach Strafen in die Kasse, Verletzungen, Sponsorenlaune,
+5. Spieltag: Trainer an der Seitenlinie oder Liveticker. Danach Strafen in die Kasse, Verletzungen, Sponsorenlaune,
    Tabelle.
 
 **Saisonende:** Stadtmeisterschaft (optional), Saisonabschlussfahrt als Minigeschichte, Fragen zum
@@ -122,7 +123,6 @@ Sponsorenangebote und einen Eintrag in der Chronik.
 | **Wetter** | Sieben Wetterlagen nach Jahreszeit, wirkt auf Boden, Ball, Puste, Zuschauer | `weather.js` |
 | **Saisonfahrt** | Drei Ziele, je drei Etappen mit Entscheidungen | `trip.js` |
 | **Karriereende & Nachfolge** | Schuhe an den Nagel, Amtsübergabe, Trainer-Ären | `legacy.js` |
-| **Challenges** | Sechs Szenarien mit Sternen und Karriere-Belohnungen | `src/challenges/` |
 
 ---
 
@@ -138,7 +138,7 @@ flowchart TB
     Main --> Render[render/<br/>three.js, Pixel-Renderer]
     Career --> Sim
     Render -.liest nur.-> Sim
-    Input[input/<br/>Tastatur, Gamepad] --> Main
+    Input[input/<br/>Trainer-Tasten] --> Main
     Audio[audio/<br/>Web Audio] --> Main
 ```
 
@@ -232,7 +232,6 @@ teuren Effekte für langsame Rechner abschalten.
 - Alle Vereins-, Jugend-, Lebens- und Geschichtensysteme aus der Tabelle oben, dazu Fitness, Werben mit
   Motiven, Abwerbeversuche und Profivertrag
 - Nachfolge über Generationen
-- Sechs Challenges
 - Deutsch und Englisch, im Browser (GitHub Pages) und als Android-APK
 
 **Bekannte Grenzen**

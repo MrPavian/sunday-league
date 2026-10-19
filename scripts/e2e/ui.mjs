@@ -49,11 +49,36 @@ async function screens(b, size) {
   await click(p, '.club-tools [data-action="onSettings"]');
   await p.waitForTimeout(300);
   ok(await visible(p, 'settings'), 'Einstellungen öffnen nicht');
-  await click(p, '.nb-tabs [data-value="tasten"]');
-  ok(!!(await p.$('.nb-page .keys')), 'Notizbuch: Seite Steuerung fehlt');
+  // Reines Managerspiel: keine Seite „Steuerung", kein Spielmodus, keine Schwierigkeit/Auto-Wechsel.
+  ok((await p.$$eval('.nb-tabs [data-value]', (e) => e.map((x) => x.dataset.value))).join() === 'spiel,ton,grafik', 'Notizbuch: Seiten sind nicht Spiel, Ton, Grafik');
+  ok(!(await p.$('.nb-page .keys')) && !(await p.$('[data-action="mode"], [data-action="difficulty"], [data-action="autoswitch"], [data-action="bind"]')), 'Einstellungen zeigen noch Selbstspiel-Optionen');
   await click(p, '.settings-panel [data-action="back"]');
   await p.waitForTimeout(300);
   ok(await visible(p, 'club'), 'Zurück aus den Einstellungen führt nicht ins Vereinsheim');
+  ok(!p.errors.length, `Seitenfehler: ${p.errors.join(' | ')}`);
+  await p.context().close();
+  return ok.done();
+}
+
+// Hauptmenü des Managerspiels: nur Karriere, Spielstände, Einstellungen – keine Platzwahl, keine Challenges,
+// kein Spielerpool, kein Spielmodus-Schalter; ohne seitliches Scrollen, auf Touch ohne zu kleine Knöpfe.
+async function mainMenu(b, size) {
+  const ok = checker(`Hauptmenü nur Karriere (${size})`);
+  const p = await page(b, size);
+  ok(await visible(p, 'menu'), 'Hauptmenü fehlt');
+  ok(!(await p.$('.venue-card, .style-toggle, .challenges-link, .venues')), 'Hauptmenü zeigt noch Platzwahl, Spielmodus oder Challenges');
+  const links = await p.$$eval('#menu button', (e) => e.map((x) => x.textContent.trim()));
+  ok(links.length === 3 && /Karriere starten/.test(links[0]) && links.includes('Spielstände') && links.includes('Einstellungen'), `Hauptmenü-Knöpfe: ${links.join(' | ')}`);
+  ok(!/Challenge|Spielerpool|Freundschaft|Spielmodus/.test(await p.textContent('#menu')), 'Hauptmenü-Text nennt entfernte Funktionen');
+  ok(!(await hScroll(p)), 'Hauptmenü: seitliches Scrollen');
+  if (SIZES[size].touch) {
+    const small = await smallTargets(p, '#menu button');
+    ok(!small.length, `Hauptmenü: Schaltflächen < 44 px: ${small.slice(0, 3).join(', ')}`);
+  }
+  // Hotkeys: O Einstellungen, L Spielstände (alte Hotkeys C/P/T tun nichts mehr).
+  for (const k of ['KeyC', 'KeyP', 'KeyT']) await p.keyboard.press(k);
+  await p.waitForTimeout(300);
+  ok((await visible(p, 'menu')) && !(await p.evaluate(() => ['settings', 'saves', 'creator', 'club'].some((i) => !document.getElementById(i).hidden))), 'C/P/T öffnen noch etwas');
   ok(!p.errors.length, `Seitenfehler: ${p.errors.join(' | ')}`);
   await p.context().close();
   return ok.done();
@@ -84,6 +109,7 @@ async function tickerRound(b) {
 export async function run({ sizes = Object.keys(SIZES) } = {}) {
   const b = await launch();
   let fails = 0;
+  for (const s of sizes) fails += await mainMenu(b, s);
   for (const s of sizes) fails += await screens(b, s);
   fails += await tickerRound(b);
   await b.close();

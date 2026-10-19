@@ -833,6 +833,11 @@ und Effet, Annahme und Ballmitnahme, Schusshärte und Flugkurven, Zweikämpfe un
 als Trainer an der Seitenlinie (Zurufe, Taktik, Wechsel) oder im Liveticker. Umfang (Freundschaftsspiel,
 Challenges, Elfmeterschießen, Tastatur-/Touch-Steuerung, Tests) vor dem Umbau festlegen.
 
+*Umgesetzt (Branch `agent-manager`, 2026-10-19, „Nur Karriere“):* Hauptmenü nur Karriere/Spielstände/Einstellungen;
+Freundschaftsspiel, Platzwahl, Challenges (samt Belohnungen), Spielerpool-Browser, Spielmodus-Schalter, Tastenbelegung,
+Schwierigkeit und Auto-Wechsel entfernt; `Input` liefert nur noch Trainer-Tasten. Die Match-Engine (`src/sim/`) ist
+unverändert (Golden bitgleich); Testspiele über die Debug-URLs laufen immer im Trainer-Modus.
+
 **Neue Mannschaften**
 - **Alte Herren** als zweites Team im Verein (eigener Kader aus Ü32/Ex-Spielern, eigene Runde, wenig Training).
 - **Frauenteam** wahlweise: im Spiel als Option gründen, wenn genug Geld vorhanden ist (Startkosten, Trikots,

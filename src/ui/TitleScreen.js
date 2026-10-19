@@ -436,7 +436,7 @@ export class TitleScreen {
         <p class="sub"></p>
         <p class="title-press"></p>
       </div>
-      <p class="title-hint">${tr('Für PC mit Tastatur · <kbd>H</kbd> Hilfe · <kbd>O</kbd> Einstellungen · Spielstand bleibt in diesem Browser', 'For PC with keyboard · <kbd>H</kbd> help · <kbd>O</kbd> settings · your save stays in this browser')}</p>
+      <p class="title-hint">${tr('Du bist der Trainer · <kbd>O</kbd> Einstellungen · Spielstand bleibt in diesem Browser', 'You are the manager · <kbd>O</kbd> settings · your save stays in this browser')}</p>
       <p class="title-foot">© Sunday League · ${tr('Alle Rechte vorbehalten', 'All rights reserved')}</p>`;
     this.canvas = root.querySelector('canvas');
     this.ctx = this.canvas.getContext('2d');

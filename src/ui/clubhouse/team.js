@@ -8,7 +8,7 @@ import { jobFits, styleFit } from '../../sim/fit.js';
 import { GROUP_LABELS, ORDERS, packLines, SIMPLE, SIMPLE_IDS } from '../../sim/commands.js';
 import { coachLevel } from '../prefs.js';
 import { button, haptic, icon, segmented, tabs as uiTabs } from '../ds.js';
-import { ATTR_LABELS } from '../PoolBrowser.js';
+import { ATTR_LABELS } from '../attrLabels.js';
 import { isLight, playerCard as collectorCard, trainerCard } from '../world.js';
 import { planTarget } from '../../sim/plan.js';
 import { oopInfo, oopText } from '../../sim/position.js';

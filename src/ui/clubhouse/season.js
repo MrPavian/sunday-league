@@ -90,7 +90,7 @@ export const seasonScreens = {
     else if (next) {
       const opp = cupClub(c, next.home === me ? next.away : next.home);
       action = `<div class="fixture-card"><p class="label">${stageName(next)}</p><h3>${humanClub(c).short} – ${opp.short}</h3><p>${tr('gegen', 'against')} <b>${opp.name}</b>${next.stage !== 'A' && next.stage !== 'B' ? tr(' · bei Unentschieden Elfmeterschießen', ' · penalties if level') : ''}</p>
-        <button class="primary self-play" data-action="onCupPlay" data-value="${kind}">${tr('Selbst spielen', 'Play it yourself')}</button> <button class="coach-play" data-action="onCupCoach" data-value="${kind}">${tr('Trainer an der Seitenlinie', 'Manager on the touchline')}</button> <button data-action="onCupSimulate" data-value="${kind}">${tr('Liveticker mit Entscheidungen', 'Live ticker with decisions')}</button></div>`;
+        <button class="primary coach-play" data-action="onCupCoach" data-value="${kind}">${tr('Trainer an der Seitenlinie', 'Manager on the touchline')}</button> <button data-action="onCupSimulate" data-value="${kind}">${tr('Liveticker mit Entscheidungen', 'Live ticker with decisions')}</button></div>`;
     } else action = `<p>${tr('Ihr seid raus – die anderen spielen noch.', 'You are out – the others are still playing.')}</p><button data-action="onCupSimulate" data-value="${kind}">${tr('Nächste Runde anschauen', 'Watch the next round')}</button>`;
     return `
       <p class="chat-head">${cfg.name} ${t.year} · ${cfg.place} · ${tr(`Sieger ${cfg.prizes.winner} €, Finale ${cfg.prizes.final} €, Halbfinale ${cfg.prizes.semi} €`, `winner €${cfg.prizes.winner}, final €${cfg.prizes.final}, semi-final €${cfg.prizes.semi}`)}</p>

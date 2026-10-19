@@ -1,6 +1,6 @@
-// Alle Modi und Varianten einmal durchspielen: Startbild, Freundschaftsspiel (selbst spielen),
-// jede Qualitätsstufe, jedes Wetter, jede Tageszeit, jeder Vorfall, Elfmeterschießen, Challenge,
-// Spielerpool, Spielstände, Englisch und ein alter Spielstand (fixtures/save-858e978.json: mit dem
+// Alle Varianten einmal durchspielen (reines Managerspiel): Startbild, Trainer-Testspiel ohne Spielersteuerung,
+// jede Qualitätsstufe, jedes Wetter, jede Tageszeit, jeder Vorfall, Elfmeterschießen (simuliert),
+// Spielstände, Englisch und ein alter Spielstand (fixtures/save-858e978.json: mit dem
 // Stand vor dem Lean-Audit erzeugt, Spieltag 5; andere Datei per E2E_OLD_SAVE).
 // Geprüft wird: keine Seitenfehler, Bildschleife läuft, Spiel erreicht den Abpfiff.
 import { readFileSync } from 'node:fs';
@@ -134,37 +134,42 @@ export async function incidents(b) {
   return ok.done();
 }
 
-async function friendlySelf(b) {
-  const ok = checker('Freundschaftsspiel selbst spielen (Tastatur) bis zum Abpfiff, zurück ins Menü');
-  const p = await page(b, 'desk', { query: '?notitle&debug&dauer=20' });
-  await p.keyboard.press('ArrowRight');
-  await p.waitForTimeout(600);
-  await p.keyboard.press('Enter');
+// Reines Managerspiel: Ein Testspiel (Debug-URL) läuft ohne ?trainer im Trainer-Modus, die KI steuert alle
+// Spieler. Pfeile, Leertaste und die früheren Spieltasten steuern nichts mehr; Trainer-Tasten wirken.
+async function coachOnly(b) {
+  const ok = checker('Nur Trainer: Testspiel ohne Spielersteuerung (Tasten ohne Wirkung), Zurufe und Menü-Tasten wirken');
+  const p = await page(b, 'desk', { query: '?venue=park&notitle&debug&dauer=20&seed=5' });
   await p.waitForTimeout(1500);
-  ok(await p.evaluate(() => document.getElementById('menu').hidden && !__sl.match.manager), 'kein selbst gesteuertes Spiel');
-  // etwas laufen, passen, schießen (nicht X: das öffnet die Wechseltafel und hält das Spiel an)
-  for (const k of ['ArrowRight', 'ArrowUp', 'Space', 'ArrowLeft', 'KeyS']) {
+  const st = () => p.evaluate(() => ({ manager: __sl.match.manager === true, controlled: __sl.match.controlledId, bar: !document.getElementById('shoutbar').hidden, card: !!document.querySelector('#hud .card'), menuHidden: document.getElementById('menu').hidden, orders: JSON.stringify(__sl.match.orders?.[0] ?? {}) }));
+  const s0 = await st();
+  ok(s0.manager && s0.controlled == null && s0.bar && !s0.card && s0.menuHidden, `Testspiel nicht im Trainer-Modus: ${JSON.stringify(s0)}`);
+  for (const k of ['ArrowRight', 'ArrowUp', 'Space', 'ArrowLeft', 'KeyS', 'KeyW', 'KeyD', 'KeyA', 'KeyQ', 'ShiftLeft']) {
     await p.keyboard.down(k);
-    await p.waitForTimeout(400);
+    await p.waitForTimeout(150);
     await p.keyboard.up(k);
   }
+  const s1 = await st();
+  ok(s1.controlled == null && s1.orders === s0.orders, `Spieltasten steuern oder ändern etwas: ${JSON.stringify(s1)}`);
+  await p.keyboard.press('Digit1'); // Zuruf „Geht drauf!"
+  await p.waitForTimeout(400);
+  ok((await p.evaluate(() => __sl.match.orders?.[0]?.press)) === 'hoch', 'Taste 1 (Zuruf) wirkt nicht');
+  await p.keyboard.press('KeyC');
+  await p.waitForTimeout(300);
+  ok((await p.evaluate(() => localStorage.getItem('sunday-league:tempo'))) === 'normal', 'Taste C schaltet das Tempo nicht weiter');
   ok(await toEnd(p, 90), 'kein Abpfiff');
   await p.waitForTimeout(1600);
   ok(await visible(p, 'end'), 'Endbildschirm fehlt');
   await p.keyboard.press('Escape');
   await p.waitForTimeout(800);
-  if (!(await visible(p, 'menu'))) {
-    await p.keyboard.press('Enter');
-    await p.waitForTimeout(800);
-  }
-  ok(await visible(p, 'menu'), 'nicht zurück im Menü');
+  ok(await visible(p, 'menu'), 'Esc führt nicht zurück ins Hauptmenü');
+  ok(!(await p.$('.venue-card')), 'Hauptmenü zeigt eine Platzwahl');
   ok(!p.errors.length, `Fehler ${p.errors.slice(0, 2).join(' | ')}`);
   await p.context().close();
   return ok.done();
 }
 
 async function shootout(b) {
-  const ok = checker('Elfmeterschießen (K.-o.-Freundschaftsspiel)');
+  const ok = checker('Elfmeterschießen (K.-o.-Testspiel, simuliert und angeschaut)');
   let done = false;
   // Bei Remis nach der Spielzeit folgt das Elfmeterschießen; mehrere Seeds, bis eins Remis ist.
   for (const seed of [1, 2, 3, 4, 5, 6]) {
@@ -203,33 +208,19 @@ async function title(b) {
 }
 
 async function menus(b) {
-  const ok = checker('Spielerpool, Spielstände, Challenge bis zum Ergebnis');
-  // Challenges haben eine feste Länge (?dauer gilt nicht) – im schnellen Tempo.
-  const p = await page(b, 'land', { query: '?notitle&debug', store: { 'sunday-league:tempo': 'schnell' } });
-  await click(p, '.pool-link');
-  await p.waitForTimeout(600);
-  ok(await visible(p, 'pool'), 'Spielerpool öffnet nicht');
-  await p.keyboard.press('Escape');
-  await p.waitForTimeout(600);
-  await p.evaluate(() => document.querySelector('#pool [data-action="back"], #pool .back')?.click());
-  await p.waitForTimeout(400);
+  const ok = checker('Spielstände öffnen und schließen, Einstellungen im Menü');
+  const p = await page(b, 'land', { query: '?notitle&debug' });
   await click(p, '.saves-link');
   await p.waitForTimeout(600);
   ok(await visible(p, 'saves'), 'Spielstände öffnen nicht');
   await p.evaluate(() => document.querySelector('#saves [data-action="back"]')?.click());
   await p.waitForTimeout(600);
-  await click(p, '.challenges-link');
+  await click(p, '.settings-link');
   await p.waitForTimeout(600);
-  ok(await visible(p, 'challenges'), 'Challenges öffnen nicht');
-  await click(p, '#challenges [data-action="start"]');
-  await p.waitForTimeout(1500);
-  ok(await toEnd(p, 400), 'Challenge: kein Abpfiff');
-  let result = false;
-  for (let i = 0; i < 10 && !result; i++) {
-    await p.waitForTimeout(500);
-    result = await p.evaluate(() => !document.getElementById('challenges').hidden && !!document.querySelector('#challenges [data-action="list"]'));
-  }
-  ok(result, 'Challenge: Ergebnis fehlt');
+  ok(await visible(p, 'settings'), 'Einstellungen öffnen nicht');
+  await p.keyboard.press('Escape');
+  await p.waitForTimeout(400);
+  ok(!(await visible(p, 'settings')) && (await visible(p, 'menu')), 'Einstellungen schließen nicht');
   ok(!p.errors.length, `Fehler ${p.errors.slice(0, 2).join(' | ')}`);
   await p.context().close();
   return ok.done();
@@ -552,7 +543,7 @@ export async function run() {
   const b = await launch();
   let f = 0;
   f += await title(b);
-  f += await friendlySelf(b);
+  f += await coachOnly(b);
   f += await qualities(b);
   f += await budget(b);
   f += await variants(b, `Wetter (${WEATHER.length})`, WEATHER, (w) => `?venue=rasenplatz&notitle&trainer&debug&dauer=30&wetter=${w}`);

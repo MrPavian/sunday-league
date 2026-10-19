@@ -12,7 +12,7 @@ Sonntag, 10:30 Uhr, Nieselregen, sieben Zuschauer, zwei davon Hunde.
 ![Status](https://img.shields.io/badge/Status-spielbarer%20Prototyp-orange)
 
 > *English:* A cosy amateur-football game in 3D pixel art. Manage a Sunday-league club full of
-> dentists, bus drivers and apprentices, play the matches yourself, and live through job stress,
+> dentists, bus drivers and apprentices, coach the matches from the touchline, and live through job stress,
 > derbies, pub nights and season trips – across generations. Fully playable in English:
 > pick the language on first start or any time in the settings (key **O**).
 > **[Full English README](README.en.md)** · **[Play in the browser](https://mrpavian.github.io/sunday-league/)** ·
@@ -26,8 +26,8 @@ Sonntag, 10:30 Uhr, Nieselregen, sieben Zuschauer, zwei davon Hunde.
 
 ## Jetzt spielen
 
-**Im Browser:** **<https://mrpavian.github.io/sunday-league/>** – auf dem PC mit Tastatur oder Gamepad, auf dem
-Handy als Trainer an der Seitenlinie. Der Spielstand wird im Browser gespeichert (Export/Import unter Spielstände).
+**Im Browser:** **<https://mrpavian.github.io/sunday-league/>** – auf dem PC mit Tastatur, auf dem
+Handy per Touch. Gespielt wird immer als Trainer an der Seitenlinie. Der Spielstand wird im Browser gespeichert (Export/Import unter Spielstände).
 
 **Auf Android (APK):** **[sunday-league.apk herunterladen](https://github.com/MrPavian/sunday-league/releases/latest/download/sunday-league.apk)**
 (immer die neueste Version, siehe [Releases](https://github.com/MrPavian/sunday-league/releases)). Installieren: APK aufs Handy,
@@ -50,17 +50,15 @@ verschiebt sich mit dem Ball, verteidigt wird in Zonen. Jeder Gegner hat seine e
 
 **Spieldauer je Platz:** vom Hinterhof und der Halle (2 × 1:30) bis zum großen Rasenplatz (2 × 2:30) – in den Einstellungen als Voreinstellung (kurz, mittel, lang) oder pro Platz in Viertelminuten frei einstellbar, Turnierspiele wahlweise kürzer oder in voller Länge. Kraft und Torgefahr sind auf die Länge abgestimmt.
 
-**Drei Arten, ein Spiel zu erleben** – im Vereinsheim vor jedem Anpfiff wählbar:
-1. **Selbst spielen** (PC, Tastatur oder Gamepad).
-2. **Trainer an der Seitenlinie** – in 3D zuschauen und reinrufen (siehe unten).
-3. **Liveticker mit Entscheidungen** – das Spiel als Text; zwischendurch hält der Ticker an: Grundausrichtung
+**Reines Managerspiel – zwei Arten, ein Spiel zu erleben**, im Vereinsheim vor jedem Anpfiff wählbar (Spieler selbst zu steuern gibt es nicht):
+1. **Trainer an der Seitenlinie** – in 3D zuschauen und reinrufen (siehe unten).
+2. **Liveticker mit Entscheidungen** – das Spiel als Text; zwischendurch hält der Ticker an: Grundausrichtung
    zum Anpfiff, was du nach einem Gegentor reinrufst, Halbzeitansprache, wen du für den Platten bringst,
    Schlussoffensive oder Bus parken. Dazu freie Zurufe jederzeit. „Zum Ergebnis" nimmt immer die erste Antwort.
 
-Auf dem Handy bist du **Trainer an der Seitenlinie**: Deine Mannschaft spielt selbst, du rufst rein –
+Du bist immer **Trainer an der Seitenlinie** (auf dem PC wie auf dem Handy): Deine Mannschaft spielt selbst, du rufst rein –
 *Geht drauf!* (Pressing), *Hinten dicht!*, *Rückt auf!*, *Über die Flügel!* –
-und wechselst aus. Ob die Jungs hören, hängt davon ab, wie gut sie kicken. Am PC gibt es den Modus auch
-(Einstellungen → Spielmodus, Tasten 1–4).
+und wechselst aus. Ob die Jungs hören, hängt davon ab, wie gut sie kicken. Am PC mit den Tasten 1–4.
 
 **Trainermodus 2.0 – Beobachten, entscheiden, Wirkung sehen:** Der Trainer steuert keine Spieler, sondern
 die Idee. Befehle in neun Gruppen (Aufbau, Angriffsweg, Seite, Pressinghöhe, Ausrichtung gegen den Ball,
@@ -84,7 +82,7 @@ kommt Ersatz für die Position, ohne Ersatz geht es in Unterzahl weiter (fehlt d
 Feldspieler ins Tor). Die Diagnose in der Karriere ist genau die Verletzung aus dem Spiel. Wechseln (X,
 Back oder Knopf „Wechsel") öffnet die Wechseltafel: Das Spiel steht, du wählst, wer raus- und wer
 reinkommt – oder „Automatisch: der Müdeste". Die Regeln hängen von der Liga ab: In der Freizeitliga und
-bei Freundschaftsspielen wird fliegend gewechselt (Rückwechsel erlaubt), ab der Kreisklasse zählt der
+wird fliegend gewechselt (Rückwechsel erlaubt), ab der Kreisklasse zählt der
 Schiri mit – vier Wechsel, raus ist raus, in der Bezirksliga fünf. Einstellbar unter Einstellungen → Auswechseln.
 
 **Abseits** gibt es nur auf dem Großfeld (Bezirksliga): Es zählt die Stellung beim Pass, nach Einwurf, Abstoß und
@@ -111,8 +109,8 @@ besteht aus Paketboten, Zahnärzten, Azubis und Frührentnern. Jede Woche fragt 
 „Wer kann Sonntag?“, und die Antworten hängen vom Leben ab: Schichtdienst, krankes Kind, Montage,
 Kater vom Polterabend.
 
-Den Spieltag spielst du selbst – in Seitenansicht, mit echtem Ballgefühl, Fehlpässen und Luftlöchern –
-oder du lässt ihn simulieren. Dazwischen führst du den Verein: Kasse, Sponsoren, Transfers, Jugend,
+Den Spieltag erlebst du als **Trainer an der Seitenlinie** – du siehst zu, rufst rein, stellst um und wechselst –
+oder im Liveticker. Dazwischen führst du den Verein: Kasse, Sponsoren, Transfers, Jugend,
 Vereinsheim. Und irgendwann knirschen die Knie, und die nächste Generation übernimmt.
 
 **Der Ton:** warmherzig mit trockenem Humor. Das Spiel macht sich nie über seine Figuren lustig –
@@ -123,14 +121,12 @@ die Komik entsteht aus dem Alltag.
 ## Features
 
 ### Auf dem Platz
-- **Selbst spielen oder simulieren** – jede Partie, in der Liga wie im Turnier; simulierte Spiele laufen als
-  kommentierter **Liveticker** im Zeitraffer (oder direkt zum Ergebnis)
+- **Trainer an der Seitenlinie oder Liveticker** – jede Partie, in der Liga wie im Turnier; im Liveticker läuft das
+  Spiel als kommentierter Text im Zeitraffer (oder direkt zum Ergebnis)
 - **Faire Torhüter-Regeln**: Hält der Keeper den Ball, gibt es eine Schutzzone – niemand lauert beim Abwurf
 - **Ballführung mit Gefühl**: Der Ball bleibt am Fuß, wer ihn will, muss stochern oder grätschen
-- **Standards selbst gestalten**: Freistoß mit Mauer und eigener Richtung, Ecken kurz, an den ersten oder
-  den langen Pfosten, **Elfmeter** nach Fouls im Strafraum (der Torwart muss raten) und **Elfmeterschießen** im
-  Turnier und in der Relegation
-- **Schwierigkeitsgrad** (locker, normal, Kreisliga-hart) und optionaler Auto-Wechsel in der Abwehr
+- **Standards**: Freistoß mit Mauer, Ecken kurz, an den ersten oder den langen Pfosten, **Elfmeter** nach Fouls
+  im Strafraum und **Elfmeterschießen** im Turnier und in der Relegation – die Spieler schießen, du siehst zu
 - **Echtes Passspiel**: Mitspieler laufen dem Ball entgegen, rücken bei Ballbesitz auf und sichern hinten ab
 - **Torhüter mit Reaktionszeit**: Platzierte Schüsse sind oft drin, im Eins gegen eins kommt der Keeper raus
   und wirft sich in die Füße – klappt mal, mal nicht
@@ -145,7 +141,6 @@ die Komik entsteht aus dem Alltag.
 - **Wetter mit Folgen**: Hitze zehrt an der Puste, Regen macht Grätschen lang, Wind verweht Flanken,
   Frost macht den Boden hart, im Schnee bleibt der Ball liegen
 - **Derbys** mit Derby-Woche, doppelten Zuschauern und härteren Zweikämpfen
-- **Sechs Challenges** mit Sternen und Belohnungen für die Karriere
 
 ### Karriere & Verein
 - **Wochenrhythmus**: Chatgruppe, Open Training, Stammkneipe, Ereignis, Spieltag
@@ -264,33 +259,24 @@ die Komik entsteht aus dem Alltag.
 
 ## Steuerung
 
-Rechte Hand läuft, linke Hand spielt.
+Du steuerst keine Spieler: Die KI spielt für beide Mannschaften, du bist Trainer. Am Handy gibt es dafür die Knöpfe
+Taktik, Wechsel, Info und Co-Trainer.
 
-| Aktion | Tastatur | Gamepad |
-|---|---|---|
-| Laufen | Pfeiltasten | linker Stick |
-| Sprinten | Shift | RB / RT |
-| Schuss (halten = fester) | W | X |
-| Pass flach | S | A |
-| Hoher Ball / Flanke | E | B |
-| Halten: mit Ball abschirmen, ohne Ball Gegner festhalten (Foulgefahr!) | A | LT |
-| Grätsche (auf hartem Boden: Schürfwunden-Gefahr) | D | Y |
-| Stochern (Zweikampf im Stehen) | Y | R3 |
-| Einwurf (Richtung mit Laufen wählen) | S, E oder W | A |
-| Spieler wechseln | Q | LB |
-| Wechseltafel (Wechsel beim nächsten Stopp) | X | Back |
-| Tempo (ruhig / normal / schnell) | C | – |
-| Hilfe ein/aus | H | – |
-| Ton an/aus | N | – |
-| Grafikeffekte an/aus | G | – |
-| Screenshot (PNG) | F2 | – |
-| Einstellungen (Sprache, Ton, Effekte, Tempo) | O | – |
-| Zurück zur Platzwahl | Esc / M | – |
+| Aktion | Taste |
+|---|---|
+| Zurufe: Pressing, hinten dicht, aufrücken, über die Flügel | 1–4 |
+| Lagekarte des Co-Trainers beantworten | 1–3 |
+| Wechseltafel (Wechsel beim nächsten Stopp) | X (Gamepad: Back) |
+| Tempo (ruhig / normal / schnell) | C |
+| Hilfe ein/aus | H |
+| Ton an/aus | N |
+| Grafikeffekte an/aus | G |
+| Screenshot (PNG) | F2 |
+| Zurück ins Menü (nur bei Test-URLs) | Esc / M |
 
-Im Menü: **K** Karriere, **C** Challenges, **P** Spielerpool, **L** Spielstände (3 Plätze, Export/Import), **O** Einstellungen (Sprache, Ton, Lautstärke, Effekte, Tempo, Trikots, Tastenbelegung).
+Im Hauptmenü: **Enter** oder **K** Karriere (fortsetzen oder neu), **L** Spielstände (3 Plätze, Export/Import), **O** Einstellungen (Sprache, Ton, Lautstärke, Effekte, Tempo, Trikots, Grafikqualität).
 
 **Sprache:** Deutsch oder Englisch – Auswahl beim ersten Start und jederzeit in den Einstellungen.
-Auf englischen Tastaturen liegt „Stochern“ auf **Z** (gleiche Taste).
 
 ---
 
@@ -312,8 +298,8 @@ npm run preview  # Build lokal ansehen
 | Parameter | Wirkung |
 |---|---|
 | `?seed=123` | Reproduzierbar dieselben Teams und derselbe Spielverlauf |
-| `?venue=hinterhof\|parkplatz\|park\|ascheplatz\|rasenplatz\|sportplatz\|grossfeld\|halle` | Überspringt die Platzwahl |
-| `?wetter=regen\|schnee\|nebel\|frost\|wind\|hitze\|laub` | Freundschaftsspiel bei diesem Wetter |
+| `?venue=hinterhof\|parkplatz\|park\|ascheplatz\|rasenplatz\|sportplatz\|grossfeld\|halle` | Testspiel im Trainer-Modus auf diesem Platz (nur Entwicklung, nicht über die Oberfläche erreichbar) |
+| `?wetter=regen\|schnee\|nebel\|frost\|wind\|hitze\|laub` | Testspiel bei diesem Wetter |
 | `?dauer=60` | Kurzspiel mit 60 Sekunden |
 | `?surface=grass\|ash\|artificial` | Anderer Untergrund auf dem gewählten Platz |
 | `?incident=hund\|gewitter\|autoalarm\|polizei\|zaun` | Löst den Vorfall nach drei Sekunden aus |
@@ -326,11 +312,10 @@ src/
   data/        Namen, Berufe, Traits, Vereine, Hintergrundgeschichten
   sim/         Deterministische Match-Simulation (ohne three.js, voll testbar)
   career/      Saison, Verein, Ereignisse, Geschichten, Finanzen, Jugend, Nachfolge …
-  challenges/  Challenge-Szenarien
   render/      Pixel-Renderer mit Nachbearbeitungs-Shader, Kamera, Spielorte, Modelle
   audio/       Synthetischer Sound (Web Audio, keine Audiodateien)
-  input/       Tastatur und Gamepad
-  ui/          Menü, HUD, Vereinsheim, Trainer-Editor
+  input/       Trainer-Tasten (Zurufe, Wechsel, Tempo)
+  ui/          Hauptmenü, HUD, Vereinsheim, Trainer-Editor
 tests/         Vitest-Tests
 docs/          Screenshots und Projektüberblick
 ```

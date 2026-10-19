@@ -1,15 +1,8 @@
-import { trickLine } from '../sim/tricks.js';
 import { MATCH_INJURIES } from '../sim/knocks.js';
 import { tr } from '../core/i18n.js';
-import { keyLabel } from '../input/Input.js';
-import { TRAITS } from '../data/traits.js';
-import { tierById } from '../data/tiers.js';
-import { POSITIONS } from '../sim/generator.js';
-import { jobName } from '../data/names.js';
-import { jobPerk } from '../data/jobs.js';
 import { findAnyPlayer } from '../sim/squad.js';
 import { REF_TRAITS } from '../sim/referee.js';
-import { attackDir, getPlayer } from '../sim/match.js';
+import { attackDir } from '../sim/match.js';
 import { shootoutScore } from '../sim/shootout.js';
 import { footballMinute } from '../sim/minute.js';
 import { crestOf, crestSVG } from './crest.js';
@@ -42,22 +35,11 @@ export class Hud {
       <div class="flash"></div>
       <div class="edge left"></div>
       <div class="edge right"></div>
-      <div class="card">
-        <div class="name"></div>
-        <div class="meta"></div>
-        <div class="perk"></div>
-        <div class="tierline"></div>
-        <div class="traits"></div>
-        <div class="injury"></div>
-        <div class="bar stamina"><i></i><span>${tr('Puste', 'Stamina')}</span></div>
-        <div class="bar charge"><i></i><span>${tr('Schuss', 'Shot')}</span></div>
-      </div>
       <div class="help">${helpText()}      </div>`;
     this.root = root;
     this.$ = (sel) => root.querySelector(sel);
     this.toastTimer = 0;
     this.refreshHelp = () => (this.$('.help').innerHTML = helpText());
-    this.lastControlled = null;
   }
 
   init(match) {
@@ -202,26 +184,12 @@ export class Hud {
       } else if (e.type === 'incident') this.toast(e.text, e.stage === 'start' ? 3.5 : 2.5, 5);
       else if (e.type === 'lightning') this.lightning();
       else if (e.type === 'end') this.toast(match.shootout?.done ? tr(`ENTSCHIEDEN – ${short(shootoutScore(match.shootout)[0] > shootoutScore(match.shootout)[1] ? 0 : 1)} gewinnt im Elfmeterschießen`, `DECIDED – ${short(shootoutScore(match.shootout)[0] > shootoutScore(match.shootout)[1] ? 0 : 1)} win on penalties`) : tr('ABPFIFF', 'FULL TIME'), 3, 9);
-      else if (e.type === 'setpiece' && e.kind === 'penalty') this.toast(e.playerId === match.controlledId ? tr(`ELFMETER! Richtung mit den Pfeilen · ${keyLabel('shoot')} halten und loslassen`, `PENALTY! Aim with the arrows · hold and release ${keyLabel('shoot')}`) : tr('ELFMETER!', 'PENALTY!'), 2.4, 4);
-      else if (e.type === 'setpiece' && e.playerId === match.controlledId && (e.kind === 'freekick' || e.kind === 'corner')) {
-        const k = (a) => keyLabel(a);
-        this.toast(
-          e.kind === 'corner'
-            ? tr(`Ecke: ${k('pass')} kurz · ${k('loft')} hoch an den langen Pfosten · ${k('shoot')} scharf an den ersten`, `Corner: ${k('pass')} short · ${k('loft')} high to the far post · ${k('shoot')} driven to the near post`)
-            : tr(`Freistoß: Richtung mit den Pfeilen · ${k('shoot')} Schuss (halten = fester) · ${k('pass')} Pass · ${k('loft')} hoch`, `Free kick: aim with the arrows · ${k('shoot')} shoot (hold = harder) · ${k('pass')} pass · ${k('loft')} lofted`),
-          2.8,
-          3,
-        );
-      } else if (e.type === 'extratime_start') this.toast(tr(`VERLÄNGERUNG – ${match.score[0]}:${match.score[1]} nach der regulären Spielzeit`, `EXTRA TIME – ${match.score[0]}-${match.score[1]} after normal time`), 3, 6);
+      else if (e.type === 'setpiece' && e.kind === 'penalty') this.toast(tr('ELFMETER!', 'PENALTY!'), 2.4, 4);
+      else if (e.type === 'extratime_start') this.toast(tr(`VERLÄNGERUNG – ${match.score[0]}:${match.score[1]} nach der regulären Spielzeit`, `EXTRA TIME – ${match.score[0]}-${match.score[1]} after normal time`), 3, 6);
       else if (e.type === 'extratime_half') this.toast(tr('Seitenwechsel in der Verlängerung', 'Switching ends in extra time'), 2.5, 4);
       else if (e.type === 'fulltime_draw') this.toast(tr(`Unentschieden – ${match.pitch.id === 'halle' ? 'Siebenmeterschießen' : 'Elfmeterschießen'}!`, 'All square – penalties!'), 2.5, 6);
-      else if (e.type === 'shootout_kick') {
-        const shooter = findAnyPlayer(match, e.shooterId);
-        const mine = e.team === match.humanTeam;
-        const up = keyLabel('up');
-        const down = keyLabel('down');
-        this.toast(mine ? tr(`${shooter.name} läuft an – ${up}/${down} zielen, ${keyLabel('shoot')} halten und loslassen`, `${shooter.name} steps up – ${up}/${down} to aim, hold and release ${keyLabel('shoot')}`) : tr(`${shooter.name} schießt – ${up}/${down}: wohin springt dein Keeper?`, `${shooter.name} to shoot – ${up}/${down}: which way does your keeper dive?`), 3, 5);
-      } else if (e.type === 'pen_goal') this.toast(tr(`Drin! ${p?.name ?? ''}`, `Scored! ${p?.name ?? ''}`), 1.4, 6);
+      else if (e.type === 'shootout_kick') this.toast(tr(`${findAnyPlayer(match, e.shooterId).name} läuft an …`, `${findAnyPlayer(match, e.shooterId).name} steps up …`), 3, 5);
+      else if (e.type === 'pen_goal') this.toast(tr(`Drin! ${p?.name ?? ''}`, `Scored! ${p?.name ?? ''}`), 1.4, 6);
       else if (e.type === 'pen_miss') this.toast(tr(`Nicht drin! ${p?.name ?? ''}`, `Missed! ${p?.name ?? ''}`), 1.4, 6);
     }
   }
@@ -252,41 +220,13 @@ export class Hud {
     } else this.$('.clock').textContent = `${halfLabel(match)} · ${matchMinute(match, match.time)}'`;
 
     if (this.toastTimer > 0 && (this.toastTimer -= dt) <= 0) this.hideToast();
-
-    const p = getPlayer(match, match.controlledId);
-    this.$('.card').hidden = !p;
-    if (!p) return;
-    if (p.id !== this.lastControlled) {
-      this.lastControlled = p.id;
-      this.$('.name').textContent = p.name;
-      this.$('.card').style.setProperty('--kit', hex(match.teams[p.team].kit.shirt));
-      this.$('.meta').textContent = `${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)}`;
-      const perk = jobPerk(p.profession);
-      this.$('.perk').textContent = perk ? perk.label : '';
-      const tier = tierById(p.tier);
-      const line = this.$('.tierline');
-      line.style.setProperty('--c', tier.color);
-      line.innerHTML = `<span class="badge">${tier.name}</span> ${tr('Stärke', 'Rating')} ${p.rating} · ${POSITIONS[p.position] ?? ''}${p.title ? ` · <b>${p.title}</b>` : ''}`;
-      const tricks = trickLine(p);
-      this.$('.traits').innerHTML = (p.traits.length
-        ? p.traits.map((id) => `<span title="${TRAITS[id].desc}">${TRAITS[id].name}</span>`).join('')
-        : `<em>${tr('keine Besonderheiten', 'no special traits')}</em>`) + (tricks ? `<span>${tricks}</span>` : '');
-    }
-    const injury = p.injury ? `${p.injury.label}${p.injury.severity > 1 ? ` ×${p.injury.severity}` : ''}` : '';
-    if (this.$('.injury').textContent !== injury) this.$('.injury').textContent = injury;
-    this.$('.stamina i').style.width = `${Math.round(p.stamina * 100)}%`;
-    this.$('.charge i').style.width = `${Math.round(p.charge * 100)}%`;
   }
 }
 
-// Tastenhilfe aus der aktuellen Belegung (Einstellungen → Tastenbelegung).
+// Tastenhilfe für den Trainer an der Seitenlinie (feste Belegung).
 function helpText() {
-  const k = (a) => `<b>${keyLabel(a)}</b>`;
-  const arrows = ['up', 'down', 'left', 'right'].map(keyLabel).join('') === '↑↓←→' ? tr('<b>Pfeile</b>', '<b>Arrows</b>') : `<b>${['up', 'left', 'down', 'right'].map(keyLabel).join('')}</b>`;
   return tr(
-    `${arrows} laufen · ${k('sprint')} sprinten · ${k('shoot')} Schuss (halten = fester) · ${k('pass')} Pass · ${k('loft')} hoher Ball ·
-        ${k('hold')} halten (abschirmen / festhalten) · ${k('tackle')} Grätsche · ${k('poke')} stochern · ${k('trick')} Trick (Stick vor/seitlich/zurück/los; hoher Ball: Fallrückzieher) · ${k('switchPlayer')} Spieler wechseln · ${k('sub')} Auswechseln · <b>C</b> Tempo · <b>N</b> Ton · <b>G</b> Effekte · <b>F2</b> Screenshot · <b>H</b> Hilfe`,
-    `${arrows} run · ${k('sprint')} sprint · ${k('shoot')} shoot (hold = harder) · ${k('pass')} pass · ${k('loft')} lofted ball ·
-        ${k('hold')} hold (shield / grab) · ${k('tackle')} slide tackle · ${k('poke')} poke · ${k('trick')} trick (stick forward/side/back/none; high ball: bicycle kick) · ${k('switchPlayer')} switch player · ${k('sub')} substitute · <b>C</b> tempo · <b>N</b> sound · <b>G</b> effects · <b>F2</b> screenshot · <b>H</b> help`,
+    '<b>1–4</b> Zurufe · <b>X</b> Auswechseln · <b>C</b> Tempo · <b>N</b> Ton · <b>G</b> Effekte · <b>F2</b> Screenshot · <b>H</b> Hilfe · <b>Esc</b> Menü',
+    '<b>1–4</b> shouts · <b>X</b> substitute · <b>C</b> tempo · <b>N</b> sound · <b>G</b> effects · <b>F2</b> screenshot · <b>H</b> help · <b>Esc</b> menu',
   );
 }

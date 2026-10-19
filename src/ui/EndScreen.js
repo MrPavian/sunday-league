@@ -150,7 +150,7 @@ export class EndScreen {
     this.root.querySelector('.news-count').textContent = `${tr('Seite', 'Page')} ${this.page + 1} / ${this.pages.length}`;
   }
 
-  show(m, { keys = tr('<b>Enter</b> Revanche · <b>M</b> anderer Platz', '<b>Enter</b> rematch · <b>M</b> different pitch') } = {}) {
+  show(m, { keys = tr('<b>Enter</b> nochmal · <b>M</b> Menü', '<b>Enter</b> again · <b>M</b> menu') } = {}) {
     this.pages = newsPages(m);
     this.page = 0;
     this.root.innerHTML = `

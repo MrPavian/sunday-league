@@ -1,21 +1,10 @@
-// Tastatur + Gamepad → Intent. Bildschirm-oben entspricht -z in der Welt.
-import { tr } from '../core/i18n.js';
+// Tastatur (und Bildschirm-Knöpfe) → Intent. Reines Managerspiel: Es gibt keine Spielersteuerung mehr,
+// nur Trainer-Kürzel (Zurufe 1–4, Wechseltafel) sowie Tempo-, Ton-, Effekt-, Hilfe- und Menütaste.
+// Die Felder für Laufen/Schuss/Pass bleiben als neutrale Werte im Intent, damit die Simulation
+// (stepMatch) unverändert dasselbe Eingabeformat bekommt.
 
-const DEFAULT_KEYS = {
-  up: ['ArrowUp'],
-  down: ['ArrowDown'],
-  left: ['ArrowLeft'],
-  right: ['ArrowRight'],
-  sprint: ['ShiftLeft', 'ShiftRight'],
-  shoot: ['KeyW', 'Space'],
-  pass: ['KeyS'],
-  loft: ['KeyE'], // hoher Ball / Flanke
-  hold: ['KeyA'], // mit Ball abschirmen, ohne Ball Gegner festhalten
-  tackle: ['KeyD'], // Grätsche
-  poke: ['KeyY', 'KeyZ'], // Zweikampf im Stehen – Y auf QWERTZ ist physisch KeyZ
-  trick: ['KeyR'], // Trick am Ball / Fall- und Seitfallzieher
-  switchPlayer: ['KeyQ'],
-  sub: ['KeyX'],
+const KEYS = {
+  sub: ['KeyX'], // Wechseltafel
   tempo: ['KeyC'],
   mute: ['KeyN'],
   fx: ['KeyG'],
@@ -23,76 +12,6 @@ const DEFAULT_KEYS = {
   menu: ['Escape', 'KeyM'],
   help: ['KeyH'],
 };
-
-// Frei belegbar sind die Tasten fürs Spielen; Menü-, Hilfe- und Sondertasten bleiben fest.
-export const REBINDABLE = ['up', 'down', 'left', 'right', 'sprint', 'shoot', 'pass', 'loft', 'hold', 'tackle', 'poke', 'trick', 'switchPlayer', 'sub'];
-export const ACTION_LABELS = tr(
-  { up: 'Hoch', down: 'Runter', left: 'Links', right: 'Rechts', sprint: 'Sprinten', shoot: 'Schuss', pass: 'Pass', loft: 'Hoher Ball', hold: 'Halten', tackle: 'Grätsche', poke: 'Stochern', trick: 'Trick / Fallrückzieher', switchPlayer: 'Spieler wechseln', sub: 'Auswechseln' },
-  { up: 'Up', down: 'Down', left: 'Left', right: 'Right', sprint: 'Sprint', shoot: 'Shoot', pass: 'Pass', loft: 'Lofted ball', hold: 'Hold', tackle: 'Slide tackle', poke: 'Poke', trick: 'Trick / bicycle kick', switchPlayer: 'Switch player', sub: 'Substitute' },
-);
-const BIND_KEY = 'sunday-league:keys';
-
-function loadBindings() {
-  try {
-    const saved = JSON.parse(globalThis.localStorage?.getItem(BIND_KEY) ?? 'null');
-    if (saved && typeof saved === 'object') return saved;
-  } catch {
-    // kaputter Eintrag – Standard nehmen
-  }
-  return {};
-}
-
-// Aktuelle Belegung: gespeicherte Änderungen über den Standard gelegt.
-const KEYS = { ...DEFAULT_KEYS };
-for (const [action, codes] of Object.entries(loadBindings())) if (REBINDABLE.includes(action) && Array.isArray(codes) && codes.length) KEYS[action] = codes;
-
-export const bindingOf = (action) => KEYS[action];
-
-// Neue Taste für eine Aktion. Liegt sie schon auf einer anderen Aktion, tauschen
-// beide – so bleibt nichts unbelegt.
-export function setBinding(action, code) {
-  if (!REBINDABLE.includes(action)) return;
-  const old = KEYS[action];
-  for (const other of REBINDABLE) {
-    if (other !== action && KEYS[other].includes(code)) KEYS[other] = KEYS[other].map((c) => (c === code ? old[0] : c));
-  }
-  KEYS[action] = [code];
-  saveBindings();
-}
-
-export function resetBindings() {
-  for (const a of REBINDABLE) KEYS[a] = DEFAULT_KEYS[a];
-  try {
-    globalThis.localStorage?.removeItem(BIND_KEY);
-  } catch {
-    // egal
-  }
-}
-
-function saveBindings() {
-  const changed = Object.fromEntries(REBINDABLE.filter((a) => KEYS[a].join() !== DEFAULT_KEYS[a].join()).map((a) => [a, KEYS[a]]));
-  try {
-    globalThis.localStorage?.setItem(BIND_KEY, JSON.stringify(changed));
-  } catch {
-    // dann gilt die Belegung nur bis zum Neuladen
-  }
-}
-
-// Anzeigename einer Taste („KeyW" → „W", „ArrowUp" → „↑").
-export function keyName(code) {
-  if (!code) return '?';
-  if (code.startsWith('Key')) return code.slice(3);
-  if (code.startsWith('Digit')) return code.slice(5);
-  const names = { ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', ShiftLeft: 'Shift', ShiftRight: 'Shift', Space: tr('Leertaste', 'Space'), ControlLeft: 'Strg', ControlRight: 'Strg', AltLeft: 'Alt', Enter: 'Enter', Tab: 'Tab', Backspace: '⌫' };
-  return names[code] ?? code.replace(/^Numpad/, 'Num ');
-}
-
-// Anzeige für die Hilfe: erste belegte Taste; für Y/Z je nach Sprache die passende.
-export function keyLabel(action) {
-  const codes = KEYS[action];
-  if (action === 'poke' && codes.join() === DEFAULT_KEYS.poke.join()) return tr('Y', 'Z');
-  return keyName(codes[0]);
-}
 
 const PREVENT = new Set(['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
 
@@ -103,7 +22,7 @@ export class Input {
     this.down = new Set();
     this.pressed = new Set();
     this.padPrev = [];
-    // Knöpfe auf dem Bildschirm (Handy, Trainer-Modus) schieben hier ihre Befehle rein.
+    // Knöpfe auf dem Bildschirm (Handy) schieben hier ihre Befehle rein.
     this.virtual = new Set();
     this.shouts = [];
     target.addEventListener('keydown', (e) => {
@@ -126,55 +45,24 @@ export class Input {
     this.shouts.push(id);
   }
 
-  held(action) {
-    return KEYS[action].some((k) => this.down.has(k));
-  }
-
   wasPressed(action) {
     return KEYS[action].some((k) => this.pressed.has(k));
   }
 
-  // Liefert den Intent für einen Simulationsschritt; Tastendruck-Flanken
-  // werden dabei verbraucht.
+  // Liefert den Intent für einen Simulationsschritt; Tastendruck-Flanken werden dabei verbraucht.
   poll() {
-    let x = (this.held('right') ? 1 : 0) - (this.held('left') ? 1 : 0);
-    let z = (this.held('down') ? 1 : 0) - (this.held('up') ? 1 : 0);
-    let sprint = this.held('sprint');
-    let shootHeld = this.held('shoot');
-    let pass = this.wasPressed('pass');
-    let loft = this.wasPressed('loft');
-    let hold = this.held('hold');
-    let tackle = this.wasPressed('tackle');
-    let poke = this.wasPressed('poke');
-    let trick = this.wasPressed('trick');
-    const tempo = this.wasPressed('tempo');
-    let switchPlayer = this.wasPressed('switchPlayer');
     let sub = this.wasPressed('sub');
+    const tempo = this.wasPressed('tempo');
     const mute = this.wasPressed('mute');
     const fx = this.wasPressed('fx');
     const restart = this.wasPressed('restart');
     const menu = this.wasPressed('menu');
     const help = this.wasPressed('help');
 
+    // Gamepad: nur die Wechseltafel (Back/Select) bleibt als Trainer-Kürzel.
     const pad = navigator.getGamepads?.()[0];
     if (pad) {
-      const [ax, ay] = pad.axes;
-      if (Math.hypot(ax, ay) > 0.2) {
-        x = ax;
-        z = ay;
-      }
-      const b = (i) => !!pad.buttons[i]?.pressed;
-      const edge = (i) => b(i) && !this.padPrev[i];
-      shootHeld ||= b(2); // X
-      pass ||= edge(0); // A
-      loft ||= edge(1); // B
-      tackle ||= edge(3); // Y
-      hold ||= b(6); // LT
-      poke ||= edge(11); // R3
-      trick ||= edge(10); // L3
-      switchPlayer ||= edge(4); // LB
-      sub ||= edge(8); // Back/Select
-      sprint ||= b(5) || b(7); // RB / RT
+      sub ||= !!pad.buttons[8]?.pressed && !this.padPrev[8];
       this.padPrev = pad.buttons.map((btn) => btn.pressed);
     }
 
@@ -190,11 +78,9 @@ export class Input {
     v.clear();
     const shout = this.shouts.shift() ?? null;
     this.pressed.clear();
-    const l = Math.hypot(x, z);
-    if (l > 1) {
-      x /= l;
-      z /= l;
-    }
-    return { move: { x, z }, sprint, shootHeld, pass, loft, hold, tackle, poke, trick, switchPlayer, sub, tempo: tempo || vt, restart: restart || vr, menu: menu || vm, mute: mute || vmu, fx, help: help || vh, shout };
+    return {
+      move: { x: 0, z: 0 }, sprint: false, shootHeld: false, pass: false, loft: false, hold: false, tackle: false, poke: false, trick: false, switchPlayer: false,
+      sub, tempo: tempo || vt, restart: restart || vr, menu: menu || vm, mute: mute || vmu, fx, help: help || vh, shout,
+    };
   }
 }

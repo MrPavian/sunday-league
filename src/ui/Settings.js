@@ -1,5 +1,4 @@
 import { getLang, LANGS, tr } from '../core/i18n.js';
-import { ACTION_LABELS, REBINDABLE, bindingOf, keyName, resetBindings, setBinding } from '../input/Input.js';
 import { HALF_MAX, HALF_MIN, matchDuration, presetHalf } from '../sim/match.js';
 import { PITCHES } from '../sim/pitch.js';
 import { BUND_NAME } from '../career/bundespokal.js';
@@ -31,14 +30,7 @@ export class Settings {
         this.page = value;
         this.render();
       }
-      else if (action === 'bind') {
-        this.capturing = value;
-        this.render();
-      } else if (action === 'resetkeys') {
-        resetBindings();
-        this.h.onChange?.('keys');
-        this.render();
-      } else {
+      else {
         this.h.onChange?.(action, value);
         this.render();
       }
@@ -48,18 +40,6 @@ export class Settings {
     });
     window.addEventListener('keydown', (e) => {
       if (this.root.hidden || this.firstRun) return;
-      // Neue Taste abwarten: die nächste gedrückte Taste wird die Belegung.
-      if (this.capturing) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        if (e.code !== 'Escape' && !['KeyO', 'KeyH', 'KeyM', 'KeyN', 'KeyG', 'KeyC', 'Enter', 'F2'].includes(e.code)) {
-          setBinding(this.capturing, e.code);
-          this.h.onChange?.('keys');
-        }
-        this.capturing = null;
-        this.render();
-        return;
-      }
       if (e.code === 'Escape' || e.code === 'KeyO') {
         e.stopPropagation();
         this.h.onBack?.();
@@ -111,25 +91,16 @@ export class Settings {
         <p class="hint">${tr('Gilt für alle Spiele, auch die simulierten der Liga. Beim Turnier spielt man mehrere Partien am Stück – deshalb standardmäßig kürzer. Kraft und Torgefahr passen sich der Dauer an – müde werden die Jungs so oder so.', 'Applies to every match, including the simulated league games. At a cup you play several games in a row – so they are shorter by default. Stamina and scoring adapt to the length – the lads get tired either way.')}</p>
         <h4>${tr('Unentschieden im Pokal', 'Level after normal time in cup ties')}</h4>
         <div class="choice"><button class="${s.pokalExtra ? '' : 'active'}" data-action="pokalextra" data-value="direct">${tr('Direkt Elfmeterschießen', 'Straight to penalties')}</button><button class="${s.pokalExtra ? 'active' : ''}" data-action="pokalextra" data-value="extra">${tr('Verlängerung, dann Elfmeterschießen', 'Extra time, then penalties')}</button></div>
-        <p class="hint">${tr(`Gilt für Kreis-, Bezirks- und Landespokal sowie den ${BUND_NAME} – eigene Spiele (selbst, Seitenlinie, Liveticker) und die schnell gerechneten der anderen. Die Verlängerung dauert ein Drittel der regulären Spielzeit (wie 2 × 15 bei 2 × 45 Minuten), auf die Spielzeit des Platzes umgerechnet. Standard wie bisher: direkt Elfmeterschießen.`, `Applies to the District, County and State Cup and the ${BUND_NAME} – your own ties (playing, touchline, live ticker) and the quickly simulated others. Extra time lasts a third of the regular playing time (like 2 × 15 on top of 2 × 45 minutes), scaled to the length of the pitch. Default as before: straight to penalties.`)}</p>
+        <p class="hint">${tr(`Gilt für Kreis-, Bezirks- und Landespokal sowie den ${BUND_NAME} – eigene Spiele (Seitenlinie, Liveticker) und die schnell gerechneten der anderen. Die Verlängerung dauert ein Drittel der regulären Spielzeit (wie 2 × 15 bei 2 × 45 Minuten), auf die Spielzeit des Platzes umgerechnet. Standard wie bisher: direkt Elfmeterschießen.`, `Applies to the District, County and State Cup and the ${BUND_NAME} – your own ties (touchline, live ticker) and the quickly simulated others. Extra time lasts a third of the regular playing time (like 2 × 15 on top of 2 × 45 minutes), scaled to the length of the pitch. Default as before: straight to penalties.`)}</p>
         <h4>${tr('Auswechseln', 'Substitutions')}</h4>
         <div class="choice">${[['liga', tr('Je nach Liga', 'By league')], ['frei', tr('Immer frei', 'Always rolling')], ['begrenzt', tr('Immer begrenzt', 'Always limited')]].map(([id, label]) => `<button class="${s.subs === id ? 'active' : ''}" data-action="subs" data-value="${id}">${label}</button>`).join('')}</div>
-        <p class="hint">${tr('Frei: fliegend wechseln, wer draußen war, darf wieder rein – so läuft es in der Freizeitliga und bei Freundschaftsspielen. Begrenzt: vier Wechsel pro Spiel, raus ist raus – so zählt der Schiri ab der Kreisklasse. Verletzte müssen immer runter; ohne Ersatz geht es in Unterzahl weiter.', 'Rolling: swap freely, and anyone who came off can go back on – that is how the recreational league and friendlies work. Limited: four substitutions per match, once off stays off – that is what the referee counts from the district league up. Injured players always have to come off; without a replacement you play a man down.')}</p>
+        <p class="hint">${tr('Frei: fliegend wechseln, wer draußen war, darf wieder rein – so läuft es in der Freizeitliga. Begrenzt: vier Wechsel pro Spiel, raus ist raus – so zählt der Schiri ab der Kreisklasse. Verletzte müssen immer runter; ohne Ersatz geht es in Unterzahl weiter.', 'Rolling: swap freely, and anyone who came off can go back on – that is how the recreational league works. Limited: four substitutions per match, once off stays off – that is what the referee counts from the district league up. Injured players always have to come off; without a replacement you play a man down.')}</p>
         <h4>${tr('Ligagröße', 'League size')}</h4>
         <div class="choice">${[6, 8].map((n) => `<button class="${s.leagueSize === n ? 'active' : ''}" data-action="leaguesize" data-value="${n}">${tr(`${n} Teams · ${(n - 1) * 2} Spieltage`, `${n} teams · ${(n - 1) * 2} matchdays`)}</button>`).join('')}</div>
         <p class="hint">${tr('Mehr Teams heißt längere Saison: mehr Spieltage, mehr Geschichten, weniger Zufall bei Auf- und Abstieg. Neue Karrieren starten damit.', 'More teams means a longer season: more matchdays, more stories, less luck in promotion and relegation. New careers start with it.')}${s.leagueSizeNow && s.leagueSizeNow !== s.leagueSize ? tr(' In deiner laufenden Karriere gilt die Änderung ab der nächsten Saison.', ' In your current career the change applies from next season.') : ''}</p>
-        <h4>${tr('Spielmodus', 'Play mode')}</h4>
-        <div class="choice"><button class="${s.manager ? '' : 'active'}" data-action="mode" data-value="player">${tr('Selbst spielen', 'Play yourself')}</button><button class="${s.manager ? 'active' : ''}" data-action="mode" data-value="manager">${tr('Trainer an der Seitenlinie', 'Manager on the touchline')}</button></div>
-        <p class="hint">${tr('Als Trainer spielt deine Mannschaft selbst. Du rufst rein: Pressing, hinten dicht, aufrücken, über die Flügel – per Knopf oder Taste 1–4, dazu wechselst du aus. Ob die Jungs hören, ist eine andere Frage.', 'As manager your team plays on its own. You shout instructions: press, defend, push up, use the wings – by button or keys 1–4, and you make the substitutions. Whether the lads listen is another matter.')}${s.touch ? tr(' Auf dem Handy ist das der Standard.', ' This is the default on phones.') : ''}</p>
         <h4>${tr('Trainer-Ansicht', 'Manager view')}</h4>
         <div class="choice"><button class="${s.coachLevel === 'profi' ? '' : 'active'}" data-action="coachlevel" data-value="einsteiger">${tr('Einsteiger', 'Beginner')}</button><button class="${s.coachLevel === 'profi' ? 'active' : ''}" data-action="coachlevel" data-value="profi">${tr('Fortgeschritten', 'Advanced')}</button></div>
         <p class="hint">${tr('Einsteiger: sechs große Entscheidungen – Angreifen, Absichern, Pressing, Konter, Ball halten, Flügel. Fortgeschritten: dazu jede Stellschraube einzeln – Aufbau, Angriffsweg, Seite, Pressinghöhe, Ausrichtung gegen den Ball, Formation, Tempo, Risiko und der Grundstil.', 'Beginner: six big calls – attack, stay solid, press, counter, keep the ball, wings. Advanced: every lever on its own as well – build-up, route, side, pressing height, shape without the ball, formation, tempo, risk and base style.')}</p>
-        <h4>${tr('Schwierigkeit', 'Difficulty')}</h4>
-        <div class="choice">${[['easy', tr('Locker', 'Easy')], ['normal', tr('Normal', 'Normal')], ['hard', tr('Kreisliga-hart', 'Hard')]].map(([id, label]) => `<button class="${s.difficulty === id ? 'active' : ''}" data-action="difficulty" data-value="${id}">${label}</button>`).join('')}</div>
-        <p class="hint">${tr('Ändert, wie klug der Gegner spielt – schneller entscheiden, mehr Zweikämpfe, bessere Pässe. Die Werte der Spieler bleiben gleich, deine Mitspieler auch.', 'Changes how smart the opponent plays – faster decisions, more challenges, better passes. Player ratings stay the same, and so do your team-mates.')}</p>
-        <h4>${tr('Automatisch wechseln in der Abwehr', 'Auto-switch when defending')}</h4>
-        <div class="choice">${toggle('autoswitch', s.autoSwitch, tr('An', 'On'), tr('Aus', 'Off'))}</div>
-        <p class="hint">${tr('Hat der Gegner den Ball, übernimmst du automatisch den Mitspieler, der deutlich näher dran ist. Sonst wechselst du selbst mit Q.', 'When the opponent has the ball you automatically take over the team-mate who is clearly closer. Otherwise you switch yourself with Q.')}</p>
       `,
       ton: `
         <h4>${tr('Ton', 'Sound')}</h4>
@@ -154,13 +125,8 @@ export class Settings {
         <div class="choice">${toggle('safekits', !s.safeKits, tr('Vereinsfarben', 'Club colours'), tr('Farbenblind-sicher', 'Colour-blind safe'))}</div>
         <p class="hint">${tr('Blau gegen Orange mit hellen und dunklen Hosen – gut unterscheidbar auch bei Rot-Grün-Schwäche. Nur die Anzeige ändert sich.', 'Blue against orange with light and dark shorts – easy to tell apart even with red-green colour blindness. Only the display changes.')}</p>
       `,
-      tasten: `
-        <h4>${tr('Tastenbelegung', 'Key bindings')}</h4>
-        <div class="keys">${REBINDABLE.map((a) => `<span>${ACTION_LABELS[a]}</span><button class="${this.capturing === a ? 'active' : ''}" data-action="bind" data-value="${a}">${this.capturing === a ? tr('Taste drücken …', 'Press a key …') : [...new Set(bindingOf(a).map(keyName))].join(' / ')}</button>`).join('')}</div>
-        <p class="hint">${tr('Klicken, dann die neue Taste drücken (Esc bricht ab). Ist die Taste schon belegt, tauschen beide. Gamepad bleibt unverändert.', 'Click, then press the new key (Esc cancels). If the key is already used, the two swap. The gamepad stays as it is.')} <button data-action="resetkeys">${tr('Standard wiederherstellen', 'Restore defaults')}</button></p>
-      `,
     };
-    const tabs = [['spiel', tr('Spiel', 'Game')], ['ton', tr('Ton & Vibration', 'Sound & vibration')], ['grafik', tr('Grafik & Sprache', 'Display & language')], ['tasten', tr('Steuerung', 'Controls')]];
+    const tabs = [['spiel', tr('Spiel', 'Game')], ['ton', tr('Ton & Vibration', 'Sound & vibration')], ['grafik', tr('Grafik & Sprache', 'Display & language')]];
     const page = pages[this.page] ? this.page : 'spiel';
     this.root.innerHTML = `
       <div class="settings-panel notebook">

@@ -116,7 +116,7 @@ export const homeScreens = {
     else if (coachAway(c)) actions = `<p class="warn">${tr('Du bist diese Woche nicht da – der Kapitän stellt auf, du bekommst nur das Ergebnis.', 'You are away this week – the captain picks the team, you just get the result.')}</p>${button(tr('Ergebnis abwarten', 'Wait for the result'), { kind: 'secondary big block', action: 'onSimulate' })}`;
     else
       actions = `${button(tr('Anpfiff – an der Seitenlinie', 'Kick-off – on the touchline'), { kind: 'primary big block coach-play', action: 'onCoach' })}
-        <div class="hub-alt">${button(tr('Liveticker mit Entscheidungen', 'Live ticker with decisions'), { action: 'onSimulate' })}${button(tr('Selbst spielen', 'Play it yourself'), { kind: 'self-play', action: 'onPlay' })}</div>`;
+        <div class="hub-alt">${button(tr('Liveticker mit Entscheidungen', 'Live ticker with decisions'), { action: 'onSimulate' })}</div>`;
     return `
       <article class="ui-card match hub-match" style="--kit:${hex(club.kit.shirt)}">
         <p class="t-cap">${tr('Sonntag, 10:30 Uhr', 'Sunday, 10:30')} · ${tr('Spieltag', 'Matchday')} ${c.round + 1}${isDerbyFixture(c, f) ? ` · <b class="derby">${derbyOf(c).name}</b>` : ''}</p>
@@ -162,7 +162,7 @@ export const homeScreens = {
       ${kind === 'bund' ? `<p class="t-2">${tr('Spielort', 'Venue')}: <b>${{ own: tr('eigener Platz', 'own pitch'), stands: tr('eigener Platz mit Stahlrohrtribüne', 'own pitch with scaffold stand'), stadium: tr('großes Stadion', 'big stadium') }[home ? tie.venue ?? 'own' : 'stadium']}</b></p>` : ''}
       <p class="t-2">${format} ${tr('gegen', 'v')} ${format} · ${MATCH.pokalExtra ? tr('bei Unentschieden Verlängerung, dann Elfmeterschießen', 'if level: extra time, then penalties') : tr('bei Unentschieden direkt Elfmeterschießen', 'if level: straight to penalties')} · ${tr('am Sonntag geht die Liga weiter', 'the league carries on on Sunday')}</p>
       ${button(tr('Anpfiff – an der Seitenlinie', 'Kick-off – on the touchline'), { kind: 'primary big block coach-play', action: 'onPokalCoach', value: kind })}
-      <div class="hub-alt">${button(tr('Liveticker mit Entscheidungen', 'Live ticker with decisions'), { action: 'onPokalSimulate', value: kind })}${button(tr('Selbst spielen', 'Play it yourself'), { kind: 'self-play', action: 'onPokalPlay', value: kind })}</div></div>`;
+      <div class="hub-alt">${button(tr('Liveticker mit Entscheidungen', 'Live ticker with decisions'), { action: 'onPokalSimulate', value: kind })}</div></div>`;
   },
 
   // Familie & Energie des Spielertrainers als kleine Balken.
@@ -251,8 +251,7 @@ export const homeScreens = {
       <p class="hint">${tr('Hin- und Rückspiel, es zählt das Gesamtergebnis. Steht es danach gleich: Elfmeterschießen.', 'Two legs, aggregate score counts. Level after both: penalties.')}</p>
       ${legs ? `<ul class="legs">${legs}</ul>` : ''}
       ${r && r.leg === 1 ? `<p>${tr('Gesamt bisher', 'Aggregate so far')}: <b>${r.agg[0]}:${r.agg[1]}</b></p>` : ''}
-      <button class="primary self-play" data-action="onRelPlay">${leg === 0 ? tr('Hinspiel selbst spielen', 'Play the first leg') : tr('Rückspiel selbst spielen', 'Play the second leg')}</button>
-      <button class="coach-play" data-action="onRelCoach">${tr('Trainer an der Seitenlinie', 'Manager on the touchline')}</button>
+      <button class="primary coach-play" data-action="onRelCoach">${leg === 0 ? tr('Hinspiel an der Seitenlinie', 'First leg on the touchline') : tr('Rückspiel an der Seitenlinie', 'Second leg on the touchline')}</button>
       <button data-action="onRelSimulate">${tr('Liveticker mit Entscheidungen', 'Live ticker with decisions')}</button>`;
   },
 
