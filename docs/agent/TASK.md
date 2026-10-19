@@ -55,6 +55,10 @@ Training und Ehrenamt in Saisonmitte und -ende, Schiri in der untersten Liga (Me
 ## Danach (vom Nutzer festgelegt, 2026-10-15)
 Nach der Hallen-Torquote: Spielmechanik und Ballphysik auf allen Plätzen feilen (ROADMAP 11.8).
 
+## Nächste Ausbaustufe (vom Nutzer festgelegt, 2026-10-19)
+Siehe ROADMAP 11.9: reines Managerspiel (Selbststeuern entfernen), Alte Herren, Frauenteam als Option, Vereinsfest,
+Sommerturnier, Transfermarkt, Platzpflege mit Platzmiete und Ausbau (Sportplatz, Tribünen, Gastro), offene Punkte 11.1–11.8.
+
 ## Gesperrt bis zum ausdrücklichen Auftrag (vom Nutzer festgelegt, 2026-10-07)
 Couch-Koop, Online-Liga mit Freunden, Editoren und Modding (ROADMAP Phase 8) bleiben auf der Roadmap, werden
 aber erst bearbeitet, wenn der Nutzer das ausdrücklich beauftragt. Nicht von sich aus vorschlagen oder anfangen.

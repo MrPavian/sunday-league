@@ -827,3 +827,36 @@ durchgehen. Vorgehen wie bei 11.6a: erst messen (KI gegen KI, feste Seeds, je Pl
 Vergleichswerten und Quellen belegen, dann gezielt ändern; andere Plätze bleiben bei platzspezifischen
 Änderungen bitgleich. Kandidaten (zu prüfen, nicht beschlossen): Ballrollen und Reibung je Untergrund, Abpraller
 und Effet, Annahme und Ballmitnahme, Schusshärte und Flugkurven, Zweikämpfe und Laufwege.
+
+### 11.9 Nächste Ausbaustufe (vom Nutzer festgelegt, 2026-10-19)
+**Grundsatz: reines Managerspiel.** Die Funktion, Spieler selbst zu steuern, wird entfernt. Gespielt wird nur noch
+als Trainer an der Seitenlinie (Zurufe, Taktik, Wechsel) oder im Liveticker. Umfang (Freundschaftsspiel,
+Challenges, Elfmeterschießen, Tastatur-/Touch-Steuerung, Tests) vor dem Umbau festlegen.
+
+**Neue Mannschaften**
+- **Alte Herren** als zweites Team im Verein (eigener Kader aus Ü32/Ex-Spielern, eigene Runde, wenig Training).
+- **Frauenteam** wahlweise: im Spiel als Option gründen, wenn genug Geld vorhanden ist (Startkosten, Trikots,
+  Trainerin, Platzzeiten), eigener Kader und eigene Liga; Mädchen aus der Jugend rücken auf.
+
+**Vereinsleben**
+- **Vereinsfest**: ein Wochenende mit Ständen, Torwandschießen, Elfmeterkönig, Einnahmen und Ereignissen.
+- **Sommerturnier**: Turnier vor der Saison (eigenes oder auswärts), Gruppenphase und K.-o.
+
+**Kader**
+- **Transfermarkt**: Spieler von Nachbarvereinen abwerben und abgeben (Wechselfristen, Ablöse/Ausbildungs-
+  entschädigung im Amateurbereich, Gerede im Dorf), aufbauend auf `poaching.js` und `recruiting.js`.
+
+**Platz und Anlage**
+- **Platzpflege**: Rasen nutzt sich über die Saison ab, Kreide nachziehen, Bewässern, Sperrung bei Regen/Absage.
+- **Platzmiete** (Pachtvertrag mit der Gemeinde, eigener Platz vs. gemieteter Platz).
+- **Ausbau Sportplatz** (Kunstrasen, Flutlicht, zweiter Platz), **Tribünen** (Stehstufen, Sitzplätze, Dach),
+  **Gastro** (Bratwurststand, Vereinsheim-Theke, Biergarten) – aufbauend auf `facilities.js`.
+
+**Offene Punkte aus 11.1–11.8 abarbeiten**
+- Großfeld: zu hohe Torquote je Schuss (20 % statt real 10–12 %), seltene Kopfballtore, seltene Ecken.
+- Futsal-Ball Größe 4 in der Halle (eigener Ballradius je Platz).
+- „Nach außen lenken" mit echtem Leiten des Ballführenden.
+- Torwart-Animationen (Abrollen, Fangen Brust/Kopf, Fausten beidhändig, Abschlag mit Ausholen, Breitmachen,
+  sichtbarer Fehlgriff), Dehnen greift an den Fuß, Reaktionen bei Sprenger/Autoalarm/Zaun, Ausrutschen beim Gewitter.
+- Chat-Zusagen wiederholen sich am häufigsten.
+- Bundespokal: vollständiges Teilnehmerfeld statt nur eigener Spiele.
