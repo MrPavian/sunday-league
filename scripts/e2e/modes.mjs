@@ -359,6 +359,11 @@ export async function clubSetup(b) {
   await p.waitForTimeout(1500);
   ok(!!(await p.$('[data-action="foundClub"]')), 'Gründungsversammlung fehlt');
   const cash0 = await p.evaluate(() => JSON.parse(localStorage.getItem('sunday-league:career')).cash);
+  // Echt tippen statt fill(): fill() umgeht keydown – so blieb unbemerkt, dass die Spielsteuerung die Leertaste schluckte.
+  await p.fill('#club input[data-field="name"]', '');
+  await p.click('#club input[data-field="name"]');
+  await p.keyboard.type('FC Blau Weiss');
+  ok((await p.inputValue('#club input[data-field="name"]')) === 'FC Blau Weiss', `Vereinsname mit Leertaste getippt: „${await p.inputValue('#club input[data-field="name"]')}“`);
   await p.fill('#club input[data-field="name"]', 'FC Testhausen');
   await p.fill('#club input[data-field="short"]', 'FCT');
   // Trikotfarbe und Wappensymbol: Scrollposition bleibt.

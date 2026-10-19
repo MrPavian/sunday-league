@@ -96,6 +96,8 @@ export function keyLabel(action) {
 
 const PREVENT = new Set(['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
 
+export const isTyping = (el) => !!el && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName));
+
 export class Input {
   constructor(target = window) {
     this.down = new Set();
@@ -105,6 +107,8 @@ export class Input {
     this.virtual = new Set();
     this.shouts = [];
     target.addEventListener('keydown', (e) => {
+      // In Eingabefeldern (Vereinsname, Spielername …) gehören Leertaste und Pfeile dem Text, nicht dem Spiel.
+      if (isTyping(e.target)) return;
       if (PREVENT.has(e.code)) e.preventDefault();
       if (!this.down.has(e.code)) this.pressed.add(e.code);
       this.down.add(e.code);
