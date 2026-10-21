@@ -32,6 +32,7 @@ import { homeScreens } from './clubhouse/home.js';
 import { phoneScreens } from './clubhouse/phone.js';
 import { pubScreens } from './clubhouse/pub.js';
 import { seasonScreens } from './clubhouse/season.js';
+import { festivalScreens } from './clubhouse/festival.js';
 import { teamScreens } from './clubhouse/team.js';
 import { hex, dartPoints, leagueName } from './clubhouse/shared.js';
 
@@ -131,6 +132,7 @@ export class Clubhouse {
       else if (action === 'kitCollar') this.draft.kit.collar = value;
       else if (action === 'kitSleeves') this.draft.kit.sleeves = value;
       else if (action.startsWith('crest')) this.crestAction(action, value);
+      else if (action.startsWith('fest')) this.festAction(action, value);
       else if (action === 'foundClub') {
         updateClub(this.career, this.draft ?? {}, { free: true });
         if (this.crestDraft) updateCrest(this.career, this.crestDraft);
@@ -574,4 +576,4 @@ export class Clubhouse {
 }
 
 // Bildschirme je Bereich (src/ui/clubhouse/*): Methoden mit demselben this wie oben.
-Object.assign(Clubhouse.prototype, homeScreens, teamScreens, seasonScreens, clubScreens, phoneScreens, pubScreens);
+Object.assign(Clubhouse.prototype, homeScreens, teamScreens, seasonScreens, clubScreens, phoneScreens, pubScreens, festivalScreens);

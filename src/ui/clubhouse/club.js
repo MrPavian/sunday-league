@@ -44,6 +44,7 @@ export const clubScreens = {
       ${profile}
       ${this.facilityBlock()}
       ${this.clubLifeBlock()}
+      ${this.festivalCard()}
       ${this.chronicleBlock()}
       ${this.kitForm()}
       ${this.crestBlock()}`;

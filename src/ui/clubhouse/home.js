@@ -21,7 +21,7 @@ import { coachAge, legacy, legacyPrompt, stepDown, successionCandidates } from '
 import { talk } from '../../career/pub.js';
 import { weatherLine } from '../../career/weather.js';
 import { derbyOf, isDerbyFixture } from '../../career/derby.js';
-import { CUP_NAME, CUPS, cupOf, PRIZES, tournamentOpen, winterCupDue, winterCupRunning } from '../../career/tournament.js';
+import { CUP_NAME, CUPS, cupOf, PRIZES, summerCupDue, summerCupRunning, tournamentOpen, winterCupDue, winterCupRunning } from '../../career/tournament.js';
 import { humanTie, pokalClub, pokalDue, POKALE, pokalOf, pokalWhen, roundName } from '../../career/pokal.js';
 import { levelName } from '../../career/bundespokal.js';
 import { MATCH } from '../../sim/match.js';
@@ -111,6 +111,7 @@ export const homeScreens = {
     const pk = pokalDue(c);
     if (this.busy) actions = `<p class="busy">${this.busy}</p>`;
     else if (pk && !coachAway(c)) actions = this.pokalCard(pk);
+    else if (summerCupRunning(c)) actions = `<p class="t-2">${tr('Erst das Sommerturnier zu Ende spielen – oder abbrechen. Danach beginnt die Saison.', 'Finish the summer tournament first – or call it off. Then the season starts.')}</p>`;
     else if (winterCupDue(c)) actions = `<p class="t-2">${tr('Erst entscheiden: Hallenturnier ja oder nein? Danach geht die Liga weiter.', 'Decide first: indoor tournament, yes or no? Then the league carries on.')}</p>`;
     else if (winterCupRunning(c)) actions = `${button(tr('Zum Hallenturnier', 'To the indoor tournament'), { kind: 'primary big block', action: 'tab', value: 'cup' })}<p class="t-2">${tr('Der nächste Ligaspieltag steigt nach dem Turnier.', 'The next league match is after the tournament.')}</p>`;
     else if (coachAway(c)) actions = `<p class="warn">${tr('Du bist diese Woche nicht da – der Kapitän stellt auf, du bekommst nur das Ergebnis.', 'You are away this week – the captain picks the team, you just get the result.')}</p>${button(tr('Ergebnis abwarten', 'Wait for the result'), { kind: 'secondary big block', action: 'onSimulate' })}`;
@@ -138,6 +139,7 @@ export const homeScreens = {
         ${notes.length ? `<ul class="hub-notes">${notes.map((n) => `<li>${n}</li>`).join('')}</ul>` : ''}
         ${stories.length ? `<ul class="stories">${stories.map((x) => `<li>${x}</li>`).join('')}</ul>` : ''}
         ${this.meBars()}
+        ${summerCupDue(c) || summerCupRunning(c) ? this.summerCard() : ''}
         ${winterCupDue(c) ? `<div class="winter-cup"><p class="label">${tr('Winterpause', 'Winter break')}</p><p>${tr(`Am Wochenende: <b>${CUPS.halle.name}</b> in der ${CUPS.halle.place}. Acht Teams, Bande, Handballtore – ${CUPS.halle.prizes.winner} € für den Sieger.`, `This weekend: <b>${CUPS.halle.name}</b> at ${CUPS.halle.place}. Eight teams, boards, handball goals – €${CUPS.halle.prizes.winner} for the winner.`)}</p>
           <div class="ui-row">${button(tr('Anmelden', 'Enter'), { kind: 'primary', action: 'onCupStart', value: 'halle' })}${button(tr('Diesmal nicht', 'Not this time'), { action: 'onCupSkip', value: 'halle' })}</div></div>` : ''}
         <div class="hub-actions">${actions}</div>
@@ -302,7 +304,7 @@ export const homeScreens = {
       <button class="primary" data-action="onCupStart">${tr(`Zur ${CUP_NAME} anmelden`, `Enter the ${CUP_NAME}`)}</button>
       <button data-action="onCupSkip">${tr('Diesmal nicht – direkt in die neue Saison', 'Not this time – straight into the new season')}</button>`;
     if (tournamentOpen(c)) return `<p class="label">${tr(`${CUP_NAME} läuft`, `${CUP_NAME} under way`)}</p><button class="primary" data-action="tab" data-value="cup">${tr('Zum Turnier', 'To the tournament')}</button>`;
-    return `${t.log.length && !t.skipped ? `<p class="reply ok">${t.log.at(-1)}</p>` : ''}<button class="primary" data-action="onNewSeason">${tr('Nächste Saison', 'Next season')}</button>`;
+    return `${t.log.length && !t.skipped ? `<p class="reply ok">${t.log.at(-1)}</p>` : ''}${this.festivalCard({ seasonEnd: true })}<button class="primary" data-action="onNewSeason">${tr('Nächste Saison', 'Next season')}</button>`;
   },
 
   miniTable() {

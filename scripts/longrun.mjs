@@ -5,15 +5,18 @@ import { promoteProspect } from '../src/career/youth.js';
 import { table } from '../src/career/career.js';
 import { resolveEvent } from '../src/career/events.js';
 import { createRng } from '../src/core/rng.js';
+import { festivalPlan, holdFestival, volunteers, FEST_PARTS, FEST_ORDER } from '../src/career/festival.js';
+import { advanceCup, cupOf, currentCupMatches, prepareCupMatch, recordCupResult, startSummerCup, summerCupDue } from '../src/career/tournament.js';
 import { appointStaff, holderOf, ROLES, squadCandidates } from '../src/career/staff.js';
 // --staff=outside: alle freien Ämter per Aushang (Pauschale), --staff=squad: aus dem Kader (umsonst).
 const STAFF = (process.argv.find((a) => a.startsWith('--staff=')) ?? '').split('=')[1] ?? '';
 const SEASONS = +process.argv[2] || 8, seed = +process.argv[3] || 4242;
 const TERM = +((process.argv.find((a) => a.startsWith('--term=')) ?? '').split('=')[1] ?? 1) || 1, WISHES = process.argv.includes('--wishes');
+const FEST = process.argv.includes('--fest'); // Vereinsfest und Sommerturnier mitspielen (Geld je Saison unter 'fest'/'turnier')
 const BOT = process.argv.includes('--bot'); // spielt wie ein aktiver Mensch: holt Leute, baut aus, nimmt Sponsoren
 const log = { recruited: 0, promoted: 0, built: [], sponsors: 0 };
 const money = {}; // Einnahmen/Ausgaben je Liga und Kategorie
-const cat = (t) => /Getränke|Drinks/.test(t) ? 'getraenke' : /Mitglied|Membership/.test(t) ? 'beitraege' : /\((Trikot|Ärmel|Bande|Ball|Shirt|Sleeve|Board)/.test(t) ? 'sponsoren' : /Strafen|Fines/.test(t) ? 'strafen' : /Schiri|Referee|Platzmiete|Pitch rent/.test(t) ? 'schiri+platz' : /Bonus|Prämie/i.test(t) ? 'praemien' : /Handwerker|Material|builders/.test(t) ? 'ausbau' : /Nebenkosten|running/.test(t) ? 'nebenkosten' : /Fahrgeld|Travel money/.test(t) ? 'fahrgeld' : /Spielbetrieb|Running the team/.test(t) ? 'spielbetrieb' : /Auswärts|Away trip/.test(t) ? 'auswaerts' : /Fahrt|trip/i.test(t) ? 'fahrt' : /Pauschale|Allowance/.test(t) ? 'ehrenamt' : /Aufwandsentschädigung|Expenses for/.test(t) ? 'ae' : 'sonstiges';
+const cat = (t) => /Getränke|Drinks/.test(t) ? 'getraenke' : /Mitglied|Membership/.test(t) ? 'beitraege' : /\((Trikot|Ärmel|Bande|Ball|Shirt|Sleeve|Board)/.test(t) ? 'sponsoren' : /Strafen|Fines/.test(t) ? 'strafen' : /Schiri|Referee|Platzmiete|Pitch rent/.test(t) ? 'schiri+platz' : /Bonus|Prämie/i.test(t) ? 'praemien' : /Handwerker|Material|builders/.test(t) ? 'ausbau' : /Vereinsfest|club festival/i.test(t) ? 'fest' : /Sommerturnier|summer tournament|Theke beim Sommer|Bar at the summer/i.test(t) ? 'turnier' : /Nebenkosten|running/.test(t) ? 'nebenkosten' : /Fahrgeld|Travel money/.test(t) ? 'fahrgeld' : /Spielbetrieb|Running the team/.test(t) ? 'spielbetrieb' : /Auswärts|Away trip/.test(t) ? 'auswaerts' : /Fahrt|trip/i.test(t) ? 'fahrt' : /Pauschale|Allowance/.test(t) ? 'ehrenamt' : /Aufwandsentschädigung|Expenses for/.test(t) ? 'ae' : 'sonstiges';
 function staffBot(c) {
   for (const role of ROLES) {
     if (role !== 'jugendleiter' && holderOf(c, role)) continue;
@@ -38,8 +41,28 @@ let c = createCareer({ seed, leagueSize: process.argv.includes('--8') ? 8 : 6 })
 const rng = createRng(seed + 1);
 const seen = new Map(); const dupWeek = []; const perSeason = [];
 let chatMax = 0, errors = [];
+function summerCup(c) { // Bot: ungerade Saisons Einladung, gerade Saisons selbst ausrichten (6 Teams), wenn die Kasse es hergibt
+  if (!summerCupDue(c)) return;
+  const t = c.season % 2 === 0 && c.cash > 200 ? startSummerCup(c, 'host', 6) : startSummerCup(c, 'invite');
+  let guard = 0;
+  while (t && cupOf(c, 'sommer').stage !== 'done' && guard++ < 10) {
+    for (const m of currentCupMatches(c, 'sommer')) { const p = prepareCupMatch(c, m, { duration: 60 }); simulateSync(p); recordCupResult(c, m, p); }
+    advanceCup(c, 'sommer');
+  }
+}
+function festival(c) { // Bot: Bausteine nach Ertrag je Helfer, solange die Helfer reichen und die Kasse nicht unter 60 € fällt
+  const plan = []; let crew = 0, cost = 0;
+  for (const id of [...FEST_ORDER].sort((a, b) => FEST_PARTS[b].spend / FEST_PARTS[b].crew - FEST_PARTS[a].spend / FEST_PARTS[a].crew)) {
+    const p = FEST_PARTS[id];
+    if (crew + p.crew <= volunteers(c) && c.cash - cost - p.cost > 60) { plan.push(id); crew += p.crew; cost += p.cost; }
+  }
+  festivalPlan(c, plan);
+  return holdFestival(c);
+}
+const festLog = [];
 for (let s = 0; s < SEASONS; s++) {
   let goals = 0, games = 0, minCash = Infinity;
+  if (FEST) try { const c0 = c.cash; summerCup(c); const lv = 'L' + (c.level ?? 1); money[lv] ??= {}; money[lv].turnier = Math.round((money[lv].turnier ?? 0) + c.cash - c0); } catch (err) { errors.push('sommerturnier: ' + err.stack.split('\n').slice(0, 3).join(' | ')); }
   while (!seasonOver(c)) {
     const texts = (c.week?.chat ?? []).map((m) => m.text);
     chatMax = Math.max(chatMax, texts.length);
@@ -58,6 +81,7 @@ for (let s = 0; s < SEASONS; s++) {
     { const L = c.ledger; let i = lastEntry ? L.lastIndexOf(lastEntry) + 1 : 0; const lv = 'L' + (c.level ?? 1); money[lv] ??= {}; for (; i < L.length; i++) { const k = cat(L[i].text); money[lv][k] = Math.round((money[lv][k] ?? 0) + L[i].amount); } }
     c = migrateCareer(JSON.parse(JSON.stringify(c))); // Speichern + Laden
   }
+  if (FEST) try { const c0 = c.cash; const r = festival(c); const lv = 'L' + (c.level ?? 1); money[lv] ??= {}; money[lv].fest = Math.round((money[lv].fest ?? 0) + c.cash - c0); if (r) festLog.push({ season: c.season, visitors: r.visitors, net: r.net, members: r.members, weather: r.weather }); } catch (err) { errors.push('vereinsfest: ' + err.stack.split('\n').slice(0, 3).join(' | ')); }
   const me = humanClub(c);
   const res = nextSeason(c);
   const feuds = Object.values(c.feuds ?? {});
@@ -65,6 +89,7 @@ for (let s = 0; s < SEASONS; s++) {
   perSeason.push({ season: c.season - 1, pos: c.history.at(-1).pos, squad: me.squad.length, gpg: +(goals / games).toFixed(2), chronicle: (c.saga?.chronicle ?? []).length, formers: Object.keys(c.formers ?? {}).length, nemMax: Math.max(0, ...nem), feud: feuds.length ? `${Math.min(...feuds)}..${Math.max(...feuds)}` : '-', otherSquads: c.clubs.filter((x) => !x.human).map((x) => x.squad.length).join(','), kb: Math.round(JSON.stringify(c).length / 1024), goal: c.goal?.type ?? '?', alumni: (c.alumni ?? []).length, cash: Math.round(c.cash), minCash: Math.round(minCash), energy: Math.round(c.coach?.energy ?? 0), fee: c.clubLife?.fee ?? 0, sup: c.clubLife?.supporters ?? 0, nb: c.clubLife?.neighbors ?? 0, mood: +(c.mood ?? 0).toFixed(2), avgRat: Math.round(humanClub(c).squad.reduce((a, i) => a + playerOf(c, i).rating, 0) / humanClub(c).squad.length), oppRat: c.clubs.filter((x) => !x.human).map((x) => Math.round(x.squad.reduce((a, i) => a + playerOf(c, i).rating, 0) / x.squad.length)).join('/'), lvl: c.level, heirs: (c.heirs?.kids ?? []).length, melee: (c.saga?.chronicle ?? []).filter((x) => x.text.startsWith('Rudel')).length });
 }
 console.table(perSeason);
+if (FEST) console.table(festLog);
 if (BOT) console.log('bot:', JSON.stringify(log));
 for (const [lv, m] of Object.entries(money)) console.log(lv, JSON.stringify(m));
 console.log('chatMax/week', chatMax, 'errors', errors.length); errors.slice(0, 10).forEach((e) => console.log(' ', e));

@@ -24,7 +24,7 @@ import {
   simulate,
 } from './career/career.js';
 import { venueExtras } from './career/sponsors.js';
-import { advanceCup, CUPS, cupOf, currentCupMatches, humanCupMatch, prepareCupMatch, recordCupResult, skipTournament, startTournament } from './career/tournament.js';
+import { advanceCup, CUPS, cupOf, currentCupMatches, humanCupMatch, prepareCupMatch, recordCupResult, skipTournament, startSummerCup, startTournament } from './career/tournament.js';
 import { createRng } from './core/rng.js';
 import { matchdaySurprise } from './career/matchday.js';
 import { INCIDENT_TYPES } from './sim/incidents.js';
@@ -559,6 +559,13 @@ const clubhouse = new Clubhouse(document.getElementById('club'), {
     clubhouse.tab = 'cup';
     openClubhouse();
   },
+  onSummerStart(value = 'invite') {
+    const [choice, size] = String(value).split(':');
+    if (!startSummerCup(career, choice, size ? Number(size) : null)) return;
+    saveCareer(career);
+    clubhouse.tab = 'cup';
+    openClubhouse();
+  },
   onCupSkip(kind = 'stadt') {
     skipTournament(career, kind);
     saveCareer(career);
@@ -650,7 +657,7 @@ function playCupMatch(kind) {
   clubhouse.hide();
   setMode('play');
   showMatch(prepared.match);
-  hud.toast(kind === 'halle' ? tr('Hallen-Stadtmeisterschaft – Sporthalle Kanalschule', 'Indoor City Cup – Kanalschule Sports Hall') : tr('Stadtmeisterschaft – Sportplatz Am Kanal', 'City Cup – Am Kanal Ground'), 2.5, 2);
+  hud.toast(kind === 'sommer' ? `${CUPS.sommer.name} – ${cupOf(career, 'sommer').place ?? ''}` : kind === 'halle' ? tr('Hallen-Stadtmeisterschaft – Sporthalle Kanalschule', 'Indoor City Cup – Kanalschule Sports Hall') : tr('Stadtmeisterschaft – Sportplatz Am Kanal', 'City Cup – Am Kanal Ground'), 2.5, 2);
 }
 
 async function runCupRound(played, kind = played?.kind ?? 'stadt') {

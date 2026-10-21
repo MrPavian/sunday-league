@@ -45,6 +45,8 @@ import { TIP_IDS, weeklyTip } from './tips.js';
 import { fenceVoice, heirIntake, heirMoments } from './generations.js';
 import { archiveReview } from './review.js';
 import { clubLifeWeek } from './clublife.js';
+import { initFestival } from './festival.js';
+import { abandonSummerCup } from './tournament.js';
 import { coachOf, afterMatchVoice, deliverNews, grudgeMatch, preMatchVoice } from './opponents.js';
 import { midSeasonReport, seasonGoalVerdict, setSeasonGoal } from './board.js';
 import { relsMap } from '../sim/bonds.js';
@@ -227,6 +229,7 @@ export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null,
   registerCustomPlayers(career);
   initCoach(career, coach);
   initAcademy(career);
+  initFestival(career);
   initSagas(career);
   startWeek(career);
   setSeasonGoal(career);
@@ -713,6 +716,7 @@ export function migrateCareer(career) {
   initCoach(career);
   initSagas(career);
   initAcademy(career);
+  initFestival(career); // Vereinsfest und Turniere: alte Stände starten leer
   career.history ??= [];
   // Laufende Karrieren kennen das Spiel schon – keine Einsteiger-Hinweise nachträglich.
   if (!career.tipsSeen && ((career.season ?? 1) > 1 || (career.round ?? 0) > 2)) career.tipsSeen = Object.fromEntries(TIP_IDS.map((id) => [id, { old: true }]));
@@ -1090,6 +1094,7 @@ export function recordResult(career, fixture, prepared) {
 }
 
 export function finishRound(career) {
+  abandonSummerCup(career); // angefangenes Sommerturnier endet mit dem ersten Spieltag
   autoResolve(career);
   weeklyFinances(career);
   weeklyMood(career);
