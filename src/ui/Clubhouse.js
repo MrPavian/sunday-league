@@ -17,7 +17,8 @@ import { argueRumor, askRumor, currentLineup, humanClub, updateClub, updateCrest
 import { appointCoach, startCourse } from '../career/youthteams.js';
 import { acceptSponsor, bookTrip, KIT_COST } from '../career/finances.js';
 import { tripChoose } from '../career/trip.js';
-import { build } from '../career/facilities.js';
+import { build, dequeue, enqueue } from '../career/facilities.js';
+import { buyGround, care, longLease, playAnyway, renew } from '../career/platz.js';
 import { cancelSponsor, declineOffer, fulfillWish, negotiate } from '../career/sponsors.js';
 import { inviteTrialist, runStation, startTraining } from '../career/training.js';
 import { promoteProspect } from '../career/youth.js';
@@ -158,6 +159,23 @@ export class Clubhouse {
       } else if (action === 'build') {
         const [id, mode] = value.split(':');
         build(this.career, id, mode);
+        this.h.onChange();
+      } else if (action === 'enqueue') {
+        const [id, mode] = value.split(':');
+        enqueue(this.career, id, mode);
+        this.h.onChange();
+      } else if (action === 'dequeue') {
+        dequeue(this.career, value);
+        this.h.onChange();
+      } else if (action === 'care') {
+        const [id, mode] = value.split(':');
+        care(this.career, id, mode);
+        this.h.onChange();
+      } else if (action === 'pachtRenew' || action === 'pachtLong' || action === 'pachtBuy') {
+        (action === 'pachtRenew' ? renew : action === 'pachtLong' ? longLease : buyGround)(this.career);
+        this.h.onChange();
+      } else if (action === 'playAnyway') {
+        playAnyway(this.career);
         this.h.onChange();
       } else if (action === 'sponsor') {
         const [i, term] = value.split(':');

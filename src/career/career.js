@@ -5,7 +5,8 @@ import { getLang, tr } from '../core/i18n.js';
 import { legacySeasonEnd } from './legacy.js';
 import { sponsorResult } from './sponsors.js';
 import { autoTrip } from './trip.js';
-import { absenceMul as facilityAbsence, fansMul, recruitBonus, weeklyFacilities, youthExtra, youthGrowthMul } from './facilities.js';
+import { absenceMul as facilityAbsence, capacity, fansMul, recruitBonus, weeklyFacilities, youthExtra, youthGrowthMul } from './facilities.js';
+import { applyPlatz, ensureVertrag, nachholAbsence, platz, platzNewSeason, sperreCheck, sperreText, weeklyPlatz } from './platz.js';
 import { createRng } from '../core/rng.js';
 import { createPlayerPool, ratePlayer } from '../sim/generator.js';
 import { slotRating } from '../sim/position.js';
@@ -225,6 +226,7 @@ export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null,
     week: null,
   };
   initFinances(career);
+  platz(career); // Platzzustand und Pachtvertrag (ROADMAP 11.9)
   initYouth(career);
   youthIntake(career, youthDeps());
   registerCustomPlayers(career);
@@ -322,6 +324,7 @@ export function nextSeason(career) {
     clubs,
     fixtures: roundRobin(clubs.map((c) => c.id), rng),
   });
+  const platzNotes = platzNewSeason(career); // Sommerpause: Rasen erholt sich; Pachtangebot
   const leaving = expireYouth(career, playerOf);
   sagaNotes.push(...childrenGrowUp(career));
   sagaNotes.push(...seasonAcademy(career));
@@ -337,6 +340,7 @@ export function nextSeason(career) {
   if (bestOfSeason) note(bestOfSeason.text);
   for (const n of sagaNotes) note(n);
   for (const n of legacyNotes) note(n);
+  for (const n of platzNotes) note(n);
   for (const n of career.sponsorNotes ?? []) note(n);
   career.sponsorNotes = [];
   for (const r of retired) note(tr(`Abschied: ${r.name} (${r.age}) hört auf – ${r.apps} Spiele, ${r.goals} Tore. Bleibt uns erhalten als ${r.role}.`, `Farewell: ${r.name} (${r.age}) is retiring – ${r.apps} games, ${r.goals} goals. Staying on as ${r.role}.`));
@@ -472,6 +476,7 @@ export function startWeek(career) {
     return `${DAYS[day]} ${String(8 + Math.floor((m / 1440) * 14)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
   };
   const fixture = humanFixture(career);
+  const postponed = sperreCheck(career, weather, fixture); // Platzsperre: Nachholspiel am Mittwoch
   const opponent = clubById(career, fixture.home === club.id ? fixture.away : fixture.home);
   chat.push({ from: null, text: tr(`Sonntag gegen ${opponent.name}${fixture.home === club.id ? ' bei uns' : ' auswärts'}. Wer kann?`, `Sunday against ${opponent.name}${fixture.home === club.id ? ' at ours' : ' away'}. Who can make it?`), time: time(), me: true });
 
@@ -504,7 +509,7 @@ export function startWeek(career) {
     } else if (rec.awayWeeks > 0) {
       status = 'no';
       text = rec.awayReason ?? tr('Bin diese Woche nicht da.', 'Not around this week.');
-    } else if (rng.chance(absenceChance(p.profession) * (career.spirit ? 0.75 : 1) * absenceFactor(career, idx) * weatherAbsence * facilityAbsence(career))) {
+    } else if (rng.chance(absenceChance(p.profession) * (career.spirit ? 0.75 : 1) * absenceFactor(career, idx) * weatherAbsence * facilityAbsence(career) * (postponed ? nachholAbsence(career) : 1))) {
       status = 'no';
       text = fresh(noReasons(p.profession));
     } else if (rng.chance(0.07)) {
@@ -520,7 +525,8 @@ export function startWeek(career) {
   // Einer kommentiert das Wetter.
   const talker = club.squad.find((idx) => availability[idx] === 'yes' && !isCoach(career, idx));
   if (talker != null) chat.push({ from: talker, text: rng.pick(WEATHER_CHAT[weather.id]), time: 'Sa 09:40' });
-  career.week = { availability, chat, nudges: NUDGES_PER_WEEK, nudged: [], lineup: null, training: null, event: null, weather };
+  career.week = { availability, chat, nudges: NUDGES_PER_WEEK, nudged: [], lineup: null, training: null, event: null, weather, postponed };
+  if (postponed) chat.splice(1, 0, { from: null, text: sperreText(postponed.reason), time: 'Fr 17:00' });
   bundChat(career, chat); // überregionaler Pokal: Auslosung, Vorfreude, Spieltag
   preMatchMemories(career, opponent, chat); // „Wisst ihr, wer bei denen spielt?"
   preMatchVoice(career, opponent, chat); // der Gegnertrainer im Kreisblatt
@@ -716,6 +722,8 @@ export function migrateCareer(career) {
   career.flags ??= {};
   migratePositions(career); // Gewöhnung an fremde Positionen (alte Stände: leer)
   initFinances(career);
+  platz(career); // alte Stände: Platz gepflegt, Pachtvertrag zu den bisherigen Bedingungen
+  ensureVertrag(career);
   initYouth(career);
   initCoach(career);
   if (career.coach) career.coach.mode ??= 'player'; // alte Spielstände: Spielertrainer
@@ -992,7 +1000,7 @@ export function nextPitch(career) {
   const home = clubById(career, f.home);
   const league = leagueOf(career);
   const base = PITCHES[home.venue];
-  return applyWeather({ ...base, format: league.format ?? base.format, referee: league.referee || !!base.referee }, career.week?.weather);
+  return applyWeather(applyPlatz({ ...base, format: league.format ?? base.format, referee: league.referee || !!base.referee }, career, home), career.week?.weather);
 }
 
 export function prepareMatch(career, fixture, { human = false, duration } = {}) {
@@ -1003,7 +1011,7 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   const league = leagueOf(career);
   const base = PITCHES[home.venue];
   // Das Wetter der Woche gilt auf allen Plätzen der Liga.
-  const pitch = applyWeather({ ...base, format: league.format ?? base.format, referee: league.referee || !!base.referee }, career.week?.weather);
+  const pitch = applyWeather(applyPlatz({ ...base, format: league.format ?? base.format, referee: league.referee || !!base.referee }, career, home), career.week?.weather);
   const avail = (c) => (c.human ? career.week.availability : aiAvailability(c, rng));
   const teamHome = teamForMatch(career, home, pitch.format, avail(home), rng);
   const teamAway = teamForMatch(career, resolveKitClash(home, away), pitch.format, avail(away), rng);
@@ -1024,6 +1032,7 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   const level = career.level ?? 1;
   const fans = level > 4 ? rng.int(80, 200) : level > 3 ? rng.int(45, 90) : level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14);
   match.crowd = Math.round(fans * (match.derby ? 1.8 : 1) * (home.human ? fansMul(career) : 1));
+  if (home.human) match.crowd = Math.min(match.crowd, capacity(career)); // Fassungsvermögen (facilities.js)
   match.homeTeam = humanIsAway ? 1 : 0;
   return { match, humanIsAway, pitch, home, away, helpers: [...teamHome.helpers, ...teamAway.helpers] };
 }
@@ -1109,6 +1118,7 @@ export function finishRound(career) {
   weeklyYouthMatches(career, ownKids(career)); // Jugendspieltag am Wochenende
   weeklyBridge(career); // A-Jugend trainiert bei der Ersten mit
   weeklyFacilities(career);
+  const platzNotes = weeklyPlatz(career); // Verschleiß, Pflege des Platzwarts, Grundsteuer
   clubLifeWeek(career); // Förderverein, Beitrag, Kassenwart
   weeklyFitness(career, playerOf, humanClub(career).squad); // erst erholen …
   tickBans(career); // ein Sperrspiel abgesessen
@@ -1127,6 +1137,7 @@ export function finishRound(career) {
   if (career.week) deliverGrumbles(career, career.week.chat); // Murren wegen fremder Position
   for (const text of coachWeek(career)) career.week?.chat.push({ from: null, text, time: 'Mo 08:05' }); // Präsidium: der Trainer erledigt seine Wochenarbeit
   for (const text of staffNotes) career.week?.chat.push({ from: null, text, time: 'Mo 08:00' });
+  for (const text of platzNotes) career.week?.chat.push({ from: null, text, time: 'Mo 08:05' });
   // Versprochene Einsätze für Neuzugänge: nach zwei Spieltagen abrechnen.
   checkPromises(career, humanClub(career).squad, (idx, text) => career.week?.chat.push({ from: idx, text, time: 'Mo 08:15' }));
   monthlyAward(career, awardDeps(career));

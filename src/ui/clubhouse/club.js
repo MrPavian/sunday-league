@@ -11,7 +11,8 @@ import { humanClub, KIT_COLLARS, KIT_COLORS, KIT_PATTERNS, KIT_SLEEVES, kitEdita
 import { spielberichtStreng } from '../../career/spielbericht.js';
 import { FINES, KIT_COST, MEMBER_FEE, SLOTS } from '../../career/finances.js';
 import { DESTINATIONS } from '../../career/trip.js';
-import { build, canBuild, facilities, FACILITIES } from '../../career/facilities.js';
+import { buildBlock, buildCost, buildWeeks, capacity, facilities, FACILITIES, FACILITY_GROUPS, QUEUE_MAX } from '../../career/facilities.js';
+import { CARE, careBlock, HELPER_EFFECT, HELPER_SLOTS, LANGPACHT_FEE, LANGPACHT_SEASONS, MIN_TERM, PACHT_SEASONS, angebotText, platzInfo, platz } from '../../career/platz.js';
 import { arenaOf, BRANCHEN, bossOf, cancelCost, goalStatus, goalText, lineOf, relLabel, shirtSponsor, sponsorColor, sponsorDef, termChance, TERMS, termWeekly, TRAITS as SPONSOR_TRAITS, WISHES, wishCost, wishLabel } from '../../career/sponsors.js';
 import { newWish } from '../../career/sponsorwish.js';
 import { chronicleData, yearOf } from '../../career/sagas.js';
@@ -44,6 +45,7 @@ export const clubScreens = {
       : '';
     return `
       ${profile}
+      ${this.platzBlock()}
       ${this.facilityBlock()}
       ${this.clubLifeBlock()}
       ${this.festivalCard()}
@@ -219,30 +221,91 @@ export const clubScreens = {
     return `<h4>${tr('Trainer', 'Managers')}</h4><ul class="milestones">${eras.map((e) => `<li><b>${yearOf(c, e.from)}–${yearOf(c, e.to)}</b> ${e.name} – ${e.seasons} ${plural(e.seasons, 'Saison', 'Saisons', 'season', 'seasons')}${e.titles ? tr(`, ${e.titles}× Meister`, `, ${e.titles}× champions`) : ''}${e.how === 'extern' ? tr(`, dann Präsident – Nachfolger an der Linie: ${esc(e.successor)}`, `, then president – successor on the touchline: ${esc(e.successor)}`) : tr(', heute Ehrenpräsident', ', now honorary president')}</li>`).join('')}${now}</ul>`;
   },
 
-  // Vereinsheim ausbauen: Handwerker oder Arbeitseinsatz.
+  // Platz und Pacht: Zustand, Pflege (Ehrenamtliche oder Fachbetrieb) und der Vertrag mit der Gemeinde.
+  platzBlock() {
+    const c = this.career;
+    const i = platzInfo(c);
+    const bar = (label, v, text) => `<div class="me-bar ${v < 0.25 ? 'low' : v < 0.5 ? 'mid' : ''}"><span>${label}</span><i style="--v:${Math.round(v * 100)}%"></i><small>${text}</small></div>`;
+    const v = i.vertrag;
+    const typ = v ? { pacht: tr('Pacht von der Gemeinde', 'leased from the council'), langpacht: tr('Langzeitpacht', 'long-term lease'), eigen: tr('Eigentum des Vereins', 'owned by the club') }[v.typ] : '';
+    const term = !v ? '' : v.typ === 'eigen' ? '' : tr(` · läuft noch ${i.left} ${plural(i.left, 'Saison', 'Saisons', 'season', 'seasons')}`, ` · ${i.left} ${plural(i.left, 'season', 'seasons', 'season', 'seasons')} left`);
+    const buyDisabled = c.cash < i.price;
+    const contract = !v
+      ? `<p class="empty">${tr('Im Hinterhof gibt es keinen Pachtvertrag – den schließt du erst mit einem richtigen Sportplatz ab.', 'There is no lease in the backyard – you only sign one once you have a proper sports ground.')}</p>`
+      : `<ul class="plain">
+        <li><b>${tr('Platz', 'Ground')}:</b> ${typ}${term}</li>
+        <li><b>${tr('Kosten', 'Cost')}:</b> ${v.typ === 'eigen' ? tr('Grundsteuer und Unterhalt', 'property tax and upkeep') : `${euro(Math.round(i.perMatch * 10) / 10)} ${tr('je Heimspiel', 'per home game')} <small>(≈ ${euro(Math.round(i.perSeason))} ${tr('im Jahr', 'a year')}${c.staff?.platzwart ? tr(', Platzwart halbiert', ', halved by the groundsman') : ''})</small>`}</li>
+        <li><b>${tr('Bauen', 'Building')}:</b> ${i.left >= MIN_TERM ? tr('erlaubt', 'allowed') : `<span class="warn">${tr(`erst ab ${MIN_TERM} Saisons Restlaufzeit oder mit eigenem Grund`, `only with ${MIN_TERM}+ seasons left or owned land`)}</span>`}</li>
+      </ul>
+      ${i.angebot ? `<p class="reply ok">${angebotText(i.angebot)}</p><div class="ui-row">${button(`${tr('Verlängern', 'Renew')} (${PACHT_SEASONS} ${tr('Saisons', 'seasons')}, ${euro(Math.round(15 * i.angebot.mul * (c.staff?.platzwart ? 0.5 : 1) * 10) / 10)}/${tr('Spiel', 'game')})`, { action: 'pachtRenew' })}</div>` : ''}
+      ${v.typ !== 'eigen' ? `<div class="ui-row">
+        ${v.typ === 'pacht' || i.angebot ? button(`${tr('Langzeitpacht', 'Long-term lease')} (${LANGPACHT_SEASONS} ${tr('Saisons', 'seasons')}, −20 %, ${euro(LANGPACHT_FEE)})`, { action: 'pachtLong', disabled: c.cash < LANGPACHT_FEE }) : ''}
+        ${i.kind !== 'none' ? button(`${tr('Grundstück kaufen', 'Buy the land')} (${euro(i.price)})`, { action: 'pachtBuy', disabled: buyDisabled }) : ''}</div>
+        <p class="empty">${tr('Wer kauft, zahlt keine Pacht mehr (nur Grundsteuer), baut ohne Genehmigungsgebühr und kann nicht gekündigt werden.', 'If you buy, you no longer pay rent (only property tax), build without permit fees and cannot be given notice.')}</p>` : ''}`;
+    let care = '';
+    if (i.kind === 'none') care = `<p class="empty">${tr('Hier gibt es keinen Rasen zu pflegen.', 'There is no grass to look after here.')}</p>`;
+    else if (i.kind === 'kunst') care = `<p class="empty">${tr('Kunstrasen: kein Verschleiß, keine Platzsperre, nichts zu mähen.', 'Artificial turf: no wear, no closures, nothing to mow.')}</p>`;
+    else {
+      const p = platz(c);
+      const rows = Object.entries(CARE)
+        .filter(([, def]) => def.kinds.includes(i.kind))
+        .map(([id, def]) => {
+          const helperBlock = careBlock(c, id, 'helfer');
+          const proBlock = careBlock(c, id, 'profi');
+          const why = { done: tr('diese Woche erledigt', 'done this week'), gap: tr('noch nicht wieder nötig', 'not needed again yet'), fine: tr('nicht nötig', 'not needed'), weather: tr('bei dem Wetter sinnlos', 'pointless in this weather') }[helperBlock ?? proBlock];
+          const btns = why && (helperBlock === 'done' || helperBlock === 'gap' || helperBlock === 'fine' || helperBlock === 'weather')
+            ? `<small>${why}</small>`
+            : `${button(`${tr('Helfer', 'Volunteers')}`, { action: 'care', value: `${id}:helfer`, disabled: helperBlock !== null })}${button(`${tr('Fachbetrieb', 'Contractor')} (${euro(def.cost)})`, { action: 'care', value: `${id}:profi`, disabled: proBlock !== null })}`;
+          return `<li class="facility"><div><b>${def.name}</b><br><small>${def.desc}</small></div><div class="state">${btns}</div></li>`;
+        })
+        .join('');
+      care = `<div class="me-bars">${bar(tr('Rasen', 'Pitch'), i.cond, i.label)}${bar(tr('Linien', 'Lines'), i.chalk, i.chalk >= 0.6 ? tr('frisch', 'fresh') : i.chalk >= 0.25 ? tr('blass', 'faded') : tr('kaum zu sehen', 'barely visible'))}</div>
+        ${c.staff?.platzwart ? `<p class="empty">${tr('Der Platzwart mäht und zieht ab von selbst; Helfer arbeiten mit seiner Anleitung voll.', 'The groundsman mows and drags by himself; volunteers work at full effect under his guidance.')}</p>` : `<p class="empty">${tr(`Ehrenamtliche schaffen ${Math.round(HELPER_EFFECT * 100)} % (höchstens ${HELPER_SLOTS} Einsätze pro Woche), der Fachbetrieb 100 % gegen Bezahlung.`, `Volunteers manage ${Math.round(HELPER_EFFECT * 100)} % (at most ${HELPER_SLOTS} jobs per week), the contractor 100 % for a fee.`)}</p>`}
+        <ul class="plain">${rows}</ul>
+        <p class="empty">${tr('Je abgespielter der Platz, desto unebener springt der Ball. Nach viel Regen und bei schlechtem Zustand sperrt die Gemeinde den Platz: das Spiel wird am Mittwoch nachgeholt (weniger Zuschauer, mehr Absagen). Die Sommerpause erholt den Rasen.', 'The more worn the pitch, the more the ball bounces unevenly. After heavy rain and in poor condition the council closes the ground: the match is replayed on Wednesday (fewer spectators, more drop-outs). The summer break restores the grass.')}${i.sperren ? ` ${tr(`Bisher ${i.sperren}× gesperrt.`, `Closed ${i.sperren}× so far.`)}` : ''}</p>`;
+    }
+    return `<div class="facilities platz"><h4>${tr('Platz und Pacht', 'Pitch and lease')}</h4>${care}<h4 class="sub">${tr('Pachtvertrag', 'Lease')}</h4>${contract}</div>`;
+  },
+
+  // Vereinsheim, Sportplatz, Tribünen, Gastro ausbauen: Handwerker oder Arbeitseinsatz, mit Bauschlange.
   facilityBlock() {
     const c = this.career;
     const f = facilities(c);
-    const rows = Object.entries(FACILITIES)
-      .map(([id, def]) => {
-        const built = f.built[id];
-        const building = f.building?.id === id;
-        const locked = (def.needs ?? []).some((n) => !f.built[n]);
-        const state = built
-          ? `<span class="ok">${tr('steht seit Saison', 'built in season')} ${built}</span>`
-          : building
-            ? `<span class="warn">${tr('im Bau, noch', 'under construction,')} ${f.building.weeks} ${plural(f.building.weeks, 'Woche', 'Wochen', 'week', 'weeks')}${tr('', ' to go')}</span>`
-            : locked
-              ? `<small>${tr('braucht erst', 'needs first')}: ${def.needs.map((n) => FACILITIES[n].name).join(', ')}</small>`
-              : canBuild(c, id)
-                ? `<button data-action="build" data-value="${id}:handwerker" ${c.cash < def.cost ? 'disabled' : ''}>${tr('Handwerker', 'Builders')} (${euro(def.cost)})</button>
-                   <button data-action="build" data-value="${id}:einsatz" ${c.cash < def.cost / 2 ? 'disabled' : ''}>${tr('Arbeitseinsatz', 'Work party')} (${euro(def.cost / 2)}, ${def.weeks * 2} ${tr('Wo.', 'wks')})</button>`
-                : `<small>${tr('erst die laufende Baustelle fertig machen', 'finish the current building work first')}</small>`;
-        return `<li class="facility${built ? ' built' : ''}"><div><b>${def.name}</b> <small>${def.weeks} ${plural(def.weeks, 'Woche', 'Wochen', 'week', 'weeks')}${def.upkeep ? ` · ${euro(def.upkeep)}${tr('/Woche Nebenkosten', '/week running costs')}` : ''}</small><br><small>${def.desc}</small></div><div class="state">${state}</div></li>`;
-      })
-      .join('');
-    return `<div class="facilities"><h4>${tr('Vereinsheim ausbauen', 'Upgrade the clubhouse')} <small>${tr('Kasse', 'Kitty')}: ${euro(c.cash)}</small></h4>
-      ${f.note ? `<p class="reply ok">${f.note}</p>` : ''}<ul class="plain">${rows}</ul></div>`;
+    const why = {
+      needs: (def) => `<small>${tr('braucht erst', 'needs first')}: ${def.needs.map((n) => FACILITIES[n].name).join(', ')}</small>`,
+      ground: () => `<small>${tr('braucht einen richtigen Sportplatz', 'needs a proper sports ground')}</small>`,
+      land: () => `<small>${tr(`Pachtvertrag zu kurz (mind. ${MIN_TERM} Saisons) – verlängern oder kaufen`, `lease too short (${MIN_TERM}+ seasons) – renew or buy`)}</small>`,
+    };
+    const queueIdx = (id) => f.queue.findIndex((q) => q.id === id);
+    const row = ([id, def]) => {
+      const built = f.built[id];
+      const building = f.building?.id === id;
+      const block = buildBlock(c, id);
+      const qb = f.building ? buildBlock(c, id, { queued: true }) : null;
+      const cost = buildCost(c, id, 'handwerker');
+      const costE = buildCost(c, id, 'einsatz');
+      const state = built
+        ? `<span class="ok">${tr('steht seit Saison', 'built in season')} ${built}</span>`
+        : building
+          ? `<span class="warn">${tr('im Bau, noch', 'under construction,')} ${f.building.weeks} ${plural(f.building.weeks, 'Woche', 'Wochen', 'week', 'weeks')}${tr('', ' to go')}</span>`
+          : queueIdx(id) >= 0
+            ? `<span class="warn">${tr('vorgemerkt', 'queued')} (${queueIdx(id) + 1})</span>${button(tr('Streichen', 'Remove'), { action: 'dequeue', value: id })}`
+            : block === null
+              ? `${button(`${tr('Handwerker', 'Builders')} (${euro(cost)})`, { action: 'build', value: `${id}:handwerker`, disabled: c.cash < cost })}${button(`${tr('Arbeitseinsatz', 'Work party')} (${euro(costE)}, ${buildWeeks(c, id, 'einsatz')} ${tr('Wo.', 'wks')})`, { action: 'build', value: `${id}:einsatz`, disabled: c.cash < costE })}`
+              : block === 'building' && qb === null && f.queue.length < QUEUE_MAX
+                ? `${button(`${tr('Vormerken', 'Queue')} (${euro(cost)})`, { action: 'enqueue', value: `${id}:handwerker` })}`
+                : block === 'building'
+                  ? `<small>${tr('erst die laufende Baustelle fertig machen', 'finish the current building work first')}</small>`
+                  : (why[block] ?? (() => ''))(def);
+      const extra = def.land && !built ? ` · ${tr('Genehmigung der Gemeinde', 'council permit')}` : '';
+      return `<li class="facility${built ? ' built' : ''}"><div><b>${def.name}</b> <small>${buildWeeks(c, id, 'handwerker')} ${plural(buildWeeks(c, id, 'handwerker'), 'Woche', 'Wochen', 'week', 'weeks')}${def.upkeep ? ` · ${euro(def.upkeep)}${tr('/Woche Nebenkosten', '/week running costs')}` : ''}${extra}</small><br><small>${def.desc}</small></div><div class="state">${state}</div></li>`;
+    };
+    const groups = FACILITY_GROUPS.map((g) => {
+      const rows = Object.entries(FACILITIES).filter(([, d]) => (d.group ?? 'heim') === g.id).map(row).join('');
+      return rows ? `<h4 class="sub">${g.name}${g.id === 'tribuene' ? ` <small>${tr('Fassungsvermögen', 'capacity')}: ${capacity(c)}</small>` : ''}</h4><ul class="plain">${rows}</ul>` : '';
+    }).join('');
+    return `<div class="facilities"><h4>${tr('Vereinsheim und Anlage ausbauen', 'Upgrade clubhouse and grounds')} <small>${tr('Kasse', 'Kitty')}: ${euro(c.cash)}</small></h4>
+      ${f.note ? `<p class="reply ok">${f.note}</p>` : ''}${groups}</div>`;
   },
 
   // Vereinsleben: was die Entscheidungen rund ums Vereinsheim dauerhaft verändert haben.
