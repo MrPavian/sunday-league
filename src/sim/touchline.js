@@ -16,6 +16,8 @@ export function createTouchline(m, team) {
 }
 
 const diff = (tl) => tl.m.score[tl.team] - tl.m.score[1 - tl.team];
+// Spielstand aus unserer Sicht (eigene Tore zuerst), wie man es an der Linie sagt: „wir führen 3:1".
+const board = (tl) => tr(`${tl.m.score[tl.team]}:${tl.m.score[1 - tl.team]}`, `${tl.m.score[tl.team]}-${tl.m.score[1 - tl.team]}`);
 
 // Nach jedem Simulationsschritt (mit den Ereignissen dieses Schritts) fragen:
 // Steht eine Entscheidung an? Gibt sie zurück oder null.
@@ -67,11 +69,10 @@ function startDecision(tl) {
 }
 
 function halftimeDecision(tl) {
-  const [a, b] = [tl.m.score[tl.team], tl.m.score[1 - tl.team]];
   const opt = (value, label, line, extra) => ({ label, line, apply: (m) => (setMentality(m, value), extra?.(m)) });
   return {
     id: 'halftime',
-    question: tr(`Halbzeit, ${a}:${b}. Was sagst du in der Kabine?`, `Half-time, ${a}-${b}. What do you say in the dressing room?`),
+    question: tr(`Halbzeit, ${board(tl)}. Was sagst du in der Kabine?`, `Half-time, ${board(tl)}. What do you say in the dressing room?`),
     options: [
       opt(tl.m.mentality, tr('Weiter so', 'Keep it up'), tr('Kabinenansprache: „Weiter so, Jungs."', 'Team talk: "Keep it up, lads."')),
       opt('offensive', tr('Mehr nach vorne!', 'More going forward!'), tr('Kabinenansprache: „Jetzt mal Mut, raus da!"', 'Team talk: "Show some courage, get out there!"')),
@@ -82,10 +83,9 @@ function halftimeDecision(tl) {
 }
 
 function concededDecision(tl) {
-  const [a, b] = [tl.m.score[tl.team], tl.m.score[1 - tl.team]];
   return {
     id: 'conceded',
-    question: tr(`Gegentor, jetzt ${a}:${b}. Was rufst du rein?`, `Conceded, now ${a}-${b}. What do you shout?`),
+    question: tr(`Gegentor, jetzt ${board(tl)}. Was rufst du rein?`, `Conceded, now ${board(tl)}. What do you shout?`),
     options: [
       { label: tr('„Ruhig bleiben!"', '"Stay calm!"'), line: tr('Der Trainer klatscht in die Hände: „Ruhig bleiben, weiter!"', 'The manager claps his hands: "Stay calm, keep going!"') },
       { label: tr('„Rückt auf!"', '"Push up!"'), line: tr('Von der Seitenlinie: „Rückt auf!"', 'From the touchline: "Push up!"'), apply: call('forward') },
@@ -120,16 +120,19 @@ function subDecision(tl) {
 
 function finaleDecision(tl) {
   const d = diff(tl);
-  const [a, b] = [tl.m.score[tl.team], tl.m.score[1 - tl.team]];
   const opt = (value, label, line, extra) => ({ label, line, apply: (m) => (setMentality(m, value), extra?.(m)) });
   return {
     id: 'finale',
-    question: d > 0 ? tr(`Noch zehn Minuten, ${a}:${b}. Wie bringen wir das über die Zeit?`, `Ten minutes left, ${a}-${b}. How do we see it out?`) : tr(`Noch zehn Minuten, ${a}:${b}. Alles oder nichts?`, `Ten minutes left, ${a}-${b}. All or nothing?`),
+    question: d > 0
+      ? tr(`Noch zehn Minuten, wir führen ${board(tl)}. Wie bringen wir das über die Zeit?`, `Ten minutes left, we lead ${board(tl)}. How do we see it out?`)
+      : d < 0
+        ? tr(`Noch zehn Minuten, wir liegen ${board(tl)} hinten. Alles oder nichts?`, `Ten minutes left, we trail ${board(tl)}. All or nothing?`)
+        : tr(`Noch zehn Minuten, ${board(tl)}. Alles oder nichts?`, `Ten minutes left, ${board(tl)}. All or nothing?`),
     options: d > 0
       ? [
           opt('defensive', tr('Hinten dicht – Bus parken', 'Park the bus'), tr('Der Trainer zeigt nach hinten: „Alle zurück!"', 'The manager points backwards: "Everyone back!"')),
           opt(tl.m.mentality, tr('Weiter so – Konter fahren', 'Keep going – hit them on the break'), tr('Von der Seitenlinie: „Weiter so, auf Konter lauern!"', 'From the touchline: "Keep going, wait for the break!"'), call('wide')),
-          opt('offensive', tr('Den Deckel draufmachen – drittes Tor!', 'Finish them off – one more goal!'), tr('Der Trainer will mehr: „Macht den Sack zu!"', 'The manager wants more: "Kill the game off!"')),
+          opt('offensive', tr('Den Deckel draufmachen – noch ein Tor!', 'Finish them off – one more goal!'), tr('Der Trainer will mehr: „Macht den Sack zu!"', 'The manager wants more: "Kill the game off!"')),
         ]
       : [
           opt('offensive', tr('Alles nach vorne!', 'Everyone forward!'), tr('Schlussoffensive! Sogar der Libero geht mit nach vorne.', 'All-out attack! Even the sweeper joins in.'), (m) => (call('press')(m), call('forward')(m))),

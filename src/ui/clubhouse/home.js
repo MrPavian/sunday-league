@@ -24,7 +24,7 @@ import { weatherLine } from '../../career/weather.js';
 import { nachholLabel } from '../../career/platz.js';
 import { derbyOf, isDerbyFixture } from '../../career/derby.js';
 import { CUP_NAME, CUPS, cupOf, PRIZES, summerCupDue, summerCupRunning, tournamentOpen, winterCupDue, winterCupRunning } from '../../career/tournament.js';
-import { humanTie, pokalClub, pokalDue, POKALE, pokalOf, pokalWhen, roundName } from '../../career/pokal.js';
+import { humanTie, pokalClub, pokalDue, pokalWonNow, POKALE, pokalOf, pokalWhen, roundName } from '../../career/pokal.js';
 import { levelName } from '../../career/bundespokal.js';
 import { MATCH } from '../../sim/match.js';
 import { coachAway, coachMode, energyLabel, isPresident, patienceLabel } from '../../career/personal.js';
@@ -55,7 +55,7 @@ export const homeScreens = {
   hub() {
     const c = this.career;
     const over = seasonOver(c);
-    const main = over ? this.seasonEnd() : this.results ? this.roundResults() : this.nextMatch();
+    const main = (over || this.results ? '' : this.pokalWonCard()) + (over ? this.seasonEnd() : this.results ? this.roundResults() : this.nextMatch());
     const mine = [];
     // Während der Ergebnisanzeige ist der eben gespielte Spieltag schon dabei.
     for (let i = Math.min(this.results ? c.round : c.round - 1, c.fixtures.length - 1); i >= 0 && mine.length < 5; i--) {
@@ -150,6 +150,15 @@ export const homeScreens = {
           <div class="ui-row">${button(tr('Anmelden', 'Enter'), { kind: 'primary', action: 'onCupStart', value: 'halle' })}${button(tr('Diesmal nicht', 'Not this time'), { action: 'onCupSkip', value: 'halle' })}</div></div>` : ''}
         <div class="hub-actions">${actions}</div>
       </article>`;
+  },
+
+  // Gleich nach dem gewonnenen Finale: Sieg-Meldung ganz oben, nicht erst im Pokal-Reiter.
+  pokalWonCard() {
+    const kind = pokalWonNow(this.career);
+    if (!kind) return '';
+    const name = POKALE[kind].name;
+    return `<article class="ui-card pokal-win"><p class="t-cap">${name}</p><h3>${tr('POKALSIEGER!', 'CUP WINNERS!')}</h3>
+      <p class="t-body">${tr(`Der ${name} steht in der Vitrine.`, `The ${name} is in the trophy cabinet.`)}</p>${button(tr('Zum Pokal', 'To the cup'), { action: 'tab', value: 'cup' })}</article>`;
   },
 
   // Pokalspiel unter der Woche: kommt vor dem Ligaspieltag.

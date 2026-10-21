@@ -26,6 +26,7 @@ import {
 import { venueExtras } from './career/sponsors.js';
 import { advanceCup, CUPS, cupOf, currentCupMatches, humanCupMatch, prepareCupMatch, recordCupResult, skipTournament, startSummerCup, startTournament } from './career/tournament.js';
 import { createRng } from './core/rng.js';
+import { saveFile } from './core/files.js';
 import { matchdaySurprise } from './career/matchday.js';
 import { INCIDENT_TYPES } from './sim/incidents.js';
 import { button, haptic, hapticsOn, setHaptics, Sheet } from './ui/ds.js';
@@ -486,11 +487,8 @@ const menu = new Menu(document.getElementById('menu'), {
         if (!c) return;
         const club = humanClub(c).short ?? 'verein';
         const blob = new Blob([exportCareer(c)], { type: 'application/json' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `sunday-league-${club}-saison-${c.season}.json`.toLowerCase().replace(/[^a-z0-9.-]+/g, '-');
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+        const name = `sunday-league-${club}-saison-${c.season}.json`.toLowerCase().replace(/[^a-z0-9.-]+/g, '-');
+        saveFile(blob, name, { title: tr('Sunday League – Spielstand', 'Sunday League – save game') }).catch((err) => console.error('Export fehlgeschlagen', err));
       },
       onImport(slot, text) {
         try {
