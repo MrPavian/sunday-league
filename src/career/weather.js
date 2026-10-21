@@ -51,6 +51,14 @@ export function rollWeather(c, round = c.round) {
   return { id, name: WEATHER[id].name, month, monthName: MONTHS[month], temp, leaves, windDir };
 }
 
+// Wetter an einem Tag außerhalb der Spieltage (Vereinsfest im Sommer): nur die Kennung, fest je Spielstand, Saison und salt.
+export function weatherOn(c, month, salt = 0) {
+  const rng = createRng((c.seed * 929 + c.season * 73 + month * 31 + salt * 11 + 5) >>> 0);
+  let r = rng.next();
+  for (const [k, p] of Object.entries(table(month))) if ((r -= p) < 0) return k;
+  return 'sonne';
+}
+
 export const weatherLine = (w) => (w ? `${MONTHS[w.month] ?? w.monthName} · ${WEATHER[w.id]?.name ?? w.name}, ${w.temp} °C${w.leaves ? tr(' · Herbstlaub', ' · autumn leaves') : ''}` : '');
 
 // Wetter auf den Platz anwenden (in der Halle gibt es kein Wetter).

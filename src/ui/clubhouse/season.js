@@ -23,8 +23,8 @@ export const seasonScreens = {
   tab_cup() {
     const c = this.career;
     const trophies = (c.trophies ?? []).length ? `<h4>${tr('Vitrine', 'Trophy cabinet')}</h4><ul class="plain trophies">${c.trophies.map((t) => `<li>${t.kind === 'foto' ? '' : `${tr('Pokal', 'Trophy')}: `}${t.name}</li>`).join('')}</ul>` : '';
-    const running = ['halle', 'stadt'].filter((k) => cupOf(c, k) && !cupOf(c, k).skipped);
-    const intro = `<p class="empty">${tr(`Zwei Turniere pro Saison: die ${CUPS.halle.name} in der Winterpause (Saisonmitte, ${CUPS.halle.place}, Bande und Handballtore) und die ${CUPS.stadt.name} im Sommer nach dem letzten Spieltag (${CUPS.stadt.place}).`, `Two tournaments per season: the ${CUPS.halle.name} in the winter break (mid-season, ${CUPS.halle.place}, boards and handball goals) and the ${CUPS.stadt.name} in summer after the last matchday (${CUPS.stadt.place}).`)}</p>`;
+    const running = ['sommer', 'halle', 'stadt'].filter((k) => cupOf(c, k) && !cupOf(c, k).skipped);
+    const intro = `<p class="empty">${tr(`Drei Turniere pro Saison: das ${CUPS.sommer.name} vor dem ersten Spieltag (Einladung oder Heimturnier, 4–8 Teams, kurze Spiele), die ${CUPS.halle.name} in der Winterpause (Saisonmitte, ${CUPS.halle.place}, Bande und Handballtore) und die ${CUPS.stadt.name} im Sommer nach dem letzten Spieltag (${CUPS.stadt.place}).`, `Three tournaments per season: the ${CUPS.sommer.name} before the first matchday (invitation or home tournament, 4–8 teams, short matches), the ${CUPS.halle.name} in the winter break (mid-season, ${CUPS.halle.place}, boards and handball goals) and the ${CUPS.stadt.name} in summer after the last matchday (${CUPS.stadt.place}).`)}</p>`;
     const pokale = POKAL_KINDS.filter((k) => pokalOf(c, k)).map((k) => this.pokalSection(k)).join('<hr>');
     const pokalIntro = (c.level ?? 1) < 2 ? `<p class="empty">${tr('Kreispokal gibt es ab der Kreisklasse C: K.-o.-Runden unter der Woche, Heimrecht für den Klassentieferen.', 'The District Cup starts in Division Three: knockout rounds midweek, home advantage for the lower-league side.')}</p>` : '';
     return `${pokale}${pokale ? '<hr>' : pokalIntro}${this.pokalWeg()}${running.length ? running.map((k) => this.cupSection(k)).join('<hr>') : intro}${trophies}`;
@@ -93,9 +93,9 @@ export const seasonScreens = {
         <button class="primary coach-play" data-action="onCupCoach" data-value="${kind}">${tr('Trainer an der Seitenlinie', 'Manager on the touchline')}</button> <button data-action="onCupSimulate" data-value="${kind}">${tr('Liveticker mit Entscheidungen', 'Live ticker with decisions')}</button></div>`;
     } else action = `<p>${tr('Ihr seid raus – die anderen spielen noch.', 'You are out – the others are still playing.')}</p><button data-action="onCupSimulate" data-value="${kind}">${tr('Nächste Runde anschauen', 'Watch the next round')}</button>`;
     return `
-      <p class="chat-head">${cfg.name} ${t.year} · ${cfg.place} · ${tr(`Sieger ${cfg.prizes.winner} €, Finale ${cfg.prizes.final} €, Halbfinale ${cfg.prizes.semi} €`, `winner €${cfg.prizes.winner}, final €${cfg.prizes.final}, semi-final €${cfg.prizes.semi}`)}</p>
+      <p class="chat-head" data-testid="cup-${kind}">${cfg.name} ${t.year} · ${t.place ?? cfg.place} · ${t.size ? `${t.size} ${tr('Teams', 'teams')} · ` : ''}${t.host ? tr('Heimturnier: Theke und Startgelder statt Preisgeld', 'Home tournament: bar and entry fees instead of prize money') : tr(`Sieger ${cfg.prizes.winner} €, Finale ${cfg.prizes.final} €, Halbfinale ${cfg.prizes.semi} €`, `winner €${cfg.prizes.winner}, final €${cfg.prizes.final}, semi-final €${cfg.prizes.semi}`)}</p>
       ${action}
-      <div class="cup-groups">${table(0)}${table(1)}</div>
+      <div class="cup-groups">${t.groups.map((_, g) => table(g)).join('')}</div>
       ${ko.length ? `<h4>${tr('K.-o.-Runde', 'Knockout round')}</h4><ul class="plain cup-list">${ko.map(line).join('')}</ul>` : ''}
       <h4>${tr('Alle Spiele', 'All matches')}</h4><ul class="plain cup-list">${t.matches.filter((m) => m.result).map(line).join('') || `<li><em>${tr('Gleich geht es los.', 'Kick-off is coming up.')}</em></li>`}</ul>
       ${t.log.length ? `<h4>${tr('Eure Ergebnisse', 'Your results')}</h4><ul class="plain">${t.log.map((l) => `<li>${l}</li>`).join('')}</ul>` : ''}`;
