@@ -20,6 +20,7 @@ import { storyLabels } from '../../career/stories.js';
 import { coachAge, legacy, legacyPrompt, stepDown, successionCandidates } from '../../career/legacy.js';
 import { talk } from '../../career/pub.js';
 import { weatherLine } from '../../career/weather.js';
+import { nachholLabel } from '../../career/platz.js';
 import { derbyOf, isDerbyFixture } from '../../career/derby.js';
 import { CUP_NAME, CUPS, cupOf, PRIZES, tournamentOpen, winterCupDue, winterCupRunning } from '../../career/tournament.js';
 import { humanTie, pokalClub, pokalDue, POKALE, pokalOf, pokalWhen, roundName } from '../../career/pokal.js';
@@ -102,6 +103,7 @@ export const homeScreens = {
     const notes = [
       w.notice && w.notice.choice === null && !(w.event && w.event.choice === null) ? tr('Am Schwarzen Brett hängt etwas für dich.', 'Something on the notice board needs you.') : '',
       w.event && w.event.choice === null ? tr('In der Gruppe wartet eine Entscheidung auf dich.', 'A decision is waiting for you in the group chat.') : '',
+      w.postponed ? `${tr(`Platzsperre: Das Spiel wird am ${nachholLabel(c)} nachgeholt (weniger Zuschauer, mehr Absagen).`, `Pitch closed: the game is replayed on ${nachholLabel(c)} (fewer spectators, more drop-outs).`)} ${button(tr('Trotzdem spielen', 'Play anyway'), { action: 'playAnyway' })}` : '',
       count('yes') < venue.format ? tr('Zu wenige Zusagen – es hilft jemand aus dem Bekanntenkreis aus.', 'Not enough players – someone from a mate\'s circle will help out.') : '',
       unfitNote(c, club),
       youthNote(c),
@@ -119,7 +121,7 @@ export const homeScreens = {
         <div class="hub-alt">${button(tr('Liveticker mit Entscheidungen', 'Live ticker with decisions'), { action: 'onSimulate' })}</div>`;
     return `
       <article class="ui-card match hub-match" style="--kit:${hex(club.kit.shirt)}">
-        <p class="t-cap">${tr('Sonntag, 10:30 Uhr', 'Sunday, 10:30')} · ${tr('Spieltag', 'Matchday')} ${c.round + 1}${isDerbyFixture(c, f) ? ` · <b class="derby">${derbyOf(c).name}</b>` : ''}</p>
+        <p class="t-cap">${w.postponed ? `${nachholLabel(c)}, ${tr('Nachholspiel', 'replay')}` : tr('Sonntag, 10:30 Uhr', 'Sunday, 10:30')} · ${tr('Spieltag', 'Matchday')} ${c.round + 1}${isDerbyFixture(c, f) ? ` · <b class="derby">${derbyOf(c).name}</b>` : ''}</p>
         <div class="hub-vs">
           <span>${crestSVG(crestOf(hc), { size: 44, short: hc.short, ...(hc.human ? crestExtras(c) : {}), label: hc.name })}<b>${hc.short}</b></span>
           <i>–</i>

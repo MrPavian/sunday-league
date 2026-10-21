@@ -1,6 +1,7 @@
 import { createCareer, currentFixtures, finishRound, humanClub, maxSquad, migrateCareer, nextSeason, nudge, playerOf, prepareMatch, recordResult, recruit, scoutRumor, seasonOver, simulateSync } from '../src/career/career.js';
 import { acceptSponsor, fulfillWish } from '../src/career/sponsors.js';
 import { build, canBuild, FACILITIES } from '../src/career/facilities.js';
+import { care, platz, renew } from '../src/career/platz.js';
 import { promoteProspect } from '../src/career/youth.js';
 import { table } from '../src/career/career.js';
 import { resolveEvent } from '../src/career/events.js';
@@ -13,7 +14,7 @@ const TERM = +((process.argv.find((a) => a.startsWith('--term=')) ?? '').split('
 const BOT = process.argv.includes('--bot'); // spielt wie ein aktiver Mensch: holt Leute, baut aus, nimmt Sponsoren
 const log = { recruited: 0, promoted: 0, built: [], sponsors: 0 };
 const money = {}; // Einnahmen/Ausgaben je Liga und Kategorie
-const cat = (t) => /Getränke|Drinks/.test(t) ? 'getraenke' : /Mitglied|Membership/.test(t) ? 'beitraege' : /\((Trikot|Ärmel|Bande|Ball|Shirt|Sleeve|Board)/.test(t) ? 'sponsoren' : /Strafen|Fines/.test(t) ? 'strafen' : /Schiri|Referee|Platzmiete|Pitch rent/.test(t) ? 'schiri+platz' : /Bonus|Prämie/i.test(t) ? 'praemien' : /Handwerker|Material|builders/.test(t) ? 'ausbau' : /Nebenkosten|running/.test(t) ? 'nebenkosten' : /Fahrgeld|Travel money/.test(t) ? 'fahrgeld' : /Spielbetrieb|Running the team/.test(t) ? 'spielbetrieb' : /Auswärts|Away trip/.test(t) ? 'auswaerts' : /Fahrt|trip/i.test(t) ? 'fahrt' : /Pauschale|Allowance/.test(t) ? 'ehrenamt' : /Aufwandsentschädigung|Expenses for/.test(t) ? 'ae' : 'sonstiges';
+const cat = (t) => /Getränke|Drinks/.test(t) ? 'getraenke' : /Mitglied|Membership/.test(t) ? 'beitraege' : /\((Trikot|Ärmel|Bande|Ball|Shirt|Sleeve|Board)/.test(t) ? 'sponsoren' : /Strafen|Fines/.test(t) ? 'strafen' : /Schiri|Referee|Platzmiete|Pitch rent/.test(t) ? 'schiri+platz' : /Bonus|Prämie/i.test(t) ? 'praemien' : /Handwerker|Material|builders|Kauf des|Langzeitpacht|Grundsteuer|Platzpflege|Platzvermietung|Pitch care|Pitch hire|purchase|long-term|Property tax/.test(t) ? 'ausbau' : /Nebenkosten|running/.test(t) ? 'nebenkosten' : /Fahrgeld|Travel money/.test(t) ? 'fahrgeld' : /Spielbetrieb|Running the team/.test(t) ? 'spielbetrieb' : /Auswärts|Away trip/.test(t) ? 'auswaerts' : /Fahrt|trip/i.test(t) ? 'fahrt' : /Pauschale|Allowance/.test(t) ? 'ehrenamt' : /Aufwandsentschädigung|Expenses for/.test(t) ? 'ae' : 'sonstiges';
 function staffBot(c) {
   for (const role of ROLES) {
     if (role !== 'jugendleiter' && holderOf(c, role)) continue;
@@ -31,7 +32,10 @@ function bot(c) {
   // --term=N: Laufzeit beim Unterschreiben (fällt auf 1 zurück, wenn der Sponsor sich nicht so lange bindet); --wishes: Wünsche erfüllen.
   for (let i = (c.offers ?? []).length - 1; i >= 0; i--) if ((TERM > 1 && acceptSponsor(c, i, TERM)) || acceptSponsor(c, i)) log.sponsors++;
   if (WISHES) c.sponsors.forEach((s, i) => { if (s.wish && !s.wish.done) fulfillWish(c, i); });
-  for (const id of Object.keys(FACILITIES)) if (canBuild(c, id) && c.cash > FACILITIES[id].cost * 1.4 && build(c, id, 'handwerker')) log.built.push(`${id}@S${c.season}`);
+  // Platz: Ehrenamtliche mähen, Kreide, Wässern, Nachsäen bei Bedarf; Pachtangebot annehmen (--nocare: Bot pflegt nicht).
+  if (!process.argv.includes('--nocare')) { care(c, 'maehen', 'helfer'); care(c, 'kreide', 'helfer'); care(c, 'waessern', 'helfer'); if (platz(c).cond < 0.6) care(c, 'nachsaeen', 'profi'); care(c, 'abziehen', 'helfer'); if (platz(c).angebot) renew(c); }
+  const OLD = ['duschen', 'grill', 'ballmaschine', 'kabine', 'flutlicht', 'vereinsbus', 'jugendhaus', 'tribuene']; // --oldset: nur die Ausbauten von vor 11.9 (Vergleich mit dem alten Stand)
+  for (const id of Object.keys(FACILITIES)) if ((!process.argv.includes('--oldset') || OLD.includes(id)) && canBuild(c, id) && c.cash > FACILITIES[id].cost * 1.4 && build(c, id, 'handwerker')) log.built.push(`${id}@S${c.season}`);
 }
 const t0 = Date.now();
 let c = createCareer({ seed, leagueSize: process.argv.includes('--8') ? 8 : 6 });

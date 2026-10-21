@@ -5,6 +5,7 @@ import { button, icon } from '../ds.js';
 import { crestOf, crestSVG } from '../crest.js';
 import { clubById, humanClub, seasonOver, table } from '../../career/career.js';
 import { dateLabel, matchDate, monthLabel } from '../../career/calendar.js';
+import { nachholLabel } from '../../career/platz.js';
 import { CUPS, cupClub, cupOf, groupTable, humanCupMatch, stageName, winterRound } from '../../career/tournament.js';
 import { POKALE, POKAL_KINDS, pokalClub, pokalEligible, pokalOf, roundName, roundTies, sponsorPraemie, tieOnPens } from '../../career/pokal.js';
 import { BUND_VENUES, levelName } from '../../career/bundespokal.js';
@@ -141,7 +142,7 @@ export const seasonScreens = {
       return `<li class="${k[0]}" title="${opp.name}"><b>${k[1]}</b> ${gf}:${ga} ${home ? tr('gg.', 'v') : tr('bei', 'at')} ${opp.short}</li>`;
     };
     const form = played.slice(-5).map(mark).join('');
-    const nx = next ? `${tr('Spieltag', 'Matchday')} ${next.i + 1} (${dateLabel(matchDate(c, next.i))}): ${next.f.home === id ? tr('gegen', 'v') : tr('bei', 'at')} ${clubById(c, next.f.home === id ? next.f.away : next.f.home).name}` : tr('Kein Spiel mehr in dieser Saison.', 'No more matches this season.');
+    const nx = next ? `${tr('Spieltag', 'Matchday')} ${next.i + 1} (${next.i === c.round && c.week?.postponed ? `${nachholLabel(c)} – ${tr('Nachholspiel nach Platzsperre', 'replay after pitch closure')}` : dateLabel(matchDate(c, next.i))}): ${next.f.home === id ? tr('gegen', 'v') : tr('bei', 'at')} ${clubById(c, next.f.home === id ? next.f.away : next.f.home).name}` : tr('Kein Spiel mehr in dieser Saison.', 'No more matches this season.');
     return `<ul class="tbl-form">${form || `<li class="none">${tr('noch kein Spiel', 'no games yet')}</li>`}</ul><p class="t-2">${nx}</p>`;
   },
 

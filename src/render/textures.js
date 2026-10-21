@@ -311,30 +311,50 @@ export function makeAshTexture(rng, { width, depth, pitch, texelsPerMeter = 12 }
     p.blob(x, z, r, [112, 66, 52], 0.5, 0.9);
     p.blob(x - r * 0.3, z - r * 0.3, r * 0.3, [140, 118, 116], 0.3, 0.7); // Himmel spiegelt
   }
+  if (pitch.worn) wearPatches(p, pitch, 1, [[120, 70, 52], [104, 62, 48]], 1.2);
   drawPitchLines(p, pitch, [124, 70, 52]);
   for (const s of [-1, 1]) p.blob(s * (pitch.halfLength - 1), 0, 1.8, [118, 64, 48], 0.35, 0.8); // feuchter Torraum
   return p.finish();
 }
 
+// Abgespielter Platz (pitch.worn 0..1, aus platz.js): kahle Stellen vor den Toren, im Mittelkorridor und an den Seiten.
+// Eigene Würfelfolge, damit der übrige Boden (und der Standardplatz ohne Verschleiß) unverändert bleibt.
+function wearPatches(p, pitch, k, colors, size) {
+  const r = pitchRng(Math.round(pitch.worn * 1000) + 7);
+  const n = Math.round(pitch.worn * 60 * k);
+  const { halfLength: hl, halfWidth: hw } = pitch;
+  for (let i = 0; i < n; i++) {
+    const nearGoal = r() < 0.5;
+    const x = nearGoal ? (r() < 0.5 ? -1 : 1) * (hl - r() * 6) : (r() - 0.5) * hl * 1.5;
+    const z = nearGoal ? (r() - 0.5) * 8 : (r() - 0.5) * hw * 1.2;
+    p.blob(x, z, (0.4 + r() * 0.9) * size * (0.5 + pitch.worn), colors[i % colors.length], 0.35 + 0.4 * pitch.worn, 0.7);
+  }
+}
+const pitchRng = (seed) => {
+  let a = seed >>> 0;
+  return () => ((a = (a + 0x6d2b79f5) >>> 0), ((((a ^ (a >>> 15)) * (1 | a)) >>> 0) / 4294967296));
+};
+
 // Kreidelinien eines Kleinfelds; worn = Farbe für den ausgetretenen Torraum.
 function drawPitchLines(p, pitch, worn) {
   const chalk = [236, 232, 222];
+  const fade = 1 - 0.8 * (pitch.fade ?? 0); // Linien verblassen, wenn die Kreide lange nicht nachgezogen wurde (platz.js); 0 = wie immer
   const { halfLength: hl, halfWidth: hw } = pitch;
   const t = Math.max(2, Math.round(0.15 * p.tpm)); // ≈ 15 cm breit, mindestens 2 Texel (bei 12 Texel/m wie bisher 3)
   const box = Math.min(8, pitch.goalHalfWidth * 2.4 + 2);
   const depth = Math.min(8, hl * 0.3);
-  p.line(-hl, -hw, hl, -hw, chalk, 0.8, 0.03, t);
-  p.line(-hl, hw, hl, hw, chalk, 0.8, 0.03, t);
-  p.line(-hl, -hw, -hl, hw, chalk, 0.8, 0.03, t);
-  p.line(hl, -hw, hl, hw, chalk, 0.8, 0.03, t);
-  p.line(0, -hw, 0, hw, chalk, 0.75, 0.03, t);
-  p.circle(0, 0, Math.min(5, hw * 0.3), chalk, 0.75);
+  p.line(-hl, -hw, hl, -hw, chalk, 0.8 * fade, 0.03, t);
+  p.line(-hl, hw, hl, hw, chalk, 0.8 * fade, 0.03, t);
+  p.line(-hl, -hw, -hl, hw, chalk, 0.8 * fade, 0.03, t);
+  p.line(hl, -hw, hl, hw, chalk, 0.8 * fade, 0.03, t);
+  p.line(0, -hw, 0, hw, chalk, 0.75 * fade, 0.03, t);
+  p.circle(0, 0, Math.min(5, hw * 0.3), chalk, 0.75 * fade);
   for (const s of [-1, 1]) {
     const x = s * hl;
-    p.line(x, -box, x - s * depth, -box, chalk, 0.75, 0.03, t);
-    p.line(x, box, x - s * depth, box, chalk, 0.75, 0.03, t);
-    p.line(x - s * depth, -box, x - s * depth, box, chalk, 0.75, 0.03, t);
-    p.blob(x - s * (depth + 1), 0, 0.12, chalk, 0.9, 1);
+    p.line(x, -box, x - s * depth, -box, chalk, 0.75 * fade, 0.03, t);
+    p.line(x, box, x - s * depth, box, chalk, 0.75 * fade, 0.03, t);
+    p.line(x - s * depth, -box, x - s * depth, box, chalk, 0.75 * fade, 0.03, t);
+    p.blob(x - s * (depth + 1), 0, 0.12, chalk, 0.9 * fade, 1);
     if (worn) p.blob(x - s * 0.8, 0, 1.4, worn, 0.5, 0.7);
   }
 }
@@ -384,6 +404,7 @@ export function makeLawnTexture(rng, { width, depth, pitch, texelsPerMeter = 12 
   for (let i = 0; i < 26; i++) p.blob(rng.range(-hl * 0.65, hl * 0.65), rng.range(-hw * 0.25, hw * 0.25), rng.range(0.6, 1.4), [102, 124, 66], 0.16, 0.6);
   // Trampelpfad des Linienrichters an der Seitenlinie.
   for (let x = -hl; x < hl; x += 0.4) p.blob(x, hw + 0.8, 0.35, [104, 118, 66], 0.4, 0.6);
+  if (pitch.worn) wearPatches(p, pitch, k, [[118, 104, 66], [128, 108, 70]], 1.6);
   drawPitchLines(p, pitch, null);
   return p.finish();
 }

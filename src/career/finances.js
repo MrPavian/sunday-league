@@ -2,7 +2,8 @@
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { closeSponsors, normalizeSponsors, paySponsors } from './sponsors.js';
-import { fansMul, salesMul, travelMul } from './facilities.js';
+import { capacity, fansMul, roofRelief, salesMul, travelMul } from './facilities.js';
+import { homeMatchEffects, rentPerMatch } from './platz.js';
 import { playerOf } from './career.js';
 import { tripSpirit } from './trip.js';
 import { BUND_GATE_SHARE, BUND_VENUES } from './bundespokal.js';
@@ -77,13 +78,15 @@ export function matchFinances(career, fixture, prepared, level) {
   if (homeHuman) {
     const rng = createRng(career.seed + career.season * 97 + career.round * 13);
     const press = (career.flags?.pressWeeks > 0 ? 1.4 : 1) * (m.derby ? 1.8 : 1); // Kreisblatt-Porträt, Derby
-    const weatherFans = { sonne: 1.2, hitze: 0.9, regen: 0.6, wind: 0.85, nebel: 0.8, frost: 0.7, schnee: 0.5 }[career.week?.weather?.id] ?? 1;
-    const base = Math.round((level > 4 ? rng.int(80, 200) : level > 3 ? rng.int(45, 90) : level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14)) * press * weatherFans * fansMul(career));
+    const wf = { sonne: 1.2, hitze: 0.9, regen: 0.6, wind: 0.85, nebel: 0.8, frost: 0.7, schnee: 0.5 }[career.week?.weather?.id] ?? 1;
+    const weatherFans = roofRelief(career) && wf < 1 ? 1 - (1 - wf) / 2 : wf; // Tribünendach: die Wetterbremse halbiert sich
+    const pe = homeMatchEffects(career); // Platzsperre/Nachholspiel, Acker, Linien
+    const base = Math.round((level > 4 ? rng.int(80, 200) : level > 3 ? rng.int(45, 90) : level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14)) * press * weatherFans * fansMul(career) * pe.fans);
     const bv = prepared.bund ? BUND_VENUES[prepared.bund.venue] : null; // überregionaler Pokal: Spielort bestimmt die Kulisse
-    const fans = bv ? prepared.match.crowd : base; // Bundespokal: die angezeigte Zuschauerzahl des Spiels wird abgerechnet
+    const fans = bv ? prepared.match.crowd : Math.min(base, capacity(career)); // Bundespokal: die angezeigte Zuschauerzahl des Spiels wird abgerechnet
     career.flags ??= {};
     career.flags.fans = { round: career.round, n: fans }; // für die Unterschriftenlisten
-    const wirt = (career.staff?.wirt ? 1.3 : 1) * salesMul(career); // Wirt, Grill & Theke
+    const wirt = (career.staff?.wirt ? 1.3 : 1) * salesMul(career, career.week?.weather?.id); // Wirt, Grill & Theke, Biergarten
     const wirt0 = bv ? bv.theke : 1; // im Stadion bleibt das meiste Geschäft beim Betreiber
     book(career, tr(`Getränkeverkauf (${fans} Zuschauer)${career.staff?.wirt ? ` – Wirt ${career.staff.wirt.name.split(' ')[0]}` : ''}${salesMul(career) > 1 ? ' – mit Grill' : ''}`, `Drinks sales (${fans} spectators)${career.staff?.wirt ? ` – bar manager ${career.staff.wirt.name.split(' ')[0]}` : ''}${salesMul(career) > 1 ? ' – with barbecue' : ''}`), Math.round(fans * 2.5 * wirt * wirt0));
     // Bezirksliga: Eintritt (3 € – Kinder und Mitglieder frei, daher im Schnitt etwas weniger).
@@ -92,8 +95,11 @@ export function matchFinances(career, fixture, prepared, level) {
     if (level > 1) {
       book(career, tr('Schiri-Gebühr', 'Referee fee'), -20 - (level - 2) * 10);
       // Tribüne oder Stadion kosten ihre eigene Miete (bundevents.js) – dann keine zusätzliche Platzmiete.
-      if (!(bv && bv.rentUnits > 0)) book(career, career.staff?.platzwart ? tr('Platzmiete (Platzwart macht vieles selbst)', 'Pitch rent (groundsman does a lot himself)') : tr('Platzmiete Waldesruh', 'Pitch rent Waldesruh'), career.staff?.platzwart ? -7.5 : -15);
+      // Pachtvertrag mit der Gemeinde (platz.js): Standard 15 €, mit Platzwart die Hälfte, Langzeitpacht 20 % billiger, Eigentum 0.
+      const rent = rentPerMatch(career);
+      if (!(bv && bv.rentUnits > 0) && rent > 0) book(career, career.staff?.platzwart ? tr('Platzmiete (Platzwart macht vieles selbst)', 'Pitch rent (groundsman does a lot himself)') : tr('Platzmiete Waldesruh', 'Pitch rent Waldesruh'), -rent);
     }
+    for (const [text, amount] of pe.book) book(career, text, amount);
   }
 }
 
