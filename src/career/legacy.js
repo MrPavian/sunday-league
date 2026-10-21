@@ -10,7 +10,7 @@ import { addCustomPlayer, humanClub, maxSquad, playerOf } from './career.js';
 import { adjustMood } from './events.js';
 import { book } from './finances.js';
 import { outcome } from './outcomes.js';
-import { adjustEnergy, adjustPatience, childAge, createCoachPlayer, familyText, partnerOf, RELATIONS, STYLES } from './personal.js';
+import { adjustEnergy, adjustPatience, childAge, createCoachPlayer, familyText, isPresident, partnerOf, RELATIONS, STYLES } from './personal.js';
 import { roleName } from './youth.js';
 import { chronicle } from './sagas.js';
 
@@ -26,6 +26,9 @@ export function legacy(c) {
 
 export const coachAge = (c) => (c.coach?.idx != null ? playerOf(c, c.coach.idx).age : null);
 export const coachPlaying = (c) => c.coach?.idx != null && humanClub(c).squad.includes(c.coach.idx);
+// Haken für die Alten Herren (ROADMAP 11.9, Team gibt es noch nicht): Wer als Spielertrainer zu den Alten Herren wechselt,
+// trägt c.coach.oldBoys = { since }. Das Team selbst kommt später und liest nur dieses Flag.
+export const oldBoysHook = (c) => c.coach?.oldBoys ?? null;
 const coachFirst = (c) => (c.coach?.idx != null ? playerOf(c, c.coach.idx).name.split(' ')[0] : 'Trainer');
 
 // Du hängst die Schuhe an den Nagel: raus aus dem Kader, Trainer bleibst du.
@@ -82,6 +85,12 @@ const PROMPTS = {
         ]),
       },
       { label: tr('Schuhe an den Nagel – ab jetzt nur Trainer', 'Hang up the boots – manager only from now on'), effect: retireOutcomes() },
+      {
+        // Weg zum Präsidium: zu den Alten Herren und einen neuen Trainer selbst verpflichten (president.js).
+        label: tr('Zu den Alten Herren – und einen neuen Trainer verpflichten', 'Move to the old boys – and hire a new manager'),
+        succession: true,
+        effect: outcome([{ w: 1, run: (c) => (hangUpBoots(c), (c.coach.oldBoys = { since: c.season + 1 }), adjustMood(c, 0.03), tr('Du kickst künftig bei den Alten Herren, mittwochs, mit Bier danach. Für die Erste muss ein neuer Trainer her – und den suchst du selbst aus.', 'From now on you play for the old boys, Wednesdays, with a beer afterwards. The first team needs a new manager – and you pick him yourself.')) }]),
+      },
     ],
   },
   koerper: {
@@ -98,8 +107,10 @@ const PROMPTS = {
     options: [{ label: tr('Abschied feiern', 'Celebrate the farewell'), effect: retireOutcomes([{ w: 2, run: (c) => (hangUpBoots(c), adjustMood(c, 0.12), book(c, tr('Abschiedsfeier (Spenden abzüglich Fass)', 'Farewell party (donations minus the keg)'), 20), tr('Die Abschiedsfeier geht bis zum Morgen. Irgendwer hat ein Banner gemalt. Es ist krumm, aber du heulst trotzdem.', 'The farewell party goes on until morning. Someone painted a banner. It is wonky, but you cry anyway.')) }]) }],
   },
   amt: {
-    title: tr('Noch ein Jahr an der Seitenlinie?', 'Another year on the touchline?'),
-    text: (c) => tr(`Du bist ${coachAge(c)}. Die Jungs könnten deine Enkel sein, manche sind es fast. Machst du weiter, oder suchst du einen Nachfolger?`, `You are ${coachAge(c)}. The lads could be your grandchildren – some almost are. Do you carry on, or look for a successor?`),
+    title: (c) => (isPresident(c) ? tr('Noch ein Jahr im Präsidium?', 'Another year in the president\'s chair?') : tr('Noch ein Jahr an der Seitenlinie?', 'Another year on the touchline?')),
+    text: (c) => (isPresident(c)
+      ? tr(`Du bist ${coachAge(c)}. Die Mitgliederversammlung wird länger, die Bratwurst nicht besser. Machst du als Präsident weiter, oder suchst du einen Nachfolger?`, `You are ${coachAge(c)}. The general meetings get longer, the bratwurst doesn't get better. Do you carry on as president, or look for a successor?`)
+      : tr(`Du bist ${coachAge(c)}. Die Jungs könnten deine Enkel sein, manche sind es fast. Machst du weiter, oder suchst du einen Nachfolger?`, `You are ${coachAge(c)}. The lads could be your grandchildren – some almost are. Do you carry on, or look for a successor?`)),
     options: [
       {
         label: tr('Weitermachen, solange die Stimme reicht', 'Carry on as long as your voice holds'),
@@ -164,11 +175,13 @@ export function legacyPromptId(c) {
   return null;
 }
 
+const titleOf = (c, p) => (typeof p.title === 'function' ? p.title(c) : p.title);
+
 export function legacyPrompt(c) {
   const id = legacyPromptId(c);
   if (!id) return null;
   const p = PROMPTS[id];
-  return { id, title: p.title, text: p.text(c), options: p.options.map((o) => o.label) };
+  return { id, title: titleOf(c, p), text: p.text(c), options: p.options.map((o) => o.label) };
 }
 
 export function resolveLegacy(c, choice) {
@@ -179,7 +192,7 @@ export function resolveLegacy(c, choice) {
   L.decided = c.season;
   const text = option.effect(c, {}, createRng((c.seed * 17 + c.season * 5 + choice) >>> 0));
   if (option.succession) L.choosing = true;
-  L.last = { season: c.season, title: PROMPTS[id].title, text };
+  L.last = { season: c.season, title: titleOf(c, PROMPTS[id]), text };
   return text;
 }
 
@@ -220,6 +233,8 @@ export function successionCandidates(c) {
   }
   const alum = [...(c.alumni ?? [])].reverse().find((a) => a.idx !== co?.idx && a.idx !== k?.idx && a.idx != null && (c.custom?.[a.idx] || a.idx < 900000));
   if (alum) out.push({ type: 'ehemaliger', idx: alum.idx, name: alum.name, age: alum.age + (c.season - alum.season), desc: tr(`Vereinslegende${alum.apps ? ` (${alum.apps} Spiele, ${alum.goals} Tore)` : ''}, heute ${alum.role}.`, `Club legend${alum.apps ? ` (${alum.apps} games, ${alum.goals} goals)` : ''}, now ${roleName(alum.role)}.`) });
+  // Anderer Weg (ROADMAP 11.9): selbst Präsident werden und den Trainer engagieren. Nicht, wenn man schon im Präsidium sitzt.
+  if (!isPresident(c)) out.push({ type: 'extern', name: tr('Trainer verpflichten – du wirst Präsident', 'Hire a manager – you become president'), desc: tr('Du suchst aus drei Bewerbern den neuen Trainer aus und führst den Verein vom Präsidium: Finanzen, Ausbau, Sponsoren, Saisonziele. Gespielt wird ohne dich an der Linie.', 'You pick the new manager from three applicants and run the club from the president\'s office: finances, expansion, sponsors, season targets. Matches are played without you on the touchline.') });
   out.push({ type: 'neu', name: tr('Neuen Trainer anlegen', 'Create a new manager'), desc: tr('Jemand ganz Neues übernimmt – du legst Namen, Alter, Familie und Spielertyp fest.', 'Someone completely new takes over – you choose name, age, family and player type.') });
   return out;
 }
@@ -241,6 +256,7 @@ function randomFamily(rng, age, last, season) {
 function coachRecord(c, { idx, first, last, style, relation, children }) {
   return {
     idx,
+    mode: 'player', // Spielertrainer oder Nur Trainer: succeed() setzt es nach dem Kader-Eintrag endgültig
     custom: true,
     first,
     last,
@@ -266,13 +282,18 @@ export function succeed(c, cand, input = null) {
   const old = c.coach;
   const club = humanClub(c);
   const oldName = old?.idx != null ? playerOf(c, old.idx).name : tr('Der alte Trainer', 'The old manager');
-  const since = old?.since ?? 1;
+  const since = (isPresident(c) ? old?.presidentSince : null) ?? old?.since ?? 1; // Präsident: seine Präsidentenzeit (die Trainerzeit steht schon als eigene Ära)
   const tenure = (c.history ?? []).filter((h) => h.season >= since);
   const titles = tenure.filter((h) => h.pos === 1).length;
   L.eras.push({ name: oldName, from: since, to: c.season, seasons: c.season - since + 1, titles, age: coachAge(c), successor: cand.type === 'neu' ? input ? `${input.first} ${input.last}`.trim() : '?' : cand.name, how: cand.type });
   L.honorary.push(oldName);
   chronicle(c, tr(`Ende einer Ära: ${oldName} tritt nach ${c.season - since + 1} Saisons${titles ? ` und ${titles} ${titles === 1 ? 'Meisterschaft' : 'Meisterschaften'}` : ''} ab und wird Ehrenpräsident.`, `End of an era: ${oldName} steps down after ${c.season - since + 1} seasons${titles ? ` and ${titles} ${titles === 1 ? 'title' : 'titles'}` : ''} and becomes honorary president.`));
   if (old?.idx != null && club.squad.includes(old.idx)) club.squad = club.squad.filter((x) => x !== old.idx);
+  // Wer aus dem Präsidium einen Nachfolger an die Linie holt, schickt den eingestellten Trainer in den Ruhestand (ohne Abfindung).
+  if (isPresident(c) && c.hired) {
+    chronicle(c, tr(`${c.hired.name} verabschiedet sich als Trainer – ${cand.type === 'neu' ? input ? `${input.first} ${input.last}`.trim() : 'der Neue' : cand.name} übernimmt wieder selbst an der Linie.`, `${c.hired.name} leaves as manager – ${cand.type === 'neu' ? input ? `${input.first} ${input.last}`.trim() : 'the newcomer' : cand.name} takes over on the touchline again.`));
+    c.hired = null;
+  }
   const rng = createRng((c.seed * 71 + c.season * 13 + L.eras.length) >>> 0);
   let rec;
   if (cand.type === 'neu') {
@@ -284,7 +305,7 @@ export function succeed(c, cand, input = null) {
     const relation = RELATIONS[input.relation] ? input.relation : 'single';
     const children = (input.children ?? []).slice(0, 3).map((k) => ({ name: k.name || 'Kind', age: Math.max(0, Math.min(25, Math.round(k.age ?? 5))) - (c.season - 1), sex: k.sex === 'w' ? 'w' : 'm', idx: null }));
     rec = coachRecord(c, { idx, first: input.first, last: input.last, style: input.style, relation, children });
-    if (age <= 45 && club.squad.length < maxSquad(c)) club.squad.push(idx);
+    if (input.mode !== 'coachOnly' && age <= 45 && club.squad.length < maxSquad(c)) club.squad.push(idx);
   } else if (cand.type === 'kind') {
     const child = old.children.find((k) => k.name === cand.child);
     let idx = child.idx;
@@ -307,6 +328,7 @@ export function succeed(c, cand, input = null) {
     if (cand.type === 'cotrainer' && c.staff) c.staff.cotrainer = null;
     if (!c.players[cand.idx]) c.players[cand.idx] = { apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 };
   }
+  rec.mode = club.squad.includes(rec.idx) ? 'player' : 'coachOnly';
   c.coach = rec;
   L.choosing = false;
   L.notes.push(tr(`Neue Ära: ${playerOf(c, rec.idx).name} (${playerOf(c, rec.idx).age}) ist der neue Trainer. ${oldName} sitzt ab jetzt als Ehrenpräsident mit Stammplatz am Tresen.`, `New era: ${playerOf(c, rec.idx).name} (${playerOf(c, rec.idx).age}) is the new manager. ${oldName} is now honorary president with a regular stool at the bar.`));
@@ -324,7 +346,7 @@ export function legacySeasonEnd(c) {
   }
   const L = legacy(c);
   if (L.choosing) {
-    const cands = successionCandidates(c).filter((x) => x.type !== 'neu');
+    const cands = successionCandidates(c).filter((x) => x.type !== 'neu' && x.type !== 'extern'); // Autoplay: kein Präsidium, die vernünftige Wahl im Verein
     if (cands.length) succeed(c, cands[0]);
     else succeed(c, { type: 'neu', name: '' }, { first: 'Uwe', last: 'Neumann', age: 45, relation: 'verheiratet', profession: 'Hausmeister', style: 'libero', children: [] });
   }

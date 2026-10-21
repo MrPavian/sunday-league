@@ -6,6 +6,10 @@ import { table } from '../src/career/career.js';
 import { resolveEvent } from '../src/career/events.js';
 import { createRng } from '../src/core/rng.js';
 import { appointStaff, holderOf, ROLES, squadCandidates } from '../src/career/staff.js';
+import { stepDown } from '../src/career/legacy.js';
+import { appointCoach, coachApplicants } from '../src/career/president.js';
+// --coachonly: Start als Nur Trainer; --president: nach der ersten Saison zurücktreten und einen Trainer verpflichten (Präsidium, ROADMAP 11.9).
+const COACHONLY = process.argv.includes('--coachonly') || process.argv.includes('--president'), PRESIDENT = process.argv.includes('--president');
 // --staff=outside: alle freien Ämter per Aushang (Pauschale), --staff=squad: aus dem Kader (umsonst).
 const STAFF = (process.argv.find((a) => a.startsWith('--staff=')) ?? '').split('=')[1] ?? '';
 const SEASONS = +process.argv[2] || 8, seed = +process.argv[3] || 4242;
@@ -34,7 +38,7 @@ function bot(c) {
   for (const id of Object.keys(FACILITIES)) if (canBuild(c, id) && c.cash > FACILITIES[id].cost * 1.4 && build(c, id, 'handwerker')) log.built.push(`${id}@S${c.season}`);
 }
 const t0 = Date.now();
-let c = createCareer({ seed, leagueSize: process.argv.includes('--8') ? 8 : 6 });
+let c = createCareer({ seed, leagueSize: process.argv.includes('--8') ? 8 : 6, coach: COACHONLY ? { first: 'Uwe', last: 'Brandt', age: 44, relation: 'verheiratet', profession: 'Elektriker', style: 'libero', children: [], mode: 'coachOnly' } : null });
 const rng = createRng(seed + 1);
 const seen = new Map(); const dupWeek = []; const perSeason = [];
 let chatMax = 0, errors = [];
@@ -59,6 +63,7 @@ for (let s = 0; s < SEASONS; s++) {
     c = migrateCareer(JSON.parse(JSON.stringify(c))); // Speichern + Laden
   }
   const me = humanClub(c);
+  if (PRESIDENT && s === 0) { stepDown(c); const r = appointCoach(c, coachApplicants(c)[1]); if (!r.ok) errors.push('hire ' + r.reason); }
   const res = nextSeason(c);
   const feuds = Object.values(c.feuds ?? {});
   const nem = Object.values(c.nemesis ?? {});

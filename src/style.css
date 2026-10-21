@@ -479,8 +479,8 @@ button.danger { background: #b0302c; color: #f2efe6; }
 body.in-menu .edge { display: none; }
 
 /* Trainer-Editor */
-#creator { position: absolute; inset: 0; display: flex; justify-content: center; padding: 16px; overflow-y: auto; background: rgb(10, 12, 14); z-index: 3; text-shadow: var(--shadow); }
-#creator[hidden] { display: none; }
+#creator, #hire { position: absolute; inset: 0; display: flex; justify-content: center; padding: 16px; overflow-y: auto; background: rgb(10, 12, 14); z-index: 3; text-shadow: var(--shadow); }
+#creator[hidden], #hire[hidden] { display: none; }
 .creator { display: grid; gap: 10px; align-content: start; }
 .creator h2 { margin: 0; color: var(--accent); font-size: 30px; }
 .creator h4 { margin: 12px 0 6px; }
@@ -506,6 +506,32 @@ body.in-menu .edge { display: none; }
 .creator .preview p { margin: 2px 0 6px; }
 .creator .actions { display: flex; justify-content: flex-end; gap: 10px; }
 @media (max-width: 760px) { .creator-grid { grid-template-columns: 1fr; } }
+
+/* Trainer engagieren (CoachHire.js) und Präsidium (clubhouse/office.js) */
+.creator .modes { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.creator .portrait-row, .cand, .office-coach { display: flex; align-items: flex-start; gap: 12px; }
+.portrait { flex: none; image-rendering: pixelated; border: 2px solid #000; background: #23231c; }
+.cands { display: grid; gap: 10px; }
+.cand { border: 2px solid #000; background: #23231c; padding: 10px; }
+.cand-info { display: grid; gap: 4px; min-width: 0; flex: 1; }
+.cand-info h3 { margin: 0; color: var(--accent); }
+.cand-info blockquote { margin: 2px 0 4px; font-style: italic; opacity: 0.9; }
+.cand.big { margin-bottom: 4px; }
+.hire .stars { color: var(--accent); letter-spacing: 1px; }
+.hire .dialog { display: grid; gap: 6px; min-height: 60px; }
+.hire .say { max-width: 88%; padding: 6px 10px; border: 2px solid #000; background: #2c2c24; }
+.hire .say.you { justify-self: end; background: #1f3a2a; }
+.hire .say.them.no { border-color: #a33; }
+.hire .asks { display: flex; flex-wrap: wrap; gap: 6px; }
+.hire .actions { flex-wrap: wrap; }
+.office { display: grid; gap: 10px; }
+.office-coach { border: 2px solid #000; background: #23231c; padding: 10px; }
+.office .goal-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.office .goal-row button.on { background: var(--accent); color: #111; text-shadow: none; }
+.office button.danger { border-color: #a33; }
+.office .vacant { border: 2px dashed var(--accent); padding: 10px; }
+.coach-note { border: 2px solid #000; background: #23231c; padding: 8px 10px; margin: 0 0 8px; }
+@media (max-width: 520px) { .cand, .office-coach { flex-direction: column; } .hire .say { max-width: 100%; } }
 
 /* Stammkneipe */
 .pub { display: grid; gap: 10px; }

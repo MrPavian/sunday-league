@@ -30,7 +30,8 @@ import { derbyResult, isDerbyFixture } from './derby.js';
 import { applyChemistry, pastLink, relationsAmong, setRelation } from './relations.js';
 import { applyFusion, chronicle, initSagas, sagaChat, sagaSeasonEnd, sagaWeek } from './sagas.js';
 import { weeklyStaff } from './staff.js';
-import { childrenGrowUp, coachAway, initCoach, isCoach, personalWeek, seasonPersonal, weeklyPersonal } from './personal.js';
+import { coachWeek, hiredGrowth, presidentSeasonEnd, weeklyHired } from './president.js'; // Präsidium nach dem Traineramt (ROADMAP 11.9)
+import { childrenGrowUp, coachAway, initCoach, isCoach, isPresident, personalWeek, seasonPersonal, weeklyPersonal } from './personal.js';
 import { absenceFactor, advanceArcs, applyForm, autoResolve, resultMood, rollNotice, rollWeekEvent, weeklyMood } from './events.js';
 import { developYouth, expireYouth, initYouth, retirements, youthIntake } from './youth.js';
 import { applyCards, banGames, banReason, isBanned, resetYellows, tickBans } from './suspensions.js';
@@ -141,7 +142,7 @@ export function developPlayers(career) {
     const before = playerOf(career, idx);
     const age = before.age;
     const practice = rec.apps >= 5 ? 1.3 : rec.apps >= 2 ? 1 : 0.6;
-    const coach = career.staff?.cotrainer ? 1.15 : 1;
+    const coach = (career.staff?.cotrainer ? 1.15 : 1) * hiredGrowth(career);
     const growth = (age <= 20 ? 0.045 : age <= 23 ? 0.025 : age <= 29 ? 0.006 : 0) * coach * (age <= 23 ? youthGrowthMul(career) : 1);
     rec.delta ??= {};
     for (const k of ATTR_KEYS) {
@@ -250,6 +251,7 @@ export function nextSeason(career) {
   const topScorer = scorer?.goals ? { name: playerOf(career, scorer.idx).name, goals: scorer.goals } : null;
   career.history = [...(career.history ?? []), { season: career.season, league: career.league, pos, champion: rows[0].club.name, topScorer, promoted, relegated }];
   const goalVerdict = seasonGoalVerdict(career, pos); // hat der Vorstand bekommen, was er wollte?
+  const presidentNotes = presidentSeasonEnd(career, pos); // Präsidium: Zufriedenheit des Trainers, Angebote von außen
 
   // Spieler der Saison und Saisonbilanz je Spieler, bevor die Zahlen zurückgesetzt werden.
   const bestOfSeason = seasonAward(career, awardDeps(career));
@@ -327,6 +329,8 @@ export function nextSeason(career) {
   const note = (text) => career.week?.chat.splice(1, 0, { from: null, text, time: 'Mo 09:00' });
   setSeasonGoal(career); // neue Saison, neue Ansage
   if (goalVerdict) note(goalVerdict);
+  for (const n of presidentNotes) note(n);
+  for (const n of coachWeek(career)) note(n); // erste Woche der neuen Saison: Taktik, Zusagen, Kader
   if (bestOfSeason) note(bestOfSeason.text);
   for (const n of sagaNotes) note(n);
   for (const n of legacyNotes) note(n);
@@ -711,6 +715,7 @@ export function migrateCareer(career) {
   initFinances(career);
   initYouth(career);
   initCoach(career);
+  if (career.coach) career.coach.mode ??= 'player'; // alte Spielstände: Spielertrainer
   initSagas(career);
   initAcademy(career);
   career.history ??= [];
@@ -907,7 +912,7 @@ export function currentLineup(career) {
 
 // Spieler auf eine Position setzen; steht er schon woanders, wird getauscht.
 export function setLineupSlot(career, slot, idx) {
-  if (coachAway(career)) return; // der Kapitän stellt auf
+  if (coachAway(career) || isPresident(career)) return; // der Kapitän bzw. der eingestellte Trainer stellt auf
   const { lineup } = currentLineup(career);
   const next = [...lineup];
   const from = next.indexOf(idx);
@@ -1005,7 +1010,7 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   // Freizeitliga: fliegend wechseln; ab der Kreisklasse zählt der Schiri mit.
   match.subRule = subRuleFor(MATCH.subs, career.level);
   // Jeder Verein hat seinen Trainer – der stellt während des Spiels auf seine Art um.
-  const persona = (club) => (club.human ? null : coachOf(club).type);
+  const persona = (club) => (club.human ? (isPresident(career) ? career.hired?.persona ?? null : null) : coachOf(club).type); // Präsidium: der eingestellte Trainer stellt im Spiel um
   match.coachPersona = humanIsAway ? [persona(away), persona(home)] : [persona(home), persona(away)];
   // Derby: hitziger, mehr Karten – außer man hat sich aufs faire Grillen geeinigt.
   match.derby = (isDerbyFixture(career, fixture) && !career.week?.derbyFair) || grudgeMatch(career, home.human ? away.id : home.id);
@@ -1111,9 +1116,11 @@ export function finishRound(career) {
     if (rec.awayWeeks > 0) rec.awayWeeks--;
   }
   const staffNotes = weeklyStaff(career, { squad: humanClub(career).squad }); // Pauschalen, freie Ämter
+  staffNotes.push(...weeklyHired(career)); // Lohn und Laune des eingestellten Trainers (Präsidium)
   career.round++;
   startWeek(career);
   if (career.week) deliverGrumbles(career, career.week.chat); // Murren wegen fremder Position
+  for (const text of coachWeek(career)) career.week?.chat.push({ from: null, text, time: 'Mo 08:05' }); // Präsidium: der Trainer erledigt seine Wochenarbeit
   for (const text of staffNotes) career.week?.chat.push({ from: null, text, time: 'Mo 08:00' });
   // Versprochene Einsätze für Neuzugänge: nach zwei Spieltagen abrechnen.
   checkPromises(career, humanClub(career).squad, (idx, text) => career.week?.chat.push({ from: idx, text, time: 'Mo 08:15' }));

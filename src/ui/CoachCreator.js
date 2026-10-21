@@ -4,6 +4,7 @@ import { TRAITS } from '../data/traits.js';
 import { createCoachPlayer, RELATIONS, STYLES } from '../career/personal.js';
 import { POSITIONS } from '../sim/generator.js';
 import { esc, hex } from './ds.js';
+import { portraitSVG } from './portrait.js';
 
 const ATTR_LABELS = tr({ pace: 'Tempo', stamina: 'Ausdauer', technique: 'Technik', passing: 'Passen', shooting: 'Schuss', tackling: 'Zweikampf', heading: 'Kopfball', keeping: 'Torwart', strength: 'Körper' }, { pace: 'Pace', stamina: 'Stamina', technique: 'Technique', passing: 'Passing', shooting: 'Shooting', tackling: 'Tackling', heading: 'Heading', keeping: 'Goalkeeping', strength: 'Strength' });
 const JOBS = [...PROFESSIONS.filter((j) => !j.startsWith('Azubi') && !j.startsWith('Student')), 'Mechatroniker', 'Polizist', 'Koch', 'Landschaftsgärtner', 'Erzieher', 'Vertriebler'];
@@ -13,6 +14,7 @@ export class CoachCreator {
   constructor(root) {
     this.root = root;
     this.data = {
+      mode: 'player', // 'player' = Spielertrainer, 'coachOnly' = Nur Trainer (keine eigene Spielerfigur im Kader)
       first: '',
       last: '',
       age: 32,
@@ -61,7 +63,10 @@ export class CoachCreator {
     if (!t) return;
     const { action, value } = t.dataset;
     const d = this.data;
-    if (action === 'style') d.style = value;
+    if (action === 'startMode') {
+      d.mode = value === 'coachOnly' ? 'coachOnly' : 'player';
+      d.age = Math.max(d.mode === 'coachOnly' ? 25 : 18, Math.min(d.mode === 'coachOnly' ? 70 : 55, d.age)); // Spielertrainer 18–55, Nur Trainer 25–70
+    } else if (action === 'style') d.style = value;
     else if (action === 'relation') d.relation = value;
     else if (action === 'skin') d.look.skin = Number(value);
     else if (action === 'hair') d.look.hair = Number(value);
@@ -99,6 +104,11 @@ export class CoachCreator {
       .join('');
     const swatch = (action, colors, current) =>
       colors.map((col) => `<button type="button" class="swatch ${current === col ? 'on' : ''}" style="background:${hex(col)}" data-action="${action}" data-value="${col}" aria-label="${tr('Farbe', 'Colour')}"></button>`).join('');
+    const only = d.mode === 'coachOnly';
+    const modes = `<div class="styles modes" role="group" aria-label="${tr('Startmodus', 'Start mode')}">
+        <button type="button" class="style ${!only ? 'on' : ''}" data-action="startMode" data-value="player" aria-pressed="${!only}"><b>${tr('Spielertrainer', 'Player-manager')}</b><span>${tr('Du stehst selbst im Kader (von der KI gesteuert) – mit Karriereende, Kindern und Nachfolge.', 'You are in the squad yourself (AI-controlled) – with career end, children and succession.')}</span></button>
+        <button type="button" class="style ${only ? 'on' : ''}" data-action="startMode" data-value="coachOnly" aria-pressed="${only}"><b>${tr('Nur Trainer', 'Manager only')}</b><span>${tr('Du stehst nur an der Seitenlinie. Keine eigene Spielerfigur im Kader, keine Einsätze.', 'You only stand on the touchline. No player figure of your own in the squad, no appearances.')}</span></button>
+      </div>`;
     const children = d.children
       .map(
         (k, i) => `<div class="child-row">
@@ -115,8 +125,10 @@ export class CoachCreator {
     const keep = [this.root.scrollTop, panel?.scrollTop ?? 0, document.scrollingElement?.scrollTop ?? 0];
     this.root.innerHTML = `
       <div class="club-panel creator">
-        <h2>${this.successor ? tr('Der neue Trainer', 'The new manager') : tr('Dein Spielertrainer', 'Your player-manager')}</h2>
-        <p class="lead">${this.successor ? tr(`Eine neue Ära beim ${this.successor}. Bis 45 spielt der Neue selbst mit.`, `A new era at ${this.successor}. Up to 45, the new manager plays too.`) : tr('Du trainierst einen Freizeitverein – und stehst selbst mit auf dem Platz. Name, Trikot und Wappen des Vereins legst du gleich danach fest.', 'You manage a recreational club – and play in the team yourself. You choose the club name, kit and crest right after this.')}</p>
+        <h2>${this.successor ? tr('Der neue Trainer', 'The new manager') : only ? tr('Dein Trainer', 'Your manager') : tr('Dein Spielertrainer', 'Your player-manager')}</h2>
+        <p class="lead">${this.successor ? (only ? tr(`Eine neue Ära beim ${this.successor}. Der Neue steht nur an der Seitenlinie.`, `A new era at ${this.successor}. The new manager stays on the touchline.`) : tr(`Eine neue Ära beim ${this.successor}. Bis 45 spielt der Neue selbst mit.`, `A new era at ${this.successor}. Up to 45, the new manager plays too.`)) : only ? tr('Du trainierst einen Freizeitverein von der Seitenlinie – ohne selbst zu spielen. Name, Trikot und Wappen des Vereins legst du gleich danach fest.', 'You manage a recreational club from the touchline – without playing yourself. You choose the club name, kit and crest right after this.') : tr('Du trainierst einen Freizeitverein – und stehst selbst mit auf dem Platz. Name, Trikot und Wappen des Vereins legst du gleich danach fest.', 'You manage a recreational club – and play in the team yourself. You choose the club name, kit and crest right after this.')}</p>
+        <h4>${tr('Wie willst du starten?', 'How do you want to start?')}</h4>
+        ${modes}
         <div class="creator-grid">
           <section>
             <div class="row">
@@ -124,7 +136,7 @@ export class CoachCreator {
               <label>${tr('Nachname', 'Last name')} <input id="cc-last" data-field="last" value="${esc(d.last)}" maxlength="20" autocomplete="off"></label>
             </div>
             <div class="row">
-              <label>${tr('Alter', 'Age')} <input id="cc-age" type="number" min="18" max="55" data-field="age" value="${d.age}"></label>
+              <label>${tr('Alter', 'Age')} <input id="cc-age" type="number" min="${only ? 25 : 18}" max="${only ? 70 : 55}" data-field="age" value="${d.age}"></label>
               <label>${tr('Beruf', 'Job')} <input id="cc-job" data-field="profession" value="${esc(d.profession)}" list="cc-jobs" maxlength="28" placeholder="${tr('z. B. Elektriker', 'e.g. electrician')}"></label>
               <datalist id="cc-jobs">${JOBS.map((j) => `<option value="${esc(jobName(j))}">`).join('')}</datalist>
             </div>
@@ -142,8 +154,7 @@ export class CoachCreator {
             </div>
           </section>
           <section>
-            <h4>${tr('Spielertyp', 'Player type')}</h4>
-            <div class="styles">${styles}</div>
+            ${only ? '' : `<h4>${tr('Spielertyp', 'Player type')}</h4><div class="styles">${styles}</div>`}
             <div class="preview"></div>
           </section>
         </div>
@@ -164,6 +175,10 @@ export class CoachCreator {
     const el = this.root.querySelector('.preview');
     if (!el) return;
     const d = this.data;
+    if (d.mode === 'coachOnly') {
+      el.innerHTML = `<div class="portrait-row">${portraitSVG(d.look, { size: 72, label: tr('Dein Trainer', 'Your manager') })}<div><p><b>${esc(`${d.first || tr('Du', 'You')} ${d.last}`.trim())}</b> · ${d.age}${tr(' J.', ' yrs')}</p><p class="empty">${tr('Als Trainer zählt kein Spielerwert – nur wie du aussiehst und wen du an der Linie spielen lässt.', 'As a manager there is no player rating – only how you look and who you let play.')}</p></div></div>`;
+      return;
+    }
     const p = createCoachPlayer({ ...d, first: d.first || tr('Du', 'You'), last: d.last }, this.seed);
     const attrs = Object.entries(ATTR_LABELS)
       .filter(([k]) => p.position === 'gk' || k !== 'keeping')
