@@ -66,6 +66,7 @@ import { Settings } from './ui/Settings.js';
 import { Ticker } from './ui/Ticker.js';
 import { SaveSlots } from './ui/SaveSlots.js';
 import { prepareRelegationMatch, recordRelegationLeg, startRelegation } from './career/relegation.js';
+import { tigerForMatch } from './career/tiger.js';
 import { humanTie, POKALE, pokalOf, pokalWhen, preparePokalMatch, recordPokalResult, roundName } from './career/pokal.js';
 import './style.css';
 import './ds.css';
@@ -326,6 +327,7 @@ function showMatch(m) {
   // Reines Managerspiel: Wo es eine eigene Mannschaft gibt, steht man an der Seitenlinie (Trainer-Modus);
   // die KI steuert alle Spieler beider Teams. Ohne eigene Mannschaft läuft nur die Kulisse im Hintergrund.
   if (m.humanTeam !== null) enableManager(m);
+  if (careerMatch?.prepared?.match === m) tigerForMatch(career, m, { home: !careerMatch.prepared.humanIsAway }); // Tim „Der Tiger“ am Zaun (nur Darstellung)
   match = m;
   view = new MatchView(scene, match);
   pixel.setWeather(view.weather.state);

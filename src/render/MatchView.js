@@ -7,6 +7,7 @@ import { allPlayers, findAnyPlayer } from '../sim/squad.js';
 import { attackDir } from '../sim/players.js';
 import { BallView } from './BallView.js';
 import { animatePlayer, createPlayerModel, disposeKit, IN_REL_AT, KitAtlas, setKitDirt, setKitWet } from './PlayerModel.js';
+import { TIGER_LOOK, TIGER_NUMBER, tigerCue, tigerKit, tigerReact, tigerSpot, tigerState, tigerStep, tigerYaw } from './tiger.js';
 import { keepAlpha, pixelTexture } from './materials.js';
 
 let flameTex = null;
@@ -58,6 +59,8 @@ const REF_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, sta
 const WARM_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture: null };
 const WARM_OUT = {};
 const WARM_RECHECK = 1; // so oft (s) wird neu gewählt, wer sich aufwärmt
+const TIGER_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture: null, face: null };
+const TIGER_OUT = {};
 const LEAVE_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture: null };
 
 const CUE = { g: null, w: 0, x: 0, z: 0, yaw: 0, s: 1, kind: null, speed: -1 };
@@ -158,6 +161,7 @@ export class MatchView {
     if (pre > 0) for (const p of allPlayers(match)) this.soil(p.id, pre / Math.max(0.01, this.dirtRate));
     this.makeBlobs();
     if (match.referee) this.buildReferee(match.referee);
+    this.buildTiger(match);
     this.incidents = new IncidentView(this.root, match);
     // Wetter 2.0: Umgebungszustand, Pfützen, Spuren – Spritzer laufen über den Effekt-Pool.
     this.weather = new WeatherFx(this.root, match);
@@ -198,12 +202,53 @@ export class MatchView {
     this.root.add(this.referee.group);
   }
 
+  // Tim „Der Tiger“ (Karriere: match.tiger, src/career/tiger.js): Edelfan hinter der Seitenlinie der Gegenseite, bei der Bank der
+  // eigenen Mannschaft. Eigene Figur wie der Schiri (src/render/tiger.js: Ort, Gesten); ?tiger=0 schaltet ihn ab, ?tiger=1 erzwingt ihn.
+  buildTiger(match) {
+    this.tiger = null;
+    this.tigerSt = null;
+    this.tigerSpot = null;
+    const q = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('tiger');
+    if (q === '0') return;
+    if (q === '1' && !match.tiger) match.tiger = { team: match.humanTeam ?? 0, home: true, mood: 0.6, shirt: match.teams[match.humanTeam ?? 0]?.kit?.shirt ?? 0xc0392b };
+    const spot = tigerSpot(match);
+    if (!spot) return;
+    this.tigerSpot = spot;
+    this.tiger = createPlayerModel(TIGER_LOOK, tigerKit(match.tiger.shirt), { number: TIGER_NUMBER, edge: 'neutral' });
+    this.tiger.mesh.castShadow = false; // Kontaktfleck statt Schattenwurf: spart einen Draw Call und rund 0,45 Tsd. Dreiecke (Budget)
+    this.tigerSt = tigerState(((match.seed ?? 1) % 29) * 1.1);
+    if (spot.legs === false) for (const n of ['upperLegL', 'upperLegR']) this.tiger.bones[n].scale.setScalar(0.0001); // Fenster: nur der Oberkörper
+    this.root.add(this.tiger.group);
+  }
+
+  // Tim: Position und Geste (Reaktion auf das Spiel oder Ruhe mit Dose) – nur Darstellung.
+  tigerFrame(match, dt) {
+    const m = this.tiger;
+    if (!m) return;
+    const away = match.incident?.type === 'gewitter'; // bei Gewitter sucht er Schutz
+    m.group.visible = !away;
+    if (away) return;
+    const o = tigerStep(this.tigerSt, dt, match.tiger.mood, TIGER_OUT);
+    const sp = this.tigerSpot;
+    m.group.position.set(sp.x, sp.y ?? 0, sp.z);
+    m.group.rotation.y = tigerYaw(sp, match.ball.pos);
+    TIGER_ANIM.dt = dt;
+    TIGER_ANIM.gesture = o.gesture;
+    TIGER_ANIM.face = o.face;
+    animatePlayer(m, TIGER_ANIM);
+    if (sp.legs !== false) this.blob(m, sp.x, sp.z);
+  }
+
   // Einmalige Effekte zu den Ereignissen dieses Schritts (vor dem Leeren der Liste).
   handleEvents(match) {
     this.steps++;
     this.effects.handle(match);
     this.ballView.handle(match);
     this.foulFx(match);
+    if (this.tigerSt) {
+      const teamOf = (id) => findAnyPlayer(match, id)?.team;
+      for (const e of match.events) tigerReact(this.tigerSt, tigerCue(this.tigerSt, match, e, teamOf));
+    }
     // Dreck: Grätschen, Fouls und Stürze hinterlassen Spuren.
     for (const e of match.events) {
       if (e.type === 'sub') {
@@ -564,6 +609,7 @@ export class MatchView {
     this.root.traverse((o) => o.geometry?.dispose());
     for (const m of this.models.values()) disposeKit(m);
     if (this.referee) disposeKit(this.referee);
+    if (this.tiger) disposeKit(this.tiger);
     this.blobs.geometry.dispose();
     // Schattenflecken: eigene Maske und eigenes Material je Spielansicht.
     this.blobs.material.alphaMap?.dispose();
@@ -617,8 +663,8 @@ export class MatchView {
     };
     mat.customProgramCacheKey = () => 'blob';
     const geo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
-    this.blobs = new THREE.InstancedMesh(geo, mat, this.models.size + 2);
-    this.blobs.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array((this.models.size + 2) * 3).fill(1), 3);
+    this.blobs = new THREE.InstancedMesh(geo, mat, this.models.size + 3);
+    this.blobs.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array((this.models.size + 3) * 3).fill(1), 3);
     this.blobs.frustumCulled = false;
     this.blobs.renderOrder = -1;
     this.root.add(this.blobs);
@@ -704,7 +750,8 @@ export class MatchView {
     const next = [];
     const home = match.homeTeam ?? 0;
     for (const team of [home, 1 - home]) {
-      const picks = warmupPicks(match, team, team === home ? WARMUP_HOME : WARMUP_AWAY, this.warmOut);
+      // Auf dem Ascheplatz (knappstes Budget) wärmt sich mit Tim am Rand nur die Heimmannschaft auf.
+      const picks = warmupPicks(match, team, team === home ? WARMUP_HOME : this.tiger && match.pitch.id === 'ascheplatz' ? 0 : WARMUP_AWAY, this.warmOut);
       picks.forEach((b, lane) => {
         if (!this.models.has(b.id)) return;
         const old = this.warm.find((w) => w.id === b.id);
@@ -971,6 +1018,7 @@ export class MatchView {
       this.blob(m, m.group.position.x, m.group.position.z);
     }
     this.warmup(match, dt);
+    this.tigerFrame(match, dt);
     // Ausgeschlossene: Kopf schütteln, dann langsam zur Seitenlinie (reactions.js walkOffStep).
     for (const w of this.walkers) {
       const m = this.models.get(w.id);

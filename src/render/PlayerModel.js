@@ -134,6 +134,7 @@ export function faceFeatures(hash, look) {
   // Glattrasierten Koteletten (≈ 3 %).
   if (look.beard && roll(hash, 11, 100) < 30) beard = ['goatee', 'handlebar'][roll(hash, 12, 2)];
   else if (beard === 'none' && roll(hash, 13, 100) < 6) beard = 'sideburns';
+  if (look.beardStyle) beard = look.beardStyle; // feste Figuren (Tim „Der Tiger“): Bartform vorgegeben
   const light = luminance(look.hair ?? 0) > 0.45;
   return { eyes: pick(FACE_PARTS.eyes, 21), brows: light && !look.bald ? 'light' : pick(['thin', 'thick', 'thin', 'mono', 'thick'], 23), nose: pick(FACE_PARTS.nose, 25), mouth: pick(FACE_PARTS.mouth, 27), beard };
 }
@@ -411,7 +412,7 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
   // Neue Frisuren aus eigenem Würfel: 24 % der Haarträger (je 4 % Dutt, Undercut, Afro, Pferdeschwanz,
   // Vokuhila, kurze Locken); alle anderen behalten ihre bisherige Frisur.
   const style = roll(hash, 10, 100) < 24 ? ['bun', 'undercut', 'afro', 'ponytail', 'mullet', 'coils'][roll(hash, 14, 6)] : oldStyle;
-  const hairStyle = look.bald ? 'bald' : style;
+  const hairStyle = look.bald ? 'bald' : look.halbglatze ? 'halbglatze' : style;
   // Zubehör (fest aus dem Aussehen, eigener Würfel je Teil; nicht jeder trägt etwas, etwa 43 % haben mindestens ein Teil):
   // Stutzen runter 22 %, Schweißband 12 % (Torwart nie, mit Manschette), Knöcheltape 9 %, Handtape 6 %, Sportbrille 4 %.
   let socksDown = roll(hash, 1, 100) < 22;
@@ -488,6 +489,14 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
       b.box(`lowerArm${s}`, 0.118, 0.035, 0.13, gloveCuff, [out, -0.185, 0.003]); // Manschette am Handgelenk
       b.box(`lowerArm${s}`, 0.14, 0.09, 0.14, pad, [out, -0.03, -0.01]); // Ellbogenpolster
     }
+  }
+
+  if (look.can) {
+    // Bierdose in der linken Faust (Tim „Der Tiger“): Quader im Netz am Unterarm, Längsachse = z des Knochens – bei
+    // gebeugtem Ellbogen steht sie aufrecht. Dose, Etikettenband und Deckel: 3 Quader, kein zusätzlicher Draw Call.
+    b.box('lowerArmL', 0.082, 0.082, 0.19, 0xe6b422, [-0.01, -0.245, 0.06]);
+    b.box('lowerArmL', 0.09, 0.09, 0.055, 0xf5f1e6, [-0.01, -0.245, 0.075]);
+    b.box('lowerArmL', 0.07, 0.07, 0.014, 0xd5d9de, [-0.01, -0.245, 0.16]);
   }
 
   if (referee) {
@@ -593,6 +602,11 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
     const buzz = mixHex(hairC, skin, 0.35);
     b.add('head', prism(headW + 0.008, headW + 0.01, 0.03, headW + 0.008, headW + 0.01), buzz, { at: [0, top + 0.0, 0] });
     b.box('head', headW + 0.008, 0.1, 0.03, buzz, [0, top - 0.06, -hw - 0.002]);
+  } else if (hairStyle === 'halbglatze') {
+    // Halbglatze: Stirn und Scheitel kahl (Haut), Haare nur an den Seiten, im Nacken und ein Rest hinten auf dem Scheitel.
+    for (const s of [-1, 1]) b.box('head', 0.035, 0.15, headW * 0.64, hairC, [s * (hw + 0.007), top * 0.58, -0.055]);
+    b.box('head', headW + 0.014, 0.17, 0.055, hairD, [0, top * 0.6, -hw]);
+    b.box('head', headW * 0.78, 0.045, 0.1, hairC, [0, top + 0.004, -hw * 0.6]);
   } else if (hash % 2) {
     for (const s of [-1, 1]) b.box('head', 0.025, 0.06, headW * 0.5, hairD, [s * (hw + 0.005), top * 0.62, -0.07]); // Haarkranz
     b.box('head', headW + 0.01, 0.06, 0.04, hairD, [0, top * 0.62, -hw]);
@@ -855,6 +869,8 @@ export const BUCH_L = [-0.5, -0.5, -1.2];
 export const BUCH_R = [-0.93, -0.96, -0.52]; // Hand auf der Seite des Buchs (Gitter-Suche, 0,1 cm)
 export const DEHNEN = { thigh: 0.7, knee: 2.5, foot: 0.2, arm: [0.7, -0.36, -0.51] }; // Hand am Fußgelenk (Gitter-Suche, 0,1 cm)
 export const PUNKT = [-0.95, 0.1, -0.05];
+export const DOSE = [-0.9, 0, -0.85]; // Dose in der Linken vor dem Bauch, aufrecht (Gitter-Suche, Hand vor dem Bauch)
+export const TRINKEN = [-1.3, -1.4, -0.9]; // Dose am Mund bei zurückgelegtem Kopf (Gitter-Suche, Abstand 2 cm)
 
 // Schicht über der Laufbewegung: Pose merken, Schicht setzen, dann zur gemerkten hin überblenden
 // (w 1 = ganz die Schicht). So springt nichts beim Wechsel zwischen Laufen, Ausholen und Schuss.
@@ -1972,6 +1988,31 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
       bn.spine.rotation.x += 0.1 * k;
       bn.head.rotation.x += 0.38 * k;
       if (bn.book) bn.book.scale.setScalar(k > 0.05 ? 1 : HIDDEN);
+    } else if (gesture === 'dose') {
+      // Edelfan am Zaun: die Dose in der Linken vor dem Bauch, die Rechte in der Hüfte, der Kopf folgt dem Spiel.
+      const k = smooth(0, 0.3, g);
+      armTo(bn, 'L', DOSE[0], DOSE[1], DOSE[2], k);
+      armTo(bn, 'R', 0.1, 0.55, -1.5, k);
+      bn.head.rotation.y += Math.sin(g * 0.9) * 0.22;
+      bn.spine.rotation.z += Math.sin(g * 1.3) * 0.025;
+      bn.hips.position.y += Math.sin(g * 2) * 0.004;
+    } else if (gesture === 'bier') {
+      // Schluck aus der Dose: Hand von der Brust zum Mund (Gitter-Suche auf den Mund), Kopf in den Nacken, danach zurück.
+      const up = smooth(0, 0.5, g) * (1 - smooth(1.9, 2.5, g));
+      const a = mix3(DOSE, TRINKEN, up);
+      arm(bn, 'L', a[0], a[1], a[2]);
+      armTo(bn, 'R', 0.1, 0.55, -1.5, 1);
+      bn.head.rotation.x -= 0.4 * up;
+      bn.spine.rotation.x -= 0.06 * up;
+    } else if (gesture === 'dosejubel') {
+      // Torjubel am Zaun: die Dose steht hoch über dem Kopf, die andere Hand winkt, er hüpft.
+      const k = smooth(0, 0.15, g);
+      armTo(bn, 'L', -2.9, 0.35 + Math.sin(g * 9) * 0.08, -0.15, k);
+      armTo(bn, 'R', -2.8, 0.3 + Math.sin(g * 8) * 0.35, -0.2, k);
+      bn.head.rotation.x -= 0.25 * k;
+      bn.spine.rotation.x -= 0.08 * k;
+      bn.hips.position.y += Math.abs(Math.sin(g * 6)) * 0.08 * k;
+      face = 'happy';
     } else if (gesture === 'punkt') {
       // Schiri: Elfmeter – der Arm zeigt gestreckt schräg nach unten zum Punkt, die andere Hand an der Hüfte.
       const k = smooth(0, 0.2, g);

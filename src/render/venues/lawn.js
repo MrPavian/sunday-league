@@ -151,5 +151,5 @@ export function buildLawn(root, pitch, rng, scene) {
   const vendor = makeSpectator(rng, { x: bx + 0.2, z: bz - 0.2, facing: 0 });
   vendor.userData.crowdSlot.vendor = true; // geht nicht selbst zur Bude
   root.add(vendor);
-  return { viewHeight: 15, bounds: { x: hl + 4, z: 4.5 }, lights };
+  return { viewHeight: 15, bounds: { x: hl + 5.5, z: 4.5 }, lights }; // x: etwas Luft hinter dem Zaun, dort steht Tim „Der Tiger“ (src/render/tiger.js)
 }
