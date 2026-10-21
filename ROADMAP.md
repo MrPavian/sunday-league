@@ -889,3 +889,65 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   sichtbarer Fehlgriff), Dehnen greift an den Fuß, Reaktionen bei Sprenger/Autoalarm/Zaun, Ausrutschen beim Gewitter.
 - Chat-Zusagen wiederholen sich am häufigsten.
 - Bundespokal: vollständiges Teilnehmerfeld statt nur eigener Spiele.
+
+### 11.10 Rückmeldungen und Wünsche (vom Nutzer, 2026-10-21)
+
+**Fehler (vor neuen Funktionen beheben)**
+- Textmodus: Die Auswahlkarte „Deine Entscheidung – du führst!“ und der Spruch „Deckel drauf“ erscheinen offenbar
+  unabhängig vom Spielstand (gemeldet bei 3:1; prüfen, ob die Bedingung Führung/Rückstand/Abstand stimmt).
+- Textmodus: Einblendungen lassen sich manchmal nicht per X schließen.
+- Pokalabschluss: Der Pokalsieg wird zuerst nicht angezeigt.
+- Saisonabschluss: „Bild teilen / Bild exportieren“ tut nichts.
+- Android: Spielstand exportieren tut nichts (Datei-Download im WebView; vermutlich Capacitor Filesystem/Share nötig).
+
+**Turniere im Kalender**
+- Hallen-Cup und Stadtpokal nicht direkt vor einem Spieltag, sondern in eigenen Pausen (Winterpause, Sommerpause).
+- Zwischen den Turnierspielen die Aufstellung ändern können (Rotation).
+
+**Ligen: Bundesland wählen, Pyramide nach oben**
+- Recherche (Quelle: https://de.wikipedia.org/wiki/Fu%C3%9Fball-Ligasystem_in_Deutschland, abgerufen 2026-10-21):
+  bundesweit Ebene 1–3 (Bundesliga 18, 2. Bundesliga 18, 3. Liga 20 Teams), Ebene 4 Regionalliga in 5 Staffeln
+  (Nord, Nordost, West, Südwest, Bayern), Ebene 5 die Oberligen (u. a. Oberliga Niedersachsen, NOFV Nord/Süd,
+  Westfalen, Niederrhein, Mittelrheinliga, Hessenliga, Rheinland-Pfalz/Saar, Baden-Württemberg, Bayernliga mit 2 Staffeln).
+  Darunter regelt jeder der 21 Landesverbände selbst; Namen und Ebenen unterscheiden sich, z. B.
+  - Bayern: Landesliga (5 Staffeln) → Bezirksliga (15) → Kreisliga → Kreisklasse …
+  - Niedersachsen: Landesliga (4) → Bezirksliga (17) → Kreisliga → Kreisklassen
+  - Hessen: Verbandsliga (3) → Gruppenliga (6) → Kreisoberliga → Kreisliga A–D
+  - Westfalen: Westfalenliga (2) → Landesliga (4) → Bezirksliga → Kreisliga A–D
+  - Sachsen: Sachsenliga → Sachsenklasse (3) → Kreisoberliga …; Thüringen: Thüringenliga → Landesklasse (3)
+  - Nordrhein-Westfalen und Baden-Württemberg haben je drei Verbände, Rheinland-Pfalz zwei.
+  Die unteren Ebenen (ab 8) stehen dort nur beispielhaft; je Verband vor dem Einbau bei der Verbandsseite prüfen.
+- Plan: Beim Start Bundesland (bzw. Verband) wählen; die Ligennamen und die Zahl der Stufen kommen aus einer Tabelle je
+  Verband. Heute gibt es 5 Stufen (Freizeitliga, Kreisklasse C, Kreisklasse B, Kreisliga A, Bezirksliga).
+  Nach oben erweitern: Landesliga/Verbandsliga, Oberliga, Regionalliga, später Profibereich.
+- Namen im Profibereich: keine geschützten Namen (DFB, DFL, „Bundesliga“-Marke) – wie beim Bundespokal eigene
+  Bezeichnungen wählen. Verbandsnamen nur als Region (z. B. „Westfalen“), keine Verbandskürzel/-logos.
+- Auf- und Abstiege der CPU-Teams (heute steigt nur der eigene Verein), dazu ein großes Portfolio an Vereinsnamen je Region.
+
+**Spielfeld**
+- Großfeld wirkt zu lang („zwischen Mittellinie und 16er ein Kilometer“). Das Feld hat die echten Maße 105 × 68 m
+  (Mittellinie bis Strafraumgrenze 36 m). Erst messen, woran es liegt (Kamera-Zoom, Laufgeschwindigkeit,
+  Figurengröße, Spielzeit), nicht das Feld kürzen.
+- Auf Plätzen mit 16-m-Raum soll der Torwart bei Angriffen herauskommen und den Winkel verkürzen
+  (1-gegen-1-Verhalten gibt es; auf den großen Plätzen messen, wie oft und wie weit er herauskommt).
+
+**Verein, Kader, Wirtschaft**
+- Tribünen ausbauen als eigenes Feature (steht in 11.9 unter Ausbau; hier vertiefen: Stehstufen, Sitzplätze, Dach,
+  Zuschauerzahl und Einnahmen).
+- Transfers auch zwischen CPU-Vereinen.
+- Leih- und Kaufspieler.
+- Integriertes Scouting.
+- Training und Trainingspläne.
+- Spielleitung (Schiedsrichter mit Gesicht und Eigenarten).
+- Mehr Rivalitäten.
+- Finanzsystem anpassen und erweitern; Sponsoring erweitern; Ausstattungsvertrag (Ausrüster).
+- Abschlussfahrt und Trainingslager: Preise nach Teilnehmerzahl, Liga und Professionalität staffeln.
+- Maximale Spielerzahl pro Liga anzeigen und anpassbar machen.
+- Heim-, Auswärts- und Ausweichtrikot (bei Farbgleichheit automatisch).
+- Trainerauszeichnung (Trainer des Monats/der Saison).
+- Mehr Sponsoren, mehr Spielernamen, mehr Nationalitäten.
+
+**Kleinkram aus der Prüfung 11.9**
+- Der Namensgenerator kann zufällig echte Profinamen erzeugen (gesehen: ein Name eines aktiven Nationaltorwarts);
+  Sperrliste bekannter Profinamen erwägen.
+- Pixel-Porträt der Trainerbewerber altert nicht (65-Jähriger mit vollem braunem Haar).
