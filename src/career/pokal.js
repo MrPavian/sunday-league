@@ -186,6 +186,8 @@ export function humanTie(c, kind) {
   const me = humanClub(c).id;
   return roundTies(cup).find((t) => !t.result && (t.home === me || t.away === me)) ?? null;
 }
+// Pokal, den der eigene Verein in dieser Woche gerade gewonnen hat (Finale gespielt, Woche noch nicht vorbei).
+export const pokalWonNow = (c) => KINDS.find((k) => { const cup = pokalOf(c, k); return cup?.done && cup.winner === humanClub(c).id && cup.wonRound === c.round; }) ?? null;
 export const pokalDue = (c) => KINDS.map((k) => (humanTie(c, k) ? k : null)).find(Boolean) ?? null;
 
 export function preparePokalMatch(c, kind, tie, { human = false, duration } = {}) {
@@ -460,6 +462,7 @@ function finishPokal(c, kind, winner) {
   cup.winner = winner;
   cup.done = true;
   const me = humanClub(c).id;
+  if (winner === me) cup.wonRound = c.round; // Vereinsheim meldet den Sieg gleich in dieser Woche (pokalWonNow)
   const final = roundTies(cup).at(-1);
   const name = pokalClub(c, cup, winner).name;
   if (kind === 'bund') {

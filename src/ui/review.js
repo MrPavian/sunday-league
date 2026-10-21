@@ -1,5 +1,6 @@
 // Das Kreisblatt-Sonderheft: als Zeitungsseite im Vereinsheim und als Bild zum Teilen.
 import { tr } from '../core/i18n.js';
+import { dataUrlToBlob, saveFile } from '../core/files.js';
 import { esc } from './ds.js';
 
 const masthead = (r) => `${tr('KREISBLATT', 'KREISBLATT')} · ${tr('Sonderheft', 'Special issue')} ${r.year}/${String(r.year + 1).slice(2)}`;
@@ -76,25 +77,14 @@ export function reviewCanvas(r) {
   return c;
 }
 
-// Teilen, wo das Gerät es kann (Handy), sonst als PNG herunterladen.
+// Teilen, wo das Gerät es kann (Handy, Android-App), sonst als PNG herunterladen.
 export async function shareReview(r) {
-  const canvas = reviewCanvas(r);
-  const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'));
-  if (!blob) return false;
-  const name = `kreisblatt-${r.year}.png`;
+  const blob = dataUrlToBlob(reviewCanvas(r).toDataURL('image/png')); // synchron, damit die Tipp-Geste fürs Teilen gilt
   try {
-    const file = new File([blob], name, { type: 'image/png' });
-    if (navigator.canShare?.({ files: [file] })) {
-      await navigator.share({ files: [file], title: r.headline });
-      return true;
-    }
-  } catch {
-    // abgebrochen oder nicht erlaubt – dann eben herunterladen
+    await saveFile(blob, `kreisblatt-${r.year}.png`, { title: r.headline, share: true });
+    return true;
+  } catch (err) {
+    console.error('Bild speichern fehlgeschlagen', err);
+    return false;
   }
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
-  return true;
 }
