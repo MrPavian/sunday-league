@@ -923,6 +923,10 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
 - Namen im Profibereich: keine geschützten Namen (DFB, DFL, „Bundesliga“-Marke) – wie beim Bundespokal eigene
   Bezeichnungen wählen. Verbandsnamen nur als Region (z. B. „Westfalen“), keine Verbandskürzel/-logos.
 - Auf- und Abstiege der CPU-Teams (heute steigt nur der eigene Verein), dazu ein großes Portfolio an Vereinsnamen je Region.
+- Vereinsnamen passend zum gewählten Bundesland (vom Nutzer gewünscht, 2026-10-21): regionale Ortsnamen-Muster und Endungen
+  (z. B. -ing/-hofen in Bayern, -büttel/-stedt im Norden, -rode/-hagen in Niedersachsen/Hessen, -itz/-ow im Osten,
+  -scheid/-rath im Rheinland), typische Vereinskürzel je Region (FC, SV, TSV, SpVgg, DJK, TuS, BSG, Eintracht, Rot-Weiß …),
+  Dialektfärbung bei Spitznamen und Ereignistexten. Nur erfundene Orte und Vereine, keine echten Vereine nachbilden.
 
 **Spielfeld**
 - Großfeld wirkt zu lang („zwischen Mittellinie und 16er ein Kilometer“). Das Feld hat die echten Maße 105 × 68 m
