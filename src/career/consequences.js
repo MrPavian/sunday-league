@@ -24,6 +24,7 @@ export function snapshot(c) {
     supporters: c.clubLife?.supporters ?? 0,
     neighbors: c.clubLife?.neighbors ?? 0,
     fee: c.clubLife?.fee ?? 0,
+    tiger: c.tiger?.mood ?? null,
   };
 }
 
@@ -71,6 +72,7 @@ export function consequences(c, before) {
   if (ds) add(tr(`Förderverein ${ds > 0 ? '+' : '−'}${Math.abs(ds)}`, `Supporters ${ds > 0 ? '+' : '−'}${Math.abs(ds)}`), ds > 0);
   const dn = after.neighbors - before.neighbors;
   if (dn) add(dn > 0 ? tr('Nachbarn versöhnlicher', 'Neighbours calmer') : tr('Nachbarn verärgert', 'Neighbours annoyed'), dn > 0);
+  if (after.tiger != null && before.tiger != null && Math.abs(after.tiger - before.tiger) >= 0.08) add(after.tiger > before.tiger ? tr('Tim „Der Tiger“ zufriedener', 'Tim "The Tiger" happier') : tr('Tim „Der Tiger“ sauer', 'Tim "The Tiger" annoyed'), after.tiger > before.tiger);
   if (after.fee !== before.fee) add(after.fee > before.fee ? tr('Beitrag +1 € pro Spieltag', 'Fee +€1 per matchday') : tr('Beitrag −1 € pro Spieltag', 'Fee −€1 per matchday'), null);
   return out.slice(0, 7);
 }

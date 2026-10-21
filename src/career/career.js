@@ -58,6 +58,7 @@ import { clubTactic, normalizeTactic, systemFormation } from '../sim/tactics.js'
 import { shirtSponsor, sleeveSponsor, sponsorColor, SPONSORS } from './sponsors.js';
 import { advancePokale, bundChat } from './pokal.js';
 import { bundVenueEvent } from './bundevents.js';
+import { initTiger, tigerWeek } from './tiger.js';
 
 export const SAVE_VERSION = 1;
 export const POOL_SEED = 1921;
@@ -538,6 +539,7 @@ export function startWeek(career) {
   personalWeek(career);
   weeklyBanter(career); // Sprüche im Chat – mit Folgen
   bundVenueEvent(career); // Spielortwahl vor dem Heimspiel im überregionalen Pokal
+  tigerWeek(career); // Tim „Der Tiger“: Vorwoche verarbeiten, Chatzeile (vor der Ereigniswahl)
   rollWeekEvent(career);
   rollNotice(career); // Schwarzes Brett: kleines Vereinsleben-Thema
   sagaChat(career);
@@ -730,6 +732,7 @@ export function migrateCareer(career) {
   initSagas(career);
   initAcademy(career);
   initFestival(career); // Vereinsfest und Turniere: alte Stände starten leer
+  initTiger(career); // Tim „Der Tiger“ (alte Stände: Vorgaben)
   career.history ??= [];
   // Laufende Karrieren kennen das Spiel schon – keine Einsteiger-Hinweise nachträglich.
   if (!career.tipsSeen && ((career.season ?? 1) > 1 || (career.round ?? 0) > 2)) career.tipsSeen = Object.fromEntries(TIP_IDS.map((id) => [id, { old: true }]));

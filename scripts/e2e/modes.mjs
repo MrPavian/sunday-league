@@ -60,13 +60,14 @@ async function variants(b, label, list, query) {
 // Überregionaler Pokal (nur für diese Spiele): Großfeld mit Stahlrohrtribüne gemessen 110 Draw Calls / 56,1 Tsd. Dreiecke
 // (ANDROID_MEDIUM, Großfeld ohne Tribüne 106 / 50,3), Stadion mit Rängen rundum 89 / 53,2 – jeweils rund 10 % Luft.
 // Bei diesen beiden Orten mit voller Menge (295 bzw. 954 Zuschauer) gemessen: 107 / 35,9 Tsd. und 88 / 40,9 Tsd. (Menge = 2 Draw Calls).
+// Mit Tim „Der Tiger“ am Rand (?tiger=1, eigene Figur ohne Schattenwurf): +1–2 Draw Calls und rund 0,4–0,9 Tsd. Dreiecke, bleibt in allen Grenzen.
 // Sporthalle mit Fangnetzen hinter den Toren: gemessen 55 Draw Calls / 30,5 Tsd. Dreiecke (ANDROID_MEDIUM; ohne Netze 55 / 29,1), jeweils rund 10 % Luft.
 const BUDGET = { halle: [61, 33500], rasenplatz: [108, 35000], sportplatz: [113, 44500], grossfeld: [117, 55000], grossfeld_tribuene: [121, 62000], stadion: [98, 58500], ascheplatz: [76, 25000], park: [79, 18600] };
 async function budget(b) {
   const ok = checker(`Grafik-Budget je Spielort (${Object.keys(BUDGET).length})`);
   const seen = [];
   for (const [venue, [calls, tris]] of Object.entries(BUDGET)) {
-    const p = await page(b, 'land', { query: `?venue=${venue}&notitle&trainer&debug&dauer=60&seed=4&quality=ANDROID_MEDIUM` });
+    const p = await page(b, 'land', { query: `?venue=${venue}&notitle&trainer&debug&dauer=60&seed=4&quality=ANDROID_MEDIUM&tiger=1` });
     await p.waitForTimeout(3000);
     // Ohne Karriere zeigt das Testspiel nur 80 Zuschauer; Stadion und Tribünenplatz des überregionalen Pokals sind aber voll
     // (match.crowd bis 3500). Gemessen wird deshalb mit der ganzen Menge (schlechtester Fall, mehr als jede Qualitätsstufe zeigt).
