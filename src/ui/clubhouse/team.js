@@ -28,7 +28,7 @@ import { FESTIVAL_TEAMS, resultLabel, youthLeague, youthPos, youthTable } from '
 import { FOCUS, ownKids, poachChance, poachKid, scoutList, talentGuess, TEAMS, teamOfAge } from '../../career/academy.js';
 import { COACH_KINDS, coachCandidates, COURSE_COST, FOCUS_FIT, fitLabel, initTeams, SELF_ENERGY, selfQuality } from '../../career/youthteams.js';
 import { chemistry, REL, relationLabel, shortName } from '../../career/relations.js';
-import { coachAway, isCoach, trainingLocked } from '../../career/personal.js';
+import { coachAway, isCoach, isPresident, trainingLocked } from '../../career/personal.js';
 import { TRAITS } from '../../data/traits.js';
 import { jobName } from '../../data/names.js';
 import { tierById } from '../../data/tiers.js';
@@ -219,8 +219,9 @@ export const teamScreens = {
     if (!c.week || this.results) return `<p class="empty">${tr('Die Aufstellung für den nächsten Spieltag gibt es nach dem Wochenstart.', 'The line-up for the next matchday is available once the week starts.')}</p>`;
     const { formation, lineup, format, tactic } = currentLineup(c);
     const board = (f, active) => `<span class="mini-pitch ${active ? 'on' : ''}">${f.map((e) => `<i class="dot-${e.role}" style="left:${((e.x + 1) * 100).toFixed(0)}%;top:${((e.z + 1) * 50).toFixed(0)}%"></i>`).join('')}</span>`;
+    const ro = isPresident(c); // Präsidium: Taktik ist Sache des Trainers (lesend)
     const systems = Object.entries(systemsFor(format))
-      .map(([id, sys]) => `<button class="system ${tactic.system === id ? 'active' : ''}" data-action="tacticSystem" data-value="${id}" aria-pressed="${tactic.system === id}">${board(sys.formation, tactic.system === id)}<b>${sys.label}</b></button>`)
+      .map(([id, sys]) => (ro ? `<span class="system ${tactic.system === id ? 'active' : ''}">${board(sys.formation, tactic.system === id)}<b>${sys.label}</b></span>` : `<button class="system ${tactic.system === id ? 'active' : ''}" data-action="tacticSystem" data-value="${id}" aria-pressed="${tactic.system === id}">${board(sys.formation, tactic.system === id)}<b>${sys.label}</b></button>`))
       .join('');
     // Passt der Stil zum Platz und Wetter am Sonntag? Und zu den Berufen der Jungs?
     const pitch = nextPitch(c);
@@ -229,7 +230,7 @@ export const teamScreens = {
       return f > 0 ? ' <i class="fit good">▲</i>' : f < 0 ? ' <i class="fit bad">▼</i>' : '';
     };
     const styles = Object.entries(PLAY_STYLES)
-      .map(([id, st]) => `<button class="${tactic.style === id ? 'active' : ''}" data-action="tacticStyle" data-value="${id}" aria-pressed="${tactic.style === id}">${st.label}${fitMark(id)}</button>`)
+      .map(([id, st]) => (ro ? `<span class="${tactic.style === id ? 'active' : ''}">${st.label}${fitMark(id)}</span>` : `<button class="${tactic.style === id ? 'active' : ''}" data-action="tacticStyle" data-value="${id}" aria-pressed="${tactic.style === id}">${st.label}${fitMark(id)}</button>`))
       .join('');
     const reasons = pitch ? styleFit(tactic.style, pitch).reasons : [];
     const fitters = lineup.filter((idx) => idx != null && jobFits(tactic.style, this.p(idx).profession)).map((idx) => this.p(idx).name.split(' ')[0]);
@@ -237,7 +238,8 @@ export const teamScreens = {
     // Tafel wie im Spiel: zeigt, was System, Stil und Spielplan verstellen.
     this.boardData = { formation, target: planTarget({ plan: [{ style: tactic.style }], orders: [tactic.orders ?? {}] }, 0) };
     return `
-      <div class="tactic-board">
+      <div class="tactic-board${ro ? ' read-only' : ''}">
+        ${ro ? this.coachBanner(tr('Die Taktik legt der Trainer fest.', 'The manager decides the tactics.')) : ''}
         <div class="club-tboard m-board"><span class="tray" aria-hidden="true"></span></div>
         <p class="ui-section-title">${tr('System', 'System')} · ${formation.length} ${tr('gegen', 'v')} ${formation.length}</p>
         <div class="systems">${systems}</div>
@@ -245,7 +247,7 @@ export const teamScreens = {
         <div class="styles">${styles}</div>
         <p class="hint">${PLAY_STYLES[tactic.style].desc}</p>
         ${fitNote ? `<p class="fit-note">${pitch ? `${tr('Sonntag', 'Sunday')}: ${pitch.name}, ${pitch.surface.name}. ` : ''}${fitNote}</p>` : ''}
-        ${this.planBlock(tactic.orders ?? {})}
+        ${ro ? '' : this.planBlock(tactic.orders ?? {})}
       </div>`;
   },
 
@@ -288,6 +290,11 @@ export const teamScreens = {
     const benchList = bench.length
       ? bench.map((idx) => `<li>${this.p(idx).name}${statusFor(c, c.week.availability[idx]) === 'late' ? tr(' <em>(kommt zur 2. Halbzeit)</em>', ' <em>(arrives for the 2nd half)</em>') : ''}</li>`).join('')
       : `<li><em>${tr('niemand', 'nobody')}</em></li>`;
+    if (isPresident(c)) {
+      const ROLE_P = tr({ gk: 'Tor', def: 'Abwehr', mid: 'Mitte', fwd: 'Sturm' }, { gk: 'GK', def: 'Def', mid: 'Mid', fwd: 'Att' });
+      const xi = formation.map((slot, i) => `<li>${ROLE_P[slot.role]}: ${lineup[i] != null ? this.p(lineup[i]).name : tr('Aushilfe', 'Stand-in')}</li>`).join('');
+      return `${this.coachBanner(tr('Der Trainer stellt auf.', 'The manager picks the team.'))}<h4>${tr('Startelf', 'Starting line-up')}</h4><ul class="bench">${xi}</ul><h4>${tr('Bank', 'Bench')}</h4><ul class="bench">${benchList}</ul>`;
+    }
     if (coachAway(c)) return `<p class="warn">${tr('Du bist diese Woche nicht da. Der Kapitän stellt auf – nach bestem Wissen und Gewissen.', 'You are away this week. The captain picks the team – to the best of his knowledge.')}</p><h4>${tr('Bank', 'Bench')}</h4><ul class="bench">${benchList}</ul>`;
     const ROLE = tr({ gk: 'Tor', def: 'Abwehr', mid: 'Mitte', fwd: 'Sturm' }, { gk: 'GK', def: 'Def', mid: 'Mid', fwd: 'Att' });
     const pick = this.pick;

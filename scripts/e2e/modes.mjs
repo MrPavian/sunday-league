@@ -5,7 +5,9 @@
 // Geprüft wird: keine Seitenfehler, Bildschleife läuft, Spiel erreicht den Abpfiff.
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { checker, click, founding, launch, leaveHalftime, newCareer, page, visible } from './lib.mjs';
+import { checker, click, founding, hScroll, launch, leaveHalftime, newCareer, page, settle, smallTargets, visible } from './lib.mjs';
+import { createCareer } from '../../src/career/career.js';
+import { stepDown } from '../../src/career/legacy.js';
 
 const QUALITIES = ['PC_LOW', 'PC_MEDIUM', 'PC_HIGH', 'PC_ULTRA', 'ANDROID_LOW', 'ANDROID_MEDIUM', 'ANDROID_HIGH'];
 const WEATHER = ['sonne', 'hitze', 'regen', 'wind', 'nebel', 'frost', 'schnee', 'laub'];
@@ -399,6 +401,154 @@ export async function clubSetup(b) {
   return ok.done();
 }
 
+// Karrierestart „Nur Trainer" (ROADMAP 11.9): Auswahl im Editor (Touch ≥ 44 px, ohne seitliches Scrollen), kein Spielertyp,
+// im Spielstand steht die Figur nicht im Kader, Vereinsheim öffnet, die Aufstellung hat elf/… Leute ohne ihn.
+export async function managerOnly(b, shots = process.env.E2E_SHOTS) {
+  const ok = checker('Karrierestart „Nur Trainer": Auswahl, kein Spielertyp, Figur nicht im Kader, Vereinsheim läuft');
+  for (const size of ['port', 'desk']) {
+    const p = await page(b, size, { query: '?notitle&debug' });
+    await p.click('.career button');
+    await p.waitForTimeout(500);
+    ok((await p.$$('#creator [data-action="startMode"]')).length === 2, `${size}: zwei Startmodi fehlen`);
+    ok(await p.evaluate(() => document.querySelector('#creator [data-action="startMode"][data-value="player"]').getAttribute('aria-pressed') === 'true'), `${size}: Spielertrainer ist nicht Vorgabe`);
+    if (shots) await p.screenshot({ path: `${shots}/choice-${size}-player.png` });
+    await p.click('#creator [data-action="startMode"][data-value="coachOnly"]');
+    await p.waitForTimeout(300);
+    ok(!(await p.$('#creator button.style[data-action="style"]')), `${size}: Spielertyp trotz „Nur Trainer"`);
+    ok(!(await hScroll(p)), `${size}: seitliches Scrollen im Editor`);
+    if (SIZES_TOUCH.includes(size)) {
+      const small = await smallTargets(p, '#creator button');
+      ok(!small.length, `${size}: Editor-Knöpfe < 44 px: ${small.slice(0, 3).join(', ')}`);
+    }
+    if (shots) await p.screenshot({ path: `${shots}/choice-${size}-only.png` });
+    await p.fill('#cc-first', 'Erika');
+    await p.fill('#cc-last', 'Test');
+    await p.click('#creator [data-action="done"]');
+    await p.waitForTimeout(1500);
+    await founding(p);
+    const saved = await p.evaluate(() => JSON.parse(localStorage.getItem('sunday-league:career')));
+    const club = saved.clubs.find((c) => c.human);
+    ok(saved.coach.mode === 'coachOnly' && saved.coach.idx != null && !club.squad.includes(saved.coach.idx), `${size}: Figur steht im Kader oder Modus fehlt`);
+    ok(await visible(p, 'club'), `${size}: Vereinsheim öffnet nicht`);
+    ok(!!(await p.$('[data-action="onCoach"]')), `${size}: Anpfiff-Knopf fehlt`);
+    // Die Aufstellung zeigt nur Kaderspieler.
+    await click(p, '[data-action="area"][data-value="team"]');
+    await click(p, '[data-action="tab"][data-value="lineup"]');
+    await p.waitForTimeout(300);
+    ok((await p.$$('.lp-token')).length >= 4, `${size}: Aufstellung leer`);
+    ok(!p.errors.length, `${size}: Fehler ${p.errors.slice(0, 2).join(' | ')}`);
+    await p.context().close();
+  }
+  return ok.done();
+}
+const SIZES_TOUCH = ['port', 'land', 'tiny'];
+
+// Nach dem Traineramt (ROADMAP 11.9): Spielstand im Sommer nach dem Rücktritt laden, „Trainer verpflichten – du wirst
+// Präsident", Bewerber ansehen, Gespräch führen, unterschreiben; danach Präsidium, Taktik/Aufstellung nur lesend,
+// Spiel von der Tribüne bis zum Abpfiff, Trainer entlassen.
+export async function presidentFlow(b, shots = process.env.E2E_SHOTS) {
+  const ok = checker('Präsidium: Trainer verpflichten (Bewerber, Gespräch), Taktik lesend, Tribüne, entlassen');
+  const save = createCareer({ seed: 77, coach: { first: 'Erika', last: 'Test', age: 47, relation: 'single', profession: 'Koch', style: 'libero', children: [], mode: 'coachOnly' } });
+  save.round = save.fixtures.length;
+  save.week = null; // am Saisonende gibt es keine Woche (startWeek)
+  stepDown(save);
+  save.cash = 600;
+  for (const size of ['port', 'desk']) {
+    const p = await page(b, size, { query: '?notitle&debug&dauer=20', store: { 'sunday-league:career': JSON.stringify(save) } });
+    await click(p, '.career [data-c="continue"]');
+    await p.waitForTimeout(1500);
+    ok(await visible(p, 'club'), `${size}: Vereinsheim öffnet nicht`);
+    ok(!!(await p.$('[data-action="successor"].new')), `${size}: „Trainer verpflichten" fehlt in der Nachfolge`);
+    ok(await p.evaluate(() => /Präsident/.test(document.querySelector('.legacy')?.textContent ?? '')), `${size}: Hinweis auf Präsident fehlt`);
+    await p.evaluate(() => [...document.querySelectorAll('[data-action="successor"].new')].find((x) => /Präsident/.test(x.textContent))?.click());
+    await p.waitForTimeout(600);
+    ok(await visible(p, 'hire'), `${size}: Bewerberbildschirm fehlt`);
+    ok((await p.$$('#hire .cand')).length === 3, `${size}: nicht drei Bewerber`);
+    ok(!(await hScroll(p)), `${size}: seitliches Scrollen bei den Bewerbern`);
+    if (SIZES_TOUCH.includes(size)) {
+      const small = await smallTargets(p, '#hire button');
+      ok(!small.length, `${size}: Bewerber-Knöpfe < 44 px: ${small.slice(0, 3).join(', ')}`);
+    }
+    if (shots) await p.screenshot({ path: `${shots}/candidates-${size}.png` });
+    await p.click('#hire [data-action="talk"][data-value="1"]');
+    await p.waitForTimeout(300);
+    for (const q of ['style', 'goal', 'money']) await click(p, `#hire [data-action="ask"][data-value="${q}"]`);
+    await p.waitForTimeout(200);
+    ok((await p.$$('#hire .say.them')).length === 3, `${size}: Antworten im Gespräch fehlen`);
+    await click(p, '#hire [data-action="haggle"]');
+    await p.waitForTimeout(200);
+    ok(!(await p.$('#hire [data-action="haggle"]')), `${size}: Feilschen ist mehrfach möglich`);
+    if (shots) await p.screenshot({ path: `${shots}/interview-${size}.png` });
+    await click(p, '#hire [data-action="sign"]');
+    await p.waitForTimeout(1500);
+    ok(await visible(p, 'club') && !(await visible(p, 'hire')), `${size}: nach der Unterschrift kein Vereinsheim`);
+    const c = await p.evaluate(() => JSON.parse(localStorage.getItem('sunday-league:career')));
+    ok(c.coach.office === 'president' && c.hired?.name, `${size}: Präsidium nicht gespeichert`);
+    // Noch Sommerpause: Turnier auslassen, neue Saison beginnen (erst dann gibt es Aufstellung und Taktik).
+    await click(p, '[data-action="area"][data-value="home"]');
+    if (await p.$('[data-action="onCupSkip"]')) {
+      await click(p, '[data-action="onCupSkip"]');
+      await p.waitForTimeout(800);
+    }
+    if (await p.$('[data-action="onNewSeason"]')) {
+      await click(p, '[data-action="onNewSeason"]');
+      await p.waitForTimeout(1500);
+    }
+    // Taktik und Aufstellung nur lesend, Präsidium-Tab da.
+    await click(p, '[data-action="area"][data-value="team"]');
+    await click(p, '[data-action="tab"][data-value="tactic"]');
+    await p.waitForTimeout(300);
+    ok(!!(await p.$('.coach-note')) && !(await p.$('[data-action="tacticSystem"], [data-action="tacticStyle"], .m-tcard')), `${size}: Taktik nicht lesend`);
+    if (shots) await p.screenshot({ path: `${shots}/tactic-readonly-${size}.png` });
+    await click(p, '[data-action="tab"][data-value="lineup"]');
+    await p.waitForTimeout(300);
+    ok(!(await p.$('[data-action="slotPick"]')), `${size}: Aufstellung nicht lesend`);
+    await click(p, '[data-action="area"][data-value="club"]');
+    await click(p, '[data-action="tab"][data-value="office"]');
+    await p.waitForTimeout(400);
+    await settle(p);
+    ok(!!(await p.$('.office-coach')) && !!(await p.$('[data-action="presidentGoal"]')), `${size}: Präsidium zeigt Trainer/Saisonziel nicht`);
+    ok(!(await hScroll(p)), `${size}: seitliches Scrollen im Präsidium`);
+    if (SIZES_TOUCH.includes(size)) {
+      const small = await smallTargets(p, '#club button');
+      ok(!small.length, `${size}: Präsidium-Knöpfe < 44 px: ${small.slice(0, 3).join(', ')}`);
+    }
+    if (shots) await p.screenshot({ path: `${shots}/president-${size}.png` });
+    // Zweistufig entlassen: erst Rückfrage, dann weg.
+    await click(p, '[data-action="fireCoach"]');
+    ok(await p.evaluate(() => document.querySelector('[data-action="fireCoach"]').classList.contains('danger')), `${size}: keine Rückfrage vor der Entlassung`);
+    await click(p, '[data-action="fireCoach"]');
+    await p.waitForTimeout(300);
+    ok(!!(await p.$('.office .vacant [data-action="hireCoach"]')), `${size}: nach der Entlassung kein „Neuen Trainer verpflichten"`);
+    if (shots) await p.screenshot({ path: `${shots}/vacant-${size}.png` });
+    await click(p, '[data-action="hireCoach"]');
+    await p.waitForTimeout(400);
+    ok(await visible(p, 'hire') && (await p.$$('#hire .cand')).length === 3, `${size}: Ersatz-Bewerber fehlen`);
+    await click(p, '#hire [data-action="talk"][data-value="0"]');
+    await click(p, '#hire [data-action="sign"]');
+    await p.waitForTimeout(1200);
+    ok((await p.evaluate(() => JSON.parse(localStorage.getItem('sunday-league:career')).hired?.name)) != null, `${size}: Ersatztrainer nicht gespeichert`);
+    // Das erste Spiel der Saison: von der Tribüne bis zum Abpfiff, keine Zuruf-Leiste.
+    if (size === 'desk') {
+      await click(p, '[data-action="area"][data-value="home"]');
+      await p.waitForSelector('[data-action="onCoach"]', { state: 'attached', timeout: 20000 });
+      ok(!!(await p.$('[data-action="onQuickSim"]')) && !!(await p.$('[data-action="onSimulate"]')), `${size}: Ticker/Ergebnis-Knöpfe fehlen`);
+      await click(p, '[data-action="onCoach"]');
+      await p.waitForTimeout(2500);
+      ok(await p.evaluate(() => !globalThis.__sl.match.manager && globalThis.__sl.match.humanTeam === null), `${size}: Tribünenspiel ist ein Trainer-Spiel`);
+      ok(await p.evaluate(() => document.getElementById('shoutbar').hidden), `${size}: Zuruf-Leiste sichtbar`);
+      if (shots) await p.screenshot({ path: `${shots}/stand-${size}.png` });
+      await p.waitForFunction(() => !document.getElementById('end').hidden, null, { timeout: 300000 });
+      await p.waitForTimeout(800);
+      await p.keyboard.press('Enter');
+      await p.waitForFunction(() => !document.getElementById('club').hidden, null, { timeout: 30000 });
+    }
+    ok(!p.errors.length, `${size}: Fehler ${p.errors.slice(0, 2).join(' | ')}`);
+    await p.context().close();
+  }
+  return ok.done();
+}
+
 // Handy: Nach der Entscheidung lässt sich die angeheftete Karte minimieren und ausblenden
 // (sonst belegt sie die halbe Anzeige), im Hoch- und Querformat.
 export async function eventFold(b) {
@@ -554,6 +704,8 @@ export async function run() {
   f += await english(b);
   f += await homeViews(b);
   f += await clubSetup(b);
+  f += await managerOnly(b);
+  f += await presidentFlow(b);
   f += await eventFold(b);
   f += await saveAtWhistle(b);
   f += await pokal(b);

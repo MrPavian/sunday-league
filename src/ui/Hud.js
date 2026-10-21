@@ -39,10 +39,13 @@ export class Hud {
     this.root = root;
     this.$ = (sel) => root.querySelector(sel);
     this.toastTimer = 0;
-    this.refreshHelp = () => (this.$('.help').innerHTML = helpText());
+    this.spectator = false; // Präsidium: von der Tribüne zuschauen, keine Zurufe und Wechsel
+    this.refreshHelp = () => (this.$('.help').innerHTML = helpText(this.spectator));
   }
 
   init(match) {
+    this.spectator = match.humanTeam == null;
+    this.refreshHelp();
     const r = match.referee;
     this.introPending = match.surprise ? match.surprise.text : match.derby ? `DERBY! ${r ? `${tr('Schiri', 'Referee')}: ${r.name}` : tr('Heute wird es heiß.', 'It is going to get heated.')}` : r ? `${tr('Schiri heute', 'Referee today')}: ${r.name} (${REF_TRAITS[r.trait].name})` : null;
     match.teams.forEach((t, i) => {
@@ -224,7 +227,9 @@ export class Hud {
 }
 
 // Tastenhilfe für den Trainer an der Seitenlinie (feste Belegung).
-function helpText() {
+function helpText(spectator = false) {
+  if (spectator)
+    return tr('<b>C</b> Tempo · <b>N</b> Ton · <b>G</b> Effekte · <b>F2</b> Screenshot · <b>H</b> Hilfe · <b>Esc</b> Menü', '<b>C</b> tempo · <b>N</b> sound · <b>G</b> effects · <b>F2</b> screenshot · <b>H</b> help · <b>Esc</b> menu');
   return tr(
     '<b>1–4</b> Zurufe · <b>X</b> Auswechseln · <b>C</b> Tempo · <b>N</b> Ton · <b>G</b> Effekte · <b>F2</b> Screenshot · <b>H</b> Hilfe · <b>Esc</b> Menü',
     '<b>1–4</b> shouts · <b>X</b> substitute · <b>C</b> tempo · <b>N</b> sound · <b>G</b> effects · <b>F2</b> screenshot · <b>H</b> help · <b>Esc</b> menu',

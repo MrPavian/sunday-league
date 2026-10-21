@@ -18,6 +18,7 @@ import { DESTINATIONS, tripChoose, tripStage, tripState, tripVerdict } from '../
 import { eventView, moodLabel, moodText } from '../../career/events.js';
 import { storyLabels } from '../../career/stories.js';
 import { coachAge, legacy, legacyPrompt, stepDown, successionCandidates } from '../../career/legacy.js';
+import { vacant } from '../../career/president.js';
 import { talk } from '../../career/pub.js';
 import { weatherLine } from '../../career/weather.js';
 import { derbyOf, isDerbyFixture } from '../../career/derby.js';
@@ -25,7 +26,7 @@ import { CUP_NAME, CUPS, cupOf, PRIZES, tournamentOpen, winterCupDue, winterCupR
 import { humanTie, pokalClub, pokalDue, POKALE, pokalOf, pokalWhen, roundName } from '../../career/pokal.js';
 import { levelName } from '../../career/bundespokal.js';
 import { MATCH } from '../../sim/match.js';
-import { coachAway, energyLabel, patienceLabel } from '../../career/personal.js';
+import { coachAway, coachMode, energyLabel, isPresident, patienceLabel } from '../../career/personal.js';
 import { PITCHES } from '../../sim/pitch.js';
 import { FIT_LOW, fitnessOf, fitnessPct } from '../../career/fitness.js';
 
@@ -103,6 +104,7 @@ export const homeScreens = {
       w.notice && w.notice.choice === null && !(w.event && w.event.choice === null) ? tr('Am Schwarzen Brett hängt etwas für dich.', 'Something on the notice board needs you.') : '',
       w.event && w.event.choice === null ? tr('In der Gruppe wartet eine Entscheidung auf dich.', 'A decision is waiting for you in the group chat.') : '',
       count('yes') < venue.format ? tr('Zu wenige Zusagen – es hilft jemand aus dem Bekanntenkreis aus.', 'Not enough players – someone from a mate\'s circle will help out.') : '',
+      vacant(c) ? tr('Trainerstelle vakant – im Präsidium einen neuen Trainer verpflichten.', 'Manager post vacant – hire a new manager from the president\'s office.') : '',
       unfitNote(c, club),
       youthNote(c),
     ].filter(Boolean);
@@ -110,9 +112,11 @@ export const homeScreens = {
     let actions;
     const pk = pokalDue(c);
     if (this.busy) actions = `<p class="busy">${this.busy}</p>`;
-    else if (pk && !coachAway(c)) actions = this.pokalCard(pk);
+    else if (pk && (!coachAway(c) || isPresident(c))) actions = this.pokalCard(pk);
     else if (winterCupDue(c)) actions = `<p class="t-2">${tr('Erst entscheiden: Hallenturnier ja oder nein? Danach geht die Liga weiter.', 'Decide first: indoor tournament, yes or no? Then the league carries on.')}</p>`;
     else if (winterCupRunning(c)) actions = `${button(tr('Zum Hallenturnier', 'To the indoor tournament'), { kind: 'primary big block', action: 'tab', value: 'cup' })}<p class="t-2">${tr('Der nächste Ligaspieltag steigt nach dem Turnier.', 'The next league match is after the tournament.')}</p>`;
+    else if (isPresident(c)) actions = `${button(tr('Spiel von der Tribüne ansehen', 'Watch the game from the stand'), { kind: 'primary big block coach-play', action: 'onCoach' })}
+        <div class="hub-alt">${button(tr('Liveticker', 'Live ticker'), { action: 'onSimulate' })}${button(tr('Nur das Ergebnis', 'Result only'), { action: 'onQuickSim' })}</div>`;
     else if (coachAway(c)) actions = `<p class="warn">${tr('Du bist diese Woche nicht da – der Kapitän stellt auf, du bekommst nur das Ergebnis.', 'You are away this week – the captain picks the team, you just get the result.')}</p>${button(tr('Ergebnis abwarten', 'Wait for the result'), { kind: 'secondary big block', action: 'onSimulate' })}`;
     else
       actions = `${button(tr('Anpfiff – an der Seitenlinie', 'Kick-off – on the touchline'), { kind: 'primary big block coach-play', action: 'onCoach' })}
@@ -161,8 +165,8 @@ export const homeScreens = {
       <p class="t-body">${home ? tr('Heimspiel', 'Home') : tr('Auswärts', 'Away')} ${tr('gegen', 'against')} <b>${opp.name}</b> <small>(${lv(opp.id)})</small>${why}.</p>
       ${kind === 'bund' ? `<p class="t-2">${tr('Spielort', 'Venue')}: <b>${{ own: tr('eigener Platz', 'own pitch'), stands: tr('eigener Platz mit Stahlrohrtribüne', 'own pitch with scaffold stand'), stadium: tr('großes Stadion', 'big stadium') }[home ? tie.venue ?? 'own' : 'stadium']}</b></p>` : ''}
       <p class="t-2">${format} ${tr('gegen', 'v')} ${format} · ${MATCH.pokalExtra ? tr('bei Unentschieden Verlängerung, dann Elfmeterschießen', 'if level: extra time, then penalties') : tr('bei Unentschieden direkt Elfmeterschießen', 'if level: straight to penalties')} · ${tr('am Sonntag geht die Liga weiter', 'the league carries on on Sunday')}</p>
-      ${button(tr('Anpfiff – an der Seitenlinie', 'Kick-off – on the touchline'), { kind: 'primary big block coach-play', action: 'onPokalCoach', value: kind })}
-      <div class="hub-alt">${button(tr('Liveticker mit Entscheidungen', 'Live ticker with decisions'), { action: 'onPokalSimulate', value: kind })}</div></div>`;
+      ${button(isPresident(c) ? tr('Spiel von der Tribüne ansehen', 'Watch the game from the stand') : tr('Anpfiff – an der Seitenlinie', 'Kick-off – on the touchline'), { kind: 'primary big block coach-play', action: 'onPokalCoach', value: kind })}
+      <div class="hub-alt">${button(isPresident(c) ? tr('Liveticker', 'Live ticker') : tr('Liveticker mit Entscheidungen', 'Live ticker with decisions'), { action: 'onPokalSimulate', value: kind })}</div></div>`;
   },
 
   // Familie & Energie des Spielertrainers als kleine Balken.
@@ -251,8 +255,8 @@ export const homeScreens = {
       <p class="hint">${tr('Hin- und Rückspiel, es zählt das Gesamtergebnis. Steht es danach gleich: Elfmeterschießen.', 'Two legs, aggregate score counts. Level after both: penalties.')}</p>
       ${legs ? `<ul class="legs">${legs}</ul>` : ''}
       ${r && r.leg === 1 ? `<p>${tr('Gesamt bisher', 'Aggregate so far')}: <b>${r.agg[0]}:${r.agg[1]}</b></p>` : ''}
-      <button class="primary coach-play" data-action="onRelCoach">${leg === 0 ? tr('Hinspiel an der Seitenlinie', 'First leg on the touchline') : tr('Rückspiel an der Seitenlinie', 'Second leg on the touchline')}</button>
-      <button data-action="onRelSimulate">${tr('Liveticker mit Entscheidungen', 'Live ticker with decisions')}</button>`;
+      <button class="primary coach-play" data-action="onRelCoach">${isPresident(c) ? (leg === 0 ? tr('Hinspiel von der Tribüne ansehen', 'Watch the first leg from the stand') : tr('Rückspiel von der Tribüne ansehen', 'Watch the second leg from the stand')) : leg === 0 ? tr('Hinspiel an der Seitenlinie', 'First leg on the touchline') : tr('Rückspiel an der Seitenlinie', 'Second leg on the touchline')}</button>
+      <button data-action="onRelSimulate">${isPresident(c) ? tr('Liveticker', 'Live ticker') : tr('Liveticker mit Entscheidungen', 'Live ticker with decisions')}</button>`;
   },
 
   // Saisonabschlussfahrt: Ziel wählen, dann drei Etappen mit Entscheidungen.
@@ -282,11 +286,15 @@ export const homeScreens = {
         ${prompt.options.map((o, i) => `<button data-action="legacy" data-value="${i}">${o}</button>`).join('')}</div>`;
     if (L.choosing) {
       const list = successionCandidates(c);
+      const btn = (x, i) => `<button class="successor${x.type === 'neu' || x.type === 'extern' ? ' new' : ''}" data-action="successor" data-value="${i}"><b>${x.name}</b>${x.age ? ` (${x.age})` : ''}<small>${x.desc}</small></button>`;
+      const inClub = list.map((x, i) => [x, i]).filter(([x]) => x.type !== 'extern');
+      const office = list.map((x, i) => [x, i]).filter(([x]) => x.type === 'extern');
       return `<div class="legacy">${last}<p class="label">${tr('Wer übernimmt?', 'Who takes over?')}</p>
-        ${list.map((x, i) => `<button class="successor${x.type === 'neu' ? ' new' : ''}" data-action="successor" data-value="${i}"><b>${x.name}</b>${x.age ? ` (${x.age})` : ''}<small>${x.desc}</small></button>`).join('')}</div>`;
+        ${inClub.map(([x, i]) => btn(x, i)).join('')}
+        ${office.length ? `<p class="label">${tr('Oder ein anderer Weg', 'Or another way')}</p>${office.map(([x, i]) => btn(x, i)).join('')}` : ''}</div>`;
     }
     const age = coachAge(c);
-    const step = c.coach && age != null && age >= 50
+    const step = c.coach && age != null && (age >= 50 || coachMode(c) === 'coachOnly')
       ? this.confirmStepDown
         ? `<button data-action="stepDown" class="danger">${tr('Wirklich abtreten? Nochmal klicken', 'Really step down? Click again')}</button>`
         : `<button data-action="stepDown">${tr(`Amt übergeben (du bist ${age})`, `Hand over the job (you are ${age})`)}</button>`

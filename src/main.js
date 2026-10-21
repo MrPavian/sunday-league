@@ -51,6 +51,8 @@ import { applyWeather, WEATHER } from './career/weather.js';
 import { Clubhouse } from './ui/Clubhouse.js';
 import { succeed } from './career/legacy.js';
 import { CoachCreator } from './ui/CoachCreator.js';
+import { CoachHire } from './ui/CoachHire.js';
+import { appointCoach } from './career/president.js';
 import { EndScreen } from './ui/EndScreen.js';
 import { Hud } from './ui/Hud.js';
 import { Menu } from './ui/Menu.js';
@@ -60,7 +62,7 @@ import { SubPanel } from './ui/SubPanel.js';
 import { PlanPanel } from './ui/PlanPanel.js';
 import { HalftimePanel } from './ui/HalftimePanel.js';
 import { coachLevel, homeView, setCoachLevel, setHomeView } from './ui/prefs.js';
-import { coachAway } from './career/personal.js';
+import { coachAway, isPresident } from './career/personal.js';
 import { enableManager } from './sim/coach.js';
 import { Settings } from './ui/Settings.js';
 import { Ticker } from './ui/Ticker.js';
@@ -287,6 +289,7 @@ let mode = 'menu'; // menu | play | club
 let career = loadCareer();
 let careerMatch = null; // { prepared, fixture } während eines Karrierespiels
 const creator = new CoachCreator(document.getElementById('creator'));
+const hireScreen = new CoachHire(document.getElementById('hire') ?? document.body.appendChild(Object.assign(document.createElement('div'), { id: 'hire', hidden: true })));
 
 let venueAdKey = null;
 let venueAds = null; // Bandenwerbung und Platzname des Karriere-Heimplatzes (null: Vorgabe des Spielorts)
@@ -548,6 +551,23 @@ const clubhouse = new Clubhouse(document.getElementById('club'), {
   onChange: () => saveCareer(career),
   onCoach: () => playCareerMatch(),
   onSimulate: () => tickerRound(),
+  onQuickSim: () => runRound(null), // Präsidium: nur das Ergebnis, ohne Zuschauen
+  onHireCoach(first = true) {
+    // Trainer selbst engagieren (Präsidium): Bewerberliste und Gespräch, dann Unterschrift.
+    clubhouse.hide();
+    hireScreen.show(career, {
+      first,
+      onDone(cand) {
+        const r = appointCoach(career, cand);
+        saveCareer(career);
+        openClubhouse();
+        if (!r.ok) hud.toast(tr('Das hat nicht geklappt – die Kasse reicht nicht.', 'That did not work – not enough in the kitty.'), 2.5, 2);
+      },
+      onCancel() {
+        openClubhouse();
+      },
+    });
+  },
   onNextWeek() {
     finishRound(career);
     saveCareer(career);
@@ -626,14 +646,21 @@ function resumeRound() {
   }
 }
 
+// Präsidium: man schaut von der Tribüne zu, der eingestellte Trainer coacht (keine Zurufe, keine Wechsel).
+const handsOn = () => !isPresident(career);
+function spectatorToast() {
+  if (!handsOn() && career.hired) hud.toast(tr(`Von der Tribüne: ${career.hired.name} coacht`, `From the stand: ${career.hired.name} is in charge`), 2.5, 2);
+}
+
 function playCareerMatch() {
   const fixture = humanFixture(career);
-  const prepared = prepareMatch(career, fixture, { human: true, duration: testDuration });
+  const prepared = prepareMatch(career, fixture, { human: handsOn(), duration: testDuration });
   careerMatch = { prepared, fixture };
   loadVenue(clubById(career, fixture.home).venue, clubById(career, fixture.home).human ? venueExtras(career) : null);
   clubhouse.hide();
   setMode('play');
   showMatch(prepared.match);
+  spectatorToast();
   for (const h of prepared.helpers) {
     const p = prepared.match.players.find((q) => q.poolIndex === h) ?? prepared.match.bench.flat().find((q) => q.poolIndex === h);
     if (p?.helperFor) hud.toast(tr(`${p.name} (Schwager von ${p.helperFor}) hilft aus`, `${p.name} (${p.helperFor}'s brother-in-law) is helping out`), 2.5, 2);
@@ -644,12 +671,13 @@ function playCareerMatch() {
 function playCupMatch(kind) {
   const m = humanCupMatch(career, kind);
   if (!m) return runCupRound(null, kind);
-  const prepared = prepareCupMatch(career, m, { human: true, duration: testDuration });
+  const prepared = prepareCupMatch(career, m, { human: handsOn(), duration: testDuration });
   careerMatch = { prepared, cup: m };
   loadVenue(prepared.pitch.id);
   clubhouse.hide();
   setMode('play');
   showMatch(prepared.match);
+  spectatorToast();
   hud.toast(kind === 'halle' ? tr('Hallen-Stadtmeisterschaft – Sporthalle Kanalschule', 'Indoor City Cup – Kanalschule Sports Hall') : tr('Stadtmeisterschaft – Sportplatz Am Kanal', 'City Cup – Am Kanal Ground'), 2.5, 2);
 }
 
@@ -675,7 +703,7 @@ async function runCupRound(played, kind = played?.kind ?? 'stadt') {
 const ticker = new Ticker(document.getElementById('ticker'));
 // Welche Mannschaft im Ticker die eigene ist (nur wenn der Trainer da ist).
 function coachTeamOf(prepared) {
-  if (coachAway(career)) return null;
+  if (coachAway(career) || isPresident(career)) return null; // Präsidium: der eingestellte Trainer coacht
   const i = prepared.match.teams.findIndex((t) => t.name === humanClub(career).name);
   return i < 0 ? null : i;
 }
@@ -733,13 +761,14 @@ async function runRound(playedFixture) {
 function playPokalMatch(kind) {
   const tie = humanTie(career, kind);
   if (!tie) return openClubhouse();
-  const prepared = preparePokalMatch(career, kind, tie, { human: true, duration: testDuration });
+  const prepared = preparePokalMatch(career, kind, tie, { human: handsOn(), duration: testDuration });
   careerMatch = { prepared, pokal: true };
   const ownGround = prepared.home.human && (kind !== 'bund' || prepared.bund?.venue === 'own'); // Heimspiel auf dem eigenen Platz: Vereinsbande wie in der Liga (nicht im fremden Stadion)
   loadVenue(prepared.pitch.id, ownGround ? venueExtras(career) : null);
   clubhouse.hide();
   setMode('play');
   showMatch(prepared.match);
+  spectatorToast();
   const cup = pokalOf(career, kind);
   hud.toast(`${POKALE[kind].name} · ${roundName(cup, tie.round)} · ${pokalWhen(kind)}`, 3, 2);
 }
@@ -763,12 +792,13 @@ function tickerPokal(kind) {
 // Relegation: Hin- oder Rückspiel an der Seitenlinie.
 function playRelegationMatch() {
   startRelegation(career);
-  const prepared = prepareRelegationMatch(career, { human: true, duration: testDuration });
+  const prepared = prepareRelegationMatch(career, { human: handsOn(), duration: testDuration });
   careerMatch = { prepared, relegation: true };
   loadVenue(prepared.pitch.id);
   clubhouse.hide();
   setMode('play');
   showMatch(prepared.match);
+  spectatorToast();
   const r = career.relegation;
   hud.toast(r.leg === 0 ? tr(`Relegation, Hinspiel gegen ${r.opponent.name}`, `Play-off, first leg against ${r.opponent.name}`) : tr(`Relegation, Rückspiel – Hinspiel ${r.legs[0].result.ours}:${r.legs[0].result.theirs}`, `Play-off, second leg – first leg ${r.legs[0].result.ours}-${r.legs[0].result.theirs}`), 3, 2);
 }
@@ -1108,6 +1138,7 @@ function onAndroidBack(exitApp) {
   if (subPanel.isOpen) return subPanel.close();
   if (planPanel.isOpen) return planPanel.close();
   if (halfPanel.isOpen) return; // Halbzeit: erst entscheiden
+  if (!document.getElementById('hire')?.hidden) return hireScreen.cancel();
   if (!document.getElementById('creator')?.hidden) {
     creator.hide();
     return openMenu();

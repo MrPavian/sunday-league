@@ -16,7 +16,9 @@ import { arenaOf, BRANCHEN, bossOf, cancelCost, goalStatus, goalText, lineOf, re
 import { newWish } from '../../career/sponsorwish.js';
 import { chronicleData, yearOf } from '../../career/sagas.js';
 import { coachPlaying, legacy } from '../../career/legacy.js';
-import { childAge, coachName, familyText, STYLES } from '../../career/personal.js';
+import { childAge, coachName, familyText, isPresident, STYLES } from '../../career/personal.js';
+import { hiredAge } from '../../career/president.js';
+import { STYLES as PLAY_STYLES } from '../../sim/tactics.js';
 import { jobName } from '../../data/names.js';
 import { POSITIONS } from '../../sim/generator.js';
 import { hex, first, euro } from './shared.js';
@@ -27,9 +29,9 @@ export const clubScreens = {
     const k = c.coach;
     const me = k?.idx != null ? this.p(k.idx) : null;
     const profile = k
-      ? `<div class="me-card"><h4>${tr('Du', 'You')} – ${coachPlaying(c) ? tr('Spielertrainer', 'player-manager') : tr('Trainer', 'manager')}${k.generation > 1 ? tr(` <small>(${k.generation}. Trainer-Ära)</small>`, ` <small>(manager era no. ${k.generation})</small>`) : ''}</h4>
-          <p><b>${coachName(c)}</b>${me ? ` · ${me.age}${tr(' J.', ' yrs')} · ${jobName(me.profession)} · ${POSITIONS[me.position]} · ${tr('Stärke', 'Rating')} ${me.rating}` : ''}</p>
-          ${k.style ? `<p>${tr('Spielertyp', 'Player type')}: ${STYLES[k.style]?.name ?? ''}</p>` : ''}
+      ? `<div class="me-card"><h4>${tr('Du', 'You')} – ${isPresident(c) ? tr('Präsident', 'president') : coachPlaying(c) ? tr('Spielertrainer', 'player-manager') : tr('Trainer', 'manager')}${k.generation > 1 ? tr(` <small>(${k.generation}. Trainer-Ära)</small>`, ` <small>(manager era no. ${k.generation})</small>`) : ''}</h4>
+          <p><b>${coachName(c)}</b>${me ? ` · ${me.age}${tr(' J.', ' yrs')} · ${jobName(me.profession)}${coachPlaying(c) ? ` · ${POSITIONS[me.position]} · ${tr('Stärke', 'Rating')} ${me.rating}` : ''}` : ''}${k.oldBoys ? tr(' · kickt bei den Alten Herren', ' · plays for the old boys') : ''}</p>
+          ${k.style && (coachPlaying(c) || k.mode !== 'coachOnly') ? `<p>${tr('Spielertyp', 'Player type')}: ${STYLES[k.style]?.name ?? ''}</p>` : ''}
           <p>${k.relation ? familyText(k.relation, k.children ?? []) : k.family}${k.flags.kasse ? tr(' · machst nebenbei die Vereinskasse', ' · also keeping the club accounts') : ''}${k.flags.familyAtGames ? tr(' · die Familie kommt sonntags mit', ' · the family comes along on Sundays') : ''}</p>
           ${(k.children ?? []).length ? `<ul class="plain">${k.children.map((ch) => {
             const age = childAge(c, ch);
@@ -37,7 +39,7 @@ export const clubScreens = {
             return `<li>${ch.sex === 'w' ? tr('Tochter', 'Daughter') : tr('Sohn', 'Son')} ${ch.name}, ${age}${tr(' J.', ' yrs')} – ${where}</li>`;
           }).join('')}</ul>` : ''}
           ${this.meBars()}
-          <p class="empty">${tr('Training, Scouting und Spieltage kosten Zeit mit der Familie. Unbesetzte Posten (Co-Trainer, Wirt, Platzwart) und Zusatzämter ziehen Energie. Ist einer der beiden Werte leer, fällst du zwei Wochen aus.', 'Training, scouting and matchdays cost family time. Empty posts (assistant, bar manager, groundsman) and extra duties drain energy. If either bar runs empty, you are out for two weeks.')}</p>
+          <p class="empty">${isPresident(c) ? tr('Im Präsidium bleibt mehr Zeit für die Familie: kein Sonntag an der Linie, kein Training. Dafür zählt, wen du als Trainer geholt hast.', 'In the president\'s office there is more time for the family: no Sundays on the touchline, no training. What counts now is who you hired as manager.') : tr('Training, Scouting und Spieltage kosten Zeit mit der Familie. Unbesetzte Posten (Co-Trainer, Wirt, Platzwart) und Zusatzämter ziehen Energie. Ist einer der beiden Werte leer, fällst du zwei Wochen aus.', 'Training, scouting and matchdays cost family time. Empty posts (assistant, bar manager, groundsman) and extra duties drain energy. If either bar runs empty, you are out for two weeks.')}</p>
         </div>`
       : '';
     return `
@@ -207,9 +209,13 @@ export const clubScreens = {
     const c = this.career;
     const eras = legacy(c).eras;
     const since = c.coach?.since ?? 1;
-    const now = c.coach?.idx != null ? `<li><b>${yearOf(c, since)}–${tr('heute', 'today')}</b> ${playerOf(c, c.coach.idx).name}${c.coach.generation > 1 ? tr(` <small>(${c.coach.generation}. Trainer-Ära)</small>`, ` <small>(manager era no. ${c.coach.generation})</small>`) : ''}</li>` : '';
-    if (!eras.length) return '';
-    return `<h4>${tr('Trainer', 'Managers')}</h4><ul class="milestones">${eras.map((e) => `<li><b>${yearOf(c, e.from)}–${yearOf(c, e.to)}</b> ${e.name} – ${e.seasons} ${plural(e.seasons, 'Saison', 'Saisons', 'season', 'seasons')}${e.titles ? tr(`, ${e.titles}× Meister`, `, ${e.titles}× champions`) : ''}${tr(', heute Ehrenpräsident', ', now honorary president')}</li>`).join('')}${now}</ul>`;
+    const h = c.hired;
+    // Präsidium: an der Linie steht der eingestellte Trainer, die eigene Figur sitzt im Präsidium.
+    const now = isPresident(c)
+      ? h ? `<li><b>${yearOf(c, h.since)}–${tr('heute', 'today')}</b> ${esc(h.name)} <small>(${hiredAge(c)}, ${PLAY_STYLES[h.style].label})</small></li>` : `<li><b>${tr('heute', 'today')}</b> ${tr('Trainerstelle vakant', 'manager post vacant')}</li>`
+      : c.coach?.idx != null ? `<li><b>${yearOf(c, since)}–${tr('heute', 'today')}</b> ${playerOf(c, c.coach.idx).name}${c.coach.generation > 1 ? tr(` <small>(${c.coach.generation}. Trainer-Ära)</small>`, ` <small>(manager era no. ${c.coach.generation})</small>`) : ''}</li>` : '';
+    if (!eras.length && !isPresident(c)) return '';
+    return `<h4>${tr('Trainer', 'Managers')}</h4><ul class="milestones">${eras.map((e) => `<li><b>${yearOf(c, e.from)}–${yearOf(c, e.to)}</b> ${e.name} – ${e.seasons} ${plural(e.seasons, 'Saison', 'Saisons', 'season', 'seasons')}${e.titles ? tr(`, ${e.titles}× Meister`, `, ${e.titles}× champions`) : ''}${e.how === 'extern' ? tr(`, dann Präsident – Nachfolger an der Linie: ${esc(e.successor)}`, `, then president – successor on the touchline: ${esc(e.successor)}`) : tr(', heute Ehrenpräsident', ', now honorary president')}</li>`).join('')}${now}</ul>`;
   },
 
   // Vereinsheim ausbauen: Handwerker oder Arbeitseinsatz.

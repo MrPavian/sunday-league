@@ -24,10 +24,13 @@ import { promoteProspect } from '../career/youth.js';
 import { setPate, toggleTrainUp } from '../career/bridge.js';
 import { resolveEvent } from '../career/events.js';
 import { legacy, resolveLegacy, stepDown, succeed, successionCandidates } from '../career/legacy.js';
+import { fireCoach, setPresidentGoal } from '../career/president.js';
+import { isPresident } from '../career/personal.js';
 import { askWirt, buyRound, playDart, setTactic, talk } from '../career/pub.js';
 import { poachKid, setYouthFocus } from '../career/academy.js';
 import { supportDream } from '../career/pub.js';
 import { clubScreens } from './clubhouse/club.js';
+import { officeScreens } from './clubhouse/office.js';
 import { homeScreens } from './clubhouse/home.js';
 import { phoneScreens } from './clubhouse/phone.js';
 import { pubScreens } from './clubhouse/pub.js';
@@ -42,7 +45,7 @@ const AREAS = [
   { id: 'home', icon: 'home', label: () => tr('Heute', 'Today'), tabs: ['home'] },
   { id: 'team', icon: 'team', label: () => tr('Mannschaft', 'Squad'), tabs: ['squad', 'lineup', 'tactic', 'training', 'youth', 'transfers'] },
   { id: 'season', icon: 'season', label: () => tr('Saison', 'Season'), tabs: ['table', 'fixtures', 'cup'] },
-  { id: 'club', icon: 'club', label: () => tr('Verein', 'Club'), tabs: ['cash', 'club', 'museum'] },
+  { id: 'club', icon: 'club', label: () => tr('Verein', 'Club'), tabs: ['cash', 'club', 'office', 'museum'] }, // 'office' (Präsidium) nur nach dem Traineramt, siehe visibleTabs
   { id: 'pub', icon: 'pub', label: () => tr('Kneipe', 'Pub'), tabs: ['pub'] },
   { id: 'phone', icon: 'phone', label: () => tr('Handy', 'Phone'), tabs: ['chat'] },
 ];
@@ -59,9 +62,12 @@ const TAB_LABELS = () => ({
   cup: tr('Turnier', 'Cup'),
   club: tr('Verein', 'Club'),
   museum: tr('Museum', 'Museum'),
+  office: tr('Präsidium', 'President'),
   cash: tr('Kasse', 'Kitty'),
   fixtures: tr('Spielplan', 'Fixtures'),
 });
+// Das Präsidium gibt es erst nach der Trainereinstellung (president.js).
+const visibleTabs = (area, c) => area.tabs.filter((t) => t !== 'office' || isPresident(c));
 export const areaOfTab = (tab) => AREAS.find((a) => a.tabs.includes(tab)) ?? AREAS[0];
 export const CLUB_AREAS = AREAS;
 
@@ -243,7 +249,22 @@ export class Clubhouse {
       } else if (action === 'successor') {
         const cand = successionCandidates(this.career)[Number(value)];
         if (cand?.type === 'neu') return this.h.onNewCoach();
+        if (cand?.type === 'extern') return this.h.onHireCoach(true); // selbst Präsident werden, Trainer engagieren
         if (cand) succeed(this.career, cand);
+        this.h.onChange();
+      } else if (action === 'fireCoach') {
+        if (!this.confirmFire) {
+          this.confirmFire = true;
+          this.render();
+          return;
+        }
+        this.confirmFire = false;
+        fireCoach(this.career);
+        this.h.onChange();
+      } else if (action === 'hireCoach') {
+        return this.h.onHireCoach(false);
+      } else if (action === 'presidentGoal') {
+        setPresidentGoal(this.career, value);
         this.h.onChange();
       } else if (action === 'tripChoose') {
         tripChoose(this.career, Number(value));
@@ -518,6 +539,7 @@ export class Clubhouse {
     if (c.founding) return this.renderFounding();
     const over = seasonOver(c);
     const roundNo = Math.min(c.round + 1, c.fixtures.length);
+    if (this.tab === 'office' && !isPresident(c)) this.tab = 'club'; // das Präsidium gibt es erst nach der Trainereinstellung
     if (this.tab === 'home' || !this[`tab_${this.tab}`]) this.tab = 'home';
     const area = areaOfTab(this.tab);
     this.lastTab[area.id] = this.tab;
@@ -530,10 +552,11 @@ export class Clubhouse {
     const labels = TAB_LABELS();
     // Bereich „Verein" ist die Vereinsmappe: Register statt Reiterleiste, Inhalt in der Kartonmappe.
     const folder = area.id === 'club';
-    const sub = area.tabs.length > 1
+    const areaTabs = visibleTabs(area, c);
+    const sub = areaTabs.length > 1
       ? folder
-        ? `<div class="m-tabs folder-tabs" role="tablist">${area.tabs.map((t) => `<button role="tab" aria-selected="${t === this.tab}" data-action="tab" data-value="${t}">${labels[t]}</button>`).join('')}</div>`
-        : uiTabs(area.tabs.map((t) => [t, labels[t]]), this.tab, 'tab')
+        ? `<div class="m-tabs folder-tabs" role="tablist">${areaTabs.map((t) => `<button role="tab" aria-selected="${t === this.tab}" data-action="tab" data-value="${t}">${labels[t]}</button>`).join('')}</div>`
+        : uiTabs(areaTabs.map((t) => [t, labels[t]]), this.tab, 'tab')
       : '';
     // Im Vereinsheim („Heute") ist das Fenster der Szene durchsichtig: dahinter läuft der eigene Platz.
     this.root.classList.toggle('see-through', area.id === 'home' && homeView() !== 'klassisch');
@@ -574,4 +597,4 @@ export class Clubhouse {
 }
 
 // Bildschirme je Bereich (src/ui/clubhouse/*): Methoden mit demselben this wie oben.
-Object.assign(Clubhouse.prototype, homeScreens, teamScreens, seasonScreens, clubScreens, phoneScreens, pubScreens);
+Object.assign(Clubhouse.prototype, homeScreens, teamScreens, seasonScreens, clubScreens, officeScreens, phoneScreens, pubScreens);

@@ -848,6 +848,14 @@ und spielt weiter – wahlweise in einem Vereinsamt, z. B. als **Präsident** (F
 Trainerwahl, Ziele vorgeben, Trainer entlassen) statt an der Seitenlinie. Baut auf `generations.js`/`staff.js`
 und der Ämterbesetzung auf.
 
+*Umgesetzt (Branch `agent-rolle`, 2026-10-19, Startmodus und Präsidium):* Beim Karrierestart wählbar „Spielertrainer“ oder „Nur Trainer“
+(`coach.mode`, alte Spielstände = Spielertrainer; „Nur Trainer“: die Figur steht nie im Kader, kein Karriereende als Spieler).
+Nach dem Traineramt (Rücktritt im Sommer oder „Zu den Alten Herren“ beim Schuhe-Entscheid) kann man in der Nachfolge „Trainer verpflichten –
+du wirst Präsident“ wählen: drei erzeugte Bewerber (Aussehen, Alter, Stil, Gehalt, Ruf, Vorstellung), kurzes Gespräch mit Feilschen, dann
+Präsidium (`src/career/president.js`, Tab „Präsidium“ im Verein): Trainer entlassen/verpflichten (Abfindung bzw. Handgeld, Spielwerte), Saisonziel
+selbst setzen, Taktik/Aufstellung lesend; Spiele von der Tribüne, im Liveticker oder nur als Ergebnis. Die Nachfolge durch ein Kind bleibt
+als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst fehlt noch).
+
 **Neue Mannschaften**
 - **Alte Herren** als zweites Team im Verein (eigener Kader aus Ü32/Ex-Spielern, eigene Runde, wenig Training).
 - **Frauenteam** wahlweise: im Spiel als Option gründen, wenn genug Geld vorhanden ist (Startkosten, Trikots,

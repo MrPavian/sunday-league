@@ -33,6 +33,10 @@ export const coachOf = (c) => c.coach ?? null;
 export const coachAway = (c) => (c.coach?.awayWeeks ?? 0) > 0;
 export const trainingLocked = (c) => coachAway(c) || (c.coach?.noTraining ?? 0) > 0;
 export const isCoach = (c, idx) => idx != null && c.coach?.idx === idx;
+// Startmodus (ROADMAP 11.9): 'player' = Spielertrainer (alte Spielstände), 'coachOnly' = Nur Trainer ohne eigene Spielerfigur im Kader.
+export const coachMode = (c) => c.coach?.mode ?? 'player';
+// Nach dem Traineramt: Der eigene Mensch sitzt im Präsidium, ein eingestellter Trainer steht an der Linie (president.js).
+export const isPresident = (c) => c.coach?.office === 'president';
 
 export function adjustPatience(c, d) {
   if (c.coach) c.coach.patience = clamp100(c.coach.patience + d);
@@ -80,7 +84,7 @@ export function createCoachPlayer(input, seed = 1) {
   const style = STYLES[input.style] ?? STYLES.spielmacher;
   const rng = createRng((seed * 131 + 7) >>> 0);
   const p = generatePlayer(rng, { role: style.role, tier: 'gut' });
-  const age = Math.max(18, Math.min(55, Math.round(input.age ?? 32)));
+  const age = Math.max(18, Math.min(75, Math.round(input.age ?? 32))); // Spielertrainer bis 55, Nur Trainer bis 75 (der Editor begrenzt)
   for (const [k, v] of Object.entries(style.mods)) if (k !== 'strength') p.attrs[k] = clampAttr(p.attrs[k] + v);
   // Das Alter: schneller mit 20, abgeklärter mit 40.
   p.attrs.pace = clampAttr(p.attrs.pace - Math.max(0, age - 30) * 0.012 + Math.max(0, 25 - age) * 0.01);
@@ -142,6 +146,7 @@ export function initCoach(career, input = null) {
     const children = (input.children ?? []).slice(0, 3).map((k) => ({ name: k.name || 'Kind', age: Math.max(0, Math.min(25, Math.round(k.age ?? 5))), sex: k.sex === 'w' ? 'w' : 'm', idx: null }));
     career.coach = {
       idx,
+      mode: input.mode === 'coachOnly' ? 'coachOnly' : 'player',
       custom: true,
       first: input.first,
       last: input.last,
@@ -157,7 +162,8 @@ export function initCoach(career, input = null) {
       noTraining: 0,
       flags: {},
     };
-    club.squad.push(idx);
+    // Nur Trainer: Die Figur existiert (Name, Aussehen, Alter), steht aber nie im Kader – wie nach den Schuhen an den Nagel.
+    if (career.coach.mode !== 'coachOnly') club.squad.push(idx);
     career.players[idx] = { apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 };
     childrenGrowUp(career);
     return career.coach;
@@ -173,7 +179,7 @@ export function initCoach(career, input = null) {
     }
   }
   const family = rng.pick(FAMILIES);
-  career.coach = { idx, family: family.text, kids: family.kids, partner: family.partner, patience: 75, energy: 80, awayWeeks: 0, noTraining: 0, flags: {} };
+  career.coach = { idx, mode: 'player', family: family.text, kids: family.kids, partner: family.partner, patience: 75, energy: 80, awayWeeks: 0, noTraining: 0, flags: {} };
   if (idx !== null) {
     club.squad.push(idx);
     career.players[idx] ??= { apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 };
@@ -230,6 +236,15 @@ export function weeklyPersonal(c) {
   const k = c.coach;
   if (!k) return;
   const w = c.week;
+  // Präsidium: kein Sonntag an der Linie, kein Training – Familie und Akku erholen sich, es gibt keine Krisen.
+  if (isPresident(c)) {
+    k.awayWeeks = 0;
+    k.pendingCrisis = null;
+    adjustPatience(c, 3);
+    adjustEnergy(c, 2 - missingStaff(c) - (k.flags.kasse ? 2 : 0));
+    if (k.noTraining > 0) k.noTraining--;
+    return;
+  }
   // Leer gelaufen (auch durch Entscheidungen unter der Woche)? Dann knallt es nächste Woche.
   const crisisNow = () => (k.awayWeeks > 0 ? null : k.patience <= 0 ? 'familienkrise' : k.energy <= 0 ? 'burnout' : null);
   k.pendingCrisis ??= crisisNow();
@@ -256,13 +271,13 @@ export function seasonPersonal(c, pos) {
   adjustEnergy(c, 20);
   k.awayWeeks = 0;
   k.noTraining = 0;
-  if (pos === 1) c.flags.offerFrom = OFFER_CLUBS[(c.season + c.seed) % OFFER_CLUBS.length];
+  if (pos === 1 && !isPresident(c)) c.flags.offerFrom = OFFER_CLUBS[(c.season + c.seed) % OFFER_CLUBS.length];
 }
 
 // Zu Wochenbeginn: Krisen gehen vor. Die Folgen gelten sofort für diese Woche.
 export function personalWeek(c) {
   const k = c.coach;
-  if (!k || !c.week) return;
+  if (!k || !c.week || isPresident(c)) return;
   const crisis = k.pendingCrisis;
   k.pendingCrisis = null;
   if (crisis === 'familienkrise') k.patience = Math.max(k.patience, 35);
@@ -296,7 +311,7 @@ export const CRISES = {
 export const PERSONAL_EVENTS = {
   familienwochenende: {
     weight: 3,
-    needs: (c) => (c.coach && !coachAway(c) && c.coach.patience < 60 ? {} : null),
+    needs: (c) => (c.coach && !isPresident(c) && !coachAway(c) && c.coach.patience < 60 ? {} : null),
     text: (c) =>
       c.coach.relation === 'single'
         ? tr(`${partnerOf(c)}: „Sonntag ist Omas 80. Geburtstag. Du kommst, und zwar pünktlich."`, `${partnerOf(c)}: "Sunday is Grandma's 80th birthday. You're coming, and on time."`)
@@ -344,7 +359,7 @@ export const PERSONAL_EVENTS = {
   },
   muede: {
     weight: 4,
-    needs: (c) => (c.coach && !coachAway(c) && c.coach.energy < 35 ? {} : null),
+    needs: (c) => (c.coach && !isPresident(c) && !coachAway(c) && c.coach.energy < 35 ? {} : null),
     text: (c) => tr(`${partnerOf(c)}: „Du siehst müde aus. Du machst da echt alles alleine, oder?"`, `${partnerOf(c)}: "You look tired. You really do everything there on your own, don't you?"`),
     options: [
       { label: tr('Training zwei Wochen abgeben', 'Hand over training for two weeks'), effect: (c) => ((c.coach.noTraining = 2), adjustEnergy(c, 20), tr('Kein Open Training die nächsten zwei Wochen. Tut gut.', 'No open training for the next two weeks. That helps.')) },
@@ -400,7 +415,7 @@ export const PERSONAL_EVENTS = {
   },
   angebot: {
     weight: 40,
-    needs: (c) => (c.flags.offerFrom && c.round <= 3 ? { club: c.flags.offerFrom } : null),
+    needs: (c) => (c.flags.offerFrom && !isPresident(c) && c.round <= 3 ? { club: c.flags.offerFrom } : null),
     text: (c, ctx) => tr(`Anruf vom ${ctx.club}: Sie suchen einen Trainer und haben von eurem Titel gehört. „Wir zahlen auch was."`, `A call from ${ctx.club}: they are looking for a manager and have heard about your title. "We'd even pay."`),
     options: [
       { label: tr('Bleiben – das ist mein Verein', 'Stay – this is my club'), effect: (c) => ((c.flags.offerFrom = null), adjustMood(c, 0.15), tr('Du hast abgesagt. Als es rumgeht, gibt die Mannschaft einen aus.', 'You said no. When word gets round, the team buys you a drink.')) },
