@@ -352,6 +352,7 @@ function faceUV(uv, start, corners, atlas, tile, face) {
 export function createPlayerModel(look, kit, { number = null, keeper = false, sponsor = null, sleeve = null, textured = true, atlas = null, edge = null, referee = false } = {}) {
   const hash = lookHash(look);
   const belly = look.belly ?? 0;
+  const paunch = look.paunch ?? 0; // nur ein Bäuchlein vorn unter der Brust (Schultern, Brust, Arme, Hüfte bleiben normal)
   const vary = (shift, step) => 1 + (((hash >>> shift) % 5) - 2) * step;
   const shoulderK = vary(6, 0.025);
   const legK = vary(9, 0.02);
@@ -469,7 +470,7 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
   const torsoTop = (0.45 + belly * 0.05) * shoulderK * (0.5 + 0.5 * bulk);
   const torsoBot = 0.37 + belly * 0.13;
   // Brust oben etwas tiefer als früher: kräftigeres Seitenprofil.
-  b.add('spine', prism(torsoTop, torsoBot, torsoH, 0.285 + belly * 0.04, 0.24 + belly * 0.1, { front: belly * 0.07 }), useAtlas ? 0xffffff : kit.shirt, { at: [0, torsoH / 2, 0.005], uv: 'kit' });
+  b.add('spine', prism(torsoTop, torsoBot, torsoH, 0.285 + belly * 0.04, 0.24 + belly * 0.1, { front: belly * 0.07 + paunch * 0.13 }), useAtlas ? 0xffffff : kit.shirt, { at: [0, torsoH / 2, 0.005], uv: 'kit' });
   b.box('spine', 0.18, 0.035, 0.17, accent, [0, torsoH, 0]); // Kragen
   b.box('spine', 0.055, 0.06, 0.02, accent, [-0.1, torsoH - 0.14, 0.13 + belly * 0.02]); // Wappen
   b.box('spine', 0.1, 0.08, 0.1, skin, [0, torsoH + 0.03, 0]); // Hals
@@ -604,8 +605,8 @@ export function createPlayerModel(look, kit, { number = null, keeper = false, sp
     b.box('head', headW + 0.008, 0.1, 0.03, buzz, [0, top - 0.06, -hw - 0.002]);
   } else if (hairStyle === 'halbglatze') {
     // Halbglatze: Stirn und Scheitel kahl (Haut), Haare nur an den Seiten, im Nacken und ein Rest hinten auf dem Scheitel.
-    for (const s of [-1, 1]) b.box('head', 0.035, 0.15, headW * 0.64, hairC, [s * (hw + 0.007), top * 0.58, -0.055]);
-    b.box('head', headW + 0.014, 0.17, 0.055, hairD, [0, top * 0.6, -hw]);
+    for (const s of [-1, 1]) b.box('head', 0.045, 0.19, headW * 0.82, hairC, [s * (hw + 0.01), top * 0.55, -0.02]);
+    b.box('head', headW + 0.016, 0.2, 0.06, hairD, [0, top * 0.58, -hw]);
     b.box('head', headW * 0.78, 0.045, 0.1, hairC, [0, top + 0.004, -hw * 0.6]);
   } else if (hash % 2) {
     for (const s of [-1, 1]) b.box('head', 0.025, 0.06, headW * 0.5, hairD, [s * (hw + 0.005), top * 0.62, -0.07]); // Haarkranz
@@ -1993,7 +1994,7 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
       const k = smooth(0, 0.3, g);
       armTo(bn, 'L', DOSE[0], DOSE[1], DOSE[2], k);
       armTo(bn, 'R', 0.1, 0.55, -1.5, k);
-      bn.head.rotation.y += Math.sin(g * 0.9) * 0.22;
+      bn.head.rotation.y += Math.sin(g * 0.9) * 0.14;
       bn.spine.rotation.z += Math.sin(g * 1.3) * 0.025;
       bn.hips.position.y += Math.sin(g * 2) * 0.004;
     } else if (gesture === 'bier') {

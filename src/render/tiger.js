@@ -3,8 +3,8 @@
 // Die Karriere legt die Angaben als match.tiger an (src/career/tiger.js tigerForMatch); die Simulation liest sie nicht.
 import { isChance } from './reactions.js';
 
-// Aussehen: dunkelbraunes Haar, Halbglatze, Vollbart, leichter Bauch, die Dose in der Linken (PlayerModel: look.can).
-export const TIGER_LOOK = { skin: 0xe6b894, hair: 0x4b3020, bald: false, halbglatze: true, beard: true, beardStyle: 'full', belly: 0.7, height: 1.01, can: true };
+// Aussehen: dunkelbraunes Haar, Halbglatze, Vollbart, leichtes Bäuchlein (paunch), die Dose in der Linken (PlayerModel: look.can).
+export const TIGER_LOOK = { skin: 0xe6b894, hair: 0x44270f, bald: false, halbglatze: true, beard: true, beardStyle: 'full', belly: 0.15, paunch: 1, height: 1.01, can: true };
 // Vereinstrikot über dem Bauch, Jeans; die Rückennummer ist die 12 (der zwölfte Mann).
 export const tigerKit = (shirt = 0xc0392b) => ({ shirt, shorts: 0x34425a, socks: 0x222222, trousers: true });
 export const TIGER_NUMBER = 12;
@@ -37,7 +37,7 @@ export function tigerSpot(match) {
 // Blickrichtung: die des Ortes, dazu ein Stück zum Ball gedreht (er hat die Dose in der Hand und steht am Zaun).
 export function tigerYaw(spot, ball) {
   const dz = Math.max(4, ball.z - spot.z);
-  return spot.yaw + Math.max(-0.45, Math.min(0.45, Math.atan2(ball.x - spot.x, dz) * (spot.yaw ? 0.25 : 0.6)));
+  return spot.yaw + Math.max(-0.45, Math.min(0.45, Math.atan2(ball.x - spot.x, dz) * (spot.yaw ? 0.25 : 0.25)));
 }
 
 // --- Gesten -----------------------------------------------------------------------------------------------
