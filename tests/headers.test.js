@@ -36,8 +36,10 @@ describe('Kopfballtore', () => {
     expect(r.share).toBeGreaterThan(0.03); // gemessen 5 %, vorher 3 %
   }, 400000);
   it('Großfeld: Kopfballtore mindestens 3 % der Tore', () => {
-    const r = heads('grossfeld', 16);
+    // 64 statt 16 Spiele (gleiche Schwelle als Anteil): Mit 16 Spielen sind es nur ~1–2 Kopfballtore, jede Änderung am
+    // Zufallsverlauf (z. B. mehr Elfmeter durch den echten 16er) kippte den Anteil; vorher und nachher mit 64 Spielen bestanden.
+    const r = heads('grossfeld', 64);
     expect(r.onGoalPerGame).toBeGreaterThan(0.4); // gemessen 0,78, vorher 0,07
     expect(r.share).toBeGreaterThan(0.03); // gemessen 5 %, vorher 1 %
-  }, 600000);
+  }, 2400000);
 });

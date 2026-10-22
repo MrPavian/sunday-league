@@ -124,7 +124,13 @@ export const BIG_PITCH = {
   referee: true,
   offside: true,
   penaltyDistance: 11,
-  // Torwart auf dem Großfeld (16,5-m-Strafraum, IFAB Regel 1): Hände im ganzen Strafraum der Simulation (keeperBox), nicht nur im
+  // Markierungen nach IFAB Regel 1: Strafraum 16,5 m tief und 40,32 m breit, Torraum 5,5 × 18,32 m, Mittelkreis 9,15 m.
+  // penaltyBox gilt für Fouls/Elfmeter, die Hände des Torwarts und die Aufstellung beim Elfmeter; keeperBox (6 m) bleibt der
+  // Torwartraum der KI (Steilpässe, Kombinationen).
+  penaltyBox: { depth: 16.5, halfWidth: 20.16 },
+  goalArea: { depth: 5.5, halfWidth: 9.16 },
+  centerCircle: 9.15,
+  // Torwart auf dem Großfeld (16,5-m-Strafraum, IFAB Regel 1): Hände im ganzen Strafraum (penaltyBox), nicht nur im
   // 1-m-Torraum der kleinen Plätze; er kommt bei Angriffen heraus. duelFrom: Eins-gegen-eins ab dieser Entfernung des Ballführenden
   // zum Tor (m); outMax: weiteste Position vor der Linie (m); claim: so weit vor der Linie holt er langsame freie Bälle (m);
   // stance: Grundstellung bei gegnerischem Ballbesitz = stanceK · Abstand des Balls zum Tor − stanceOff, zwischen 0,8 m und stanceMax.

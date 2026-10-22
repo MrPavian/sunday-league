@@ -6,7 +6,7 @@ import { attackDir, clampToPitch, getPlayer, setControlled, teamAttacking } from
 import { processSubs } from './squad.js';
 import { styleOf } from './plan.js';
 import { cornerSpots, keeperZone } from './ai.js';
-import { keeperBox } from './actions.js';
+import { penaltyBox } from './actions.js';
 
 // Elfmeterpunkt: im Kleinfeld näher dran als auf dem großen Platz.
 export function penaltySpot(m, team) {
@@ -101,7 +101,7 @@ function clearBox(m, team, taker, spot) {
   const { pitch } = m;
   const s = attackDir(m, team);
   const goalX = s * pitch.halfLength;
-  const box = keeperBox(pitch);
+  const box = penaltyBox(pitch); // beim Elfmeter alle außerhalb des Strafraums
   let k = 0;
   for (const p of m.players) {
     if (p === taker) continue;

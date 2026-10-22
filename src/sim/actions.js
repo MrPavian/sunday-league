@@ -420,6 +420,12 @@ export function keeperBox(pitch) {
   const depth = Math.min(6, pitch.halfLength * 0.3);
   return { depth, halfWidth: Math.min(pitch.halfWidth, pitch.goalHalfWidth + depth * 0.9) };
 }
+// Strafraum für Fouls, Elfmeter und Torwart-Hände: echte Maße, wo der Platz sie hat (Großfeld), sonst der Torwartraum.
+export const penaltyBox = (pitch) => pitch.penaltyBox ?? keeperBox(pitch);
+export function inPenaltyBox(pitch, pos, goalX, margin = 0) {
+  const b = penaltyBox(pitch);
+  return Math.abs(pos.x - goalX) <= b.depth + margin && Math.abs(pos.z) <= b.halfWidth + margin;
+}
 export function inKeeperBox(pitch, pos, goalX, margin = 0) {
   const b = keeperBox(pitch);
   return Math.abs(pos.x - goalX) <= b.depth + margin && Math.abs(pos.z) <= b.halfWidth + margin;
@@ -429,7 +435,7 @@ export function inKeeperBox(pitch, pos, goalX, margin = 0) {
 // raus, spielt er wie ein Feldspieler mit dem Fuß (der Strafraum oben bleibt für Standards).
 export const HAND_ZONE = { depth: 1, side: 1 };
 export function inHandZone(pitch, pos, goalX, margin = 0) {
-  if (pitch.keeperSweep?.handsInBox) return inKeeperBox(pitch, pos, goalX, margin); // Großfeld: Hände im Strafraum (pitch.js)
+  if (pitch.keeperSweep?.handsInBox) return inPenaltyBox(pitch, pos, goalX, margin); // Großfeld: Hände im Strafraum (pitch.js)
   return Math.abs(pos.x - goalX) <= HAND_ZONE.depth + margin && Math.abs(pos.z) <= pitch.goalHalfWidth + HAND_ZONE.side + margin;
 }
 

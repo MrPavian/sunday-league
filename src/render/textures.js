@@ -341,20 +341,28 @@ function drawPitchLines(p, pitch, worn) {
   const fade = 1 - 0.8 * (pitch.fade ?? 0); // Linien verblassen, wenn die Kreide lange nicht nachgezogen wurde (platz.js); 0 = wie immer
   const { halfLength: hl, halfWidth: hw } = pitch;
   const t = Math.max(2, Math.round(0.15 * p.tpm)); // ≈ 15 cm breit, mindestens 2 Texel (bei 12 Texel/m wie bisher 3)
-  const box = Math.min(8, pitch.goalHalfWidth * 2.4 + 2);
-  const depth = Math.min(8, hl * 0.3);
+  // Plätze mit echten Maßen (Großfeld: pitch.penaltyBox, goalArea, centerCircle) zeichnen diese, sonst die Kleinfeld-Näherung.
+  const box = pitch.penaltyBox?.halfWidth ?? Math.min(8, pitch.goalHalfWidth * 2.4 + 2);
+  const depth = pitch.penaltyBox?.depth ?? Math.min(8, hl * 0.3);
+  const spot = pitch.penaltyBox ? pitch.penaltyDistance : depth + 1;
   p.line(-hl, -hw, hl, -hw, chalk, 0.8 * fade, 0.03, t);
   p.line(-hl, hw, hl, hw, chalk, 0.8 * fade, 0.03, t);
   p.line(-hl, -hw, -hl, hw, chalk, 0.8 * fade, 0.03, t);
   p.line(hl, -hw, hl, hw, chalk, 0.8 * fade, 0.03, t);
   p.line(0, -hw, 0, hw, chalk, 0.75 * fade, 0.03, t);
-  p.circle(0, 0, Math.min(5, hw * 0.3), chalk, 0.75 * fade);
+  p.circle(0, 0, pitch.centerCircle ?? Math.min(5, hw * 0.3), chalk, 0.75 * fade);
   for (const s of [-1, 1]) {
     const x = s * hl;
     p.line(x, -box, x - s * depth, -box, chalk, 0.75 * fade, 0.03, t);
     p.line(x, box, x - s * depth, box, chalk, 0.75 * fade, 0.03, t);
     p.line(x - s * depth, -box, x - s * depth, box, chalk, 0.75 * fade, 0.03, t);
-    p.blob(x - s * (depth + 1), 0, 0.12, chalk, 0.9 * fade, 1);
+    p.blob(x - s * spot, 0, 0.12, chalk, 0.9 * fade, 1);
+    const ga = pitch.goalArea;
+    if (ga) {
+      p.line(x, -ga.halfWidth, x - s * ga.depth, -ga.halfWidth, chalk, 0.75 * fade, 0.03, t);
+      p.line(x, ga.halfWidth, x - s * ga.depth, ga.halfWidth, chalk, 0.75 * fade, 0.03, t);
+      p.line(x - s * ga.depth, -ga.halfWidth, x - s * ga.depth, ga.halfWidth, chalk, 0.75 * fade, 0.03, t);
+    }
     if (worn) p.blob(x - s * 0.8, 0, 1.4, worn, 0.5, 0.7);
   }
 }

@@ -28,7 +28,7 @@
 import { clamp, dist2d, len } from '../core/math.js';
 import { createRng } from '../core/rng.js';
 import { hasTrait } from '../data/traits.js';
-import { inKeeperBox, keeperBox } from './actions.js';
+import { inPenaltyBox, penaltyBox } from './actions.js';
 import { foulInjury } from './knocks.js';
 import { attackDir, getPlayer } from './players.js';
 import { decideCard, REF_TRAITS, refereeSees, showCard } from './referee.js';
@@ -129,7 +129,7 @@ export function callFoul(m, off, vic, o = {}) {
   }
   const goalX = attackDir(m, vic.team) * pitch.halfLength;
   // Im Strafraum gibt es Elfmeter – mit Schiri immer, ohne erst ab dem Kleinfeld.
-  const penalty = !o.offensive && (!!m.referee || pitch.format >= 5) && m.phase === 'play' && inKeeperBox(pitch, vic.pos, goalX, 0.3);
+  const penalty = !o.offensive && (!!m.referee || pitch.format >= 5) && m.phase === 'play' && inPenaltyBox(pitch, vic.pos, goalX, 0.3);
   // Ohne Schiri wird ein Rempler im Strafraum selten gleich als Elfmeter angezeigt (gewählt); Grätschen und Festhalten wie bisher.
   if (!m.referee && penalty && kind !== 'tackle' && kind !== 'hold' && !rng.chance(FOUL.noRefBox)) return 'none';
   const dogso = !!m.referee && !o.offensive && isLastMan(m, off, vic);
@@ -225,7 +225,7 @@ const duel = (m, a, b) => {
 
 // Strafraumfläche der Simulation im Verhältnis zum echten Anteil (1 = wie echt; größere Plätze: bis 6).
 export function boxFactor(pitch) {
-  const b = keeperBox(pitch);
+  const b = penaltyBox(pitch);
   const share = (b.depth * 2 * b.halfWidth) / (4 * pitch.halfLength * pitch.halfWidth);
   return clamp(FOUL.realBoxShare / share, 0.9, 6);
 }
@@ -233,7 +233,7 @@ export function boxFactor(pitch) {
 export const sizeFactor = (pitch) => clamp(Math.sqrt(pitch.halfLength / 26), FOUL.sizeMin, FOUL.sizeMax);
 
 // Steht p im Strafraum des Gegners (aus seiner Sicht)?
-const inAttackBox = (m, p) => inKeeperBox(m.pitch, p.pos, attackDir(m, p.team) * m.pitch.halfLength, 0.3);
+const inAttackBox = (m, p) => inPenaltyBox(m.pitch, p.pos, attackDir(m, p.team) * m.pitch.halfLength, 0.3);
 
 // Der Ballführende wird gehalten, gezogen, geschubst oder gelegt. Die Chance wächst, wenn er am Verteidiger vorbei ist.
 export function stepContactFouls(m, dt) {

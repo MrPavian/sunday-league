@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createMatch, stepMatch } from '../src/sim/match.js';
 import { PITCHES } from '../src/sim/pitch.js';
 import { attackDir } from '../src/sim/players.js';
-import { inHandZone, keeperBox } from '../src/sim/actions.js';
+import { inHandZone, keeperBox, penaltyBox } from '../src/sim/actions.js';
 
 // Torwart auf dem Großfeld (ROADMAP 11.10): kommt bei gegnerischen Angriffen vor die Linie (Winkel verkürzen), bleibt aber im
 // Strafraum der Simulation; auf den kleineren Plätzen bleibt es bei der Linie (Messung: scripts/bigpitch-audit.mjs).
@@ -31,7 +31,7 @@ describe('keeper sweep (Großfeld)', () => {
   it('hands count in the whole simulated box on the big pitch only', () => {
     const big = PITCHES.grossfeld;
     const goalX = -big.halfLength;
-    const box = keeperBox(big);
+    const box = penaltyBox(big); // echter 16er (IFAB Regel 1)
     expect(inHandZone(big, { x: goalX + box.depth - 0.5, z: 0 }, goalX)).toBe(true);
     expect(inHandZone(big, { x: goalX + box.depth + 1, z: 0 }, goalX)).toBe(false);
     const small = PITCHES.rasenplatz;
