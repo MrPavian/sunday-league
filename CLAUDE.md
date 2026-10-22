@@ -6,7 +6,8 @@ so wenig Kontext und Arbeit wie möglich für ein korrektes Ergebnis. Antworten 
 
 ## Befehle
 - `npm run dev` – Entwicklung · `npm run build` – nach `dist/` · `npm run preview` – gebautes Spiel
-- `npx vitest run tests/<datei>.test.js` – einzelne Tests · `npm test` – alle (lang)
+- `npx vitest related <geänderte src-Dateien> --run` – nur betroffene Tests (Standard) · `npx vitest run tests/<datei>.test.js`
+  – einzelne Tests · `npm test` – alle (lang, einmal je Lieferung)
 - `node scripts/golden.mjs` – Golden-Datei der Simulation neu schreiben (nur bei gewollter Sim-Änderung)
 - `npm run e2e -- ui|match|memory|modes` – Browsertests gegen `dist/` (vorher bauen; eigener Port per `E2E_BASE`)
 - `npm run longrun` – Karriere über viele Saisons (Wirtschaft/Balance)
@@ -63,7 +64,8 @@ so wenig Kontext und Arbeit wie möglich für ein korrektes Ergebnis. Antworten 
 ## Prüfungen
 - Kleine Änderung: gezielte Prüfung der betroffenen Funktion. Sim/Karriere: passende Vitest-Dateien.
   Renderer/UI: passende E2E-Suite, wenn sinnvoll. Gesamtintegration: `npm run build`; `npm test` bei breitem Einfluss.
-- Kein voller Lauf doppelt ohne relevante Änderung seit dem letzten. Fehlschläge nie ignorieren.
+- Kein voller Lauf doppelt ohne relevante Änderung seit dem letzten; nie unter Fremdlast (parallele Agenten/Läufe)
+  testen. Mehrere Themen gebündelt liefern. Fehlschläge nie ignorieren.
 - Android-Verhalten nie als getestet bezeichnen ohne echtes Gerät.
 
 ## Abschlussbericht (knapp)
