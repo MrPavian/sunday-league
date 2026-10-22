@@ -1,7 +1,16 @@
 // Gemeinsame Lagen für die Tests der Phasen-Ereignisse (deutsch und englisch, src/career/phaseevents.js).
 import { createCareer, humanClub } from '../src/career/career.js';
+import { getLang } from '../src/core/i18n.js';
 import { PHASE_EVENTS } from '../src/career/phaseevents.js';
 import { createRng } from '../src/core/rng.js';
+
+// Startkarriere je Sprache und Seed nur einmal bauen (createCareer ist teuer); jede Szene bekommt eine frische Kopie.
+const BASE = new Map();
+const careerFor = (seed) => {
+  const key = `${getLang()}|${seed}`;
+  if (!BASE.has(key)) BASE.set(key, JSON.stringify(createCareer({ seed })));
+  return JSON.parse(BASE.get(key));
+};
 
 export const IDS = Object.keys(PHASE_EVENTS);
 export const FOLLOW = IDS.filter((id) => PHASE_EVENTS[id].followUp);
@@ -14,7 +23,7 @@ const LINKS = { jugendleiter_bilanz: () => ({ tone: 1 }) };
 // Ein Zustand, in dem das Ereignis passt. level: Stufe der Liga (Schiri-Ereignisse nur 1).
 export function scene(id, seed0 = 1, { level = LEVEL1.includes(id) ? 1 : 4, link = {}, round } = {}) {
   for (let seed = seed0; seed < seed0 + 400; seed++) {
-    const c = createCareer({ seed });
+    const c = careerFor(seed);
     c.level = level;
     c.round = round ?? ROUND[id] ?? 5;
     c.week.weather = { id: 'sonne' };

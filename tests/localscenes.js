@@ -1,8 +1,17 @@
 // Gemeinsame Lagen für die Tests der lokalen Ereignisse (deutsch und englisch, src/career/localevents.js).
 import { createCareer, humanClub } from '../src/career/career.js';
+import { getLang } from '../src/core/i18n.js';
 import { LOCAL_EVENTS } from '../src/career/localevents.js';
 import { isCoach } from '../src/career/personal.js';
 import { createRng } from '../src/core/rng.js';
+
+// Startkarriere je Sprache und Seed nur einmal bauen (createCareer ist teuer); jede Szene bekommt eine frische Kopie.
+const BASE = new Map();
+const careerFor = (seed) => {
+  const key = `${getLang()}|${seed}`;
+  if (!BASE.has(key)) BASE.set(key, JSON.stringify(createCareer({ seed })));
+  return JSON.parse(BASE.get(key));
+};
 
 export const IDS = Object.keys(LOCAL_EVENTS);
 export const FOLLOW = IDS.filter((id) => LOCAL_EVENTS[id].followUp);
@@ -23,7 +32,7 @@ export const awayRound = (c) => c.fixtures.findIndex((rd, i) => i >= 1 && rd.som
 // Ein Zustand, in dem das Ereignis passt (Folge-Ereignisse: mit fälliger Kette). level: Stufe der Liga.
 export function scene(id, seed0 = 1, { level = 4, link = {} } = {}) {
   for (let seed = seed0; seed < seed0 + 400; seed++) {
-    const c = createCareer({ seed });
+    const c = careerFor(seed);
     c.level = level;
     c.round = AWAY.includes(id) ? awayRound(c) : 3;
     c.week.weather = { id: WEATHER[id] ?? 'sonne' };

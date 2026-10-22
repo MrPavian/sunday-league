@@ -23,11 +23,18 @@ const REGISTRIES = { ...EVENTS, ...SOCIAL_EVENTS, ...LIFE_EVENTS, ...SEASON_EVEN
 const startLang = getLang();
 afterAll(() => setLang(startLang));
 
+// Startzustand je Sprache, Seed und Stufe nur einmal bauen (createCareer + startWeek sind teuer); jede Szene bekommt eine
+// frische Kopie – die Texte hängen an der Sprache, deshalb gehört sie zum Schlüssel.
+const BASE = new Map();
 const careerAt = (seed, level) => {
-  const c = createCareer({ seed });
-  c.level = level;
-  startWeek(c);
-  return c;
+  const key = `${getLang()}|${seed}|${level}`;
+  if (!BASE.has(key)) {
+    const c = createCareer({ seed });
+    c.level = level;
+    startWeek(c);
+    BASE.set(key, JSON.stringify(c));
+  }
+  return JSON.parse(BASE.get(key));
 };
 const states = (c) => Object.values(c.week.availability);
 
