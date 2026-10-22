@@ -1471,7 +1471,9 @@ line.tb-chalk { stroke-width: 1; }
 @media (prefers-reduced-motion: reduce) { .sub-panel .sub-row.sub-card.active { transform: none; } }
 
 /* ===== UI 3.0 Phase 6: Handy + Hand + Gruppenchat ===== */
-.phone-stage { display: grid; justify-items: center; padding: var(--s2) 0 var(--s6, 28px); }
+/* minmax(0, 1fr): Die Spalte richtet sich nach dem Platz, nicht nach dem Inhalt – sonst schiebt die seitlich scrollende
+   Nachhaken-Leiste (lange Namen) das ganze Handy breiter als den Bildschirm, und das „ד der Karte rutscht hinaus. */
+.phone-stage { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; padding: var(--s2) 0 var(--s6, 28px); }
 /* Die Hand ragt über den Rand hinaus (Arm aus dem Bild) – abgeschnitten wird erst am Inhaltsbereich. */
 .club-body:has(.phone-stage) { overflow: clip; }
 .phone-stage .m-phone-wrap { --phone-w: min(380px, 100%); }
