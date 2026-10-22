@@ -112,9 +112,13 @@ export function updateTactics(m, dt) {
       if (cover) {
         const dir = norm(ownGoal.x - ball.pos.x, ownGoal.z - ball.pos.z);
         const d = Math.min(3.5, dist2d(ball.pos, ownGoal) * 0.5);
-        // Nach außen lenken: Der Absichernde stellt den Weg nach innen zu.
-        const inside = styleOf(m, team).funnel === 'wide' && Math.abs(ball.pos.z) > 1.5 ? -Math.sign(ball.pos.z) * 1.3 : 0;
-        m.tactics[cover.id] = { type: 'cover', ...clampToPitch(pitch, ball.pos.x + dir.x * d, ball.pos.z + dir.z * d + inside) };
+        // Lenken: Der Absichernde stellt den Weg nach innen zu (nach außen lenken) bzw. bleibt in der Mitte (Zentrum zumachen).
+        const fun = styleOf(m, team).funnel;
+        const fn = funnelOf(pitch);
+        const fade = funnelFade(pitch, ball.pos, ownGoal);
+        const inside = fun === 'wide' && Math.abs(ball.pos.z) > 1.5 ? -Math.sign(ball.pos.z) * fn.inside * pitch.halfWidth * fade : 0;
+        const cz = ball.pos.z + dir.z * d + inside;
+        m.tactics[cover.id] = { type: 'cover', ...clampToPitch(pitch, ball.pos.x + dir.x * d, fun === 'centre' ? cz * (1 - (1 - fn.centre) * fade) : cz) };
       }
       // Zonendeckung: Jeder bleibt in seinem Raum (Ankerpunkt aus dem System) und
       // übernimmt den Gegner, der dort auftaucht – statt quer über den Platz
@@ -133,8 +137,10 @@ export function updateTactics(m, dt) {
       // Einer bleibt immer hinten: im 4 gegen 4 geht der Absichernde nicht mit.
       if (st.press && pressHere && rest.length > (st.pressZone === 'high' && pool.length >= 4 ? 1 : 2)) {
         const second = rest.reduce((a, b) => (dist2d(b.pos, ball.pos) < dist2d(a.pos, ball.pos) ? b : a));
-        if (dist2d(second.pos, ball.pos) < (st.pressZone === 'high' ? 14 : 9)) {
-          m.tactics[second.id] = { type: 'mark', ...clampToPitch(pitch, ball.pos.x, ball.pos.z) };
+        if (dist2d(second.pos, ball.pos) < (st.pressZone === 'high' ? 14 : st.pressZone === 'mid' ? 11 : 9)) {
+          // Nach außen lenken: auch der zweite Mann stellt den Weg nach innen zu.
+          const sIn = st.funnel === 'wide' && Math.abs(ball.pos.z) > 1.5 ? -Math.sign(ball.pos.z) * funnelOf(pitch).inside * pitch.halfWidth * funnelFade(pitch, ball.pos, ownGoal) : 0;
+          m.tactics[second.id] = { type: 'mark', ...clampToPitch(pitch, ball.pos.x, ball.pos.z + sIn) };
           rest.splice(rest.indexOf(second), 1);
         }
       }
@@ -162,8 +168,13 @@ export function updateTactics(m, dt) {
         }
         taken.add(best.id);
         const dir = norm(ownGoal.x - best.pos.x, ownGoal.z - best.pos.z);
-        const gap = st.pressZone === 'high' ? 1 : 1.5;
-        m.tactics[p.id] = { type: 'mark', ...clampToPitch(pitch, best.pos.x + dir.x * gap, best.pos.z + dir.z * gap) };
+        let gap = st.pressZone === 'high' ? 1 : 1.5;
+        // Nach außen lenken: Die Mitte wird eng gedeckt, auf den Außen bleibt Abstand – dorthin gehen die Anspiele.
+        if (st.funnel === 'wide') gap *= Math.abs(best.pos.z) > pitch.halfWidth * FUNNEL_WING ? funnelOf(pitch).loose : FUNNEL_TIGHT;
+        let mz = best.pos.z + dir.z * gap;
+        // Zentrum zumachen: Deckungen rücken zur Mitte, außen bleibt Platz.
+        if (st.funnel === 'centre') mz *= 1 - (1 - funnelOf(pitch).centre) * funnelFade(pitch, best.pos, ownGoal);
+        m.tactics[p.id] = { type: 'mark', ...clampToPitch(pitch, best.pos.x + dir.x * gap, mz) };
       }
       // Hohes Pressing: In der gegnerischen Hälfte geht auch der Absichernde mit drauf.
       if (st.pressZone === 'high' && ballAdv > 0.2 && cover && pool.length >= 5 && m.tactics[cover.id]?.type === 'cover') m.tactics[cover.id] = { type: 'mark', ...clampToPitch(pitch, ball.pos.x, ball.pos.z) };
@@ -207,7 +218,7 @@ export function updateTactics(m, dt) {
         }
       }
     }
-    if (m.manager && team === m.coachTeam) shoutTactics(m, team, rest, possession !== null && possession !== team, ball);
+    if (m.manager && team === m.coachTeam) shoutTactics(m, team, rest);
     if (receiver && receiver.id !== m.controlledId) m.tactics[receiver.id] = { type: 'receive', ...receiveSpot(m, receiver) };
     if (oppKeeper) {
       const r = keeperZone(pitch);
@@ -226,7 +237,7 @@ export function updateTactics(m, dt) {
 }
 
 // Taktische Zurufe des Trainers auf die Laufwege legen.
-function shoutTactics(m, team, players, defending, ball) {
+function shoutTactics(m, team, players) {
   const { pitch } = m;
   const s = attackDir(m, team);
   for (const p of players) {
@@ -235,13 +246,7 @@ function shoutTactics(m, team, players, defending, ball) {
     let { x, z } = t;
     if (heeds(m, p, 'back')) x -= s * (p.role === 'fwd' ? 3 : 5);
     if (heeds(m, p, 'forward')) x += s * (p.role === 'def' ? 3 : 5);
-    if (!defending && heeds(m, p, 'wide') && p.role !== 'def') z = clamp(z * 1.6 + Math.sign(z || p.home.z || 1) * 2, -pitch.halfWidth + 1, pitch.halfWidth - 1);
     m.tactics[p.id] = { ...t, ...clampToPitch(pitch, x, z, 0.8) };
-  }
-  // Pressing: Der Absichernde geht mit drauf.
-  if (defending) {
-    const cover = players.find((p) => m.tactics[p.id]?.type === 'cover' && heeds(m, p, 'press'));
-    if (cover) m.tactics[cover.id] = { type: 'mark', ...clampToPitch(pitch, ball.pos.x, ball.pos.z) };
   }
 }
 
@@ -307,6 +312,28 @@ function receiveSpot(m, p) {
   }
   return clampToPitch(pitch, spot.x, spot.z, 0.3);
 }
+
+// Lenken (Befehle „Nach außen lenken“ / „Zentrum zumachen“), Spielwerte aus orders-check (7er Rasenplatz, 96 Spiele; Großfeld, 64):
+// inside – Versatz des Absichernden/zweiten Manns nach innen (Anteil der halben Breite); centre – Anteil der Breite, den
+// Deckungen und Absichernder im Zentrum behalten; wing/loose/tight – Außen (ab Anteil der halben Breite) werden mit dem
+// loose-fachen, die Mitte mit dem tight-fachen Abstand gedeckt. Auf dem Großfeld (halbe Breite 34 m) kräftiger, weil dort
+// mehr Raum zwischen den Spielern liegt (Übergang linear zwischen halber Breite 17 m und 34 m).
+const FUNNEL_WING = 0.4;
+const FUNNEL_TIGHT = 0.6;
+const funnelCache = new Map();
+function funnelOf(pitch) {
+  let f = funnelCache.get(pitch.halfWidth);
+  if (!f) {
+    const k = clamp((pitch.halfWidth - 17) / 17, 0, 1);
+    f = { inside: 0.15 + 0.07 * k, centre: 0.5 - 0.2 * k, loose: 4 + k };
+    funnelCache.set(pitch.halfWidth, f);
+  }
+  return f;
+}
+// Seite absichern: um diesen Anteil der halben Breite verschiebt der Block gegen den Ball (Spielwert, gemessen mit blockZ).
+const COVER_SHIFT = 0.2;
+// Vor dem eigenen Tor wird nicht gelenkt, sondern normal gedeckt: 0 im Strafraumbereich … 1 ab der Mitte des Verteidigungsdrittels.
+const funnelFade = (pitch, pos, goal) => clamp((dist2d(pos, goal) - pitch.halfLength * 0.25) / (pitch.halfLength * 0.3), 0, 1);
 
 // Abseits: so weit bleiben Stürmer vor der letzten Linie (Meter).
 export const OFFSIDE_MARGIN = 0.8;
@@ -402,7 +429,7 @@ export function anchor(m, p, possession) {
   // Angriffsseite: Mittelfeld und Sturm schieben rüber und bieten sich dort an.
   if (possession && st.focus) z += st.focus * s * pitch.halfWidth * (p.role === 'def' ? 0.12 : 0.4);
   // Seite absichern: Der Block verschiebt gegen den Ball dorthin.
-  if (!possession && st.cover) z += st.cover * s * pitch.halfWidth * 0.12;
+  if (!possession && st.cover) z += st.cover * s * pitch.halfWidth * COVER_SHIFT;
   if (boxRun != null) z = boxRun;
   z = clamp(z, -pitch.halfWidth * 0.9, pitch.halfWidth * 0.9);
   return boxRun != null ? { x, z, box: true } : { x, z };
@@ -576,7 +603,7 @@ export function outfieldIntent(m, p, dt) {
     const k = aiSkill(m, p);
     const intensity = k < 1 ? 0.8 : 1;
     const mv = norm(ax - p.pos.x, az - p.pos.z);
-    const press = heeds(m, p, 'press') || fst.pressZone === 'high';
+    const press = fst.pressZone === 'high';
     return { move: { x: mv.x * intensity, z: mv.z * intensity }, sprint: dBall > (press ? 1.2 : k > 1 ? 2 : k < 1 ? 5 : 3) && p.stamina > (press ? 0.32 : 0.3) };
   }
 
@@ -623,7 +650,7 @@ function carryIntent(m, p, oppGoal, wall) {
   const { pitch } = m;
   const st = styleOf(m, p.team);
   // Flügelspiel: Wer außen ist, bleibt außen und geht bis zur Grundlinie.
-  const onWing = Math.abs(p.pos.z) > pitch.halfWidth * 0.4 && (st.cross > 0.7 || st.channel === 'wide' || heeds(m, p, 'wide'));
+  const onWing = Math.abs(p.pos.z) > pitch.halfWidth * 0.4 && (st.cross > 0.7 || st.channel === 'wide');
   // Auch ohne Befehl: Wer außen den Ball hat, bleibt bis zum letzten Drittel außen und zieht erst
   // dann nach innen – vorher liefen alle sofort zur Mitte (gemessen: 74–86 % der Angriffe zentral).
   const keepWide = !onWing && st.channel !== 'centre' && Math.abs(p.pos.z) > pitch.halfWidth * WIDE_LANE && Math.abs(p.pos.x - oppGoal.x) > pitch.halfLength * 0.4;
@@ -765,7 +792,7 @@ function aiDecide(m, p, oppGoal) {
     }
   }
   // Flügelspiel: Außen in Tornähe wird geflankt, nicht aus spitzem Winkel geschossen.
-  if ((st.cross > 0.7 || heeds(m, p, 'wide')) && Math.abs(p.pos.z) > pitch.goalHalfWidth * 2.2 && Math.abs(p.pos.x - oppGoal.x) < pitch.halfLength * 0.45 && rng.chance(0.75)) {
+  if (st.cross > 0.7 && Math.abs(p.pos.z) > pitch.goalHalfWidth * 2.2 && Math.abs(p.pos.x - oppGoal.x) < pitch.halfLength * 0.45 && rng.chance(0.75)) {
     p.pending = crossInto(m, p, oppGoal);
     return;
   }
@@ -864,7 +891,7 @@ function aiDecide(m, p, oppGoal) {
   }
   // Außen an der Grundlinie: Flanke in die Mitte.
   const wide = Math.abs(p.pos.z) > pitch.halfWidth * (st.cross > 0.7 ? 0.45 : 0.55) && Math.abs(p.pos.x - oppGoal.x) < pitch.halfLength * (st.cross > 0.7 ? 0.5 : 0.4);
-  if (wide && rng.chance(heeds(m, p, 'wide') ? 0.85 : st.cross)) {
+  if (wide && rng.chance(st.cross)) {
     p.pending = crossInto(m, p, oppGoal);
     return;
   }
@@ -955,7 +982,7 @@ function chooseTackle(m, p, dBall) {
   const tb = norm(ball.pos.x - p.pos.x, ball.pos.z - p.pos.z);
   if (tb.x * p.facing.x + tb.z * p.facing.z < 0.8) return null;
   const tst = styleOf(m, p.team);
-  p.decideTimer = (tst.pressZone === 'high' ? 0.7 : heeds(m, p, 'press') || tst.press ? 0.8 : 1.3) / aiSkill(m, p); // nicht im Sekundentakt reingehen
+  p.decideTimer = (tst.pressZone === 'high' ? 0.7 : tst.press ? 0.8 : 1.3) / aiSkill(m, p); // nicht im Sekundentakt reingehen
 
   const tough = hasTrait(p, 'hart_im_nehmen');
   let slideChance = surface.hard ? (p.injury ? 0 : tough ? 0.2 : 0.03) : 0.06 + 0.14 * p.attrs.tackling;

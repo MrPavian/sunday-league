@@ -31,7 +31,7 @@ export const NEUTRAL = { focus: 0, channel: null, through: 0, risk: 0, tempo: 1,
 export const ORDER_EFFECTS = {
   // MIT BALL: Aufbau
   build: {
-    halten: (s) => ({ passRate: s.passRate * 1.25, shortPass: s.shortPass + 0.02, forward: s.forward * 0.7, long: s.long * 0.3, risk: -0.7, shoot: s.shoot - 1 }),
+    halten: (s) => ({ passRate: s.passRate * 1.25, shortPass: s.shortPass + 0.02, forward: s.forward * 0.5, long: 0, risk: -0.7, shoot: s.shoot - 1 }),
     kurz: (s) => ({ shortPass: Math.max(s.shortPass, 0.065), passRate: s.passRate * 1.35, long: s.long * 0.3, cross: s.cross * 0.75 }),
     direkt: (s) => ({ forward: s.forward + 0.04, long: Math.max(s.long, 0.35), shortPass: s.shortPass * 0.5, tempo: 1.15, through: Math.max(s.through, 0.2) }),
   },
@@ -51,14 +51,14 @@ export const ORDER_EFFECTS = {
   // GEGEN DEN BALL: Pressinghöhe
   press: {
     hoch: (s) => ({ press: true, pressZone: 'high', line: Math.max(s.line + 0.06, 0.1), tire: Math.max(s.tire * 1.1, 1.18) }),
-    mittel: (s) => ({ press: true, pressZone: 'mid', line: Math.min(s.line, 0.03), tire: Math.max(s.tire, 1.08) }),
+    mittel: (s) => ({ press: true, pressZone: 'mid', line: 0.05, tire: Math.max(s.tire, 1.08) }),
     tief: (s) => ({ press: false, pressZone: null, line: Math.min(s.line - 0.08, -0.1), compact: s.compact * 0.88, tire: s.tire * 0.92 }),
   },
   // GEGEN DEN BALL: Ausrichtung
   guard: {
     aussen: () => ({ funnel: 'wide' }),
-    zentrum: (s) => ({ funnel: 'centre', defWidth: 0.68, compact: s.compact * 0.95 }),
-    konter: (s) => ({ rest: 2, push: s.push * 0.8 }),
+    zentrum: (s) => ({ funnel: 'centre', defWidth: 0.4, compact: s.compact * 0.95 }),
+    konter: (s) => ({ rest: 2, push: s.push * 0.6 }),
   },
   // GEGEN DEN BALL: eine Seite absichern
   cover: {
@@ -68,17 +68,17 @@ export const ORDER_EFFECTS = {
   // FORM
   shape: {
     aufruecken: (s) => ({ push: s.push + 0.08, line: s.line + 0.04 }),
-    kompakt: (s) => ({ compact: s.compact * 0.85, defWidth: 0.68, push: s.push - 0.03 }),
+    kompakt: (s) => ({ compact: s.compact * 0.75, defWidth: 0.62, push: s.push - 0.03 }),
     stuermer_fallen: () => ({ fwdDrop: 0.7, fwdHold: 0 }),
   },
   // Tempo: Bedenkzeit, wie oft abgespielt wird – und Kraft (ruhig spart, schnell kostet).
   tempo: {
-    ruhig: (s) => ({ tempo: 0.8, passRate: s.passRate * 0.85, tire: s.tire * 0.9 }),
-    schnell: (s) => ({ tempo: 1.2, passRate: s.passRate * 1.15, tire: s.tire * 1.06 }),
+    ruhig: (s) => ({ tempo: 0.7, passRate: s.passRate * 0.7, tire: s.tire * 0.8 }),
+    schnell: (s) => ({ tempo: 1.35, passRate: s.passRate * 1.3, tire: s.tire * 1.12 }),
   },
   risk: {
     sicher: () => ({ risk: -1 }),
-    aggressiv: (s) => ({ risk: 1, shoot: s.shoot + 0.8, push: s.push + 0.03 }),
+    aggressiv: (s) => ({ risk: 1, shoot: s.shoot + 0.8, push: s.push + 0.03, through: Math.max(s.through, 0.2) }),
   },
 };
 export const ORDER_GROUPS = Object.keys(ORDER_EFFECTS);
