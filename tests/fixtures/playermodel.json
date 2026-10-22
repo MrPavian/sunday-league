@@ -1,0 +1,6920 @@
+{
+ "exports": [
+  "ACTS",
+  "BONES",
+  "BUCH_L",
+  "BUCH_R",
+  "DEHNEN",
+  "DOSE",
+  "EDGE_CODE",
+  "FACES",
+  "FACE_PARTS",
+  "GRIP",
+  "IN_REL_AT",
+  "KARTE",
+  "KitAtlas",
+  "PUNKT",
+  "REF_BONES",
+  "REKLAMIEREN",
+  "TRINKEN",
+  "TROESTEN",
+  "UNSCHULD",
+  "VORTEIL",
+  "animatePlayer",
+  "boxGeometry",
+  "createPlayerModel",
+  "disposeKit",
+  "faceArt",
+  "faceFeatures",
+  "posePlayer",
+  "setFace",
+  "setKitDirt",
+  "setKitWet"
+ ],
+ "constants": "e70292e39042ddc2",
+ "models": {
+  "standard": {
+   "verts": 1296,
+   "bones": 15,
+   "geo": "4630d33cff69a4ec",
+   "skeleton": "b44d5934651fe50c",
+   "inverse": "2421b64b975b0e67",
+   "meta": "b8fb84985b66f077",
+   "look": "buzz|short|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": {
+    "tile": 0,
+    "accent": 16052712,
+    "brow": 3811866,
+    "hairColor": 3811866,
+    "mouth": 9330510,
+    "number": 7
+   },
+   "material": "MeshToonMaterial"
+  },
+  "standard-ohne-atlas": {
+   "verts": 1404,
+   "bones": 15,
+   "geo": "e29f29639060049a",
+   "skeleton": "b44d5934651fe50c",
+   "inverse": "2421b64b975b0e67",
+   "meta": "1bbb0cb4bffa70ca",
+   "look": "buzz|short|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "glatze": {
+   "verts": 1332,
+   "bones": 15,
+   "geo": "1879a8b819e9c7bb",
+   "skeleton": "b44d5934651fe50c",
+   "inverse": "2421b64b975b0e67",
+   "meta": "26a94f7eb4441ee1",
+   "look": "bald|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": {
+    "tile": 0,
+    "accent": 16052712,
+    "brow": 8085839,
+    "hairColor": 3811866,
+    "mouth": 9330510,
+    "number": 10
+   },
+   "material": "MeshToonMaterial"
+  },
+  "halbglatze": {
+   "verts": 1368,
+   "bones": 15,
+   "geo": "1ebc30d6b468d73b",
+   "skeleton": "b44d5934651fe50c",
+   "inverse": "2421b64b975b0e67",
+   "meta": "c8abcb3d00785c29",
+   "look": "halbglatze|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": {
+    "tile": 0,
+    "accent": 16052712,
+    "brow": 3811866,
+    "hairColor": 3811866,
+    "mouth": 9330510,
+    "number": 4
+   },
+   "material": "MeshToonMaterial"
+  },
+  "halbglatze-bart": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "a66cb095f49f73bb",
+   "skeleton": "b44d5934651fe50c",
+   "inverse": "2421b64b975b0e67",
+   "meta": "5f126a5fa5843301",
+   "look": "halbglatze|short|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "mutze-polizei": {
+   "verts": 1368,
+   "bones": 15,
+   "geo": "62671427302ccc86",
+   "skeleton": "b44d5934651fe50c",
+   "inverse": "2421b64b975b0e67",
+   "meta": "76e4fc845fa11418",
+   "look": "buzz|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": {
+    "tile": 0,
+    "accent": 16052712,
+    "brow": 3811866,
+    "hairColor": 3811866,
+    "mouth": 9330510,
+    "number": null
+   },
+   "material": "MeshToonMaterial"
+  },
+  "mutze-polizei-ohne-atlas": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "b6c31c27d666c15b",
+   "skeleton": "b44d5934651fe50c",
+   "inverse": "2421b64b975b0e67",
+   "meta": "b80db08508a3acd8",
+   "look": "buzz|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "torwart": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "2f59b8357a5d875e",
+   "skeleton": "b44d5934651fe50c",
+   "inverse": "2421b64b975b0e67",
+   "meta": "e8c1c461c55021ec",
+   "look": "buzz|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": {
+    "tile": 0,
+    "accent": 16052712,
+    "brow": 3811866,
+    "hairColor": 3811866,
+    "mouth": 9330510,
+    "number": 1
+   },
+   "material": "MeshToonMaterial"
+  },
+  "torwart-gruen-hell": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "5401429dc6cabec7",
+   "skeleton": "b44d5934651fe50c",
+   "inverse": "2421b64b975b0e67",
+   "meta": "0056839ea64c73d2",
+   "look": "buzz|short|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": {
+    "tile": 0,
+    "accent": 1842204,
+    "brow": 3811866,
+    "hairColor": 3811866,
+    "mouth": 9330510,
+    "number": 12
+   },
+   "material": "MeshToonMaterial"
+  },
+  "sponsor-aermel": {
+   "verts": 1368,
+   "bones": 15,
+   "geo": "9199ac5d59c25577",
+   "skeleton": "f0faf40e53bf07dc",
+   "inverse": "090282890d310aa8",
+   "meta": "ce081059c614eb66",
+   "look": "buzz|short|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": {
+    "tile": 0,
+    "accent": 16052712,
+    "brow": 3811866,
+    "hairColor": 3811866,
+    "mouth": 9330510,
+    "number": 99
+   },
+   "material": "MeshToonMaterial"
+  },
+  "bauch": {
+   "verts": 1296,
+   "bones": 15,
+   "geo": "99aefbcb1b35cbf0",
+   "skeleton": "46773899af51fa96",
+   "inverse": "a26540339a4f4cc0",
+   "meta": "82be4b404d5a86cb",
+   "look": "buzz|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": {
+    "tile": 0,
+    "accent": 16052712,
+    "brow": 3811866,
+    "hairColor": 3811866,
+    "mouth": 9330510,
+    "number": 5
+   },
+   "material": "MeshToonMaterial"
+  },
+  "paunch": {
+   "verts": 1296,
+   "bones": 15,
+   "geo": "d82d3a554278a9af",
+   "skeleton": "716c47cd1c89a2ce",
+   "inverse": "c4ee37a2c977f3ba",
+   "meta": "b8fb84985b66f077",
+   "look": "buzz|short|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": {
+    "tile": 0,
+    "accent": 16052712,
+    "brow": 3811866,
+    "hairColor": 3811866,
+    "mouth": 9330510,
+    "number": 8
+   },
+   "material": "MeshToonMaterial"
+  },
+  "dose-tiger": {
+   "verts": 1584,
+   "bones": 15,
+   "geo": "7787513176c69bf6",
+   "skeleton": "b44d5934651fe50c",
+   "inverse": "2421b64b975b0e67",
+   "meta": "22998cf34018c8de",
+   "look": "undercut|goatee|{\"socksDown\":false,\"sweat\":2,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": {
+    "tile": 0,
+    "accent": 16052712,
+    "brow": 13676640,
+    "hairColor": 13676640,
+    "mouth": 9330510,
+    "number": 3
+   },
+   "material": "MeshToonMaterial"
+  },
+  "dose-ohne-atlas": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "14331a3fbfc6112a",
+   "skeleton": "b44d5934651fe50c",
+   "inverse": "2421b64b975b0e67",
+   "meta": "1bbb0cb4bffa70ca",
+   "look": "buzz|short|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "schiri": {
+   "verts": 1440,
+   "bones": 18,
+   "geo": "87b5166f74fc3952",
+   "skeleton": "2fc18ea32c43886f",
+   "inverse": "350b1ae4eb5c45db",
+   "meta": "e8c1c461c55021ec",
+   "look": "buzz|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": {
+    "tile": 0,
+    "accent": 16052712,
+    "brow": 3811866,
+    "hairColor": 3811866,
+    "mouth": 9330510,
+    "number": null
+   },
+   "material": "MeshToonMaterial"
+  },
+  "schiri-ohne-atlas": {
+   "verts": 1512,
+   "bones": 18,
+   "geo": "1d50874f4d9f0d55",
+   "skeleton": "2fc18ea32c43886f",
+   "inverse": "350b1ae4eb5c45db",
+   "meta": "b80db08508a3acd8",
+   "look": "buzz|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "lange-hose": {
+   "verts": 1332,
+   "bones": 15,
+   "geo": "15408fb3572b816e",
+   "skeleton": "00b4c541491e9209",
+   "inverse": "dca85ff59957c687",
+   "meta": "e3d87622bdcf87e4",
+   "look": "long|moustache|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":\"R\",\"specs\":false}",
+   "cloth": {
+    "tile": 0,
+    "accent": 16052712,
+    "brow": 2236189,
+    "hairColor": 2236189,
+    "mouth": 9330510,
+    "number": 2
+   },
+   "material": "MeshToonMaterial"
+  },
+  "bartstil-schnauzer": {
+   "verts": 1404,
+   "bones": 15,
+   "geo": "e29f29639060049a",
+   "skeleton": "b44d5934651fe50c",
+   "inverse": "2421b64b975b0e67",
+   "meta": "11f33502f8e3e996",
+   "look": "buzz|handlebar|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "bartstil-koteletten": {
+   "verts": 1296,
+   "bones": 15,
+   "geo": "4630d33cff69a4ec",
+   "skeleton": "b44d5934651fe50c",
+   "inverse": "2421b64b975b0e67",
+   "meta": "43176a246e0d8879",
+   "look": "buzz|sideburns|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": {
+    "tile": 0,
+    "accent": 16052712,
+    "brow": 3811866,
+    "hairColor": 3811866,
+    "mouth": 9330510,
+    "number": 6
+   },
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-0": {
+   "verts": 1620,
+   "bones": 15,
+   "geo": "d3e9bc915f985f18",
+   "skeleton": "fb3a2ded3d3289fe",
+   "inverse": "893e1729ee5435e7",
+   "meta": "172b7565533adb91",
+   "look": "short|short|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-1": {
+   "verts": 1368,
+   "bones": 15,
+   "geo": "345b4f6f041bf3aa",
+   "skeleton": "31bb42902043204f",
+   "inverse": "bac48f317458b7d4",
+   "meta": "413d64ca9747ee29",
+   "look": "mohawk|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-2": {
+   "verts": 1656,
+   "bones": 15,
+   "geo": "014a02c01a206273",
+   "skeleton": "0369656ca9d6f981",
+   "inverse": "5e9b74e56bbf87a2",
+   "meta": "aef240cc6a83f01f",
+   "look": "curly|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-3": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "17c19eb2fee4bb9d",
+   "skeleton": "4cd233e60010799e",
+   "inverse": "3ccf0ec6d4ee03f2",
+   "meta": "5b1d15d20a0fb056",
+   "look": "ponytail|short|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-4": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "e9a0932011fe2968",
+   "skeleton": "1cdcf783a122631a",
+   "inverse": "d93dc810b923f0ef",
+   "meta": "d5cf337da8f5cbbd",
+   "look": "bun|stubble|{\"socksDown\":false,\"sweat\":1,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-5": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "3da53612623ba2c4",
+   "skeleton": "716c47cd1c89a2ce",
+   "inverse": "c4ee37a2c977f3ba",
+   "meta": "e372c8c46d318356",
+   "look": "bald|stubble|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-6": {
+   "verts": 1584,
+   "bones": 15,
+   "geo": "a736934f5cf04057",
+   "skeleton": "5e28b841b73c216d",
+   "inverse": "26b108cd367109f0",
+   "meta": "aff2659fe82ada4d",
+   "look": "sidepart|full|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":\"R\",\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-7": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "6151783d64132a5d",
+   "skeleton": "22019facccae4562",
+   "inverse": "b52059615cdea4ef",
+   "meta": "43384ff412eca589",
+   "look": "halbglatze|none|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-8": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "3ae5d5d35fb4eda0",
+   "skeleton": "ca50ed06d741d7ce",
+   "inverse": "2b347b4e52b9f80e",
+   "meta": "b63f05d7ead1b102",
+   "look": "short|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-9": {
+   "verts": 1692,
+   "bones": 15,
+   "geo": "6b179a14e1d0e564",
+   "skeleton": "e87559fda427976e",
+   "inverse": "d87f3bd69b775433",
+   "meta": "f0ecfca5d0f5ecee",
+   "look": "spiky|short|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-10": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "c380365a0ff7ce2a",
+   "skeleton": "fe5e33fabe5a9508",
+   "inverse": "f70cbf26692eb406",
+   "meta": "1f0ac44c75c1f7be",
+   "look": "sidepart|none|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-11": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "e3ef0b8df0c24946",
+   "skeleton": "6855e127b35dbbd9",
+   "inverse": "c35b4993764a90b9",
+   "meta": "2beb499c9a709e42",
+   "look": "spiky|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-12": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "c33e96719b01cbc0",
+   "skeleton": "963ba4a90e87ea28",
+   "inverse": "3fd2dc84963f13c6",
+   "meta": "d101b5b6f5fbc5a9",
+   "look": "sidepart|full|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-13": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "b6ad0da3cba8551d",
+   "skeleton": "1f91e8c98407a25b",
+   "inverse": "20b88a15811feda9",
+   "meta": "c0fb8ab1326d4a73",
+   "look": "spiky|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-14": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "38d4f32e4988787a",
+   "skeleton": "db2779d1e0ec023b",
+   "inverse": "c977035f0990f992",
+   "meta": "deaab09e2f357445",
+   "look": "short|none|{\"socksDown\":false,\"sweat\":1,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-15": {
+   "verts": 1584,
+   "bones": 15,
+   "geo": "b3555a2dfd59e49b",
+   "skeleton": "b75748e3f71168fc",
+   "inverse": "34d2813a8046af65",
+   "meta": "4e36821cd3c523f6",
+   "look": "short|full|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-16": {
+   "verts": 1656,
+   "bones": 15,
+   "geo": "d06f4b7bc2ea1dc5",
+   "skeleton": "b3096a2bb985737c",
+   "inverse": "49c41796bf83af15",
+   "meta": "f0fdef39a129379e",
+   "look": "curly|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-17": {
+   "verts": 1584,
+   "bones": 15,
+   "geo": "96bce15b0b65ac53",
+   "skeleton": "e37aba1322aedd07",
+   "inverse": "a0046daa38a21950",
+   "meta": "09b0ba2df6ccf12b",
+   "look": "short|stubble|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-18": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "17f53cfec8ad6933",
+   "skeleton": "1f91e8c98407a25b",
+   "inverse": "20b88a15811feda9",
+   "meta": "91a57953e71f98b6",
+   "look": "sidepart|handlebar|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-19": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "a4ea07769a4a3ca4",
+   "skeleton": "eb96d0cec5b07264",
+   "inverse": "401d57df86f783c8",
+   "meta": "fdbfd2f7f8e9da14",
+   "look": "short|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-20": {
+   "verts": 1584,
+   "bones": 15,
+   "geo": "e85e497a29843e36",
+   "skeleton": "fb3a2ded3d3289fe",
+   "inverse": "893e1729ee5435e7",
+   "meta": "a7602196474a0926",
+   "look": "sidepart|none|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":\"R\",\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-21": {
+   "verts": 1620,
+   "bones": 15,
+   "geo": "b208cfc8a081a87f",
+   "skeleton": "74ab83d6147540cf",
+   "inverse": "c406ab3358bbe3ad",
+   "meta": "d73ed50d26abd390",
+   "look": "sidepart|full|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-22": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "e71440248e85d938",
+   "skeleton": "44c2544de4ccf737",
+   "inverse": "9c27f20c1d18ea57",
+   "meta": "c1947e18779633c5",
+   "look": "sidepart|none|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-23": {
+   "verts": 1656,
+   "bones": 15,
+   "geo": "540ca9431e6e744a",
+   "skeleton": "70fd4e4f33b61694",
+   "inverse": "11f867103da6eeb0",
+   "meta": "08990132c6cf42a6",
+   "look": "curly|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-24": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "0cd61e22d0159f96",
+   "skeleton": "50a1325064b8713a",
+   "inverse": "ff944b450b292543",
+   "meta": "34395d7c542f2cc1",
+   "look": "bun|short|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-25": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "0e686733b26aa96e",
+   "skeleton": "e62a549b5981d0f8",
+   "inverse": "b865fa3418b1f13d",
+   "meta": "5c6871148bf01dc6",
+   "look": "spiky|stubble|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-26": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "ab8396989729d0b6",
+   "skeleton": "efefc8fd3c59fa1b",
+   "inverse": "deb848b402063c9f",
+   "meta": "3b7c1e7b4f2552b6",
+   "look": "sidepart|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-27": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "f134659866e0ce9a",
+   "skeleton": "b4a71e785c6bb784",
+   "inverse": "9cfe4cc19064ee05",
+   "meta": "e5cdc8d00c952634",
+   "look": "ponytail|full|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-28": {
+   "verts": 1296,
+   "bones": 15,
+   "geo": "88ec6460ba61fb49",
+   "skeleton": "e9c49acab615510e",
+   "inverse": "d9b5100bace7c0b4",
+   "meta": "6b1f825fe9c01c4f",
+   "look": "bald|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-29": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "b863935d1f45c3ea",
+   "skeleton": "613226e52f54d984",
+   "inverse": "6496dae6ae8971ee",
+   "meta": "34ce7bce3d065a9a",
+   "look": "sidepart|none|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-30": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "a9d10fd51279b1b3",
+   "skeleton": "4af95417ab2b782c",
+   "inverse": "87431669087ddc97",
+   "meta": "2a13db00e94b34c4",
+   "look": "buzz|full|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-31": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "482e11c86e2df5ad",
+   "skeleton": "5e28b841b73c216d",
+   "inverse": "26b108cd367109f0",
+   "meta": "ab9a80c9002e280a",
+   "look": "short|none|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-32": {
+   "verts": 1620,
+   "bones": 15,
+   "geo": "0609b3ee5880af73",
+   "skeleton": "27cb7ab6d984487e",
+   "inverse": "a6d97706f0e8be46",
+   "meta": "cf92c7e82535cf38",
+   "look": "coils|stubble|{\"socksDown\":false,\"sweat\":2,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-33": {
+   "verts": 1620,
+   "bones": 15,
+   "geo": "edf99b54926d11b8",
+   "skeleton": "1f91e8c98407a25b",
+   "inverse": "20b88a15811feda9",
+   "meta": "651e51ef6cdb3b8b",
+   "look": "sidepart|goatee|{\"socksDown\":false,\"sweat\":2,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-34": {
+   "verts": 1656,
+   "bones": 15,
+   "geo": "ac3d89d837680258",
+   "skeleton": "50a1325064b8713a",
+   "inverse": "ff944b450b292543",
+   "meta": "3d4f5ee6f298480f",
+   "look": "short|stubble|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-35": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "9fbc71b226606e91",
+   "skeleton": "73564deb6ebcd5d6",
+   "inverse": "8b2c98caa714c200",
+   "meta": "fbdcec2fcb792d1b",
+   "look": "spiky|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-36": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "0d60f9acb02a45d4",
+   "skeleton": "3c32006e0b2168ea",
+   "inverse": "0bb52f92bf795c68",
+   "meta": "715fe1e1abc91ca1",
+   "look": "afro|short|{\"socksDown\":false,\"sweat\":2,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-37": {
+   "verts": 1584,
+   "bones": 15,
+   "geo": "0ea70396222c9275",
+   "skeleton": "e735b9f02751f6b0",
+   "inverse": "a2daf8f5db3ce297",
+   "meta": "2913a1c25010e240",
+   "look": "coils|none|{\"socksDown\":false,\"sweat\":1,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-38": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "a9a303e4b526be88",
+   "skeleton": "1f91e8c98407a25b",
+   "inverse": "20b88a15811feda9",
+   "meta": "1de9763e91367e58",
+   "look": "halbglatze|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-39": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "c23caaef9c5dc7c6",
+   "skeleton": "091a364aa65f6cb2",
+   "inverse": "48c691b0afe56826",
+   "meta": "4a68b4cdaa03d0ed",
+   "look": "sidepart|goatee|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-40": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "5d78097151dd0801",
+   "skeleton": "2c7ade658be53168",
+   "inverse": "61ad57e2cc5d63e7",
+   "meta": "8aa52a2a2855add6",
+   "look": "spiky|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-41": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "3ab3eb1fdf70e957",
+   "skeleton": "efefc8fd3c59fa1b",
+   "inverse": "deb848b402063c9f",
+   "meta": "bf4e9d9d62700940",
+   "look": "undercut|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-42": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "19f04bf7816ccc7e",
+   "skeleton": "e735b9f02751f6b0",
+   "inverse": "a2daf8f5db3ce297",
+   "meta": "8a745888df816a71",
+   "look": "undercut|short|{\"socksDown\":false,\"sweat\":1,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-43": {
+   "verts": 1584,
+   "bones": 15,
+   "geo": "6dcb4b7f0807608c",
+   "skeleton": "1016bc27646428ff",
+   "inverse": "bb31742085b6f2ee",
+   "meta": "0ec52c6d1b8da384",
+   "look": "sidepart|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":true}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-44": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "7e1bee888cb5b410",
+   "skeleton": "045f397717c0bb48",
+   "inverse": "4d547f17b6a20095",
+   "meta": "a37905838b785fee",
+   "look": "short|none|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-45": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "b806ec914b27e981",
+   "skeleton": "fb3a2ded3d3289fe",
+   "inverse": "893e1729ee5435e7",
+   "meta": "425b3055e340d238",
+   "look": "sidepart|handlebar|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-46": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "828b6471882cc233",
+   "skeleton": "a30052d6df1e9487",
+   "inverse": "35ed4f028ef4e550",
+   "meta": "e26f7a6eeaca45bd",
+   "look": "sidepart|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-47": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "4b6ae2f59987e32e",
+   "skeleton": "cf6ed6fa263d2980",
+   "inverse": "beb80f5adfec47ec",
+   "meta": "6d0873f2556e16ff",
+   "look": "afro|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":\"L\",\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-48": {
+   "verts": 1656,
+   "bones": 15,
+   "geo": "11883b4f0acf9fb4",
+   "skeleton": "4b37b1cfe0175031",
+   "inverse": "df6a6dde0a41b545",
+   "meta": "af17d33e1499af02",
+   "look": "spiky|handlebar|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-49": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "07ebe77ec4afa37e",
+   "skeleton": "db2779d1e0ec023b",
+   "inverse": "c977035f0990f992",
+   "meta": "daff316a9f9fd3ad",
+   "look": "short|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-50": {
+   "verts": 1836,
+   "bones": 15,
+   "geo": "3f368b5f65550480",
+   "skeleton": "d77535f1ad330339",
+   "inverse": "fe5c98913bcb9e54",
+   "meta": "5c4fb6af197a8be9",
+   "look": "curly|none|{\"socksDown\":false,\"sweat\":2,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-51": {
+   "verts": 1656,
+   "bones": 15,
+   "geo": "215a2d106f54baf4",
+   "skeleton": "3b84e70665a9b2a9",
+   "inverse": "6e388abc05cd4495",
+   "meta": "ea01b42185f8f7be",
+   "look": "bald|full|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":\"R\",\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-52": {
+   "verts": 1368,
+   "bones": 15,
+   "geo": "da506c493e50bd29",
+   "skeleton": "cd96ad6b421685e4",
+   "inverse": "cf929b620813bfe4",
+   "meta": "037f3d3e94e8d7e3",
+   "look": "buzz|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-53": {
+   "verts": 1728,
+   "bones": 15,
+   "geo": "4cc241a85b983eea",
+   "skeleton": "e8fd97f3b718f035",
+   "inverse": "78aeacdac05d5f43",
+   "meta": "9ce27b33b2ad8f90",
+   "look": "curly|none|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-54": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "06b1ff45b823c5a1",
+   "skeleton": "e87559fda427976e",
+   "inverse": "d87f3bd69b775433",
+   "meta": "56c091bc6a76c231",
+   "look": "long|goatee|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-55": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "6df63050551e0be6",
+   "skeleton": "4af95417ab2b782c",
+   "inverse": "87431669087ddc97",
+   "meta": "977e09982070619d",
+   "look": "afro|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-56": {
+   "verts": 1656,
+   "bones": 15,
+   "geo": "dfe7a7758e6086be",
+   "skeleton": "3bac13c6a32b59f2",
+   "inverse": "94d87a2e22b7e987",
+   "meta": "bee77bf8cabcae99",
+   "look": "curly|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-57": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "e79df6fcc28eaf8e",
+   "skeleton": "b0157cde85ef9d99",
+   "inverse": "fd57c3fcddccd217",
+   "meta": "8455f2ccea87c51a",
+   "look": "sidepart|moustache|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-58": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "7306fae1bc5a6f31",
+   "skeleton": "334d7f6782dba561",
+   "inverse": "3367d6955bdae61c",
+   "meta": "afd606fc309628e6",
+   "look": "sidepart|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-59": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "eb68a9ff93ea39c9",
+   "skeleton": "a78c90ef01217619",
+   "inverse": "6618c091fdaeaab5",
+   "meta": "1093496de41cbd2b",
+   "look": "bun|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-60": {
+   "verts": 1620,
+   "bones": 15,
+   "geo": "af3b8c9f43a02e1a",
+   "skeleton": "19e588ed6dcb9036",
+   "inverse": "502ef1df713b7e31",
+   "meta": "275cc42de1798b78",
+   "look": "coils|full|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-61": {
+   "verts": 1620,
+   "bones": 15,
+   "geo": "2c1b91782f7742ca",
+   "skeleton": "4c757d01c2c617b8",
+   "inverse": "346eae3ff835ba9b",
+   "meta": "97a015b139a7beb7",
+   "look": "sidepart|none|{\"socksDown\":true,\"sweat\":2,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-62": {
+   "verts": 1584,
+   "bones": 15,
+   "geo": "6ad33e242202c0fa",
+   "skeleton": "44c2544de4ccf737",
+   "inverse": "9c27f20c1d18ea57",
+   "meta": "1948d1f475b8be8c",
+   "look": "spiky|none|{\"socksDown\":false,\"sweat\":1,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-63": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "9ec45c0a590ab358",
+   "skeleton": "4cd233e60010799e",
+   "inverse": "3ccf0ec6d4ee03f2",
+   "meta": "45063cddef9bc91a",
+   "look": "ponytail|moustache|{\"socksDown\":false,\"sweat\":1,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-64": {
+   "verts": 1656,
+   "bones": 15,
+   "geo": "7c8fab97527dc77c",
+   "skeleton": "ddf5e3c385abe035",
+   "inverse": "5bee10fe415cbae4",
+   "meta": "b40336a449b677e2",
+   "look": "curly|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-65": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "324de2c4337132a5",
+   "skeleton": "fe5e33fabe5a9508",
+   "inverse": "f70cbf26692eb406",
+   "meta": "85933d15881efd60",
+   "look": "ponytail|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-66": {
+   "verts": 1620,
+   "bones": 15,
+   "geo": "3bf3062a08108ccf",
+   "skeleton": "29b3de066750fa15",
+   "inverse": "219983b69b629681",
+   "meta": "e9d4410c523c42ec",
+   "look": "spiky|goatee|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-67": {
+   "verts": 1368,
+   "bones": 15,
+   "geo": "7576085d768f1f73",
+   "skeleton": "cd96ad6b421685e4",
+   "inverse": "cf929b620813bfe4",
+   "meta": "c830b7f876232a1c",
+   "look": "mohawk|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-68": {
+   "verts": 1584,
+   "bones": 15,
+   "geo": "c4b229b272511dc9",
+   "skeleton": "68586d38325ac2d7",
+   "inverse": "2a5f7a3080643b8d",
+   "meta": "1da6a812711f019a",
+   "look": "undercut|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-69": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "d791436461932655",
+   "skeleton": "02bc6d5d89a1c7e6",
+   "inverse": "d0c6fce303586ff0",
+   "meta": "e8ddaae6cc356758",
+   "look": "halbglatze|short|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-70": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "f29de9089ac720f2",
+   "skeleton": "2c7ade658be53168",
+   "inverse": "61ad57e2cc5d63e7",
+   "meta": "bdf7014db58049e9",
+   "look": "spiky|stubble|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-71": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "01091d3d9b7d0fb2",
+   "skeleton": "a30052d6df1e9487",
+   "inverse": "35ed4f028ef4e550",
+   "meta": "1010e6e92361deda",
+   "look": "sidepart|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-72": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "5782d7b335fa28ff",
+   "skeleton": "fc2211792ccc3285",
+   "inverse": "176eec0761eefb82",
+   "meta": "a563b83f1555ea6d",
+   "look": "ponytail|goatee|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-73": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "f0ee2752c85c4e69",
+   "skeleton": "4cd233e60010799e",
+   "inverse": "3ccf0ec6d4ee03f2",
+   "meta": "b0049cd2443fe0a4",
+   "look": "short|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-74": {
+   "verts": 1404,
+   "bones": 15,
+   "geo": "bef23e656d08ea28",
+   "skeleton": "a78c90ef01217619",
+   "inverse": "6618c091fdaeaab5",
+   "meta": "3832e85c66fb2310",
+   "look": "bald|stubble|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-75": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "51438d0c960f732b",
+   "skeleton": "f20caa5c8cd56ae7",
+   "inverse": "5068d317947d64cd",
+   "meta": "97017894162bac44",
+   "look": "sidepart|short|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-76": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "658ae3da25b7203d",
+   "skeleton": "29eda3329b6e5609",
+   "inverse": "58191b476e4e13b2",
+   "meta": "c7c9854885b220e7",
+   "look": "short|none|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-77": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "4c24bf67e027b59e",
+   "skeleton": "c1c142bc85b91562",
+   "inverse": "625231aafc0c9364",
+   "meta": "dacc7c7d3b864625",
+   "look": "long|none|{\"socksDown\":false,\"sweat\":1,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-78": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "8cde1a34b4d2ce4f",
+   "skeleton": "7ba459882f5c8cbe",
+   "inverse": "44fa55648d73c8b7",
+   "meta": "cf81db15e3ff2f88",
+   "look": "mullet|handlebar|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-79": {
+   "verts": 1656,
+   "bones": 15,
+   "geo": "7d9c04f7f5908363",
+   "skeleton": "92644b4156a0b9ae",
+   "inverse": "8d8151f2ae94dcfb",
+   "meta": "1668768ac72259c8",
+   "look": "curly|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-80": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "cee015ef1282dae0",
+   "skeleton": "19e588ed6dcb9036",
+   "inverse": "502ef1df713b7e31",
+   "meta": "6677bc6e920e54cf",
+   "look": "sidepart|stubble|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-81": {
+   "verts": 1656,
+   "bones": 15,
+   "geo": "9ab02ca7eb9340a2",
+   "skeleton": "b0fae79ad317fe14",
+   "inverse": "c82e146f86f0e006",
+   "meta": "7af2b324c81f7690",
+   "look": "coils|handlebar|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-82": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "14a5fa6d048b7470",
+   "skeleton": "c773d296e093f571",
+   "inverse": "df5dd6845ba05056",
+   "meta": "31e948ee36ea8968",
+   "look": "spiky|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-83": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "71fd606837221b55",
+   "skeleton": "ca50ed06d741d7ce",
+   "inverse": "2b347b4e52b9f80e",
+   "meta": "3fa51cae5e1122c3",
+   "look": "ponytail|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-84": {
+   "verts": 1656,
+   "bones": 15,
+   "geo": "75aa1eef8b6105ba",
+   "skeleton": "02bc6d5d89a1c7e6",
+   "inverse": "d0c6fce303586ff0",
+   "meta": "58ef71524b1537b0",
+   "look": "spiky|short|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-85": {
+   "verts": 1800,
+   "bones": 15,
+   "geo": "2f084c6fd7d6251c",
+   "skeleton": "2c7ade658be53168",
+   "inverse": "61ad57e2cc5d63e7",
+   "meta": "bd6d157bb762df96",
+   "look": "curly|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-86": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "b8c3186eeca9259f",
+   "skeleton": "4c757d01c2c617b8",
+   "inverse": "346eae3ff835ba9b",
+   "meta": "ac0af477fd4aa356",
+   "look": "short|none|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-87": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "6a860f93b47f1f3a",
+   "skeleton": "cf6ed6fa263d2980",
+   "inverse": "beb80f5adfec47ec",
+   "meta": "00f185f3e24c0b85",
+   "look": "short|handlebar|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":\"L\",\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-88": {
+   "verts": 1404,
+   "bones": 15,
+   "geo": "d8bad701b4262c79",
+   "skeleton": "b54c30597edc04ea",
+   "inverse": "c394e158ca8519d3",
+   "meta": "f143e1cd756f5109",
+   "look": "buzz|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":\"R\",\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-89": {
+   "verts": 1368,
+   "bones": 15,
+   "geo": "48f3f42138ef9846",
+   "skeleton": "ddf5e3c385abe035",
+   "inverse": "5bee10fe415cbae4",
+   "meta": "b89cb814dc90c3d8",
+   "look": "buzz|sideburns|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-90": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "9359a24ae7c4ecee",
+   "skeleton": "e62a549b5981d0f8",
+   "inverse": "b865fa3418b1f13d",
+   "meta": "105d4fcedf17212a",
+   "look": "long|goatee|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-91": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "cdb5f5170cf308c5",
+   "skeleton": "3b84e70665a9b2a9",
+   "inverse": "6e388abc05cd4495",
+   "meta": "46ace9de0c39a3c5",
+   "look": "mullet|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-92": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "0ea1562040d36464",
+   "skeleton": "b0157cde85ef9d99",
+   "inverse": "fd57c3fcddccd217",
+   "meta": "bf70ead91998ccf5",
+   "look": "spiky|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-93": {
+   "verts": 1764,
+   "bones": 15,
+   "geo": "350699c46a254b2c",
+   "skeleton": "2dbc421681077f42",
+   "inverse": "f2e28ddda8e1ee34",
+   "meta": "f1fd34733d4fe8a7",
+   "look": "curly|full|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":\"R\",\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-94": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "1093d31c279e3272",
+   "skeleton": "0037a4d7f52ef043",
+   "inverse": "e8744d50427fe95d",
+   "meta": "bc5534ed53ca672b",
+   "look": "short|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-95": {
+   "verts": 1692,
+   "bones": 15,
+   "geo": "bfbbb80eeaff517d",
+   "skeleton": "86bd289e3e039bb4",
+   "inverse": "8a800357d1e539f5",
+   "meta": "57dfa3677db978d1",
+   "look": "curly|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":\"R\",\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-96": {
+   "verts": 1620,
+   "bones": 15,
+   "geo": "cc0187bafb7a5510",
+   "skeleton": "2a935d325e870788",
+   "inverse": "4841235257d24331",
+   "meta": "36fdc21143e9726c",
+   "look": "spiky|full|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-97": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "6c32ae9478ebd007",
+   "skeleton": "0da46b1680609b6f",
+   "inverse": "770767846d5ddcd7",
+   "meta": "0bae91106a43218c",
+   "look": "bald|none|{\"socksDown\":true,\"sweat\":1,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-98": {
+   "verts": 1728,
+   "bones": 15,
+   "geo": "7bd805dbda6addc7",
+   "skeleton": "2dbc421681077f42",
+   "inverse": "f2e28ddda8e1ee34",
+   "meta": "0844995274997363",
+   "look": "curly|none|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-99": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "26724154effd5d79",
+   "skeleton": "045f397717c0bb48",
+   "inverse": "4d547f17b6a20095",
+   "meta": "254254e961bec1bc",
+   "look": "short|moustache|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-100": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "db62c3f72f2aea5e",
+   "skeleton": "24c464a5d34d252f",
+   "inverse": "bfa58a70cae25ec6",
+   "meta": "779223779787ef3d",
+   "look": "halbglatze|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-101": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "c96565d5f57c2b83",
+   "skeleton": "46bf42addf41e3de",
+   "inverse": "013b11775a6151b6",
+   "meta": "31700c88f23615ce",
+   "look": "short|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-102": {
+   "verts": 1584,
+   "bones": 15,
+   "geo": "f887c147dd5114f8",
+   "skeleton": "63a551a2feff5b9f",
+   "inverse": "49b2804fea17f1e5",
+   "meta": "0643f588f3a4399c",
+   "look": "mohawk|short|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":\"R\",\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-103": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "674eadcbd95ba505",
+   "skeleton": "1016bc27646428ff",
+   "inverse": "bb31742085b6f2ee",
+   "meta": "621c5a5ebc13a783",
+   "look": "mullet|none|{\"socksDown\":false,\"sweat\":1,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-104": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "eb1d179f3dd1befe",
+   "skeleton": "02bc6d5d89a1c7e6",
+   "inverse": "d0c6fce303586ff0",
+   "meta": "e5d92c368c1c6f6c",
+   "look": "ponytail|stubble|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-105": {
+   "verts": 1584,
+   "bones": 15,
+   "geo": "003eb227687a521a",
+   "skeleton": "c4cd5903210f9ec4",
+   "inverse": "4b63e06ad87346d6",
+   "meta": "f763978a00ed48cc",
+   "look": "long|goatee|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":\"R\",\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-106": {
+   "verts": 1656,
+   "bones": 15,
+   "geo": "91dfc09495d63ba9",
+   "skeleton": "6855e127b35dbbd9",
+   "inverse": "c35b4993764a90b9",
+   "meta": "8df3ad8ae7f503e8",
+   "look": "long|stubble|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":true}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-107": {
+   "verts": 1368,
+   "bones": 15,
+   "geo": "bd23bde3568326a3",
+   "skeleton": "c1c142bc85b91562",
+   "inverse": "625231aafc0c9364",
+   "meta": "c384b27e4b87ffc3",
+   "look": "mohawk|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-108": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "161669596a2177b6",
+   "skeleton": "b48cffbf43576c5f",
+   "inverse": "c7e8cc2232444c4c",
+   "meta": "c2bd45a5258fa1b5",
+   "look": "long|moustache|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-109": {
+   "verts": 1368,
+   "bones": 15,
+   "geo": "ad94b35ff2f00168",
+   "skeleton": "045f397717c0bb48",
+   "inverse": "4d547f17b6a20095",
+   "meta": "1977069ee182fbc3",
+   "look": "buzz|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-110": {
+   "verts": 1764,
+   "bones": 15,
+   "geo": "6b6c31ba26a6328c",
+   "skeleton": "d77535f1ad330339",
+   "inverse": "fe5c98913bcb9e54",
+   "meta": "9a3a87c1919b02fb",
+   "look": "curly|stubble|{\"socksDown\":true,\"sweat\":1,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-111": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "85a2593e965356e6",
+   "skeleton": "efefc8fd3c59fa1b",
+   "inverse": "deb848b402063c9f",
+   "meta": "db2a95862e34e674",
+   "look": "sidepart|short|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-112": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "e98ba13c67e428a8",
+   "skeleton": "b0157cde85ef9d99",
+   "inverse": "fd57c3fcddccd217",
+   "meta": "7d164d80abd2a97c",
+   "look": "sidepart|stubble|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":\"R\",\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-113": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "56c36bc8a4bcf03c",
+   "skeleton": "4b37b1cfe0175031",
+   "inverse": "df6a6dde0a41b545",
+   "meta": "09c0865284c2ea7c",
+   "look": "sidepart|stubble|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-114": {
+   "verts": 1584,
+   "bones": 15,
+   "geo": "4f7474b48b948598",
+   "skeleton": "db2779d1e0ec023b",
+   "inverse": "c977035f0990f992",
+   "meta": "5c935982d09bc0bf",
+   "look": "sidepart|full|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":\"R\",\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-115": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "e4c289b5d896ef75",
+   "skeleton": "716c47cd1c89a2ce",
+   "inverse": "c4ee37a2c977f3ba",
+   "meta": "ca2d7c3d0bc51ae4",
+   "look": "undercut|stubble|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-116": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "4cd465ac9f2473a7",
+   "skeleton": "4c757d01c2c617b8",
+   "inverse": "346eae3ff835ba9b",
+   "meta": "5f880dd852a20bfa",
+   "look": "short|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-117": {
+   "verts": 1404,
+   "bones": 15,
+   "geo": "ec076f3e8cf150d1",
+   "skeleton": "b4a71e785c6bb784",
+   "inverse": "9cfe4cc19064ee05",
+   "meta": "3823da171a0e5e60",
+   "look": "buzz|moustache|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-118": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "71905048add94743",
+   "skeleton": "1016bc27646428ff",
+   "inverse": "bb31742085b6f2ee",
+   "meta": "c4a826c3b4d8241e",
+   "look": "short|none|{\"socksDown\":false,\"sweat\":2,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-119": {
+   "verts": 1692,
+   "bones": 15,
+   "geo": "e2147a31515640ce",
+   "skeleton": "46773899af51fa96",
+   "inverse": "a26540339a4f4cc0",
+   "meta": "f71a9fcdad0b729a",
+   "look": "long|none|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-120": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "ff06711d4aef9473",
+   "skeleton": "716c47cd1c89a2ce",
+   "inverse": "c4ee37a2c977f3ba",
+   "meta": "6af30c139455a9b9",
+   "look": "bald|full|{\"socksDown\":false,\"sweat\":2,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-121": {
+   "verts": 1584,
+   "bones": 15,
+   "geo": "d3343e6d31b1544c",
+   "skeleton": "5e28b841b73c216d",
+   "inverse": "26b108cd367109f0",
+   "meta": "0b67566ebbd574bc",
+   "look": "short|none|{\"socksDown\":true,\"sweat\":2,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-122": {
+   "verts": 1620,
+   "bones": 15,
+   "geo": "74b2dc2e453cd64e",
+   "skeleton": "c773d296e093f571",
+   "inverse": "df5dd6845ba05056",
+   "meta": "d17777900c8ff7b8",
+   "look": "sidepart|none|{\"socksDown\":true,\"sweat\":2,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-123": {
+   "verts": 1620,
+   "bones": 15,
+   "geo": "52913a91966fbd84",
+   "skeleton": "4cd233e60010799e",
+   "inverse": "3ccf0ec6d4ee03f2",
+   "meta": "8bb0ec64e1b91c98",
+   "look": "short|full|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":true}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-124": {
+   "verts": 1620,
+   "bones": 15,
+   "geo": "79bb4f987f67573a",
+   "skeleton": "5672f6d675afebe9",
+   "inverse": "96f87a2838a4a93d",
+   "meta": "eb68d2ca5faeba3c",
+   "look": "spiky|none|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-125": {
+   "verts": 1584,
+   "bones": 15,
+   "geo": "3c420e7243eecdcf",
+   "skeleton": "24c464a5d34d252f",
+   "inverse": "bfa58a70cae25ec6",
+   "meta": "caf3553e40436941",
+   "look": "sidepart|none|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":\"L\",\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-126": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "f999da10d44e04cb",
+   "skeleton": "29eda3329b6e5609",
+   "inverse": "58191b476e4e13b2",
+   "meta": "2714bb390964638d",
+   "look": "sidepart|handlebar|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":\"L\",\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-127": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "01f2d340dc76bda9",
+   "skeleton": "701c7f75270091f1",
+   "inverse": "ad81b172b3be3af2",
+   "meta": "73c3265c5cdf957d",
+   "look": "mullet|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":\"R\",\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-128": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "ffb085c6e2f7c4dc",
+   "skeleton": "96d263d55250a9fe",
+   "inverse": "6fc9db96d32b5132",
+   "meta": "aec7d226599875cc",
+   "look": "mohawk|none|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-129": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "1bddb8485fa9acfe",
+   "skeleton": "ad537a4d267a28ff",
+   "inverse": "d4fb160c084d8511",
+   "meta": "1f1fda91332a36a1",
+   "look": "buzz|goatee|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":true}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-130": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "53c14281a43e68f0",
+   "skeleton": "a8525ea2f3332851",
+   "inverse": "586a4555862ff09d",
+   "meta": "811099ba053c3daa",
+   "look": "short|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-131": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "9dc4d435e10a2f7e",
+   "skeleton": "31bb42902043204f",
+   "inverse": "bac48f317458b7d4",
+   "meta": "119b54c92745fa34",
+   "look": "halbglatze|stubble|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":\"R\",\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-132": {
+   "verts": 1692,
+   "bones": 15,
+   "geo": "c0f74798160f327b",
+   "skeleton": "39ac0fd934460fac",
+   "inverse": "5eddd6abff906d01",
+   "meta": "b8f851a5d1c9dc9b",
+   "look": "spiky|handlebar|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-133": {
+   "verts": 1728,
+   "bones": 15,
+   "geo": "94aa909c98112a92",
+   "skeleton": "582ee32d0d3dc780",
+   "inverse": "73048a3e667819d1",
+   "meta": "d7a87c70aed569c8",
+   "look": "curly|none|{\"socksDown\":false,\"sweat\":2,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-134": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "2b62ae482f7ccc5c",
+   "skeleton": "84fe43e8b65c04ce",
+   "inverse": "4cbc1b7d961d5eae",
+   "meta": "a278e9214656ec65",
+   "look": "ponytail|sideburns|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-135": {
+   "verts": 1656,
+   "bones": 15,
+   "geo": "a36c9e56675569a7",
+   "skeleton": "73564deb6ebcd5d6",
+   "inverse": "8b2c98caa714c200",
+   "meta": "4c39a158e51b1cfe",
+   "look": "spiky|short|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-136": {
+   "verts": 1584,
+   "bones": 15,
+   "geo": "ae08f689edeff9a7",
+   "skeleton": "46bf42addf41e3de",
+   "inverse": "013b11775a6151b6",
+   "meta": "4f65832a7a5a797d",
+   "look": "short|sideburns|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-137": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "0ac53944f32e5aa0",
+   "skeleton": "e37aba1322aedd07",
+   "inverse": "a0046daa38a21950",
+   "meta": "13094934843f3d90",
+   "look": "sidepart|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-138": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "383e9f547fba1455",
+   "skeleton": "334d7f6782dba561",
+   "inverse": "3367d6955bdae61c",
+   "meta": "1af438b1db4de466",
+   "look": "short|short|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-139": {
+   "verts": 1584,
+   "bones": 15,
+   "geo": "89e183b7bda54689",
+   "skeleton": "5672f6d675afebe9",
+   "inverse": "96f87a2838a4a93d",
+   "meta": "faf3787d7b2bc7a8",
+   "look": "spiky|none|{\"socksDown\":false,\"sweat\":1,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-140": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "b78787aa87a36c2c",
+   "skeleton": "e62a549b5981d0f8",
+   "inverse": "b865fa3418b1f13d",
+   "meta": "4468a83462fa1f9b",
+   "look": "long|stubble|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-141": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "df2562ce54470969",
+   "skeleton": "3bac13c6a32b59f2",
+   "inverse": "94d87a2e22b7e987",
+   "meta": "2ce01308188d8bf9",
+   "look": "buzz|goatee|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":\"R\",\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-142": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "3e9b870af5b0ba57",
+   "skeleton": "cd96ad6b421685e4",
+   "inverse": "cf929b620813bfe4",
+   "meta": "ee6d06f2829262cf",
+   "look": "buzz|none|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-143": {
+   "verts": 1296,
+   "bones": 15,
+   "geo": "871ff8c0f885d368",
+   "skeleton": "a168059879ff820c",
+   "inverse": "22f59b59de549392",
+   "meta": "866c6930658fd041",
+   "look": "bald|stubble|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-144": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "16be479c12cb9e11",
+   "skeleton": "02bc6d5d89a1c7e6",
+   "inverse": "d0c6fce303586ff0",
+   "meta": "c28a5a33b50b6ddf",
+   "look": "sidepart|short|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":\"L\",\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-145": {
+   "verts": 1368,
+   "bones": 15,
+   "geo": "2d5f049e166fb470",
+   "skeleton": "716c47cd1c89a2ce",
+   "inverse": "c4ee37a2c977f3ba",
+   "meta": "f90dad518416bdc6",
+   "look": "mohawk|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-146": {
+   "verts": 1728,
+   "bones": 15,
+   "geo": "fd00e0ea283a0b55",
+   "skeleton": "8dc8d945bf23573b",
+   "inverse": "1d1fa4abf1dd7731",
+   "meta": "932ce0c8cd7821db",
+   "look": "spiky|none|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":true}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-147": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "05aaf0c921ffcc14",
+   "skeleton": "0369656ca9d6f981",
+   "inverse": "5e9b74e56bbf87a2",
+   "meta": "f322abd09928c7fb",
+   "look": "mohawk|short|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-148": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "52f75865a00ad3ef",
+   "skeleton": "334d7f6782dba561",
+   "inverse": "3367d6955bdae61c",
+   "meta": "924200cab5dab3fd",
+   "look": "short|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-149": {
+   "verts": 1620,
+   "bones": 15,
+   "geo": "f98fc4ea9c38b443",
+   "skeleton": "091a364aa65f6cb2",
+   "inverse": "48c691b0afe56826",
+   "meta": "7089d49927506360",
+   "look": "coils|none|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-150": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "3fee1102a0b00082",
+   "skeleton": "a749e0a2528be3e2",
+   "inverse": "1ca7ca5ad9d224ed",
+   "meta": "40ae99b167d7bf98",
+   "look": "afro|short|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-151": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "0038642505af6eab",
+   "skeleton": "5e28b841b73c216d",
+   "inverse": "26b108cd367109f0",
+   "meta": "a4ad9ffd3610d65c",
+   "look": "afro|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":\"R\",\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-152": {
+   "verts": 1476,
+   "bones": 15,
+   "geo": "7d28049ad50b0d92",
+   "skeleton": "c773d296e093f571",
+   "inverse": "df5dd6845ba05056",
+   "meta": "d1f4476153e0ddab",
+   "look": "sidepart|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-153": {
+   "verts": 1728,
+   "bones": 15,
+   "geo": "9b2271b5d7202a6c",
+   "skeleton": "68c4f49136c86d12",
+   "inverse": "fa46b1f55faf2f2c",
+   "meta": "07dae9d1f66ec2e2",
+   "look": "bun|moustache|{\"socksDown\":true,\"sweat\":0,\"tapeFoot\":\"R\",\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-154": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "65ede4040d9929fe",
+   "skeleton": "045f397717c0bb48",
+   "inverse": "4d547f17b6a20095",
+   "meta": "e5a4c79c463705af",
+   "look": "afro|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-155": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "65b588f4e68bf707",
+   "skeleton": "b75748e3f71168fc",
+   "inverse": "34d2813a8046af65",
+   "meta": "6da831f920bd3178",
+   "look": "short|stubble|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-156": {
+   "verts": 1512,
+   "bones": 15,
+   "geo": "dd100a64f7375095",
+   "skeleton": "3c32006e0b2168ea",
+   "inverse": "0bb52f92bf795c68",
+   "meta": "bd9a703e472be165",
+   "look": "ponytail|short|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":\"L\",\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-157": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "b7d958c5fc111158",
+   "skeleton": "6916f6250742f889",
+   "inverse": "1aa323e0ef14aa27",
+   "meta": "a10842861ec55ac8",
+   "look": "short|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-158": {
+   "verts": 1440,
+   "bones": 15,
+   "geo": "008ea4cf8abf0a85",
+   "skeleton": "4cd233e60010799e",
+   "inverse": "3ccf0ec6d4ee03f2",
+   "meta": "702e6ce9f5dacb30",
+   "look": "short|none|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  },
+  "erzeugt-159": {
+   "verts": 1548,
+   "bones": 15,
+   "geo": "018d80f5c9ef0255",
+   "skeleton": "50a1325064b8713a",
+   "inverse": "ff944b450b292543",
+   "meta": "e6c0bde19a5d80db",
+   "look": "sidepart|goatee|{\"socksDown\":false,\"sweat\":0,\"tapeFoot\":null,\"tapeHand\":null,\"specs\":false}",
+   "cloth": null,
+   "material": "MeshToonMaterial"
+  }
+ },
+ "atlas": {
+  "standard": "87de6a09b2022079",
+  "glatze": "1a7d5c47facdcd22",
+  "halbglatze": "c95be7c5c1dd5caa",
+  "mutze-polizei": "9e935e520427ac21",
+  "torwart": "feacc44f42d77768",
+  "torwart-gruen-hell": "62e49c142aab96e1",
+  "sponsor-aermel": "10dac7a02b5ec3a5",
+  "bauch": "53626417644c586d",
+  "paunch": "fd3119d80d86276f",
+  "dose-tiger": "06a0bf385037ab12",
+  "schiri": "7eaef96d78e9c10b",
+  "lange-hose": "f096107675747613",
+  "bartstil-koteletten": "5e2b6a29bb0373a7"
+ },
+ "anims": {
+  "lauf-0": {
+   "frames": 70,
+   "hash": "f0fed798a58ddbb4",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.02,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ]
+  },
+  "lauf-0.5": {
+   "frames": 70,
+   "hash": "1aec7eb47d2dcb23",
+   "faces": "neutral",
+   "first": [
+    0.844,
+    0,
+    0.0541,
+    -0.0298,
+    0.0183,
+    0.1512,
+    0.0424,
+    0.1853
+   ],
+   "last": [
+    0.844,
+    0,
+    0.0264,
+    -0.0298,
+    -0.0183,
+    0.1512,
+    -0.0424,
+    0.1301
+   ]
+  },
+  "lauf-1.5": {
+   "frames": 70,
+   "hash": "cb2d55b7b66906d9",
+   "faces": "neutral",
+   "first": [
+    0.8402,
+    0,
+    0.08,
+    -0.056,
+    0.135,
+    0.108,
+    0.2687,
+    0.476
+   ],
+   "last": [
+    0.829,
+    0,
+    0.08,
+    -0.056,
+    -0.2901,
+    0.108,
+    -0.2687,
+    0.476
+   ]
+  },
+  "lauf-3": {
+   "frames": 70,
+   "hash": "ad0f336f60f24fb2",
+   "faces": "neutral",
+   "first": [
+    0.8385,
+    0,
+    0.12,
+    -0.084,
+    0.194,
+    0.116,
+    0.3394,
+    0.6245
+   ],
+   "last": [
+    0.819,
+    0,
+    0.12,
+    -0.084,
+    0.4321,
+    0.116,
+    0.48,
+    0.08
+   ]
+  },
+  "lauf-5": {
+   "frames": 70,
+   "hash": "2243c37ad1777b16",
+   "faces": "neutral",
+   "first": [
+    0.8362,
+    0,
+    0.1733,
+    -0.1213,
+    0.2727,
+    0.1267,
+    0.4337,
+    0.8225
+   ],
+   "last": [
+    0.8093,
+    0,
+    0.1733,
+    -0.1213,
+    -0.6075,
+    0.1267,
+    -0.6133,
+    0.08
+   ]
+  },
+  "lauf-7.5": {
+   "frames": 70,
+   "hash": "7fa04c44afc93bcb",
+   "faces": "effort",
+   "first": [
+    0.8333,
+    0,
+    0.24,
+    -0.168,
+    0.3712,
+    0.14,
+    0.5515,
+    1.0699
+   ],
+   "last": [
+    0.8039,
+    0,
+    0.24,
+    -0.168,
+    0.7979,
+    0.14,
+    0.5515,
+    0.2073
+   ]
+  },
+  "lauf-9": {
+   "frames": 70,
+   "hash": "5bc9b21dd5376ac3",
+   "faces": "effort",
+   "first": [
+    0.8333,
+    0,
+    0.24,
+    -0.168,
+    0.3712,
+    0.14,
+    0.5515,
+    1.0699
+   ],
+   "last": [
+    0.8333,
+    0,
+    0.24,
+    -0.168,
+    -0.3712,
+    0.14,
+    -0.5515,
+    0.2073
+   ]
+  },
+  "lauf-ball": {
+   "frames": 70,
+   "hash": "be82db09a644660d",
+   "faces": "neutral",
+   "first": [
+    0.8373,
+    0,
+    0.1467,
+    -0.1027,
+    0.2334,
+    0.1213,
+    0.3866,
+    0.7235
+   ],
+   "last": [
+    0.8117,
+    0,
+    0.2467,
+    0.2473,
+    0.1044,
+    0.3213,
+    0,
+    0.176
+   ]
+  },
+  "lauf-wechselnd": {
+   "frames": 120,
+   "hash": "c5acfb1675503742",
+   "faces": "neutral,effort",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8401,
+    0,
+    0.24,
+    -0.168,
+    0.3018,
+    0.14,
+    0,
+    0.26
+   ]
+  },
+  "verletzt": {
+   "frames": 40,
+   "hash": "51e9e602cf46a6ae",
+   "faces": "pain,neutral",
+   "first": [
+    0.835,
+    0,
+    0.2,
+    -0.14,
+    0.3121,
+    0.132,
+    0.4808,
+    0.9215
+   ],
+   "last": [
+    0.835,
+    0,
+    0.2,
+    -0.14,
+    0.3121,
+    0.132,
+    0.4808,
+    0.9215
+   ]
+  },
+  "muede": {
+   "frames": 30,
+   "hash": "5f280f97f9468b10",
+   "faces": "exhausted",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8269,
+    0,
+    0.0933,
+    -0.0653,
+    0.3325,
+    0.1107,
+    0.2923,
+    0.1139
+   ]
+  },
+  "gesicht": {
+   "frames": 10,
+   "hash": "5c7b35b0c761d3b5",
+   "faces": "happy,sad,neutral,angry,pain,happy,sad,neutral,angry,pain",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0493,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ]
+  },
+  "schuss-shot-1": {
+   "frames": 76,
+   "hash": "5fe0018b80b16e4c",
+   "faces": "neutral,effort,neutral",
+   "first": [
+    0.8385,
+    0,
+    0.12,
+    -0.084,
+    0.194,
+    0.116,
+    0.3394,
+    0.6245
+   ],
+   "last": [
+    0.8227,
+    0,
+    0.12,
+    -0.084,
+    0.4171,
+    0.116,
+    0.3394,
+    0.1309
+   ]
+  },
+  "schuss-pass-1": {
+   "frames": 76,
+   "hash": "69ad78054b8670cc",
+   "faces": "neutral,effort,neutral",
+   "first": [
+    0.8385,
+    0,
+    0.12,
+    -0.084,
+    0.194,
+    0.116,
+    0.3394,
+    0.6245
+   ],
+   "last": [
+    0.8227,
+    0,
+    0.12,
+    -0.084,
+    0.4171,
+    0.116,
+    0.3394,
+    0.1309
+   ]
+  },
+  "schuss-shot--1": {
+   "frames": 76,
+   "hash": "87afd9e1a6ac8050",
+   "faces": "neutral,effort,neutral",
+   "first": [
+    0.8385,
+    0,
+    0.12,
+    -0.084,
+    0.194,
+    0.116,
+    0.3394,
+    0.6245
+   ],
+   "last": [
+    0.8227,
+    0,
+    0.12,
+    -0.084,
+    0.4171,
+    0.116,
+    0.3394,
+    0.1309
+   ]
+  },
+  "schuss-pass--1": {
+   "frames": 76,
+   "hash": "596a24bdb2f2bd31",
+   "faces": "neutral,effort,neutral",
+   "first": [
+    0.8385,
+    0,
+    0.12,
+    -0.084,
+    0.194,
+    0.116,
+    0.3394,
+    0.6245
+   ],
+   "last": [
+    0.8227,
+    0,
+    0.12,
+    -0.084,
+    0.4171,
+    0.116,
+    0.3394,
+    0.1309
+   ]
+  },
+  "schuss-sofort": {
+   "frames": 24,
+   "hash": "ef4f4c9dd40a84a4",
+   "faces": "effort,neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0362,
+    0.0413,
+    -0.15,
+    0.2233,
+    -0.0003,
+    0.1867
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0398,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ]
+  },
+  "schuss-im-fall": {
+   "frames": 12,
+   "hash": "b69e278ade41d9b3",
+   "faces": "effort",
+   "first": [
+    0.3,
+    -1.1,
+    0.45,
+    0.35,
+    -0.4,
+    0.35,
+    0.15,
+    0.02
+   ],
+   "last": [
+    0.3,
+    -1.1,
+    0.45,
+    0.35,
+    -0.4,
+    0.35,
+    0.15,
+    0.02
+   ]
+  },
+  "tw-bereit": {
+   "frames": 50,
+   "hash": "01a2f676152c726a",
+   "faces": "neutral,effort",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ],
+   "last": [
+    0.7034,
+    0,
+    0.4313,
+    -0.306,
+    -0.366,
+    0.9353,
+    -0.488,
+    0.854
+   ]
+  },
+  "tw-breit": {
+   "frames": 30,
+   "hash": "864fc016b55d0820",
+   "faces": "effort",
+   "first": [
+    0.6797,
+    0,
+    0.3973,
+    -0.2805,
+    -0.429,
+    1.0963,
+    -0.572,
+    1.001
+   ],
+   "last": [
+    0.6055,
+    0,
+    0.3928,
+    -0.2805,
+    -0.02,
+    1.5765,
+    -0.715,
+    1.1917
+   ]
+  },
+  "tw-bereit-haelt": {
+   "frames": 10,
+   "hash": "aa641448c613a93f",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    -1.05,
+    -0.28,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0493,
+    -0.028,
+    -1.05,
+    -0.28,
+    0,
+    0.14
+   ]
+  },
+  "tw-abwurf": {
+   "frames": 45,
+   "hash": "f682f28993360ecc",
+   "faces": "neutral,effort",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    -1.05,
+    -0.28,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.3065,
+    -0.028,
+    -1.2,
+    0.05,
+    0.2,
+    0.3
+   ]
+  },
+  "tw-abschlag": {
+   "frames": 36,
+   "hash": "ce4c81d3a44379e6",
+   "faces": "effort",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    -1.05,
+    -0.28,
+    0,
+    0.14
+   ],
+   "last": [
+    0.7646,
+    0,
+    0.1991,
+    0.18,
+    -0.75,
+    0.9,
+    -1.2419,
+    0.25
+   ]
+  },
+  "tw-sprung": {
+   "frames": 40,
+   "hash": "1c2a5c4c4bb1beb4",
+   "faces": "effort",
+   "first": [
+    0.8458,
+    0,
+    0.0539,
+    -0.0289,
+    -0.0094,
+    0.15,
+    0.0005,
+    0.0047
+   ],
+   "last": [
+    0.8434,
+    0,
+    0.0296,
+    -0.0271,
+    0.0094,
+    0.15,
+    -0.0005,
+    -0.0047
+   ]
+  },
+  "tw-sprung-haelt": {
+   "frames": 40,
+   "hash": "518ad77888cff9bb",
+   "faces": "effort",
+   "first": [
+    0.8458,
+    0,
+    0.0539,
+    -0.0289,
+    -1.05,
+    -0.28,
+    0.0005,
+    0.0047
+   ],
+   "last": [
+    0.8434,
+    0,
+    0.0296,
+    -0.0271,
+    -1.05,
+    -0.28,
+    -0.0005,
+    -0.0047
+   ]
+  },
+  "tw-sprung-faust": {
+   "frames": 40,
+   "hash": "213132f792b93f9f",
+   "faces": "effort",
+   "first": [
+    0.8458,
+    0,
+    -0.046,
+    -0.029,
+    -2.45,
+    -0.35,
+    0.0005,
+    0.0047
+   ],
+   "last": [
+    0.8434,
+    0,
+    0.0296,
+    -0.0271,
+    -0.0025,
+    0.1595,
+    -0.0005,
+    -0.0047
+   ]
+  },
+  "tw-faust-beide": {
+   "frames": 30,
+   "hash": "e2b0244beb30e3fe",
+   "faces": "effort",
+   "first": [
+    0.8446,
+    0,
+    -0.0457,
+    -0.028,
+    -2.45,
+    -0.35,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0357,
+    -0.028,
+    -0.0025,
+    0.1595,
+    0,
+    0.14
+   ]
+  },
+  "tw-faust-links": {
+   "frames": 30,
+   "hash": "7b81080fd60ab05c",
+   "faces": "effort",
+   "first": [
+    0.8446,
+    0,
+    -0.0457,
+    -0.028,
+    -2.45,
+    1,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0357,
+    -0.028,
+    -0.0026,
+    0.1608,
+    0,
+    0.14
+   ]
+  },
+  "tw-faust-rechts": {
+   "frames": 30,
+   "hash": "2c6195e66a412873",
+   "faces": "effort",
+   "first": [
+    0.8446,
+    0,
+    -0.0457,
+    -0.028,
+    -0.3,
+    -0.35,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0357,
+    -0.028,
+    -0.0003,
+    0.1598,
+    0,
+    0.14
+   ]
+  },
+  "tw-hecht-0-false-1": {
+   "frames": 84,
+   "hash": "a74c1731d26f2a03",
+   "faces": "effort,neutral",
+   "first": [
+    0.8446,
+    0,
+    0,
+    -0.028,
+    0,
+    0,
+    0,
+    0
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0228,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ]
+  },
+  "tw-hecht-1-true--1": {
+   "frames": 84,
+   "hash": "d5339fc0e010e37b",
+   "faces": "effort,neutral",
+   "first": [
+    0.8446,
+    0,
+    0,
+    -0.028,
+    0,
+    0,
+    0,
+    0
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0228,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ]
+  },
+  "tw-hecht-0.5-false--1": {
+   "frames": 84,
+   "hash": "e4af0e47f1b937aa",
+   "faces": "effort,neutral",
+   "first": [
+    0.8446,
+    0,
+    0,
+    -0.028,
+    0,
+    0,
+    0,
+    0
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0228,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ]
+  },
+  "tw-hecht-0-true-1": {
+   "frames": 84,
+   "hash": "9703920bab770a0e",
+   "faces": "effort,neutral",
+   "first": [
+    0.8446,
+    0,
+    0,
+    -0.028,
+    0,
+    0,
+    0,
+    0
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0228,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ]
+  },
+  "tw-hecht-ohne-high": {
+   "frames": 30,
+   "hash": "e577fbc14bd38203",
+   "faces": "effort",
+   "first": [
+    0.8446,
+    0,
+    0,
+    -0.028,
+    0,
+    0,
+    0,
+    0
+   ],
+   "last": [
+    0.3209,
+    0,
+    0.2,
+    -0.028,
+    -2.2,
+    0.2,
+    -0.3,
+    1.2
+   ]
+  },
+  "tw-hecht-abpraller": {
+   "frames": 60,
+   "hash": "fc7ade0bd396a19b",
+   "faces": "effort,surprised",
+   "first": [
+    0.8446,
+    0,
+    0,
+    -0.028,
+    0,
+    0,
+    0,
+    0
+   ],
+   "last": [
+    0.8446,
+    0,
+    0,
+    0,
+    -0.1,
+    0.1,
+    0,
+    0
+   ]
+  },
+  "tw-abpraller": {
+   "frames": 30,
+   "hash": "84a3b998e743573f",
+   "faces": "surprised",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    -0.0001,
+    0.1601,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0357,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ]
+  },
+  "tw-ducken": {
+   "frames": 30,
+   "hash": "f0d2981e6489f389",
+   "faces": "surprised",
+   "first": [
+    0.8441,
+    0,
+    0.0562,
+    -0.0266,
+    -0.0072,
+    0.0017,
+    -0.0017,
+    0.0031
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0357,
+    -0.028,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "tw-ducken-haelt": {
+   "frames": 10,
+   "hash": "aa641448c613a93f",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    -1.05,
+    -0.28,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0493,
+    -0.028,
+    -1.05,
+    -0.28,
+    0,
+    0.14
+   ]
+  },
+  "tw-fangen-brust": {
+   "frames": 36,
+   "hash": "6ab971d99c33ced3",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    -1.05,
+    -0.28,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0317,
+    -0.028,
+    -1.05,
+    -0.28,
+    0,
+    0.14
+   ]
+  },
+  "tw-fangen-kopf": {
+   "frames": 36,
+   "hash": "eb8190f2ce6ec289",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    -1.05,
+    -0.28,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0317,
+    -0.028,
+    -1.05,
+    -0.28,
+    0,
+    0.14
+   ]
+  },
+  "tw-fangen-tief": {
+   "frames": 36,
+   "hash": "75649babad8bb65f",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    -1.05,
+    -0.28,
+    0,
+    0
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0317,
+    -0.028,
+    -1.05,
+    -0.28,
+    0,
+    0.14
+   ]
+  },
+  "tw-fangen-keiner": {
+   "frames": 4,
+   "hash": "84e4bacc9173d95a",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    -1.05,
+    -0.28,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0528,
+    -0.028,
+    -1.05,
+    -0.28,
+    0,
+    0.14
+   ]
+  },
+  "tw-ball-ueberkopf": {
+   "frames": 10,
+   "hash": "864a8fa9e81b41a8",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    -2.85,
+    0.12,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0493,
+    -0.028,
+    -2.85,
+    0.12,
+    0,
+    0.14
+   ]
+  },
+  "einwurf": {
+   "frames": 80,
+   "hash": "71203879c579b88c",
+   "faces": "effort",
+   "first": [
+    0.8397,
+    0,
+    0.0933,
+    0,
+    0.1545,
+    0.1104,
+    0.2923,
+    0.5255
+   ],
+   "last": [
+    0.7946,
+    0,
+    0.35,
+    -0.1,
+    -1.15,
+    -0.3,
+    0.4,
+    0.35
+   ]
+  },
+  "einwurf-sofort": {
+   "frames": 30,
+   "hash": "3049472c9d84b55d",
+   "faces": "effort",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    0,
+    0,
+    0.16,
+    0,
+    0.14
+   ],
+   "last": [
+    0.7946,
+    0,
+    0.0357,
+    -0.1,
+    0,
+    0.16,
+    0.4,
+    0.35
+   ]
+  },
+  "einwurf-ueberkopf": {
+   "frames": 6,
+   "hash": "3926c0844824e7e9",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    -2.85,
+    0.12,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0516,
+    -0.028,
+    -2.85,
+    0.12,
+    0,
+    0.14
+   ]
+  },
+  "kopfball-anlauf": {
+   "frames": 50,
+   "hash": "6f627911d039bdf8",
+   "faces": "effort",
+   "first": [
+    0.839,
+    0,
+    -0.0005,
+    -0.0005,
+    -0.7012,
+    0.5506,
+    0.0998,
+    0.8005
+   ],
+   "last": [
+    0.8445,
+    0,
+    0.0712,
+    0.0812,
+    -0.7,
+    0.55,
+    0.0997,
+    0.8006
+   ]
+  },
+  "kopfball-hoch": {
+   "frames": 24,
+   "hash": "f1075a1432a1bebb",
+   "faces": "effort",
+   "first": [
+    1.1646,
+    0,
+    0.1373,
+    0.1569,
+    -1.45,
+    0.95,
+    -0.05,
+    1.1
+   ],
+   "last": [
+    0.8444,
+    0,
+    0.0712,
+    0.0812,
+    -0.7,
+    0.55,
+    0.0997,
+    0.8006
+   ]
+  },
+  "kopfball-anlauf-nur": {
+   "frames": 26,
+   "hash": "96d180983c8bbb87",
+   "faces": "effort",
+   "first": [
+    0.8451,
+    0,
+    -0.0005,
+    -0.0005,
+    -0.7012,
+    0.5506,
+    0.0998,
+    0.8005
+   ],
+   "last": [
+    1.1646,
+    0,
+    0.1441,
+    0.1647,
+    -1.45,
+    0.95,
+    -0.05,
+    1.1
+   ]
+  },
+  "trick-uebersteiger-1": {
+   "frames": 30,
+   "hash": "eae668a301c2eb2b",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    0.25,
+    -0.2,
+    0.7,
+    0,
+    0.45
+   ],
+   "last": [
+    0.8343,
+    0,
+    0.0592,
+    0.25,
+    -0.2,
+    0.7,
+    0,
+    0
+   ]
+  },
+  "trick-uebersteiger--1": {
+   "frames": 30,
+   "hash": "a46e4c2c2675d3be",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    0.25,
+    -0.2,
+    0.7,
+    0.05,
+    0
+   ],
+   "last": [
+    0.8343,
+    0,
+    0.0592,
+    0.25,
+    -0.2,
+    0.7,
+    0,
+    0.3
+   ]
+  },
+  "trick-hacke-1": {
+   "frames": 30,
+   "hash": "eb8a861625468fdc",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0,
+    0.3,
+    0.2,
+    0.5,
+    0.55,
+    0.3
+   ],
+   "last": [
+    0.8343,
+    0,
+    0,
+    0.3,
+    0.2,
+    0.5,
+    0.55,
+    0.3
+   ]
+  },
+  "trick-hacke--1": {
+   "frames": 30,
+   "hash": "61670fb3369b4d70",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0,
+    0.3,
+    0.2,
+    0.5,
+    -0.1,
+    0
+   ],
+   "last": [
+    0.8343,
+    0,
+    0,
+    0.3,
+    0.2,
+    0.5,
+    -0.1,
+    0
+   ]
+  },
+  "trick-jayjay-1": {
+   "frames": 30,
+   "hash": "6834579b69333a2e",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0,
+    0.1,
+    -0.3,
+    0,
+    0.45,
+    0
+   ],
+   "last": [
+    0.8343,
+    0,
+    0,
+    0.1,
+    -0.3,
+    0,
+    0.45,
+    0
+   ]
+  },
+  "trick-jayjay--1": {
+   "frames": 30,
+   "hash": "992483fcd7a544b7",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0,
+    0.1,
+    -0.3,
+    0,
+    0,
+    0.7
+   ],
+   "last": [
+    0.8343,
+    0,
+    0,
+    0.1,
+    -0.3,
+    0,
+    0,
+    0.7
+   ]
+  },
+  "trick-zidane-1": {
+   "frames": 30,
+   "hash": "076f6acefff1da93",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    0.3,
+    -0.1,
+    0,
+    0,
+    0
+   ],
+   "last": [
+    0.8343,
+    0,
+    0.0592,
+    0.3,
+    -0.1,
+    0,
+    0,
+    0
+   ]
+  },
+  "trick-zidane--1": {
+   "frames": 30,
+   "hash": "d28cce45c2a0b8c8",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    0.3,
+    -0.1,
+    0,
+    0,
+    0
+   ],
+   "last": [
+    0.8343,
+    0,
+    0.0592,
+    0.3,
+    -0.1,
+    0,
+    0,
+    0
+   ]
+  },
+  "trick-im-schuss": {
+   "frames": 10,
+   "hash": "f82a4a25e2003b91",
+   "faces": "effort",
+   "first": [
+    0.8248,
+    0,
+    0.0172,
+    0.0413,
+    -0.15,
+    0.2233,
+    0.3016,
+    0.1793
+   ],
+   "last": [
+    0.7853,
+    0,
+    -0.0571,
+    0.18,
+    -0.45,
+    0.35,
+    0.9048,
+    0.2578
+   ]
+  },
+  "ausgetrickst": {
+   "frames": 30,
+   "hash": "c2bcd04b8dc41e52",
+   "faces": "surprised",
+   "first": [
+    0.8446,
+    0,
+    0.0537,
+    -0.028,
+    0,
+    0.1619,
+    0,
+    0.0016
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0357,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0
+   ]
+  },
+  "zweikampf-0.5-0-0": {
+   "frames": 30,
+   "hash": "a0db33f352ff0736",
+   "faces": "neutral,effort",
+   "first": [
+    0.8397,
+    0,
+    0.0933,
+    -0.0653,
+    0.1546,
+    0.1107,
+    0.2923,
+    0.5255
+   ],
+   "last": [
+    0.7826,
+    0,
+    0.2933,
+    -0.1853,
+    0.75,
+    1.35,
+    0,
+    0.378
+   ]
+  },
+  "zweikampf--1.2-0-1": {
+   "frames": 30,
+   "hash": "22096f56393b8ed2",
+   "faces": "neutral,effort",
+   "first": [
+    0.8397,
+    0,
+    0.0933,
+    -0.0653,
+    0.1546,
+    0.1107,
+    0.2923,
+    0.5255
+   ],
+   "last": [
+    0.7526,
+    0,
+    0.4433,
+    -0.1853,
+    -1.3,
+    1.1,
+    0,
+    0.378
+   ]
+  },
+  "zweikampf-2.8-1-0": {
+   "frames": 30,
+   "hash": "e06c7d7cc3ae54f5",
+   "faces": "neutral,effort",
+   "first": [
+    0.8397,
+    0,
+    0.0933,
+    -0.0653,
+    0.1546,
+    0.1107,
+    0.2923,
+    0.5255
+   ],
+   "last": [
+    0.7826,
+    0,
+    0.3933,
+    -0.1853,
+    0.6,
+    0.6,
+    0,
+    0.378
+   ]
+  },
+  "zweikampf--0.1-0.5-0.5": {
+   "frames": 30,
+   "hash": "bab5ac486a24f7fb",
+   "faces": "neutral,effort",
+   "first": [
+    0.8397,
+    0,
+    0.0933,
+    -0.0653,
+    0.1546,
+    0.1107,
+    0.2923,
+    0.5255
+   ],
+   "last": [
+    0.7676,
+    0,
+    0.3808,
+    -0.1853,
+    -0.2625,
+    0.85,
+    0,
+    0.378
+   ]
+  },
+  "kontakt-1": {
+   "frames": 24,
+   "hash": "504aa65ec9487ab9",
+   "faces": "pain",
+   "first": [
+    0.8385,
+    0,
+    0.12,
+    -0.084,
+    0.194,
+    0.116,
+    0.3394,
+    0.6245
+   ],
+   "last": [
+    0.8422,
+    0,
+    0.12,
+    -0.084,
+    0.1577,
+    0.116,
+    0,
+    0.152
+   ]
+  },
+  "kontakt--1": {
+   "frames": 24,
+   "hash": "0a603c491f87ce00",
+   "faces": "pain",
+   "first": [
+    0.8385,
+    0,
+    0.12,
+    -0.084,
+    0.194,
+    0.116,
+    0.3394,
+    0.6245
+   ],
+   "last": [
+    0.8422,
+    0,
+    0.12,
+    -0.084,
+    0.1577,
+    0.116,
+    0,
+    0.152
+   ]
+  },
+  "graetsche": {
+   "frames": 32,
+   "hash": "e5121bdb8e50db99",
+   "faces": "effort",
+   "first": [
+    0.8362,
+    0,
+    0.1733,
+    -0.1213,
+    0.2727,
+    0.1267,
+    0.4337,
+    0.8225
+   ],
+   "last": [
+    0.3,
+    -1.1,
+    0.45,
+    0.35,
+    -0.4,
+    0.35,
+    0.15,
+    0.02
+   ]
+  },
+  "graetsche-ohne-slide": {
+   "frames": 6,
+   "hash": "8d71154d67a35878",
+   "faces": "effort",
+   "first": [
+    0.3,
+    -1.1,
+    0.45,
+    0.35,
+    -0.4,
+    0.35,
+    0.15,
+    0.02
+   ],
+   "last": [
+    0.3,
+    -1.1,
+    0.45,
+    0.35,
+    -0.4,
+    0.35,
+    0.15,
+    0.02
+   ]
+  },
+  "meckern": {
+   "frames": 40,
+   "hash": "b22c7fa666930cec",
+   "faces": "angry",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.15,
+    -2.2529,
+    0.3,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0292,
+    -0.15,
+    -2.2188,
+    0.3,
+    0,
+    0.14
+   ]
+  },
+  "gefoult": {
+   "frames": 8,
+   "hash": "c1d1173859b0a0ba",
+   "faces": "pain",
+   "first": [
+    0.2,
+    1.45,
+    0.05,
+    -0.45,
+    -2.5,
+    0.5,
+    0.1,
+    0.35
+   ],
+   "last": [
+    0.2,
+    1.45,
+    0.05,
+    -0.45,
+    -2.5,
+    0.5,
+    0.1,
+    0.35
+   ]
+  },
+  "sim-poke": {
+   "frames": 10,
+   "hash": "c7a1455875a2d4ba",
+   "faces": "neutral,effort",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ],
+   "last": [
+    0.7819,
+    0,
+    -0.06,
+    0.18,
+    -0.45,
+    0.35,
+    0.95,
+    0.2565
+   ]
+  },
+  "aufstehen-tackle-1": {
+   "frames": 30,
+   "hash": "8eaa7b6124936584",
+   "faces": "effort",
+   "first": [
+    0.3,
+    -1.1,
+    0.45,
+    0.35,
+    -0.4,
+    0.35,
+    0.15,
+    0.02
+   ],
+   "last": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0.35,
+    0,
+    0
+   ]
+  },
+  "aufstehen-tackle--1": {
+   "frames": 30,
+   "hash": "8eaa7b6124936584",
+   "faces": "effort",
+   "first": [
+    0.3,
+    -1.1,
+    0.45,
+    0.35,
+    -0.4,
+    0.35,
+    0.15,
+    0.02
+   ],
+   "last": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0.35,
+    0,
+    0
+   ]
+  },
+  "aufstehen-down-1": {
+   "frames": 30,
+   "hash": "48059b5cc688e988",
+   "faces": "pain",
+   "first": [
+    0.2,
+    1.45,
+    0.05,
+    -0.45,
+    -2.5,
+    0.5,
+    0.1,
+    0.35
+   ],
+   "last": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0.35,
+    0,
+    0
+   ]
+  },
+  "aufstehen-down--1": {
+   "frames": 30,
+   "hash": "48059b5cc688e988",
+   "faces": "pain",
+   "first": [
+    0.2,
+    1.45,
+    0.05,
+    -0.45,
+    -2.5,
+    0.5,
+    0.1,
+    0.35
+   ],
+   "last": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0.35,
+    0,
+    0
+   ]
+  },
+  "aufstehen-back-1": {
+   "frames": 30,
+   "hash": "b99fadcd5c553b02",
+   "faces": "effort",
+   "first": [
+    0.22,
+    -1.45,
+    -0.1,
+    0.4,
+    0.55,
+    1.1,
+    -0.45,
+    1.2
+   ],
+   "last": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0.35,
+    0,
+    0
+   ]
+  },
+  "aufstehen-back--1": {
+   "frames": 30,
+   "hash": "b99fadcd5c553b02",
+   "faces": "effort",
+   "first": [
+    0.22,
+    -1.45,
+    -0.1,
+    0.4,
+    0.55,
+    1.1,
+    -0.45,
+    1.2
+   ],
+   "last": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0.35,
+    0,
+    0
+   ]
+  },
+  "aufstehen-side-1": {
+   "frames": 30,
+   "hash": "68a63b5977e59bcb",
+   "faces": "effort",
+   "first": [
+    0.25,
+    0,
+    0.15,
+    0.1,
+    -0.6,
+    0.4,
+    -0.5,
+    0.75
+   ],
+   "last": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0.35,
+    0,
+    0
+   ]
+  },
+  "aufstehen-side--1": {
+   "frames": 30,
+   "hash": "68a63b5977e59bcb",
+   "faces": "effort",
+   "first": [
+    0.25,
+    0,
+    0.15,
+    0.1,
+    -0.6,
+    0.4,
+    -0.5,
+    0.75
+   ],
+   "last": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0.35,
+    0,
+    0
+   ]
+  },
+  "aufstehen-crouch-1": {
+   "frames": 30,
+   "hash": "e40bc49b5c920a07",
+   "faces": "effort",
+   "first": [
+    0.3,
+    0,
+    0.5,
+    0.2,
+    -0.4,
+    0.35,
+    -0.6,
+    1.7
+   ],
+   "last": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0.35,
+    0,
+    0
+   ]
+  },
+  "aufstehen-crouch--1": {
+   "frames": 30,
+   "hash": "e40bc49b5c920a07",
+   "faces": "effort",
+   "first": [
+    0.3,
+    0,
+    0.5,
+    0.2,
+    -0.4,
+    0.35,
+    -0.6,
+    1.7
+   ],
+   "last": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0.35,
+    0,
+    0
+   ]
+  },
+  "akrobatik-fallrueck": {
+   "frames": 40,
+   "hash": "3f982b3a156ba7ad",
+   "faces": "effort,neutral",
+   "first": [
+    0.8446,
+    0,
+    0,
+    0.55,
+    0.9,
+    1.1,
+    -0.9,
+    0.6
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0292,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ]
+  },
+  "akrobatik-seitfall": {
+   "frames": 40,
+   "hash": "af25f1a840067996",
+   "faces": "effort,neutral",
+   "first": [
+    0.8446,
+    0,
+    0,
+    -0.028,
+    -0.5,
+    0.4,
+    -1.4,
+    0.3
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0292,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ]
+  },
+  "akrobatik-state": {
+   "frames": 20,
+   "hash": "3ace520b01b76dc5",
+   "faces": "effort",
+   "first": [
+    0.8446,
+    0,
+    0,
+    0.55,
+    0.9,
+    1.1,
+    -0.9,
+    0.6
+   ],
+   "last": [
+    0.24,
+    -1.65,
+    -0.15,
+    0,
+    0.9,
+    1.1,
+    -0.9,
+    0.6
+   ]
+  },
+  "akrobatik-fertig": {
+   "frames": 6,
+   "hash": "b15213391a52b321",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0516,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ]
+  },
+  "foul-sturzRueck-1-0.2-1": {
+   "frames": 100,
+   "hash": "93ff566c6993cc4e",
+   "faces": "pain",
+   "first": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "last": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0.35,
+    0,
+    0
+   ]
+  },
+  "foul-sturzRueck--1-0.8-1": {
+   "frames": 100,
+   "hash": "b8a37f6c30df4268",
+   "faces": "pain",
+   "first": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "last": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0.35,
+    0,
+    0
+   ]
+  },
+  "foul-sturzRueck-1-0.9-0.6": {
+   "frames": 100,
+   "hash": "db440085eeb8da1a",
+   "faces": "pain",
+   "first": [
+    0.8435,
+    0,
+    0.0255,
+    -0.0169,
+    0.035,
+    0.0479,
+    0.0744,
+    0.1429
+   ],
+   "last": [
+    0.8441,
+    0,
+    0.0232,
+    -0.0169,
+    -0.0284,
+    0.2579,
+    0,
+    0.1864
+   ]
+  },
+  "foul-taumelRueck-1-0.2-1": {
+   "frames": 100,
+   "hash": "41a6b107b24fafad",
+   "faces": "surprised,pain",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0,
+    0,
+    0,
+    0
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "foul-taumelRueck--1-0.8-1": {
+   "frames": 100,
+   "hash": "35c664249e33433e",
+   "faces": "surprised,pain",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0,
+    0,
+    0,
+    0
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "foul-taumelRueck-1-0.9-0.6": {
+   "frames": 100,
+   "hash": "bd51015aa9fa8ecb",
+   "faces": "surprised,pain",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0.035,
+    0.0479,
+    0.0744,
+    0.1429
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    -0.0284,
+    0.0479,
+    0,
+    0.1864
+   ]
+  },
+  "foul-sturzSeite-1-0.2-1": {
+   "frames": 100,
+   "hash": "f55d13aa2b1ab1d5",
+   "faces": "pain",
+   "first": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "last": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0.35,
+    0,
+    0
+   ]
+  },
+  "foul-sturzSeite--1-0.8-1": {
+   "frames": 100,
+   "hash": "89e5a067d76426e1",
+   "faces": "pain",
+   "first": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "last": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0.35,
+    0,
+    0
+   ]
+  },
+  "foul-sturzSeite-1-0.9-0.6": {
+   "frames": 100,
+   "hash": "c01d069e07d5b34d",
+   "faces": "pain",
+   "first": [
+    0.8435,
+    0,
+    0.0255,
+    -0.0169,
+    0.035,
+    0.0479,
+    0.0744,
+    0.1429
+   ],
+   "last": [
+    0.8441,
+    0,
+    0.0232,
+    -0.0169,
+    -0.0284,
+    0.2579,
+    0,
+    0.1864
+   ]
+  },
+  "foul-taumelSeite-1-0.2-1": {
+   "frames": 100,
+   "hash": "d6d367d0227b3194",
+   "faces": "surprised,pain",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    -0.2,
+    0,
+    0.1859,
+    0
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    -0.2,
+    0,
+    0,
+    0
+   ]
+  },
+  "foul-taumelSeite--1-0.8-1": {
+   "frames": 100,
+   "hash": "2e66ae52a0e7f88d",
+   "faces": "surprised,pain",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    -0.2,
+    0,
+    0,
+    0.3572
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    -0.2,
+    0,
+    0,
+    0.4661
+   ]
+  },
+  "foul-taumelSeite-1-0.9-0.6": {
+   "frames": 100,
+   "hash": "05e9e520420d8d1b",
+   "faces": "surprised,pain",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    -0.085,
+    0.0479,
+    0.1859,
+    0.1429
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    -0.1484,
+    0.0479,
+    0,
+    0.1864
+   ]
+  },
+  "foul-sturzVorn-1-0.2-1": {
+   "frames": 100,
+   "hash": "eb4a621734ff0791",
+   "faces": "pain",
+   "first": [
+    0.8446,
+    0,
+    0,
+    0,
+    -1.7136,
+    0.45,
+    0,
+    0
+   ],
+   "last": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0.35,
+    0,
+    0
+   ]
+  },
+  "foul-sturzVorn--1-0.8-1": {
+   "frames": 100,
+   "hash": "311064e18921d635",
+   "faces": "pain",
+   "first": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "last": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0.35,
+    0,
+    0
+   ]
+  },
+  "foul-sturzVorn-1-0.9-0.6": {
+   "frames": 100,
+   "hash": "f0e5af49b7f26551",
+   "faces": "pain",
+   "first": [
+    0.8435,
+    0,
+    0.0255,
+    -0.0169,
+    0.035,
+    0.0479,
+    0.0744,
+    0.1429
+   ],
+   "last": [
+    0.8441,
+    0,
+    0.0232,
+    -0.0169,
+    -0.0284,
+    0.2579,
+    0,
+    0.1864
+   ]
+  },
+  "foul-taumelVorn-1-0.2-1": {
+   "frames": 100,
+   "hash": "1e6a97b515d47816",
+   "faces": "surprised,pain",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0,
+    0,
+    0,
+    0
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "foul-taumelVorn--1-0.8-1": {
+   "frames": 100,
+   "hash": "454c655845859ef3",
+   "faces": "surprised,pain",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0,
+    0,
+    0,
+    0
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "foul-taumelVorn-1-0.9-0.6": {
+   "frames": 100,
+   "hash": "00e851072af146f9",
+   "faces": "surprised,pain",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0.035,
+    0.0479,
+    0.0744,
+    0.1429
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    -0.0284,
+    0.0479,
+    0,
+    0.1864
+   ]
+  },
+  "foul-sturzLuft-1-0.2-1": {
+   "frames": 100,
+   "hash": "1bdb2f2cf0123127",
+   "faces": "pain",
+   "first": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "last": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0.35,
+    0,
+    0
+   ]
+  },
+  "foul-sturzLuft--1-0.8-1": {
+   "frames": 100,
+   "hash": "d2c1a66b1b12982e",
+   "faces": "pain",
+   "first": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "last": [
+    0.8446,
+    0,
+    0,
+    0,
+    0,
+    0.35,
+    0,
+    0
+   ]
+  },
+  "foul-sturzLuft-1-0.9-0.6": {
+   "frames": 100,
+   "hash": "788a04aff8b8471a",
+   "faces": "pain",
+   "first": [
+    0.8435,
+    0,
+    0.0255,
+    -0.0169,
+    0.035,
+    0.0479,
+    0.0744,
+    0.1429
+   ],
+   "last": [
+    0.8441,
+    0,
+    0.0232,
+    -0.0169,
+    -0.0284,
+    0.2579,
+    0,
+    0.1864
+   ]
+  },
+  "foul-taumelLuft-1-0.2-1": {
+   "frames": 100,
+   "hash": "6c8a8496bd551cb4",
+   "faces": "surprised,pain",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0,
+    0,
+    0,
+    0
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "foul-taumelLuft--1-0.8-1": {
+   "frames": 100,
+   "hash": "b3e448197056ed1c",
+   "faces": "surprised,pain",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0,
+    0,
+    0,
+    0
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "foul-taumelLuft-1-0.9-0.6": {
+   "frames": 100,
+   "hash": "168f7f3d4bc5cd59",
+   "faces": "surprised,pain",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0.035,
+    0.0479,
+    0.0744,
+    0.1429
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    -0.0284,
+    0.0479,
+    0,
+    0.1864
+   ]
+  },
+  "foul-ziehen-1-0.2-1": {
+   "frames": 100,
+   "hash": "2bac75e987b70dce",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0.0874,
+    0.1198,
+    0.1859,
+    0.3572
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    -0.0711,
+    0.1198,
+    0,
+    0.4661
+   ]
+  },
+  "foul-ziehen--1-0.8-1": {
+   "frames": 100,
+   "hash": "f347a69bf667e3d7",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0.0874,
+    0.1198,
+    0.1859,
+    0.3572
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    -0.0711,
+    0.1198,
+    0,
+    0.4661
+   ]
+  },
+  "foul-ziehen-1-0.9-0.6": {
+   "frames": 100,
+   "hash": "9ee68c92bd1b5980",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0.0874,
+    0.1198,
+    0.1859,
+    0.3572
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    -0.0711,
+    0.1198,
+    0,
+    0.4661
+   ]
+  },
+  "foul-festhalten-1-0.2-1": {
+   "frames": 100,
+   "hash": "159bb83c00a37ac9",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0.0874,
+    0.1198,
+    0.1859,
+    0.3572
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    -0.0711,
+    0.1198,
+    0,
+    0.4661
+   ]
+  },
+  "foul-festhalten--1-0.8-1": {
+   "frames": 100,
+   "hash": "159bb83c00a37ac9",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0.0874,
+    0.1198,
+    0.1859,
+    0.3572
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    -0.0711,
+    0.1198,
+    0,
+    0.4661
+   ]
+  },
+  "foul-festhalten-1-0.9-0.6": {
+   "frames": 100,
+   "hash": "eb6eacad77aeb42f",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0.0874,
+    0.1198,
+    0.1859,
+    0.3572
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    -0.0711,
+    0.1198,
+    0,
+    0.4661
+   ]
+  },
+  "foul-schubsen-1-0.2-1": {
+   "frames": 100,
+   "hash": "65f450cc3a1a7074",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0.0874,
+    0.1198,
+    0.1859,
+    0.3572
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    -0.0711,
+    0.1198,
+    0,
+    0.4661
+   ]
+  },
+  "foul-schubsen--1-0.8-1": {
+   "frames": 100,
+   "hash": "2c6bb9b08cb8dc26",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0.0874,
+    0.1198,
+    0.1859,
+    0.3572
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    -0.0711,
+    0.1198,
+    0,
+    0.4661
+   ]
+  },
+  "foul-schubsen-1-0.9-0.6": {
+   "frames": 100,
+   "hash": "cc33ec6885418cb3",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0.0874,
+    0.1198,
+    0.1859,
+    0.3572
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    -0.0711,
+    0.1198,
+    0,
+    0.4661
+   ]
+  },
+  "foul-schubsenLuft-1-0.2-1": {
+   "frames": 100,
+   "hash": "52a9cd9eb202c950",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0.0874,
+    0.1198,
+    0,
+    0
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    -0.0711,
+    0.1198,
+    0,
+    0
+   ]
+  },
+  "foul-schubsenLuft--1-0.8-1": {
+   "frames": 100,
+   "hash": "b7f7fa485d3df05b",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0.0874,
+    0.1198,
+    0,
+    0
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    -0.0711,
+    0.1198,
+    0,
+    0
+   ]
+  },
+  "foul-schubsenLuft-1-0.9-0.6": {
+   "frames": 100,
+   "hash": "5aa2c78cb3f57154",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0.0874,
+    0.1198,
+    0.0744,
+    0.1429
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    -0.0711,
+    0.1198,
+    0,
+    0.1864
+   ]
+  },
+  "foul-beinstellen-1-0.2-1": {
+   "frames": 100,
+   "hash": "f23b5679f7407547",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0.0874,
+    0.1198,
+    0.1859,
+    0.3572
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    -0.0711,
+    0.1198,
+    0,
+    0.4661
+   ]
+  },
+  "foul-beinstellen--1-0.8-1": {
+   "frames": 100,
+   "hash": "4b2be59942deb56b",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0.0874,
+    0.1198,
+    0.1859,
+    0.3572
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    -0.0711,
+    0.1198,
+    0,
+    0.4661
+   ]
+  },
+  "foul-beinstellen-1-0.9-0.6": {
+   "frames": 100,
+   "hash": "a27a7c5ce9dfec6d",
+   "faces": "effort",
+   "first": [
+    0.8417,
+    0,
+    0.0637,
+    -0.0422,
+    0.0874,
+    0.1198,
+    0.1859,
+    0.3572
+   ],
+   "last": [
+    0.8435,
+    0,
+    0.058,
+    -0.0422,
+    -0.0711,
+    0.1198,
+    0,
+    0.4661
+   ]
+  },
+  "foul-wirkungslos": {
+   "frames": 46,
+   "hash": "2a718f52c9d3a331",
+   "faces": "neutral,effort,neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.026,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ]
+  },
+  "geste-finger": {
+   "frames": 170,
+   "hash": "c9652f84365d7b25",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    -0.15,
+    0.15,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0584,
+    -0.028,
+    -0.15,
+    0.15,
+    0,
+    0.14
+   ]
+  },
+  "geste-arme": {
+   "frames": 170,
+   "hash": "df3d17060494c5aa",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    -0.0057,
+    -0.028,
+    -0.95,
+    -0.4,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    -0.0016,
+    -0.028,
+    -0.95,
+    -0.4,
+    0,
+    0.14
+   ]
+  },
+  "geste-scheuchen": {
+   "frames": 170,
+   "hash": "7efbcbb56561b29a",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.2043,
+    -0.028,
+    -1.1997,
+    0.8,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.2084,
+    -0.028,
+    -1.4357,
+    0.8,
+    0,
+    0.14
+   ]
+  },
+  "geste-call": {
+   "frames": 170,
+   "hash": "e407fb0a9c9204e0",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    0,
+    0.3465,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0584,
+    -0.028,
+    0,
+    0.0811,
+    0,
+    0.14
+   ]
+  },
+  "geste-haende": {
+   "frames": 170,
+   "hash": "4b6266ad943fccf7",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    -0.0257,
+    -0.328,
+    -2.5,
+    -0.4,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    -0.0216,
+    -0.328,
+    -2.5,
+    -0.4,
+    0,
+    0.14
+   ]
+  },
+  "geste-abwinken": {
+   "frames": 170,
+   "hash": "a79f5c35c8c0fc73",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0591,
+    -0.028,
+    0,
+    0.35,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.1584,
+    -0.028,
+    0,
+    0.35,
+    0,
+    0.14
+   ]
+  },
+  "geste-abklatschen": {
+   "frames": 170,
+   "hash": "2ab55d6cb456b4f6",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    0,
+    0.2,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0584,
+    -0.028,
+    0,
+    0.2,
+    0,
+    0.14
+   ]
+  },
+  "geste-zeigen": {
+   "frames": 170,
+   "hash": "939dd30b9f974801",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    0.05,
+    0.05,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0584,
+    -0.028,
+    0.05,
+    0.05,
+    0,
+    0.14
+   ]
+  },
+  "geste-geballt": {
+   "frames": 170,
+   "hash": "db1fbda9889a9389",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    0,
+    0.2,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0584,
+    -0.028,
+    0,
+    0.2,
+    0,
+    0.14
+   ]
+  },
+  "geste-schulter": {
+   "frames": 170,
+   "hash": "7288ca129d686789",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    -0.15,
+    0.774,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0584,
+    -0.028,
+    -0.15,
+    0.7134,
+    0,
+    0.14
+   ]
+  },
+  "geste-schimpfen": {
+   "frames": 170,
+   "hash": "03741e3e5e111d36",
+   "faces": "angry",
+   "first": [
+    0.8446,
+    0,
+    0.1343,
+    -0.028,
+    0.55,
+    0.1027,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.1384,
+    -0.028,
+    0.55,
+    0.1199,
+    0,
+    0.14
+   ]
+  },
+  "geste-wade": {
+   "frames": 170,
+   "hash": "f7e60b284ae5c049",
+   "faces": "pain",
+   "first": [
+    0.8056,
+    0,
+    0.7543,
+    -0.378,
+    -0.1,
+    -0.2,
+    0,
+    1.2
+   ],
+   "last": [
+    0.7904,
+    0,
+    0.7584,
+    -0.378,
+    -0.1,
+    -0.2,
+    0,
+    1.2
+   ]
+  },
+  "geste-klettern": {
+   "frames": 170,
+   "hash": "7ad7c6d58909f05c",
+   "faces": "effort",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.328,
+    -2.0434,
+    -0.1408,
+    -0.6084,
+    0.5958
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0584,
+    -0.328,
+    -1.5302,
+    -0.15,
+    -0.1502,
+    1.0998
+   ]
+  },
+  "geste-dehnenL": {
+   "frames": 170,
+   "hash": "1054230842ee5ca6",
+   "faces": "neutral",
+   "first": [
+    0.8246,
+    0,
+    0.1043,
+    -0.028,
+    0.7,
+    0.6,
+    0,
+    2.5
+   ],
+   "last": [
+    0.8246,
+    0,
+    0.1084,
+    -0.028,
+    0.7,
+    0.6,
+    0,
+    2.5
+   ]
+  },
+  "geste-dehnenR": {
+   "frames": 170,
+   "hash": "59da7752ee3d115d",
+   "faces": "neutral",
+   "first": [
+    0.8246,
+    0,
+    0.1043,
+    -0.028,
+    -0.4,
+    -0.36,
+    0.7,
+    0.14
+   ],
+   "last": [
+    0.8246,
+    0,
+    0.1084,
+    -0.028,
+    -0.4,
+    -0.36,
+    0.7,
+    0.14
+   ]
+  },
+  "geste-kreisen": {
+   "frames": 170,
+   "hash": "a5c33487e34633fd",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0628,
+    -0.0312,
+    0.1,
+    0.55,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.1145,
+    -0.049,
+    0.1,
+    0.55,
+    0,
+    0.14
+   ]
+  },
+  "geste-armkreisen": {
+   "frames": 170,
+   "hash": "698261cd631cc194",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0243,
+    -0.028,
+    -0.0833,
+    0.12,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0284,
+    -0.028,
+    -14.1667,
+    0.12,
+    0,
+    0.14
+   ]
+  },
+  "geste-hopser": {
+   "frames": 170,
+   "hash": "52b963ca2017ad49",
+   "faces": "neutral",
+   "first": [
+    0.9024,
+    0,
+    0.0533,
+    -0.0653,
+    0.4003,
+    0.12,
+    -1.0009,
+    0.25
+   ],
+   "last": [
+    0.8546,
+    0,
+    0.0533,
+    -0.0653,
+    0.8264,
+    0.12,
+    -0.15,
+    0.646
+   ]
+  },
+  "geste-zaun": {
+   "frames": 170,
+   "hash": "a04d8a3d789db00b",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.1343,
+    -0.028,
+    -1.05,
+    0.05,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.1384,
+    -0.028,
+    -1.05,
+    0.05,
+    0,
+    0.14
+   ]
+  },
+  "geste-unschuld": {
+   "frames": 170,
+   "hash": "3805f029aae530a9",
+   "faces": "surprised",
+   "first": [
+    0.8446,
+    0,
+    0.0531,
+    -0.028,
+    -0.0252,
+    0.1694,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0084,
+    -0.028,
+    -1.1077,
+    0.55,
+    0,
+    0.14
+   ]
+  },
+  "geste-reklamieren": {
+   "frames": 170,
+   "hash": "d90c1daa646f4851",
+   "faces": "angry",
+   "first": [
+    0.8446,
+    0,
+    0.0555,
+    -0.0279,
+    -0.0067,
+    0.1814,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.1184,
+    0.0136,
+    -0.2834,
+    1.25,
+    0,
+    0.14
+   ]
+  },
+  "geste-troesten": {
+   "frames": 170,
+   "hash": "4b574d76c7ed579d",
+   "faces": "sad",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.0258,
+    -0.0088,
+    0.1635,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0584,
+    0.222,
+    0.1,
+    -0.67,
+    0,
+    0.14
+   ]
+  },
+  "geste-kopfschuetteln": {
+   "frames": 170,
+   "hash": "3071d9ce56e47bb5",
+   "faces": "sad",
+   "first": [
+    0.8446,
+    0,
+    0.0558,
+    -0.0242,
+    0.0013,
+    0.1529,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.1784,
+    0.272,
+    0.1,
+    -0.4,
+    0,
+    0.14
+   ]
+  },
+  "geste-abgang": {
+   "frames": 170,
+   "hash": "056ccbfc8db5ada2",
+   "faces": "sad",
+   "first": [
+    0.8446,
+    0,
+    0.0553,
+    -0.026,
+    0.0006,
+    0.1599,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.2584,
+    0.372,
+    0.12,
+    0.14,
+    0,
+    0.14
+   ]
+  },
+  "geste-vorteil": {
+   "frames": 170,
+   "hash": "834e9672810dff22",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0526,
+    -0.028,
+    -0.0513,
+    0.1631,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0084,
+    -0.028,
+    -1.566,
+    0.25,
+    0,
+    0.14
+   ]
+  },
+  "geste-karteGelb": {
+   "frames": 170,
+   "hash": "111af248395716ac",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0534,
+    -0.0293,
+    0.0013,
+    0.1595,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    -0.0116,
+    -0.128,
+    0.1,
+    0.12,
+    0,
+    0.14
+   ]
+  },
+  "geste-karteRot": {
+   "frames": 170,
+   "hash": "e230c40eabb27989",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0534,
+    -0.0293,
+    0.0013,
+    0.1595,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    -0.0116,
+    -0.128,
+    0.1,
+    0.12,
+    0,
+    0.14
+   ]
+  },
+  "geste-notizbuch": {
+   "frames": 170,
+   "hash": "a6518aa0e7755210",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0552,
+    -0.0246,
+    -0.0045,
+    0.15,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.1584,
+    0.352,
+    -0.5,
+    -0.96,
+    0,
+    0.14
+   ]
+  },
+  "geste-dose": {
+   "frames": 170,
+   "hash": "f4b4456ff8dbdf61",
+   "faces": "neutral",
+   "first": [
+    0.8447,
+    0,
+    0.0543,
+    -0.028,
+    -0.008,
+    0.1635,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8423,
+    0,
+    0.0584,
+    -0.028,
+    -0.9,
+    0.55,
+    0,
+    0.14
+   ]
+  },
+  "geste-bier": {
+   "frames": 170,
+   "hash": "70719043537a7dfb",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0541,
+    -0.0293,
+    -0.9013,
+    0.55,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0584,
+    -0.028,
+    -0.9,
+    0.55,
+    0,
+    0.14
+   ]
+  },
+  "geste-dosejubel": {
+   "frames": 170,
+   "hash": "528ecc9471b3804c",
+   "faces": "happy",
+   "first": [
+    0.8449,
+    0,
+    0.0516,
+    -0.0366,
+    -0.0995,
+    0.1664,
+    0,
+    0.14
+   ],
+   "last": [
+    0.9215,
+    0,
+    -0.0216,
+    -0.278,
+    -2.9,
+    0.0811,
+    0,
+    0.14
+   ]
+  },
+  "geste-punkt": {
+   "frames": 170,
+   "hash": "71434a03a24b8f43",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0563,
+    -0.028,
+    0.002,
+    0.1588,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.1584,
+    -0.028,
+    0.1,
+    0.1,
+    0,
+    0.14
+   ]
+  },
+  "geste-unbekannt": {
+   "frames": 170,
+   "hash": "be5a8d9ced6fa8ff",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0584,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ]
+  },
+  "geste-reklamieren-erholen": {
+   "frames": 40,
+   "hash": "641e6d40e1d87063",
+   "faces": "angry",
+   "first": [
+    0.8446,
+    0,
+    0.0555,
+    -0.0279,
+    -0.0067,
+    0.1814,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0892,
+    -0.0779,
+    -0.4299,
+    1.25,
+    0,
+    0.14
+   ]
+  },
+  "geste-andere-erholen": {
+   "frames": 10,
+   "hash": "01612fdc1668a319",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.0493,
+    -0.028,
+    0,
+    0.16,
+    0,
+    0.14
+   ]
+  },
+  "geste-wechsel": {
+   "frames": 80,
+   "hash": "86ba2a03469f1eb3",
+   "faces": "neutral",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.028,
+    -0.15,
+    0.15,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.1016,
+    -0.028,
+    -1.05,
+    0.05,
+    0,
+    0.14
+   ]
+  },
+  "geste-im-hecht": {
+   "frames": 10,
+   "hash": "a884896229086d26",
+   "faces": "effort",
+   "first": [
+    0.3333,
+    0,
+    0.0857,
+    -0.028,
+    -2.2857,
+    0.2,
+    -0.0714,
+    0.9143
+   ],
+   "last": [
+    0.3333,
+    0,
+    0.0857,
+    -0.028,
+    -2.2857,
+    0.2,
+    -0.0714,
+    0.9143
+   ]
+  },
+  "jubel-flugzeug-0": {
+   "frames": 70,
+   "hash": "eaec09fe31ed6801",
+   "faces": "happy",
+   "first": [
+    0.8446,
+    0,
+    0.1,
+    -0.25,
+    0,
+    1.45,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.1,
+    -0.25,
+    0,
+    1.45,
+    0,
+    0.14
+   ]
+  },
+  "jubel-flugzeug-3": {
+   "frames": 70,
+   "hash": "2a7c361f920d2f4c",
+   "faces": "happy",
+   "first": [
+    0.8385,
+    0,
+    0.1,
+    -0.25,
+    0,
+    1.45,
+    0.3394,
+    0.6245
+   ],
+   "last": [
+    0.819,
+    0,
+    0.1,
+    -0.25,
+    0,
+    1.45,
+    0.48,
+    0.08
+   ]
+  },
+  "jubel-faust-0": {
+   "frames": 70,
+   "hash": "fd38aaf5f99e1f6e",
+   "faces": "happy",
+   "first": [
+    0.8634,
+    0,
+    0.0543,
+    -0.25,
+    -0.2,
+    0.15,
+    0,
+    0.14
+   ],
+   "last": [
+    0.9043,
+    0,
+    0.02,
+    -0.25,
+    -0.2,
+    0.15,
+    0,
+    0.14
+   ]
+  },
+  "jubel-faust-3": {
+   "frames": 70,
+   "hash": "ab7fbf323935506b",
+   "faces": "happy",
+   "first": [
+    0.8459,
+    0,
+    0.12,
+    -0.25,
+    -0.2,
+    0.15,
+    0.3394,
+    0.6245
+   ],
+   "last": [
+    0.8413,
+    0,
+    0.12,
+    -0.25,
+    -0.2,
+    0.15,
+    0.48,
+    0.08
+   ]
+  },
+  "jubel-tanz-0": {
+   "frames": 70,
+   "hash": "123f0ec57dcc877e",
+   "faces": "happy",
+   "first": [
+    0.964,
+    0,
+    -0.12,
+    -0.25,
+    -1.7035,
+    0.35,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8618,
+    0,
+    -0.12,
+    -0.25,
+    -2.2995,
+    0.35,
+    0,
+    0.14
+   ]
+  },
+  "jubel-tanz-3": {
+   "frames": 70,
+   "hash": "a333511f3f9c8cc3",
+   "faces": "happy",
+   "first": [
+    0.9508,
+    0,
+    -0.12,
+    -0.25,
+    -1.7448,
+    0.35,
+    0.3394,
+    0.6245
+   ],
+   "last": [
+    0.8772,
+    0,
+    -0.12,
+    -0.25,
+    -2.739,
+    0.35,
+    0.48,
+    0.08
+   ]
+  },
+  "jubel-rutscher-0": {
+   "frames": 70,
+   "hash": "8130a2c3c2f952b8",
+   "faces": "happy",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.25,
+    -2.8,
+    0.3,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.02,
+    -0.25,
+    -2.8,
+    0.3,
+    0,
+    0.14
+   ]
+  },
+  "jubel-rutscher-3": {
+   "frames": 70,
+   "hash": "a68f17035f62a622",
+   "faces": "happy",
+   "first": [
+    0.46,
+    0,
+    -0.35,
+    -0.35,
+    -2.8,
+    0.3,
+    -0.05,
+    1.5
+   ],
+   "last": [
+    0.46,
+    0,
+    -0.35,
+    -0.35,
+    -2.8,
+    0.3,
+    -0.05,
+    1.5
+   ]
+  },
+  "jubel-trikot-0": {
+   "frames": 70,
+   "hash": "ff09897ad49c3f3b",
+   "faces": "happy",
+   "first": [
+    0.8446,
+    0,
+    -0.12,
+    -0.25,
+    -2.75,
+    0.2,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    -0.12,
+    -0.25,
+    -2.75,
+    0.2,
+    0,
+    0.14
+   ]
+  },
+  "jubel-trikot-3": {
+   "frames": 70,
+   "hash": "e53443d929b6b831",
+   "faces": "happy",
+   "first": [
+    0.8385,
+    0,
+    -0.12,
+    -0.25,
+    -2.75,
+    0.2,
+    0.3394,
+    0.6245
+   ],
+   "last": [
+    0.819,
+    0,
+    -0.12,
+    -0.25,
+    -2.75,
+    0.2,
+    0.48,
+    0.08
+   ]
+  },
+  "jubel-ohr-0": {
+   "frames": 70,
+   "hash": "d9ddb8c6202af1bd",
+   "faces": "happy",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.25,
+    -0.35,
+    -0.4,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.02,
+    -0.25,
+    -0.35,
+    -0.4,
+    0,
+    0.14
+   ]
+  },
+  "jubel-ohr-3": {
+   "frames": 70,
+   "hash": "dba4794ba4ef7f9e",
+   "faces": "happy",
+   "first": [
+    0.8385,
+    0,
+    0.12,
+    -0.25,
+    -0.35,
+    -0.4,
+    0.3394,
+    0.6245
+   ],
+   "last": [
+    0.819,
+    0,
+    0.12,
+    -0.25,
+    -0.35,
+    -0.4,
+    0.48,
+    0.08
+   ]
+  },
+  "jubel-ruecken-0": {
+   "frames": 70,
+   "hash": "a08f06bc2d9bb003",
+   "faces": "happy",
+   "first": [
+    0.8446,
+    0,
+    -0.18,
+    -0.35,
+    -2.6,
+    -1.2,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    -0.18,
+    -0.35,
+    -2.6,
+    -1.2,
+    0,
+    0.14
+   ]
+  },
+  "jubel-ruecken-3": {
+   "frames": 70,
+   "hash": "a3abd664cf6e8274",
+   "faces": "happy",
+   "first": [
+    0.8385,
+    0,
+    -0.18,
+    -0.35,
+    -2.6,
+    -1.2,
+    0.3394,
+    0.6245
+   ],
+   "last": [
+    0.819,
+    0,
+    -0.18,
+    -0.35,
+    -2.6,
+    -1.2,
+    0.48,
+    0.08
+   ]
+  },
+  "jubel-brust-0": {
+   "frames": 70,
+   "hash": "503ff663204a2bdd",
+   "faces": "happy",
+   "first": [
+    0.8446,
+    0,
+    -0.1,
+    -0.3,
+    -1.2983,
+    0.55,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    -0.1,
+    -0.3,
+    -1.4451,
+    0.55,
+    0,
+    0.14
+   ]
+  },
+  "jubel-brust-3": {
+   "frames": 70,
+   "hash": "5b3c0d9822149294",
+   "faces": "happy",
+   "first": [
+    0.8385,
+    0,
+    -0.1,
+    -0.3,
+    -1.3738,
+    0.55,
+    0.3394,
+    0.6245
+   ],
+   "last": [
+    0.819,
+    0,
+    -0.1,
+    -0.3,
+    -1.15,
+    0.55,
+    0.48,
+    0.08
+   ]
+  },
+  "jubel-umarmen-0": {
+   "frames": 70,
+   "hash": "d6dbbfc0a225ea89",
+   "faces": "happy",
+   "first": [
+    0.8981,
+    0,
+    0.12,
+    -0.25,
+    -1.7,
+    0.75,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8639,
+    0,
+    0.12,
+    -0.25,
+    -1.7,
+    0.75,
+    0,
+    0.14
+   ]
+  },
+  "jubel-umarmen-3": {
+   "frames": 70,
+   "hash": "0b6f7d554ec0946c",
+   "faces": "happy",
+   "first": [
+    0.8604,
+    0,
+    0.12,
+    -0.25,
+    -1.7,
+    0.75,
+    0.3394,
+    0.6245
+   ],
+   "last": [
+    0.8809,
+    0,
+    0.12,
+    -0.25,
+    -1.7,
+    0.75,
+    0.48,
+    0.08
+   ]
+  },
+  "jubel-hinterher-0": {
+   "frames": 70,
+   "hash": "c297843df27e67b7",
+   "faces": "happy",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.25,
+    0,
+    0.25,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.02,
+    -0.25,
+    0,
+    0.25,
+    0,
+    0.14
+   ]
+  },
+  "jubel-hinterher-3": {
+   "frames": 70,
+   "hash": "380f1010ae7489f2",
+   "faces": "happy",
+   "first": [
+    0.8385,
+    0,
+    0.12,
+    -0.25,
+    0.194,
+    0.25,
+    0.3394,
+    0.6245
+   ],
+   "last": [
+    0.819,
+    0,
+    0.12,
+    -0.25,
+    0.4321,
+    0.25,
+    0.48,
+    0.08
+   ]
+  },
+  "jubel-schrei-0": {
+   "frames": 70,
+   "hash": "76b63a8711bc8610",
+   "faces": "happy",
+   "first": [
+    0.8792,
+    0,
+    -0.2,
+    -0.5,
+    -0.5975,
+    0.45,
+    0,
+    0.14
+   ],
+   "last": [
+    0.9135,
+    0,
+    -0.2,
+    -0.5,
+    -0.5672,
+    0.45,
+    0,
+    0.14
+   ]
+  },
+  "jubel-schrei-3": {
+   "frames": 70,
+   "hash": "e2f734a4d1b07976",
+   "faces": "happy",
+   "first": [
+    0.8907,
+    0,
+    -0.2,
+    -0.5,
+    -0.5695,
+    0.45,
+    0.3394,
+    0.6245
+   ],
+   "last": [
+    0.8604,
+    0,
+    -0.2,
+    -0.5,
+    -0.605,
+    0.45,
+    0.48,
+    0.08
+   ]
+  },
+  "jubel-unbekannt-0": {
+   "frames": 70,
+   "hash": "975a876d8a2f68ee",
+   "faces": "happy",
+   "first": [
+    0.8446,
+    0,
+    0.0543,
+    -0.25,
+    0,
+    0.16,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.02,
+    -0.25,
+    0,
+    0.16,
+    0,
+    0.14
+   ]
+  },
+  "jubel-unbekannt-3": {
+   "frames": 70,
+   "hash": "67ca7fecfdd0bef2",
+   "faces": "happy",
+   "first": [
+    0.8385,
+    0,
+    0.12,
+    -0.25,
+    0.194,
+    0.116,
+    0.3394,
+    0.6245
+   ],
+   "last": [
+    0.819,
+    0,
+    0.12,
+    -0.25,
+    0.4321,
+    0.116,
+    0.48,
+    0.08
+   ]
+  },
+  "gegentor": {
+   "frames": 10,
+   "hash": "37a36a76f6453680",
+   "faces": "sad",
+   "first": [
+    0.8446,
+    0,
+    0.16,
+    0.4,
+    0.1,
+    0.55,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.16,
+    0.4,
+    0.1,
+    0.55,
+    0,
+    0.14
+   ]
+  },
+  "gegentor-jubel": {
+   "frames": 10,
+   "hash": "7d0cd7f7ebccdd43",
+   "faces": "happy",
+   "first": [
+    0.8634,
+    0,
+    0.0543,
+    -0.25,
+    -0.2,
+    0.15,
+    0,
+    0.14
+   ],
+   "last": [
+    0.886,
+    0,
+    0.0493,
+    -0.25,
+    -0.2,
+    0.15,
+    0,
+    0.14
+   ]
+  },
+  "gewitter": {
+   "frames": 20,
+   "hash": "988340b8155f8175",
+   "faces": "effort",
+   "first": [
+    0.8446,
+    0,
+    0.0546,
+    -0.0278,
+    -0.0025,
+    0.0005,
+    0,
+    0.14
+   ],
+   "last": [
+    0.8446,
+    0,
+    0.3229,
+    0.1722,
+    -2.5025,
+    0.4505,
+    0,
+    0.14
+   ]
+  },
+  "jubel-gesichtswunsch": {
+   "frames": 6,
+   "hash": "a2fe4404063e3719",
+   "faces": "happy",
+   "first": [
+    0.964,
+    0,
+    -0.12,
+    -0.25,
+    -1.7035,
+    0.35,
+    0,
+    0.14
+   ],
+   "last": [
+    0.9192,
+    0,
+    -0.12,
+    -0.25,
+    -1.9647,
+    0.35,
+    0,
+    0.14
+   ]
+  },
+  "mix-feld": {
+   "frames": 400,
+   "hash": "583727947de3ead7",
+   "faces": "sad,pain,effort,pain,surprised,effort,pain,surprised,neutral,sad,effort,happy,effort,pain,neutral,pain,effort,happy,effort,neutral,pain,effort,surprised,neutral,effort,pain,effort,neutral,happy,pain,effort,happy,angry,neutral,pain,effort,angry,sad,surprised,sad,neutral,effort,neutral,surprised,effort,surprised,effort,angry,pain,sad,effort,angry,effort,angry,neutral,happy,sad,effort,angry,sad,effort,pain,effort,neutral,effort,happy,neutral,effort,sad,happy,effort,sad,effort,sad,pain,effort,happy,effort,sad,neutral,effort,pain,effort,neutral,effort,angry,pain,effort,neutral,angry,effort,pain,effort,pain,neutral,angry,effort,happy,effort,sad,effort,surprised,pain,happy,effort,happy,effort,pain,effort,happy,surprised,effort,happy,effort,pain,angry,neutral,pain,effort,pain,effort,sad,effort,sad,angry,effort,pain,effort,pain,neutral,happy,effort,sad,effort,neutral,effort,sad,effort,neutral,effort,happy,effort,neutral,surprised,effort,sad,neutral,happy,effort,happy,surprised,happy,effort,surprised,effort,sad,neutral,pain,effort,sad,effort,surprised,effort,happy,angry,effort,angry,effort,happy,effort,sad,neutral,effort,pain,angry,effort,neutral,pain,effort,happy,effort,pain,surprised,effort,happy,sad,pain,sad,effort,neutral,pain,effort,pain,surprised,effort,sad,effort,pain,sad,effort,pain,sad,effort,sad,effort,angry,effort,surprised,effort,surprised,neutral,effort,pain,effort,angry,effort,surprised,effort,angry,effort,sad,pain,effort,pain,surprised,pain,effort,happy,neutral,effort,happy,effort,happy,effort,neutral,effort,happy,effort,surprised,effort,pain,surprised,effort,neutral,angry,surprised,effort,pain,effort,surprised,sad,effort,surprised,effort,pain,neutral,sad,neutral,effort,neutral,angry,effort,angry,effort,happy,effort,neutral,pain,effort,angry,surprised,effort,pain,happy,effort,happy,sad,effort,neutral,sad,exhausted,effort,angry,sad,effort,happy,effort",
+   "first": [
+    0.8446,
+    0,
+    0.16,
+    0.4,
+    0.1,
+    0.55,
+    0,
+    0.14
+   ],
+   "last": [
+    0.7813,
+    0,
+    0.2574,
+    -0.0507,
+    -0.8789,
+    0.1582,
+    -0.2233,
+    0.3908
+   ]
+  },
+  "mix-keeper": {
+   "frames": 400,
+   "hash": "8d6b37b7a9260756",
+   "faces": "effort,angry,effort,sad,effort,sad,effort,pain,happy,surprised,effort,happy,neutral,sad,pain,effort,angry,pain,effort,angry,effort,neutral,effort,sad,pain,effort,pain,effort,surprised,pain,effort,neutral,sad,pain,happy,effort,pain,surprised,effort,sad,effort,surprised,pain,sad,pain,happy,surprised,sad,neutral,effort,pain,angry,surprised,effort,sad,pain,effort,pain,sad,surprised,effort,neutral,happy,sad,effort,sad,effort,sad,effort,surprised,angry,pain,effort,sad,effort,angry,pain,effort,happy,pain,effort,surprised,angry,effort,pain,sad,pain,effort,happy,surprised,sad,effort,surprised,effort,neutral,effort,happy,angry,happy,sad,pain,effort,pain,angry,pain,sad,effort,sad,effort,pain,happy,effort,pain,effort,happy,sad,pain,neutral,effort,neutral,sad,angry,effort,sad,pain,effort,pain,neutral,happy,effort,surprised,sad,effort,neutral,effort,pain,effort,sad,exhausted,effort,sad,surprised,angry,pain,neutral,effort,sad,effort,surprised,pain,effort,surprised,effort,surprised,effort,surprised,pain,effort,neutral,surprised,sad,happy,surprised,effort,angry,effort,pain,effort,happy,effort,sad,pain,neutral,effort,neutral,pain,happy,sad,angry,effort,happy,pain,sad,surprised,sad,pain,effort,sad,effort,pain,happy,effort,happy,sad,effort,surprised,effort,pain,sad,pain,neutral,effort,pain,sad,angry,effort,neutral,effort,pain,effort,surprised,effort,angry,pain,effort,sad,effort,neutral,effort,pain,effort,sad,neutral,happy,effort,happy,effort,sad,pain,neutral,angry,effort,sad,effort,angry,pain,happy,effort,pain,surprised,pain,sad,effort,angry,neutral,sad,effort,happy,surprised,sad,effort,pain,neutral,effort,pain,happy,effort,neutral,pain,sad,effort,happy,angry,pain,neutral,effort,pain,effort,pain,angry,surprised,effort,pain,neutral,pain,effort,happy,effort,angry,sad,effort,surprised,neutral,effort,pain,neutral,pain,effort,pain,sad,effort,surprised,effort",
+   "first": [
+    0.24,
+    -1.65,
+    -0.15,
+    0,
+    0.9,
+    1.1,
+    -0.9047,
+    0.6
+   ],
+   "last": [
+    0.7951,
+    0,
+    0.3167,
+    0,
+    -1.05,
+    -0.28,
+    -0.1451,
+    0.3731
+   ]
+  },
+  "mix-schiri": {
+   "frames": 400,
+   "hash": "3b191c4f11f0b164",
+   "faces": "pain,effort,angry,happy,pain,happy,effort,pain,effort,neutral,effort,happy,pain,effort,angry,pain,effort,pain,effort,exhausted,effort,happy,angry,effort,happy,effort,angry,happy,angry,effort,angry,surprised,happy,neutral,angry,effort,pain,effort,sad,effort,neutral,exhausted,effort,sad,pain,effort,happy,effort,pain,effort,pain,effort,sad,neutral,effort,happy,neutral,sad,effort,surprised,pain,effort,angry,effort,neutral,surprised,effort,happy,effort,happy,neutral,effort,neutral,pain,effort,happy,effort,surprised,effort,pain,surprised,effort,pain,effort,neutral,surprised,effort,neutral,happy,pain,neutral,effort,surprised,angry,pain,surprised,pain,surprised,pain,effort,pain,effort,happy,effort,angry,pain,effort,neutral,effort,pain,surprised,effort,pain,effort,sad,happy,effort,pain,effort,sad,effort,pain,effort,pain,happy,effort,happy,surprised,happy,effort,surprised,neutral,effort,pain,effort,pain,sad,pain,angry,sad,effort,sad,effort,happy,neutral,effort,neutral,effort,surprised,effort,neutral,effort,sad,effort,pain,effort,sad,happy,effort,pain,happy,neutral,exhausted,effort,sad,pain,effort,sad,effort,happy,angry,sad,effort,pain,effort,neutral,effort,happy,surprised,happy,effort,happy,effort,happy,effort,happy,angry,pain,effort,angry,pain,effort,happy,pain,neutral,surprised,pain,effort,happy,neutral,effort,happy,angry,effort,neutral,effort,angry,effort,pain,effort,pain,neutral,effort,angry,exhausted,effort,happy,surprised,effort,angry,pain,neutral,happy,effort,happy,pain,effort,pain,effort,happy,effort,surprised,effort,surprised,happy,sad,effort,angry,effort,angry,pain,effort,pain,effort,surprised,happy,effort,angry,neutral,happy,surprised,effort,pain,neutral,effort,neutral,surprised,effort,sad,effort,neutral,pain,happy,effort,pain,effort,angry,effort,sad,pain,happy,effort,surprised,pain,effort,neutral,angry,effort,pain,effort,pain,effort,pain,surprised,sad,angry,sad,angry,effort,happy,effort,pain,sad",
+   "first": [
+    0.2446,
+    -1.45,
+    -0.1,
+    0.4884,
+    0.55,
+    1.1,
+    -0.55,
+    1.2
+   ],
+   "last": [
+    0.8663,
+    -0.0091,
+    0.16,
+    0.4,
+    0.1,
+    0.55,
+    -0.9,
+    0.6
+   ]
+  }
+ },
+ "misc": {
+  "gesichtDreck": "485409414fb2f217",
+  "pose": "446c2161fd3b54c1",
+  "faceArt": "9c88a21106519957",
+  "bones": "root,hips,spine,head,upperArmL,lowerArmL,upperArmR,lowerArmR,upperLegL,lowerLegL,footL,upperLegR,lowerLegR,footR,hood"
+ }
+}
