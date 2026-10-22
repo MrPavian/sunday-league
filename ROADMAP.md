@@ -952,6 +952,9 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
 - Mehr Sponsoren, mehr Spielernamen, mehr Nationalitäten.
 
 **Kleinkram aus der Prüfung 11.9**
+- Tim „Der Tiger“ im Hinterhof-Fenster: Clipping – Arme und Kopf tauchen bei Gesten (Jubel, Schluck, Zeigen) teils in die
+  Rückwand bzw. Fensterlaibung ein (gemeldet vom Nutzer, 2026-10-22). Lösung prüfen: Figur weiter nach vorn, Gesten im
+  Fenster mit kleinerem Ausschlag nach hinten, oder Laibung tiefer.
 - Der Namensgenerator kann zufällig echte Profinamen erzeugen (gesehen: ein Name eines aktiven Nationaltorwarts);
   Sperrliste bekannter Profinamen erwägen.
 - Pixel-Porträt der Trainerbewerber altert nicht (65-Jähriger mit vollem braunem Haar).
