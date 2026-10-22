@@ -1,6 +1,7 @@
 // Liveticker: macht aus den Spielereignissen kurze Kommentarzeilen – für simulierte
 // Partien, die man nicht selbst spielt. Nutzt einen eigenen Zufall, damit der
 // Ticker das Ergebnis nicht verändert.
+import { hypot } from '../core/math.js';
 import { TRICKS } from './tricks.js';
 import { MATCH_INJURIES } from './knocks.js';
 import { bondOf, isBad, isGood } from './bonds.js';
@@ -105,7 +106,7 @@ export function createCommentator(m, seed = 1) {
           resolveShot('wide');
           const p = who(e.playerId);
           const goalX = attackDir(m, p?.team ?? 0) * m.pitch.halfLength;
-          const dist = p ? Math.round(Math.hypot(goalX - p.pos.x, p.pos.z)) : 10;
+          const dist = p ? Math.round(hypot(goalX - p.pos.x, p.pos.z)) : 10;
           pendingShot = { id: e.playerId, team: p?.team ?? 0, time: m.time, dist, acro: e.acro };
           break;
         }

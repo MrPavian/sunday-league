@@ -1,7 +1,7 @@
 // Deterministische Match-Simulation. Kennt kein three.js – dieselbe Logik soll
 // später auch ungespielte Partien simulieren und online laufen können.
 import { createRng } from '../core/rng.js';
-import { dist2d, norm } from '../core/math.js';
+import { dist2d, hypot, norm } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
 import { TEAM_PRESETS } from '../data/teams.js';
 import { applyJobPerks } from '../data/jobs.js';
@@ -393,7 +393,7 @@ function defenceSwitch(m) {
 
 function handleBallEvent(m, ev) {
   // Flog der Ball hoch oder scharf ins Aus? (Für „Ball über den Zaun".)
-  if (ev.type === 'out') ev.flying = m.ball.pos.y > 0.6 || Math.hypot(m.ball.vel.x, m.ball.vel.z) > 9;
+  if (ev.type === 'out') ev.flying = m.ball.pos.y > 0.6 || hypot(m.ball.vel.x, m.ball.vel.z) > 9;
   if (ev.type === 'goal') onGoal(m, teamAttacking(m, ev.side));
   else if (ev.type === 'out') restartFromOut(m, ev);
   else if (ev.type === 'car') carRule(m, ev);
@@ -410,7 +410,7 @@ function humanIntent(m, p, input, dt) {
   if (ball.holder === p.id) {
     // Einwurf: mit dem Stick zielen, Pass- oder Schusstaste wirft.
     const mv = input.move;
-    if (Math.hypot(mv.x, mv.z) > 0.3) p.facing = { x: mv.x / Math.hypot(mv.x, mv.z), z: mv.z / Math.hypot(mv.x, mv.z) };
+    if (hypot(mv.x, mv.z) > 0.3) p.facing = { x: mv.x / hypot(mv.x, mv.z), z: mv.z / hypot(mv.x, mv.z) };
     if (input.pass || input.loft || input.shootHeld) p.pending = { type: 'pass', ttl: 0.45, cone: 0.2 };
     return { move: { x: 0, z: 0 }, sprint: false };
   }
@@ -419,7 +419,7 @@ function humanIntent(m, p, input, dt) {
   const sp = m.setPiece;
   if (sp && sp.takerId === p.id && !sp.taken && (sp.type === 'freekick' || sp.type === 'corner' || sp.type === 'penalty') && m.time - sp.time < 6) {
     const mv = input.move;
-    const l = Math.hypot(mv.x, mv.z);
+    const l = hypot(mv.x, mv.z);
     if (l > 0.3) {
       const t = { x: mv.x / l, z: mv.z / l };
       const k = Math.min(1, dt * 5);

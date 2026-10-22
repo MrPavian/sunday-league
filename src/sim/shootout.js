@@ -2,7 +2,7 @@
 // selbst spielt. Geschossen wird immer auf dasselbe Tor; wer schießt, spielt für
 // diesen Moment „nach rechts". Der Mensch zielt als Schütze mit ↑/↓ und dosiert
 // die Wucht mit der Schusstaste; im Tor wählt er mit ↑/↓ die Ecke.
-import { clamp } from '../core/math.js';
+import { clamp, hypot } from '../core/math.js';
 import { keeperSaves, tryExecute } from './actions.js';
 import { stepBall } from './ball.js';
 import { keeperReaction } from './ai.js';
@@ -147,7 +147,7 @@ export function stepShootout(m, input, dt) {
     const ev = stepBall(ball, pitch, dt);
     if (ev?.type === 'goal') return finishKick(m, true);
     const out = ev && (ev.type === 'out' || ev.type === 'car');
-    const stopped = Math.hypot(ball.vel.x, ball.vel.z) < 0.5 && ball.pos.y < 0.2;
+    const stopped = hypot(ball.vel.x, ball.vel.z) < 0.5 && ball.pos.y < 0.2;
     const away = ball.vel.x < 0 && ball.pos.x < pitch.halfLength - spotDistance(pitch) - 1;
     if (ev?.type === 'post' || ev?.type === 'bar') m.events.push({ type: ev.type });
     if (out || stopped || away || ball.holder || so.timer > 3) finishKick(m, false);

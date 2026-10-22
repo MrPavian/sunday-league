@@ -1,7 +1,7 @@
 // Standardsituationen: Anstoß, Freistoß, Einwurf, Ecke, Abstoß.
 // Ohne Schiri gelten die Hobbyregeln: Wer gefoult wurde, legt sich den Ball
 // hin; wer ans Auto schießt, gibt den Ball ab.
-import { clamp, dist2d, len, norm } from '../core/math.js';
+import { clamp, dist2d, hypot, len, norm } from '../core/math.js';
 import { attackDir, clampToPitch, getPlayer, setControlled, teamAttacking } from './players.js';
 import { processSubs } from './squad.js';
 import { styleOf } from './plan.js';
@@ -182,7 +182,7 @@ function buildWall(m, team, spot) {
   const { pitch } = m;
   const defending = 1 - team;
   const goalX = attackDir(m, team) * pitch.halfLength;
-  const dGoal = Math.hypot(goalX - spot.x, spot.z);
+  const dGoal = hypot(goalX - spot.x, spot.z);
   if (dGoal > 17 || dGoal < DISTANCE + 1.5 || pitch.format < 5) return null; // im Hinterhof stellt keiner eine Mauer
   const size = pitch.format >= 11 ? 4 : pitch.format >= 7 ? 3 : 2;
   const dir = norm(goalX - spot.x, -spot.z);

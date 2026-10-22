@@ -1,5 +1,5 @@
 // KI: Wer läuft an, wer sichert ab, wer deckt, wer läuft sich frei.
-import { clamp, dist2d, len, norm } from '../core/math.js';
+import { clamp, dist2d, hypot, len, norm } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
 import { BALL_RADIUS, BOARD_BOUNCE, ballSpeed, rollDistance } from './ball.js';
 import { attackDir, clampToPitch, distToSegment, getPlayer, wallPush } from './players.js';
@@ -298,7 +298,7 @@ function receiveSpot(m, p) {
   }
   // Bandenpass (m.pass.board): Solange der Ball noch zur Bande läuft, ist der Weg hinter der Bande nur halb so schnell in z.
   const board = m.pass?.board && Math.sign(ball.vel.z) === m.pass.board ? m.pass.board * (pitch.halfWidth - BALL_RADIUS) : null;
-  const v0 = Math.hypot(ball.vel.x, ball.vel.z);
+  const v0 = hypot(ball.vel.x, ball.vel.z);
   for (let t = 0.1; t <= 2.5; t += 0.1) {
     const f = v0 > 1e-6 ? rollDistance(v0, t, pitch.surface) / v0 : 0; // Anteil der Anfangsgeschwindigkeit als Weg
     spot = { x: ball.pos.x + ball.vel.x * f, z: ball.pos.z + ball.vel.z * f };
@@ -1053,7 +1053,7 @@ export function keeperIntent(m, p, dt) {
   const sweep = pitch.keeperSweep;
   // Großfeld: Bei gegnerischem Ballbesitz im Anflug steht er etwas vor der Linie, auf der Linie zwischen Ball und Tormitte.
   if (sweep && carrier && carrier.team !== p.team && !ball.holder) {
-    const dBall = Math.hypot(ball.pos.x - goalX, ball.pos.z);
+    const dBall = hypot(ball.pos.x - goalX, ball.pos.z);
     if (dBall < 30) {
       const dir0 = norm(ball.pos.x - goalX, ball.pos.z);
       const stance = clamp(sweep.stanceK * dBall - sweep.stanceOff, 0.8, sweep.stanceMax);
@@ -1061,7 +1061,7 @@ export function keeperIntent(m, p, dt) {
     }
   }
   if (!reacting && carrier && carrier.team !== p.team && ball.pos.y < 0.6 && dist2d(carrier.pos, ball.pos) < 1.3) {
-    const dGoal = Math.hypot(ball.pos.x - goalX, ball.pos.z);
+    const dGoal = hypot(ball.pos.x - goalX, ball.pos.z);
     const covered = m.players.some((o) => o.team === p.team && o !== p && o.state === 'normal' && distToSegment(o.pos, ball.pos, { x: goalX, z: 0 }) < 1 && dist2d(o.pos, { x: goalX, z: 0 }) < dGoal);
     if (dGoal < (sweep?.duelFrom ?? 11) && !covered) {
       // Nur bis an den Rand des Torraums: weiter draußen dürfte er den Ball nicht mehr mit den Händen spielen

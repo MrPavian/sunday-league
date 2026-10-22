@@ -54,9 +54,9 @@ describe('Spiel über außen', () => {
     const k7 = audit('rasenplatz', 16).kinds;
     expect(k7.flach + k7.halbhoch).toBeGreaterThan(2 * k7.hoch);
     expect(k7.flach).toBeGreaterThan(0);
-    // 48 statt 16 Spiele (gleiche Schwelle, Verhältnis): Die Zahl der Flanken je Stichprobe ist klein, mit 16 Spielen kippte das
-    // Verhältnis nach der Torwart-Änderung (Großfeld, ROADMAP 11.10) durch anderen Zufallsverlauf; Flankenlogik unverändert.
-    const k11 = audit('grossfeld', 48).kinds;
+    // 96 statt 16 Spiele (gleiche Schwelle, Verhältnis): ~45 Flanken je 48 Spiele sind zu wenig – zwei Hälften zu je 48 Spielen
+    // lagen bei 4,25 und 2,14 (vor der sqrt-Rechnung) bzw. 2,0 und 3,9 (danach), zusammen 2,9 bzw. 2,8. Flankenlogik unverändert.
+    const k11 = audit('grossfeld', 96).kinds;
     expect(k11.hoch).toBeGreaterThan(2 * (k11.flach + k11.halbhoch));
-  }, 900000);
+  }, 1800000);
 });

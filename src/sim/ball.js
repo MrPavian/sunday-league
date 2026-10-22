@@ -1,3 +1,4 @@
+import { hypot, hypot3 } from '../core/math.js';
 import { SURFACES } from './surfaces.js';
 
 export const BALL_RADIUS = 0.11;
@@ -26,7 +27,7 @@ export function createBall() {
 
 export function ballSpeed(ball) {
   const v = ball.vel;
-  return Math.hypot(v.x, v.y, v.z);
+  return hypot3(v.x, v.y, v.z);
 }
 
 // Integrates one step. Returns an event or null:
@@ -62,7 +63,7 @@ export function stepBall(ball, pitch, dt) {
   }
 
   const onGround = pos.y <= BALL_RADIUS + 1e-4 && vel.y === 0;
-  const h = Math.hypot(vel.x, vel.z);
+  const h = hypot(vel.x, vel.z);
   if (h > 0) {
     let next;
     if (onGround) {
@@ -187,7 +188,7 @@ function collideFrame(ball, pitch, prevX) {
       for (const sz of [-1, 1]) {
         const dx = sideOf(pos.x - px, prevX - px);
         const dz = pos.z - sz * gw;
-        const d = Math.hypot(dx, dz);
+        const d = hypot(dx, dz);
         if (d < r && d > 1e-6) {
           const nx = dx / d;
           const nz = dz / d;
@@ -205,7 +206,7 @@ function collideFrame(ball, pitch, prevX) {
     if (Math.abs(pos.z) < gw) {
       const dx = sideOf(pos.x - px, prevX - px);
       const dy = pos.y - pitch.goalHeight;
-      const d = Math.hypot(dx, dy);
+      const d = hypot(dx, dy);
       if (d < r && d > 1e-6) {
         const nx = dx / d;
         const ny = dy / d;
@@ -236,5 +237,5 @@ export function boardRoute(pitch, from, to, side) {
   const aimZ = zw + (zw - to.z) / BOARD_BOUNCE;
   const f = d1 / (d1 + d2 / BOARD_BOUNCE);
   const bounce = { x: from.x + (to.x - from.x) * f, z: zw };
-  return { bounce, aim: { x: to.x, z: aimZ }, len: Math.hypot(bounce.x - from.x, d1) + Math.hypot(to.x - bounce.x, d2) };
+  return { bounce, aim: { x: to.x, z: aimZ }, len: hypot(bounce.x - from.x, d1) + hypot(to.x - bounce.x, d2) };
 }

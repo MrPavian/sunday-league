@@ -4,7 +4,7 @@
 // eigenen Zufallsstrom, damit Spiele ohne Vorfall unverändert bleiben.
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
-import { clamp, dist2d, norm, rotate } from '../core/math.js';
+import { clamp, dist2d, hypot, norm, rotate } from '../core/math.js';
 import { SKIN_TONES } from '../data/names.js';
 import { personName } from '../data/origins.js';
 import { attackDir, clampToPitch } from './players.js';
@@ -152,7 +152,7 @@ function stepPerch(m) {
     const side = ball.pos.x >= 0 ? 1 : -1;
     const land = perchSpot(pitch, side);
     const from = { x: land.x - side * 10, z: land.z + 7 };
-    m.pigeon = { pos: from, y: land.y + 5, land, side, facing: norm(-from.x + land.x, land.z - from.z), state: 'anflug', t: 0, flap: 1, d0: Math.hypot(10, 7), dy: 5, shot: m.shotTime ?? null };
+    m.pigeon = { pos: from, y: land.y + 5, land, side, facing: norm(-from.x + land.x, land.z - from.z), state: 'anflug', t: 0, flap: 1, d0: hypot(10, 7), dy: 5, shot: m.shotTime ?? null };
     return false;
   }
   if (pg.state === 'latte') {
@@ -163,7 +163,7 @@ function stepPerch(m) {
       pg.t = 0;
       m.events.push({ type: 'coo' });
     }
-  } else if (pg.state === 'wartet' && m.phase === 'play' && (pg.t > 9 || (pg.t > 1.5 && !ball.holder && ball.pos.y < 0.6 && Math.hypot(ball.vel.x, ball.vel.z) < 1.2))) {
+  } else if (pg.state === 'wartet' && m.phase === 'play' && (pg.t > 9 || (pg.t > 1.5 && !ball.holder && ball.pos.y < 0.6 && hypot(ball.vel.x, ball.vel.z) < 1.2))) {
     beginIncident(m, 'taube');
     return true;
   }
@@ -261,7 +261,7 @@ function beginIncident(m, type, info = {}) {
       const r = inc.routes.get(p.id);
       const e = r.pts[0];
       r.exit = sh.exitZ !== undefined && r.pts.length > 1 && Math.abs(e.z - sh.exitZ) < 1e-6 && inc.delay[i] > inc.react[i];
-      if (r.exit) r.resume = inc.delay[i] + Math.hypot(e.x - p.pos.x, e.z - p.pos.z) / STORM_RUN;
+      if (r.exit) r.resume = inc.delay[i] + hypot(e.x - p.pos.x, e.z - p.pos.z) / STORM_RUN;
     });
     const slipper = m.players.map((p, i) => ({ p, i, len: plan[i + off].len })).filter(({ p, len }) => p.role !== 'gk' && len >= 6).sort((a, b) => a.len - b.len)[0];
     if (slipper) inc.slip = { id: slipper.p.id, at: Math.min(inc.delay[slipper.i], inc.react[slipper.i]) + 0.35, done: false, side: slipper.i % 2 ? 1 : -1 };
@@ -286,7 +286,7 @@ function beginIncident(m, type, info = {}) {
     if (perched) {
       const pg = m.pigeon;
       Object.assign(pg, { land, state: 'gleiten', t: 0, flap: 1, y0: pg.y, d0: Math.max(1, dist2d(pg.pos, land)) });
-    } else m.pigeon = { pos: { x: land.x - 9, z: land.z + side * 6 }, y: 6, y0: 6, d0: Math.hypot(9, 6), land, facing: norm(9, -side * 6), state: 'gleiten', t: 0, flap: 0 };
+    } else m.pigeon = { pos: { x: land.x - 9, z: land.z + side * 6 }, y: 6, y0: 6, d0: hypot(9, 6), land, facing: norm(9, -side * 6), state: 'gleiten', t: 0, flap: 0 };
     text = perched
       ? r.pick(tr(['Die Taube von der Latte kommt zum Ball herunter. Sie hat Zeit.', 'Erst saß sie auf dem Tor, jetzt pickt sie am Elfmeterpunkt.', 'Die Taube landet direkt vor dem Ball und guckt den Schiri an.'], ['The pigeon from the crossbar drops down to the ball. It is in no hurry.', 'First it sat on the goal, now it pecks at the penalty spot.', 'The pigeon lands right in front of the ball and stares at the referee.']))
       : r.pick(tr(['Eine Taube landet neben dem Ball. Sie hat Zeit.', 'Taube auf dem Platz! Sie pickt am Elfmeterpunkt.', 'Eine Taube setzt sich direkt vor den Ball und guckt den Schiri an.'], ['A pigeon lands next to the ball. It is in no hurry.', 'Pigeon on the pitch! It pecks at the penalty spot.', 'A pigeon settles right in front of the ball and stares at the referee.']));
@@ -328,7 +328,7 @@ function nearestJet(pitch, pos) {
   for (const [sx, sz] of SPRINKLER_SPOTS) {
     const x = sx * pitch.halfLength;
     const z = sz * pitch.halfWidth;
-    const d = Math.hypot(pos.x - x, pos.z - z);
+    const d = hypot(pos.x - x, pos.z - z);
     if (!best || d < best.d) best = { d, x, z };
   }
   return best;
@@ -770,7 +770,7 @@ function walkFree(m, e, target, speed, dt, dog = false) {
     return true;
   }
   let pl = plans.get(e);
-  if (!pl || pl.n-- <= 0 || Math.hypot(pl.to.x - target.x, pl.to.z - target.z) > 0.4 || (pl.wp && (dist2d(e.pos, pl.wp) < 0.35 || !pathClear(obs, e.pos, pl.wp)))) {
+  if (!pl || pl.n-- <= 0 || hypot(pl.to.x - target.x, pl.to.z - target.z) > 0.4 || (pl.wp && (dist2d(e.pos, pl.wp) < 0.35 || !pathClear(obs, e.pos, pl.wp)))) {
     pl = { to: { x: target.x, z: target.z }, wp: freeStep(obs, e.pos, target), n: 15 };
     plans.set(e, pl);
   }
@@ -802,7 +802,7 @@ function stepEscort(m, inc, p, dt) {
   const pitch = m.pitch;
   const es = (inc.escort ??= { dir: { x: 0, z: -1 }, side: new Map() });
   // Gehrichtung des Schiris, geglättet (steht er, bleibt die letzte Richtung).
-  const rv = Math.hypot(ref.vel.x, ref.vel.z);
+  const rv = hypot(ref.vel.x, ref.vel.z);
   if (rv > 0.3 && es.t !== inc.t) {
     es.t = inc.t;
     const k = Math.min(1, dt * 6);
@@ -827,7 +827,7 @@ function stepEscort(m, inc, p, dt) {
   const slot = freePoint(obs, w) ?? w;
   const ex = slot.x - p.pos.x;
   const ez = slot.z - p.pos.z;
-  const d = Math.hypot(ex, ez);
+  const d = hypot(ex, ez);
   let vx;
   let vz;
   if (d > ESCORT.far) {
@@ -842,12 +842,12 @@ function stepEscort(m, inc, p, dt) {
     vx = fx + ex * ESCORT.gain;
     vz = fz + ez * ESCORT.gain;
   }
-  const vm = Math.hypot(vx, vz);
+  const vm = hypot(vx, vz);
   if (vm > ESCORT.maxSpeed) (vx *= ESCORT.maxSpeed / vm), (vz *= ESCORT.maxSpeed / vm);
   // Beschleunigung begrenzen
   const dx = vx - p.vel.x;
   const dz = vz - p.vel.z;
-  const dm = Math.hypot(dx, dz);
+  const dm = hypot(dx, dz);
   const lim = ESCORT.accel * dt;
   if (dm > lim) (vx = p.vel.x + (dx / dm) * lim), (vz = p.vel.z + (dz / dm) * lim);
   const x0 = p.pos.x;
@@ -862,7 +862,7 @@ function stepEscort(m, inc, p, dt) {
   p.vel.x = vx;
   p.vel.z = vz;
   // Blick: in Gehrichtung (wenn er wirklich geht), sonst zum Schiri; mit Drehrate, kürzester Weg.
-  const sp = Math.hypot(vx, vz);
+  const sp = hypot(vx, vz);
   const want = sp > 0.5 ? { x: vx / sp, z: vz / sp } : norm(ref.pos.x - p.pos.x, ref.pos.z - p.pos.z);
   const a0 = Math.atan2(p.facing.x, p.facing.z);
   const aw = Math.atan2(want.x, want.z);

@@ -1,4 +1,4 @@
-import { clamp, len } from '../core/math.js';
+import { clamp, hypot, len } from '../core/math.js';
 
 // Spielrichtung: Team 0 spielt in der 1. Halbzeit Richtung +x, nach dem
 // Seitenwechsel andersherum.
@@ -27,7 +27,7 @@ export function switchToNearestOnTeam(m, team) {
   let bestD = Infinity;
   for (const p of m.players) {
     if (p.team !== team || p.role === 'gk') continue;
-    const d = Math.hypot(p.pos.x - m.ball.pos.x, p.pos.z - m.ball.pos.z);
+    const d = hypot(p.pos.x - m.ball.pos.x, p.pos.z - m.ball.pos.z);
     if (d < bestD) {
       bestD = d;
       best = p;

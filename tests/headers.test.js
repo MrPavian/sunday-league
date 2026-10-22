@@ -31,10 +31,12 @@ describe('Kopfballtore', () => {
     expect(r.hdrGoals).toBeGreaterThan(2); // gemessen 0,07-0,09 je Spiel, vorher 0
   }, 1500000);
   it('9er-Feld: Kopfballtore mindestens 3 % der Tore', () => {
-    const r = heads('sportplatz', 24);
+    // 72 statt 24 Spiele (gleiche Schwelle als Anteil): Mit 24 Spielen kippte der Anteil nach der sqrt-Rechnung (2,9 %);
+    // über 72 Spiele vorher 5,4 %, nachher 8,3 %.
+    const r = heads('sportplatz', 72);
     expect(r.onGoalPerGame).toBeGreaterThan(0.5); // gemessen 0,95, vorher 0,38
     expect(r.share).toBeGreaterThan(0.03); // gemessen 5 %, vorher 3 %
-  }, 400000);
+  }, 1200000);
   it('Großfeld: Kopfballtore mindestens 3 % der Tore', () => {
     // 64 statt 16 Spiele (gleiche Schwelle als Anteil): Mit 16 Spielen sind es nur ~1–2 Kopfballtore, jede Änderung am
     // Zufallsverlauf (z. B. mehr Elfmeter durch den echten 16er) kippte den Anteil; vorher und nachher mit 64 Spielen bestanden.

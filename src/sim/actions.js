@@ -1,7 +1,7 @@
 import { styleOf } from './plan.js';
 import { bondBonus, bondOf, isBad } from './bonds.js';
 // Bewegung und Ballkontakte: Laufen, Schuss, Pass, Kopfball, Torwart, Dribbling.
-import { clamp, dist2d, len, norm, rotate } from '../core/math.js';
+import { clamp, dist2d, hypot, len, norm, rotate } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
 import { BALL_RADIUS, ballSpeed, boardRoute, rollSpeedFor } from './ball.js';
 import { attackDir, distToSegment, setControlled, wallPush } from './players.js';
@@ -310,6 +310,9 @@ function pass(m, p, a, fatigue, fromHands) {
   let vy;
   let board = null;
   const lead = target && a.through && target.id === a.targetId ? a.through : null;
+  // Rückpass beim Doppelpass nur nach vorn: Der Auftrag gilt bis 0,6 s – ist die Wand inzwischen am Zielpunkt vorbei,
+  // spielt sie ihn nicht (sonst ginge er zurück statt in den Lauf).
+  if (a.combo && lead && (lead.x - p.pos.x) * attackDir(m, p.team) < 1) return false;
   if (!target) {
     // Keiner frei? Dann eben nach vorne gebolzt – grob Richtung Tor.
     // Aus der eigenen Hälfte weit nach vorne, in der gegnerischen in die Mitte.
@@ -384,6 +387,10 @@ function pass(m, p, a, fatigue, fromHands) {
     m.pass.react = 0.55 - 0.3 * read;
   }
   // Rückpass beim Doppelpass: in den Lauf gespielt, aber kein Ball hinter die Abwehrlinie.
+  if (a.combo && m.combo?.wall === p.id && !m.combo.returned) {
+    m.combo.returned = true;
+    m.events.push({ type: 'combo', kind: m.combo.kind, playerId: m.combo.runner, wallId: p.id });
+  }
   m.events.push({ type: 'pass', playerId: p.id, targetId: target?.id ?? null, lofted: !!a.lofted, cross: isCross || undefined, crossKind: isCross ? (a.low ? 'flach' : a.driven ? 'halbhoch' : 'hoch') : undefined, from: { x: p.pos.x, z: p.pos.z }, to: target ? { x: target.pos.x, z: target.pos.z } : null, through: !!(a.through && target && !a.combo && !isCross), combo: a.combo || undefined });
   if (board) m.events.push({ type: 'bandenpass', kind: 'pass', playerId: p.id, targetId: target.id });
 }
@@ -612,7 +619,7 @@ export function headerTouch(m) {
   dir = rotate(dir, rng.gauss() * ((nearGoal ? HEAD_AIM : 0.1) + 0.4 * (1 - skill)) * (monster ? 0.5 : 1));
   // Aufs Tor: Das Tempo der Flanke bleibt erhalten, der Kopf legt bis zu 4,5 m/s drauf (Sprung-/Standkopfball,
   // MDPI Appl. Sci. 14/946, 2024). Vorher immer 4–8 m/s – der Torwart hielt 14 von 22 Kopfbällen aufs Tor.
-  const incoming = Math.hypot(ball.vel.x, ball.vel.z);
+  const incoming = hypot(ball.vel.x, ball.vel.z);
   // Verteidiger köpft am eigenen Tor, ein Gegner im Nacken: Nicht jede Klärung geht sauber nach vorn. Der Ball wird
   // nur verlängert, behält seine Richtung (um bis zu etwa 30 Grad abgelenkt) und fliegt hinter die eigene Grundlinie
   // oder ins Seitenaus. Anteil gewählt, nicht gemessen: steigt mit Bedrängnis und sinkt mit Kopfballstärke.
@@ -757,7 +764,7 @@ function deflect(m, p, prevTeam) {
   let d = cosOf(dPos) > cosOf(dNeg) ? dPos : dNeg;
   if (rng.chance(0.3)) d = d === dPos ? dNeg : dPos; // auch die andere Seite kommt vor
   if (cosOf(d) < 0.09) d = norm(inc.x + d.x * 0.5, inc.z + d.z * 0.5);
-  const h = Math.hypot(ball.vel.x, ball.vel.z) * keep;
+  const h = hypot(ball.vel.x, ball.vel.z) * keep;
   ball.vel.x = d.x * h;
   ball.vel.z = d.z * h;
   ball.vel.y = (1 + rng.next() * 3) * (m.pitch.flatPlay ? 0.4 : 1); // vom Schienbein oder Fuß auch mal hoch (Halle: kaum)

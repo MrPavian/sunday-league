@@ -301,9 +301,10 @@ describe('rules & set pieces', () => {
 
 describe('venues', () => {
   it.each(Object.entries(PITCHES))('%s: full AI matches run, stay in bounds and see goals', (id, pitch) => {
-    // Zwei volle Spiele à 2 × 5 Minuten – ein einzelnes 0:0 ist Fußball, zwei am Stück ein Befund.
+    // Vier volle Spiele à 2 × 5 Minuten (Seeds 5–8): Nach der sqrt-Rechnung endeten auf dem Parkplatz ausgerechnet
+    // Seed 5 und 6 0:0 (0:0-Anteil über 40 Spiele 7 %, Tore 3,15 je Spiel statt vorher 2,88) – zwei Spiele reichen nicht.
     let goals = 0;
-    for (const seed of [5, 6]) {
+    for (const seed of [5, 6, 7, 8]) {
       const m = createMatch({ seed, pitch, human: false, duration: 600 });
       for (let i = 0; i < 60 * 1200 && m.phase !== 'ended'; i++) {
         stepMatch(m, undefined, DT);

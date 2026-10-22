@@ -91,7 +91,7 @@ describe('offence: combinations', () => {
             made[e.kind] = (made[e.kind] ?? 0) + 1;
             if (e.kind === 'onetwo' || e.kind === 'layoff') {
               // Der Rückpass geht nach vorn in den Lauf – nicht zurück.
-              open = { kind: e.kind, id: e.playerId, wall: e.wallId, time: m.time, checked: false };
+              open = { kind: e.kind, id: e.playerId, wall: e.wallId, time: m.time, checked: false, wallHad: false };
             }
           }
           // Der Rückpass selbst: geht er nach vorn in den Lauf?
@@ -107,7 +107,12 @@ describe('offence: combinations', () => {
             }
           }
           m.events.length = 0;
-          if (open && m.time - open.time > 0.05 && m.ball.lastTouch === open.id) {
+          // Erst wenn die Wand den Ball hatte, zählt der Läufer am Ball als „angekommen“: Beim Direktspiel ist der Läufer
+          // (als Passgeber) noch letzter Ballkontakt, solange der Ball zur Wand unterwegs ist – das schloss den Doppelpass
+          // früher vorzeitig ab, und der spätere Rückpass wurde gar nicht mehr gezählt (gemessen 2,4 Rückpässe je Spiel,
+          // gezählt 0,75).
+          if (open && m.ball.lastTouch === open.wall) open.wallHad = true;
+          if (open && open.wallHad && m.time - open.time > 0.05 && m.ball.lastTouch === open.id) {
             done[open.kind] = (done[open.kind] ?? 0) + 1;
             open = null;
           } else if (open && m.time - open.time > 2.5) open = null;

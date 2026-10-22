@@ -5,7 +5,7 @@
 // der erste Weg, der kein (um Spielerbreite aufgeblasenes) Hindernis schneidet, gewinnt.
 // Ohne Zufall: dieselbe Aufstellung ergibt denselben Weg, der Zufallsstrom der Vorfälle bleibt unberührt.
 import { tr } from '../core/i18n.js';
-import { clamp } from '../core/math.js';
+import { clamp, hypot } from '../core/math.js';
 
 export const INFLATE = 0.35; // so viel Luft lassen die Wege zu Hindernissen (Körperbreite)
 export const SLOT_GAP = 0.5; // so nah dürfen zwei Figuren am Ende höchstens stehen (Mindestabstand)
@@ -339,7 +339,7 @@ const pathLength = (from, pts) => {
   let len = 0;
   let a = from;
   for (const b of pts) {
-    len += Math.hypot(b.x - a.x, b.z - a.z);
+    len += hypot(b.x - a.x, b.z - a.z);
     a = b;
   }
   return len;
@@ -424,7 +424,7 @@ export function freePoint(obs, p, e = INFLATE) {
     if (!r) return q;
     const c = e + 0.04;
     const opts = [{ x: r.x0 - c, z: q.z }, { x: r.x1 + c, z: q.z }, { x: q.x, z: r.z0 - c }, { x: q.x, z: r.z1 + c }];
-    opts.sort((a, b) => Math.hypot(a.x - q.x, a.z - q.z) - Math.hypot(b.x - q.x, b.z - q.z));
+    opts.sort((a, b) => hypot(a.x - q.x, a.z - q.z) - hypot(b.x - q.x, b.z - q.z));
     q = opts[0];
   }
   return blockedBy(obs, q, e) ? null : q;
@@ -449,7 +449,7 @@ export function freeStep(obs, from, to) {
       if (!blockedBy(obs, p)) nodes.push(p);
     }
   }
-  nodes.sort((a, b) => Math.hypot(a.x - from.x, a.z - from.z) + Math.hypot(a.x - to.x, a.z - to.z) - (Math.hypot(b.x - from.x, b.z - from.z) + Math.hypot(b.x - to.x, b.z - to.z)));
+  nodes.sort((a, b) => hypot(a.x - from.x, a.z - from.z) + hypot(a.x - to.x, a.z - to.z) - (hypot(b.x - from.x, b.z - from.z) + hypot(b.x - to.x, b.z - to.z)));
   nodes.length = Math.min(nodes.length, 60);
   const pts = [from, ...nodes, to]; // 0 = Start, letzter = Ziel
   const goal = pts.length - 1;
@@ -465,7 +465,7 @@ export function freeStep(obs, from, to) {
     done[u] = true;
     for (let v = 1; v < pts.length; v++) {
       if (done[v]) continue;
-      const d = dist[u] + Math.hypot(pts[v].x - pts[u].x, pts[v].z - pts[u].z);
+      const d = dist[u] + hypot(pts[v].x - pts[u].x, pts[v].z - pts[u].z);
       if (d >= dist[v]) continue;
       if (!pathClear(obs, pts[u], pts[v])) continue;
       dist[v] = d;
@@ -475,7 +475,7 @@ export function freeStep(obs, from, to) {
   // Der Weg rückwärts; erste Ecke, die nicht schon (fast) erreicht ist – sonst bliebe die Figur an der Ecke stehen.
   const path = [];
   for (let i = goal; i > 0; i = prev[i]) path.unshift(pts[i]);
-  const far = path.find((q) => Math.hypot(q.x - from.x, q.z - from.z) > 0.3 && pathClear(obs, from, q, INFLATE - 0.15));
+  const far = path.find((q) => hypot(q.x - from.x, q.z - from.z) > 0.3 && pathClear(obs, from, q, INFLATE - 0.15));
   return far ?? path[0];
 }
 
