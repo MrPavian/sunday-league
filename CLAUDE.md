@@ -21,7 +21,8 @@ so wenig Kontext und Arbeit wie möglich für ein korrektes Ergebnis. Antworten 
   für alte Spielstände).
 - `src/render/` – three.js-Darstellung: `PixelRenderer.js` (WebGLRenderer, Render-Targets, Nachbearbeitung),
   `CameraRig.js` (orthografische Kamera), `MatchView.js` (Szene eines Spiels), `venues/` (Spielorte),
-  `PlayerModel.js`, `quality.js` (Qualitätsstufen).
+  `player/` (Figuren: `model.js` Aufbau, `animate.js` Ebenen, `keeper.js` Torwart, `gestures.js`, `poses.js`; `PlayerModel.js`
+  re-exportiert nur; Figuren-Änderung → `node scripts/playermodel_snapshot.mjs`), `quality.js` (Qualitätsstufen).
 - `src/ui/` – DOM-Oberfläche (Vereinsheim `Clubhouse.js` + `clubhouse/*`, Menüs, HUD).
   `src/core/`, `src/data/`, `src/audio/`, `src/input/` – Hilfen, Daten/Texte, Ton, Eingabe.
 - `src/main.js` – Verdrahtung, Spielschleife (`requestAnimationFrame`), Simulation im festen Takt `STEP = 1/60`.
