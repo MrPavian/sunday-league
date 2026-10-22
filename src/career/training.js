@@ -5,12 +5,12 @@ import { book } from './finances.js';
 import { trainingLocked } from './personal.js';
 import { getPool, humanClub, joinSquad, maxSquad, playerOf, RECRUIT_BASE } from './career.js';
 import { tr } from '../core/i18n.js';
+import { tierWeightsFor } from '../data/tiers.js';
 
 export const TRAINING_COST = 5;
 export const MAX_STATIONS = 3;
 const TRIALISTS = 6;
 const INVITES = 2;
-const TIERS = { ok: 0.42, gut: 0.32, stark: 0.18, dorfstar: 0.06, superstar: 0.02 };
 
 const noise = (rng, s) => (rng.next() + rng.next() + rng.next() - 1.5) * s;
 
@@ -85,10 +85,12 @@ export function startTraining(career) {
     return null;
   };
   // Mindestens ein junger Spieler – vielleicht ein Rohdiamant.
-  const young = pick((p) => p.age <= 20 && p.tier !== 'legende');
+  // Der Junge kommt aus derselben Stufen-Verteilung (höchstens stark: jüngere sind noch nicht weiter).
+  const youngTier = weightedTier(rng, career.level, 'stark');
+  const young = pick((p) => p.age <= 20 && p.tier === youngTier) ?? pick((p) => p.age <= 20 && p.tier === 'gut');
   if (young) trialists.push({ idx: young.poolIndex });
   while (trialists.length < TRIALISTS) {
-    const tier = weightedTier(rng);
+    const tier = weightedTier(rng, career.level);
     const p = pick((q) => q.tier === tier);
     if (p) trialists.push({ idx: p.poolIndex });
   }
@@ -98,9 +100,14 @@ export function startTraining(career) {
   return true;
 }
 
-function weightedTier(rng) {
-  let r = rng.next();
-  for (const [tier, w] of Object.entries(TIERS)) if ((r -= w) < 0) return tier;
+// Wer zum Open Training kommt, passt zur Liga (data/tiers.js); cap = höchste Stufe, z. B. 'stark' für den Jungen.
+function weightedTier(rng, level, cap = null) {
+  const w = tierWeightsFor(level, 'probetraining');
+  const ids = Object.keys(w);
+  const max = cap ? ids.indexOf(cap) : ids.length - 1;
+  const list = ids.map((id, i) => [id, i <= max ? w[id] : 0]);
+  let r = rng.next() * list.reduce((s, [, x]) => s + x, 0);
+  for (const [tier, x] of list) if ((r -= x) < 0) return tier;
   return 'ok';
 }
 

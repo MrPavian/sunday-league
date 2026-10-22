@@ -39,6 +39,7 @@ import { applyCards, banGames, banReason, isBanned, resetYellows, tickBans } fro
 import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFinances, weeklyFinances } from './finances.js';
 
 import { nameEditionFor, nameLocaleOf } from '../data/names.js';
+import { tierWeightsFor } from '../data/tiers.js';
 import { setNameLocale } from '../data/origins.js';
 import { weeklyBanter } from './banter.js';
 import { matchdaySurprise } from './matchday.js';
@@ -72,9 +73,7 @@ const NUDGES_PER_WEEK = 3;
 export const MAX_SQUAD = 12; // Freizeitliga; in der Kreisklasse mehr (siehe maxSquad)
 export const MIN_SQUAD = 7;
 const SCOUT_ACTIONS = 2;
-const RUMOR_TIERS = { ok: 0.44, gut: 0.33, stark: 0.15, dorfstar: 0.06, superstar: 0.014, legende: 0.006 };
-// Kreisliga A: Wer dort spielt, zieht bessere Leute an.
-const RUMOR_TIERS_BY_LEVEL = { 4: { ok: 0.26, gut: 0.36, stark: 0.23, dorfstar: 0.1, superstar: 0.035, legende: 0.007 }, 5: { ok: 0.14, gut: 0.33, stark: 0.3, dorfstar: 0.16, superstar: 0.06, legende: 0.01 } };
+// Wer in der Liga spielt, zieht passende Leute an: Stufen-Verteilung je Liga in data/tiers.js (tierWeightsFor).
 export const RECRUIT_BASE = { ok: 0.85, gut: 0.65, stark: 0.45, dorfstar: 0.3, superstar: 0.2, legende: 0.15 };
 const DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
 
@@ -669,7 +668,7 @@ function makeRumors(career, rng, count = 3, exclude = []) {
   for (const idx of exclude) taken.add(idx);
   const rumors = [];
   for (let n = 0; n < count; n++) {
-    const tier = weighted(rng, RUMOR_TIERS_BY_LEVEL[career.level ?? 1] ?? RUMOR_TIERS);
+    const tier = weighted(rng, tierWeightsFor(career.level, 'geruecht'));
     const list = pool.byTier(tier);
     for (let attempt = 0; attempt < 30; attempt++) {
       const p = rng.pick(list);
@@ -694,7 +693,7 @@ export function addRumor(career, rng, source) {
   if (!w) return null;
   const pool = getPool();
   const taken = takenIndices(career);
-  const list = pool.byTier(rng.pick(['gut', 'gut', 'stark', 'dorfstar']));
+  const list = pool.byTier(weighted(rng, tierWeightsFor(career.level, 'wirt')));
   for (let attempt = 0; attempt < 40; attempt++) {
     const p = rng.pick(list);
     if (taken.has(p.poolIndex) || w.rumors.some((r) => r.idx === p.poolIndex)) continue;
