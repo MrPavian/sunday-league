@@ -958,3 +958,18 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
 - Der Namensgenerator kann zufällig echte Profinamen erzeugen (gesehen: ein Name eines aktiven Nationaltorwarts);
   Sperrliste bekannter Profinamen erwägen.
 - Pixel-Porträt der Trainerbewerber altert nicht (65-Jähriger mit vollem braunem Haar).
+
+### 11.11 Weitere Wünsche (vom Nutzer, 2026-10-22)
+- **Übersichtlichkeit:** Lange Menüs (z. B. Verein: Kasse, Ausbau, Platz, Fest, Präsidium; Mannschaft) in Unterseiten bzw.
+  aufklappbare Bereiche gliedern. Zuerst messen, welche Seiten auf dem Handy am längsten sind.
+- **Hinterhof neu (vom Nutzer ausdrücklich gewünschte andere Kameraperspektive):** Blick wie aus dem 1. oder 2. Stock des
+  Hauses auf den Hof – steiler von oben, von der Hauswandseite, ggf. Fensterbrett/Rahmen im Vordergrund. Nur der Hinterhof.
+- **Jugendspielerinnen → Frauenteam:** Heute erhöhen Mädchen mit 16 nur einen abstrakten Stärkewert (`saga.frauen`), ohne
+  Frauenteam verschwinden sie. Mit dem echten Frauenteam (11.9) als echte Spielerinnen in dessen Kader übernehmen.
+- **Übergang Amateur → Profi (Vorschlag, Entscheidung später):** schrittweise ab Oberliga (erste Vertragsspieler),
+  Regionalliga (Lizenzauflagen: Stadion, Flutlicht, Finanznachweis), Profibereich (hauptamtlich).
+  - Neu: Arzt/Physio (Verletzungsdauer, Belastung), Athletiktrainer, Scouting-Abteilung, Pressesprecher, Merchandise
+    (Fanshop, Trikotverkauf), TV- und Ticketeinnahmen, Spielerberater, Verträge mit Laufzeit, Ablöse, Lizenzprüfung.
+  - Wandelt sich: Kneipe → VIP-/Sponsorenbereich (Stammkneipe bleibt als Fan-Treff), Ehrenämter → bezahlte Stellen,
+    Chat/Absagen → feste Trainingszeiten, Kreisblatt → Lokalzeitung/TV.
+  - Fällt weg: Absagen wegen Arbeit, Platzpflege durch Helfer, Ehrenamtsgeschichten, Vereinsfest als Geldquelle.
