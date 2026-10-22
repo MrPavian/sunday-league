@@ -55,10 +55,12 @@ so wenig Kontext und Arbeit wie möglich für ein korrektes Ergebnis. Antworten 
 - Fehler gezielt eingrenzen (Ursache reproduzieren, betroffene Datei lesen) statt das Repository neu zu analysieren.
   Wiederholen nur mit geänderter Hypothese oder neuem Prüfschritt; „Flake" erst nach belegter Ursache
   (z. B. Last-Timeout, einzeln wiederholt grün).
-- Unteragenten nur, wenn ein konkreter Vorteil den Mehraufwand rechtfertigt, nicht für kleine Aufgaben. Dann:
+- Erst direkt und einfach selbst arbeiten. Unteragenten nur für klar unabhängige Teilaufgaben, deren Vorteil den
+  Mehraufwand rechtfertigt – nie für kleine Aufgaben. Dann:
   eigener git-Worktree, kein Commit/Push durch den Agenten; die Hauptsitzung prüft den Diff und übernimmt.
 - Modelle: Sonnet für gewöhnliche Umsetzung, Haiku für einfache Suchen, Opus nur bei konkretem Bedarf (ungelöster
-  komplexer Fehler, wichtige Architekturentscheidung) – nie allein wegen der Größe einer Aufgabe.
+  komplexer Fehler, wichtige Architekturentscheidung) – nie allein wegen der Größe einer Aufgabe. Bei einem Fehler
+  nicht sofort das Modell wechseln, sondern zuerst die Ursache eingrenzen.
 - Direkt auf `main` committen und pushen ist freigegeben; anderes mit Außenwirkung vorher fragen.
 
 ## Prüfungen
