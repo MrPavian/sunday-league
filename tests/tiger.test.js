@@ -10,9 +10,16 @@ import { createRng } from '../src/core/rng.js';
 const IDS = Object.keys(TIGER_EVENTS);
 const FOLLOW = IDS.filter((id) => TIGER_EVENTS[id].followUp);
 
+// Startkarriere je Seed nur einmal bauen (createCareer ist teuer); jede Szene bekommt eine frische Kopie.
+const BASE = new Map();
+const careerFor = (seed) => {
+  if (!BASE.has(seed)) BASE.set(seed, JSON.stringify(createCareer({ seed })));
+  return JSON.parse(BASE.get(seed));
+};
+
 function scene(id, seed0 = 1, extra = () => {}) {
   for (let seed = seed0; seed < seed0 + 300; seed++) {
-    const c = createCareer({ seed });
+    const c = careerFor(seed);
     c.level = 3;
     c.round = 4;
     c.week.weather = { id: 'sonne' };
