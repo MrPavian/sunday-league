@@ -973,3 +973,5 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   - Wandelt sich: Kneipe → VIP-/Sponsorenbereich (Stammkneipe bleibt als Fan-Treff), Ehrenämter → bezahlte Stellen,
     Chat/Absagen → feste Trainingszeiten, Kreisblatt → Lokalzeitung/TV.
   - Fällt weg: Absagen wegen Arbeit, Platzpflege durch Helfer, Ehrenamtsgeschichten, Vereinsfest als Geldquelle.
+  - Mit der Zeit dazu (vom Nutzer, 2026-10-22): zweite Mannschaft (U23) und U19 als eigene Teams mit eigener Liga;
+    Durchlässigkeit Jugend → U19 → U23 → Profikader, Einsätze von Profis in der U23 (Spielpraxis nach Verletzung).
