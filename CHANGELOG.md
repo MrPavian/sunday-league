@@ -18,6 +18,9 @@ Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**
 - **Edelfan Tim „Der Tiger“:** Halbglatze, Vollbart, Dose in der Hand – er steht bei jedem Spiel am Rand (im Hinterhof schaut er aus dem Fenster) und jubelt, schimpft und trinkt. Dazu 19 Ereignisse, etwa „Tim schmeißt eine Runde“ nach großen Spielen oder eine Leserbrief-Geschichte über drei Wochen.
 
 ### Verbessert
+- **Großfeld:** Die Kamera zeigt mehr Platz in Spielrichtung und folgt dem Ball seitlich weiter, der Ball bleibt fast immer im Bild. Strafraum (16,5 m), Torraum, Mittelkreis (9,15 m) und Elfmeterpunkt (11 m) haben echte Maße; ein Foul im ganzen Strafraum gibt Elfmeter, der Torwart nimmt dort die Hände und kommt bei Angriffen heraus.
+- **Neuzugänge passen zur Liga:** In den unteren Ligen kommen kaum noch Dorfstars, Superstars oder Legenden – mit jedem Aufstieg werden die Angebote besser.
+- Liga-Ereignisse (Sportgericht, Kreispokal, Fans …) kommen in den oberen Ligen wieder öfter.
 - Gleichstand in Turniertabellen: Punkte, Tordifferenz, Tore, direkter Vergleich, dann Los.
 - Liveticker: Die Schlussfrage sagt „wir führen“ oder „wir liegen hinten“, die Option heißt „Den Deckel draufmachen – noch ein Tor!“.
 

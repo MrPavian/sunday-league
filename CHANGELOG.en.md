@@ -18,6 +18,9 @@ In the game, the same highlights are under **Settings → What's new**.
 - **Superfan Tim “The Tiger”:** Balding, full beard, can in hand – he stands at the touchline at every match (in the backyard he watches from a window) and cheers, rants and drinks. Plus 19 events, such as “Tim buys a round” after big games or a three-week letters-page story.
 
 ### Improved
+- **Full-size pitch:** The camera shows more space in the direction of play and follows the ball further to the side, so the ball nearly always stays in view. Penalty area (16.5 m), goal area, centre circle (9.15 m) and penalty spot (11 m) have real dimensions; a foul anywhere in the penalty area gives a penalty, and the keeper uses his hands there and comes off his line during attacks.
+- **New players match the league:** In the lower leagues hardly any village stars, superstars or legends turn up any more – the offers get better with every promotion.
+- League events (disciplinary panel, district cup, fans …) come up more often again in the higher leagues.
 - Ties in tournament tables: points, goal difference, goals, head-to-head, then lots.
 - Live ticker: the final question says “we lead” or “we trail”, and the option reads “Finish them off – one more goal!”.
 
