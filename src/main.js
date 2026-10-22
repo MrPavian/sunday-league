@@ -47,6 +47,7 @@ import { applyColorSafeKits } from './render/colorSafe.js';
 import { venueById } from './render/venues/index.js';
 import { createMatch, HALF_MAX, HALF_MIN, MATCH, MATCH_LENGTHS, matchDuration, stepMatch } from './sim/match.js';
 import { PITCHES } from './sim/pitch.js';
+import { attackDir, getPlayer } from './sim/players.js';
 import { SURFACES } from './sim/surfaces.js';
 import { applyWeather, WEATHER } from './career/weather.js';
 import { Clubhouse } from './ui/Clubhouse.js';
@@ -320,6 +321,7 @@ function loadVenue(id, ads = null) {
   pixel.markShadowsDirty();
   sound.setVenue(venue.id);
   rig.viewHeight = cameraViewHeight(venueInfo.viewHeight);
+  rig.viewHeightPortrait = venueInfo.viewHeightPortrait ? cameraViewHeight(venueInfo.viewHeightPortrait) : null; // Hochformat: Figuren lesbar halten
   rig.depth = pitch.halfWidth; // Hochformat: Platz an die Bedienleiste rücken (CameraRig.resize)
   resize();
 }
@@ -1067,7 +1069,8 @@ function frame(now) {
   const clubWindow = mode === 'club' ? document.querySelector('#club.see-through .cs-window') : null;
   const windowRect = clubWindow?.getBoundingClientRect();
   rig.frameWindow(windowRect?.width > 0 && windowRect.height > 0 ? windowRect : null, window.innerWidth, window.innerHeight, pitch.halfLength, pitch.halfWidth);
-  rig.follow(match.ball.pos.x, match.ball.pos.z, dt, venueInfo.bounds);
+  const touchTeam = match.ball.lastTouch != null ? getPlayer(match, match.ball.lastTouch)?.team : null;
+  rig.follow(match.ball.pos.x, match.ball.pos.z, dt, venueInfo.bounds, touchTeam != null ? attackDir(match, touchTeam) : 0, venueInfo.lead ?? 0, match.ball.vel.x);
   // Ball 2.0: bei Tor oder hartem Pfostentreffer zuckt das Bild um genau ein internes Pixel
   // (nur Darstellung; die Kameraführung selbst bleibt, wie sie ist).
   const shake = view.ballView?.shakeOffset(dt) ?? 0;

@@ -124,6 +124,12 @@ export const BIG_PITCH = {
   referee: true,
   offside: true,
   penaltyDistance: 11,
+  // Torwart auf dem Großfeld (16,5-m-Strafraum, IFAB Regel 1): Hände im ganzen Strafraum der Simulation (keeperBox), nicht nur im
+  // 1-m-Torraum der kleinen Plätze; er kommt bei Angriffen heraus. duelFrom: Eins-gegen-eins ab dieser Entfernung des Ballführenden
+  // zum Tor (m); outMax: weiteste Position vor der Linie (m); claim: so weit vor der Linie holt er langsame freie Bälle (m);
+  // stance: Grundstellung bei gegnerischem Ballbesitz = stanceK · Abstand des Balls zum Tor − stanceOff, zwischen 0,8 m und stanceMax.
+  // Werte gewählt (kleine Schritte), Wirkung gemessen mit scripts/bigpitch-audit.mjs.
+  keeperSweep: { handsInBox: true, duelFrom: 18, outMax: 5.5, claim: 3.5, stanceK: 0.1, stanceOff: 0.5, stanceMax: 2.5 },
   surface: SURFACES.grass,
 };
 

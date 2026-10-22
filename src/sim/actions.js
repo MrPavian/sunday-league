@@ -25,6 +25,10 @@ export function movePlayer(m, p, intent, dt, leaders) {
   const moving = mag > 0.1;
   const sprint = intent.sprint && moving && p.stamina > 0.05;
 
+  // Tempo: Sprint = (4,6 + 2,6·Pace)·1,28 ≈ 7,1–9,2 m/s; gemessen (scripts/bigpitch-audit.mjs, 100 Spiele je Platz) liegt der Spitzenwert je Spieler
+  // und Spiel im Mittel bei 7,1 m/s (p90 7,8). Real: Sprinttest 30 m, Amateure ≈ 29,7 km/h = 8,3 m/s, Profis 31,2 km/h = 8,7 m/s (österreichische
+  // Studie, lida.sport-iat.de/dfb/Record/4080853); Spitzentempo im Spiel Profis ≈ 32,9 km/h = 9,1 m/s (Biol. Sport 2024, PMC11694206). Das Tempo
+  // gilt auf allen Plätzen gleich und wurde nicht verändert; mittleres Tempo im Spiel 3,3 m/s ist höher als real (≈ 1,9 m/s einschließlich Stehen).
   let maxSpeed = (4.6 + 2.6 * p.attrs.pace + (hasTrait(p, 'schnell') ? 0.6 : 0)) * (0.72 + 0.28 * p.stamina);
   if (sprint) maxSpeed *= 1.28;
   if (p.shielding) maxSpeed *= 0.55; // Körper zwischen Gegner und Ball
@@ -425,6 +429,7 @@ export function inKeeperBox(pitch, pos, goalX, margin = 0) {
 // raus, spielt er wie ein Feldspieler mit dem Fuß (der Strafraum oben bleibt für Standards).
 export const HAND_ZONE = { depth: 1, side: 1 };
 export function inHandZone(pitch, pos, goalX, margin = 0) {
+  if (pitch.keeperSweep?.handsInBox) return inKeeperBox(pitch, pos, goalX, margin); // Großfeld: Hände im Strafraum (pitch.js)
   return Math.abs(pos.x - goalX) <= HAND_ZONE.depth + margin && Math.abs(pos.z) <= pitch.goalHalfWidth + HAND_ZONE.side + margin;
 }
 
