@@ -40,9 +40,10 @@ export const PROFIS = [
 // (200 Spiele) – unter dem Band. Der stärkere Kader liegt je Liga etwas höher; mit einem Wert je Liga lassen sich beide Kader nur grob ins
 // Band 3–5 % legen. Nach der Deckelung der Schussreichweite auf großen Plätzen (ai.js, BIG_RANGE_CAP) neu gemessen (je 400 Spiele):
 // Zweitligist (+0,23) mittel 3,3 % / bezirk 8,5 %; Erstligist mit +0,19 mittel 6,3 % / bezirk 5,8 %, mit +0,22 mittel 3,3 % / bezirk 5,0 %
-// (95-%-Streuung ±1,7–2,7 Punkte). Tests: tests/pokal2.test.js.
+// (95-%-Streuung ±1,7–2,7 Punkte). Nach sqrt-Rechnung, echtem Strafraum und Doppelpass-Fix (je 600 Spiele): Zweitligist +0,23 mittel 5,2 % /
+// bezirk 8,2 %, mit +0,24 mittel 3,7 % / bezirk 8,5 %; Erstligist +0,22 mittel 3,7 % / bezirk 7,8 %. Tests: tests/pokal2.test.js.
 export const PROFI_KLASSEN = {
-  zweit: { level: 8, boost: 0.23, tiers: { gut: 0.05, stark: 0.3, dorfstar: 0.45, superstar: 0.2 } },
+  zweit: { level: 8, boost: 0.24, tiers: { gut: 0.05, stark: 0.3, dorfstar: 0.45, superstar: 0.2 } },
   erst: { level: 9, boost: 0.22, tiers: { stark: 0.1, dorfstar: 0.42, superstar: 0.45, legende: 0.03 } },
 };
 export const PROFI_ATTRS = ['pace', 'stamina', 'technique', 'passing', 'shooting', 'tackling', 'heading', 'keeping'];
