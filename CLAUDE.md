@@ -26,6 +26,8 @@ so wenig Kontext und Arbeit wie möglich für ein korrektes Ergebnis. Antworten 
 - `src/ui/` – DOM-Oberfläche (Vereinsheim `Clubhouse.js` + `clubhouse/*`, Menüs, HUD).
   `src/core/`, `src/data/`, `src/audio/`, `src/input/` – Hilfen, Daten/Texte, Ton, Eingabe.
 - `src/main.js` – Verdrahtung, Spielschleife (`requestAnimationFrame`), Simulation im festen Takt `STEP = 1/60`.
+  `src/app/` – aus main.js ausgelagert: `matchflow.js` (Karriere-, Pokal-, Turnierspiele, Halbzeit), `menus.js`
+  (Einstellungen, Spielstände), `debug.js` (Debug, Test-URL-Schalter), `android.js` (Zurück-Taste).
 - Die Übersicht ersetzt nicht den Blick in den Code: zuständige Module je Aufgabe gezielt bestimmen.
 
 ## three.js-Konventionen (wie vorhanden)

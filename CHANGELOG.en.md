@@ -6,6 +6,13 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-23 – Coaching orders that count, faster game
+
+### Improved
+- **Coaching orders:** Every order has been measured (the same matches with and without it). “Close the middle” was only half built and now pushes the opponent wide. Stay compact, speed up/slow down, guard against the counter, cover left/right, mid-block, keep the ball and more risk all take hold much more strongly.
+- **One-twos:** The wall only plays the return pass once he really has the ball, and tries again if needed – one-twos arrive more often (57 → 64 %), lay-offs too (58 → 68 %).
+- **Faster:** The match engine needs about 40 % less computing time.
+
 ## 2026-10-22 – Presidency, club festival, pitch care and Tim
 
 ### New

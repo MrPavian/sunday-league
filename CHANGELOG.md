@@ -6,6 +6,13 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-23 – Trainerbefehle mit Wirkung, schnelleres Spiel
+
+### Verbessert
+- **Trainerbefehle:** Jeder Befehl ist nachgemessen (gleiche Spiele mit und ohne Befehl). „Zentrum zumachen“ war nur halb eingebaut und lässt den Gegner jetzt außen kommen. Kompakter, Tempo rein/raus, Konter absichern, Links/Rechts absichern, Mittleres Pressing, Ball halten und Mehr Risiko wirken deutlich stärker.
+- **Doppelpass:** Die Wand spielt den Rückpass erst, wenn sie den Ball wirklich hat, und versucht es notfalls erneut – Doppelpässe kommen öfter an (57 → 64 %), Ablagen ebenfalls (58 → 68 %).
+- **Schneller:** Die Spielberechnung braucht rund 40 % weniger Rechenzeit.
+
 ## 2026-10-22 – Präsidium, Vereinsfest, Platzpflege und Tim
 
 ### Neu
