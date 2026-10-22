@@ -6,6 +6,27 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-22 – Präsidium, Vereinsfest, Platzpflege und Tim
+
+### Neu
+- **Spielertrainer oder nur Trainer:** Beim Karrierestart wählst du, ob du selbst im Kader stehst oder nur an der Seitenlinie. Alte Spielstände bleiben Spielertrainer.
+- **Präsidium:** Nach dem Traineramt (Rücktritt oder Wechsel zu den Alten Herren) kannst du aus drei Bewerbern einen Trainer verpflichten – mit Gespräch und Feilschen ums Gehalt – und führst den Verein als Präsident: Saisonziel, Kasse, Ausbau, Trainer entlassen. Die Spiele schaust du von der Tribüne oder im Liveticker.
+- **Vereinsfest:** Nach dem letzten Spieltag mit sieben Bausteinen (Grill, Kuchen, Tombola, Torwand, Elfmeterkönig, Hüpfburg, Kinderturnier), Helfern, Wetter, kleinen Pannen und Kreisblatt-Bericht.
+- **Sommerturnier:** Vor dem ersten Spieltag, mit 4, 6 oder 8 Teams – als Gast oder selbst ausgerichtet. Der Pokal kommt in die Vitrine.
+- **Platzpflege:** Rasen und Linien nutzen sich ab; mähen, Kreide ziehen, wässern, nachsäen – mit Helfern oder Fachbetrieb. Ein abgespielter Platz springt unebener, bei Regen oder Frost droht eine Platzsperre mit Nachholtermin am Mittwoch.
+- **Pacht und Ausbau:** Verlängerungsangebot der Gemeinde, Langzeitpacht oder Grundstückskauf. Neu baubar: Kunstrasen, zweiter Platz, Stehstufen, Sitzplätze, Tribünendach, Bratwurststand und Biergarten.
+- **Edelfan Tim „Der Tiger“:** Halbglatze, Vollbart, Dose in der Hand – er steht bei jedem Spiel am Rand (im Hinterhof schaut er aus dem Fenster) und jubelt, schimpft und trinkt. Dazu 19 Ereignisse, etwa „Tim schmeißt eine Runde“ nach großen Spielen oder eine Leserbrief-Geschichte über drei Wochen.
+
+### Verbessert
+- Gleichstand in Turniertabellen: Punkte, Tordifferenz, Tore, direkter Vergleich, dann Los.
+- Liveticker: Die Schlussfrage sagt „wir führen“ oder „wir liegen hinten“, die Option heißt „Den Deckel draufmachen – noch ein Tor!“.
+
+### Behoben
+- Ein Pokalsieg erscheint sofort als Karte auf der Startseite.
+- Auf dem Handy lässt sich die Vereinskarte auch bei langen Texten wieder mit × schließen.
+- „Bild teilen“ am Saisonende lädt auf dem PC zuverlässig herunter und teilt auf dem Handy.
+- Android: Spielstand exportieren und Bild teilen laufen über den Teilen-Dialog.
+
 ## 2026-10-19 – Reines Managerspiel
 
 ### Neu

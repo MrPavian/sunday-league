@@ -6,6 +6,27 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-22 – Presidency, club festival, pitch care and Tim
+
+### New
+- **Player-manager or manager only:** At the start of a career you choose whether you are in the squad yourself or only on the touchline. Old saves stay player-manager.
+- **Presidency:** After your time as manager (stepping down or moving to the old boys) you can hire a manager from three applicants – with an interview and haggling over wages – and run the club as president: season target, finances, facilities, sacking the manager. You watch matches from the stand or in the live ticker.
+- **Club festival:** After the last matchday, with seven attractions (barbecue, cakes, raffle, goal wall, penalty king, bouncy castle, kids' tournament), helpers, weather, small mishaps and a local paper report.
+- **Summer tournament:** Before the first matchday, with 4, 6 or 8 teams – as guests or as hosts. The trophy goes in the cabinet.
+- **Pitch care:** Grass and lines wear out; mow, chalk, water, reseed – with helpers or a contractor. A worn pitch bounces less evenly; in rain or frost the pitch may be closed and the match moved to Wednesday.
+- **Lease and facilities:** A renewal offer from the council, a long-term lease or buying the ground. New to build: artificial turf, a second pitch, terraces, seats, a stand roof, a sausage stall and a beer garden.
+- **Superfan Tim “The Tiger”:** Balding, full beard, can in hand – he stands at the touchline at every match (in the backyard he watches from a window) and cheers, rants and drinks. Plus 19 events, such as “Tim buys a round” after big games or a three-week letters-page story.
+
+### Improved
+- Ties in tournament tables: points, goal difference, goals, head-to-head, then lots.
+- Live ticker: the final question says “we lead” or “we trail”, and the option reads “Finish them off – one more goal!”.
+
+### Fixed
+- A cup win now shows up straight away as a card on the home screen.
+- On the phone the club card can be closed with × again, even with long texts.
+- “Share picture” at the end of the season reliably downloads on the PC and shares on the phone.
+- Android: exporting saves and sharing the picture go through the share dialog.
+
 ## 2026-10-19 – Pure manager game
 
 ### New

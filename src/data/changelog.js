@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-22',
+    de: { title: 'Präsidium, Vereinsfest, Platzpflege und Tim', items: ['Beim Start wählbar: Spielertrainer oder nur Trainer – später kannst du einen Trainer verpflichten und den Verein als Präsident führen.', 'Vereinsfest am Saisonende und Sommerturnier vor der Saison.', 'Platzpflege, Pachtvertrag und neue Ausbauten: Kunstrasen, Tribünen bis zum Dach, Biergarten.', 'Edelfan Tim „Der Tiger“ steht bei jedem Spiel am Rand – mit 19 eigenen Ereignissen.', 'Behoben: Pokalsieg-Anzeige, Schließen-Knopf im Handy, Bild teilen und Spielstand-Export auf Android.'] },
+    en: { title: 'Presidency, club festival, pitch care and Tim', items: ['Choose at the start: player-manager or manager only – later you can hire a manager and run the club as president.', 'Club festival at the end of the season and a summer tournament before it.', 'Pitch care, lease contract and new facilities: artificial turf, stands up to a roof, beer garden.', 'Superfan Tim “The Tiger” stands at the touchline at every match – with 19 events of his own.', 'Fixed: cup win notice, close button on the phone, sharing the picture and exporting saves on Android.'] },
+  },
+  {
     id: '2026-10-19',
     de: { title: 'Reines Managerspiel', items: ['Hauptmenü nur noch mit Karriere, Spielständen und Einstellungen.', 'Du coachst jedes Spiel von der Seitenlinie oder per Liveticker – selbst spielen gibt es nicht mehr.', 'Freundschaftsspiel, Challenges und Spielerpool sind entfernt.', 'Alte Spielstände laden weiter.'] },
     en: { title: 'Pure manager game', items: ['Main menu with only Career, Saves and Settings.', 'You coach every match from the touchline or via the live ticker – playing yourself is gone.', 'Friendly match, challenges and player pool are removed.', 'Old saves still load.'] },
