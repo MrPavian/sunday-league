@@ -7,8 +7,8 @@ const runs = files.map((f) => JSON.parse(fs.readFileSync(f, 'utf8')));
 const base = runs[0].res['-'];
 const all = Object.assign({}, ...runs.map((r) => r.res));
 const EXPECT = (await import('./orders-check-expect.mjs')).EXPECT;
-const POS = new Set(['defX', 'midX', 'fwdAhead', 'teamLen', 'passLen']);
-const SHARE = new Set(['longShare', 'ownWide', 'ownLeft', 'ownRight', 'oppWide', 'oppLeft', 'oppRight', 'winsHigh', 'stamina']);
+const POS = new Set(['defX', 'midX', 'fwdAhead', 'teamLen', 'lenDef', 'blockZ', 'passLen']);
+const SHARE = new Set(['longShare', 'ownWide', 'ownLeft', 'ownRight', 'oppWide', 'oppLeft', 'oppRight', 'oppShotLeft', 'oppShotRight', 'oppShotWide', 'winsHigh', 'stamina']);
 const fmt = (k, v) => (SHARE.has(k) ? (100 * v).toFixed(1) + ' %' : v.toFixed(POS.has(k) ? 1 : 2));
 const rows = [];
 for (const [cfg, exp] of Object.entries(EXPECT)) {
@@ -21,7 +21,7 @@ for (const [cfg, exp] of Object.entries(EXPECT)) {
     return { k, txt: `${k} ${fmt(k, base[k])} → ${fmt(k, r[k])}`, verdict };
   });
   const v = parts.some((p) => p.verdict === 'FALSCH') ? 'FALSCH' : parts.every((p) => p.verdict === 'wirkt') ? 'wirkt' : parts.some((p) => p.verdict === 'wirkt') ? 'teils' : 'kaum';
-  rows.push({ Befehl: cfg, Kennzahlen: parts.map((p) => p.txt + ' (' + p.verdict + ')').join(' · '), Tore: `${r.goals.toFixed(2)}:${r.against.toFixed(2)}`, Bewertung: v });
+  rows.push({ Befehl: cfg, Kennzahlen: parts.map((p) => p.txt + ' (' + p.verdict + ')').join(' · '), Tore: `${r.goals.toFixed(2)}:${r.against.toFixed(2)} (Sch. ${r.shots.toFixed(1)}:${r.oppShots.toFixed(1)})`, Bewertung: v });
 }
-console.log(`Ohne Befehl: Tore ${base.goals.toFixed(2)}:${base.against.toFixed(2)}`);
-for (const r of rows) console.log(`${r.Bewertung.padEnd(6)} ${r.Befehl.padEnd(22)} ${r.Tore.padEnd(10)} ${r.Kennzahlen}`);
+console.log(`Ohne Befehl: Tore ${base.goals.toFixed(2)}:${base.against.toFixed(2)} (Sch. ${base.shots.toFixed(1)}:${base.oppShots.toFixed(1)})`);
+for (const r of rows) console.log(`${r.Bewertung.padEnd(6)} ${r.Befehl.padEnd(22)} ${r.Tore.padEnd(26)} ${r.Kennzahlen}`);
