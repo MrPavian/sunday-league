@@ -1,36 +1,10 @@
-import { langChosen, setLang, tr } from './core/i18n.js';
+import { tr } from './core/i18n.js';
 import * as THREE from 'three';
 import '@fontsource/pixelify-sans/400.css';
 import '@fontsource/pixelify-sans/600.css';
 import { Sound } from './audio/Sound.js';
-import {
-  clubById,
-  createCareer,
-  currentFixtures,
-  finishRound,
-  humanClub,
-  humanFixture,
-  loadCareer,
-  activeSlot,
-  setActiveSlot,
-  slotSummaries,
-  exportCareer,
-  importCareer,
-  deleteCareer,
-  nextSeason,
-  prepareMatch,
-  recordResult,
-  saveCareer,
-  simulate,
-} from './career/career.js';
-import { venueExtras } from './career/sponsors.js';
-import { advanceCup, CUPS, cupOf, currentCupMatches, humanCupMatch, prepareCupMatch, recordCupResult, skipTournament, startSummerCup, startTournament } from './career/tournament.js';
+import { loadCareer, saveCareer } from './career/career.js';
 import { createRng } from './core/rng.js';
-import { saveFile } from './core/files.js';
-import { matchdaySurprise } from './career/matchday.js';
-import { INCIDENT_TYPES } from './sim/incidents.js';
-import { button, haptic, hapticsOn, setHaptics, Sheet } from './ui/ds.js';
-import { checkWhatsNew, whatsNewLatestHtml } from './ui/whatsnew.js';
 import { Input } from './input/Input.js';
 import { CameraRig } from './render/CameraRig.js';
 import { MatchView } from './render/MatchView.js';
@@ -38,23 +12,18 @@ import { PixelRenderer } from './render/PixelRenderer.js';
 import { DebugOverlay } from './render/DebugOverlay.js';
 import { cameraViewHeight, createGovernor, detectPlatform, gpuName, LADDER, pickInitialQuality, QUALITY, setCurrentQuality } from './render/quality.js';
 import { applyLighting } from './render/props.js';
-import { BONES } from './render/PlayerModel.js';
 import { buildCrowd } from './render/crowd.js';
 import { moodOf, pickTimeOfDay, resolveLighting } from './render/lighting.js';
 import { setEmissiveLevel } from './render/materials.js';
 import { disposeTree, mergeStatic } from './render/merge.js';
 import { applyColorSafeKits } from './render/colorSafe.js';
 import { venueById } from './render/venues/index.js';
-import { createMatch, HALF_MAX, HALF_MIN, MATCH, MATCH_LENGTHS, matchDuration, stepMatch } from './sim/match.js';
-import { PITCHES } from './sim/pitch.js';
+import { createMatch, MATCH, MATCH_LENGTHS, stepMatch } from './sim/match.js';
 import { attackDir, getPlayer } from './sim/players.js';
 import { SURFACES } from './sim/surfaces.js';
-import { applyWeather, WEATHER } from './career/weather.js';
 import { Clubhouse } from './ui/Clubhouse.js';
-import { succeed } from './career/legacy.js';
 import { CoachCreator } from './ui/CoachCreator.js';
 import { CoachHire } from './ui/CoachHire.js';
-import { appointCoach } from './career/president.js';
 import { EndScreen } from './ui/EndScreen.js';
 import { Hud } from './ui/Hud.js';
 import { Menu } from './ui/Menu.js';
@@ -63,15 +32,16 @@ import { ShoutBar } from './ui/ShoutBar.js';
 import { SubPanel } from './ui/SubPanel.js';
 import { PlanPanel } from './ui/PlanPanel.js';
 import { HalftimePanel } from './ui/HalftimePanel.js';
-import { coachLevel, homeView, setCoachLevel, setHomeView } from './ui/prefs.js';
-import { coachAway, isPresident } from './career/personal.js';
+import { coachLevel } from './ui/prefs.js';
 import { enableManager } from './sim/coach.js';
 import { Settings } from './ui/Settings.js';
 import { Ticker } from './ui/Ticker.js';
 import { SaveSlots } from './ui/SaveSlots.js';
-import { prepareRelegationMatch, recordRelegationLeg, startRelegation } from './career/relegation.js';
 import { tigerForMatch } from './career/tiger.js';
-import { humanTie, POKALE, pokalOf, pokalWhen, preparePokalMatch, recordPokalResult, roundName } from './career/pokal.js';
+import { installAndroidBack } from './app/android.js';
+import { applyTestSwitches, installDebugKeys, installGfxDebug, installTestHooks, testPitch } from './app/debug.js';
+import { createMatchflow } from './app/matchflow.js';
+import { createMenus, remember } from './app/menus.js';
 import './style.css';
 import './ds.css';
 import './world.css';
@@ -112,70 +82,7 @@ setCurrentQuality(startQuality);
 pixel.applyQuality(startQuality);
 const governor = createGovernor(startQuality, { platform, auto: !fixedQuality });
 const gfx = new DebugOverlay(pixel, { visible: params.has('gfx') });
-gfx.extra = () => [playerDebug(), `PLATFORM    ${platform}${governor.auto ? `  Auto (${governor.changes} Wechsel${governor.lastFps ? `, zuletzt ${governor.lastFps.toFixed(0)} fps` : ''})` : '  fest'}`].join('\n');
-// Spieler 2.0 in der Debug-Anzeige: ein SkinnedMesh je Figur, Team-Atlanten.
-function playerDebug() {
-  if (!view?.models) return '';
-  const all = [...view.models.values()];
-  const shown = all.filter((m) => m.group.visible);
-  const tris = shown[0]?.mesh ? shown[0].mesh.geometry.attributes.position.count / 3 : 0;
-  const mats = new Set(all.map((m) => m.mesh?.material)).size + (view.referee ? 1 : 0);
-  const cs = crowd?.stats;
-  return [
-    cs ? `CROWD       ${cs.shown}/${cs.people} Zuschauer · ${cs.calls} Draw Calls (+1 Schatten) · ${crowd.material ? 1 : 0} Material · aktiv ${cs.active} · ${crowd.hz ?? 12} Hz` : '',
-    ...weatherDebug(),
-    ...ballDebug(),
-    `PLAYER      Modell 2.0 · ${shown.length} Figuren · je 1 Draw Call (+1 Schatten)`,
-    `PLAYER TRI  ${tris} je Figur · ${BONES.length} Knochen (starr) · ${mats} Materialien`,
-    `PLAYER ANIM prozedural, 8 Posen je Schrittpaar · Gesicht ${shown[0]?.face ?? '–'}`,
-  ].join('\n');
-}
-// Wetter 2.0 in der Debug-Anzeige (weather.js, Effects, IncidentView).
-function weatherDebug() {
-  const w = view?.weather;
-  if (!w) return [];
-  const s = w.state;
-  const st = w.stats;
-  const inc = view.incidents;
-  const fx = view.effects;
-  let live = 0;
-  for (const p of fx.p) if (p.life > 0) live++;
-  const parts = inc.rain.visible ? `${Math.round(inc.drops.length * (0.55 + 0.45 * (inc.rainRate ?? 0.8)))} Regen` : inc.snow.visible ? `${inc.flakes.length} Schnee` : inc.leaves.visible ? `${inc.leafCount} Laub` : '0';
-  const f2 = (v) => v.toFixed(2);
-  return [
-    `WEATHER     ${s.weather ?? 'sonne'}${(match?.pitch?.heat ?? 1) > 1 ? ' (Hitze)' : ''}  Boden ${s.groundId}${s.indoor ? ' · Halle' : ''}  Wind ${f2(s.windX)}  (F4: nächstes Wetter)`,
-    `WETNESS     ${f2(s.wet)} → Ziel ${f2(s.wetTarget)}  Regen ${f2(s.rain)}`,
-    `PUDDLES     ${st.puddles}/${st.puddleMax}  ${st.puddles ? '1 Draw Call' : ''}`,
-    `SPLASHES    ${st.splashRate.toFixed(1)}/s  (gesamt ${st.splashes})  Partikel ${live}/${fx.max}`,
-    `FOOTPRINTS  ${st.footprints}/${st.footprintMax}${st.leaves ? `  Laub am Boden ${st.leaves}` : ''}`,
-    `SNOW        ${f2(s.snow)}  FROST ${f2(s.frost)}`,
-    `FOG         ${f2(s.fog)}  Bodennebel ${s.fog > 0 ? 'an' : 'aus'}`,
-    `HEAT HAZE   ${st.heatHaze > 0 ? f2(st.heatHaze) : 'aus'}`,
-    `W-PARTICLES ${parts}`,
-  ];
-}
-// Ball 2.0 in der Debug-Anzeige (BallView.js, Effects.js).
-function ballDebug() {
-  const bv = view?.ballView;
-  if (!bv) return [];
-  const st = bv.stats;
-  const fx = view.effects;
-  let live = 0;
-  let ball = 0;
-  for (let i = 0; i < fx.max; i++) {
-    if (fx.p[i].life <= 0) continue;
-    live++;
-    if (fx.ballFx[i]) ball++;
-  }
-  const tris = bv.mesh.geometry.attributes.position.count / 3;
-  return [
-    `BALL        ${tris} Dreiecke · ${bv.mesh.castShadow ? 2 : 1} Draw Calls (Farbe + Schatten)${bv.trail ? ` · Schweif +1 wenn sichtbar` : ''}`,
-    `BALL FX     ${ball} Ball-Akzente · ${live}/${fx.max} Effekte aktiv (1 Draw Call) · ${st.impacts} Aufpralle`,
-    `BALL SHADOW Höhe ${st.height.toFixed(2)} m · Dichte ${st.shadow.toFixed(2)} (im Kontaktschatten-Draw-Call)`,
-    `BALL TRAIL  ${bv.trail ? (st.trail ? `an (${st.trail} Punkte)` : 'aus') : 'nicht in dieser Stufe'}`,
-    `NET EFFECT  ${bv.nets.length ? `${bv.nets.length} Netze · ${st.net.toFixed(2)} m` : 'keine Netze / Stufe ohne Netzreaktion'}`,
-  ];
-}
+
 const shakeDir = new THREE.Vector3();
 let lightMood = null;
 try {
@@ -185,56 +92,12 @@ try {
 }
 const rig = new CameraRig();
 const scene = new THREE.Scene();
-// ?debug: Renderer und Szene für die Browser-Konsole (Draw Calls, Speicher).
-// ?ds – Übersicht des Designsystems (UI 2.0), nur zum Prüfen.
-if (params.has('ds')) import('./ui/StyleGuide.js').then((m) => m.showStyleGuide());
-if (params.has('debug')) globalThis.__sl = { renderer: pixel.renderer, pixel, scene, THREE, rig, get match() { return match; }, get view() { return view; }, get crowd() { return crowd; }, get weather() { return view?.weather; }, get sound() { return sound; }, showVenue: (id) => (loadVenue(id), startMatch(false)) };
-// Nur mit ?debug: Herzschlag und „letztes System" je Bild – zeigt bei einem Hänger, wo es stand.
-// Reine Diagnose: setzt nichts zurück und startet nichts neu.
-const DIAG = params.has('debug') ? { frame: 0, simStep: 0, sys: '-', stalls: 0, errors: [] } : null;
-if (DIAG) {
-  globalThis.__sl.diag = DIAG;
-  const where = () => `SIM STEP ${DIAG.simStep} · SIM TIME ${match ? match.time.toFixed(2) : '-'} · MATCH seed ${match?.seed ?? '-'} phase ${match?.phase ?? '-'} · FRAME ${DIAG.frame} · LAST SYSTEM ${DIAG.sys}`;
-  window.addEventListener('error', (e) => {
-    DIAG.errors.push({ msg: e.message, at: where() });
-    console.error(`[sl-diag] Fehler in ${DIAG.sys}: ${e.message} | ${where()}`);
-  });
-  let seen = 0;
-  let quiet = 0;
-  setInterval(() => {
-    if (document.hidden || mode !== 'play') return void (quiet = 0);
-    quiet = DIAG.frame === seen ? quiet + 1 : 0;
-    seen = DIAG.frame;
-    if (quiet === 3) {
-      DIAG.stalls++;
-      console.error(`[sl-diag] Kein Bild seit 3 s | ${where()}`);
-    }
-  }, 1000);
-}
 const input = new Input();
 const shoutBar = new ShoutBar(document.getElementById('shoutbar') ?? document.body.appendChild(Object.assign(document.createElement('div'), { id: 'shoutbar', hidden: true })), input);
 const hud = new Hud(document.getElementById('hud'));
 const subPanel = new SubPanel(document.body.appendChild(Object.assign(document.createElement('div'), { id: 'subpanel', hidden: true })));
 const planPanel = new PlanPanel(document.body.appendChild(Object.assign(document.createElement('div'), { id: 'planpanel', hidden: true })));
 const halfPanel = new HalftimePanel(document.body.appendChild(Object.assign(document.createElement('div'), { id: 'halfpanel', hidden: true })));
-// Halbzeit im Trainermodus: Spiel steht, Lage ansehen, umstellen, wechseln.
-function openHalftime() {
-  const team = match.coachTeam;
-  halfPanel.open(match, team, {
-    onPlan: () => {
-      halfPanel.hideForNow();
-      planPanel.open(match, team, { advanced: coachLevel() === 'profi' }, () => halfPanel.reopen());
-    },
-    onSub: () => {
-      halfPanel.hideForNow();
-      subPanel.open(match, team, () => halfPanel.reopen());
-    },
-    onClose: () => {
-      drainInput = true;
-      if (match.phase === 'halftime') match.phaseTimer = Math.min(match.phaseTimer, 0.5); // die Pause war schon lang genug
-    },
-  });
-}
 shoutBar.onPlan = () => {
   if (mode !== 'play' || !match?.manager || match.phase === 'ended' || subPanel.isOpen) return;
   planPanel.open(match, match.coachTeam, { advanced: coachLevel() === 'profi' }, () => (drainInput = true));
@@ -266,20 +129,6 @@ try {
   // egal
 }
 
-function remember(key, value) {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    // egal
-  }
-}
-
-// Sprache wechseln: Die Seite lädt neu, damit alle Texte in der neuen Sprache entstehen.
-function switchLanguage(lang) {
-  setLang(lang);
-  if (career) saveCareer(career);
-  location.reload();
-}
 
 let venue = null;
 let venueRoot = null;
@@ -293,6 +142,43 @@ let career = loadCareer();
 let careerMatch = null; // { prepared, fixture } während eines Karrierespiels
 const creator = new CoachCreator(document.getElementById('creator'));
 const hireScreen = new CoachHire(document.getElementById('hire') ?? document.body.appendChild(Object.assign(document.createElement('div'), { id: 'hire', hidden: true })));
+const ticker = new Ticker(document.getElementById('ticker'));
+
+// Gemeinsamer Zustand für src/app/*: Zugriff auf die Variablen dieser Datei (keine Kopien), dazu die
+// Bausteine, die mehrere Teile brauchen. menu, clubhouse und die Abläufe aus app/ kommen weiter unten dazu.
+const ctx = {
+  params, canvas, scene, rig, pixel, platform, governor, gfx, hud, sound, settings, saveSlots, title, endScreen,
+  creator, hireScreen, ticker, subPanel, planPanel, halfPanel, testDuration, TEMPOS,
+  loadVenue, showMatch, startMatch, setMode,
+  get match() { return match; },
+  get view() { return view; },
+  get crowd() { return crowd; },
+  get venue() { return venue; },
+  get pitch() { return pitch; },
+  get mode() { return mode; },
+  get career() { return career; },
+  set career(v) { career = v; },
+  get careerMatch() { return careerMatch; },
+  set careerMatch(v) { careerMatch = v; },
+  get seed() { return seed; },
+  set seed(v) { seed = v; },
+  get tempo() { return tempo; },
+  set tempo(v) { tempo = v; },
+  get colorSafe() { return colorSafe; },
+  set colorSafe(v) { colorSafe = v; },
+  get leagueSize() { return leagueSize; },
+  set leagueSize(v) { leagueSize = v; },
+  get drainInput() { return drainInput; },
+  set drainInput(v) { drainInput = v; },
+};
+installGfxDebug(ctx);
+const DIAG = installTestHooks(ctx);
+const shot = installDebugKeys(ctx);
+const menus = createMenus(ctx);
+const flow = createMatchflow(ctx);
+const { openMenu } = menus;
+const { openHalftime, commitCareerMatch, finishCareerMatch } = flow;
+Object.assign(ctx, { openMenu, openClubhouse: flow.openClubhouse, finishCareerMatch });
 
 let venueAdKey = null;
 let venueAds = null; // Bandenwerbung und Platzname des Karriere-Heimplatzes (null: Vorgabe des Spielorts)
@@ -348,23 +234,9 @@ function showMatch(m) {
 
 // human: Testspiel mit eigener Mannschaft (Trainer-Modus, nur über die Test-URLs); false: Kulisse.
 function startMatch(human) {
-  // Testschalter: ?wetter=regen|schnee|nebel|frost|wind|hitze|laub
-  const w = params.get('wetter');
-  const matchPitch = w ? applyWeather(pitch, { id: WEATHER[w] ? w : 'sonne', leaves: w === 'laub', windDir: 1 }) : pitch;
+  const matchPitch = testPitch(pitch, params);
   const m = createMatch({ seed: seed++, pitch: matchPitch, human, duration: testDuration, incidents: true });
-  // Testschalter: ?incident=hund|gewitter|… löst den Vorfall nach 3 Sekunden aus.
-  // Unbekannte Namen ignorieren – ein Vorfall ohne Text ließ die Anzeige werfen und das Bild stehen.
-  // Ersatzschiri nur, wo es einen Schiri gibt (wie bei der Auslosung in incidents.js) – sonst stand das Spiel.
-  const forced = params.get('incident');
-  if (human && INCIDENT_TYPES.includes(forced) && (forced !== 'ersatzschiri' || m.referee)) m.incidentPlan = { type: forced, at: 3 };
-  // Testschalter: ?elfmeter (mit ?dauer=2) – Freundschaftsspiel als K.-o.-Spiel, bei Remis Elfmeterschießen.
-  if (human && params.has('elfmeter')) m.knockout = true;
-  // Testschalter: ?stau – Spieltags-Überraschung „Stau" wie in der Karriere (einer kommt nach einem Drittel).
-  // Ohne Bank, damit der Nachzügler wirklich später aufs Feld kommt (mit Bank rückt einer nach – wie tests/freeze.test.js).
-  if (human && params.has('stau')) {
-    m.bench[0] = [];
-    matchdaySurprise(m, 0, createRng(m.seed ?? 1), 1, 'stau');
-  }
+  applyTestSwitches(m, human, params);
   showMatch(m);
 }
 
@@ -377,250 +249,13 @@ function setMode(next) {
 
 // --- Hauptmenü ---------------------------------------------------------------------
 
-const saveInfo = () => (career ? `${humanClub(career).name}, ${tr('Spieltag', 'matchday')} ${Math.min(career.round + 1, career.fixtures.length)}` : null);
-
-const menu = new Menu(document.getElementById('menu'), {
-  onCareer() {
-    menu.hide();
-    openClubhouse();
-  },
-  onSettings() {
-    menu.paused = true;
-    settings.show({
-      state: () => ({ muted: sound.muted, effects: pixel.effects, tempo, tempos: TEMPOS, volume: sound.volume, safeKits: colorSafe, length: MATCH.halves ? 'custom' : MATCH.length, cupShort: MATCH.cupShare < 1, pokalExtra: MATCH.pokalExtra, subs: MATCH.subs, coachLevel: coachLevel(), homeView: homeView(), haptics: hapticsOn(), leagueSize: career ? career.nextLeagueSize ?? career.leagueSize ?? 6 : leagueSize, leagueSizeNow: career?.leagueSize ?? null }),
-      onLang: switchLanguage,
-      onChange(key, value) {
-        if (key === 'sound' && sound.muted !== (value === 'off')) sound.toggleMute();
-        if (key === 'effects') {
-          pixel.setEffects(value === 'on');
-          remember('sunday-league:fx', pixel.effects ? '1' : '0');
-        }
-        if (key === 'tempo') {
-          tempo = Number(value);
-          remember('sunday-league:tempo', TEMPOS[tempo].id);
-        }
-        if (key === 'volume') sound.setVolume(value / 100);
-        if (key === 'safekits') {
-          colorSafe = value === 'off'; // „aus" = nicht Vereinsfarben
-          remember('sunday-league:safekits', colorSafe ? '1' : '0');
-          if (match) showMatch(match); // Kulisse im Menü sofort umfärben
-        }
-        if (key === 'haptics') {
-          setHaptics(value === 'on');
-          haptic('select');
-        }
-        if (key === 'length' && MATCH_LENGTHS[value]) {
-          // Voreinstellung wählen: setzt alle Plätze zurück auf die Vorgabe.
-          MATCH.length = value;
-          MATCH.halves = null;
-          remember('sunday-league:length', value);
-          remember('sunday-league:halves', 'null');
-        }
-        if (key === 'half') {
-          const [id, step] = value.split(':');
-          const pitch = PITCHES[id];
-          if (pitch) {
-            const now = matchDuration(pitch) / 2;
-            MATCH.halves = { ...(MATCH.halves ?? {}), [id]: Math.max(HALF_MIN, Math.min(HALF_MAX, now + Number(step))) };
-            remember('sunday-league:halves', JSON.stringify(MATCH.halves));
-          }
-        }
-        if (key === 'leaguesize') {
-          leagueSize = Number(value) === 6 ? 6 : 8;
-          remember('sunday-league:leaguesize', String(leagueSize));
-          if (career) {
-            // Laufende Karriere: gilt ab der nächsten Saison.
-            career.nextLeagueSize = leagueSize === (career.leagueSize ?? 6) ? null : leagueSize;
-            saveCareer(career);
-          }
-        }
-        if (key === 'coachlevel') setCoachLevel(value);
-        if (key === 'homeview') setHomeView(value);
-        if (key === 'subs') {
-          MATCH.subs = value;
-          remember('sunday-league:subs', value);
-        }
-        if (key === 'cupshare') {
-          MATCH.cupShare = value === 'on' ? 0.75 : 1;
-          remember('sunday-league:cupshare', MATCH.cupShare === 1 ? '1' : '0');
-        }
-        if (key === 'pokalextra') {
-          MATCH.pokalExtra = value === 'extra';
-          remember('sunday-league:pokalextra', MATCH.pokalExtra ? '1' : '0');
-        }
-      },
-      onBack() {
-        settings.hide();
-        setTimeout(() => (menu.paused = false), 0);
-        if (mode === 'club' && career) clubhouse.render(); // aus dem Vereinsheim geöffnet
-      },
-    });
-  },
-  onSaves() {
-    menu.paused = true;
-    saveSlots.show({
-      summaries: () => slotSummaries(),
-      active: () => activeSlot(),
-      onLoad(slot) {
-        setActiveSlot(slot);
-        career = loadCareer();
-        saveSlots.hide();
-        menu.paused = false;
-        menu.setCareer(saveInfo());
-        if (career) {
-          menu.hide();
-          openClubhouse();
-        }
-      },
-      onNew(slot) {
-        setActiveSlot(slot);
-        career = loadCareer();
-        saveSlots.hide();
-        menu.paused = false;
-        menu.onCareerNew();
-      },
-      onDelete(slot) {
-        deleteCareer(undefined, slot);
-        if (slot === activeSlot()) career = null;
-        menu.setCareer(saveInfo());
-      },
-      onExport(slot) {
-        const c = loadCareer(undefined, slot);
-        if (!c) return;
-        const club = humanClub(c).short ?? 'verein';
-        const blob = new Blob([exportCareer(c)], { type: 'application/json' });
-        const name = `sunday-league-${club}-saison-${c.season}.json`.toLowerCase().replace(/[^a-z0-9.-]+/g, '-');
-        saveFile(blob, name, { title: tr('Sunday League – Spielstand', 'Sunday League – save game') }).catch((err) => console.error('Export fehlgeschlagen', err));
-      },
-      onImport(slot, text) {
-        try {
-          const c = importCareer(text);
-          saveCareer(c, undefined, slot);
-          if (slot === activeSlot()) career = c;
-          menu.setCareer(saveInfo());
-          return true;
-        } catch (err) {
-          return err.message === 'json'
-            ? tr('Die Datei ist kein gültiger Spielstand (kein JSON).', 'The file is not a valid save (not JSON).')
-            : tr('Das ist kein Sunday-League-Spielstand dieser Version.', 'This is not a Sunday League save for this version.');
-        }
-      },
-      onBack() {
-        saveSlots.hide();
-        setTimeout(() => (menu.paused = false), 0);
-      },
-    });
-  },
-  onCareerNew() {
-    // Erst dich selbst anlegen, dann geht es ins Vereinsheim.
-    menu.hide();
-    setMode('club');
-    const careerSeed = seed++;
-    creator.show({
-      seed: careerSeed,
-      onDone(coach) {
-        creator.hide();
-        career = createCareer({ seed: careerSeed, coach, leagueSize });
-        career.founding = true; // erst Name, Trikot und Wappen (Gründungsversammlung)
-        saveCareer(career);
-        openClubhouse();
-      },
-      onCancel() {
-        creator.hide();
-        openMenu();
-      },
-    });
-  },
-});
-
-function openMenu() {
-  setMode('menu');
-  endScreen.hide();
-  clubhouse.hide();
-  setTimeout(() => (menu.paused = false), 0);
-  menu.setCareer(saveInfo());
-  // Kulisse: KI-Spiel auf dem zuletzt geladenen Platz (sonst Parkplatz).
-  loadVenue(venue?.id ?? params.get('venue') ?? 'parkplatz');
-  startMatch(false);
-  menu.show();
-}
+const menu = new Menu(document.getElementById('menu'), menus.handlers);
+ctx.menu = menu;
 
 // --- Karriere ------------------------------------------------------------------
 
-const clubhouse = new Clubhouse(document.getElementById('club'), {
-  onMenu: openMenu,
-  onSettings: () => menu.onSettings(),
-  onChange: () => saveCareer(career),
-  onCoach: () => playCareerMatch(),
-  onSimulate: () => tickerRound(),
-  onQuickSim: () => runRound(null), // Präsidium: nur das Ergebnis, ohne Zuschauen
-  onHireCoach(first = true) {
-    // Trainer selbst engagieren (Präsidium): Bewerberliste und Gespräch, dann Unterschrift.
-    clubhouse.hide();
-    hireScreen.show(career, {
-      first,
-      onDone(cand) {
-        const r = appointCoach(career, cand);
-        saveCareer(career);
-        openClubhouse();
-        if (!r.ok) hud.toast(tr('Das hat nicht geklappt – die Kasse reicht nicht.', 'That did not work – not enough in the kitty.'), 2.5, 2);
-      },
-      onCancel() {
-        openClubhouse();
-      },
-    });
-  },
-  onNextWeek() {
-    finishRound(career);
-    saveCareer(career);
-    openClubhouse();
-  },
-  onCupStart(kind = 'stadt') {
-    startTournament(career, kind);
-    saveCareer(career);
-    clubhouse.tab = 'cup';
-    openClubhouse();
-  },
-  onSummerStart(value = 'invite') {
-    const [choice, size] = String(value).split(':');
-    if (!startSummerCup(career, choice, size ? Number(size) : null)) return;
-    saveCareer(career);
-    clubhouse.tab = 'cup';
-    openClubhouse();
-  },
-  onCupSkip(kind = 'stadt') {
-    skipTournament(career, kind);
-    saveCareer(career);
-    openClubhouse();
-  },
-  onCupCoach: (kind = 'stadt') => playCupMatch(kind),
-  onPokalCoach: (kind) => playPokalMatch(kind),
-  onPokalSimulate: (kind) => tickerPokal(kind),
-  onRelCoach: () => playRelegationMatch(),
-  onRelSimulate: () => tickerRelegation(),
-  onCupSimulate: (kind = 'stadt') => tickerCup(kind),
-  onNewCoach() {
-    creator.show({
-      seed: career.seed + career.season,
-      successor: humanClub(career).name,
-      onDone(input) {
-        creator.hide();
-        succeed(career, { type: 'neu', name: `${input.first} ${input.last}` }, input);
-        saveCareer(career);
-        openClubhouse();
-      },
-      onCancel() {
-        creator.hide();
-        openClubhouse();
-      },
-    });
-  },
-  onNewSeason() {
-    nextSeason(career);
-    saveCareer(career);
-    openClubhouse();
-  },
-});
+const clubhouse = new Clubhouse(document.getElementById('club'), flow.clubhouseHandlers);
+ctx.clubhouse = clubhouse;
 
 // App in den Hintergrund (Android: anderer App-Wechsel, Bildschirm aus) oder Seite zu:
 // Karriere sichern – das System darf die App danach jederzeit beenden.
@@ -629,223 +264,6 @@ function saveOnLeave() {
 }
 document.addEventListener('visibilitychange', () => document.hidden && saveOnLeave());
 window.addEventListener('pagehide', saveOnLeave);
-
-function openClubhouse(results = null) {
-  setMode('club');
-  endScreen.hide();
-  // Im Hintergrund kickt irgendwer auf dem eigenen Platz.
-  loadVenue(humanClub(career).venue, venueExtras(career));
-  startMatch(false);
-  clubhouse.show(career, { results });
-  if (!results) resumeRound();
-}
-
-// Eigenes Spiel schon gewertet, der Rest des Spieltags bzw. der Turnierrunde aber noch
-// nicht (Weiter gedrückt, oder die App wurde nach dem Abpfiff geschlossen): jetzt nachrechnen.
-let resuming = false;
-function resumeRound() {
-  if (resuming || careerMatch) return;
-  const fixture = humanFixture(career);
-  if (fixture?.result) return void runRound(fixture);
-  for (const kind of Object.keys(CUPS)) {
-    const t = cupOf(career, kind);
-    const me = humanClub(career).id;
-    const playedNow = t && t.stage !== 'done' && t.matches.some((m) => m.round === t.round && m.result && (m.home === me || m.away === me));
-    if (playedNow && currentCupMatches(career, kind).length) return void runCupRound(null, kind);
-  }
-}
-
-// Präsidium: man schaut von der Tribüne zu, der eingestellte Trainer coacht (keine Zurufe, keine Wechsel).
-const handsOn = () => !isPresident(career);
-function spectatorToast() {
-  if (!handsOn() && career.hired) hud.toast(tr(`Von der Tribüne: ${career.hired.name} coacht`, `From the stand: ${career.hired.name} is in charge`), 2.5, 2);
-}
-
-function playCareerMatch() {
-  const fixture = humanFixture(career);
-  const prepared = prepareMatch(career, fixture, { human: handsOn(), duration: testDuration });
-  careerMatch = { prepared, fixture };
-  loadVenue(clubById(career, fixture.home).venue, clubById(career, fixture.home).human ? venueExtras(career) : null);
-  clubhouse.hide();
-  setMode('play');
-  showMatch(prepared.match);
-  spectatorToast();
-  for (const h of prepared.helpers) {
-    const p = prepared.match.players.find((q) => q.poolIndex === h) ?? prepared.match.bench.flat().find((q) => q.poolIndex === h);
-    if (p?.helperFor) hud.toast(tr(`${p.name} (Schwager von ${p.helperFor}) hilft aus`, `${p.name} (${p.helperFor}'s brother-in-law) is helping out`), 2.5, 2);
-  }
-}
-
-// Stadtmeisterschaft: eigenes Spiel an der Seitenlinie, der Rest läuft im Hintergrund.
-function playCupMatch(kind) {
-  const m = humanCupMatch(career, kind);
-  if (!m) return runCupRound(null, kind);
-  const prepared = prepareCupMatch(career, m, { human: handsOn(), duration: testDuration });
-  careerMatch = { prepared, cup: m };
-  loadVenue(prepared.pitch.id);
-  clubhouse.hide();
-  setMode('play');
-  showMatch(prepared.match);
-  spectatorToast();
-  hud.toast(kind === 'sommer' ? `${CUPS.sommer.name} – ${cupOf(career, 'sommer').place ?? ''}` : kind === 'halle' ? tr('Hallen-Stadtmeisterschaft – Sporthalle Kanalschule', 'Indoor City Cup – Kanalschule Sports Hall') : tr('Stadtmeisterschaft – Sportplatz Am Kanal', 'City Cup – Am Kanal Ground'), 2.5, 2);
-}
-
-async function runCupRound(played, kind = played?.kind ?? 'stadt') {
-  if (resuming) return;
-  resuming = true;
-  clubhouse.setBusy(kind === 'halle' ? tr('Turnier läuft … auf dem anderen Hallendrittel wird auch gespielt.', 'Tournament under way … the other end of the hall is playing too.') : tr('Turnier läuft … auf dem Nebenplatz wird auch gekickt.', 'Tournament under way … they are playing on the next pitch too.'));
-  for (const m of currentCupMatches(career, kind)) {
-    if (m === played) continue;
-    const prepared = prepareCupMatch(career, m, { duration: testDuration });
-    await simulate(prepared);
-    recordCupResult(career, m, prepared);
-  }
-  advanceCup(career, kind);
-  saveCareer(career);
-  resuming = false;
-  clubhouse.tab = 'cup';
-  openClubhouse();
-}
-
-// Simulieren mit Liveticker: Das eigene Spiel läuft als kommentierter Text im
-// Zeitraffer, danach werden die übrigen Partien wie gewohnt gerechnet.
-const ticker = new Ticker(document.getElementById('ticker'));
-// Welche Mannschaft im Ticker die eigene ist (nur wenn der Trainer da ist).
-function coachTeamOf(prepared) {
-  if (coachAway(career) || isPresident(career)) return null; // Präsidium: der eingestellte Trainer coacht
-  const i = prepared.match.teams.findIndex((t) => t.name === humanClub(career).name);
-  return i < 0 ? null : i;
-}
-const tickerTitle = (prepared) => tr(`Liveticker · ${prepared.pitch.name}`, `Live ticker · ${prepared.pitch.name}`);
-
-function tickerRound() {
-  const fixture = humanFixture(career);
-  if (!fixture) return runRound(null);
-  const prepared = prepareMatch(career, fixture, { duration: testDuration });
-  clubhouse.hide();
-  ticker.show(prepared, {
-    title: tickerTitle(prepared),
-    coachTeam: coachTeamOf(prepared),
-    onDone() {
-      recordResult(career, fixture, prepared);
-      saveCareer(career);
-      openClubhouse(); // rechnet den Rest des Spieltags (resumeRound)
-    },
-  });
-}
-
-function tickerCup(kind) {
-  const m = humanCupMatch(career, kind);
-  if (!m) return runCupRound(null, kind);
-  const prepared = prepareCupMatch(career, m, { duration: testDuration });
-  clubhouse.hide();
-  ticker.show(prepared, {
-    title: tickerTitle(prepared),
-    coachTeam: coachTeamOf(prepared),
-    onDone() {
-      recordCupResult(career, m, prepared);
-      saveCareer(career);
-      openClubhouse(); // rechnet den Rest der Turnierrunde (resumeRound)
-    },
-  });
-}
-
-// Restliche Partien des Spieltags simulieren (und ggf. das eigene Spiel).
-async function runRound(playedFixture) {
-  if (resuming) return;
-  resuming = true;
-  clubhouse.setBusy(tr('Spieltag läuft … die anderen Plätze melden sich gleich.', 'Matchday under way … the other grounds will report in shortly.'));
-  for (const f of currentFixtures(career)) {
-    if (f === playedFixture || f.result) continue;
-    const prepared = prepareMatch(career, f, { duration: testDuration });
-    await simulate(prepared);
-    recordResult(career, f, prepared);
-  }
-  saveCareer(career);
-  resuming = false;
-  openClubhouse(currentFixtures(career));
-}
-
-// Kreis-/Bezirkspokal: das Spiel unter der Woche, vor dem Ligaspieltag.
-function playPokalMatch(kind) {
-  const tie = humanTie(career, kind);
-  if (!tie) return openClubhouse();
-  const prepared = preparePokalMatch(career, kind, tie, { human: handsOn(), duration: testDuration });
-  careerMatch = { prepared, pokal: true };
-  const ownGround = prepared.home.human && (kind !== 'bund' || prepared.bund?.venue === 'own'); // Heimspiel auf dem eigenen Platz: Vereinsbande wie in der Liga (nicht im fremden Stadion)
-  loadVenue(prepared.pitch.id, ownGround ? venueExtras(career) : null);
-  clubhouse.hide();
-  setMode('play');
-  showMatch(prepared.match);
-  spectatorToast();
-  const cup = pokalOf(career, kind);
-  hud.toast(`${POKALE[kind].name} · ${roundName(cup, tie.round)} · ${pokalWhen(kind)}`, 3, 2);
-}
-
-function tickerPokal(kind) {
-  const tie = humanTie(career, kind);
-  if (!tie) return openClubhouse();
-  const prepared = preparePokalMatch(career, kind, tie, { duration: testDuration });
-  clubhouse.hide();
-  ticker.show(prepared, {
-    title: `${POKALE[kind].name} · ${prepared.pitch.name}`,
-    coachTeam: coachTeamOf(prepared),
-    onDone() {
-      recordPokalResult(career, prepared);
-      saveCareer(career);
-      openClubhouse();
-    },
-  });
-}
-
-// Relegation: Hin- oder Rückspiel an der Seitenlinie.
-function playRelegationMatch() {
-  startRelegation(career);
-  const prepared = prepareRelegationMatch(career, { human: handsOn(), duration: testDuration });
-  careerMatch = { prepared, relegation: true };
-  loadVenue(prepared.pitch.id);
-  clubhouse.hide();
-  setMode('play');
-  showMatch(prepared.match);
-  spectatorToast();
-  const r = career.relegation;
-  hud.toast(r.leg === 0 ? tr(`Relegation, Hinspiel gegen ${r.opponent.name}`, `Play-off, first leg against ${r.opponent.name}`) : tr(`Relegation, Rückspiel – Hinspiel ${r.legs[0].result.ours}:${r.legs[0].result.theirs}`, `Play-off, second leg – first leg ${r.legs[0].result.ours}-${r.legs[0].result.theirs}`), 3, 2);
-}
-
-function tickerRelegation() {
-  startRelegation(career);
-  const prepared = prepareRelegationMatch(career, { duration: testDuration });
-  clubhouse.hide();
-  ticker.show(prepared, {
-    title: tr(`Relegation · ${prepared.pitch.name}`, `Play-off · ${prepared.pitch.name}`),
-    coachTeam: coachTeamOf(prepared),
-    onDone() {
-      recordRelegationLeg(career, prepared);
-      saveCareer(career);
-      openClubhouse();
-    },
-  });
-}
-
-// Abpfiff: Ergebnis sofort werten und speichern – nicht erst, wenn der Spieler das
-// Kreisblatt weglegt. Wer die App auf dem Ergebnis-Bildschirm schließt, verliert nichts.
-function commitCareerMatch() {
-  if (!careerMatch || careerMatch.committed) return;
-  const { prepared, fixture, cup, relegation, pokal } = careerMatch;
-  careerMatch.committed = true;
-  if (pokal) recordPokalResult(career, prepared);
-  else if (relegation) recordRelegationLeg(career, prepared);
-  else if (cup) recordCupResult(career, cup, prepared);
-  else recordResult(career, fixture, prepared);
-  saveCareer(career);
-}
-
-// „Weiter“ auf dem Kreisblatt: zurück ins Vereinsheim, dort läuft der Rest des Spieltags.
-function finishCareerMatch() {
-  commitCareerMatch();
-  careerMatch = null;
-  openClubhouse();
-}
 
 // --- Loop ------------------------------------------------------------------------
 
@@ -896,42 +314,7 @@ if (params.get('venue')) {
   menu.hide();
   setMode('play');
   startMatch(true);
-} else {
-  openMenu();
-  // Allererster Start: erst die Sprache wählen, dann das Startbild.
-  const firstRun = !langChosen() && !params.get('lang');
-  // „Was ist neu": einmal nach einem Update, nie beim allerersten Start, nie im Spiel (hier ist immer das Menü offen).
-  const whatsNew = new Sheet({ id: 'whatsnew-sheet', onClose: () => setTimeout(() => (menu.paused = settings.root.hidden ? false : true), 0) });
-  whatsNew.el.addEventListener('click', (e) => {
-    if (!e.target.closest('[data-action="wn-all"]')) return;
-    whatsNew.close();
-    settings.page = 'neu';
-    menu.onSettings();
-  });
-  const maybeWhatsNew = () => {
-    if (mode !== 'menu' || !checkWhatsNew({ isNewPlayer: firstRun })) return;
-    const { title: t, body } = whatsNewLatestHtml();
-    menu.paused = true;
-    whatsNew.open({
-      title: `${tr('Was ist neu', 'What’s new')}: ${t}`,
-      body,
-      footer: `${button(tr('Alle Änderungen', 'All changes'), { kind: 'secondary', action: 'wn-all' })}${button(tr('Weiter', 'Continue'), { kind: 'primary', action: 'sheet-close' })}`,
-    });
-  };
-  const showTitle = () => {
-    if (params.has('notitle')) return maybeWhatsNew();
-    menu.paused = true;
-    title.show(() => {
-      setTimeout(() => (menu.paused = false), 0);
-      maybeWhatsNew();
-    });
-  };
-  if (firstRun) {
-    checkWhatsNew({ isNewPlayer: true }); // neuer Spieler: Version nur merken
-    menu.paused = true;
-    settings.show({ onLang: switchLanguage }, { firstRun: true }); // lädt neu, danach kommt das Startbild
-  } else showTitle();
-}
+} else menus.showStartup();
 
 // Automatische Qualität (siehe quality.js: Hysterese, Mindestverweildauer, Abklingzeit).
 function governQuality(dt) {
@@ -1079,46 +462,11 @@ function frame(now) {
   updateLighting();
   pixel.render(scene, rig.camera, { moving: !(subPanel.isOpen || planPanel.isOpen || halfPanel.isOpen) });
   if (gfx.active) gfx.end(performance.now());
-  if (screenshotWanted) saveScreenshot();
+  if (shot.wanted) shot.save();
   if (DIAG) DIAG.sys = 'idle';
   requestAnimationFrame(frame);
 }
 
-// F2: Screenshot als PNG. Wie im three.js-Manual („Taking a Screenshot of the
-// Canvas") direkt nach dem Rendern abgreifen – danach ist der Puffer leer.
-let screenshotWanted = false;
-window.addEventListener('keydown', (e) => {
-  if (e.code === 'F3') {
-    e.preventDefault();
-    gfx.toggle();
-    return;
-  }
-  // F4 (nur bei offener Debug-Anzeige): nächstes Wetter – lädt mit ?wetter=… neu.
-  if (e.code === 'F4' && !gfx.el.hidden) {
-    e.preventDefault();
-    const list = ['sonne', 'regen', 'nebel', 'schnee', 'frost', 'hitze', 'laub', 'wind'];
-    const u = new URL(location.href);
-    u.searchParams.set('wetter', list[(list.indexOf(u.searchParams.get('wetter') ?? 'sonne') + 1) % list.length]);
-    if (venue) u.searchParams.set('venue', venue.id);
-    location.href = u.toString();
-    return;
-  }
-  if (e.code !== 'F2') return;
-  e.preventDefault();
-  screenshotWanted = true;
-});
-function saveScreenshot() {
-  screenshotWanted = false;
-  canvas.toBlob((blob) => {
-    if (!blob) return;
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `sunday-league-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.png`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    if (mode === 'play') hud.toast(tr('Screenshot gespeichert', 'Screenshot saved'), 1.2, 2);
-  });
-}
 requestAnimationFrame(frame);
 
 // Als App installierbar und offline spielbar (nicht in der Android-App, die bringt alles mit).
@@ -1128,50 +476,4 @@ if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.Ca
   });
 }
 
-// --- Android: Zurück-Taste -------------------------------------------------------
-// Ohne eigenen Handler beendet Android die App sofort, auch mitten im Spiel. Reihenfolge:
-// offenes Blatt oder Fenster schließen (wie Esc) → Wechsel-/Plantafel → Vereinsheim zurück auf
-// „Heute" → Hauptmenü; im Hauptmenü erst beim zweiten Druck innerhalb von 2 s beenden.
-let backArmedAt = -1e9;
-function backToast(text) {
-  let el = document.getElementById('back-toast');
-  if (!el) el = document.body.appendChild(Object.assign(document.createElement('div'), { id: 'back-toast', className: 'back-toast' }));
-  el.textContent = text;
-  el.hidden = false;
-  clearTimeout(el._t);
-  el._t = setTimeout(() => (el.hidden = true), 1800);
-}
-const pressEscape = () => window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Escape', key: 'Escape', bubbles: true }));
-function onAndroidBack(exitApp) {
-  if (document.querySelector('.ui-sheet:not([hidden])')) return pressEscape();
-  for (const id of ['settings', 'saves']) if (!document.getElementById(id)?.hidden) return pressEscape();
-  if (subPanel.isOpen) return subPanel.close();
-  if (planPanel.isOpen) return planPanel.close();
-  if (halfPanel.isOpen) return; // Halbzeit: erst entscheiden
-  if (!document.getElementById('hire')?.hidden) return hireScreen.cancel();
-  if (!document.getElementById('creator')?.hidden) {
-    creator.hide();
-    return openMenu();
-  }
-  if (mode === 'play') {
-    if (careerMatch) {
-      if (match.phase === 'ended') return finishCareerMatch();
-      return backToast(tr('Das Spiel läuft – zurück ins Vereinsheim nach dem Abpfiff.', 'The match is on – back to the clubhouse after the final whistle.'));
-    }
-    return openMenu();
-  }
-  if (mode === 'club') {
-    if (!document.getElementById('ticker')?.hidden) return; // Liveticker: dort entscheidet man selbst
-    if (clubhouse.back()) return;
-    return openMenu();
-  }
-  // Hauptmenü oder Titelbild: zweimal drücken zum Beenden.
-  const now = performance.now();
-  if (now - backArmedAt < 2000) return exitApp();
-  backArmedAt = now;
-  backToast(tr('Nochmal „Zurück“ zum Beenden', 'Press back again to quit'));
-}
-if (window.Capacitor?.isNativePlatform?.()) {
-  import('@capacitor/app').then(({ App }) => App.addListener('backButton', () => onAndroidBack(() => App.exitApp()))).catch(() => {});
-}
-if (params.has('debug')) globalThis.__back = () => onAndroidBack(() => (globalThis.__exited = true));
+installAndroidBack(ctx);
