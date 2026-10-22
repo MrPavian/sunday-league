@@ -161,3 +161,8 @@ export const LEAGUE_EVENTS = {
     ],
   },
 };
+
+// Mit jedem neuen Ereignis-Paket (Tim, Fest, Platz …) sank der Anteil der Liga-Ereignisse in der Bezirksliga von 14 % auf
+// 4,9 % der Wochenereignisse (gemessen: 200 Karrieren × 10 Wochen). Gemeinsamer Faktor hebt ihn auf etwa 10 % (Spielwert).
+export const LEAGUE_WEIGHT = 2.2;
+for (const ev of Object.values(LEAGUE_EVENTS)) ev.weight *= LEAGUE_WEIGHT;
