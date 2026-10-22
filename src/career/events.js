@@ -599,6 +599,34 @@ export function advanceArcs(career) {
   }
 }
 
+// Alle Ereignis-Pakete an einer Stelle. Neues Paket: hier eintragen (roll: true = wird wöchentlich gezogen, sonst nur
+// nachgeschlagen). Die Reihenfolge bestimmt die Folge der Kandidaten und damit den Zufall – bestehende Einträge nicht umsortieren.
+// Erst beim ersten Aufruf gebaut: Einige Pakete importieren events.js selbst (Kreisimport), beim Laden wären sie noch leer.
+let packs = null;
+const eventPacks = () => (packs ??= [
+  { pack: EVENTS, roll: true },
+  { pack: STORY_STARTS, roll: true },
+  { pack: PERSONAL_EVENTS, roll: true },
+  { pack: SAGA_EVENTS, roll: true },
+  { pack: SOCIAL_EVENTS, roll: true },
+  { pack: BANTER_EVENTS, roll: true },
+  { pack: DERBY_EVENTS, roll: true },
+  { pack: INJURY_EVENTS, roll: true },
+  { pack: LIFE_EVENTS, roll: true },
+  { pack: ACADEMY_EVENTS, roll: true },
+  { pack: SPONSOR_EVENTS, roll: true },
+  { pack: POACH_EVENTS, roll: true },
+  { pack: LEAGUE_EVENTS, roll: true },
+  { pack: BUND_EVENTS, roll: false },
+  { pack: SEASON_EVENTS, roll: true },
+  { pack: LOCAL_EVENTS, roll: true },
+  { pack: PHASE_EVENTS, roll: true },
+  { pack: TIGER_EVENTS, roll: true },
+  { pack: CLUBLIFE_EVENTS, roll: false },
+  { pack: CRISES, roll: false },
+]);
+const rolledEntries = () => eventPacks().filter((x) => x.roll).flatMap((x) => Object.entries(x.pack));
+
 // Zu Wochenbeginn höchstens ein Ereignis ziehen.
 export function rollWeekEvent(career) {
   career.flags ??= {};
@@ -613,7 +641,7 @@ export function rollWeekEvent(career) {
   const candidates = [];
   const storySeason = new Set(career.eventLog.filter((e) => e.season === career.season).map((e) => e.id));
   const storiesFull = arcsOf(career).length >= 3;
-  for (const [id, ev] of [...Object.entries(EVENTS), ...Object.entries(STORY_STARTS), ...Object.entries(PERSONAL_EVENTS), ...Object.entries(SAGA_EVENTS), ...Object.entries(SOCIAL_EVENTS), ...Object.entries(BANTER_EVENTS), ...Object.entries(DERBY_EVENTS), ...Object.entries(INJURY_EVENTS), ...Object.entries(LIFE_EVENTS), ...Object.entries(ACADEMY_EVENTS), ...Object.entries(SPONSOR_EVENTS), ...Object.entries(POACH_EVENTS), ...Object.entries(LEAGUE_EVENTS), ...Object.entries(SEASON_EVENTS), ...Object.entries(LOCAL_EVENTS), ...Object.entries(PHASE_EVENTS), ...Object.entries(TIGER_EVENTS)]) { // Vereinsleben hängt am Schwarzen Brett
+  for (const [id, ev] of rolledEntries()) { // Vereinsleben hängt am Schwarzen Brett
     if (recent.has(id)) continue;
     if (STORY_STARTS[id] && (storiesFull || storySeason.has(id))) continue; // jede Geschichte höchstens einmal pro Saison
     const ctx = ev.needs(career, rng);
@@ -631,8 +659,7 @@ export function rollWeekEvent(career) {
   return event;
 }
 
-const eventDef = (career, id) =>
-  EVENTS[id] ?? STORY_STARTS[id] ?? PERSONAL_EVENTS[id] ?? SAGA_EVENTS[id] ?? SOCIAL_EVENTS[id] ?? BANTER_EVENTS[id] ?? DERBY_EVENTS[id] ?? INJURY_EVENTS[id] ?? LIFE_EVENTS[id] ?? ACADEMY_EVENTS[id] ?? SPONSOR_EVENTS[id] ?? POACH_EVENTS[id] ?? LEAGUE_EVENTS[id] ?? BUND_EVENTS[id] ?? SEASON_EVENTS[id] ?? LOCAL_EVENTS[id] ?? PHASE_EVENTS[id] ?? TIGER_EVENTS[id] ?? CLUBLIFE_EVENTS[id] ?? CRISES[id] ?? storyDecision(career, id);
+const eventDef = (career, id) => eventPacks().map((x) => x.pack[id]).find(Boolean) ?? storyDecision(career, id);
 
 // Feste Etiketten über dem Ereignis (Geschichten haben eigene Namen).
 const STORY_TAGS = { 'Neue Geschichte': 'New story', Privat: 'Private', Vereinsgeschichte: 'Club history', Vereinsleben: 'Club life' };

@@ -17,6 +17,7 @@ import { PITCHES } from '../sim/pitch.js';
 import { allPlayers, subRuleFor } from '../sim/squad.js';
 import { gradePlayers } from '../sim/stats.js';
 import { absenceChance, DECLINE_TEXT, FAREWELL, INJURED, JOIN_TEXT, LATE, LATE_STRICT, noReasons, NUDGE_NO, NUDGE_YES, RUMOR_SOURCES, YES } from './chat.js';
+import { runHooks } from './hooks.js';
 import { EXTRA_CLUBS, HUMAN_CLUB_DEFAULT, LEAGUES, leagueClubs, MAX_LEVEL } from './clubs.js';
 import { autoRelegation, relegationOutcome } from './relegation.js';
 import { applyPubToTeam } from './pub.js';
@@ -236,6 +237,7 @@ export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null,
   initSagas(career);
   startWeek(career);
   setSeasonGoal(career);
+  runHooks('create', career);
   return career;
 }
 
@@ -354,7 +356,9 @@ export function nextSeason(career) {
     if (diff >= 2) career.week?.chat.splice(1, 0, { from: null, text: tr(`Vorbereitung: ${now.name} (${now.age}) hat richtig zugelegt – Stärke ${d.before} → ${now.rating}.`, `Pre-season: ${now.name} (${now.age}) has really improved – rating ${d.before} → ${now.rating}.`), time: 'Mo 09:00' });
     else if (diff <= -2) career.week?.chat.splice(1, 0, { from: null, text: tr(`${now.name} (${now.age}) merkt die Jahre – Stärke ${d.before} → ${now.rating}.`, `${now.name} (${now.age}) is feeling his age – rating ${d.before} → ${now.rating}.`), time: 'Mo 09:00' });
   }
-  return { pos, promoted, relegated, development, retired, intake, leaving };
+  const summary = { pos, promoted, relegated, development, retired, intake, leaving };
+  runHooks('nextSeason', career, summary);
+  return summary;
 }
 
 // Ligagröße geändert: Die zwei Zusatzvereine kommen dazu oder melden sich ab.
@@ -552,6 +556,7 @@ export function startWeek(career) {
   midSeasonReport(career); // Zwischenzeugnis vom Vorstand
   career.week.actions = SCOUT_ACTIONS;
   weeklyTip(career); // Einsteiger-Hinweis, wenn ein System zum ersten Mal auftaucht
+  runHooks('startWeek', career);
 }
 
 // Nachhaken bei einer Absage – klappt ungefähr jedes zweite Mal.
@@ -739,6 +744,7 @@ export function migrateCareer(career) {
     career.week.rumors = makeRumors(career, createRng(hashSeed(career.seed, career.season, career.round, 3)));
     career.week.actions = SCOUT_ACTIONS;
   }
+  runHooks('migrate', career);
   return career;
 }
 
@@ -1143,6 +1149,7 @@ export function finishRound(career) {
   // Versprochene Einsätze für Neuzugänge: nach zwei Spieltagen abrechnen.
   checkPromises(career, humanClub(career).squad, (idx, text) => career.week?.chat.push({ from: idx, text, time: 'Mo 08:15' }));
   monthlyAward(career, awardDeps(career));
+  runHooks('finishRound', career);
 }
 
 const awardDeps = (career) => ({ playerOf: (idx) => playerOf(career, idx), clubOfIdx: (idx) => career.clubs.find((c) => c.squad.includes(idx)) ?? null });
