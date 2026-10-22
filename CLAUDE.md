@@ -10,6 +10,7 @@ so wenig Kontext und Arbeit wie möglich für ein korrektes Ergebnis. Antworten 
   – einzelne Tests · `npm test` – alle (lang, einmal je Lieferung)
 - `node scripts/golden.mjs` – Golden-Datei der Simulation neu schreiben (nur bei gewollter Sim-Änderung)
 - `npm run e2e -- ui|match|memory|modes` – Browsertests gegen `dist/` (vorher bauen; eigener Port per `E2E_BASE`)
+  – gezielt: `E2E_ONLY=budget,incidents E2E_VENUE=grossfeld npm run e2e -- modes` (Prüfungen bzw. Spielorte auswählen)
 - `npm run longrun` – Karriere über viele Saisons (Wirtschaft/Balance)
 - `npm run android:apk` – APK (es gibt kein echtes Android-Gerät zum Testen; immer erwähnen)
 

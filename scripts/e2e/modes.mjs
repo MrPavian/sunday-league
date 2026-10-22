@@ -62,11 +62,17 @@ async function variants(b, label, list, query) {
 // Bei diesen beiden Orten mit voller Menge (295 bzw. 954 Zuschauer) gemessen: 107 / 35,9 Tsd. und 88 / 40,9 Tsd. (Menge = 2 Draw Calls).
 // Mit Tim „Der Tiger“ am Rand (?tiger=1, eigene Figur ohne Schattenwurf): +1–2 Draw Calls und rund 0,4–0,9 Tsd. Dreiecke, bleibt in allen Grenzen.
 // Sporthalle mit Fangnetzen hinter den Toren: gemessen 55 Draw Calls / 30,5 Tsd. Dreiecke (ANDROID_MEDIUM; ohne Netze 55 / 29,1), jeweils rund 10 % Luft.
+// Auswahl für gezielte Läufe: E2E_ONLY=budget,incidents (Namen der Prüfungen in run) und E2E_VENUE=grossfeld,stadion
+// (Spielorte für Budget und Vorfälle). Ohne Variablen läuft alles wie bisher.
+const ONLY = process.env.E2E_ONLY ? new Set(process.env.E2E_ONLY.split(',')) : null;
+const VENUE = process.env.E2E_VENUE ? new Set(process.env.E2E_VENUE.split(',')) : null;
+const atVenue = (v) => !VENUE || VENUE.has(v);
 const BUDGET = { halle: [61, 33500], rasenplatz: [108, 35000], sportplatz: [113, 44500], grossfeld: [117, 55000], grossfeld_tribuene: [121, 62000], stadion: [98, 58500], ascheplatz: [76, 25000], park: [79, 18600] };
 async function budget(b) {
-  const ok = checker(`Grafik-Budget je Spielort (${Object.keys(BUDGET).length})`);
+  const list = Object.entries(BUDGET).filter(([v]) => atVenue(v));
+  const ok = checker(`Grafik-Budget je Spielort (${list.length})`);
   const seen = [];
-  for (const [venue, [calls, tris]] of Object.entries(BUDGET)) {
+  for (const [venue, [calls, tris]] of list) {
     const p = await page(b, 'land', { query: `?venue=${venue}&notitle&trainer&debug&dauer=60&seed=4&quality=ANDROID_MEDIUM&tiger=1` });
     await p.waitForTimeout(3000);
     // Ohne Karriere zeigt das Testspiel nur 80 Zuschauer; Stadion und Tribünenplatz des überregionalen Pokals sind aber voll
@@ -105,8 +111,9 @@ async function qualities(b) {
 }
 
 export async function incidents(b) {
-  const ok = checker(`Vorfälle bis zum Abpfiff (${Object.keys(INCIDENTS).length}) + Ersatzschiri ohne Schiri`);
-  for (const [v, venue] of Object.entries(INCIDENTS)) {
+  const list = Object.entries(INCIDENTS).filter(([, venue]) => atVenue(venue));
+  const ok = checker(`Vorfälle bis zum Abpfiff (${list.length}) + Ersatzschiri ohne Schiri`);
+  for (const [v, venue] of list) {
     // Fester Seed und volle Spielzeit: Zaun/Autoalarm brauchen ein auslösendes Ereignis, das mit
     // zufälligem Seed in einem kurzen Spiel mal kam und mal nicht (Test war Glückssache).
     let p = null;
@@ -693,24 +700,24 @@ export async function saveAtWhistle(b) {
 export async function run() {
   const b = await launch();
   let f = 0;
-  f += await title(b);
-  f += await coachOnly(b);
-  f += await qualities(b);
-  f += await budget(b);
-  f += await variants(b, `Wetter (${WEATHER.length})`, WEATHER, (w) => `?venue=rasenplatz&notitle&trainer&debug&dauer=30&wetter=${w}`);
-  f += await variants(b, `Tageszeiten (${TIMES.length})`, TIMES, (z) => `?venue=ascheplatz&notitle&trainer&debug&dauer=30&zeit=${z}`);
-  f += await incidents(b);
-  f += await shootout(b);
-  f += await menus(b);
-  f += await english(b);
-  f += await homeViews(b);
-  f += await clubSetup(b);
-  f += await managerOnly(b);
-  f += await presidentFlow(b);
-  f += await eventFold(b);
-  f += await saveAtWhistle(b);
-  f += await pokal(b);
-  f += await oldSave(b, process.env.E2E_OLD_SAVE ?? fileURLToPath(new URL('./fixtures/save-858e978.json', import.meta.url)));
+  if (!ONLY || ONLY.has('title')) f += await title(b);
+  if (!ONLY || ONLY.has('coachOnly')) f += await coachOnly(b);
+  if (!ONLY || ONLY.has('qualities')) f += await qualities(b);
+  if (!ONLY || ONLY.has('budget')) f += await budget(b);
+  if (!ONLY || ONLY.has('variants')) f += await variants(b, `Wetter (${WEATHER.length})`, WEATHER, (w) => `?venue=rasenplatz&notitle&trainer&debug&dauer=30&wetter=${w}`);
+  if (!ONLY || ONLY.has('variants')) f += await variants(b, `Tageszeiten (${TIMES.length})`, TIMES, (z) => `?venue=ascheplatz&notitle&trainer&debug&dauer=30&zeit=${z}`);
+  if (!ONLY || ONLY.has('incidents')) f += await incidents(b);
+  if (!ONLY || ONLY.has('shootout')) f += await shootout(b);
+  if (!ONLY || ONLY.has('menus')) f += await menus(b);
+  if (!ONLY || ONLY.has('english')) f += await english(b);
+  if (!ONLY || ONLY.has('homeViews')) f += await homeViews(b);
+  if (!ONLY || ONLY.has('clubSetup')) f += await clubSetup(b);
+  if (!ONLY || ONLY.has('managerOnly')) f += await managerOnly(b);
+  if (!ONLY || ONLY.has('presidentFlow')) f += await presidentFlow(b);
+  if (!ONLY || ONLY.has('eventFold')) f += await eventFold(b);
+  if (!ONLY || ONLY.has('saveAtWhistle')) f += await saveAtWhistle(b);
+  if (!ONLY || ONLY.has('pokal')) f += await pokal(b);
+  if (!ONLY || ONLY.has('oldSave')) f += await oldSave(b, process.env.E2E_OLD_SAVE ?? fileURLToPath(new URL('./fixtures/save-858e978.json', import.meta.url)));
   await b.close();
   return f;
 }
