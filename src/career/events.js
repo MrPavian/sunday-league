@@ -4,6 +4,7 @@ import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { book } from './finances.js';
 import { getPool, humanClub, joinSquad, playerOf } from './career.js';
+import { tierWeightsFor } from '../data/tiers.js';
 import { advanceStories, arcsOf, STORY_STARTS, storyDecision } from './stories.js';
 import { CRISES, PERSONAL_EVENTS } from './personal.js';
 import { SAGA_EVENTS } from './sagas.js';
@@ -445,7 +446,12 @@ export const EVENTS = {
     needs: (c) => {
       const pool = getPool();
       const taken = new Set([...c.clubs.flatMap((x) => x.squad), ...(c.youth?.prospects ?? [])]);
-      const kid = pool.everyone().find((p) => playerOf(c, p.poolIndex).age <= 17 && !taken.has(p.poolIndex) && p.tier !== 'ok');
+      // Stufe passend zur Liga (data/tiers.js, Weg 'kind'); welcher Junge, hängt von der Woche ab.
+      const w = tierWeightsFor(c.level, 'kind');
+      let r = ((c.round * 0.6180339 + c.season * 0.3819660) % 1) * Object.values(w).reduce((a, b) => a + b, 0);
+      const tier = Object.entries(w).find(([, x]) => (r -= x) < 0)?.[0] ?? 'gut';
+      const kids = pool.everyone().filter((p) => p.tier === tier && playerOf(c, p.poolIndex).age <= 17 && !taken.has(p.poolIndex));
+      const kid = kids[(c.round * 7 + c.season * 13) % Math.max(1, kids.length)];
       return kid ? { kid: kid.poolIndex } : null;
     },
     text: (c, ctx) => tr(`Ein Junge aus der Nachbarschaft, ${first(c, ctx.kid)}, schaut jede Woche zu und kickt danach allein weiter. Richtig gut.`, `A lad from the neighbourhood, ${first(c, ctx.kid)}, watches every week and keeps kicking on his own afterwards. Really good.`),

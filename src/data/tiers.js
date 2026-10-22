@@ -75,3 +75,45 @@ export function rollTier(rng, weights = null) {
   }
   return TIERS[0];
 }
+
+// --- Zuzug nach Liga-Stufe ----------------------------------------------------------------
+// Wer neu zum Verein stößt (Gerüchte, Wirt, Probetraining, Ereignisse), soll zur Liga passen: unten
+// überwiegend ok/gut, Top-Leute selten, Superstar und Ex-Profi erst weiter oben. Mit jedem Aufstieg
+// verschiebt sich die Verteilung nach oben. EINE Tabelle für alle Wege; die Wege unterscheiden sich
+// nur durch ARRIVAL_SOURCES. Alle Zahlen sind erfundene Spielwerte (angelehnt an die Gegnerkader in
+// clubs.js, Zuzug im Schnitt etwas schwächer als die Gegner), keine Realwerte. Gemessen mit
+// scripts/stufen-audit.mjs.
+export const ARRIVAL_BASE = {
+  1: { ok: 0.55, gut: 0.35, stark: 0.092, dorfstar: 0.008, superstar: 0, legende: 0 },
+  2: { ok: 0.42, gut: 0.39, stark: 0.15, dorfstar: 0.035, superstar: 0.005, legende: 0 },
+  3: { ok: 0.31, gut: 0.4, stark: 0.21, dorfstar: 0.07, superstar: 0.01, legende: 0 },
+  4: { ok: 0.26, gut: 0.36, stark: 0.23, dorfstar: 0.1, superstar: 0.035, legende: 0.007 }, // wie bisher
+  5: { ok: 0.14, gut: 0.33, stark: 0.3, dorfstar: 0.16, superstar: 0.06, legende: 0.01 }, // wie bisher
+};
+// floor: schwächere Stufen entfallen; lift: je Stufe über dem floor (bzw. über ok) mal lift;
+// hi: höchste erlaubte Stufe dieses Wegs, egal in welcher Liga.
+export const ARRIVAL_SOURCES = {
+  geruecht: {}, // Gerüchteküche und Werben
+  wirt: { floor: 'gut', lift: 1.5, hi: 'dorfstar' }, // Tipp vom Wirt / Überläufer: eher die Besseren
+  probetraining: { hi: 'superstar' }, // Open Training: wer eben vorbeikommt
+  kind: { floor: 'gut', hi: 'stark' }, // Talent aus der Nachbarschaft (Ereignis)
+  comeback: { floor: 'gut', hi: 'dorfstar' }, // Rückkehrer nach Verletzungspause
+};
+
+// Gewichte (Summe 1, alle sechs Stufen als Schlüssel) für einen Zuzug in dieser Liga-Stufe auf diesem Weg.
+export function tierWeightsFor(level, source = 'geruecht') {
+  const base = ARRIVAL_BASE[Math.max(1, Math.min(5, level || 1))];
+  const s = ARRIVAL_SOURCES[source] ?? {};
+  const ids = TIERS.map((t) => t.id);
+  const lo = s.floor ? ids.indexOf(s.floor) : 0;
+  const hi = s.hi ? ids.indexOf(s.hi) : ids.length - 1;
+  const w = {};
+  let sum = 0;
+  ids.forEach((id, i) => {
+    w[id] = i >= lo && i <= hi ? base[id] * (s.lift ?? 1) ** (i - lo) : 0;
+    sum += w[id];
+  });
+  if (!sum) w[ids[Math.max(lo, 0)]] = sum = 1; // Notfall: nie leer
+  for (const id of ids) w[id] /= sum;
+  return w;
+}
