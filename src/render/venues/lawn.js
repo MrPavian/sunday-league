@@ -151,5 +151,9 @@ export function buildLawn(root, pitch, rng, scene) {
   const vendor = makeSpectator(rng, { x: bx + 0.2, z: bz - 0.2, facing: 0 });
   vendor.userData.crowdSlot.vendor = true; // geht nicht selbst zur Bude
   root.add(vendor);
-  return { viewHeight: 15, bounds: { x: hl + 5.5, z: 4.5 }, lights }; // x: etwas Luft hinter dem Zaun, dort steht Tim „Der Tiger“ (src/render/tiger.js)
+  // Großfeld (105 m): weiter heraus und mit Vorausschau in Spielrichtung – gemessen zeigte die Kamera dort nur 24 % der Platzlänge
+  // (gleicher Ausschnitt wie auf dem 7er-Feld mit 48 %) und davon nur ≈ 11 m voraus; der Ball war 7 % der Spielzeit nicht im Bild,
+  // weil die Kamera seitlich nur ±4,5 m folgte (68 m Breite; scripts/bigpitch-audit.mjs).
+  const big = hl >= 50;
+  return { viewHeight: big ? 19 : 15, viewHeightPortrait: big ? 16 : undefined, lead: big ? 0.4 : 0, bounds: { x: hl + 5.5, z: big ? 12 : 4.5 }, lights }; // x: etwas Luft hinter dem Zaun, dort steht Tim „Der Tiger“ (src/render/tiger.js)
 }

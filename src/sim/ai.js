@@ -1050,12 +1050,23 @@ export function keeperIntent(m, p, dt) {
   // Eins gegen eins: Kommt ein Gegner mit Ball frei aufs Tor, geht der Keeper raus
   // und verkürzt den Winkel – auf der Linie zwischen Ball und Tormitte.
   const carrier = ball.lastTouch && getPlayer(m, ball.lastTouch);
+  const sweep = pitch.keeperSweep;
+  // Großfeld: Bei gegnerischem Ballbesitz im Anflug steht er etwas vor der Linie, auf der Linie zwischen Ball und Tormitte.
+  if (sweep && carrier && carrier.team !== p.team && !ball.holder) {
+    const dBall = Math.hypot(ball.pos.x - goalX, ball.pos.z);
+    if (dBall < 30) {
+      const dir0 = norm(ball.pos.x - goalX, ball.pos.z);
+      const stance = clamp(sweep.stanceK * dBall - sweep.stanceOff, 0.8, sweep.stanceMax);
+      tx = goalX + dir0.x * stance;
+    }
+  }
   if (!reacting && carrier && carrier.team !== p.team && ball.pos.y < 0.6 && dist2d(carrier.pos, ball.pos) < 1.3) {
     const dGoal = Math.hypot(ball.pos.x - goalX, ball.pos.z);
     const covered = m.players.some((o) => o.team === p.team && o !== p && o.state === 'normal' && distToSegment(o.pos, ball.pos, { x: goalX, z: 0 }) < 1 && dist2d(o.pos, { x: goalX, z: 0 }) < dGoal);
-    if (dGoal < 11 && !covered) {
-      // Nur bis an den Rand des Torraums: weiter draußen dürfte er den Ball nicht mehr mit den Händen spielen.
-      const out = clamp(dGoal * 0.35, 0.8, HAND_ZONE.depth) * (0.7 + 0.3 * p.attrs.keeping);
+    if (dGoal < (sweep?.duelFrom ?? 11) && !covered) {
+      // Nur bis an den Rand des Torraums: weiter draußen dürfte er den Ball nicht mehr mit den Händen spielen
+      // (Großfeld: bis zum Strafraum der Simulation, pitch.keeperSweep).
+      const out = clamp(dGoal * 0.35, 0.8, sweep?.outMax ?? HAND_ZONE.depth) * (0.7 + 0.3 * p.attrs.keeping);
       const dir = norm(ball.pos.x - goalX, ball.pos.z);
       tx = goalX + dir.x * out;
       tz = dir.z * out;
@@ -1065,7 +1076,7 @@ export function keeperIntent(m, p, dt) {
   // sie nah am Tor liegen; weiter draußen wäre er mit dem Fuß im Gewühl.
   const dMe = dist2d(p.pos, ball.pos);
   const beaten = m.players.some((o) => o.team !== p.team && dist2d(o.pos, ball.pos) < dMe - 0.5);
-  const claim = HAND_ZONE.depth + 0.5;
+  const claim = (sweep?.claim ?? HAND_ZONE.depth) + 0.5;
   if (!ball.holder && !beaten && Math.abs(ball.pos.x - goalX) < claim && Math.abs(ball.pos.z) < Math.max(claim, gw + 1) && ballSpeed(ball) < 6) {
     tx = ball.pos.x;
     tz = ball.pos.z;

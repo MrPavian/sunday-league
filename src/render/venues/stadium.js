@@ -71,5 +71,5 @@ export function buildStadium(root, pitch, rng, scene) {
   board.position.set(-hl - 11.5, 8, 0);
   board.rotation.y = Math.PI / 2;
   root.add(board);
-  return { viewHeight: 17, bounds: { x: hl + 6, z: 4.5 }, lights: { heads, pools, field: [hl, hw] } };
+  return { viewHeight: 20, viewHeightPortrait: 17.5, lead: 0.4, bounds: { x: hl + 6, z: 12 }, lights: { heads, pools, field: [hl, hw] } };
 }

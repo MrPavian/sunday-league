@@ -3,6 +3,11 @@ import * as THREE from 'three';
 // Hochformat: Abstand unter der vorderen Linie (m) und Anteil der Bildhöhe für die Bedienleiste unten.
 const PORTRAIT_FOOT = 1.2;
 const PORTRAIT_BAR = 0.1;
+// Vorausschau: Einblendrate (1/s) der Verschiebung; ≈ 1 s bis sie nach einem Wechsel der Spielrichtung steht.
+const LEAD_RATE = 1.2;
+// Flugrichtung des Balls: Sekunden Vorlauf und größte Verschiebung (m).
+const VEL_LEAD = 0.2;
+const VEL_LEAD_MAX = 6;
 
 // Orthografische Seitenansicht (~20° Neigung, TV-Perspektive). Die Kameraposition wird im Kameraraum auf das
 // Texelraster gerastet, damit die Pixel beim Scrollen nicht flimmern.
@@ -41,7 +46,7 @@ export class CameraRig {
     this.camera.clearViewOffset();
     const aspect = internalWidth / internalHeight;
     // Hochformat (Handy): weiter rauszoomen, damit genug Spielfeld in die Breite passt.
-    const h = (this.viewHeight / 2) * Math.max(1, 1.0 / aspect);
+    const h = ((aspect < 1 && this.viewHeightPortrait ? this.viewHeightPortrait : this.viewHeight) / 2) * Math.max(1, 1.0 / aspect);
     // Hochformat: Das Bild ist viel höher als der Platz tief. Statt unter dem Platz eine leere Fläche
     // zu zeigen (Großfeld: nur Himmelfarbe), sitzt die vordere Linie knapp über der Bedienleiste –
     // oben bekommt die Kulisse den Platz.
@@ -82,10 +87,18 @@ export class CameraRig {
     this.camera.updateProjectionMatrix();
   }
 
-  follow(x, z, dt, bounds) {
+  // ahead: Spielrichtung des Ballbesitzers (+1/-1, 0 = Richtung beibehalten), lead: Anteil der halben Bildbreite, um den der
+  // Ball hinter der Bildmitte liegt (Vorausschau, nur Großfeld/Stadion; langsam geglättet, damit ein Ballverlust nicht ruckt).
+  follow(x, z, dt, bounds, ahead = 0, lead = 0, vx = 0) {
     const halfW = this.camera.right;
+    if (ahead) this.aheadDir = ahead;
+    const wantLead = this.windowed ? 0 : (this.aheadDir ?? 0) * lead * halfW;
+    this.leadX = (this.leadX ?? 0) + (wantLead - (this.leadX ?? 0)) * (1 - Math.exp(-dt * LEAD_RATE));
     const maxX = Math.max(0, bounds.x - halfW);
-    const tx = Math.max(-maxX, Math.min(maxX, x));
+    // Mit Vorausschau (lead > 0) zusätzlich ein Stück in Flugrichtung des Balls: Die Kamera hängt dem Ball sonst um ≈ vx/4 hinterher
+    // (Folgerate 4/s) – lange Pässe auf dem Großfeld (bis 24 m/s) liefen aus dem Bild (gemessen: Ball 7 % der Spielzeit nicht im Bild).
+    const flight = lead > 0 && !this.windowed ? Math.max(-VEL_LEAD_MAX, Math.min(VEL_LEAD_MAX, vx * VEL_LEAD)) : 0;
+    const tx = Math.max(-maxX, Math.min(maxX, x + this.leadX + flight));
     const tz = Math.max(-bounds.z, Math.min(bounds.z, z * 0.35));
     const k = 1 - Math.exp(-dt * 4);
     this.target.x += (tx - this.target.x) * k;

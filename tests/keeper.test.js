@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createMatch, stepMatch } from '../src/sim/match.js';
 import { PITCHES } from '../src/sim/pitch.js';
 import { attackDir } from '../src/sim/players.js';
-import { HAND_ZONE, inHandZone } from '../src/sim/actions.js';
+import { HAND_ZONE, inHandZone, keeperBox } from '../src/sim/actions.js';
 
 // Hände nur im Torraum (1 m vor der Linie): Im laufenden Spiel nimmt der Keeper den Ball nie
 // weiter draußen in die Hand – draußen spielt er mit dem Fuß.
@@ -33,7 +33,9 @@ describe('keeper hand zone', () => {
             const p = m.players.find((x) => x.id === h);
             if (p.role === 'gk') {
               const goalX = -attackDir(m, p.team) * m.pitch.halfLength;
-              expect(Math.abs(m.ball.pos.x - goalX)).toBeLessThanOrEqual(HAND_ZONE.depth + 0.25);
+              // Großfeld (pitch.keeperSweep.handsInBox): Hände im Strafraum der Simulation; überall sonst unverändert 1 m.
+              const reach = m.pitch.keeperSweep?.handsInBox ? keeperBox(m.pitch).depth : HAND_ZONE.depth;
+              expect(Math.abs(m.ball.pos.x - goalX)).toBeLessThanOrEqual(reach + 0.25);
               catches++;
             }
           }
