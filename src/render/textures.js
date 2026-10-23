@@ -1,5 +1,6 @@
 import { pixelTexture } from './materials.js';
 import { cameraViewHeight, currentQuality, LADDER, QUALITY } from './quality.js';
+import { endWallX } from '../sim/players.js';
 
 // Texeldichte des Bodens: so fein wie die Bildschirmpixel der niedrigsten Stufe der Plattform (die
 // Automatik kann im Spiel herunterschalten – feiner als der Bildschirm flimmert der Boden beim Schwenk,
@@ -461,11 +462,11 @@ export function makeHallTexture(rng, { width, depth, pitch }) {
   p.circle(0, 0, 3, red, 0.8);
   // Außerhalb der Bande liegt kein Parkett, sondern blaugrauer Hallen-PVC in Bahnen (Nähte alle 2 m, Stoß leicht dunkler),
   // direkt an der Bande ein dunkler Gummistreifen (Prallschutz/Laufweg). Gleiche Textur, kein zusätzlicher Draw Call.
-  const { wallX } = pitch;
   const bz = hw + 0.1; // Bandenmitte hinten/vorn
   p.field((x, z) => {
     const ax = Math.abs(x);
     const az = Math.abs(z);
+    const wallX = endWallX(pitch, z); // Stirnseite: neben dem Tor auf der Torlinie, dahinter die Tornische (players.js)
     if (ax <= wallX && az <= bz) return null; // Spielfeld: Parkett bleibt
     const d = Math.max(ax - wallX, az - bz); // Abstand zur Bandenkante
     const h = Math.sin(x * 91.7 + z * 57.3) * 43758.5;

@@ -159,6 +159,9 @@ export const HALL = {
   // (je ±0,1 m, Rules of the Game 2005/2010, Tor Regel 1:2: https://www2.handball.ee/est/info/rules_ofthe_game_01.08.05.pdf), 1,0 m liegt
   // in der Toleranz (Strandhandball: 0,8 m oben, 1,0 m unten). Netzrückseite liegt an der Bandeninnenseite: kein Streifen dahinter.
   wallX: 18 + HALL_GOAL_DEPTH + 0.06,
+  // Bande neben dem Tor bündig mit den Pfosten (auf der Torlinie), das Tor steht in einer Nische bis wallX (vom Nutzer
+  // gewünscht, 2026-10-23: vorher lag neben dem Tor ein 1 m breiter Parkettstreifen bis zur Bande). Siehe endWallX (players.js).
+  goalNiche: true,
   goalHalfWidth: 1.5, // Handballtor 3 × 2 m
   goalHeight: 2.0,
   goalType: 'frame',

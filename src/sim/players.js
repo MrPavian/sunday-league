@@ -44,6 +44,15 @@ export function distToSegment(q, a, b) {
   return len(q.x - (a.x + abx * t), q.z - (a.z + abz * t));
 }
 
+// Bande hinter der Torlinie (x-Betrag der Bandenmitte) an der Stelle z. Mit Tornische (Halle): neben dem Tor bündig mit den
+// Pfosten auf der Torlinie, nur hinter dem Tor (|z| < Torbreite) die Nische bis wallX. Sonst überall wallX.
+export const endWallX = (pitch, z = 0) => (pitch.goalNiche && Math.abs(z) >= pitch.goalHalfWidth ? pitch.halfLength + 0.06 : pitch.wallX);
+// Figuren in x vor der Bande halten (Abstand m zur Bandenmitte).
+export const clampWallX = (pitch, x, z, m = 0.3) => {
+  const w = endWallX(pitch, z) - m;
+  return clamp(x, -w, w);
+};
+
 export function clampToPitch(pitch, x, z, margin = 0.5) {
   return {
     x: clamp(x, -pitch.halfLength + margin, pitch.halfLength - margin),
@@ -55,7 +64,7 @@ export function clampToPitch(pitch, x, z, margin = 0.5) {
 // Wand (0, wenn frei). Nur bei 'walls'-Plätzen – dort gibt es kein Aus.
 export function wallPush(pitch, pos, range = 1.6) {
   if (pitch.boundary !== 'walls') return { x: 0, z: 0, near: false };
-  const xMax = pitch.wallX - 0.3;
+  const xMax = endWallX(pitch, pos.z) - 0.3;
   const zMax = pitch.halfWidth - 0.3;
   const px = pos.x > xMax - range ? -1 : pos.x < -xMax + range ? 1 : 0;
   const pz = pos.z > zMax - range ? -1 : pos.z < -zMax + range ? 1 : 0;

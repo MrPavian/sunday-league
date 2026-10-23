@@ -255,15 +255,21 @@ function stadium(pitch) {
 // Auf dem Parkett liegt nur die Bande (0,9 m hoch, weiß, 0,12 m dick): Wer drinnen ist, kommt nur durch die Tür vorn heraus.
 // Draußen (Auswechselbänke vorn, Gang hinter der Bande, Tribüne) stehen Bänke, Stufen und die Hallenwände.
 function hall(pitch) {
-  const { halfWidth: hw, wallX: wx } = pitch;
+  const { halfWidth: hw, halfLength: hl, wallX: wx, goalHalfWidth: gw } = pitch;
   const g = GEO.hall;
   const t = 0.06; // halbe Bandendicke (box(…, 0.12, …))
+  const ex = hl + t; // Bande hinter der Torlinie, bündig mit den Pfosten (pitch.goalNiche, endWallX in players.js)
   const obstacles = [
-    rc(-wx - t, wx + t, -hw - 0.1 - t, -hw - 0.1 + t), // Bande hinten: box(wallX * 2, 0.9, 0.12, …, -hw - 0.1)
-    rc(-wx - t, g.doorX - g.doorW / 2, hw + 0.1 - t, hw + 0.1 + t), // Bande vorn links der Tür
-    rc(g.doorX + g.doorW / 2, wx + t, hw + 0.1 - t, hw + 0.1 + t), // Bande vorn rechts der Tür (Lücke = Bandentür)
-    rc(-wx - t, -wx + t, -hw - 0.15, hw + 0.15), // Bande links: box(0.12, 0.9, hw * 2 + 0.3, …, -wallX, 0)
-    rc(wx - t, wx + t, -hw - 0.15, hw + 0.15), // Bande rechts
+    rc(-ex - t, ex + t, -hw - 0.1 - t, -hw - 0.1 + t), // Bande hinten: box(ex * 2, 0.9, 0.12, …, -hw - 0.1)
+    rc(-ex - t, g.doorX - g.doorW / 2, hw + 0.1 - t, hw + 0.1 + t), // Bande vorn links der Tür
+    rc(g.doorX + g.doorW / 2, ex + t, hw + 0.1 - t, hw + 0.1 + t), // Bande vorn rechts der Tür (Lücke = Bandentür)
+    // Bande an den Stirnseiten neben dem Tor (je zwei Stücke) und die Tornische dahinter: Rückwand bei wallX, Seiten an den Pfosten.
+    ...[-1, 1].flatMap((s) => [
+      rc(s * ex - t, s * ex + t, gw, hw + 0.15),
+      rc(s * ex - t, s * ex + t, -hw - 0.15, -gw),
+      rc(s * wx - t, s * wx + t, -gw - t, gw + t),
+      ...[-1, 1].map((sz) => rc(Math.min(s * ex, s * wx) - t, Math.max(s * ex, s * wx) + t, sz * gw - t, sz * gw + t)),
+    ]),
     rc(-g.w / 2 - 0.15, g.w / 2 + 0.15, -hw - 4.5 - 0.15, -hw - 4.5 + 0.15), // Hinterwand: box(W, 6, 0.3, …, -hw - 4.5)
     rc(-g.w / 2 - 0.15, -g.w / 2 + 0.15, -g.d / 2, g.d / 2), // Seitenwand links: box(0.3, 8, D, …, -W / 2)
     rc(g.w / 2 - 0.15, g.w / 2 + 0.15, -g.d / 2, g.d / 2), // Seitenwand rechts

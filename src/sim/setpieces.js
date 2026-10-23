@@ -2,7 +2,7 @@
 // Ohne Schiri gelten die Hobbyregeln: Wer gefoult wurde, legt sich den Ball
 // hin; wer ans Auto schießt, gibt den Ball ab.
 import { clamp, dist2d, hypot, len, norm } from '../core/math.js';
-import { attackDir, clampToPitch, getPlayer, setControlled, teamAttacking } from './players.js';
+import { attackDir, clampToPitch, clampWallX, getPlayer, setControlled, teamAttacking } from './players.js';
 import { processSubs } from './squad.js';
 import { styleOf } from './plan.js';
 import { cornerSpots, keeperZone } from './ai.js';
@@ -61,6 +61,7 @@ export function startSetPiece(m, { type, team, spot = { x: 0, z: 0 }, takerId = 
     // Nicht hinter die Wand stellen, wenn der Freistoß direkt davor liegt.
     taker.pos.x = clamp(spot.x - toGoal.x * back, -pitch.wallX + 0.3, pitch.wallX - 0.3);
     taker.pos.z = spot.z - toGoal.z * back;
+    taker.pos.x = clampWallX(pitch, taker.pos.x, taker.pos.z); // Halle: neben dem Tor steht die Bande auf der Torlinie
     taker.facing = toGoal;
   }
   taker.setPieceAction = type === 'corner' ? 'cross' : type === 'penalty' ? 'penalty' : null;
@@ -83,6 +84,7 @@ export function startSetPiece(m, { type, team, spot = { x: 0, z: 0 }, takerId = 
       const zMax = pitch.boundary === 'lines' ? pitch.halfWidth + 1 : pitch.halfWidth - 0.3;
       p.pos.x = clamp(spot.x + n.x * keep, -pitch.wallX + 0.3, pitch.wallX - 0.3);
       p.pos.z = clamp(spot.z + n.z * keep, -zMax, zMax);
+      p.pos.x = clampWallX(pitch, p.pos.x, p.pos.z);
     }
   }
 
@@ -197,6 +199,7 @@ function buildWall(m, team, spot) {
     const zMax = pitch.boundary === 'lines' ? pitch.halfWidth + 1 : pitch.halfWidth - 0.3;
     p.pos.x = clamp(centre.x + side.x * off, -pitch.wallX + 0.3, pitch.wallX - 0.3);
     p.pos.z = clamp(centre.z + side.z * off, -zMax, zMax);
+    p.pos.x = clampWallX(pitch, p.pos.x, p.pos.z);
     p.vel.x = p.vel.z = 0;
     p.facing = { x: -dir.x, z: -dir.z };
   });
@@ -228,6 +231,7 @@ function lineUpCorner(m, team, taker) {
     const sp = spots[i];
     p.pos.x = clamp(sp.x + m.rng.range(-0.15, 0.15), -pitch.wallX + 0.3, pitch.wallX - 0.3);
     p.pos.z = clamp(sp.z + m.rng.range(-0.15, 0.15), -zMax, zMax);
+    p.pos.x = clampWallX(pitch, p.pos.x, p.pos.z);
     p.facing = { x: -s, z: 0 };
     placed.push(p);
   });
@@ -243,6 +247,7 @@ function lineUpCorner(m, team, taker) {
     taken.add(d.id);
     d.pos.x = clamp(a.pos.x + s * 1.0, -pitch.wallX + 0.3, pitch.wallX - 0.3);
     d.pos.z = clamp(a.pos.z + Math.sign(-a.pos.z || 1) * 0.3, -zMax, zMax);
+    d.pos.x = clampWallX(pitch, d.pos.x, d.pos.z);
     d.facing = { x: -s, z: 0 };
   }
 }

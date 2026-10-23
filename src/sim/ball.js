@@ -1,5 +1,6 @@
 import { hypot, hypot3 } from '../core/math.js';
 import { SURFACES } from './surfaces.js';
+import { endWallX } from './players.js';
 
 export const BALL_RADIUS = 0.11;
 const G = 9.81;
@@ -102,7 +103,12 @@ export function stepBall(ball, pitch, dt) {
     // Nur richtige Schüsse/Pässe zählen, nicht das Dribbeln an der Stoßstange.
     if (!event && pitch.carRule && ((ball.lastAction === 'shoot' && impact > 6) || impact > 13)) event = { type: 'car', x: pos.x, z: pos.z };
   }
-  const xMax = pitch.wallX - BALL_RADIUS;
+  // Tornische (Halle): Wer im Tor ist (kam von hinter der Torlinie), bleibt zwischen den Seitennetzen.
+  if (pitch.goalNiche && Math.abs(prevX) > hl && Math.abs(pos.x) > hl && Math.abs(pos.z) > pitch.goalHalfWidth - BALL_RADIUS) {
+    pos.z = Math.sign(pos.z) * (pitch.goalHalfWidth - BALL_RADIUS);
+    vel.z = -vel.z * 0.2;
+  }
+  const xMax = endWallX(pitch, pos.z) - BALL_RADIUS;
   const netX = catchNetX(pitch, pos);
   if (netX !== null && Math.abs(pos.x) > netX) {
     // Fangnetz hinter dem Tor: Der Ball bleibt hängen und fällt zurück, statt von der Wand abzuprallen.
@@ -170,7 +176,7 @@ export function rollSpeedFor(d, vEnd, surface) {
 export function catchNetX(pitch, pos) {
   const net = pitch.catchNet;
   if (!net || Math.abs(pos.z) >= pitch.goalHalfWidth + net.margin || pos.y <= net.boardHeight || pos.y >= net.height) return null;
-  return pitch.wallX - BALL_RADIUS - net.lean * (pos.y - net.boardHeight);
+  return endWallX(pitch, pos.z) - BALL_RADIUS - net.lean * (pos.y - net.boardHeight);
 }
 
 // Pfosten (senkrechte Zylinder) und Latte (waagerechter Zylinder). Die

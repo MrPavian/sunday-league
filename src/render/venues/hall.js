@@ -3,6 +3,7 @@ import { tr } from '../../core/i18n.js';
 import { emissiveToon, toon } from '../materials.js';
 import { addLights, box, ground, makeBench, makeGoalFrame } from '../props.js';
 import { GEO } from '../../sim/shelter.js';
+import { endWallX } from '../../sim/players.js';
 import { crowdRow, makeSpectator } from '../spectators.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { vertexToon } from '../materials.js';
@@ -23,18 +24,26 @@ export function buildHall(root, pitch, rng, scene) {
     root.add(goal);
   }
 
-  // Weiße Bande rund ums Feld, mit Werbung vom Sponsor.
+  // Weiße Bande rund ums Feld, mit Werbung vom Sponsor. An den Stirnseiten steht sie neben dem Tor bündig mit den Pfosten
+  // (auf der Torlinie, ex); das Tor sitzt in einer Nische bis wallX (pitch.goalNiche, endWallX – dieselben Maße wie Ball und Spieler).
   const bande = 0xf2efe6;
-  root.add(box(wallX * 2, 0.9, 0.12, bande, 0, 0.45, -hw - 0.1));
+  const ex = endWallX(pitch, hw);
+  root.add(box(ex * 2 + 0.12, 0.9, 0.12, bande, 0, 0.45, -hw - 0.1));
   // Vorn mit Tür (GEO.hall, shelter.js): Schiri, Ordner und Platzverweise gehen durch die Lücke, nicht durch die Bande.
   // Die Lücke ist in der Kulisse leer; die Tür selbst (buildBoardDoor, unten) baut die IncidentView als eigenes bewegtes Mesh,
   // damit mergeStatic sie nicht einbackt. Der Ball prallt an der Bandenlinie auch an der Tür ab (ball.js: zMax gilt überall).
   const door = GEO.hall;
-  const left = door.doorX - door.doorW / 2 + wallX;
-  const right = wallX - (door.doorX + door.doorW / 2);
-  root.add(box(left, 0.9, 0.12, bande, -wallX + left / 2, 0.45, hw + 0.1));
-  root.add(box(right, 0.9, 0.12, bande, wallX - right / 2, 0.45, hw + 0.1));
-  for (const s of [-1, 1]) root.add(box(0.12, 0.9, hw * 2 + 0.3, bande, s * wallX, 0.45, 0));
+  const left = door.doorX - door.doorW / 2 + ex + 0.06;
+  const right = ex + 0.06 - (door.doorX + door.doorW / 2);
+  root.add(box(left, 0.9, 0.12, bande, -ex - 0.06 + left / 2, 0.45, hw + 0.1));
+  root.add(box(right, 0.9, 0.12, bande, ex + 0.06 - right / 2, 0.45, hw + 0.1));
+  const side = hw + 0.15 - gw; // Stirnbande neben dem Tor: vom Pfosten bis zur Ecke
+  for (const s of [-1, 1]) {
+    for (const sz of [-1, 1]) root.add(box(0.12, 0.9, side, bande, s * ex, 0.45, sz * (gw + side / 2)));
+    // Tornische: Rückwand hinter dem Netz und die Seitenwände an den Pfosten.
+    root.add(box(0.12, 0.9, gw * 2 + 0.12, bande, s * wallX, 0.45, 0));
+    for (const sz of [-1, 1]) root.add(box(Math.abs(wallX - ex) + 0.12, 0.9, 0.12, bande, s * (ex + wallX) / 2, 0.45, sz * (gw + 0.06)));
+  }
   for (const [x, text] of [[-10, 'SPORTHAUS KANAL'], [0, pitch.sponsorAds?.bande ? pitch.sponsorAds.bande.name.toUpperCase() : tr('BÄCKEREI KRUME', 'CRUMBS BAKERY')], [10, 'HALLENCUP']]) {
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(7, 0.6), toon(0xffffff, { map: makeSignTextureWide(text, { bg: '#1f3a6b' }) }));
     sign.position.set(x, 0.5, -hw - 0.17);
@@ -52,12 +61,22 @@ export function buildHall(root, pitch, rng, scene) {
     const slant = Math.atan(lean);
     const len = rise * Math.hypot(1, lean);
     for (const s of [-1, 1]) {
-      const xAt = (y) => s * (wallX - 0.06 - lean * (y - bh));
+      // Wie catchNetX: über dem Tor auf der Nischen-Rückwand (wallX), daneben auf der Stirnbande (ex).
+      const xAt = (base, y) => s * (base - 0.06 - lean * (y - bh));
       const tilt = (m) => ((m.rotation.z = s * slant), m);
-      for (let z = -nz; z <= nz + 0.01; z += 0.4) root.add(tilt(box(0.04, len, 0.04, netCol, xAt((nh + bh) / 2), (nh + bh) / 2, z)));
-      for (let y = bh + 0.4; y < nh; y += 0.4) root.add(box(0.05, 0.05, nz * 2, netCol, xAt(y), y, 0));
-      root.add(box(0.08, 0.08, nz * 2 + 0.1, bande, xAt(nh), nh, 0)); // Oberseil
-      for (const z of [-nz - 0.05, nz + 0.05]) root.add(tilt(box(0.1, len, 0.1, bande, xAt((nh + bh) / 2), (nh + bh) / 2, z))); // Pfosten
+      const panel = (z0, z1, base) => {
+        for (let z = z0; z <= z1 + 0.01; z += 0.4) root.add(tilt(box(0.04, len, 0.04, netCol, xAt(base, (nh + bh) / 2), (nh + bh) / 2, z)));
+        for (let y = bh + 0.4; y < nh; y += 0.4) root.add(box(0.05, 0.05, z1 - z0, netCol, xAt(base, y), y, (z0 + z1) / 2));
+        root.add(box(0.08, 0.08, z1 - z0 + 0.1, bande, xAt(base, nh), nh, (z0 + z1) / 2)); // Oberseil
+      };
+      const inner = endWallX(pitch, 0);
+      panel(-gw, gw, inner);
+      for (const sz of [-1, 1]) {
+        panel(sz > 0 ? gw : -nz, sz > 0 ? nz : -gw, ex);
+        // Querstück an der Nischenkante: schließt die Lücke zwischen den beiden Netzebenen.
+        for (let y = bh + 0.4; y < nh; y += 0.4) root.add(box(Math.abs(xAt(inner, y) - xAt(ex, y)), 0.05, 0.05, netCol, (xAt(inner, y) + xAt(ex, y)) / 2, y, sz * gw));
+        root.add(tilt(box(0.1, len, 0.1, bande, xAt(ex, (nh + bh) / 2), (nh + bh) / 2, sz * (nz + 0.05)))); // Pfosten außen
+      }
     }
   }
 

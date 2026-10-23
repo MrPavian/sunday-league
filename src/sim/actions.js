@@ -4,7 +4,7 @@ import { bondBonus, bondOf, isBad } from './bonds.js';
 import { clamp, dist2d, hypot, len, norm, rotate } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
 import { BALL_RADIUS, ballSpeed, boardRoute, rollSpeedFor } from './ball.js';
-import { attackDir, distToSegment, setControlled, wallPush } from './players.js';
+import { attackDir, clampWallX, distToSegment, setControlled, wallPush } from './players.js';
 import { aiSkill, keeperReaction, laneScore, WIDE_LANE } from './ai.js';
 
 // Bonus für den freien Mann außen bei der Passwahl der KI (Stellschraube, gemessen mit scripts/orders-audit.mjs).
@@ -72,7 +72,7 @@ export function movePlayer(m, p, intent, dt, leaders) {
 
 export function clampPlayer(pitch, p, x, z) {
   const zMax = pitch.boundary === 'lines' ? pitch.halfWidth + 1.2 : pitch.halfWidth - 0.3;
-  p.pos.x = clamp(x, -pitch.wallX + 0.3, pitch.wallX - 0.3);
+  p.pos.x = clampWallX(pitch, x, z);
   p.pos.z = clamp(z, -zMax, zMax);
 }
 
