@@ -70,7 +70,7 @@ export const SQUAD_SHAPES = {
   xl: ['gk', 'gk', 'def', 'def', 'def', 'def', 'def', 'mid', 'mid', 'mid', 'mid', 'mid', 'fwd', 'fwd', 'fwd'], // Kreisliga A: 9 Spieler + Bank
   xxl: ['gk', 'gk', 'def', 'def', 'def', 'def', 'def', 'def', 'def', 'mid', 'mid', 'mid', 'mid', 'mid', 'mid', 'mid', 'fwd', 'fwd', 'fwd', 'fwd'], // Bezirksliga: 11 + Bank
 };
-const NUDGES_PER_WEEK = 3;
+const NUDGES_PER_WEEK = 2; // Nachhaken im Teamchat: zweimal je Spieltag (vom Nutzer festgelegt, 2026-10-23)
 export const MAX_SQUAD = 12; // Freizeitliga; in der Kreisklasse mehr (siehe maxSquad)
 export const MIN_SQUAD = 7;
 const SCOUT_ACTIONS = 2;
@@ -729,6 +729,7 @@ export function migrateCareer(career) {
   career.leagueSize ??= 6;
   career.mood ??= 0;
   career.flags ??= {};
+  if (career.week && career.week.nudges > NUDGES_PER_WEEK) career.week.nudges = NUDGES_PER_WEEK; // alte Stände: früher dreimal Nachhaken
   migratePositions(career); // Gewöhnung an fremde Positionen (alte Stände: leer)
   initFinances(career);
   platz(career); // alte Stände: Platz gepflegt, Pachtvertrag zu den bisherigen Bedingungen

@@ -56,13 +56,14 @@ describe('career', () => {
     for (const idx of humanClub(career).squad) expect(['yes', 'no', 'late']).toContain(w.availability[idx]);
   });
 
-  it('nudging only works on declines, three times per week', () => {
+  it('nudging only works on declines, twice per match day', () => {
     const c = createCareer({ seed: 5 });
     const declined = Object.entries(c.week.availability).filter(([, s]) => s === 'no');
     const yes = Object.entries(c.week.availability).find(([, s]) => s === 'yes');
     if (yes) expect(nudge(c, Number(yes[0]))).toBeNull();
-    for (const [idx] of declined.slice(0, 3)) expect(typeof nudge(c, Number(idx))).toBe('boolean');
-    expect(c.week.nudges).toBe(Math.max(0, 3 - Math.min(3, declined.length)));
+    for (const [idx] of declined.slice(0, 2)) expect(typeof nudge(c, Number(idx))).toBe('boolean');
+    expect(c.week.nudges).toBe(Math.max(0, 2 - Math.min(2, declined.length)));
+    if (declined.length > 2) expect(nudge(c, Number(declined[2][0]))).toBeNull(); // ein drittes Mal geht nicht
   });
 
   it('automatic line-up picks the strongest in each position, and form tips the balance', () => {
