@@ -7,6 +7,10 @@ import { groundTexels, makeAshTexture, makeSignTextureWide } from '../textures.j
 
 // Ascheplatz vom SV Grün-Weiß: Jugendtore, Ballfangzaun, Flutlicht,
 // Vereinsheim im Container und die üblichen drei Zuschauer.
+// Acrylglas der Spielerkabine: ein Material für alle Ascheplätze (wie der Farb-Cache in materials.js, wird nicht freigegeben).
+let glassMat = null;
+const acrylic = () => (glassMat ??= new THREE.MeshToonMaterial({ color: 0xd6e8ee, transparent: true, opacity: 0.3, depthWrite: false }));
+
 export function buildAshPitch(root, pitch, rng, scene) {
   root.add(addLights(scene));
   const W = 56;
@@ -35,12 +39,27 @@ export function buildAshPitch(root, pitch, rng, scene) {
   const masts = [-18, 0, 18];
   for (const x of masts) root.add(makeFloodlight(x, -18.5, 14, 2.4));
 
-  // Auswechselbänke mit Dach.
-  // Ein durchgehendes Dach über beiden Bänken: Unterstand beim Gewitter.
+  // Auswechselbänke unter einer Spielerkabine aus Acrylglas: ein durchgehendes Dach über beiden Bänken (Unterstand beim
+  // Gewitter, GEO.ash). Vorher war es eine dunkelgrüne Platte, die von der Kamera aus wie ein schwarzer Balken aussah (vom
+  // Nutzer gemeldet, 2026-10-23); jetzt durchsichtiges Dach und Rückwand im grauen Rahmen, darunter sieht man die Bänke.
   const A = GEO.ash;
   for (const x of [-5, 5]) root.add(makeBench(x, -15.6));
-  root.add(box(A.x * 2, 0.08, A.z1 - A.z0, 0x2f4f3a, 0, A.y, (A.z0 + A.z1) / 2), box(A.x * 2, A.y, 0.06, 0x2f4f3a, 0, A.y / 2, A.z0));
-  for (const s of [-1, 1]) root.add(box(0.1, A.y, 0.1, 0x2f4f3a, s * (A.x - 0.1), A.y / 2, A.z1 - 0.1));
+  const frame = 0x8a9096; // Farbe der Geländer: kein zusätzliches Material für den Rahmen
+  const depth = A.z1 - A.z0;
+  const zc = (A.z0 + A.z1) / 2;
+  root.add(box(A.x * 2, 0.08, 0.08, frame, 0, A.y, A.z1), box(A.x * 2, 0.08, 0.08, frame, 0, A.y, A.z0), box(A.x * 2, 0.08, 0.08, frame, 0, 0.5, A.z0));
+  for (let x = -A.x + 0.05; x <= A.x - 0.04; x += (A.x * 2 - 0.1) / 6) {
+    root.add(box(0.08, 0.08, depth, frame, x, A.y, zc)); // Sparren
+    root.add(box(0.08, A.y, 0.08, frame, x, A.y / 2, A.z0)); // Rückwand-Pfosten
+  }
+  for (const s of [-1, 1]) root.add(box(0.1, A.y, 0.1, frame, s * (A.x - 0.1), A.y / 2, A.z1 - 0.1));
+  const glass = acrylic();
+  for (const [w, h, d, y, z] of [[A.x * 2, 0.03, depth, A.y + 0.02, zc], [A.x * 2, A.y - 0.5, 0.03, (A.y + 0.5) / 2, A.z0]]) {
+    const pane = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), glass);
+    pane.position.set(0, y, z);
+    pane.renderOrder = 2; // nach dem Undurchsichtigen
+    root.add(pane);
+  }
 
   // Vereinsheim-Container mit Schild und Fahne.
   root.add(box(9, 2.8, 3, 0x3f7a4a, -10, 1.4, -21.5));
