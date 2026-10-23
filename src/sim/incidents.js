@@ -103,6 +103,17 @@ function tumble(p, dir, speed, lie = 0.7) {
   p.pending = null;
 }
 
+// Gewitter nach Jahreszeit und Wetter (Gewicht in der Auslosung, sonst 1). DWD-Auswertung 1961–2022 (Hamburg, Frankfurt,
+// Stuttgart, Potsdam; wetterdienst.de, „Gewittersaison in den Startlöchern“): Hauptsaison Mai bis August mit 3–7
+// Gewittertagen im Monat, im September etwa wieder auf April-Niveau, Oktober bis März selten (mehr als eins im Monat ist die
+// Ausnahme). Die Gewichte sind daraus abgeleitete Spielwerte; Hitze begünstigt Wärmegewitter, bei Schnee, Frost und Nebel
+// gibt es keins (vom Nutzer gemeldet, 2026-10-23: kam auch bei Sonne im Winter ganz plötzlich).
+const STORM_MONTH = { 5: 1, 6: 1, 7: 1, 8: 1, 4: 0.3, 9: 0.3 };
+const STORM_WEATHER = { hitze: 1.6, sonne: 1, regen: 1, wind: 0.6, nebel: 0, frost: 0, schnee: 0 };
+const stormWeight = (pitch) => (pitch.weatherId == null ? 1 : (STORM_MONTH[pitch.month] ?? 0.1) * (STORM_WEATHER[pitch.weatherId] ?? 1));
+// Vorwarnung vor dem Gewitter (Anteil der Spielzeit vor dem Ausbruch): erst Grollen in der Ferne, dann setzt Regen ein.
+export const STORM_WARN = { rumble: 0.12, rain: 0.05 };
+
 // Beim Anpfiff: gibt es heute einen Vorfall, und wann frühestens?
 export function planIncident(m, seed) {
   const rng = createRng(((seed * 2654435761) ^ 0x5bd1e995) >>> 0);
@@ -111,7 +122,32 @@ export function planIncident(m, seed) {
   if (!rng.chance(INCIDENT_CHANCE)) return null;
   let list = VENUE_INCIDENTS[m.pitch.base ?? m.pitch.id] ?? ['gewitter'];
   if (!m.referee) list = list.filter((t) => t !== 'ersatzschiri');
-  return { type: rng.pick(list), at: rng.range(0.12, 0.85) * m.duration };
+  // Gewichtet ziehen – mit einer Zufallszahl wie rng.pick (ohne Wetterangaben alle Gewichte 1: dasselbe Ergebnis wie vorher).
+  const w = list.map((t) => (t === 'gewitter' ? stormWeight(m.pitch) : 1));
+  let r = rng.next() * w.reduce((a, b) => a + b, 0);
+  let type = list[list.length - 1];
+  for (let i = 0; i < list.length; i++) if ((r -= w[i]) < 0) {
+    type = list[i];
+    break;
+  }
+  if (w.every((x) => x === 0)) return null;
+  const at = rng.range(0.12, 0.85) * m.duration;
+  // Das Gewitter zieht auf (STORM_WARN): nicht vor der Vorwarnung ausbrechen lassen.
+  return type === 'gewitter' ? { type, at: Math.max(at, (STORM_WARN.rumble + 0.02) * m.duration), warned: 0 } : { type, at };
+}
+
+// Gewitter zieht auf: Grollen in der Ferne, dann die ersten Tropfen (Regen in der Darstellung) – das Unwetter selbst folgt
+// in beginIncident. Ohne Zufall, der Zufallsstrom der Vorfälle bleibt gleich.
+function stormWarning(m, plan) {
+  if (plan.warned < 1 && m.time >= plan.at - STORM_WARN.rumble * m.duration) {
+    plan.warned = 1;
+    m.events.push({ type: 'rumble' }, { type: 'incident', kind: 'gewitter', stage: 'warn', text: tr('In der Ferne grollt es. Über den Dächern wird der Himmel schwarz.', 'Thunder rumbles in the distance. The sky over the rooftops is turning black.') });
+  }
+  if (plan.warned < 2 && m.time >= plan.at - STORM_WARN.rain * m.duration) {
+    plan.warned = 2;
+    if (!m.weather) m.weather = 'rain';
+    m.events.push({ type: 'rumble' }, { type: 'incident', kind: 'gewitter', stage: 'warn', text: tr('Die ersten dicken Tropfen. Das Grollen kommt näher.', 'The first fat raindrops. The rumbling is getting closer.') });
+  }
 }
 
 const lastTeam = (m) => m.lastTouchTeam ?? 0;
@@ -121,6 +157,7 @@ const look = (rng, extra = {}) => ({ skin: rng.pick(SKIN_TONES), hair: rng.pick(
 export function checkIncident(m, dt) {
   stepLeftovers(m, dt);
   const plan = m.incidentPlan;
+  if (plan?.type === 'gewitter') stormWarning(m, plan);
   if (!plan || m.time < plan.at || m.phase !== 'play') return false;
   if (plan.type === 'zaun') {
     // Ohne Aus (Hinterhof, Parkplatz): hoher Ball an die Mauer.

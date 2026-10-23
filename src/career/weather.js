@@ -75,6 +75,9 @@ export function applyWeather(pitch, w) {
     heat: def.heat ?? 1,
     wind: def.wind ? { x: def.wind * w.windDir, z: def.wind * 0.3 } : null,
     visual: def.visual ?? (w.leaves ? 'leaves' : null),
+    // Für die Auslosung der Vorfälle (incidents.js): Gewitter je nach Monat und Wetterlage.
+    weatherId: w.id,
+    month: w.month,
   };
 }
 

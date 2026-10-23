@@ -281,6 +281,13 @@ export class Sound {
     this.noise('bandpass', 1400, 1.5, 0.22, 0.05, d, t);
   }
 
+  // Grollen in der Ferne: nur tief und leise, ohne den Knall des Blitzes (Vorwarnung vor dem Gewitter).
+  rumble() {
+    const d = this.out(Math.random() - 0.5);
+    const t = this.ctx.currentTime;
+    this.noise('lowpass', 120, 0.6, 2.8, 0.14, d, t, 0.6);
+  }
+
   thunder() {
     const d = this.out(Math.random() - 0.5);
     const t = this.ctx.currentTime;
@@ -535,6 +542,9 @@ export class Sound {
           break;
         case 'lightning':
           this.thunder();
+          break;
+        case 'rumble':
+          this.rumble();
           break;
         case 'halftime':
         case 'extratime_start':
