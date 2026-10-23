@@ -107,9 +107,44 @@ async function freeze(b) {
   return ok.done();
 }
 
+// Trikot folgt der Rolle: Ersatztorwart als Feldspieler eingewechselt → Feldtrikot; Feldspieler ins Tor → Torwarttrikot.
+async function kitSwap(b) {
+  const ok = checker('Trikot nach Rollenwechsel: Ersatztorwart im Feld, Feldspieler im Tor');
+  const p = await page(b, 'land', { query: '?venue=sportplatz&notitle&trainer&debug&dauer=120&seed=3' });
+  await p.waitForTimeout(1500);
+  const ids = await p.evaluate(() => {
+    const m = __sl.match;
+    return { out: m.players.find((q) => q.team === 0 && q.role === 'mid')?.id, gk: m.bench[0].find((q) => q.role === 'gk')?.id };
+  });
+  ok(!!ids.gk && !!ids.out, `kein Ersatztorwart oder Mittelfeldspieler (${JSON.stringify(ids)})`);
+  ok(await p.evaluate((id) => __sl.view.models.get(id)?.keeperKit === true, ids.gk), 'Ersatztorwart sitzt nicht im Torwarttrikot auf der Bank');
+  await p.click('[data-tap="sub"]');
+  await p.waitForTimeout(500);
+  await p.evaluate(({ out, gk }) => {
+    document.querySelector(`#subpanel [data-action="out"][data-value="${out}"]`)?.click();
+    document.querySelector(`#subpanel [data-action="in"][data-value="${gk}"]`)?.click();
+    document.querySelector('#subpanel [data-action="confirm"]')?.click();
+  }, ids);
+  let on = false;
+  for (let i = 0; i < 240 && !on; i++) {
+    await p.waitForTimeout(250);
+    on = await p.evaluate((id) => __sl.match.players.some((q) => q.id === id), ids.gk);
+  }
+  ok(on, 'Ersatztorwart wurde nicht eingewechselt');
+  await p.waitForTimeout(300);
+  ok(await p.evaluate((id) => { const q = __sl.match.players.find((x) => x.id === id); return q?.role !== 'gk' && __sl.view.models.get(id)?.keeperKit === false; }, ids.gk), 'eingewechselter Ersatztorwart trägt im Feld noch das Torwarttrikot');
+  // Feldspieler muss ins Tor (wie nach Rot für den Torwart, squad.js): Torwarttrikot.
+  const field = await p.evaluate(() => { const q = __sl.match.players.find((x) => x.team === 1 && x.role === 'def'); q.role = 'gk'; return q.id; });
+  await p.waitForTimeout(300);
+  ok(await p.evaluate((id) => __sl.view.models.get(id)?.keeperKit === true, field), 'Feldspieler im Tor trägt kein Torwarttrikot');
+  ok(!p.errors.length, `Seitenfehler: ${p.errors.slice(0, 2).join(' | ')}`);
+  await p.context().close();
+  return ok.done();
+}
+
 export async function run() {
   const b = await launch();
-  const fails = (await trainerFlow(b)) + (await freeze(b)) + (await audio(b));
+  const fails = (await trainerFlow(b)) + (await freeze(b)) + (await audio(b)) + (await kitSwap(b));
   await b.close();
   return fails;
 }

@@ -119,34 +119,23 @@ export class MatchView {
     this.warmOut = new Set(); // Ausgewechselte: wärmen sich nicht gleich wieder auf
     this.warmOn = typeof location === 'undefined' || new URLSearchParams(location.search).get('warmup') !== '0';
     this.softGround = !match.pitch.surface.hard;
-    // Ein Atlas (Textur + Material) je Team und Trikot: Feldspieler, Torwart.
+    // Ein Atlas (Textur + Material) je Team und Trikot: Feldspieler, Torwart. Platz für jeden Spieler des Teams in beiden:
+    // Wer die Rolle wechselt (Ersatztorwart als Feldspieler eingewechselt, Feldspieler nach Rot ins Tor), bekommt eine
+    // neue Kachel im anderen Trikot (rekit).
     const everyone = allPlayers(match);
     this.atlases = new Map();
-    const atlasFor = (p) => {
-      const key = `${p.team}|${p.role === 'gk' ? 'gk' : 'field'}`;
+    this.atlasFor = (team, keeper) => {
+      const key = `${team}|${keeper ? 'gk' : 'field'}`;
       if (!this.atlases.has(key)) {
-        const team = match.teams[p.team];
-        const kit = p.role === 'gk' ? team.keeperKit : team.kit;
-        const capacity = everyone.filter((q) => q.team === p.team && (q.role === 'gk') === (p.role === 'gk')).length;
-        this.atlases.set(key, new KitAtlas(kit, { sponsor: team.sponsor ?? null, sleeve: team.sleeve ?? null, capacity, edge: p.team === 0 ? 'home' : 'away' }));
+        const t = match.teams[team];
+        const capacity = everyone.filter((q) => q.team === team).length;
+        this.atlases.set(key, new KitAtlas(keeper ? t.keeperKit : t.kit, { sponsor: t.sponsor ?? null, sleeve: t.sleeve ?? null, capacity, edge: team === 0 ? 'home' : 'away' }));
       }
       return this.atlases.get(key);
     };
     for (const p of everyone) {
-      const team = match.teams[p.team];
-      const kit = p.role === 'gk' ? team.keeperKit : team.kit;
-      // Rückennummer: Position in der Aufstellung (Torwart die 1).
-      const number = p.role === 'gk' ? 1 : (Number(String(p.id).split('-')[1]) || 0) + 1;
-      const model = createPlayerModel(p.look, kit, { number, keeper: p.role === 'gk', sponsor: team.sponsor ?? null, sleeve: team.sleeve ?? null, atlas: typeof document !== 'undefined' ? atlasFor(p) : null });
-      model.celebration = celebrationFor(p.id);
-      model.footPref = footFor(p.id);
-      if (p.hot) {
-        // In Form: eine kleine Pixelflamme über dem Kopf.
-        model.flame = new THREE.Sprite(keepAlpha(new THREE.SpriteMaterial({ map: flameTexture(), transparent: true, depthWrite: false })));
-        model.flame.scale.set(0.32, 0.4, 1);
-        model.flame.position.set(0, 2.25, 0);
-        model.group.add(model.flame);
-      }
+      // Rückennummer: Position in der Aufstellung (Torwart die 1); bleibt beim Rollenwechsel.
+      const model = this.buildModel(match, p, p.role === 'gk' ? 1 : (Number(String(p.id).split('-')[1]) || 0) + 1);
       this.models.set(p.id, model);
       this.root.add(model.group);
     }
@@ -784,6 +773,37 @@ export class MatchView {
     }
   }
 
+  // Figur eines Spielers im Trikot seiner Rolle: Torwarttrikot nur, wer gerade im Tor steht.
+  buildModel(match, p, number) {
+    const team = match.teams[p.team];
+    const keeper = p.role === 'gk';
+    const model = createPlayerModel(p.look, keeper ? team.keeperKit : team.kit, { number, keeper, sponsor: team.sponsor ?? null, sleeve: team.sleeve ?? null, atlas: typeof document !== 'undefined' ? this.atlasFor(p.team, keeper) : null });
+    model.number = number;
+    model.keeperKit = keeper;
+    model.celebration = celebrationFor(p.id);
+    model.footPref = footFor(p.id);
+    if (p.hot) {
+      // In Form: eine kleine Pixelflamme über dem Kopf.
+      model.flame = new THREE.Sprite(keepAlpha(new THREE.SpriteMaterial({ map: flameTexture(), transparent: true, depthWrite: false })));
+      model.flame.scale.set(0.32, 0.4, 1);
+      model.flame.position.set(0, 2.25, 0);
+      model.group.add(model.flame);
+    }
+    return model;
+  }
+
+  // Rolle gewechselt (Einwechslung, Feldspieler ins Tor): neue Figur im passenden Trikot, die alte wird freigegeben.
+  rekit(match, p) {
+    const old = this.models.get(p.id);
+    const model = this.buildModel(match, p, old.number);
+    this.root.remove(old.group);
+    if (old.flame) old.flame.material.dispose();
+    disposeKit(old);
+    this.models.set(p.id, model);
+    this.root.add(model.group);
+    return model;
+  }
+
   sync(match, dt) {
     this.time += dt;
     const sdt = this.steps * SIM_STEP; // Spielzeit seit dem letzten Bild (0 bei Pause)
@@ -795,7 +815,8 @@ export class MatchView {
     const duels = duelPairs(match);
     for (const p of match.players) {
       idx++;
-      const m = this.models.get(p.id);
+      let m = this.models.get(p.id);
+      if (m.keeperKit !== (p.role === 'gk')) m = this.rekit(match, p);
       m.group.visible = true;
       this.throwInState(m, p, match, tin, dt);
       const px = p.pos.x - (m.inOff > 0.001 ? m.inDir * m.inOff : 0); // Anlauf des Einwerfers: hinter dem Punkt
