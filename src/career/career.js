@@ -19,7 +19,7 @@ import { gradePlayers } from '../sim/stats.js';
 import { absenceChance, DECLINE_TEXT, FAREWELL, INJURED, JOIN_TEXT, LATE, LATE_STRICT, noReasons, NUDGE_NO, NUDGE_YES, RUMOR_SOURCES, YES } from './chat.js';
 import { runHooks } from './hooks.js';
 import { EXTRA_CLUBS, HUMAN_CLUB_DEFAULT, LEAGUES, leagueClubs, MAX_LEVEL } from './clubs.js';
-import { autoRelegation, relegationOutcome } from './relegation.js';
+import { autoRelegation, nextRelegationPitch, relegationNeeded, relegationOutcome, relegationWeek } from './relegation.js';
 import { applyPubToTeam } from './pub.js';
 import { rollInjuries } from './injuries.js';
 import { afterMatchFitness, backFromInjury, fitnessOf, weeklyFitness } from './fitness.js';
@@ -477,7 +477,7 @@ export function startWeek(career) {
   const prevRumors = career.week?.rumors ?? []; // offene Gerüchte bleiben 2–4 Wochen am Brett
   advancePokale(career); // Kreis-/Bezirkspokal: anmelden, verpasste Runden ausspielen
   if (seasonOver(career)) {
-    career.week = null;
+    career.week = relegationNeeded(career) ? relegationWeek(career) : null; // Relegation: eigene Woche für Aufstellung und Taktik
     return;
   }
   const rng = createRng(hashSeed(career.seed, career.season, career.round, 1));
@@ -942,9 +942,12 @@ export function resolveKitClash(home, away) {
 
 // --- Aufstellung durch den Trainer ------------------------------------------------
 
+// Spielerzahl des nächsten eigenen Spiels – wie prepareMatch: die der Liga, ohne Vorgabe die des Platzes. Nach dem letzten
+// Spieltag die der Relegation (nextRelegationPitch).
 export function matchFormat(career) {
   const f = humanFixture(career);
-  return PITCHES[clubById(career, f.home).venue].format;
+  if (!f) return nextRelegationPitch(career)?.format ?? leagueOf(career).format ?? PITCHES[humanClub(career).venue].format;
+  return leagueOf(career).format ?? PITCHES[clubById(career, f.home).venue].format;
 }
 
 // Aktuelle Aufstellung für die Anzeige: gewählte Spieler, Rest automatisch.
@@ -1036,7 +1039,7 @@ function aiAvailability(club, rng) {
 // Platz des nächsten eigenen Spiels (mit Wetter) – für die Taktiktafel.
 export function nextPitch(career) {
   const f = humanFixture(career);
-  if (!f) return null;
+  if (!f) return nextRelegationPitch(career);
   const home = clubById(career, f.home);
   const league = leagueOf(career);
   const base = PITCHES[home.venue];

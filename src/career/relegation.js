@@ -11,7 +11,9 @@ import { subRuleFor } from '../sim/squad.js';
 import { LEAGUES, MAX_LEVEL } from './clubs.js';
 import { humanClub, resolveKitClash, simulateSync, squadPicker, SQUAD_SHAPES, table, teamForMatch } from './career.js';
 import { adjustMood } from './events.js';
-import { applyWeather } from './weather.js';
+import { applyWeather, rollWeather } from './weather.js';
+import { coachAway, isCoach } from './personal.js';
+import { isBanned } from './suspensions.js';
 import { chronicle } from './sagas.js';
 
 const RELEGATION_ID = 'relegation';
@@ -63,6 +65,45 @@ export function startRelegation(career) {
   return career.relegation;
 }
 
+// Platz eines Relegationsspiels: der des Heimvereins, wenn die höhere Liga dort spielt – sonst (Hinterhof, Parkplatz …) der Platz,
+// den die höhere Liga verlangt (humanVenue). Spielerzahl wie in der höheren Liga. Vorher stand im Hinterhof 7 gegen 7
+// (vom Nutzer gemeldet, 2026-10-23): die Spielerzahl kam aus der höheren Liga, der Platz vom Heimverein.
+function legVenue(r, home) {
+  const higher = LEAGUES[Math.max(r.fromLevel, r.otherLevel)];
+  const ok = home.venue === higher.humanVenue || higher.clubs.some((c) => c.venue === home.venue);
+  const base = PITCHES[ok ? home.venue : higher.humanVenue] ?? PITCHES.rasenplatz;
+  return { base, format: higher.format ?? base.format, higher };
+}
+const legHome = (career, r) => (r.legs[r.leg].home === humanClub(career).id ? humanClub(career) : r.opponent);
+
+// Platz des nächsten Relegationsspiels (für Aufstellung und Taktik im Vereinsheim), null ohne offene Relegation.
+export function nextRelegationPitch(career) {
+  const r = relegationOf(career);
+  if (!r || r.done) return null;
+  const { base, format } = legVenue(r, legHome(career, r));
+  return applyWeather({ ...base, format, referee: true }, career.week?.weather);
+}
+
+// Spielwoche der Relegation: Nach dem letzten Spieltag gibt es sonst keine Woche – Aufstellung und Taktik ließen sich nicht
+// wählen (vom Nutzer gemeldet). Zusagen: wer nicht verletzt, gesperrt oder verreist ist, ist dabei – um den Aufstieg fehlt
+// keiner. Keine Ereignisse, keine Gerüchte, kein Nachhaken; die gewählte Aufstellung gilt für Hin- und Rückspiel.
+export function relegationWeek(career, lineup = null) {
+  const r = startRelegation(career);
+  if (!r || r.done) return null;
+  const club = humanClub(career);
+  const availability = {};
+  for (const idx of club.squad) {
+    const rec = career.players[idx] ?? {};
+    if (isCoach(career, idx)) availability[idx] = coachAway(career) || isBanned(career, idx) ? 'no' : 'yes';
+    else availability[idx] = rec.injuryWeeks > 0 || isBanned(career, idx) || rec.awayWeeks > 0 ? 'no' : 'yes';
+  }
+  const home = r.legs[r.leg].home === club.id;
+  const what = r.leg === 0 ? tr('Hinspiel', 'first leg') : tr('Rückspiel', 'second leg');
+  const text = tr(`Relegation, ${what} gegen ${r.opponent.name}${home ? ' bei uns' : ' auswärts'}. Alle an Bord – um so ein Spiel fehlt keiner.`, `Play-off, ${what} against ${r.opponent.name}${home ? ' at ours' : ' away'}. All hands on deck – nobody misses a game like this.`);
+  const weather = rollWeather(career, Math.max(0, (career.fixtures?.length ?? 1) - 1));
+  return { relegation: true, availability, chat: [{ from: null, text, time: 'Mo 08:00', me: true }], nudges: 0, nudged: [], lineup, training: null, event: null, weather, postponed: null, rumors: [], actions: 0 };
+}
+
 export function prepareRelegationMatch(career, { human = false, duration } = {}) {
   const r = relegationOf(career);
   const leg = r.legs[r.leg];
@@ -71,9 +112,7 @@ export function prepareRelegationMatch(career, { human = false, duration } = {})
   const home = homeIsMe ? me : r.opponent;
   const away = homeIsMe ? r.opponent : me;
   const rng = createRng((career.seed * 613 + career.season * 97 + r.leg * 7) >>> 0);
-  const higher = LEAGUES[Math.max(r.fromLevel, r.otherLevel)];
-  const base = PITCHES[home.venue] ?? PITCHES.rasenplatz;
-  const format = higher.format ?? base.format;
+  const { base, format, higher } = legVenue(r, home);
   const pitch = applyWeather({ ...base, format, referee: true }, career.week?.weather);
   const avail = (club) => (club.human ? career.week?.availability ?? Object.fromEntries(club.squad.map((i) => [i, 'yes'])) : Object.fromEntries(club.squad.map((i) => [i, rng.chance(0.1) ? 'no' : 'yes'])));
   const teamHome = teamForMatch(career, home, format, avail(home), rng);
@@ -106,6 +145,7 @@ export function recordRelegationLeg(career, prepared) {
   r.agg[1] += theirs;
   if (r.leg === 0) {
     r.leg = 1;
+    career.week = relegationWeek(career, career.week?.lineup ?? null); // Rückspiel: neue Zusagen, Aufstellung bleibt
     return r;
   }
   if (r.agg[0] === r.agg[1]) {
