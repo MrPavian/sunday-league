@@ -60,6 +60,18 @@ export async function transferMarkt(b, size, shots) {
   await p.waitForTimeout(200);
   const nb = await p.$$eval('[data-testid="tf-row"] .tf-meta', (e) => e.map((x) => x.textContent));
   ok(nb.length > 0 && nb.every((t) => /Nachbarliga/.test(t)), 'Ligafilter Nachbarliga greift nicht');
+  // Vereinslose: ohne Frist, Ansprechen setzt ihn auf die Gerüchteküche
+  await click(p, '[data-action="tfFilter"][data-group="scope"][data-value="free"]');
+  await p.waitForTimeout(200);
+  const free = await p.$$eval('[data-testid="tf-free"]', (e) => e.length);
+  ok(free > 0, 'Vereinslos: keine Spieler');
+  await layout('Vereinslos');
+  await shot('transfers-vereinslos');
+  if (await p.$('[data-testid="tf-free-btn"]:not([disabled])')) {
+    await click(p, '[data-testid="tf-free-btn"]:not([disabled])');
+    await p.waitForTimeout(200);
+    ok(/Gerüchteküche/.test(await p.textContent('[data-testid="tf-note"]')), 'Vereinslos: Ansprechen ohne Rückmeldung');
+  }
   await click(p, '[data-action="tfFilter"][data-group="scope"][data-value="own"]');
   await p.waitForTimeout(200);
   // Detail, Anfrage, Gespräch

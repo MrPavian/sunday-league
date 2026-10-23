@@ -4,7 +4,8 @@
 // Angebot – oft vom Derby-Rivalen. Du erfährst es unter der Woche und entscheidest bis Sonntag:
 // reden, Einsatz versprechen (gebrochene Versprechen haben Folgen, siehe advanceArcs),
 // Fahrgeld aus der Kasse oder ziehen lassen. Wer geht, spielt danach beim anderen Verein
-// (Ex-Spieler-Geschichten, Derby-Brisanz).
+// (Ex-Spieler-Geschichten, Derby-Brisanz). Wechseln darf er nur in einer Wechselperiode: Außerhalb wird die Zusage
+// vorgemerkt und kommt zur nächsten Periode als Angebot des Vereins (transfers.js planDeparture).
 //
 // Profivertrag: Für Amateure praktisch ausgeschlossen. Recherche: Von allen Kindern, die mit
 // Fußball anfangen, wird etwa jedes zehntausendste Profi (0,01 %); selbst von U19-Spielern aus
@@ -24,7 +25,8 @@ import { adjustForm, adjustMood } from './events.js';
 import { canLose, first, joinRival, outcome } from './outcomes.js';
 import { isCoach } from './personal.js';
 import { chronicle } from './sagas.js';
-import { inTransfers } from './transfers.js';
+import { inTransfers, planDeparture } from './transfers.js';
+import { windowAt } from './transferrules.js';
 
 const POACH_GATE = 0.6; // so oft wird überhaupt ein Kandidat gesucht (je Ereigniswoche)
 export const PRO_MIN_RATING = 68;
@@ -70,10 +72,19 @@ function suitor(c, rng) {
 }
 
 const mark = (c, idx) => ((c.flags.poached ??= {})[idx] = c.season);
+// 'now' = gewechselt (Wechselperiode), 'later' = vorgemerkt bis zur nächsten, false = bleibt.
 const leaveFor = (c, ctx) => {
   mark(c, ctx.s);
-  return joinRival(c, ctx.s, ctx.club);
+  if (windowAt(c)) return joinRival(c, ctx.s, ctx.club) ? 'now' : false;
+  return planDeparture(c, ctx.s, ctx.club) ? 'later' : false;
 };
+const WINDOW_TAIL = () => tr(' Wechseln darf er erst in der nächsten Wechselperiode – bis dahin spielt er noch für dich.', ' He can only move in the next transfer period – until then he still plays for you.');
+// Text je nach Ausgang: now/later sind Texte, stay der Text, wenn er doch bleibt.
+const leave = (c, ctx, now, later, stay) => {
+  const how = leaveFor(c, ctx);
+  return how === 'now' ? now() : how === 'later' ? later() + WINDOW_TAIL() : stay;
+};
+const clubName = (c, ctx) => clubById(c, ctx.club)?.name;
 
 export const POACH_EVENTS = {
   abwerbeversuch: {
@@ -102,7 +113,7 @@ export const POACH_EVENTS = {
         effect: outcome([
           { w: (c, ctx) => (ctx.why === 'star' ? 3 : 2) + 2 * (c.mood ?? 0), run: (c, ctx) => (mark(c, ctx.s), adjustForm(c, ctx.s, 0.3), tr(`${first(c, ctx.s)} bleibt: „Hier sind meine Jungs." Er geht mit Schwung in die Woche.`, `${first(c, ctx.s)} stays: "My lads are here." He goes into the week with fresh energy.`)) },
           { w: 1, run: (c, ctx) => (mark(c, ctx.s), (c.players[ctx.s].grumpy = 1), tr(`${first(c, ctx.s)} bleibt – aber überzeugt klingt anders.`, `${first(c, ctx.s)} stays – but he does not sound convinced.`)) },
-          { w: (c, ctx) => (canLose(c) ? (ctx.why === 'grumpy' ? 2 : 1) : 0), run: (c, ctx) => (leaveFor(c, ctx) ? tr(`Das Gespräch hilft nicht. ${first(c, ctx.s)} wechselt zu ${clubById(c, ctx.club)?.name}.`, `The talk does not help. ${first(c, ctx.s)} joins ${clubById(c, ctx.club)?.name}.`) : tr('Er bleibt. Vorerst.', 'He stays. For now.')) },
+          { w: (c, ctx) => (canLose(c) ? (ctx.why === 'grumpy' ? 2 : 1) : 0), run: (c, ctx) => leave(c, ctx, () => tr(`Das Gespräch hilft nicht. ${first(c, ctx.s)} wechselt zu ${clubName(c, ctx)}.`, `The talk does not help. ${first(c, ctx.s)} joins ${clubName(c, ctx)}.`), () => tr(`Das Gespräch hilft nicht. ${first(c, ctx.s)} sagt ${clubName(c, ctx)} zu.`, `The talk does not help. ${first(c, ctx.s)} says yes to ${clubName(c, ctx)}.`), tr('Er bleibt. Vorerst.', 'He stays. For now.')) },
         ]),
       },
       {
@@ -110,7 +121,7 @@ export const POACH_EVENTS = {
         effect: outcome([
           { w: (c, ctx) => (ctx.why === 'star' ? 2 : 5), run: (c, ctx) => (mark(c, ctx.s), (c.flags.promise = { idx: ctx.s, round: c.round }), tr(`${first(c, ctx.s)} sagt ${clubById(c, ctx.club)?.name} ab. Jetzt musst du dein Versprechen halten.`, `${first(c, ctx.s)} turns down ${clubById(c, ctx.club)?.name}. Now you have to keep your promise.`)) },
           { w: 1, run: (c, ctx) => (mark(c, ctx.s), (c.flags.promise = { idx: ctx.s, round: c.round }), adjustMood(c, -0.04), tr('Er bleibt. Aber das spricht sich rum – jetzt wollen noch zwei andere ein Versprechen.', 'He stays. But word gets round – now two others want a promise too.')) },
-          { w: (c) => (canLose(c) ? 0.7 : 0), run: (c, ctx) => (leaveFor(c, ctx) ? tr(`${first(c, ctx.s)} glaubt dir nicht und unterschreibt drüben.`, `${first(c, ctx.s)} does not believe you and signs over there.`) : tr('Er bleibt. Vorerst.', 'He stays. For now.')) },
+          { w: (c) => (canLose(c) ? 0.7 : 0), run: (c, ctx) => leave(c, ctx, () => tr(`${first(c, ctx.s)} glaubt dir nicht und unterschreibt drüben.`, `${first(c, ctx.s)} does not believe you and signs over there.`), () => tr(`${first(c, ctx.s)} glaubt dir nicht und sagt drüben zu.`, `${first(c, ctx.s)} does not believe you and says yes over there.`), tr('Er bleibt. Vorerst.', 'He stays. For now.')) },
         ]),
       },
       {
@@ -118,13 +129,13 @@ export const POACH_EVENTS = {
         effect: outcome([
           { w: 3, run: (c, ctx) => (mark(c, ctx.s), book(c, tr(`Fahrgeld ${first(c, ctx.s)}`, `Petrol money ${first(c, ctx.s)}`), -30), tr(`${first(c, ctx.s)} bleibt. „Für die Spritkosten – okay."`, `${first(c, ctx.s)} stays. "For the petrol – fair enough."`)) },
           { w: 1, run: (c, ctx) => (mark(c, ctx.s), book(c, tr(`Fahrgeld ${first(c, ctx.s)}`, `Petrol money ${first(c, ctx.s)}`), -30), adjustMood(c, -0.03), tr('Er bleibt – aber in der Kabine wird gefragt, wer sonst noch Fahrgeld bekommt.', 'He stays – but in the dressing room people are asking who else gets petrol money.')) },
-          { w: (c) => (canLose(c) ? 1 : 0), run: (c, ctx) => (book(c, tr(`Fahrgeld ${first(c, ctx.s)}`, `Petrol money ${first(c, ctx.s)}`), -30), leaveFor(c, ctx) ? tr(`${first(c, ctx.s)} nimmt das Geld – und wechselt trotzdem. Die 30 € sind weg.`, `${first(c, ctx.s)} takes the money – and switches anyway. The €30 is gone.`) : tr('Er bleibt.', 'He stays.')) },
+          { w: (c) => (canLose(c) ? 1 : 0), run: (c, ctx) => (book(c, tr(`Fahrgeld ${first(c, ctx.s)}`, `Petrol money ${first(c, ctx.s)}`), -30), leave(c, ctx, () => tr(`${first(c, ctx.s)} nimmt das Geld – und wechselt trotzdem. Die 30 € sind weg.`, `${first(c, ctx.s)} takes the money – and switches anyway. The €30 is gone.`), () => tr(`${first(c, ctx.s)} nimmt das Geld – und sagt trotzdem drüben zu. Die 30 € sind weg.`, `${first(c, ctx.s)} takes the money – and says yes over there anyway. The €30 is gone.`), tr('Er bleibt.', 'He stays.'))) },
         ]),
       },
       {
         label: tr('Ziehen lassen', 'Let him go'),
         effect: outcome([
-          { w: (c) => (canLose(c) ? 4 : 0), run: (c, ctx) => (leaveFor(c, ctx) ? (adjustMood(c, -0.02), tr(`${first(c, ctx.s)} wechselt zu ${clubById(c, ctx.club)?.name}. Das nächste Duell wird pikant.`, `${first(c, ctx.s)} joins ${clubById(c, ctx.club)?.name}. The next meeting will be spicy.`)) : tr('Er bleibt.', 'He stays.')) },
+          { w: (c) => (canLose(c) ? 4 : 0), run: (c, ctx) => leave(c, ctx, () => (adjustMood(c, -0.02), tr(`${first(c, ctx.s)} wechselt zu ${clubName(c, ctx)}. Das nächste Duell wird pikant.`, `${first(c, ctx.s)} joins ${clubName(c, ctx)}. The next meeting will be spicy.`)), () => (adjustMood(c, -0.02), tr(`${first(c, ctx.s)} sagt ${clubName(c, ctx)} zu.`, `${first(c, ctx.s)} says yes to ${clubName(c, ctx)}.`)), tr('Er bleibt.', 'He stays.')) },
           { w: 1, run: (c, ctx) => (mark(c, ctx.s), tr(`Am Ende war es nur Gerede: ${first(c, ctx.s)} bleibt.`, `In the end it was just talk: ${first(c, ctx.s)} stays.`)) },
         ]),
       },

@@ -7,8 +7,9 @@ import { motivesOf } from '../src/career/recruiting.js';
 import { EXTRA_STEPS, FEE_BASE, HANDGELD_STEPS, importanceIn, nextWindow, releaseChance, trainingFee, waitGames, windowAt } from '../src/career/transferrules.js';
 import {
   acceptOffer, anyClub, argueDeal, askClub, counterOffer, declineOffer, ensureNeighbors, importanceOf, inTransfers, listPlayer, loanIn, loanOut, loansIn, loansOut, marketList, priceOf, setHandgeld, talkDeal,
-  tstate, windowInfo,
+  tstate, windowInfo, freeAgents, approachFree,
 } from '../src/career/transfers.js';
+import { recruit } from '../src/career/career.js';
 
 // Spieltage ohne Simulation abschließen (Ergebnisse 1:1), wie in den anderen Karriere-Tests.
 function advanceTo(c, round) {
@@ -467,5 +468,62 @@ describe('Leihe', () => {
     expect(c.formers?.[idx]).toBeUndefined();
     expect(loansOut(c)).toHaveLength(0);
     expect(maxSquad(c)).toBeGreaterThan(0);
+  });
+});
+
+describe('Abwerbung nur in der Wechselperiode, Vereinslose jederzeit', () => {
+  const yes = { chance: () => true, next: () => 0, int: (a) => a, pick: (a) => a[0], range: (a) => a };
+
+  it('Zusage während der Saison: er bleibt bis zur Winterperiode, dann kommt das Angebot mit Entschädigung', () => {
+    const c = advanceTo(createCareer({ seed: 3 }), 2);
+    expect(windowAt(c)).toBeNull();
+    const me = humanClub(c);
+    const idx = me.squad.find((i) => !inTransfers(c, i) && c.players[i].injuryWeeks === 0);
+    const rival = c.clubs.find((x) => !x.human).id;
+    const text = POACH_EVENTS.abwerbeversuch.options[3].effect(c, { s: idx, why: 'bench', club: rival }, yes);
+    expect(text).toMatch(/nächsten Wechselperiode|next transfer period/);
+    expect(me.squad).toContain(idx);
+    expect(clubById(c, rival).squad).not.toContain(idx);
+    expect(inTransfers(c, idx)).toBe(true); // kein zweiter Abwerbeversuch, solange er vorgemerkt ist
+    expect(reload(c).transfers.pending).toEqual(tstate(c).pending); // Spielstand behält die Zusage
+    advanceTo(c, Math.floor(c.fixtures.length / 2));
+    expect(windowAt(c)).toBe('winter');
+    expect(tstate(c).pending).toEqual([]);
+    const o = tstate(c).offers.find((x) => x.idx === idx && x.club === rival);
+    expect(o).toMatchObject({ poached: true, wish: true, kind: 'winter' });
+    const cash = c.cash;
+    expect(acceptOffer(c, o.id)).toBe('ok');
+    expect(me.squad).not.toContain(idx);
+    expect(clubById(c, rival).squad).toContain(idx);
+    expect(c.cash).toBe(cash + o.fee);
+  });
+
+  it('in der Wechselperiode wechselt er sofort', () => {
+    const c = createCareer({ seed: 3 });
+    expect(windowAt(c)).toBe('summer');
+    const idx = humanClub(c).squad.find((i) => !inTransfers(c, i));
+    const rival = c.clubs.find((x) => !x.human).id;
+    POACH_EVENTS.abwerbeversuch.options[3].effect(c, { s: idx, why: 'bench', club: rival }, yes);
+    expect(clubById(c, rival).squad).toContain(idx);
+    expect(tstate(c).pending).toEqual([]);
+  });
+
+  it('Vereinslose: außerhalb der Fristen ansprechen und verpflichten', () => {
+    const c = advanceTo(createCareer({ seed: 3 }), 2);
+    expect(windowAt(c)).toBeNull();
+    const free = freeAgents(c);
+    expect(free.length).toBeGreaterThan(0);
+    expect(freeAgents(c)).toEqual(free); // innerhalb der Woche stabil
+    const taken = takenIndices(c);
+    expect(free.every((i) => !taken.has(i))).toBe(true);
+    while (humanClub(c).squad.length >= maxSquad(c)) humanClub(c).squad.pop();
+    const idx = free[0];
+    expect(approachFree(c, idx)).toBe('ok');
+    expect(approachFree(c, idx)).toBe('busy');
+    const i = c.week.rumors.findIndex((r) => r.idx === idx);
+    c.week.actions = 1;
+    expect(recruit(c, i)).toBe('joined'); // Zusage ist je Woche und Spieler fest gewürfelt (Seed 3: ja)
+    expect(humanClub(c).squad).toContain(idx);
+    expect(freeAgents(c)).not.toContain(idx);
   });
 });

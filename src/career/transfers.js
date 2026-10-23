@@ -16,7 +16,8 @@ import { createRng } from '../core/rng.js';
 import { LEAGUES } from './clubs.js';
 import { book } from './finances.js';
 import { askAround, knownMotives, pickArgument, startTalk } from './recruiting.js';
-import { clubById, humanClub, joinSquad, maxSquad, MIN_SQUAD, playerOf, recruitChance, releasePlayer, squadPicker, SQUAD_SHAPES, takenIndices } from './career.js';
+import { clubById, getPool, humanClub, joinSquad, maxSquad, MIN_SQUAD, playerOf, recruitChance, releasePlayer, squadPicker, SQUAD_SHAPES, takenIndices } from './career.js';
+import { tierWeightsFor } from '../data/tiers.js';
 import { coachAway, isCoach } from './personal.js';
 import { adjustMood } from './events.js';
 import { rememberNewClub } from './memory.js';
@@ -49,6 +50,7 @@ export function tstate(c) {
   t.rel ??= {}; // Verhältnis zu den anderen Vereinen, −3 … +3
   t.log ??= []; // Meldungen (Kreisblatt) für den Reiter
   t.loans ??= []; // Leihen: { idx, from, to, season, dir: 'in'|'out' }
+  t.pending ??= []; // Abwerbungen außerhalb der Fristen, fällig zur nächsten Wechselperiode: { idx, club, season, round }
   t.nextOffer ??= 1;
   t.stats ??= { in: 0, out: 0, cpu: 0, paid: 0, received: 0, loans: 0 };
   return t;
@@ -74,7 +76,7 @@ export const clubRating = (c, club) => (club.squad.length ? club.squad.reduce((s
 // Wer steht in einer Verhandlung, auf der Liste oder hat ein Angebot? poaching.js lässt solche Spieler in Ruhe.
 export function inTransfers(c, idx) {
   const t = c.transfers;
-  return !!t && (t.listed.includes(idx) || t.offers.some((o) => o.idx === idx) || t.loans.some((l) => l.idx === idx));
+  return !!t && (t.listed.includes(idx) || t.offers.some((o) => o.idx === idx) || t.loans.some((l) => l.idx === idx) || !!t.pending?.some((x) => x.idx === idx));
 }
 
 // --- Meldungen und Dorfgespräch ---------------------------------------------------------------------------------
@@ -342,6 +344,31 @@ function makeOffers(c, kind, key) {
   const wishers = me.squad.filter((i) => !isCoach(c, i) && !t.listed.includes(i) && c.flags?.poached?.[i] !== c.season && ((c.players[i]?.grumpy ?? 0) > 0 || (played >= 3 && (c.players[i]?.playShare ?? c.players[i]?.apps ?? 9) <= played * 0.35)));
   if (wishers.length && rng.chance(0.5)) add(rng.pick(wishers), true);
 }
+
+// --- Abwerbung außerhalb der Wechselperiode (poaching.js) ---------------------------------------------------------
+// Vereinswechsel gibt es nur in den Wechselperioden (transferrules.js). Sagt ein Spieler während der Saison einem anderen
+// Verein zu, wird das vorgemerkt: Er spielt bis dahin weiter bei uns, zur nächsten Periode kommt das Angebot des Vereins
+// wie jedes andere – Freigabe gegen Ausbildungsentschädigung oder verweigern (dann ist er sauer, siehe declineOffer).
+export function planDeparture(c, idx, clubId) {
+  const t = tstate(c);
+  if (!humanClub(c).squad.includes(idx) || t.pending.some((x) => x.idx === idx)) return false;
+  t.pending.push({ idx, club: clubId, season: c.season, round: c.round });
+  return true;
+}
+function duePending(c, kind, key) {
+  const t = tstate(c);
+  const me = humanClub(c);
+  for (const x of t.pending) {
+    const club = anyClub(c, x.club); // nach Auf-/Abstieg kann der Verein weg sein – dann verfällt die Zusage
+    if (!club || !me.squad.includes(x.idx) || t.offers.some((o) => o.idx === x.idx && o.club === x.club)) continue;
+    const p = playerOf(c, x.idx);
+    const base = trainingFee(c.level ?? 1, levelOf(c, club), { age: p.age, seasonsAtClub: c.players[x.idx]?.seasons?.length ?? 0, recent: recentJoin(c, x.idx, kind) });
+    const imp = importanceIn(me.squad, x.idx, ratingOf(c), positionOf(c));
+    t.offers.push({ id: t.nextOffer++, idx: x.idx, club: club.id, key, kind, base, fee: kind === 'winter' ? winterFee(base, imp) : base, wish: true, poached: true, counter: false });
+  }
+  t.pending = [];
+}
+
 function recentJoin(c, idx, kind) {
   const rec = c.players[idx];
   if (rec?.since == null) return false;
@@ -453,6 +480,41 @@ function pickWeighted(rng, list, weight) {
   const ws = list.map(weight);
   let r = rng.next() * ws.reduce((a, b) => a + b, 0);
   return list.find((_, i) => (r -= ws[i]) < 0) ?? list[0];
+}
+
+// --- Vereinslose Spieler ----------------------------------------------------------------------------------------
+// Wer keinem Verein angehört, braucht weder Freigabe noch Wechselperiode – Vereinslose kann man jederzeit holen. Die Suche
+// zeigt je Woche eine Handvoll, von denen man gehört hat (ligagerechte Stufen wie die Tipps vom Wirt); „Ansprechen“ setzt
+// ihn auf die Gerüchteküche, dort läuft das Werben wie gewohnt (Aktionen, Gespräch, Zusage).
+const FREE_LIST = 12; // Spielwert: so viele Vereinslose je Woche in der Suche
+export function freeAgents(c) {
+  if (!c.week) return [];
+  const taken = takenIndices(c);
+  const weights = tierWeightsFor(c.level, 'wirt');
+  const byTier = {};
+  for (const p of getPool().everyone()) if (weights[p.tier] > 0 && !taken.has(p.poolIndex)) (byTier[p.tier] ??= []).push(p.poolIndex);
+  const tiers = Object.keys(byTier);
+  if (!tiers.length) return [];
+  const rng = createRng(hashSeed(c.seed, c.season, c.round, 6110));
+  const out = [];
+  for (let k = 0; k < FREE_LIST * 4 && out.length < FREE_LIST; k++) {
+    const idx = rng.pick(byTier[pickWeighted(rng, tiers, (id) => weights[id])]);
+    if (!out.includes(idx)) out.push(idx);
+  }
+  return out;
+}
+export function approachFree(c, idx) {
+  const w = c.week;
+  if (!w || takenIndices(c).has(idx)) return 'gone';
+  if (w.rumors.some((r) => r.idx === idx)) return 'busy';
+  if (humanClub(c).squad.length >= maxSquad(c)) return 'full';
+  const p = playerOf(c, idx);
+  const rng = createRng(hashSeed(c.seed, c.season, c.round, idx, 6111));
+  const spread = 5 + Math.floor(rng.next() * 4);
+  const shift = Math.floor(rng.next() * spread);
+  const name = p.name.split(' ')[0];
+  w.rumors.push({ idx, source: tr(`${name} ist vereinslos – über die Spielersuche gefunden. Er darf sofort spielen.`, `${name} is without a club – found through the player search. He could play straight away.`), scouted: false, status: 'open', range: [p.rating - shift, p.rating - shift + spread], reply: null, season: c.season, until: c.round + 2, free: true });
+  return 'ok';
 }
 
 // --- Leihe -----------------------------------------------------------------------------------------------------
@@ -608,9 +670,12 @@ export function startWeek(c) {
   const firstWeek = c.season === 1 && c.round === 0; // der Gründungssommer: die Liga ist gerade erst entstanden
   if (!firstWeek) cpuTransfers(c, kind);
   makeOffers(c, kind, key);
+  duePending(c, kind, key);
   for (const o of t.offers.filter((x) => x.key === key)) {
     const club = anyClub(c, o.club);
-    if (club) c.week.chat.push({ from: o.idx, text: tr(`${club.name} hat angefragt – ${o.wish ? 'ich würde gern hören, was ihr sagt.' : 'bin gespannt, was ihr sagt.'}`, `${club.name} have been in touch – ${o.wish ? 'I would like to hear what you say.' : 'curious what you say.'}`), time: 'Mo 09:30' });
+    if (!club) continue;
+    const text = o.poached ? tr(`Wie besprochen: Ich will zu ${club.name}. Die haben jetzt offiziell angefragt – gebt ihr mich frei?`, `As we discussed: I want to join ${club.name}. They have now asked officially – will you release me?`) : tr(`${club.name} hat angefragt – ${o.wish ? 'ich würde gern hören, was ihr sagt.' : 'bin gespannt, was ihr sagt.'}`, `${club.name} have been in touch – ${o.wish ? 'I would like to hear what you say.' : 'curious what you say.'}`);
+    c.week.chat.push({ from: o.idx, text, time: 'Mo 09:30' });
   }
 }
 export function nextSeason(c) {

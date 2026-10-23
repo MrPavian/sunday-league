@@ -9,8 +9,8 @@ import { humanClub, maxSquad, MIN_SQUAD } from '../../career/career.js';
 import { coachAway, isCoach } from '../../career/personal.js';
 import { importanceLabel, trainingFee, windowLabel, FEE_BASE } from '../../career/transferrules.js';
 import {
-  acceptOffer, anyClub, argueDeal, askAroundDeal, askClub, clubRating, counterOffer, declineOffer, EXTRA_STEPS, HANDGELD_STEPS, listPlayer, loanIn, loanOut,
-  loansIn, loansOut, marketList, MAX_REQUESTS, playerChance, priceOf, setHandgeld, talkDeal, tstate, windowInfo,
+  acceptOffer, anyClub, approachFree, argueDeal, askAroundDeal, askClub, clubRating, counterOffer, declineOffer, EXTRA_STEPS, HANDGELD_STEPS, listPlayer, loanIn, loanOut,
+  freeAgents, loansIn, loansOut, marketList, MAX_REQUESTS, playerChance, priceOf, setHandgeld, talkDeal, tstate, windowInfo,
 } from '../../career/transfers.js';
 import { banGames } from '../../career/suspensions.js';
 import { TRAITS } from '../../data/traits.js';
@@ -21,6 +21,8 @@ import { POSITIONS } from '../../sim/generator.js';
 const SUBS = ['rumors', 'market', 'own', 'news'];
 const POS_ABBR = () => ({ all: tr('Alle', 'All'), gk: tr('TW', 'GK'), def: tr('ABW', 'DEF'), mid: tr('MF', 'MID'), fwd: tr('ST', 'FWD') });
 const MAX_ROWS = 40;
+// Kurz gehalten: vier Felder müssen auch auf dem kleinsten Bildschirm in eine Zeile passen (e2e ui, Größe tiny).
+const SCOPES = () => [['all', tr('Alle', 'All')], ['own', tr('Liga', 'League')], ['neighbor', tr('Nachbar', 'Nearby')], ['free', tr('Vereinslos', 'Free')]];
 const euro = (n) => `${n.toLocaleString('de-DE')} €`;
 
 // Rückmeldungen der Aktionen (Codes aus career/transfers.js).
@@ -68,11 +70,12 @@ export const transferScreens = {
     const tf = this.tf;
     if (tf.open != null) return this.tfDetail(tf.open, info);
     const pos = POS_ABBR();
+    if (tf.scope === 'free') return this.tfFree(pos);
     const rows = marketList(c, { scope: tf.scope, pos: tf.pos, sort: tf.sort });
     const shown = rows.slice(0, MAX_ROWS);
     const filters = `<div class="tf-filters">
       ${segmented('pos', Object.entries(pos), tf.pos, { action: 'tfFilter' })}
-      ${segmented('scope', [['all', tr('Alle', 'All')], ['own', tr('Meine Liga', 'My league')], ['neighbor', tr('Nachbarliga', 'Neighbouring')]], tf.scope, { action: 'tfFilter' })}
+      ${segmented('scope', SCOPES(), tf.scope, { action: 'tfFilter' })}
       ${segmented('sort', [['rating', tr('Stärke', 'Rating')], ['age', tr('Alter', 'Age')], ['club', tr('Verein', 'Club')]], tf.sort, { action: 'tfFilter' })}
     </div>`;
     const list = shown
@@ -89,6 +92,33 @@ export const transferScreens = {
     return `${filters}
       <p class="chat-head">${tr(`${rows.length} Spieler gefunden${rows.length > MAX_ROWS ? `, die ersten ${MAX_ROWS} angezeigt – Filter nutzen` : ''}`, `${rows.length} players found${rows.length > MAX_ROWS ? `, first ${MAX_ROWS} shown – use the filters` : ''}`)}</p>
       <ul class="tf-list" data-testid="tf-list">${list || `<li class="empty">${tr('Niemand passt zum Filter.', 'Nobody matches the filter.')}</li>`}</ul>`;
+  },
+
+  // Vereinslose: ohne Freigabe und Frist; Ansprechen setzt ihn auf die Gerüchteküche (Stärke wie dort nur als Spanne).
+  tfFree(pos) {
+    const c = this.career;
+    const tf = this.tf;
+    const rumors = c.week.rumors ?? [];
+    let ids = freeAgents(c).filter((i) => tf.pos === 'all' || this.p(i).position === tf.pos);
+    if (tf.sort === 'age') ids = ids.sort((a, b) => this.p(a).age - this.p(b).age);
+    const full = humanClub(c).squad.length >= maxSquad(c);
+    const filters = `<div class="tf-filters">
+      ${segmented('pos', Object.entries(pos), tf.pos, { action: 'tfFilter' })}
+      ${segmented('scope', SCOPES(), tf.scope, { action: 'tfFilter' })}
+      ${segmented('sort', [['rating', tr('Stärke', 'Rating')], ['age', tr('Alter', 'Age')]], tf.sort === 'age' ? 'age' : 'rating', { action: 'tfFilter' })}
+    </div>`;
+    const list = ids
+      .map((i) => {
+        const p = this.p(i);
+        const on = rumors.some((r) => r.idx === i);
+        return `<li class="tf-own" data-testid="tf-free"><span class="tf-name">${tierBadge(p)} <b>${p.name}</b> <small>${POSITIONS[p.position]} · ${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)}</small></span>
+          <span class="tf-btns">${on ? chip(tr('auf der Gerüchteküche', 'on the rumour board'), { plain: true }) : button(tr('Ansprechen', 'Approach'), { action: 'tfFree', value: i, disabled: full, 'data-testid': 'tf-free-btn' })}</span></li>`;
+      })
+      .join('');
+    return `${filters}
+      <p class="chat-head">${tr('Vereinslose Spieler, von denen man diese Woche hört – sie brauchen keine Freigabe und dürfen jederzeit wechseln.', 'Players without a club you hear about this week – they need no release and can join at any time.')}</p>
+      ${full ? `<p class="warn">${MSG().full}</p>` : ''}
+      <ul class="tf-list" data-testid="tf-free-list">${list || `<li class="empty">${tr('Niemand passt zum Filter.', 'Nobody matches the filter.')}</li>`}</ul>`;
   },
 
   tfDetail(idx, info) {
@@ -171,6 +201,7 @@ export const transferScreens = {
           ${o.wish ? `<p class="hint">${tr('Wer weg will und festgehalten wird, ist sauer.', 'Someone who wants out and is held back will sulk.')}</p>` : ''}</article>`;
       })
       .join('');
+    const pending = (t.pending ?? []).filter((x) => me.squad.includes(x.idx)).map((x) => `<li>${tr(`${this.p(x.idx).name} hat ${anyClub(c, x.club)?.name ?? '?'} zugesagt – das Angebot kommt zur nächsten Wechselperiode.`, `${this.p(x.idx).name} has said yes to ${anyClub(c, x.club)?.name ?? '?'} – the offer arrives with the next transfer period.`)}</li>`).join('');
     const rows = me.squad
       .filter((i) => !isCoach(c, i))
       .sort((a, b) => this.p(b).rating - this.p(a).rating)
@@ -185,6 +216,7 @@ export const transferScreens = {
     const lo = [...loansIn(c).map((l) => ({ ...l, text: tr(`${this.p(l.idx).name} von ${anyClub(c, l.from)?.name ?? '?'}`, `${this.p(l.idx).name} from ${anyClub(c, l.from)?.name ?? '?'}`) })), ...loansOut(c).map((l) => ({ ...l, text: tr(`${this.p(l.idx).name} bei ${anyClub(c, l.to)?.name ?? '?'}`, `${this.p(l.idx).name} at ${anyClub(c, l.to)?.name ?? '?'}`) }))];
     return `<h4>${tr('Angebote anderer Vereine', 'Offers from other clubs')}</h4>
       ${offerCards || `<p class="empty">${info.open ? tr('Gerade liegt kein Angebot vor.', 'No offer at the moment.') : tr('Angebote kommen, wenn die Wechselperiode beginnt – wer auf der Liste steht, wird angefragt.', 'Offers arrive when the transfer period starts – players on the list get enquiries.')}</p>`}
+      ${pending ? `<h4>${tr('Vorgemerkte Wechsel', 'Pending moves')}</h4><ul class="plain" data-testid="tf-pending">${pending}</ul>` : ''}
       <h4>${tr('Kader – Transferliste und Leihe', 'Squad – transfer list and loans')}</h4>
       <p class="empty">${tr('Wer auf der Liste steht, bekommt in der nächsten Periode Angebote. Ohne Freigabe geht niemand (außer mit Wartefrist).', 'Players on the list get offers in the next period. Nobody leaves without a release (except with a waiting period).')}</p>
       <ul class="tf-list">${rows}</ul>
@@ -236,6 +268,11 @@ export const transferScreens = {
     }
     if (action === 'tfOpen') tf.open = Number(value);
     else if (action === 'tfClose') tf.open = null;
+    else if (action === 'tfFree') {
+      const code = approachFree(c, Number(value));
+      tf.note = code === 'ok' ? tr('Er steht jetzt auf der Gerüchteküche – dort kannst du ihn umwerben.', 'He is on the rumour board now – you can court him there.') : MSG()[code] ?? '';
+      return true;
+    }
     else if (action === 'tfAsk') {
       const code = askClub(c, Number(value), tf.extra ?? 0);
       tf.note = code === 'ja' ? tr('Freigabe zugesagt.', 'Release agreed.') : code === 'nein' ? tr('Der Verein lehnt ab.', 'The club says no.') : MSG()[code] ?? '';
