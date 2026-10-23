@@ -37,7 +37,7 @@ describe('Was ist neu: einmal nach einem Update', () => {
 });
 
 describe('Änderungsprotokoll ist konsistent', () => {
-  const headings = (file) => [...readFileSync(new URL(`../${file}`, import.meta.url), 'utf8').matchAll(/^## (\d{4}-\d{2}-\d{2}) – (.+)$/gm)].map((m) => [m[1], m[2]]);
+  const headings = (file) => [...readFileSync(new URL(`../${file}`, import.meta.url), 'utf8').matchAll(/^## (\d{4}-\d{2}-\d{2}(?:-\d+)?) – (.+)$/gm)].map((m) => [m[1], m[2]]);
   it('Daten, CHANGELOG.md und CHANGELOG.en.md haben dieselben Lieferungen und Titel', () => {
     expect(headings('CHANGELOG.md')).toEqual(CHANGELOG.map((e) => [e.id, e.de.title]));
     expect(headings('CHANGELOG.en.md')).toEqual(CHANGELOG.map((e) => [e.id, e.en.title]));

@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-23-2',
+    de: { title: 'Transfermarkt, Wappen-Editor und Alte Herren', items: ['Transfermarkt mit Wechselperioden im Sommer und Winter: Spieler von Nachbarvereinen holen, eigene abgeben oder verleihen – mit Ausbildungsentschädigung und Dorfgespräch.', 'Abwerbungen anderer Vereine wirken erst in der nächsten Wechselperiode; vereinslose Spieler kannst du jederzeit holen (Rubrik „Vereinslos“).', 'Wappen-Editor: Gründungsjahr einstellbar, viel mehr Muster, Formen, Motive und eine dritte Farbe.', 'Alte Herren: eine Ü32-Mannschaft mit eigener Runde, Kader aus Ehemaligen und eigener Bierkasse.', 'Behoben: Der Tür-Knopf oben rechts führt wieder ins Hauptmenü.'] },
+    en: { title: 'Transfer market, crest editor and old boys', items: ['Transfer market with summer and winter windows: sign players from nearby clubs, sell or loan out your own – with training compensation and village gossip.', 'Other clubs poaching your players only takes effect in the next transfer window; free agents can join at any time (“Free” filter).', 'Crest editor: founding year adjustable, many more patterns, shapes, emblems and a third colour.', 'Old boys: an over-32 side with its own league, a squad of former players and its own beer kitty.', 'Fixed: the door button at the top right takes you back to the main menu again.'] },
+  },
+  {
     id: '2026-10-23',
     de: { title: 'Trainerbefehle mit Wirkung, schnelleres Spiel', items: ['Jeder Trainerbefehl wirkt jetzt spürbar – „Zentrum zumachen“ war bisher nur halb eingebaut.', 'Kompakter, Tempo rein/raus, Konter absichern, Seite absichern und mittleres Pressing greifen deutlich stärker.', 'Doppelpässe und Ablagen kommen öfter beim Läufer an.', 'Die Spielberechnung ist rund 40 % schneller – das schont auf dem Handy Akku und Bildrate.'] },
     en: { title: 'Coaching orders that count, faster game', items: ['Every coaching order now has a noticeable effect – “Close the middle” was only half built before.', 'Stay compact, speed up/slow down, guard against the counter, cover a side and the mid-block take hold much more strongly.', 'One-twos and lay-offs reach the runner more often.', 'The match engine is about 40 % faster – easier on phone battery and frame rate.'] },

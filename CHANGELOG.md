@@ -6,6 +6,18 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-23-2 – Transfermarkt, Wappen-Editor und Alte Herren
+
+### Neu
+- **Transfermarkt:** Wechsel gibt es wie im Amateurfußball nur in zwei Wechselperioden – im Sommer vor dem ersten Spieltag und im Winter nach der Winterpause. In der Spielersuche findest du Spieler der eigenen Liga und der Nachbarligen; erst fragst du beim Verein um Freigabe, dann führst du das Gespräch mit dem Spieler. Ohne Freigabe geht es nur mit Wartefrist. Eigene Spieler kannst du auf die Transferliste setzen, Angebote annehmen oder ablehnen und für eine Saison verleihen. Die Ausbildungsentschädigung folgt einer echten Verbandstabelle, Handgeld bleibt unter der Amateurgrenze. Auch die CPU-Vereine tauschen untereinander Spieler, das Kreisblatt berichtet.
+- **Abwerbungen erst zur Wechselperiode:** Sagt einer deiner Spieler während der Saison einem anderen Verein zu, spielt er bis zur nächsten Wechselperiode weiter für dich. Dann kommt das Angebot – du gibst ihn frei (mit Entschädigung) oder hältst ihn fest.
+- **Vereinslose jederzeit:** Neue Rubrik „Vereinslos“ in der Spielersuche. Wer keinem Verein angehört, braucht weder Freigabe noch Frist – ansprechen, auf der Gerüchteküche umwerben, fertig.
+- **Wappen-Editor:** Das Gründungsjahr ist einstellbar (1880 bis zum aktuellen Spieljahr), dazu 40 Muster, 15 Formen, 78 Motive und eine dritte Farbe.
+- **Alte Herren:** Mit genug Ü32-Spielern im Umfeld gründest du eine Alte-Herren-Mannschaft. Sie spielt freitags alle zwei Wochen in einer eigenen Runde mit sechs Teams, der Kader kommt aus Ehemaligen, Ü32 der Ersten und neuen Gesichtern. Statt Training gibt es Bierkasse und Stimmung; beim Karriereende kann man dort weiterspielen.
+
+### Behoben
+- **Tür-Knopf:** Das Tür-Symbol oben rechts im Vereinsheim führt wieder ins Hauptmenü (seit der letzten Lieferung ohne Wirkung).
+
 ## 2026-10-23 – Trainerbefehle mit Wirkung, schnelleres Spiel
 
 ### Verbessert

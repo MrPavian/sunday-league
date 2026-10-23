@@ -6,6 +6,18 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-23-2 – Transfer market, crest editor and old boys
+
+### New
+- **Transfer market:** As in amateur football, moves only happen in two transfer windows – in summer before the first match day and in winter after the winter break. The player search lists players from your league and the neighbouring leagues; first you ask the club for a release, then you talk to the player. Without a release there is a waiting period. You can put your own players on the transfer list, accept or reject offers and loan players out for a season. Training compensation follows a real association table, signing-on fees stay below the amateur limit. The CPU clubs also trade players among themselves, and the District Gazette reports on it.
+- **Poaching only in the window:** If one of your players says yes to another club during the season, he keeps playing for you until the next transfer window. Then the offer arrives – you release him (with compensation) or hold on to him.
+- **Free agents at any time:** New “Free” filter in the player search. Players without a club need neither a release nor a window – approach them, court them on the rumour board, done.
+- **Crest editor:** The founding year is adjustable (1880 to the current game year), plus 40 patterns, 15 shapes, 78 emblems and a third colour.
+- **Old boys:** With enough over-32 players around you can found an old boys side. It plays every other Friday in its own six-team league; the squad comes from former players, your first team's over-32s and new faces. Instead of training there is a beer kitty and team spirit; when your playing career ends you can carry on there.
+
+### Fixed
+- **Door button:** The door icon at the top right of the clubhouse takes you back to the main menu again (it did nothing since the last delivery).
+
 ## 2026-10-23 – Coaching orders that count, faster game
 
 ### Improved

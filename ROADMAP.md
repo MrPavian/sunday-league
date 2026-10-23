@@ -615,6 +615,9 @@ englische Namen, Vereine, Ligen und Sponsoren (11.3, 11.4), mehr deutsche Namen 
 10 Ereignisse für höhere Ligen (11.5), Torwart-Hechtsprung in Phasen, Vorfälle als Szenen mit Taube (11.1),
 Bratwurst- und Bierbude auf Rasen-, Sport- und Großfeld, an die Zuschauer ab und zu gehen (`src/render/crowd.js`),
 Kreis- und Bezirkspokal im K.-o.-System unter der Woche (`src/career/pokal.js`, siehe 11.7).
+Aus 11.9/11.10 erledigt (bis 2026-10-23): Alte Herren, Vereinsfest und Sommerturnier, Transfermarkt (Wechselperioden,
+CPU-Wechsel, Leihe, Abwerbung erst zur Periode, Vereinslose jederzeit), Platzpflege/Pacht/Ausbau mit Tribünen und Gastro,
+Wappen-Editor, die gemeldeten Fehler aus 11.10 (Textmodus, Pokalsieg, Bild teilen, Android-Export), Großfeld-Maße und Torwart.
 
 ### 11.1 Animationen
 - ✅ Erledigt (Oktober 2026, `src/render/reactions.js`, `tests/reactions.test.js`): vier neue Jubel (Trikot über
@@ -857,23 +860,8 @@ selbst setzen, Taktik/Aufstellung lesend; Spiele von der Tribüne, im Liveticker
 als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst fehlt noch).
 
 **Neue Mannschaften**
-- **Alte Herren** als zweites Team im Verein (eigener Kader aus Ü32/Ex-Spielern, eigene Runde, wenig Training).
 - **Frauenteam** wahlweise: im Spiel als Option gründen, wenn genug Geld vorhanden ist (Startkosten, Trikots,
   Trainerin, Platzzeiten), eigener Kader und eigene Liga; Mädchen aus der Jugend rücken auf.
-
-**Vereinsleben**
-- **Vereinsfest**: ein Wochenende mit Ständen, Torwandschießen, Elfmeterkönig, Einnahmen und Ereignissen.
-- **Sommerturnier**: Turnier vor der Saison (eigenes oder auswärts), Gruppenphase und K.-o.
-
-**Kader**
-- **Transfermarkt**: Spieler von Nachbarvereinen abwerben und abgeben (Wechselfristen, Ablöse/Ausbildungs-
-  entschädigung im Amateurbereich, Gerede im Dorf), aufbauend auf `poaching.js` und `recruiting.js`.
-
-**Platz und Anlage**
-- **Platzpflege**: Rasen nutzt sich über die Saison ab, Kreide nachziehen, Bewässern, Sperrung bei Regen/Absage.
-- **Platzmiete** (Pachtvertrag mit der Gemeinde, eigener Platz vs. gemieteter Platz).
-- **Ausbau Sportplatz** (Kunstrasen, Flutlicht, zweiter Platz), **Tribünen** (Stehstufen, Sitzplätze, Dach),
-  **Gastro** (Bratwurststand, Vereinsheim-Theke, Biergarten) – aufbauend auf `facilities.js`.
 
 **Offene Punkte aus 11.1–11.8 abarbeiten**
 - Großfeld: zu hohe Torquote je Schuss (20 % statt real 10–12 %), seltene Kopfballtore, seltene Ecken.
@@ -891,14 +879,6 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
 - Bundespokal: vollständiges Teilnehmerfeld statt nur eigener Spiele.
 
 ### 11.10 Rückmeldungen und Wünsche (vom Nutzer, 2026-10-21)
-
-**Fehler (vor neuen Funktionen beheben)**
-- Textmodus: Die Auswahlkarte „Deine Entscheidung – du führst!“ und der Spruch „Deckel drauf“ erscheinen offenbar
-  unabhängig vom Spielstand (gemeldet bei 3:1; prüfen, ob die Bedingung Führung/Rückstand/Abstand stimmt).
-- Textmodus: Einblendungen lassen sich manchmal nicht per X schließen.
-- Pokalabschluss: Der Pokalsieg wird zuerst nicht angezeigt.
-- Saisonabschluss: „Bild teilen / Bild exportieren“ tut nichts.
-- Android: Spielstand exportieren tut nichts (Datei-Download im WebView; vermutlich Capacitor Filesystem/Share nötig).
 
 **Turniere im Kalender**
 - Hallen-Cup und Stadtpokal nicht direkt vor einem Spieltag, sondern in eigenen Pausen (Winterpause, Sommerpause).
@@ -928,18 +908,9 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   -scheid/-rath im Rheinland), typische Vereinskürzel je Region (FC, SV, TSV, SpVgg, DJK, TuS, BSG, Eintracht, Rot-Weiß …),
   Dialektfärbung bei Spitznamen und Ereignistexten. Nur erfundene Orte und Vereine, keine echten Vereine nachbilden.
 
-**Spielfeld**
-- Großfeld wirkt zu lang („zwischen Mittellinie und 16er ein Kilometer“). Das Feld hat die echten Maße 105 × 68 m
-  (Mittellinie bis Strafraumgrenze 36 m). Erst messen, woran es liegt (Kamera-Zoom, Laufgeschwindigkeit,
-  Figurengröße, Spielzeit), nicht das Feld kürzen.
-- Auf Plätzen mit 16-m-Raum soll der Torwart bei Angriffen herauskommen und den Winkel verkürzen
-  (1-gegen-1-Verhalten gibt es; auf den großen Plätzen messen, wie oft und wie weit er herauskommt).
-
 **Verein, Kader, Wirtschaft**
 - Tribünen ausbauen als eigenes Feature (steht in 11.9 unter Ausbau; hier vertiefen: Stehstufen, Sitzplätze, Dach,
   Zuschauerzahl und Einnahmen).
-- Transfers auch zwischen CPU-Vereinen.
-- Leih- und Kaufspieler.
 - Integriertes Scouting.
 - Training und Trainingspläne.
 - Spielleitung (Schiedsrichter mit Gesicht und Eigenarten).
