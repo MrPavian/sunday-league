@@ -367,7 +367,9 @@ export async function clubSetup(b) {
   ok((await p.inputValue('#club input[data-field="name"]')) === 'FC Blau Weiss', `Vereinsname mit Leertaste getippt: „${await p.inputValue('#club input[data-field="name"]')}“`);
   await p.fill('#club input[data-field="name"]', 'FC Testhausen');
   await p.fill('#club input[data-field="short"]', 'FCT');
-  // Trikotfarbe und Wappensymbol: Scrollposition bleibt.
+  // Trikotfarbe und Wappensymbol (Reiter „Symbol“ im Wappen-Editor): Scrollposition bleibt.
+  await click(p, '[data-action="crestTab"][data-value="symbol"]');
+  await p.waitForTimeout(200);
   for (const sel of ['[data-action="kitColor"][data-value^="socks"]', '.crest-grid [data-action="crestSymbol"]']) {
     const kept = await p.evaluate((s) => {
       const all = [...document.querySelectorAll(`#club ${s}`)];

@@ -30,7 +30,7 @@ import { seasonBridge, weeklyBridge, youthFactor } from './bridge.js';
 import { applyWeather, rollWeather, WEATHER, WEATHER_CHAT } from './weather.js';
 import { derbyResult, isDerbyFixture } from './derby.js';
 import { applyChemistry, pastLink, relationsAmong, setRelation } from './relations.js';
-import { applyFusion, chronicle, initSagas, sagaChat, sagaSeasonEnd, sagaWeek } from './sagas.js';
+import { applyFusion, chronicle, initSagas, sagaChat, sagaSeasonEnd, sagaWeek, yearOf } from './sagas.js';
 import { weeklyStaff } from './staff.js';
 import { coachWeek, hiredGrowth, presidentSeasonEnd, weeklyHired } from './president.js'; // Präsidium nach dem Traineramt (ROADMAP 11.9)
 import { childrenGrowUp, coachAway, initCoach, isCoach, isPresident, personalWeek, seasonPersonal, weeklyPersonal } from './personal.js';
@@ -887,7 +887,20 @@ export function updateClub(career, { name, short, kit }, { free = false } = {}) 
 }
 
 // Wappen darf man jederzeit ändern – kostet nichts, steht aber in der Chronik.
-export function updateCrest(career, crest) {
+export const FOUNDED_MIN = 1880;
+// Gründungsjahr des Vereins: von 1880 bis zum aktuellen Spieljahr (Karrierestart: das Startjahr).
+export const foundedRange = (career) => [FOUNDED_MIN, Math.max(FOUNDED_MIN, yearOf(career))];
+export const clampFounded = (career, year) => {
+  const [lo, hi] = foundedRange(career);
+  return Math.min(hi, Math.max(lo, Math.round(Number(year)) || career.founded || 2004));
+};
+
+// `founded` (optional): neues Gründungsjahr, steht im Wappenband und in der Chronik.
+export const setFounded = (career, year) => {
+  career.founded = clampFounded(career, year);
+};
+export function updateCrest(career, crest, founded) {
+  if (founded != null) setFounded(career, founded);
   const club = humanClub(career);
   const first = !club.crest;
   if (club.crest) club.crestHistory = [...(club.crestHistory ?? []), { season: career.season, crest: club.crest }].slice(-12);
