@@ -273,6 +273,14 @@ export class Sound {
     this.tone('sine', 400, 300, 0.4, 0.05, d, t + 0.36);
   }
 
+  // Krähe: heiseres, rauhes „Kraah“ – Sägezahn mit Rauschen, kurz abfallend.
+  caw(pan = 0) {
+    const d = this.out(pan);
+    const t = this.ctx.currentTime;
+    this.tone('sawtooth', 620, 480, 0.26, 0.07, d, t);
+    this.noise('bandpass', 1400, 1.5, 0.22, 0.05, d, t);
+  }
+
   thunder() {
     const d = this.out(Math.random() - 0.5);
     const t = this.ctx.currentTime;
@@ -503,6 +511,7 @@ export class Sound {
           else if (e.kind === 'polizei') this.siren();
           else if (e.kind === 'sprenger') this.hiss();
           else if (e.kind === 'taube') this.coo(pan);
+          else if (e.kind === 'kraehe') this.caw(pan);
           else if (e.kind === 'ersatzschiri' || e.kind === 'zaun') this.grumble(pan);
           else if (e.kind === 'fan') this.cheer(0.6); // die Halle johlt
           break;
@@ -517,6 +526,9 @@ export class Sound {
           break;
         case 'coo':
           this.coo(pan);
+          break;
+        case 'caw':
+          this.caw(pan);
           break;
         case 'alarm':
           this.carAlarm(pan);

@@ -77,6 +77,39 @@ describe('Vorfälle als Szene', () => {
     expect(m.phase).not.toBe('incident');
   });
 
+  it('Krähe: stößt dreimal auf Köpfe herab, landet, wird von den Spielern vertrieben und fliegt davon', () => {
+    for (const venue of ['park', 'rasenplatz', 'grossfeld', 'hinterhof']) {
+      const m = start('kraehe', venue);
+      expect(m.crow.y).toBeGreaterThan(4);
+      const seen = new Set();
+      const hits = [];
+      let ducked = false;
+      let shoo = false;
+      let fell = 0;
+      run(m, 40, (mm) => {
+        if (mm.crow) seen.add(mm.crow.state);
+        for (const e of mm.events) if (e.type === 'caw' && e.playerId != null) hits.push(e.playerId);
+        mm.events.length = 0;
+        for (const [i, p] of mm.players.entries()) {
+          const pose = incidentPose(mm, p, i);
+          if (pose.cover) ducked = true;
+          if (pose.gesture === 'scheuchen') shoo = true;
+          if (p.state === 'down') fell++;
+        }
+      });
+      expect(m.incident, venue).toBeNull();
+      expect([...seen], venue).toEqual(expect.arrayContaining(['kreisen', 'sturz', 'landen', 'hocken']));
+      expect(hits.length, venue).toBe(3);
+      expect(hits.every((id) => m.players.find((p) => p.id === id)?.role !== 'gk'), venue).toBe(true); // nie der Torwart
+      expect(fell, venue).toBeGreaterThan(0); // der Erste setzt sich vor Schreck hin
+      expect(ducked && shoo, venue).toBe(true);
+      expect(m.incidents[0].type).toBe('kraehe');
+      expect(m.crow?.state).toBe('weg');
+      for (let i = 0; i < 60 * 6 && m.crow; i++) stepMatch(m, undefined, DT);
+      expect(m.crow, venue).toBeNull();
+    }
+  });
+
   it('Gewitter: der Schiri ist als Erster unterm Vordach, einer rutscht aus und steht wieder auf', () => {
     for (const seed of [3, 4, 5]) {
       const m = start('gewitter', 'rasenplatz', seed);

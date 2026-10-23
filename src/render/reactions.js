@@ -331,6 +331,16 @@ export function incidentPose(match, p, i, out = POSE) {
       if (pg && pg.state !== 'gleiten' && Math.hypot(pg.pos.x - p.pos.x, pg.pos.z - p.pos.z) < 2.3) out.gesture = 'scheuchen';
       break;
     }
+    case 'kraehe': {
+      // Wen sie anfliegt, der zieht die Hände über den Kopf; am Boden scheuchen die Nahen, die anderen zeigen hoch.
+      const cr = match.crow;
+      if (!cr) break;
+      const d = Math.hypot(cr.pos.x - p.pos.x, cr.pos.z - p.pos.z);
+      if ((cr.state === 'sturz' && cr.target === p.id && d < 5) || (cr.hit?.id === p.id && match.time - cr.hit.t < 0.8)) out.cover = 1;
+      else if (cr.state === 'hocken' && d < 2.6) out.gesture = 'scheuchen';
+      else if (cr.y > 1 && speed < 1.5 && i % 3 === 0) out.gesture = 'zeigen';
+      break;
+    }
     case 'zaun': {
       const { climber, fence } = inc;
       if (!climber || !fence) break;

@@ -23,6 +23,7 @@ describe('Halle: Vorfälle', () => {
   it('keine Polizei und keine Taube; dafür der Fan; die Halle hat Hindernisse und eine Tür', () => {
     expect(VENUE_INCIDENTS.halle).not.toContain('polizei');
     expect(VENUE_INCIDENTS.halle).not.toContain('taube');
+    expect(VENUE_INCIDENTS.halle).not.toContain('kraehe');
     expect(VENUE_INCIDENTS.halle).toContain('fan');
     expect(INCIDENT_TYPES).toContain('fan');
     const sh = shelterFor(hall);

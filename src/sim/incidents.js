@@ -1,5 +1,5 @@
 // Seltene Vorfälle während des Spiels: Hund auf dem Platz, Ball über den Zaun,
-// Autoalarm, Polizei wegen Lärm, Gewitter, Rasensprenger, Schiri verletzt, Taube.
+// Autoalarm, Polizei wegen Lärm, Gewitter, Rasensprenger, Schiri verletzt, Taube, Krähe.
 // Die Uhr steht, solange ein Vorfall läuft. Alles deterministisch über einen
 // eigenen Zufallsstrom, damit Spiele ohne Vorfall unverändert bleiben.
 import { tr } from '../core/i18n.js';
@@ -15,14 +15,14 @@ import { stateMove } from './tackles.js';
 export const INCIDENT_CHANCE = 0.4;
 
 export const VENUE_INCIDENTS = {
-  hinterhof: ['zaun', 'polizei', 'gewitter', 'taube'],
-  parkplatz: ['autoalarm', 'polizei', 'zaun', 'gewitter', 'taube'],
-  park: ['hund', 'zaun', 'gewitter', 'taube'],
-  ascheplatz: ['hund', 'zaun', 'gewitter', 'taube'],
-  rasenplatz: ['sprenger', 'ersatzschiri', 'hund', 'gewitter', 'zaun', 'taube'],
-  sportplatz: ['sprenger', 'ersatzschiri', 'hund', 'gewitter', 'zaun', 'taube'],
-  grossfeld: ['sprenger', 'ersatzschiri', 'hund', 'gewitter', 'zaun', 'taube'],
-  halle: ['ersatzschiri', 'fan'], // drinnen kein Wetter, keine Polizei, keine Taube: dafür ein betrunkener Fan über der Bande
+  hinterhof: ['zaun', 'polizei', 'gewitter', 'taube', 'kraehe'],
+  parkplatz: ['autoalarm', 'polizei', 'zaun', 'gewitter', 'taube', 'kraehe'],
+  park: ['hund', 'zaun', 'gewitter', 'taube', 'kraehe'],
+  ascheplatz: ['hund', 'zaun', 'gewitter', 'taube', 'kraehe'],
+  rasenplatz: ['sprenger', 'ersatzschiri', 'hund', 'gewitter', 'zaun', 'taube', 'kraehe'],
+  sportplatz: ['sprenger', 'ersatzschiri', 'hund', 'gewitter', 'zaun', 'taube', 'kraehe'],
+  grossfeld: ['sprenger', 'ersatzschiri', 'hund', 'gewitter', 'zaun', 'taube', 'kraehe'],
+  halle: ['ersatzschiri', 'fan'], // drinnen kein Wetter, keine Polizei, keine Taube oder Krähe: dafür ein betrunkener Fan über der Bande
 };
 
 // Kurzbericht fürs Kreisblatt ({min} = Spielminute).
@@ -38,9 +38,10 @@ const REPORTS = {
   fan_kiss: tr('In der {min}. Minute sprang ein angetrunkener Fan über die Bande und wollte den Torwart küssen. Der Ordner führte ihn hinaus.', 'In minute {min} a tipsy fan jumped the boards to kiss the goalkeeper. A steward led him out.'),
   fan_ball: tr('In der {min}. Minute sprang ein angetrunkener Fan über die Bande und klaute den Ball. Der Ordner führte ihn hinaus.', 'In minute {min} a tipsy fan jumped the boards and stole the ball. A steward led him out.'),
   taube: tr('In der {min}. Minute landete eine Taube neben dem Ball und ließ sich nur ungern verscheuchen.', 'In minute {min} a pigeon landed next to the ball and was in no hurry to be shooed away.'),
+  kraehe: tr('In der {min}. Minute ging eine Krähe im Sturzflug auf die Spieler los. Erst beide Mannschaften zusammen konnten sie vertreiben.', 'In minute {min} a crow dive-bombed the players. It took both teams together to drive it off.'),
 };
 
-const DURATION = { hund: 8, zaun: 9, autoalarm: 6, polizei: 9, gewitter: 8, sprenger: 5, ersatzschiri: 6, taube: 6, fan: 7 };
+const DURATION = { hund: 8, zaun: 9, autoalarm: 6, polizei: 9, gewitter: 8, sprenger: 5, ersatzschiri: 6, taube: 6, fan: 7, kraehe: 8 };
 // Beim Gewitter wird gesprintet (vorher 3,5 m/s – sah nach Spaziergang aus); Sprinttempo der Spieler liegt bei 7.
 const STORM_RUN = 7.2;
 const REF_RUN = 7.6; // der Schiri ist zuerst unterm Vordach
@@ -63,6 +64,10 @@ const FAN_LOOK = { skin: SKIN_TONES[1], hair: 0x5a3a22, bald: false, beard: true
 const FAN_KIT = { shirt: 0x9a2a2a, shorts: 0x34425a, socks: 0x222222, trousers: true }; // Vereinstrikot über dem Bauch, Jeans
 const STEWARD_KIT = { shirt: 0xe8c21a, shorts: 0x222a3a, socks: 0x222222, trousers: true }; // gelbe Warnweste
 const STEWARD_LOOK = { skin: SKIN_TONES[0], hair: 0x2a1d14, bald: false, beard: false, belly: 0.5, height: 1.02 };
+// Krähe: Angriffe meist im Sturzflug auf den höchsten Punkt des Kopfes, selten und fast immer Scheinangriffe zum Schutz
+// von Nest oder Jungen (NABU, zitiert bei web.de: https://web.de/magazine/wissen/natur-umwelt/gefaehrlich-kraehen-30703214;
+// Deutsche Wildtier Stiftung). Tempo, Höhen und Zahl der Angriffe sind Spielwerte.
+const CROW = { dive: 11, head: 1.9, up: 4.2, hop: 1.3, attacks: 3, shoo: 1.4, chase: 4.6, sight: 14 };
 const DOG_LUNGE = 2.2; // so nah am Hund hechten Spieler nach dem Ball im Maul
 const OWNER_LOOK = { skin: SKIN_TONES[1], hair: 0x5a3a22, bald: false, beard: false, belly: 0.5, height: 1 };
 const OWNER_KIT = { shirt: 0x4a6a3a, shorts: 0x34425a, socks: 0x222222 }; // grüne Regenjacke
@@ -290,6 +295,15 @@ function beginIncident(m, type, info = {}) {
     text = perched
       ? r.pick(tr(['Die Taube von der Latte kommt zum Ball herunter. Sie hat Zeit.', 'Erst saß sie auf dem Tor, jetzt pickt sie am Elfmeterpunkt.', 'Die Taube landet direkt vor dem Ball und guckt den Schiri an.'], ['The pigeon from the crossbar drops down to the ball. It is in no hurry.', 'First it sat on the goal, now it pecks at the penalty spot.', 'The pigeon lands right in front of the ball and stares at the referee.']))
       : r.pick(tr(['Eine Taube landet neben dem Ball. Sie hat Zeit.', 'Taube auf dem Platz! Sie pickt am Elfmeterpunkt.', 'Eine Taube setzt sich direkt vor den Ball und guckt den Schiri an.'], ['A pigeon lands next to the ball. It is in no hurry.', 'Pigeon on the pitch! It pecks at the penalty spot.', 'A pigeon settles right in front of the ball and stares at the referee.']));
+  } else if (type === 'kraehe') {
+    // Kommt von hoch außen und stößt auf den Kopf des Spielers nächst am Ball herab (stepCrow).
+    ball.holder = null;
+    ball.pos.y = 0.11;
+    ball.vel.x = ball.vel.y = ball.vel.z = 0;
+    const side = ball.pos.z > 0 ? 1 : -1;
+    const from = { x: ball.pos.x - 10, z: side * (pitch.halfWidth + 6) };
+    m.crow = { pos: from, y: 7, facing: norm(ball.pos.x - from.x, ball.pos.z - from.z), state: 'kreisen', t: 0.9, flap: 1, attacks: 0, target: crowTarget(m, ball.pos), hit: null };
+    text = r.pick(tr(['Eine Krähe! Sie stößt im Sturzflug auf die Spieler herab …', 'Krähe im Anflug – und sie hat es auf die Köpfe abgesehen.', 'Eine Krähe kreist tief über dem Platz. Dann stürzt sie herab.'], ['A crow! It dive-bombs the players …', 'Crow incoming – and it is going for their heads.', 'A crow circles low over the pitch. Then it dives.']));
   } else if (type === 'ersatzschiri') {
     // Zwei Spieler laufen zum Schiri, die anderen schauen hin.
     inc.helpers = m.players.filter((p) => p.role !== 'gk').sort((a, b) => dist2d(a.pos, m.referee.pos) - dist2d(b.pos, m.referee.pos)).slice(0, 2).map((p) => p.id);
@@ -345,6 +359,7 @@ export function stepIncident(m, dt) {
 
   if (inc.type === 'hund') stepDog(m, dt);
   if (inc.type === 'taube') stepPigeon(m, dt);
+  if (inc.type === 'kraehe' && m.crow) stepCrow(m, dt);
   if (inc.type === 'gewitter' && m.referee) followRoute(inc, inc.routes.get('ref'), m.referee, 'ref', REF_RUN, dt);
   if (inc.type === 'gewitter' && Math.floor(inc.t / 2.8) !== Math.floor((inc.t - dt) / 2.8)) m.events.push({ type: 'lightning' });
   if (inc.type === 'autoalarm' && Math.floor(inc.t / 1.4) !== Math.floor((inc.t - dt) / 1.4)) m.events.push({ type: 'alarm' });
@@ -413,6 +428,12 @@ export function stepIncident(m, dt) {
       // Sitzt sie hinter einem Hindernis (Bande, Zaun, Garage …) oder gibt es keinen freien Weg, bleibt er stehen und winkt.
       if (dist2d(p.pos, m.pigeon.pos) > 1.6 && walkFree(m, p, m.pigeon.pos, 2.6, dt)) continue;
       p.facing = norm(m.pigeon.pos.x - p.pos.x, m.pigeon.pos.z - p.pos.z);
+    } else if (inc.type === 'kraehe' && m.crow) {
+      // Sitzt sie am Boden, gehen die Nahen mit den Armen rudernd auf sie los; fliegt sie, schauen alle zu ihr hoch.
+      const cr = m.crow;
+      const d = dist2d(p.pos, cr.pos);
+      if (cr.state === 'hocken' && p.role !== 'gk' && d < CROW.sight && d > CROW.shoo - 0.3 && walkFree(m, p, cr.pos, CROW.chase, dt)) continue;
+      p.facing = norm(cr.pos.x - p.pos.x || 1e-3, cr.pos.z - p.pos.z);
     } else if (inc.type === 'polizei') {
       // Alle drehen sich zu den Beamten um.
       const cop = m.visitors.find((v) => v.gesture && v.id.startsWith('polizei'));
@@ -481,8 +502,9 @@ export function stepIncident(m, dt) {
   const dogBusy = inc.type === 'hund' && m.dog && !m.dog.hasBall && inc.t < 14;
   const climbBusy = climber && !climber.done && inc.t < 16;
   const fanBusy = fanF && !fanF.done && inc.t < 60;
+  const crowBusy = inc.type === 'kraehe' && m.crow && !['weg', 'satt'].includes(m.crow.state) && inc.t < 30;
   const exitBusy = inc.exit && !(inc.exit.done && m.visitors.some((v) => v.id === 'ersatz' && dist2d(v.pos, inc.exit.pts[0]) < 0.6)) && inc.t < 40;
-  if (inc.timer > 0 || dogBusy || climbBusy || fanBusy || exitBusy) return;
+  if (inc.timer > 0 || dogBusy || climbBusy || fanBusy || crowBusy || exitBusy) return;
   endIncident(m, r);
 }
 
@@ -696,6 +718,9 @@ function endIncident(m, r) {
   } else if (inc.type === 'taube') {
     if (m.pigeon) m.pigeon.state = 'weg';
     text = tr('Die Taube fliegt beleidigt davon. Weiter!', 'The pigeon flies off in a huff. Play on!');
+  } else if (inc.type === 'kraehe') {
+    if (m.crow) m.crow.state = 'weg';
+    text = r.pick(tr(['Die Krähe gibt auf und zieht krächzend ab. Weiter!', 'Vertrieben! Die Krähe schimpft noch vom Flutlichtmast. Weiter!'], ['The crow gives up and flies off cawing. Play on!', 'Driven off! The crow is still cursing from the floodlight pole. Play on!']));
   } else if (inc.type === 'fan') {
     m.visitors = m.visitors.filter((v) => !v.manual);
     text = inc.fan.mode === 'kiss'
@@ -963,6 +988,105 @@ function stepPigeon(m, dt) {
   pg.pos.z += pg.facing.z * 0.35 * dt;
 }
 
+// Krähe: Wen nimmt sie sich vor? Den Feldspieler (nicht den Torwart) am nächsten zu diesem Punkt.
+function crowTarget(m, at) {
+  let best = null;
+  for (const p of m.players) if (p.role !== 'gk' && p.state === 'normal' && (!best || dist2d(p.pos, at) < dist2d(best.pos, at))) best = p;
+  return best?.id ?? null;
+}
+
+// Krähe: kreisen → Sturzflug auf den Kopf (krächzt, beim ersten Treffer fällt der Spieler um) → wieder hoch → landet beim
+// Ball und hüpft auf die Spieler zu. Wer ihr zu nahe kommt, wird beim nächsten Sturzflug das Ziel. Nach CROW.attacks
+// Angriffen hat sie genug: Kommt dann einer heran, fliegt sie davon (endIncident). Ohne eigenen Zufall.
+function stepCrow(m, dt) {
+  const cr = m.crow;
+  const { pitch, ball } = m;
+  cr.t += dt;
+  const victim = cr.target != null ? m.players.find((p) => p.id === cr.target) : null;
+  if (cr.state === 'kreisen') {
+    // Hoch über dem Feld eindrehen, dann zustoßen.
+    cr.flap = 1;
+    const a = Math.atan2(cr.facing.x, cr.facing.z) + 1.6 * dt;
+    cr.facing = { x: Math.sin(a), z: Math.cos(a) };
+    cr.pos.x += cr.facing.x * 7 * dt;
+    cr.pos.z += cr.facing.z * 7 * dt;
+    cr.y += (CROW.up + 1 - cr.y) * Math.min(1, 2 * dt);
+    if (cr.t > 1.2) Object.assign(cr, { state: 'sturz', t: 0 });
+    return;
+  }
+  if (cr.state === 'sturz') {
+    if (!victim) return Object.assign(cr, { state: 'landen', t: 0, land: clampToPitch(pitch, ball.pos.x + 1.5, ball.pos.z, 1) });
+    const d = dist2d(cr.pos, victim.pos);
+    const step = Math.min(d, CROW.dive * dt);
+    cr.facing = norm(victim.pos.x - cr.pos.x || 1e-3, victim.pos.z - cr.pos.z);
+    cr.pos.x += cr.facing.x * step;
+    cr.pos.z += cr.facing.z * step;
+    cr.flap = 0; // Flügel angelegt
+    cr.y = Math.max(CROW.head, cr.y - Math.max(2.5, (cr.y - CROW.head) / Math.max(0.15, d / CROW.dive)) * dt);
+    if (d - step < 0.35 && cr.y < CROW.head + 0.4) {
+      cr.attacks++;
+      cr.hit = { id: victim.id, t: m.time };
+      m.events.push({ type: 'caw', playerId: victim.id });
+      // Der Erste erschrickt so, dass er sich hinsetzt; danach ducken sie sich nur noch (Darstellung: Hände über den Kopf).
+      if (cr.attacks === 1 && victim.state === 'normal') tumble(victim, { x: -cr.facing.x, z: -cr.facing.z }, 2.2, 0.9);
+      Object.assign(cr, { state: 'steigen', t: 0 });
+    }
+    return;
+  }
+  if (cr.state === 'steigen') {
+    cr.flap = 1;
+    cr.pos.x += cr.facing.x * 7 * dt;
+    cr.pos.z += cr.facing.z * 7 * dt;
+    cr.y += 3 * dt;
+    if (cr.t > 0.8) Object.assign(cr, { state: 'landen', t: 0, land: clampToPitch(pitch, ball.pos.x + (cr.attacks % 2 ? 1.6 : -1.6), ball.pos.z + 1.2, 1), y0: cr.y });
+    return;
+  }
+  if (cr.state === 'landen') {
+    cr.land ??= clampToPitch(pitch, ball.pos.x + 1.5, ball.pos.z, 1);
+    cr.y0 ??= cr.y;
+    cr.d0 ??= Math.max(1, dist2d(cr.pos, cr.land));
+    const d = dist2d(cr.pos, cr.land);
+    const step = Math.min(d, 8 * dt);
+    if (d > 0.05) {
+      cr.facing = norm(cr.land.x - cr.pos.x, cr.land.z - cr.pos.z);
+      cr.pos.x += cr.facing.x * step;
+      cr.pos.z += cr.facing.z * step;
+    }
+    cr.flap = 1;
+    cr.y = Math.max(0, cr.y0 * Math.min(1, (d - step) / cr.d0));
+    if (d - step < 0.05) {
+      Object.assign(cr, { state: 'hocken', t: 0, y: 0, flap: 0, land: null, y0: null, d0: null });
+      m.events.push({ type: 'caw' });
+    }
+    return;
+  }
+  if (cr.state === 'hocken') {
+    // Renitent: hüpft dem Nächsten ein Stück entgegen, statt abzuhauen.
+    let near = null;
+    for (const p of m.players) if (p.role !== 'gk' && p.state === 'normal' && (!near || dist2d(p.pos, cr.pos) < dist2d(near.pos, cr.pos))) near = p;
+    if (!near) return;
+    const d = dist2d(near.pos, cr.pos);
+    cr.facing = norm(near.pos.x - cr.pos.x || 1e-3, near.pos.z - cr.pos.z);
+    const hop = (cr.t * 2.2) % 1;
+    cr.y = d > 0.9 ? 0.18 * Math.sin(hop * Math.PI) : 0;
+    if (d > 0.9) {
+      cr.pos.x += cr.facing.x * CROW.hop * dt;
+      cr.pos.z += cr.facing.z * CROW.hop * dt;
+    }
+    if (Math.floor(cr.t / 1.5) !== Math.floor((cr.t - dt) / 1.5)) m.events.push({ type: 'caw' });
+    if (d < CROW.shoo && cr.t > 1.2) {
+      if (cr.attacks >= CROW.attacks) {
+        // Genug: davon, weg vom Scheuchenden.
+        cr.facing = norm(cr.pos.x - near.pos.x || 1, cr.pos.z - near.pos.z);
+        cr.state = 'satt'; // endIncident schickt sie weg, sobald die Mindestdauer um ist
+        return;
+      }
+      Object.assign(cr, { state: 'kreisen', t: 0, flap: 1, target: near.id });
+      cr.facing = norm(cr.pos.x - near.pos.x || 1, cr.pos.z - near.pos.z);
+    }
+  }
+}
+
 // Taube vor dem Vorfall: anfliegen, auf der Latte sitzen, beim Schuss aufflattern, über dem Platz kreisen.
 function perchFlight(m, pg, dt) {
   const { land, side } = pg;
@@ -1074,6 +1198,15 @@ export function stepLeftovers(m, dt) {
     pg.pos.z += pg.facing.z * 6 * dt;
     pg.y += 3 * dt;
     if (pg.y > 12) m.pigeon = null;
+  }
+  if (m.crow?.state === 'weg') {
+    // Davon: mit kräftigem Flügelschlag schräg hoch und weg vom Platz.
+    const cr = m.crow;
+    cr.flap = 1;
+    cr.pos.x += cr.facing.x * 8 * dt;
+    cr.pos.z += cr.facing.z * 8 * dt;
+    cr.y += 3.5 * dt;
+    if (cr.y > 14) m.crow = null;
   }
   if (m.visitors?.length) {
     stepVisitors(m, dt);

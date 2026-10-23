@@ -84,7 +84,43 @@ function createPigeon() {
   return { group, head, wings };
 }
 
-// Hund, Taube, Besucher (Polizei, Autobesitzer, Herrchen), Regen und Rasensprenger.
+// Krähe (Rabenkrähe): ganz schwarz, kräftiger schwarzer Schnabel, breite Flügel. Echte Maße 45–49 cm Länge, 93–104 cm
+// Spannweite (NABU-Vogelporträt Rabenkrähe); hier im selben Maßstab wie die Taube (× 1,25, sonst aus der Kamera kaum zu sehen).
+function createCrow() {
+  const black = toon(0x1c1d22);
+  const sheen = toon(0x2c3040); // bläulicher Glanz auf den Flügeln
+  const beak = toon(0x111111);
+  const group = new THREE.Group();
+  const box = (w, h, d, mat, x, y, z, parent = group) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    m.position.set(x, y, z);
+    parent.add(m);
+    return m;
+  };
+  box(0.16, 0.15, 0.27, black, 0, 0.17, 0);
+  box(0.12, 0.03, 0.15, black, 0, 0.16, -0.2); // Schwanz
+  const head = new THREE.Group();
+  head.position.set(0, 0.26, 0.13);
+  box(0.11, 0.1, 0.11, black, 0, 0, 0, head);
+  box(0.04, 0.04, 0.08, beak, 0, -0.005, 0.09, head);
+  for (const sx of [-0.05, 0.05]) box(0.012, 0.02, 0.02, toon(0x8a6a2a), sx, 0.02, 0.04, head); // Augen
+  group.add(head);
+  const wings = [];
+  for (const sx of [-1, 1]) {
+    const pivot = new THREE.Group();
+    pivot.position.set(sx * 0.08, 0.22, 0);
+    const w = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.02, 0.2), sheen);
+    w.position.x = sx * 0.21;
+    pivot.add(w);
+    group.add(pivot);
+    wings.push({ pivot, sx });
+  }
+  for (const sx of [-0.04, 0.04]) box(0.02, 0.1, 0.02, black, sx, 0.05, 0.02);
+  group.scale.setScalar(1.25);
+  return { group, head, wings };
+}
+
+// Hund, Taube, Krähe, Besucher (Polizei, Autobesitzer, Herrchen), Regen und Rasensprenger.
 export class IncidentView {
   constructor(root, match) {
     this.root = root;
@@ -92,6 +128,7 @@ export class IncidentView {
     this.visitors = new Map();
     this.dog = null;
     this.pigeon = null;
+    this.crow = null;
     const { pitch } = match;
     this.area = { x: pitch.halfLength + 6, z: pitch.halfWidth + 6 };
 
@@ -185,6 +222,7 @@ export class IncidentView {
     this.rainRate = env ? Math.max(0.5, env.rain) : 0.8;
     this.syncDog(match.dog, dt);
     this.syncPigeon(match.pigeon);
+    this.syncCrow(match.crow);
     this.syncVisitors(match.visitors ?? [], dt);
     this.syncRain(match.weather === 'rain', dt);
     this.syncFlakes(this.snow, match.weather === 'snow', dt, 1.1, 0.4);
@@ -243,6 +281,27 @@ export class IncidentView {
     v.head.rotation.x = peck * 0.9;
     v.head.rotation.y = perched ? Math.sin(this.time * 1.3) * 0.7 : 0;
     v.head.position.z = 0.1 + peck * 0.03;
+  }
+
+  syncCrow(cr) {
+    if (!cr) {
+      if (this.crow) this.crow.group.visible = false;
+      return;
+    }
+    this.crow ??= createCrow();
+    if (!this.crow.group.parent) this.root.add(this.crow.group);
+    const v = this.crow;
+    v.group.visible = true;
+    v.group.position.set(cr.pos.x, cr.y, cr.pos.z);
+    v.group.rotation.y = Math.atan2(cr.facing.x, cr.facing.z);
+    // Sturzflug: Flügel halb angelegt, Kopf voran; sonst langsamer, kräftiger Schlag als bei der Taube.
+    const dive = cr.state === 'sturz';
+    const beat = cr.flap ? Math.sin(this.time * 17) * 0.9 : 0;
+    for (const w of v.wings) w.pivot.rotation.z = w.sx * (dive ? -0.5 : cr.flap ? 0.2 + beat : -0.15);
+    v.group.rotation.x = dive ? 0.5 : 0;
+    // Am Boden: hackt mit dem Kopf in Richtung der Spieler.
+    const peck = cr.state === 'hocken' ? Math.max(0, Math.sin(this.time * 9)) : 0;
+    v.head.rotation.x = peck * 0.7;
   }
 
   // Besucher (Polizei, Hundebesitzer …) haben eigenen Trikot-Atlas und eigenes Skelett –

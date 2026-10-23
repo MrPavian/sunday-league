@@ -16,7 +16,7 @@ const TIMES = ['morgen', 'mittag', 'nachmittag', 'abend'];
 // Autoalarm brauchen ein auslösendes Ereignis (Ball fliegt drüber, Auto fährt vorbei).
 // Seed je Vorfall fest: Der Autoalarm geht nur mit 60 % je Autotreffer los – mit Seed 15 trifft der
 // Ball früh ein Auto und der Alarm kommt (bei 3 s; Seed 13 passte bis zur Flankenverwertung).
-const INCIDENTS = { hund: 'park', zaun: 'hinterhof', autoalarm: 'parkplatz', polizei: 'hinterhof', gewitter: 'park', sprenger: 'rasenplatz', ersatzschiri: 'rasenplatz', taube: 'park', fan: 'halle' };
+const INCIDENTS = { hund: 'park', zaun: 'hinterhof', autoalarm: 'parkplatz', polizei: 'hinterhof', gewitter: 'park', sprenger: 'rasenplatz', ersatzschiri: 'rasenplatz', taube: 'park', kraehe: 'rasenplatz', fan: 'halle' };
 // Autoalarm und Zaun brauchen einen Treffer ans Auto bzw. einen hohen Ball – das hängt vom Spielverlauf ab (Rate in Node
 // gemessen: Autoalarm 26 von 30 Seeds, alte wie neue Ballphysik). Der Browser-Test prüft den Ablauf, nicht die Rate: bis zu
 // drei Seeds, der erste mit Vorfall zählt. Die Rate prüfen die Unit-Tests.
