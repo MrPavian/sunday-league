@@ -3,7 +3,8 @@
 // Geschichten der Leute), Taktik auf dem Bierdeckel, den Wirt ausfragen oder
 // eine Runde Dart um die nächste Runde.
 import { createRng } from '../core/rng.js';
-import { DOSSIER, DOSSIER_ORDER, dossierIndex, DREAM_SUPPORT, HEINZ, INTEL } from '../data/backstories.js';
+import { DOSSIER, DOSSIER_ORDER, dossierFacts, dossierIndex, DREAM_SUPPORT, HEINZ, INTEL } from '../data/backstories.js';
+import { originOf } from '../data/origins.js';
 import { book } from './finances.js';
 import { addRumor, clubById, humanClub, humanFixture, playerOf } from './career.js';
 import { adjustForm, adjustMood } from './events.js';
@@ -47,7 +48,7 @@ const canAct = (c) => pubOpen(c) && pubState(c).actions > 0;
 // Dossier: welche Kapitel es gibt und welche schon erzählt wurden.
 export function dossier(c, idx) {
   const p = playerOf(c, idx);
-  const facts = { first: p.name.split(' ')[0], age: p.age, profession: p.profession };
+  const facts = dossierFacts(p, originOf(p.name.split(' ').slice(1).join(' ')));
   const known = c.players[idx]?.dossier ?? 0;
   return DOSSIER_ORDER.map((kind, i) => {
     const list = DOSSIER[kind];
@@ -69,7 +70,7 @@ export function supportDream(c, idx) {
   adjustMood(c, 0.05);
   rec.dreamDone = true;
   rec.loyal = true;
-  const text = DREAM_SUPPORT[dossierIndex(idx, 2, DREAM_SUPPORT.length)](name);
+  const text = DREAM_SUPPORT[dossierIndex(idx, 2, DREAM_SUPPORT.length)](name, playerOf(c, idx));
   chronicle(c, tr(`${playerOf(c, idx).name}: ein Traum wird wahr. ${text}`, `${playerOf(c, idx).name}: a dream comes true. ${text}`));
   pubState(c).log.push(text);
   return text;

@@ -143,14 +143,21 @@ export const DE_LAST_MORE = [
   'Steffens', 'Tewes', 'Plückebaum', 'Schulte-Döinghaus', 'Kampmann', 'Hülsmann', 'Wienhold', 'Steinkamp', 'Rehbein', 'Hagedorn', 'Wehrmann', 'Feldkamp', 'Möllenbeck', 'Brockhoff', 'Uhlenbrock', 'Dreyer', 'Gieseler', 'Klöckner', 'Pöppelmann', 'Tönnies',
 ];
 const DE_SET_MORE = nameSet({ ...ORIGINS, de: { ...ORIGINS.de, last: DE_LAST_MORE } }, DE_FIRST_MORE, 'de');
+// Siebte Auflage (neue deutsche Karrieren, vom Nutzer gewünscht 2026-10-23): Vor- und Nachname passen zur Herkunft –
+// kein „Max El-Amrani“ mehr. Deutsche Vornamen bleiben nur, wo sie typisch sind: Polen im Ruhrgebiet, Ruhrpott-Polen,
+// Russlanddeutsche. Gleich viele Zufallszahlen je Name wie Auflage 6: Werte und Aussehen bleiben gleich, nur „Körper“
+// hängt auch am Namen (strength.js) und weicht bei etwa 2 % der Spieler ab (die mit neuem Vornamen).
+const STRICT = { germanFirst: 0 };
+const ORIGINS_STRICT = Object.fromEntries(Object.entries(ORIGINS).map(([id, o]) => [id, ['pl', 'ruhr', 'russ', 'de'].includes(id) ? o : { ...o, ...STRICT }]));
+const DE_SET_STRICT = nameSet({ ...ORIGINS_STRICT, de: { ...ORIGINS.de, last: DE_LAST_MORE } }, DE_FIRST_MORE, 'de');
 const EN_SET = nameSet(ORIGINS_EN, LOCAL_FIRST_EN, 'gb');
 
 // Welcher Satz gerade gilt, hängt an der Namensauflage der Karriere (career.js, setNameEdition) –
 // nicht an der Sprache: Eine deutsche Karriere behält ihre Namen auch auf Englisch.
 let SET = DE_SET;
-// locale: 'de' (Auflage 4 und älter), 'de6' (Auflage 6, mehr Namen), 'en' (Auflage 5).
+// locale: 'de' (Auflage 4 und älter), 'de6' (Auflage 6, mehr Namen), 'de7' (Auflage 7, Namen passend zur Herkunft), 'en' (Auflage 5).
 export const setNameLocale = (locale) => {
-  SET = locale === 'en' ? EN_SET : locale === 'de6' ? DE_SET_MORE : DE_SET;
+  SET = locale === 'en' ? EN_SET : locale === 'de7' ? DE_SET_STRICT : locale === 'de6' ? DE_SET_MORE : DE_SET;
 };
 export const nameLocale = () => (SET === EN_SET ? 'en' : 'de');
 
@@ -158,6 +165,7 @@ export const nameLocale = () => (SET === EN_SET ? 'en' : 'de');
 export const personIdentityDE = DE_SET.identity;
 export const personIdentityEN = EN_SET.identity;
 export const personIdentityDE6 = DE_SET_MORE.identity;
+export const personIdentityDE7 = DE_SET_STRICT.identity;
 
 // Ein ganzer Name, passend zum Alter – mit Herkunft, damit das Aussehen dazu passen kann.
 export const personIdentity = (rng, age = 30) => SET.identity(rng, age);

@@ -1,7 +1,7 @@
 // Ereignisse aus dem Beziehungsnetz und den Dossiers. Jede Antwort hat mehrere
 // mögliche Ausgänge – vom Happy End bis dazu, dass einer den Verein verlässt
 // oder rausfliegt.
-import { DOSSIER, dossierIndex, RUMOR_CHAT } from '../data/backstories.js';
+import { DOSSIER, dossierFacts, dossierIndex, RUMOR_CHAT } from '../data/backstories.js';
 import { book } from './finances.js';
 import { humanClub, playerOf } from './career.js';
 import { derbyRivalId } from './derby.js';
@@ -211,7 +211,7 @@ export const SOCIAL_EVENTS = {
     },
     text: (c, ctx) => {
       const p = playerOf(c, ctx.s);
-      const secret = DOSSIER.geheimnis[dossierIndex(ctx.s, 3, DOSSIER.geheimnis.length)]({ first: first(c, ctx.s), age: p.age, profession: p.profession });
+      const secret = DOSSIER.geheimnis[dossierIndex(ctx.s, 3, DOSSIER.geheimnis.length)](dossierFacts(p));
       return RUMOR_CHAT[ctx.s % RUMOR_CHAT.length](first(c, ctx.s), secret);
     },
     options: [
