@@ -439,7 +439,9 @@ describe('player development', () => {
     const { developPlayers, playerOf, getPool } = await import('../src/career/career.js');
     const c = createCareer({ seed: 95 });
     const pool = getPool();
-    const young = pool.everyone().find((p) => p.age <= 19 && p.tier === 'gut' && !c.clubs.some((cl) => cl.squad.includes(p.poolIndex)));
+    const { devProfile } = await import('../src/career/development.js');
+    // Ein „normaler“ Entwicklungstyp: Stagnierer und Durchbruch-Typen vor dem Sprung legen gewollt kaum zu (development.test.js).
+    const young = pool.everyone().find((p) => p.age <= 19 && p.tier === 'gut' && !c.clubs.some((cl) => cl.squad.includes(p.poolIndex)) && devProfile(c, p.poolIndex, p.position).type === 'normal');
     const old = pool.everyone().find((p) => p.age >= 36 && p.tier === 'gut' && !c.clubs.some((cl) => cl.squad.includes(p.poolIndex)));
     const club = humanClub(c);
     club.squad.push(young.poolIndex, old.poolIndex);

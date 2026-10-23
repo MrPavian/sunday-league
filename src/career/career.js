@@ -36,6 +36,7 @@ import { coachWeek, hiredGrowth, presidentSeasonEnd, weeklyHired } from './presi
 import { childrenGrowUp, coachAway, initCoach, isCoach, isPresident, personalWeek, seasonPersonal, weeklyPersonal } from './personal.js';
 import { absenceFactor, advanceArcs, applyForm, autoResolve, resultMood, rollNotice, rollWeekEvent, weeklyMood } from './events.js';
 import { developYouth, expireYouth, initYouth, retirements, youthIntake } from './youth.js';
+import { environmentChanged, rememberEnvironment, seasonGain } from './development.js';
 import { applyCards, banGames, banReason, isBanned, resetYellows, tickBans } from './suspensions.js';
 import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFinances, weeklyFinances } from './finances.js';
 
@@ -135,7 +136,9 @@ export function playerOf(career, idx) {
   return p;
 }
 
-// Saisonwechsel: Junge werden besser (vor allem mit Spielpraxis), Ältere langsamer.
+// Saisonwechsel: Junge werden besser (vor allem mit Spielpraxis), Ältere langsamer. Wie viel, hängt vom verborgenen
+// Entwicklungstyp, vom Höhepunkt der Position und von der Liga ab (development.js); ein Tapetenwechsel kann den
+// Knoten platzen lassen. Der Zuwachs (Stärkepunkte) verteilt sich mit Zufall auf die Werte.
 export function developPlayers(career) {
   const club = humanClub(career);
   const rng = createRng(hashSeed(career.seed, career.season, 17));
@@ -147,20 +150,24 @@ export function developPlayers(career) {
     const age = before.age;
     const practice = rec.apps >= 5 ? 1.3 : rec.apps >= 2 ? 1 : 0.6;
     const coach = (career.staff?.cotrainer ? 1.15 : 1) * hiredGrowth(career);
-    const growth = (age <= 20 ? 0.045 : age <= 23 ? 0.025 : age <= 29 ? 0.006 : 0) * coach * (age <= 23 ? youthGrowthMul(career) : 1);
+    const mul = practice * coach * (age <= 23 ? youthGrowthMul(career) : 1);
+    const { gain, event, prof } = seasonGain(career, idx, before, mul, environmentChanged(career, idx, club));
+    const onset = 31 + prof.declineShift; // körperlicher Abbau ab hier, die zweite Stufe drei Jahre später
     rec.delta ??= {};
     for (const k of ATTR_KEYS) {
       // Körper würfelt aus einem eigenen Strom: ein neunter Wurf je Spieler in rng würde die Entwicklung aller
       // folgenden Spieler (und alter Spielstände) verschieben.
-      let d = growth * practice * (0.5 + (k === 'strength' ? strRng : rng).next());
-      if (age >= 31 && (k === 'pace' || k === 'stamina')) d -= age >= 34 ? 0.035 : 0.015;
-      // Körper: wächst wie die anderen bis Ende 20 (growth oben), baut ab 31 langsam ab – halb so schnell wie Tempo/Ausdauer.
-      if (age >= 31 && k === 'strength') d -= age >= 34 ? 0.018 : 0.008;
-      if (age >= 34 && k !== 'pace' && k !== 'stamina' && k !== 'strength') d -= 0.008;
+      let d = (gain / 100) * (0.5 + (k === 'strength' ? strRng : rng).next());
+      if (age >= onset && (k === 'pace' || k === 'stamina')) d -= age >= onset + 3 ? 0.035 : 0.015;
+      // Körper: baut ab dem Einsetzen langsam ab – halb so schnell wie Tempo/Ausdauer.
+      if (age >= onset && k === 'strength') d -= age >= onset + 3 ? 0.018 : 0.008;
+      if (age >= onset + 3 && k !== 'pace' && k !== 'stamina' && k !== 'strength') d -= 0.008;
       rec.delta[k] = (rec.delta[k] ?? 0) + d;
     }
-    report.push({ idx, before: before.rating });
+    rec.devSeen = career.season;
+    report.push({ idx, before: before.rating, event });
   }
+  rememberEnvironment(career, club);
   return report;
 }
 
@@ -237,6 +244,7 @@ export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null,
   initSagas(career);
   startWeek(career);
   setSeasonGoal(career);
+  for (const idx of humanClub(career).squad) if (career.players[idx]) career.players[idx].devSeen = 0; // Gründungskader: kein Tapetenwechsel (development.js)
   runHooks('create', career);
   return career;
 }
@@ -353,7 +361,13 @@ export function nextSeason(career) {
   for (const d of development) {
     const now = playerOf(career, d.idx);
     const diff = now.rating - d.before;
-    if (diff >= 2) career.week?.chat.splice(1, 0, { from: null, text: tr(`Vorbereitung: ${now.name} (${now.age}) hat richtig zugelegt – Stärke ${d.before} → ${now.rating}.`, `Pre-season: ${now.name} (${now.age}) has really improved – rating ${d.before} → ${now.rating}.`), time: 'Mo 09:00' });
+    if (d.event === 'durchbruch' || (d.event === 'knoten' && diff >= 4)) {
+      const why = d.event === 'knoten' ? tr(' Neue Umgebung, neuer Schwung – bei ihm ist der Knoten geplatzt.', ' New surroundings, new energy – it has finally clicked for him.') : tr(' Keiner weiß genau, warum – aber plötzlich läuft alles.', ' Nobody quite knows why – but suddenly everything works.');
+      const text = tr(`Durchbruch: ${now.name} (${now.age}) ist kaum wiederzuerkennen – Stärke ${d.before} → ${now.rating}.${why}`, `Breakthrough: ${now.name} (${now.age}) is barely recognisable – rating ${d.before} → ${now.rating}.${why}`);
+      career.week?.chat.splice(1, 0, { from: null, text, time: 'Mo 09:00' });
+      note(tr(`Kreisblatt: Der Durchbruch von ${now.name} (${now.age}) – „So einen hatten wir hier lange nicht.“`, `District Gazette: ${now.name}'s (${now.age}) breakthrough – "We have not had one like him here for ages."`));
+    } else if (d.event === 'stillstand' && career.staff?.cotrainer) career.week?.chat.splice(1, 0, { from: null, text: tr(`Co-Trainer: ${now.name} tritt auf der Stelle. Vielleicht braucht er mal was Neues – andere Rolle, andere Taktik.`, `Assistant coach: ${now.name} is treading water. Maybe he needs something new – a different role, different tactics.`), time: 'Mo 09:00' });
+    else if (diff >= 2) career.week?.chat.splice(1, 0, { from: null, text: tr(`Vorbereitung: ${now.name} (${now.age}) hat richtig zugelegt – Stärke ${d.before} → ${now.rating}.`, `Pre-season: ${now.name} (${now.age}) has really improved – rating ${d.before} → ${now.rating}.`), time: 'Mo 09:00' });
     else if (diff <= -2) career.week?.chat.splice(1, 0, { from: null, text: tr(`${now.name} (${now.age}) merkt die Jahre – Stärke ${d.before} → ${now.rating}.`, `${now.name} (${now.age}) is feeling his age – rating ${d.before} → ${now.rating}.`), time: 'Mo 09:00' });
   }
   const summary = { pos, promoted, relegated, development, retired, intake, leaving };
@@ -729,6 +743,7 @@ export function migrateCareer(career) {
   career.leagueSize ??= 6;
   career.mood ??= 0;
   career.flags ??= {};
+  for (const idx of humanClub(career)?.squad ?? []) if (career.players[idx]) career.players[idx].devSeen ??= 0; // alte Stände: wer schon da ist, ist nicht neu
   if (career.week && career.week.nudges > NUDGES_PER_WEEK) career.week.nudges = NUDGES_PER_WEEK; // alte Stände: früher dreimal Nachhaken
   migratePositions(career); // Gewöhnung an fremde Positionen (alte Stände: leer)
   initFinances(career);
