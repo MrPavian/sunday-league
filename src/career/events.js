@@ -18,6 +18,7 @@ import { ACADEMY_EVENTS } from './academy.js';
 import { SPONSOR_EVENTS } from './sponsors.js';
 import { POACH_EVENTS } from './poaching.js';
 import { CLUBLIFE_EVENTS } from './clublife.js';
+import { OLDBOYS_EVENTS } from './oldboysevents.js';
 import { LEAGUE_EVENTS } from './leagueevents.js';
 import { BUND_EVENTS } from './bundevents.js';
 import { SEASON_EVENTS } from './seasonevents.js';
@@ -623,6 +624,7 @@ const eventPacks = () => (packs ??= [
   { pack: PHASE_EVENTS, roll: true },
   { pack: TIGER_EVENTS, roll: true },
   { pack: CLUBLIFE_EVENTS, roll: false },
+  { pack: OLDBOYS_EVENTS, roll: true }, // Alte Herren: nur mit Team (needs prüft)
   { pack: CRISES, roll: false },
 ]);
 const rolledEntries = () => eventPacks().filter((x) => x.roll).flatMap((x) => Object.entries(x.pack));

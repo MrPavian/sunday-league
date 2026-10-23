@@ -1832,3 +1832,31 @@ body.manager #end { padding-bottom: 84px; }
 .tf-rules li, .tf-log li { margin: 4px 0; }
 @media (max-width: 640px) { .tf-own .tf-btns { width: 100%; } .tf-own .tf-btns button { flex: 1 1 120px; } }
 .club-panel .tf .ui-tabs button { padding: 0 var(--s3); } /* vier Unterbereiche sollen auch auf dem Handy nebeneinander passen */
+
+/* Alte Herren (Reiter in Verein, ROADMAP 11.9): Spiel/Tabelle, Kader, Ergebnisse */
+.oh { display: grid; gap: 10px; min-width: 0; }
+.oh h3, .oh h4, .oh p { margin: 0; }
+.oh h4 { margin-top: 6px; }
+.oh-title { overflow-wrap: anywhere; }
+.oh-note { padding: 6px 10px; border: 2px solid #000; background: #2a2516; font-size: 13px; }
+.oh-reasons { margin: 0; padding-left: 18px; color: #d9a04f; }
+.oh-facts { display: flex; gap: 6px; flex-wrap: wrap; }
+.oh-card { display: grid; gap: 6px; padding: 8px 10px; border: 2px solid #000; border-left: 6px solid var(--accent); background: rgba(255, 255, 255, 0.04); }
+.oh-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 14px; }
+.oh-table th, .oh-table td { padding: 6px 4px; text-align: left; border-bottom: 1px solid rgba(255, 255, 255, 0.12); }
+.oh-table th:first-child, .oh-table td:first-child { width: 26px; }
+.oh-table .num, .oh-table th:nth-child(n+3) { width: 15%; text-align: right; font-variant-numeric: tabular-nums; }
+.oh-table tr.mine { background: rgba(255, 255, 255, 0.08); font-weight: bold; }
+.oh-club { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.oh-club i { flex: none; width: 10px; height: 10px; border: 1px solid #000; }
+.oh-club span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.oh-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.oh-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 10px; padding: 6px 8px; border: 2px solid #000; background: rgba(255, 255, 255, 0.04); }
+.oh-name { flex: 1 1 160px; min-width: 0; overflow-wrap: anywhere; }
+.oh-name small, .oh-meta small { display: block; opacity: 0.75; }
+.oh-meta { display: grid; gap: 2px; justify-items: end; text-align: right; }
+.oh-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.oh-row .ui-btn { min-height: 44px; }
+.oh-score.w { color: #5cc46a; }
+.oh-score.l { color: #d9a04f; }
+@media (max-width: 640px) { .oh-btns { width: 100%; } .oh-btns .ui-btn { flex: 1 1 100px; } }

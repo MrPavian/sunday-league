@@ -20,6 +20,7 @@ import { appointCoach } from '../career/president.js';
 import { coachAway, isPresident } from '../career/personal.js';
 import { prepareRelegationMatch, recordRelegationLeg, startRelegation } from '../career/relegation.js';
 import { humanTie, POKALE, pokalOf, pokalWhen, preparePokalMatch, recordPokalResult, roundName } from '../career/pokal.js';
+import { pendingGame, playDue, prepareOldBoysMatch, recordOldBoysResult } from '../career/oldboys.js';
 import { coachLevel } from '../ui/prefs.js';
 
 export function createMatchflow(ctx) {
@@ -175,9 +176,28 @@ export function createMatchflow(ctx) {
       await simulate(prepared);
       recordResult(ctx.career, f, prepared);
     }
+    await playDue(ctx.career, (prepared) => simulate(prepared), true); // Alte Herren: das Freitagsspiel, falls niemand zugeschaut hat
     saveCareer(ctx.career);
     resuming = false;
     openClubhouse(currentFixtures(ctx.career));
+  }
+
+  // Alte Herren: das Freitagsspiel im Liveticker ansehen (Ergebnis und Kasse wie bei unbeobachteten Spielen).
+  function tickerOldBoys() {
+    const game = pendingGame(ctx.career);
+    if (!game) return openClubhouse();
+    const prepared = prepareOldBoysMatch(ctx.career, game);
+    ctx.clubhouse.hide();
+    ticker.show(prepared, {
+      title: tr(`Liveticker · Alte Herren · ${prepared.pitch.name}`, `Live ticker · Old boys · ${prepared.pitch.name}`),
+      coachTeam: null,
+      onDone() {
+        recordOldBoysResult(ctx.career, prepared);
+        saveCareer(ctx.career);
+        ctx.clubhouse.tab = 'oldboys';
+        openClubhouse();
+      },
+    });
   }
 
   // Kreis-/Bezirkspokal: das Spiel unter der Woche, vor dem Ligaspieltag.
@@ -313,6 +333,7 @@ export function createMatchflow(ctx) {
     onPokalSimulate: (kind) => tickerPokal(kind),
     onRelCoach: () => playRelegationMatch(),
     onRelSimulate: () => tickerRelegation(),
+    onOldBoysTicker: () => tickerOldBoys(),
     onCupSimulate: (kind = 'stadt') => tickerCup(kind),
     onNewCoach() {
       creator.show({

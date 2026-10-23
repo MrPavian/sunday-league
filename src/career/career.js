@@ -662,6 +662,8 @@ export const takenIndices = (career) =>
     ...(career.youth?.prospects ?? []),
     ...(career.alumni ?? []).map((a) => a.idx),
     ...(career.transfers?.neighbors ?? []).flatMap((n) => n.squad), // Nachbarligen des Transfermarkts (transfers.js)
+    ...(career.oldBoys?.squad ?? []), // Alte Herren (oldboys.js): eigener Kader und die Gegner der Ü32-Runde
+    ...(career.oldBoys?.league?.opps ?? []).flatMap((o) => o.squad),
     ...Object.entries(career.formers ?? {}).filter(([, f]) => f.pro).map(([k]) => Number(k)),
     // Gäste aus Turnieren und Pokalen, solange sie dabei sind (sonst spielte einer für zwei Vereine).
     ...Object.values(career.cups ?? {}).flatMap((t) => (t.stage !== 'done' ? (t.guests ?? []).flatMap((g) => g.squad) : [])),
