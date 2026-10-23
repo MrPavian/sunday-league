@@ -30,6 +30,8 @@ describe('Ecken', () => {
     expect(corners('rasenplatz', 16)).toBeGreaterThan(3); // gemessen 4,4 (80 Spiele)
   }, 240000);
   it('Großfeld: über 1,5 Ecken je Spiel (vorher 0,5)', () => {
-    expect(corners('grossfeld', 12)).toBeGreaterThan(1.5); // gemessen 2,6 (80 Spiele)
-  }, 400000);
+    // 24 statt 12 Spiele (gleiche Schwelle je Spiel): Seit die Flanken in Kopfhöhe ankommen (2026-10-23) lagen die 12 Spiele
+    // genau auf 1,5; über 40 Spiele unverändert 1,95 → 1,88 je Spiel.
+    expect(corners('grossfeld', 24)).toBeGreaterThan(1.5); // gemessen 2,6 (80 Spiele)
+  }, 800000);
 });

@@ -226,6 +226,8 @@ export const CORNER_SCATTER = 2.5;
 // Befreiungsschlag: Tempo (m/s) und Steigung (m/s) – gewählt, nicht gemessen.
 export const CLEAR = { speed: 15, vy: 5 };
 export const CROSS_VMAX = { driven: 24, high: 27 };
+// Ankunftshöhe einer Flanke am Zielpunkt (m): im Kopfballbereich von headerTouch (1,35–2,4 m). Gewählt, nicht gemessen.
+export const CROSS_ARRIVE = { driven: 1.55, high: 1.4 };
 function pass(m, p, a, fatigue, fromHands) {
   const { ball, rng, pitch } = m;
   const eye = hasTrait(p, 'gutes_auge');
@@ -332,7 +334,9 @@ function pass(m, p, a, fatigue, fromHands) {
     // Eckstoß: Die Flanke landet nicht auf den Zentimeter beim Mitspieler, sondern streut um den Zielpunkt (Standardabweichung
     // in Metern, gewählt, nicht gemessen; sonst fiel aus gut 13 % der Ecken ein Tor, real sind es 3–5 %).
     const sc = a.zone && a.lofted ? CORNER_SCATTER * (1.4 - p.attrs.passing) : 0;
-    const lx = lx0 + rng.gauss() * sc;
+    // Gestreut, aber im Feld: Ohne Grenze lag der Zielpunkt einer Ecke (2–3,5 m vor der Torlinie, Streuung um 2,5 m) oft hinter
+    // der Linie – der Ball flog direkt ins Toraus (gemessen, scripts/corner-check.mjs). Ohne Streuung bleibt alles wie vorher.
+    const lx = sc ? clamp(lx0 + rng.gauss() * sc, -pitch.halfLength + 1, pitch.halfLength - 1) : lx0;
     const lz = clamp(lz0 + rng.gauss() * sc, -pitch.halfWidth + edge, pitch.halfWidth - edge);
     // Halle: Ist der direkte Weg zugestellt, kommt aber ein Ball über die Bande an, wird die Bande angespielt.
     board = !a.lofted && !lead && !a.zone && target ? boardChoice(m, p, { x: lx, z: lz }, false) : null;
@@ -340,8 +344,10 @@ function pass(m, p, a, fatigue, fromHands) {
     dir = board ? norm(board.aim.x - p.pos.x, board.aim.z - p.pos.z) : norm(lx - p.pos.x, lz - p.pos.z);
     if (a.lofted) {
       // Hoher Ball: Flanken kommen auf Kopfhöhe, sonst landet er vor den Füßen.
-      // Scharf an den ersten Pfosten: flacher und schneller.
-      const arrive = a.lofted === 'cross' ? (a.driven ? 1.1 : 1.4) : 0.3;
+      // Scharf an den ersten Pfosten: flacher und schneller – aber auch dann in Kopfhöhe (CROSS_ARRIVE). Mit 1,1 m kam er auf
+      // Brusthöhe an, zu hoch für den Fuß und zu tief für den Kopf (headerTouch ab 1,35 m): Gemessen ging so rund jede dritte
+      // Ecke unberührt durch bis ins Aus (scripts/corner-check.mjs, vom Nutzer gemeldet 2026-10-23).
+      const arrive = a.lofted === 'cross' ? (a.driven ? CROSS_ARRIVE.driven : CROSS_ARRIVE.high) : 0.3;
       vy = a.driven ? clamp(1.5 + d * 0.1, 2, 3.2) : clamp(3 + d * 0.22, 4, 8);
       const flight = (vy + Math.sqrt(Math.max(0, vy * vy - 2 * 9.81 * (arrive - 0.11)))) / 9.81;
       speed = d / Math.max(0.4, flight);
@@ -573,6 +579,7 @@ export function keeperSaves(m) {
 export const HEAD_VMAX = 22;
 export const HEAD_DUEL = { dist: 1.5, factor: 0.6 };
 export const HEAD_MISS = 0.45;
+export const HEAD_GRAZE = 0.7; // Anteil der nicht sauber getroffenen Kopfbälle, die den Ball noch streifen (Spielwert)
 // Zielstreuung eines Kopfballs aufs Tor (Bogenmaß, zusätzlich zur Streuung durch die Kopfballstärke): real kommen nur rund 34 % der
 // Kopfbälle aufs Tor (StatsBomb); der Wert 0,3 ist gewählt, nicht gemessen.
 export const HEAD_AIM = 0.3;
@@ -609,7 +616,25 @@ export function headerTouch(m) {
     const f = clamp(HEAD_DUEL.factor + STRENGTH_FX.head * (strengthOf(p) - strengthOf(o)), 0.2, 1);
     duel = Math.min(duel, f);
   }
-  if (!rng.chance((0.35 + 0.4 * skill) * duel)) return; // verpasst – Ball fliegt weiter
+  if (!rng.chance((0.35 + 0.4 * skill) * duel)) {
+    // Nicht sauber getroffen: Meist streift er ihn noch (Kopf, Schulter, Hinterkopf) – der Ball wird abgefälscht und verliert
+    // Tempo. Ganz verpasst wird er selten. Vorher flog jeder verpasste Kopfball unberührt weiter, gemessen ging so bei Ecken
+    // jeder dritte Ball trotz Spieler in Reichweite ins Aus (scripts/corner-check.mjs). Anteil HEAD_GRAZE gewählt, nicht gemessen.
+    if (!rng.chance(HEAD_GRAZE)) return; // ganz verpasst – Ball fliegt weiter
+    const v = hypot(ball.vel.x, ball.vel.z);
+    const d2 = rotate(norm(ball.vel.x, ball.vel.z), rng.gauss() * 0.6);
+    const k = rng.range(0.35, 0.7);
+    ball.vel.x = d2.x * v * k;
+    ball.vel.z = d2.z * v * k;
+    ball.vel.y = rng.range(-0.5, 2);
+    p.kickCooldown = 0.35;
+    p.headAnim = 0.3;
+    ball.lastTouch = p.id;
+    ball.lastAction = 'header';
+    m.lastTouchTeam = p.team;
+    m.events.push({ type: 'header', playerId: p.id, onGoal: false, graze: true });
+    return;
+  }
 
   const s = attackDir(m, p.team);
   const goal = { x: s * pitch.halfLength, z: rng.range(-pitch.goalHalfWidth * 0.8, pitch.goalHalfWidth * 0.8) };

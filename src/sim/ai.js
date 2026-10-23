@@ -220,6 +220,19 @@ export function updateTactics(m, dt) {
     }
     if (m.manager && team === m.coachTeam) shoutTactics(m, team, rest);
     if (receiver && receiver.id !== m.controlledId) m.tactics[receiver.id] = { type: 'receive', ...receiveSpot(m, receiver) };
+    // Flanke oder Ecke des Gegners in der Luft: Der Verteidiger, der den Treffpunkt in Kopfhöhe am ehesten erreicht, geht ins
+    // Kopfballduell. Vorher blieben alle in ihrer Zone, nur der Angreifer lief hin – gemessen ging so fast die Hälfte der Ecken
+    // unberührt ins Aus (scripts/corner-check.mjs). In der Profiliga hat fast jede Ecke einen ersten Kontakt (Copa América 2021:
+    // 52,6 % davon ein Angreifer, Pergamos/UoA); dort wird um jeden hohen Ball gekämpft.
+    if (m.pass?.cross && m.pass.team !== team && !ball.holder && (ball.pos.y > 0.5 || ball.vel.y > 1)) {
+      let best = null;
+      for (const p of pool.slice(0, 4)) {
+        const spot = receiveSpot(m, p);
+        const d = dist2d(p.pos, spot);
+        if (!best || d < best.d) best = { p, spot, d };
+      }
+      if (best) m.tactics[best.p.id] = { type: 'receive', ...best.spot };
+    }
     if (oppKeeper) {
       const r = keeperZone(pitch);
       for (const p of pool) {
