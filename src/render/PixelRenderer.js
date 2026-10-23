@@ -87,6 +87,7 @@ const postFragment = /* glsl */ `
   uniform vec2 rimDir;       // Sonnenrichtung im Bild (Kameraraum x, y)
   uniform float cloudAmount; // Wolkenschatten (0 = keine, bedeckt oder abends)
   uniform vec2 cloudShift;   // wie weit die Wolken gezogen sind (Meter)
+  uniform vec2 cloudSun;     // −Sonne.xz / Sonne.y: Versatz je Meter Höhe (Schatten entlang des Sonnenstrahls)
   // Phase 7: Bloom nur aus Lichtquellen (Kennung im Alphakanal, siehe materials.js LIGHT_CODE).
   uniform sampler2D tBloom;
   uniform float bloomIntensity;
@@ -305,7 +306,10 @@ const postFragment = /* glsl */ `
     // Kante weich über ein 4×4-Bayer-Muster, das an den WOLKEN verankert ist (Weltposition + Zug, nicht am
     // Bildschirm): das Raster wandert mit dem Schatten mit, die Kante kriecht und flimmert nicht mehr.
     if (cloudAmount > 0.0 && !sky) {
-      vec2 cq = wp.xz + cloudShift;
+      // Entlang des Sonnenstrahls auf den Boden projiziert: Eine Hauswand bekommt so denselben Fleck wie der Boden davor.
+      // Vorher nur wp.xz – auf einer senkrechten Wand (z fest) wurde jeder Fleck zum Streifen über die ganze Wandhöhe
+      // (vom Nutzer gemeldet, 2026-10-23).
+      vec2 cq = wp.xz + wp.y * cloudSun + cloudShift;
       vec2 cp = cq * 0.055;
       float cn = vnoise(cp) * 0.65 + vnoise(cp * 2.7 + 13.0) * 0.35;
       float sh = smoothstep(0.58 - 0.22 * cloudAmount, 0.78 - 0.22 * cloudAmount, cn); // breitere Kante als früher (0,13 → 0,20)
@@ -556,6 +560,7 @@ export class PixelRenderer {
         rimDir: { value: new THREE.Vector2(-1, 0.4) },
         cloudAmount: { value: 0 },
         cloudShift: { value: new THREE.Vector2() },
+        cloudSun: { value: new THREE.Vector2() },
         tBloom: { value: null },
         bloomIntensity: { value: 0 },
         ditherOrigin: { value: new THREE.Vector2() },
@@ -646,6 +651,8 @@ export class PixelRenderer {
     u.floodAmount.value = L.flood;
     u.floodField.value = L.floodField;
     this.sunDir = new THREE.Vector3(...L.sun.dir).normalize();
+    const sy = Math.max(0.25, this.sunDir.y); // flache Sonne: Versatz begrenzen, sonst lange Schlieren
+    u.cloudSun.value.set(-this.sunDir.x / sy, -this.sunDir.z / sy);
     u.rimLight.value = L.flood ? 0.08 : 0.16; // unter Flutlicht kommt das Licht von überall
     const f = lights?.field ?? [20, 12];
     u.field.value.set(f[0], f[1], 1.5, 7);
