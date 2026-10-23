@@ -1647,7 +1647,7 @@ body.manager #end { padding-bottom: 84px; }
 /* Gerüchteküche: Zettel am Kork (Transfers) */
 .rumor-board.m-cork { padding: var(--s4) var(--s3) var(--s3); }
 .rb-title { margin: 0 0 var(--s3); font-size: var(--fs-h2); color: var(--paper-ink); background: var(--paper); padding: 2px 12px; border: 2px solid #000; box-shadow: 2px 2px 0 #000; }
-.rumor-board .rumors { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--s4); }
+.rumor-board .rumors { grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: var(--s4); }
 .rumor-board .rumor { position: relative; color: var(--paper-ink); background: #fff4a8; border: 2px solid #000; border-left: 6px solid var(--c); box-shadow: 3px 3px 0 #000; text-shadow: none; transform: rotate(-0.8deg); }
 .rumor-board .rumor:nth-child(2n) { background: #f7f0dc; transform: rotate(0.7deg); }
 .rumor-board .rumor::after { content: ''; position: absolute; top: -7px; left: calc(50% - 7px); width: 14px; height: 14px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ff8a80 0 2px, #d9342b 3px); border: 2px solid #000; }
@@ -1775,3 +1775,39 @@ body.manager #end { padding-bottom: 84px; }
 .fest-lines li { display: flex; justify-content: space-between; gap: 8px; }
 .summer-cup { border-left-color: #e0b020; }
 @media (max-width: 640px) { .fest-part { flex-direction: column; align-items: flex-start; } .fest-part .fp-facts { justify-content: flex-start; } }
+
+/* Transfermarkt (Reiter Transfers, ROADMAP 11.9): Unterbereiche, Spielerliste, Verhandlung */
+.tf { display: grid; gap: 10px; min-width: 0; }
+.tf h4 { margin: 6px 0 0; }
+.tf-banner { margin: 0; padding: 8px 10px; border: 2px solid #000; border-left: 6px solid #666; background: rgba(255, 255, 255, 0.05); font-size: 13px; }
+.tf-banner.open { border-left-color: #5cc46a; }
+.tf-banner.closed { border-left-color: #d9a04f; }
+.tf-note { margin: 0; padding: 6px 10px; border: 2px solid #000; background: #2a2516; font-size: 13px; }
+.tf-filters { display: grid; gap: 8px; }
+.tf-filters .ui-seg button { min-height: 44px; }
+.tf-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.tf-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'name num' 'meta imp'; gap: 2px 10px; width: 100%; padding: 8px 10px; text-align: left; font: inherit; color: inherit; background: rgba(255, 255, 255, 0.04); border: 2px solid #000; cursor: pointer; }
+.tf-row .tf-name { grid-area: name; min-width: 0; overflow-wrap: anywhere; }
+.tf-row .tf-meta { grid-area: meta; min-width: 0; font-size: 12px; opacity: 0.8; overflow-wrap: anywhere; }
+.tf-row .tf-num { grid-area: num; align-self: center; font-size: 20px; font-variant-numeric: tabular-nums; }
+.tf-row .tf-imp { grid-area: imp; font-size: 12px; opacity: 0.8; text-align: right; }
+.tf-card { display: grid; gap: 4px; padding: 8px 10px; border: 2px solid #000; border-left: 6px solid var(--accent); background: rgba(255, 255, 255, 0.04); }
+.tf-card p { margin: 0; }
+.tf-card .badge { padding: 0 6px; color: #111; background: var(--c); border: 1px solid #000; text-shadow: none; font-size: 12px; }
+.tf-card .traits { display: flex; gap: 4px; flex-wrap: wrap; }
+.tf-card .traits i { font-style: normal; font-size: 12px; padding: 1px 6px; background: #2f4f3a; border: 1px solid #000; }
+.tf-step { display: grid; gap: 8px; padding: 8px 10px; border: 2px solid #000; background: rgba(255, 255, 255, 0.03); }
+.tf-step p, .tf-loan p { margin: 0; }
+.tf-step .actions, .tf-card .actions, .tf-loan { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.tf-step .actions.args button[aria-pressed='true'] { outline: 3px solid var(--accent); }
+.tf-step .reply.ok { color: #5cc46a; }
+.tf-step .reply.no { color: #d9a04f; }
+.tf-step .motives .unknown { opacity: 0.6; }
+.tf-own { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 10px; padding: 6px 8px; border: 2px solid #000; background: rgba(255, 255, 255, 0.04); }
+.tf-own .tf-name { flex: 1 1 200px; min-width: 0; }
+.tf-own .tf-name small { display: block; opacity: 0.75; }
+.tf-own .tf-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.tf-own button[aria-pressed='true'] { background: var(--accent); color: #111; text-shadow: none; }
+.tf-rules li, .tf-log li { margin: 4px 0; }
+@media (max-width: 640px) { .tf-own .tf-btns { width: 100%; } .tf-own .tf-btns button { flex: 1 1 120px; } }
+.club-panel .tf .ui-tabs button { padding: 0 var(--s3); } /* vier Unterbereiche sollen auch auf dem Handy nebeneinander passen */

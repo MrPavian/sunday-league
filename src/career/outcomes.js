@@ -5,6 +5,7 @@ import { rememberNewClub } from './memory.js';
 import { hasTrait } from '../data/traits.js';
 import { statusFor } from './spielbericht.js';
 import { humanClub, joinSquad, MIN_SQUAD, playerOf, releasePlayer } from './career.js';
+import { noteDeparture } from './transfers.js';
 
 // outcome([{ w, if, run }]) → effect(c, ctx, rng) für eine Event-Option.
 export function outcome(list) {
@@ -37,6 +38,7 @@ export function joinRival(c, idx, rivalId) {
   rival.squad.push(idx);
   rememberNewClub(c, idx, rivalId);
   c.players[idx] = { apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 };
+  noteDeparture(c, idx, rival); // Transfermarkt: Meldung im Kreisblatt und im Dorf (transfers.js)
   return true;
 }
 

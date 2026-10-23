@@ -26,6 +26,7 @@ const REASON = {
   dogso: tr('Rot wegen Notbremse', 'red card for a professional foul'),
   serious: tr('Rot wegen groben Foulspiels', 'red card for serious foul play'),
   yellows: tr('fünf Gelbe Karten', 'five yellow cards'),
+  wartefrist: tr('Wartefrist nach Wechsel ohne Freigabe', 'waiting period after a move without release'), // transfers.js
 };
 export const banReason = (reason) => REASON[reason] ?? REASON.serious;
 export const banLabel = (c, idx) => {

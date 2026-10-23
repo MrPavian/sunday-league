@@ -24,6 +24,7 @@ import { adjustForm, adjustMood } from './events.js';
 import { canLose, first, joinRival, outcome } from './outcomes.js';
 import { isCoach } from './personal.js';
 import { chronicle } from './sagas.js';
+import { inTransfers } from './transfers.js';
 
 const POACH_GATE = 0.6; // so oft wird überhaupt ein Kandidat gesucht (je Ereigniswoche)
 export const PRO_MIN_RATING = 68;
@@ -49,7 +50,7 @@ function poachCandidates(c) {
   const out = [];
   for (const idx of club.squad) {
     const rec = c.players[idx];
-    if (!rec || isCoach(c, idx) || rec.injuryWeeks > 0 || c.flags?.poached?.[idx] === c.season) continue;
+    if (!rec || isCoach(c, idx) || rec.injuryWeeks > 0 || c.flags?.poached?.[idx] === c.season || inTransfers(c, idx)) continue; // Transfermarkt: wer auf der Liste steht oder ein Angebot hat, läuft dort
     const p = playerOf(c, idx);
     if (rec.grumpy > 0) out.push({ idx, why: 'grumpy', w: 2 });
     else if (played >= 3 && (rec.playShare ?? rec.apps) <= played * 0.45) out.push({ idx, why: 'bench', w: 2 }); // Spielzeit, nicht Einsätze
