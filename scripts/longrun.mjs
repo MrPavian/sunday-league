@@ -1,4 +1,6 @@
-import { createCareer, currentFixtures, finishRound, humanClub, maxSquad, migrateCareer, nextSeason, nudge, playerOf, prepareMatch, recordResult, recruit, scoutRumor, seasonOver, simulateSync } from '../src/career/career.js';
+import { createCareer, currentFixtures, finishRound, humanClub, maxSquad, migrateCareer, MIN_SQUAD, nextSeason, nudge, playerOf, prepareMatch, recordResult, recruit, scoutRumor, seasonOver, simulateSync } from '../src/career/career.js';
+import * as TF from '../src/career/transfers.js';
+import { motivesOf } from '../src/career/recruiting.js';
 import { acceptSponsor, fulfillWish } from '../src/career/sponsors.js';
 import { build, canBuild, FACILITIES } from '../src/career/facilities.js';
 import { care, platz, renew } from '../src/career/platz.js';
@@ -19,9 +21,11 @@ const SEASONS = +process.argv[2] || 8, seed = +process.argv[3] || 4242;
 const TERM = +((process.argv.find((a) => a.startsWith('--term=')) ?? '').split('=')[1] ?? 1) || 1, WISHES = process.argv.includes('--wishes');
 const FEST = process.argv.includes('--fest'); // Vereinsfest und Sommerturnier mitspielen (Geld je Saison unter 'fest'/'turnier')
 const BOT = process.argv.includes('--bot'); // spielt wie ein aktiver Mensch: holt Leute, baut aus, nimmt Sponsoren
+const TRANSFERS = process.argv.includes('--transfers'); // Transfermarkt mitspielen (Spieler holen, Liste, Angebote, Leihe; Geld unter 'transfer'); prüft Doppelte und CPU-Kader
+const tfLog = { asked: 0, ja: 0, nein: 0, signed: 0, sold: 0, loans: 0 };
 const log = { recruited: 0, promoted: 0, built: [], sponsors: 0 };
 const money = {}; // Einnahmen/Ausgaben je Liga und Kategorie
-const cat = (t) => /Getränke|Drinks/.test(t) ? 'getraenke' : /Mitglied|Membership/.test(t) ? 'beitraege' : /\((Trikot|Ärmel|Bande|Ball|Shirt|Sleeve|Board)/.test(t) ? 'sponsoren' : /Strafen|Fines/.test(t) ? 'strafen' : /Schiri|Referee|Platzmiete|Pitch rent/.test(t) ? 'schiri+platz' : /Bonus|Prämie/i.test(t) ? 'praemien' : /Handwerker|Material|builders|Kauf des|Langzeitpacht|Grundsteuer|Platzpflege|Platzvermietung|Pitch care|Pitch hire|purchase|long-term|Property tax/.test(t) ? 'ausbau' : /Vereinsfest|club festival/i.test(t) ? 'fest' : /Sommerturnier|summer tournament|Theke beim Sommer|Bar at the summer/i.test(t) ? 'turnier' : /Nebenkosten|running/.test(t) ? 'nebenkosten' : /Fahrgeld|Travel money/.test(t) ? 'fahrgeld' : /Spielbetrieb|Running the team/.test(t) ? 'spielbetrieb' : /Auswärts|Away trip/.test(t) ? 'auswaerts' : /Fahrt|trip/i.test(t) ? 'fahrt' : /Pauschale|Allowance/.test(t) ? 'ehrenamt' : /Aufwandsentschädigung|Expenses for/.test(t) ? 'ae' : 'sonstiges';
+const cat = (t) => /Ausbildungsentschädigung|Training compensation|Handgeld|Signing-on|Leihe:|Loan:/.test(t) ? 'transfer' : /Getränke|Drinks/.test(t) ? 'getraenke' : /Mitglied|Membership/.test(t) ? 'beitraege' : /\((Trikot|Ärmel|Bande|Ball|Shirt|Sleeve|Board)/.test(t) ? 'sponsoren' : /Strafen|Fines/.test(t) ? 'strafen' : /Schiri|Referee|Platzmiete|Pitch rent/.test(t) ? 'schiri+platz' : /Bonus|Prämie/i.test(t) ? 'praemien' : /Handwerker|Material|builders|Kauf des|Langzeitpacht|Grundsteuer|Platzpflege|Platzvermietung|Pitch care|Pitch hire|purchase|long-term|Property tax/.test(t) ? 'ausbau' : /Vereinsfest|club festival/i.test(t) ? 'fest' : /Sommerturnier|summer tournament|Theke beim Sommer|Bar at the summer/i.test(t) ? 'turnier' : /Nebenkosten|running/.test(t) ? 'nebenkosten' : /Fahrgeld|Travel money/.test(t) ? 'fahrgeld' : /Spielbetrieb|Running the team/.test(t) ? 'spielbetrieb' : /Auswärts|Away trip/.test(t) ? 'auswaerts' : /Fahrt|trip/i.test(t) ? 'fahrt' : /Pauschale|Allowance/.test(t) ? 'ehrenamt' : /Aufwandsentschädigung|Expenses for/.test(t) ? 'ae' : 'sonstiges';
 function staffBot(c) {
   for (const role of ROLES) {
     if (role !== 'jugendleiter' && holderOf(c, role)) continue;
@@ -43,6 +47,42 @@ function bot(c) {
   if (!process.argv.includes('--nocare')) { care(c, 'maehen', 'helfer'); care(c, 'kreide', 'helfer'); care(c, 'waessern', 'helfer'); if (platz(c).cond < 0.6) care(c, 'nachsaeen', 'profi'); care(c, 'abziehen', 'helfer'); if (platz(c).angebot) renew(c); }
   const OLD = ['duschen', 'grill', 'ballmaschine', 'kabine', 'flutlicht', 'vereinsbus', 'jugendhaus', 'tribuene']; // --oldset: nur die Ausbauten von vor 11.9 (Vergleich mit dem alten Stand)
   for (const id of Object.keys(FACILITIES)) if ((!process.argv.includes('--oldset') || OLD.includes(id)) && canBuild(c, id) && c.cash > FACILITIES[id].cost * 1.4 && build(c, id, 'handwerker')) log.built.push(`${id}@S${c.season}`);
+}
+// Transfermarkt-Bot: wie ein aktiver Mensch in der Wechselperiode – Angebote prüfen, Besten der Nachbarn anfragen, mit passenden
+// Argumenten reden, bei vollem Kader den Schwächsten listen, einmal pro Sommer einen Leihspieler.
+function transferBot(c) {
+  const kind = TF.windowInfo(c).kind;
+  if (!kind || !c.week) return;
+  const me = humanClub(c);
+  for (const o of [...c.transfers.offers]) {
+    if (me.squad.length > MIN_SQUAD + 2) { if (TF.acceptOffer(c, o.id) === 'ok') tfLog.sold++; } else TF.declineOffer(c, o.id);
+  }
+  const mine = me.squad.filter((i) => i !== c.coach?.idx).map((i) => playerOf(c, i).rating).sort((a, b) => a - b);
+  if (me.squad.length >= maxSquad(c) - 1) { const w = me.squad.filter((i) => i !== c.coach?.idx).sort((a, b) => playerOf(c, a).rating - playerOf(c, b).rating)[0]; TF.listPlayer(c, w, true); }
+  if (me.squad.length < maxSquad(c)) {
+    for (const r of TF.marketList(c, { sort: 'rating' })) {
+      if (TF.windowInfo(c).left <= 0 || me.squad.length >= maxSquad(c)) break;
+      if (r.p.rating <= (mine[2] ?? 0) || TF.priceOf(c, r.idx) > c.cash - 100) continue;
+      tfLog.asked++;
+      const code = TF.askClub(c, r.idx);
+      if (code === 'ja') {
+        tfLog.ja++;
+        if (c.cash > 400) TF.setHandgeld(c, r.idx, 40);
+        if (!TF.talkDeal(c, r.idx)) continue;
+        const [a, b] = motivesOf(r.p);
+        TF.argueDeal(c, r.idx, a);
+        if (TF.argueDeal(c, r.idx, b)?.joined) tfLog.signed++;
+      } else if (code === 'nein') tfLog.nein++;
+    }
+  }
+  if (kind === 'summer' && me.squad.length < maxSquad(c) - 1 && !TF.loansIn(c).length) {
+    for (const r of TF.marketList(c, { sort: 'rating' })) if (r.importance < 0.6 && r.p.rating > (mine[2] ?? 0) && TF.loanIn(c, r.idx) === 'ok') { tfLog.loans++; break; }
+  }
+}
+function tfCheck(c) { // keiner doppelt, CPU-Kader nicht ausgedünnt
+  const all = [...c.clubs.flatMap((x) => x.squad), ...c.transfers.neighbors.flatMap((n) => n.squad)];
+  if (new Set(all).size !== all.length) errors.push(`doppelte Spieler ${c.season}/${c.round}`);
+  for (const x of c.clubs.filter((k) => !k.human)) if (x.squad.length < 8) errors.push(`dünner Kader ${x.name} ${x.squad.length} ${c.season}/${c.round}`);
 }
 const t0 = Date.now();
 let c = createCareer({ seed, leagueSize: process.argv.includes('--8') ? 8 : 6, coach: COACHONLY ? { first: 'Uwe', last: 'Brandt', age: 44, relation: 'verheiratet', profession: 'Elektriker', style: 'libero', children: [], mode: 'coachOnly' } : null });
@@ -77,6 +117,7 @@ for (let s = 0; s < SEASONS; s++) {
     const dups = texts.filter((t, i) => texts.indexOf(t) !== i);
     if (dups.length) dupWeek.push(`${c.season}/${c.round}: ${dups[0].slice(0, 70)}`);
     for (const t of texts) seen.set(t, (seen.get(t) ?? 0) + 1);
+    if (TRANSFERS) try { const cash0 = c.cash; transferBot(c); const lv = 'L' + (c.level ?? 1); money[lv] ??= {}; money[lv].transfer = Math.round((money[lv].transfer ?? 0) + c.cash - cash0); } catch (err) { errors.push('transfers: ' + err.stack.split('\n').slice(0, 3).join(' | ')); }
     if (BOT) bot(c);
     const e = c.week?.event;
     if (e && e.choice === null && rng.chance(0.7)) try { resolveEvent(c, rng.int ? rng.int(0, e.options.length - 1) : Math.floor(rng.next() * e.options.length)); } catch (err) { errors.push('event ' + e.id + ': ' + err.message); }
@@ -88,6 +129,7 @@ for (let s = 0; s < SEASONS; s++) {
     try { finishRound(c); } catch (err) { errors.push(`round ${c.season}/${c.round}: ${err.stack.split('\n').slice(0, 3).join(' | ')}`); c.round++; }
     { const L = c.ledger; let i = lastEntry ? L.lastIndexOf(lastEntry) + 1 : 0; const lv = 'L' + (c.level ?? 1); money[lv] ??= {}; for (; i < L.length; i++) { const k = cat(L[i].text); money[lv][k] = Math.round((money[lv][k] ?? 0) + L[i].amount); } }
     c = migrateCareer(JSON.parse(JSON.stringify(c))); // Speichern + Laden
+    if (TRANSFERS) tfCheck(c);
   }
   if (FEST) try { const c0 = c.cash; const r = festival(c); const lv = 'L' + (c.level ?? 1); money[lv] ??= {}; money[lv].fest = Math.round((money[lv].fest ?? 0) + c.cash - c0); if (r) festLog.push({ season: c.season, visitors: r.visitors, net: r.net, members: r.members, weather: r.weather }); } catch (err) { errors.push('vereinsfest: ' + err.stack.split('\n').slice(0, 3).join(' | ')); }
   const me = humanClub(c);
@@ -95,11 +137,12 @@ for (let s = 0; s < SEASONS; s++) {
   const res = nextSeason(c);
   const feuds = Object.values(c.feuds ?? {});
   const nem = Object.values(c.nemesis ?? {});
-  perSeason.push({ season: c.season - 1, pos: c.history.at(-1).pos, squad: me.squad.length, gpg: +(goals / games).toFixed(2), chronicle: (c.saga?.chronicle ?? []).length, formers: Object.keys(c.formers ?? {}).length, nemMax: Math.max(0, ...nem), feud: feuds.length ? `${Math.min(...feuds)}..${Math.max(...feuds)}` : '-', otherSquads: c.clubs.filter((x) => !x.human).map((x) => x.squad.length).join(','), kb: Math.round(JSON.stringify(c).length / 1024), goal: c.goal?.type ?? '?', alumni: (c.alumni ?? []).length, cash: Math.round(c.cash), minCash: Math.round(minCash), energy: Math.round(c.coach?.energy ?? 0), fee: c.clubLife?.fee ?? 0, sup: c.clubLife?.supporters ?? 0, nb: c.clubLife?.neighbors ?? 0, mood: +(c.mood ?? 0).toFixed(2), avgRat: Math.round(humanClub(c).squad.reduce((a, i) => a + playerOf(c, i).rating, 0) / humanClub(c).squad.length), oppRat: c.clubs.filter((x) => !x.human).map((x) => Math.round(x.squad.reduce((a, i) => a + playerOf(c, i).rating, 0) / x.squad.length)).join('/'), lvl: c.level, heirs: (c.heirs?.kids ?? []).length, melee: (c.saga?.chronicle ?? []).filter((x) => x.text.startsWith('Rudel')).length });
+  perSeason.push({ season: c.season - 1, pos: c.history.at(-1).pos, squad: me.squad.length, gpg: +(goals / games).toFixed(2), chronicle: (c.saga?.chronicle ?? []).length, formers: Object.keys(c.formers ?? {}).length, nemMax: Math.max(0, ...nem), feud: feuds.length ? `${Math.min(...feuds)}..${Math.max(...feuds)}` : '-', otherSquads: c.clubs.filter((x) => !x.human).map((x) => x.squad.length).join(','), kb: Math.round(JSON.stringify(c).length / 1024), goal: c.goal?.type ?? '?', alumni: (c.alumni ?? []).length, cash: Math.round(c.cash), minCash: Math.round(minCash), energy: Math.round(c.coach?.energy ?? 0), fee: c.clubLife?.fee ?? 0, sup: c.clubLife?.supporters ?? 0, nb: c.clubLife?.neighbors ?? 0, mood: +(c.mood ?? 0).toFixed(2), avgRat: Math.round(humanClub(c).squad.reduce((a, i) => a + playerOf(c, i).rating, 0) / humanClub(c).squad.length), oppRat: c.clubs.filter((x) => !x.human).map((x) => Math.round(x.squad.reduce((a, i) => a + playerOf(c, i).rating, 0) / x.squad.length)).join('/'), lvl: c.level, heirs: (c.heirs?.kids ?? []).length, ...(TRANSFERS ? { tf: `${c.transfers.stats.in}/${c.transfers.stats.out}/${c.transfers.stats.cpu}/${c.transfers.stats.loans}`, tfPaid: `${c.transfers.stats.paid}/${c.transfers.stats.received}` } : {}), melee: (c.saga?.chronicle ?? []).filter((x) => x.text.startsWith('Rudel')).length });
 }
 console.table(perSeason);
 if (FEST) console.table(festLog);
 if (BOT) console.log('bot:', JSON.stringify(log));
+if (TRANSFERS) console.log('transfermarkt:', JSON.stringify(tfLog), JSON.stringify(c.transfers.stats));
 for (const [lv, m] of Object.entries(money)) console.log(lv, JSON.stringify(m));
 console.log('chatMax/week', chatMax, 'errors', errors.length); errors.slice(0, 10).forEach((e) => console.log(' ', e));
 console.log('duplicate within week:', dupWeek.length); dupWeek.slice(0, 8).forEach((d) => console.log(' ', d));

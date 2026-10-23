@@ -6,6 +6,7 @@ import { mainMenu, screens, tickerRound, whatsNew } from './ui/core.mjs';
 import { festivalAndSummer } from './ui/festival.mjs';
 import { phoneAndShare } from './ui/phone.mjs';
 import { platzAnlage } from './ui/platz.mjs';
+import { transferMarkt } from './ui/transfers.mjs';
 
 export async function run({ sizes = Object.keys(SIZES) } = {}) {
   const b = await launch();
@@ -15,6 +16,7 @@ export async function run({ sizes = Object.keys(SIZES) } = {}) {
   for (const s of sizes) fails += await whatsNew(b, s, process.env.E2E_SHOTS);
   for (const s of sizes) fails += await festivalAndSummer(b, s, process.env.E2E_SHOTS);
   for (const s of sizes) fails += await platzAnlage(b, s);
+  for (const s of sizes) fails += await transferMarkt(b, s, process.env.E2E_SHOTS);
   for (const s of sizes) fails += await phoneAndShare(b, s);
   fails += await tickerRound(b);
   await b.close();

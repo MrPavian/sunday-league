@@ -38,6 +38,7 @@ import { pubScreens } from './clubhouse/pub.js';
 import { seasonScreens } from './clubhouse/season.js';
 import { festivalScreens } from './clubhouse/festival.js';
 import { teamScreens } from './clubhouse/team.js';
+import { transferScreens } from './clubhouse/transfers.js';
 import { hex, dartPoints, leagueName } from './clubhouse/shared.js';
 
 
@@ -354,6 +355,8 @@ export class Clubhouse {
         nudge(this.career, Number(value));
         haptic('tap');
         this.h.onChange();
+      } else if (action.startsWith('tf')) {
+        if (this.tfAction(action, value, t)) this.h.onChange(); // Transfermarkt (clubhouse/transfers.js)
       } else if (action in this.h) return this.h[action](value);
       this.render();
     });
@@ -617,4 +620,4 @@ export class Clubhouse {
 }
 
 // Bildschirme je Bereich (src/ui/clubhouse/*): Methoden mit demselben this wie oben.
-Object.assign(Clubhouse.prototype, homeScreens, teamScreens, seasonScreens, clubScreens, officeScreens, phoneScreens, pubScreens, festivalScreens);
+Object.assign(Clubhouse.prototype, homeScreens, teamScreens, transferScreens, seasonScreens, clubScreens, officeScreens, phoneScreens, pubScreens, festivalScreens);

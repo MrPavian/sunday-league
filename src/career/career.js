@@ -661,6 +661,7 @@ export const takenIndices = (career) =>
     ...career.clubs.flatMap((c) => c.squad),
     ...(career.youth?.prospects ?? []),
     ...(career.alumni ?? []).map((a) => a.idx),
+    ...(career.transfers?.neighbors ?? []).flatMap((n) => n.squad), // Nachbarligen des Transfermarkts (transfers.js)
     ...Object.entries(career.formers ?? {}).filter(([, f]) => f.pro).map(([k]) => Number(k)),
     // Gäste aus Turnieren und Pokalen, solange sie dabei sind (sonst spielte einer für zwei Vereine).
     ...Object.values(career.cups ?? {}).flatMap((t) => (t.stage !== 'done' ? (t.guests ?? []).flatMap((g) => g.squad) : [])),

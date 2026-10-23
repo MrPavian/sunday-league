@@ -367,7 +367,8 @@ export const teamScreens = {
       </div>`;
   },
 
-  tab_transfers() {
+  // Gerüchteküche (Unterbereich des Reiters „Transfers“, siehe transfers.js).
+  rumorBoard() {
     const c = this.career;
     const w = c.week;
     if (!w || this.results) return `<p class="empty">${tr('Die Gerüchteküche meldet sich nach dem Wochenstart.', 'The rumour mill starts up once the week begins.')}</p>`;
