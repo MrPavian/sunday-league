@@ -7,6 +7,7 @@ import { crestEditor } from './ui/crest.mjs';
 import { festivalAndSummer } from './ui/festival.mjs';
 import { phoneAndShare } from './ui/phone.mjs';
 import { platzAnlage } from './ui/platz.mjs';
+import { alteHerren, alteHerrenTicker } from './ui/oldboys.mjs';
 import { transferMarkt } from './ui/transfers.mjs';
 
 export async function run({ sizes = Object.keys(SIZES) } = {}) {
@@ -19,6 +20,8 @@ export async function run({ sizes = Object.keys(SIZES) } = {}) {
   for (const s of sizes) fails += await crestEditor(b, s, process.env.E2E_SHOTS);
   for (const s of sizes) fails += await platzAnlage(b, s);
   for (const s of sizes) fails += await transferMarkt(b, s, process.env.E2E_SHOTS);
+  for (const s of sizes) fails += await alteHerren(b, s, process.env.E2E_SHOTS);
+  fails += await alteHerrenTicker(b, process.env.E2E_SHOTS);
   for (const s of sizes) fails += await phoneAndShare(b, s);
   fails += await tickerRound(b);
   await b.close();

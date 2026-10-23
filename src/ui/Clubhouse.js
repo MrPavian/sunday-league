@@ -39,6 +39,7 @@ import { seasonScreens } from './clubhouse/season.js';
 import { festivalScreens } from './clubhouse/festival.js';
 import { teamScreens } from './clubhouse/team.js';
 import { transferScreens } from './clubhouse/transfers.js';
+import { oldBoysScreens } from './clubhouse/oldboys.js';
 import { hex, dartPoints, leagueName } from './clubhouse/shared.js';
 
 
@@ -48,7 +49,7 @@ const AREAS = [
   { id: 'home', icon: 'home', label: () => tr('Heute', 'Today'), tabs: ['home'] },
   { id: 'team', icon: 'team', label: () => tr('Mannschaft', 'Squad'), tabs: ['squad', 'lineup', 'tactic', 'training', 'youth', 'transfers'] },
   { id: 'season', icon: 'season', label: () => tr('Saison', 'Season'), tabs: ['table', 'fixtures', 'cup'] },
-  { id: 'club', icon: 'club', label: () => tr('Verein', 'Club'), tabs: ['cash', 'club', 'office', 'museum'] }, // 'office' (Präsidium) nur nach dem Traineramt, siehe visibleTabs
+  { id: 'club', icon: 'club', label: () => tr('Verein', 'Club'), tabs: ['cash', 'club', 'office', 'oldboys', 'museum'] }, // 'office' (Präsidium) nur nach dem Traineramt, siehe visibleTabs
   { id: 'pub', icon: 'pub', label: () => tr('Kneipe', 'Pub'), tabs: ['pub'] },
   { id: 'phone', icon: 'phone', label: () => tr('Handy', 'Phone'), tabs: ['chat'] },
 ];
@@ -66,6 +67,7 @@ const TAB_LABELS = () => ({
   club: tr('Verein', 'Club'),
   museum: tr('Museum', 'Museum'),
   office: tr('Präsidium', 'President'),
+  oldboys: tr('Alte Herren', 'Old boys'),
   cash: tr('Kasse', 'Kitty'),
   fixtures: tr('Spielplan', 'Fixtures'),
 });
@@ -357,6 +359,8 @@ export class Clubhouse {
         nudge(this.career, Number(value));
         haptic('tap');
         this.h.onChange();
+      } else if (action.startsWith('ah')) {
+        if (this.ahAction(action, value)) this.h.onChange(); // Alte Herren (clubhouse/oldboys.js)
       } else if (action.startsWith('tf')) {
         if (this.tfAction(action, value, t)) this.h.onChange(); // Transfermarkt (clubhouse/transfers.js)
       } else if (action in this.h) return this.h[action](value);
@@ -640,4 +644,4 @@ export class Clubhouse {
 }
 
 // Bildschirme je Bereich (src/ui/clubhouse/*): Methoden mit demselben this wie oben.
-Object.assign(Clubhouse.prototype, homeScreens, teamScreens, transferScreens, seasonScreens, clubScreens, officeScreens, phoneScreens, pubScreens, festivalScreens);
+Object.assign(Clubhouse.prototype, homeScreens, teamScreens, transferScreens, oldBoysScreens, seasonScreens, clubScreens, officeScreens, phoneScreens, pubScreens, festivalScreens);

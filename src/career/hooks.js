@@ -4,7 +4,8 @@
 // Ältere Module (Fest, Tim, Platz …) hängen noch direkt in career.js; deren Reihenfolge bestimmt den Zufall und bleibt.
 // Einträge als Namensraum-Import (`import * as x from './x.js'`), damit Kreisimporte mit career.js unschädlich sind.
 import * as transfers from './transfers.js'; // Transfermarkt
-export const FEATURES = [transfers];
+import * as oldboys from './oldboys.js'; // Alte Herren
+export const FEATURES = [transfers, oldboys];
 
 export function runHooks(name, career, ...args) {
   for (const f of FEATURES) f[name]?.(career, ...args);

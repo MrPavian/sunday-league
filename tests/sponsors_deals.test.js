@@ -14,7 +14,12 @@ import { bandBoards } from '../src/render/venues/lawn.js';
 import { slotsFor } from '../src/career/sponsors.js';
 
 const fake = { pick: (a) => a[0], int: (a) => a, chance: () => true, next: () => 0.5, range: (a) => a };
-const fresh = (seed = 5) => createCareer({ seed });
+// Startkarriere je Seed nur einmal bauen (createCareer ist teuer); jeder Test bekommt eine frische Kopie.
+const BASE = new Map();
+const fresh = (seed = 5) => {
+  if (!BASE.has(seed)) BASE.set(seed, JSON.stringify(createCareer({ seed })));
+  return JSON.parse(BASE.get(seed));
+};
 const signAll = (c) => { for (let i = c.offers.length - 1; i >= 0; i--) acceptSponsor(c, i); };
 
 describe('Sperrliste verjährt (Fehler: Pool schrumpfte über lange Karrieren)', () => {
