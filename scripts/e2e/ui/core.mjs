@@ -54,6 +54,10 @@ export async function screens(b, size) {
   await click(p, '.settings-panel [data-action="back"]');
   await p.waitForTimeout(300);
   ok(await visible(p, 'club'), 'Zurück aus den Einstellungen führt nicht ins Vereinsheim');
+  // Tür oben rechts: zurück ins Hauptmenü (war nach dem Umbau von main.js ohne Wirkung)
+  await click(p, '.club-tools [data-action="onMenu"]');
+  await p.waitForTimeout(300);
+  ok((await visible(p, 'menu')) && !(await visible(p, 'club')), 'Tür-Knopf führt nicht ins Hauptmenü');
   ok(!p.errors.length, `Seitenfehler: ${p.errors.join(' | ')}`);
   await p.context().close();
   return ok.done();

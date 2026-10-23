@@ -283,7 +283,7 @@ export function createMatchflow(ctx) {
 
   // Handler fürs Vereinsheim (Clubhouse in main.js).
   const clubhouseHandlers = {
-    onMenu: ctx.openMenu,
+    onMenu: () => ctx.openMenu(), // erst beim Klick nachschlagen: openMenu kommt nach createMatchflow in ctx (main.js)
     onSettings: () => ctx.menu.onSettings(),
     onChange: () => saveCareer(ctx.career),
     onCoach: () => playCareerMatch(),

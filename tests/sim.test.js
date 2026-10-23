@@ -322,7 +322,7 @@ describe('venues', () => {
       expect(m.players.length + m.sentOff.length).toBe(pitch.format * 2); // Platzverweise zählen mit
     }
     expect(goals).toBeGreaterThan(0);
-  });
+  }, 60000); // vier volle Spiele: alleine 23–28 s auf dem Testrechner, auch schon beim Stand vor dieser Lieferung
 });
 
 describe('player pool', () => {

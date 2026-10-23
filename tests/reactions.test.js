@@ -618,6 +618,6 @@ describe('Fouls sichtbar machen', () => {
     }
     expect(foulsSeen).toBeGreaterThan(8);
     expect(kinds.size).toBeGreaterThanOrEqual(3);
-  });
+  }, 60000); // alleine 26–32 s auf dem Testrechner, auch schon beim Stand vor dieser Lieferung
 });
 
