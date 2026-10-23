@@ -5,9 +5,9 @@ import { kitPreviewURL } from '../../render/kitPaint.js';
 import { museum } from '../../career/museum.js';
 import { clubLife, FEE_NAMES, neighborText } from '../../career/clublife.js';
 import { reviewHTML } from '../review.js';
-import { button, esc } from '../ds.js';
-import { CREST_BAND_TEXTS, CREST_COLORS, CREST_DIVISIONS, CREST_SHAPES, CREST_SYMBOLS, crestExtras, crestOf, crestSVG, defaultCrest, FIGURES } from '../crest.js';
-import { humanClub, KIT_COLLARS, KIT_COLORS, KIT_PATTERNS, KIT_SLEEVES, kitEditable, updateCrest, playerOf, table } from '../../career/career.js';
+import { button, esc, tabs as uiTabs } from '../ds.js';
+import { CREST_BAND_TEXTS, CREST_COLORS, CREST_DIVISION_GROUPS, CREST_DIVISIONS, CREST_OVERLAYS, CREST_SHAPES, CREST_SYMBOL_GROUPS, CREST_SYMBOLS, crestExtras, crestOf, crestSVG, defaultCrest, THIRD_COLOR_DIVISIONS } from '../crest.js';
+import { humanClub, KIT_COLLARS, KIT_COLORS, KIT_PATTERNS, KIT_SLEEVES, kitEditable, updateCrest, setFounded, clampFounded, foundedRange, playerOf, table } from '../../career/career.js';
 import { spielberichtStreng } from '../../career/spielbericht.js';
 import { FINES, KIT_COST, MEMBER_FEE, SLOTS } from '../../career/finances.js';
 import { DESTINATIONS } from '../../career/trip.js';
@@ -116,9 +116,13 @@ export const clubScreens = {
 
   crestAction(action, value) {
     const club = humanClub(this.career);
+    // Reiter und Farbfach ändern nichts am Wappen: kein Entwurf nötig.
+    if (action === 'crestTab') return void (this.crestTab = value);
+    if (action === 'crestSlot') return void (this.crestSlot = value);
     const d = (this.crestDraft ??= structuredClone(crestOf(club)));
     if (action === 'crestShape') d.shape = value;
     else if (action === 'crestDivision') d.division = value;
+    else if (action === 'crestOverlay') d.overlay = value;
     else if (action === 'crestSymbol') d.symbol = value;
     else if (action === 'crestColor') {
       const [slot, col] = value.split(':');
@@ -126,58 +130,87 @@ export const clubScreens = {
     } else if (action === 'crestBand') d.band = !d.band;
     else if (action === 'crestBandText') (d.band = true), (d.bandText = value);
     else if (action === 'crestStars') d.stars = !(d.stars ?? true);
-    else if (action === 'crestSlot') this.crestSlot = value;
+    else if (action === 'crestYear') this.crestYear = clampFounded(this.career, value);
+    else if (action === 'crestYearStep') this.crestYear = clampFounded(this.career, (this.crestYear ?? crestExtras(this.career).year) + Number(value));
     else if (action === 'crestRandom') {
       const seed = { id: `${club.id}-${Math.random()}`, kit: { shirt: d.colors.field, second: d.colors.second } };
-      this.crestDraft = { ...defaultCrest(seed), colors: { ...d.colors } };
-    } else if (action === 'crestReset') this.crestDraft = null;
+      const pick = (list) => list[Math.floor(Math.random() * list.length)];
+      const symbols = Object.keys(CREST_SYMBOLS).filter((id) => id !== 'keins');
+      this.crestDraft = { ...defaultCrest(seed), shape: pick(Object.keys(CREST_SHAPES)), division: pick(Object.keys(CREST_DIVISIONS)), symbol: pick(symbols), overlay: Math.random() < 0.3 ? pick(Object.keys(CREST_OVERLAYS)) : 'keine', colors: { ...d.colors } };
+    } else if (action === 'crestReset') (this.crestDraft = null), (this.crestYear = null);
     else if (action === 'crestSave') {
-      updateCrest(this.career, d);
+      if (JSON.stringify(d) !== JSON.stringify(crestOf(club))) updateCrest(this.career, d, this.crestYear);
+      else if (this.crestYear != null) setFounded(this.career, this.crestYear);
       this.crestDraft = null;
+      this.crestYear = null;
       this.crestNote = tr('Neues Wappen ist beim Schildermacher bestellt. Und schon auf der Anzeigetafel.', 'New crest ordered from the sign maker. Already on the scoreboard.');
       this.h.onChange();
     }
   },
 
-  // Wappen-Editor: Form, Teilung, Symbol oder Figur, vier Farben, Schriftband.
-  crestBlock(founding = false) {
+  // Große Vorschau und Gründungsjahr darunter; auch zum Auffrischen beim Tippen im Jahresfeld (ohne Neuzeichnen).
+  crestLive() {
+    const founding = !!this.career.founding;
     const club = { ...humanClub(this.career), ...(founding && this.draft ? { name: this.draft.name || humanClub(this.career).name, short: this.draft.short || humanClub(this.career).short } : {}) };
     const d = this.crestDraft ?? crestOf(club);
-    const slot = this.crestSlot ?? 'field';
     const extra = crestExtras(this.career);
-    const mini = (patch) => crestSVG({ ...d, ...patch, colors: d.colors }, { size: 30, short: club.short, year: extra.year });
+    const year = this.crestYear ?? extra.year;
+    return { club, d, extra, year, svg: crestSVG(d, { size: 120, short: club.short, year, stars: extra.stars, label: club.name }) };
+  },
+
+  // Wappen-Editor: Vorschau immer sichtbar, darunter Reiter Form / Muster / Farben / Symbol / Band & Jahr.
+  crestBlock(founding = false) {
+    const { club, d, extra, year, svg } = this.crestLive();
+    const [yMin, yMax] = foundedRange(this.career);
+    const tab = this.crestTab ?? 'form';
+    const slot = this.crestSlot ?? 'field';
+    const mini = (patch) => crestSVG({ ...d, ...patch, colors: d.colors }, { size: 30, short: club.short, year });
     const choice = (action, entries, current, patch) =>
-      entries.map(([id, label]) => `<button class="crest-choice ${current === id ? 'active' : ''}" data-action="${action}" data-value="${id}" title="${label}">${mini(patch(id))}<small>${label}</small></button>`).join('');
-    const symbols = Object.entries(CREST_SYMBOLS);
-    const slots = tr({ field: 'Feld', second: 'Teilung', symbol: 'Symbol', border: 'Rand & Band' }, { field: 'Field', second: 'Division', symbol: 'Symbol', border: 'Border & band' });
-    return `
-      <div class="crest-editor">
-        <div class="crest-preview">
-          ${crestSVG(d, { size: 150, short: club.short, year: extra.year, stars: extra.stars, label: club.name })}
-          <b>${club.name}</b>
-          <div class="crest-actions">
-            <button data-action="crestRandom">${tr('Würfeln', 'Shuffle')}</button>
-            <button data-action="crestBand" class="${d.band ? 'active' : ''}">${tr('Schriftband', 'Name band')}</button>
-            <button data-action="crestStars" class="${d.stars ?? true ? 'active' : ''}" title="${tr('Ein Stern je Meisterschaft, bis zu fünf', 'One star per league title, up to five')}">${tr('Sterne', 'Stars')} (${extra.stars})</button>
-            ${this.crestDraft ? `<button data-action="crestReset">${tr('Verwerfen', 'Discard')}</button>` : ''}
-            ${founding ? '' : `<button class="primary" data-action="crestSave" ${this.crestDraft ? '' : 'disabled'}>${tr('Wappen übernehmen', 'Use this crest')}</button>`}
+      entries.map(([id, label]) => `<button class="crest-choice ${current === id ? 'active' : ''}" data-action="${action}" data-value="${id}" title="${label}" aria-pressed="${current === id}">${mini(patch(id))}<small>${label}</small></button>`).join('');
+    const group = (title, body) => `<h4>${title}</h4><div class="crest-grid">${body}</div>`;
+    const slots = tr({ field: 'Feld', second: 'Zweite Farbe', third: 'Dritte Farbe', symbol: 'Symbol', border: 'Rand & Band' }, { field: 'Field', second: 'Second colour', third: 'Third colour', symbol: 'Symbol', border: 'Border & band' });
+    const tabs = [['form', tr('Form', 'Shape')], ['muster', tr('Muster', 'Pattern')], ['farben', tr('Farben', 'Colours')], ['symbol', tr('Symbol', 'Symbol')], ['band', tr('Band/Jahr', 'Band/Year')]];
+    const panels = {
+      form: group(tr('Schildform', 'Shield shape'), choice('crestShape', Object.entries(CREST_SHAPES), d.shape, (id) => ({ shape: id }))),
+      muster:
+        CREST_DIVISION_GROUPS.map((g) => group(g.label, choice('crestDivision', g.ids.map((id) => [id, CREST_DIVISIONS[id]]), d.division, (id) => ({ division: id })))).join('') +
+        group(tr('Rand, Ring und Haupt (dritte Farbe)', 'Border, ring and chief (third colour)'), choice('crestOverlay', Object.entries(CREST_OVERLAYS), d.overlay ?? 'keine', (id) => ({ overlay: id }))),
+      farben: `<h4>${tr('Farbfach wählen', 'Pick a colour slot')}</h4>
+          <div class="swatch-row crest-slots">${Object.entries(slots).map(([id, label]) => `<button class="${slot === id ? 'active' : ''}" data-action="crestSlot" data-value="${id}"><i class="dot" style="background:${hex(d.colors[id])}"></i>${label}</button>`).join('')}</div>
+          <div class="swatch-row">${CREST_COLORS.map((col) => `<button class="swatch ${d.colors[slot] === col ? 'on' : ''}" style="background:${hex(col)}" data-action="crestColor" data-value="${slot}:${col}" aria-label="${hex(col)}"></button>`).join('')}</div>
+          <p class="empty">${THIRD_COLOR_DIVISIONS.has(d.division) || (d.overlay ?? 'keine') !== 'keine' ? '' : tr('Die dritte Farbe braucht ein dreifarbiges Muster oder einen Rand/Ring (Reiter Muster).', 'The third colour needs a three-colour pattern or a border/ring (Pattern tab).')}</p>`,
+      symbol: CREST_SYMBOL_GROUPS.map((g) => group(g.label, choice('crestSymbol', g.ids.map((id) => [id, CREST_SYMBOLS[id]]), d.symbol, (id) => ({ symbol: id })))).join('') + group(tr('Ohne Motiv', 'No emblem'), choice('crestSymbol', [['keins', CREST_SYMBOLS.keins]], d.symbol, (id) => ({ symbol: id }))),
+      band: `<h4>${tr('Schriftband', 'Name band')}</h4>
+          <div class="swatch-row"><button class="${d.band ? '' : 'active'}" data-action="crestBand" aria-pressed="${!d.band}" ${d.band ? '' : 'disabled'}>${tr('Ohne Band', 'No band')}</button>${Object.entries(CREST_BAND_TEXTS).map(([id, label]) => `<button class="${d.band && (d.bandText ?? 'short') === id ? 'active' : ''}" data-action="crestBandText" data-value="${id}">${label}</button>`).join('')}</div>
+          <h4>${tr('Gründungsjahr', 'Founding year')}</h4>
+          <div class="crest-year" data-testid="crest-year">
+            <button data-action="crestYearStep" data-value="-10" aria-label="-10">−10</button><button data-action="crestYearStep" data-value="-1" aria-label="-1">−1</button>
+            <input type="number" inputmode="numeric" min="${yMin}" max="${yMax}" step="1" value="${year}" data-crest-year aria-label="${tr('Gründungsjahr', 'Founding year')}">
+            <button data-action="crestYearStep" data-value="1" aria-label="+1">+1</button><button data-action="crestYearStep" data-value="10" aria-label="+10">+10</button>
           </div>
-          ${this.crestNote && !this.crestDraft ? `<p class="empty">${this.crestNote}</p>` : ''}
+          <p class="empty">${tr(`Von ${yMin} bis ${yMax}. Das Jahr steht im Schriftband („Jahr“ oder „Beides“), in der Vereinschronik und bestimmt die Jubiläen.`, `From ${yMin} to ${yMax}. The year appears on the name band ("Year" or "Both"), in the club chronicle and sets the anniversaries.`)}</p>
+          <h4>${tr('Meistersterne', 'Champion stars')}</h4>
+          <div class="swatch-row"><button data-action="crestStars" class="${d.stars ?? true ? 'active' : ''}" aria-pressed="${d.stars ?? true}" title="${tr('Ein Stern je Meisterschaft, bis zu fünf', 'One star per league title, up to five')}">${tr('Sterne über dem Wappen', 'Stars above the crest')} (${extra.stars})</button></div>`,
+    };
+    const dirty = !!this.crestDraft || this.crestYear != null;
+    return `
+      <div class="crest-editor" data-testid="crest-editor">
+        <div class="crest-stage">
+          <div class="crest-live" data-testid="crest-preview">${svg}</div>
+          <div class="crest-side">
+            <b>${esc(club.name)}</b>
+            <small>${tr('gegründet', 'founded')} ${year}</small>
+          </div>
+          ${founding ? '' : `<button class="primary crest-apply" data-action="crestSave" title="${tr('Wappen übernehmen', 'Use this crest')}" ${dirty ? '' : 'disabled'}>${tr('Übernehmen', 'Apply')}</button>`}
         </div>
-        <div class="crest-options">
-          <h4>${tr('Form', 'Shape')}</h4>
-          <div class="crest-grid">${choice('crestShape', Object.entries(CREST_SHAPES), d.shape, (id) => ({ shape: id }))}</div>
-          <h4>${tr('Teilung', 'Division')}</h4>
-          <div class="crest-grid">${choice('crestDivision', Object.entries(CREST_DIVISIONS), d.division, (id) => ({ division: id }))}</div>
-          <h4>${tr('Schriftband', 'Name band')}</h4>
-          <div class="swatch-row">${Object.entries(CREST_BAND_TEXTS).map(([id, label]) => `<button class="${d.band && (d.bandText ?? 'short') === id ? 'active' : ''}" data-action="crestBandText" data-value="${id}">${label}</button>`).join('')}</div>
-          <h4>${tr('Symbole', 'Symbols')}</h4>
-          <div class="crest-grid">${choice('crestSymbol', symbols.filter(([id]) => !FIGURES.has(id)), d.symbol, (id) => ({ symbol: id }))}</div>
-          <h4>${tr('Figuren', 'Figures')}</h4>
-          <div class="crest-grid">${choice('crestSymbol', symbols.filter(([id]) => FIGURES.has(id)), d.symbol, (id) => ({ symbol: id }))}</div>
-          <h4>${tr('Farben', 'Colours')}</h4>
-          <div class="swatch-row">${Object.entries(slots).map(([id, label]) => `<button class="${slot === id ? 'active' : ''}" data-action="crestSlot" data-value="${id}"><i class="dot" style="background:${hex(d.colors[id])}"></i>${label}</button>`).join('')}</div>
-          <div class="swatch-row">${CREST_COLORS.map((col) => `<button class="swatch ${d.colors[slot] === col ? 'on' : ''}" style="background:${hex(col)}" data-action="crestColor" data-value="${slot}:${col}"></button>`).join('')}</div>
+        <div class="crest-actions">
+          <button data-action="crestRandom">${tr('Würfeln', 'Shuffle')}</button>
+          ${dirty ? `<button data-action="crestReset">${tr('Verwerfen', 'Discard')}</button>` : ''}
+        </div>
+        ${this.crestNote && !dirty ? `<p class="empty crest-note">${this.crestNote}</p>` : ''}
+        <div class="crest-options" data-testid="crest-options">
+          ${uiTabs(tabs, tab, 'crestTab').replace('class="ui-tabs"', 'class="ui-tabs crest-tabs"')}
+          <div class="crest-panel" data-tab="${tab}">${panels[tab] ?? panels.form}</div>
         </div>
       </div>`;
   },

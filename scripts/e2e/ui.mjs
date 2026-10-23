@@ -3,6 +3,7 @@
 // Karriere-Runde per Liveticker bis zur nächsten Woche. Die Prüfungen stehen je Bereich unter ui/.
 import { launch, SIZES } from './lib.mjs';
 import { mainMenu, screens, tickerRound, whatsNew } from './ui/core.mjs';
+import { crestEditor } from './ui/crest.mjs';
 import { festivalAndSummer } from './ui/festival.mjs';
 import { phoneAndShare } from './ui/phone.mjs';
 import { platzAnlage } from './ui/platz.mjs';
@@ -15,6 +16,7 @@ export async function run({ sizes = Object.keys(SIZES) } = {}) {
   for (const s of sizes) fails += await screens(b, s);
   for (const s of sizes) fails += await whatsNew(b, s, process.env.E2E_SHOTS);
   for (const s of sizes) fails += await festivalAndSummer(b, s, process.env.E2E_SHOTS);
+  for (const s of sizes) fails += await crestEditor(b, s, process.env.E2E_SHOTS);
   for (const s of sizes) fails += await platzAnlage(b, s);
   for (const s of sizes) fails += await transferMarkt(b, s, process.env.E2E_SHOTS);
   for (const s of sizes) fails += await phoneAndShare(b, s);

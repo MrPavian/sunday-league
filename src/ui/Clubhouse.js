@@ -13,7 +13,7 @@ import { appointStaff, releaseStaff } from '../career/staff.js';
 // Was im Vereinsheim scrollt (je nach Bildschirmgröße das Fenster, der Inhalt oder die Mappe).
 const SCROLLERS = '.club-panel, .club-main, .club-body, .club-folder, .folder-sheet';
 const scrollKey = (el) => SCROLLERS.split(', ').find((sel) => el.matches(sel));
-import { argueRumor, askRumor, currentLineup, humanClub, updateClub, updateCrest, setClubTactic, setClubPlan, maxSquad, recruit, releasePlayer, scoutRumor, talkRumor, nudge, playerOf, resetLineup, setLineupSlot, seasonOver, table } from '../career/career.js';
+import { argueRumor, askRumor, currentLineup, humanClub, updateClub, updateCrest, setFounded, clampFounded, foundedRange, setClubTactic, setClubPlan, maxSquad, recruit, releasePlayer, scoutRumor, talkRumor, nudge, playerOf, resetLineup, setLineupSlot, seasonOver, table } from '../career/career.js';
 import { appointCoach, startCourse } from '../career/youthteams.js';
 import { acceptSponsor, bookTrip, KIT_COST } from '../career/finances.js';
 import { tripChoose } from '../career/trip.js';
@@ -143,10 +143,12 @@ export class Clubhouse {
       else if (action.startsWith('fest')) this.festAction(action, value);
       else if (action === 'foundClub') {
         updateClub(this.career, this.draft ?? {}, { free: true });
-        if (this.crestDraft) updateCrest(this.career, this.crestDraft);
+        if (this.crestDraft) updateCrest(this.career, this.crestDraft, this.crestYear);
+        else if (this.crestYear != null) setFounded(this.career, this.crestYear);
         delete this.career.founding;
         this.draft = null;
         this.crestDraft = null;
+        this.crestYear = null;
         this.tab = 'home';
         this.h.onChange();
       } else if (action === 'saveClub') {
@@ -483,6 +485,24 @@ export class Clubhouse {
   }
 
   bindClubForm() {
+    // Gründungsjahr tippen: übernommen wird beim Verlassen des Feldes bzw. mit Enter.
+    // Beim Tippen nur Vorschau auffrischen (Neuzeichnen würde das Feld verlieren); beim Verlassen auf den Bereich klemmen.
+    this.root.querySelectorAll('input[data-crest-year]').forEach((el) => {
+      const sync = (commit) => {
+        const [lo, hi] = foundedRange(this.career);
+        const raw = Number(el.value);
+        if (el.value === '' || !Number.isFinite(raw) || (!commit && (raw < lo || raw > hi))) return commit && (el.value = String(this.crestYear ?? crestExtras(this.career).year));
+        this.crestYear = clampFounded(this.career, raw);
+        this.crestDraft ??= structuredClone(crestOf(humanClub(this.career)));
+        if (commit) el.value = String(this.crestYear);
+        const live = this.crestLive();
+        this.root.querySelector('.crest-live').innerHTML = live.svg;
+        this.root.querySelector('.crest-side small').textContent = `${tr('gegründet', 'founded')} ${live.year}`;
+        this.root.querySelector('[data-action="crestSave"]')?.removeAttribute('disabled');
+      };
+      el.addEventListener('input', () => sync(false));
+      el.addEventListener('change', () => sync(true));
+    });
     this.root.querySelectorAll('input[data-field]').forEach((el) =>
       el.addEventListener('input', () => {
         this.draft[el.dataset.field] = el.value;

@@ -278,17 +278,38 @@ kbd {
 .club-cell .crest-svg { vertical-align: -4px; margin-right: 6px; }
 .scoreboard .team { gap: 6px; }
 .scoreboard .team .crest-svg { flex: none; }
-.crest-editor { display: grid; grid-template-columns: 190px 1fr; gap: 16px; margin-top: 18px; padding-top: 14px; border-top: 2px dashed rgba(255, 255, 255, 0.15); }
-.crest-preview { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
-.crest-preview .crest-svg { filter: drop-shadow(4px 4px 0 #000); }
+.crest-editor { display: grid; grid-template-columns: 190px minmax(0, 1fr); grid-template-areas: 'stage opts' 'act opts' 'note opts'; grid-template-rows: auto auto 1fr; column-gap: 16px; row-gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 2px dashed rgba(255, 255, 255, 0.15); }
+.crest-stage { grid-area: stage; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; min-width: 0; }
+.crest-editor > .crest-actions { grid-area: act; }
+.crest-editor > .crest-note { grid-area: note; align-self: start; }
+.crest-options { grid-area: opts; }
+.crest-stage .crest-svg { filter: drop-shadow(4px 4px 0 #000); }
+.crest-side { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; max-width: 100%; }
+.crest-side b { overflow-wrap: anywhere; }
 .crest-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
-.crest-options h4 { margin: 8px 0 4px; font-size: 13px; opacity: 0.8; }
+.crest-options { min-width: 0; }
+.crest-options h4 { margin: 10px 0 4px; font-size: 13px; opacity: 0.8; }
 .crest-grid { display: flex; flex-wrap: wrap; gap: 4px; }
-.club-panel button.crest-choice { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 62px; padding: 4px 2px; }
-.club-panel button.crest-choice small { font-size: var(--fs-caption); line-height: 1.1; }
+.club-panel button.crest-choice { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 78px; min-height: 56px; padding: 4px 2px; }
+.club-panel button.crest-choice small { font-size: var(--fs-caption); line-height: 1.1; overflow-wrap: anywhere; max-width: 100%; }
 .club-panel button.crest-choice.active { background: #3b4a3a; color: var(--ink); outline: 2px solid var(--accent); text-shadow: var(--shadow); }
 .swatch-row .dot { display: inline-block; width: 10px; height: 10px; margin-right: 4px; border: 1px solid #000; vertical-align: -1px; }
-@media (max-width: 720px) { .crest-editor { grid-template-columns: 1fr; } }
+.club-panel .crest-tabs { flex-wrap: wrap; overflow-x: visible; }
+.club-panel .ui-tabs.crest-tabs button { flex: 1 1 auto; padding: 0 6px; font-size: 14px; }
+.crest-slots button.active { outline: 2px solid var(--accent); }
+.crest-year { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.crest-year input { width: 6.5em; min-height: 44px; font: inherit; font-size: 20px; text-align: center; color: var(--ink); background: #1d2126; border: 2px solid #000; }
+.club-panel .crest-year button { min-width: 44px; min-height: 44px; }
+@media (min-height: 560px) and (min-width: 721px) { .crest-stage { position: sticky; top: 8px; } }
+@media (max-width: 720px) {
+  .crest-editor { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'stage' 'act' 'note' 'opts'; grid-template-rows: none; row-gap: 6px; }
+  /* Vorschau mit „Übernehmen“ bleibt beim Blättern in den Reitern sichtbar: kompakte Zeile oben. */
+  .crest-stage { position: sticky; top: 0; z-index: 3; flex-direction: row; align-items: center; gap: 10px; padding: 6px 0; background: var(--surface-1); border-bottom: 2px solid #000; }
+  .crest-live .crest-svg { width: 64px; height: auto; }
+  .crest-side { align-items: flex-start; text-align: left; flex: 1; }
+  .crest-side b { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .club-panel .crest-apply { flex: none; padding: 4px 8px; font-size: 14px; }
+}
 .club-panel header small { opacity: 0.8; }
 .club-panel button {
   font: inherit;
