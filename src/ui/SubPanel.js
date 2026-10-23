@@ -110,13 +110,13 @@ export class SubPanel {
   render() {
     const m = this.match;
     const left = subsLeft(m, this.team);
-    const rule = m.subRule ?? { limit: Infinity, reentry: true };
+    const rule = m.subRule ?? { limit: Infinity, reentry: false };
     const outs = this.outList();
     const ins = this.inList();
     const hurt = m.players.filter((p) => p.team === this.team && p.mustLeave);
     const ruleText = Number.isFinite(rule.limit)
       ? tr(`Noch ${left} von ${rule.limit} Wechseln · raus ist raus`, `${left} of ${rule.limit} substitutions left · once off, stays off`)
-      : tr('Fliegend wechseln · Rückwechsel erlaubt', 'Rolling substitutions · players may go back on');
+      : tr('Beliebig oft wechseln · raus ist raus', 'Unlimited substitutions · once off, stays off');
     const swapOutRole = outs.find((p) => p.id === this.outId)?.role ?? null;
     const row = (p, kind, selected) => {
       const knock = p.knock ? ` <em class="sub-knock">✚ ${esc(MATCH_INJURIES[p.knock.kind]?.label ?? '')}</em>` : '';

@@ -25,14 +25,17 @@ describe('substitution rules', () => {
     expect(inn.role).toBe('mid');
   });
 
-  it('rolling subs let a player come back on', () => {
+  // Kein Rückwechsel, auch nicht in der Freizeitliga (vom Nutzer festgelegt, 2026-10-23).
+  it('unlimited subs in the recreational league, but once off stays off', () => {
     const m = fresh(2);
+    expect(m.subRule.limit).toBe(Infinity);
     const out = m.players.find((p) => p.team === 0 && p.role === 'fwd');
     const inn = usableBench(m, 0)[0];
     planSub(m, 0, out.id, inn.id);
     processSubs(m);
-    expect(usableBench(m, 0)).toContain(out);
-    expect(planSub(m, 0, inn.id, out.id)).toBe(true);
+    expect(out.usedUp).toBe(true);
+    expect(usableBench(m, 0)).not.toContain(out);
+    expect(planSub(m, 0, inn.id, out.id)).toBe(false);
   });
 
   it('limited subs: once off stays off, and after four it is over', () => {

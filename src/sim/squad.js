@@ -1,13 +1,13 @@
 // Ersatzbank & Wechsel. Gewechselt wird bei jeder Unterbrechung. Die Regeln kommen
-// vom Spiel (m.subRule): in der Freizeitliga rollend mit Rückwechsel, in der
-// Kreisklasse begrenzt. Verletzte müssen runter – ohne Ersatz geht es in Unterzahl
+// vom Spiel (m.subRule): in der Freizeitliga beliebig oft, ab der Kreisklasse
+// begrenzt. Einen Rückwechsel gibt es nirgends (vom Nutzer festgelegt, 2026-10-23): raus ist raus. Verletzte müssen runter – ohne Ersatz geht es in Unterzahl
 // weiter.
 import { dist2d } from '../core/math.js';
 import { formationSpot } from './formation.js';
 import { setControlled } from './players.js';
 import { applyPositionMalus, bestForRole, posGrade } from './position.js';
 
-export const FREE_SUBS = { limit: Infinity, reentry: true };
+export const FREE_SUBS = { limit: Infinity, reentry: false };
 export const LIMITED_SUBS = { limit: 4, reentry: false };
 export const BEZIRK_SUBS = { limit: 5, reentry: false }; // Bezirksliga: fünf Wechsel, kein Rückwechsel (z. B. FVM 2024/25)
 
@@ -89,7 +89,7 @@ export function planSub(m, team, outId, inId) {
 
 const rule = (m) => m.subRule ?? FREE_SUBS;
 export const subsLeft = (m, team) => rule(m).limit - (m.subsUsed?.[team] ?? 0);
-// Wer darf rein? Nicht verletzt, nicht schon ausgewechselt (ohne Rückwechsel), nicht noch im Auto.
+// Wer darf rein? Nicht verletzt, nicht schon ausgewechselt, nicht noch im Auto.
 export const usableBench = (m, team) => m.bench[team].filter((b) => !b.usedUp && !b.mustLeave && !(b.late && m.half === 1));
 
 // Verletzt und kein Ersatz: Er geht vom Platz, die Mannschaft spielt mit einem weniger.
@@ -166,7 +166,7 @@ export function substitute(m, out, incoming, { forced = false } = {}) {
   bench.splice(bench.indexOf(incoming), 1);
   bench.push(out);
   (m.subsUsed ??= [0, 0])[out.team]++;
-  // Verletzt oder ohne Rückwechsel: Für ihn ist das Spiel vorbei.
+  // Ausgewechselt (kein Rückwechsel) oder verletzt: Für ihn ist das Spiel vorbei.
   if (out.mustLeave || !rule(m).reentry) out.usedUp = true;
   Object.assign(incoming, {
     role: out.role,
