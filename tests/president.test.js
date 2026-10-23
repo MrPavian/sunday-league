@@ -146,7 +146,7 @@ describe('after the coaching job: hire a manager and become president', () => {
     setLineupSlot(c, 0, humanClub(c).squad.find((i) => i !== currentLineup(c).lineup[0]));
     expect(c.week.lineup).toBe(null);
     expect(JSON.stringify(currentLineup(c).lineup)).toBe(before);
-  });
+  }, 60000); // spielt eine ganze Saison mit echten Spielen
 
   it('the first hire is free of fees, only with a prior step-down, and nobody can hire while the post is taken', () => {
     const c = createCareer({ seed: 24, coach: input(43, 'coachOnly') });

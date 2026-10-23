@@ -35,12 +35,18 @@ describe('Sponsoring auf Englisch', () => {
   it('jedes neue Gespräch: Text, Antworten und alle Ausgänge sind englisch', () => {
     const bad = [];
     let checked = 0;
+    // Startkarriere je Seed nur einmal bauen (createCareer ist teuer); jede Szene bekommt eine frische Kopie.
+    const base = new Map();
+    const careerFor = (seed) => {
+      if (!base.has(seed)) base.set(seed, JSON.stringify(m.career.createCareer({ seed })));
+      return JSON.parse(base.get(seed));
+    };
     for (const id of NEW) {
       const ev = m.sponsors.SPONSOR_EVENTS[id];
       ev.options.forEach((o, i) => {
         if (german(o.label)) bad.push(`${id} option: ${o.label}`);
         for (let seed = 1; seed <= 40; seed++) {
-          const c = m.career.createCareer({ seed: seed * 5 + i });
+          const c = careerFor(seed * 5 + i);
           m.sponsors.acceptSponsor(c, 0);
           m.sponsors.acceptSponsor(c, 0);
           c.round = 5;
