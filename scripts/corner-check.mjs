@@ -16,6 +16,7 @@ for (const v of venues) {
     let track = null;
     let corner = null; // angesetzte Ecke: { taker, t }
     let kicked = -99; // Zeitpunkt der letzten ausgeführten Ecke (für Tore nach Ecke, auch nach einem Kopfball)
+    let kickTeam = null; // Team, das sie ausgeführt hat – nur dessen Tore zählen
     while (m.phase !== 'ended') {
       stepMatch(m, undefined, 1 / 60);
       for (const e of m.events) {
@@ -23,10 +24,11 @@ for (const v of venues) {
         if (e.type === 'pass' && corner && e.playerId === corner.taker && !track) {
           track = { t: m.time, kicker: e.playerId, peak: 0 };
           kicked = m.time;
+          kickTeam = m.players.find((q) => q.id === e.playerId)?.team ?? null;
           corner = null;
           continue;
         }
-        if (e.type === 'goal' && m.time - kicked < 8) s.goals++; // Tor bis 8 s nach der Ecke
+        if (e.type === 'goal' && e.team === kickTeam && m.time - kicked < 8) s.goals++; // Tor des ausführenden Teams bis 8 s nach der Ecke
         if (!track) continue;
         if (e.type === 'out') {
           (Math.abs(m.ball.pos.z) > pitch.halfWidth - 0.5 ? s.outSide++ : s.outEnd++);

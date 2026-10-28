@@ -1031,6 +1031,8 @@ function openMate(m, gk) {
 export const CLEAR_ZONE = 0.3;
 export const CLEAR_CHANCE = 0.5;
 
+// Seitlicher Spielraum des Torwarts bei einer Flanke (Anteil der halben Torbreite), Spielwert.
+export const KEEPER_CROSS_Z = 0.35;
 export function keeperIntent(m, p, dt) {
   const { ball, pitch } = m;
   const s = attackDir(m, p.team);
@@ -1081,7 +1083,12 @@ export function keeperIntent(m, p, dt) {
   // bis dahin bleibt er, wo er war. Gute Keeper sind schneller.
   const reaction = keeperReaction(m, p);
   const reacting = m.shotTime != null && m.time - m.shotTime < reaction;
+  // Flanke des Gegners in der Luft (noch kein Schuss): mittig bleiben, leicht zur Ballseite – dann reagiert er auf den Kopfball.
+  // Vorher lief er dorthin, wo die Flanke seine Linie gekreuzt hätte (meist an den Pfosten), und der Kopfball ging in die
+  // freie Ecke (real kommen 11–13 % der Kopfbälle aufs Tor rein: MLS 2011–2015, Frauen-WM 2019).
+  const crossing = m.pass?.cross && m.pass.team !== p.team && !ball.holder && ball.lastAction !== 'shoot' && ball.lastAction !== 'header';
   if (reacting && p.keeperTz != null) tz = p.keeperTz;
+  else if (crossing) tz = clamp(ball.pos.z * 0.15, -gw * KEEPER_CROSS_Z, gw * KEEPER_CROSS_Z);
   else if (ball.vel.x * -s > 2) {
     const t = (tx - ball.pos.x) / ball.vel.x;
     if (t > 0 && t < 2) tz = clamp(ball.pos.z + ball.vel.z * t, -gw - 0.6, gw + 0.6);

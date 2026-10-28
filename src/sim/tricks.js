@@ -221,6 +221,7 @@ export function acrobaticTouch(m) {
     const toGoal = norm(gx - p.pos.x, -p.pos.z);
     const dGoal = len(gx - p.pos.x, p.pos.z);
     if (human ? dGoal < 2 : dGoal > 14 || dGoal < 3) continue;
+    if (!human && p.pos.x * s <= 0.3) continue; // aus der eigenen Hälfte zählt kein Tor (wie shouldShoot in ai.js); im Hinterhof reichen 14 m bis dorthin
     const face = p.facing.x * toGoal.x + p.facing.z * toGoal.z;
     const kind = face < -0.35 && ball.pos.y > 1.05 ? 'fallrueck' : Math.abs(face) < 0.6 && ball.pos.y < 1.55 ? 'seitfall' : null;
     if (!kind) continue;

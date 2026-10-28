@@ -575,10 +575,15 @@ export function keeperSaves(m) {
   }
 }
 
-// Höchsttempo eines Kopfballs aufs Tor: 22 m/s (rund 80 km/h), gewählt, nicht gemessen. Vorher folgte es der Flanke (bis 27 m/s).
-export const HEAD_VMAX = 22;
+// Höchsttempo eines Kopfballs aufs Tor: 16 m/s (rund 58 km/h), Spielwert. Vorher folgte es der Flanke (bis 27 m/s), dann
+// 22 m/s – auf dem Großfeld lag fast jeder Kopfball nach einer Flanke an dieser Grenze, aus 3–8 m hielt der Torwart davon kaum
+// einen (39 % der Kopfbälle aufs Tor gingen rein, real 11–13 %: MLS 2011–2015, Frauen-WM 2019). Eingemessen mit 120 Spielen je Platz.
+export const HEAD_VMAX = 16;
 export const HEAD_DUEL = { dist: 1.5, factor: 0.6 };
 export const HEAD_MISS = 0.45;
+export const HEAD_KEEP = 0.75; // Anteil des Flankentempos, der beim Kopfball aufs Tor bleibt (Spielwert, eingemessen)
+export const HEAD_PLACE = 1.6; // weiteste Platzierung eines Kopfballs neben der Tormitte (m, Spielwert, eingemessen)
+export const HEAD_CLEAR = { speed: 8, vy: [3, 5] }; // Klärender Kopfball am eigenen Tor: Tempo ab 8 m/s (+5 · Kopfball), Steigung (Spielwert)
 export const HEAD_GRAZE = 0.7; // Anteil der nicht sauber getroffenen Kopfbälle, die den Ball noch streifen (Spielwert)
 // Zielstreuung eines Kopfballs aufs Tor (Bogenmaß, zusätzlich zur Streuung durch die Kopfballstärke): real kommen nur rund 34 % der
 // Kopfbälle aufs Tor (StatsBomb); der Wert 0,3 ist gewählt, nicht gemessen.
@@ -637,7 +642,9 @@ export function headerTouch(m) {
   }
 
   const s = attackDir(m, p.team);
-  const goal = { x: s * pitch.halfLength, z: rng.range(-pitch.goalHalfWidth * 0.8, pitch.goalHalfWidth * 0.8) };
+  // Wohin geköpft wird: nicht bis in den Winkel eines Großfeldtors – ein Kopfball ist selten so platziert (HEAD_PLACE, Meter).
+  const place = Math.min(pitch.goalHalfWidth * 0.8, HEAD_PLACE);
+  const goal = { x: s * pitch.halfLength, z: rng.range(-place, place) };
   // Aufs Tor geköpft wird bis knapp hinter den Elfmeterpunkt (Großfeld 11 m) – fest 8 m hieß dort: nie.
   const nearGoal = dist2d(p.pos, goal) < Math.max(8, (pitch.penaltyDistance ?? 0) + 2);
   let dir = nearGoal ? norm(goal.x - p.pos.x, goal.z - p.pos.z) : norm(s * 0.8 + p.facing.x * 0.2, p.facing.z * 0.5);
@@ -664,9 +671,15 @@ export function headerTouch(m) {
       return;
     }
   }
-  const speed = nearGoal ? Math.min(incoming + 1.5 + 3 * skill + (monster ? 1.5 : 0), HEAD_VMAX) : 4 + 4 * skill + (monster ? 1.5 : 0);
+  // Aufs Tor: vom Tempo der Flanke bleibt beim Umlenken nur ein Teil (HEAD_KEEP), der Kopf legt etwas drauf. Weg vom Tor
+  // (Klärung der Abwehr, Ablage): weiter und höher als früher (4–8 m/s, 1–3 m/s hoch) – die Klärungen landeten wieder im
+  // Strafraum, nach Ecken fiel so aus jeder sechsten ein Tor (real 2–4 %). Beides Spielwerte, eingemessen auf die
+  // Verwertung von Kopfbällen aufs Tor (real 11–13 %: MLS 2011–2015, Frauen-WM 2019) und die Torquote nach Ecken
+  // (scripts/corner-check.mjs).
+  const clear = !nearGoal && p.pos.x * own > pitch.halfLength * 0.4; // am eigenen Tor
+  const speed = nearGoal ? Math.min(incoming * HEAD_KEEP + 1.5 + 3 * skill + (monster ? 1.5 : 0), HEAD_VMAX) : clear ? HEAD_CLEAR.speed + 5 * skill : 4 + 4 * skill + (monster ? 1.5 : 0);
   ball.vel.x = dir.x * speed;
-  ball.vel.y = nearGoal ? rng.range(-1.5, 0.5) : rng.range(1, 3);
+  ball.vel.y = nearGoal ? rng.range(-1.5, 0.5) : clear ? rng.range(HEAD_CLEAR.vy[0], HEAD_CLEAR.vy[1]) : rng.range(1, 3);
   ball.vel.z = dir.z * speed;
   ball.lastTouch = p.id;
   ball.lastAction = 'header';
