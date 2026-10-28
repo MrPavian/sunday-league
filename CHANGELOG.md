@@ -6,6 +6,29 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-28 – Auswärtstrikot, Englische Woche, Krähe und Spielerentwicklung
+
+### Neu
+- **Auswärtstrikot:** Im Trikot-Editor schaltest du zwischen Heim und Auswärts um. Beide Sätze bestellst du zusammen für einen Preis. Sind sich die Trikots zu ähnlich, läuft der Gast im Auswärtstrikot auf, und erst wenn auch das nicht passt, im neutralen Ausweichtrikot. Vereine ohne eigenes Auswärtstrikot spielen in ihrer zweiten Farbe. Der Torwart hebt sich immer von beiden Mannschaften ab. Am Spiel steht, wer in welchem Trikot spielt.
+- **Englische Woche:** Nach dem Pokalspiel unter der Woche zeigt das Vereinsheim erst das Ergebnis und „Weiter zum Sonntag“, dann das Ligaspiel. Bis Sonntag erholen sich die Beine. Zwischen Samstag und Sonntag reicht die Zeit dafür nur zum Teil. Der Bundespokal meidet die Wochen der anderen Pokale – zwei Pokale in einer Woche gibt es nur noch, wenn eine kurze Saison keinen Platz mehr hat.
+- **Spielerentwicklung:** Jeder Spieler hat einen verborgenen Entwicklungstyp: normal, früh, spät, konstant, mit Durchbruch oder früh stehengeblieben. Die Liga begrenzt, wie viel geht – in der Freizeitliga weniger als in der Bezirksliga, mit Ausreißern nach oben und unten. Ein Wechsel, ein neuer Trainer oder eine neue Spielidee lässt manchmal den Knoten platzen.
+- **Neuer Vorfall – die Krähe:** Eine renitente Krähe fliegt aufs Feld, hackt nach den Spielern und wird von beiden Mannschaften vertrieben.
+
+### Verbessert
+- **Teamchat:** Nachhaken, ob doch jemand kann, geht nur noch zweimal je Spieltag.
+- **Namen und Geschichten:** Name, Aussehen und die Geschichte in der Kneipe passen zur Herkunft, und die Geschichten passen zur Position. Ein Torwart erzählt nicht mehr von seinen Toren. Bestehende Spielstände behalten ihre Namen.
+- **Ecken:** Ecken kommen deutlich öfter im Strafraum an statt ins Seitenaus zu fliegen, auch auf dem Ascheplatz. Kopfbälle sind langsamer und weniger genau, der Torwart bleibt bei Flanken nah an der Tormitte. Tore nach Ecken bleiben noch etwas zu häufig.
+- **Gewitter:** Es kommt nur noch zur passenden Jahreszeit und bei passendem Wetter, mit Donnergrollen und ersten Tropfen als Vorwarnung.
+
+### Behoben
+- **Rückwechsel:** Ausgewechselte Spieler können nicht wieder eingewechselt werden, auch nicht in der Freizeitliga.
+- **Trikot nach Rolle:** Ein Torwart, der als Feldspieler aufläuft, trägt das normale Trikot und kein Torwarttrikot.
+- **Relegation:** Aufstellung und Taktik lassen sich vorher wählen, und gespielt wird auf dem Platz und mit der Spielerzahl der höheren Liga – nicht mehr mit elf Mann im Hinterhof.
+- **Halle:** Die Bande hinter dem Tor schließt bündig mit den Pfosten ab.
+- **Ascheplatz:** Die Spielerkabine ist aus Acrylglas statt einer dunklen Platte, die im Bild wie ein schwarzer Balken aussah.
+- **Wolkenschatten:** Keine Streifen mehr an den Hauswänden.
+- **Fallzieher:** Die KI zieht nicht mehr aus der eigenen Hälfte ab.
+
 ## 2026-10-23-2 – Transfermarkt, Wappen-Editor und Alte Herren
 
 ### Neu

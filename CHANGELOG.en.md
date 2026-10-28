@@ -6,6 +6,29 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-28 – Away kit, midweek games, crow and player development
+
+### New
+- **Away kit:** The kit editor switches between home and away. You order both sets together for one price. If the kits are too similar, the visitors wear their away kit, and only if that clashes too, a neutral change kit. Clubs without their own away kit play in their second colour. The goalkeeper always stands out from both teams. The match card shows who plays in which kit.
+- **Midweek games:** After a midweek cup game the clubhouse first shows the result and “On to Sunday”, then the league match. Legs recover by Sunday; between Saturday and Sunday there is only time for part of that. The national cup avoids the other cups' weeks – two cups in one week only happen when a short season has no room left.
+- **Player development:** Every player has a hidden development type: normal, early, late, steady, breakthrough or stalled early. The league limits how much is possible – less in the recreational league than in the county league, with outliers both ways. A move, a new manager or a new style of play sometimes makes it click.
+- **New incident – the crow:** A stubborn crow flies onto the pitch, pecks at the players and is chased off by both teams.
+
+### Improved
+- **Team chat:** Asking again whether someone can play after all is limited to twice per match day.
+- **Names and stories:** Name, looks and the pub story match the player's origin, and the stories match his position – a goalkeeper no longer talks about his goals. Existing saves keep their names.
+- **Corners:** Corners reach the box much more often instead of flying out for a throw-in, on the ash pitch too. Headers are slower and less precise, and the goalkeeper stays near the centre of the goal on crosses. Goals from corners are still a little too frequent.
+- **Thunderstorms:** They only come in the right season and fitting weather, with distant thunder and first drops as a warning.
+
+### Fixed
+- **No re-entry:** Substituted players can't come back on, in the recreational league too.
+- **Kit by role:** A goalkeeper playing outfield wears the normal shirt, not the goalkeeper kit.
+- **Play-off:** Line-up and tactics can be chosen beforehand, and the game is played on the higher league's pitch with its number of players – no more eleven-a-side in the backyard.
+- **Indoor hall:** The boards behind the goal are flush with the posts.
+- **Ash pitch:** The players' shelter is made of acrylic glass instead of a dark panel that looked like a black bar on screen.
+- **Cloud shadows:** No more stripes on house walls.
+- **Overhead kicks:** The AI no longer tries them from its own half.
+
 ## 2026-10-23-2 – Transfer market, crest editor and old boys
 
 ### New
