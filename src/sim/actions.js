@@ -190,6 +190,7 @@ function shoot(m, p, a, fatigue) {
   (m.lastShotAt ??= [-9, -9])[p.team] = m.time;
   markShooter(m, p);
   m.shotTime = m.time; // Der Torwart braucht einen Moment, bis er die Richtung erkennt.
+  m.shotFrom = { x: p.pos.x, z: p.pos.z }; // für die Reaktionszeit des Torwarts (keeperSaves)
 }
 
 function cornerZone(m, p, kind) {
@@ -424,6 +425,12 @@ function boardChoice(m, p, to, shot) {
 // Strafraum: Nur hier darf der Torwart den Ball in die Hand nehmen.
 // Wie viel kürzer als die lange Spieldauer auf diesem Platz das Spiel ist
 // (1 = volle Länge, bis 2,5). So ist „kurz" im Hinterhof so flott wie auf dem Rasen.
+// Torwart gegen Fernschüsse (Spielwerte, eingemessen auf Opta-Werte der Premier League: im Strafraum 13–15 %, von außerhalb
+// 3–4 % Tore je Schuss, https://www.premierleague.com/news/4272809). KEEPER_FAR: Zuschlag für kurze Spiele voll bis 16,5 m,
+// weg ab 25 m. KEEPER_TIME: je Sekunde Flugzeit über 1 s 0,4 weniger Gegentreffer, höchstens 0,35 (ab 0,5 s kostete es auf
+// Rasen- und Sportplatz zu viele Tore: 9 % je Schuss statt 10–12 %).
+export const KEEPER_FAR = { from: 16.5, span: 8.5 };
+export const KEEPER_TIME = { from: 1, per: 0.4, max: 0.35 };
 export const shortGame = (m) => clamp((m.fullLength || 600) / (m.duration || 600), 1, 2.5);
 
 // Elfmeter – im Elfmeterschießen oder im Spiel: Der Torwart muss raten.
@@ -503,8 +510,16 @@ export function keeperSaves(m) {
       // Elfmeter an den Pfosten: selbst bei richtiger Ecke schwer zu halten.
       const postShot = spotKick(m) ? clamp(Math.abs(lineZ) / gw, 0, 1) * 0.5 : 0;
       // Kurze Spiele: etwas mehr Tore, sonst endet die Hälfte 0:0.
-      const brisk = spotKick(m) ? 0 : (shortGame(m) - 1) * 0.1 * (1 + Math.max(0, pitch.halfLength - 20) / 12) * (m.goalPace ?? 1);
-      const beaten = clamp((bs - 8) * 0.02 + corner * 0.85 + pointBlank + postShot + brisk - 0.3 * p.attrs.keeping - (dist2d(p.pos, ball.pos) < 0.45 ? 0.15 : 0), 0.02, 0.7);
+      // Wie weit weg wurde geschossen? Der Zuschlag für kurze Spiele gilt nur bis knapp vor den Strafraum (KEEPER_FAR) – bei einem
+      // Fernschuss hat der Torwart Zeit. Vorher galt er für jeden Schuss: Auf dem Großfeld gingen 13 % der Schüsse aus mehr als
+      // 25 m rein (real 3–4 % von außerhalb des Strafraums).
+      const fromD = m.shotFrom && since < 3 ? Math.hypot(goalX - m.shotFrom.x, m.shotFrom.z) : 0;
+      const near = clamp(1 - (fromD - KEEPER_FAR.from) / KEEPER_FAR.span, 0, 1);
+      const brisk = spotKick(m) ? 0 : (shortGame(m) - 1) * 0.1 * (1 + Math.max(0, pitch.halfLength - 20) / 12) * (m.goalPace ?? 1) * near;
+      // Lange Flugzeit: Der Torwart sieht den Ball kommen und steht richtig (KEEPER_TIME).
+      const tFly = fromD > 0 ? fromD / Math.max(bs, 1) : 0;
+      const early = spotKick(m) ? 0 : clamp((tFly - KEEPER_TIME.from) * KEEPER_TIME.per, 0, KEEPER_TIME.max);
+      const beaten = clamp((bs - 8) * 0.02 + corner * 0.85 + pointBlank + postShot + brisk - early - 0.3 * p.attrs.keeping - (dist2d(p.pos, ball.pos) < 0.45 ? 0.15 : 0), 0.02, 0.7);
       if (rng.chance(beaten)) {
         p.catchCooldown = 0.7; // zu spät – der Ball ist vorbei
         if (hands && ball.pos.y > 1.5) p.jumpAnim = 0.5; // hoch: springt vergeblich hoch
@@ -554,11 +569,15 @@ export function keeperSaves(m) {
       const tip = hands && pitch.boundary === 'lines' && m.phase !== 'shootout' && rng.chance(clamp(0.3 + (bs - 10) * 0.05, 0.2, 0.9));
       if (tip) {
         const over = Math.abs(ball.pos.z) < pitch.goalHalfWidth * 0.6 || rng.chance(0.5); // mittig nur drüber, nie ins eigene Netz
-        ball.vel.y = over ? rng.range(4.5, 6) : rng.range(0.5, 1.5);
+        ball.pos.y = Math.min(ball.pos.y, 1.2);
+        // Über die Latte heißt: Der Scheitel liegt über der Latte. Vorher reichten 4,5–6 m/s nur bis 2,2–3,0 m – vor dem
+        // Großfeld-Tor (2,44 m) fiel ein Teil der gelenkten Bälle ins eigene Netz (25 von 29 Fernschusstoren in 30 Spielen).
+        const clearBar = Math.sqrt(2 * 9.81 * Math.max(0.5, pitch.goalHeight + 0.35 - ball.pos.y));
+        ball.vel.y = over ? Math.max(clearBar, rng.range(4.5, 6)) : rng.range(0.5, 1.5);
         // Der Ball muss die Linie auch erreichen: Weg bis hinter die Linie, über den Scheitel bzw. in 0,35 s.
         const toLine = pitch.halfLength + BALL_RADIUS + 0.3 - Math.abs(ball.pos.x);
         ball.vel.x = -s * Math.max(toLine / (over ? ball.vel.y / 9.81 : 0.35), 1.5);
-        ball.vel.z = side * (over ? rng.range(1, 2.5) : rng.range(5, 7));
+        ball.vel.z = (over ? side : Math.sign(ball.pos.z) || side) * (over ? rng.range(1, 2.5) : rng.range(5, 7)); // ums Tor: nach außen, nie zur Tormitte
       } else {
         ball.vel.x = s * rng.range(3, 5);
         ball.vel.z = side * rng.range(4, 7);

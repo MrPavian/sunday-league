@@ -864,7 +864,9 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   Trainerin, Platzzeiten), eigener Kader und eigene Liga; Mädchen aus der Jugend rücken auf.
 
 **Offene Punkte aus 11.1–11.8 abarbeiten**
-- Großfeld: zu hohe Torquote je Schuss (20 % statt real 10–12 %), seltene Kopfballtore, seltene Ecken.
+- ~~Großfeld: zu hohe Torquote je Schuss (20 % statt real 10–12 %)~~ – eingemessen 2026-10-28 (Torwart lenkt nicht mehr ins eigene
+  Netz, Fernschüsse hält er; Großfeld 13 %, Rasen/Sportplatz 10 %). Kurze Spiele auf dem Großfeld haben dadurch weniger Tore
+  (2,8 → 1,8, vom Nutzer so entschieden). Offen: seltene Kopfballtore, seltene Ecken.
 - Futsal-Ball Größe 4 in der Halle (eigener Ballradius je Platz).
 - „Nach außen lenken" mit echtem Leiten des Ballführenden. Vorlage: Steuerungsverhalten aus Yuka
   (https://github.com/Mugen87/yuka, MIT, z. B. Interpose/Offset-Pursuit) – nur das Prinzip in die eigene,
