@@ -6,6 +6,13 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-28-3 – Torwart im Strafraum
+
+### Verbessert
+- **Nahschüsse:** Auf Sportplatz und Großfeld gingen Schüsse aus dem Strafraum viel zu oft rein (21 % bzw. 32 %, real 13–16 %). Jetzt sind es etwa 16 % bzw. 22 %. Vor dem großen 7,32-m-Tor hechtet der Torwart weiter, und der Bonus für kurze Spiele ist auf großen Plätzen nicht mehr größer als auf dem 7er-Feld.
+- **Kopfbälle:** Für den Torwart ist ein Kopfball aufs Tor jetzt ein Schuss – aus kurzer Distanz hat er weniger Zeit. Auf dem Großfeld sind rund 15 % der Tore Kopfballtore, wie im echten Fußball.
+- **Weniger Tore auf großen Plätzen:** In kurzen Spielen fallen auf dem Großfeld jetzt im Schnitt etwa 1,5 Tore, auf dem Sportplatz 2,0.
+
 ## 2026-10-28-2 – Torwart hält Fernschüsse, Relegation mit Pause
 
 ### Verbessert

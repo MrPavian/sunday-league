@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-28-3',
+    de: { title: 'Torwart im Strafraum', items: ['Schüsse aus dem Strafraum gehen auf Sportplatz und Großfeld nicht mehr so oft rein – etwa jeder fünfte statt jeder dritte.', 'Vor dem großen Tor hechtet der Torwart weiter.', 'Kopfbälle zählen für den Torwart als Schuss – auf dem Großfeld sind rund 15 % der Tore Kopfballtore. In kurzen Spielen fallen auf großen Plätzen weniger Tore.'] },
+    en: { title: 'Goalkeeper in the box', items: ['Shots from inside the box no longer go in as often on the 9-a-side and full-size pitches – about one in five instead of one in three.', 'In front of the big goal the keeper dives further.', 'Headers count as shots for the keeper – about 15 % of goals on the full-size pitch are headers. Short games on large pitches have fewer goals.'] },
+  },
+  {
     id: '2026-10-28-2',
     de: { title: 'Torwart hält Fernschüsse, Relegation mit Pause', items: ['Auf dem Großfeld geht nur noch etwa jeder achte Schuss rein statt jeder fünfte – Fernschüsse hält der Torwart fast immer. In kurzen Spielen fallen dort dafür weniger Tore.', 'Relegation: Nach dem Hinspiel erst das Ergebnis und „Weiter zum Rückspiel“.', 'Behoben: Der Torwart lenkt harte Schüsse nicht mehr ins eigene Netz.'] },
     en: { title: 'Keepers stop long shots, play-off with a break', items: ['On the full-size pitch only about one shot in eight goes in instead of one in five – the keeper almost always stops long shots. Short games there have fewer goals as a result.', 'Play-off: after the first leg you see the result and “On to the second leg” first.', 'Fixed: the goalkeeper no longer tips hard shots into his own net.'] },

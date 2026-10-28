@@ -6,6 +6,13 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-28-3 – Goalkeeper in the box
+
+### Improved
+- **Close-range shots:** On the 9-a-side pitch and the full-size pitch, shots from inside the box went in far too often (21 % and 32 %, real 13–16 %). Now it is about 16 % and 22 %. In front of the big 7.32 m goal the keeper dives further, and the short-game bonus on large pitches is no bigger than on the 7-a-side pitch.
+- **Headers:** For the goalkeeper a header on goal now counts as a shot – from close range he has less time. On the full-size pitch about 15 % of goals are headers, as in real football.
+- **Fewer goals on large pitches:** In short games the full-size pitch now averages about 1.5 goals, the 9-a-side pitch 2.0.
+
 ## 2026-10-28-2 – Keepers stop long shots, play-off with a break
 
 ### Improved
