@@ -1,7 +1,8 @@
 // Oberfläche: Relegation nach dem letzten Spieltag (Vizemeister der Freizeitliga). Aufstellung und Taktik lassen sich wählen
 // (vorher: „gibt es nach dem Wochenstart“), das Hinspiel läuft auf einem Platz der höheren Liga mit deren Spielerzahl
 // (vorher 7 gegen 7 im Hinterhof).
-import { createCareer, finishRound, humanClub, seasonOver } from '../../../src/career/career.js';
+import { createCareer, finishRound, humanClub, seasonOver, simulateSync } from '../../../src/career/career.js';
+import { prepareRelegationMatch, recordRelegationLeg, startRelegation } from '../../../src/career/relegation.js';
 import { checker, click, page } from '../lib.mjs';
 
 function career() {
@@ -19,7 +20,7 @@ function career() {
 }
 
 export async function relegation(b) {
-  const ok = checker('Relegation: Aufstellung, Taktik, Platz und Spielerzahl');
+  const ok = checker('Relegation: Aufstellung, Taktik, Platz und Spielerzahl, „Weiter zum Rückspiel“');
   const c = career();
   const p = await page(b, 'land', { query: '?notitle&debug&dauer=10', store: { 'sunday-league:career': JSON.stringify(c) } });
   await click(p, '.career [data-c="continue"]');
@@ -41,5 +42,20 @@ export async function relegation(b) {
   ok(info.pitch && info.pitch !== 'hinterhof' && info.n === info.format, `Relegation: Platz/Spielerzahl passt nicht (${JSON.stringify(info)})`);
   ok(!p.errors.length, `Seitenfehler: ${p.errors.slice(0, 2).join(' | ')}`);
   await p.context().close();
+  // Nach dem Hinspiel: erst „Weiter zum Rückspiel“ (vom Nutzer gewünscht, 2026-10-28), dann das Rückspiel.
+  const c2 = career();
+  startRelegation(c2);
+  const first = prepareRelegationMatch(c2, { duration: 10 });
+  simulateSync(first);
+  recordRelegationLeg(c2, first);
+  const q = await page(b, 'land', { query: '?notitle&debug&dauer=10', store: { 'sunday-league:career': JSON.stringify(c2) } });
+  await click(q, '.career [data-c="continue"]');
+  await q.waitForTimeout(1500);
+  ok(!!(await q.$('[data-action="onRelegationNext"]')) && !(await q.$('[data-action="onRelCoach"]')), 'Relegation: nach dem Hinspiel fehlt der Schritt „Weiter zum Rückspiel“');
+  await click(q, '[data-action="onRelegationNext"]');
+  await q.waitForTimeout(800);
+  ok(!!(await q.$('[data-action="onRelCoach"]')), 'Relegation: nach „Weiter“ fehlt der Knopf fürs Rückspiel');
+  ok(!q.errors.length, `Seitenfehler: ${q.errors.slice(0, 2).join(' | ')}`);
+  await q.context().close();
   return ok.done();
 }

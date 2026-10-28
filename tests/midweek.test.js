@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { createCareer, finishRound, humanClub, humanFixture, seasonOver, simulateSync } from '../src/career/career.js';
 import { fitnessOf, MATCH_COST } from '../src/career/fitness.js';
+import { finishFirstLeg, prepareRelegationMatch, recordRelegationLeg, startRelegation } from '../src/career/relegation.js';
 import { finishMidweek, humanTie, midweekGap, POKAL_KINDS, pokalDue, pokalEligible, pokalRounds, preparePokalMatch, recordPokalResult } from '../src/career/pokal.js';
 
 describe('Englische Woche', () => {
@@ -62,5 +63,27 @@ describe('Englische Woche', () => {
   it('Samstag auf Sonntag: nur ein Viertel der Erholung', () => {
     expect(midweekGap('bund', null)).toBeCloseTo(17, 6);
     expect(midweekGap('kreis', 'bund')).toBeCloseTo(66, 6);
+  });
+
+  it('Relegation: nach dem Hinspiel erst „Weiter zum Rückspiel“, dann das Rückspiel', () => {
+    const c = createCareer({ seed: 5 });
+    const me = humanClub(c).id;
+    const top = c.clubs.find((x) => !x.human).id;
+    while (!seasonOver(c)) {
+      for (const f of c.fixtures[c.round]) {
+        const s = (id) => (id === top ? 5 : id === me ? 3 : 0);
+        f.result = { home: s(f.home), away: s(f.away) };
+      }
+      finishRound(c);
+    }
+    startRelegation(c);
+    const first = prepareRelegationMatch(c, { duration: 10 });
+    simulateSync(first);
+    recordRelegationLeg(c, first);
+    expect(c.relegation.leg).toBe(1);
+    expect(c.week.legDone).toBe(true);
+    finishFirstLeg(c);
+    expect(c.week.legDone).toBeUndefined();
+    expect(c.week.relegation).toBe(true); // die Woche fürs Rückspiel bleibt
   });
 });

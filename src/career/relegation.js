@@ -104,6 +104,11 @@ export function relegationWeek(career, lineup = null) {
   return { relegation: true, availability, chat: [{ from: null, text, time: 'Mo 08:00', me: true }], nudges: 0, nudged: [], lineup, training: null, event: null, weather, postponed: null, rumors: [], actions: 0 };
 }
 
+// „Weiter zum Rückspiel“: wie nach dem Pokalspiel unter der Woche ein eigener Schritt zwischen zwei Spielen.
+export function finishFirstLeg(career) {
+  if (career.week) delete career.week.legDone;
+}
+
 export function prepareRelegationMatch(career, { human = false, duration } = {}) {
   const r = relegationOf(career);
   const leg = r.legs[r.leg];
@@ -146,6 +151,7 @@ export function recordRelegationLeg(career, prepared) {
   if (r.leg === 0) {
     r.leg = 1;
     career.week = relegationWeek(career, career.week?.lineup ?? null); // Rückspiel: neue Zusagen, Aufstellung bleibt
+    if (career.week) career.week.legDone = true; // erst „Weiter zum Rückspiel“ im Vereinsheim (finishFirstLeg), dann das Rückspiel
     return r;
   }
   if (r.agg[0] === r.agg[1]) {

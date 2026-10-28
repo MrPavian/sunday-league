@@ -287,12 +287,17 @@ export const homeScreens = {
         ? tr(`Vizemeister – jetzt geht es in der Relegation um den Aufstieg in die ${target}. Gegner: <b>${opp.name}</b>.`, `Runners-up – now the play-off decides promotion to the ${target}. Opponent: <b>${opp.name}</b>.`)
         : tr(`Vorletzter – in der Relegation geht es um den Klassenerhalt in der ${target}. Gegner: <b>${opp.name}</b>.`, `Second from bottom – the play-off decides whether we stay in the ${target}. Opponent: <b>${opp.name}</b>.`);
     const leg = r ? r.leg : 0;
+    // Nach dem Hinspiel erst ein eigener Schritt (wie nach dem Pokalspiel unter der Woche), dann das Rückspiel.
+    const actions = c.week?.legDone
+      ? `<p>${tr(`Hinspiel ${r.legs[0].result.ours}:${r.legs[0].result.theirs}. Eine Woche Pause, dann fällt im Rückspiel die Entscheidung.`, `First leg ${r.legs[0].result.ours}-${r.legs[0].result.theirs}. A week off, then the second leg decides it.`)}</p>
+      <button class="primary" data-action="onRelegationNext">${tr('Weiter zum Rückspiel', 'On to the second leg')}</button>`
+      : `<button class="primary coach-play" data-action="onRelCoach">${isPresident(c) ? (leg === 0 ? tr('Hinspiel von der Tribüne ansehen', 'Watch the first leg from the stand') : tr('Rückspiel von der Tribüne ansehen', 'Watch the second leg from the stand')) : leg === 0 ? tr('Hinspiel an der Seitenlinie', 'First leg on the touchline') : tr('Rückspiel an der Seitenlinie', 'Second leg on the touchline')}</button>
+      <button data-action="onRelSimulate">${isPresident(c) ? tr('Liveticker', 'Live ticker') : tr('Liveticker mit Entscheidungen', 'Live ticker with decisions')}</button>`;
     return `<p class="label">${tr('Relegation', 'Play-off')}</p><p>${intro}</p>
       <p class="hint">${tr('Hin- und Rückspiel, es zählt das Gesamtergebnis. Steht es danach gleich: Elfmeterschießen.', 'Two legs, aggregate score counts. Level after both: penalties.')}</p>
       ${legs ? `<ul class="legs">${legs}</ul>` : ''}
       ${r && r.leg === 1 ? `<p>${tr('Gesamt bisher', 'Aggregate so far')}: <b>${r.agg[0]}:${r.agg[1]}</b></p>` : ''}
-      <button class="primary coach-play" data-action="onRelCoach">${isPresident(c) ? (leg === 0 ? tr('Hinspiel von der Tribüne ansehen', 'Watch the first leg from the stand') : tr('Rückspiel von der Tribüne ansehen', 'Watch the second leg from the stand')) : leg === 0 ? tr('Hinspiel an der Seitenlinie', 'First leg on the touchline') : tr('Rückspiel an der Seitenlinie', 'Second leg on the touchline')}</button>
-      <button data-action="onRelSimulate">${isPresident(c) ? tr('Liveticker', 'Live ticker') : tr('Liveticker mit Entscheidungen', 'Live ticker with decisions')}</button>`;
+      ${actions}`;
   },
 
   // Saisonabschlussfahrt: Ziel wählen, dann drei Etappen mit Entscheidungen.
