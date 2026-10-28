@@ -45,7 +45,9 @@ describe('Spiel über außen', () => {
     const r = audit('sportplatz', 24);
     expect(r.hdrOnGoal).toBeGreaterThan(0.32); // gemessen 0,45 (80 Spiele), vorher 0,25
     expect(r.hdrGoals).toBeGreaterThan(0); // gemessen 5 % der Tore, rund 3 in 24 Spielen
-    expect(r.goals).toBeGreaterThan(2.2);
+    // 2,2 → 1,8 (vom Nutzer entschieden, 2026-10-28): realistische Nahschüsse (Strafraum 21 → 16 %) kosten in kurzen Spielen Tore;
+    // gemessen 2,04 in diesen 24 Spielen, 2,08 in 80.
+    expect(r.goals).toBeGreaterThan(1.8);
   }, 240000);
 
   // Flankenarten nach Feldgröße: Auf dem 7er-Feld kommen Flanken eher flach oder halbhoch, auf dem Großfeld hoch.

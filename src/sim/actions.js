@@ -430,6 +430,11 @@ function boardChoice(m, p, to, shot) {
 // weg ab 25 m. KEEPER_TIME: je Sekunde Flugzeit über 1 s 0,4 weniger Gegentreffer, höchstens 0,35 (ab 0,5 s kostete es auf
 // Rasen- und Sportplatz zu viele Tore: 9 % je Schuss statt 10–12 %).
 export const KEEPER_FAR = { from: 16.5, span: 8.5 };
+// Torwart im Strafraum: Zuschlag für kurze Spiele höchstens wie auf dem 7er-Feld (halbe Länge 26 m), Reichweite wächst ab dem
+// 5-m-Tor (halbe Breite 2,5 m) mit der Torbreite. Gemessen (Schüsse aus < 16,5 m, 60–120 Spiele): Rasen 13,9 %, Sportplatz
+// 21 → 16 %, Großfeld 32 → 17 % Tore je Schuss.
+export const BRISK_PITCH_MAX = 1.5;
+export const KEEPER_REACH_GW = 2.5;
 export const KEEPER_TIME = { from: 1, per: 0.4, max: 0.35 };
 export const shortGame = (m) => clamp((m.fullLength || 600) / (m.duration || 600), 1, 2.5);
 
@@ -473,7 +478,9 @@ export function keeperSaves(m) {
     // Inkl. Hechtsprung. Vor großen Toren (Asche, Rasen) streckt er sich weiter –
     // sonst deckt er dort anteilig viel weniger ab als vor dem Jackentor.
     // Beim Elfmeter steht er fest auf der Linie – ohne Anlauf reicht der Sprung weniger weit.
-    const reach = hands ? (0.85 + 0.75 * p.attrs.keeping) * clamp(pitch.goalHalfWidth / 1.6, 0.85, 1.3) * (spotKick(m) ? 0.62 : 1) : 0.55 + 0.35 * p.attrs.keeping;
+    // Vor dem 7,32-m-Tor (Großfeld) deckt er anteilig so viel ab wie vor dem 5-m-Tor (KEEPER_REACH_GW): Vorher gingen dort
+    // 35 von 486 Schüssen aus dem Strafraum rein, an die er gar nicht herankam (120 Spiele), jetzt 10.
+    const reach = hands ? (0.85 + 0.75 * p.attrs.keeping) * clamp(pitch.goalHalfWidth / 1.6, 0.85, 1.3) * Math.max(1, pitch.goalHalfWidth / KEEPER_REACH_GW) * (spotKick(m) ? 0.62 : 1) : 0.55 + 0.35 * p.attrs.keeping;
     if (dist2d(p.pos, ball.pos) > reach || ball.pos.y > (hands ? 2.3 : 1)) continue;
 
     const bs = ballSpeed(ball);
@@ -515,7 +522,9 @@ export function keeperSaves(m) {
       // 25 m rein (real 3–4 % von außerhalb des Strafraums).
       const fromD = m.shotFrom && since < 3 ? Math.hypot(goalX - m.shotFrom.x, m.shotFrom.z) : 0;
       const near = clamp(1 - (fromD - KEEPER_FAR.from) / KEEPER_FAR.span, 0, 1);
-      const brisk = spotKick(m) ? 0 : (shortGame(m) - 1) * 0.1 * (1 + Math.max(0, pitch.halfLength - 20) / 12) * (m.goalPace ?? 1) * near;
+      // Der Zuschlag wächst mit der Platzlänge nur bis zum 7er-Feld (BRISK_PITCH_MAX). Vorher: Sportplatz ×2,25, Großfeld ×3,7 – dort
+      // gingen 21 % bzw. 32 % der Schüsse aus dem Strafraum rein (real 13–16 %, Opta).
+      const brisk = spotKick(m) ? 0 : (shortGame(m) - 1) * 0.1 * Math.min(BRISK_PITCH_MAX, 1 + Math.max(0, pitch.halfLength - 20) / 12) * (m.goalPace ?? 1) * near;
       // Lange Flugzeit: Der Torwart sieht den Ball kommen und steht richtig (KEEPER_TIME).
       const tFly = fromD > 0 ? fromD / Math.max(bs, 1) : 0;
       const early = spotKick(m) ? 0 : clamp((tFly - KEEPER_TIME.from) * KEEPER_TIME.per, 0, KEEPER_TIME.max);
@@ -704,7 +713,14 @@ export function headerTouch(m) {
   ball.lastAction = 'header';
   m.lastTouchTeam = p.team;
   p.facing = dir;
-  if (nearGoal) markShooter(m, p);
+  if (nearGoal) {
+    markShooter(m, p);
+    // Für den Torwart ist ein Kopfball aufs Tor ein Schuss: Reaktionszeit und Entfernung zählen wie beim Fuß (keeperSaves).
+    // Vorher blieb m.shotTime beim letzten Schuss stehen – aus 6 m hatte er dieselbe Zeit wie bei einem Fernschuss und hielt
+    // 91 % der Kopfbälle aufs Tor (Großfeld, 80 Spiele); Kopfballtore: 4–7 % der Kopfbälle aufs Tor, real 11–13 % (siehe HEAD_VMAX).
+    m.shotTime = m.time;
+    m.shotFrom = { x: p.pos.x, z: p.pos.z };
+  }
   m.events.push({ type: 'header', playerId: p.id, onGoal: nearGoal });
 }
 
