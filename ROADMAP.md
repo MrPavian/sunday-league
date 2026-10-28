@@ -948,3 +948,18 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
     Durchlässigkeit Jugend → U19 → U23 → Profikader, Einsätze von Profis in der U23 (Spielpraxis nach Verletzung).
 - **Systemwechsel im laufenden Spiel** (vom Nutzer gewünscht, 2026-10-22): Formation (z. B. 3-3 → 2-3-1) an der Seitenlinie
   und im Liveticker ändern; heute nur vor dem Spiel. Spieler laufen ihre neuen Positionen an, Umstellung kostet kurz Ordnung.
+
+### 11.12 Kneipe und Vereinsheim in 3D (vom Nutzer gewünscht, 2026-10-28)
+- Kneipe bzw. Vereinsheim als begehbarer 3D-Raum im Stil des Spiels (Pixel-Shader, Low-Poly-Figuren wie auf dem Platz),
+  statt der heutigen Kneipen-Seite. Heute: Vereinsheim-Szene als gezeichneter Raum (`src/ui/ClubScene.js`), Kneipe als
+  Menü (`src/career/pub.js`).
+- Figuren: eigene Spieler an der Theke und am Stammtisch, der Wirt hinter der Theke – immer die angestellte Person
+  (`c.staff.wirt`, Aussehen wie ihr Porträt; ohne Anstellung der Standard-Wirt).
+- Leben im Raum: Leute reden (Gesten, Sprechblasen), trinken, prosten sich zu; zwei spielen Darts an der Dartscheibe
+  (Wurf-Animation, Pfeile bleiben stecken); Fanschals, Vereinsflaggen und Wimpel an Wänden und Decke, passend zu den
+  Vereinsfarben und Erfolgen.
+- Bedienung über die Figuren: Jede Kneipenfunktion (Runde ausgeben, Gespräch, Dossier, Träume unterstützen, Gerüchte,
+  Taktik am Stammtisch …) öffnet man durch Antippen der passenden Person oder des Gegenstands – keine zusätzliche
+  Menüebene; die heutigen Funktionen bleiben dieselben.
+- Technik: eigene kleine Szene mit dem vorhandenen Renderer; Budget für Draw Calls und Handy-Leistung wie bei den Plätzen
+  prüfen; Touch-Ziele groß genug; Barrierefreiheit: Liste der anklickbaren Figuren als Alternative.
