@@ -6,6 +6,15 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-28-2 – Keepers stop long shots, play-off with a break
+
+### Improved
+- **Goals per shot:** On the full-size pitch one shot in five went in, now about one in eight. Long shots from more than 25 m are almost always saved, as in real football. Because a short game only lasts 2 × 3 minutes, fewer goals fall on the full-size pitch (just under 2 instead of just under 3 on average). On the other pitches it stays at about one goal in ten shots.
+- **Play-off:** After the first leg you first see the result and “On to the second leg”, then the second leg.
+
+### Fixed
+- **Tipped into his own net:** When the goalkeeper tipped a hard shot “over the bar”, the ball often still dropped into the big goal. “Round the post” sometimes went towards the middle of the goal, too.
+
 ## 2026-10-28 – Away kit, midweek games, crow and player development
 
 ### New

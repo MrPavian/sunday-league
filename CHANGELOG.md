@@ -6,6 +6,15 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-28-2 – Torwart hält Fernschüsse, Relegation mit Pause
+
+### Verbessert
+- **Torquote je Schuss:** Auf dem Großfeld ging jeder fünfte Schuss rein, jetzt etwa jeder achte. Fernschüsse aus mehr als 25 m sind fast immer gehalten, wie im echten Fußball. Weil das Spiel bei kurzer Dauer nur 2 × 3 Minuten dauert, fallen auf dem Großfeld dafür weniger Tore (im Schnitt knapp 2 statt knapp 3). Auf den anderen Plätzen bleibt es bei etwa jedem zehnten Schuss.
+- **Relegation:** Nach dem Hinspiel kommt erst das Ergebnis mit „Weiter zum Rückspiel“, dann das Rückspiel.
+
+### Behoben
+- **Ins eigene Tor gelenkt:** Lenkte der Torwart einen harten Schuss „über die Latte“, fiel der Ball vor dem großen Tor oft doch hinein. Auch „um den Pfosten“ ging manchmal Richtung Tormitte.
+
 ## 2026-10-28 – Auswärtstrikot, Englische Woche, Krähe und Spielerentwicklung
 
 ### Neu
