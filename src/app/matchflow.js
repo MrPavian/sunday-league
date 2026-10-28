@@ -19,7 +19,7 @@ import { succeed } from '../career/legacy.js';
 import { appointCoach } from '../career/president.js';
 import { coachAway, isPresident } from '../career/personal.js';
 import { prepareRelegationMatch, recordRelegationLeg, startRelegation } from '../career/relegation.js';
-import { humanTie, POKALE, pokalOf, pokalWhen, preparePokalMatch, recordPokalResult, roundName } from '../career/pokal.js';
+import { finishMidweek, humanTie, POKALE, pokalOf, pokalWhen, preparePokalMatch, recordPokalResult, roundName } from '../career/pokal.js';
 import { pendingGame, playDue, prepareOldBoysMatch, recordOldBoysResult } from '../career/oldboys.js';
 import { coachLevel } from '../ui/prefs.js';
 
@@ -304,6 +304,11 @@ export function createMatchflow(ctx) {
           openClubhouse();
         },
       });
+    },
+    onMidweekDone() {
+      finishMidweek(ctx.career); // Englische Woche: vom Pokalspiel zum nächsten Spiel der Woche
+      saveCareer(ctx.career);
+      openClubhouse();
     },
     onNextWeek() {
       finishRound(ctx.career);

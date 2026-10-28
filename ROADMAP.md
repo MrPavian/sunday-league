@@ -918,7 +918,8 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
 - Finanzsystem anpassen und erweitern; Sponsoring erweitern; Ausstattungsvertrag (Ausrüster).
 - Abschlussfahrt und Trainingslager: Preise nach Teilnehmerzahl, Liga und Professionalität staffeln.
 - Maximale Spielerzahl pro Liga anzeigen und anpassbar machen.
-- Heim-, Auswärts- und Ausweichtrikot (bei Farbgleichheit automatisch).
+- ~~Heim-, Auswärts- und Ausweichtrikot (bei Farbgleichheit automatisch).~~ Erledigt 2026-10-28 (`awayKitOf`, `kitChoice`,
+  `resolveKitClash` in career.js; Editor mit Heim/Auswärts, Torwart hebt sich von allen Trikots ab).
 - Trainerauszeichnung (Trainer des Monats/der Saison).
 - Mehr Sponsoren, mehr Spielernamen, mehr Nationalitäten.
 

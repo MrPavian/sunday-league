@@ -6,14 +6,14 @@ import { effectChips } from '../../career/consequences.js';
 import { seasonReview } from '../../career/review.js';
 import { reviewHTML } from '../review.js';
 import { GOALS } from '../../career/board.js';
-import { button, icon } from '../ds.js';
+import { button, esc, icon } from '../ds.js';
 import { clubScene } from '../ClubScene.js';
 import { phone } from '../world.js';
 import { homeView } from '../prefs.js';
 import { crestExtras, crestOf, crestSVG } from '../crest.js';
 import { relegationNeeded, relegationOf } from '../../career/relegation.js';
 import { LEAGUES } from '../../career/clubs.js';
-import { clubById, humanClub, leagueOf, humanFixture, playerOf, seasonOver, table } from '../../career/career.js';
+import { clubById, humanClub, kitChoice, leagueOf, humanFixture, playerOf, seasonOver, table } from '../../career/career.js';
 import { DESTINATIONS, tripChoose, tripStage, tripState, tripVerdict } from '../../career/trip.js';
 import { eventView, moodLabel, moodText } from '../../career/events.js';
 import { storyLabels } from '../../career/stories.js';
@@ -49,13 +49,20 @@ function youthNote(c) {
   return tr(`Jugend am Wochenende: ${games}${picked}`, `Youth at the weekend: ${games}${picked}`);
 }
 
+// Welches Trikot der Gast trägt (career.js kitChoice), als Zeile unter dem Spielort.
+const KIT_NAMES = () => ({ heim: tr('Heimtrikot', 'home kit'), auswaerts: tr('Auswärtstrikot', 'away kit'), ausweich: tr('Ausweichtrikot', 'change kit') });
+function kitLine(hc, ac, home) {
+  const name = KIT_NAMES()[kitChoice(hc, ac)];
+  return home ? tr(`Trikots: wir im Heimtrikot, ${ac.short} im ${name}`, `Kits: we wear our home kit, ${ac.short} their ${name}`) : tr(`Wir laufen im ${name} auf.`, `We play in our ${name}.`);
+}
+
 export const homeScreens = {
   // HEUTE: das Vereinsheim als Raum (Szene), das Spiel (oder Ergebnisse/Saisonende) groß,
   // daneben letzte Ergebnisse, Aushang und was in der Gruppe auf dich wartet.
   hub() {
     const c = this.career;
     const over = seasonOver(c);
-    const main = (over || this.results ? '' : this.pokalWonCard()) + (over ? this.seasonEnd() : this.results ? this.roundResults() : this.nextMatch());
+    const main = (over || this.results ? '' : this.pokalWonCard()) + (over ? this.seasonEnd() : this.results ? this.roundResults() : c.week?.midweek ? this.midweekCard() : this.nextMatch());
     const mine = [];
     // Während der Ergebnisanzeige ist der eben gespielte Spieltag schon dabei.
     for (let i = Math.min(this.results ? c.round : c.round - 1, c.fixtures.length - 1); i >= 0 && mine.length < 5; i--) {
@@ -134,6 +141,7 @@ export const homeScreens = {
         </div>
         <p class="t-body hub-opp">${home ? tr('Heimspiel', 'Home') : tr('Auswärts', 'Away')} ${tr('gegen', 'against')} <b>${opp.name}</b></p>
         <p class="t-2">${venue.name} · ${venue.surface.name} · ${venue.format} ${tr('gegen', 'v')} ${venue.format}</p>
+        <p class="t-2 kit-line">${kitLine(hc, ac, home)}</p>
         <p class="t-2 weather">${weatherLine(c.week?.weather)}</p>
         <div class="ui-chips hub-facts">
           <span class="ui-chip" style="--c:#5cc46a" title="${tr('Zusagen', 'in')}">${count('yes')} ${tr('Zusagen', 'in')}</span>
@@ -159,6 +167,21 @@ export const homeScreens = {
     const name = POKALE[kind].name;
     return `<article class="ui-card pokal-win"><p class="t-cap">${name}</p><h3>${tr('POKALSIEGER!', 'CUP WINNERS!')}</h3>
       <p class="t-body">${tr(`Der ${name} steht in der Vitrine.`, `The ${name} is in the trophy cabinet.`)}</p>${button(tr('Zum Pokal', 'To the cup'), { action: 'tab', value: 'cup' })}</article>`;
+  },
+
+  // Englische Woche: nach dem Pokalspiel erst das Ergebnis, dann „Weiter zum …“ (pokal.js finishMidweek).
+  midweekCard() {
+    const c = this.career;
+    const mw = c.week.midweek;
+    const [a, b] = mw.result;
+    const won = a + (mw.pens?.[0] ?? 0) * 0.01 > b + (mw.pens?.[1] ?? 0) * 0.01;
+    const next = pokalDue(c);
+    const label = next ? (POKALE[next].saturday ? tr('Weiter zum Samstag', 'On to Saturday') : tr('Weiter zum Mittwoch', 'On to Wednesday')) : tr('Weiter zum Sonntag', 'On to Sunday');
+    return `<article class="ui-card hub-card midweek-card"><p class="t-cap">${pokalWhen(mw.kind)} · <b>${POKALE[mw.kind].name}</b> · ${tr('Englische Woche', 'Midweek game')}</p>
+      <h3 class="t-h2">${a} : ${b}${mw.et ? ` <small>${tr('n. V.', 'a.e.t.')}</small>` : ''}${mw.pens ? ` <small>(${tr('i. E.', 'pens')} ${mw.pens[0]}:${mw.pens[1]})</small>` : ''}</h3>
+      <p class="t-body">${tr('gegen', 'against')} <b>${esc(mw.opp)}</b> – ${won ? tr('eine Runde weiter.', 'through to the next round.') : tr('ausgeschieden.', 'knocked out.')}</p>
+      <p class="t-2">${next ? tr(`Diese Woche wartet noch der ${POKALE[next].name}, danach die Liga am Sonntag.`, `The ${POKALE[next].name} is still to come this week, then the league on Sunday.`) : tr('Am Sonntag geht die Liga weiter. Bis dahin erholen sich die Beine – ganz frisch ist nach dem Pokal nicht jeder.', 'The league carries on on Sunday. Legs recover until then – not everyone will be completely fresh after the cup game.')}</p>
+      <div class="hub-actions">${button(label, { kind: 'primary big block', action: 'onMidweekDone' })}</div></article>`;
   },
 
   // Pokalspiel unter der Woche: kommt vor dem Ligaspieltag.

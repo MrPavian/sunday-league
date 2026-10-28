@@ -266,7 +266,7 @@ async function english(b) {
 // Kreispokal: Spielstand per Aufstieg in die Kreisklasse B, vorgespult bis zur ersten Pokalwoche.
 // Startseite zeigt das Pokalspiel (Mittwoch) vor dem Ligaspiel; Liveticker spielt es, danach Liga.
 export async function pokal(b) {
-  const ok = checker('Kreispokal: Pokalspiel unter der Woche vor dem Ligaspiel, Pokal-Tab mit Runden');
+  const ok = checker('Kreispokal: Pokalspiel unter der Woche vor dem Ligaspiel, „Weiter zum Sonntag“, Pokal-Tab mit Runden');
   const { createCareer, currentFixtures, finishRound, nextSeason, seasonOver } = await import('../../src/career/career.js');
   const { pokalOf } = await import('../../src/career/pokal.js');
   const c = createCareer({ seed: 77 });
@@ -297,6 +297,11 @@ export async function pokal(b) {
     await p.waitForTimeout(300);
   }
   await click(p, '[data-action="area"][data-value="home"]').catch(() => {});
+  // Englische Woche: erst das Pokalergebnis mit „Weiter zum Sonntag“, das Ligaspiel noch nicht.
+  ok(!!(await p.waitForSelector('.midweek-card [data-action="onMidweekDone"]', { timeout: 20000 }).catch(() => null)), 'nach dem Pokalspiel fehlt der Schritt „Weiter zum Sonntag“');
+  ok(!(await p.$('[data-action="onSimulate"]')), 'Ligaspiel wird ohne Zwischenschritt gleich nach dem Pokalspiel angeboten');
+  await click(p, '[data-action="onMidweekDone"]');
+  await p.waitForTimeout(600);
   ok(!!(await p.waitForSelector('[data-action="onSimulate"]', { state: 'attached', timeout: 20000 }).catch(() => null)), 'nach dem Pokalspiel fehlt das Ligaspiel');
   ok(!(await p.$('.pokal-card')), 'Pokalspiel steht nach dem Spielen noch da');
   await click(p, '[data-action="area"][data-value="season"]').catch(() => {});
@@ -340,7 +345,7 @@ export async function oldSave(b, file) {
 // Karrierestart: Trainer anlegen, Verein gründen (Name, Trikot, Wappen – gratis), Farbwahl ohne
 // Sprung nach oben; danach Ehrenämter selbst besetzen (aus dem Kader und per Aushang).
 export async function clubSetup(b) {
-  const ok = checker('Karrierestart: Gründung (Name, Trikot, Wappen), Scrollposition bei Farbwahl, Ehrenamt besetzen');
+  const ok = checker('Karrierestart: Gründung (Name, Trikot, Auswärtstrikot, Wappen), Scrollposition bei Farbwahl, Ehrenamt besetzen');
   const p = await page(b, 'port', { query: '?notitle&debug' });
   await p.click('.career button');
   await p.waitForTimeout(500);
@@ -383,8 +388,24 @@ export async function clubSetup(b) {
     }, sel);
     ok(kept.before > 0 && Math.abs(kept.after - kept.before) < 2, `Gründung: ${sel} springt (${kept.before} → ${kept.after})`);
   }
+  // Auswärtstrikot: umschalten, Trikotfarbe wählen – das Heimtrikot bleibt, wie es war.
+  const homeShirt = await p.evaluate(() => JSON.parse(localStorage.getItem('sunday-league:career')).clubs.find((c) => c.human).kit.shirt);
+  await click(p, '[data-action="kitSide"][data-value="away"]');
+  await p.waitForTimeout(200);
+  const awayPick = await p.evaluate(() => {
+    const all = [...document.querySelectorAll('#club [data-action="kitColor"][data-value^="shirt:"]')];
+    const el = all.find((x) => !x.classList.contains('on'));
+    el.click();
+    return Number(el.dataset.value.split(':')[1]);
+  });
+  await p.waitForTimeout(200);
+  ok(!!(await p.$('#club [data-action="kitSide"][data-value="away"].active')), 'Auswärts-Reiter nicht aktiv');
   await click(p, '[data-action="foundClub"]');
   await p.waitForTimeout(1000);
+  const kits = await p.evaluate(() => JSON.parse(localStorage.getItem('sunday-league:career')).clubs.find((c) => c.human));
+  ok(kits.awayKit?.shirt === awayPick && kits.kit.shirt === homeShirt, `Auswärtstrikot nicht gespeichert (${kits.awayKit?.shirt} statt ${awayPick}, Heim ${kits.kit.shirt} statt ${homeShirt})`);
+  const kitLine = await p.evaluate(() => document.querySelector('#club .kit-line')?.textContent ?? '');
+  ok(/Heimtrikot|Auswärtstrikot|Ausweichtrikot/.test(kitLine), `Trikotzeile am Spiel fehlt: „${kitLine}“`);
   const head = await p.textContent('#club .club-id h2');
   ok(head === 'FC Testhausen', `Vereinsname nicht übernommen: ${head}`);
   const saved = await p.evaluate(() => JSON.parse(localStorage.getItem('sunday-league:career')));

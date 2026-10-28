@@ -135,12 +135,13 @@ export class Clubhouse {
         this.h.onChange();
       }
       else if (action === 'chronicle') this.showChronicle = !this.showChronicle;
+      else if (action === 'kitSide') this.kitSide = value;
       else if (action === 'kitColor') {
         const [part, color] = value.split(':');
-        this.draft.kit[part] = Number(color);
-      } else if (action === 'kitPattern') this.draft.kit.pattern = value;
-      else if (action === 'kitCollar') this.draft.kit.collar = value;
-      else if (action === 'kitSleeves') this.draft.kit.sleeves = value;
+        this.draftKit()[part] = Number(color);
+      } else if (action === 'kitPattern') this.draftKit().pattern = value;
+      else if (action === 'kitCollar') this.draftKit().collar = value;
+      else if (action === 'kitSleeves') this.draftKit().sleeves = value;
       else if (action.startsWith('crest')) this.crestAction(action, value);
       else if (action.startsWith('fest')) this.festAction(action, value);
       else if (action === 'foundClub') {

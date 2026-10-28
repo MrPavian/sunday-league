@@ -884,22 +884,25 @@ export const KIT_SLEEVES = tr({ main: 'Hauptfarbe', second: '2. Farbe' }, { main
 export const kitEditable = (career) => career.round === 0;
 
 // free: Gründung zu Karrierebeginn – der Förderverein zahlt die ersten Trikots.
-export function updateClub(career, { name, short, kit }, { free = false } = {}) {
+// awayKit: Auswärtstrikot; Heim- und Auswärtssatz zusammen kosten einmal KIT_COST.
+export function updateClub(career, { name, short, kit, awayKit }, { free = false } = {}) {
   if (!free && !kitEditable(career)) return false;
   const club = humanClub(career);
   if (name?.trim()) club.name = name.trim().slice(0, 32);
   if (short?.trim()) club.short = short.trim().toUpperCase().slice(0, 4);
-  if (kit && JSON.stringify({ ...club.kit, ...kit }) !== JSON.stringify(club.kit)) {
+  const homeChanged = kit && JSON.stringify({ ...club.kit, ...kit }) !== JSON.stringify(club.kit);
+  const awayChanged = awayKit && JSON.stringify({ ...awayKitOf(club), ...awayKit }) !== JSON.stringify(awayKitOf(club));
+  if (homeChanged || awayChanged) {
     // Neue Trikots kosten – ohne Geld in der Kasse bleibt's beim alten Satz.
     if (!free) {
       if (career.cash < KIT_COST) return 'nocash';
       book(career, tr('Neuer Trikotsatz', 'New kit'), -KIT_COST);
       club.kitHistory = [...(club.kitHistory ?? []), { season: career.season, kit: { ...club.kit } }].slice(-12); // fürs Museum
     }
-    club.kit = { ...club.kit, ...kit };
-    // Torwart immer in einer Kontrastfarbe.
-    const keeper = [0xe8742a, 0x5cc46a, 0xe0b020, 0x6b4f8c].find((c) => colorDistance(c, club.kit.shirt) > 150) ?? 0xe8742a;
-    club.keeperKit = { shirt: keeper, shorts: 0x1c1c1c, socks: keeper };
+    if (homeChanged) club.kit = { ...club.kit, ...kit };
+    if (awayChanged) club.awayKit = { ...awayKitOf(club), ...awayKit };
+    // Torwart immer in einer Kontrastfarbe zu beiden eigenen Trikots.
+    club.keeperKit = keeperKitFor(null, [club.kit.shirt, awayKitOf(club).shirt]);
   }
   return true;
 }
@@ -932,12 +935,52 @@ export function colorDistance(a, b) {
   return Math.hypot(ch(a, 16) - ch(b, 16), ch(a, 8) - ch(b, 8), ch(a, 0) - ch(b, 0));
 }
 
-// Bei ähnlichen Trikots läuft der Gast im Ausweichtrikot auf.
+// Trikots unterscheidbar: Abstand der Trikotfarben (RGB) über KIT_CLASH, beim Torwart über KEEPER_CLASH.
+export const KIT_CLASH = 110;
+const KEEPER_CLASH = 150;
+const NEUTRAL_KITS = [0xf2efe6, 0x1c1c1c, 0xe0b020];
+const KEEPER_COLORS = [0xe8742a, 0x5cc46a, 0xe0b020, 0x6b4f8c, 0x4fa3e0, 0x7a3fa0, 0x1c1c1c];
+
+// Auswärtstrikot: selbst gestaltet (club.awayKit) – sonst aus den Vereinsfarben abgeleitet (CPU-Vereine, alte
+// Spielstände): die zweite Farbe als Trikot, die Hauptfarbe als Hose; ohne passende zweite Farbe Weiß oder Schwarz.
+export function awayKitOf(club) {
+  if (club.awayKit) return club.awayKit;
+  const k = club.kit;
+  const shirt = k.second != null && colorDistance(k.second, k.shirt) > KEEPER_CLASH ? k.second : (NEUTRAL_KITS.find((c) => colorDistance(c, k.shirt) > KEEPER_CLASH) ?? 0xf2efe6);
+  return { shirt, shorts: k.shirt, socks: shirt, pattern: 'uni', second: k.shirt, collar: k.collar ?? 'standard', sleeves: 'main' };
+}
+
+// Welches Trikot der Gast trägt: 'heim', 'auswaerts' oder 'ausweich' (neutral) – das erste, das sich vom Trikot und
+// vom Torwart der Gastgeber abhebt.
+export function kitChoice(home, away) {
+  const apart = (shirt) => colorDistance(shirt, home.kit.shirt) > KIT_CLASH && (!home.keeperKit || colorDistance(shirt, home.keeperKit.shirt) > KIT_CLASH);
+  if (apart(away.kit.shirt)) return 'heim';
+  if (apart(awayKitOf(away).shirt)) return 'auswaerts';
+  return 'ausweich';
+}
+
+// Torwart in einer Farbe, die sich von allen anderen Trikots auf dem Platz abhebt (sonst der beste verfügbare).
+export function keeperKitFor(current, shirts) {
+  const gap = (c) => Math.min(...shirts.map((s) => colorDistance(c, s)));
+  if (current && gap(current.shirt) > KEEPER_CLASH) return current;
+  const shirt = KEEPER_COLORS.find((c) => gap(c) > KEEPER_CLASH) ?? KEEPER_COLORS.reduce((a, b) => (gap(b) > gap(a) ? b : a));
+  return { shirt, shorts: 0x1c1c1c, socks: shirt };
+}
+
+// Bei ähnlichen Trikots läuft der Gast im Auswärtstrikot auf, passt auch das nicht, im Ausweichtrikot.
+// Sein Torwart hebt sich von beiden Mannschaften und vom Torwart der Gastgeber ab.
 export function resolveKitClash(home, away) {
-  if (colorDistance(home.kit.shirt, away.kit.shirt) > 110) return away;
-  const alt = [0xf2efe6, 0x1c1c1c, 0xe0b020].find((c) => colorDistance(c, home.kit.shirt) > 150);
+  const choice = kitChoice(home, away);
+  let kit = away.kit;
+  if (choice === 'auswaerts') kit = awayKitOf(away);
+  else if (choice === 'ausweich') {
+    const alt = NEUTRAL_KITS.find((c) => colorDistance(c, home.kit.shirt) > KEEPER_CLASH && (!home.keeperKit || colorDistance(c, home.keeperKit.shirt) > KIT_CLASH)) ?? NEUTRAL_KITS.find((c) => colorDistance(c, home.kit.shirt) > KEEPER_CLASH);
+    kit = { shirt: alt, shorts: alt === 0x1c1c1c ? 0xf2efe6 : 0x1c1c1c, socks: alt };
+  }
+  const keeperKit = keeperKitFor(away.keeperKit, [home.kit.shirt, kit.shirt, ...(home.keeperKit ? [home.keeperKit.shirt] : [])]);
+  if (kit === away.kit && keeperKit === away.keeperKit) return away;
   // Das Wappen bleibt, auch wenn das Ausweichtrikot andere Farben hat.
-  return { ...away, crest: away.crest ?? defaultCrest(away), kit: { shirt: alt, shorts: alt === 0x1c1c1c ? 0xf2efe6 : 0x1c1c1c, socks: alt } };
+  return { ...away, crest: away.crest ?? defaultCrest(away), kit, keeperKit };
 }
 
 // --- Aufstellung durch den Trainer ------------------------------------------------

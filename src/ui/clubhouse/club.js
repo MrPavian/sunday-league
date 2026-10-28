@@ -7,7 +7,7 @@ import { clubLife, FEE_NAMES, neighborText } from '../../career/clublife.js';
 import { reviewHTML } from '../review.js';
 import { button, esc, tabs as uiTabs } from '../ds.js';
 import { CREST_BAND_TEXTS, CREST_COLORS, CREST_DIVISION_GROUPS, CREST_DIVISIONS, CREST_OVERLAYS, CREST_SHAPES, CREST_SYMBOL_GROUPS, CREST_SYMBOLS, crestExtras, crestOf, crestSVG, defaultCrest, THIRD_COLOR_DIVISIONS } from '../crest.js';
-import { humanClub, KIT_COLLARS, KIT_COLORS, KIT_PATTERNS, KIT_SLEEVES, kitEditable, updateCrest, setFounded, clampFounded, foundedRange, playerOf, table } from '../../career/career.js';
+import { awayKitOf, humanClub, KIT_COLLARS, KIT_COLORS, KIT_PATTERNS, KIT_SLEEVES, kitEditable, updateCrest, setFounded, clampFounded, foundedRange, playerOf, table } from '../../career/career.js';
 import { spielberichtStreng } from '../../career/spielbericht.js';
 import { FINES, KIT_COST, MEMBER_FEE, SLOTS } from '../../career/finances.js';
 import { DESTINATIONS } from '../../career/trip.js';
@@ -59,8 +59,10 @@ export const clubScreens = {
     const c = this.career;
     const club = humanClub(c);
     const editable = founding || kitEditable(c);
-    this.draft ??= { name: club.name, short: club.short, kit: { pattern: 'uni', second: 0xf2efe6, collar: 'standard', sleeves: 'main', ...club.kit } };
-    const d = this.draft;
+    this.draft ??= { name: club.name, short: club.short, kit: { pattern: 'uni', second: 0xf2efe6, collar: 'standard', sleeves: 'main', ...club.kit }, awayKit: { ...awayKitOf(club) } };
+    const away = this.kitSide === 'away';
+    // Heim- oder Auswärtstrikot im Editor: d.kit ist der gerade bearbeitete Satz.
+    const d = { ...this.draft, kit: this.draftKit() };
     const mainSponsor = shirtSponsor(c);
     const sponsorShown = mainSponsor ? { id: mainSponsor.id, name: mainSponsor.name, color: sponsorColor(mainSponsor) } : null;
     const shirtCss = (k) => `url(${kitPreviewURL(k, sponsorShown)}) center / 100% 100%`;
@@ -78,6 +80,9 @@ export const clubScreens = {
           <small class="sponsor-note">${sponsorShown ? tr(`Auf der Brust: ${sponsorShown.name}`, `On the chest: ${sponsorShown.name}`) : tr('Noch kein Trikotsponsor', 'No shirt sponsor yet')}</small>
         </div>
         <div class="fields">
+          <div class="swatch-row kit-side"><span>${tr('Satz', 'Set')}</span>${[['home', tr('Heim', 'Home')], ['away', tr('Auswärts', 'Away')]]
+            .map(([id, label]) => `<button class="${(id === 'away') === away ? 'active' : ''}" data-action="kitSide" data-value="${id}">${label}</button>`)
+            .join('')}</div>
           <label>${tr('Vereinsname', 'Club name')} <input data-field="name" value="${esc(d.name)}" maxlength="32" ${editable ? '' : 'disabled'}></label>
           <label>${tr('Kürzel', 'Short name')} <input data-field="short" value="${esc(d.short)}" maxlength="4" ${editable ? '' : 'disabled'}></label>
           <div class="swatch-row"><span>${tr('Muster', 'Pattern')}</span>${Object.entries(KIT_PATTERNS)
@@ -99,6 +104,11 @@ export const clubScreens = {
             : `<p class="warn">${tr('Die Trikots für diese Saison sind bestellt. Änderungen wieder vor dem ersten Spieltag der nächsten Saison.', 'This season\'s kits are ordered. Changes again before the first matchday of next season.')}</p>`}
         </div>
       </div>`;
+  },
+
+  // Der im Editor gewählte Satz (Heim oder Auswärts) des Entwurfs.
+  draftKit() {
+    return this.kitSide === 'away' ? this.draft.awayKit : this.draft.kit;
   },
 
   // Gründungsversammlung: Zu Karrierebeginn legst du Name, Trikot und Wappen fest – die Erstausstattung ist frei.

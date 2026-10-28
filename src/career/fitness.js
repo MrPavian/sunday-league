@@ -12,7 +12,7 @@ import { SHIFT_JOBS } from './chat.js';
 export const FIT_MIN = 0.5;
 export const FIT_LOW = 0.7; // darunter steigt das Verletzungsrisiko
 const RECOVERY = 0.12; // je Woche
-const MATCH_COST = 0.05; // ein ganzes Spiel (anteilig nach Spielzeit)
+export const MATCH_COST = 0.05; // ein ganzes Spiel (anteilig nach Spielzeit)
 
 const clampFit = (v) => Math.max(FIT_MIN, Math.min(1, v));
 export const fitnessOf = (c, idx) => c.players?.[idx]?.fitness ?? 1;

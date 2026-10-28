@@ -19,7 +19,7 @@ import { humanClub, playerOf, resolveKitClash, seasonOver, squadPicker, SQUAD_SH
 import { isCoach } from './personal.js';
 import { adjustMood } from './events.js';
 import { BUND_AWAY, BUND_ERST, BUND_NAME, BUND_PRIZE, BUND_PRIZE_WINNER, BUND_ROUND_NAMES, BUND_SPONSOR, BUND_TEXT, BUND_VENUES, OBERLIGA, PROFI_ATTRS, PROFI_KLASSEN, PROFIS } from './bundespokal.js';
-import { afterMatchFitness } from './fitness.js';
+import { adjustFitness, afterMatchFitness, fitnessOf, MATCH_COST } from './fitness.js';
 import { applyCards } from './suspensions.js';
 import { bundVenueAutoResolve } from './bundevents.js';
 import { book, homeUnit, matchFinances } from './finances.js';
@@ -85,18 +85,25 @@ export function pokalRounds(c, kind) {
   const n = c.fixtures.length;
   const winter = Math.floor(n / 2);
   const taken = new Set([winter]);
-  if (kind !== 'bund') for (const other of KINDS.slice(0, KINDS.indexOf(kind))) if (other !== 'bund') for (const r of pokalRounds(c, other)) taken.add(r); // der überregionale Pokal läuft samstags, die anderen mittwochs
+  // Höchstens ein Pokalspiel je Woche (vom Nutzer gewünscht, 2026-10-28): auch der überregionale Pokal (samstags) meidet
+  // die Wochen der anderen (mittwochs), in denen der eigene Verein mitspielt. Nur wenn der Kalender voll ist (kurze Saison,
+  // drei oder vier Pokale), teilen sich zwei Pokale eine Woche.
+  for (const other of KINDS.slice(0, KINDS.indexOf(kind))) if (pokalEligible(c, other)) for (const r of pokalRounds(c, other)) taken.add(r);
+  const own = new Set();
   return POKALE[kind].slots.map((f) => {
     const target = Math.min(n - 1, Math.max(1, Math.round(n * f)));
     let r = target;
-    if (kind === 'land') {
-      // Die dritte Pokalart sucht die nächste freie Woche in beide Richtungen (sonst springt sie bei vollem Kalender an den Saisonrand).
+    if (kind === 'land' || kind === 'bund') {
+      // Landes- und überregionaler Pokal suchen die nächste freie Woche in beide Richtungen (sonst springen sie bei vollem Kalender an den Saisonrand).
       for (let d = 1; taken.has(r) && d < n; d++) r = [target + d, target - d].find((x) => x >= 1 && x <= n - 1 && !taken.has(x)) ?? r;
     } else {
       while (taken.has(r) && r < n - 1) r++;
       while (taken.has(r) && r > 1) r--;
     }
-    if (taken.has(r)) r = target; // alle Wochen belegt (kurze Saison, mehrere Pokale): zwei Pokale in einer Woche
+    // Alle Wochen belegt (kurze Saison, mehrere Pokale): zwei Pokale in einer Woche – nächstliegende Woche, die dieser Pokal
+    // noch nicht hat, nie die Winterpause.
+    if (taken.has(r)) r = [...Array(n - 1).keys()].map((i) => i + 1).filter((x) => x !== winter && !own.has(x)).sort((x, y) => Math.abs(x - target) - Math.abs(y - target) || x - y)[0] ?? target;
+    own.add(r);
     taken.add(r);
     return r;
   }).slice(0, roundsFor(kind)).sort((x, y) => x - y);
@@ -241,9 +248,13 @@ function penalties(teams, rng) {
 export function recordPokalResult(c, prepared) {
   const { tie, kind, match: m } = prepared;
   const cup = pokalOf(c, kind);
+  const cost = {}; // Fitness, die das Pokalspiel gekostet hat – bis zum nächsten Spiel kommt ein Teil zurück (finishMidweek)
   for (const p of [...m.players, ...m.bench.flat(), ...(m.sentOff ?? [])]) {
     const st = m.stats.players[p.id];
-    if (p.poolIndex != null && st?.seconds > 0) afterMatchFitness(c, p.poolIndex, Math.min(1 + EXTRA_SHARE, st.seconds / (m.duration || st.seconds)), 1, 1 + EXTRA_SHARE); // Anteil an der Spielzeit: mit Verlängerung bis 4/3, wer die Verlängerung ganz spielt, zahlt ein Drittel mehr. Doppelbelastung: bis Sonntag keine Erholung (die kommt erst zum Wochenwechsel)
+    if (p.poolIndex == null || !(st?.seconds > 0)) continue;
+    const before = fitnessOf(c, p.poolIndex);
+    afterMatchFitness(c, p.poolIndex, Math.min(1 + EXTRA_SHARE, st.seconds / (m.duration || st.seconds)), 1, 1 + EXTRA_SHARE); // Anteil an der Spielzeit: mit Verlängerung bis 4/3, wer die Verlängerung ganz spielt, zahlt ein Drittel mehr
+    if (before > fitnessOf(c, p.poolIndex)) cost[p.poolIndex] = before - fitnessOf(c, p.poolIndex);
   }
   const [s0, s1] = m.score;
   tie.result = prepared.humanIsAway ? { home: s1, away: s0 } : { home: s0, away: s1 };
@@ -257,6 +268,30 @@ export function recordPokalResult(c, prepared) {
   matchFinances(c, tie, prepared, kind === 'bund' ? c.level ?? 1 : cup.levels[tie.home]); // Heimspiel: Theke, Schiri, Platzmiete; auswärts: Sprit
   logTie(c, cup, tie);
   afterHumanTie(c, kind);
+  // Englische Woche: Das Vereinsheim zeigt erst das Pokalergebnis und „Weiter zum …“, dann das nächste Spiel.
+  if (c.week) c.week.midweek = { kind, result: prepared.humanIsAway ? [s1, s0] : [s0, s1], pens: tie.pens ? (prepared.humanIsAway ? [tie.pens.away, tie.pens.home] : [tie.pens.home, tie.pens.away]) : null, et: !!tie.et, opp: pokalClub(c, cup, prepared.humanIsAway ? tie.home : tie.away).name, cost };
+}
+
+// Erholung zwischen zwei Spielen einer Woche: Je nach Messgröße dauert sie 24–72 Stunden (Nédélec u. a. 2012, „Recovery
+// in Soccer Part I“, Sports Medicine 42, https://hal-insep.archives-ouvertes.fr/hal-01660950). Anstoßzeiten ab Montag 0 Uhr
+// in Stunden: Mittwoch 19:30, Samstag 15:30, Sonntag 10:30; ein Spiel dauert mit allem etwa 2 Stunden.
+const KICKOFF_H = { wed: 67.5, sat: 135.5, sun: 154.5 };
+const FULL_RECOVERY_H = 72;
+export const midweekGap = (fromKind, toKind) => KICKOFF_H[toKind ? (POKALE[toKind].saturday ? 'sat' : 'wed') : 'sun'] - KICKOFF_H[POKALE[fromKind].saturday ? 'sat' : 'wed'] - 2;
+
+// „Weiter zum …“ nach dem Pokalspiel: ein Teil der Fitness kommt zurück (höchstens ein normales Spiel; die Verlängerung
+// wirkt länger nach), eine Zeile im Chat, dann das nächste Spiel der Woche.
+export function finishMidweek(c) {
+  const mw = c.week?.midweek;
+  if (!mw) return;
+  const next = pokalDue(c);
+  const share = Math.max(0, Math.min(1, midweekGap(mw.kind, next) / FULL_RECOVERY_H));
+  for (const [idx, drop] of Object.entries(mw.cost ?? {})) adjustFitness(c, Number(idx), Math.min(drop, MATCH_COST) * share);
+  const [a, b] = mw.result;
+  const score = `${a}:${b}${mw.et ? ` ${tr('n. V.', 'a.e.t.')}` : ''}${mw.pens ? ` (${tr('i. E.', 'pens')} ${mw.pens[0]}:${mw.pens[1]})` : ''}`;
+  const won = a + (mw.pens?.[0] ?? 0) * 0.01 > b + (mw.pens?.[1] ?? 0) * 0.01;
+  c.week.chat.push({ from: null, text: tr(`${POKALE[mw.kind].name}: ${score} gegen ${mw.opp}. ${won ? 'Weiter geht\'s!' : 'Ausgeschieden.'} ${next ? `Nächstes Spiel: ${POKALE[next].name}.` : 'Jetzt zählt der Sonntag.'}`, `${POKALE[mw.kind].name}: ${score} against ${mw.opp}. ${won ? 'Through!' : 'Knocked out.'} ${next ? `Next up: ${POKALE[next].name}.` : 'Now Sunday is what counts.'}`), time: POKALE[mw.kind].saturday ? 'Sa 18:10' : 'Mi 22:10', me: true });
+  delete c.week.midweek;
 }
 
 function logTie(c, cup, tie) {
