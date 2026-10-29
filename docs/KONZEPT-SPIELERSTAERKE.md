@@ -228,3 +228,27 @@ Punkte für den Stärkeren (Sieg 1, Remis ½); N Spiele je Zeile, Unsicherheit b
 - b) Engine leicht steiler (Faktor ≈ 1,3), vorzugsweise über die Technikwerte, damit Profis vor allem besser entscheiden und
   ausführen (Gedanke aus Weg C).
 - c) Ligen weiter auseinanderziehen (Ziel-Leistung je Liga, Abschnitt 3), unten kleinere Abstände (Nutzerentscheid).
+
+### 11.1 Wirkung der einzelnen Werte (2026-10-29)
+
+Rasenplatz (7er), N = 120 je Zeile, nur ein Wert verschoben, für die ganze Mannschaft um ±0,20. „Wirkung“ ist der Stärkeunterschied,
+der im Versuch mit allen Werten (Steigung 0,043 je Punkt, kleinste Quadrate über D = 4/8/12/20) dieselbe Punktquote ergibt; in Klammern
+die Spanne bei ±4,5 Prozentpunkten Unsicherheit. „Zählt“ ist, um wie viel sich die heutige Stärkezahl dabei ändert.
+
+| Wert | Punkte | Wirkung | Zählt in der Stärke |
+|---|---|---|---|
+| Körper | 70 % | 7,6 (5,9–9,5) | 0 |
+| Technik | 71 % | 8,0 (6,2–9,9) | 7,1 |
+| Zweikampf | 69 % | 7,2 (5,4–9,0) | 5,1 |
+| Abschluss | 68 % | 6,5 (4,7–8,3) | 3,4 |
+| Tempo | 66 % | 5,8 (4,1–7,6) | 5,0 |
+| Torwart | 64 % | 5,2 (3,5–7,0) | 3,4 |
+| Passen | 63 % | 4,7 (3,0–6,4) | 7,1 |
+| Ausdauer | 55 % | 1,9 (0,3–3,6) | 6,2 |
+| Kopfball | 54 % | 1,4 (−0,3–3,0) | 2,3 |
+
+**Folgerung:** Die Stärkezahl gewichtet anders, als die Engine wirkt. Körper fehlt ganz, Ausdauer und Passen zählen zu viel, Abschluss,
+Zweikampf und Torwart zu wenig. Das erklärt, warum echte Kader flacher vorhersagen (QUICK 0,03) als der Versuch (0,043–0,06).
+Ausdauer hängt an der Spiellänge (gemessen mit der eingestellten, kurzen Spielzeit); bei langen Spielen ist sie neu zu messen.
+Nächste Messung: dieselbe Methode je Position (nur Abwehr, nur Mittelfeld, nur Sturm, nur Torwart), daraus neue Gewichte je Position
+für die Stärkezahl der neuen Karrieren.

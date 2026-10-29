@@ -4,7 +4,7 @@
 // Heim und Gast wechseln je Spiel, damit Anstoß und Seite herausfallen.
 //   node scripts/strength-steepness.mjs [Platz=sportplatz] [Spiele je Stufe=40] [Stufen=0,4,8,12,20] [Werte=all|tech|phys]
 // tech: nur Technik, Passen, Abschluss, Zweikampf, Kopfball, Torwart; phys: nur Tempo, Ausdauer, Körper. Die Verschiebung wird so
-// gewählt, dass der Stärkeunterschied trotzdem D ist (Bisektion).
+// gewählt, dass der Stärkeunterschied trotzdem D ist (Bisektion). attr:<Wert>: nur dieser eine Wert, um ±D/200 verschoben.
 import { createRng } from '../src/core/rng.js';
 import { TEAM_PRESETS } from '../src/data/teams.js';
 import { generateTeam, ratePlayer } from '../src/sim/generator.js';
@@ -21,8 +21,9 @@ const roles = [...systemFormation(format, normalizeTactic(TEAM_PRESETS[0].tactic
 const clamp = (v) => Math.max(0.05, Math.min(0.98, v));
 const MODE = process.argv[5] ?? 'all';
 const PHYS = new Set(['pace', 'stamina', 'strength']);
-const moves = (k) => MODE === 'all' || (MODE === 'phys') === PHYS.has(k);
-const shift = (team, preset, dx) => ({ ...preset, players: team.players.map((p) => { const attrs = Object.fromEntries(Object.entries(p.attrs).map(([k, v]) => [k, moves(k) ? clamp(v + dx) : v])); const q = { ...p, attrs }; return { ...q, rating: ratePlayer(q) }; }) });
+const [ONE, POS] = MODE.startsWith('attr:') ? MODE.slice(5).split('@') : [null, null]; // attr:pace[@def] – nur dieser Wert (nur diese Position), um ±D/200 (ohne Bisektion)
+const moves = (k) => (ONE ? k === ONE : MODE === 'all' || (MODE === 'phys') === PHYS.has(k));
+const shift = (team, preset, dx) => ({ ...preset, players: team.players.map((p) => { if (POS && p.position !== POS) return p; const attrs = Object.fromEntries(Object.entries(p.attrs).map(([k, v]) => [k, moves(k) ? clamp(v + dx) : v])); const q = { ...p, attrs }; return { ...q, rating: ratePlayer(q) }; }) });
 const eleven = (t) => t.players.slice(0, format).reduce((s, p) => s + p.rating, 0) / format;
 
 const out = [];
@@ -37,8 +38,8 @@ for (const D of STEPS) {
     const gap = (dx) => eleven(shift(base, TEAM_PRESETS[0], dx)) - eleven(shift(base, TEAM_PRESETS[1], -dx));
     let lo = 0;
     let hi = 0.6;
-    for (let it = 0; it < 24; it++) (gap((lo + hi) / 2) < D ? (lo = (lo + hi) / 2) : (hi = (lo + hi) / 2));
-    const dx = D ? (lo + hi) / 2 : 0;
+    for (let it = 0; it < (ONE ? 0 : 24); it++) (gap((lo + hi) / 2) < D ? (lo = (lo + hi) / 2) : (hi = (lo + hi) / 2));
+    const dx = ONE ? D / 200 : D ? (lo + hi) / 2 : 0;
     const strong = shift(base, TEAM_PRESETS[0], dx);
     const weak = shift(base, TEAM_PRESETS[1], -dx);
     realD += eleven(strong) - eleven(weak);
