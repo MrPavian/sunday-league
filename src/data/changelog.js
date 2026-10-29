@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-29-3',
+    de: { title: 'Ligen bis zur Oberliga, Bundesland, voller Bundespokal und Winterpause', items: ['Bundesland wählen: Die Ligen heißen wie in deinem Landesverband, die Vereine bekommen regional klingende, erfundene Namen.', 'Drei neue Ligen über der Bezirksliga bis zur Oberliga – mehr Zuschauer, höherer Eintritt, stärkere Gegner. Ab der Landesliga direkt in den Landespokal.', 'Auf- und Abstieg auch für alle anderen Vereine, in jeder Liga.', 'Bundespokal mit 64 Vereinen: Alle Paarungen laufen mit, der echte Sieger wird ausgespielt.', 'Winterpause als eigene Woche mit dem Hallenturnier und eigener Turnier-Aufstellung.'] },
+    en: { title: 'Leagues up to the Oberliga, choose your state, full National Cup and winter break', items: ['Choose your state: leagues are named as in your regional association, and clubs get made-up names that sound local.', 'Three new leagues above the county league up to the Oberliga – more spectators, higher entry fees, stronger opponents. From the Landesliga up, straight into the State Cup.', 'Promotion and relegation for all the other clubs too, in every league.', 'National Cup with 64 clubs: every tie is played and the real winner is decided.', 'Winter break as its own week with the indoor tournament and a separate tournament line-up.'] },
+  },
+  {
     id: '2026-10-29-2',
     de: { title: 'Systemwechsel im laufenden Spiel', items: ['Im Taktik-Blatt an der Seitenlinie und im Liveticker lässt sich das System während des Spiels umstellen.', 'Die Spieler laufen ihre neuen Positionen an – bis alle stehen, wackelt die Ordnung.'] },
     en: { title: 'Change system during the match', items: ['In the touchline tactics sheet and in the live ticker you can change your system during the match.', 'The players run to their new positions – until everyone is in place, the shape wobbles.'] },

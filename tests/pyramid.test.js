@@ -66,5 +66,42 @@ describe('Ligenpyramide', () => {
     const avg = (l) => ensureLeagues(c)[l].reduce((x, d) => x + defStrength(d, pool, l), 0) / 5;
     expect(avg(5)).toBeGreaterThan(avg(4));
     expect(avg(5)).toBeGreaterThan(avg(1) + 8);
+    expect(avg(8)).toBeGreaterThan(avg(6));
+    expect(avg(8)).toBeGreaterThan(avg(5) + 2);
   }, 60000);
+
+  it('Stufen 6–8: Stammvereine je Liga stärker als die darunter; Oberliga etwa so stark wie die des Pokals (FIELD_STRENGTH)', async () => {
+    const { defStrength } = await import('../src/career/pyramid.js');
+    const { EXTRA_CLUBS } = await import('../src/career/clubs.js');
+    const { FIELD_STRENGTH } = await import('../src/career/bundespokal.js');
+    const pool = getPool();
+    const avg = (l) => { const d = [...LEAGUES[l].clubs, ...(EXTRA_CLUBS[l] ?? [])]; return d.reduce((x, y) => x + defStrength(y, pool, l), 0) / d.length; };
+    for (let l = 2; l <= MAX_LEVEL; l++) expect(avg(l)).toBeGreaterThan(avg(l - 1));
+    expect(Math.abs(avg(8) - FIELD_STRENGTH.amateur[0])).toBeLessThan(FIELD_STRENGTH.amateur[1]);
+  });
+
+  it('alter Spielstand ohne Stufen 6–8: die neuen Ligen kommen dazu, die alten bleiben', () => {
+    const c = createCareer({ seed: 37 });
+    const old = Object.fromEntries([1, 2, 3, 4, 5].map((l) => [l, ensureLeagues(c)[l]]));
+    c.leagues = old;
+    const l = ensureLeagues(c);
+    for (let k = 6; k <= 8; k++) expect(l[k]).toHaveLength(5);
+    expect(l[5]).toBe(old[5]);
+  });
+
+  it('Pokale ab der Landesliga: kein Kreis- und Bezirkspokal, direkt in den Landespokal', async () => {
+    const { pokalEligible } = await import('../src/career/pokal.js');
+    const { levelName } = await import('../src/career/bundespokal.js');
+    const c = createCareer({ seed: 39 });
+    c.level = 6;
+    expect(pokalEligible(c, 'kreis')).toBe(false);
+    expect(pokalEligible(c, 'bezirk')).toBe(false);
+    expect(pokalEligible(c, 'land')).toBe(true);
+    c.level = 5;
+    expect(pokalEligible(c, 'bezirk')).toBe(true);
+    expect(pokalEligible(c, 'land')).toBe(false);
+    expect(levelName(12)).toBe('Erstligist');
+    expect(levelName(11)).toBe('Zweitligist');
+    expect(levelName(8, 'Oberliga')).toBe('Oberliga');
+  });
 });

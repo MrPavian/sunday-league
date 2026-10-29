@@ -6,7 +6,7 @@ import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { humanClub, playerOf, table } from './career.js';
 import { adjustMood } from './events.js';
-import { book, KIT_COST } from './finances.js';
+import { book, KIT_COST, upperScale } from './finances.js';
 import { first, outcome, sitOut } from './outcomes.js';
 import { lateOr } from './spielbericht.js';
 import { isCoach } from './personal.js';
@@ -152,7 +152,7 @@ export function adjustRel(s, d) {
 function makeOffer(rng, sp, slot, level, extra = {}) {
   const goal = rng.pick(GOALS);
   const n = rng.int(goal.n[0], goal.n[1]);
-  const scale = level > 4 ? 6 : level > 3 ? 4 : level > 2 ? 3 : level > 1 ? 2 : 1;
+  const scale = level > 4 ? Math.round(6 * upperScale(level)) : level > 3 ? 4 : level > 2 ? 3 : level > 1 ? 2 : 1;
   const [lo, hi] = SLOT_PAY[slot];
   const weekly = Math.max(1, Math.round(rng.int(lo, hi) * scale * TRAITS[sp.trait].pay));
   return { ...sp, slot, weekly, goal: { type: goal.type, n, text: GOAL_TEXT[goal.type](n) }, bonus: rng.int(4, 8) * 10 * scale, rel: 50, seasons: 0, ...extra };

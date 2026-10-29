@@ -303,8 +303,8 @@ describe('Landespokal und Qualifikationskette', () => {
     expect(cup.rounds).toHaveLength(3);
     expect(roundName(cup, 2)).toMatch(/Finale|Final/);
     expect(cup.guests).toHaveLength(7);
-    expect(Math.min(...cup.guests.map((g) => g.level))).toBe(6);
-    expect(Math.max(...cup.guests.map((g) => g.level))).toBe(7);
+    expect(Math.min(...cup.guests.map((g) => g.level))).toBe(6); // Landesliga
+    expect(Math.max(...cup.guests.map((g) => g.level))).toBe(8); // Oberliga (Stufe 8 seit der Pyramide nach oben)
     for (const t of cup.ties) expect(cup.levels[t.home]).toBeLessThanOrEqual(cup.levels[t.away]); // Heimrecht beim Klassentieferen
     // höhere Stärke: Schnitt der besten 11 der Gäste über dem eines Bezirksliga-Gegners (gleiche Stichprobe)
     const top = (club) => club.squad.map((i) => playerOf(c, i).rating).sort((a, b) => b - a).slice(0, 11).reduce((s, x) => s + x, 0) / 11;
@@ -392,7 +392,7 @@ describe('Überregionaler Pokal gegen einen Profiverein', () => {
       expect(cup.rounds).toHaveLength(6);
       const me = humanClub(c).id;
       expect(cup.ties[0].home).toBe(me);
-      expect([8, 9]).toContain(cup.levels[cup.ties[0].away]);
+      expect([11, 12]).toContain(cup.levels[cup.ties[0].away]); // Zweit-/Erstligist
       c.round = cup.rounds[0];
       const p = preparePokalMatch(c, 'bund', cup.ties[0]);
       expect(p.pitch.id).toBe('grossfeld');

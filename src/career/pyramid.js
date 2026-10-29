@@ -9,19 +9,20 @@ import { createRng } from '../core/rng.js';
 import { PITCHES } from '../sim/pitch.js';
 import { EXTRA_CLUBS, LEAGUES, MAX_LEVEL } from './clubs.js';
 import { poisson, QUICK } from './pokal.js';
-import { leagueTitle } from './verband.js';
+import { leagueTitle, localized } from './verband.js';
 
 const hashSeed = (...parts) => parts.reduce((h, p) => (Math.imul(h ^ p, 0x9e3779b1) + 0x7f4a7c15) >>> 0, 0x2545f491); // wie career.js
 const stripSquad = ({ squad, human, ...def }) => def;
 const isExtra = (level, id) => (EXTRA_CLUBS[level] ?? []).some((e) => e.id === id);
 
 // Vereinslisten anlegen (alte Spielstände, neue Karriere): die festen Listen, für die eigene Liga die tatsächlichen Gegner.
+// Spielstände von vor der Pyramide nach oben (Stufen 6–8) bekommen die neuen Ligen dazu, mit gewähltem Verband regional benannt.
 export function ensureLeagues(career) {
-  if (career.leagues) return career.leagues;
   const own = career.level ?? 1;
-  career.leagues = {};
+  career.leagues ??= {};
   for (let l = 1; l <= MAX_LEVEL; l++) {
-    career.leagues[l] = l === own ? career.clubs.filter((c) => !c.human && !isExtra(l, c.id)).map(stripSquad) : LEAGUES[l].clubs.map((d) => ({ ...d }));
+    if (career.leagues[l]) continue;
+    career.leagues[l] = l === own ? career.clubs.filter((c) => !c.human && !isExtra(l, c.id)).map(stripSquad) : LEAGUES[l].clubs.map((d) => localized(career, { ...d }, l, career.leagues));
   }
   return career.leagues;
 }

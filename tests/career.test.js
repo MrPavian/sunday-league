@@ -624,13 +624,15 @@ describe('leagues and relegation play-offs', () => {
     expect(relegationNeeded(c)).toMatchObject({ kind: 'up', level: 4, other: 5 });
   });
 
-  it('the Bezirksliga (11 v 11) is the top league – its champion stays at the top', async () => {
+  it('the Oberliga (11 v 11) is the top league – its champion stays at the top', async () => {
     const { LEAGUES, MAX_LEVEL } = await import('../src/career/clubs.js');
-    expect(MAX_LEVEL).toBe(5);
-    expect(LEAGUES[5].clubs.length).toBe(5);
-    expect(LEAGUES[5].format).toBe(11);
+    expect(MAX_LEVEL).toBe(8); // Pyramide bis zur Oberliga (Stufen 6–8 seit 2026-10-29)
+    for (let l = 5; l <= MAX_LEVEL; l++) {
+      expect(LEAGUES[l].clubs.length).toBe(5);
+      expect(LEAGUES[l].format).toBe(11);
+    }
     const c = createCareer({ seed: 32 });
-    c.level = 5;
+    c.level = MAX_LEVEL;
     const { relegationNeeded } = await import('../src/career/relegation.js');
     finishAsRunnerUp(c);
     expect(relegationNeeded(c)).toBeNull(); // von ganz oben gibt es keinen Aufstieg

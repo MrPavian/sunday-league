@@ -81,7 +81,7 @@ export function matchFinances(career, fixture, prepared, level) {
     const wf = { sonne: 1.2, hitze: 0.9, regen: 0.6, wind: 0.85, nebel: 0.8, frost: 0.7, schnee: 0.5 }[career.week?.weather?.id] ?? 1;
     const weatherFans = roofRelief(career) && wf < 1 ? 1 - (1 - wf) / 2 : wf; // Tribünendach: die Wetterbremse halbiert sich
     const pe = homeMatchEffects(career); // Platzsperre/Nachholspiel, Acker, Linien
-    const base = Math.round((level > 4 ? rng.int(80, 200) : level > 3 ? rng.int(45, 90) : level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14)) * press * weatherFans * fansMul(career) * pe.fans);
+    const base = Math.round((level > 5 ? rng.int(...UPPER_FANS[Math.min(8, level)]) : level > 4 ? rng.int(80, 200) : level > 3 ? rng.int(45, 90) : level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14)) * press * weatherFans * fansMul(career) * pe.fans);
     const bv = prepared.bund ? BUND_VENUES[prepared.bund.venue] : null; // überregionaler Pokal: Spielort bestimmt die Kulisse
     const fans = bv ? prepared.match.crowd : Math.min(base, capacity(career)); // Bundespokal: die angezeigte Zuschauerzahl des Spiels wird abgerechnet
     career.flags ??= {};
@@ -91,7 +91,7 @@ export function matchFinances(career, fixture, prepared, level) {
     book(career, tr(`Getränkeverkauf (${fans} Zuschauer)${career.staff?.wirt ? ` – Wirt ${career.staff.wirt.name.split(' ')[0]}` : ''}${salesMul(career) > 1 ? ' – mit Grill' : ''}`, `Drinks sales (${fans} spectators)${career.staff?.wirt ? ` – bar manager ${career.staff.wirt.name.split(' ')[0]}` : ''}${salesMul(career) > 1 ? ' – with barbecue' : ''}`), Math.round(fans * 2.5 * wirt * wirt0));
     // Bezirksliga: Eintritt (3 € – Kinder und Mitglieder frei, daher im Schnitt etwas weniger).
     if (bv) book(career, tr(`Eintrittsanteil ${BUND_GATE_SHARE * 100} % (${fans} Zuschauer)`, `Gate share ${BUND_GATE_SHARE * 100} % (${fans} spectators)`), Math.round(fans * ENTRY_FEE * BUND_GATE_SHARE));
-    else if (level > 4) book(career, tr(`Eintritt (${fans} Zuschauer)`, `Gate money (${fans} spectators)`), Math.round(fans * ENTRY_FEE));
+    else if (level > 4) book(career, tr(`Eintritt (${fans} Zuschauer)`, `Gate money (${fans} spectators)`), Math.round(fans * entryFee(level)));
     if (level > 1) {
       book(career, tr('Schiri-Gebühr', 'Referee fee'), -20 - (level - 2) * 10);
       // Tribüne oder Stadion kosten ihre eigene Miete (bundevents.js) – dann keine zusätzliche Platzmiete.
@@ -105,14 +105,29 @@ export function matchFinances(career, fixture, prepared, level) {
 
 // Durchschnittliche Einnahmen eines Heimspiels der Stufe (mittlere Zuschauerzahl × Theke, ab Bezirksliga plus Eintritt):
 // Maßeinheit für Prämien und Mieten im überregionalen Pokal (bundespokal.js).
-const MEAN_FANS = [0, 9.5, 29, 45, 67.5, 140]; // Mitte der Spannen in matchFinances (5–14, 18–40, 30–60, 45–90, 80–200)
-export const homeUnit = (level) => Math.round(MEAN_FANS[Math.min(5, Math.max(1, level))] * (2.5 + (level > 4 ? ENTRY_FEE : 0)));
+const MEAN_FANS = [0, 9.5, 29, 45, 67.5, 140, 217.5, 295, 370]; // Mitte der Spannen in matchFinances (5–14, 18–40, 30–60, 45–90, 80–200, UPPER_FANS)
+export const homeUnit = (level) => Math.round(MEAN_FANS[Math.min(8, Math.max(1, level))] * (2.5 + (level > 4 ? entryFee(level) : 0)));
+
+// Stufen 6–8 (Landesliga, Verbandsliga, Oberliga). Belegt ist nur die Oberliga: Oberliga Westfalen im Schnitt 298, 352 und
+// 462 Zuschauer je Spiel (2022/23–2024/25, Infoboxen der Saisonartikel in der deutschen Wikipedia, abgerufen 2026-10-29),
+// Mittel ≈ 370. Für die 6. und 7. Liga fand sich kein Ligaschnitt – die Mitte ist HERGELEITET (Nutzerentscheid 2026-10-29):
+// gleichmäßig zwischen Bezirksliga (140) und Oberliga (370); die Spanne wie in der Bezirksliga ±43 % um die Mitte.
+export const UPPER_FANS = { 6: [125, 310], 7: [170, 420], 8: [210, 530] };
+// Kosten und Erträge der Stufen 6–8, die nur bis zur Bezirksliga eingestellt waren (Kosten, Sponsoren, Feste, Turniere):
+// mit der Zuschauerzahl hochgerechnet (hergeleitet, siehe oben), z. B. Oberliga 370 / 140 ≈ 2,6 × Bezirksliga.
+export const upperScale = (level) => MEAN_FANS[Math.min(8, Math.max(5, level))] / MEAN_FANS[5];
 
 // Ab der Kreisklasse kostet der Spielbetrieb: Verband, Versicherung, Trikotwäsche –
-// und die guten Leute wollen Fahrgeld. Wer oben mitspielen will, muss rechnen.
-export const OPS_COST = [0, 0, 40, 70, 100, 150];
-export const ENTRY_FEE = 2.2; // 3 € Eintritt, Kinder und Mitglieder frei
+// und die guten Leute wollen Fahrgeld. Wer oben mitspielen will, muss rechnen. Stufen 6–8: 150 € × upperScale.
+export const OPS_COST = [0, 0, 40, 70, 100, 150, 233, 316, 396];
 export const FAHRGELD = { stark: 3, dorfstar: 6, superstar: 10, legende: 12 };
+export const ENTRY_FEE = 2.2; // 3 € Eintritt, Kinder und Mitglieder frei
+// Eintritt je Stufe (je Zuschauer, mit demselben Abschlag für Kinder und Mitglieder: 2,2 / 3). Landesliga 5 € (Rheinpfalz,
+// 11.07.2015: bisher 4 €, Einigung auf 5 € vorgeschlagen; https://www.rheinpfalz.de/lokal/ludwigshafen_artikel,-frauen-m%C3%BCssen-k%C3%BCnftig-mehr-zahlen-_arid,375801.html).
+// Verbandsliga 6 € und Oberliga 7 € HERGELEITET (je Stufe ein Euro mehr; kein Beleg gefunden).
+const ENTRY_BY_LEVEL = { 6: 5, 7: 6, 8: 7 };
+export const entryFee = (level) => (ENTRY_BY_LEVEL[level] ? +((ENTRY_BY_LEVEL[level] * ENTRY_FEE) / 3).toFixed(2) : ENTRY_FEE);
+
 // Bezirksliga: Aufwandsentschädigung statt Fahrgeld (je Woche). Recherche: etwa die Hälfte
 // der Spieler wird bezahlt, typisch 100–250 € im Monat; mehr als 250 € im Monat erlaubt der
 // DFB für Amateure nicht (≈ 58 € je Woche).

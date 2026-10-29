@@ -9,6 +9,8 @@ import { nachholLabel } from '../../career/platz.js';
 import { CUPS, cupClub, cupOf, groupTable, humanCupMatch, stageName, winterRound } from '../../career/tournament.js';
 import { fieldRound, POKALE, POKAL_KINDS, pokalClub, pokalEligible, pokalOf, roundName, roundTies, sponsorPraemie, tieOnPens } from '../../career/pokal.js';
 import { BUND_VENUES, levelName } from '../../career/bundespokal.js';
+import { leagueTitle } from '../../career/verband.js';
+import { MAX_LEVEL } from '../../career/clubs.js';
 import { MATCH } from '../../sim/match.js';
 import { first, leagueName } from './shared.js';
 
@@ -62,7 +64,7 @@ export const seasonScreens = {
     const prize = sponsorPraemie(c, kind);
     const prizeLine = `<p class="t-2">${tr('Prämie des Hauptsponsors', 'Main sponsor bonus')}: ${prize ? tr(`${prize.amount} € bei ${kind === 'bund' ? 'Sieg in Runde 1 (danach je Runde weiter)' : 'Pokalsieg'} (${prize.sponsor.name})`, `€${prize.amount} for ${kind === 'bund' ? 'winning round 1 (more for every round after)' : 'winning the cup'} (${prize.sponsor.name})`) : tr('ohne Hauptsponsor keine', 'none without a main sponsor')}</p>`;
     const extra = `<p class="t-2">${tr('Bei Unentschieden', 'If level')}: ${MATCH.pokalExtra ? tr('Verlängerung, dann Elfmeterschießen', 'extra time, then penalties') : tr('direkt Elfmeterschießen', 'straight to penalties')} <small>(${tr('Einstellungen', 'Settings')})</small></p>`;
-    const vs = guest ? `<p class="t-2">${tr('Gegner', 'Opponents')}: <b>${guest.name}</b> <small>(${levelName(cup.levels[guest.id])})</small></p>` : '';
+    const vs = guest ? `<p class="t-2">${tr('Gegner', 'Opponents')}: <b>${guest.name}</b> <small>(${levelName(cup.levels[guest.id], leagueTitle(c, Math.min(MAX_LEVEL, cup.levels[guest.id])))})</small></p>` : '';
     return `<p class="chat-head">${POKALE[kind].name} ${cup.year} · ${POKALE[kind].size === 2 ? '' : `${POKALE[kind].size} ${tr('Vereine', 'clubs')} · `}${rules}</p>${vs}${kind === 'bund' ? bundVenueLine(cup) : ''}${state}${prizeLine}${extra}${rounds.reverse().join('')}`;
   },
 

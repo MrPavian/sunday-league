@@ -292,21 +292,21 @@ function finishTournament(c, kind) {
 
 // Sommerturnier danach: Theke und Startgelder (nur als Gastgeber), Spielpraxis für die Form, Kreisblatt-Zeile.
 // Zuschauer je Spiel: Spielwerte, nach Liga gestaffelt (kleiner als ein Ligaheimspiel, dafür viele Spiele an einem Tag).
-const LEVEL_MUL = [0, 1, 1.3, 1.6, 2, 2.6]; // Kosten wachsen mit der Liga wie im Vereinsfest (festival.js)
-export const hostCost = (c, size = 4) => Math.round((CUPS.sommer.hostBase + CUPS.sommer.hostPerTeam * size) * LEVEL_MUL[Math.min(5, Math.max(1, c.level ?? 1))]);
-export const SUMMER_FANS = [0, [10, 24], [16, 34], [24, 46], [34, 64], [50, 110]];
+const LEVEL_MUL = [0, 1, 1.3, 1.6, 2, 2.6, 4, 5.5, 6.9]; // Kosten wachsen mit der Liga wie im Vereinsfest (festival.js); Stufen 6–8: 2,6 × upperScale
+export const hostCost = (c, size = 4) => Math.round((CUPS.sommer.hostBase + CUPS.sommer.hostPerTeam * size) * LEVEL_MUL[Math.min(8, Math.max(1, c.level ?? 1))]);
+export const SUMMER_FANS = [0, [10, 24], [16, 34], [24, 46], [34, 64], [50, 110], [78, 171], [105, 232], [132, 291]]; // Stufen 6–8: Stufe 5 × upperScale (finances.js)
 function summerAftermath(c, t) {
   const cfg = CUPS.sommer;
   const me = humanClub(c).id;
   const rng = createRng((c.seed * 53 + c.season * 211 + 17) >>> 0);
-  const [lo, hi] = SUMMER_FANS[Math.min(5, Math.max(1, c.level ?? 1))];
+  const [lo, hi] = SUMMER_FANS[Math.min(8, Math.max(1, c.level ?? 1))];
   if (t.host) {
     let fans = 0;
     for (let i = 0; i < t.size / 2; i++) fans += rng.int(lo, hi); // Publikum kommt für den Tag, nicht je Spiel
     const wirt = (c.staff?.wirt ? 1.3 : 1) * salesMul(c);
     t.fans = fans;
     t.theke = Math.round(fans * cfg.spendPerFan * wirt);
-    t.fees = Math.round(cfg.startFee * LEVEL_MUL[Math.min(5, Math.max(1, c.level ?? 1))]) * (t.size - 1);
+    t.fees = Math.round(cfg.startFee * LEVEL_MUL[Math.min(8, Math.max(1, c.level ?? 1))]) * (t.size - 1);
     book(c, tr(`Theke beim Sommerturnier (${fans} Zuschauer insgesamt)`, `Bar at the summer tournament (${fans} spectators in total)`), t.theke);
     book(c, tr(`Startgelder Sommerturnier (${t.size - 1} Gäste)`, `Summer tournament entry fees (${t.size - 1} guests)`), t.fees);
     t.log.push(tr(`Als Gastgeber: ${euroFmt(t.theke)} Theke und ${euroFmt(t.fees)} Startgelder.`, `As hosts: ${euroFmt(t.theke)} from the bar and ${euroFmt(t.fees)} entry fees.`));

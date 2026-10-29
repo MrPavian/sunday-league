@@ -52,7 +52,7 @@ describe('Saison-Ereignisse: Aufbau', () => {
     play(m, 8, 'top');
     expect(SEASON_EVENTS.abstiegskrise.needs(m, rng)).toBeNull();
     // ganz oben gibt es keinen Aufstieg mehr
-    m.level = 5;
+    m.level = 8; // Oberliga
     expect(SEASON_EVENTS.aufstiegsfeier.needs(m, rng)).toBeNull();
     // Flutlicht-Defekt braucht ein Flutlicht, Kabine nur ohne neue Kabine
     const f = createCareer({ seed: 4 });

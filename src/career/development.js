@@ -19,8 +19,9 @@ const unit = (...parts) => hash(...parts) / 4294967296;
 
 // Höhepunkt (Alter) je Position, siehe oben.
 export const PEAK_AGE = { fwd: 25, mid: 26, def: 27, gk: 30 };
-// Wie viel Entwicklung die Liga hergibt (Trainingsumfang, Mitspieler), Stufe 1 (Freizeitliga) bis 5 (Bezirksliga).
-export const LEAGUE_GROWTH = [0.57, 0.65, 0.75, 0.87, 1];
+// Wie viel Entwicklung die Liga hergibt (Trainingsumfang, Mitspieler), Stufe 1 (Freizeitliga) bis 8 (Oberliga). Stufen 6–8
+// HERGELEITET: der letzte Schritt (+0,13) gleichmäßig fortgesetzt.
+export const LEAGUE_GROWTH = [0.57, 0.65, 0.75, 0.87, 1, 1.13, 1.26, 1.39];
 // Anteile der Entwicklungstypen.
 export const DEV_TYPES = [
   ['normal', 0.38],

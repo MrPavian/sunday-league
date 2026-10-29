@@ -89,6 +89,11 @@ export const ARRIVAL_BASE = {
   3: { ok: 0.31, gut: 0.4, stark: 0.21, dorfstar: 0.07, superstar: 0.01, legende: 0 },
   4: { ok: 0.26, gut: 0.36, stark: 0.23, dorfstar: 0.1, superstar: 0.035, legende: 0.007 }, // wie bisher
   5: { ok: 0.14, gut: 0.33, stark: 0.3, dorfstar: 0.16, superstar: 0.06, legende: 0.01 }, // wie bisher
+  // Stufen 6–8 HERGELEITET (Nutzerentscheid 2026-10-29): Stufe 5 plus ein, zwei bzw. drei Drittel des Unterschieds zwischen den
+  // Gegnerkadern der Bezirks- und der Oberliga (clubs.js BZ_CLUBS → OL_CLUBS) – Zuzug bleibt so etwas schwächer als die Gegner.
+  6: { ok: 0.123, gut: 0.28, stark: 0.303, dorfstar: 0.197, superstar: 0.084, legende: 0.013 },
+  7: { ok: 0.106, gut: 0.23, stark: 0.307, dorfstar: 0.233, superstar: 0.109, legende: 0.015 },
+  8: { ok: 0.09, gut: 0.18, stark: 0.31, dorfstar: 0.269, superstar: 0.133, legende: 0.018 },
 };
 // floor: schwächere Stufen entfallen; lift: je Stufe über dem floor (bzw. über ok) mal lift;
 // hi: höchste erlaubte Stufe dieses Wegs, egal in welcher Liga.
@@ -102,7 +107,7 @@ export const ARRIVAL_SOURCES = {
 
 // Gewichte (Summe 1, alle sechs Stufen als Schlüssel) für einen Zuzug in dieser Liga-Stufe auf diesem Weg.
 export function tierWeightsFor(level, source = 'geruecht') {
-  const base = ARRIVAL_BASE[Math.max(1, Math.min(5, level || 1))];
+  const base = ARRIVAL_BASE[Math.max(1, Math.min(8, level || 1))];
   const s = ARRIVAL_SOURCES[source] ?? {};
   const ids = TIERS.map((t) => t.id);
   const lo = s.floor ? ids.indexOf(s.floor) : 0;

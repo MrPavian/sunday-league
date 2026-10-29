@@ -14,13 +14,24 @@ describe('Landesverband', () => {
     }
   });
 
+  it('Stufen 6–8 (7. Liga bis Oberliga): je Verband sieben verschiedene Klassennamen von Stufe 2 bis 8', () => {
+    for (const [id, v] of Object.entries(VERBAENDE)) {
+      if (!v.tiers) continue;
+      expect(v.upper).toHaveLength(3);
+      const names = [2, 3, 4, 5, 6, 7, 8].map((l) => leagueTitle({ verband: id }, l));
+      expect(new Set(names).size).toBe(7);
+      expect(leagueTitle({ verband: id }, 8)).toMatch(/Oberliga|Bremen-Liga|Mittelrheinliga|Hessenliga|Bayernliga/);
+    }
+    expect(leagueTitle({ verband: 'hamburg' }, 7)).toBe('Oberliga Hamburg'); // eine Klasse weniger: Stufe 7 ist schon die Oberliga
+  });
+
   it('ohne Wahl (alte Spielstände) die bisherigen Namen', () => {
-    for (let l = 1; l <= 5; l++) expect(leagueTitle({}, l)).toBe(LEAGUES[l].name);
+    for (let l = 1; l <= 8; l++) expect(leagueTitle({}, l)).toBe(LEAGUES[l].name);
   });
 
   it('Beispiele aus der Quelle: Westfalen, Bayern, Hessen', () => {
-    expect(verbandLeagues({ verband: 'westfalen' })).toBe('Freizeitliga → Kreisliga C → Kreisliga B → Kreisliga A → Bezirksliga');
-    expect(verbandLeagues({ verband: 'bayern' })).toBe('Freizeitliga → B-Klasse → A-Klasse → Kreisklasse → Kreisliga');
+    expect(verbandLeagues({ verband: 'westfalen' })).toBe('Freizeitliga → Kreisliga C → Kreisliga B → Kreisliga A → Bezirksliga → Landesliga → Westfalenliga → Oberliga Westfalen');
+    expect(verbandLeagues({ verband: 'bayern' })).toBe('Freizeitliga → B-Klasse → A-Klasse → Kreisklasse → Kreisliga → Bezirksliga → Landesliga Bayern → Bayernliga');
     expect(leagueTitle({ verband: 'hessen' }, 5)).toMatch(/^Kreisoberliga /);
   });
 
@@ -52,10 +63,11 @@ describe('Regionale Vereinsnamen', () => {
   it('ab Stufe 2 regional, eindeutig (Name, Ort, Kürzel); die Freizeitliga behält ihre Hobbynamen', () => {
     for (const v of ['bayern', 'westfalen', 'sachsen', 'hamburg', 'hessen', 'saarland', 'wuerttemberg']) {
       const c = pick(v);
-      const all = [2, 3, 4, 5].flatMap((l) => c.leagues[l]);
+      const all = [2, 3, 4, 5, 6, 7, 8].flatMap((l) => c.leagues[l]);
       expect(new Set(all.map((d) => d.name)).size).toBe(all.length);
       expect(new Set(all.map((d) => d.short)).size).toBe(all.length);
       for (const d of c.leagues[1]) expect(LEAGUES[1].clubs.some((x) => x.name === d.name)).toBe(true);
+      for (const d of all) expect(Object.values(LEAGUES).flatMap((x) => x.clubs).some((x) => x.name === d.name)).toBe(false); // alle regional umbenannt
     }
   });
   it('typische Endungen je Region und fest je Spielstand', () => {

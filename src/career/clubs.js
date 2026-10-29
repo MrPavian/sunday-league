@@ -1,6 +1,7 @@
 // Die Freizeitliga Kanalbezirk – fünf Gegner mit typischen Hobbyliga-Namen.
 // tiers verschiebt die Kaderstärke (stärkere Vereine haben mehr "Gute").
 import { tr } from '../core/i18n.js';
+import { OBERLIGA } from './bundespokal.js';
 export const LEAGUE_NAME = tr('Freizeitliga Kanalbezirk', 'Canal District Sunday League');
 
 export const AI_CLUBS = [
@@ -257,6 +258,37 @@ export const BZ_CLUBS = [
   },
 ];
 
+// Stufen 6–8 (Ligenpyramide nach oben, vom Nutzer gewünscht 2026-10-29): 7. Liga (Landesliga), 6. Liga (Verbandsliga) und
+// Oberliga (5. Liga). Die Kadermischungen sind HERGELEITET, nicht gemessen (Nutzerentscheid 2026-10-29): gleichmäßig
+// zwischen der Bezirksliga (BZ_CLUBS, Stärke der besten 11 ≈ 68,9) und der Oberliga des Landespokals (OBERLIGA ≈ 74,0)
+// verteilt – Stufe 6 bei einem Drittel, Stufe 7 bei zwei Dritteln des Abstands (geprüft in tests/pyramid.test.js).
+const club = (id, de, en, short, kit, keeper, tiers) => ({ id, name: tr(de, en), short: tr(short[0], short[1]), venue: 'grossfeld', kit, keeperKit: { shirt: keeper, shorts: 0x1c1c1c, socks: keeper }, tiers });
+const L6 = { ok: 0.03, gut: 0.22, stark: 0.4, dorfstar: 0.25, superstar: 0.1 };
+const L7 = { ok: 0.02, gut: 0.17, stark: 0.4, dorfstar: 0.28, superstar: 0.12, legende: 0.01 };
+const vary = (t, d) => Object.fromEntries(Object.entries(t).map(([k, w]) => [k, +(w + (k === 'stark' ? -d : k === 'gut' ? d : 0)).toFixed(2)])); // etwas Streuung je Verein
+
+// Landesliga (Stufe 6): die drei Landesligisten des Bezirkspokals (bisher in pokal.js) und neue Vereine.
+export const LL_CLUBS = [
+  club('ll-westfalia', 'SC Westfalia Kanalstadt', 'Canal Town Westfield', ['SCW', 'CTW'], { shirt: 0xf2efe6, shorts: 0x1c1c1c, socks: 0xf2efe6, pattern: 'uni', second: 0x1c1c1c }, 0x3fa05a, L6),
+  club('ll-viktoria', 'Viktoria Hafenstadt 1911', 'Harbour City Victoria 1911', ['VHS', 'HCV'], { shirt: 0x6b2a8a, shorts: 0xf2efe6, socks: 0x6b2a8a, pattern: 'uni', second: 0xf2efe6 }, 0xe0b020, vary(L6, 0.03)),
+  club('ll-rotweiss', 'Rot-Weiß Oberkanal', 'Upper Canal Red & White', ['RWO', 'UCR'], { shirt: 0xc0392b, shorts: 0xf2efe6, socks: 0xc0392b, pattern: 'uni', second: 0xf2efe6 }, 0x1f3a6b, vary(L6, 0.05)),
+  club('ll-schleusenau', 'SV Schleusenau 1926', 'Lockford 1926', ['SSA', 'LKF'], { shirt: 0x2a6f97, shorts: 0x2a6f97, socks: 0xf2efe6, pattern: 'chevron', second: 0xf2efe6 }, 0xe8742a, vary(L6, -0.02)),
+  club('ll-pegelturm', 'FC Pegelturm', 'Gauge Tower FC', ['PGT', 'GTF'], { shirt: 0x8a5a2b, shorts: 0xf2efe6, socks: 0x8a5a2b, pattern: 'streifen', second: 0xf2efe6 }, 0x2e8b57, vary(L6, 0.02)),
+];
+// Verbandsliga (Stufe 7).
+export const VL_CLUBS = [
+  club('vl-dueker', 'SC Düker 07', 'Culvert SC 07', ['SCD', 'CSC'], { shirt: 0x3b4a8f, shorts: 0xf2efe6, socks: 0x3b4a8f, pattern: 'schulter', second: 0xf2efe6 }, 0xe0b020, L7),
+  club('vl-ankerplatz', 'FSV Ankerplatz', 'Anchor Square FSV', ['FSA', 'ASF'], { shirt: 0xd9822b, shorts: 0x1f2a44, socks: 0xd9822b, pattern: 'uni', second: 0x1f2a44 }, 0x6a2c8c, vary(L7, 0.02)),
+  club('vl-fischmarkt', 'SpVgg Fischmarkt', 'Fish Market Athletic', ['SFM', 'FMA'], { shirt: 0x4f9da6, shorts: 0x4f9da6, socks: 0xf2efe6, pattern: 'ringel', second: 0xf2efe6 }, 0xc8352f, vary(L7, 0.04)),
+  club('vl-wehrdamm', 'TuS Wehrdamm 1897', 'Weir Dam 1897', ['TWD', 'WDA'], { shirt: 0x7a1f3d, shorts: 0xf2efe6, socks: 0x7a1f3d, pattern: 'brustring', second: 0xf2efe6 }, 0x3fa05a, vary(L7, -0.02)),
+  club('vl-leuchtfeuer', 'FC Leuchtfeuer Kanalstadt', 'Beacon Canal Town', ['FLK', 'BCT'], { shirt: 0xe3c35a, shorts: 0x2a3b66, socks: 0xe3c35a, pattern: 'schaerpe', second: 0x2a3b66 }, 0x2f6fb5, vary(L7, 0.01)),
+];
+// Oberliga (Stufe 8): die vier Oberligisten des Landespokals (bundespokal.js) und ein neuer Verein.
+export const OL_CLUBS = [
+  ...OBERLIGA.map((d) => ({ ...d, venue: 'grossfeld', kit: { ...d.kit, second: d.kit.shorts } })),
+  club('ol-hafenkrone', 'SV Hafenkrone 1912', 'Harbour Crown 1912', ['SHK', 'HCR'], { shirt: 0x1f5f5b, shorts: 0xe3c35a, socks: 0x1f5f5b, pattern: 'nadel', second: 0xe3c35a }, 0xc0392b, OBERLIGA[0].tiers),
+];
+
 // Zwei weitere Vereine je Liga für die große Staffel (8 Teams, 14 Spieltage).
 export const EXTRA_CLUBS = {
   1: [
@@ -359,11 +391,23 @@ export const EXTRA_CLUBS = {
       tiers: { ok: 0.05, gut: 0.27, stark: 0.4, dorfstar: 0.21, superstar: 0.07 },
     },
   ],
+  6: [
+    club('ll-kranhof', 'TSV Kranhof', 'Cranehall TSV', ['TKH', 'CHT'], { shirt: 0x5a6e2f, shorts: 0xf2efe6, socks: 0x5a6e2f, pattern: 'haelften', second: 0xf2efe6 }, 0xe0b020, vary(L6, 0.04)),
+    club('ll-bojenwerder', 'VfB Bojenwerder', 'Buoy Island VfB', ['VBW', 'BIV'], { shirt: 0xf2efe6, shorts: 0x7a1f3d, socks: 0x7a1f3d, pattern: 'karo', second: 0x7a1f3d }, 0x2f6fb5, vary(L6, -0.01)),
+  ],
+  7: [
+    club('vl-kaimauer', 'SV Kaimauer', 'Quay Wall SV', ['SKM', 'QWS'], { shirt: 0x2b2b5e, shorts: 0xd9822b, socks: 0x2b2b5e, pattern: 'streifen', second: 0xd9822b }, 0x3fa05a, vary(L7, 0.03)),
+    club('vl-moewenberg', 'VfR Möwenberg', 'Gullhill Rovers', ['VMB', 'GHR'], { shirt: 0x9bb7d4, shorts: 0x1c1c1c, socks: 0x9bb7d4, pattern: 'uni', second: 0x1c1c1c }, 0xc8352f, vary(L7, -0.01)),
+  ],
+  8: [
+    club('ol-werftring', 'FC Werftring', 'Dockring FC', ['FWR', 'DRF'], { shirt: 0x6e2f5a, shorts: 0xf2efe6, socks: 0x6e2f5a, pattern: 'schulter', second: 0xf2efe6 }, 0xe8742a, OBERLIGA[1].tiers),
+    club('ol-deichgraf', 'TSV Deichgraf', 'Dyke Reeve TSV', ['TDG', 'DRT'], { shirt: 0x3a7d44, shorts: 0x3a7d44, socks: 0xf2efe6, pattern: 'ringel', second: 0xf2efe6 }, 0x6b2a8a, OBERLIGA[2].tiers),
+  ],
 };
 
 export const leagueClubs = (league, size = 6) => [...league.clubs, ...(size >= 8 ? EXTRA_CLUBS[league.level] ?? [] : [])];
 
-export const MAX_LEVEL = 5;
+export const MAX_LEVEL = 8;
 
 export const LEAGUES = {
   1: { level: 1, name: LEAGUE_NAME, referee: false, format: null, humanVenue: 'hinterhof', clubs: AI_CLUBS, squadShape: 'small', maxSquad: 12, derby: { club: 'kanal', name: tr('Kanal-Derby', 'Canal Derby') } },
@@ -371,4 +415,7 @@ export const LEAGUES = {
   3: { level: 3, name: tr('Kreisklasse B Kanalbezirk', 'Canal District Division Two'), referee: true, format: 7, humanVenue: 'rasenplatz', clubs: KB_CLUBS, squadShape: 'large', maxSquad: 16, derby: { club: 'viktoria', name: tr('Stadtderby', 'City Derby') } },
   4: { level: 4, name: tr('Kreisliga A Kanalbezirk', 'Canal District Premier Division'), referee: true, format: 9, humanVenue: 'sportplatz', clubs: KA_CLUBS, squadShape: 'xl', maxSquad: 18, derby: { club: 'wacker', name: tr('Kanal-Klassiker', 'Canal Classic') } },
   5: { level: 5, name: tr('Bezirksliga Kanal', 'County Senior League'), referee: true, format: 11, humanVenue: 'grossfeld', clubs: BZ_CLUBS, squadShape: 'xxl', maxSquad: 22, derby: { club: 'hafen', name: tr('Hafen-Derby', 'Harbour Derby') } },
+  6: { level: 6, name: tr('Landesliga Staffel Kanal', 'Regional League Canal Group'), referee: true, format: 11, humanVenue: 'grossfeld', clubs: LL_CLUBS, squadShape: 'xxl', maxSquad: 22, derby: { club: 'll-westfalia', name: tr('Kanalstadt-Derby', 'Canal Town Derby') } },
+  7: { level: 7, name: tr('Verbandsliga', 'State League'), referee: true, format: 11, humanVenue: 'grossfeld', clubs: VL_CLUBS, squadShape: 'xxl', maxSquad: 22, derby: { club: 'vl-leuchtfeuer', name: tr('Leuchtfeuer-Derby', 'Beacon Derby') } },
+  8: { level: 8, name: tr('Oberliga', 'Regional Premier League'), referee: true, format: 11, humanVenue: 'grossfeld', clubs: OL_CLUBS, squadShape: 'xxl', maxSquad: 22, derby: { club: 'ol-oberhafen', name: tr('Oberhafen-Derby', 'Upper Harbour Derby') } },
 };

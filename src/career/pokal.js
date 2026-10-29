@@ -14,7 +14,7 @@ import { createRng } from '../core/rng.js';
 import { createMatch, EXTRA_SHARE, MATCH, matchDuration } from '../sim/match.js';
 import { BUND_PITCHES, PITCHES } from '../sim/pitch.js';
 import { shootoutScore } from '../sim/shootout.js';
-import { LEAGUES } from './clubs.js';
+import { LEAGUES, MAX_LEVEL } from './clubs.js';
 import { humanClub, playerOf, resolveKitClash, seasonOver, squadPicker, SQUAD_SHAPES, takenIndices, teamForMatch } from './career.js';
 import { isCoach } from './personal.js';
 import { adjustMood } from './events.js';
@@ -58,14 +58,7 @@ export function sponsorPraemie(c, kind, mult = PRAEMIE[kind]) {
   return s ? { sponsor: s, amount: Math.round(s.bonus * mult) } : null;
 }
 
-// Gegner aus der Landesliga (nur im Bezirkspokal): eine Stufe über der Bezirksliga.
-const LANDESLIGA = [
-  { id: 'll-westfalia', name: tr('SC Westfalia Kanalstadt', 'Canal Town Westfield'), short: tr('SCW', 'CTW'), kit: { shirt: 0xf2efe6, shorts: 0x1c1c1c, socks: 0xf2efe6, pattern: 'uni' }, keeperKit: { shirt: 0x3fa05a, shorts: 0x1c1c1c, socks: 0x3fa05a }, tiers: { ok: 0.15, gut: 0.4, stark: 0.3, dorfstar: 0.12, superstar: 0.03 } },
-  { id: 'll-viktoria', name: tr('Viktoria Hafenstadt 1911', 'Harbour City Victoria 1911'), short: tr('VHS', 'HCV'), kit: { shirt: 0x6b2a8a, shorts: 0xf2efe6, socks: 0x6b2a8a, pattern: 'uni' }, keeperKit: { shirt: 0xe0b020, shorts: 0x1c1c1c, socks: 0xe0b020 }, tiers: { ok: 0.18, gut: 0.4, stark: 0.28, dorfstar: 0.11, superstar: 0.03 } },
-  { id: 'll-rotweiss', name: tr('Rot-Weiß Oberkanal', 'Upper Canal Red & White'), short: tr('RWO', 'UCR'), kit: { shirt: 0xc0392b, shorts: 0xf2efe6, socks: 0xc0392b, pattern: 'uni' }, keeperKit: { shirt: 0x1f3a6b, shorts: 0x1c1c1c, socks: 0x1f3a6b }, tiers: { ok: 0.2, gut: 0.42, stark: 0.27, dorfstar: 0.09, superstar: 0.02 } },
-];
-
-const LEVEL_VENUE = (level) => LEAGUES[Math.min(5, Math.max(2, level))].humanVenue;
+const LEVEL_VENUE = (level) => LEAGUES[Math.min(MAX_LEVEL, Math.max(2, level))].humanVenue;
 const fresh = () => ({ apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 });
 
 export const pokalOf = (c, kind) => (c.pokale?.[kind]?.season === c.season ? c.pokale[kind] : null);
@@ -74,10 +67,11 @@ export const pokalClub = (c, cup, id) => c.clubs.find((x) => x.id === id) ?? cup
 // Wer darf diese Saison in welchen Pokal?
 export function pokalEligible(c, kind) {
   const level = c.level ?? 1;
-  if (kind === 'kreis') return level >= 2;
-  if (kind === 'land') return level >= 4 && c.landQual === c.season; // Bezirkspokalsieger der Vorsaison
+  // Ab der Landesliga (Stufe 6) spielt der Verein keinen Kreis- und Bezirkspokal mehr, sondern direkt im Landespokal.
+  if (kind === 'kreis') return level >= 2 && level <= 5;
+  if (kind === 'land') return level >= 6 || (level >= 4 && c.landQual === c.season); // sonst nur der Bezirkspokalsieger der Vorsaison
   if (kind === 'bund') return c.bundQual === c.season; // Landespokalsieger der Vorsaison
-  return level >= 5 || (level >= 4 && c.pokalQual === c.season);
+  return level === 5 || (level === 4 && c.pokalQual === c.season);
 }
 
 // Spieltage, vor denen eine Runde unter der Woche steigt. Nicht in der ersten Woche, nicht in der
@@ -131,13 +125,14 @@ export function startPokal(c, kind) {
   const everyone = kind === 'kreis' || (kind === 'bezirk' && level === 5);
   let pool;
   if (kind === 'kreis') pool = [2, 3, 4, 5].filter((l) => l !== level).flatMap((l) => membersOf(c, l).map((d) => ({ d, level: l })));
-  else if (kind === 'bezirk') pool = [...(level === 5 ? [] : membersOf(c, 5).map((d) => ({ d, level: 5 }))), ...LANDESLIGA.map((d) => ({ d, level: 6 }))];
-  else if (kind === 'land') pool = [...LANDESLIGA.map((d) => ({ d, level: 6 })), ...OBERLIGA.map((d) => ({ d, level: 7 }))];
+  // Bezirkspokal: Bezirks- und Landesliga; Landespokal: Landesliga bis Oberliga (Stufen 6–8, pyramid.js) – ohne die eigene Liga.
+  else if (kind === 'bezirk') pool = [5, 6].filter((l) => l !== level).flatMap((l) => membersOf(c, l).map((d) => ({ d, level: l })));
+  else if (kind === 'land') pool = [6, 7, 8].filter((l) => l !== level).flatMap((l) => membersOf(c, l).map((d) => ({ d, level: l })));
   else pool = [];
   const want = cfg.size - (everyone ? own.length : 1);
   const shuffled = [...pool].sort(() => rng.next() - 0.5).slice(0, Math.max(0, want));
   const guests = shuffled.map(({ d, level: l }) => {
-    const squad = pick(d.tiers, SQUAD_SHAPES[LEAGUES[Math.min(5, l)].squadShape]);
+    const squad = pick(d.tiers, SQUAD_SHAPES[LEAGUES[Math.min(MAX_LEVEL, l)].squadShape]);
     for (const idx of squad) c.players[idx] ??= fresh();
     return { ...d, id: `pokal-${kind}-${d.id}`, human: false, venue: LEVEL_VENUE(l), squad, level: l };
   });
@@ -224,7 +219,7 @@ export function preparePokalMatch(c, kind, tie, { human = false, duration } = {}
   // Spielort der Heimspiele (Entscheidung per Ereignis, Standard eigener Platz); beim Profi immer das große Stadion.
   const bundVenue = kind === 'bund' ? (home.human ? tie.venue ?? 'own' : 'stadium') : null;
   const base = kind === 'bund' ? (bundVenue === 'own' ? PITCHES.grossfeld : BUND_PITCHES[BUND_VENUES[bundVenue].pitch]) : PITCHES[home.human ? home.venue : LEVEL_VENUE(homeLevel)] ?? PITCHES.rasenplatz;
-  const format = kind === 'bund' ? 11 : LEAGUES[Math.min(5, Math.max(2, homeLevel))].format ?? base.format;
+  const format = kind === 'bund' ? 11 : LEAGUES[Math.min(MAX_LEVEL, Math.max(2, homeLevel))].format ?? base.format;
   const pitch = applyWeather({ ...base, format, referee: true }, c.week?.weather);
   const avail = (club) => (club.human ? c.week?.availability ?? Object.fromEntries(club.squad.map((i) => [i, 'yes'])) : Object.fromEntries(club.squad.map((i) => [i, (c.players[i]?.injuryWeeks ?? 0) > 0 || rng.chance(0.12) ? 'no' : 'yes'])));
   const teamHome = teamForMatch(c, home, format, avail(home), rng);
@@ -235,7 +230,7 @@ export function preparePokalMatch(c, kind, tie, { human = false, duration } = {}
   match.knockout = true; // unentschieden → (Verlängerung und) Elfmeterschießen
   match.extraTime = MATCH.pokalExtra; // Einstellung: erst Verlängerung (ein Drittel der Spielzeit)?
   match.midweek = !POKALE[kind].saturday; // Mittwochabend: Flutlicht (main.js); der überregionale Pokal läuft samstags
-  match.crowd = Math.round(30 + 25 * Math.max(cup.levels[tie.home], cup.levels[tie.away]) + rng.int(0, 30)); // Pokal zieht: der Große kommt
+  match.crowd = Math.round(30 + 25 * crowdStep(Math.max(cup.levels[tie.home], cup.levels[tie.away])) + rng.int(0, 30)); // Pokal zieht: der Große kommt
   if (kind === 'bund') {
     const bv = BUND_VENUES[bundVenue];
     match.crowd = Math.min(bv.cap, match.crowd * bv.mul);
@@ -332,7 +327,7 @@ const strength = (c, club, n) => {
   return r.reduce((s, x) => s + x, 0) / Math.max(1, r.length);
 };
 // Stärke eines Teilnehmers im Format des Gastgebers dieser Paarung.
-export const teamStrength = (c, cup, id, tie) => strength(c, pokalClub(c, cup, id), LEAGUES[Math.min(5, Math.max(2, cup.levels[tie.home]))].format ?? 7);
+export const teamStrength = (c, cup, id, tie) => strength(c, pokalClub(c, cup, id), LEAGUES[Math.min(MAX_LEVEL, Math.max(2, cup.levels[tie.home]))].format ?? 7);
 export const poisson = (rng, l) => {
   let k = 0;
   let p = Math.exp(-l);
@@ -418,7 +413,10 @@ function initField(c, cup) {
   cup.alive = cup.field.map((f) => f.id);
   cup.fieldTies = [];
 }
-const OBERLIGA_LEVEL = 7;
+const OBERLIGA_LEVEL = 8;
+// Zugkraft im Pokal wie vor der Pyramide nach oben (Landesliga 6, Oberliga 7, Zweitligist 8, Erstligist 9): die Profis
+// stehen jetzt auf 11/12, die Oberliga auf 8 – die Zuschauerzahlen der Pokalspiele bleiben dadurch gleich.
+const crowdStep = (level) => (level >= PROFI_KLASSEN.zweit.level ? level - 3 : level >= OBERLIGA_LEVEL ? level - 1 : level);
 // Kein Trikot bekannt: Farbe fest aus dem Namen (für Anzeige und Spiel).
 const FIELD_COLORS = [0x2f6fb5, 0xc8352f, 0x2e6b3a, 0xe0b020, 0x6b4f8c, 0xe8742a, 0x1f8a8a, 0x8c2f2f, 0x58c9a5, 0x3a8fb7];
 function fieldKit(id) {

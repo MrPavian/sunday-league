@@ -7,7 +7,7 @@ import { tr } from '../core/i18n.js';
 // Nie den Namen eines echten Wettbewerbs verwenden.
 export const BUND_NAME = tr('Bundespokal', 'National Cup');
 
-// Oberliga (Stufe 7): nur im Landespokal, stärker als die Landesliga (Stufe 6, siehe pokal.js).
+// Oberliga (Stufe 8): Stammvereine der Oberliga (clubs.js OL_CLUBS), im Landespokal und als Amateure im überregionalen Pokal.
 export const OBERLIGA = [
   { id: 'ol-oberhafen', name: tr('FC Oberhafen 1909', 'Upper Harbour FC 1909'), short: tr('FCO', 'UHF'), kit: { shirt: 0x2f6f73, shorts: 0xf2efe6, socks: 0x2f6f73, pattern: 'uni' }, keeperKit: { shirt: 0xe0b020, shorts: 0x1c1c1c, socks: 0xe0b020 }, tiers: { gut: 0.12, stark: 0.4, dorfstar: 0.32, superstar: 0.15, legende: 0.01 } },
   { id: 'ol-eisenbrueck', name: tr('TSV Eisenbrück', 'Ironbridge TSV'), short: tr('TSE', 'IBT'), kit: { shirt: 0xe07b1c, shorts: 0x3a2a20, socks: 0xe07b1c, pattern: 'uni' }, keeperKit: { shirt: 0x6b2a8a, shorts: 0x1c1c1c, socks: 0x6b2a8a }, tiers: { gut: 0.1, stark: 0.42, dorfstar: 0.33, superstar: 0.14, legende: 0.01 } },
@@ -15,7 +15,7 @@ export const OBERLIGA = [
   { id: 'ol-tannenhoehe', name: tr('VfR Tannenhöhe', 'Firhill Rovers'), short: tr('VTH', 'FHR'), kit: { shirt: 0x58c9a5, shorts: 0x1f2a44, socks: 0x58c9a5, pattern: 'uni' }, keeperKit: { shirt: 0xc0392b, shorts: 0x1c1c1c, socks: 0xc0392b }, tiers: { gut: 0.12, stark: 0.41, dorfstar: 0.32, superstar: 0.14, legende: 0.01 } },
 ];
 
-// Fiktive Profivereine (Kader der Stufen 8 und 9, siehe PROFI_KLASSEN) für alle Runden des überregionalen Pokals.
+// Fiktive Profivereine (Kader der Stufen 11 und 12, siehe PROFI_KLASSEN) für alle Runden des überregionalen Pokals.
 // Kader: nur die oberen Klassen des Spielerpools (Dorfstar bis Legende).
 export const PROFIS = [
   { id: 'profi-kaiserstein', name: tr('FC Kaiserstein 1903', 'Kaiserstone Athletic'), short: tr('FKS', 'KSA'), kit: { shirt: 0x1f8a8a, shorts: 0x14233a, socks: 0x1f8a8a, pattern: 'uni' }, keeperKit: { shirt: 0xf0d34a, shorts: 0x14233a, socks: 0xf0d34a } },
@@ -73,8 +73,8 @@ export const FIELD_AMATEURS = () => AMATEUR_FIELD.map(([id, name]) => ({ id: `am
 // bezirk 8,2 %, mit +0,24 mittel 3,7 % / bezirk 8,5 %; Erstligist +0,22 mittel 3,7 % / bezirk 7,8 %. Nach Verstärkung der Trainerbefehle (KI-Vereine nutzen sie): Zweitligist +0,24
 // mittel 4,3 % (1200 Spiele), Erstligist mittel 3,8 % (600). Tests: tests/pokal2.test.js.
 export const PROFI_KLASSEN = {
-  zweit: { level: 8, boost: 0.24, tiers: { gut: 0.05, stark: 0.3, dorfstar: 0.45, superstar: 0.2 } },
-  erst: { level: 9, boost: 0.22, tiers: { stark: 0.1, dorfstar: 0.42, superstar: 0.45, legende: 0.03 } },
+  zweit: { level: 11, boost: 0.24, tiers: { gut: 0.05, stark: 0.3, dorfstar: 0.45, superstar: 0.2 } },
+  erst: { level: 12, boost: 0.22, tiers: { stark: 0.1, dorfstar: 0.42, superstar: 0.45, legende: 0.03 } },
 };
 export const PROFI_ATTRS = ['pace', 'stamina', 'technique', 'passing', 'shooting', 'tackling', 'heading', 'keeping'];
 // Chance, dass der Gegner der Runde ein Erstligist ist (sonst Zweitligist): früh meist Zweitligist, ab Halbfinale Erstligist.
@@ -84,8 +84,9 @@ export const BUND_ERST = [0.3, 0.5, 0.65, 0.85, 1, 1];
 export const BUND_AWAY = 0.4;
 
 // Stufen der Pokalgegner über der Bezirksliga (5): Landesliga, Oberliga, Profi.
-export const LEVEL_PROFI = 8;
-export const levelName = (level, leagueName) => (level >= 9 ? tr('Erstligist', 'Top-flight club') : level >= LEVEL_PROFI ? tr('Zweitligist', 'Second-tier club') : level === 7 ? tr('Oberliga', 'Regional Premier League') : level === 6 ? tr('Landesliga', 'Regional League') : leagueName);
+// Stufen über der Oberliga (8): Regionalliga 9 und 3. Liga 10 gibt es im Spiel nicht, Zweitligist 11, Erstligist 12.
+export const LEVEL_PROFI = 11;
+export const levelName = (level, leagueName) => (level >= 12 ? tr('Erstligist', 'Top-flight club') : level >= LEVEL_PROFI ? tr('Zweitligist', 'Second-tier club') : leagueName);
 
 // Spielorte für Heimspiele im überregionalen Pokal. Zuschauer = Vielfaches eines normalen Heimspiels (mul, gedeckelt
 // durch die Kapazität cap), Theke = Anteil des Getränkeverkaufs, der beim Verein bleibt, rentUnits = Miete in Einheiten

@@ -12,7 +12,7 @@ import { phone } from '../world.js';
 import { homeView } from '../prefs.js';
 import { crestExtras, crestOf, crestSVG } from '../crest.js';
 import { relegationNeeded, relegationOf } from '../../career/relegation.js';
-import { LEAGUES } from '../../career/clubs.js';
+import { LEAGUES, MAX_LEVEL } from '../../career/clubs.js';
 import { leagueTitle } from '../../career/verband.js';
 import { clubById, humanClub, kitChoice, leagueOf, humanFixture, playerOf, seasonOver, table } from '../../career/career.js';
 import { DESTINATIONS, tripChoose, tripStage, tripState, tripVerdict } from '../../career/trip.js';
@@ -207,11 +207,11 @@ export const homeScreens = {
     const me = humanClub(c).id;
     const home = tie.home === me;
     const opp = pokalClub(c, cup, home ? tie.away : tie.home);
-    const lv = (id) => levelName(cup.levels[id], leagueTitle(c, Math.min(5, cup.levels[id])));
+    const lv = (id) => levelName(cup.levels[id], leagueTitle(c, Math.min(MAX_LEVEL, cup.levels[id])));
     const oppLevel = cup.levels[opp.id];
     const myLevel = cup.levels[me];
     const why = kind === 'bund' ? (!home ? tr(' – ihr müsst zum Profi ins große Stadion', ' – you have to visit the professionals in their big stadium') : tr(' – Heimrecht für den Amateur, volle Hütte', ' – home advantage for the amateurs, packed ground')) : oppLevel > myLevel ? tr(' – der Höherklassige muss zu euch', ' – the higher-league side has to come to you') : oppLevel < myLevel ? tr(' – ihr müsst zum Klassentieferen', ' – you have to visit the lower-league side') : '';
-    const format = kind === 'bund' ? 11 : LEAGUES[Math.min(5, Math.max(2, cup.levels[tie.home]))].format;
+    const format = kind === 'bund' ? 11 : LEAGUES[Math.min(MAX_LEVEL, Math.max(2, cup.levels[tie.home]))].format;
     return `<div class="pokal-card"><p class="t-cap">${pokalWhen(kind)} · <b>${POKALE[kind].name}</b> · ${roundName(cup, tie.round)}</p>
       <p class="t-body">${home ? tr('Heimspiel', 'Home') : tr('Auswärts', 'Away')} ${tr('gegen', 'against')} <b>${opp.name}</b> <small>(${lv(opp.id)})</small>${why}.</p>
       ${kind === 'bund' ? `<p class="t-2">${tr('Spielort', 'Venue')}: <b>${{ own: tr('eigener Platz', 'own pitch'), stands: tr('eigener Platz mit Stahlrohrtribüne', 'own pitch with scaffold stand'), stadium: tr('großes Stadion', 'big stadium') }[home ? tie.venue ?? 'own' : 'stadium']}</b></p>` : ''}

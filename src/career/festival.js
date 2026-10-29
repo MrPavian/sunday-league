@@ -32,10 +32,10 @@ export const FEST_PARTS = {
 export const FEST_ORDER = Object.keys(FEST_PARTS);
 
 // Besucher-Grundwert und Kostenfaktor je Liga (Index = Stufe). Ein Dorffest in der Freizeitliga ist klein.
-const BASE_VISITORS = [0, 50, 70, 90, 120, 160];
-const COST_MUL = [0, 1, 1.3, 1.6, 2, 2.6];
+const BASE_VISITORS = [0, 50, 70, 90, 120, 160, 249, 337, 423]; // Stufen 6–8: Stufe 5 × upperScale (finances.js), hergeleitet
+const COST_MUL = [0, 1, 1.3, 1.6, 2, 2.6, 4, 5.5, 6.9];
 const SPEND_MUL = 0.9; // Umsatz je Besucher insgesamt, zum Eichen
-const level = (c) => Math.min(5, Math.max(1, c.level ?? 1));
+const level = (c) => Math.min(8, Math.max(1, c.level ?? 1));
 export const partCost = (c, id) => Math.round(FEST_PARTS[id].cost * COST_MUL[level(c)]);
 
 // --- Zustand -----------------------------------------------------------------------------------------

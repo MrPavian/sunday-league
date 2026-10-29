@@ -909,6 +909,11 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
 - ~~Bundesland/Verband beim Start wählen, Ligennamen je Verband, regionale Vereinsnamen~~ – erledigt 2026-10-29 (verband.js): 21 Verbände
   in der Gründungsversammlung, Ligennamen nach der Spielklassen-Tabelle der englischen Wikipedia (Stufe 5 = 8. Liga), regionale
   Vereinsnamen mit typischen Endungen und erfundenen Kanal-Stämmen. Offen: Dialektfärbung bei Spitznamen und Ereignistexten.
+- ~~Pyramide nach oben: Landesliga, Verbandsliga, Oberliga~~ – erledigt 2026-10-29: Stufe 6 = 7. Liga, 7 = 6. Liga, 8 = Oberliga
+  (Namen je Verband nach der Quelle; Hamburg/Niederrhein mit Stufe 8 „Oberliga (Spitzenstaffel)“ als Spielvariante). Ab Stufe 6
+  direkt im Landespokal. Belegt: Oberliga-Zuschauer (Ø 298–462, Oberliga Westfalen) und 5 € Eintritt in der Landesliga; Zuschauer,
+  Kaderstärke, Kosten und Zuzug der Stufen 6–7 sind hergeleitet (gleichmäßig zwischen Bezirks- und Oberliga). Offen: echte
+  Ligaschnitte für 6./7. Liga, Vertragsspieler ab Oberliga (Profi-Übergang), Regionalliga.
 - Plan (ursprünglich): Beim Start Bundesland (bzw. Verband) wählen; die Ligennamen und die Zahl der Stufen kommen aus einer Tabelle je
   Verband. Heute gibt es 5 Stufen (Freizeitliga, Kreisklasse C, Kreisklasse B, Kreisliga A, Bezirksliga).
   Nach oben erweitern: Landesliga/Verbandsliga, Oberliga, Regionalliga, später Profibereich.

@@ -40,7 +40,7 @@ import { absenceFactor, advanceArcs, applyForm, autoResolve, resultMood, rollNot
 import { developYouth, expireYouth, initYouth, retirements, youthIntake } from './youth.js';
 import { environmentChanged, rememberEnvironment, seasonGain } from './development.js';
 import { applyCards, banGames, banReason, isBanned, resetYellows, tickBans } from './suspensions.js';
-import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFinances, weeklyFinances } from './finances.js';
+import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFinances, UPPER_FANS, weeklyFinances } from './finances.js';
 
 import { nameEditionFor, nameLocaleOf } from '../data/names.js';
 import { tierWeightsFor } from '../data/tiers.js';
@@ -1152,7 +1152,7 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   if (home.human || away.human) matchdaySurprise(match, humanIsAway || home.human ? 0 : 1, createRng(hashSeed(career.seed, career.season, career.round, 77)), 0.28, null, career.level ?? 1);
   // Zuschauer am Zaun – für die Geräuschkulisse (die Kasse zählt nach dem Spiel selbst).
   const level = career.level ?? 1;
-  const fans = level > 4 ? rng.int(80, 200) : level > 3 ? rng.int(45, 90) : level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14);
+  const fans = level > 5 ? rng.int(...UPPER_FANS[Math.min(8, level)]) : level > 4 ? rng.int(80, 200) : level > 3 ? rng.int(45, 90) : level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14);
   match.crowd = Math.round(fans * (match.derby ? 1.8 : 1) * (home.human ? fansMul(career) : 1));
   if (home.human) match.crowd = Math.min(match.crowd, capacity(career)); // Fassungsvermögen (facilities.js)
   match.homeTeam = humanIsAway ? 1 : 0;
