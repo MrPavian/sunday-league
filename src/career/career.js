@@ -44,7 +44,7 @@ import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFin
 
 import { nameEditionFor, nameLocaleOf } from '../data/names.js';
 import { tierWeightsFor } from '../data/tiers.js';
-import { setNameLocale } from '../data/origins.js';
+import { agedLook, setNameLocale } from '../data/origins.js';
 import { weeklyBanter } from './banter.js';
 import { matchdaySurprise } from './matchday.js';
 import { spielberichtStreng, statusFor } from './spielbericht.js';
@@ -133,7 +133,7 @@ export function playerOf(career, idx) {
   // Aus Schülern werden mit der Zeit Studenten oder Azubis.
   const job = career.players[idx]?.job; // Jobwechsel aus einer Lebensgeschichte
   const profession = job ? job : base.profession.startsWith('Schüler') && age >= 19 ? (base.poolIndex % 2 ? 'Student (1. Semester)' : 'Azubi Bürokaufmann') : base.profession;
-  const p = { ...base, attrs, age, profession, traits: extra ? [...new Set([...base.traits, ...extra])] : base.traits };
+  const p = { ...base, attrs, age, profession, traits: extra ? [...new Set([...base.traits, ...extra])] : base.traits, look: agedLook(base.look, base.age, age, idx) };
   p.rating = ratePlayer(p);
   return p;
 }

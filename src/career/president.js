@@ -15,7 +15,7 @@
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { HAIR_COLORS, SKIN_TONES } from '../data/names.js';
-import { personName } from '../data/origins.js';
+import { hairIndex, personIdentity, skinIndex } from '../data/origins.js';
 import { STYLE_IDS, STYLES, systemsFor } from '../sim/tactics.js';
 import { GOALS, targetPos } from './board.js';
 import { humanClub, maxSquad, nudge, playerOf, recruit, seasonOver } from './career.js';
@@ -29,7 +29,7 @@ import { promoteProspect } from './youth.js';
 export { isPresident };
 
 // Wochenlohn je Liga-Stufe (Spielwert), skaliert mit dem Ruf des Trainers.
-const SALARY_BASE = [0, 12, 20, 30, 42, 56];
+const SALARY_BASE = [0, 12, 20, 30, 42, 56, 87, 118, 148]; // Stufen 6–8: 56 × upperScale (finances.js), hergeleitet
 export const SEVERANCE_WEEKS = 6; // Abfindung bei Entlassung: sechs Wochenlöhne (Spielwert)
 export const HIRE_FEE_WEEKS = 2; // Handgeld ab der zweiten Einstellung: zwei Wochenlöhne (Spielwert)
 const PERSONAS = ['stratege', 'oldschool', 'grossmaul', 'kumpeltyp']; // wie bei den Trainern der Gegner (opponents.js)
@@ -89,21 +89,23 @@ const STYLE_ANSWER = {
 // Deterministisch aus Seed, Saison und Zahl der bisherigen Einstellungen: dieselben drei Bewerber beim Neuladen.
 export function coachApplicants(c) {
   const rng = createRng(hash(c.seed ?? 0, c.season ?? 1, c.hiredCount ?? 0, c.round ?? 0, 977));
-  const level = clamp(c.level ?? 1, 1, 5);
+  const level = clamp(c.level ?? 1, 1, 8);
   const order = ARCH_IDS.map((id) => ({ id, k: rng.next() })).sort((a, b) => a.k - b.k).map((x) => x.id);
   return order.map((arch, i) => {
     const a = ARCHETYPES[arch];
     const age = Math.round(rng.range(a.age[0], a.age[1]));
-    const name = personName(rng, age);
+    const { name, origin } = personIdentity(rng, age);
     const [first, ...rest] = name.split(' ');
     const quality = Math.round(rng.range(a.quality[0], a.quality[1]) * 100) / 100;
     const reputation = Math.round(rng.range(a.rep[0], a.rep[1]));
     const style = rng.pick(a.styles.filter((s) => STYLES[s]));
     const persona = Array.isArray(a.persona) ? rng.pick(a.persona) : a.persona;
+    // Aussehen wie bei den Spielern (generator.js makeLook): Haut und Haar passend zur Herkunft des Namens, grau ab etwa 40
+    // (origins.js hairIndex). Vorher eigene Würfel: grau erst ab 56 und nur zu 60 % – ein 65-Jähriger hatte oft volles braunes Haar.
     const look = {
-      skin: rng.chance(0.82) ? SKIN_TONES[rng.int(0, 2)] : SKIN_TONES[rng.int(3, SKIN_TONES.length - 1)],
-      hair: age > 55 && rng.chance(0.6) ? HAIR_COLORS[5] : HAIR_COLORS[rng.int(0, HAIR_COLORS.length - 1)],
-      bald: age > 45 && rng.chance(0.3),
+      skin: SKIN_TONES[skinIndex(rng, origin)],
+      hair: HAIR_COLORS[hairIndex(rng, origin, age)],
+      bald: age > 30 && rng.chance(0.35),
       beard: rng.chance(arch === 'ehrgeizig' ? 0.35 : 0.25),
     };
     const salary = Math.max(6, Math.round(SALARY_BASE[level] * (0.55 + (reputation / 100) * 0.95)));

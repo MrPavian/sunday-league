@@ -10,6 +10,7 @@ import { isPresident } from '../../career/personal.js';
 import { canSetGoal, hiredAge, happyLabel, severance, weeklySalary } from '../../career/president.js';
 import { esc, meter } from '../ds.js';
 import { portraitSVG } from '../portrait.js';
+import { agedLook } from '../../data/origins.js';
 import { euro } from './shared.js';
 
 const stars = (rep) => '★'.repeat(Math.max(1, Math.round(rep / 20))) + '☆'.repeat(5 - Math.max(1, Math.round(rep / 20)));
@@ -30,7 +31,7 @@ export const officeScreens = {
     const g = c.goal?.season === c.season ? c.goal : null;
     const coach = h
       ? `<div class="office-coach">
-          ${portraitSVG(h.look, { size: 72, shirt: club.kit.shirt, label: h.name })}
+          ${portraitSVG(agedLook(h.look, h.age, hiredAge(c), h.seed), { size: 72, shirt: club.kit.shirt, label: h.name })}
           <div class="cand-info">
             <h3>${esc(h.name)}</h3>
             <p class="t-2">${hiredAge(c)}${tr(' J.', ' yrs')} · ${STYLES[h.style].label} · <span class="stars">${stars(h.reputation)}</span> · <b>${euro(weeklySalary(c))}</b> ${tr('pro Woche', 'a week')}</p>

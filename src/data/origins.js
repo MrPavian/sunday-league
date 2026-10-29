@@ -1,4 +1,5 @@
 import { LOCAL_FIRST_EN, LOOK_GROUP_EN, ORIGINS_EN } from './origins_en.js';
+import { PRO_NAMES } from './pronames.js';
 
 // Stimmige Namen: Erst wird die Herkunft gewürfelt, dann passen Vor- und Nachname
 // zueinander – so wie in einer echten Kreisliga-Mannschaft im Ruhrgebiet oder in
@@ -98,6 +99,18 @@ export const ORIGINS = {
 const generation = (age) => (age <= 27 ? 'young' : age <= 40 ? 'mid' : 'old');
 export const germanFirst = (rng, age = 30) => rng.pick(DE_FIRST[generation(age)]);
 
+// Echte Fußballer (pronames.js) bekommen einen anderen Nachnamen derselben Herkunft – fest aus dem Namen gerechnet, ohne weitere
+// Zufallszahl: Der Spielerpool wird aus dem Seed erzeugt, alle anderen Spieler alter Spielstände bleiben so, wie sie sind.
+function notPro(first, last, lasts) {
+  if (!PRO_NAMES.has(`${first} ${last}`)) return last;
+  const h = [...`${first} ${last}`].reduce((x, ch) => (Math.imul(x ^ ch.charCodeAt(0), 0x9e3779b1) + 0x7f4a7c15) >>> 0, 0x2545f491);
+  for (let k = 0; k < lasts.length; k++) {
+    const alt = lasts[(h + k) % lasts.length];
+    if (alt !== last && !PRO_NAMES.has(`${first} ${alt}`)) return alt;
+  }
+  return last;
+}
+
 // Ein Namenssatz: Herkunftsgruppen und die „einheimischen" Vornamen nach Jahrgang. Deutsch (Auflage 4)
 // zieht die Zufallszahlen genau wie früher – alte Spielstände behalten ihre Spieler.
 function nameSet(origins, local, fallback) {
@@ -121,7 +134,8 @@ function nameSet(origins, local, fallback) {
     identity(rng, age = 30) {
       const origin = pickOrigin(rng);
       const last = rng.pick(origins[origin].last);
-      return { name: `${firstFor(origin, rng, age)} ${last}`, origin };
+      const first = firstFor(origin, rng, age);
+      return { name: `${first} ${notPro(first, last, origins[origin].last)}`, origin };
     },
     originOf,
     firstNameFor: (last, rng, age = 17) => firstFor(originOf(last), rng, age),
@@ -216,9 +230,23 @@ function weighted(rng, weights) {
 }
 export const skinIndex = (rng, origin) => weighted(rng, SKIN_W[LOOK_GROUP[origin] ?? 'de']);
 // Ab etwa 40 wird es grau – mit 45 bei gut jedem Vierten, mit 55 bei den meisten.
+export const greyChance = (age) => (age >= 40 ? Math.min(0.85, (age - 38) * 0.04) : 0);
 export function hairIndex(rng, origin, age) {
-  const grey = age >= 40 ? Math.min(0.85, (age - 38) * 0.04) : 0;
-  return rng.chance(grey) ? 5 : weighted(rng, HAIR_W[LOOK_GROUP[origin] ?? 'de']);
+  return rng.chance(greyChance(age)) ? 5 : weighted(rng, HAIR_W[LOOK_GROUP[origin] ?? 'de']);
+}
+// Älter werden (vom Nutzer gemeldet: Porträts alterten nicht): Wer beim Würfeln (Alter age0) nicht grau war, wird es bis zum
+// Alter age mit (greyChance(age) − greyChance(age0)) / (1 − greyChance(age0)) – so passt der Anteil Grauer in jedem Alter zur
+// selben Kurve. Fest je Person (key), ohne den Zufallsstrom des Spiels zu berühren; einmal grau, bleibt grau.
+const GREY = 0x8a8a8a; // wie HAIR_COLORS[5] (names.js)
+export function agedLook(look, age0, age, key) {
+  if (!look || !(age > age0) || look.hair === GREY) return look;
+  const p0 = greyChance(age0);
+  const p = greyChance(age);
+  if (p <= p0) return look;
+  let h = Math.imul((key >>> 0) ^ 0x9e3779b9, 0x85ebca6b);
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
+  const u = ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+  return u < (p - p0) / (1 - p0) ? { ...look, hair: GREY } : look;
 }
 
 // Herkunft eines Nachnamens (für Kinder, Söhne, Verwandte).
