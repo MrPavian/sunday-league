@@ -6,6 +6,18 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-29-3 – Leagues up to the Oberliga, choose your state, full National Cup and winter break
+
+### New
+- **Choose your state:** At the founding meeting you pick your regional association (21 to choose from). The leagues are then named as they are there, e.g. in Westphalia from Kreisliga C to Oberliga Westfalen. Clubs get made-up names that sound local. The Sunday league stays the Sunday league.
+- **Three new leagues up to the Oberliga:** Above the county league come the 7th tier (e.g. Landesliga), the 6th tier (e.g. Westfalenliga) and the Oberliga. More spectators, higher entry fees, stronger opponents, higher costs. From the Landesliga up you go straight into the State Cup instead of the District and County Cups.
+- **Promotion and relegation for everyone:** At the end of the season the other clubs go up and down too, in every league. The District Gazette reports who moves.
+- **National Cup with 64 clubs:** All the other ties are played alongside yours. The cup tab shows every round, and even after you go out the real winner is decided.
+- **Winter break as its own week:** After the first half of the season there is a week without a league match, with the indoor tournament. Between tournament games you set a separate tournament line-up.
+
+### Note
+- Backed by sources: Oberliga crowds (Oberliga Westfalen averages 298 to 462) and €5 entry in the Landesliga. The values for the 6th and 7th tiers sit evenly between the county league and the Oberliga. Hamburg and Niederrhein have one class fewer, so their top tier is called "Oberliga (Spitzenstaffel)".
+
 ## 2026-10-29-2 – Change system during the match
 
 ### New

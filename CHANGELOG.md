@@ -6,6 +6,18 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-29-3 – Ligen bis zur Oberliga, Bundesland, voller Bundespokal und Winterpause
+
+### Neu
+- **Bundesland wählen:** In der Gründungsversammlung wählst du deinen Landesverband (21 zur Auswahl). Die Ligen heißen dann wie dort, z. B. in Westfalen Kreisliga C bis Oberliga Westfalen. Die Vereine bekommen regional klingende, erfundene Namen. Die Freizeitliga bleibt die Freizeitliga.
+- **Drei neue Ligen bis zur Oberliga:** Über der Bezirksliga kommen die 7. Liga (z. B. Landesliga), die 6. Liga (z. B. Westfalenliga) und die Oberliga. Mehr Zuschauer, höherer Eintritt, stärkere Gegner, höhere Kosten. Ab der Landesliga spielst du direkt im Landespokal statt im Kreis- und Bezirkspokal.
+- **Auf- und Abstieg für alle:** Am Saisonende steigen auch die anderen Vereine auf und ab, in jeder Liga. Das Kreisblatt meldet, wer rauf- und wer runtergeht.
+- **Bundespokal mit 64 Vereinen:** Neben deinem Spiel laufen alle anderen Paarungen mit. Im Pokal-Reiter siehst du jede Runde, und auch nach deinem Ausscheiden wird der echte Sieger ausgespielt.
+- **Winterpause als eigene Woche:** Nach der Hinrunde kommt eine Woche ohne Ligaspiel, mit dem Hallenturnier. Zwischen den Turnierspielen stellst du eine eigene Turnier-Aufstellung auf.
+
+### Hinweis
+- Belegt sind die Zuschauer der Oberliga (Oberliga Westfalen im Schnitt 298 bis 462) und 5 € Eintritt in der Landesliga. Die Werte der 6. und 7. Liga sind gleichmäßig zwischen Bezirks- und Oberliga angesetzt. Hamburg und Niederrhein haben eine Klasse weniger, dort heißt die oberste Stufe „Oberliga (Spitzenstaffel)“.
+
 ## 2026-10-29-2 – Systemwechsel im laufenden Spiel
 
 ### Neu
