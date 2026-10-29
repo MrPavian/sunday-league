@@ -93,7 +93,7 @@ export function matchFinances(career, fixture, prepared, level) {
     if (bv) book(career, tr(`Eintrittsanteil ${BUND_GATE_SHARE * 100} % (${fans} Zuschauer)`, `Gate share ${BUND_GATE_SHARE * 100} % (${fans} spectators)`), Math.round(fans * ENTRY_FEE * BUND_GATE_SHARE));
     else if (level > 4) book(career, tr(`Eintritt (${fans} Zuschauer)`, `Gate money (${fans} spectators)`), Math.round(fans * entryFee(level)));
     if (level > 1) {
-      book(career, tr('Schiri-Gebühr', 'Referee fee'), -20 - (level - 2) * 10);
+      book(career, tr('Schiri-Gebühr', 'Referee fee'), -refFee(level));
       // Tribüne oder Stadion kosten ihre eigene Miete (bundevents.js) – dann keine zusätzliche Platzmiete.
       // Pachtvertrag mit der Gemeinde (platz.js): Standard 15 €, mit Platzwart die Hälfte, Langzeitpacht 20 % billiger, Eigentum 0.
       const rent = rentPerMatch(career);
@@ -120,6 +120,13 @@ export const upperScale = (level) => MEAN_FANS[Math.min(8, Math.max(5, level))] 
 // Ab der Kreisklasse kostet der Spielbetrieb: Verband, Versicherung, Trikotwäsche –
 // und die guten Leute wollen Fahrgeld. Wer oben mitspielen will, muss rechnen. Stufen 6–8: 150 € × upperScale.
 export const OPS_COST = [0, 0, 40, 70, 100, 150, 233, 316, 396];
+// Schiedsrichter-Spesen je Heimspiel (der Gastgeber zahlt), Stufen wie im Verband Westfalen, Saison 2025/26: Kreisliga 27 €,
+// Bezirksliga 35 €, Landesliga 45 € + 2 × 35 € Assistenten, Westfalenliga 50 € + 2 × 40 €, Oberliga 75 € + 2 × 50 €
+// (Kreisschiedsrichterausschuss Paderborn, https://www.flvw-kreis-paderborn.de/data/downloads/SR_Spesen_Kreis_PB_01.07.2025.pdf).
+// Andere Verbände zahlen ähnlich (Bezirksliga 30–62 €, Oberliga 60–100 € für den Schiri). Annahme ohne Quelle: Assistenten erst
+// ab der Landesliga. Fahrtkosten (0,30 €/km) fehlen, die Entfernungen kennt das Spiel nicht. Vorher pauschal 20–80 €.
+const REF_FEE = [0, 0, 27, 27, 27, 35, 115, 130, 175];
+export const refFee = (level) => REF_FEE[Math.min(8, Math.max(1, level))];
 export const FAHRGELD = { stark: 3, dorfstar: 6, superstar: 10, legende: 12 };
 export const ENTRY_FEE = 2.2; // 3 € Eintritt, Kinder und Mitglieder frei
 // Eintritt je Stufe (je Zuschauer, mit demselben Abschlag für Kinder und Mitglieder: 2,2 / 3). Landesliga 5 € (Rheinpfalz,

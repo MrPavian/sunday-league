@@ -34,6 +34,11 @@ export const FACILITIES = {
   tribdach: { group: 'tribuene', land: true, name: tr('Tribünendach', 'Stand roof'), cost: 900, weeks: 4, upkeep: 2, needs: ['sitzplaetze'], desc: tr('Trocken bleiben: bei Regen und Schnee kommen fast so viele wie sonst, Platz für 1000.', 'Stay dry: in rain and snow almost as many come as usual, room for 1,000.'), done: tr('Das Dach ist drauf. Beim ersten Platzregen jubelt die Tribüne lauter als bei jedem Tor.', 'The roof is on. At the first downpour the stand cheers louder than at any goal.') },
   bratwurststand: { group: 'gastro', name: tr('Bratwurststand', 'Sausage stall'), cost: 120, weeks: 1, upkeep: 0, desc: tr('Ein Rost, ein Sonnenschirm: 10 % mehr Getränke- und Wurstverkauf.', 'A grill and a parasol: 10 % more drinks and sausage sales.'), done: tr('Der erste Rost glüht. Der Geruch zieht bis zum Parkplatz.', 'The first grill glows. The smell reaches the car park.') },
   biergarten: { group: 'gastro', land: true, name: tr('Biergarten', 'Beer garden'), cost: 650, weeks: 3, upkeep: 2, needs: ['grill'], desc: tr('Bierbänke unter Kastanien: der Verkauf steigt um die Hälfte, bei Sonne noch mehr.', 'Beer benches under chestnut trees: sales go up by half, even more in the sun.'), done: tr('Der Biergarten ist eröffnet. Die Kastanie spendet Schatten, die Nachbarn Beschwerden.', 'The beer garden is open. The chestnut gives shade, the neighbours give complaints.') },
+  // Ab der Landesliga: Ausbau zum kleinen Stadion. Fassungsvermögen wie die Mindestgröße der Regionalliga West und Bayern
+  // (2500 Plätze, davon 150 bzw. 100 überdachte Sitzplätze: WDFV-Zulassungsrichtlinien,
+  // https://wdfv.de/download/herren-regionalliga-west/herren-regionalliga-west-richtlinien-fuer-das-allgemeine-zulassungsverfahren.pdf;
+  // BFV-Erklärung zur Spielstätte 2024/25). Für die Oberliga gibt es keine Mindestgröße. Preis, Bauzeit und Nebenkosten sind Spielwerte.
+  stadion: { group: 'tribuene', land: true, minLevel: 6, name: tr('Stadionausbau', 'Stadium upgrade'), cost: 6000, weeks: 10, upkeep: 8, needs: ['tribdach'], desc: tr('Stehwälle rundum, Kassenhäuschen, Ordner: Platz für 2500 – so viel verlangt die Regionalliga.', 'Terracing all round, ticket booths, stewards: room for 2,500 – what the Regionalliga requires.'), done: tr('Das Stadion ist fertig. Beim ersten Heimspiel verläuft sich der Platzwart auf dem Weg zum Kassenhäuschen.', 'The stadium is finished. At the first home game the groundsman gets lost on the way to the ticket booth.') },
   tribuene: { group: 'tribuene', name: tr('Kleine Tribüne', 'Small stand'), cost: 700, weeks: 4, upkeep: 2, needs: ['grill'], desc: tr('Drei Stufen, ein Dach – ein Drittel mehr Zuschauer.', 'Three steps and a roof – a third more spectators.'), done: tr('Die Tribüne steht! Drei Stufen Beton und ein Dach aus dem Baumarkt.', 'The stand is up! Three concrete steps and a roof from the DIY store.') },
 };
 
@@ -54,7 +59,7 @@ export const FACILITY_GROUPS = [
 
 // Stufen: der höchste Ausbau zählt. Zuschauerbedarf (fansMul) und Fassungsvermögen (capacity) – Spielwerte; die Tribüne
 // (ab 1.33) und das Grundmaß waren schon vorher so (unverändert, damit alte Spielstände gleich bleiben).
-const STAND_TIERS = [['tribdach', 1.65, 1000], ['sitzplaetze', 1.55, 800], ['tribuene', 1.33, 600], ['stehstufen', 1.12, 400]];
+const STAND_TIERS = [['stadion', 1.65, 2500], ['tribdach', 1.65, 1000], ['sitzplaetze', 1.55, 800], ['tribuene', 1.33, 600], ['stehstufen', 1.12, 400]];
 const stand = (c) => STAND_TIERS.find(([id]) => hasFacility(c, id));
 export const standLevel = (c) => (stand(c) ? STAND_TIERS.length - STAND_TIERS.indexOf(stand(c)) : 0);
 export const CAPACITY_BASE = 250; // Spielwert: Zaun und Wiese rund um den Platz
@@ -86,7 +91,7 @@ export function buildWeeks(c, id, mode = 'handwerker') {
   return (mode === 'einsatz' ? def.weeks * 2 : def.weeks) + (def.land && landState(c) !== 'eigen' ? 1 : 0);
 }
 
-// Warum nicht? null = baubar. Gründe: 'built' | 'building' | 'needs' | 'ground' (kein richtiger Platz) | 'land' (Pachtvertrag zu kurz).
+// Warum nicht? null = baubar. Gründe: 'built' | 'building' | 'needs' | 'level' (Liga zu tief) | 'ground' (kein richtiger Platz) | 'land' (Pachtvertrag zu kurz).
 export function buildBlock(c, id, { queued = false } = {}) {
   const f = facilities(c);
   const def = FACILITIES[id];
@@ -96,6 +101,7 @@ export function buildBlock(c, id, { queued = false } = {}) {
   const pending = new Set([f.building?.id, ...f.queue.map((q) => q.id)].filter(Boolean));
   if (queued && pending.has(id)) return 'queued';
   if ((def.needs ?? []).some((n) => !f.built[n] && !(queued && pending.has(n)))) return 'needs';
+  if (def.minLevel && (c.level ?? 1) < def.minLevel) return 'level';
   if (def.ground && !hasGround(c)) return 'ground';
   if (def.land && !landOk(c)) return 'land';
   return null;

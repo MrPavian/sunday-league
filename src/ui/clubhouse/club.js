@@ -9,7 +9,7 @@ import { button, esc, tabs as uiTabs } from '../ds.js';
 import { CREST_BAND_TEXTS, CREST_COLORS, CREST_DIVISION_GROUPS, CREST_DIVISIONS, CREST_OVERLAYS, CREST_SHAPES, CREST_SYMBOL_GROUPS, CREST_SYMBOLS, crestExtras, crestOf, crestSVG, defaultCrest, THIRD_COLOR_DIVISIONS } from '../crest.js';
 import { awayKitOf, humanClub, KIT_COLLARS, KIT_COLORS, KIT_PATTERNS, KIT_SLEEVES, kitEditable, updateCrest, setFounded, clampFounded, foundedRange, playerOf, table } from '../../career/career.js';
 import { spielberichtStreng } from '../../career/spielbericht.js';
-import { VERBAND_CHOICES, verbandLeagues } from '../../career/verband.js';
+import { leagueTitle, VERBAND_CHOICES, verbandLeagues } from '../../career/verband.js';
 import { FINES, KIT_COST, MEMBER_FEE, SLOTS } from '../../career/finances.js';
 import { DESTINATIONS } from '../../career/trip.js';
 import { buildBlock, buildCost, buildWeeks, capacity, facilities, FACILITIES, FACILITY_GROUPS, QUEUE_MAX } from '../../career/facilities.js';
@@ -328,6 +328,7 @@ export const clubScreens = {
     const why = {
       needs: (def) => `<small>${tr('braucht erst', 'needs first')}: ${def.needs.map((n) => FACILITIES[n].name).join(', ')}</small>`,
       ground: () => `<small>${tr('braucht einen richtigen Sportplatz', 'needs a proper sports ground')}</small>`,
+      level: (def) => `<small>${tr(`erst ab der ${leagueTitle(c, def.minLevel)}`, `only from the ${leagueTitle(c, def.minLevel)} up`)}</small>`,
       land: () => `<small>${tr(`Pachtvertrag zu kurz (mind. ${MIN_TERM} Saisons) – verlängern oder kaufen`, `lease too short (${MIN_TERM}+ seasons) – renew or buy`)}</small>`,
     };
     const queueIdx = (id) => f.queue.findIndex((q) => q.id === id);
