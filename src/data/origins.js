@@ -1,5 +1,6 @@
 import { LOCAL_FIRST_EN, LOOK_GROUP_EN, ORIGINS_EN } from './origins_en.js';
 import { PRO_NAMES } from './pronames.js';
+import { REGION_NAMES, TIMELESS } from './regionalnames.js';
 
 // Stimmige Namen: Erst wird die Herkunft gewürfelt, dann passen Vor- und Nachname
 // zueinander – so wie in einer echten Kreisliga-Mannschaft im Ruhrgebiet oder in
@@ -182,7 +183,43 @@ export const personIdentityDE6 = DE_SET_MORE.identity;
 export const personIdentityDE7 = DE_SET_STRICT.identity;
 
 // Ein ganzer Name, passend zum Alter – mit Herkunft, damit das Aussehen dazu passen kann.
-export const personIdentity = (rng, age = 30) => SET.identity(rng, age);
+// Regionale Namen (regionalnames.js): Bundesland der Karriere, null = keine (ohne Verband, englische Namen, alte Spielstände).
+let REGION = null;
+export const setNameRegion = (land) => {
+  REGION = REGION_NAMES[land] ? land : null;
+};
+export const nameRegion = () => REGION;
+// Anteile sind Spielwerte (keine Quelle nennt sie): gut jeder Dritte mit deutschem Nachnamen trägt einen Namen, der für das
+// Bundesland typisch ist; jeder Achte einen der dort besonders häufigen Vornamen (Ältere nur zeitlose, regionalnames.js).
+export const REGION_LAST_SHARE = 0.35;
+export const REGION_FIRST_SHARE = 0.12;
+const mix = (h) => {
+  h = Math.imul(h ^ (h >>> 16), 0x85ebca6b);
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
+  return (h ^ (h >>> 16)) >>> 0;
+};
+const strHash = (str) => [...str].reduce((x, ch) => (Math.imul(x ^ ch.charCodeAt(0), 0x9e3779b1) + 0x7f4a7c15) >>> 0, 0x2545f491);
+// Name passend zur Region – fest je Person (key) und Bundesland, ohne Zufallsstrom: Werte, Aussehen und „Körper“ (der am
+// ursprünglichen Namen hängt) bleiben gleich. Nur deutsche Nachnamen (Herkunft „de“) werden regional; echte Fußballer nie.
+export function regionalize(name, age, key, land = REGION) {
+  const region = REGION_NAMES[land];
+  if (!region || !name) return name;
+  const [first, ...rest] = name.split(' ');
+  const last = rest.join(' ');
+  if (!last || DE_SET_STRICT.originOf(last) !== 'de') return name;
+  const h = mix((key >>> 0) ^ strHash(land));
+  const newLast = (h % 10000) / 10000 < REGION_LAST_SHARE ? region.last[mix(h ^ 0x51ed27) % region.last.length] : last;
+  const firsts = generation(age) === 'young' ? region.first : region.first.filter((f) => TIMELESS.has(f)); // Ältere: keine Modenamen
+  const newFirst = firsts.length && (mix(h ^ 0x2b7e15) % 10000) / 10000 < REGION_FIRST_SHARE ? firsts[mix(h ^ 0x9d2c56) % firsts.length] : first;
+  if (newFirst === newLast) return name; // kein „Paul Paul“ (Thomas, Paul, Martin … sind auch Nachnamen)
+  const out = `${newFirst} ${newLast}`;
+  return PRO_NAMES.has(out) ? name : out;
+}
+
+export const personIdentity = (rng, age = 30) => {
+  const id = SET.identity(rng, age);
+  return REGION && SET !== EN_SET ? { ...id, name: regionalize(id.name, age, strHash(`${id.name}:${age}`)) } : id;
+};
 export const personName = (rng, age = 30) => personIdentity(rng, age).name;
 
 // Mädchennamen (Töchter, Frauenteam, Jugend): deutsch aus der Liste der jeweiligen Stelle (unverändert),

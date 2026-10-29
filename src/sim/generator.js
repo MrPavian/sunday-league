@@ -4,7 +4,7 @@ import { createRng } from '../core/rng.js';
 import { HIGHER_AMATEUR_CLUBS, LOWER_LEAGUES, PRO_CLUBS } from '../data/clubs.js';
 import { LEGEND_ARCHETYPES } from '../data/legends.js';
 import { HAIR_COLORS, NAME_EDITIONS, PROFESSIONS, SKIN_TONES } from '../data/names.js';
-import { hairIndex, personIdentity, skinIndex } from '../data/origins.js';
+import { hairIndex, personIdentity, regionalize, skinIndex } from '../data/origins.js';
 import { RANDOM_TRAIT_IDS } from '../data/traits.js';
 import { rollTier, tierById } from '../data/tiers.js';
 import { deriveStrength } from './strength.js';
@@ -188,7 +188,8 @@ const POSITION_ROLL = [
   ['fwd', 0.25],
 ];
 
-export function createPlayerPool({ seed = 1921, size = 25000, edition = 2 } = {}) {
+// region: Bundesland für regionale Namen (origins.js regionalize) – erst nach dem Würfeln, damit Werte und „Körper“ gleich bleiben.
+export function createPlayerPool({ seed = 1921, size = 25000, edition = 2, region = null } = {}) {
   const names = NAME_EDITIONS[edition] ?? NAME_EDITIONS[2];
   const cache = new Map();
   const get = (index) => {
@@ -203,6 +204,7 @@ export function createPlayerPool({ seed = 1921, size = 25000, edition = 2 } = {}
       }
     }
     const p = { ...generatePlayer(rng, { role, names }), id: `pool-${index}`, poolIndex: index };
+    if (region) p.name = regionalize(p.name, p.age, index, region);
     cache.set(index, p);
     return p;
   };

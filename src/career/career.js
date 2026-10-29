@@ -44,7 +44,7 @@ import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFin
 
 import { nameEditionFor, nameLocaleOf } from '../data/names.js';
 import { tierWeightsFor } from '../data/tiers.js';
-import { agedLook, setNameLocale } from '../data/origins.js';
+import { agedLook, setNameLocale, setNameRegion } from '../data/origins.js';
 import { weeklyBanter } from './banter.js';
 import { matchdaySurprise } from './matchday.js';
 import { spielberichtStreng, statusFor } from './spielbericht.js';
@@ -85,19 +85,26 @@ let poolCache = null;
 // Ohne Karriere (Freundschaftsspiele): Namen nach Sprache. In einer Karriere gilt ihre Auflage.
 let poolEdition = nameEditionFor(getLang());
 setNameLocale(nameLocaleOf(poolEdition));
-export const getPool = () => (poolCache ??= createPlayerPool({ seed: POOL_SEED, edition: poolEdition }));
-// Alte Spielstände würfeln ihre Spieler mit der ersten Namensauflage.
-export function setNameEdition(edition = 1) {
+let poolRegion = null; // Bundesland für regionale Namen (origins.js regionalize), null = keine
+export const getPool = () => (poolCache ??= createPlayerPool({ seed: POOL_SEED, edition: poolEdition, region: poolRegion }));
+// Alte Spielstände würfeln ihre Spieler mit der ersten Namensauflage. region: Bundesland der Karriere (nur deutsche Auflagen).
+export function setNameEdition(edition = 1, region = null) {
   setNameLocale(nameLocaleOf(edition)); // Schiri, Trainer, Kinder … passend zu den Spielern
-  if (edition === poolEdition) return;
+  const land = nameLocaleOf(edition) === 'en' ? null : region;
+  setNameRegion(land);
+  if (edition === poolEdition && land === poolRegion) return;
   poolEdition = edition;
+  poolRegion = land;
   poolCache = null;
 }
+// Regionale Namen nur in Karrieren, die den Verband ab dieser Auflage gewählt haben (career.regionNames) – ältere Spielstände
+// mit Verband behalten ihre Namen.
+const regionOf = (career) => (career.regionNames ? VERBAENDE[career.verband]?.land ?? null : null);
 // Eigene Spieler (du selbst, deine Kinder) liegen im Spielstand statt im Pool.
 export const CUSTOM_BASE = 900000;
 const CUSTOM = new Map();
 export function registerCustomPlayers(career) {
-  setNameEdition(career.names ?? 1);
+  setNameEdition(career.names ?? 1, regionOf(career));
   CUSTOM.clear();
   // Alte Spielstände kennen den Körper („strength") noch nicht: aus Aussehen/Alter/Position nachtragen (strength.js,
   // ohne Zufallsstrom, also immer derselbe Wert). Pool-Spieler haben ihn von Haus aus.
@@ -913,6 +920,8 @@ export const kitEditable = (career) => career.round === 0;
 export function setVerband(career, id) {
   if (!VERBAENDE[id] || !career.founding) return false;
   career.verband = id;
+  career.regionNames = 1; // regionale Vor- und Nachnamen (regionalnames.js)
+  setNameEdition(career.names ?? 1, regionOf(career));
   career.league = leagueTitle(career, career.level ?? 1);
   localizeClubs(career, ensureLeagues(career)); // regionale Vereinsnamen (verband.js)
   return true;
