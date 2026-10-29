@@ -6,6 +6,16 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-29-6 – Retro kits, new kit editor, kit supplier and Manager of the Month
+
+### New
+- **Retro kits:** 14 new patterns after legendary 90s shirts – zigzag, wings, jags, squiggles, rainbow, confetti, star shoulders, edged stripes and more. All in any colours, many with a third colour. The editor names the inspiration; there are no crests, sponsors or manufacturers.
+- **Kit supplier:** A team sports supplier makes new kits cheaper, some give one free set a year from a certain league up. Two offers per season in the kitty, three-season deal.
+- **Manager of the Month and of the Season:** Every four matchdays the District Gazette names the manager with the most points, and at the end of the season the one who got the most out of his squad. Your awards are on the roll of honour.
+
+### Improved
+- **Clearer kit editor:** sections for set and name, pattern, cut and colours; patterns shown as small previews in your colours, split into Classic and Retro.
+
 ## 2026-10-29-5 – Stadium, referee fees, squad limit and trips at real prices
 
 ### New

@@ -1,6 +1,7 @@
 // Trikotstoff als winziger Pixel-Atlas (64 × 16): vorne | hinten | Seite links |
 // Seite rechts. Die Spielfigur mappt ihre Quader auf diese Felder, das Vereinsheim
 // zeigt dieselbe Vorderseite als Vorschau. Dazu Sponsor-Brustfeld und Dreck.
+import { tr } from '../core/i18n.js';
 import { GLYPHS, logoFor, wordBars } from './sponsorLogos.js';
 
 export const REGION = { front: 0, back: 16, left: 32, right: 48 };
@@ -27,11 +28,96 @@ const PATTERNS = {
   breit: (x, y) => Math.floor(y / 6) % 2 === 1,
   verlauf: (x, y) => BAYER[(y & 3) * 4 + (x & 3)] < (y * 16) / 15,
   aermel: (x, y, face) => face === 'left' || face === 'right' || (y <= 5 && (x <= 2 || x >= 13)),
+  // --- Retro (vom Nutzer gewünscht, 2026-10-29): Muster nach legendären Trikots, frei einfärbbar, ohne Vereinsnamen, Wappen
+  // oder Logos. Rückgabe 2 = dritte Farbe (kit.third). Vorbilder (Beschreibungen aus Trikot-Ranglisten und Sammlerseiten, siehe
+  // RETRO_MODELS): 0 Hauptfarbe, 1 zweite, 2 dritte.
+  zickzack: (x, y) => [0, 1, 0, 2][Math.floor((y + Math.abs((x % 8) - 4)) / 2.5) % 4],
+  fluegel: (x, y, face) => (face === 'left' || face === 'right' ? ((x + y) % 5 < 2 ? 1 : (x + y) % 5 === 2 ? 2 : 0) : y <= 3 + ((x % 4) < 2 ? 1 : 0) && (x <= 4 || x >= 11) ? 1 : 0),
+  zacken: (x, y, face) => (face === 'left' || face === 'right' ? y < 6 + (x % 4) : y <= 2 + (x % 3 === 0 ? 1 : 0)),
+  keile: (x, y) => {
+    const h = (((x >> 2) * 7 + (y >> 2) * 13) ^ 5) % 7;
+    const up = (x & 3) > (y & 3);
+    return [0, 0, 1, 0, 2, 1, 0][(h + (up ? 3 : 0)) % 7];
+  },
+  welle: (x, y) => {
+    const c = 7 + Math.round(2 * Math.sin((x * Math.PI) / 4));
+    return Math.abs(y - c) <= 1 ? 1 : y === c - 3 || y === c + 3 ? 2 : 0;
+  },
+  blitz: (x, y, face) => {
+    if (face !== 'front' && face !== 'back') return 0;
+    const xx = face === 'back' ? 15 - x : x;
+    const path = xx < 6 ? 2 + xx : xx < 9 ? 7 - (xx - 6) : 4 + (xx - 9) * 1.5;
+    const d = Math.abs(y - path);
+    return d <= 1 ? 1 : d <= 2 ? 2 : 0;
+  },
+  halbton: (x, y) => BAYER[(y & 3) * 4 + (x & 3)] < (7 - y) * 2.3,
+  krakel: (x, y, face) => {
+    const xx = face === 'back' ? x + 5 : face === 'left' ? x + 9 : face === 'right' ? x + 13 : x; // Kringel laufen um den Körper
+    if (Math.abs(y - (4 + 2.5 * Math.sin(xx * 0.8))) < 0.7) return 1;
+    if (Math.abs(y - (11 + 2 * Math.sin(xx * 0.6 + 2))) < 0.7) return 2;
+    return Math.abs(xx % 16 - (8 + 3 * Math.sin(y * 0.7))) < 0.6 ? 1 : 0;
+  },
+  regenbogen: (x, y, face) => [0, 1, 2][Math.floor(((face === 'back' ? 15 - x : x) + y) / 5) % 3],
+  konfetti: (x, y) => {
+    const h = (x * 73856093) ^ (y * 19349663);
+    return h % 11 === 0 ? 1 : h % 13 === 0 ? 2 : 0;
+  },
+  linien: (x, y) => {
+    const h = ((y >> 1) * 2654435761) >>> 0;
+    const start = h % 16;
+    const len = 3 + ((h >>> 8) % 5);
+    return y % 2 === 0 && (x - start + 16) % 16 < len ? 1 : 0;
+  },
+  sterne: (x, y, face) => {
+    if (y > 4) return 0;
+    const px = x % 5;
+    const py = y % 5;
+    return (px === 2 && py >= 1 && py <= 3) || (py === 2 && px >= 1 && px <= 3) ? 2 : face === 'left' || face === 'right' || y <= 3 ? 1 : 0;
+  },
+  brustband3: (x, y) => (y === 5 || y === 9 ? 1 : y >= 6 && y <= 8 ? (y === 7 ? 2 : 1) : 0),
+  kante: (x, y) => (x % 6 === 5 ? 2 : Math.floor(x / 6) % 2 === 1 ? 1 : 0),
 };
+// Muster mit dritter Farbe (Editor zeigt dann die dritte Farbreihe).
+export const THREE_COLOR = new Set(['zickzack', 'fluegel', 'keile', 'welle', 'blitz', 'krakel', 'regenbogen', 'konfetti', 'sterne', 'brustband3', 'kante']);
+// Retro-Muster: Vorbild (nur als Hinweis im Editor, keine Nachbildung von Wappen, Sponsoren oder Herstellern).
+export const RETRO_MODELS = tr(
+  {
+    zickzack: 'Frankfurt auswärts 1993/94 („Tetra-Pak“)',
+    fluegel: 'Dortmund 1994/95 (Flügel entlang der Ärmel)',
+    zacken: 'Dortmund 1992–94 (Zacken an Schultern und Ärmeln)',
+    halbton: '90er-Jacquard',
+    krakel: 'Arsenal auswärts 1991–93 („Bruised Banana“)',
+    regenbogen: 'Bochum 1997/98',
+    konfetti: 'Kölner Karnevalstrikot',
+    linien: 'Niederlande, EM 1996',
+    welle: 'Nigeria, WM 1994',
+    sterne: 'Juventus auswärts 1995/96 (Sterne auf den Schultern)',
+    brustband3: 'Sampdoria 1991/92 (Brustband)',
+    keile: 'Spanien 1996 (eckiges Muster)',
+    blitz: '90er-Blitzmuster',
+    kante: '1860 München in den 90ern (Hellblau, Weiß, dunkelblaue Kanten)',
+  },
+  {
+    zickzack: 'Frankfurt away 1993/94 ("Tetra Pak")',
+    fluegel: 'Dortmund 1994/95 (wings along the sleeves)',
+    zacken: 'Dortmund 1992–94 (jags on shoulders and sleeves)',
+    halbton: '90s jacquard',
+    krakel: 'Arsenal away 1991–93 ("Bruised Banana")',
+    regenbogen: 'Bochum 1997/98',
+    konfetti: 'Cologne carnival shirt',
+    linien: 'Netherlands, Euro 96',
+    welle: 'Nigeria, 1994 World Cup',
+    sterne: 'Juventus away 1995/96 (stars on the shoulders)',
+    brustband3: 'Sampdoria 1991/92 (chest band)',
+    keile: 'Spain 1996 (angular pattern)',
+    blitz: '90s lightning pattern',
+    kante: '1860 Munich in the 90s (sky blue, white, navy edges)',
+  },
+);
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 export const PATTERN_IDS = Object.keys(PATTERNS);
 // Muster, bei denen der Ärmel schon in der Zweitfarbe steckt.
-export const SECOND_SLEEVE = ['seiten', 'schulter', 'aermel'];
+export const SECOND_SLEEVE = ['seiten', 'schulter', 'aermel', 'fluegel', 'zacken', 'sterne'];
 export const sleeveColor = (kit) => (SECOND_SLEEVE.includes(kit.pattern) || kit.sleeves === 'second') && kit.second != null ? kit.second : kit.shirt;
 
 // Kragenarten als Pixel im Atlas (Vorderseite oben, hinten schmaler Streifen) – keine Zusatzfläche.
@@ -157,11 +243,13 @@ export function paintKit(ctx, kit, { sponsor = null, dirt = 0, splats = null, di
   const fn = PATTERNS[kit.pattern] ?? PATTERNS.uni;
   const a = css(kit.shirt);
   const b = css(kit.second ?? kit.shirt);
+  const t = css(kit.third ?? kit.second ?? kit.shirt);
   faces.forEach((face, fi) => {
     const ox = x0 + fi * 16;
     for (let y = 0; y < 16; y++)
       for (let x = 0; x < 16; x++) {
-        ctx.fillStyle = fn(x, y, face) ? b : a;
+        const v = fn(x, y, face);
+        ctx.fillStyle = v === 2 ? t : v ? b : a;
         ctx.fillRect(ox + x, y, 1, 1);
       }
     // Falten: unter den Armen, an der Taille und ein Zug schräg zur Hüfte – leicht dunkler, damit der
@@ -175,7 +263,7 @@ export function paintKit(ctx, kit, { sponsor = null, dirt = 0, splats = null, di
       ctx.fillStyle = css(collarInk(kit));
       for (const [x, y, w, h] of collar) ctx.fillRect(ox + x, y, w, h);
     }
-    if (face === 'front' && sponsor) paintSponsor(ctx, ox, kit, sponsor, fn(8, 8, face) ? kit.second ?? kit.shirt : kit.shirt);
+    if (face === 'front' && sponsor) { const v = fn(8, 8, face); paintSponsor(ctx, ox, kit, sponsor, v === 2 ? kit.third ?? kit.second ?? kit.shirt : v ? kit.second ?? kit.shirt : kit.shirt); }
   });
   if (wet > 0) paintWet(ctx, wet, x0, faces);
   if (dirt > 0 && splats) {

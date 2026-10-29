@@ -934,8 +934,9 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
 - Spielleitung (Schiedsrichter mit Gesicht und Eigenarten).
 - Mehr Rivalitäten.
 - Finanzsystem anpassen und erweitern; Sponsoring erweitern; Ausstattungsvertrag (Ausrüster). Erledigt 2026-10-29: Schiri-Spesen
-  nach der Verbandstabelle (Westfalen 2025/26), Stadionausbau (2500 Plätze) ab Landesliga. Offen: Vertragsspieler ab Oberliga
-  (Quellen bisher nur Foren/FAQ: 200–1500 € im Monat; gehört zum Profi-Übergang), Fahrtkosten der Schiris, Ausrüster.
+  nach der Verbandstabelle (Westfalen 2025/26), Stadionausbau (2500 Plätze) ab Landesliga. Ausrüster erledigt (outfitter.js). Offen:
+  Vertragsspieler ab Oberliga (Quellen bisher nur Foren/FAQ: 200–1500 € im Monat; gehört zum Profi-Übergang), Fahrtkosten der
+  Schiris, Ausrüster-Logo auf dem Trikot (Grafik).
 - ~~Abschlussfahrt und Trainingslager: Preise nach Teilnehmerzahl, Liga und Professionalität staffeln~~ – erledigt 2026-10-29
   (travel.js): echte Preise je Person, Spieler zahlen selbst, der Verein gibt einen Zuschuss (0–100 %), Mitfahrer nach
   Eigenanteil; Trainingslager unten Baggersee, ab Bezirksliga Sportschule, ab Oberliga Belek.
@@ -943,7 +944,7 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   Karriere, Standards aller Ligen aufklappbar.
 - ~~Heim-, Auswärts- und Ausweichtrikot (bei Farbgleichheit automatisch).~~ Erledigt 2026-10-28 (`awayKitOf`, `kitChoice`,
   `resolveKitClash` in career.js; Editor mit Heim/Auswärts, Torwart hebt sich von allen Trikots ab).
-- Trainerauszeichnung (Trainer des Monats/der Saison).
+- ~~Trainerauszeichnung (Trainer des Monats/der Saison)~~ – erledigt 2026-10-29 (coachawards.js).
 - Mehr Sponsoren, mehr Spielernamen, mehr Nationalitäten.
 
 **Kleinkram aus der Prüfung 11.9**
@@ -1017,3 +1018,9 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   3D-Kneipe (11.12).
 - Vor dem Einbau messen: Größe der App (zusätzliches WebAssembly-Modul), Rechenzeit und Draw Calls auf dem Handy (Budgets wie in
   scripts/e2e/modes.mjs); Simulation und Golden dürfen sich nicht ändern.
+
+### 11.16 Retro-Trikots (vom Nutzer gewünscht, 2026-10-29)
+- ~~Legendäre Trikotdesigns als einfärbbare Muster, Trikot-Editor übersichtlicher~~ – erledigt 2026-10-29: 14 Retro-Muster mit
+  dritter Farbe (kitPaint.js RETRO_MODELS, Vorbilder aus Trikot-Ranglisten und Sammlerseiten), Editor in Abschnitten mit
+  Vorschaukacheln. Ohne Vereinsnamen im Muster, ohne Wappen, Sponsoren, Hersteller. Offen: Ligue 1 / La Liga (Quellen nennen
+  PSG auswärts 96/97 und Barcelona auswärts 95–97, aber ohne Musterbeschreibung).

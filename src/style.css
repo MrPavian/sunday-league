@@ -1868,3 +1868,13 @@ body.manager #end { padding-bottom: 84px; }
 /* Zuschuss für Fahrten (Kasse, Abschlussfahrt): fünf Stufen, auch auf kleinen Handys mindestens 44 px breit */
 .trip-share { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); margin: var(--s2) 0; }
 .trip-share .ui-seg button { min-width: var(--touch-min); min-height: var(--touch-min); }
+/* Trikot-Editor: Abschnitte und Muster als Vorschaukacheln */
+.kit-editor { display: grid; gap: var(--s3); }
+.kit-sec { border: 2px solid #000; padding: var(--s2) var(--s3); background: var(--surface-2, transparent); }
+.kit-sec h5 { margin: 0 0 var(--s2); font-size: var(--fs-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+.pattern-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: var(--s2); }
+.pattern-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: var(--touch); padding: 4px; }
+.pattern-tile i { width: 40px; height: 40px; border: 2px solid #000; image-rendering: pixelated; }
+.pattern-tile span { font-size: var(--fs-caption); line-height: 1.1; text-align: center; }
+.pattern-tile.active { outline: 3px solid var(--accent); }
+.pattern-model { display: block; margin-top: var(--s2); opacity: 0.85; }

@@ -1,7 +1,7 @@
 // VEREIN (Vereinsmappe): Kasse, Verein (Name, Trikot, Wappen, Ausbau, Chronik), Museum.
 // Methoden des Vereinsheims (this = Clubhouse), aus Clubhouse.js herausgelöst – Verhalten unverändert.
 import { plural, tr } from '../../core/i18n.js';
-import { kitPreviewURL } from '../../render/kitPaint.js';
+import { kitPreviewURL, RETRO_MODELS, THREE_COLOR } from '../../render/kitPaint.js';
 import { museum } from '../../career/museum.js';
 import { clubLife, FEE_NAMES, neighborText } from '../../career/clublife.js';
 import { reviewHTML } from '../review.js';
@@ -66,6 +66,8 @@ export const clubScreens = {
     const away = this.kitSide === 'away';
     // Heim- oder Auswärtstrikot im Editor: d.kit ist der gerade bearbeitete Satz.
     const d = { ...this.draft, kit: this.draftKit() };
+    const group = this.kitGroup ?? (RETRO_MODELS[d.kit.pattern] ? 'retro' : 'klassisch');
+    const patternIds = Object.keys(KIT_PATTERNS).filter((id) => !!RETRO_MODELS[id] === (group === 'retro'));
     const mainSponsor = shirtSponsor(c);
     const sponsorShown = mainSponsor ? { id: mainSponsor.id, name: mainSponsor.name, color: sponsorColor(mainSponsor) } : null;
     const shirtCss = (k) => `url(${kitPreviewURL(k, sponsorShown)}) center / 100% 100%`;
@@ -82,25 +84,38 @@ export const clubScreens = {
           <b>${d.short}</b>
           <small class="sponsor-note">${sponsorShown ? tr(`Auf der Brust: ${sponsorShown.name}`, `On the chest: ${sponsorShown.name}`) : tr('Noch kein Trikotsponsor', 'No shirt sponsor yet')}</small>
         </div>
-        <div class="fields">
-          <div class="swatch-row kit-side"><span>${tr('Satz', 'Set')}</span>${[['home', tr('Heim', 'Home')], ['away', tr('Auswärts', 'Away')]]
-            .map(([id, label]) => `<button class="${(id === 'away') === away ? 'active' : ''}" data-action="kitSide" data-value="${id}">${label}</button>`)
-            .join('')}</div>
-          <label>${tr('Vereinsname', 'Club name')} <input data-field="name" value="${esc(d.name)}" maxlength="32" ${editable ? '' : 'disabled'}></label>
-          <label>${tr('Kürzel', 'Short name')} <input data-field="short" value="${esc(d.short)}" maxlength="4" ${editable ? '' : 'disabled'}></label>
-          <div class="swatch-row"><span>${tr('Muster', 'Pattern')}</span>${Object.entries(KIT_PATTERNS)
-            .map(([id, label]) => `<button class="${d.kit.pattern === id ? 'active' : ''}" data-action="kitPattern" data-value="${id}" ${editable ? '' : 'disabled'}>${label}</button>`)
-            .join('')}</div>
-          <div class="swatch-row"><span>${tr('Kragen', 'Collar')}</span>${Object.entries(KIT_COLLARS)
-            .map(([id, label]) => `<button class="${(d.kit.collar ?? 'standard') === id ? 'active' : ''}" data-action="kitCollar" data-value="${id}" ${editable ? '' : 'disabled'}>${label}</button>`)
-            .join('')}</div>
-          <div class="swatch-row"><span>${tr('Ärmel', 'Sleeves')}</span>${Object.entries(KIT_SLEEVES)
-            .map(([id, label]) => `<button class="${(d.kit.sleeves ?? 'main') === id ? 'active' : ''}" data-action="kitSleeves" data-value="${id}" ${editable ? '' : 'disabled'}>${label}</button>`)
-            .join('')}</div>
-          ${swatches('shirt', tr('Trikot', 'Shirt'))}
-          ${d.kit.pattern !== 'uni' || d.kit.sleeves === 'second' ? swatches('second', tr('2. Farbe', '2nd colour')) : ''}
-          ${swatches('shorts', tr('Hose', 'Shorts'))}
-          ${swatches('socks', tr('Stutzen', 'Socks'))}
+        <div class="fields kit-editor">
+          <section class="kit-sec"><h5>${tr('Satz und Name', 'Set and name')}</h5>
+            <div class="swatch-row kit-side">${[['home', tr('Heim', 'Home')], ['away', tr('Auswärts', 'Away')]]
+              .map(([id, label]) => `<button class="${(id === 'away') === away ? 'active' : ''}" data-action="kitSide" data-value="${id}">${label}</button>`)
+              .join('')}</div>
+            <label>${tr('Vereinsname', 'Club name')} <input data-field="name" value="${esc(d.name)}" maxlength="32" ${editable ? '' : 'disabled'}></label>
+            <label>${tr('Kürzel', 'Short name')} <input data-field="short" value="${esc(d.short)}" maxlength="4" ${editable ? '' : 'disabled'}></label>
+          </section>
+          <section class="kit-sec"><h5>${tr('Muster', 'Pattern')}</h5>
+            <div class="swatch-row kit-side">${[['klassisch', tr('Klassisch', 'Classic')], ['retro', tr('Retro', 'Retro')]]
+              .map(([id, label]) => `<button class="${group === id ? 'active' : ''}" data-action="kitGroup" data-value="${id}">${label}</button>`)
+              .join('')}</div>
+            <div class="pattern-grid">${patternIds
+              .map((id) => `<button class="pattern-tile ${d.kit.pattern === id ? 'active' : ''}" data-action="kitPattern" data-value="${id}" ${editable ? '' : 'disabled'} title="${esc(RETRO_MODELS[id] ? `${tr('Vorbild', 'Inspired by')}: ${RETRO_MODELS[id]}` : KIT_PATTERNS[id])}"><i style="background:url(${kitPreviewURL({ ...d.kit, pattern: id })}) center / 100% 100%"></i><span>${KIT_PATTERNS[id]}</span></button>`)
+              .join('')}</div>
+            ${RETRO_MODELS[d.kit.pattern] ? `<small class="pattern-model">${tr('Vorbild', 'Inspired by')}: ${RETRO_MODELS[d.kit.pattern]} – ${tr('frei einfärbbar, ohne Wappen und Logos', 'any colours, no crests or logos')}</small>` : ''}
+          </section>
+          <section class="kit-sec"><h5>${tr('Schnitt', 'Cut')}</h5>
+            <div class="swatch-row"><span>${tr('Kragen', 'Collar')}</span>${Object.entries(KIT_COLLARS)
+              .map(([id, label]) => `<button class="${(d.kit.collar ?? 'standard') === id ? 'active' : ''}" data-action="kitCollar" data-value="${id}" ${editable ? '' : 'disabled'}>${label}</button>`)
+              .join('')}</div>
+            <div class="swatch-row"><span>${tr('Ärmel', 'Sleeves')}</span>${Object.entries(KIT_SLEEVES)
+              .map(([id, label]) => `<button class="${(d.kit.sleeves ?? 'main') === id ? 'active' : ''}" data-action="kitSleeves" data-value="${id}" ${editable ? '' : 'disabled'}>${label}</button>`)
+              .join('')}</div>
+          </section>
+          <section class="kit-sec"><h5>${tr('Farben', 'Colours')}</h5>
+            ${swatches('shirt', tr('Trikot', 'Shirt'))}
+            ${d.kit.pattern !== 'uni' || d.kit.sleeves === 'second' ? swatches('second', tr('2. Farbe', '2nd colour')) : ''}
+            ${THREE_COLOR.has(d.kit.pattern) ? swatches('third', tr('3. Farbe', '3rd colour')) : ''}
+            ${swatches('shorts', tr('Hose', 'Shorts'))}
+            ${swatches('socks', tr('Stutzen', 'Socks'))}
+          </section>
           ${this.clubNote ? `<p class="warn">${this.clubNote}</p>` : ''}
           ${founding ? '' : editable
             ? `<button class="primary" data-action="saveClub">${tr(`Trikots bestellen <small>(neuer Satz ${kitPrice(c)} €${outfitterOf(c) ? ` bei ${outfitterDef(outfitterOf(c).id).name}` : ''}, Name gratis)</small>`, `Order kits <small>(new set €${kitPrice(c)}${outfitterOf(c) ? ` from ${outfitterDef(outfitterOf(c).id).name}` : ''}, name change free)</small>`)}</button>`

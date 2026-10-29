@@ -6,6 +6,16 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-29-6 – Retro-Trikots, neuer Trikot-Editor, Ausrüster und Trainer des Monats
+
+### Neu
+- **Retro-Trikots:** 14 neue Muster nach legendären Trikots der 90er – Zickzack, Flügel, Zacken, Krakel, Regenbogen, Konfetti, Sternschultern, Streifen mit Kante und mehr. Alle frei einfärbbar, viele mit dritter Farbe. Im Editor steht das Vorbild dabei; Wappen, Sponsoren und Hersteller gibt es nicht.
+- **Ausrüster:** Ein Teamsport-Ausrüster macht neue Trikotsätze billiger, manche geben ab einer Liga einen Satz im Jahr umsonst. Zwei Angebote je Saison in der Kasse, Vertrag über drei Saisons.
+- **Trainer des Monats und der Saison:** Das Kreisblatt kürt alle vier Spieltage den Trainer mit den meisten Punkten und am Saisonende den, der am meisten aus seinem Kader geholt hat. Deine Auszeichnungen stehen auf der Ehrentafel.
+
+### Verbessert
+- **Trikot-Editor übersichtlicher:** Abschnitte für Satz und Name, Muster, Schnitt und Farben; die Muster als kleine Vorschau in deinen Farben, getrennt nach Klassisch und Retro.
+
 ## 2026-10-29-5 – Stadion, Schiri-Spesen, Kadergrenze und Fahrten mit echten Preisen
 
 ### Neu

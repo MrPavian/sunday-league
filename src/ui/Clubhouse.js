@@ -142,7 +142,11 @@ export class Clubhouse {
       else if (action === 'kitColor') {
         const [part, color] = value.split(':');
         this.draftKit()[part] = Number(color);
-      } else if (action === 'kitPattern') this.draftKit().pattern = value;
+      } else if (action === 'kitPattern') {
+        const k = this.draftKit();
+        k.pattern = value;
+        k.third ??= 0x1d2b44; // dritte Farbe für Retro-Muster: Dunkelblau als Start
+      } else if (action === 'kitGroup') this.kitGroup = value;
       else if (action === 'kitCollar') this.draftKit().collar = value;
       else if (action === 'kitSleeves') this.draftKit().sleeves = value;
       else if (action.startsWith('crest')) this.crestAction(action, value);

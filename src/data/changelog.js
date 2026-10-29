@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-29-6',
+    de: { title: 'Retro-Trikots, neuer Trikot-Editor, Ausrüster und Trainer des Monats', items: ['14 Retro-Muster nach legendären 90er-Trikots, frei einfärbbar, viele mit dritter Farbe.', 'Trikot-Editor in Abschnitten, Muster als Vorschau in deinen Farben.', 'Ausrüstervertrag: Rabatt auf Trikotsätze, ab einer Liga Freiware.', 'Trainer des Monats und der Saison im Kreisblatt, mit Platz auf der Ehrentafel.'] },
+    en: { title: 'Retro kits, new kit editor, kit supplier and Manager of the Month', items: ['14 retro patterns after legendary 90s shirts, in any colours, many with a third colour.', 'Kit editor in sections, patterns previewed in your colours.', 'Kit supplier deal: discount on kit sets, free kit from a certain league up.', 'Manager of the Month and of the Season in the District Gazette, with a place on the roll of honour.'] },
+  },
+  {
     id: '2026-10-29-5',
     de: { title: 'Stadion, Schiri-Spesen, Kadergrenze und Fahrten mit echten Preisen', items: ['Ab der Landesliga lässt sich der Platz zum Stadion für 2500 Zuschauer ausbauen.', 'Die Kadergrenze steht im Kader-Reiter und lässt sich mit − und + verschieben.', 'Schiri-Spesen wie im echten Verband – ab der Landesliga mit zwei Assistenten.', 'Abschlussfahrt und Trainingslager kosten je Person so viel wie in echt; der Verein gibt einen Zuschuss, den du festlegst.', 'Trainingslager je Liga: Baggersee, Sportschule des Verbands oder Belek.'] },
     en: { title: 'Stadium, referee fees, squad limit and trips at real prices', items: ['From the Landesliga up you can expand your ground into a stadium for 2,500 spectators.', 'The squad limit is shown in the squad tab and can be moved with − and +.', 'Referee fees as in a real association – from the Landesliga up with two assistants.', 'The end-of-season trip and training camp cost what they really cost per person; the club gives a subsidy you set.', 'Training camp by league: the lake, the association\'s sports school or Belek.'] },
