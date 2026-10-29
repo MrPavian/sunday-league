@@ -945,7 +945,9 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
 - ~~Heim-, Auswärts- und Ausweichtrikot (bei Farbgleichheit automatisch).~~ Erledigt 2026-10-28 (`awayKitOf`, `kitChoice`,
   `resolveKitClash` in career.js; Editor mit Heim/Auswärts, Torwart hebt sich von allen Trikots ab).
 - ~~Trainerauszeichnung (Trainer des Monats/der Saison)~~ – erledigt 2026-10-29 (coachawards.js).
-- Mehr Sponsoren, mehr Spielernamen, mehr Nationalitäten.
+- Mehr Sponsoren, mehr Spielernamen, mehr Nationalitäten. Erledigt 2026-10-29: Namensauflage 8 mit Ukraine, Rumänien, Kosovo,
+  Afghanistan, Bulgarien, Iran, Vietnam (BAMF-Migrationsbericht 2024, Tabelle 7-2), deutscher Anteil wie bisher; regionale Namen
+  (regionalnames.js). Offen: mehr Sponsoren, Herkunftsmischung je Bundesland.
 
 **Kleinkram aus der Prüfung 11.9**
 - ~~Tim „Der Tiger“ im Hinterhof-Fenster: Clipping~~ – erledigt 2026-10-29: 0,5 m vor der Wand auf einem Kissen (gemessen: ab

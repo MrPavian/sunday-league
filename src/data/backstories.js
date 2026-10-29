@@ -30,6 +30,16 @@ const ORIGIN_LINES = {
   cb: tr('Die Großeltern kamen aus der Karibik. Bei Heimspielen bringt die Tante Jerk Chicken für die dritte Halbzeit mit.', 'His grandparents came from the Caribbean. At home games his aunt brings jerk chicken for the third half.'),
   cn: tr('Die Eltern kamen aus Hongkong und haben ein Restaurant. Mannschaftsessen nach dem Aufstieg: dort, ganz klar.', 'His parents came from Hong Kong and run a restaurant. Team dinner after promotion: there, obviously.'),
 };
+// Neue Gruppen der Auflage 8 (origins.js ORIGINS_NEW).
+Object.assign(ORIGIN_LINES, {
+  ua: tr('Ist mit Mutter und kleiner Schwester aus der Ukraine gekommen. In Kyjiw hat er in der Jugend eines Hauptstadtvereins gespielt, hier fing er in der Kreisliga neu an.', 'Came over from Ukraine with his mum and little sister. In Kyiv he played in a big club\'s youth set-up; here he started again in the district league.'),
+  ro: tr('Die Familie kommt aus Siebenbürgen. Der Vater arbeitet auf dem Bau und steht trotzdem bei jedem Heimspiel pünktlich am Zaun.', 'The family comes from Transylvania. His dad works on building sites and is still at the fence on time for every home game.'),
+  al: tr('Die Eltern kamen Ende der Neunziger aus dem Kosovo. Auf Hochzeiten in der Familie ist er der, der um Mitternacht noch den Ball dabeihat.', 'His parents came from Kosovo in the late nineties. At family weddings he is the one who still has a ball with him at midnight.'),
+  afg: tr('Ist als Jugendlicher aus Afghanistan gekommen. Deutsch hat er im Verein gelernt – die ersten Wörter waren „Hintermann" und „Leo".', 'Came from Afghanistan as a teenager. He learned German at the club – the first words were "man on" and "mine".'),
+  bg: tr('Ist aus Plowdiw hergezogen, wegen der Arbeit im Krankenhaus. Spielt, seit er laufen kann, und erklärt jedem, dass er eigentlich Zehner ist.', 'Moved here from Plovdiv for a hospital job. Has played since he could walk and tells everyone he is really a number ten.'),
+  ir: tr('Die Eltern kamen aus Teheran. Der Vater schaut jedes Spiel mit Thermoskanne Tee und kommentiert leise auf Persisch.', 'His parents came from Tehran. His dad watches every game with a flask of tea and commentates quietly in Persian.'),
+  vn: tr('Die Eltern kamen aus Vietnam und haben das Blumengeschäft am Markt. Zum Saisonende gibt es für jeden einen Strauß – auch für den Schiri.', 'His parents came from Vietnam and run the florist on the market square. At the end of the season everyone gets a bouquet – the referee too.'),
+});
 const originLine = (p) => ORIGIN_LINES[p.origin] ?? null;
 const gk = (p) => p.position === 'gk';
 

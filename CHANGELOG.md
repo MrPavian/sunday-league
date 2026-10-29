@@ -6,6 +6,12 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-29-7 – Mehr Nationalitäten
+
+### Neu
+- **Mehr Nationalitäten:** In neuen Karrieren spielen jetzt auch Spieler mit ukrainischen, rumänischen, kosovarischen, afghanischen, bulgarischen, iranischen und vietnamesischen Namen mit – im Verhältnis wie im Mikrozensus 2024. Der Anteil deutscher Namen bleibt wie bisher. Jede Gruppe hat eigene Vornamen und einen eigenen Satz im Kneipen-Dossier.
+- **Keine echten Nationalspieler** dieser Länder als Spielernamen.
+
 ## 2026-10-29-6 – Retro-Trikots, neuer Trikot-Editor, Ausrüster und Trainer des Monats
 
 ### Neu

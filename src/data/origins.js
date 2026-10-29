@@ -165,6 +165,29 @@ const DE_SET_MORE = nameSet({ ...ORIGINS, de: { ...ORIGINS.de, last: DE_LAST_MOR
 const STRICT = { germanFirst: 0 };
 const ORIGINS_STRICT = Object.fromEntries(Object.entries(ORIGINS).map(([id, o]) => [id, ['pl', 'ruhr', 'russ', 'de'].includes(id) ? o : { ...o, ...STRICT }]));
 const DE_SET_STRICT = nameSet({ ...ORIGINS_STRICT, de: { ...ORIGINS.de, last: DE_LAST_MORE } }, DE_FIRST_MORE, 'de');
+// Achte Auflage (neue deutsche Karrieren, vom Nutzer gewünscht 2026-10-29: mehr Nationalitäten): dazu die großen Herkunftsgruppen,
+// die bisher fehlten. Anteile nach dem Migrationsbericht 2024 des BAMF (Kapitel 7, Tabelle 7-2, Mikrozensus 2024, Anteil an
+// allen 21,2 Mio. Menschen mit Einwanderungsgeschichte: https://www.bamf.de/SharedDocs/Anlagen/DE/Forschung/Migrationsberichte/MB-2024/migrationsbericht-2024-kap7.pdf):
+// Ukraine 5,6 %, Rumänien 4,9 %, Kosovo 2,6 %, Afghanistan 2,2 %, Bulgarien 1,7 %, Iran 1,4 %, Vietnam 1,0 %. Umgerechnet ins Gewicht
+// wie die vorhandenen Gruppen (Türkei 0,09 bei 12,2 %, Polen 0,07 bei 9,3 %, Italien 0,03 bei 3,1 %): ≈ 0,008 je Prozent.
+// Vornamen passen zur Herkunft (wie Auflage 7). Namen in der in Deutschland üblichen Schreibweise; keine Kombination, die einen
+// Nationalspieler dieser Länder ergibt (pronames.js).
+const PER_PERCENT = 0.008;
+export const ORIGINS_NEW = {
+  ua: { w: 5.6 * PER_PERCENT, last: ['Kowalenko', 'Bondarenko', 'Tkatschenko', 'Krawtschenko', 'Olijnyk', 'Melnyk', 'Bojko', 'Lyssenko', 'Sawtschenko', 'Rudenko', 'Martschenko', 'Petrenko', 'Klymenko', 'Ponomarenko', 'Hryzenko', 'Moros'], first: ['Oleksandr', 'Andrij', 'Serhij', 'Dmytro', 'Mykola', 'Wolodymyr', 'Jurij', 'Taras', 'Bohdan', 'Witalij', 'Maksym', 'Artem', 'Denys', 'Ihor', 'Oleh', 'Pawlo'] },
+  ro: { w: 4.9 * PER_PERCENT, last: ['Popa', 'Pop', 'Radu', 'Dumitru', 'Stan', 'Stoica', 'Matei', 'Ciobanu', 'Rusu', 'Munteanu', 'Constantin', 'Marin', 'Tudor', 'Florea', 'Lazăr', 'Moldovan', 'Barbu', 'Nistor', 'Ene'], first: ['Andrei', 'Alexandru', 'Ionuț', 'Mihai', 'Florin', 'Adrian', 'Cristian', 'Marius', 'Vlad', 'Ștefan', 'Bogdan', 'Sorin', 'Cosmin', 'Dragoș', 'Răzvan', 'Lucian'] },
+  al: { w: 2.6 * PER_PERCENT, last: ['Krasniqi', 'Gashi', 'Morina', 'Shala', 'Kelmendi', 'Bytyqi', 'Rexhepi', 'Hasani', 'Zeqiri', 'Ahmeti', 'Haliti', 'Sadiku', 'Hyseni', 'Musliu', 'Avdiu', 'Ismaili'], first: ['Arben', 'Besnik', 'Driton', 'Fatos', 'Valon', 'Agon', 'Ardian', 'Bujar', 'Ilir', 'Leotrim', 'Liridon', 'Florent', 'Egzon', 'Dardan', 'Arlind', 'Blerim'] },
+  afg: { w: 2.2 * PER_PERCENT, last: ['Ahmadzai', 'Popal', 'Sultani', 'Wardak', 'Noori', 'Amiri', 'Sadat', 'Rahmani', 'Habibi', 'Azizi', 'Nazari', 'Haidari', 'Stanekzai', 'Zazai', 'Safi', 'Mohmand'], first: ['Ahmad', 'Mohammad', 'Farid', 'Jawad', 'Navid', 'Omid', 'Sami', 'Wahid', 'Zabi', 'Hamid', 'Rahim', 'Bashir', 'Javid', 'Nasir', 'Shafiq', 'Yama'] },
+  bg: { w: 1.7 * PER_PERCENT, last: ['Georgiew', 'Dimitrow', 'Nikolow', 'Christow', 'Stojanow', 'Todorow', 'Iliew', 'Atanassow', 'Angelow', 'Kolew', 'Jordanow', 'Marinow', 'Kostow', 'Iwanow', 'Pawlow', 'Wassilew'], first: ['Georgi', 'Dimitar', 'Iwan', 'Nikolaj', 'Christo', 'Stojan', 'Todor', 'Petar', 'Plamen', 'Atanas', 'Kalojan', 'Boris', 'Swetoslaw', 'Wesselin', 'Radoslaw', 'Ljubomir'] },
+  ir: { w: 1.4 * PER_PERCENT, last: ['Hosseini', 'Mohammadi', 'Rezaei', 'Jafari', 'Moradi', 'Ghasemi', 'Hashemi', 'Sadeghi', 'Mousavi', 'Ebrahimi', 'Kazemi', 'Bagheri', 'Zamani', 'Tehrani', 'Shirazi', 'Najafi'], first: ['Reza', 'Mehdi', 'Amir', 'Hossein', 'Saeed', 'Arash', 'Babak', 'Behnam', 'Kian', 'Dariush', 'Farhad', 'Hamed', 'Omid', 'Payam', 'Navid', 'Kourosh'] },
+  vn: { w: 1.0 * PER_PERCENT, last: ['Nguyen', 'Tran', 'Le', 'Pham', 'Hoang', 'Huynh', 'Phan', 'Vu', 'Vo', 'Dang', 'Bui', 'Do', 'Ho', 'Ngo', 'Duong', 'Ly'], first: ['Minh', 'Anh', 'Duc', 'Hung', 'Tuan', 'Long', 'Nam', 'Quang', 'Thanh', 'Huy', 'Khanh', 'Bao', 'Phuc', 'Son', 'Tien', 'Vinh'] },
+};
+// Der deutsche Anteil bleibt wie in Auflage 7 (Nutzerentscheid 2026-10-29): Alle nicht-deutschen Gruppen werden gemeinsam so
+// skaliert, dass ihre Summe gleich bleibt – die neuen nehmen ihren Anteil nur den anderen Herkünften weg.
+const nonDe = (o) => Object.entries(o).filter(([id]) => id !== 'de').reduce((sum, [, x]) => sum + x.w, 0);
+const KEEP_DE = nonDe(ORIGINS) / (nonDe(ORIGINS) + nonDe(ORIGINS_NEW));
+const scaled = (o) => Object.fromEntries(Object.entries(o).map(([id, x]) => [id, id === 'de' ? x : { ...x, w: x.w * KEEP_DE }]));
+const DE_SET_8 = nameSet({ ...scaled({ ...ORIGINS_STRICT, ...Object.fromEntries(Object.entries(ORIGINS_NEW).map(([id, o]) => [id, { ...o, ...STRICT }])) }), de: { ...ORIGINS.de, last: DE_LAST_MORE } }, DE_FIRST_MORE, 'de');
 const EN_SET = nameSet(ORIGINS_EN, LOCAL_FIRST_EN, 'gb');
 
 // Welcher Satz gerade gilt, hängt an der Namensauflage der Karriere (career.js, setNameEdition) –
@@ -172,7 +195,7 @@ const EN_SET = nameSet(ORIGINS_EN, LOCAL_FIRST_EN, 'gb');
 let SET = DE_SET;
 // locale: 'de' (Auflage 4 und älter), 'de6' (Auflage 6, mehr Namen), 'de7' (Auflage 7, Namen passend zur Herkunft), 'en' (Auflage 5).
 export const setNameLocale = (locale) => {
-  SET = locale === 'en' ? EN_SET : locale === 'de7' ? DE_SET_STRICT : locale === 'de6' ? DE_SET_MORE : DE_SET;
+  SET = locale === 'en' ? EN_SET : locale === 'de8' ? DE_SET_8 : locale === 'de7' ? DE_SET_STRICT : locale === 'de6' ? DE_SET_MORE : DE_SET;
 };
 export const nameLocale = () => (SET === EN_SET ? 'en' : 'de');
 
@@ -181,6 +204,7 @@ export const personIdentityDE = DE_SET.identity;
 export const personIdentityEN = EN_SET.identity;
 export const personIdentityDE6 = DE_SET_MORE.identity;
 export const personIdentityDE7 = DE_SET_STRICT.identity;
+export const personIdentityDE8 = DE_SET_8.identity;
 
 // Ein ganzer Name, passend zum Alter – mit Herkunft, damit das Aussehen dazu passen kann.
 // Regionale Namen (regionalnames.js): Bundesland der Karriere, null = keine (ohne Verband, englische Namen, alte Spielstände).
@@ -206,7 +230,7 @@ export function regionalize(name, age, key, land = REGION) {
   if (!region || !name) return name;
   const [first, ...rest] = name.split(' ');
   const last = rest.join(' ');
-  if (!last || DE_SET_STRICT.originOf(last) !== 'de') return name;
+  if (!last || DE_SET_8.originOf(last) !== 'de') return name; // Auflage 8 kennt alle Herkunftsgruppen
   const h = mix((key >>> 0) ^ strHash(land));
   const newLast = (h % 10000) / 10000 < REGION_LAST_SHARE ? region.last[mix(h ^ 0x51ed27) % region.last.length] : last;
   const firsts = generation(age) === 'young' ? region.first : region.first.filter((f) => TIMELESS.has(f)); // Ältere: keine Modenamen
@@ -259,7 +283,8 @@ const HAIR_W = {
   mix: [0.35, 0.25, 0.1, 0.05, 0.22, 0, 0.03],
   ea: [0.15, 0.05, 0, 0, 0.8, 0, 0],
 };
-const LOOK_GROUP = { de: 'de', pl: 'pl', ruhr: 'pl', russ: 'pl', tr: 'tr', yu: 'yu', it: 'south', gr: 'south', pt: 'south', ar: 'ar', wa: 'wa', ...LOOK_GROUP_EN };
+// Neue Gruppen (Auflage 8) nutzen die Aussehen-Gewichte der nächstliegenden vorhandenen Gruppe.
+const LOOK_GROUP = { de: 'de', pl: 'pl', ruhr: 'pl', russ: 'pl', tr: 'tr', yu: 'yu', it: 'south', gr: 'south', pt: 'south', ar: 'ar', wa: 'wa', ua: 'pl', ro: 'yu', al: 'yu', bg: 'yu', afg: 'ar', ir: 'ar', vn: 'ea', ...LOOK_GROUP_EN }; // afg: 'af' ist im englischen Satz Afrika
 function weighted(rng, weights) {
   let r = rng.next() * weights.reduce((a, b) => a + b, 0);
   for (let i = 0; i < weights.length; i++) if ((r -= weights[i]) < 0) return i;

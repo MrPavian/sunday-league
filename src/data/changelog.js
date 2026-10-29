@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-29-7',
+    de: { title: 'Mehr Nationalitäten', items: ['Neue Karrieren: auch ukrainische, rumänische, kosovarische, afghanische, bulgarische, iranische und vietnamesische Namen – im Verhältnis wie im Mikrozensus 2024, deutscher Anteil wie bisher.', 'Eigene Vornamen und Dossier-Sätze je Gruppe; keine echten Nationalspieler als Namen.'] },
+    en: { title: 'More nationalities', items: ['New careers: Ukrainian, Romanian, Kosovar, Afghan, Bulgarian, Iranian and Vietnamese names too – in proportion to the 2024 German microcensus, German share as before.', 'Own first names and dossier lines per group; no real internationals as names.'] },
+  },
+  {
     id: '2026-10-29-6',
     de: { title: 'Retro-Trikots, neuer Trikot-Editor, Ausrüster und Trainer des Monats', items: ['14 Retro-Muster nach legendären 90er-Trikots, frei einfärbbar, viele mit dritter Farbe.', 'Trikot-Editor in Abschnitten, Muster als Vorschau in deinen Farben.', 'Ausrüstervertrag: Rabatt auf Trikotsätze, ab einer Liga Freiware.', 'Trainer des Monats und der Saison im Kreisblatt, mit Platz auf der Ehrentafel.'] },
     en: { title: 'Retro kits, new kit editor, kit supplier and Manager of the Month', items: ['14 retro patterns after legendary 90s shirts, in any colours, many with a third colour.', 'Kit editor in sections, patterns previewed in your colours.', 'Kit supplier deal: discount on kit sets, free kit from a certain league up.', 'Manager of the Month and of the Season in the District Gazette, with a place on the roll of honour.'] },

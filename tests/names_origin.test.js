@@ -13,7 +13,7 @@ const GERMAN = new Set(Array.from({ length: 3000 }, (_, i) => germanFirst(create
 const STRICT = ['tr', 'ar', 'wa', 'yu', 'gr', 'pt', 'it'];
 
 describe('Namen nach Herkunft (Auflage 7)', () => {
-  it('neue deutsche Karrieren nutzen Auflage 7', () => expect(NAME_EDITION).toBe(7));
+  it('neue deutsche Karrieren nutzen Auflage 8 (mit den neuen Herkunftsgruppen)', () => expect(NAME_EDITION).toBe(8));
 
   it('türkische, arabische, westafrikanische … Nachnamen haben keinen deutschen Vornamen; Werte wie Auflage 6 (bis auf Körper)', () => {
     setNameLocale(nameLocaleOf(7));
@@ -60,5 +60,32 @@ describe('Kneipengeschichten passen zu Herkunft und Position', () => {
     expect(DREAM_SUPPORT[0]('Kai', facts)).not.toMatch(/Fallrückzieher/);
     const field = ['familie', 'traum'].flatMap((k) => all(k, { ...facts, position: 'fwd' })).join(' ');
     expect(field).toMatch(/öfter aufs Tor/);
+  });
+});
+
+describe('Mehr Nationalitäten (Auflage 8)', () => {
+  it('neue Herkunftsgruppen kommen vor, etwa im Verhältnis des Mikrozensus 2024, mit passendem Vornamen; Profinamen nie', async () => {
+    const { ORIGINS_NEW } = await import('../src/data/origins.js');
+    const { PRO_NAMES } = await import('../src/data/pronames.js');
+    setNameLocale('de8');
+    const pool = createPlayerPool({ seed: 1921, edition: 8 });
+    const count = {};
+    for (let i = 0; i < N; i++) {
+      const p = pool.get(i);
+      const [first, ...rest] = p.name.split(' ');
+      const o = originOf(rest.join(' '));
+      if (ORIGINS_NEW[o]) {
+        count[o] = (count[o] ?? 0) + 1;
+        expect(ORIGINS_NEW[o].first, p.name).toContain(first);
+      }
+      expect(PRO_NAMES.has(p.name)).toBe(false);
+    }
+    for (const id of Object.keys(ORIGINS_NEW)) expect(count[id] ?? 0, id).toBeGreaterThan(0);
+    expect(count.ua).toBeGreaterThan(count.vn); // 5,6 % gegen 1,0 %
+    // Deutscher Anteil wie in Auflage 7 (Nutzerentscheid): höchstens einen Prozentpunkt Unterschied
+    const share = (f) => { const r = createRng(5); let de = 0; for (let i = 0; i < 20000; i++) if (f(r, 25).origin === 'de') de++; return de / 20000; };
+    const { personIdentityDE7, personIdentityDE8 } = await import('../src/data/origins.js');
+    expect(Math.abs(share(personIdentityDE8) - share(personIdentityDE7))).toBeLessThan(0.01);
+    setNameLocale(nameLocaleOf(NAME_EDITION));
   });
 });

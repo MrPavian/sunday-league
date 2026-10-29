@@ -6,6 +6,12 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-29-7 – More nationalities
+
+### New
+- **More nationalities:** New careers now also feature players with Ukrainian, Romanian, Kosovar, Afghan, Bulgarian, Iranian and Vietnamese names – in proportion to the 2024 German microcensus. The share of German names stays as before. Each group has its own first names and its own line in the pub dossier.
+- **No real internationals** from these countries as player names.
+
 ## 2026-10-29-6 – Retro kits, new kit editor, kit supplier and Manager of the Month
 
 ### New

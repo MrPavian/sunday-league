@@ -2,7 +2,7 @@
 // die mit dem Alter aussehen wie ihre Altersgenossen (65-Jähriger mit vollem braunem Haar).
 import { describe, expect, it } from 'vitest';
 import { createRng } from '../src/core/rng.js';
-import { agedLook, greyChance, personIdentityDE, personIdentityDE6, personIdentityDE7, personIdentityEN } from '../src/data/origins.js';
+import { agedLook, greyChance, personIdentityDE, personIdentityDE6, personIdentityDE7, personIdentityDE8, personIdentityEN } from '../src/data/origins.js';
 import { PRO_NAMES } from '../src/data/pronames.js';
 import { HAIR_COLORS } from '../src/data/names.js';
 import { createCareer } from '../src/career/career.js';
@@ -13,7 +13,7 @@ describe('Keine echten Profinamen', () => {
     for (const n of ['Oliver Baumann', 'Thomas Müller', 'Harry Kane', 'Robert Lewandowski']) expect(PRO_NAMES.has(n)).toBe(true);
   });
   it('kein Namenssatz erzeugt einen Namen von der Liste (je 50 000 Namen)', () => {
-    for (const f of [personIdentityDE, personIdentityDE6, personIdentityDE7, personIdentityEN]) {
+    for (const f of [personIdentityDE, personIdentityDE6, personIdentityDE7, personIdentityDE8, personIdentityEN]) {
       const rng = createRng(4711);
       for (let i = 0; i < 50000; i++) expect(PRO_NAMES.has(f(rng, 16 + (i % 45)).name)).toBe(false);
     }
