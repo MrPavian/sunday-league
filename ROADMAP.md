@@ -867,9 +867,9 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
 - ~~Großfeld: zu hohe Torquote je Schuss (20 % statt real 10–12 %)~~ – eingemessen 2026-10-28 (Torwart lenkt nicht mehr ins eigene
   Netz, Fernschüsse hält er; Großfeld 13 %, Rasen/Sportplatz 10 %). Kurze Spiele auf dem Großfeld haben dadurch weniger Tore
   (2,8 → 1,8, vom Nutzer so entschieden). Nahschüsse 2026-10-28 eingemessen (Strafraum: Großfeld 32 → 22 %, Sportplatz 21 → 16 %,
-  Großfeld nun 1,5 Tore je kurzem Spiel; Kopfball zählt als Schuss, 15 % der Tore). Offen: Tore nach Ecken noch 12–15 % (real 2,6–4,6 %, WM 2022 / Copa América 2021);
-  Angreifer köpfen den ersten Ball zu oft ungestört (Verteidiger klären nur 14–24 %, real rund 44 %), flache Schüsse werden nie
-  geblockt (bodyBlock erst ab 0,7 m Höhe). Versucht, nicht übernommen: Kopfballduell mit Gegner in Reichweite, Blocken ab 0 m.
+  Großfeld nun 1,5 Tore je kurzem Spiel; Kopfball zählt als Schuss, 15 % der Tore). Ecken 2026-10-29: Torwart fängt Flanken (KEEPER_CLAIM), enge Deckung, Kopfballduell – Eckentore Großfeld 15 → 9 %,
+  Rasen 13 → 11 %, Sportplatz 12 %; dafür Kopfballtore Großfeld 15 → 5 % der Tore (vom Nutzer so entschieden). Offen: Eckentore
+  noch über real 2,6–4,6 % (WM 2022 / Copa América 2021) – vor allem Abpraller und Nachschüsse im Strafraum.
 - Futsal-Ball Größe 4 in der Halle (eigener Ballradius je Platz).
 - „Nach außen lenken" mit echtem Leiten des Ballführenden. Vorlage: Steuerungsverhalten aus Yuka
   (https://github.com/Mugen87/yuka, MIT, z. B. Interpose/Offset-Pursuit) – nur das Prinzip in die eigene,

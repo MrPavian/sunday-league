@@ -481,11 +481,14 @@ export function keeperSaves(m) {
     // Vor dem 7,32-m-Tor (Großfeld) deckt er anteilig so viel ab wie vor dem 5-m-Tor (KEEPER_REACH_GW): Vorher gingen dort
     // 35 von 486 Schüssen aus dem Strafraum rein, an die er gar nicht herankam (120 Spiele), jetzt 10.
     const reach = hands ? (0.85 + 0.75 * p.attrs.keeping) * clamp(pitch.goalHalfWidth / 1.6, 0.85, 1.3) * Math.max(1, pitch.goalHalfWidth / KEEPER_REACH_GW) * (spotKick(m) ? 0.62 : 1) : 0.55 + 0.35 * p.attrs.keeping;
-    if (dist2d(p.pos, ball.pos) > reach || ball.pos.y > (hands ? 2.3 : 1)) continue;
+    // Gegnerische Flanke: Er fängt sie auch, wenn sie nicht aufs Tor fliegt (Ecken kommen von der Grundlinie weg), und streckt
+    // sich höher (ai.js KEEPER_CLAIM). Vorher sprang er nur für Bälle Richtung Tor und bis 2,3 m.
+    const oppCross = hands && !!m.pass?.cross && m.pass.team !== p.team && ball.pos.y > 1;
+    if (dist2d(p.pos, ball.pos) > reach || ball.pos.y > (hands ? (oppCross ? KEEPER_CLAIM_Y : 2.3) : 1)) continue;
 
     const bs = ballSpeed(ball);
     const towardGoal = ball.vel.x * -s > 0;
-    if (bs >= 4 && !towardGoal) continue;
+    if (bs >= 4 && !towardGoal && !oppCross) continue;
     // Langsamer Ball außerhalb des Torraums: kein Abwehren – er nimmt ihn mit dem Fuß an.
     if (!hands && bs < 4) continue;
     // Ball am Fuß eines Gegners: Der Keeper muss sich in die Füße werfen. Klappt
@@ -607,7 +610,8 @@ export function keeperSaves(m) {
 // 22 m/s – auf dem Großfeld lag fast jeder Kopfball nach einer Flanke an dieser Grenze, aus 3–8 m hielt der Torwart davon kaum
 // einen (39 % der Kopfbälle aufs Tor gingen rein, real 11–13 %: MLS 2011–2015, Frauen-WM 2019). Eingemessen mit 120 Spielen je Platz.
 export const HEAD_VMAX = 16;
-export const HEAD_DUEL = { dist: 1.5, factor: 0.6 };
+export const HEAD_DUEL = { dist: 1.5, factor: 0.6, contest: 0.6 }; // contest: so viel weiter als die eigene Reichweite springt der Gegner mit (Spielwert)
+export const KEEPER_CLAIM_Y = 2.6; // so hoch fängt der Torwart eine Flanke (m, Spielwert; Sprung mit gestreckten Armen)
 export const HEAD_MISS = 0.45;
 export const HEAD_KEEP = 0.75; // Anteil des Flankentempos, der beim Kopfball aufs Tor bleibt (Spielwert, eingemessen)
 export const HEAD_PLACE = 1.6; // weiteste Platzierung eines Kopfballs neben der Tormitte (m, Spielwert, eingemessen)
@@ -635,6 +639,22 @@ export function headerTouch(m) {
     }
   }
   if (!p) return;
+  // Kopfballduell: Steht ein Gegner ebenfalls fast in Sprungweite (HEAD_DUEL.contest), gewinnt nicht automatisch der Nächste –
+  // Kopfballstärke, Körper und Abstand entscheiden. Vorher köpfte immer der Nächste, bei Ecken fast immer der Angreifer.
+  let rival = null;
+  let rd = Infinity;
+  for (const c of m.players) {
+    if (c.team === p.team || c.role === 'gk' || c.kickCooldown > 0 || c.state !== 'normal') continue;
+    const d = dist2d(c.pos, ball.pos);
+    if (d < (hasTrait(c, 'kopfball') ? 0.9 : 0.7) + HEAD_DUEL.contest && ball.pos.y < 1.75 * c.look.height + 0.45 && d < rd) {
+      rd = d;
+      rival = c;
+    }
+  }
+  if (rival) {
+    const w = (c, d) => ((0.4 + c.attrs.heading + (hasTrait(c, 'kopfball') ? 0.25 : 0)) * (1 + STRENGTH_FX.head * 2 * (strengthOf(c) - 0.5))) / (0.25 + d);
+    if (rng.chance(w(rival, rd) / (w(p, best) + w(rival, rd)))) p = rival;
+  }
   if (headerDuelFoul(m, p)) return; // Schubsen im Kopfballduell: Pfiff (bei Ecken und Flanken fallen so viele Elfmeter)
   p.kickCooldown = 0.35;
   p.headAnim = 0.3;

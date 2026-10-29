@@ -232,6 +232,18 @@ export function updateTactics(m, dt) {
         if (!best || d < best.d) best = { p, spot, d };
       }
       if (best) m.tactics[best.p.id] = { type: 'receive', ...best.spot };
+      // Enge Deckung: Wer einen Angreifer im eigenen Strafraum hat, geht mit ihm zum Ball, einen Schritt torseitig – beim
+      // Adressaten der Flanke bis an den Kopfballpunkt. Vorher blieb die Deckung stehen, wo sie bei der Ausführung stand.
+      const ownX = -attackDir(m, team) * pitch.halfLength;
+      const used = new Set(best ? [best.p.id] : []);
+      const box = m.players.filter((o) => o.team !== team && o.role !== 'gk' && o.state === 'normal' && Math.abs(o.pos.x - ownX) < 18 && Math.abs(o.pos.z) < 20).sort((a, b) => (a.id === m.pass.targetId ? -1 : b.id === m.pass.targetId ? 1 : 0));
+      for (const a of box) {
+        const d = pool.filter((q) => !used.has(q.id)).sort((x, y) => dist2d(x.pos, a.pos) - dist2d(y.pos, a.pos))[0];
+        if (!d || dist2d(d.pos, a.pos) > 6) continue;
+        used.add(d.id);
+        const aim = a.id === m.pass.targetId ? receiveSpot(m, a) : a.pos;
+        m.tactics[d.id] = { type: 'receive', ...clampToPitch(pitch, aim.x + Math.sign(ownX - aim.x) * CROSS_MARK_GAP, aim.z, 0.3) };
+      }
     }
     if (oppKeeper) {
       const r = keeperZone(pitch);
@@ -1033,6 +1045,11 @@ export const CLEAR_CHANCE = 0.5;
 
 // Seitlicher Spielraum des Torwarts bei einer Flanke (Anteil der halben Torbreite), Spielwert.
 export const KEEPER_CROSS_Z = 0.35;
+// Torwart fängt Flanken ab: bis depth Meter vor der Linie, wenn der Ball unter height Meter herunterkommt und er mit speed (m/s)
+// rechtzeitig dort ist (Spielwerte, eingemessen auf Eckentore; 3,5 m ließ die Eckentore bei 13 %).
+export const KEEPER_CLAIM = { depth: 5.5, height: 2.6, speed: 6.5 };
+// Enge Deckung bei Flanken: Abstand des Verteidigers vor seinem Mann zum eigenen Tor hin (m).
+export const CROSS_MARK_GAP = 0.3;
 export function keeperIntent(m, p, dt) {
   const { ball, pitch } = m;
   const s = attackDir(m, p.team);
@@ -1127,6 +1144,23 @@ export function keeperIntent(m, p, dt) {
   if (!ball.holder && !beaten && Math.abs(ball.pos.x - goalX) < claim && Math.abs(ball.pos.z) < Math.max(claim, gw + 1) && ballSpeed(ball) < 6) {
     tx = ball.pos.x;
     tz = ball.pos.z;
+  }
+  // Flanke in den Fünfmeterraum, wo er die Hände nehmen darf (Großfeld: im ganzen Strafraum): rausgehen und abfangen.
+  // Vorher blieb er auf der Linie und hatte bei 1 % der Ecken den ersten Kontakt; Eckentore Großfeld 14,5 % (real 2,6–4,6 %,
+  // WM 2022 / Copa América 2021). Mit KEEPER_CLAIM 8 % – dafür weniger Kopfballtore (vom Nutzer so entschieden, 2026-10-29).
+  if (crossing && sweep?.handsInBox) {
+    const g = 9.81;
+    for (let t = 0.05; t <= 2.5; t += 0.05) {
+      const y = ball.pos.y + ball.vel.y * t - 0.5 * g * t * t;
+      if (ball.vel.y - g * t > 0 || y > KEEPER_CLAIM.height) continue;
+      const sx = ball.pos.x + ball.vel.x * t;
+      const sz = ball.pos.z + ball.vel.z * t;
+      if (Math.abs(sx - goalX) < KEEPER_CLAIM.depth && Math.abs(sz) < gw + 2 && dist2d(p.pos, { x: sx, z: sz }) <= KEEPER_CLAIM.speed * t + 0.6) {
+        tx = sx;
+        tz = sz;
+      }
+      break;
+    }
   }
   const dx = tx - p.pos.x;
   const dz = tz - p.pos.z;
