@@ -1008,3 +1008,12 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   Entscheidungen des Nutzers (2026-10-29) stehen im Konzept, Abschnitt 10: Stärke 1–99 über alle Ligen plus verdeckte Boni
   (Weltklasse, Führungsspieler, Star der Liga), nur neue Karrieren, unten kleinere Abstände (Spielwert), Anzeige „Stärke · Niveau“.
   Voraussetzung für die Profiligen.
+
+### 11.15 Physik-Engine für Effekte prüfen (vom Nutzer vorgeschlagen, 2026-10-29)
+- [Jolt Physics](https://github.com/jrouwe/JoltPhysics) (C++, im Browser über den WebAssembly-Port JoltPhysics.js) prüfen – **nur für
+  die Darstellung**, nicht für die Spielsimulation. Die Ballphysik ist eingemessen, und der Golden-Test sichert, dass jedes Spiel aus
+  dem Seed gleich abläuft; die Spieler sind gesteuerte Figuren, keine freien Körper.
+- Mögliche Einsätze (Animation und Grafik): Ragdoll beim Hinfallen nach Fouls, Ball im Netz (Netz beult aus), Gegenstände in der
+  3D-Kneipe (11.12).
+- Vor dem Einbau messen: Größe der App (zusätzliches WebAssembly-Modul), Rechenzeit und Draw Calls auf dem Handy (Budgets wie in
+  scripts/e2e/modes.mjs); Simulation und Golden dürfen sich nicht ändern.
