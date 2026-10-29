@@ -16,6 +16,8 @@ export const TIGER_NUMBER = 12;
 // Nicht im Stadion des überregionalen Pokals (Menge, Ränge, Grafik-Budget): dort null.
 const SIDE = { rasenplatz: 1.55, ascheplatz: 1.7, park: 1.6, parkplatz: 1.3, hinterhof: 0, halle: 0.7 };
 const END = { sportplatz: 0.35, grossfeld: 0.35, grossfeld_tribuene: 0.35 }; // m hinter dem Zaun (wallX), außerhalb aller Laufwege
+// Fenster im Hinterhof: x der Fenster, Abstand der Körpermitte vor der Wand (m), Höhe (y).
+export const TIGER_WINDOW = { x: 5.6, out: 0.5, y: 1.35 }; // y: Kissen (TIGER_WINDOW.y + 0,7 m) über den Köpfen der Spieler (bis 1,87 m)
 export const tigerVenues = () => [...Object.keys(SIDE), ...Object.keys(END)];
 
 // Ort und Blickrichtung: auf der Seite der eigenen Mannschaft (Mannschaft 0 links, 1 rechts), an der Seitenlinie etwa auf halbem
@@ -28,9 +30,12 @@ export function tigerSpot(match) {
   const side = (t.team ?? 0) === 0 ? -1 : 1;
   if (id in END) return { x: side * (pitch.wallX + END[id]), z: -3.2, yaw: -side * 0.8 };
   if (!(id in SIDE)) return null;
-  // Hinterhof: Tim schaut aus einem Erdgeschossfenster der Hauswand (Fenster der Kulisse bei x = ±5,6, Brüstung ≈ 1,9 m, Vorderkante
-  // der Wand z = −halfWidth): Oberkörper im Rahmen, Beine ausgeblendet (legs: false), y hebt ihn auf die Brüstung. Kein Laufweg berührt ihn.
-  if (id === 'hinterhof') return { x: side * 5.6, z: -pitch.halfWidth, y: 1.2, legs: false, yaw: 0 };
+  // Hinterhof: Tim lehnt sich aus einem Erdgeschossfenster der Hauswand (Fenster der Kulisse bei x = ±5,6, Brüstung ≈ 1,9 m, Vorderkante
+  // der Wand z = −halfWidth) auf ein Kissen (venues/backyard.js): Oberkörper vor dem Fenster, Beine ausgeblendet (legs: false), y hebt
+  // ihn auf die Brüstung. Kein Laufweg berührt ihn. Vorher stand er mit der Körpermitte in der Wand – Kopf, Rücken und Arme tauchten
+  // bei Gesten und beim Drehen zum Ball bis 0,43 m hinter das Fensterglas (vom Nutzer gemeldet, 2026-10-22). Gemessen über alle
+  // Gesten und Drehungen: ab 0,45 m vor der Wand bleibt alles davor (tests/tigerfigure.test.js), out = 0,5 m mit Luft.
+  if (id === 'hinterhof') return { x: side * TIGER_WINDOW.x, z: -pitch.halfWidth + TIGER_WINDOW.out, y: TIGER_WINDOW.y, legs: false, yaw: 0 };
   return { x: side * pitch.halfLength * (id === 'halle' ? 0.34 : 0.45), z: -(pitch.halfWidth + SIDE[id]), yaw: 0 };
 }
 

@@ -3,6 +3,7 @@ import { emissiveToon, toon } from '../materials.js';
 import { addLights, box, ground, makeBike, makeBin, makeBush } from '../props.js';
 import { makeConcreteTexture, makeShutterTexture } from '../textures.js';
 import { GEO } from '../../sim/shelter.js';
+import { TIGER_WINDOW } from '../tiger.js';
 
 // Hinterhof zwischen Mietshäusern: Garagentor auf der einen Seite, ein mit
 // Kreide an die Hauswand gemaltes Tor auf der anderen.
@@ -46,6 +47,12 @@ export function buildBackyard(root, pitch, rng, scene) {
         omaPlaced = true;
       }
     }
+  }
+  // Kissen auf der Fensterbank der beiden Erdgeschossfenster, aus denen Tim „Der Tiger“ zuschaut (render/tiger.js TIGER_WINDOW): Er lehnt
+  // sich davor hinaus, das Kissen verdeckt, wo der Oberkörper ohne Beine endet.
+  for (const x of [-TIGER_WINDOW.x, TIGER_WINDOW.x]) {
+    const depth = TIGER_WINDOW.out + 0.3;
+    root.add(box(1.1, 0.24, depth, 0x5a7896, x, TIGER_WINDOW.y + 0.82, -hw + depth / 2)); // blaugrau, hebt sich vom Vereinstrikot ab
   }
   // Hauseingang: graue Tür, darüber ein Vordach auf zwei Stützen – hierher flüchten alle beim Gewitter.
   root.add(box(B.doorW, B.doorH, 0.12, 0x6b6f73, B.doorX, B.doorH / 2, facadeZ + 0.36));

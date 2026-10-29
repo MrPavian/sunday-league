@@ -40,7 +40,10 @@ describe('Tiger am Rand: außerhalb der Laufwege', () => {
       const zMax = p.boundary === 'lines' ? p.halfWidth + 1.2 : p.halfWidth - 0.3;
       const xMax = p.wallX - 0.3;
       const outside = Math.abs(s.z) >= zMax + 0.3 || Math.abs(s.x) >= xMax + 0.3;
-      expect(outside, `${id}: x ${s.x} z ${s.z} (Laufweg ±${xMax} / ±${zMax})`).toBe(true);
+      // Hinterhof: Er lehnt aus dem Fenster über dem Laufweg – dann muss alles von ihm (ab dem Kissen, TIGER_WINDOW.y + 0,7 m)
+      // über dem Kopf des größten Spielers liegen (Kopf bei Körpergröße 1,07 stehend 1,87 m, gemessen mit PlayerModel).
+      const above = s.legs === false && s.y + 0.7 >= 1.87 + 0.15;
+      expect(outside || above, `${id}: x ${s.x} z ${s.z} (Laufweg ±${xMax} / ±${zMax})`).toBe(true);
     }
   });
 });
@@ -48,7 +51,8 @@ describe('Tiger am Rand: außerhalb der Laufwege', () => {
 describe('Tiger am Rand: Hinterhof-Fenster', () => {
   it('schaut aus einem Erdgeschossfenster der Hauswand, ohne Beine, auf der Seite der Mannschaft', () => {
     const s = tigerSpot(match('hinterhof'));
-    expect(s).toMatchObject({ z: -PITCHES.hinterhof.halfWidth, legs: false });
+    expect(s).toMatchObject({ legs: false });
+    expect(s.z).toBeGreaterThan(-PITCHES.hinterhof.halfWidth); // vor der Hauswand, nicht in ihr
     expect(s.y).toBeGreaterThan(0.8);
     expect(Math.abs(s.x)).toBeCloseTo(5.6, 6);
     expect(tigerSpot(match('hinterhof', 1)).x).toBeCloseTo(-s.x, 6);
@@ -130,5 +134,38 @@ describe('Tiger: Figur', () => {
     }
     expect(DOSE[0]).toBeLessThan(0);
     expect(TRINKEN[1]).toBeLessThan(DOSE[1]); // quer vor die Brust zum Mund
+  });
+});
+
+describe('Tiger im Hinterhof-Fenster: kein Clipping', () => {
+  // Gemeldet 2026-10-22: Arme und Kopf tauchten bei Gesten in die Hauswand. Geprüft über alle Gesten und die Drehung zum Ball
+  // (tigerYaw bis ±0,45): Gelenke, Handenden, Hinterkopf und Rücken bleiben vor dem Fensterglas (Wand + 0,06 m).
+  it('alle Gesten bleiben vor dem Fensterglas', async () => {
+    const THREE = await import('three');
+    const { animatePlayer, createPlayerModel } = await import('../src/render/PlayerModel.js');
+    const { TIGER_LOOK, tigerKit } = await import('../src/render/tiger.js');
+    const pitch = PITCHES.hinterhof;
+    const sp = tigerSpot(match('hinterhof'));
+    const glass = -pitch.halfWidth + 0.06;
+    const v = new THREE.Vector3();
+    let worst = -Infinity;
+    for (const gesture of ['dose', 'bier', 'schulter', 'arme', 'dosejubel', 'haende', 'abwinken', 'geballt', 'call', 'zeigen', 'unschuld', 'schimpfen', 'finger']) {
+      for (const yaw of [-0.45, 0, 0.45]) {
+        const m = createPlayerModel(TIGER_LOOK, tigerKit(), { number: 12, textured: false });
+        m.group.position.set(sp.x, sp.y, sp.z);
+        m.group.rotation.y = sp.yaw + yaw;
+        for (let t = 0; t < 4; t += 0.05) {
+          animatePlayer(m, { speed: 0, dt: 0.05, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture });
+          m.group.updateMatrixWorld(true);
+          const pts = [];
+          for (const n of ['spine', 'head', 'upperArmL', 'upperArmR', 'lowerArmL', 'lowerArmR']) pts.push(m.bones[n].getWorldPosition(v.clone()));
+          for (const n of ['lowerArmL', 'lowerArmR']) pts.push(m.bones[n].localToWorld(v.set(0, -0.3, 0).clone())); // Faust
+          pts.push(m.bones.head.localToWorld(v.set(0, 0.15, -0.16).clone()), m.bones.head.localToWorld(v.set(0, 0.3, -0.16).clone())); // Hinterkopf
+          for (const x of [0.2, -0.2]) pts.push(m.bones.spine.localToWorld(v.set(x, 0.45, -0.14).clone())); // Schulterblätter
+          for (const p of pts) worst = Math.max(worst, glass - (p.z - 0.07)); // 0,07 m halbe Dicke von Arm/Hand
+        }
+      }
+    }
+    expect(worst).toBeLessThan(0);
   });
 });
