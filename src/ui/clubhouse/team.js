@@ -18,7 +18,7 @@ import { awardLabel } from '../../career/awards.js';
 import { FIT_LOW, fitnessCap, fitnessOf, fitnessPct, fitnessShown } from '../../career/fitness.js';
 import { SHIFT_JOBS } from '../../career/chat.js';
 import { ARG_IDS, ARGUMENTS, knownMotives, MOTIVES } from '../../career/recruiting.js';
-import { currentLineup, humanClub, nextPitch, maxSquad, MIN_SQUAD, recruit, recruitChance, setLineupSlot, table } from '../../career/career.js';
+import { currentLineup, humanClub, lineupOf, runningCup, nextPitch, maxSquad, MIN_SQUAD, recruit, recruitChance, setLineupSlot, table } from '../../career/career.js';
 import { inviteChance, isRawDiamond, MAX_STATIONS, STATIONS, TRAINING_COST, trainingDone } from '../../career/training.js';
 import { roleName, STAFF_ROLES } from '../../career/youth.js';
 import { canAffordOutside, EHRENAMT_MONTH, feeOf, holderOf, outsideCandidate, ROLES as STAFF_ROLE_IDS, squadCandidates, STAFF_MIN_AGE, UEBUNGSLEITER_MONTH } from '../../career/staff.js';
@@ -352,7 +352,7 @@ export const teamScreens = {
     return `
       <div class="lineup2${isLight(humanClub(c).kit.shirt) ? ' light-kit' : ''}">
         <div class="lp-head">
-          <p class="t-cap">${c.week.lineup ? tr('Eigene Aufstellung', 'Your line-up') : tr('Automatisch aufgestellt (Stärke auf der Position, Form)', 'Picked automatically (strength in position, form)')} · ${PLAY_STYLES[tactic.style].label}</p>
+          <p class="t-cap">${runningCup(c) ? `${tr('Turnier', 'Tournament')} · ` : ''}${lineupOf(c) ? tr('Eigene Aufstellung', 'Your line-up') : tr('Automatisch aufgestellt (Stärke auf der Position, Form)', 'Picked automatically (strength in position, form)')} · ${PLAY_STYLES[tactic.style].label}</p>
           <div class="ui-row">${pick ? button(tr('Abbrechen', 'Cancel'), { kind: 'ghost', action: 'pickCancel' }) : ''}${button(tr('Automatisch aufstellen', 'Pick automatically'), { action: 'autoLineup' })}</div>
         </div>
         <div class="lp-stage">

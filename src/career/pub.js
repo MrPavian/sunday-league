@@ -33,7 +33,7 @@ export function pubState(c) {
   return c.week.pub;
 }
 
-export const pubOpen = (c) => !!c.week && !coachAway(c);
+export const pubOpen = (c) => !!c.week && !c.week.cupWeek && !coachAway(c); // Turnierwoche nach der Saison (tournament.js cupWeek): Kneipe erst wieder in der neuen Saison
 
 function spend(c, text) {
   const pub = pubState(c);

@@ -886,8 +886,11 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
 ### 11.10 Rückmeldungen und Wünsche (vom Nutzer, 2026-10-21)
 
 **Turniere im Kalender**
-- Hallen-Cup und Stadtpokal nicht direkt vor einem Spieltag, sondern in eigenen Pausen (Winterpause, Sommerpause).
-- Zwischen den Turnierspielen die Aufstellung ändern können (Rotation).
+- ~~Hallen-Cup und Stadtpokal nicht direkt vor einem Spieltag, sondern in eigenen Pausen~~ – erledigt 2026-10-29: Winterpause als
+  eigene Woche ohne Ligaspiel (career.js winterBreakWeek); die Stadtmeisterschaft lag schon nach dem letzten Spieltag (Sommerpause).
+  Offen: Das Sommerturnier liegt weiter in der Woche des ersten Spieltags (Vorbereitung als eigene Woche wäre der nächste Schritt).
+- ~~Zwischen den Turnierspielen die Aufstellung ändern können (Rotation)~~ – erledigt 2026-10-29: eigene Turnier-Aufstellung
+  (week.cupLineup), getrennt von der Liga.
 
 **Ligen: Bundesland wählen, Pyramide nach oben**
 - Recherche (Quelle: https://de.wikipedia.org/wiki/Fu%C3%9Fball-Ligasystem_in_Deutschland, abgerufen 2026-10-21):

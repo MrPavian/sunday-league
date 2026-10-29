@@ -10,6 +10,7 @@ import { platzAnlage } from './ui/platz.mjs';
 import { alteHerren, alteHerrenTicker } from './ui/oldboys.mjs';
 import { transferMarkt } from './ui/transfers.mjs';
 import { relegation } from './ui/relegation.mjs';
+import { winterBreak } from './ui/winter.mjs';
 
 export async function run({ sizes = Object.keys(SIZES) } = {}) {
   const b = await launch();
@@ -25,6 +26,7 @@ export async function run({ sizes = Object.keys(SIZES) } = {}) {
   fails += await alteHerrenTicker(b, process.env.E2E_SHOTS);
   for (const s of sizes) fails += await phoneAndShare(b, s);
   fails += await relegation(b);
+  fails += await winterBreak(b);
   fails += await tickerRound(b);
   await b.close();
   return fails;

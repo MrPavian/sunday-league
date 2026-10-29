@@ -654,6 +654,9 @@ export function migrate(c) {
   tstate(c);
   ensureNeighbors(c);
 }
+// Winterpause (career.js winterBreakWeek): Die Wechselperiode II öffnet schon dort – gleiche Arbeit wie zum Wochenstart.
+export const breakWeek = (c) => startWeek(c);
+
 export function startWeek(c) {
   const t = tstate(c);
   const w = c.week;

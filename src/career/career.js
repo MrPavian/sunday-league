@@ -988,6 +988,7 @@ export function resolveKitClash(home, away) {
 // Spielerzahl des nächsten eigenen Spiels – wie prepareMatch: die der Liga, ohne Vorgabe die des Platzes. Nach dem letzten
 // Spieltag die der Relegation (nextRelegationPitch).
 export function matchFormat(career) {
+  if (runningCup(career)) return 5; // Turniere: 5 gegen 5 (tournament.js)
   const f = humanFixture(career);
   if (!f) return nextRelegationPitch(career)?.format ?? leagueOf(career).format ?? PITCHES[humanClub(career).venue].format;
   return leagueOf(career).format ?? PITCHES[clubById(career, f.home).venue].format;
@@ -998,7 +999,7 @@ export function matchFormat(career) {
 export function currentLineup(career) {
   const club = humanClub(career);
   const format = matchFormat(career);
-  const { lineup, bench, helpers } = buildLineup(career, club, format, career.week.availability, createRng(1), career.week.lineup);
+  const { lineup, bench, helpers } = buildLineup(career, club, format, career.week.availability, createRng(1), lineupOf(career));
   return {
     format,
     formation: systemFormation(format, tacticOf(club, format).system),
@@ -1016,11 +1017,11 @@ export function setLineupSlot(career, slot, idx) {
   const from = next.indexOf(idx);
   if (from >= 0) next[from] = next[slot];
   next[slot] = idx;
-  career.week.lineup = next;
+  career.week[lineupKey(career)] = next;
 }
 
 export function resetLineup(career) {
-  career.week.lineup = null;
+  career.week[lineupKey(career)] = null;
 }
 
 // Tiefe Kopie – das Match verändert seine Spieler, der Pool bleibt unberührt.
@@ -1032,7 +1033,7 @@ function helperOf(career, club, idx) {
 }
 
 export function teamForMatch(career, club, format, availability, rng) {
-  const manual = club.human ? career.week?.lineup : null;
+  const manual = club.human ? lineupOf(career) : null;
   const { lineup, bench, late, helpers, penalty } = buildLineup(career, club, format, availability, rng, manual);
   const players = [...lineup, ...bench].map((idx) => {
     const p = helpers.includes(idx) ? helperOf(career, club, idx) : applyForm(copyPlayer(playerOf(career, idx)), career.players[idx], club.human ? career.mood ?? 0 : 0);
@@ -1194,6 +1195,7 @@ export function recordResult(career, fixture, prepared) {
 }
 
 export function finishRound(career) {
+  if (career.week?.breakWeek === 'winter') return finishWinterBreak(career); // „Weiter“ in der Winterpause: kein Spieltag
   abandonSummerCup(career); // angefangenes Sommerturnier endet mit dem ersten Spieltag
   autoResolve(career);
   weeklyFinances(career);
@@ -1219,7 +1221,12 @@ export function finishRound(career) {
   const staffNotes = weeklyStaff(career, { squad: humanClub(career).squad }); // Pauschalen, freie Ämter
   staffNotes.push(...weeklyHired(career)); // Lohn und Laune des eingestellten Trainers (Präsidium)
   career.round++;
-  startWeek(career);
+  // Winterpause (vom Nutzer gewünscht, 2026-10-21): eine eigene Woche ohne Ligaspiel vor dem Spieltag nach der Hinrunde –
+  // dort liegt das Hallenturnier. Vorher lag es in der Woche des Spieltags, direkt vor dem Ligaspiel.
+  if (!seasonOver(career) && career.round === winterRound(career) && career.flags?.winterBreak !== career.season) {
+    career.week = winterBreakWeek(career);
+    runHooks('breakWeek', career); // Transfermarkt: Wechselperiode II öffnet schon in der Winterpause
+  } else startWeek(career);
   if (career.week) deliverGrumbles(career, career.week.chat); // Murren wegen fremder Position
   for (const text of coachWeek(career)) career.week?.chat.push({ from: null, text, time: 'Mo 08:05' }); // Präsidium: der Trainer erledigt seine Wochenarbeit
   for (const text of staffNotes) career.week?.chat.push({ from: null, text, time: 'Mo 08:00' });
@@ -1229,6 +1236,50 @@ export function finishRound(career) {
   monthlyAward(career, awardDeps(career));
   runHooks('finishRound', career);
 }
+
+// Spieltag, vor dem die Winterpause liegt (Saisonmitte; die Pokale meiden diese Woche, pokal.js).
+export const winterRound = (c) => Math.floor(c.fixtures.length / 2);
+
+// Woche der Winterpause: kein Ligaspiel, keine Ereignisse und Gerüchte (die laufenden bleiben am Brett). Wer verletzt,
+// gesperrt oder verreist ist, fehlt beim Hallenturnier – sonst sind alle da (wie relegationWeek).
+function winterBreakWeek(career) {
+  const club = humanClub(career);
+  const availability = {};
+  for (const idx of club.squad) {
+    const rec = career.players[idx] ?? {};
+    availability[idx] = (isCoach(career, idx) && coachAway(career)) || rec.injuryWeeks > 0 || isBanned(career, idx) || rec.awayWeeks > 0 ? 'no' : 'yes';
+  }
+  const text = tr('Winterpause! Kein Ligaspiel diese Woche. Wer Lust hat: Hallenturnier am Wochenende.', 'Winter break! No league game this week. Anyone up for it: indoor tournament at the weekend.');
+  return { breakWeek: 'winter', availability, chat: [{ from: null, text, time: 'Mo 08:00', me: true }], nudges: 0, nudged: [], lineup: null, training: null, event: null, weather: rollWeather(career), postponed: null, rumors: career.week?.rumors ?? [], actions: 0 };
+}
+
+// „Weiter“ nach der Winterpause: Die Woche zählt für Kasse, Erholung, Verletzungen und Ämter, aber nicht als Spieltag
+// (keine Sperre abgesessen, kein Spieltag weitergezählt). Danach beginnt die Woche des nächsten Spieltags.
+export function finishWinterBreak(career) {
+  if (career.week?.breakWeek !== 'winter') return;
+  weeklyFinances(career);
+  weeklyFitness(career, playerOf, humanClub(career).squad);
+  weeklyBridge(career); // A-Jugend trainiert auch in der Pause mit
+  for (const [key, rec] of Object.entries(career.players)) {
+    if (rec.injuryWeeks > 0) {
+      rec.injuryWeeks--;
+      if (rec.injuryWeeks === 0) backFromInjury(career, Number(key), rec.injury?.weeks ?? 1);
+    }
+    if (rec.injuryWeeks === 0) rec.injury = null;
+    if (rec.awayWeeks > 0) rec.awayWeeks--;
+  }
+  const notes = weeklyStaff(career, { squad: humanClub(career).squad });
+  notes.push(...weeklyHired(career));
+  (career.flags ??= {}).winterBreak = career.season;
+  startWeek(career);
+  for (const text of notes) career.week?.chat.push({ from: null, text, time: 'Mo 08:00' });
+}
+
+// Läuft gerade ein Turnier des eigenen Vereins (Sommer, Halle, Stadt)? Dann ist das nächste eigene Spiel ein Turnierspiel
+// (5 gegen 5), und die Aufstellung dafür steht getrennt von der Liga (week.cupLineup) – zwischen den Spielen rotierbar.
+export const runningCup = (career) => ['sommer', 'halle', 'stadt'].find((k) => { const t = career.cups?.[k]; return t && t.season === career.season && t.stage !== 'done'; }) ?? null;
+const lineupKey = (career) => (runningCup(career) ? 'cupLineup' : 'lineup');
+export const lineupOf = (career) => career.week?.[lineupKey(career)] ?? null;
 
 const awardDeps = (career) => ({ playerOf: (idx) => playerOf(career, idx), clubOfIdx: (idx) => career.clubs.find((c) => c.squad.includes(idx)) ?? null });
 

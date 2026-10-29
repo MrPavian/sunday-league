@@ -5,13 +5,13 @@ import { createRng } from '../core/rng.js';
 import { createMatch, MATCH, matchDuration } from '../sim/match.js';
 import { PITCHES } from '../sim/pitch.js';
 import { book } from './finances.js';
-import { clubById, humanClub, humanFixture, playerOf, resolveKitClash, seasonOver, squadPicker, SQUAD_SHAPES, takenIndices, teamForMatch } from './career.js';
+import { clubById, humanClub, humanFixture, playerOf, resolveKitClash, seasonOver, squadPicker, SQUAD_SHAPES, takenIndices, teamForMatch, winterRound } from './career.js';
 import { adjustForm, adjustMood } from './events.js';
 import { salesMul } from './facilities.js';
 import { chronicle, yearOf } from './sagas.js';
 import { shootoutScore } from '../sim/shootout.js';
 import { afterMatchFitness } from './fitness.js';
-import { applyCards } from './suspensions.js';
+import { applyCards, isBanned } from './suspensions.js';
 import { rollInjuries } from './injuries.js';
 import { tr, euroFmt } from '../core/i18n.js';
 
@@ -24,6 +24,15 @@ export const CUPS = {
 CUPS.sommer = { name: tr('Sommerturnier', 'Summer tournament'), title: tr('Turniersieger', 'Tournament winners'), venue: 'ascheplatz', place: tr('Sportplatz des Gastgebers', 'the host\'s ground'), share: 0.5, short: true, prizes: { winner: 90, final: 40, semi: 15 }, absent: 0.1, absentWhy: tr('Urlaub und Sommerlaune: manche fehlen', 'Holidays and summer mood: some are missing'), sizes: [4, 6, 8], hostBase: 30, hostPerTeam: 10, startFee: 8, spendPerFan: 1.2 };
 export const CUP_NAME = CUPS.stadt.name;
 export const PRIZES = CUPS.stadt.prizes;
+
+function cupWeek(c) {
+  const availability = {};
+  for (const idx of humanClub(c).squad) {
+    const rec = c.players[idx] ?? {};
+    availability[idx] = rec.injuryWeeks > 0 || rec.awayWeeks > 0 || isBanned(c, idx) ? 'no' : 'yes';
+  }
+  return { cupWeek: true, availability, chat: [], nudges: 0, nudged: [], lineup: null, training: null, event: null, weather: null, postponed: null, rumors: [], actions: 0 };
+}
 
 // Gäste aus der Stadt, die nicht in eurer Liga spielen.
 const GUESTS = [
@@ -58,13 +67,17 @@ export function cupClub(c, id) {
 }
 
 // Winterpause: Das Hallenturnier liegt in der Saisonmitte.
-export const winterRound = (c) => Math.floor(c.fixtures.length / 2);
-export const winterCupDue = (c) => !!c.week && !seasonOver(c) && c.round === winterRound(c) && !cupOf(c, 'halle');
+export { winterRound };
+// Fällig in der Woche der Winterpause (career.js winterBreakWeek); alte Spielstände ohne diese Woche: wie bisher in der Woche des Spieltags.
+export const winterCupDue = (c) => !!c.week && !seasonOver(c) && c.round === winterRound(c) && !cupOf(c, 'halle') && (c.week.breakWeek === 'winter' || c.flags?.winterBreak !== c.season);
 export const winterCupRunning = (c) => !!cupOf(c, 'halle') && cupOf(c, 'halle').stage !== 'done';
 
 // opts (nur Sommerturnier): size 4/6/8 Teams, host = wir richten aus, venue/place/hostName des Orts.
 export function startTournament(c, kind = 'stadt', opts = {}) {
   if (cupOf(c, kind)) return cupOf(c, kind);
+  // Stadtmeisterschaft nach dem letzten Spieltag: Es gibt keine Woche mehr – für Aufstellung und Rotation eine Turnierwoche
+  // (wer verletzt oder gesperrt ist, fehlt; zufällige Absagen kommen je Spiel dazu, CUPS.absent).
+  if (!c.week && !opts.noWeek) c.week = cupWeek(c);
   const cfg = CUPS[kind];
   const size = cfg.sizes?.includes(opts.size) ? opts.size : 8;
   const rng = createRng((c.seed * 31 + c.season * 977 + kind.length * 101 + 5) >>> 0);
@@ -92,7 +105,7 @@ export function startTournament(c, kind = 'stadt', opts = {}) {
 }
 
 export function skipTournament(c, kind = 'stadt') {
-  const t = startTournament(c, kind);
+  const t = startTournament(c, kind, { noWeek: true });
   t.skipped = true;
   t.stage = 'done';
   cleanup(c, kind);

@@ -62,7 +62,7 @@ export const homeScreens = {
   hub() {
     const c = this.career;
     const over = seasonOver(c);
-    const main = (over || this.results ? '' : this.pokalWonCard()) + (over ? this.seasonEnd() : this.results ? this.roundResults() : c.week?.midweek ? this.midweekCard() : this.nextMatch());
+    const main = (over || this.results ? '' : this.pokalWonCard()) + (over ? this.seasonEnd() : this.results ? this.roundResults() : c.week?.midweek ? this.midweekCard() : c.week?.breakWeek ? this.breakCard() : this.nextMatch());
     const mine = [];
     // Während der Ergebnisanzeige ist der eben gespielte Spieltag schon dabei.
     for (let i = Math.min(this.results ? c.round : c.round - 1, c.fixtures.length - 1); i >= 0 && mine.length < 5; i--) {
@@ -167,6 +167,20 @@ export const homeScreens = {
     const name = POKALE[kind].name;
     return `<article class="ui-card pokal-win"><p class="t-cap">${name}</p><h3>${tr('POKALSIEGER!', 'CUP WINNERS!')}</h3>
       <p class="t-body">${tr(`Der ${name} steht in der Vitrine.`, `The ${name} is in the trophy cabinet.`)}</p>${button(tr('Zum Pokal', 'To the cup'), { action: 'tab', value: 'cup' })}</article>`;
+  },
+
+  // Winterpause (career.js winterBreakWeek): kein Ligaspiel; Hallenturnier anmelden, spielen oder auslassen, dann weiter.
+  breakCard() {
+    const c = this.career;
+    const t = cupOf(c, 'halle');
+    let body;
+    if (winterCupDue(c)) body = `<p class="t-body">${tr(`Am Wochenende: <b>${CUPS.halle.name}</b> in der ${CUPS.halle.place}. Acht Teams, Bande, Handballtore – ${CUPS.halle.prizes.winner} € für den Sieger.`, `This weekend: <b>${CUPS.halle.name}</b> at ${CUPS.halle.place}. Eight teams, boards, handball goals – €${CUPS.halle.prizes.winner} for the winner.`)}</p>
+      <div class="ui-row">${button(tr('Anmelden', 'Enter'), { kind: 'primary', action: 'onCupStart', value: 'halle' })}${button(tr('Diesmal nicht', 'Not this time'), { action: 'onCupSkip', value: 'halle' })}</div>`;
+    else if (winterCupRunning(c)) body = `${button(tr('Zum Hallenturnier', 'To the indoor tournament'), { kind: 'primary big block', action: 'tab', value: 'cup' })}<p class="t-2">${tr('Zwischen den Spielen kannst du die Aufstellung ändern – frische Beine rein.', 'Between games you can change the line-up – fresh legs in.')}</p>`;
+    else body = `${t && !t.skipped && t.log.length ? `<p class="reply ok">${t.log.at(-1)}</p>` : `<p class="t-2">${tr('Ruhige Woche: Beine hochlegen, Kasse zählen.', 'A quiet week: feet up, count the takings.')}</p>`}
+      <div class="hub-actions">${button(tr('Weiter zum nächsten Spieltag', 'On to the next matchday'), { kind: 'primary big block', action: 'onBreakDone' })}</div>`;
+    return `<article class="ui-card hub-card break-card"><p class="t-cap">${tr('Winterpause', 'Winter break')} · ${tr('kein Ligaspiel', 'no league game')}</p>
+      <h3 class="t-h2">${CUPS.halle.name}</h3>${body}</article>`;
   },
 
   // Englische Woche: nach dem Pokalspiel erst das Ergebnis, dann „Weiter zum …“ (pokal.js finishMidweek).

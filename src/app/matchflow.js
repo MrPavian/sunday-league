@@ -5,6 +5,7 @@ import {
   clubById,
   currentFixtures,
   finishRound,
+  finishWinterBreak,
   humanClub,
   humanFixture,
   nextSeason,
@@ -304,6 +305,11 @@ export function createMatchflow(ctx) {
           openClubhouse();
         },
       });
+    },
+    onBreakDone() {
+      finishWinterBreak(ctx.career); // Winterpause vorbei: Woche des nächsten Spieltags
+      saveCareer(ctx.career);
+      openClubhouse();
     },
     onRelegationNext() {
       finishFirstLeg(ctx.career); // Relegation: vom Hinspiel zum Rückspiel
