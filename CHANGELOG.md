@@ -6,6 +6,18 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-29-4 – Regionale Namen, Tim am Fenster, graue Haare
+
+### Neu
+- **Regionale Namen:** Mit gewähltem Bundesland tragen viele Spieler, Trainer und Schiris dort typische Nachnamen – in Bayern Huber, Gruber oder Mayr, in Schleswig-Holstein Hansen oder Petersen, in Sachsen Uhlig oder Kretzschmar. Dazu kommen die Vornamen, die dort besonders häufig sind, in Bayern etwa Xaver, Josef und Korbinian (Modenamen wie Fiete oder Jonte nur bei den Jungen). Gilt für neue Karrieren.
+
+### Verbessert
+- **Älter werden:** Trainerbewerber sehen so alt aus, wie sie sind – ein 65-Jähriger ist meist grau. Spieler und Trainer werden mit den Jahren grau.
+- **Keine echten Fußballer:** Der Namensgenerator erzeugt keine Namen bekannter Nationalspieler mehr.
+
+### Behoben
+- **Tim „Der Tiger“ im Hinterhof:** Er lehnt jetzt auf einem Kissen vor dem Fenster, Kopf und Arme verschwinden nicht mehr in der Wand.
+
 ## 2026-10-29-3 – Ligen bis zur Oberliga, Bundesland, voller überregionaler Pokal und Winterpause
 
 ### Neu

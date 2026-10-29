@@ -6,6 +6,18 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-29-4 – Regional names, Tim at the window, grey hair
+
+### New
+- **Regional names:** With a state chosen, many players, managers and referees carry surnames typical of it – Huber, Gruber or Mayr in Bavaria, Hansen or Petersen in Schleswig-Holstein, Uhlig or Kretzschmar in Saxony. You also meet the first names that are especially common there, in Bavaria for example Xaver, Josef and Korbinian (trendy names like Fiete or Jonte only among the young). Applies to new careers.
+
+### Improved
+- **Getting older:** Manager applicants look as old as they are – a 65-year-old is usually grey. Players and managers turn grey over the years.
+- **No real footballers:** The name generator no longer produces names of well-known internationals.
+
+### Fixed
+- **Tim "The Tiger" in the backyard:** He now leans on a cushion in front of the window; his head and arms no longer vanish into the wall.
+
 ## 2026-10-29-3 – Leagues up to the Oberliga, choose your state, full nationwide cup and winter break
 
 ### New

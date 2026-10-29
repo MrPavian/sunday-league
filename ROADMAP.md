@@ -942,12 +942,14 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
 - Mehr Sponsoren, mehr Spielernamen, mehr Nationalitäten.
 
 **Kleinkram aus der Prüfung 11.9**
-- Tim „Der Tiger“ im Hinterhof-Fenster: Clipping – Arme und Kopf tauchen bei Gesten (Jubel, Schluck, Zeigen) teils in die
-  Rückwand bzw. Fensterlaibung ein (gemeldet vom Nutzer, 2026-10-22). Lösung prüfen: Figur weiter nach vorn, Gesten im
-  Fenster mit kleinerem Ausschlag nach hinten, oder Laibung tiefer.
-- Der Namensgenerator kann zufällig echte Profinamen erzeugen (gesehen: ein Name eines aktiven Nationaltorwarts);
-  Sperrliste bekannter Profinamen erwägen.
-- Pixel-Porträt der Trainerbewerber altert nicht (65-Jähriger mit vollem braunem Haar).
+- ~~Tim „Der Tiger“ im Hinterhof-Fenster: Clipping~~ – erledigt 2026-10-29: 0,5 m vor der Wand auf einem Kissen (gemessen: ab
+  0,45 m bleiben alle Gesten vor dem Glas), Kissen über den Köpfen der Spieler; Clipping-Test in tests/tigerfigure.test.js.
+- ~~Der Namensgenerator kann zufällig echte Profinamen erzeugen~~ – erledigt 2026-10-29 (pronames.js): Sperrliste aus Wikipedia
+  (alle deutschen Nationalspieler, England ab 10 Länderspielen, aktuelle Kader Polen/Türkei), Ersatz-Nachname ohne Zufallsstrom.
+  Offen: Vereinsspieler ohne Länderspiel. Dazu regionale Vor- und Nachnamen je Bundesland (regionalnames.js); Ältere bekommen
+  nur zeitlose Vornamen (Einschätzung, keine Quelle für ältere Jahrgänge gefunden).
+- ~~Pixel-Porträt der Trainerbewerber altert nicht~~ – erledigt 2026-10-29: Aussehen wie bei den Spielern (grau ab 40), und alle
+  werden mit den Jahren grau (origins.js agedLook). Offen: Glatze/Bauch mit dem Alter (keine Quelle).
 
 ### 11.11 Weitere Wünsche (vom Nutzer, 2026-10-22)
 - **Übersichtlichkeit:** Lange Menüs (z. B. Verein: Kasse, Ausbau, Platz, Fest, Präsidium; Mannschaft) in Unterseiten bzw.
@@ -982,3 +984,20 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   Menüebene; die heutigen Funktionen bleiben dieselben.
 - Technik: eigene kleine Szene mit dem vorhandenen Renderer; Budget für Draw Calls und Handy-Leistung wie bei den Plätzen
   prüfen; Touch-Ziele groß genug; Barrierefreiheit: Liste der anklickbaren Figuren als Alternative.
+
+### 11.13 Mehr Leben im Chat und rund um den Verein (vom Nutzer gewünscht, 2026-10-29)
+- Mehr Ereignisse im Chat und mehr verschiedene Nachrichten, damit er lebendiger wird. Heute wiederholen sich vor allem die
+  Zusagen (siehe 11.9 „Chat-Zusagen wiederholen sich“).
+- Mehr Ereignisse rund um den Verein (Ort, Nachbarn, Gemeinde, Sponsoren, Fans, andere Vereine) und mehr Unerwartetes: Dinge,
+  mit denen man nicht rechnet, auch ohne Entscheidung, einfach als Farbe im Vereinsleben.
+- Vor dem Einbau: zählen, welche Nachrichten wie oft kommen (über viele Saisons), damit die neuen die Lücken füllen statt die
+  Häufigen noch häufiger zu machen.
+
+### 11.14 Spielerstärke und Entwicklung über alle Ligen (vom Nutzer gewünscht, 2026-10-29)
+- Konzept: [docs/KONZEPT-SPIELERSTAERKE.md](docs/KONZEPT-SPIELERSTAERKE.md). Eine absolute Leistungsskala in Elo-Einheiten. Die
+  Profiligen sind belegt (Bundesliga 1977, 2. Liga 1722, 3. Liga 1518, Regionalliga 1265, im Mittel 237 je Stufe). Die
+  Amateurstufen sind mit 237 je Stufe hergeleitet.
+- Gemessen: Heute liegen die Amateurstufen nur 1–6 Stärkepunkte auseinander, realistisch wären bei der heutigen Engine 13–17. Die
+  Profis stoßen an die Wert-Obergrenze (Erst- und Zweitligist nur 1,2 Punkte auseinander).
+- Empfehlung: Engine steiler (≈ 7,7 Stärkepunkte je Liga), Entwicklung mit verborgenem Potenzial und Trainingsumfang je Liga.
+  Offene Entscheidungen stehen im Konzept, Abschnitt 10. Voraussetzung für die Profiligen.
