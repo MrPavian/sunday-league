@@ -19,6 +19,7 @@ import { gradePlayers } from '../sim/stats.js';
 import { absenceChance, DECLINE_TEXT, FAREWELL, INJURED, JOIN_TEXT, LATE, LATE_STRICT, noReasons, NUDGE_NO, NUDGE_YES, RUMOR_SOURCES, YES } from './chat.js';
 import { runHooks } from './hooks.js';
 import { EXTRA_CLUBS, HUMAN_CLUB_DEFAULT, LEAGUES, leagueClubs, MAX_LEVEL } from './clubs.js';
+import { cpuMoves, membersOf, movesNotes, syncOwnLeague } from './pyramid.js';
 import { autoRelegation, nextRelegationPitch, relegationNeeded, relegationOutcome, relegationWeek } from './relegation.js';
 import { applyPubToTeam } from './pub.js';
 import { rollInjuries } from './injuries.js';
@@ -296,6 +297,8 @@ export function nextSeason(career) {
 
   const newLevel = promoted ? level + 1 : relegated ? level - 1 : level;
   const league = LEAGUES[newLevel];
+  // Auf- und Abstieg der CPU-Vereine in allen Ligen (pyramid.js); die eigene Liga mit ihrer echten Tabelle.
+  const cpuMoved = cpuMoves(career, rows.filter((r) => !r.club.human).map((r) => r.club.id), getPool());
   const rng = createRng(hashSeed(career.seed, career.season, 99));
   const human = humanClub(career);
   const sagaNotes = sagaSeasonEnd(career, { level });
@@ -304,9 +307,11 @@ export function nextSeason(career) {
   const size = career.nextLeagueSize ?? career.leagueSize ?? 6; // neue Ligagröße gilt ab jetzt
   career.leagueSize = size;
   career.nextLeagueSize = null;
+  sagaNotes.push(...movesNotes(cpuMoved, newLevel));
   if (newLevel === level) {
     const used = new Set([...clubs.flatMap((c) => c.squad), ...(career.youth?.prospects ?? []), ...(career.alumni ?? []).map((a) => a.idx)]);
     const pickFusion = squadPicker(createRng(hashSeed(career.seed, career.season, 98)), used);
+    clubs = swapMembers(career, clubs, newLevel, (tiers) => pickFusion(tiers, SQUAD_SHAPES[league.squadShape])); // Auf- und Absteiger tauschen
     const fused = applyFusion(career, clubs, (tiers) => pickFusion(tiers, SQUAD_SHAPES[league.squadShape]), freshRecord);
     clubs = fused.clubs;
     sagaNotes.push(...fused.notes);
@@ -318,7 +323,7 @@ export function nextSeason(career) {
     const used = new Set(human.squad);
     const pick = squadPicker(rng, used);
     for (const c of career.clubs) if (!c.human) for (const idx of c.squad) delete career.players[idx];
-    clubs = [human, ...leagueClubs(league, size).map((c) => ({ ...c, human: false, squad: pick(c.tiers, SQUAD_SHAPES[league.squadShape]) }))];
+    clubs = [human, ...[...membersOf(career, newLevel), ...(size >= 8 ? EXTRA_CLUBS[newLevel] ?? [] : [])].map((c) => ({ ...c, human: false, squad: pick(c.tiers, SQUAD_SHAPES[league.squadShape]) }))];
     for (const c of clubs) for (const idx of c.squad) career.players[idx] ??= freshRecord();
   }
   // Der Relegationsgegner verlässt den Spielstand wieder.
@@ -334,6 +339,7 @@ export function nextSeason(career) {
     clubs,
     fixtures: roundRobin(clubs.map((c) => c.id), rng),
   });
+  syncOwnLeague(career); // Vereinsliste der eigenen Liga = tatsächliche Gegner (nach Fusion, Zu- und Abgängen)
   const platzNotes = platzNewSeason(career); // Sommerpause: Rasen erholt sich; Pachtangebot
   const leaving = expireYouth(career, playerOf);
   sagaNotes.push(...childrenGrowUp(career));
@@ -373,6 +379,25 @@ export function nextSeason(career) {
   const summary = { pos, promoted, relegated, development, retired, intake, leaving };
   runHooks('nextSeason', career, summary);
   return summary;
+}
+
+// Gleiche Liga, neue Saison: Wer aufgestiegen oder abgestiegen ist (pyramid.js cpuMoves), geht; die Neuen kommen mit frischem Kader.
+function swapMembers(career, clubs, level, pickSquad) {
+  const members = membersOf(career, level);
+  const ids = new Set(members.map((d) => d.id));
+  const extras = new Set((EXTRA_CLUBS[level] ?? []).map((e) => e.id));
+  const out = [];
+  for (const c of clubs) {
+    if (c.human || extras.has(c.id) || ids.has(c.id)) out.push(c);
+    else for (const idx of c.squad) if (!career.formers?.[idx]) delete career.players[idx];
+  }
+  for (const d of members) {
+    if (out.some((c) => c.id === d.id)) continue;
+    const squad = pickSquad(d.tiers);
+    for (const idx of squad) career.players[idx] ??= freshRecord();
+    out.push({ ...d, human: false, squad });
+  }
+  return out;
 }
 
 // Ligagröße geändert: Die zwei Zusatzvereine kommen dazu oder melden sich ab.

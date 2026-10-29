@@ -911,7 +911,8 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   Nach oben erweitern: Landesliga/Verbandsliga, Oberliga, Regionalliga, später Profibereich.
 - Namen im Profibereich: keine geschützten Namen (DFB, DFL, „Bundesliga“-Marke) – wie beim Bundespokal eigene
   Bezeichnungen wählen. Verbandsnamen nur als Region (z. B. „Westfalen“), keine Verbandskürzel/-logos.
-- Auf- und Abstiege der CPU-Teams (heute steigt nur der eigene Verein), dazu ein großes Portfolio an Vereinsnamen je Region.
+- ~~Auf- und Abstiege der CPU-Teams (heute steigt nur der eigene Verein)~~ – erledigt 2026-10-29 (pyramid.js): jede Liga mit eigener
+  Vereinsliste, je Grenze ein Auf- und ein Absteiger; fremde Ligen per Schnellmodell. Offen: großes Portfolio an Vereinsnamen je Region.
 - Vereinsnamen passend zum gewählten Bundesland (vom Nutzer gewünscht, 2026-10-21): regionale Ortsnamen-Muster und Endungen
   (z. B. -ing/-hofen in Bayern, -büttel/-stedt im Norden, -rode/-hagen in Niedersachsen/Hessen, -itz/-ow im Osten,
   -scheid/-rath im Rheinland), typische Vereinskürzel je Region (FC, SV, TSV, SpVgg, DJK, TuS, BSG, Eintracht, Rot-Weiß …),

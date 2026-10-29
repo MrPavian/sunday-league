@@ -26,6 +26,7 @@ import { book, homeUnit, matchFinances } from './finances.js';
 import { chronicle, yearOf } from './sagas.js';
 import { adjustRel, shirtSponsor } from './sponsors.js';
 import { applyWeather } from './weather.js';
+import { membersOf } from './pyramid.js';
 
 // Zufallssalze je Pokal (kreis/bezirk wie vor Einführung der übrigen Pokale, damit alte Auslosungen gleich bleiben):
 // [Teilnehmer, Auslosung, Spiel, Rundenabschluss].
@@ -129,8 +130,8 @@ export function startPokal(c, kind) {
   // Auffüllen aus den anderen Ligen des Kreises (Kreispokal) bzw. aus Bezirks- und Landesliga.
   const everyone = kind === 'kreis' || (kind === 'bezirk' && level === 5);
   let pool;
-  if (kind === 'kreis') pool = [2, 3, 4, 5].filter((l) => l !== level).flatMap((l) => LEAGUES[l].clubs.map((d) => ({ d, level: l })));
-  else if (kind === 'bezirk') pool = [...(level === 5 ? [] : LEAGUES[5].clubs.map((d) => ({ d, level: 5 }))), ...LANDESLIGA.map((d) => ({ d, level: 6 }))];
+  if (kind === 'kreis') pool = [2, 3, 4, 5].filter((l) => l !== level).flatMap((l) => membersOf(c, l).map((d) => ({ d, level: l })));
+  else if (kind === 'bezirk') pool = [...(level === 5 ? [] : membersOf(c, 5).map((d) => ({ d, level: 5 }))), ...LANDESLIGA.map((d) => ({ d, level: 6 }))];
   else if (kind === 'land') pool = [...LANDESLIGA.map((d) => ({ d, level: 6 })), ...OBERLIGA.map((d) => ({ d, level: 7 }))];
   else pool = [];
   const want = cfg.size - (everyone ? own.length : 1);

@@ -15,6 +15,7 @@ import { applyWeather, rollWeather } from './weather.js';
 import { coachAway, isCoach } from './personal.js';
 import { isBanned } from './suspensions.js';
 import { chronicle } from './sagas.js';
+import { membersOf } from './pyramid.js';
 
 const RELEGATION_ID = 'relegation';
 
@@ -35,9 +36,8 @@ export const relegationOf = (career) => (career.relegation?.season === career.se
 export function startRelegation(career) {
   const need = relegationNeeded(career);
   if (!need || relegationOf(career)) return relegationOf(career);
-  const league = LEAGUES[need.other];
   const strength = (c) => (c.tiers.stark ?? 0) + 2 * (c.tiers.dorfstar ?? 0) + 3 * (c.tiers.superstar ?? 0) + 0.5 * (c.tiers.gut ?? 0);
-  const sorted = [...league.clubs].sort((a, b) => strength(a) - strength(b));
+  const sorted = [...membersOf(career, need.other)].sort((a, b) => strength(a) - strength(b)); // aktuelle Vereinsliste (pyramid.js)
   const def = need.kind === 'up' ? sorted[0] : sorted[sorted.length - 1];
   const rng = createRng((career.seed * 977 + career.season * 31) >>> 0);
   const used = new Set([...career.clubs.flatMap((c) => c.squad), ...(career.youth?.prospects ?? []), ...(career.alumni ?? []).map((a) => a.idx)]);

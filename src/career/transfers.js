@@ -23,6 +23,7 @@ import { adjustMood } from './events.js';
 import { rememberNewClub } from './memory.js';
 import { chronicle } from './sagas.js';
 import { EXTRA_STEPS, handgeldOk, HANDGELD_STEPS, importanceIn, MAX_REQUESTS, nextWindow, releaseChance, trainingFee, waitGames, windowAt, windowKey, winterFee } from './transferrules.js';
+import { membersOf } from './pyramid.js';
 
 export { HANDGELD_STEPS, EXTRA_STEPS, MAX_REQUESTS };
 
@@ -113,7 +114,7 @@ function genNeighbors(c) {
   for (const lv of [(c.level ?? 1) - 1, (c.level ?? 1) + 1]) {
     const league = LEAGUES[lv];
     if (!league) continue;
-    const defs = [...league.clubs];
+    const defs = [...membersOf(c, lv)]; // Vereinsliste der Nachbarliga (pyramid.js, mit Auf- und Absteigern)
     for (let k = 0; k < NEIGHBOR_CLUBS && defs.length; k++) {
       const def = defs.splice(Math.floor(rng.next() * defs.length), 1)[0];
       try {
