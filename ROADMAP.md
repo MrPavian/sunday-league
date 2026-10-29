@@ -933,9 +933,14 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
 - Training und Trainingspläne.
 - Spielleitung (Schiedsrichter mit Gesicht und Eigenarten).
 - Mehr Rivalitäten.
-- Finanzsystem anpassen und erweitern; Sponsoring erweitern; Ausstattungsvertrag (Ausrüster).
-- Abschlussfahrt und Trainingslager: Preise nach Teilnehmerzahl, Liga und Professionalität staffeln.
-- Maximale Spielerzahl pro Liga anzeigen und anpassbar machen.
+- Finanzsystem anpassen und erweitern; Sponsoring erweitern; Ausstattungsvertrag (Ausrüster). Erledigt 2026-10-29: Schiri-Spesen
+  nach der Verbandstabelle (Westfalen 2025/26), Stadionausbau (2500 Plätze) ab Landesliga. Offen: Vertragsspieler ab Oberliga
+  (Quellen bisher nur Foren/FAQ: 200–1500 € im Monat; gehört zum Profi-Übergang), Fahrtkosten der Schiris, Ausrüster.
+- ~~Abschlussfahrt und Trainingslager: Preise nach Teilnehmerzahl, Liga und Professionalität staffeln~~ – erledigt 2026-10-29
+  (travel.js): echte Preise je Person, Spieler zahlen selbst, der Verein gibt einen Zuschuss (0–100 %), Mitfahrer nach
+  Eigenanteil; Trainingslager unten Baggersee, ab Bezirksliga Sportschule, ab Oberliga Belek.
+- ~~Maximale Spielerzahl pro Liga anzeigen und anpassbar machen~~ – erledigt 2026-10-29: Kadergrenze im Kader-Reiter, −/+ je
+  Karriere, Standards aller Ligen aufklappbar.
 - ~~Heim-, Auswärts- und Ausweichtrikot (bei Farbgleichheit automatisch).~~ Erledigt 2026-10-28 (`awayKitOf`, `kitChoice`,
   `resolveKitClash` in career.js; Editor mit Heim/Auswärts, Torwart hebt sich von allen Trikots ab).
 - Trainerauszeichnung (Trainer des Monats/der Saison).

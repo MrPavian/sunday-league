@@ -17,6 +17,7 @@ import { setSquadExtra, setVerband, argueRumor, askRumor, currentLineup, humanCl
 import { verbandLeagues } from '../career/verband.js';
 import { appointCoach, startCourse } from '../career/youthteams.js';
 import { acceptSponsor, bookTrip, KIT_COST } from '../career/finances.js';
+import { setTripShare } from '../career/travel.js';
 import { tripChoose } from '../career/trip.js';
 import { build, dequeue, enqueue } from '../career/facilities.js';
 import { buyGround, care, longLease, playAnyway, renew } from '../career/platz.js';
@@ -295,6 +296,9 @@ export class Clubhouse {
         this.h.onChange();
       } else if (action === 'tripChoose') {
         tripChoose(this.career, Number(value));
+        this.h.onChange();
+      } else if (action === 'tripShare') {
+        setTripShare(this.career, Number(value));
         this.h.onChange();
       } else if (action === 'trip') {
         bookTrip(this.career, value);

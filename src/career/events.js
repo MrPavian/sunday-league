@@ -724,7 +724,7 @@ export function rollNotice(career) {
   if (!due && !pool.length) return null;
   let r = rng.next() * pool.reduce((sum, x) => sum + x.ev.weight, 0);
   const pick = due ?? pool.find((x) => (r -= x.ev.weight) < 0) ?? pool[0];
-  w.notice = { id: pick.id, ctx: pick.ctx, text: pick.ev.text(career, pick.ctx), options: pick.ev.options.map((o) => o.label), choice: null, result: null, story: 'Vereinsleben' };
+  w.notice = { id: pick.id, ctx: pick.ctx, text: pick.ev.text(career, pick.ctx), options: pick.ev.options.map((o) => labelOf(o, career)), choice: null, result: null, story: 'Vereinsleben' }; // Beschriftung kann von der Liga abhängen (Trainingslager) – nur Text speichern
   return w.notice;
 }
 

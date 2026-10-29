@@ -10,6 +10,7 @@ import { first, outcome } from './outcomes.js';
 import { adjustEnergy, adjustPatience, isCoach } from './personal.js';
 import { setRelation } from './relations.js';
 import { chronicle } from './sagas.js';
+import { travelCost } from './travel.js';
 
 // Punkte für die Fahrt: Am Ende entscheidet die Summe, wie die Stimmung in die neue Saison geht.
 const score = (c, d) => (c.trip.score += d);
@@ -22,7 +23,6 @@ const hurt = (c, idx, weeks, label) => {
 export const DESTINATIONS = {
   kegeltour: {
     name: tr('Kegeltour ins Sauerland', 'Bowling trip to the Sauerland'),
-    cost: 120,
     desc: tr('Zwei Tage, eine Kegelbahn, ein Gasthof mit Doppelzimmern und Etagendusche.', 'Two days, one bowling alley, a country inn with double rooms and a shared shower.'),
     stages: [
       {
@@ -50,7 +50,6 @@ export const DESTINATIONS = {
   },
   harz: {
     name: tr('Hüttenwochenende im Harz', 'Cabin weekend in the Harz'),
-    cost: 250,
     desc: tr('Eine Hütte, ein Kamin, eine Wanderung, die keiner machen will.', 'A cabin, a fireplace, a hike nobody wants to do.'),
     stages: [
       {
@@ -78,7 +77,6 @@ export const DESTINATIONS = {
   },
   mallorca: {
     name: tr('Mallorca, Ballermann', 'Mallorca, Ballermann'),
-    cost: 450,
     desc: tr('Vier Tage Playa de Palma. Gleiche T-Shirts, Spitznamen auf dem Rücken, wenig Schlaf.', 'Four days at Playa de Palma. Matching T-shirts, nicknames on the back, little sleep.'),
     stages: [
       {
@@ -108,11 +106,15 @@ export const DESTINATIONS = {
 
 export const TRIP_DEFAULT = 'harz';
 
+// Preis je Person und Zuschuss des Vereins: travel.js. Der Verein zahlt seinen Anteil für alle, die mitfahren.
 export function bookTrip(c, dest = TRIP_DEFAULT) {
   const d = DESTINATIONS[dest];
-  if (!d || c.tripBooked || c.cash < d.cost) return false;
-  book(c, tr(`Saisonabschlussfahrt gebucht: ${d.name}`, `End-of-season trip booked: ${d.name}`), -d.cost);
+  if (!d || c.tripBooked) return false;
+  const k = travelCost(c, dest);
+  if (c.cash < k.club) return false;
+  if (k.club) book(c, tr(`Saisonabschlussfahrt gebucht: ${d.name} (${k.people} dabei, Zuschuss ${Math.round(k.share * 100)} %)`, `End-of-season trip booked: ${d.name} (${k.people} going, ${Math.round(k.share * 100)} % subsidy)`), -k.club);
   c.tripBooked = dest;
+  c.tripPeople = { people: k.people, players: k.players };
   c.trip = null;
   return true;
 }
@@ -162,7 +164,9 @@ function finishTrip(c) {
   const t = c.trip;
   const d = DESTINATIONS[t.dest];
   t.verdict = tripVerdict(t.score);
-  adjustMood(c, Math.max(-0.1, Math.min(0.15, t.score * 0.03)));
+  // Wer nicht mitfährt, hat auch nichts von der Stimmung: Wirkung im Verhältnis der Mitfahrer (alte Spielstände: alle).
+  const part = c.tripPeople ? c.tripPeople.people / Math.max(1, c.tripPeople.players) : 1;
+  adjustMood(c, Math.max(-0.1, Math.min(0.15, t.score * 0.03)) * part);
   const best = [...t.log].sort((x, y) => y.text.length - x.text.length)[0];
   chronicle(c, `${tr('Saisonabschlussfahrt', 'End-of-season trip')}: ${d.name} – ${t.verdict}. ${best ? best.text.split('.')[0] + '.' : ''}`);
 }

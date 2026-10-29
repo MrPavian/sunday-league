@@ -10,6 +10,7 @@ import { hasFacility } from './facilities.js';
 import { humanClub, playerOf } from './career.js';
 import { first, leaveTeam, outcome } from './outcomes.js';
 import { adjustEnergy, isCoach } from './personal.js';
+import { travelCost } from './travel.js';
 import { chronicle } from './sagas.js';
 import { adjustRel } from './sponsors.js';
 
@@ -19,6 +20,32 @@ export function clubLife(c) {
 }
 const once = (c, key) => clubLife(c).done[key] === c.season;
 const mark = (c, key) => (clubLife(c).done[key] = c.season);
+// Trainingslager: Der Verein zahlt seinen Zuschuss für alle Mitfahrer, nur wer dabei ist, wird fitter (Werte wie bisher in der
+// Sportschule; Belek: länger, deshalb anderthalbmal so viel – Spielwert).
+function camp(c, key, rng) {
+  mark(c, 'lager');
+  const k = travelCost(c, key);
+  if (k.club) book(c, key === 'belek' ? tr(`Trainingslager Belek (${k.people} dabei)`, `Training camp in Belek (${k.people} going)`) : tr(`Trainingslager Sportschule (${k.people} dabei)`, `Training camp at the sports school (${k.people} going)`), -k.club);
+  const list = squad(c);
+  const going = [...list].sort(() => rng.next() - 0.5).slice(0, k.people);
+  const gain = key === 'belek' ? 0.012 : 0.008;
+  for (const idx of going) {
+    const rec = c.players[idx];
+    if (!rec) continue;
+    rec.delta ??= {};
+    for (const a of ['stamina', 'passing', 'technique']) rec.delta[a] = (rec.delta[a] ?? 0) + gain;
+    adjustForm(c, idx, 0.15);
+  }
+  adjustMood(c, (key === 'belek' ? 0.1 : 0.08) * (k.people / Math.max(1, k.players)));
+  const s = rng.pick(going.length ? going : list);
+  const missing = k.players - k.people;
+  const absent = missing > 0 ? tr(` ${missing} blieben zu Hause – zu teuer oder keinen Urlaub bekommen.`, ` ${missing} stayed at home – too expensive or no time off work.`) : '';
+  return key === 'belek'
+    ? tr(`Sechs Tage Sonne, zwei Einheiten am Tag, abends Buffet. ${first(c, s)} kommt braun gebrannt und mit Sonnenbrand im Nacken zurück.${absent}`, `Six days of sun, two sessions a day, buffet in the evening. ${first(c, s)} comes back tanned and with a sunburnt neck.${absent}`)
+    : tr(`Drei Tage Laufen, Taktik, Kartenspielen bis Mitternacht. Alle kommen fitter zurück – ${first(c, s)} mit einem Muskelkater, über den er noch in Wochen redet.${absent}`, `Three days of running, tactics and cards until midnight. Everyone comes back fitter – ${first(c, s)} with aching muscles he will talk about for weeks.${absent}`);
+}
+const lake = (c) => (mark(c, 'lager'), book(c, tr('Mannschaftswochenende am Baggersee', 'Team weekend at the lake'), -40), adjustMood(c, 0.07), tr('Zelte, Grill, ein Ball und viel zu wenig Schlaf. Sportlich null, fürs Team Gold.', 'Tents, a barbecue, one ball and far too little sleep. Nothing for fitness, gold for the team.'));
+const home = (c) => (mark(c, 'lager'), tr('Vorbereitung auf dem eigenen Platz. Günstig und ein bisschen öde.', 'Pre-season on your own pitch. Cheap and a bit dull.'));
 const squad = (c) => humanClub(c).squad.filter((i) => !isCoach(c, i));
 export const clampN = (v) => Math.max(-3, Math.min(3, v));
 const neighbors = (c, d) => (clubLife(c).neighbors = clampN(clubLife(c).neighbors + d));
@@ -86,30 +113,29 @@ export const CLUBLIFE_EVENTS = {
     ],
   },
 
+  // Trainingslager je Liga (Nutzerentscheid 2026-10-29): unten Baggersee oder eigener Platz, ab der Bezirksliga die Sportschule
+  // des Verbands, ab der Oberliga Belek. Preise je Person und Zuschuss: travel.js.
   trainingslager: {
     weight: 5,
     calendar: () => true,
-    needs: (c) => (c.round === 0 && !once(c, 'lager') ? { cost: 120 * (c.level ?? 1) + 30 } : null),
-    text: (c, ctx) => tr(`Saisonvorbereitung: Die Sportschule hätte am langen Wochenende noch Zimmer frei – Vollpension, Rasenplatz, Kraftraum. ${ctx.cost} € für die ganze Mannschaft.`, `Pre-season: the sports school has rooms free on the long weekend – full board, grass pitch, gym. €${ctx.cost} for the whole squad.`),
+    needs: (c) => (c.round === 0 && !once(c, 'lager') ? {} : null),
+    text: (c) => {
+      const lv = c.level ?? 1;
+      const offer = (key, name) => {
+        const k = travelCost(c, key);
+        return tr(`${name}: ${k.per} € je Person, der Verein zahlt ${Math.round(k.share * 100)} % – ${k.people} von ${k.players} wären dabei.`, `${name}: €${k.per} per person, the club pays ${Math.round(k.share * 100)} % – ${k.people} of ${k.players} would come.`);
+      };
+      if (lv >= 8) return tr('Saisonvorbereitung: Andere Oberligisten fliegen ins Trainingslager. ', 'Pre-season: other clubs at this level fly to a training camp. ') + offer('belek', tr('Belek, sechs Tage mit Flug und Rasenplätzen', 'Belek, six days with flights and grass pitches')) + ' ' + offer('sportschule', tr('Oder die Sportschule des Verbands, zwei Nächte', 'Or the association\'s sports school, two nights'));
+      if (lv >= 5) return tr('Saisonvorbereitung: Die Sportschule des Verbands hätte am langen Wochenende noch Zimmer frei – Vollpension, Rasenplatz, Kraftraum. ', 'Pre-season: the association\'s sports school has rooms free on the long weekend – full board, grass pitch, gym. ') + offer('sportschule', tr('Zwei Nächte', 'Two nights'));
+      return tr('Saisonvorbereitung: Für eine Sportschule ist die Liga noch zu klein. Am Baggersee wäre am Wochenende Platz für die Zelte – oder ihr bleibt auf dem eigenen Platz.', 'Pre-season: the league is too small for a sports school. There is room for the tents at the lake at the weekend – or you stay on your own pitch.');
+    },
     options: [
-      { label: tr('Ab in die Sportschule', 'Off to the sports school'), effect: (c, ctx, rng) => {
-        mark(c, 'lager');
-        book(c, tr('Trainingslager Sportschule', 'Training camp at the sports school'), -ctx.cost);
-        for (const idx of humanClub(c).squad) {
-          const rec = c.players[idx];
-          if (!rec) continue;
-          rec.delta ??= {};
-          for (const k of ['stamina', 'passing', 'technique']) rec.delta[k] = (rec.delta[k] ?? 0) + 0.008;
-          adjustForm(c, idx, 0.15);
-        }
-        adjustMood(c, 0.08);
-        const s = rng.pick(squad(c));
-        return tr(`Drei Tage Laufen, Taktik, Kartenspielen bis Mitternacht. Alle kommen fitter zurück – ${first(c, s)} mit einem Muskelkater, über den er noch in Wochen redet.`, `Three days of running, tactics and cards until midnight. Everyone comes back fitter – ${first(c, s)} with aching muscles he will talk about for weeks.`);
-      } },
-      { label: tr('Wochenende am Baggersee (40 €)', 'A weekend at the lake (€40)'), effect: (c) => (mark(c, 'lager'), book(c, tr('Mannschaftswochenende am Baggersee', 'Team weekend at the lake'), -40), adjustMood(c, 0.07), tr('Zelte, Grill, ein Ball und viel zu wenig Schlaf. Sportlich null, fürs Team Gold.', 'Tents, a barbecue, one ball and far too little sleep. Nothing for fitness, gold for the team.')) },
-      { label: tr('Kein Trainingslager', 'No training camp'), effect: (c) => (mark(c, 'lager'), tr('Vorbereitung auf dem eigenen Platz. Günstig und ein bisschen öde.', 'Pre-season on your own pitch. Cheap and a bit dull.')) },
+      { label: (c) => ((c.level ?? 1) >= 8 ? tr('Ab nach Belek', 'Off to Belek') : (c.level ?? 1) >= 5 ? tr('Ab in die Sportschule', 'Off to the sports school') : tr('Wochenende am Baggersee (40 €)', 'A weekend at the lake (€40)')), effect: (c, ctx, rng) => ((c.level ?? 1) >= 8 ? camp(c, 'belek', rng) : (c.level ?? 1) >= 5 ? camp(c, 'sportschule', rng) : lake(c)) },
+      { label: (c) => ((c.level ?? 1) >= 8 ? tr('Lieber die Sportschule', 'The sports school instead') : (c.level ?? 1) >= 5 ? tr('Wochenende am Baggersee (40 €)', 'A weekend at the lake (€40)') : tr('Vorbereitung auf dem eigenen Platz', 'Pre-season on your own pitch')), effect: (c, ctx, rng) => ((c.level ?? 1) >= 8 ? camp(c, 'sportschule', rng) : (c.level ?? 1) >= 5 ? lake(c) : home(c)) },
+      { label: tr('Kein Trainingslager', 'No training camp'), effect: (c) => home(c) },
     ],
   },
+
 
   kassenpruefung: {
     weight: 3,

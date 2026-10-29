@@ -39,7 +39,8 @@ function unfitNote(c, club) {
   const names = low.map((idx) => `${playerOf(c, idx).name.split(' ').at(-1)} (${fitnessPct(fitnessOf(c, idx))} %)`).join(', ');
   return tr(`Nicht ganz fit: ${names} – spielen lassen oder schonen?`, `Not fully fit: ${names} – play them or give them a rest?`);
 }
-import { hex, first, euro } from './shared.js';
+import { hex, first, euro, shareChooser } from './shared.js';
+import { travelCost } from '../../career/travel.js';
 
 // Jugendspieltag vom Wochenende (kurz): „Jugend: D 3:1 · C 0:2 · E Spielfest".
 function youthNote(c) {
@@ -320,7 +321,8 @@ export const homeScreens = {
     const c = this.career;
     if (!c.tripBooked)
       return `<div class="trip"><p class="label">${tr('Saisonabschlussfahrt', 'End-of-season trip')}</p><p>${tr('Kasse', 'Kitty')}: ${euro(c.cash)}. ${tr('Wohin geht es?', 'Where to?')}</p>
-        ${Object.entries(DESTINATIONS).map(([id, d]) => `<button class="successor" data-action="trip" data-value="${id}" ${c.cash < d.cost ? 'disabled' : ''}><b>${d.name} – ${euro(d.cost)}</b><small>${d.desc}</small></button>`).join('')}</div>`;
+        ${shareChooser(c)}
+        ${Object.entries(DESTINATIONS).map(([id, d]) => { const k = travelCost(c, id); return `<button class="successor" data-action="trip" data-value="${id}" ${c.cash < k.club ? 'disabled' : ''}><b>${d.name} – ${euro(k.per)} ${tr('je Person', 'per person')}</b><small>${d.desc}</small><small>${tr(`Verein zahlt ${euro(k.club)}, jeder Mitfahrer ${euro(k.own)} · ${k.people} von ${k.players} dabei`, `Club pays ${euro(k.club)}, each player ${euro(k.own)} · ${k.people} of ${k.players} going`)}</small></button>`; }).join('')}</div>`;
     const t = tripState(c);
     const d = DESTINATIONS[t.dest];
     const log = t.log.map((e) => `<p class="trip-log"><small>${e.a}</small><br>${e.text}</p>`).join('');

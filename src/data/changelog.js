@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-29-5',
+    de: { title: 'Stadion, Schiri-Spesen, Kadergrenze und Fahrten mit echten Preisen', items: ['Ab der Landesliga lässt sich der Platz zum Stadion für 2500 Zuschauer ausbauen.', 'Die Kadergrenze steht im Kader-Reiter und lässt sich mit − und + verschieben.', 'Schiri-Spesen wie im echten Verband – ab der Landesliga mit zwei Assistenten.', 'Abschlussfahrt und Trainingslager kosten je Person so viel wie in echt; der Verein gibt einen Zuschuss, den du festlegst.', 'Trainingslager je Liga: Baggersee, Sportschule des Verbands oder Belek.'] },
+    en: { title: 'Stadium, referee fees, squad limit and trips at real prices', items: ['From the Landesliga up you can expand your ground into a stadium for 2,500 spectators.', 'The squad limit is shown in the squad tab and can be moved with − and +.', 'Referee fees as in a real association – from the Landesliga up with two assistants.', 'The end-of-season trip and training camp cost what they really cost per person; the club gives a subsidy you set.', 'Training camp by league: the lake, the association\'s sports school or Belek.'] },
+  },
+  {
     id: '2026-10-29-4',
     de: { title: 'Regionale Namen, Tim am Fenster, graue Haare', items: ['Mit gewähltem Bundesland tragen viele Spieler, Trainer und Schiris dort typische Namen – in Bayern Huber, Gruber oder Mayr, dazu Vornamen wie Xaver, Josef und Korbinian.', 'Trainerbewerber sehen so alt aus, wie sie sind; Spieler und Trainer werden mit den Jahren grau.', 'Der Namensgenerator erzeugt keine Namen bekannter Nationalspieler mehr.', 'Tim „Der Tiger“ lehnt im Hinterhof auf einem Kissen vor dem Fenster – Kopf und Arme verschwinden nicht mehr in der Wand.'] },
     en: { title: 'Regional names, Tim at the window, grey hair', items: ['With a state chosen, many players, managers and referees carry names typical of it – Huber, Gruber or Mayr in Bavaria, with first names like Xaver, Josef and Korbinian.', 'Manager applicants look as old as they are; players and managers turn grey over the years.', 'The name generator no longer produces names of well-known internationals.', 'Tim "The Tiger" leans on a cushion in front of the backyard window – his head and arms no longer vanish into the wall.'] },

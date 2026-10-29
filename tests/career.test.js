@@ -362,13 +362,15 @@ describe('club finances', () => {
   });
 
   it('the season trip costs money and lifts spirits next season', async () => {
-    const { bookTrip, TRIP_COST } = await import('../src/career/finances.js');
+    const { bookTrip } = await import('../src/career/finances.js');
+    const { travelCost } = await import('../src/career/travel.js');
     const { nextSeason, currentFixtures } = await import('../src/career/career.js');
     const c = createCareer({ seed: 83 });
     expect(bookTrip(c)).toBe(false); // zu wenig Geld
     c.cash = 400;
+    const cost = travelCost(c, 'harz').club; // Standardziel, Zuschuss des Vereins (travel.js)
     expect(bookTrip(c)).toBe(true);
-    expect(c.cash).toBe(400 - TRIP_COST);
+    expect(c.cash).toBe(400 - cost);
     while (!seasonOver(c)) {
       for (const f of currentFixtures(c)) f.result = { home: 1, away: 1 };
       finishRound(c);

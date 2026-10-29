@@ -6,6 +6,17 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-29-5 – Stadion, Schiri-Spesen, Kadergrenze und Fahrten mit echten Preisen
+
+### Neu
+- **Stadionausbau:** Ab der Landesliga lässt sich der Platz zum kleinen Stadion ausbauen – Platz für 2500 Zuschauer, so viel verlangt die Regionalliga.
+- **Kadergrenze einstellbar:** Im Kader-Reiter steht die Kadergrenze deiner Liga, mit − und + verschiebst du sie. Aufklappbar siehst du den Standard jeder Liga.
+
+### Verbessert
+- **Schiri-Spesen** wie im echten Verband: in der Kreisliga 27 €, in der Bezirksliga 35 €, ab der Landesliga mit zwei Assistenten (Oberliga 175 € je Heimspiel).
+- **Abschlussfahrt und Trainingslager** kosten jetzt je Person so viel wie in echt – Mallorca rund 450 €, die Kegeltour 110 €. Jeder zahlt seinen Teil, der Verein gibt einen Zuschuss, den du in der Kasse festlegst. Je teurer es für die Spieler wird, desto weniger fahren mit.
+- **Trainingslager je Liga:** unten Baggersee oder eigener Platz, ab der Bezirksliga die Sportschule des Verbands, ab der Oberliga Belek.
+
 ## 2026-10-29-4 – Regionale Namen, Tim am Fenster, graue Haare
 
 ### Neu

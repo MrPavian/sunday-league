@@ -6,6 +6,17 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-29-5 – Stadium, referee fees, squad limit and trips at real prices
+
+### New
+- **Stadium upgrade:** From the Landesliga up you can expand your ground into a small stadium – room for 2,500 spectators, what the Regionalliga requires.
+- **Adjustable squad limit:** The squad tab shows your league's squad limit; move it with − and +. Expand it to see the default for every league.
+
+### Improved
+- **Referee fees** as in a real association: €27 in the Kreisliga, €35 in the Bezirksliga, from the Landesliga up with two assistants (Oberliga €175 per home game).
+- **End-of-season trip and training camp** now cost what they really cost per person – Mallorca around €450, the bowling trip €110. Everyone pays their share, the club gives a subsidy you set in the kitty. The more the players pay, the fewer come along.
+- **Training camp by league:** the lake or your own pitch at the bottom, the association's sports school from the Bezirksliga, Belek from the Oberliga.
+
 ## 2026-10-29-4 – Regional names, Tim at the window, grey hair
 
 ### New

@@ -11,7 +11,6 @@ export { bookTrip } from './trip.js';
 
 export const START_CASH = 100;
 export const KIT_COST = 60;
-export const TRIP_COST = 250;
 export const MEMBER_FEE = 3; // pro Spieler und Spieltag
 
 // Der Strafenkatalog – hängt laminiert in der Kabine.

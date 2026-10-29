@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { createCareer, nextSeason } from '../src/career/career.js';
 import { bookTrip, DESTINATIONS, tripChoose, tripStage, tripState } from '../src/career/trip.js';
+import { travelCost } from '../src/career/travel.js';
 
 describe('season trip', () => {
   it('three stages with decisions, then a verdict in the chronicle', () => {
     for (const dest of Object.keys(DESTINATIONS)) {
       const c = createCareer({ seed: 40 + dest.length });
-      c.cash = 1000;
+      c.cash = 5000;
+      const k = travelCost(c, dest); // Preis je Person × Mitfahrer × Zuschuss des Vereins
       expect(bookTrip(c, dest)).toBe(true);
-      expect(c.cash).toBe(1000 - DESTINATIONS[dest].cost);
+      expect(c.cash).toBe(5000 - k.club);
       c.round = c.fixtures.length;
       for (let i = 0; i < 3; i++) {
         expect(tripStage(c).n).toBe(i + 1);

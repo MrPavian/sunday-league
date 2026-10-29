@@ -11,7 +11,8 @@ import { awayKitOf, humanClub, KIT_COLLARS, KIT_COLORS, KIT_PATTERNS, KIT_SLEEVE
 import { spielberichtStreng } from '../../career/spielbericht.js';
 import { leagueTitle, VERBAND_CHOICES, verbandLeagues } from '../../career/verband.js';
 import { FINES, KIT_COST, MEMBER_FEE, SLOTS } from '../../career/finances.js';
-import { DESTINATIONS } from '../../career/trip.js';
+import { travelCost } from '../../career/travel.js';
+import { shareChooser } from './shared.js';
 import { buildBlock, buildCost, buildWeeks, capacity, facilities, FACILITIES, FACILITY_GROUPS, QUEUE_MAX } from '../../career/facilities.js';
 import { CARE, careBlock, HELPER_EFFECT, HELPER_SLOTS, LANGPACHT_FEE, LANGPACHT_SEASONS, MIN_TERM, PACHT_SEASONS, angebotText, platzInfo, platz } from '../../career/platz.js';
 import { arenaOf, BRANCHEN, bossOf, cancelCost, goalStatus, goalText, lineOf, relLabel, shirtSponsor, sponsorColor, sponsorDef, termChance, TERMS, termWeekly, TRAITS as SPONSOR_TRAITS, WISHES, wishCost, wishLabel } from '../../career/sponsors.js';
@@ -468,7 +469,8 @@ export const clubScreens = {
     return `
       <div class="cash-head"><span>${tr('Mannschaftskasse', 'Team kitty')}</span><b class="${c.cash < 0 ? 'minus' : ''}">${euro(c.cash)}</b>
         ${arenaOf(c) ? `<small>${tr('Sportplatz', 'Ground')}: ${arenaOf(c)}</small>` : ''}
-        <small>${tr('Ziel: Saisonabschlussfahrt (ab', 'Goal: end-of-season trip (from')} ${euro(DESTINATIONS.kegeltour.cost)})${c.spirit ? tr(' · Stimmung nach der letzten Fahrt: bestens (weniger Absagen)', ' · spirits after the last trip: excellent (fewer drop-outs)') : ''}</small></div>
+        <small>${tr('Ziel: Saisonabschlussfahrt (Kegeltour: Verein zahlt', 'Goal: end-of-season trip (bowling trip: club pays')} ${euro(travelCost(c, 'kegeltour').club)})${c.spirit ? tr(' · Stimmung nach der letzten Fahrt: bestens (weniger Absagen)', ' · spirits after the last trip: excellent (fewer drop-outs)') : ''}</small></div>
+      ${shareChooser(c)}
       <div class="cash-grid">
         <section><h4>${tr('Sponsoren', 'Sponsors')}</h4><ul class="plain">${active}</ul>
           ${c.sponsorNote && c.round === 0 ? `<p class="reply ok">${c.sponsorNote}</p>` : ''}${offers ? `<h4>${tr('Angebote für diese Saison', 'Offers for this season')}</h4><div class="rumors">${offers}</div>` : c.round === 0 ? '' : `<p class="empty">${tr('Neue Angebote gibt es vor der nächsten Saison.', 'New offers come before next season.')}</p>`}</section>
