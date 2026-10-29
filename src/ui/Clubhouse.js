@@ -16,7 +16,8 @@ const scrollKey = (el) => SCROLLERS.split(', ').find((sel) => el.matches(sel));
 import { setSquadExtra, setVerband, argueRumor, askRumor, currentLineup, humanClub, updateClub, updateCrest, setFounded, clampFounded, foundedRange, setClubTactic, setClubPlan, maxSquad, recruit, releasePlayer, scoutRumor, talkRumor, nudge, playerOf, resetLineup, setLineupSlot, seasonOver, table } from '../career/career.js';
 import { verbandLeagues } from '../career/verband.js';
 import { appointCoach, startCourse } from '../career/youthteams.js';
-import { acceptSponsor, bookTrip, KIT_COST } from '../career/finances.js';
+import { acceptSponsor, bookTrip } from '../career/finances.js';
+import { kitPrice, signOutfitter } from '../career/outfitter.js';
 import { setTripShare } from '../career/travel.js';
 import { tripChoose } from '../career/trip.js';
 import { build, dequeue, enqueue } from '../career/facilities.js';
@@ -158,7 +159,7 @@ export class Clubhouse {
         this.h.onChange();
       } else if (action === 'saveClub') {
         const res = updateClub(this.career, this.draft);
-        this.clubNote = res === 'nocash' ? tr(`Zu wenig in der Kasse – ein neuer Trikotsatz kostet ${KIT_COST} €.`, `Not enough in the kitty – a new kit costs €${KIT_COST}.`) : tr('Bestellt!', 'Ordered!');
+        this.clubNote = res === 'nocash' ? tr(`Zu wenig in der Kasse – ein neuer Trikotsatz kostet ${kitPrice(this.career)} €.`, `Not enough in the kitty – a new kit costs €${kitPrice(this.career)}.`) : tr('Bestellt!', 'Ordered!');
         if (res !== 'nocash') this.draft = null;
         this.h.onChange();
       } else if (action === 'negotiate') {
@@ -296,6 +297,9 @@ export class Clubhouse {
         this.h.onChange();
       } else if (action === 'tripChoose') {
         tripChoose(this.career, Number(value));
+        this.h.onChange();
+      } else if (action === 'outfitter') {
+        signOutfitter(this.career, value);
         this.h.onChange();
       } else if (action === 'tripShare') {
         setTripShare(this.career, Number(value));

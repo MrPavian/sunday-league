@@ -10,8 +10,9 @@ import { CREST_BAND_TEXTS, CREST_COLORS, CREST_DIVISION_GROUPS, CREST_DIVISIONS,
 import { awayKitOf, humanClub, KIT_COLLARS, KIT_COLORS, KIT_PATTERNS, KIT_SLEEVES, kitEditable, updateCrest, setFounded, clampFounded, foundedRange, playerOf, table } from '../../career/career.js';
 import { spielberichtStreng } from '../../career/spielbericht.js';
 import { leagueTitle, VERBAND_CHOICES, verbandLeagues } from '../../career/verband.js';
-import { FINES, KIT_COST, MEMBER_FEE, SLOTS } from '../../career/finances.js';
+import { FINES, MEMBER_FEE, SLOTS } from '../../career/finances.js';
 import { travelCost } from '../../career/travel.js';
+import { freeKitLeft, kitPrice, OUTFITTER_SEASONS, outfitterDef, outfitterOf, outfitterOffers } from '../../career/outfitter.js';
 import { shareChooser } from './shared.js';
 import { buildBlock, buildCost, buildWeeks, capacity, facilities, FACILITIES, FACILITY_GROUPS, QUEUE_MAX } from '../../career/facilities.js';
 import { CARE, careBlock, HELPER_EFFECT, HELPER_SLOTS, LANGPACHT_FEE, LANGPACHT_SEASONS, MIN_TERM, PACHT_SEASONS, angebotText, platzInfo, platz } from '../../career/platz.js';
@@ -102,7 +103,7 @@ export const clubScreens = {
           ${swatches('socks', tr('Stutzen', 'Socks'))}
           ${this.clubNote ? `<p class="warn">${this.clubNote}</p>` : ''}
           ${founding ? '' : editable
-            ? `<button class="primary" data-action="saveClub">${tr(`Trikots bestellen <small>(neuer Satz ${KIT_COST} €, Name gratis)</small>`, `Order kits <small>(new set €${KIT_COST}, name change free)</small>`)}</button>`
+            ? `<button class="primary" data-action="saveClub">${tr(`Trikots bestellen <small>(neuer Satz ${kitPrice(c)} €${outfitterOf(c) ? ` bei ${outfitterDef(outfitterOf(c).id).name}` : ''}, Name gratis)</small>`, `Order kits <small>(new set €${kitPrice(c)}${outfitterOf(c) ? ` from ${outfitterDef(outfitterOf(c).id).name}` : ''}, name change free)</small>`)}</button>`
             : `<p class="warn">${tr('Die Trikots für diese Saison sind bestellt. Änderungen wieder vor dem ersten Spieltag der nächsten Saison.', 'This season\'s kits are ordered. Changes again before the first matchday of next season.')}</p>`}
         </div>
       </div>`;
@@ -322,6 +323,19 @@ export const clubScreens = {
     return `<div class="facilities platz"><h4>${tr('Platz und Pacht', 'Pitch and lease')}</h4>${care}<h4 class="sub">${tr('Pachtvertrag', 'Lease')}</h4>${contract}</div>`;
   },
 
+  // Ausrüster: laufender Vertrag oder zwei Angebote je Saison (outfitter.js).
+  outfitterBlock() {
+    const c = this.career;
+    const o = outfitterOf(c);
+    const terms = (d) => `${Math.round(d.discount * 100)} % ${tr('Rabatt auf Trikotsätze', 'off kit sets')}${d.freeFrom ? ` · ${tr(`ab der ${leagueTitle(c, d.freeFrom)} ein Satz je Saison gratis`, `one free set a season from the ${leagueTitle(c, d.freeFrom)} up`)}` : ''}`;
+    if (o) {
+      const d = outfitterDef(o.id);
+      return `<div class="outfitter" data-testid="outfitter"><h4>${tr('Ausrüster', 'Kit supplier')}: ${d.name}</h4><small>${terms(d)} · ${tr(`bis Saison ${o.until}`, `until season ${o.until}`)}${freeKitLeft(c) ? ` · ${tr('Freiware diese Saison noch offen', 'free set still available this season')}` : ''}</small></div>`;
+    }
+    const offers = outfitterOffers(c).map((d) => `<button class="successor" data-action="outfitter" data-value="${d.id}"><b>${d.name}</b><small>${d.line}</small><small>${terms(d)} · ${OUTFITTER_SEASONS} ${tr('Saisons', 'seasons')}</small></button>`).join('');
+    return `<div class="outfitter" data-testid="outfitter"><h4>${tr('Ausrüster gesucht', 'Looking for a kit supplier')}</h4><small>${tr('Ein Ausrüstervertrag macht neue Trikotsätze billiger. Nur einer zur Zeit.', 'A supplier deal makes new kits cheaper. Only one at a time.')}</small>${offers}</div>`;
+  },
+
   // Vereinsheim, Sportplatz, Tribünen, Gastro ausbauen: Handwerker oder Arbeitseinsatz, mit Bauschlange.
   facilityBlock() {
     const c = this.career;
@@ -388,13 +402,15 @@ export const clubScreens = {
       ? `<ul class="vitrine">${mu.trophies.map((t) => `<li><span class="cup"></span><b>${t.name}</b><small>${tr('Saison', 'Season')} ${t.season}</small></li>`).join('')}</ul>`
       : empty(tr('Die Vitrine ist noch leer. Der Staublappen liegt bereit.', 'The trophy cabinet is still empty. The duster is ready.'));
     const awards = mu.awards.length ? `<ul class="plain">${mu.awards.map((a) => `<li>★ ${a.name} – ${a.kind === 'season' ? tr('Spieler der Saison', 'Player of the Season') : tr('Spieler des Monats', 'Player of the Month')} (S${a.season})</li>`).join('')}</ul>` : empty(tr('Noch keine Auszeichnung vom Kreisblatt.', 'No District Gazette award yet.'));
+    const coachList = (c.coachAwards ?? []).filter((a) => a.human); // Trainer des Monats / der Saison (coachawards.js)
+    const coachAwards = coachList.length ? `<ul class="plain">${coachList.map((a) => `<li>★ ${a.name} – ${a.kind === 'season' ? tr('Trainer der Saison', 'Manager of the Season') : tr('Trainer des Monats', 'Manager of the Month')} (S${a.season})</li>`).join('')}</ul>` : '';
     const records = mu.records.length ? `<ul class="plain">${mu.records.map((r) => `<li><b>${r.label}:</b> ${r.text}</li>`).join('')}</ul>` : empty(tr('Rekorde entstehen mit der Zeit.', 'Records come with time.'));
     const legends = mu.legends.length ? `<ol class="plain">${mu.legends.map((l) => `<li><span>${l.name}${l.active ? '' : ` <small>(${tr('ehemalig', 'former')})</small>`}</span><b>${l.goals} ${plural(l.goals, 'Tor', 'Tore', 'goal', 'goals')} · ${l.apps} ${plural(l.apps, 'Spiel', 'Spiele', 'app', 'apps')}</b></li>`).join('')}</ol>` : empty(tr('Noch keine Legenden.', 'No legends yet.'));
     const kits = `<div class="archive">${mu.kits.map((k) => `<figure><span class="kit-mini" style="background:url(${kitPreviewURL(k.kit)}) center/100% 100%"></span><figcaption>S${k.season}${k.now ? tr(' (aktuell)', ' (current)') : ''}</figcaption></figure>`).join('')}</div>`;
     const crests = mu.crests.length ? `<div class="archive">${mu.crests.map((k) => `<figure>${crestSVG(k.crest, { size: 40, short: club.short, year: crestExtras(c).year })}<figcaption>S${k.season}${k.now ? tr(' (aktuell)', ' (current)') : ''}</figcaption></figure>`).join('')}</div>` : '';
     return `<div class="museum">
       <section><h4>${tr('Vitrine', 'Trophy cabinet')}</h4>${trophies}</section>
-      <section><h4>${tr('Ehrentafel', 'Roll of honour')}</h4>${awards}</section>
+      <section><h4>${tr('Ehrentafel', 'Roll of honour')}</h4>${awards}${coachAwards}</section>
       <section><h4>${tr('Rekorde', 'Records')}</h4>${records}</section>
       <section><h4>${tr('Vereinslegenden', 'Club legends')}</h4>${legends}</section>
       <section><h4>${tr('Trikot- und Wappenarchiv', 'Kit and crest archive')}</h4>${kits}${crests}</section>
@@ -471,6 +487,7 @@ export const clubScreens = {
         ${arenaOf(c) ? `<small>${tr('Sportplatz', 'Ground')}: ${arenaOf(c)}</small>` : ''}
         <small>${tr('Ziel: Saisonabschlussfahrt (Kegeltour: Verein zahlt', 'Goal: end-of-season trip (bowling trip: club pays')} ${euro(travelCost(c, 'kegeltour').club)})${c.spirit ? tr(' · Stimmung nach der letzten Fahrt: bestens (weniger Absagen)', ' · spirits after the last trip: excellent (fewer drop-outs)') : ''}</small></div>
       ${shareChooser(c)}
+      ${this.outfitterBlock()}
       <div class="cash-grid">
         <section><h4>${tr('Sponsoren', 'Sponsors')}</h4><ul class="plain">${active}</ul>
           ${c.sponsorNote && c.round === 0 ? `<p class="reply ok">${c.sponsorNote}</p>` : ''}${offers ? `<h4>${tr('Angebote für diese Saison', 'Offers for this season')}</h4><div class="rumors">${offers}</div>` : c.round === 0 ? '' : `<p class="empty">${tr('Neue Angebote gibt es vor der nächsten Saison.', 'New offers come before next season.')}</p>`}</section>

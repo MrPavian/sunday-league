@@ -35,7 +35,7 @@ import { applyChemistry, pastLink, relationsAmong, setRelation } from './relatio
 import { applyFusion, chronicle, initSagas, sagaChat, sagaSeasonEnd, sagaWeek, yearOf } from './sagas.js';
 import { weeklyStaff } from './staff.js';
 import { coachWeek, hiredGrowth, presidentSeasonEnd, weeklyHired } from './president.js'; // Präsidium nach dem Traineramt (ROADMAP 11.9)
-import { childrenGrowUp, coachAway, initCoach, isCoach, isPresident, personalWeek, seasonPersonal, weeklyPersonal } from './personal.js';
+import { childrenGrowUp, coachAway, coachName, initCoach, isCoach, isPresident, personalWeek, seasonPersonal, weeklyPersonal } from './personal.js';
 import { absenceFactor, advanceArcs, applyForm, autoResolve, resultMood, rollNotice, rollWeekEvent, weeklyMood } from './events.js';
 import { developYouth, expireYouth, initYouth, retirements, youthIntake } from './youth.js';
 import { environmentChanged, rememberEnvironment, seasonGain } from './development.js';
@@ -45,6 +45,8 @@ import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFin
 import { nameEditionFor, nameLocaleOf } from '../data/names.js';
 import { tierWeightsFor } from '../data/tiers.js';
 import { agedLook, setNameLocale, setNameRegion } from '../data/origins.js';
+import { kitPrice, useKitDeal } from './outfitter.js';
+import { monthlyCoachAward, seasonCoachAward } from './coachawards.js';
 import { weeklyBanter } from './banter.js';
 import { matchdaySurprise } from './matchday.js';
 import { spielberichtStreng, statusFor } from './spielbericht.js';
@@ -289,6 +291,7 @@ export function nextSeason(career) {
 
   // Spieler der Saison und Saisonbilanz je Spieler, bevor die Zahlen zurückgesetzt werden.
   const bestOfSeason = seasonAward(career, awardDeps(career));
+  const coachOfSeason = seasonCoachAward(career, table(career), (idx) => playerOf(career, idx).rating, coachName(career));
   for (const idx of humanClub(career).squad) logSeason(career, idx, playerOf(career, idx).rating);
 
   // Entwicklung zuerst – die Einsätze dieser Saison zählen als Spielpraxis.
@@ -372,6 +375,7 @@ export function nextSeason(career) {
   for (const n of presidentNotes) note(n);
   for (const n of coachWeek(career)) note(n); // erste Woche der neuen Saison: Taktik, Zusagen, Kader
   if (bestOfSeason) note(bestOfSeason.text);
+  if (coachOfSeason) note(coachOfSeason.text);
   for (const n of sagaNotes) note(n);
   for (const n of legacyNotes) note(n);
   for (const n of platzNotes) note(n);
@@ -949,8 +953,10 @@ export function updateClub(career, { name, short, kit, awayKit }, { free = false
   if (homeChanged || awayChanged) {
     // Neue Trikots kosten – ohne Geld in der Kasse bleibt's beim alten Satz.
     if (!free) {
-      if (career.cash < KIT_COST) return 'nocash';
-      book(career, tr('Neuer Trikotsatz', 'New kit'), -KIT_COST);
+      const price = kitPrice(career); // Ausrüster: Rabatt oder Freiware (outfitter.js)
+      if (career.cash < price) return 'nocash';
+      book(career, price ? tr('Neuer Trikotsatz', 'New kit') : tr('Neuer Trikotsatz (Freiware des Ausrüsters)', 'New kit (free from the kit supplier)'), -price);
+      useKitDeal(career);
       club.kitHistory = [...(club.kitHistory ?? []), { season: career.season, kit: { ...club.kit } }].slice(-12); // fürs Museum
     }
     if (homeChanged) club.kit = { ...club.kit, ...kit };
@@ -1288,6 +1294,7 @@ export function finishRound(career) {
   // Versprochene Einsätze für Neuzugänge: nach zwei Spieltagen abrechnen.
   checkPromises(career, humanClub(career).squad, (idx, text) => career.week?.chat.push({ from: idx, text, time: 'Mo 08:15' }));
   monthlyAward(career, awardDeps(career));
+  monthlyCoachAward(career, coachName(career)); // Trainer des Monats (coachawards.js)
   runHooks('finishRound', career);
 }
 
