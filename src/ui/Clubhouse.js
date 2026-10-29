@@ -13,7 +13,8 @@ import { appointStaff, releaseStaff } from '../career/staff.js';
 // Was im Vereinsheim scrollt (je nach Bildschirmgröße das Fenster, der Inhalt oder die Mappe).
 const SCROLLERS = '.club-panel, .club-main, .club-body, .club-folder, .folder-sheet';
 const scrollKey = (el) => SCROLLERS.split(', ').find((sel) => el.matches(sel));
-import { argueRumor, askRumor, currentLineup, humanClub, updateClub, updateCrest, setFounded, clampFounded, foundedRange, setClubTactic, setClubPlan, maxSquad, recruit, releasePlayer, scoutRumor, talkRumor, nudge, playerOf, resetLineup, setLineupSlot, seasonOver, table } from '../career/career.js';
+import { setVerband, argueRumor, askRumor, currentLineup, humanClub, updateClub, updateCrest, setFounded, clampFounded, foundedRange, setClubTactic, setClubPlan, maxSquad, recruit, releasePlayer, scoutRumor, talkRumor, nudge, playerOf, resetLineup, setLineupSlot, seasonOver, table } from '../career/career.js';
+import { verbandLeagues } from '../career/verband.js';
 import { appointCoach, startCourse } from '../career/youthteams.js';
 import { acceptSponsor, bookTrip, KIT_COST } from '../career/finances.js';
 import { tripChoose } from '../career/trip.js';
@@ -507,6 +508,12 @@ export class Clubhouse {
       };
       el.addEventListener('input', () => sync(false));
       el.addEventListener('change', () => sync(true));
+    });
+    // Landesverband bei der Gründung (verband.js): bestimmt die Ligennamen.
+    this.root.querySelector('select[data-verband]')?.addEventListener('change', (e) => {
+      setVerband(this.career, e.target.value);
+      const hint = this.root.querySelector('.verband-leagues');
+      if (hint) hint.textContent = verbandLeagues(this.career);
     });
     this.root.querySelectorAll('input[data-field]').forEach((el) =>
       el.addEventListener('input', () => {

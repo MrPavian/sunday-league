@@ -9,6 +9,7 @@ import { button, esc, tabs as uiTabs } from '../ds.js';
 import { CREST_BAND_TEXTS, CREST_COLORS, CREST_DIVISION_GROUPS, CREST_DIVISIONS, CREST_OVERLAYS, CREST_SHAPES, CREST_SYMBOL_GROUPS, CREST_SYMBOLS, crestExtras, crestOf, crestSVG, defaultCrest, THIRD_COLOR_DIVISIONS } from '../crest.js';
 import { awayKitOf, humanClub, KIT_COLLARS, KIT_COLORS, KIT_PATTERNS, KIT_SLEEVES, kitEditable, updateCrest, setFounded, clampFounded, foundedRange, playerOf, table } from '../../career/career.js';
 import { spielberichtStreng } from '../../career/spielbericht.js';
+import { VERBAND_CHOICES, verbandLeagues } from '../../career/verband.js';
 import { FINES, KIT_COST, MEMBER_FEE, SLOTS } from '../../career/finances.js';
 import { DESTINATIONS } from '../../career/trip.js';
 import { buildBlock, buildCost, buildWeeks, capacity, facilities, FACILITIES, FACILITY_GROUPS, QUEUE_MAX } from '../../career/facilities.js';
@@ -111,11 +112,21 @@ export const clubScreens = {
     return this.kitSide === 'away' ? this.draft.awayKit : this.draft.kit;
   },
 
+  // Landesverband: Auswahl nach Bundesland, darunter die Ligen von unten nach oben.
+  verbandBlock() {
+    const cur = this.career.verband ?? 'kanal';
+    const opts = [`<option value="kanal"${cur === 'kanal' ? ' selected' : ''}>${tr('Kanalbezirk (erfunden)', 'Canal District (fictional)')}</option>`, ...VERBAND_CHOICES().map((o) => `<option value="${o.id}"${cur === o.id ? ' selected' : ''}>${esc(o.label)}</option>`)].join('');
+    return `<div class="club-form verband-form"><label>${tr('Landesverband', 'State association')} <select data-verband>${opts}</select></label>
+      <p class="t-2">${tr('Bestimmt die Namen der Ligen (Quelle: Spielklassen je Verband). Orte und Vereine bleiben erfunden.', 'Sets the league names (source: divisions per association). Towns and clubs stay fictional.')}</p>
+      <p class="t-2 verband-leagues">${verbandLeagues(this.career)}</p></div>`;
+  },
+
   // Gründungsversammlung: Zu Karrierebeginn legst du Name, Trikot und Wappen fest – die Erstausstattung ist frei.
   founding() {
     return `<div class="club-panel founding">
         <h2>${tr('Gründungsversammlung', 'Founding meeting')}</h2>
         <p class="lead">${tr('Bevor der Ball rollt: Wie heißt dein Verein, in welchen Farben läuft er auf, und was steht auf dem Wappen? Die ersten Trikots zahlt der Förderverein. Später kostet ein neuer Satz Geld, das Wappen bleibt immer änderbar.', 'Before a ball is kicked: what is your club called, what colours does it play in, and what goes on the crest? The supporters\' club pays for the first kits. Later a new set costs money; the crest can always be changed.')}</p>
+        ${this.verbandBlock()}
         ${this.kitForm(true)}
         ${this.crestBlock(true)}
         <div class="actions founding-actions">

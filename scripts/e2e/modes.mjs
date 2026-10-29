@@ -345,7 +345,7 @@ export async function oldSave(b, file) {
 // Karrierestart: Trainer anlegen, Verein gründen (Name, Trikot, Wappen – gratis), Farbwahl ohne
 // Sprung nach oben; danach Ehrenämter selbst besetzen (aus dem Kader und per Aushang).
 export async function clubSetup(b) {
-  const ok = checker('Karrierestart: Gründung (Name, Trikot, Auswärtstrikot, Wappen), Scrollposition bei Farbwahl, Ehrenamt besetzen');
+  const ok = checker('Karrierestart: Gründung (Name, Verband, Trikot, Auswärtstrikot, Wappen), Scrollposition bei Farbwahl, Ehrenamt besetzen');
   const p = await page(b, 'port', { query: '?notitle&debug' });
   await p.click('.career button');
   await p.waitForTimeout(500);
@@ -388,6 +388,11 @@ export async function clubSetup(b) {
     }, sel);
     ok(kept.before > 0 && Math.abs(kept.after - kept.before) < 2, `Gründung: ${sel} springt (${kept.before} → ${kept.after})`);
   }
+  // Landesverband: Westfalen wählen – die Ligen darunter zeigen dessen Namen.
+  await p.selectOption('#club select[data-verband]', 'westfalen');
+  await p.waitForTimeout(200);
+  const vLine = await p.textContent('#club .verband-leagues');
+  ok(/Kreisliga A/.test(vLine) && /Bezirksliga/.test(vLine), `Verband: Ligennamen fehlen („${vLine}“)`);
   // Auswärtstrikot: umschalten, Trikotfarbe wählen – das Heimtrikot bleibt, wie es war.
   const homeShirt = await p.evaluate(() => JSON.parse(localStorage.getItem('sunday-league:career')).clubs.find((c) => c.human).kit.shirt);
   await click(p, '[data-action="kitSide"][data-value="away"]');
@@ -411,6 +416,7 @@ export async function clubSetup(b) {
   const saved = await p.evaluate(() => JSON.parse(localStorage.getItem('sunday-league:career')));
   const club = saved.clubs.find((c) => c.human);
   ok(club.short === 'FCT' && !!club.crest && !saved.founding, 'Kürzel/Wappen nicht gespeichert');
+  ok(saved.verband === 'westfalen', `Verband nicht gespeichert (${saved.verband})`);
   ok(saved.cash === cash0, `Erstausstattung hat Geld gekostet (${cash0} → ${saved.cash})`);
   // Ehrenamt: Wirt aus dem Kader, Platzwart per Aushang.
   await click(p, '[data-action="area"][data-value="team"]');

@@ -9,6 +9,7 @@ import { createRng } from '../core/rng.js';
 import { PITCHES } from '../sim/pitch.js';
 import { EXTRA_CLUBS, LEAGUES, MAX_LEVEL } from './clubs.js';
 import { poisson, QUICK } from './pokal.js';
+import { leagueTitle } from './verband.js';
 
 const hashSeed = (...parts) => parts.reduce((h, p) => (Math.imul(h ^ p, 0x9e3779b1) + 0x7f4a7c15) >>> 0, 0x2545f491); // wie career.js
 const stripSquad = ({ squad, human, ...def }) => def;
@@ -116,10 +117,10 @@ export function cpuMoves(career, ownOrder, pool) {
 }
 
 // Kreisblatt: Auf- und Absteiger rund um die Liga, in der der eigene Verein nächste Saison spielt.
-export function movesNotes(moves, level) {
+export function movesNotes(career, moves, level) {
   return moves
     .filter((m) => m.level === level || m.level === level - 1)
-    .map((m) => tr(`Kreisblatt: ${m.up} steigt in die ${LEAGUES[m.level + 1].name} auf, ${m.down} muss runter in die ${LEAGUES[m.level].name}.`, `District Gazette: ${m.up} go up to the ${LEAGUES[m.level + 1].name}, ${m.down} drop to the ${LEAGUES[m.level].name}.`));
+    .map((m) => tr(`Kreisblatt: ${m.up} steigt in die ${leagueTitle(career, m.level + 1)} auf, ${m.down} muss runter in die ${leagueTitle(career, m.level)}.`, `District Gazette: ${m.up} go up to the ${leagueTitle(career, m.level + 1)}, ${m.down} drop to the ${leagueTitle(career, m.level)}.`));
 }
 
 // Nach dem Saisonwechsel: Die eigene Liga hält ihre Vereinsliste aus den tatsächlichen Gegnern (Fusionen, neue Vereine).

@@ -13,6 +13,7 @@ import { homeView } from '../prefs.js';
 import { crestExtras, crestOf, crestSVG } from '../crest.js';
 import { relegationNeeded, relegationOf } from '../../career/relegation.js';
 import { LEAGUES } from '../../career/clubs.js';
+import { leagueTitle } from '../../career/verband.js';
 import { clubById, humanClub, kitChoice, leagueOf, humanFixture, playerOf, seasonOver, table } from '../../career/career.js';
 import { DESTINATIONS, tripChoose, tripStage, tripState, tripVerdict } from '../../career/trip.js';
 import { eventView, moodLabel, moodText } from '../../career/events.js';
@@ -206,7 +207,7 @@ export const homeScreens = {
     const me = humanClub(c).id;
     const home = tie.home === me;
     const opp = pokalClub(c, cup, home ? tie.away : tie.home);
-    const lv = (id) => levelName(cup.levels[id], LEAGUES[Math.min(5, cup.levels[id])]?.name);
+    const lv = (id) => levelName(cup.levels[id], leagueTitle(c, Math.min(5, cup.levels[id])));
     const oppLevel = cup.levels[opp.id];
     const myLevel = cup.levels[me];
     const why = kind === 'bund' ? (!home ? tr(' – ihr müsst zum Profi ins große Stadion', ' – you have to visit the professionals in their big stadium') : tr(' – Heimrecht für den Amateur, volle Hütte', ' – home advantage for the amateurs, packed ground')) : oppLevel > myLevel ? tr(' – der Höherklassige muss zu euch', ' – the higher-league side has to come to you') : oppLevel < myLevel ? tr(' – ihr müsst zum Klassentieferen', ' – you have to visit the lower-league side') : '';
@@ -259,10 +260,10 @@ export const homeScreens = {
     if (pos === 1 && level === 1) msg = tr('MEISTER! Aufstieg in die Kreisklasse C – eigener Rasenplatz, Schiri, 7 gegen 7. Die Runde im Vereinsheim geht aufs Haus.', 'CHAMPIONS! Promotion to District League C – your own grass pitch, a referee, 7-a-side. The round at the clubhouse is on the house.');
     else if (pos === 1 && level === 2) msg = tr('MEISTER der Kreisklasse C! Aufstieg in die Kreisklasse B – stärkere Gegner, mehr Zuschauer, mehr Geld.', 'District League C CHAMPIONS! Promotion to District League B – tougher opponents, bigger crowds, more money.');
     else if (pos === 1) msg = tr('MEISTER der Kreisklasse B! Ganz oben im Kanalbezirk. Die Schale bekommt einen Ehrenplatz im Vereinsheim.', 'District League B CHAMPIONS! The top of the Canal District. The trophy gets pride of place in the clubhouse.');
-    else if (last && level > 1) msg = tr(`Letzter Platz – Abstieg in die ${LEAGUES[level - 1].name}. Kopf hoch, nächstes Jahr geht's wieder rauf.`, `Bottom of the table – relegated to the ${LEAGUES[level - 1].name}. Chin up, next year we go again.`);
+    else if (last && level > 1) msg = tr(`Letzter Platz – Abstieg in die ${leagueTitle(c, level - 1)}. Kopf hoch, nächstes Jahr geht's wieder rauf.`, `Bottom of the table – relegated to the ${leagueTitle(c, level - 1)}. Chin up, next year we go again.`);
     else if (rel?.done) msg = rel.kind === 'up'
-      ? rel.won ? tr(`Vizemeister – und über die Relegation aufgestiegen (${rel.agg[0]}:${rel.agg[1]}${rel.pens ? `, i. E. ${rel.pens.ours}:${rel.pens.theirs}` : ''})! Ab jetzt ${LEAGUES[level + 1].name}.`, `Runners-up – and promoted via the play-off (${rel.agg[0]}-${rel.agg[1]}${rel.pens ? `, ${rel.pens.ours}-${rel.pens.theirs} on pens` : ''})! ${LEAGUES[level + 1].name} from now on.`) : tr(`Vizemeister, aber die Relegation verloren (${rel.agg[0]}:${rel.agg[1]}${rel.pens ? `, i. E. ${rel.pens.ours}:${rel.pens.theirs}` : ''}). Nächstes Jahr.`, `Runners-up, but lost the play-off (${rel.agg[0]}-${rel.agg[1]}${rel.pens ? `, ${rel.pens.ours}-${rel.pens.theirs} on pens` : ''}). Next year.`)
-      : rel.won ? tr(`Klassenerhalt in der Relegation (${rel.agg[0]}:${rel.agg[1]}${rel.pens ? `, i. E. ${rel.pens.ours}:${rel.pens.theirs}` : ''}). Durchatmen!`, `Survived in the play-off (${rel.agg[0]}-${rel.agg[1]}${rel.pens ? `, ${rel.pens.ours}-${rel.pens.theirs} on pens` : ''}). Deep breath!`) : tr(`Relegation verloren (${rel.agg[0]}:${rel.agg[1]}${rel.pens ? `, i. E. ${rel.pens.ours}:${rel.pens.theirs}` : ''}) – Abstieg in die ${LEAGUES[level - 1].name}.`, `Lost the play-off (${rel.agg[0]}-${rel.agg[1]}${rel.pens ? `, ${rel.pens.ours}-${rel.pens.theirs} on pens` : ''}) – relegated to the ${LEAGUES[level - 1].name}.`);
+      ? rel.won ? tr(`Vizemeister – und über die Relegation aufgestiegen (${rel.agg[0]}:${rel.agg[1]}${rel.pens ? `, i. E. ${rel.pens.ours}:${rel.pens.theirs}` : ''})! Ab jetzt ${leagueTitle(c, level + 1)}.`, `Runners-up – and promoted via the play-off (${rel.agg[0]}-${rel.agg[1]}${rel.pens ? `, ${rel.pens.ours}-${rel.pens.theirs} on pens` : ''})! ${leagueTitle(c, level + 1)} from now on.`) : tr(`Vizemeister, aber die Relegation verloren (${rel.agg[0]}:${rel.agg[1]}${rel.pens ? `, i. E. ${rel.pens.ours}:${rel.pens.theirs}` : ''}). Nächstes Jahr.`, `Runners-up, but lost the play-off (${rel.agg[0]}-${rel.agg[1]}${rel.pens ? `, ${rel.pens.ours}-${rel.pens.theirs} on pens` : ''}). Next year.`)
+      : rel.won ? tr(`Klassenerhalt in der Relegation (${rel.agg[0]}:${rel.agg[1]}${rel.pens ? `, i. E. ${rel.pens.ours}:${rel.pens.theirs}` : ''}). Durchatmen!`, `Survived in the play-off (${rel.agg[0]}-${rel.agg[1]}${rel.pens ? `, ${rel.pens.ours}-${rel.pens.theirs} on pens` : ''}). Deep breath!`) : tr(`Relegation verloren (${rel.agg[0]}:${rel.agg[1]}${rel.pens ? `, i. E. ${rel.pens.ours}:${rel.pens.theirs}` : ''}) – Abstieg in die ${leagueTitle(c, level - 1)}.`, `Lost the play-off (${rel.agg[0]}-${rel.agg[1]}${rel.pens ? `, ${rel.pens.ours}-${rel.pens.theirs} on pens` : ''}) – relegated to the ${leagueTitle(c, level - 1)}.`);
     else if (pos === 2 && relegationNeeded(c)) msg = tr('Vizemeister! Jetzt noch die Relegation – zwei Spiele um den Aufstieg.', 'Runners-up! Now the play-off – two games for promotion.');
     else if (relegationNeeded(c)) msg = tr('Vorletzter. Jetzt zählt es: Relegation um den Klassenerhalt.', 'Second from bottom. Now it counts: a play-off to stay up.');
     else if (pos === 2) msg = tr('Vizemeister! Nächstes Jahr greifen wir an.', 'Runners-up! Next year we go for it.');
@@ -291,8 +292,8 @@ export const homeScreens = {
     const need = relegationNeeded(c);
     const r = relegationOf(c);
     if (!need || r?.done) return null;
-    const target = LEAGUES[need.kind === 'up' ? need.other : need.level].name;
-    const opp = r?.opponent ?? { name: tr(`ein Verein aus der ${LEAGUES[need.other].name}`, `a club from the ${LEAGUES[need.other].name}`) };
+    const target = leagueTitle(c, need.kind === 'up' ? need.other : need.level);
+    const opp = r?.opponent ?? { name: tr(`ein Verein aus der ${leagueTitle(c, need.other)}`, `a club from the ${leagueTitle(c, need.other)}`) };
     const legs = r
       ? r.legs.map((l, i) => `<li>${i === 0 ? tr('Hinspiel', 'First leg') : tr('Rückspiel', 'Second leg')} ${l.home === 'relegation' ? tr('auswärts', 'away') : tr('zu Hause', 'at home')}: ${l.result ? `<b>${l.result.ours}:${l.result.theirs}</b>` : '–'}</li>`).join('')
       : '';

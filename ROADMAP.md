@@ -906,7 +906,10 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   - Sachsen: Sachsenliga → Sachsenklasse (3) → Kreisoberliga …; Thüringen: Thüringenliga → Landesklasse (3)
   - Nordrhein-Westfalen und Baden-Württemberg haben je drei Verbände, Rheinland-Pfalz zwei.
   Die unteren Ebenen (ab 8) stehen dort nur beispielhaft; je Verband vor dem Einbau bei der Verbandsseite prüfen.
-- Plan: Beim Start Bundesland (bzw. Verband) wählen; die Ligennamen und die Zahl der Stufen kommen aus einer Tabelle je
+- ~~Bundesland/Verband beim Start wählen, Ligennamen je Verband, regionale Vereinsnamen~~ – erledigt 2026-10-29 (verband.js): 21 Verbände
+  in der Gründungsversammlung, Ligennamen nach der Spielklassen-Tabelle der englischen Wikipedia (Stufe 5 = 8. Liga), regionale
+  Vereinsnamen mit typischen Endungen und erfundenen Kanal-Stämmen. Offen: Dialektfärbung bei Spitznamen und Ereignistexten.
+- Plan (ursprünglich): Beim Start Bundesland (bzw. Verband) wählen; die Ligennamen und die Zahl der Stufen kommen aus einer Tabelle je
   Verband. Heute gibt es 5 Stufen (Freizeitliga, Kreisklasse C, Kreisklasse B, Kreisliga A, Bezirksliga).
   Nach oben erweitern: Landesliga/Verbandsliga, Oberliga, Regionalliga, später Profibereich.
 - Namen im Profibereich: keine geschützten Namen (DFB, DFL, „Bundesliga“-Marke) – wie beim Bundespokal eigene

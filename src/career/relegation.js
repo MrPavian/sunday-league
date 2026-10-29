@@ -16,6 +16,7 @@ import { coachAway, isCoach } from './personal.js';
 import { isBanned } from './suspensions.js';
 import { chronicle } from './sagas.js';
 import { membersOf } from './pyramid.js';
+import { leagueTitle } from './verband.js';
 
 const RELEGATION_ID = 'relegation';
 
@@ -173,7 +174,7 @@ export function recordRelegationLeg(career, prepared) {
   } else r.won = r.agg[0] > r.agg[1];
   r.done = true;
   adjustMood(career, r.won ? 0.15 : -0.1);
-  const league = LEAGUES[r.kind === 'up' ? r.otherLevel : r.fromLevel].name;
+  const league = leagueTitle(career, r.kind === 'up' ? r.otherLevel : r.fromLevel);
   chronicle(
     career,
     r.kind === 'up'
