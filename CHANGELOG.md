@@ -6,7 +6,7 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
-## 2026-10-29-3 – Ligen bis zur Oberliga, Bundesland, voller Bundespokal und Winterpause
+## 2026-10-29-3 – Ligen bis zur Oberliga, Bundesland, voller überregionaler Pokal und Winterpause
 
 ### Neu
 - **Bundesland wählen:** In der Gründungsversammlung wählst du deinen Landesverband (21 zur Auswahl). Die Ligen heißen dann wie dort, z. B. in Westfalen Kreisliga C bis Oberliga Westfalen. Die Vereine bekommen regional klingende, erfundene Namen. Die Freizeitliga bleibt die Freizeitliga.

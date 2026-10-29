@@ -6,7 +6,7 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
-## 2026-10-29-3 – Leagues up to the Oberliga, choose your state, full National Cup and winter break
+## 2026-10-29-3 – Leagues up to the Oberliga, choose your state, full nationwide cup and winter break
 
 ### New
 - **Choose your state:** At the founding meeting you pick your regional association (21 to choose from). The leagues are then named as they are there, e.g. in Westphalia from Kreisliga C to Oberliga Westfalen. Clubs get made-up names that sound local. The Sunday league stays the Sunday league.
