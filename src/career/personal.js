@@ -12,6 +12,7 @@ import { lateOr, statusFor } from './spielbericht.js';
 import { jobName } from '../data/names.js';
 import { trainingRelief } from './facilities.js';
 import { appointTreasurer } from './clublife.js';
+import { addFromYouth } from './women.js';
 
 const FAMILIES = [
   { text: tr('verheiratet, zwei Kinder', 'married, two children'), kids: 2, partner: 'Deine Frau' },
@@ -200,6 +201,7 @@ export function childrenGrowUp(c) {
       if (age >= 16 && !child.inFrauen && c.saga?.frauen) {
         child.inFrauen = true;
         c.saga.frauen.strength = Math.min(0.9, c.saga.frauen.strength + 0.05);
+        addFromYouth(c, { name: `${child.name} ${k.last ?? ''}`.trim(), talent: child.talent ?? 0.45, age }); // women.js
         c.saga.chronicle?.push({ season: c.season, text: tr(`${child.name} ${k.last ?? ''} (${age}), Tochter des Trainers, spielt jetzt im Frauenteam.`, `${child.name} ${k.last ?? ''} (${age}), the manager's daughter, now plays in the women's team.`) });
         notes.push(tr(`${child.name} (${age}) spielt ab sofort im Frauenteam. Die Kapitänin ist begeistert.`, `${child.name} (${age}) now plays in the women's team. The captain is thrilled.`));
       }

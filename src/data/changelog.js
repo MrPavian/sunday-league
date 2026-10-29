@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-29-9',
+    de: { title: 'Frauenteam mit Kader und Liga', items: ['Das Frauenteam hat jetzt 16 echte Spielerinnen, eine Trainerin und eine eigene Liga mit Tabelle – Verein → Frauen.', 'Ergebnisse jede Woche in der Chatgruppe, Meister steigen auf.', 'Mädchen aus der Jugend und deine Töchter rücken mit 16 als Spielerinnen auf.'] },
+    en: { title: "Women's team with squad and league", items: ["The women's team now has 16 real players, a coach and its own league table – Club → Women.", 'Results every week in the group chat, champions go up.', 'Girls from the youth section and your daughters join at 16 as players.'] },
+  },
+  {
     id: '2026-10-29-8',
     de: { title: 'Bunte Trikots, Hallenuhr und Hallentore', items: ['Deine bunten Trikots bleiben: Beißt sich nur der Torwart, zieht sich der Torwart um – nicht die ganze Mannschaft.', 'Die Hallenuhr läuft 2 × 20 Minuten wie im Futsal statt bis zur 90.', 'Rot-weiße Handballtore und leichte Fangnetze in der Halle – man sieht, wer vor dem Tor steht.'] },
     en: { title: 'Colourful kits, indoor clock and indoor goals', items: ['Your colourful kits stay on: if only the keeper clashes, the keeper changes – not the whole team.', 'The indoor clock runs 2 × 20 minutes like futsal instead of up to 90.', 'Red-and-white handball goals and light catch nets indoors – you can see who is in front of goal.'] },

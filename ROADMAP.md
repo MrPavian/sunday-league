@@ -860,8 +860,11 @@ selbst setzen, Taktik/Aufstellung lesend; Spiele von der Tribüne, im Liveticker
 als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst fehlt noch).
 
 **Neue Mannschaften**
-- **Frauenteam** wahlweise: im Spiel als Option gründen, wenn genug Geld vorhanden ist (Startkosten, Trikots,
-  Trainerin, Platzzeiten), eigener Kader und eigene Liga; Mädchen aus der Jugend rücken auf.
+- ~~**Frauenteam** wahlweise: im Spiel als Option gründen, wenn genug Geld vorhanden ist (Startkosten, Trikots,
+  Trainerin, Platzzeiten), eigener Kader und eigene Liga; Mädchen aus der Jugend rücken auf.~~ – erledigt 2026-10-29
+  (Nutzerentscheid: verwaltet und simuliert, ohne 3D-Spiele; `src/career/women.js`, Reiter Verein → Frauen): 16 Spielerinnen,
+  Trainerin, eigene Liga mit acht Mannschaften (Kreisliga bis Verbandsliga, Auf- und Abstieg), Ergebnisse parallel zu den
+  Herren, Schiri-Spesen der Frauen (Westfalen 2025/26). Offen: 3D-Spiele mit Spielerinnen-Modellen (Animation und Grafik).
 
 **Offene Punkte aus 11.1–11.8 abarbeiten**
 - ~~Großfeld: zu hohe Torquote je Schuss (20 % statt real 10–12 %)~~ – eingemessen 2026-10-28 (Torwart lenkt nicht mehr ins eigene
@@ -964,7 +967,7 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   aufklappbare Bereiche gliedern. Zuerst messen, welche Seiten auf dem Handy am längsten sind.
 - **Hinterhof neu (vom Nutzer ausdrücklich gewünschte andere Kameraperspektive):** Blick wie aus dem 1. oder 2. Stock des
   Hauses auf den Hof – steiler von oben, von der Hauswandseite, ggf. Fensterbrett/Rahmen im Vordergrund. Nur der Hinterhof.
-- **Jugendspielerinnen → Frauenteam:** Heute erhöhen Mädchen mit 16 nur einen abstrakten Stärkewert (`saga.frauen`), ohne
+- ~~**Jugendspielerinnen → Frauenteam:**~~ erledigt 2026-10-29 (women.js `addFromYouth`). Bisher: Heute erhöhen Mädchen mit 16 nur einen abstrakten Stärkewert (`saga.frauen`), ohne
   Frauenteam verschwinden sie. Mit dem echten Frauenteam (11.9) als echte Spielerinnen in dessen Kader übernehmen.
 - **Übergang Amateur → Profi (Vorschlag, Entscheidung später):** schrittweise ab Oberliga (erste Vertragsspieler),
   Regionalliga (Lizenzauflagen: Stadion, Flutlicht, Finanznachweis), Profibereich (hauptamtlich).

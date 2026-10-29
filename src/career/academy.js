@@ -5,6 +5,7 @@
 import { createRng } from '../core/rng.js';
 import { tr } from '../core/i18n.js';
 import { girlName, lastName, personName } from '../data/origins.js';
+import { addFromYouth } from './women.js';
 import { generatePlayer, ratePlayer } from '../sim/generator.js';
 import { book } from './finances.js';
 import { addCustomPlayer, humanClub, maxSquad, playerOf } from './career.js';
@@ -166,6 +167,7 @@ export function seasonAcademy(c) {
     if (k.girl) {
       if (c.saga?.frauen) {
         c.saga.frauen.strength = Math.min(0.9, c.saga.frauen.strength + k.talent * 0.05);
+        addFromYouth(c, { name: k.name, talent: k.talent, age: k.age }); // als echte Spielerin in den Kader (women.js)
         notes.push(tr(`${k.name} wechselt aus der Jugend ins Frauenteam.`, `${k.name} moves up from the youth section to the women's team.`));
       }
       continue;

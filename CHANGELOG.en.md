@@ -6,6 +6,12 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-29-9 – Women's team with squad and league
+
+### New
+- **Women's team with squad and league:** If you have founded a women's team, you will now find it under Club → Women: 16 players with name, age, position, rating and portrait, a coach and the captain from the founding. They play in their own eight-team league, on Sundays alongside the first team; results arrive in the group chat. Champions go up (as far as the regional league), the bottom side goes down. Home games cost referee fees as for women's football in Westphalia.
+- **From the youth section to the women's team:** Girls from the youth section and your daughters join the squad as real players at 16. In summer some stop and new players join.
+
 ## 2026-10-29-8 – Colourful kits, indoor clock and indoor goals
 
 ### Fixed

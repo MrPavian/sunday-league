@@ -5,7 +5,8 @@
 // Einträge als Namensraum-Import (`import * as x from './x.js'`), damit Kreisimporte mit career.js unschädlich sind.
 import * as transfers from './transfers.js'; // Transfermarkt
 import * as oldboys from './oldboys.js'; // Alte Herren
-export const FEATURES = [transfers, oldboys];
+import * as women from './women.js'; // Frauenteam
+export const FEATURES = [transfers, oldboys, women];
 
 export function runHooks(name, career, ...args) {
   for (const f of FEATURES) f[name]?.(career, ...args);

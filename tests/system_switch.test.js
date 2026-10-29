@@ -54,7 +54,7 @@ describe('Systemwechsel im Spiel', () => {
     expect(gap(a)).toBeLessThan(gap(b)); // näher an den neuen Grundpositionen als ohne Umstellung
     while (a.phase !== 'ended') stepMatch(a, undefined, 1 / 60);
     expect(a.score.every(Number.isFinite)).toBe(true); // läuft ohne Fehler zu Ende
-  }, 60000);
+  }, 120000); // ein ganzes Großfeldspiel: allein rund 59 s gemessen (2026-10-29), im vollen Lauf mit allen Workern länger
 
   it('nach einem Platzverweis: weniger Spieler als Plätze, jeder bekommt trotzdem einen', () => {
     const m = createMatch({ seed: 4, pitch: PITCHES.rasenplatz, human: false });

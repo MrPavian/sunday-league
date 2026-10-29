@@ -43,6 +43,7 @@ import { festivalScreens } from './clubhouse/festival.js';
 import { teamScreens } from './clubhouse/team.js';
 import { transferScreens } from './clubhouse/transfers.js';
 import { oldBoysScreens } from './clubhouse/oldboys.js';
+import { womenScreens } from './clubhouse/women.js';
 import { hex, dartPoints, leagueName } from './clubhouse/shared.js';
 
 
@@ -52,7 +53,7 @@ const AREAS = [
   { id: 'home', icon: 'home', label: () => tr('Heute', 'Today'), tabs: ['home'] },
   { id: 'team', icon: 'team', label: () => tr('Mannschaft', 'Squad'), tabs: ['squad', 'lineup', 'tactic', 'training', 'youth', 'transfers'] },
   { id: 'season', icon: 'season', label: () => tr('Saison', 'Season'), tabs: ['table', 'fixtures', 'cup'] },
-  { id: 'club', icon: 'club', label: () => tr('Verein', 'Club'), tabs: ['cash', 'club', 'office', 'oldboys', 'museum'] }, // 'office' (Präsidium) nur nach dem Traineramt, siehe visibleTabs
+  { id: 'club', icon: 'club', label: () => tr('Verein', 'Club'), tabs: ['cash', 'club', 'office', 'oldboys', 'women', 'museum'] }, // 'office' (Präsidium) nur nach dem Traineramt, 'women' nur mit Frauenteam, siehe visibleTabs
   { id: 'pub', icon: 'pub', label: () => tr('Kneipe', 'Pub'), tabs: ['pub'] },
   { id: 'phone', icon: 'phone', label: () => tr('Handy', 'Phone'), tabs: ['chat'] },
 ];
@@ -71,11 +72,12 @@ const TAB_LABELS = () => ({
   museum: tr('Museum', 'Museum'),
   office: tr('Präsidium', 'President'),
   oldboys: tr('Alte Herren', 'Old boys'),
+  women: tr('Frauen', 'Women'),
   cash: tr('Kasse', 'Kitty'),
   fixtures: tr('Spielplan', 'Fixtures'),
 });
 // Das Präsidium gibt es erst nach der Trainereinstellung (president.js).
-const visibleTabs = (area, c) => area.tabs.filter((t) => t !== 'office' || isPresident(c));
+const visibleTabs = (area, c) => area.tabs.filter((t) => (t !== 'office' || isPresident(c)) && (t !== 'women' || !!c.women));
 export const areaOfTab = (tab) => AREAS.find((a) => a.tabs.includes(tab)) ?? AREAS[0];
 export const CLUB_AREAS = AREAS;
 
@@ -378,6 +380,8 @@ export class Clubhouse {
         this.h.onChange();
       } else if (action.startsWith('ah')) {
         if (this.ahAction(action, value)) this.h.onChange(); // Alte Herren (clubhouse/oldboys.js)
+      } else if (action.startsWith('wo')) {
+        if (this.woAction(action, value)) this.h.onChange(); // Frauenteam (clubhouse/women.js)
       } else if (action.startsWith('tf')) {
         if (this.tfAction(action, value, t)) this.h.onChange(); // Transfermarkt (clubhouse/transfers.js)
       } else if (action in this.h) return this.h[action](value);
@@ -610,6 +614,7 @@ export class Clubhouse {
     const over = seasonOver(c);
     const roundNo = Math.min(c.round + 1, c.fixtures.length);
     if (this.tab === 'office' && !isPresident(c)) this.tab = 'club'; // das Präsidium gibt es erst nach der Trainereinstellung
+    if (this.tab === 'women' && !c.women) this.tab = 'club';
     if (this.tab === 'home' || !this[`tab_${this.tab}`]) this.tab = 'home';
     const area = areaOfTab(this.tab);
     this.lastTab[area.id] = this.tab;
@@ -667,4 +672,4 @@ export class Clubhouse {
 }
 
 // Bildschirme je Bereich (src/ui/clubhouse/*): Methoden mit demselben this wie oben.
-Object.assign(Clubhouse.prototype, homeScreens, teamScreens, transferScreens, oldBoysScreens, seasonScreens, clubScreens, officeScreens, phoneScreens, pubScreens, festivalScreens);
+Object.assign(Clubhouse.prototype, homeScreens, teamScreens, transferScreens, oldBoysScreens, womenScreens, seasonScreens, clubScreens, officeScreens, phoneScreens, pubScreens, festivalScreens);

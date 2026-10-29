@@ -287,7 +287,7 @@ export function sagaSeasonEnd(c, { level }) {
   }
 
   const fr = s.frauen;
-  if (fr && fr.founded < c.season) {
+  if (fr && fr.founded < c.season && !c.women) { // mit echtem Kader rechnet women.js
     const pos = Math.max(1, Math.min(8, Math.round(8 - fr.strength * 8 + rng.range(-1.5, 1.5))));
     fr.seasons.push({ season: c.season, pos });
     fr.strength = Math.min(0.9, fr.strength + 0.05);

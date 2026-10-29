@@ -6,6 +6,12 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-29-9 – Frauenteam mit Kader und Liga
+
+### Neu
+- **Frauenteam mit Kader und Liga:** Wer ein Frauenteam gegründet hat, findet es jetzt unter Verein → Frauen: 16 Spielerinnen mit Namen, Alter, Position, Stärke und Porträt, eine Trainerin und die Kapitänin aus der Gründung. Gespielt wird in einer eigenen Liga mit acht Mannschaften, sonntags parallel zur Ersten; die Ergebnisse kommen in die Chatgruppe. Meister steigen auf (bis zur Verbandsliga), Letzte steigen ab. Heimspiele kosten Schiri-Spesen wie bei den Frauen in Westfalen.
+- **Aus der Jugend ins Frauenteam:** Mädchen aus der Jugend und deine Töchter kommen mit 16 als echte Spielerinnen in den Kader. Im Sommer hören manche auf, Neue kommen dazu.
+
 ## 2026-10-29-8 – Bunte Trikots, Hallenuhr und Hallentore
 
 ### Behoben
