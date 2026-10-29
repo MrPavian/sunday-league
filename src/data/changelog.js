@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-29-2',
+    de: { title: 'Systemwechsel im laufenden Spiel', items: ['Im Taktik-Blatt an der Seitenlinie und im Liveticker lässt sich das System während des Spiels umstellen.', 'Die Spieler laufen ihre neuen Positionen an – bis alle stehen, wackelt die Ordnung.'] },
+    en: { title: 'Change system during the match', items: ['In the touchline tactics sheet and in the live ticker you can change your system during the match.', 'The players run to their new positions – until everyone is in place, the shape wobbles.'] },
+  },
+  {
     id: '2026-10-29',
     de: { title: 'Ecken: Torwart fängt Flanken, Abwehr deckt eng', items: ['Auf dem Großfeld fängt der Torwart Flanken in den Fünfmeterraum ab.', 'Verteidiger gehen mit ihrem Mann zum Ball; ein echtes Kopfballduell entscheidet, wer köpft.', 'Tore nach Ecken auf dem Großfeld: etwa jede elfte statt jede siebte Ecke.'] },
     en: { title: 'Corners: keeper claims crosses, tighter marking', items: ['On the full-size pitch the goalkeeper claims crosses into the six-yard box.', 'Defenders go to the ball with their man; a real aerial duel decides who heads it.', 'Goals from corners on the full-size pitch: about one in eleven instead of one in seven.'] },

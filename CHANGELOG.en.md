@@ -6,6 +6,11 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-29-2 – Change system during the match
+
+### New
+- **Change your system mid-match:** In the tactics sheet on the touchline and in the live ticker you can pick a different system, e.g. from 2-3-1 to 3-2-1. Each player takes the spot in the new formation closest to his old one and runs there – until everyone is in place, the shape wobbles. A player moved out of position plays a little weaker there.
+
 ## 2026-10-29 – Corners: keeper claims crosses, tighter marking
 
 ### Improved

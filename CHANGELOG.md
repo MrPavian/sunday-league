@@ -6,6 +6,11 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-29-2 – Systemwechsel im laufenden Spiel
+
+### Neu
+- **System umstellen während des Spiels:** Im Taktik-Blatt an der Seitenlinie und im Liveticker wählst du ein anderes System, z. B. von 2-3-1 auf 3-2-1. Jeder Spieler übernimmt den Platz der neuen Formation, der seinem bisherigen am nächsten liegt, und läuft ihn an – bis alle stehen, wackelt die Ordnung. Muss einer dabei auf eine fremde Position, spielt er dort etwas schwächer.
+
 ## 2026-10-29 – Ecken: Torwart fängt Flanken, Abwehr deckt eng
 
 ### Verbessert
