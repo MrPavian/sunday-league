@@ -952,8 +952,8 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   - Fällt weg: Absagen wegen Arbeit, Platzpflege durch Helfer, Ehrenamtsgeschichten, Vereinsfest als Geldquelle.
   - Mit der Zeit dazu (vom Nutzer, 2026-10-22): zweite Mannschaft (U23) und U19 als eigene Teams mit eigener Liga;
     Durchlässigkeit Jugend → U19 → U23 → Profikader, Einsätze von Profis in der U23 (Spielpraxis nach Verletzung).
-- **Systemwechsel im laufenden Spiel** (vom Nutzer gewünscht, 2026-10-22): Formation (z. B. 3-3 → 2-3-1) an der Seitenlinie
-  und im Liveticker ändern; heute nur vor dem Spiel. Spieler laufen ihre neuen Positionen an, Umstellung kostet kurz Ordnung.
+- ~~**Systemwechsel im laufenden Spiel**~~ – erledigt 2026-10-29: im Taktik-Blatt an der Seitenlinie und im Liveticker
+  (plan.js setSystem). Jeder bekommt den nächstgelegenen Platz der neuen Formation, die Spieler laufen ihre Positionen an.
 
 ### 11.12 Kneipe und Vereinsheim in 3D (vom Nutzer gewünscht, 2026-10-28)
 - Kneipe bzw. Vereinsheim als begehbarer 3D-Raum im Stil des Spiels (Pixel-Shader, Low-Poly-Figuren wie auf dem Platz),

@@ -9,7 +9,9 @@
 import { clamp } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
 import { isBad, isGood } from './bonds.js';
-import { STYLES } from './tactics.js';
+import { formationSpot } from './formation.js';
+import { applyPositionMalus } from './position.js';
+import { STYLES, systemFormation, systemsFor } from './tactics.js';
 
 // Neue Stellgrößen, die nur Befehle setzen. Neutral = Verhalten wie bisher.
 //   focus     – Angriffsseite: -1 links … +1 rechts (in Spielrichtung), 0 frei
@@ -108,6 +110,50 @@ export function setStyle(m, team, style) {
   m.plan[team] = { ...m.plan[team], style };
   if (m.modsCache) m.modsCache[team] = null;
   (m.decisions ??= []).push({ t: m.time, half: m.half, team, group: 'style', value: style, before, by: 'coach' });
+}
+
+// System (Formation) während des Spiels wechseln (vom Nutzer gewünscht, 2026-10-22): Jeder Feldspieler bekommt den Platz
+// der neuen Formation, der seinem bisherigen am nächsten liegt – bevorzugt einer auf seiner eigenen Position. Die Spieler
+// laufen ihre neuen Grundpositionen von selbst an; bis sie dort sind, stimmt die Ordnung nicht (kein zusätzlicher Abzug).
+// Nach einem Platzverweis bleiben die Plätze frei, die am schlechtesten passen. Gibt true zurück, wenn umgestellt wurde.
+export function setSystem(m, team, system, { by = 'coach' } = {}) {
+  const format = m.pitch.format ?? 5;
+  if (!systemsFor(format)[system] || m.plan[team]?.system === system) return false;
+  const entries = systemFormation(format, system).map((e, i) => ({ ...e, i }));
+  const mine = m.players.filter((p) => p.team === team);
+  const free = new Set(entries.map((e) => e.i));
+  const assign = new Map();
+  const keeper = mine.find((p) => p.role === 'gk');
+  const gkEntry = entries.find((e) => e.role === 'gk');
+  if (keeper && gkEntry) {
+    assign.set(keeper, gkEntry);
+    free.delete(gkEntry.i);
+  }
+  const cost = (p, e) => {
+    const f = p.formationEntry ?? { x: -0.4, z: 0 };
+    return Math.abs(f.x - e.x) * 2 + Math.abs(f.z - e.z) + (e.role === p.position ? 0 : 0.5);
+  };
+  const outfield = mine.filter((p) => p !== keeper);
+  const pairs = [];
+  for (const p of outfield) for (const e of entries) if (e.role !== 'gk') pairs.push({ p, e, c: cost(p, e) });
+  pairs.sort((a, b) => a.c - b.c || a.e.i - b.e.i);
+  for (const { p, e } of pairs) {
+    if (assign.has(p) || !free.has(e.i)) continue;
+    assign.set(p, e);
+    free.delete(e.i);
+  }
+  for (const [p, e] of assign) {
+    const { i, ...entry } = e;
+    p.formationEntry = entry;
+    if (p.role !== 'gk') p.role = entry.role;
+    p.home = formationSpot(m.pitch, entry, team, m.sidesSwapped);
+    applyPositionMalus(p);
+  }
+  const before = m.plan[team]?.system ?? null;
+  m.plan[team] = { ...m.plan[team], system };
+  (m.decisions ??= []).push({ t: m.time, half: m.half, team, group: 'system', value: system, before, by });
+  m.events?.push({ type: 'system', team, value: system, before, by });
+  return true;
 }
 
 // Ebene 2 – Wie gut setzt dieser Spieler eine Anweisung um? Wer Fußball versteht

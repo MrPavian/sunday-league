@@ -1,8 +1,8 @@
 import { tr } from '../core/i18n.js';
 import { applySimple, GROUP_LABELS, ORDERS, packLines, simpleActive, SIMPLE, SIMPLE_IDS } from '../sim/commands.js';
 import { activeShouts, shout, SHOUTS } from '../sim/coach.js';
-import { execution, ORDER_GROUPS, orderOf, planTarget, setOrder, setStyle } from '../sim/plan.js';
-import { STYLES } from '../sim/tactics.js';
+import { execution, ORDER_GROUPS, orderOf, planTarget, setOrder, setStyle, setSystem } from '../sim/plan.js';
+import { STYLES, systemsFor } from '../sim/tactics.js';
 import { button, esc, haptic } from './ds.js';
 import { setCoachLevel } from './prefs.js';
 import { TacticBoard } from './TacticBoard.js';
@@ -38,6 +38,8 @@ export class PlanPanel {
         if (wasOn) setOrder(m, this.team, g, null, { by: 'coach' });
         else shout(m, value, { force: true });
         this.preview = { label: SHOUTS[value].label, text: wasOn ? tr('aufgehoben', 'called off') : (ORDERS[`${g}:${v}`]?.hint ?? '') };
+      } else if (action === 'system') {
+        if (setSystem(m, this.team, value)) this.preview = { label: systemsFor(m.pitch.format)[value].label, text: tr('Die Spieler laufen ihre neuen Positionen an – bis alle stehen, wackelt die Ordnung.', 'The players head for their new positions – until everyone is in place, the shape wobbles.') };
       } else if (action === 'style') {
         setStyle(m, this.team, value);
         this.preview = { label: STYLES[value].label, text: STYLES[value].desc };
@@ -113,11 +115,15 @@ export class PlanPanel {
         .join('');
       return `<div class="plan-group"><h4>${GROUP_LABELS[g]}</h4><div class="ui-seg">${seg}</div></div>`;
     }).join('');
+    const system = m.plan?.[team]?.system;
+    const systems = Object.entries(systemsFor(m.pitch.format)).map(([id, s]) => `<button data-action="system" data-value="${id}" aria-pressed="${system === id}" class="${system === id ? 'active' : ''}">${s.label}</button>`).join('');
     const styles = Object.entries(STYLES).map(([id, s]) => `<button data-action="style" data-value="${id}" aria-pressed="${style === id}" class="${style === id ? 'active' : ''}" title="${esc(s.desc)}">${s.label}</button>`).join('');
     this.root.querySelector('.tp-controls').innerHTML = `
       <p class="ui-section-title">${tr('Aktiv', 'Active')}</p>
       <div class="ui-chips">${active.length ? active.map((a) => `<span class="ui-chip">${a}</span>`).join('') : `<span class="ui-chip plain">${tr('nur der Grundstil', 'base style only')} · ${STYLES[style].label}</span>`}</div>
       ${this.preview ? `<p class="tp-preview" aria-live="polite"><b>${esc(this.preview.label)}</b> ${esc(this.preview.text)}</p>` : ''}
+      <p class="ui-section-title">${tr('System', 'System')}</p>
+      <div class="chips systems">${systems}</div>
       <p class="ui-section-title">${tr('Zurufe', 'Shouts')}</p>
       <div class="chips shouts">${shouts}</div>
       <p class="ui-section-title">${tr('Trainerkarten', 'Coach cards')}</p>

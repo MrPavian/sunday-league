@@ -152,13 +152,26 @@ export async function browserFirstRun(b, size) {
 }
 
 export async function tickerRound(b) {
-  const ok = checker('Karriere-Runde per Liveticker bis zur nächsten Woche');
+  const ok = checker('Karriere-Runde per Liveticker bis zur nächsten Woche, Systemwechsel im Ticker');
   const p = await page(b, 'land');
   await newCareer(p);
   await click(p, '[data-action="area"][data-value="home"]');
   await click(p, '[data-action="onSimulate"]');
   await p.waitForTimeout(1500);
   ok(await visible(p, 'ticker'), 'Liveticker öffnet nicht');
+  // Systemwechsel im Ticker (plan.js setSystem): anderes System wählen – Kopfzeile und Kommentar zeigen es.
+  for (let i = 0; i < 40 && !(await p.$('#ticker [data-action="system"]')); i++) {
+    await p.evaluate(() => document.querySelector('#ticker .decision button')?.click()); // offene Entscheidung zuerst beantworten
+    await p.waitForTimeout(250);
+  }
+  const sys = await p.evaluate(() => {
+    const btn = [...document.querySelectorAll('#ticker [data-action="system"]')].find((x) => !x.classList.contains('active'));
+    if (!btn) return null;
+    const label = btn.textContent.trim();
+    btn.click();
+    return { label, plans: document.querySelector('#ticker .plans')?.textContent ?? '', line: [...document.querySelectorAll('#ticker .lines li')].some((li) => li.textContent.includes(label)), active: document.querySelector('#ticker [data-action="system"].active')?.textContent.trim() };
+  });
+  ok(sys && sys.plans.includes(sys.label) && sys.line && sys.active === sys.label, `Liveticker: Systemwechsel wirkt nicht (${JSON.stringify(sys)})`);
   for (let i = 0; i < 300 && (await visible(p, 'ticker')); i++) {
     await p.evaluate(() => document.querySelector('#ticker .decision button, #ticker [data-action="done"], #ticker [data-action="skip"]')?.click());
     await p.waitForTimeout(300);

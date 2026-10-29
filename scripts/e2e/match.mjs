@@ -3,7 +3,7 @@
 import { checker, launch, leaveHalftime, page } from './lib.mjs';
 
 async function trainerFlow(b) {
-  const ok = checker('Trainer-Spiel: Taktik, Info, Wechsel, Lagekarte, Halbzeit, Abpfiff');
+  const ok = checker('Trainer-Spiel: Taktik, Systemwechsel, Info, Wechsel, Lagekarte, Halbzeit, Abpfiff');
   const p = await page(b, 'land', { query: '?venue=ascheplatz&notitle&trainer&debug&dauer=60&seed=3', store: { 'sunday-league:coachlevel': 'profi' } });
   await p.waitForTimeout(1500);
   const t = () => p.evaluate(() => __sl.match.time);
@@ -16,6 +16,15 @@ async function trainerFlow(b) {
   await p.click('.plan-panel [data-action="shout"][data-value="press"]');
   await p.waitForTimeout(400);
   ok((await p.evaluate(() => __sl.match.orders?.[0]?.press)) === 'hoch', 'Zuruf „Pressing" setzt keinen Befehl');
+  // Systemwechsel an der Seitenlinie: anderes System antippen – Plan und Grundpositionen ändern sich.
+  const sys = await p.evaluate(() => {
+    const btn = [...document.querySelectorAll('.plan-panel [data-action="system"]')].find((x) => !x.classList.contains('active'));
+    return btn ? { id: btn.dataset.value, before: __sl.match.plan[0].system } : null;
+  });
+  if (sys) await p.click(`.plan-panel [data-action="system"][data-value="${sys.id}"]`);
+  await p.waitForTimeout(400);
+  const after = await p.evaluate(() => ({ system: __sl.match.plan[0].system, active: document.querySelector('.plan-panel [data-action="system"].active')?.dataset.value }));
+  ok(sys && after.system === sys.id && after.active === sys.id, `Taktik-Blatt: Systemwechsel wirkt nicht (${JSON.stringify({ sys, after })})`);
   await p.click('.plan-panel footer [data-action="close"]');
   await p.waitForTimeout(600);
   t0 = await t();

@@ -4,7 +4,8 @@ import { stepMatch } from '../sim/match.js';
 import { createCommentator, tickerMinute } from '../sim/commentary.js';
 import { answer, checkDecision, createTouchline, mentalityLabel } from '../sim/touchline.js';
 import { shout, SHOUTS } from '../sim/coach.js';
-import { tacticLabel } from '../sim/tactics.js';
+import { systemsFor, tacticLabel } from '../sim/tactics.js';
+import { setSystem } from '../sim/plan.js';
 import { coachReviewHtml } from './coachReview.js';
 
 const hex = (n) => `#${(n ?? 0x888888).toString(16).padStart(6, '0')}`;
@@ -24,6 +25,7 @@ export class Ticker {
       else if (t.dataset.action === 'done') this.finish();
       else if (t.dataset.action === 'decide') this.decide(Number(t.dataset.value));
       else if (t.dataset.action === 'shout') this.call(t.dataset.value);
+      else if (t.dataset.action === 'system') this.reshape(t.dataset.value);
     });
     window.addEventListener('keydown', (e) => {
       if (this.root.hidden) return;
@@ -90,6 +92,18 @@ export class Ticker {
     m.events.length = 0;
     this.commentator.lines.push({ minute: tickerMinute(m), text: tr(`Von der Seitenlinie: „${SHOUTS[type].label}“`, `From the touchline: “${SHOUTS[type].label}”`), kind: 'coach' });
     this.update();
+  }
+
+  // Systemwechsel von der Seitenlinie (plan.js setSystem): Die Spieler laufen ihre neuen Positionen an.
+  reshape(system) {
+    const m = this.match;
+    if (!this.tl || m.phase === 'ended' || !setSystem(m, this.tl.team, system)) return;
+    m.events.length = 0;
+    const label = systemsFor(m.pitch.format)[system].label;
+    this.commentator.lines.push({ minute: tickerMinute(m), text: tr(`Von der Seitenlinie: Umstellung auf ${label}`, `From the touchline: switching to ${label}`), kind: 'coach' });
+    this.root.querySelector('.plans').textContent = m.teams.map((t, i) => `${t.short ?? t.name}: ${tacticLabel(m.plan?.[i], m.pitch.format)}`).join(' – ');
+    this.update();
+    this.updateControls();
   }
 
   decide(choice, resume = true) {
@@ -202,7 +216,12 @@ export class Ticker {
     const calls = this.tl
       ? `<div class="calls"><span>${tr('Reinrufen', 'Shout')}:</span>${['press', 'back', 'forward', 'wide'].map((id) => `<button data-action="shout" data-value="${id}">${SHOUTS[id].short}</button>`).join('')}</div>`
       : '';
-    foot.innerHTML = `${calls}
+    // System umstellen (wie das Taktik-Blatt an der Seitenlinie).
+    const cur = m.plan?.[this.tl?.team]?.system;
+    const systems = this.tl
+      ? `<div class="calls systems"><span>${tr('System', 'System')}:</span>${Object.entries(systemsFor(m.pitch.format)).map(([id, s]) => `<button data-action="system" data-value="${id}" aria-pressed="${cur === id}" class="${cur === id ? 'active' : ''}">${s.label}</button>`).join('')}</div>`
+      : '';
+    foot.innerHTML = `${calls}${systems}
       <button data-action="speed">${tr('Tempo', 'Speed')}: ${SPEEDS[this.speed]}× <small>(${tr('Leertaste', 'Space')})</small></button>
       <button data-action="skip">${tr('Zum Ergebnis (Enter)', 'Skip to result (Enter)')}</button>`;
   }
