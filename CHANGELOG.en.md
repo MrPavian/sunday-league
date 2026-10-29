@@ -6,6 +6,13 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-29-8 – Colourful kits, indoor clock and indoor goals
+
+### Fixed
+- **Colourful kits stay on:** Your team often played in the white change kit even with colourful home and away kits – a kit had to differ from the opposing keeper as well as the opposing shirt. Now only outfield shirts count; a keeper who clashes changes colour (the host's keeper too). Measured over all clubs and 132 colourful kit pairs: change kit 36.5 % → 9.4 %.
+- **Indoor clock:** Indoor matches now show 2 × 20 minutes like futsal (extra time 2 × 5) instead of running up to 90. Display only.
+- **Indoor goals and catch nets:** Goals are striped red and white like handball goals, and the catch nets behind them are a light veil instead of bars. Before, the white goals vanished against the white boards and players in front of goal looked as if they were behind it.
+
 ## 2026-10-29-7 – More nationalities
 
 ### New

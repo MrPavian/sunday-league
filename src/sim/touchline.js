@@ -2,7 +2,7 @@
 // machst – Grundausrichtung, Reaktion aufs Gegentor, Halbzeitansprache, Wechsel,
 // Schlussphase. Jede Antwort wirkt über die Zurufe bzw. die Grundausrichtung.
 import { tr } from '../core/i18n.js';
-import { tickerMinute } from './commentary.js';
+import { matchMinutes, minute90 } from './minute.js';
 import { enableManager, MENTALITIES, setMentality, shout } from './coach.js';
 import { substitute, subsLeft, usableBench } from './squad.js';
 import { answerCard } from './coachfeed.js';
@@ -24,7 +24,7 @@ const board = (tl) => tr(`${tl.m.score[tl.team]}:${tl.m.score[1 - tl.team]}`, `$
 export function checkDecision(tl, events) {
   const { m, team } = tl;
   if (tl.open || m.phase === 'ended' || m.phase === 'shootout') return null;
-  const minute = tickerMinute(m);
+  const minute = minute90(m); // Schwellen auf 90 gerechnet, auch in der Halle
   const once = (id) => !tl.asked.has(id) && (tl.asked.add(id), true);
   const recent = m.time - tl.lastAsk < m.duration * 0.08;
   let d = null;
@@ -121,13 +121,16 @@ function subDecision(tl) {
 function finaleDecision(tl) {
   const d = diff(tl);
   const opt = (value, label, line, extra) => ({ label, line, apply: (m) => (setMentality(m, value), extra?.(m)) });
+  // Restzeit in Minuten der Anzeige (90 → zehn, Halle 40 → vier).
+  const left = Math.round((matchMinutes(tl.m) * 10) / 90);
+  const [de, en] = { 4: ['vier', 'Four'], 10: ['zehn', 'Ten'] }[left] ?? [String(left), String(left)];
   return {
     id: 'finale',
     question: d > 0
-      ? tr(`Noch zehn Minuten, wir führen ${board(tl)}. Wie bringen wir das über die Zeit?`, `Ten minutes left, we lead ${board(tl)}. How do we see it out?`)
+      ? tr(`Noch ${de} Minuten, wir führen ${board(tl)}. Wie bringen wir das über die Zeit?`, `${en} minutes left, we lead ${board(tl)}. How do we see it out?`)
       : d < 0
-        ? tr(`Noch zehn Minuten, wir liegen ${board(tl)} hinten. Alles oder nichts?`, `Ten minutes left, we trail ${board(tl)}. All or nothing?`)
-        : tr(`Noch zehn Minuten, ${board(tl)}. Alles oder nichts?`, `Ten minutes left, ${board(tl)}. All or nothing?`),
+        ? tr(`Noch ${de} Minuten, wir liegen ${board(tl)} hinten. Alles oder nichts?`, `${en} minutes left, we trail ${board(tl)}. All or nothing?`)
+        : tr(`Noch ${de} Minuten, ${board(tl)}. Alles oder nichts?`, `${en} minutes left, ${board(tl)}. All or nothing?`),
     options: d > 0
       ? [
           opt('defensive', tr('Hinten dicht – Bus parken', 'Park the bus'), tr('Der Trainer zeigt nach hinten: „Alle zurück!"', 'The manager points backwards: "Everyone back!"')),

@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-29-8',
+    de: { title: 'Bunte Trikots, Hallenuhr und Hallentore', items: ['Deine bunten Trikots bleiben: Beißt sich nur der Torwart, zieht sich der Torwart um – nicht die ganze Mannschaft.', 'Die Hallenuhr läuft 2 × 20 Minuten wie im Futsal statt bis zur 90.', 'Rot-weiße Handballtore und leichte Fangnetze in der Halle – man sieht, wer vor dem Tor steht.'] },
+    en: { title: 'Colourful kits, indoor clock and indoor goals', items: ['Your colourful kits stay on: if only the keeper clashes, the keeper changes – not the whole team.', 'The indoor clock runs 2 × 20 minutes like futsal instead of up to 90.', 'Red-and-white handball goals and light catch nets indoors – you can see who is in front of goal.'] },
+  },
+  {
     id: '2026-10-29-7',
     de: { title: 'Mehr Nationalitäten', items: ['Neue Karrieren: auch ukrainische, rumänische, kosovarische, afghanische, bulgarische, iranische und vietnamesische Namen – im Verhältnis wie im Mikrozensus 2024, deutscher Anteil wie bisher.', 'Eigene Vornamen und Dossier-Sätze je Gruppe; keine echten Nationalspieler als Namen.'] },
     en: { title: 'More nationalities', items: ['New careers: Ukrainian, Romanian, Kosovar, Afghan, Bulgarian, Iranian and Vietnamese names too – in proportion to the 2024 German microcensus, German share as before.', 'Own first names and dossier lines per group; no real internationals as names.'] },

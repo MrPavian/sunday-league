@@ -165,6 +165,13 @@ export const HALL = {
   goalHalfWidth: 1.5, // Handballtor 3 × 2 m
   goalHeight: 2.0,
   goalType: 'frame',
+  // Uhr in der Anzeige (sim/minute.js; vom Nutzer gemeldet: Hallenspiele liefen bis zur 90.): Futsal-Spielzeit 2 × 20 Minuten,
+  // Verlängerung höchstens 2 × 5 (FIFA Futsal Laws of the Game 2025/26, Regel 7 und Regel 10.2:
+  // https://the-aiff.com/media/uploads/2025/09/Futsal-Laws-of-the-Game-2025-2026_EN.pdf). Kreis- und Verbandsturniere spielen oft kürzer (1 × 12 ohne
+  // Seitenwechsel, SHFV Futsal-Landesmeisterschaft 2024: https://shfv-kiel.de/wp-content/uploads/2025/01/20241208_Futsal_Landesmeisterschaft.pdf);
+  // 2 × 20 passt zur Halbzeit mit Seitenwechsel, die das Spiel hat. Nur die Anzeige, die Simulation bleibt.
+  minutes: 40,
+  extraMinutes: 10,
   boundary: 'walls',
   carRule: false,
   referee: true,

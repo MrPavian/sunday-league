@@ -6,7 +6,7 @@ import { TRICKS } from './tricks.js';
 import { MATCH_INJURIES } from './knocks.js';
 import { bondOf, isBad, isGood } from './bonds.js';
 import { tr } from '../core/i18n.js';
-import { footballMinute } from './minute.js';
+import { extraMinutes, footballMinute, matchMinutes } from './minute.js';
 import { createRng } from '../core/rng.js';
 import { attackDir } from './players.js';
 import { findAnyPlayer } from './squad.js';
@@ -269,7 +269,7 @@ export function createCommentator(m, seed = 1) {
           break;
         case 'extratime_start':
           resolveShot('wide');
-          add(tr(`Nach 90 Minuten ${scoreText(m)}. Verlängerung! Zweimal ${Math.round(m.extra.total / 2 / m.duration * 90)} Minuten, die Beine werden schwer.`, `${scoreText(m)} after 90 minutes. Extra time! Two halves of ${Math.round(m.extra.total / 2 / m.duration * 90)} minutes, and the legs are getting heavy.`), 'whistle');
+          add(tr(`Nach ${matchMinutes(m)} Minuten ${scoreText(m)}. Verlängerung! Zweimal ${extraMinutes(m) / 2} Minuten, die Beine werden schwer.`, `${scoreText(m)} after ${matchMinutes(m)} minutes. Extra time! Two halves of ${extraMinutes(m) / 2} minutes, and the legs are getting heavy.`), 'whistle');
           break;
         case 'extratime_half':
           resolveShot('wide');

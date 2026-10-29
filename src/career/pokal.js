@@ -15,7 +15,7 @@ import { createMatch, EXTRA_SHARE, MATCH, matchDuration } from '../sim/match.js'
 import { BUND_PITCHES, PITCHES } from '../sim/pitch.js';
 import { shootoutScore } from '../sim/shootout.js';
 import { LEAGUES, MAX_LEVEL } from './clubs.js';
-import { humanClub, playerOf, resolveKitClash, seasonOver, squadPicker, SQUAD_SHAPES, takenIndices, teamForMatch } from './career.js';
+import { humanClub, playerOf, resolveKits, seasonOver, squadPicker, SQUAD_SHAPES, takenIndices, teamForMatch } from './career.js';
 import { isCoach } from './personal.js';
 import { adjustMood } from './events.js';
 import { BUND_AWAY, BUND_ERST, BUND_NAME, BUND_PRIZE, BUND_PRIZE_WINNER, BUND_ROUND_NAMES, BUND_SPONSOR, BUND_TEXT, BUND_VENUES, FIELD_AMATEURS, FIELD_PROS, FIELD_STRENGTH, OBERLIGA, PROFI_ATTRS, PROFI_KLASSEN, PROFIS } from './bundespokal.js';
@@ -222,8 +222,9 @@ export function preparePokalMatch(c, kind, tie, { human = false, duration } = {}
   const format = kind === 'bund' ? 11 : LEAGUES[Math.min(MAX_LEVEL, Math.max(2, homeLevel))].format ?? base.format;
   const pitch = applyWeather({ ...base, format, referee: true }, c.week?.weather);
   const avail = (club) => (club.human ? c.week?.availability ?? Object.fromEntries(club.squad.map((i) => [i, 'yes'])) : Object.fromEntries(club.squad.map((i) => [i, (c.players[i]?.injuryWeeks ?? 0) > 0 || rng.chance(0.12) ? 'no' : 'yes'])));
-  const teamHome = teamForMatch(c, home, format, avail(home), rng);
-  const teamAway = teamForMatch(c, resolveKitClash(home, away), format, avail(away), rng);
+  const kits = resolveKits(home, away);
+  const teamHome = teamForMatch(c, kits.home, format, avail(home), rng);
+  const teamAway = teamForMatch(c, kits.away, format, avail(away), rng);
   const humanIsAway = human && away.human;
   const teams = humanIsAway ? [teamAway, teamHome] : [teamHome, teamAway];
   const match = createMatch({ seed: rng.int(1, 1e9), pitch, teams, human, duration: duration ?? matchDuration(pitch), incidents: true });

@@ -6,6 +6,13 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-29-8 – Bunte Trikots, Hallenuhr und Hallentore
+
+### Behoben
+- **Bunte Trikots bleiben:** Bisher lief deine Mannschaft oft im weißen Ausweichsatz auf, obwohl Heim- und Auswärtstrikot bunt waren – weil ein Trikot nicht nur vom gegnerischen Trikot, sondern auch vom gegnerischen Torwart abweichen musste. Jetzt zählen nur die Feldtrikots; beißt sich ein Torwart, bekommt er eine andere Farbe (auch der der Gastgeber). Gemessen über alle Vereine und 132 bunte Trikotpaare: Ausweichsatz 36,5 % → 9,4 %.
+- **Hallenuhr:** Hallenspiele zeigen jetzt 2 × 20 Minuten wie im Futsal (Verlängerung 2 × 5) statt bis zur 90. Nur die Anzeige ändert sich.
+- **Hallentore und Fangnetze:** Die Tore sind rot-weiß gestreift wie Handballtore, die Fangnetze dahinter sind ein leichter Schleier statt Gitterstäben. Vorher verschwanden die weißen Tore vor der weißen Bande, und Spieler vor dem Tor sahen aus wie dahinter.
+
 ## 2026-10-29-7 – Mehr Nationalitäten
 
 ### Neu

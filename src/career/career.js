@@ -1001,7 +1001,8 @@ export function colorDistance(a, b) {
 export const KIT_CLASH = 110;
 const KEEPER_CLASH = 150;
 const NEUTRAL_KITS = [0xf2efe6, 0x1c1c1c, 0xe0b020];
-const KEEPER_COLORS = [0xe8742a, 0x5cc46a, 0xe0b020, 0x6b4f8c, 0x4fa3e0, 0x7a3fa0, 0x1c1c1c];
+// Weiß zuletzt: nur, wenn keine Farbe passt (z. B. Orange gegen Blau, der andere Torwart schon in Schwarz).
+const KEEPER_COLORS = [0xe8742a, 0x5cc46a, 0xe0b020, 0x6b4f8c, 0x4fa3e0, 0x7a3fa0, 0x1c1c1c, 0xf2efe6];
 
 // Auswärtstrikot: selbst gestaltet (club.awayKit) – sonst aus den Vereinsfarben abgeleitet (CPU-Vereine, alte
 // Spielstände): die zweite Farbe als Trikot, die Hauptfarbe als Hose; ohne passende zweite Farbe Weiß oder Schwarz.
@@ -1012,10 +1013,11 @@ export function awayKitOf(club) {
   return { shirt, shorts: k.shirt, socks: shirt, pattern: 'uni', second: k.shirt, collar: k.collar ?? 'standard', sleeves: 'main' };
 }
 
-// Welches Trikot der Gast trägt: 'heim', 'auswaerts' oder 'ausweich' (neutral) – das erste, das sich vom Trikot und
-// vom Torwart der Gastgeber abhebt.
+// Welches Trikot der Gast trägt: 'heim', 'auswaerts' oder 'ausweich' (neutral) – das erste, das sich vom Trikot der
+// Gastgeber abhebt. Verglichen werden nur die Feldtrikots; ein Torwart, der sich beißt, zieht sich um (Regel 4: der
+// Torwart muss sich von allen anderen unterscheiden), nicht die ganze Mannschaft.
 export function kitChoice(home, away) {
-  const apart = (shirt) => colorDistance(shirt, home.kit.shirt) > KIT_CLASH && (!home.keeperKit || colorDistance(shirt, home.keeperKit.shirt) > KIT_CLASH);
+  const apart = (shirt) => colorDistance(shirt, home.kit.shirt) > KIT_CLASH;
   if (apart(away.kit.shirt)) return 'heim';
   if (apart(awayKitOf(away).shirt)) return 'auswaerts';
   return 'ausweich';
@@ -1029,21 +1031,26 @@ export function keeperKitFor(current, shirts) {
   return { shirt, shorts: 0x1c1c1c, socks: shirt };
 }
 
-// Bei ähnlichen Trikots läuft der Gast im Auswärtstrikot auf, passt auch das nicht, im Ausweichtrikot.
-// Sein Torwart hebt sich von beiden Mannschaften und vom Torwart der Gastgeber ab.
-export function resolveKitClash(home, away) {
+// Trikots beider Mannschaften für ein Spiel: Bei ähnlichen Trikots läuft der Gast im Auswärtstrikot auf, passt auch
+// das nicht, im Ausweichtrikot. Danach die Torhüter: der der Gastgeber hebt sich von beiden Feldtrikots ab, der des
+// Gasts zusätzlich vom Torwart der Gastgeber. Unveränderte Vereine kommen unverändert zurück.
+export function resolveKits(home, away) {
   const choice = kitChoice(home, away);
   let kit = away.kit;
   if (choice === 'auswaerts') kit = awayKitOf(away);
   else if (choice === 'ausweich') {
-    const alt = NEUTRAL_KITS.find((c) => colorDistance(c, home.kit.shirt) > KEEPER_CLASH && (!home.keeperKit || colorDistance(c, home.keeperKit.shirt) > KIT_CLASH)) ?? NEUTRAL_KITS.find((c) => colorDistance(c, home.kit.shirt) > KEEPER_CLASH);
+    const alt = NEUTRAL_KITS.find((c) => colorDistance(c, home.kit.shirt) > KEEPER_CLASH) ?? NEUTRAL_KITS.find((c) => colorDistance(c, home.kit.shirt) > KIT_CLASH) ?? 0xf2efe6;
     kit = { shirt: alt, shorts: alt === 0x1c1c1c ? 0xf2efe6 : 0x1c1c1c, socks: alt };
   }
-  const keeperKit = keeperKitFor(away.keeperKit, [home.kit.shirt, kit.shirt, ...(home.keeperKit ? [home.keeperKit.shirt] : [])]);
-  if (kit === away.kit && keeperKit === away.keeperKit) return away;
+  const homeKeeper = keeperKitFor(home.keeperKit, [home.kit.shirt, kit.shirt]);
+  const awayKeeper = keeperKitFor(away.keeperKit, [home.kit.shirt, kit.shirt, homeKeeper.shirt]);
+  const homeOut = homeKeeper === home.keeperKit ? home : { ...home, keeperKit: homeKeeper };
   // Das Wappen bleibt, auch wenn das Ausweichtrikot andere Farben hat.
-  return { ...away, crest: away.crest ?? defaultCrest(away), kit, keeperKit };
+  const awayOut = kit === away.kit && awayKeeper === away.keeperKit ? away : { ...away, crest: away.crest ?? defaultCrest(away), kit, keeperKit: awayKeeper };
+  return { home: homeOut, away: awayOut };
 }
+// Nur der Gast (ältere Aufrufer, Tests).
+export const resolveKitClash = (home, away) => resolveKits(home, away).away;
 
 // --- Aufstellung durch den Trainer ------------------------------------------------
 
@@ -1162,8 +1169,9 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   // Das Wetter der Woche gilt auf allen Plätzen der Liga.
   const pitch = applyWeather(applyPlatz({ ...base, format: league.format ?? base.format, referee: league.referee || !!base.referee }, career, home), career.week?.weather);
   const avail = (c) => (c.human ? career.week.availability : aiAvailability(c, rng));
-  const teamHome = teamForMatch(career, home, pitch.format, avail(home), rng);
-  const teamAway = teamForMatch(career, resolveKitClash(home, away), pitch.format, avail(away), rng);
+  const kits = resolveKits(home, away);
+  const teamHome = teamForMatch(career, kits.home, pitch.format, avail(home), rng);
+  const teamAway = teamForMatch(career, kits.away, pitch.format, avail(away), rng);
   // Der menschliche Verein ist in der Simulation immer Team 0.
   const humanIsAway = human && away.human;
   const teams = humanIsAway ? [teamAway, teamHome] : [teamHome, teamAway];

@@ -9,6 +9,42 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { vertexToon } from '../materials.js';
 import { makeHallTexture, makeSignTextureWide } from '../textures.js';
 
+// Rot-weiße Handballtore (props.js makeGoalFrame, bands): Rot ist eine Spielwahl, die Regel verlangt nur zwei Kontrastfarben.
+const HALL_GOAL_RED = 0xc8352f;
+
+// Fangnetz als halbdurchsichtige Fläche mit Maschen (statt Einzelstäben, die von oben wie eine Leiter wirkten – vom Nutzer
+// gemeldet). Maschenweite 20 cm: Spielwert (das Tornetz darf laut IHF höchstens 10 × 10 cm haben, fürs Fangnetz gibt es keine
+// Vorgabe; feiner flimmert es aus der Kameraentfernung). Eine Textur, ein Material für alle Netzflächen.
+const NET_MESH = 0.2;
+let netMat = null;
+function catchNetMaterial() {
+  if (netMat) return netMat;
+  const c = document.createElement('canvas');
+  c.width = c.height = 32;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = 'rgba(60, 74, 68, 0.08)';
+  ctx.fillRect(0, 0, 32, 32);
+  ctx.fillStyle = 'rgba(48, 58, 54, 0.85)';
+  ctx.fillRect(0, 0, 32, 3);
+  ctx.fillRect(0, 0, 3, 32);
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.anisotropy = 4;
+  netMat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide });
+  return netMat;
+}
+// Netzfläche als Viereck (Ecken unten links, unten rechts, oben rechts, oben links); w und h: Maße in Metern für die Maschen.
+function netQuad(corners, w, h) {
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(corners.flat(), 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, w / NET_MESH, 0, w / NET_MESH, h / NET_MESH, 0, h / NET_MESH], 2));
+  geo.setIndex([0, 1, 2, 0, 2, 3]);
+  geo.computeVertexNormals();
+  const mesh = new THREE.Mesh(geo, catchNetMaterial());
+  mesh.renderOrder = 1;
+  return mesh;
+}
+
 // Sporthalle der Kanalschule: Parkett mit bunten Linien, weiße Bande, Handballtore,
 // Sprossenwand, Tribüne mit Klappbänken – und es riecht nach Hallenschuh.
 export function buildHall(root, pitch, rng, scene) {
@@ -19,7 +55,7 @@ export function buildHall(root, pitch, rng, scene) {
   root.add(ground(W, D, toon(0xffffff, { map: makeHallTexture(rng, { width: W, depth: D, pitch }) })));
 
   for (const s of [-1, 1]) {
-    const goal = makeGoalFrame(gw, gh, s, pitch.goalDepth);
+    const goal = makeGoalFrame(gw, gh, s, pitch.goalDepth, { bands: HALL_GOAL_RED });
     goal.position.x = s * hl;
     root.add(goal);
   }
@@ -51,31 +87,31 @@ export function buildHall(root, pitch, rng, scene) {
   }
 
   // Fangnetze hinter den Toren (pitch.catchNet, gleiche Maße und Neigung wie in der Simulation, catchNetX): von der Bande bis zur
-  // Netzhöhe, Tor plus Rand breit, oben zum Feld geneigt (von der Kamera aus sähe ein senkrechtes Netz nur wie eine Linie aus).
-  // Nur Einzelboxen in Farben, die die Halle schon nutzt – mergeStatic backt sie in vorhandene Draw Calls.
+  // Netzhöhe, Tor plus Rand breit, oben zum Feld geneigt. Netzflächen halbdurchsichtig (netQuad), das Oberseil in der Farbe der
+  // Hallenwand (0x5a7a6a), damit mergeStatic es in vorhandene Draw Calls backt. Keine Pfosten: Das Netz hängt wie in echten Hallen am
+  // Seil unter der Decke (ein schräger Pfosten lief im Hochformat quer über die Spieler vorm Tor).
   if (pitch.catchNet) {
     const { height: nh, margin, boardHeight: bh, lean } = pitch.catchNet;
     const nz = gw + margin;
-    const netCol = 0x5a7a6a;
+    const rope = 0x5a7a6a;
     const rise = nh - bh;
-    const slant = Math.atan(lean);
     const len = rise * Math.hypot(1, lean);
     for (const s of [-1, 1]) {
       // Wie catchNetX: über dem Tor auf der Nischen-Rückwand (wallX), daneben auf der Stirnbande (ex).
       const xAt = (base, y) => s * (base - 0.06 - lean * (y - bh));
-      const tilt = (m) => ((m.rotation.z = s * slant), m);
       const panel = (z0, z1, base) => {
-        for (let z = z0; z <= z1 + 0.01; z += 0.4) root.add(tilt(box(0.04, len, 0.04, netCol, xAt(base, (nh + bh) / 2), (nh + bh) / 2, z)));
-        for (let y = bh + 0.4; y < nh; y += 0.4) root.add(box(0.05, 0.05, z1 - z0, netCol, xAt(base, y), y, (z0 + z1) / 2));
-        root.add(box(0.08, 0.08, z1 - z0 + 0.1, bande, xAt(base, nh), nh, (z0 + z1) / 2)); // Oberseil
+        root.add(netQuad([[xAt(base, bh), bh, z0], [xAt(base, bh), bh, z1], [xAt(base, nh), nh, z1], [xAt(base, nh), nh, z0]], z1 - z0, len));
+        root.add(box(0.06, 0.06, z1 - z0 + 0.06, rope, xAt(base, nh), nh, (z0 + z1) / 2)); // Oberseil
       };
       const inner = endWallX(pitch, 0);
       panel(-gw, gw, inner);
       for (const sz of [-1, 1]) {
         panel(sz > 0 ? gw : -nz, sz > 0 ? nz : -gw, ex);
-        // Querstück an der Nischenkante: schließt die Lücke zwischen den beiden Netzebenen.
-        for (let y = bh + 0.4; y < nh; y += 0.4) root.add(box(Math.abs(xAt(inner, y) - xAt(ex, y)), 0.05, 0.05, netCol, (xAt(inner, y) + xAt(ex, y)) / 2, y, sz * gw));
-        root.add(tilt(box(0.1, len, 0.1, bande, xAt(ex, (nh + bh) / 2), (nh + bh) / 2, sz * (nz + 0.05)))); // Pfosten außen
+        // Seitenstück an der Nischenkante: schließt die Lücke zwischen den beiden Netzebenen.
+        const z = sz * gw;
+        const gap = Math.abs(xAt(inner, bh) - xAt(ex, bh));
+        root.add(netQuad([[xAt(ex, bh), bh, z], [xAt(inner, bh), bh, z], [xAt(inner, nh), nh, z], [xAt(ex, nh), nh, z]], gap, len));
+        root.add(box(gap, 0.06, 0.06, rope, (xAt(inner, nh) + xAt(ex, nh)) / 2, nh, z));
       }
     }
   }

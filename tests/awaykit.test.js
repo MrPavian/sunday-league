@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { awayKitOf, colorDistance, createCareer, humanClub, KIT_CLASH, kitChoice, resolveKitClash, updateClub } from '../src/career/career.js';
+import { awayKitOf, colorDistance, createCareer, humanClub, KIT_CLASH, kitChoice, resolveKitClash, resolveKits, updateClub } from '../src/career/career.js';
 import { KIT_COST } from '../src/career/finances.js';
 
 const club = (shirt, extra = {}) => ({ id: `c${shirt}`, kit: { shirt, shorts: 0x1c1c1c, socks: shirt, second: 0xf2efe6 }, keeperKit: { shirt: 0xe8742a, shorts: 0x1c1c1c, socks: 0xe8742a }, ...extra });
@@ -32,8 +32,27 @@ describe('away kit', () => {
   it('the away keeper stands out from both teams and the home keeper', () => {
     const orange = club(0xe8742a); // Gastgeber in Orange – wie der Torwart des Gastes
     const blue = club(0x2f6fb5);
-    const away = resolveKitClash(orange, blue);
-    for (const s of [orange.kit.shirt, away.kit.shirt, orange.keeperKit.shirt]) expect(colorDistance(away.keeperKit.shirt, s)).toBeGreaterThan(150);
+    const { home, away } = resolveKits(orange, blue); // der orange Torwart der Gastgeber zieht sich auch um
+    for (const s of [orange.kit.shirt, away.kit.shirt]) expect(colorDistance(home.keeperKit.shirt, s)).toBeGreaterThan(150);
+    for (const s of [orange.kit.shirt, away.kit.shirt, home.keeperKit.shirt]) expect(colorDistance(away.keeperKit.shirt, s)).toBeGreaterThan(150);
+  });
+
+  it('a shirt that only clashes with the home keeper is kept – the keeper changes instead', () => {
+    // Gast in Orange, Gastgeber in Blau mit orangem Torwart: früher Ausweichtrikot, jetzt zieht sich der Torwart um.
+    const blue = club(0x2f6fb5);
+    const orange = club(0xe8742a, { awayKit: { shirt: 0xe0b020, shorts: 0x1c1c1c, socks: 0xe0b020 } });
+    expect(kitChoice(blue, orange)).toBe('heim');
+    const { home, away } = resolveKits(blue, orange);
+    expect(away.kit).toBe(orange.kit);
+    expect(home.kit).toBe(blue.kit);
+    for (const s of [blue.kit.shirt, orange.kit.shirt]) expect(colorDistance(home.keeperKit.shirt, s)).toBeGreaterThan(150);
+    for (const s of [blue.kit.shirt, orange.kit.shirt, home.keeperKit.shirt]) expect(colorDistance(away.keeperKit.shirt, s)).toBeGreaterThan(150);
+    // Ohne Konflikt bleiben beide Vereine unverändert.
+    const blueW = club(0x2f6fb5, { keeperKit: { shirt: 0xf2efe6, shorts: 0x1c1c1c, socks: 0xf2efe6 } });
+    const red = club(0xc8352f, { keeperKit: { shirt: 0x1c1c1c, shorts: 0x1c1c1c, socks: 0x1c1c1c } });
+    const r = resolveKits(blueW, red);
+    expect(r.home).toBe(blueW);
+    expect(r.away).toBe(red);
   });
 
   it('the kit editor orders home and away kit together for one price', () => {

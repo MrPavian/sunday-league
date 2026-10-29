@@ -179,14 +179,34 @@ export function makeDog(x, z, color = 0x8a6a3a, rotation = 0) {
 // Mit Netzreaktion (Qualitätsstufe netFx) werden die Schnüre zu einem eigenen Mesh je Tor
 // zusammengefasst, das sich beim Tor ausbeulen kann (Ball 2.0, BallView) – sonst bleiben es
 // Einzelboxen, die mergeStatic mit der übrigen Kulisse verschmilzt.
-export function makeGoalFrame(halfWidth, height, sign, depth = 1.2) {
+// bands (Farbe): Handballtor in der Halle, Pfosten und Latte in zwei Farben gestreift – an den Ecken 28 cm, sonst 20 cm
+// (IHF Spielregeln, Erläuterungen zum Tor: https://www2.handball.ee/est/info/rules_ofthe_game_01.08.05.pdf). Vor der weißen
+// Bande verschwand ein weißes Tor; so sieht man, wo die Torlinie ist (vom Nutzer gemeldet: Spieler wirkten wie hinter der Bande).
+const bandsAlong = (len) => {
+  const out = [];
+  for (let p = 0, i = 0; p < len - 1e-6; i++) {
+    const l = Math.min(i === 0 ? 0.28 : 0.2, len - p);
+    out.push([p, p + l, i % 2]);
+    p += l;
+  }
+  return out;
+};
+export function makeGoalFrame(halfWidth, height, sign, depth = 1.2, { bands = null } = {}) {
   const g = new THREE.Group();
   const white = 0xf2f2ee;
   const net = 0xd8d8d0;
   const t = 0.12;
-  g.add(box(t, height, t, white, 0, height / 2, -halfWidth));
-  g.add(box(t, height, t, white, 0, height / 2, halfWidth));
-  g.add(box(t, t, halfWidth * 2 + t, white, 0, height, 0));
+  if (bands != null) {
+    const col = [bands, white];
+    // Pfosten von der Ecke nach unten, Latte von beiden Ecken zur Mitte.
+    for (const z of [-halfWidth, halfWidth]) for (const [a, b, c] of bandsAlong(height)) g.add(box(t, b - a, t, col[c], 0, height - (a + b) / 2, z));
+    const half = halfWidth + t / 2;
+    for (const sz of [-1, 1]) for (const [a, b, c] of bandsAlong(half)) g.add(box(t, t, b - a, col[c], 0, height, sz * (half - (a + b) / 2)));
+  } else {
+    g.add(box(t, height, t, white, 0, height / 2, -halfWidth));
+    g.add(box(t, height, t, white, 0, height / 2, halfWidth));
+    g.add(box(t, t, halfWidth * 2 + t, white, 0, height, 0));
+  }
   const back = sign * depth;
   const strings = [];
   for (const z of [-halfWidth, halfWidth]) strings.push(box(depth, 0.04, 0.04, net, back / 2, height * 0.9, z));
