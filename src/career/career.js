@@ -186,7 +186,17 @@ const hashSeed = (...parts) => parts.reduce((h, p) => (Math.imul(h ^ p, 0x9e3779
 
 export const leagueOf = (career) => LEAGUES[career.level ?? 1];
 const youthDeps = () => ({ getPool, playerOf, freshRecord, book });
-export const maxSquad = (career) => leagueOf(career).maxSquad;
+// Kadergrenze: Standard der Liga (LEAGUES maxSquad, Spielwerte), vom Nutzer je Karriere verschiebbar (vom Nutzer gewünscht,
+// ROADMAP 11.10): bis hinunter zum Mindestkader, nach oben bis SQUAD_EXTRA_MAX über den Standard. Wer schon mehr Spieler hat,
+// behält sie – es kommt nur niemand mehr dazu.
+export const SQUAD_EXTRA_MAX = 10;
+export const maxSquad = (career) => Math.max(MIN_SQUAD, leagueOf(career).maxSquad + (career.squadExtra ?? 0));
+export function setSquadExtra(career, extra) {
+  const std = leagueOf(career).maxSquad;
+  career.squadExtra = Math.max(MIN_SQUAD - std, Math.min(SQUAD_EXTRA_MAX, Math.round(extra)));
+  if (!career.squadExtra) delete career.squadExtra;
+  return maxSquad(career);
+}
 
 // Kader aus dem Pool ziehen – nach Klassen-Gewichten und Positionen.
 export function squadPicker(rng, used) {

@@ -1861,3 +1861,7 @@ body.manager #end { padding-bottom: 84px; }
 .oh-score.w { color: #5cc46a; }
 .oh-score.l { color: #d9a04f; }
 @media (max-width: 640px) { .oh-btns { width: 100%; } .oh-btns .ui-btn { flex: 1 1 100px; } }
+/* Kadergrenze im Kader-Reiter: Plus/Minus mit voller Touch-Größe */
+.squad-limit { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); }
+.squad-limit .ui-btn { min-width: var(--touch); min-height: var(--touch); padding: 0; }
+.squad-limit details { flex-basis: 100%; }

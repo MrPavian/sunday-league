@@ -13,7 +13,7 @@ import { appointStaff, releaseStaff } from '../career/staff.js';
 // Was im Vereinsheim scrollt (je nach Bildschirmgröße das Fenster, der Inhalt oder die Mappe).
 const SCROLLERS = '.club-panel, .club-main, .club-body, .club-folder, .folder-sheet';
 const scrollKey = (el) => SCROLLERS.split(', ').find((sel) => el.matches(sel));
-import { setVerband, argueRumor, askRumor, currentLineup, humanClub, updateClub, updateCrest, setFounded, clampFounded, foundedRange, setClubTactic, setClubPlan, maxSquad, recruit, releasePlayer, scoutRumor, talkRumor, nudge, playerOf, resetLineup, setLineupSlot, seasonOver, table } from '../career/career.js';
+import { setSquadExtra, setVerband, argueRumor, askRumor, currentLineup, humanClub, updateClub, updateCrest, setFounded, clampFounded, foundedRange, setClubTactic, setClubPlan, maxSquad, recruit, releasePlayer, scoutRumor, talkRumor, nudge, playerOf, resetLineup, setLineupSlot, seasonOver, table } from '../career/career.js';
 import { verbandLeagues } from '../career/verband.js';
 import { appointCoach, startCourse } from '../career/youthteams.js';
 import { acceptSponsor, bookTrip, KIT_COST } from '../career/finances.js';
@@ -314,6 +314,9 @@ export class Clubhouse {
       } else if (action === 'argue') {
         const [i, arg] = String(value).split(':');
         argueRumor(this.career, Number(i), arg);
+        this.h.onChange();
+      } else if (action === 'squadLimit') {
+        setSquadExtra(this.career, Number(value));
         this.h.onChange();
       } else if (action === 'release') {
         // Zweiter Klick bestätigt (Browser-Dialoge sind nicht überall erlaubt).

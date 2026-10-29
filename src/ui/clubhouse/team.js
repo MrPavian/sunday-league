@@ -8,6 +8,8 @@ import { jobFits, styleFit } from '../../sim/fit.js';
 import { GROUP_LABELS, ORDERS, packLines, SIMPLE, SIMPLE_IDS } from '../../sim/commands.js';
 import { coachLevel } from '../prefs.js';
 import { button, haptic, icon, segmented, tabs as uiTabs } from '../ds.js';
+import { LEAGUES } from '../../career/clubs.js';
+import { leagueTitle } from '../../career/verband.js';
 import { ATTR_LABELS } from '../attrLabels.js';
 import { isLight, playerCard as collectorCard, trainerCard } from '../world.js';
 import { planTarget } from '../../sim/plan.js';
@@ -18,7 +20,7 @@ import { awardLabel } from '../../career/awards.js';
 import { FIT_LOW, fitnessCap, fitnessOf, fitnessPct, fitnessShown } from '../../career/fitness.js';
 import { SHIFT_JOBS } from '../../career/chat.js';
 import { ARG_IDS, ARGUMENTS, knownMotives, MOTIVES } from '../../career/recruiting.js';
-import { currentLineup, humanClub, lineupOf, runningCup, nextPitch, maxSquad, MIN_SQUAD, recruit, recruitChance, setLineupSlot, table } from '../../career/career.js';
+import { currentLineup, humanClub, lineupOf, runningCup, nextPitch, maxSquad, MIN_SQUAD, recruit, recruitChance, setLineupSlot, SQUAD_EXTRA_MAX, table } from '../../career/career.js';
 import { inviteChance, isRawDiamond, MAX_STATIONS, STATIONS, TRAINING_COST, trainingDone } from '../../career/training.js';
 import { roleName, STAFF_ROLES } from '../../career/youth.js';
 import { canAffordOutside, EHRENAMT_MONTH, feeOf, holderOf, outsideCandidate, ROLES as STAFF_ROLE_IDS, squadCandidates, STAFF_MIN_AGE, UEBUNGSLEITER_MONTH } from '../../career/staff.js';
@@ -87,9 +89,22 @@ export const teamScreens = {
     return `
       <div class="squad-head">
         <p class="t-2">${club.squad.length} ${tr('Spieler', 'players')}${c.week ? ` · ${count.yes} ${tr('Zusagen', 'in')} ${spielberichtStreng(c) ? '' : ` · ${count.late} ${tr('später', 'late')}`} · ${count.bench ? ` · ${count.bench} ${tr('Strafbank', 'penalty bench')}` : ''} · ${count.no} ${tr('Absagen', 'out')}` : ''}</p>
+        ${this.squadLimitLine()}
         <div class="squad-sort">${segmented('sort', [['rating', tr('Stärke', 'Rating')], ['pos', tr('Position', 'Position')]], this.squadSort === 'pos' ? 'pos' : 'rating', { action: 'squadSort' })}</div>
       </div>
       <div class="squad-deck">${cards}</div>`;
+  },
+
+  // Kadergrenze anzeigen und verschieben; darunter der Standard jeder Liga.
+  squadLimitLine() {
+    const c = this.career;
+    const std = LEAGUES[c.level ?? 1].maxSquad;
+    const max = maxSquad(c);
+    const extra = c.squadExtra ?? 0;
+    const byLeague = Object.values(LEAGUES).map((l) => `${leagueTitle(c, l.level)}: ${l.maxSquad}`).join(' · ');
+    return `<div class="t-2 squad-limit" data-testid="squad-limit">${tr('Kadergrenze', 'Squad limit')} <b>${max}</b> <small>(${tr('Standard', 'default')} ${std}${extra ? `, ${extra > 0 ? '+' : ''}${extra}` : ''})</small>
+      ${button('−', { action: 'squadLimit', value: extra - 1, disabled: max <= MIN_SQUAD, 'aria-label': tr('Kadergrenze senken', 'Lower squad limit') })}${button('+', { action: 'squadLimit', value: extra + 1, disabled: extra >= SQUAD_EXTRA_MAX, 'aria-label': tr('Kadergrenze erhöhen', 'Raise squad limit') })}
+      <details><summary><small>${tr('Standard je Liga', 'Default per league')}</small></summary><small>${byLeague}</small></details></div>`;
   },
 
   // Sammelkarte eines Spielers: vorn Stärke, Trikot, Name, Position, Sonntag – hinten die Werte.
