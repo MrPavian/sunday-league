@@ -18,7 +18,7 @@ import { LEAGUES } from './clubs.js';
 import { humanClub, playerOf, resolveKitClash, seasonOver, squadPicker, SQUAD_SHAPES, takenIndices, teamForMatch } from './career.js';
 import { isCoach } from './personal.js';
 import { adjustMood } from './events.js';
-import { BUND_AWAY, BUND_ERST, BUND_NAME, BUND_PRIZE, BUND_PRIZE_WINNER, BUND_ROUND_NAMES, BUND_SPONSOR, BUND_TEXT, BUND_VENUES, OBERLIGA, PROFI_ATTRS, PROFI_KLASSEN, PROFIS } from './bundespokal.js';
+import { BUND_AWAY, BUND_ERST, BUND_NAME, BUND_PRIZE, BUND_PRIZE_WINNER, BUND_ROUND_NAMES, BUND_SPONSOR, BUND_TEXT, BUND_VENUES, FIELD_AMATEURS, FIELD_PROS, FIELD_STRENGTH, OBERLIGA, PROFI_ATTRS, PROFI_KLASSEN, PROFIS } from './bundespokal.js';
 import { adjustFitness, afterMatchFitness, fitnessOf, MATCH_COST } from './fitness.js';
 import { applyCards } from './suspensions.js';
 import { bundVenueAutoResolve } from './bundevents.js';
@@ -68,7 +68,7 @@ const LEVEL_VENUE = (level) => LEAGUES[Math.min(5, Math.max(2, level))].humanVen
 const fresh = () => ({ apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 });
 
 export const pokalOf = (c, kind) => (c.pokale?.[kind]?.season === c.season ? c.pokale[kind] : null);
-export const pokalClub = (c, cup, id) => c.clubs.find((x) => x.id === id) ?? cup.guests.find((g) => g.id === id);
+export const pokalClub = (c, cup, id) => c.clubs.find((x) => x.id === id) ?? cup.guests.find((g) => g.id === id) ?? cup.field?.find((f) => f.id === id);
 
 // Wer darf diese Saison in welchen Pokal?
 export function pokalEligible(c, kind) {
@@ -121,6 +121,7 @@ export function startPokal(c, kind) {
   if (kind === 'bund') {
     c.pokale ??= {};
     c.pokale.bund = { kind, season: c.season, year: yearOf(c), guests: [], levels: { [humanClub(c).id]: level }, rounds: pokalRounds(c, kind), round: 0, ties: [], out: false, winner: null, log: [], done: false };
+    initField(c, c.pokale.bund);
     bundDraw(c, c.pokale.bund);
     return c.pokale.bund;
   }
@@ -153,12 +154,26 @@ export function bundDraw(c, cup) {
   const r = cup.round;
   const me = humanClub(c).id;
   const rng = createRng((c.seed * 61 + c.season * 443 + r * 89 + SALT.bund[0]) >>> 0);
-  const klass = PROFI_KLASSEN[rng.chance(BUND_ERST[r]) ? 'erst' : 'zweit'];
-  const free = PROFIS.filter((p) => !cup.guests.some((g) => g.id === `pokal-bund-${p.id}`));
-  const def = { ...rng.pick(free), tiers: klass.tiers };
+  let klass = PROFI_KLASSEN[rng.chance(BUND_ERST[r]) ? 'erst' : 'zweit'];
+  let def;
+  if (cup.field) {
+    // Volles Feld: Gegner ist ein noch dabeiseiender Profi der gezogenen Klasse (sonst der anderen).
+    const alive = cup.field.filter((f) => cup.alive.includes(f.id) && f.id !== me);
+    const want = klass === PROFI_KLASSEN.erst ? 'erst' : 'zweit';
+    const pros = alive.filter((f) => f.klass === 'erst' || f.klass === 'zweit');
+    // Bevorzugt die gezogene Klasse, sonst ein anderer Profi; sind keine Profis mehr dabei, ein Amateur (Oberliga-Kader).
+    const pool = pros.some((f) => f.klass === want) ? pros.filter((f) => f.klass === want) : pros.length ? pros : alive;
+    const f = rng.pick(pool);
+    klass = PROFI_KLASSEN[f.klass] ?? { level: OBERLIGA_LEVEL, boost: 0, tiers: OBERLIGA[0].tiers };
+    const known = PROFIS.find((x) => x.id === f.id);
+    def = { ...(known ?? { id: f.id, name: f.name, short: f.short, kit: fieldKit(f.id), keeperKit: { shirt: 0xe0b020, shorts: 0x1c1c1c, socks: 0xe0b020 } }), tiers: klass.tiers, fieldId: f.id };
+  } else {
+    const free = PROFIS.filter((p) => !cup.guests.some((g) => g.id === `pokal-bund-${p.id}`));
+    def = { ...rng.pick(free), tiers: klass.tiers };
+  }
   const squad = squadPicker(rng, takenIndices(c))(def.tiers, SQUAD_SHAPES.xxl);
   for (const idx of squad) c.players[idx] = { ...fresh(), delta: Object.fromEntries(PROFI_ATTRS.map((k) => [k, klass.boost])) };
-  const guest = { ...def, id: `pokal-bund-${def.id}`, human: false, venue: 'grossfeld', squad, level: klass.level, klass: klass === PROFI_KLASSEN.erst ? 'erst' : 'zweit' };
+  const guest = { ...def, id: `pokal-bund-${def.id}`, human: false, venue: 'grossfeld', squad, level: klass.level, klass: klass === PROFI_KLASSEN.erst ? 'erst' : klass === PROFI_KLASSEN.zweit ? 'zweit' : 'amateur' };
   cup.guests.push(guest);
   cup.levels[guest.id] = guest.level;
   const away = r > 0 && rng.chance(BUND_AWAY);
@@ -378,14 +393,64 @@ function bundRoundEnd(c, cup) {
   const tie = roundTies(cup)[0];
   const won = tieWinner(tie) === me;
   bundMemory(c, cup, tie, won);
+  if (cup.field) playFieldRound(c, cup, cup.round, tie);
   if (won && cup.round < cup.rounds.length - 1) {
     cup.round++;
     bundDraw(c, cup);
     return;
   }
   if (!won) cup.out = true;
-  finishPokal(c, 'bund', tieWinner(tie));
+  // Ausgeschieden: Der Rest des Wettbewerbs wird gleich ausgespielt (Schnellmodell), der echte Sieger steht fest.
+  if (cup.field && !won) for (let r = cup.round + 1; r < cup.rounds.length && cup.alive.length > 1; r++) playFieldRound(c, cup, r, null);
+  finishPokal(c, 'bund', cup.field ? (won ? me : cup.alive[0]) : tieWinner(tie));
 }
+
+// --- Volles Teilnehmerfeld (64) ---------------------------------------------------------------------------------
+// Stärke je Verein aus der gemessenen Verteilung seiner Klasse (FIELD_STRENGTH), fest je Saison; der eigene Verein mit
+// seinem echten Kader. Die eigene Paarung läuft wie bisher (bundDraw, Spiel oder Liveticker), alle anderen per Schnellmodell.
+function initField(c, cup) {
+  const rng = createRng((c.seed * 97 + c.season * 331 + 7177) >>> 0);
+  const me = humanClub(c);
+  const gauss = () => Math.sqrt(-2 * Math.log(1 - rng.next())) * Math.cos(2 * Math.PI * rng.next());
+  const entry = (f) => ({ ...f, level: f.klass === 'erst' ? PROFI_KLASSEN.erst.level : f.klass === 'zweit' ? PROFI_KLASSEN.zweit.level : OBERLIGA_LEVEL, str: +(FIELD_STRENGTH[f.klass][0] + gauss() * FIELD_STRENGTH[f.klass][1]).toFixed(1) });
+  cup.field = [{ id: me.id, name: me.name, short: me.short, klass: 'human', level: c.level ?? 1 }, ...FIELD_PROS().map(entry), ...FIELD_AMATEURS().map(entry)];
+  cup.alive = cup.field.map((f) => f.id);
+  cup.fieldTies = [];
+}
+const OBERLIGA_LEVEL = 7;
+// Kein Trikot bekannt: Farbe fest aus dem Namen (für Anzeige und Spiel).
+const FIELD_COLORS = [0x2f6fb5, 0xc8352f, 0x2e6b3a, 0xe0b020, 0x6b4f8c, 0xe8742a, 0x1f8a8a, 0x8c2f2f, 0x58c9a5, 0x3a8fb7];
+function fieldKit(id) {
+  let h = 7;
+  for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const shirt = FIELD_COLORS[h % FIELD_COLORS.length];
+  return { shirt, shorts: 0x1c1c1c, socks: shirt, pattern: 'uni' };
+}
+
+// Eine Runde des Feldes: alle Verbliebenen außer der eigenen Paarung werden gelost und per Schnellmodell gespielt (wie
+// quickTie: Torerwartung aus dem Stärkeunterschied, QUICK_BUND). Heimrecht beim Klassentieferen. Sieger bleiben in cup.alive.
+function playFieldRound(c, cup, r, humanTie) {
+  const rng = createRng((c.seed * 101 + c.season * 577 + r * 6151 + 41) >>> 0);
+  const me = humanClub(c).id;
+  const humanIds = humanTie ? [humanTie.home, humanTie.away].map((id) => (cup.guests.find((g) => g.id === id)?.fieldId ?? id)) : [];
+  const rest = cup.alive.filter((id) => !humanIds.includes(id)).sort(() => rng.next() - 0.5);
+  const winners = humanTie ? [tieWinner(humanTie) === me ? me : humanIds.find((id) => id !== me)] : [];
+  const str = (id) => (id === me ? strength(c, humanClub(c), 11) : cup.field.find((f) => f.id === id).str);
+  const lvl = (id) => cup.field.find((f) => f.id === id).level;
+  for (let i = 0; i + 1 < rest.length; i += 2) {
+    const [a, b] = lvl(rest[i + 1]) < lvl(rest[i]) ? [rest[i + 1], rest[i]] : [rest[i], rest[i + 1]];
+    const d = str(a) - str(b);
+    const lh = QUICK.base * Math.exp(QUICK_BUND.perPoint * d + QUICK.home);
+    const la = QUICK.base * Math.exp(-QUICK_BUND.perPoint * d);
+    const t = { round: r, home: a, away: b, result: { home: poisson(rng, lh), away: poisson(rng, la) }, pens: null };
+    if (t.result.home === t.result.away) t.pens = rng.chance(0.5) ? { home: 5, away: 4 } : { home: 4, away: 5 };
+    cup.fieldTies.push(t);
+    winners.push(tieWinner(t));
+  }
+  cup.alive = winners;
+}
+// Alle Paarungen einer Runde für die Anzeige: die eigene (mit dem Profi aus dem Feld) und die übrigen.
+export const fieldRound = (cup, r = cup.round) => (cup.fieldTies ?? []).filter((t) => t.round === r);
 
 // Eine Runde gegen einen Profi festhalten (Chronik, Museum, Kreisblatt, Prämien, Foto mit dem Star). Sieg = Sensation
 // und Einzug in die nächste Runde (Sponsorprämie); knappe Niederlage (höchstens ein Tor Unterschied, auch nach
@@ -506,7 +571,7 @@ function finishPokal(c, kind, winner) {
       adjustMood(c, 0.3);
       chronicle(c, tr(`${cfg.name}sieger ${cup.year}! Ein Amateurverein hat den ${cfg.name} gewonnen. ${humanClub(c).name} im Märchenland.`, `${cfg.name} winners ${cup.year}! An amateur club has won the ${cfg.name}. ${humanClub(c).name} in fairy-tale land.`));
       cup.log.push(tr(`POKALSIEGER! Der ${cfg.name} steht in der Vitrine.`, `CUP WINNERS! The ${cfg.name} is in the cabinet.`));
-    }
+    } else if (cup.field) cup.log.push(tr(`${cfg.name}sieger ${cup.year}: ${name}.`, `${cfg.name} winners ${cup.year}: ${name}.`));
   } else if (winner === me) {
     const opp = pokalClub(c, cup, final.home === me ? final.away : final.home).name;
     c.trophies = [...(c.trophies ?? []), { name: `${cfg.name} ${cup.year}`, season: c.season }];

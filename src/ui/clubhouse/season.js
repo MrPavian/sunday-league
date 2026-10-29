@@ -7,7 +7,7 @@ import { clubById, humanClub, seasonOver, table } from '../../career/career.js';
 import { dateLabel, matchDate, monthLabel } from '../../career/calendar.js';
 import { nachholLabel } from '../../career/platz.js';
 import { CUPS, cupClub, cupOf, groupTable, humanCupMatch, stageName, winterRound } from '../../career/tournament.js';
-import { POKALE, POKAL_KINDS, pokalClub, pokalEligible, pokalOf, roundName, roundTies, sponsorPraemie, tieOnPens } from '../../career/pokal.js';
+import { fieldRound, POKALE, POKAL_KINDS, pokalClub, pokalEligible, pokalOf, roundName, roundTies, sponsorPraemie, tieOnPens } from '../../career/pokal.js';
 import { BUND_VENUES, levelName } from '../../career/bundespokal.js';
 import { MATCH } from '../../sim/match.js';
 import { first, leagueName } from './shared.js';
@@ -38,13 +38,21 @@ export const seasonScreens = {
     const me = humanClub(c).id;
     const name = (id) => pokalClub(c, cup, id)?.short ?? '?';
     const rounds = [];
-    for (let r = 0; r <= cup.round; r++) {
+    // Bundespokal mit vollem Feld: auch die Runden nach dem eigenen Ausscheiden (fieldRound).
+    const last = cup.fieldTies?.length ? Math.max(cup.round, ...cup.fieldTies.map((t) => t.round)) : cup.round;
+    const line = (t) => `<li class="${t.home === me || t.away === me ? 'mine' : ''}">${name(t.home)} ${t.result ? `<b>${t.result.home}:${t.result.away}</b>${t.et ? ` <small>${tr('n. V.', 'a.e.t.')}</small>` : ''}${t.pens ? ` <small>${tieOnPens(t)}</small>` : ''}` : '–:–'} ${name(t.away)}</li>`;
+    for (let r = 0; r <= last; r++) {
       const ties = roundTies(cup, r);
-      if (!ties.length) continue;
+      const field = fieldRound(cup, r);
+      if (!ties.length && !field.length) continue;
+      if (!ties.length) {
+        rounds.push(`<h4>${roundName(cup, r)}</h4><ul class="plain cup-list">${field.map(line).join('')}</ul>`);
+        continue;
+      }
       const when = cup.rounds[r] != null ? dateLabel(matchDate(c, cup.rounds[r])) : '';
       rounds.push(`<h4>${roundName(cup, r)} <small>${POKALE[kind].saturday ? tr('Samstag vor dem', 'Saturday before') : tr('Mittwoch vor dem', 'Wednesday before')} ${when}</small></h4><ul class="plain cup-list">${ties
-        .map((t) => `<li class="${t.home === me || t.away === me ? 'mine' : ''}">${name(t.home)} ${t.result ? `<b>${t.result.home}:${t.result.away}</b>${t.et ? ` <small>${tr('n. V.', 'a.e.t.')}</small>` : ''}${t.pens ? ` <small>${tieOnPens(t)}</small>` : ''}` : '–:–'} ${name(t.away)}</li>`)
-        .join('')}</ul>`);
+        .map(line)
+        .join('')}</ul>${field.length ? `<details class="cup-field"><summary>${tr(`Alle weiteren Spiele (${field.length})`, `All other ties (${field.length})`)}</summary><ul class="plain cup-list">${field.map(line).join('')}</ul></details>` : ''}`);
     }
     const state = cup.done ? `<p class="reply ok">${cup.log.slice(-3).join(' ')}</p>` : cup.out ? `<p>${tr('Ihr seid raus – die anderen spielen weiter.', 'You are out – the others play on.')}</p>` : `<p>${tr('Ihr seid noch dabei. Das nächste Pokalspiel steht auf der Startseite, sobald die Woche da ist.', 'You are still in. The next cup tie appears on the home page when its week comes.')}</p>`;
     const guest = kind === 'bund' ? cup.guests.at(-1) : null;

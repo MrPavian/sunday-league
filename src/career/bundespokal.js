@@ -29,6 +29,35 @@ export const PROFIS = [
   { id: 'profi-seewacht', name: tr('TSG Seewacht', 'Lakewatch TSG'), short: tr('TSW', 'LWT'), kit: { shirt: 0x3a8fb7, shorts: 0xd8c690, socks: 0x3a8fb7, pattern: 'uni' }, keeperKit: { shirt: 0xd9534f, shorts: 0x1c1c1c, socks: 0xd9534f } },
 ];
 
+// Volles Teilnehmerfeld (64, ROADMAP 11.9): Bezug ist der echte Pokal mit 36 Erst- und Zweitligisten, 4 Drittligisten und 24 Amateuren
+// (Landespokalsieger und weitere Amateure der großen Verbände). Eine dritte Liga gibt es hier nicht: 18 Erst-, 18 Zweitligisten und
+// 27 Amateure plus der eigene Verein. Alle Namen sind erfunden (keine echten Orte oder Vereine nachgebildet).
+// Stärke (Ø Wertung der besten 11, wie pokal.js strength), gemessen mit scripts aus 40 Kadern je Klasse (2026-10-29):
+// Erstligist 96,5 ± 0,8, Zweitligist 95,3 ± 0,9, Oberligist (Landespokalsieger) 73,8 ± 2,7.
+export const FIELD_STRENGTH = { erst: [96.5, 0.8], zweit: [95.3, 0.9], amateur: [73.8, 2.7] };
+const PRO_EXTRA = [
+  ['wolkenhain', 'FC Wolkenhain', 'FCW'], ['nebelstein', 'SV Nebelstein 1907', 'SVN'], ['kranichfurt', 'Kranichfurt 04', 'K04'], ['sternbachtal', 'TSV Sternbachtal', 'TST'],
+  ['mondquell', 'VfB Mondquell', 'VMQ'], ['donnerhall', 'Donnerhall United', 'DHU'], ['goldammerfeld', 'SC Goldammerfeld', 'SCG'], ['rabenwacht', 'FC Rabenwacht 1912', 'FRW'],
+  ['wellenbruch', 'Sportfreunde Wellenbruch', 'SFW'], ['eisvogelau', 'Eintracht Eisvogelau', 'EEA'], ['morgenkamm', 'VfL Morgenkamm', 'VMK'], ['kupferkessel', 'SV Kupferkessel', 'SKK'],
+  ['falkenwiege', 'Falkenwiege 1898', 'F98'], ['hagelsturz', 'FC Hagelsturz', 'FCH'], ['lerchenzinne', 'TuS Lerchenzinne', 'TLZ'], ['bernsteinhafen', 'Union Bernsteinhafen', 'UBH'],
+  ['windmuehlenau', 'FSV Windmühlenau', 'FWA'], ['glutberg', 'SC Glutberg-Nord', 'SGN'], ['eulenkreuz', 'Viktoria Eulenkreuz', 'VEK'], ['schwanenquell', 'FC Schwanenquell', 'FSN'],
+  ['funkenheide', 'SV Funkenheide 1920', 'SFH'], ['taubengrund', 'Germania Taubengrund', 'GTG'], ['salzwind', 'Salzwind 1905', 'S05'], ['kometenfeld', 'TSG Kometenfeld', 'TKF'],
+  ['brausewasser', 'VfR Brausewasser', 'VBW'], ['ahornspitz', 'FC Ahornspitz', 'FAS'], ['blitzmoor', 'Blitzmoor Athletic', 'BMA'],
+];
+const AMATEUR_FIELD = [
+  ['heckenrose', 'SV Heckenrose'], ['kieselgrund', 'TSV Kieselgrund'], ['lindwurmtal', 'FC Lindwurmtal'], ['moorlerche', 'SpVgg Moorlerche'], ['distelwies', 'TuS Distelwies'],
+  ['glockenacker', 'SV Glockenacker'], ['krummbirn', 'FC Krummbirn'], ['wichtelbrunn', 'DJK Wichtelbrunn'], ['hummelweide', 'SG Hummelweide'], ['tannzapfen', 'TSV Tannzapfen'],
+  ['krähenkuppe', 'SV Krähenkuppe'], ['schlehdorn', 'FC Schlehdorn-West'], ['muschelsand', 'TuS Muschelsand'], ['ziegenstieg', 'SV Ziegenstieg'], ['ottergrund', 'FSV Ottergrund'],
+  ['dachsbau', 'SG Dachsbau'], ['kressewiese', 'TSV Kressewiese'], ['feldlerchenau', 'TSV Feldlerchenau'], ['rosskastanie', 'FC Rosskastanie'], ['wiesenknopf', 'SV Wiesenknopf'],
+  ['igelhain', 'SpVgg Igelhain'], ['brombeerhang', 'TuS Brombeerhang'], ['schwalbennest', 'SV Schwalbennest'], ['erlenbruchtal', 'FC Erlenbruchtal'], ['flachsland', 'TSV Flachsland-Ost'],
+  ['grillenfeld', 'TSV Grillenfeld'], ['hasenpfad', 'SG Hasenpfad'],
+];
+// Die 9 bekannten Profis (PROFIS, mit Trikots) und 27 weitere; 18 Erst-, 18 Zweitligisten (fest je Eintrag).
+export const FIELD_PROS = () => [...PROFIS.map((p) => ({ id: p.id, name: p.name, short: p.short })), ...PRO_EXTRA.map(([id, name, short]) => ({ id: `profi-${id}`, name, short }))].map((p, i) => ({ ...p, klass: i % 2 === 0 ? 'erst' : 'zweit' }));
+// Kürzel: erster Buchstabe der Vereinsform und die ersten zwei des Ortes (SV Heckenrose → SHE).
+const shortOf = (name) => { const [form, ...rest] = name.split(' '); return (form[0] + rest.join('').slice(0, 2)).toUpperCase(); };
+export const FIELD_AMATEURS = () => AMATEUR_FIELD.map(([id, name]) => ({ id: `ama-${id}`, name, short: shortOf(name), klass: 'amateur' }));
+
 // Profis nach „Liga": Zweitligist (Stufe 8) und Erstligist (Stufe 9). Kader aus den oberen Klassen des Spielerpools,
 // dazu ein Aufschlag auf jede Fähigkeit (0…1-Skala) über denselben Weg wie die Entwicklung der eigenen Spieler
 // (career.players[idx].delta) – Profis trainieren hauptberuflich, und der Pool allein reicht nicht: seine besten Klassen

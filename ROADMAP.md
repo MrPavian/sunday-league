@@ -822,7 +822,7 @@ Bundespokal neu kalibriert (400 Spiele je Zeile, Kader „mittel"): Aufschlag Zw
   jede gegen einen fiktiven Zweit- oder Erstligisten, Spielortwahl (eigener Platz / Stahlrohrtribüne / Stadion),
   Rundenprämie (verdoppelt sich je Runde) und Eintrittsteilung nach dem Vorbild des realen Pokals, Foto mit dem Star in der Vitrine.
 - **Sponsorenprämien** des Trikotsponsors für Pokalsiege als Vielfaches seines Saisonziel-Bonus (`PRAEMIE`).
-- Offen: Gegner und Profis im Bundespokal nur bis zum Finale als Einzelspiele (kein vollständiges 64er-Feld).
+- ~~Offen: Gegner und Profis im Bundespokal nur bis zum Finale als Einzelspiele (kein vollständiges 64er-Feld).~~ Erledigt 2026-10-29.
 
 ### 11.8 Spielmechanik und Ballphysik feilen (vom Nutzer gewünscht, 2026-10-15)
 Nach der Hallen-Torquote (stärkere Flachschüsse, Bandenpässe): Spielmechanik und Ballphysik auf **allen Plätzen**
@@ -881,7 +881,8 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
 - Torwart-Animationen (Abrollen, Fangen Brust/Kopf, Fausten beidhändig, Abschlag mit Ausholen, Breitmachen,
   sichtbarer Fehlgriff), Dehnen greift an den Fuß, Reaktionen bei Sprenger/Autoalarm/Zaun, Ausrutschen beim Gewitter.
 - Chat-Zusagen wiederholen sich am häufigsten.
-- Bundespokal: vollständiges Teilnehmerfeld statt nur eigener Spiele.
+- ~~Bundespokal: vollständiges Teilnehmerfeld statt nur eigener Spiele.~~ Erledigt 2026-10-29: 64 Vereine (18 Erst-, 18 Zweitligisten,
+  27 Amateure, eigener Verein), alle Paarungen je Runde (pokal.js playFieldRound), Sieger steht auch nach dem Ausscheiden fest.
 
 ### 11.10 Rückmeldungen und Wünsche (vom Nutzer, 2026-10-21)
 
