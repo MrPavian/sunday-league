@@ -187,3 +187,44 @@ aus Technik, Passen, Abschluss, Zweikampf, Torwart und einem neuen Wert für Spi
   zum Einmessen: von Stufe 8 (Oberliga) nach unten schrittweise kleiner werdend. Den genauen Verlauf lege ich beim Prototyp fest
   und lege ihn vor dem Einbau mit den gemessenen Siegquoten vor.
 - **Anzeige:** Zahl und Liganiveau, z. B. „Stärke 54 · Niveau Landesliga“.
+
+## 11. Messung Schritt 1 (2026-10-29)
+
+Gemessen mit `scripts/strength-steepness.mjs`: zwei Mannschaften aus demselben Grundkader, eine mit allen Werten um D/200 höher,
+die andere um D/200 niedriger (Stärkeunterschied der Startelf = D), Heim und Gast im Wechsel, Spiellänge wie eingestellt.
+Punkte für den Stärkeren (Sieg 1, Remis ½); N Spiele je Zeile, Unsicherheit bei N = 40 etwa ±7 Prozentpunkte.
+
+| Platz (Format) | N | D = 4 | D = 8 | D = 12 | D = 16 | D = 20 | D = 24 | Tore je Team (D = 0) |
+|---|---|---|---|---|---|---|---|---|
+| Park (5) | 40 | 59 % | 83 % | 71 % | – | 86 % | – | 0,89 |
+| Rasenplatz (7) | 40 | 63 % | 78 % | 78 % | – | 90 % | – | 1,41 |
+| Sportplatz (9) | 40 | 63 % | 69 % | 86 % | – | 93 % | – | 0,93 |
+| Großfeld (11) | 24 | – | 69 % | – | 71 % | – | 90 % | 0,65 |
+
+**Woher die Steilheit kommt** (D = 8, N = 60, nur eine Wertegruppe verschoben, gleicher Stärkeunterschied):
+
+| Platz | nur Körper (Tempo, Ausdauer, Körper) | nur Technik (Passen, Technik, Abschluss, Zweikampf, Kopfball, Torwart) |
+|---|---|---|
+| Rasenplatz (7) | 77 % | 76 % |
+| Sportplatz (9) | 76 % | 61 % |
+
+**Was das heißt:**
+1. Die Engine ist schon fast so steil wie nötig, wenn ein Stärkeunterschied aus allen Werten gleichmäßig kommt: bei 8 Punkten
+   im Mittel etwa 75 % der Punkte (Ziel aus Abschnitt 3: 80 % bei 7,7 Punkten). Umgerechnet in das Poisson-Modell entspricht das
+   etwa 0,05–0,06 je Punkt; für 80 % bräuchte es etwa 0,07 (Rechnung mit 1,2 Toren je Team). Also rund 1,3-mal steiler, nicht
+   doppelt, wie in Abschnitt 4 angenommen.
+2. Die Annahme in Abschnitt 4 (doppelt so steil) kam aus dem Pokalmodell (QUICK, 0,03 je Punkt), das an echten Kadern gemessen ist.
+   Bei echten Kadern sagt die Stärkezahl das Ergebnis also schlechter voraus als bei gleichmäßig verschobenen Werten. Vermutete
+   Gründe, noch zu messen: Zuschläge in der Stärke ohne gleich große Wirkung im Spiel (z. B. Ex-Profi +12), Gewichte je Position,
+   die nicht zur Wirkung im Spiel passen, Spieler auf fremden Positionen.
+3. Weg C (Steilheit nur aus der Technik, Körper bleibt) trägt so nicht: Je Stärkepunkt wirkt Körper mindestens so stark wie
+   Technik, auf dem Sportplatz sogar deutlich stärker. Bei Weg C müsste die Technik im Spiel mehr Gewicht bekommen.
+4. Das Hauptproblem „unten zu eng“ liegt damit vor allem an den Abständen der Kader zwischen den Ligen (1–6 Punkte), weniger an der
+   Engine.
+
+**Neuer Vorschlag für Schritt 2:**
+- a) Stärkezahl ehrlicher machen: Gewichte je Position und Zuschläge an der Wirkung im Spiel messen (gleiche Methode, je Wert
+  einzeln), damit die Zahl bei echten Kadern so gut vorhersagt wie im Versuch. Ziel: QUICK-Steigung an echten Kadern ≈ 0,05.
+- b) Engine leicht steiler (Faktor ≈ 1,3), vorzugsweise über die Technikwerte, damit Profis vor allem besser entscheiden und
+  ausführen (Gedanke aus Weg C).
+- c) Ligen weiter auseinanderziehen (Ziel-Leistung je Liga, Abschnitt 3), unten kleinere Abstände (Nutzerentscheid).
