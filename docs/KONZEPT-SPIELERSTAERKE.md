@@ -176,10 +176,14 @@ aus Technik, Passen, Abschluss, Zweikampf, Torwart und einem neuen Wert für Spi
 5. Profiligen (Regionalliga, 3. Liga, 2. Liga, Bundesliga) setzen darauf auf.
 6. Neu eichen; Prüfgrößen aus Abschnitt 7 als Tests.
 
-## 10. Offene Entscheidungen
+## 10. Entscheidungen (Nutzer, 2026-10-29)
 
-- Weg A, B oder C (Empfehlung A mit C)?
-- Alte Spielstände: altes Modell behalten oder umrechnen?
-- Abstand unten: 237 Elo je Stufe wie oben, oder kleiner? Unten ist das unbelegt; Kreis- und Bezirkspokal-Ergebnisse wären eine
-  Prüfquelle.
-- Soll die Anzeige 1–99 bleiben, oder zusätzlich „Niveau: Landesliga“ als Klartext?
+- **Weg:** Stärke 1–99 über alle 12 Ligen (Weg A), dazu verdeckte Boni für besondere Spieler, z. B. „Weltklassespieler“,
+  „Führungsspieler“, „Star der Liga“. Umsetzung: Die Boni sind verborgene Eigenschaften, die im Spiel wirken (Entscheidungen,
+  Mitspieler, Drucksituationen), aber nicht in der Stärkezahl stecken. Vorhandene Besonderheiten wie „Anführer“ oder „Teamchemie“
+  werden dabei geprüft und eingeordnet; Größe der Boni als Spielwerte, beim Einbau an der Engine gemessen.
+- **Alte Spielstände:** Nur neue Karrieren bekommen das neue Modell; laufende Spielstände spielen mit dem alten weiter.
+- **Abstand unten:** In den Amateurligen kleiner als 237 Elo je Stufe. Das ist ein Spielwert ohne Quelle, im Code markiert. Vorschlag
+  zum Einmessen: von Stufe 8 (Oberliga) nach unten schrittweise kleiner werdend. Den genauen Verlauf lege ich beim Prototyp fest
+  und lege ihn vor dem Einbau mit den gemessenen Siegquoten vor.
+- **Anzeige:** Zahl und Liganiveau, z. B. „Stärke 54 · Niveau Landesliga“.

@@ -1000,4 +1000,6 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
 - Gemessen: Heute liegen die Amateurstufen nur 1–6 Stärkepunkte auseinander, realistisch wären bei der heutigen Engine 13–17. Die
   Profis stoßen an die Wert-Obergrenze (Erst- und Zweitligist nur 1,2 Punkte auseinander).
 - Empfehlung: Engine steiler (≈ 7,7 Stärkepunkte je Liga), Entwicklung mit verborgenem Potenzial und Trainingsumfang je Liga.
-  Offene Entscheidungen stehen im Konzept, Abschnitt 10. Voraussetzung für die Profiligen.
+  Entscheidungen des Nutzers (2026-10-29) stehen im Konzept, Abschnitt 10: Stärke 1–99 über alle Ligen plus verdeckte Boni
+  (Weltklasse, Führungsspieler, Star der Liga), nur neue Karrieren, unten kleinere Abstände (Spielwert), Anzeige „Stärke · Niveau“.
+  Voraussetzung für die Profiligen.
