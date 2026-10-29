@@ -6,6 +6,12 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-29 – Ecken: Torwart fängt Flanken, Abwehr deckt eng
+
+### Verbessert
+- **Ecken:** Auf dem Großfeld geht der Torwart bei Flanken in den Fünfmeterraum raus und fängt sie ab – vorher blieb er auf der Linie. Die Verteidiger gehen mit ihrem Mann zum Ball, und wer köpft, entscheidet jetzt ein echtes Kopfballduell statt einfach der Nächste. Tore nach Ecken: Großfeld etwa 9 % statt 15 %, Rasenplatz 11 % statt 13 %. Das ist noch mehr als im echten Fußball (3–5 %).
+- **Weniger Kopfballtore:** Weil der Torwart mehr Flanken holt, fallen auf dem Großfeld weniger Kopfballtore und insgesamt etwas weniger Tore (im kurzen Spiel etwa 1,2).
+
 ## 2026-10-28-3 – Torwart im Strafraum
 
 ### Verbessert

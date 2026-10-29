@@ -6,6 +6,12 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-29 – Corners: keeper claims crosses, tighter marking
+
+### Improved
+- **Corners:** On the full-size pitch the goalkeeper now comes out for crosses into the six-yard box and catches them – before he stayed on his line. Defenders go to the ball with their man, and a real aerial duel now decides who heads it instead of simply the nearest player. Goals from corners: full-size pitch about 9 % instead of 15 %, 7-a-side 11 % instead of 13 %. Still more than in real football (3–5 %).
+- **Fewer headed goals:** Because the keeper claims more crosses, fewer headers go in on the full-size pitch and there are slightly fewer goals overall (about 1.2 in a short game).
+
 ## 2026-10-28-3 – Goalkeeper in the box
 
 ### Improved

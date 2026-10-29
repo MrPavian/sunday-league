@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-29',
+    de: { title: 'Ecken: Torwart fängt Flanken, Abwehr deckt eng', items: ['Auf dem Großfeld fängt der Torwart Flanken in den Fünfmeterraum ab.', 'Verteidiger gehen mit ihrem Mann zum Ball; ein echtes Kopfballduell entscheidet, wer köpft.', 'Tore nach Ecken auf dem Großfeld: etwa jede elfte statt jede siebte Ecke.'] },
+    en: { title: 'Corners: keeper claims crosses, tighter marking', items: ['On the full-size pitch the goalkeeper claims crosses into the six-yard box.', 'Defenders go to the ball with their man; a real aerial duel decides who heads it.', 'Goals from corners on the full-size pitch: about one in eleven instead of one in seven.'] },
+  },
+  {
     id: '2026-10-28-3',
     de: { title: 'Torwart im Strafraum', items: ['Schüsse aus dem Strafraum gehen auf Sportplatz und Großfeld nicht mehr so oft rein – etwa jeder fünfte statt jeder dritte.', 'Vor dem großen Tor hechtet der Torwart weiter.', 'Kopfbälle zählen für den Torwart als Schuss – auf dem Großfeld sind rund 15 % der Tore Kopfballtore. In kurzen Spielen fallen auf großen Plätzen weniger Tore.'] },
     en: { title: 'Goalkeeper in the box', items: ['Shots from inside the box no longer go in as often on the 9-a-side and full-size pitches – about one in five instead of one in three.', 'In front of the big goal the keeper dives further.', 'Headers count as shots for the keeper – about 15 % of goals on the full-size pitch are headers. Short games on large pitches have fewer goals.'] },
