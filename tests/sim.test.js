@@ -430,9 +430,11 @@ describe('match flow', () => {
     const { m, seen } = full(6);
     const subs = seen.filter((e) => e.type === 'sub');
     expect(subs.length).toBeGreaterThan(0);
-    expect(m.players.length).toBe(10);
+    // Verletzt und kein einsetzbarer Ersatz mehr: geht vom Platz (squad.js leaveInjured) – zählt hier mit.
+    const injuredOff = m.sentOff.filter((p) => p.injuredOff);
+    expect(m.players.length + injuredOff.length).toBe(10);
     expect(m.bench[0].length + m.bench[1].length).toBe(6);
-    const ids = new Set([...m.players, ...m.bench[0], ...m.bench[1]].map((p) => p.id));
+    const ids = new Set([...m.players, ...injuredOff, ...m.bench[0], ...m.bench[1]].map((p) => p.id));
     expect(ids.size).toBe(16);
   });
 

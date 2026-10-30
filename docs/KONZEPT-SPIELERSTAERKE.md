@@ -287,3 +287,23 @@ Vorschlag für Gewichte nach Wirkung (auf 0,05 gerundet, Werte im Rauschen wegge
 Torwart: Torwart 0,75, Technik 0,15, Passen 0,10 · Abwehr: Zweikampf 0,25, Körper 0,25, Technik 0,20, Tempo 0,10, Passen 0,10,
 Ausdauer 0,05, Kopfball 0,05 (vorläufig, bis zur Messung auf dem Großfeld) · Mittelfeld: Tempo 0,25, Technik 0,25, Körper 0,20, Zweikampf 0,15, Passen 0,10, Ausdauer 0,05 ·
 Sturm: Körper 0,35, Technik 0,25, Abschluss 0,15, Passen 0,10, Tempo 0,15.
+
+### 11.3 Engine-Abgleich Körper und Ausdauer (2026-10-30, Nutzerentscheid „erst Engine, dann Zahl“)
+
+**Körper.** Er wirkt über fünf Faktoren (sim/strength.js STRENGTH_FX): Schulterduell, Abschirmen im Stehen, Stochern, Festhalten,
+Kopfballduell. Gemessen (Rasenplatz, Körper im Sturm, N = 80, ±0,30; Körper aller Positionen, N = 120, ±0,20):
+
+| Variante | Körper im Sturm | Körper alle | Tests |
+|---|---|---|---|
+| vorher (duel 0,4) | 9,6 | 7,6 | grün |
+| alles halbiert, Mitte gleich | 2,5 | 4,4 | Abschirmen nicht mehr Hauptfaktor (strength.test), 9er-Tore 2,19 → 1,88 je Spiel (80 Spiele) |
+| nur Stochern und Festhalten halbiert | 9,1 | 9,4 | grün, aber keine Wirkung |
+| **duel 0,3** (eingebaut) | **6,0** | 8,0 | grün |
+
+Das Schulterduell ist der Hebel. Mit 0,3 liegt Körper im Sturm etwa bei der Technik (5,3–6,2); weiter herunter drückt es die Tore auf
+dem 9er unter die vom Nutzer festgelegte Marke. Golden ändert sich gewollt.
+
+**Ausdauer.** Am Spielende haben alle Feldspieler etwa 0,2 Restkraft, egal wie hoch ihre Ausdauer ist (6 Spiele je Platz: Ausdauer
+unter 0,4 → 0,20–0,24, über 0,6 → 0,22). Ursache: Die KI sprintet, solange die Kraft über 0,25–0,35 liegt (ai.js). Gute Ausdauer heißt
+dadurch „öfter sprinten“, nicht „frischer bleiben“. Ein Umbau (z. B. Kräfte einteilen je Restspielzeit) ist ein eigener Schritt;
+bis dahin bekommt Ausdauer in der Stärkezahl nur ein kleines Gewicht.

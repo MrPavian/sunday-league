@@ -11,12 +11,14 @@ export const STRENGTH_DEFAULT = 0.5;
 // (siehe generator.js ROLL_ATTRS): ein neuer Schlüssel in der Schleife würde den Zufallsstrom des Pools verschieben.
 export const ATTR_KEYS = ['pace', 'stamina', 'technique', 'passing', 'shooting', 'tackling', 'heading', 'keeping', 'strength'];
 
-// Wirkung des Körpers. Spielwerte, gewählt – nicht gemessen; die Wirkung der Summe auf Tore, Ballwechsel usw. steht im
+// Wirkung des Körpers. Spielwerte, gewählt – nicht gemessen. 2026-10-30 duel 0,4 → 0,3 (Nutzerentscheid „erst Engine, dann Zahl“):
+// Körper wirkte im Sturm stärker als Technik und Abschluss (docs/KONZEPT-SPIELERSTAERKE.md, 11.2 und 11.3), entgegen der Absicht oben.
+// Gemessen: Körper im Sturm 9,6 → 6,0 Stärkepunkte (Technik 5,3–6,2); Stochern und Festhalten halbiert änderten nichts Messbares. die Wirkung der Summe auf Tore, Ballwechsel usw. steht im
 // Messbericht (docs/agent/pingpong-audit-2026-10.md, Abschnitt „Körper“). Spreizung der Werte im Pool: Mittel 0,50, 1 sigma 0,10
 // (gemessen am Standardpool, 25.000 Spieler); ein Unterschied von 0,2 zwischen zwei Spielern ist also schon deutlich.
 export const STRENGTH_FX = {
   // Klauchance bei Berührung (shielded): + duel * (Körper Angreifer − Körper Ballführer). 0,4 → bei Diff 0,2: ±0,08.
-  duel: 0.4,
+  duel: 0.3,
   // Abschirmen im Stehen (carrier.shielding): vorher fest 0,2, jetzt base + perStrength * Körper (bei 0,5 wieder 0,2;
   // Körper 0,3 → 0,12, Körper 0,7 → 0,28). Hier ist der Körper der Hauptfaktor, nicht die Technik.
   shieldBase: 0.0,

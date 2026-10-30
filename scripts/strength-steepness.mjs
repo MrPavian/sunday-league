@@ -11,6 +11,10 @@ import { generateTeam, ratePlayer } from '../src/sim/generator.js';
 import { createMatch, stepMatch } from '../src/sim/match.js';
 import { PITCHES } from '../src/sim/pitch.js';
 import { normalizeTactic, systemFormation } from '../src/sim/tactics.js';
+import { STRENGTH_FX } from '../src/sim/strength.js';
+
+// FX='{"duel":0.3}': Körper-Faktoren für eine Messvariante überschreiben (nur im Skript).
+if (process.env.FX) Object.assign(STRENGTH_FX, JSON.parse(process.env.FX));
 
 const pitch = PITCHES[process.argv[2] ?? 'sportplatz'];
 const N = +process.argv[3] || 40;
@@ -58,4 +62,4 @@ for (const D of STEPS) {
   const perPoint = D ? Math.log((gs + 0.5) / (gw + 0.5)) / 2 / (realD / N) : 0;
   out.push({ D, realD: +(realD / N).toFixed(1), points: +((pts / N) * 100).toFixed(1), goalsPerTeam: +(goals / N / 2).toFixed(2), perPoint: +perPoint.toFixed(3) });
 }
-console.log(JSON.stringify({ pitch: pitch.id, format, N, mode: MODE, rows: out }));
+console.log(JSON.stringify({ pitch: pitch.id, format, N, mode: MODE, fx: process.env.FX ?? null, rows: out }));
