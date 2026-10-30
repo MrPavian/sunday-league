@@ -37,7 +37,9 @@ import { clubScreens } from './clubhouse/club.js';
 import { officeScreens } from './clubhouse/office.js';
 import { homeScreens } from './clubhouse/home.js';
 import { phoneScreens } from './clubhouse/phone.js';
-import { pubScreens } from './clubhouse/pub.js';
+import { pubCast, pubScreens } from './clubhouse/pub.js';
+import { PubView } from '../render/pub/PubView.js';
+import { yearOf } from '../career/sagas.js';
 import { seasonScreens } from './clubhouse/season.js';
 import { festivalScreens } from './clubhouse/festival.js';
 import { teamScreens } from './clubhouse/team.js';
@@ -219,6 +221,9 @@ export class Clubhouse {
       } else if (action === 'invite') {
         inviteTrialist(this.career, Number(value));
         this.h.onChange();
+      } else if (action === 'pubFocus') {
+        this.pubFocus = value; // Person im Raum angetippt (clubhouse/pub.js)
+        this.render();
       } else if (action === 'pubRound') {
         buyRound(this.career);
         this.h.onChange();
@@ -587,6 +592,24 @@ export class Clubhouse {
 
   hide() {
     this.root.hidden = true;
+    this.syncPub3d(true);
+  }
+
+  // 3D-Kneipe (render/pub/PubView.js): solange die Bühne im Reiter steht; main.js rendert sie statt des Platzes.
+  // Neu gebaut, wenn sich Woche oder Besetzung ändern.
+  syncPub3d(off = false) {
+    const stage = !off && this.root.querySelector('[data-pub-stage]');
+    const c = this.career;
+    const key = stage ? `${c.season}:${c.round}:${pubCast(c).join(',')}:${c.staff?.wirt?.idx ?? ''}` : null;
+    if (this.pubView && this.pubViewKey !== key) {
+      this.pubView.dispose();
+      this.pubView = null;
+    }
+    if (!stage || this.pubView) return;
+    const club = humanClub(c);
+    const titles = (c.history ?? []).filter((h) => h.pos === 1).map((h) => yearOf(c, h.season));
+    this.pubView = new PubView({ club, wirt: c.staff?.wirt ? { look: playerOf(c, c.staff.wirt.idx).look } : null, cast: pubCast(c).map((idx) => ({ id: idx, look: playerOf(c, idx).look })), titles, seed: c.seed ?? 1 });
+    this.pubViewKey = key;
   }
 
   // Android-Zurück-Taste: erst Auswahl/Spielerkarte schließen, dann zurück auf „Heute".
@@ -634,7 +657,7 @@ export class Clubhouse {
         : uiTabs(areaTabs.map((t) => [t, labels[t]]), this.tab, 'tab')
       : '';
     // Im Vereinsheim („Heute") ist das Fenster der Szene durchsichtig: dahinter läuft der eigene Platz.
-    this.root.classList.toggle('see-through', area.id === 'home' && homeView() !== 'klassisch');
+    this.root.classList.toggle('see-through', (area.id === 'home' || this.tab === 'pub') && homeView() !== 'klassisch');
     // Neuer Bereich/Tab: Inhalt blendet einmal kurz ein (nicht bei jedem Neuzeichnen).
     const enter = this.shownTab !== this.tab;
     this.shownTab = this.tab;
@@ -658,6 +681,7 @@ export class Clubhouse {
     const wa = this.root.querySelector('.phone-stage.open .wa-body');
     if (wa) wa.scrollTop = wa.scrollHeight;
     this.bindPub();
+    this.syncPub3d();
     this.bindPate();
     this.bindCalSwipe();
     this.bindClubForm();

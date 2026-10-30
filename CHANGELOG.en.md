@@ -6,6 +6,12 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-30-3 – The pub in 3D
+
+### New
+- **The pub as a room:** The local is now a 3D room in the style of the game. The landlord stands behind the bar (your hired landlord with his own face, otherwise Kalle), Grandpa Heinz and a few players sit at the regulars' table, two play darts – the darts stay in the board. Pennants, scarves and the club name in your colours, a title pennant for every championship. People drink, chat and gesture.
+- **Tap instead of menus:** Tap a person and what you can do with them appears below: buy a round or pump the landlord, the regulars' table and beer-mat tactics with Grandpa Heinz, the duel at the dartboard, a one-to-one with a player. All of them are also listed under the room; the classic view shows only the list.
+
 ## 2026-10-30-2 – Legs, nerves and a second wind
 
 ### Changed

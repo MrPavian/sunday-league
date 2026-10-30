@@ -982,6 +982,15 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   (plan.js setSystem). Jeder bekommt den nächstgelegenen Platz der neuen Formation, die Spieler laufen ihre Positionen an.
 
 ### 11.12 Kneipe und Vereinsheim in 3D (vom Nutzer gewünscht, 2026-10-28)
+- ✅ Erster Ausbau 2026-10-30 (`src/render/pub/PubView.js`, `src/ui/clubhouse/pub.js`): Die Stammkneipe ist ein 3D-Raum im Pixel-Stil,
+  gerendert vom selben Renderer wie der Platz (kein zweiter WebGL-Kontext), solange der Kneipen-Reiter offen ist. Theke mit dem Wirt
+  (angestellter Wirt mit seinem Aussehen, sonst Kalle), Flaschenregal, Stammtisch mit Opa Heinz und Spielern, zwei an der Dartscheibe
+  (Wurf, Pfeile bleiben stecken), Barhocker, Lampen, Wimpelkette und Schals in den Vereinsfarben, Vereinsname über der Theke,
+  Meisterwimpel aus der Vereinsgeschichte. Leute trinken, gestikulieren, reihum eine Sprechblase. Antippen einer Person (Marker,
+  44 px) öffnet ihre Sache darunter: Wirt → Runde und Neuigkeiten, Opa Heinz → Stammtisch und Bierdeckel-Taktik, Dartscheibe → Duell,
+  Spieler → Einzelgespräch mit Dossier und Traum. Liste aller Ansprechpartner als Alternative; die klassische Ansicht zeigt nur Liste
+  und Inhalte. Kosten: 39 Draw Calls, 6 Tsd. Dreiecke (Halle 61 / 32 Tsd.). Offen: Vereinsheim („Heute“) als 3D-Raum, Prosten
+  als gemeinsame Geste, Wimpel/Flaggen nach Erfolgen im Pokal.
 - Kneipe bzw. Vereinsheim als begehbarer 3D-Raum im Stil des Spiels (Pixel-Shader, Low-Poly-Figuren wie auf dem Platz),
   statt der heutigen Kneipen-Seite. Heute: Vereinsheim-Szene als gezeichneter Raum (`src/ui/ClubScene.js`), Kneipe als
   Menü (`src/career/pub.js`).

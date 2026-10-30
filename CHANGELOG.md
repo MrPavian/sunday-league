@@ -6,6 +6,12 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-30-3 – Die Kneipe in 3D
+
+### Neu
+- **Kneipe als Raum:** Die Stammkneipe ist jetzt ein 3D-Raum im Stil des Spiels. Hinter der Theke steht der Wirt (dein angestellter Wirt mit seinem Gesicht, sonst Kalle), am Stammtisch sitzen Opa Heinz und ein paar Spieler, zwei werfen Darts – die Pfeile bleiben stecken. Wimpelkette, Schals und Vereinsname in deinen Farben, für jede Meisterschaft ein Meisterwimpel. Die Leute trinken, reden und gestikulieren.
+- **Antippen statt Menü:** Tipp eine Person an, und darunter steht, was du mit ihr machen kannst: beim Wirt eine Runde ausgeben oder ihn ausfragen, bei Opa Heinz der Stammtisch und die Taktik auf dem Bierdeckel, an der Dartscheibe das Duell, bei einem Spieler das Einzelgespräch. Alle Ansprechpartner stehen zusätzlich als Liste unter dem Raum; in der klassischen Ansicht gibt es nur die Liste.
+
 ## 2026-10-30-2 – Kraft, Nerven und zweite Luft
 
 ### Geändert

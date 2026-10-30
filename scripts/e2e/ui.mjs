@@ -9,6 +9,7 @@ import { phoneAndShare } from './ui/phone.mjs';
 import { platzAnlage } from './ui/platz.mjs';
 import { alteHerren, alteHerrenTicker } from './ui/oldboys.mjs';
 import { frauen } from './ui/women.mjs';
+import { kneipe } from './ui/pub.mjs';
 import { transferMarkt } from './ui/transfers.mjs';
 import { relegation } from './ui/relegation.mjs';
 import { winterBreak } from './ui/winter.mjs';
@@ -26,6 +27,7 @@ export async function run({ sizes = Object.keys(SIZES) } = {}) {
   for (const s of sizes) fails += await alteHerren(b, s, process.env.E2E_SHOTS);
   fails += await alteHerrenTicker(b, process.env.E2E_SHOTS);
   for (const s of sizes) fails += await frauen(b, s, process.env.E2E_SHOTS);
+  for (const s of sizes) fails += await kneipe(b, s, process.env.E2E_SHOTS);
   for (const s of sizes) fails += await phoneAndShare(b, s);
   fails += await relegation(b);
   fails += await winterBreak(b);

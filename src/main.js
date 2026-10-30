@@ -459,8 +459,25 @@ function frame(now) {
   const shake = view.ballView?.shakeOffset(dt) ?? 0;
   if (shake) rig.camera.position.addScaledVector(shakeDir.set(1, 0, 0).applyQuaternion(rig.camera.quaternion), (shake * (rig.camera.top - rig.camera.bottom)) / rig.internalHeight);
   if (DIAG) DIAG.sys = 'render';
-  updateLighting();
-  pixel.render(scene, rig.camera, { moving: !(subPanel.isOpen || planPanel.isOpen || halfPanel.isOpen) });
+  // Kneipen-Reiter offen: der 3D-Raum (render/pub/PubView.js) statt des Platzes, Knöpfe über den Figuren mitführen.
+  const pubView = mode === 'club' ? clubhouse.pubView : null;
+  const pubStage = pubView ? document.querySelector('#club [data-pub-stage]') : null;
+  const pubRect = pubStage?.getBoundingClientRect();
+  if (pubView && pubRect?.width > 0 && pubRect.height > 0) {
+    pubView.update(dt);
+    pubView.frameRect(pubRect, window.innerWidth, window.innerHeight);
+    const talker = pubView.talker();
+    for (const btn of pubStage.querySelectorAll('[data-actor]')) {
+      btn.classList.toggle('talk', btn.dataset.actor === talker);
+      const at = pubView.screenOf(btn.dataset.actor, window.innerWidth, window.innerHeight);
+      btn.hidden = !at;
+      if (at) btn.style.transform = `translate(${(at.x - pubRect.x).toFixed(0)}px, ${(at.y - pubRect.y).toFixed(0)}px) translate(-50%, -100%)`;
+    }
+    pixel.render(pubView.scene, pubView.camera, { moving: true });
+  } else {
+    updateLighting();
+    pixel.render(scene, rig.camera, { moving: !(subPanel.isOpen || planPanel.isOpen || halfPanel.isOpen) });
+  }
   if (gfx.active) gfx.end(performance.now());
   if (shot.wanted) shot.save();
   if (DIAG) DIAG.sys = 'idle';

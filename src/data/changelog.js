@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-30-3',
+    de: { title: 'Die Kneipe in 3D', items: ['„Zum Anstoß“ ist jetzt ein Raum: Wirt hinter der Theke, Opa Heinz und die Jungs am Stammtisch, zwei beim Darts.', 'Wimpel, Schals und Meisterwimpel in deinen Vereinsfarben.', 'Tipp eine Person an: Runde beim Wirt, Taktik bei Opa Heinz, Gespräch mit einem Spieler, Duell an der Dartscheibe.'] },
+    en: { title: 'The pub in 3D', items: ['The pub is now a room: the landlord behind the bar, Grandpa Heinz and the lads at the regulars\' table, two playing darts.', 'Pennants, scarves and title pennants in your club colours.', 'Tap a person: a round from the landlord, tactics with Grandpa Heinz, a chat with a player, a duel at the dartboard.'] },
+  },
+  {
     id: '2026-10-30-2',
     de: { title: 'Kraft, Nerven und zweite Luft', items: ['Die Spieler werden über das Spiel müde wie im echten Fußball – nicht mehr schon nach einem Drittel platt. Eingewechselte bringen frische Beine.', 'Wer knapp führt, bekommt in der Schlussphase Druck. Nervöse wackeln, Ruhepole bleiben cool.', 'Ein Anschlusstreffer setzt manchmal noch einmal Kräfte frei – nicht immer.', 'Neues Spielerprofil „Zweite Luft“: holt sich spät im Spiel noch einmal Kraft.'] },
     en: { title: 'Legs, nerves and a second wind', items: ['Players tire over the match like in real football – no longer spent after a third of it. Substitutes bring fresh legs.', 'A narrow lead brings pressure late on. Nervy players wobble, calm heads stay cool.', 'Pulling a goal back sometimes frees up fresh energy – not always.', 'New player profile "Second wind": finds fresh legs late in the game.'] },
