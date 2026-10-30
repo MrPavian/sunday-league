@@ -252,3 +252,38 @@ Zweikampf und Torwart zu wenig. Das erklärt, warum echte Kader flacher vorhersa
 Ausdauer hängt an der Spiellänge (gemessen mit der eingestellten, kurzen Spielzeit); bei langen Spielen ist sie neu zu messen.
 Nächste Messung: dieselbe Methode je Position (nur Abwehr, nur Mittelfeld, nur Sturm, nur Torwart), daraus neue Gewichte je Position
 für die Stärkezahl der neuen Karrieren.
+
+### 11.2 Wirkung je Position (2026-10-30)
+
+Rasenplatz (7er), N = 80 je Zeile, nur ein Wert nur einer Position verschoben, um ±0,30. Wirkung wie in 11.1 in Stärkepunkten der
+ganzen Mannschaft (Unsicherheit etwa ±2,3); „zählt“ = Änderung der heutigen Stärkezahl (Schnitt der Startelf).
+
+| Position | Wert | Wirkung | Zählt |
+|---|---|---|---|
+| Torwart | Torwart | 7,2 | 4,9 |
+| Torwart | Technik / Passen / Tempo / Körper | 1,6 / 0,9 / −0,4 / −0,7 | 0,8 / 0,8 / 0,8 / 0 |
+| Abwehr | Zweikampf | 5,5 | 5,1 |
+| Abwehr | Körper | 5,0 | 0 |
+| Abwehr | Technik | 4,1 | 1,7 |
+| Abwehr | Tempo / Passen / Ausdauer | 2,5 / 2,3 / 1,1 | 2,4 / 2,4 / 2,4 |
+| Abwehr | Kopfball / Abschluss | −0,2 / −0,2 | 2,5 / 0 |
+| Mittelfeld | Tempo | 6,7 | 2,4 |
+| Mittelfeld | Technik | 6,5 | 6,3 |
+| Mittelfeld | Körper | 5,0 | 0 |
+| Mittelfeld | Zweikampf / Passen / Ausdauer | 3,6 / 2,7 / 2,0 | 2,5 / 6,3 / 5,0 |
+| Mittelfeld | Abschluss / Kopfball | −0,2 / 0,4 | 2,5 / 0 |
+| Sturm | Körper | 9,6 | 0 |
+| Sturm | Technik | 6,2 | 1,7 |
+| Sturm | Abschluss / Passen / Tempo | 4,1 / 3,6 / 3,4 | 2,5 / 0,8 / 1,6 |
+| Sturm | Zweikampf / Ausdauer / Kopfball | 1,1 / −0,2 / −1,6 | 0 / 0,8 / 0,8 |
+
+**Auffällig:**
+- Körper ist im Spiel einer der stärksten Werte, im Sturm der stärkste – mehr als Technik und Abschluss.
+- Kopfball wirkt auf dem 7er-Rasen nicht messbar (wenig Flanken); auf dem Großfeld noch zu messen.
+- Ausdauer wirkt kaum (kurze, eingestellte Spielzeit).
+- Passen im Mittelfeld zählt in der Stärke viel (6,3), wirkt aber wenig (2,7).
+
+Vorschlag für Gewichte nach Wirkung (auf 0,05 gerundet, Werte im Rauschen weggelassen), nur Rasenplatz:
+Torwart: Torwart 0,75, Technik 0,15, Passen 0,10 · Abwehr: Zweikampf 0,25, Körper 0,25, Technik 0,20, Tempo 0,10, Passen 0,10,
+Ausdauer 0,05, Kopfball 0,05 · Mittelfeld: Tempo 0,25, Technik 0,25, Körper 0,20, Zweikampf 0,15, Passen 0,10, Ausdauer 0,05 ·
+Sturm: Körper 0,35, Technik 0,25, Abschluss 0,15, Passen 0,10, Tempo 0,15.
