@@ -6,6 +6,11 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-30-1 – Technik schlägt Masse
+
+### Geändert
+- **Körper im Zweikampf:** Im Schulterduell zählt der Körper etwas weniger. Gemessen war er im Sturm wichtiger als Technik und Abschluss; jetzt liegen Körper und Technik gleichauf. Abschirmen im Stehen bleibt Sache des Körpers. Torzahlen bleiben im gewohnten Rahmen.
+
 ## 2026-10-29-9 – Frauenteam mit Kader und Liga
 
 ### Neu

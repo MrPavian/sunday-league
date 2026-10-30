@@ -6,6 +6,11 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-30-1 – Skill beats bulk
+
+### Changed
+- **Strength in duels:** Strength counts a little less in shoulder-to-shoulder duels. Measured, it mattered more for strikers than technique and finishing; now strength and technique are level. Shielding the ball while standing is still down to strength. Goal counts stay in the usual range.
+
 ## 2026-10-29-9 – Women's team with squad and league
 
 ### New

@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-30-1',
+    de: { title: 'Technik schlägt Masse', items: ['Im Schulterduell zählt der Körper etwas weniger. Vorher war er im Sturm wichtiger als Technik und Abschluss, jetzt liegen sie gleichauf.', 'Abschirmen im Stehen bleibt Sache des Körpers.'] },
+    en: { title: 'Skill beats bulk', items: ['Strength counts a little less in shoulder-to-shoulder duels. Before, it mattered more for strikers than technique and finishing; now they are level.', 'Shielding the ball while standing is still down to strength.'] },
+  },
+  {
     id: '2026-10-29-9',
     de: { title: 'Frauenteam mit Kader und Liga', items: ['Das Frauenteam hat jetzt 16 echte Spielerinnen, eine Trainerin und eine eigene Liga mit Tabelle – Verein → Frauen.', 'Ergebnisse jede Woche in der Chatgruppe, Meister steigen auf.', 'Mädchen aus der Jugend und deine Töchter rücken mit 16 als Spielerinnen auf.'] },
     en: { title: "Women's team with squad and league", items: ["The women's team now has 16 real players, a coach and its own league table – Club → Women.", 'Results every week in the group chat, champions go up.', 'Girls from the youth section and your daughters join at 16 as players.'] },
