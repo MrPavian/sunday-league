@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-30-2',
+    de: { title: 'Kraft, Nerven und zweite Luft', items: ['Die Spieler werden über das Spiel müde wie im echten Fußball – nicht mehr schon nach einem Drittel platt. Eingewechselte bringen frische Beine.', 'Wer knapp führt, bekommt in der Schlussphase Druck. Nervöse wackeln, Ruhepole bleiben cool.', 'Ein Anschlusstreffer setzt manchmal noch einmal Kräfte frei – nicht immer.', 'Neues Spielerprofil „Zweite Luft“: holt sich spät im Spiel noch einmal Kraft.'] },
+    en: { title: 'Legs, nerves and a second wind', items: ['Players tire over the match like in real football – no longer spent after a third of it. Substitutes bring fresh legs.', 'A narrow lead brings pressure late on. Nervy players wobble, calm heads stay cool.', 'Pulling a goal back sometimes frees up fresh energy – not always.', 'New player profile "Second wind": finds fresh legs late in the game.'] },
+  },
+  {
     id: '2026-10-30-1',
     de: { title: 'Technik schlägt Masse', items: ['Im Schulterduell zählt der Körper etwas weniger. Vorher war er im Sturm wichtiger als Technik und Abschluss, jetzt liegen sie gleichauf.', 'Abschirmen im Stehen bleibt Sache des Körpers.'] },
     en: { title: 'Skill beats bulk', items: ['Strength counts a little less in shoulder-to-shoulder duels. Before, it mattered more for strikers than technique and finishing; now they are level.', 'Shielding the ball while standing is still down to strength.'] },

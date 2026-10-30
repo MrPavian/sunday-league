@@ -103,9 +103,11 @@ describe('coach orders change real behaviour', () => {
 describe('fairness', () => {
   it('no hidden comeback help: the score changes nothing about how the match plays', () => {
     const run = (fakeScore) => {
-      const m = createMatch({ seed: 44, pitch: PITCHES.parkplatz, human: false, duration: 120, aiCoach: false, frustration: false });
+      const m = createMatch({ seed: 44, pitch: PITCHES.parkplatz, human: false, duration: 120, aiCoach: false, frustration: false, mentality: false });
       // frustration: false – die Frust-Rauheit (Rückstand → ruppiger, fouls.js roughness) ist gewollt und sichtbar, keine versteckte
-      // Aufholhilfe; sie ist die einzige Stelle, an der der Spielstand das Spiel selbst ändert, und wird hier abgeschaltet.
+      // Aufholhilfe. mentality: false – ebenso Ergebnisdruck und Kraftschub nach dem Anschlusstreffer (mentality.js, vom Nutzer
+      // gewünscht 2026-10-30, im Ticker angesagt). Das sind die einzigen Stellen, an denen der Spielstand das Spiel selbst ändert;
+      // beide werden hier abgeschaltet.
       const trail = [];
       while (m.phase !== 'ended') {
         stepMatch(m, undefined, 1 / 60);

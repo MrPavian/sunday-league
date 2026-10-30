@@ -339,3 +339,19 @@ aus Abschnitt 3 ist erreicht, ohne die Engine eigens steiler zu machen.
 **Folge 3 – Ausdauer als Wert:** wirkt weiter kaum (Rasenplatz 51 %, Sportplatz 55 % bei ±0,20). Fitte Spieler sprinten mehr (wie bei
 Mohr et al.: Fitness hängt mit der Menge an schnellen Läufen zusammen), bleiben aber nicht frischer. In der Stärkezahl bekommt Ausdauer
 deshalb nur ein kleines Gewicht.
+
+### 11.5 Kopf und Beine: Ergebnisdruck, Kraftschub, Zweite Luft (2026-10-30, vom Nutzer gewünscht)
+
+Neu in sim/mentality.js (alle Werte Spielwerte, keine Quelle für feste Zahlen; dass der Spielstand die Laufarbeit beeinflusst, ist belegt,
+Überblick Lago-Peñas 2012):
+- **Ergebnisdruck** für den knapp Führenden ab 75 % der Spielzeit (bei zwei Toren halb), nach einem Anschlusstreffer sofort voll und über
+  12 % der Spielzeit abklingend. Er verstärkt die Streuung unter Gegnerdruck: Nervöse voll, normale halb, Ruhepole gar nicht (ein Ruhepol
+  in der Nähe halbiert es noch einmal).
+- **Kraftschub** nach Anschlusstreffer oder Ausgleich in der zweiten Hälfte, in 60 % der Fälle: ein Viertel der verlorenen Kraft zurück,
+  zum Spielende bis zum Anderthalbfachen.
+- **Zweite Luft** (Profil, etwa jeder Fünfzehnte mit Ausdauer ab 0,45, nie Raucher): einmal je Spiel ab 70 % der Spielzeit, wenn die Kraft
+  unter 0,4 liegt, +0,25.
+
+Gemessen (je 80 Spiele Rasenplatz und Sportplatz, alt → neu): Wer bei 75 % der Spielzeit mit einem Tor hinten liegt, holt noch
+mindestens einen Punkt in 20 % (11 von 56) → 16 % (10 von 63) der Fälle – im Rauschen, die Wirkung ist mild. Kraftschübe 11–18, Zweite Luft
+15–20 je 80 Spiele. Tore unverändert (244 → 247, 190 → 184).

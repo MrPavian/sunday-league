@@ -16,6 +16,7 @@ import { fooled, tryTrick } from './tricks.js';
 import { PINGPONG, STRENGTH_FX, strengthOf } from './strength.js';
 import { headerDuelFoul } from './fouls.js';
 import { STAMINA_DRAIN } from './pitch.js';
+import { secondWind } from './mentality.js';
 
 export const REACH = 0.75;
 
@@ -53,6 +54,7 @@ export function movePlayer(m, p, intent, dt, leaders) {
     if (leaders.some((l) => l !== p && l.team === p.team && dist2d(l.pos, p.pos) < 8)) drain *= 0.85;
   }
   p.stamina = clamp(p.stamina - drain * dt, 0, 1);
+  if (hasProfile(p, 'zweiteluft')) secondWind(m, p); // einmal je Spiel spät Kraft zurück (mentality.js)
 
   const dir = moving ? norm(mv.x, mv.z) : { x: 0, z: 0 };
   const tvx = dir.x * maxSpeed * mag;

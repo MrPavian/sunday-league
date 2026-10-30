@@ -33,6 +33,7 @@ import { stepLog } from './matchlog.js';
 import { stepSituations } from './situations.js';
 import { answerCard, stepCoachFeed } from './coachfeed.js';
 import { aiCoachHalftime, stepAiCoach } from './aicoach.js';
+import { afterGoal } from './mentality.js';
 
 export { attackDir, getPlayer } from './players.js';
 export { startPoke, startTackle } from './tackles.js';
@@ -68,7 +69,7 @@ const NO_INPUT = { move: { x: 0, z: 0 }, sprint: false, shootHeld: false, pass: 
 const BENCH_ROLES = { 4: ['mid', 'fwd'], 5: ['def', 'mid', 'fwd'], 7: ['def', 'mid', 'fwd'], 9: ['gk', 'def', 'mid', 'fwd'], 11: ['gk', 'def', 'def', 'mid', 'mid', 'fwd', 'fwd'] };
 
 // human: false → beide Teams von der KI gesteuert (Simulation ungespielter Partien).
-export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = true, human = true, duration, incidents = false, aiCoach = true, frustration = true } = {}) {
+export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = true, human = true, duration, incidents = false, aiCoach = true, frustration = true, mentality = true } = {}) {
   const rng = createRng(seed);
   duration ??= matchDuration(pitch);
   const format = pitch.format ?? 5;
@@ -105,6 +106,7 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = tr
     bench,
     seed,
     frustration, // Rückstand macht ruppiger (fouls.js roughness); nur für Fairness-Tests abschaltbar
+    mentality, // Ergebnisdruck und Kraftschub nach dem Anschlusstreffer (mentality.js), sichtbar im Ticker; nur für Fairness-Tests abschaltbar
     aiCoach, // KI-Trainer stellen während des Spiels um (aicoach.js)
     subRequests: [false, false],
     subRule: subRuleFor(MATCH.subs),
@@ -483,6 +485,7 @@ function onGoal(m, team) {
   const lp = m.lastPass;
   const assistId = !ownGoal && lp && lp.team === team && lp.playerId !== scorer?.id && m.time - lp.time < 8 ? lp.playerId : null;
   m.events.push({ type: 'goal', team, scorerId: scorer?.id ?? null, assistId, ownGoal, via: m.ball.lastAction, acro: acroGoal(m, scorer), time: m.time });
+  afterGoal(m, team); // Zittern beim Führenden, Kraftschub beim Aufholenden (mentality.js)
   m.lastGoal = { team, scorerId: ownGoal ? null : scorer?.id ?? null };
   for (const p of m.players) p.mood = p.team !== team ? 'sad' : p.id === m.lastGoal.scorerId ? 'scorer' : 'celebrate';
   m.phase = 'goal';

@@ -6,6 +6,16 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-30-2 – Kraft, Nerven und zweite Luft
+
+### Geändert
+- **Müdigkeit wie im echten Fußball:** Die Spieler verlieren ihre Kraft über das ganze Spiel. Gegen Ende laufen sie etwa 40 % weniger schnelle Läufe als am Anfang, wie in der Sportwissenschaft gemessen (Mohr et al. 2003); vorher waren sie schon nach einem Drittel platt. Eingewechselte bringen frische Beine. Müde Spieler schießen und passen ungenauer als frische. Auf dem Großfeld fallen dadurch mehr Tore, die Trefferquote liegt jetzt wie im echten Fußball bei gut 10 %.
+
+### Neu
+- **Nerven beim Führenden:** Wer knapp führt, bekommt in der Schlussphase Druck, nach einem Anschlusstreffer erst recht. Nervöse Spieler wackeln, Ruhepole bleiben cool und beruhigen die anderen. Der Ticker sagt es an.
+- **Kraft aus dem Anschlusstreffer:** Ein Anschlusstreffer oder Ausgleich in der zweiten Hälfte setzt manchmal noch einmal Kräfte frei, nicht immer.
+- **Profil „Zweite Luft“:** Manche Spieler holen sich spät im Spiel noch einmal Kraft, wenn sie müde sind.
+
 ## 2026-10-30-1 – Technik schlägt Masse
 
 ### Geändert

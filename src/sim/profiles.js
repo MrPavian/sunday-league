@@ -9,9 +9,11 @@
 //   solist      – dribbelt lieber selbst
 //   nervoes     – unter Druck mehr Fehler
 //   ruhepol     – unter Druck ruhig, beruhigt die Mitspieler um sich herum
+//   zweiteluft  – holt sich spät im Spiel einmal Kraft zurück (mentality.js)
 import { tr } from '../core/i18n.js';
 import { dist2d } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
+import { resultPressure } from './mentality.js';
 
 export const PROFILES = {
   spielmacher: { label: tr('Spielmacher', 'Playmaker'), desc: tr('Fordert den Ball und verteilt ihn.', 'Demands the ball and distributes it.') },
@@ -22,6 +24,7 @@ export const PROFILES = {
   solist: { label: tr('Einzelkämpfer', 'Soloist'), desc: tr('Versucht es lieber selbst mit dem Dribbling.', 'Would rather take them on himself.') },
   nervoes: { label: tr('Nervös', 'Nervy'), desc: tr('Unter Druck unterlaufen ihm mehr Fehler.', 'Makes more mistakes under pressure.') },
   ruhepol: { label: tr('Ruhepol', 'Calming presence'), desc: tr('Bleibt unter Druck ruhig und beruhigt die anderen.', 'Stays calm under pressure and settles the others.') },
+  zweiteluft: { label: tr('Zweite Luft', 'Second wind'), desc: tr('Holt sich spät im Spiel noch einmal Kraft, wenn er müde ist.', 'Finds fresh legs late in the game when he is tired.') },
 };
 
 function hash(s) {
@@ -49,6 +52,8 @@ export function profilesOf(p) {
   add('ruhepol', hasTrait(p, 'ballsicher') || hasTrait(p, 'ex_profi') ? 1 : (p.age ?? 0) >= 32 && a.technique >= 0.6 ? 0.1 + a.technique - 0.6 : 0);
   // Nervosität: junge, unsichere Spieler – und ein paar, bei denen es einfach so ist.
   add('nervoes', young && a.technique < 0.4 ? 0.2 : hash(p.name ?? p.id) % 11 === 0 && !hasTrait(p, 'ballsicher') ? 0.05 : 0);
+  // Zweite Luft: etwa jeder Fünfzehnte mit wenigstens mittlerer Ausdauer, nie der Raucher (Spielwert, ohne Zufallsstrom).
+  if (pos !== 'gk') add('zweiteluft', (hash(`${p.name ?? p.id}:luft`) % 15 === 0 && a.stamina >= 0.45 && !hasTrait(p, 'raucher')) ? 0.3 : 0);
   out.sort((x, y) => y[1] - x[1]);
   // Ballmagnet und Einzelkämpfer schließen sich mit Mannschaftsspieler aus.
   const ids = [];
@@ -78,8 +83,9 @@ export function pressureChaos(m, p) {
   const pr = pressureOn(m, p);
   if (!pr) return 1;
   let k = 0.3;
-  if (hasProfile(p, 'nervoes')) k = 0.6;
-  else if (hasProfile(p, 'ruhepol')) k = 0.1;
-  else if (m.players.some((q) => q !== p && q.team === p.team && hasProfile(q, 'ruhepol') && dist2d(q.pos, p.pos) < 10)) k = 0.2;
-  return 1 + k * pr;
+  let jitter = 0.5; // Ergebnisdruck (mentality.js): verstärkt die Streuung beim knapp Führenden
+  if (hasProfile(p, 'nervoes')) (k = 0.6), (jitter = 1);
+  else if (hasProfile(p, 'ruhepol')) (k = 0.1), (jitter = 0);
+  else if (m.players.some((q) => q !== p && q.team === p.team && hasProfile(q, 'ruhepol') && dist2d(q.pos, p.pos) < 10)) (k = 0.2), (jitter = 0.25);
+  return 1 + k * pr * (1 + jitter * resultPressure(m, p.team));
 }

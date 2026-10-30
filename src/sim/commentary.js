@@ -196,6 +196,15 @@ export function createCommentator(m, seed = 1) {
           add(e.out ? pick(tr(['{p} bleibt liegen und hält sich das Bein. {l}. Für ihn geht es nicht weiter.', 'Autsch. {p} ({l}) muss behandelt werden – das war es für heute.'], ['{p} stays down clutching his leg. {l}. He cannot carry on.', 'Ouch. {p} ({l}) needs treatment – that is it for today.']), { p: surname(p), l: label }) : tr(`${surname(p)} hat was abbekommen (${label}) – humpelt aber weiter.`, `${surname(p)} took a knock (${label}) – but limps on.`), 'foul');
           break;
         }
+        case 'surge':
+          add(tr(`Das Tor setzt bei ${team(e.team)} noch mal Kräfte frei – auf einmal laufen sie wieder.`, `That goal gives ${team(e.team)} fresh legs – suddenly they are running again.`));
+          break;
+        case 'jitters':
+          add(tr(`Nur noch ein Tor Vorsprung – bei ${team(e.team)} flattern jetzt die Nerven.`, `Just one goal in it now – nerves are fraying for ${team(e.team)}.`));
+          break;
+        case 'second_wind':
+          add(tr(`${surname(who(e.playerId))} hat die zweite Luft gefunden und zieht noch mal an.`, `${surname(who(e.playerId))} has found his second wind and picks up the pace again.`));
+          break;
         case 'injury_off':
           add(tr(`${surname(who(e.playerId))} geht vom Platz, kein Wechsel mehr möglich – ${team(e.team)} spielt in Unterzahl.`, `${surname(who(e.playerId))} goes off with no subs left – ${team(e.team)} are a man down.`), 'red');
           break;

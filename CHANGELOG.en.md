@@ -6,6 +6,16 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-30-2 – Legs, nerves and a second wind
+
+### Changed
+- **Tiredness like real football:** Players lose their energy over the whole match. Towards the end they make about 40 % fewer fast runs than at the start, as measured in sports science (Mohr et al. 2003); before, they were spent after a third of the game. Substitutes bring fresh legs. Tired players shoot and pass less accurately than fresh ones. On the full-size pitch more goals go in as a result; the conversion rate is now just over 10 % as in real football.
+
+### New
+- **Nerves for the leading side:** A narrow lead brings pressure late on, all the more after the other side pulls one back. Nervy players wobble, calm heads stay cool and settle the others. The ticker says so.
+- **Energy from a goal back:** Pulling a goal back or equalising in the second half sometimes frees up fresh energy, not always.
+- **"Second wind" profile:** Some players find fresh legs late in the game when they are tired.
+
 ## 2026-10-30-1 – Skill beats bulk
 
 ### Changed
