@@ -187,6 +187,9 @@ aus Technik, Passen, Abschluss, Zweikampf, Torwart und einem neuen Wert für Spi
   zum Einmessen: von Stufe 8 (Oberliga) nach unten schrittweise kleiner werdend. Den genauen Verlauf lege ich beim Prototyp fest
   und lege ihn vor dem Einbau mit den gemessenen Siegquoten vor.
 - **Anzeige:** Zahl und Liganiveau, z. B. „Stärke 54 · Niveau Landesliga“.
+- **Skala (2026-10-30, nach Messung 11.6):** Die Stärke darf über 99 gehen (etwa bis 150), rund 15 Punkte je Liga bei echten Kadern,
+  unten kleinere Abstände. Die Engine bleibt so steil, wie sie ist. Damit ersetzt diese Entscheidung „1–99 über alle 12 Ligen“.
+- **Reihenfolge (2026-10-30):** Erst die übrigen Punkte aus „Verein, Kader, Wirtschaft“, das neue Stärkemodell danach am Stück.
 
 ## 11. Messung Schritt 1 (2026-10-29)
 
