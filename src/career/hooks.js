@@ -8,7 +8,8 @@ import * as oldboys from './oldboys.js'; // Alte Herren
 import * as women from './women.js'; // Frauenteam
 import * as scouting from './scouting.js'; // Scouting
 import * as teamtraining from './teamtraining.js'; // Trainingsplan
-export const FEATURES = [transfers, oldboys, women, scouting, teamtraining];
+import * as referees from './referees.js'; // Schiedsrichter mit Gesicht
+export const FEATURES = [transfers, oldboys, women, scouting, teamtraining, referees];
 
 export function runHooks(name, career, ...args) {
   for (const f of FEATURES) f[name]?.(career, ...args);

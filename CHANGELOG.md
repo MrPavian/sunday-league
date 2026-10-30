@@ -6,6 +6,11 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-30-6 – Schiedsrichter mit Gesicht
+
+### Neu
+- **Schiedsrichter mit Gesicht:** Kreis, Bezirk und Verband haben jetzt ihren festen Stamm an Schiris – mit Namen, Gesicht, Art zu pfeifen (pingelig, lässt laufen, kurzsichtig, souverän) und einer Eigenheit. Dein Ligaspiel pfeift einer von ihnen, im 3D-Spiel sieht er immer gleich aus. Die Spielkarte zeigt, wer Sonntag pfeift und wie die Bilanz mit ihm ist; wer schon einmal da war, ist auch Thema im Mannschaftschat. Unter Verein stehen alle Schiris deiner Ebene.
+
 ## 2026-10-30-5 – Trainingsplan
 
 ### Neu

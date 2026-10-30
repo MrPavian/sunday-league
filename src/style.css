@@ -1935,3 +1935,6 @@ body.manager #end { padding-bottom: 84px; }
 .tplan .actions button { min-height: var(--touch); }
 .tplan-keeper { display: flex; align-items: center; gap: var(--s2); min-height: var(--touch); }
 .tplan-keeper input { width: 22px; height: 22px; }
+.ref-block { margin: 10px 0; }
+.ref-block ul { display: grid; gap: 6px; }
+.ref-next { font-size: 0.8em; color: #e0b020; }

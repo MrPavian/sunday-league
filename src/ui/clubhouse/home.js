@@ -22,6 +22,7 @@ import { coachAge, legacy, legacyPrompt, stepDown, successionCandidates } from '
 import { vacant } from '../../career/president.js';
 import { talk } from '../../career/pub.js';
 import { weatherLine } from '../../career/weather.js';
+import { refereeLine } from '../../career/referees.js';
 import { nachholLabel } from '../../career/platz.js';
 import { derbyOf, isDerbyFixture } from '../../career/derby.js';
 import { CUP_NAME, CUPS, cupOf, PRIZES, summerCupDue, summerCupRunning, tournamentOpen, winterCupDue, winterCupRunning } from '../../career/tournament.js';
@@ -145,6 +146,7 @@ export const homeScreens = {
         <p class="t-2">${venue.name} · ${venue.surface.name} · ${venue.format} ${tr('gegen', 'v')} ${venue.format}</p>
         <p class="t-2 kit-line">${kitLine(hc, ac, home)}</p>
         <p class="t-2 weather">${weatherLine(c.week?.weather)}</p>
+        ${refereeLine(c) ? `<p class="t-2 ref-line" data-testid="ref-line">${refereeLine(c)}</p>` : ''}
         <div class="ui-chips hub-facts">
           <span class="ui-chip" style="--c:#5cc46a" title="${tr('Zusagen', 'in')}">${count('yes')} ${tr('Zusagen', 'in')}</span>
           ${count('late') && !spielberichtStreng(c) ? `<span class="ui-chip" style="--c:#e0b020">${count('late')} ${tr('später', 'late')}</span>` : ''}

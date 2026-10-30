@@ -12,6 +12,7 @@ import { createPlayerPool, ratePlayer } from '../sim/generator.js';
 import { slotRating } from '../sim/position.js';
 import { ATTR_KEYS, ensureStrength } from '../sim/strength.js';
 import { afterMatchPositions, deliverGrumbles, famAt, migratePositions, posFamOf } from './positions.js';
+import { applyReferee, recordReferee } from './referees.js';
 import { createMatch, MATCH, stepMatch } from '../sim/match.js';
 import { PITCHES } from '../sim/pitch.js';
 import { allPlayers, subRuleFor } from '../sim/squad.js';
@@ -1184,6 +1185,7 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   match.coachPersona = humanIsAway ? [persona(away), persona(home)] : [persona(home), persona(away)];
   // Derby: hitziger, mehr Karten – außer man hat sich aufs faire Grillen geeinigt.
   match.derby = (isDerbyFixture(career, fixture) && !career.week?.derbyFair) || grudgeMatch(career, home.human ? away.id : home.id);
+  if (home.human || away.human) applyReferee(career, match); // Schiri aus dem festen Stamm (referees.js)
   // Eigenes Spiel: Manchmal kommt am Spieltag etwas dazwischen.
   if (home.human || away.human) matchdaySurprise(match, humanIsAway || home.human ? 0 : 1, createRng(hashSeed(career.seed, career.season, career.round, 77)), 0.28, null, career.level ?? 1);
   // Zuschauer am Zaun – für die Geräuschkulisse (die Kasse zählt nach dem Spiel selbst).
@@ -1251,6 +1253,8 @@ export function recordResult(career, fixture, prepared) {
     heirMoments(career); // erstes Tor des Juniors
     afterMatchPositions(career, m, humanClub(career).squad); // Gewöhnung & Murren (positions.js)
     afterMatchVoice(career, prepared, fixture.home === humanId ? fixture.away : fixture.home);
+    const homeSide = fixture.home === humanId;
+    recordReferee(career, prepared, homeSide ? fixture.result.home : fixture.result.away, homeSide ? fixture.result.away : fixture.result.home);
   }
   matchFinances(career, fixture, prepared, career.level ?? 1);
   const human = humanClub(career).id;

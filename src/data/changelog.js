@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-30-6',
+    de: { title: 'Schiedsrichter mit Gesicht', items: ['Jede Ebene hat ihre festen Schiris: gleicher Name, gleiches Gesicht, gleiche Art zu pfeifen.', 'Auf der Spielkarte steht, wer Sonntag pfeift – und wie es bisher mit ihm lief.', 'Unter Verein siehst du alle Schiris deiner Ebene mit Eigenheiten und Bilanz.'] },
+    en: { title: 'Referees with faces', items: ['Every level has its regular referees: same name, same face, same way of reffing.', 'The match card shows who is reffing on Sunday – and how it has gone with him so far.', 'Under Club you can see all referees at your level with their quirks and record.'] },
+  },
+  {
     id: '2026-10-30-5',
     de: { title: 'Trainingsplan', items: ['Unter Mannschaft → Training legst du fest, wie oft und worauf die Mannschaft trainiert.', 'Mehr Training bringt mehr Entwicklung zum Saisonende, kostet aber jede Woche Familie und Kraft.', 'Schwerpunkte wie Kondition oder Ball und Passspiel, dazu Extra-Torwarttraining.'] },
     en: { title: 'Training plan', items: ['Under Squad → Training you decide how often and on what the team trains.', 'More training means more development at the end of the season, but costs family time and energy every week.', 'Focus areas such as fitness or ball work and passing, plus extra keeper training.'] },

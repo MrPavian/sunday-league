@@ -26,6 +26,9 @@ import { STYLES as PLAY_STYLES } from '../../sim/tactics.js';
 import { jobName } from '../../data/names.js';
 import { POSITIONS } from '../../sim/generator.js';
 import { hex, first, euro } from './shared.js';
+import { bandOf, BANDS, history, officialAssistants, pool, QUIRKS, refereeFor } from '../../career/referees.js';
+import { REF_TRAITS } from '../../sim/referee.js';
+import { portraitSVG } from '../portrait.js';
 
 export const clubScreens = {
   tab_club() {
@@ -51,10 +54,27 @@ export const clubScreens = {
       ${this.platzBlock()}
       ${this.facilityBlock()}
       ${this.clubLifeBlock()}
+      ${this.refereeBlock()}
       ${this.festivalCard()}
       ${this.chronicleBlock()}
       ${this.kitForm()}
       ${this.crestBlock()}`;
+  },
+
+  // Schiris der eigenen Ebene (referees.js): Gesicht, Art zu pfeifen, Eigenheit, Bilanz mit uns.
+  refereeBlock() {
+    const c = this.career;
+    if ((c.level ?? 1) < 2) return '';
+    const next = refereeFor(c);
+    const rows = pool(c).map((r) => {
+      const h = history(c, r.id);
+      const rec = h ? tr(`${h.g} Sp. mit uns · ${h.w}-${h.d}-${h.l} · ${h.y} Gelb${h.r ? ` · ${h.r} Rot` : ''}`, `${h.g} gp with us · ${h.w}-${h.d}-${h.l} · ${h.y} yellow${h.r ? ` · ${h.r} red` : ''}`) : tr('noch nicht bei uns gepfiffen', 'not reffed us yet');
+      return `<li class="oh-row ref-row" data-testid="ref-row">${portraitSVG(r.look, { size: 36, shirt: 0x1c1c1c, label: r.name })}<span class="oh-name">${esc(r.name)}${next?.id === r.id ? ` <b class="ref-next">${tr('pfeift Sonntag', 'reffing Sunday')}</b>` : ''}<small>${r.age}${tr(' J.', ' yrs')} · ${REF_TRAITS[r.trait].name} · ${QUIRKS[r.quirk].name}</small></span><span class="oh-meta"><small>${rec}</small></span></li>`;
+    });
+    const band = BANDS[bandOf(c.level)].name;
+    return `<details class="ref-block"><summary>${tr(`Schiedsrichter im ${band}`, `Referees in the ${band}`)}</summary>
+      <p class="t-2">${officialAssistants(c.level) ? tr('Mit Schiedsrichter-Assistenten vom Verband.', 'With assistant referees appointed by the association.') : tr('Die Linienrichter stellt der Heimverein – meist ein Ersatzspieler mit Fahne.', 'The home club provides the linesmen – usually a substitute with a flag.')}</p>
+      <ul class="plain">${rows.join('')}</ul></details>`;
   },
 
   // Name, Kürzel und Trikot. Bei der Gründung (Karrierestart) ohne Bestellknopf – das macht der Gründungsknopf.

@@ -6,6 +6,11 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-30-6 – Referees with faces
+
+### New
+- **Referees with faces:** district, county and state level now each have their regular referees – with a name, a face, a way of reffing (fussy, lets it flow, short-sighted, in control) and a quirk. One of them takes charge of your league match, and he always looks the same in the 3D game. The match card shows who is reffing on Sunday and your record with him; anyone who has been before also comes up in the team chat. Under Club you can see all referees at your level.
+
 ## 2026-10-30-5 – Training plan
 
 ### New

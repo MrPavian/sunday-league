@@ -18,7 +18,7 @@ const SURPRISES = [
     w: 1,
     if: (m) => !!m.referee,
     run: (m) => {
-      Object.assign(m.referee, { name: tr('Opa Heinz', 'Grandpa Heinz'), trait: 'zuschauer', kit: { shirt: 0x6b4f2a, shorts: 0x3a3a44, socks: 0x3a3a44 } });
+      Object.assign(m.referee, { name: tr('Opa Heinz', 'Grandpa Heinz'), trait: 'zuschauer', refId: null, kit: { shirt: 0x6b4f2a, shorts: 0x3a3a44, socks: 0x3a3a44 } });
       return tr('Der Schiri ist nicht gekommen. Opa Heinz vom Nebenplatz springt ein – mit der Trillerpfeife vom Enkel.', 'The referee has not turned up. Grandpa Heinz from the next pitch steps in – with his grandson’s whistle.');
     },
   },

@@ -318,7 +318,7 @@ Liga- und Vereinsnamen bleiben fiktiv (keine Lizenzen nötig); regionale Variant
 - [ ] Dritte-Halbzeit-Szenen & Beziehungsnetz
 - [ ] Kreisblatt/Lokalzeitung, Vereins-Social-Media
 - [ ] Rivalitäten & Derbys, Kreispokal
-- [ ] Schiedsrichter-Persönlichkeiten
+- [x] Schiedsrichter-Persönlichkeiten (2026-10-30, referees.js)
 
 **Meilenstein M6:** Das Spiel erzählt eigene Geschichten.
 
@@ -941,7 +941,10 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   Woche (Liga-Norm 1–4 nach Quellen zum Trainingsumfang), Schwerpunkt (Ausgewogen, Kondition, Ball und Passspiel, Abschluss, Zweikampf und
   Abwehr), Extra-Torwarttraining. Wirkt auf die Entwicklung zum Saisonende (±12 % je Tag, Schwerpunkt verteilt den Zuwachs um) und kostet je
   Tag über der Norm jede Woche Familie und Kraft. Ohne eigenen Plan unverändert. Offen: einzelne Einheiten im Wochenverlauf, Trainingsbeteiligung.
-- Spielleitung (Schiedsrichter mit Gesicht und Eigenarten).
+- ~~Spielleitung (Schiedsrichter mit Gesicht und Eigenarten).~~ Erster Ausbau 2026-10-30 (`src/career/referees.js`): fester Schiri-Stamm
+  je Ebene (Kreis, Bezirk, Verband) mit Name, Pixel-Gesicht, Art zu pfeifen und Eigenheit; das eigene Ligaspiel pfeift einer aus dem Stamm
+  (gleiches Aussehen im 3D-Spiel), Bilanz und Karten mit dem eigenen Verein, Ansage auf der Spielkarte und im Mannschaftschat, Liste unter
+  Verein. Offen: Schiri-Beschwerden mit Gedächtnis, Pokal- und Relegationsspiele, Assistenten als Figuren.
 - Mehr Rivalitäten.
 - Finanzsystem anpassen und erweitern; Sponsoring erweitern; Ausstattungsvertrag (Ausrüster). Erledigt 2026-10-29: Schiri-Spesen
   nach der Verbandstabelle (Westfalen 2025/26), Stadionausbau (2500 Plätze) ab Landesliga. Ausrüster erledigt (outfitter.js). Offen:
