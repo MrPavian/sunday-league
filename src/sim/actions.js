@@ -15,6 +15,7 @@ import { hasProfile, pressureChaos } from './profiles.js';
 import { fooled, tryTrick } from './tricks.js';
 import { PINGPONG, STRENGTH_FX, strengthOf } from './strength.js';
 import { headerDuelFoul } from './fouls.js';
+import { STAMINA_DRAIN } from './pitch.js';
 
 export const REACH = 0.75;
 
@@ -41,6 +42,7 @@ export function movePlayer(m, p, intent, dt, leaders) {
   const speed = len(p.vel.x, p.vel.z);
   let drain = sprint ? 0.02 : speed > 2 ? 0.0012 : -0.008;
   if (drain > 0) {
+    drain *= STAMINA.drain * (STAMINA_DRAIN[m.pitch.base ?? m.pitch.id] ?? 1);
     drain *= (1.3 - 0.6 * p.attrs.stamina) * (m.pitch.heat ?? 1); // Hitze kostet Kraft
     if (hasTrait(p, 'pferdelunge')) drain *= 0.5;
     if (hasTrait(p, 'raucher')) drain *= 1.3;
@@ -137,7 +139,7 @@ export function tryExecute(m, p) {
     if (p.role === 'gk') m.keeperRelease = { id: p.id, team: p.team, time: m.time, lofted: !!a.lofted };
   } else {
     // Luftloch – gehört in der Kreisklasse dazu.
-    const whiff = (0.05 * (1 - p.attrs.technique) + 0.04 * fatigue) * (hasTrait(p, 'ballsicher') ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.3 : 1) * (p.id === m.controlledId ? 0.5 : 1);
+    const whiff = (0.05 * (1 - p.attrs.technique) + 0.04 * STAMINA.skill * fatigue) * (hasTrait(p, 'ballsicher') ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.3 : 1) * (p.id === m.controlledId ? 0.5 : 1);
     if (!a.placed && m.rng.chance(whiff)) {
       m.events.push({ type: 'whiff', playerId: p.id });
       return;
@@ -171,7 +173,7 @@ function shoot(m, p, a, fatigue) {
   const power = clamp(a.power ?? 0.5, 0.1, 1);
   // Streuung: Technik, Müdigkeit, Wucht. Die KI streut etwas mehr als der Mensch,
   // der selbst zielt – sonst treffen Amateure wie Profis.
-  const sigma = 0.025 + 0.16 * (1 - p.attrs.shooting) + 0.08 * fatigue + 0.05 * power + (hammer ? 0.03 : 0) + (p.id === m.controlledId ? 0 : 0.005 + (aiSkill(m, p) < 1 ? 0.05 : aiSkill(m, p) > 1 ? -0.015 : 0));
+  const sigma = 0.025 + 0.16 * (1 - p.attrs.shooting) + 0.08 * STAMINA.skill * fatigue + 0.05 * power + (hammer ? 0.03 : 0) + (p.id === m.controlledId ? 0 : 0.005 + (aiSkill(m, p) < 1 ? 0.05 : aiSkill(m, p) > 1 ? -0.015 : 0));
   // Elfmeter: in Ruhe platziert, ohne Gegner am Fuß – deutlich weniger Streuung.
   // Ebene 3: Wer bedrängt abzieht, streut mehr – nervöse Spieler noch mehr.
   // Direktabnahme und Schuss aus der Drehung sind schwerer zu platzieren.
@@ -370,7 +372,7 @@ function pass(m, p, a, fatigue, fromHands) {
       speed = clamp(3.5 + d * 0.75, 5.5, 16);
       vy = d > 16 && !pitch.flatPlay ? 3.5 : 0.2;
     }
-    const sigma = (0.02 + 0.12 * (1 - p.attrs.passing) + 0.05 * fatigue) * (eye ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.6 : 1) * (hasProfile(p, 'spielmacher') ? 0.85 : 1) * pressureChaos(m, p);
+    const sigma = (0.02 + 0.12 * (1 - p.attrs.passing) + 0.05 * STAMINA.skill * fatigue) * (eye ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.6 : 1) * (hasProfile(p, 'spielmacher') ? 0.85 : 1) * pressureChaos(m, p);
     dir = rotate(dir, rng.gauss() * sigma);
     speed *= 1 + rng.gauss() * 0.08 * (1 - p.attrs.passing);
     if (p.id === m.controlledId) m.pendingSwitch = { receiver: target.id, kicker: p.id };
@@ -436,6 +438,12 @@ export const KEEPER_FAR = { from: 16.5, span: 8.5 };
 export const BRISK_PITCH_MAX = 1.5;
 export const KEEPER_REACH_GW = 2.5;
 export const KEEPER_TIME = { from: 1, per: 0.4, max: 0.35 };
+// Kraftverlust insgesamt (Faktor auf alle Verluste, für Messungen); je Platz: pitch.js STAMINA_DRAIN.
+// skill: wie stark Müdigkeit Schuss, Pass, Ballannahme und Luftlöcher verstreut. 2 statt 1 (2026-10-30): Mit dem eingemessenen
+// Kraftverlust sind Schützen im Schnitt nur noch etwa halb so müde (Müdigkeit bei Schüssen Großfeld 0,73 → 0,30, Rasen 0,64 → 0,35,
+// Parkplatz 0,43 → 0,34); die Eichungen der Torquoten hatten die ständige Erschöpfung stillschweigend eingerechnet. Doppelt gewichtet
+// zielt man frisch genauer, müde am Ende so schlecht wie vorher. Messung: docs/KONZEPT-SPIELERSTAERKE.md 11.4.
+export const STAMINA = { drain: 1, skill: 2 };
 export const shortGame = (m) => clamp((m.fullLength || 600) / (m.duration || 600), 1, 2.5);
 
 // Elfmeter – im Elfmeterschießen oder im Spiel: Der Torwart muss raten.
@@ -947,7 +955,7 @@ export function dribbleTouch(m) {
   }
   // Der gesteuerte Spieler führt den Ball etwas enger (Spielhilfe für den Menschen).
   const assist = p.id === m.controlledId ? 0.6 : 1;
-  dir = rotate(dir, rng.gauss() * (0.04 + 0.18 * (1 - tech) + 0.08 * fatigue) * calm * assist);
+  dir = rotate(dir, rng.gauss() * (0.04 + 0.18 * (1 - tech) + 0.08 * STAMINA.skill * fatigue) * calm * assist);
   // Kurze Ballberührungen: der Ball läuft nur knapp vor dem Spieler her.
   const touch = speed * (1.0 + 0.1 * (1 - tech) * assist) + 0.3 + 0.4 * (1 - tech) * assist;
   ball.vel.x = dir.x * touch;

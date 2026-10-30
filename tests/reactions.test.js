@@ -1,7 +1,7 @@
 // Reaktionen der Figuren (nur Darstellung): Nach einem vergebenen Schuss greift sich der Schütze an den Kopf
 // oder winkt ab, der Torwart ballt nach der Parade die Faust; beim Tor bilden die Mitspieler eine Traube.
 import { describe, expect, it } from 'vitest';
-import { advantageGesture, BOOK_FOR, CARD_AT, CARD_HOLD, cardGesture, consolers, dribbleCarry, FALL, FALL_TOTAL, foulFrame, foulLayout, foulPlace, foulPlan, isAerial, penaltyGoal, poseTime, refCrowd, variation, walkOffStart, walkOffStep, WALK_MAX, whistleTimes, catchKind, DUEL_FAR, duelPairs, foeBearing, isFumble, kickFoot, THROW_RUN, throwInRun, mateCelebration, punchStyle, refereeSignal, shotReactions, SUB_FIVE, SUB_WALK, subScene, tiredFace, wideStance, crowdCues, isChance, warmupPicks, warmupSpot, warmupStep, WARMUP_AWAY, WARMUP_CYCLE, WARMUP_HOME, WARMUP_LANE, WARMUP_PLAN } from '../src/render/reactions.js';
+import { advantageGesture, BOOK_FOR, CARD_AT, CARD_HOLD, cardGesture, consolers, dribbleCarry, FALL, FALL_TOTAL, foulFrame, foulLayout, foulPlace, foulPlan, isAerial, penaltyGoal, poseTime, refCrowd, variation, walkOffStart, walkOffStep, WALK_MAX, whistleTimes, catchKind, DUEL_FAR, duelPairs, foeBearing, isFumble, kickFoot, THROW_RUN, throwInRun, mateCelebration, punchStyle, refereeSignal, shotReactions, SUB_FIVE, SUB_WALK, subScene, tiredFace, TIRED_SPEED, TIRED_STAMINA, wideStance, crowdCues, isChance, warmupPicks, warmupSpot, warmupStep, WARMUP_AWAY, WARMUP_CYCLE, WARMUP_HOME, WARMUP_LANE, WARMUP_PLAN } from '../src/render/reactions.js';
 import { LIMITED_SUBS } from '../src/sim/squad.js';
 import { attackDir } from '../src/sim/players.js';
 import { createMatch, matchDuration, stepMatch } from '../src/sim/match.js';
@@ -145,7 +145,7 @@ describe('Erschöpfung im Gesicht', () => {
     expect(tiredFace({ ...p, vel: { x: 6, z: 0 } })).toBe(false);
     expect(tiredFace({ ...p, state: 'tackle' })).toBe(false);
     expect(tiredFace({ ...p, injury: { severity: 1 } })).toBe(false);
-    const edge = { ...p, stamina: 0.34 };
+    const edge = { ...p, stamina: TIRED_STAMINA * 1.1 }; // zwischen Schwelle und Schwelle × 1,2
     expect(tiredFace(edge, false)).toBe(false);
     expect(tiredFace(edge, true)).toBe(true);
   });
@@ -170,8 +170,8 @@ describe('Erschöpfung im Gesicht', () => {
           if (t) {
             tired++;
             ever.add(seed + p.id);
-            expect(Math.hypot(p.vel.x, p.vel.z)).toBeLessThan(3.2 * 1.2);
-            expect(p.stamina).toBeLessThan(0.3 * 1.2);
+            expect(Math.hypot(p.vel.x, p.vel.z)).toBeLessThan(TIRED_SPEED * 1.2);
+            expect(p.stamina).toBeLessThan(TIRED_STAMINA * 1.2);
           }
         }
       }

@@ -307,3 +307,35 @@ dem 9er unter die vom Nutzer festgelegte Marke. Golden ändert sich gewollt.
 unter 0,4 → 0,20–0,24, über 0,6 → 0,22). Ursache: Die KI sprintet, solange die Kraft über 0,25–0,35 liegt (ai.js). Gute Ausdauer heißt
 dadurch „öfter sprinten“, nicht „frischer bleiben“. Ein Umbau (z. B. Kräfte einteilen je Restspielzeit) ist ein eigener Schritt;
 bis dahin bekommt Ausdauer in der Stärkezahl nur ein kleines Gewicht.
+
+### 11.4 Ausdauer eingemessen (2026-10-30)
+
+**Ziel aus der Forschung:** In den letzten 15 Minuten 35–45 % weniger hochintensives Laufen als in den ersten 15, unabhängig von Spielklasse
+und Position; Eingewechselte laufen am Ende 25 % mehr (Mohr, Krustrup & Bangsbo 2003, J Sports Sci 21:519–528,
+https://read.qxmd.com/read/12848386). Messung im Spiel: Anteil der Zeit über 5 m/s in den ersten und letzten 15 % der Spielzeit.
+
+| Platz | Abfall vorher | Faktor Kraftverlust | Abfall nachher |
+|---|---|---|---|
+| Park | 56 % | 0,56 | 33 % |
+| Rasenplatz | 84 % | 0,29 | 39 % |
+| Sportplatz | 94 % | 0,19 | 44 % |
+| Großfeld | 88 % | 0,15 | 38–41 % |
+| Halle | – | 0,67 | 43 % |
+| Parkplatz, Hinterhof, Ascheplatz | – | 0,61 / 0,67 / 0,41 | auf 40 % eingemessen |
+
+Eingewechselte laufen danach am Ende 3–45 % mehr (vorher teils weniger). Die Kraft fällt nicht mehr im ersten Drittel auf die Sprintschwelle,
+sondern sinkt über das Spiel (Rasenplatz: 0,95 → 0,48 statt 0,81 → 0,25).
+
+**Folge 1 – Zielgenauigkeit:** Schützen waren im Schnitt nur noch halb so müde (Großfeld 0,73 → 0,30). Die bisherigen Eichungen der
+Torquoten hatten die ständige Erschöpfung stillschweigend eingerechnet. Deshalb wiegt Müdigkeit bei Schuss, Pass, Ballannahme und
+Luftlöchern jetzt doppelt (actions.js STAMINA.skill = 2): frisch genauer, müde am Ende so schlecht wie vorher. Torzahlen je Spiel
+(40 Spiele je Platz, scripts/engine.mjs, alt → neu): Parkplatz 2,1 → 2,4, Hinterhof 3,3 → 2,8, Park 1,9 → 1,6, Ascheplatz 3,0 → 2,9,
+Rasenplatz 2,9 → 3,1, Sportplatz 2,1 → 2,2, Halle 2,3 → 2,4 – im Rauschen gleich. **Großfeld 0,9 → 1,8**, Trefferquote je Schuss
+6 % → 12 % (real 10–12 %); mit Gewicht 3 wären es 1,6 und 10 %. Nutzerentscheid 2026-10-30: realistisch lassen (Gewicht 2).
+
+**Folge 2 – Steilheit:** Bei 8 Punkten Unterschied holt der Stärkere jetzt 80 % der Punkte (Rasenplatz, N = 60) statt 74–78 %: das Ziel
+aus Abschnitt 3 ist erreicht, ohne die Engine eigens steiler zu machen.
+
+**Folge 3 – Ausdauer als Wert:** wirkt weiter kaum (Rasenplatz 51 %, Sportplatz 55 % bei ±0,20). Fitte Spieler sprinten mehr (wie bei
+Mohr et al.: Fitness hängt mit der Menge an schnellen Läufen zusammen), bleiben aber nicht frischer. In der Stärkezahl bekommt Ausdauer
+deshalb nur ein kleines Gewicht.

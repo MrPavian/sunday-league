@@ -184,6 +184,7 @@ function step(m, input, dt) {
     m.phaseTimer -= dt;
     stepBall(ball, pitch, dt);
     celebrate(m, dt);
+    stepLeftovers(m, dt); // auch beim Torjubel: die Krähe hing sonst 2,5 s in der Luft
     if (m.phaseTimer <= 0) startSetPiece(m, { type: 'kickoff', team: m.kickoffTeam });
     return;
   }

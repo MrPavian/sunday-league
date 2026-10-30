@@ -191,4 +191,11 @@ export const HALL = {
   surface: SURFACES.hall,
 };
 
+// Kraftverlust je Platz (Faktor auf alle Verluste, sim/actions.js movePlayer). Eingemessen 2026-10-30 auf 40 % weniger schnelle Läufe
+// (über 5 m/s) in den letzten 15 % der Spielzeit gegenüber den ersten 15 % – Mohr, Krustrup & Bangsbo 2003 (J Sports Sci 21:519–528):
+// 35–45 % weniger hochintensives Laufen in den letzten als in den ersten 15 Minuten, unabhängig von Spielklasse und Position;
+// https://read.qxmd.com/read/12848386. Vorher (Faktor 1) waren es 56–94 %: Nach einem Drittel des Spiels hingen alle an der
+// Sprintschwelle, und Ausdauer wirkte kaum (docs/KONZEPT-SPIELERSTAERKE.md, 11.4). Bisektion mit 12 Spielen je Schritt (Großfeld 6),
+// gerundet; die Unterschiede je Platz kommen von der Spiellänge (actions.js shortGame).
+export const STAMINA_DRAIN = { parkplatz: 0.61, hinterhof: 0.67, park: 0.56, ascheplatz: 0.41, rasenplatz: 0.29, sportplatz: 0.19, grossfeld: 0.15, halle: 0.67 };
 export const PITCHES = { parkplatz: PARKING_LOT, hinterhof: BACKYARD, park: PARK, ascheplatz: ASH_PITCH, rasenplatz: LAWN_PITCH, sportplatz: NINE_PITCH, grossfeld: BIG_PITCH, halle: HALL };

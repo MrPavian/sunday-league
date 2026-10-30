@@ -200,7 +200,9 @@ export function warmupStep(w, dt, out = {}) {
 
 // Ausgepumpt: niedrige Ausdauer und er steht oder trabt (Sprint zeigt Anstrengung, keine Erschöpfung).
 // was = war er es im Bild davor – weite Schwellen verhindern Flackern an der Grenze.
-export const TIRED_STAMINA = 0.3;
+// 0,3 → 0,36 (2026-10-30): Mit dem eingemessenen Kraftverlust (pitch.js STAMINA_DRAIN) fallen die Müdesten am Ende auf etwa
+// 0,3–0,35 statt auf 0,1–0,25; das Gesicht soll weiter beim unteren Viertel kommen. Nur Anzeige.
+export const TIRED_STAMINA = 0.36;
 export const TIRED_SPEED = 3.2;
 export function tiredFace(p, was = false) {
   if (p.state !== 'normal' || p.injury) return false;
