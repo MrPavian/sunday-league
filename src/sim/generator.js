@@ -157,15 +157,25 @@ export function generatePlayer(rng, { role = 'mid', tier = null, tierWeights = n
 }
 
 // Stärke 1–99, gewichtet nach Position.
-const RATING_WEIGHTS = {
+export const RATING_WEIGHTS = {
   gk: { keeping: 0.6, passing: 0.1, pace: 0.1, technique: 0.1, stamina: 0.1 },
   def: { tackling: 0.3, heading: 0.15, pace: 0.15, passing: 0.15, stamina: 0.15, technique: 0.1 },
   mid: { passing: 0.25, technique: 0.25, stamina: 0.2, tackling: 0.1, shooting: 0.1, pace: 0.1 },
   fwd: { shooting: 0.3, technique: 0.2, pace: 0.2, heading: 0.1, passing: 0.1, stamina: 0.1 },
 };
+// Gewichte nach gemessener Wirkung im Spiel (docs/KONZEPT-SPIELERSTAERKE.md 11.6: Regression der Tordifferenz auf zufällige
+// Werteverschiebungen je Position, 800 Spiele Rasenplatz + 600 Sportplatz, Engine Stand 2026-10-30). Positive Anteile je Position,
+// auf 0,05 gerundet; Werte im Rauschen weggelassen; Kopfball 0,05 bei Abwehr und Sturm vorläufig (auf 7er/9er kaum messbar, Großfeld
+// fehlt). Noch nicht in Gebrauch – erst nach der Prüfung an echten Kadern (scripts/rating-validate.mjs).
+export const RATING_WEIGHTS_V2 = {
+  gk: { keeping: 0.85, passing: 0.15 },
+  def: { strength: 0.3, technique: 0.25, pace: 0.2, tackling: 0.15, passing: 0.05, heading: 0.05 },
+  mid: { pace: 0.2, strength: 0.2, tackling: 0.15, technique: 0.15, passing: 0.15, stamina: 0.1, shooting: 0.05 },
+  fwd: { shooting: 0.3, technique: 0.2, pace: 0.15, tackling: 0.15, strength: 0.05, passing: 0.05, stamina: 0.05, heading: 0.05 },
+};
 
 // Besonderheiten zählen mit: Ex-Profis spielen deutlich über ihren Laufwerten.
-const TRAIT_RATING = { ex_profi: 12, meckerer: -2, raucher: -2 };
+export const TRAIT_RATING = { ex_profi: 12, meckerer: -2, raucher: -2 };
 
 export function ratePlayer(p) {
   const w = RATING_WEIGHTS[p.position] ?? RATING_WEIGHTS.mid;

@@ -355,3 +355,24 @@ Neu in sim/mentality.js (alle Werte Spielwerte, keine Quelle für feste Zahlen; 
 Gemessen (je 80 Spiele Rasenplatz und Sportplatz, alt → neu): Wer bei 75 % der Spielzeit mit einem Tor hinten liegt, holt noch
 mindestens einen Punkt in 20 % (11 von 56) → 16 % (10 von 63) der Fälle – im Rauschen, die Wirkung ist mild. Kraftschübe 11–18, Zweite Luft
 15–20 je 80 Spiele. Tore unverändert (244 → 247, 190 → 184).
+
+### 11.6 Neue Gewichte, geprüft an echten Kadern (2026-10-30)
+
+**Messung per Regression** (scripts/strength-regression.mjs): In jedem Spiel zufällige Verschiebungen aller Werte je Position (±0,25),
+Regression der Tordifferenz; 800 Spiele Rasenplatz, 600 Sportplatz, Unsicherheit ±0,31 bzw. gemittelt ±0,22 Tore je ganzem Wertpunkt.
+Deutlich: Torwart 1,4 · Abschluss im Sturm 1,1 · Mittelfeld Tempo 0,84, Körper 0,77, Technik/Zweikampf/Passen je ≈ 0,6 · Abwehr
+Körper 0,70, Technik 0,68, Tempo 0,46 · Kopfball auf 7er/9er ≈ 0 · Ausdauer klein. Daraus `RATING_WEIGHTS_V2` (generator.js, noch nicht in
+Gebrauch).
+
+**Prüfung an echten Kadern** (scripts/rating-validate.mjs, 400 Pokalspiele, echte Engine):
+
+| Stärkezahl | Steigung je Punkt | Steigung × Streuung | Log-Likelihood |
+|---|---|---|---|
+| heute | 0,030 | 0,394 | −373,4 |
+| neue Gewichte | 0,035 | 0,397 | −370,5 |
+| neue Gewichte + Zuschläge (Ex-Profi …) | 0,035 | 0,405 | −370,0 |
+
+**Folgerung:** Die neuen Gewichte sagen nur wenig besser voraus (≈ 3 %). Bei echten Kadern bestimmen Zufall und Spielverlauf den Ausgang
+weit mehr als die Gewichtung. Wichtiger für die Ligen: Mit 0,035 je Punkt ergeben 7,7 Punkte Abstand nur ≈ 66 % der Punkte (Poisson, 1,4
+Tore je Team); für die realistischen 80 % je Liga braucht es bei echten Kadern ≈ 15 Punkte. Zwölf Ligen passen so nicht auf 1–99, unten
+kleinere Abstände (Nutzerentscheid) helfen nur teilweise.
