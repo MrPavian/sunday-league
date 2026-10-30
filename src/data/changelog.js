@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-30-5',
+    de: { title: 'Trainingsplan', items: ['Unter Mannschaft → Training legst du fest, wie oft und worauf die Mannschaft trainiert.', 'Mehr Training bringt mehr Entwicklung zum Saisonende, kostet aber jede Woche Familie und Kraft.', 'Schwerpunkte wie Kondition oder Ball und Passspiel, dazu Extra-Torwarttraining.'] },
+    en: { title: 'Training plan', items: ['Under Squad → Training you decide how often and on what the team trains.', 'More training means more development at the end of the season, but costs family time and energy every week.', 'Focus areas such as fitness or ball work and passing, plus extra keeper training.'] },
+  },
+  {
     id: '2026-10-30-4',
     de: { title: 'Scouting', items: ['Spieler anderer Vereine zeigen ihre Stärke nur als Spanne – je besser du sie kennst, desto genauer.', '„Spiel anschauen“ beim Verein deckt seine Spieler auf, Klasse und Eigenschaften siehst du erst nach dem Zuschauen.', '„Zum Bolzplatz“: zwei Vereinslose für die Gerüchteküche.'] },
     en: { title: 'Scouting', items: ['Players at other clubs only show their rating as a range – the better you know them, the narrower it gets.', '"Watch them play" at a club reveals its players; class and traits only show after you have watched.', '"Go to the kickabout pitch": two unattached players for the rumour board.'] },

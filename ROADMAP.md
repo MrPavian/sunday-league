@@ -937,7 +937,10 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   „beobachtet“, sortiert nach der Schätzung. Eigene Liga und Gegner nach dem Spiel „gesehen“; „Spiel anschauen“ (eine Aktion) deckt einen
   Verein auf, „Bolzplatz“ (eine Aktion) bringt zwei Vereinslose auf die Gerüchteküche. Offen: Scout als Ehrenamt (eine Beobachtung je
   Woche von selbst), Gegnerberichte mit derselben Kenntnis.
-- Training und Trainingspläne.
+- ~~Training und Trainingspläne.~~ Erster Ausbau 2026-10-30 (`src/career/teamtraining.js`, Reiter Mannschaft → Training): Trainingstage je
+  Woche (Liga-Norm 1–4 nach Quellen zum Trainingsumfang), Schwerpunkt (Ausgewogen, Kondition, Ball und Passspiel, Abschluss, Zweikampf und
+  Abwehr), Extra-Torwarttraining. Wirkt auf die Entwicklung zum Saisonende (±12 % je Tag, Schwerpunkt verteilt den Zuwachs um) und kostet je
+  Tag über der Norm jede Woche Familie und Kraft. Ohne eigenen Plan unverändert. Offen: einzelne Einheiten im Wochenverlauf, Trainingsbeteiligung.
 - Spielleitung (Schiedsrichter mit Gesicht und Eigenarten).
 - Mehr Rivalitäten.
 - Finanzsystem anpassen und erweitern; Sponsoring erweitern; Ausstattungsvertrag (Ausrüster). Erledigt 2026-10-29: Schiri-Spesen

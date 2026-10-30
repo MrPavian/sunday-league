@@ -47,6 +47,7 @@ import { tierWeightsFor } from '../data/tiers.js';
 import { agedLook, setNameLocale, setNameRegion } from '../data/origins.js';
 import { kitPrice, useKitDeal } from './outfitter.js';
 import { monthlyCoachAward, seasonCoachAward } from './coachawards.js';
+import { focusWeight, trainingGrowth } from './teamtraining.js';
 import { weeklyBanter } from './banter.js';
 import { matchdaySurprise } from './matchday.js';
 import { spielberichtStreng, statusFor } from './spielbericht.js';
@@ -161,14 +162,14 @@ export function developPlayers(career) {
     const age = before.age;
     const practice = rec.apps >= 5 ? 1.3 : rec.apps >= 2 ? 1 : 0.6;
     const coach = (career.staff?.cotrainer ? 1.15 : 1) * hiredGrowth(career);
-    const mul = practice * coach * (age <= 23 ? youthGrowthMul(career) : 1);
+    const mul = practice * coach * (age <= 23 ? youthGrowthMul(career) : 1) * trainingGrowth(career); // Trainingsplan (teamtraining.js)
     const { gain, event, prof } = seasonGain(career, idx, before, mul, environmentChanged(career, idx, club));
     const onset = 31 + prof.declineShift; // körperlicher Abbau ab hier, die zweite Stufe drei Jahre später
     rec.delta ??= {};
     for (const k of ATTR_KEYS) {
       // Körper würfelt aus einem eigenen Strom: ein neunter Wurf je Spieler in rng würde die Entwicklung aller
       // folgenden Spieler (und alter Spielstände) verschieben.
-      let d = (gain / 100) * (0.5 + (k === 'strength' ? strRng : rng).next());
+      let d = (gain / 100) * (0.5 + (k === 'strength' ? strRng : rng).next()) * focusWeight(career, k, before.position); // Schwerpunkt verteilt den Zuwachs
       if (age >= onset && (k === 'pace' || k === 'stamina')) d -= age >= onset + 3 ? 0.035 : 0.015;
       // Körper: baut ab dem Einsetzen langsam ab – halb so schnell wie Tempo/Ausdauer.
       if (age >= onset && k === 'strength') d -= age >= onset + 3 ? 0.018 : 0.008;

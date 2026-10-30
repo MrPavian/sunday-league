@@ -6,6 +6,11 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-30-5 – Training plan
+
+### New
+- **Training plan:** Under Squad → Training you set how often the team trains (1× to 5× a week, shown next to what is usual in your league) and on what: balanced, fitness, ball work and passing, finishing or duels and defending, plus optional extra keeper training. More training means more development at the end of the season, and the focus steers it into its attributes. In return, every evening beyond the usual costs family time and energy every week. If you set nothing, training stays as before.
+
 ## 2026-10-30-4 – Scouting
 
 ### New

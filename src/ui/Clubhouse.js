@@ -40,6 +40,7 @@ import { phoneScreens } from './clubhouse/phone.js';
 import { pubCast, pubScreens } from './clubhouse/pub.js';
 import { PubView } from '../render/pub/PubView.js';
 import { yearOf } from '../career/sagas.js';
+import { plan as trainPlanOf, setPlan as setTrainingPlan } from '../career/teamtraining.js';
 import { seasonScreens } from './clubhouse/season.js';
 import { festivalScreens } from './clubhouse/festival.js';
 import { teamScreens } from './clubhouse/team.js';
@@ -211,6 +212,10 @@ export class Clubhouse {
           if (cancelSponsor(this.career, Number(value)) === 'nocash') this.career.sponsorNote = tr('Zu wenig in der Kasse für die Vertragsstrafe.', 'Not enough in the kitty for the contract penalty.');
           this.cancelAsk = null;
         } else this.cancelAsk = Number(value);
+        this.h.onChange();
+      } else if (action === 'tplanDays' || action === 'tplanFocus' || action === 'tplanKeeper') {
+        // Trainingsplan (career/teamtraining.js)
+        setTrainingPlan(this.career, action === 'tplanDays' ? { days: Number(value) } : action === 'tplanFocus' ? { focus: value } : { keeper: !trainPlanOf(this.career).keeper });
         this.h.onChange();
       } else if (action === 'training') {
         startTraining(this.career);

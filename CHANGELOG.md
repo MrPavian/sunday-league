@@ -6,6 +6,11 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-30-5 – Trainingsplan
+
+### Neu
+- **Trainingsplan:** Unter Mannschaft → Training stellst du ein, wie oft die Mannschaft trainiert (1× bis 5× je Woche, angezeigt mit dem, was in deiner Liga üblich ist) und worauf: ausgewogen, Kondition, Ball und Passspiel, Abschluss oder Zweikampf und Abwehr, dazu wahlweise Extra-Torwarttraining. Mehr Training bringt mehr Entwicklung zum Saisonende, der Schwerpunkt lenkt sie in seine Werte. Dafür kostet jeder Abend über dem Üblichen jede Woche Familie und Kraft. Wer nichts einstellt, trainiert wie bisher.
+
 ## 2026-10-30-4 – Scouting
 
 ### Neu

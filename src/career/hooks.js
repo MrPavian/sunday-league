@@ -7,7 +7,8 @@ import * as transfers from './transfers.js'; // Transfermarkt
 import * as oldboys from './oldboys.js'; // Alte Herren
 import * as women from './women.js'; // Frauenteam
 import * as scouting from './scouting.js'; // Scouting
-export const FEATURES = [transfers, oldboys, women, scouting];
+import * as teamtraining from './teamtraining.js'; // Trainingsplan
+export const FEATURES = [transfers, oldboys, women, scouting, teamtraining];
 
 export function runHooks(name, career, ...args) {
   for (const f of FEATURES) f[name]?.(career, ...args);

@@ -37,6 +37,7 @@ import { tierById } from '../../data/tiers.js';
 import { POSITIONS } from '../../sim/generator.js';
 import { STATUS, first, formArrow } from './shared.js';
 import { banGames, banLabel, banReason, isBanned, yellowCount, YELLOW_LIMIT } from '../../career/suspensions.js';
+import { FOCUS as TRAIN_FOCUS, MAX_DAYS, MIN_DAYS, normDays, plan as trainPlan, planSummary } from '../../career/teamtraining.js';
 
 const roleLabelCap = (role) => (role === 'jugendleiter' ? tr('Jugendleiter', 'Youth director') : STAFF_ROLES[role].name);
 
@@ -429,10 +430,37 @@ export const teamScreens = {
       <div class="rumor-board m-cork"><p class="rb-title m-hand black">${tr('Gerüchteküche', 'Rumour mill')}</p><div class="rumors">${cards}</div></div>`;
   },
 
+  // Trainingsplan der Mannschaft (career/teamtraining.js): Tage je Woche, Schwerpunkt, Torwarttraining – gilt bis zur Änderung.
+  trainingPlanBlock() {
+    const c = this.career;
+    const pl = trainPlan(c);
+    const n = normDays(c);
+    const days = Array.from({ length: MAX_DAYS - MIN_DAYS + 1 }, (_, i) => MIN_DAYS + i)
+      .map((d) => `<button class="${pl.days === d ? 'active' : ''}" data-action="tplanDays" data-value="${d}" aria-pressed="${pl.days === d}">${d}×${d === n ? ` <small>${tr('üblich', 'usual')}</small>` : ''}</button>`)
+      .join('');
+    const focus = Object.entries(TRAIN_FOCUS)
+      .map(([id, f]) => `<button class="${pl.focus === id ? 'active' : ''}" data-action="tplanFocus" data-value="${id}" aria-pressed="${pl.focus === id}" title="${f.desc}">${f.name}</button>`)
+      .join('');
+    const more = pl.days > n ? tr('Mehr Abende auf dem Platz kosten Familie und Kraft – jede Woche.', 'More evenings at the ground cost family time and energy – every week.') : pl.days < n ? tr('Weniger Training: mehr Zeit für die Familie, aber die Jungs entwickeln sich langsamer.', 'Less training: more family time, but the lads develop more slowly.') : tr('So viel trainieren die meisten in dieser Liga.', 'That is how much most clubs train in this league.');
+    return `<section class="tplan" data-testid="tplan"><h4>${tr('Trainingsplan', 'Training plan')}</h4>
+      <p class="t-2">${planSummary(c)}</p>
+      <div class="actions tplan-days">${days}</div>
+      <div class="actions tplan-focus">${focus}</div>
+      <p class="t-2">${TRAIN_FOCUS[pl.focus].desc} ${more}</p>
+      <label class="tplan-keeper"><input type="checkbox" data-action="tplanKeeper" ${pl.keeper ? 'checked' : ''}> ${tr('Extra-Torwarttraining (kostet etwas Kraft, Torhüter entwickeln sich schneller)', 'Extra keeper training (costs a little energy, keepers develop faster)')}</label>
+      <p class="t-2">${tr('Wirkt auf die Entwicklung zum Saisonende.', 'Takes effect on development at the end of the season.')}</p></section>`;
+  },
+
   tab_training() {
     const c = this.career;
     const w = c.week;
-    if (!w || this.results) return `<p class="empty">${tr('Das nächste Open Training gibt es nach dem Wochenstart.', 'The next open training is available once the week starts.')}</p>`;
+    if (!w || this.results) return `${this.trainingPlanBlock()}<p class="empty">${tr('Das nächste Open Training gibt es nach dem Wochenstart.', 'The next open training is available once the week starts.')}</p>`;
+    return this.trainingPlanBlock() + this.openTraining();
+  },
+
+  openTraining() {
+    const c = this.career;
+    const w = c.week;
     const tt = w.training;
     if (!tt && trainingLocked(c))
       return `<p class="warn">${coachAway(c) ? tr('Du bist diese Woche nicht da.', 'You are away this week.') : tr('Du hast das Training abgegeben, um durchzuschnaufen.', 'You handed over training to catch your breath.')} ${tr('Kein Open Training in dieser Woche.', 'No open training this week.')}</p>`;

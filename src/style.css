@@ -1928,3 +1928,10 @@ body.manager #end { padding-bottom: 84px; }
 .tf-num.est { font-size: var(--fs-caption); opacity: 0.85; white-space: nowrap; }
 .tf-scout { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); margin: var(--s2) 0; }
 .tf-scout small { flex: 1 1 220px; opacity: 0.75; }
+/* Trainingsplan (career/teamtraining.js) */
+.tplan { display: grid; gap: var(--s2); margin-bottom: var(--s4); padding: var(--s3); border: 2px solid #000; background: rgba(255, 255, 255, 0.04); }
+.tplan h4, .tplan p { margin: 0; }
+.tplan .actions { display: flex; flex-wrap: wrap; gap: var(--s1); }
+.tplan .actions button { min-height: var(--touch); }
+.tplan-keeper { display: flex; align-items: center; gap: var(--s2); min-height: var(--touch); }
+.tplan-keeper input { width: 22px; height: 22px; }
