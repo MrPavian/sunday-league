@@ -285,5 +285,5 @@ ganzen Mannschaft (Unsicherheit etwa ±2,3); „zählt“ = Änderung der heutig
 
 Vorschlag für Gewichte nach Wirkung (auf 0,05 gerundet, Werte im Rauschen weggelassen), nur Rasenplatz:
 Torwart: Torwart 0,75, Technik 0,15, Passen 0,10 · Abwehr: Zweikampf 0,25, Körper 0,25, Technik 0,20, Tempo 0,10, Passen 0,10,
-Ausdauer 0,05, Kopfball 0,05 · Mittelfeld: Tempo 0,25, Technik 0,25, Körper 0,20, Zweikampf 0,15, Passen 0,10, Ausdauer 0,05 ·
+Ausdauer 0,05, Kopfball 0,05 (vorläufig, bis zur Messung auf dem Großfeld) · Mittelfeld: Tempo 0,25, Technik 0,25, Körper 0,20, Zweikampf 0,15, Passen 0,10, Ausdauer 0,05 ·
 Sturm: Körper 0,35, Technik 0,25, Abschluss 0,15, Passen 0,10, Tempo 0,15.
