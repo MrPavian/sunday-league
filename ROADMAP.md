@@ -932,7 +932,11 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
 **Verein, Kader, Wirtschaft**
 - Tribünen ausbauen als eigenes Feature (steht in 11.9 unter Ausbau; hier vertiefen: Stehstufen, Sitzplätze, Dach,
   Zuschauerzahl und Einnahmen).
-- Integriertes Scouting.
+- ~~Integriertes Scouting.~~ Erster Ausbau 2026-10-30 (`src/career/scouting.js`): Kenntnis fremder Spieler in vier Stufen (unbekannt,
+  gesehen, beobachtet, gescoutet); der Transfermarkt zeigt die Stärke als Spanne (±12/7/3, Spielwerte), Klasse und Eigenschaften erst ab
+  „beobachtet“, sortiert nach der Schätzung. Eigene Liga und Gegner nach dem Spiel „gesehen“; „Spiel anschauen“ (eine Aktion) deckt einen
+  Verein auf, „Bolzplatz“ (eine Aktion) bringt zwei Vereinslose auf die Gerüchteküche. Offen: Scout als Ehrenamt (eine Beobachtung je
+  Woche von selbst), Gegnerberichte mit derselben Kenntnis.
 - Training und Trainingspläne.
 - Spielleitung (Schiedsrichter mit Gesicht und Eigenarten).
 - Mehr Rivalitäten.

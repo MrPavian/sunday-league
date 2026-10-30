@@ -6,6 +6,12 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-30-4 – Scouting
+
+### Neu
+- **Scouting:** Auf dem Transfermarkt siehst du die Stärke fremder Spieler nur als Spanne, etwa „64–78“. Wer in deiner Liga spielt oder gegen euch gespielt hat, ist „gesehen“. Mit „Spiel anschauen“ (eine Aktion der Woche) beobachtest du einen Verein: Die Spanne wird enger, die Auffälligsten sind danach genau bekannt. Klasse und Eigenschaften zeigt erst, wer beobachtet wurde.
+- **Bolzplatz:** „Zum Bolzplatz“ (eine Aktion) bringt zwei vereinslose Spieler auf die Gerüchteküche.
+
 ## 2026-10-30-3 – Die Kneipe in 3D
 
 ### Neu

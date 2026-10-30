@@ -6,6 +6,12 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-30-4 – Scouting
+
+### New
+- **Scouting:** On the transfer market you only see other players' ratings as a range, such as "64–78". Anyone in your league or who has played against you counts as "seen". With "Watch them play" (one action a week) you watch a club: the ranges narrow, and the standouts are known exactly. Class and traits only show for players you have watched.
+- **Kickabout pitch:** "Go to the kickabout pitch" (one action) puts two unattached players on the rumour board.
+
 ## 2026-10-30-3 – The pub in 3D
 
 ### New

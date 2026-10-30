@@ -17,6 +17,7 @@ import { TRAITS } from '../../data/traits.js';
 import { jobName } from '../../data/names.js';
 import { tierById } from '../../data/tiers.js';
 import { POSITIONS } from '../../sim/generator.js';
+import { bolzplatz, canBolz, canWatch, estimate, estimateText, LEVEL_NAMES, watchClub } from '../../career/scouting.js';
 
 const SUBS = ['rumors', 'market', 'own', 'news'];
 const POS_ABBR = () => ({ all: tr('Alle', 'All'), gk: tr('TW', 'GK'), def: tr('ABW', 'DEF'), mid: tr('MF', 'MID'), fwd: tr('ST', 'FWD') });
@@ -35,6 +36,7 @@ const MSG = () => ({
   cash: tr('Dafür reicht die Kasse nicht.', 'Not enough in the kitty.'),
   squad: tr('Dann wären wir zu wenige im Kader.', 'We would be left with too few players.'),
   nein: tr('Der Verein will ihn nicht verleihen.', 'The club will not lend him.'),
+  noaction: tr('Dafür ist diese Woche keine Aktion mehr frei – oder du warst schon dort.', 'No action left for that this week – or you have already been.'),
   ok: '',
 });
 
@@ -42,6 +44,10 @@ const tierBadge = (p) => {
   const t = tierById(p.tier);
   return `<span class="badge" style="--c:${t.color}">${t.name}</span>`;
 };
+
+// Bolzplatz-Scouting: zwei Vereinslose für die Gerüchteküche (eine Aktion der Woche).
+const scoutBar = (c) =>
+  `<p class="tf-scout">${button(tr('Zum Bolzplatz (1 Aktion)', 'Go to the kickabout pitch (1 action)'), { kind: 'secondary', action: 'tfBolz', disabled: !canBolz(c), 'data-testid': 'tf-bolz' })} <small>${tr('Stärke fremder Spieler siehst du nur als Spanne – wer gegen euch spielt oder den du spielen siehst, wird genauer.', 'You only see other players’ ratings as a range – it narrows for those who play against you or whom you watch.')}</small></p>`;
 
 export const transferScreens = {
   tab_transfers() {
@@ -71,7 +77,9 @@ export const transferScreens = {
     if (tf.open != null) return this.tfDetail(tf.open, info);
     const pos = POS_ABBR();
     if (tf.scope === 'free') return this.tfFree(pos);
-    const rows = marketList(c, { scope: tf.scope, pos: tf.pos, sort: tf.sort });
+    // Scouting (career/scouting.js): Stärke als Spanne, sortiert wird nach der Schätzung – die echte Zahl bleibt verborgen.
+    const rows = marketList(c, { scope: tf.scope, pos: tf.pos, sort: tf.sort }).map((r) => ({ ...r, est: estimate(c, r.idx) }));
+    if (tf.sort === 'rating') rows.sort((a, b) => b.est.mid - a.est.mid);
     const shown = rows.slice(0, MAX_ROWS);
     const filters = `<div class="tf-filters">
       ${segmented('pos', Object.entries(pos), tf.pos, { action: 'tfFilter' })}
@@ -85,11 +93,11 @@ export const transferScreens = {
         return `<li><button class="tf-row" data-action="tfOpen" data-value="${r.idx}" data-testid="tf-row">
           <span class="tf-name"><b>${r.p.name}</b> ${state}</span>
           <span class="tf-meta">${POSITIONS[r.p.position]} · ${r.p.age}${tr(' J.', ' yrs')} · ${r.clubName}${r.neighbor ? ` (${tr('Nachbarliga', 'neighbouring')})` : ''}${r.clubId === c.flags?.derbyRival ? ` · ${tr('Derby', 'derby')}` : ''}</span>
-          <span class="tf-num" title="${tr('Stärke', 'Rating')}">${r.p.rating}</span>
+          <span class="tf-num${r.est.exact ? '' : ' est'}" title="${tr('Stärke', 'Rating')} (${LEVEL_NAMES()[r.est.level]})">${estimateText(r.est)}</span>
           <span class="tf-imp">${importanceLabel(r.importance)}</span></button></li>`;
       })
       .join('');
-    return `${filters}
+    return `${filters}${scoutBar(c)}
       <p class="chat-head">${tr(`${rows.length} Spieler gefunden${rows.length > MAX_ROWS ? `, die ersten ${MAX_ROWS} angezeigt – Filter nutzen` : ''}`, `${rows.length} players found${rows.length > MAX_ROWS ? `, first ${MAX_ROWS} shown – use the filters` : ''}`)}</p>
       <ul class="tf-list" data-testid="tf-list">${list || `<li class="empty">${tr('Niemand passt zum Filter.', 'Nobody matches the filter.')}</li>`}</ul>`;
   },
@@ -101,6 +109,7 @@ export const transferScreens = {
     const rumors = c.week.rumors ?? [];
     let ids = freeAgents(c).filter((i) => tf.pos === 'all' || this.p(i).position === tf.pos);
     if (tf.sort === 'age') ids = ids.sort((a, b) => this.p(a).age - this.p(b).age);
+    else ids = ids.sort((a, b) => estimate(c, b).mid - estimate(c, a).mid); // nach Schätzung, nicht nach der verborgenen Zahl
     const full = humanClub(c).squad.length >= maxSquad(c);
     const filters = `<div class="tf-filters">
       ${segmented('pos', Object.entries(pos), tf.pos, { action: 'tfFilter' })}
@@ -111,7 +120,7 @@ export const transferScreens = {
       .map((i) => {
         const p = this.p(i);
         const on = rumors.some((r) => r.idx === i);
-        return `<li class="tf-own" data-testid="tf-free"><span class="tf-name">${tierBadge(p)} <b>${p.name}</b> <small>${POSITIONS[p.position]} · ${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)}</small></span>
+        return `<li class="tf-own" data-testid="tf-free"><span class="tf-name">${estimate(c, i).traits ? tierBadge(p) : ''} <b>${p.name}</b> <small>${POSITIONS[p.position]} · ${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)}</small></span>
           <span class="tf-btns">${on ? chip(tr('auf der Gerüchteküche', 'on the rumour board'), { plain: true }) : button(tr('Ansprechen', 'Approach'), { action: 'tfFree', value: i, disabled: full, 'data-testid': 'tf-free-btn' })}</span></li>`;
       })
       .join('');
@@ -136,12 +145,14 @@ export const transferScreens = {
     const price = priceOf(c, idx, info.kind ?? 'summer');
     const winter = info.kind === 'winter';
     const tier = tierById(p.tier);
-    const traits = p.traits.length ? `<p class="traits">${p.traits.map((x) => `<i title="${TRAITS[x].desc}">${TRAITS[x].name}</i>`).join('')}</p>` : '';
+    const est = estimate(c, idx);
+    const traits = !est.traits ? `<p class="t-2">${tr('Eigenschaften: noch unbekannt – schau ihm beim Spielen zu.', 'Traits: not known yet – go and watch him play.')}</p>` : p.traits.length ? `<p class="traits">${p.traits.map((x) => `<i title="${TRAITS[x].desc}">${TRAITS[x].name}</i>`).join('')}</p>` : '';
+    const watch = button(tr(`Spiel von ${club.name} anschauen (1 Aktion)`, `Watch ${club.name} play (1 action)`), { kind: 'secondary', action: 'tfWatch', value: club.id, disabled: !canWatch(c, club), 'data-testid': 'tf-watch' });
     const head = `<div class="tf-card">
-      <p class="who">${tierBadge(p)} <b>${p.name}</b>${p.title ? ` <em>${p.title}</em>` : ''}</p>
-      <p class="t-2">${POSITIONS[p.position]} · ${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)} · ${tr('Stärke', 'Rating')} <b>${p.rating}</b></p>
+      <p class="who">${est.traits ? tierBadge(p) : ''} <b>${p.name}</b>${p.title ? ` <em>${p.title}</em>` : ''}</p>
+      <p class="t-2">${POSITIONS[p.position]} · ${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)} · ${tr('Stärke', 'Rating')} <b>${estimateText(est)}</b> <small>(${LEVEL_NAMES()[est.level]})</small></p>
       <p class="t-2">${club.name} (${row.neighbor ? tr('Nachbarliga', 'neighbouring league') : tr('deine Liga', 'your league')}) · ${tr('Vereinsstärke', 'club strength')} ${Math.round(clubRating(c, club))} · ${importanceLabel(row.importance)}${row.clubId === c.flags?.derbyRival ? ` · <b>${tr('Derby-Rivale', 'derby rival')}</b>` : ''}</p>
-      ${traits}${p.backstory ? `<p class="story">${p.backstory}</p>` : ''}</div>`;
+      ${traits}${p.backstory ? `<p class="story">${p.backstory}</p>` : ''}${est.exact ? '' : `<p>${watch}</p>`}</div>`;
     // Schritt 1: Verein
     let step1;
     if (d) {
@@ -265,6 +276,15 @@ export const transferScreens = {
       if (g === 'extra') tf.extra = Number(value);
       else tf[g] = value;
       return false;
+    }
+    if (action === 'tfWatch') {
+      const club = c.clubs.find((x) => x.id === value) ?? tstate(c).neighbors.find((x) => x.id === value);
+      tf.note = (club && watchClub(c, club)) || MSG().noaction || '';
+      return true;
+    }
+    if (action === 'tfBolz') {
+      tf.note = bolzplatz(c) || MSG().noaction || '';
+      return true;
     }
     if (action === 'tfOpen') tf.open = Number(value);
     else if (action === 'tfClose') tf.open = null;
