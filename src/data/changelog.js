@@ -3,8 +3,8 @@
 export const CHANGELOG = [
   {
     id: '2026-10-30-3',
-    de: { title: 'Die Kneipe in 3D', items: ['„Zum Anstoß“ ist jetzt ein Raum: Wirt hinter der Theke, Opa Heinz und die Jungs am Stammtisch, zwei beim Darts.', 'Wimpel, Schals und Meisterwimpel in deinen Vereinsfarben.', 'Tipp eine Person an: Runde beim Wirt, Taktik bei Opa Heinz, Gespräch mit einem Spieler, Duell an der Dartscheibe.'] },
-    en: { title: 'The pub in 3D', items: ['The pub is now a room: the landlord behind the bar, Grandpa Heinz and the lads at the regulars\' table, two playing darts.', 'Pennants, scarves and title pennants in your club colours.', 'Tap a person: a round from the landlord, tactics with Grandpa Heinz, a chat with a player, a duel at the dartboard.'] },
+    de: { title: 'Die Kneipe in 3D', items: ['„Zum Anstoß“ ist jetzt ein Raum: Wirt hinter der Theke, Opa Heinz und die Jungs am Stammtisch, zwei beim Darts.', 'Wimpel, Schals und Meisterwimpel in deinen Vereinsfarben.', 'Tipp eine Person an: Runde beim Wirt, Taktik bei Opa Heinz, Gespräch mit einem Spieler, Duell an der Dartscheibe.', 'Hochkant näher dran: seitlich durch den Raum wischen, die Kamera fährt zur gewählten Person.'] },
+    en: { title: 'The pub in 3D', items: ['The pub is now a room: the landlord behind the bar, Grandpa Heinz and the lads at the regulars\' table, two playing darts.', 'Pennants, scarves and title pennants in your club colours.', 'Tap a person: a round from the landlord, tactics with Grandpa Heinz, a chat with a player, a duel at the dartboard.', 'Closer in portrait: swipe through the room, the camera moves to the person you pick.'] },
   },
   {
     id: '2026-10-30-2',

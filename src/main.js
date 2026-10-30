@@ -470,7 +470,7 @@ function frame(now) {
     for (const btn of pubStage.querySelectorAll('[data-actor]')) {
       btn.classList.toggle('talk', btn.dataset.actor === talker);
       const at = pubView.screenOf(btn.dataset.actor, window.innerWidth, window.innerHeight);
-      btn.hidden = !at;
+      btn.hidden = !at || at.x < pubRect.x - 4 || at.x > pubRect.x + pubRect.width + 4; // hochkant: außerhalb des Ausschnitts
       if (at) btn.style.transform = `translate(${(at.x - pubRect.x).toFixed(0)}px, ${(at.y - pubRect.y).toFixed(0)}px) translate(-50%, -100%)`;
     }
     pixel.render(pubView.scene, pubView.camera, { moving: true });

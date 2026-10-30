@@ -37,4 +37,27 @@ describe('Kneipe 3D', () => {
     expect(v.talker()).toBeTruthy();
     v.dispose();
   });
+
+  it('hochkant: näher ran, Wischen schwenkt in Grenzen, focus fährt zur Person; quer der ganze Raum ohne Schwenk', () => {
+    const c = createCareer({ seed: 5 });
+    const cast = pubCast(c).map((idx) => ({ id: idx, look: playerOf(c, idx).look }));
+    const v = new PubView({ club: humanClub(c), cast, seed: 1 });
+    v.frameRect({ x: 0, y: 0, width: 360, height: 270 }, 360, 800);
+    expect(v.zoomed).toBe(true);
+    v.focus('wirt');
+    for (let i = 0; i < 120; i++) v.update(1 / 60);
+    expect(v.camera.position.x).toBeLessThan(-1);
+    expect(Math.abs(v.screenOf('wirt', 360, 800).x - 180)).toBeLessThan(60); // der Wirt steht etwa in der Mitte
+    v.drag(-10000); // weit nach links gewischt: am rechten Rand Schluss
+    expect(v.camera.position.x).toBeCloseTo(v.maxPan, 5);
+    v.drag(10000);
+    expect(v.camera.position.x).toBeCloseTo(-v.maxPan, 5);
+    const wide = new PubView({ club: humanClub(c), cast, seed: 1 });
+    wide.frameRect({ x: 0, y: 0, width: 900, height: 300 }, 900, 600);
+    expect(wide.zoomed).toBe(false);
+    wide.drag(500);
+    expect(wide.camera.position.x).toBe(0);
+    v.dispose();
+    wide.dispose();
+  });
 });

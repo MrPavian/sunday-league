@@ -222,8 +222,10 @@ export class Clubhouse {
         inviteTrialist(this.career, Number(value));
         this.h.onChange();
       } else if (action === 'pubFocus') {
+        if (this.pubDragged) return void (this.pubDragged = false); // war ein Wischen, kein Antippen
         this.pubFocus = value; // Person im Raum angetippt (clubhouse/pub.js)
         this.render();
+        this.pubView?.focus(value); // hochkant: die Kamera fährt hin
       } else if (action === 'pubRound') {
         buyRound(this.career);
         this.h.onChange();
@@ -547,6 +549,34 @@ export class Clubhouse {
   }
 
   bindPub() {
+    // Hochkant: seitlich durch den Raum wischen (render/pub/PubView.js drag); ab 6 px gilt es als Wischen, nicht als Antippen.
+    const stage = this.root.querySelector('[data-pub-stage]');
+    if (stage) {
+      let from = null;
+      let moved = 0;
+      stage.addEventListener('pointerdown', (e) => {
+        from = e.clientX;
+        moved = 0;
+        this.pubDragged = false;
+      });
+      stage.addEventListener('pointermove', (e) => {
+        if (from == null) return;
+        const dx = e.clientX - from;
+        from = e.clientX;
+        moved += Math.abs(dx);
+        if (moved > 6) {
+          this.pubDragged = true;
+          this.pubView?.drag(dx);
+        }
+      });
+      const end = () => {
+        from = null;
+        setTimeout(() => (this.pubDragged = false), 0); // der Klick nach dem Loslassen kommt vorher an
+      };
+      stage.addEventListener('pointerup', end);
+      stage.addEventListener('pointercancel', end);
+      stage.addEventListener('pointerleave', end);
+    }
     const sel = this.root.querySelector('select[data-pub-pick]');
     sel?.addEventListener('change', () => {
       this.pubPick = Number(sel.value);
@@ -610,6 +640,7 @@ export class Clubhouse {
     const titles = (c.history ?? []).filter((h) => h.pos === 1).map((h) => yearOf(c, h.season));
     this.pubView = new PubView({ club, wirt: c.staff?.wirt ? { look: playerOf(c, c.staff.wirt.idx).look } : null, cast: pubCast(c).map((idx) => ({ id: idx, look: playerOf(c, idx).look })), titles, seed: c.seed ?? 1 });
     this.pubViewKey = key;
+    this.pubView.focus(this.pubFocus ?? 'heinz');
   }
 
   // Android-Zurück-Taste: erst Auswahl/Spielerkarte schließen, dann zurück auf „Heute".

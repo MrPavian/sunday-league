@@ -989,7 +989,8 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   Meisterwimpel aus der Vereinsgeschichte. Leute trinken, gestikulieren, reihum eine Sprechblase. Antippen einer Person (Marker,
   44 px) öffnet ihre Sache darunter: Wirt → Runde und Neuigkeiten, Opa Heinz → Stammtisch und Bierdeckel-Taktik, Dartscheibe → Duell,
   Spieler → Einzelgespräch mit Dossier und Traum. Liste aller Ansprechpartner als Alternative; die klassische Ansicht zeigt nur Liste
-  und Inhalte. Kosten: 39 Draw Calls, 6 Tsd. Dreiecke (Halle 61 / 32 Tsd.). Offen: Vereinsheim („Heute“) als 3D-Raum, Prosten
+  und Inhalte. Hochkant (vom Nutzer gewünscht): näher ran, seitlich wischen, die Kamera fährt zur gewählten Person.
+  Kosten: 39 Draw Calls, 6 Tsd. Dreiecke (Halle 61 / 32 Tsd.). Offen: Vereinsheim („Heute“) als 3D-Raum, Prosten
   als gemeinsame Geste, Wimpel/Flaggen nach Erfolgen im Pokal.
 - Kneipe bzw. Vereinsheim als begehbarer 3D-Raum im Stil des Spiels (Pixel-Shader, Low-Poly-Figuren wie auf dem Platz),
   statt der heutigen Kneipen-Seite. Heute: Vereinsheim-Szene als gezeichneter Raum (`src/ui/ClubScene.js`), Kneipe als

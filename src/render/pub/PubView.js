@@ -15,6 +15,9 @@ import { arm, leg } from '../player/poses.js';
 const ROOM = { w: 11, d: 7.2, h: 3.2 };
 const BACK = -ROOM.d / 2 + 0.1;
 const DART_ANCHOR = new THREE.Vector3(ROOM.w / 2 - 0.3, 2.15, 1.4);
+const ROOM_HALF = 6.0; // halbe Bildbreite für den ganzen Raum (m)
+const ZOOM_HALF = 3.1; // hochkant: gut halbe Raumbreite, Figuren etwa doppelt so groß
+const NARROW = 1.6; // Bühnen schmaler als 1,6 : 1 gelten als hochkant
 // Lässige Kleidung für die Gäste (Jeans, Pulli) – Farben wie die Zuschauer, keine Vereinstrikots.
 const TOPS = [0x5a6e8c, 0x8c3b3b, 0x3f6b4a, 0xc9b27a, 0x2f2f36, 0x7a5a8c, 0xb0b4ba, 0x9c6a3a];
 const JEANS = [0x34425a, 0x2a3346, 0x4a4f5a];
@@ -189,19 +192,50 @@ export class PubView {
     this.anim = { speed: 0, dt: 0, gesture: null, face: null, state: 'normal' };
   }
 
-  // Bild an den HTML-Bereich anpassen (wie CameraRig.frameWindow): der Raum füllt die Bühne.
+  // Bild an den HTML-Bereich anpassen (wie CameraRig.frameWindow). Breite Bühne: der ganze Raum (Theke bis Dartscheibe); ist sie
+  // sehr flach (Handy quer), wird oben und unten beschnitten. Schmale Bühne (Handy hochkant, vom Nutzer gewünscht 2026-10-30): näher
+  // ran, gut halbe Raumbreite, seitlich wischen (drag) oder die Kamera fährt zur gewählten Person (focus).
   frameRect(rect, screenW, screenH) {
     const key = `${rect.x | 0},${rect.y | 0},${rect.width | 0},${rect.height | 0},${screenW},${screenH}`;
     if (key === this.framed) return;
     this.framed = key;
     const aspect = rect.width / rect.height;
-    // Die Raumbreite (Theke bis Dartscheibe) füllt die Bühne; ist sie sehr flach (Handy quer), wird oben und unten beschnitten,
-    // ist sie hoch, sieht man mehr Decke und Boden.
-    const hh = Math.max(1.3, 6.0 / aspect);
+    this.halfW = aspect < NARROW ? ZOOM_HALF : ROOM_HALF;
+    this.maxPan = Math.max(0, ROOM_HALF - this.halfW);
+    this.stageW = rect.width;
+    const hh = Math.max(1.3, this.halfW / aspect);
     Object.assign(this.camera, { left: -hh * aspect, right: hh * aspect, top: hh, bottom: -hh });
     this.camera.setViewOffset(rect.width, rect.height, -rect.x, -rect.y, screenW, screenH);
     this.camera.updateProjectionMatrix();
+    // Beim ersten Einpassen zur gewählten Person, danach bleibt der Schwenk (Drehen, Größe ändern).
+    const first = this.focusId && !this.placed ? this.anchorOf(this.focusId) : null;
+    this.placed = true;
+    this.setPan(first ? first.x : this.panTo ?? 0, true);
+  }
+
+  get zoomed() {
+    return (this.maxPan ?? 0) > 0;
+  }
+
+  // Seitlich schwenken (Meter); jump = sofort statt weich.
+  setPan(x, jump = false) {
+    this.panTo = Math.max(-(this.maxPan ?? 0), Math.min(this.maxPan ?? 0, x));
+    if (jump) this.panX = this.panTo;
+    this.camera.position.x = this.panX ?? 0;
     this.camera.updateMatrixWorld(); // sonst erst beim Rendern – die Marker brauchen sie schon vorher
+  }
+
+  // Wischen: Fingerweg in Pixeln der Bühne → Schwenk in Metern (der Raum folgt dem Finger).
+  drag(dxPx) {
+    if (!this.zoomed || !this.stageW) return;
+    this.setPan(this.panTo - (dxPx * 2 * this.halfW) / this.stageW, true);
+  }
+
+  // Zur Person (oder Dartscheibe) schwenken.
+  focus(id) {
+    this.focusId = id;
+    const at = this.anchorOf(id);
+    if (at) this.setPan(at.x);
   }
 
   // Wohin der Knopf einer Figur (oder der Dartscheibe) gehört (Bildschirm-Pixel); null = nicht im Raum.
@@ -226,6 +260,10 @@ export class PubView {
   // Leben im Raum: trinken, reden, Darts werfen (Pfeile bleiben stecken, nach drei holt er sie).
   update(dt) {
     this.t += dt;
+    if (this.panTo != null && Math.abs(this.panTo - (this.panX ?? 0)) > 0.002) {
+      this.panX = (this.panX ?? 0) + (this.panTo - (this.panX ?? 0)) * (1 - Math.exp(-dt * 7));
+      this.setPan(this.panTo);
+    }
     for (const a of this.actors) {
       const g = (this.t + a.phase) % 9;
       this.anim.dt = dt;

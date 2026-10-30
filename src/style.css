@@ -1921,4 +1921,6 @@ body.manager #end { padding-bottom: 84px; }
 .pub-who small { opacity: 0.7; }
 #club.see-through .pub > * { position: relative; z-index: 1; }
 #club.see-through .pub > .pub-stage { z-index: 0 !important; }
-@media (orientation: portrait) and (max-width: 720px) { .pub-stage { height: 52vw; min-height: 220px; } }
+/* Hochkant: Bühne im Seitenverhältnis des Ausschnitts (kein leerer Boden), seitlich wischen; senkrecht scrollt die Seite weiter. */
+.pub-stage { touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+@media (orientation: portrait) and (max-width: 720px) { .pub-stage { height: auto; aspect-ratio: 4 / 3; } }
