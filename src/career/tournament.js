@@ -82,7 +82,7 @@ export function startTournament(c, kind = 'stadt', opts = {}) {
   const size = cfg.sizes?.includes(opts.size) ? opts.size : 8;
   const rng = createRng((c.seed * 31 + c.season * 977 + kind.length * 101 + 5) >>> 0);
   const used = takenIndices(c);
-  const pick = squadPicker(rng, used);
+  const pick = squadPicker(rng, used, (c.strength ?? 1) >= 3 ? c.level ?? 1 : null); // Stärkemodell 3: Gäste vom eigenen Niveau
   const guestDefs = [...GUESTS].sort(() => rng.next() - 0.5).slice(0, Math.max(0, size - c.clubs.length)); // aufgefüllt auf die Teamzahl
   const venue = opts.venue ?? cfg.venue;
   const guests = guestDefs.map((g) => ({ ...g, id: `${g.id}-${kind}`, human: false, venue, squad: pick(g.tiers, SQUAD_SHAPES.small) }));

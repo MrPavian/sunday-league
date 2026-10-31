@@ -113,6 +113,9 @@ export function startPokal(c, kind) {
   const rng = createRng((c.seed * 53 + c.season * 389 + SALT[kind][0]) >>> 0);
   const used = takenIndices(c);
   const pick = squadPicker(rng, used);
+  // Stärkemodell 3: Gäste ziehen Spieler nach dem Niveau ihrer Liga (Konzept Spielerstärke 12.5), je Liga ein eigener Picker.
+  const pickers = {};
+  const pickAt = (l) => ((c.strength ?? 1) >= 3 ? (pickers[l] ??= squadPicker(rng, used, Math.min(MAX_LEVEL, l))) : pick);
   if (kind === 'bund') {
     c.pokale ??= {};
     c.pokale.bund = { kind, season: c.season, year: yearOf(c), guests: [], levels: { [humanClub(c).id]: level }, rounds: pokalRounds(c, kind), round: 0, ties: [], out: false, winner: null, log: [], done: false };
@@ -132,7 +135,7 @@ export function startPokal(c, kind) {
   const want = cfg.size - (everyone ? own.length : 1);
   const shuffled = [...pool].sort(() => rng.next() - 0.5).slice(0, Math.max(0, want));
   const guests = shuffled.map(({ d, level: l }) => {
-    const squad = pick(d.tiers, SQUAD_SHAPES[LEAGUES[Math.min(MAX_LEVEL, l)].squadShape]);
+    const squad = pickAt(l)(d.tiers, SQUAD_SHAPES[LEAGUES[Math.min(MAX_LEVEL, l)].squadShape]);
     for (const idx of squad) c.players[idx] ??= fresh();
     return { ...d, id: `pokal-${kind}-${d.id}`, human: false, venue: LEVEL_VENUE(l), squad, level: l };
   });

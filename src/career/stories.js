@@ -5,8 +5,7 @@ import { tr } from '../core/i18n.js';
 import { jobName } from '../data/names.js';
 import { POSITIONS } from '../sim/generator.js';
 import { book, MEMBER_FEE } from './finances.js';
-import { clubById, getPool, humanClub, joinSquad, maxSquad, playerOf, releasePlayer } from './career.js';
-import { tierWeightsFor } from '../data/tiers.js';
+import { arrivalTiers, clubById, getPool, humanClub, joinSquad, maxSquad, niveauFits, playerOf, releasePlayer } from './career.js';
 import { adjustForm, adjustMood } from './events.js';
 
 const first = (c, idx) => playerOf(c, idx).name.split(' ')[0];
@@ -263,12 +262,12 @@ export const STORIES = {
         const pool = getPool();
         const taken = new Set([...c.clubs.flatMap((x) => x.squad), ...(c.youth?.prospects ?? []), ...(c.alumni ?? []).map((a) => a.idx), ...arcsOf(c).map((a) => a.idx)]);
         // Stufe passend zur Liga (data/tiers.js, Weg 'comeback'), dann ein Spieler dieser Stufe.
-        const w = tierWeightsFor(c.level, 'comeback');
+        const w = arrivalTiers(c, 'comeback');
         let r = rng.next() * Object.values(w).reduce((a, b) => a + b, 0);
         const tier = Object.entries(w).find(([, x]) => (r -= x) < 0)?.[0] ?? 'gut';
         for (let i = 0; i < 400; i++) {
           const p = pool.get(rng.int(0, pool.size - 1));
-          if (!taken.has(p.poolIndex) && p.age >= 29 && p.age <= 38 && p.tier === tier) return { s: p.poolIndex };
+          if (!taken.has(p.poolIndex) && p.age >= 29 && p.age <= 38 && p.tier === tier && niveauFits(c, p.poolIndex)) return { s: p.poolIndex };
         }
         return null;
       },

@@ -3,9 +3,8 @@
 import { createRng } from '../core/rng.js';
 import { book } from './finances.js';
 import { trainingLocked } from './personal.js';
-import { getPool, humanClub, joinSquad, maxSquad, playerOf, RECRUIT_BASE } from './career.js';
+import { arrivalTiers, getPool, humanClub, joinSquad, maxSquad, niveauFits, playerOf, RECRUIT_BASE } from './career.js';
 import { tr } from '../core/i18n.js';
-import { tierWeightsFor } from '../data/tiers.js';
 
 export const TRAINING_COST = 5;
 export const MAX_STATIONS = 3;
@@ -86,12 +85,12 @@ export function startTraining(career) {
   };
   // Mindestens ein junger Spieler – vielleicht ein Rohdiamant.
   // Der Junge kommt aus derselben Stufen-Verteilung (höchstens stark: jüngere sind noch nicht weiter).
-  const youngTier = weightedTier(rng, career.level, 'stark');
-  const young = pick((p) => p.age <= 20 && p.tier === youngTier) ?? pick((p) => p.age <= 20 && p.tier === 'gut');
+  const youngTier = weightedTier(rng, career, 'stark');
+  const young = pick((p) => p.age <= 20 && p.tier === youngTier && niveauFits(career, p.poolIndex)) ?? pick((p) => p.age <= 20 && p.tier === 'gut' && niveauFits(career, p.poolIndex));
   if (young) trialists.push({ idx: young.poolIndex });
   while (trialists.length < TRIALISTS) {
-    const tier = weightedTier(rng, career.level);
-    const p = pick((q) => q.tier === tier);
+    const tier = weightedTier(rng, career);
+    const p = pick((q) => q.tier === tier && niveauFits(career, q.poolIndex));
     if (p) trialists.push({ idx: p.poolIndex });
   }
   for (const t of trialists) Object.assign(t, { results: {}, notes: [], status: 'open', reply: null });
@@ -101,8 +100,8 @@ export function startTraining(career) {
 }
 
 // Wer zum Open Training kommt, passt zur Liga (data/tiers.js); cap = höchste Stufe, z. B. 'stark' für den Jungen.
-function weightedTier(rng, level, cap = null) {
-  const w = tierWeightsFor(level, 'probetraining');
+function weightedTier(rng, career, cap = null) {
+  const w = arrivalTiers(career, 'probetraining');
   const ids = Object.keys(w);
   const max = cap ? ids.indexOf(cap) : ids.length - 1;
   const list = ids.map((id, i) => [id, i <= max ? w[id] : 0]);

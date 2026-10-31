@@ -775,14 +775,26 @@ export const takenIndices = (career) =>
     ...Object.values(career.pokale ?? {}).flatMap((t) => (!t.done ? t.guests.flatMap((g) => g.squad) : [])),
   ]);
 
+// Stärkemodell 3 (Konzept Spielerstärke 12.5): Wer neu dazukommt (Gerüchte, Wirt, Probetraining, Nachbarschaft, Rückkehrer,
+// Vereinslose), hat das Niveau der eigenen Liga oder eins darunter – über den Tipp vom Wirt auch eins darüber. Weil der Pool unten
+// mehr Spieler hat, sind Zugänge im Schnitt etwas schwächer als die Gegner (wie bisher, data/tiers.js ARRIVAL_BASE). Die Klassen
+// kommen dann in der Mischung der Freizeitliga. Im alten Modell gilt alles wie bisher (kein Filter, kein zusätzlicher Zufall).
+export function niveauFits(career, idx, up = false) {
+  if ((career.strength ?? 1) < 3) return true;
+  const n = niveauOf(idx);
+  const lv = career.level ?? 1;
+  return n >= lv - 1 && n <= lv + (up ? 1 : 0);
+}
+export const arrivalTiers = (career, source) => tierWeightsFor((career.strength ?? 1) >= 3 ? 1 : career.level, source);
+
 function makeRumors(career, rng, count = 3, exclude = []) {
   const pool = getPool();
   const taken = takenIndices(career);
   for (const idx of exclude) taken.add(idx);
   const rumors = [];
   for (let n = 0; n < count; n++) {
-    const tier = weighted(rng, tierWeightsFor(career.level, 'geruecht'));
-    const list = pool.byTier(tier);
+    const tier = weighted(rng, arrivalTiers(career, 'geruecht'));
+    const list = pool.byTier(tier).filter((p) => niveauFits(career, p.poolIndex));
     for (let attempt = 0; attempt < 30; attempt++) {
       const p = rng.pick(list);
       if (taken.has(p.poolIndex) || rumors.some((r) => r.idx === p.poolIndex)) continue;
@@ -806,7 +818,7 @@ export function addRumor(career, rng, source) {
   if (!w) return null;
   const pool = getPool();
   const taken = takenIndices(career);
-  const list = pool.byTier(weighted(rng, tierWeightsFor(career.level, 'wirt')));
+  const list = pool.byTier(weighted(rng, arrivalTiers(career, 'wirt'))).filter((p) => niveauFits(career, p.poolIndex, true));
   for (let attempt = 0; attempt < 40; attempt++) {
     const p = rng.pick(list);
     if (taken.has(p.poolIndex) || w.rumors.some((r) => r.idx === p.poolIndex)) continue;

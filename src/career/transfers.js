@@ -16,8 +16,7 @@ import { createRng } from '../core/rng.js';
 import { LEAGUES } from './clubs.js';
 import { book } from './finances.js';
 import { askAround, knownMotives, pickArgument, startTalk } from './recruiting.js';
-import { clubById, getPool, humanClub, joinSquad, maxSquad, MIN_SQUAD, playerOf, recruitChance, releasePlayer, squadPicker, SQUAD_SHAPES, takenIndices } from './career.js';
-import { tierWeightsFor } from '../data/tiers.js';
+import { arrivalTiers, clubById, getPool, humanClub, joinSquad, maxSquad, MIN_SQUAD, niveauFits, playerOf, recruitChance, releasePlayer, squadPicker, SQUAD_SHAPES, takenIndices } from './career.js';
 import { coachAway, isCoach } from './personal.js';
 import { adjustMood } from './events.js';
 import { rememberNewClub } from './memory.js';
@@ -110,10 +109,12 @@ function genNeighbors(c) {
   t.neighbors = [];
   const rng = createRng(hashSeed(c.seed, c.season, c.level ?? 1, 6101));
   const used = takenIndices(c);
-  const pick = squadPicker(rng, used);
+  const m3 = (c.strength ?? 1) >= 3; // Stärkemodell 3: Kader nach dem Niveau der Nachbarliga (Konzept Spielerstärke 12.5)
+  const pick0 = m3 ? null : squadPicker(rng, used);
   for (const lv of [(c.level ?? 1) - 1, (c.level ?? 1) + 1]) {
     const league = LEAGUES[lv];
     if (!league) continue;
+    const pick = pick0 ?? squadPicker(rng, used, lv);
     const defs = [...membersOf(c, lv)]; // Vereinsliste der Nachbarliga (pyramid.js, mit Auf- und Absteigern)
     for (let k = 0; k < NEIGHBOR_CLUBS && defs.length; k++) {
       const def = defs.splice(Math.floor(rng.next() * defs.length), 1)[0];
@@ -281,7 +282,7 @@ function completeSigning(c, d) {
 // Ersatz für einen Abgang aus dem Pool, passend zu den Stufen des Vereins (ligagerecht).
 function refill(c, club, position, rng) {
   try {
-    const [inn] = squadPicker(rng, takenIndices(c))(club.tiers, [position]);
+    const [inn] = squadPicker(rng, takenIndices(c), (c.strength ?? 1) >= 3 ? club.level ?? c.level ?? 1 : null)(club.tiers, [position]);
     club.squad.push(inn);
     if (!club.neighbor) c.players[inn] ??= freshRecord();
     return inn;
@@ -491,9 +492,9 @@ const FREE_LIST = 12; // Spielwert: so viele Vereinslose je Woche in der Suche
 export function freeAgents(c) {
   if (!c.week) return [];
   const taken = takenIndices(c);
-  const weights = tierWeightsFor(c.level, 'wirt');
+  const weights = arrivalTiers(c, 'wirt');
   const byTier = {};
-  for (const p of getPool().everyone()) if (weights[p.tier] > 0 && !taken.has(p.poolIndex)) (byTier[p.tier] ??= []).push(p.poolIndex);
+  for (const p of getPool().everyone()) if (weights[p.tier] > 0 && !taken.has(p.poolIndex) && niveauFits(c, p.poolIndex, true)) (byTier[p.tier] ??= []).push(p.poolIndex);
   const tiers = Object.keys(byTier);
   if (!tiers.length) return [];
   const rng = createRng(hashSeed(c.seed, c.season, c.round, 6110));
