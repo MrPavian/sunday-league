@@ -422,3 +422,24 @@ Je höher die Werte, desto weniger bringt ein Punkt: Formeln mit festen Obergren
 8. **Neu eichen und Prüfgrößen als Tests** (Abschnitt 7): Ligaabstand, Tabellenspreizung, Pokal, Entwicklung, Torquote.
 
 Jeder Schritt endet mit Messung, Gesamtprüfung und Commit; Schritt 1 ist ohne sichtbare Änderung im heutigen Spiel.
+
+### 12.3 Schritt 1, erster Stand: Engine für Werte über 1 (2026-10-31, Nutzerentscheid Weg A)
+
+`src/sim/skill.js`: Jede Formel rechnet bis 1 wie bisher (Golden unverändert); darüber Zweikämpfe als Unterschied beider Spieler
+(`contest`, `tilt` Torwart gegen Schütze), Fehler schrumpfen auf 25 % zu (`errScale`, Abstand 0,3), Fähigkeiten ohne Gegenspieler
+weich (`soft`). Rund 35 Formeln in actions, ai, combos, fouls, shootout, tackles, tricks. Gefunden und behoben: fit.js schnitt vor
+jedem Spiel alle Werte bei 0,98 ab; zwei Dribbel-Formeln wurden über 1 negativ; der Torwart fing über 1 fast fünfmal so oft.
+
+Messung (Rasenplatz, 120 Spiele je Zeile, 16 Punkte Unterschied, nur Technikwerte angehoben):
+
+| BASE | Wirkung je Punkt | Punkte für den Stärkeren | Tore je Team |
+|---|---|---|---|
+| 0 | 0,047 | 91 % | 1,61 |
+| +0,3 | 0,042 | 84 % | 1,62 |
+| +0,6 | 0,032 | 81 % | 1,46 |
+| +0,9 | 0,021 | 70 % | 1,57 |
+| +1,2 | 0,025 | 75 % | 1,50 |
+| +1,5 | 0,014 | 64 % | 1,47 |
+
+Tore stabil; die Wirkung je Punkt sinkt noch (Ziel ±15 % nicht erreicht), ein Teil schon unter 1. Nächster Schritt: je Formel messen,
+was oben noch sättigt; sonst oben größere Ligaabstände (Entscheidung beim Nutzer).

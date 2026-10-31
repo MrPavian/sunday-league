@@ -1,4 +1,5 @@
 // Grätschen, Stochern, Fouls, Schürfwunden – und wer danach meckert.
+import { cap1, contest } from './skill.js';
 import { tr } from '../core/i18n.js';
 import { clamp, dist2d, len, rotate } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
@@ -102,7 +103,7 @@ export function injure(m, p) {
 
 function knockBall(m, p, spread, minSpeed, maxSpeed) {
   const { ball, rng } = m;
-  const dir = rotate(p.facing, rng.gauss() * spread * (1 - p.attrs.tackling));
+  const dir = rotate(p.facing, rng.gauss() * spread * (1 - cap1(p.attrs.tackling)));
   const speed = rng.range(minSpeed, maxSpeed);
   ball.vel.x = dir.x * speed;
   ball.vel.y = 0.3;
@@ -135,7 +136,7 @@ export function resolveTackles(m) {
         m.events.push({ type: 'tackle', playerId: p.id });
       } else {
         const win = contested
-          ? clamp(0.32 + 0.45 * p.attrs.tackling - 0.35 * opp.attrs.technique - (hasTrait(opp, 'ballsicher') ? 0.1 : 0) - (opp.shielding ? STRENGTH_FX.pokeShieldBase + STRENGTH_FX.pokeShieldPerStrength * strengthOf(opp) : 0) + STRENGTH_FX.poke * (strengthOf(p) - strengthOf(opp)) + (hasProfile(p, 'kaempfer') ? 0.08 : 0) + (hasProfile(opp, 'nervoes') ? 0.05 : 0), 0.1, 0.9)
+          ? clamp(0.32 + 0.45 * cap1(p.attrs.tackling) - 0.35 * cap1(opp.attrs.technique) + contest(p.attrs.tackling, opp.attrs.technique, 0.4) - (hasTrait(opp, 'ballsicher') ? 0.1 : 0) - (opp.shielding ? STRENGTH_FX.pokeShieldBase + STRENGTH_FX.pokeShieldPerStrength * strengthOf(opp) : 0) + STRENGTH_FX.poke * (strengthOf(p) - strengthOf(opp)) + (hasProfile(p, 'kaempfer') ? 0.08 : 0) + (hasProfile(opp, 'nervoes') ? 0.05 : 0), 0.1, 0.9)
           : 0.95;
         p.tackleWon = rng.chance(win) ? true : 'missed';
         if (p.tackleWon === true) {
@@ -156,7 +157,7 @@ export function resolveTackles(m) {
       let foul;
       if (slide) {
         const fromBehind = o.facing.x * p.facing.x + o.facing.z * p.facing.z > 0.5;
-        foul = p.tackleWon !== true || rng.chance(0.12 * (1 - p.attrs.tackling) + (fromBehind ? 0.2 : 0) + (o.shielding ? 0.25 : 0));
+        foul = p.tackleWon !== true || rng.chance(0.12 * (1 - cap1(p.attrs.tackling)) + (fromBehind ? 0.2 : 0) + (o.shielding ? 0.25 : 0));
         o.state = 'down';
         o.stateTimer = foul ? 1.4 : 0.7;
         o.pending = null;

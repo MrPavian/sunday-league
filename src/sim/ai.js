@@ -1,4 +1,5 @@
 // KI: Wer läuft an, wer sichert ab, wer deckt, wer läuft sich frei.
+import { cap1, errScale, soft, sure } from './skill.js';
 import { clamp, dist2d, hypot, len, norm } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
 import { BALL_RADIUS, BOARD_BOUNCE, ballSpeed, rollDistance } from './ball.js';
@@ -36,7 +37,7 @@ const BIG_LONG_EXTRA = 0; // m: Distanzschuss-Band über der Reichweite – dort
 // Werte der Spieler bleiben unangetastet.
 const SKILL = { easy: 0.7, normal: 1, hard: 1.25 };
 // Reaktionszeit des Torwarts: Stärke, dazu der Schwierigkeitsgrad beim Gegner-Keeper.
-export const keeperReaction = (m, p) => (0.14 + (1 - p.attrs.keeping) * 0.14) * (aiSkill(m, p) < 1 ? 1.35 : aiSkill(m, p) > 1 ? 0.85 : 1);
+export const keeperReaction = (m, p) => (0.14 + (1 - cap1(p.attrs.keeping)) * 0.14) * (aiSkill(m, p) < 1 ? 1.35 : aiSkill(m, p) > 1 ? 0.85 : 1);
 export const aiSkill = (m, p) => (m.humanTeam !== null && p.team !== m.humanTeam ? SKILL[m.difficulty] ?? 1 : 1);
 
 // Einmal pro Schritt: Rollen für beide Teams verteilen.
@@ -613,11 +614,11 @@ export function outfieldIntent(m, p, dt) {
     // der Ball weg, bevor er sich entschieden hat. Die Wand beim Doppelpass spielt direkt.
     if (dBall < 1.3 && !p.pending && !ball.holder && p.decideTimer > 0.1) {
       if (m.combo?.wall === p.id && !m.combo.returned) p.decideTimer = 0.1;
-      else if (shotOn(m, p, oppGoal)) p.decideTimer = Math.min(p.decideTimer, 0.06 + 0.12 * (1 - p.attrs.technique));
+      else if (shotOn(m, p, oppGoal)) p.decideTimer = Math.min(p.decideTimer, (0.06 + 0.12 * (1 - cap1(p.attrs.technique))) * errScale(p.attrs.technique));
     }
     if (dBall < 1.3 && p.decideTimer <= 0 && !p.pending && !ball.holder) {
       // Amateure brauchen einen Moment, bis sie sich entscheiden.
-      p.decideTimer = (0.4 + (1 - p.attrs.technique) * 0.4 + m.rng.next() * 0.25) / (aiSkill(m, p) * fst.tempo);
+      p.decideTimer = ((0.4 + (1 - cap1(p.attrs.technique)) * 0.4) * errScale(p.attrs.technique) + m.rng.next() * 0.25) / (aiSkill(m, p) * fst.tempo);
       aiDecide(m, p, oppGoal);
     }
     // Ball am Fuß: mit dem Ball nach vorne, nicht um ihn herumlaufen. Wer vor dem
@@ -655,7 +656,7 @@ export function outfieldIntent(m, p, dt) {
     // Technik hat, öfter. Nicht aus der eigenen Hälfte, nicht mit dem Rücken zum Tor.
     if (!p.pending && dist2d(p.pos, ball.pos) < 1.8 && ball.pos.y < 1.1 && p.firstTry !== m.pass && shotOn(m, p, oppGoal)) {
       p.firstTry = m.pass;
-      if (m.rng.chance(0.35 + 0.45 * p.attrs.technique)) {
+      if (m.rng.chance(sure(0.35 + 0.45 * cap1(p.attrs.technique), p.attrs.technique))) {
         const gw = pitch.goalHalfWidth;
         p.pending = { type: 'shoot', power: clamp(0.35 + dist2d(p.pos, oppGoal) / 20, 0.4, 0.9), target: { x: oppGoal.x, z: (m.rng.chance(0.5) ? 1 : -1) * m.rng.range(gw * 0.4, gw * 1.0) }, ttl: 0.35, first: true };
       }
@@ -781,14 +782,14 @@ function aiDecide(m, p, oppGoal) {
   // sonst den Ball behaupten, bis Hilfe kommt. Nicht ewig: danach wird normal entschieden.
   if (p.role !== 'def' && p.pos.x * sd > -pitch.halfLength * 0.2 && backToGoal(m, p, toG)) {
     const mate = layoffMate(m, p);
-    if (mate && rng.chance(Math.min(0.95, (0.45 + 0.35 * p.attrs.passing) * comboK(m, p)))) {
+    if (mate && rng.chance(Math.min(0.95, (0.45 + 0.35 * soft(p.attrs.passing)) * comboK(m, p)))) {
       p.pending = { type: 'pass', targetId: mate.id, ttl: 0.3, cone: -1 };
       m.layoffBy = { id: p.id, time: m.time };
       m.events.push({ type: 'combo', kind: 'layoff_pass', playerId: p.id, wallId: mate.id });
       return;
     }
     if (m.time - (p.holdUpStart ?? -9) > 3) p.holdUpStart = m.time;
-    if (m.time - p.holdUpStart < 0.8 + 1.0 * p.attrs.technique) {
+    if (m.time - p.holdUpStart < 0.8 + 1.0 * soft(p.attrs.technique)) {
       p.holdUp = m.time;
       p.decideTimer = 0.25;
       return;
@@ -803,14 +804,14 @@ function aiDecide(m, p, oppGoal) {
   // 59 % der Schüsse aus mehr als 35 % der Feldlänge). Bezug: 7er-Feld (halbe Länge 26 m) bleibt gleich.
   const small = Math.min(1, Math.max(0.75, pitch.halfLength / 22));
   const bigPitch = pitch.halfLength > BIG_PITCH_HL;
-  const rawRange = (10 + p.attrs.shooting * 5 + (hasTrait(p, 'hammer') ? 4 : 0) + st.shoot + st.risk * 0.8 + brisk * 2.5) * small + Math.max(0, (pitch.halfLength - 20) * 0.45);
+  const rawRange = (10 + soft(p.attrs.shooting) * 5 + (hasTrait(p, 'hammer') ? 4 : 0) + st.shoot + st.risk * 0.8 + brisk * 2.5) * small + Math.max(0, (pitch.halfLength - 20) * 0.45);
   // Große Plätze (halbe Länge > 30 m): Reichweite deckeln. Ungedeckelt wuchs sie mit Platzlänge und Raffung auf ~40 m
   // (gemessen: Median 31 m, p90 43 m; echte Profiligen im Mittel ~17 m, CIES 2018/19). Kleinere Plätze bleiben unverändert.
   const range = bigPitch ? Math.min(rawRange, BIG_RANGE_CAP) : rawRange;
   // An der Grundlinie: flach zurück in den Rückraum, wenn dort einer frei einläuft.
   if (Math.abs(p.pos.z) > pitch.goalHalfWidth * 1.5) {
     const cb = cutbackMate(m, p, oppGoal);
-    if (cb && rng.chance(Math.min(0.95, (0.55 + 0.25 * p.attrs.passing) * comboK(m, p)))) {
+    if (cb && rng.chance(Math.min(0.95, (0.55 + 0.25 * soft(p.attrs.passing)) * comboK(m, p)))) {
       p.pending = { type: 'pass', targetId: cb.id, ttl: 0.3, cone: -1 };
       m.events.push({ type: 'combo', kind: 'cutback', playerId: p.id, wallId: cb.id });
       return;
@@ -899,7 +900,7 @@ function aiDecide(m, p, oppGoal) {
   const tb = throughTarget(m, p);
   if (tb) {
     // Je Entscheidung – der Ballführende entscheidet jetzt öfter selbst, daher etwas seltener.
-    const seen = tb.margin > 0.4 ? 0.08 + 0.2 * p.attrs.passing : 0;
+    const seen = tb.margin > 0.4 ? 0.08 + 0.2 * soft(p.attrs.passing) : 0;
     if (rng.chance(Math.min(0.9, st.through * 0.55 * adherence(m, p) + seen))) {
       p.pending = { type: 'pass', through: tb.point, targetId: tb.target.id, lofted: tb.lofted || undefined, ttl: 0.4, cone: -0.6 };
       return;
@@ -929,11 +930,11 @@ function aiDecide(m, p, oppGoal) {
   });
   const selfish = hasProfile(p, 'solist') || hasProfile(p, 'ballmagnet') ? 0.75 : hasProfile(p, 'teamplayer') ? 1.2 : 1;
   // Befreiungsschlag: Bedrängt im eigenen Drittel schlägt die Abwehr den Ball lieber weg, als ihn im Aufbau zu verlieren.
-  if (underPressure && pitch.boundary === 'lines' && p.role === 'def' && p.pos.x * s0 < -pitch.halfLength * CLEAR_ZONE && rng.chance(CLEAR_CHANCE * (1.2 - p.attrs.passing) * (1 - 0.3 * st.risk))) {
+  if (underPressure && pitch.boundary === 'lines' && p.role === 'def' && p.pos.x * s0 < -pitch.halfLength * CLEAR_ZONE && rng.chance(CLEAR_CHANCE * (1.2 - cap1(p.attrs.passing)) * errScale(p.attrs.passing) * (1 - 0.3 * st.risk))) {
     p.pending = { type: 'pass', ttl: 0.3, cone: -0.2, clear: true };
     return;
   }
-  if (underPressure && rng.chance(Math.min(0.95, (0.45 + 0.4 * p.attrs.passing) * aiSkill(m, p) * st.passRate * (1 - 0.2 * st.risk) * selfish))) {
+  if (underPressure && rng.chance(Math.min(0.95, (0.45 + 0.4 * soft(p.attrs.passing)) * aiSkill(m, p) * st.passRate * (1 - 0.2 * st.risk) * selfish))) {
     p.pending = { type: 'pass', ttl: 0.3, cone: -0.2 };
     return;
   }
@@ -953,7 +954,7 @@ function aiDecide(m, p, oppGoal) {
     if ((ahead < 3 && !wideLevel) || d > 16) return false;
     return !m.players.some((o) => o.team !== p.team && (dist2d(o.pos, t.pos) < 2.5 || distToSegment(o.pos, p.pos, t.pos) < 1.3));
   });
-  if (open && rng.chance(Math.min(0.92, (0.25 + 0.35 * p.attrs.passing) * aiSkill(m, p) * st.passRate * selfish))) p.pending = { type: 'pass', ttl: 0.3, cone: -0.3, optional: true };
+  if (open && rng.chance(Math.min(0.92, (0.25 + 0.35 * soft(p.attrs.passing)) * aiSkill(m, p) * st.passRate * selfish))) p.pending = { type: 'pass', ttl: 0.3, cone: -0.3, optional: true };
 }
 
 // Raum hinter der Abwehr: Welcher Mitspieler kommt vor den Verteidigern an den Ball,
@@ -1010,11 +1011,11 @@ function chooseTackle(m, p, dBall) {
   p.decideTimer = (tst.pressZone === 'high' ? 0.7 : tst.press ? 0.8 : 1.3) / aiSkill(m, p); // nicht im Sekundentakt reingehen
 
   const tough = hasTrait(p, 'hart_im_nehmen');
-  let slideChance = surface.hard ? (p.injury ? 0 : tough ? 0.2 : 0.03) : 0.06 + 0.14 * p.attrs.tackling;
+  let slideChance = surface.hard ? (p.injury ? 0 : tough ? 0.2 : 0.03) : 0.06 + 0.14 * soft(p.attrs.tackling);
   if (m.derby) slideChance *= 1.4; // im Derby geht man dazwischen
   if (p.yellow) slideChance *= 0.3; // mit Gelb vorbelastet lieber vorsichtig
   if (dBall > 0.9 && rng.chance(slideChance)) return 'slide';
-  if (dBall < 1.4 && rng.chance((0.15 + 0.25 * p.attrs.tackling) * aiSkill(m, p))) return 'poke';
+  if (dBall < 1.4 && rng.chance((0.15 + 0.25 * soft(p.attrs.tackling)) * aiSkill(m, p))) return 'poke';
   return null;
 }
 
@@ -1130,7 +1131,7 @@ export function keeperIntent(m, p, dt) {
     if (dGoal < (sweep?.duelFrom ?? 11) && !covered) {
       // Nur bis an den Rand des Torraums: weiter draußen dürfte er den Ball nicht mehr mit den Händen spielen
       // (Großfeld: bis zum Strafraum der Simulation, pitch.keeperSweep).
-      const out = clamp(dGoal * 0.35, 0.8, sweep?.outMax ?? HAND_ZONE.depth) * (0.7 + 0.3 * p.attrs.keeping);
+      const out = clamp(dGoal * 0.35, 0.8, sweep?.outMax ?? HAND_ZONE.depth) * (0.7 + 0.3 * soft(p.attrs.keeping));
       const dir = norm(ball.pos.x - goalX, ball.pos.z);
       tx = goalX + dir.x * out;
       tz = dir.z * out;

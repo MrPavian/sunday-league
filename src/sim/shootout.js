@@ -2,6 +2,7 @@
 // selbst spielt. Geschossen wird immer auf dasselbe Tor; wer schießt, spielt für
 // diesen Moment „nach rechts". Der Mensch zielt als Schütze mit ↑/↓ und dosiert
 // die Wucht mit der Schusstaste; im Tor wählt er mit ↑/↓ die Ecke.
+import { soft } from './skill.js';
 import { clamp, hypot } from '../core/math.js';
 import { keeperSaves, tryExecute } from './actions.js';
 import { stepBall } from './ball.js';
@@ -192,7 +193,7 @@ function moveKeeper(m, keeper, dt) {
   const target = so.diveZ * m.pitch.goalHalfWidth * 0.6;
   const dz = target - keeper.pos.z;
   if (Math.abs(dz) < 0.05) return;
-  const speed = 3.5 + 1.5 * keeper.attrs.keeping;
+  const speed = 3.5 + 1.5 * soft(keeper.attrs.keeping);
   keeper.pos.z += Math.sign(dz) * Math.min(Math.abs(dz), speed * dt);
   if (so.diveZ !== 0 && keeper.diveAnim <= 0) {
     keeper.diveAnim = 0.5;

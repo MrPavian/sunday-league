@@ -4,6 +4,7 @@
 // Ablauf eines Doppelpasses: A spielt B an und sprintet sofort an seinem Gegenspieler
 // vorbei in den freien Raum (m.combo). B spielt direkt in den Lauf zurück, wenn der Weg
 // frei ist – sonst verfällt die Kombination nach kurzer Zeit.
+import { soft } from './skill.js';
 import { clamp, dist2d, norm } from '../core/math.js';
 import { hasProfile } from './profiles.js';
 import { attackDir, clampToPitch, distToSegment, getPlayer } from './players.js';
@@ -128,7 +129,7 @@ export function considerCombo(m, keeperDepth) {
   const z = clamp(a.pos.z + (b.pos.z - a.pos.z) * 0.25, -pitch.halfWidth * 0.85, pitch.halfWidth * 0.85);
   const k = hasProfile(a, 'solist') ? 0.5 : hasProfile(a, 'teamplayer') ? 1.3 : 1;
   // Befehl „Kombinieren“ bzw. Kurzpassspiel: öfter – so weit der Spieler es umsetzt.
-  if (!rng.chance(clamp((0.2 + 0.35 * a.attrs.passing) * k * comboK(m, a), 0, 0.9))) return;
+  if (!rng.chance(clamp((0.2 + 0.35 * soft(a.attrs.passing)) * k * comboK(m, a), 0, 0.9))) return;
   m.combo = { kind: 'onetwo', runner: a.id, wall: b.id, team: a.team, time: m.time, spot: clampToPitch(pitch, x * s, z, 1.2) };
 }
 

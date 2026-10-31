@@ -59,8 +59,10 @@ export function applyFit(team, style, pitch) {
     if (job) matches++;
     if (!d && !job) return p;
     const a = { ...p.attrs };
-    for (const k of Object.keys(a)) a[k] = Math.max(0.05, Math.min(0.98, a[k] + d));
-    if (job) for (const k of attrs) if (a[k] != null) a[k] = Math.min(0.98, a[k] + 0.02);
+    // Deckel 0,98 nur für Werte, die schon darunter lagen: Werte über 1 (höhere Ligen, sim/skill.js) bleiben erhalten.
+    const top = (k, v) => (p.attrs[k] > 0.98 ? v : Math.min(0.98, v));
+    for (const k of Object.keys(a)) a[k] = Math.max(0.05, top(k, a[k] + d));
+    if (job) for (const k of attrs) if (a[k] != null) a[k] = top(k, a[k] + 0.02);
     return { ...p, attrs: a };
   });
   return { players, fit, matches };
