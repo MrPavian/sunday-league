@@ -87,6 +87,19 @@ export const SPONSORS = [
   { id: 'autobahn', branche: 'auto', color: 0x2a6ac8, name: tr('Autohof an der A2', 'Junction 2 Services'), line: tr('Die Bandenwerbung sieht man von der Autobahn. Theoretisch.', 'You can see the boards from the motorway. Theoretically.'), trait: 'ehrgeizig', boss: tr('Autohof-Betreiber Kuhlmann', 'Kuhlmann who runs the services'), from: 4 },
   { id: 'klinik', branche: 'gesundheit', color: 0x4ab0b0, name: tr('Sportklinik am Park', 'Parkside Sports Clinic'), line: tr('MRT innerhalb einer Woche statt in drei Monaten.', 'MRI within a week instead of three months.'), trait: 'grosszuegig', boss: tr('Chefarzt Dr. Brandes', 'Dr Brandes the consultant'), from: 4 },
   { id: 'landmaschinen', branche: 'bau', color: 0x3a8a2a, name: tr('Landmaschinen Hof & Feld', 'Farm & Field Machinery'), line: tr('Leiht für den Platz eine Walze, die eigentlich für Äcker gebaut ist.', 'Lends a roller for the pitch that was really built for fields.'), trait: 'knauserig', boss: tr('Landmaschinenhändler Wübbe', 'Wubbe the machinery dealer'), from: 4 },
+  // Ab der Bezirksliga (Stufe 5): Firmen aus der ganzen Region, ab Landesliga und Verbandsliga noch größere (Auflage 2026-10-31).
+  { id: 'wohnbau', branche: 'bau', color: 0x8c4a2a, name: tr('Wohnbau Kanalstadt eG', 'Canal Town Housing Co-op'), line: tr('Baut Wohnungen, in denen auch die Spieler wohnen könnten. Könnten.', 'Builds flats the players could live in. Could.'), trait: 'treu', boss: tr('Vorständin Gerda Lüttke', 'board member Gerda Lüttke'), from: 5 },
+  { id: 'wohnwelt', branche: 'handel', color: 0x6b4f8c, name: tr('Möbelhaus Wohnwelt Brandes', 'Brandes Home World'), line: tr('Die neue Kabinenbank ist ein Ausstellungsstück. Mit Preisschild.', 'The new dressing-room bench is a showroom piece. Price tag still on.'), trait: 'ehrgeizig', boss: tr('Juniorchef Tim Brandes', 'junior boss Tim Brandes'), from: 5 },
+  { id: 'kraus', branche: 'finanzen', color: 0x1d4f9c, name: tr('Versicherungsagentur Kraus', 'Kraus Insurance Agency'), line: tr('Versichert alles außer Kreuzbänder. Die sind ausgeschlossen.', 'Insures everything except cruciate ligaments. Those are excluded.'), trait: 'knauserig', boss: tr('Agenturleiter Kraus', 'agency manager Kraus'), from: 5 },
+  { id: 'datenwerk', branche: 'dienst', color: 0x2a8ac8, name: tr('Datenwerk IT-Systemhaus', 'Datawork IT Services'), line: tr('Richtet das WLAN im Vereinsheim ein. Das Passwort steht an der Theke.', 'Sets up the clubhouse wifi. The password is on the bar.'), trait: 'ehrgeizig', boss: tr('Geschäftsführerin Selin Arslan', 'managing director Selin Arslan'), from: 5 },
+  { id: 'feldmann', branche: 'auto', color: 0x1c1c1c, name: tr('Autogruppe Feldmann', 'Feldmann Motor Group'), line: tr('Vier Standorte, ein Ziel: Aufstieg. Und Leasing.', 'Four sites, one goal: promotion. And leasing.'), trait: 'ehrgeizig', boss: tr('Seniorchef Feldmann', 'Feldmann senior'), from: 5 },
+  { id: 'albers', branche: 'dienst', color: 0x3a5a3a, name: tr('Steuerkanzlei Albers & Partner', 'Albers & Partner Accountants'), line: tr('Prüft die Vereinskasse gern mit. Gründlich.', 'Happy to check the club accounts too. Thoroughly.'), trait: 'treu', boss: tr('Steuerberater Albers', 'accountant Albers'), from: 5 },
+  { id: 'windkraft', branche: 'energie', color: 0x3aa36a, name: tr('Windkraft Nordfeld', 'Northfield Wind Power'), line: tr('Wenn der Wind auf dem Platz dreht, verdienen wir mit.', 'When the wind turns on the pitch, we earn from it.'), trait: 'grosszuegig', boss: tr('Projektleiter Jansen', 'project manager Jansen'), from: 6 },
+  { id: 'klinikum', branche: 'gesundheit', color: 0x2a7ab0, name: tr('Klinikum Kanalstadt', 'Canal Town Hospital'), line: tr('Die Notaufnahme kennt euch beim Vornamen. Jetzt auch offiziell.', 'A&E knows you by first name. Now officially.'), trait: 'treu', boss: tr('Pressestelle des Klinikums', 'the hospital press office'), from: 6 },
+  { id: 'hafenlogistik', branche: 'auto', color: 0xd8742a, name: tr('Logistikzentrum Kanalhafen', 'Canal Port Logistics'), line: tr('Liefert alles in 24 Stunden. Nur die Trikots kommen trotzdem zu spät.', 'Delivers anything within 24 hours. The kits are still late.'), trait: 'knauserig', boss: tr('Standortleiter Brüggemann', 'site manager Brüggemann'), from: 6 },
+  { id: 'hafenbank', branche: 'finanzen', color: 0x0a3a6a, name: tr('Hafenbank Kanalstadt', 'Canal Town Harbour Bank'), line: tr('Seit 1872 in der Region. Der Kredit fürs Flutlicht auch bald.', 'In the region since 1872. Soon the floodlight loan too.'), trait: 'treu', boss: tr('Filialdirektor Olsen', 'branch director Olsen'), from: 7 },
+  { id: 'kanalquelle', branche: 'getraenke', color: 0x4ab0d8, name: tr('Mineralbrunnen Kanalquelle', 'Canal Spring Mineral Water'), line: tr('Wasser für die Trinkpause. Mit Kohlensäure, ob ihr wollt oder nicht.', 'Water for the drinks break. Sparkling, like it or not.'), trait: 'grosszuegig', boss: tr('Marketingchefin Weller', 'head of marketing Weller'), from: 7 },
+  { id: 'flughafen', branche: 'auto', color: 0x2a4a8c, name: tr('Regionalflughafen Kanalstadt', 'Canal Town Regional Airport'), line: tr('Drei Flüge am Tag. Einer davon nach Belek – fürs Trainingslager.', 'Three flights a day. One of them to Belek – for the training camp.'), trait: 'ehrgeizig', boss: tr('Flughafendirektor Kemper', 'airport director Kemper'), from: 7 },
 ];
 // Wer fragt in dieser Liga an? Kleine Betriebe immer, große Firmen erst weiter oben.
 export const sponsorsFor = (level) => SPONSORS.filter((s) => (s.from ?? 1) <= level);
@@ -116,11 +129,12 @@ export function venueExtras(career) {
 }
 
 export const SLOTS = tr(
-  { trikot: 'Trikotsponsor', bande: 'Bandenpartner', ball: 'Spielballpate', aermel: 'Ärmelsponsor' },
-  { trikot: 'shirt sponsor', bande: 'advertising board', ball: 'match ball sponsor', aermel: 'sleeve sponsor' },
+  { trikot: 'Trikotsponsor', bande: 'Bandenpartner', ball: 'Spielballpate', aermel: 'Ärmelsponsor', ruecken: 'Rückensponsor', hose: 'Hosensponsor' },
+  { trikot: 'shirt sponsor', bande: 'advertising board', ball: 'match ball sponsor', aermel: 'sleeve sponsor', ruecken: 'back-of-shirt sponsor', hose: 'shorts sponsor' },
 );
-const SLOT_PAY = { trikot: [8, 14], bande: [4, 8], ball: [2, 4], aermel: [5, 9] };
-export const slotsFor = (level) => (level > 1 ? ['trikot', 'aermel', 'bande', 'ball'] : ['trikot', 'bande', 'ball']);
+const SLOT_PAY = { trikot: [8, 14], bande: [4, 8], ball: [2, 4], aermel: [5, 9], ruecken: [4, 8], hose: [3, 6] }; // Spielwerte
+// Ab Bezirksliga der Rückensponsor, ab Verbandsliga der Hosensponsor (mehr Werbefläche, mehr Partner – Spielwert, nicht gemessen).
+export const slotsFor = (level) => (level >= 7 ? ['trikot', 'aermel', 'ruecken', 'hose', 'bande', 'ball'] : level >= 5 ? ['trikot', 'aermel', 'ruecken', 'bande', 'ball'] : level > 1 ? ['trikot', 'aermel', 'bande', 'ball'] : ['trikot', 'bande', 'ball']);
 
 // Saisonziele der Sponsoren mit Bonus bei Erfüllung.
 const GOALS = [
@@ -229,7 +243,9 @@ export function makeOffers(career, level) {
       const open = sponsorsFor(level).filter((s) => !used.has(s.id) && !(shut.has(s.branche) && !career.sponsors.some((x) => x.id === s.id)));
       // Reicht der Pool nicht (lange Karriere, viele Sperren), dürfen auch Gesperrte wieder fragen – Plätze bleiben besetzbar.
       const pool = open.filter((s) => !banned.has(s.id));
-      const pick = pool.length ? pool : open;
+      let pick = pool.length ? pool : open;
+      // Ab Bezirksliga steht vorn auf der Brust eine größere Firma, sofern eine frei ist (der Kiosk bleibt an der Bande).
+      if (slot === 'trikot' && level >= 5 && pick.some((s) => (s.from ?? 1) >= 3)) pick = pick.filter((s) => (s.from ?? 1) >= 3);
       if (!pick.length) break;
       const sp = rng.pick(pick);
       used.add(sp.id);

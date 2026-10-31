@@ -125,6 +125,18 @@ export const LOGOS = {
   autobahn: { glyph: 'strasse', layout: 'band', accent: 0xf2efe6 },
   klinik: { glyph: 'kreuz', layout: 'mitte', accent: 0xc0392b },
   landmaschinen: { glyph: 'traktor', layout: 'links', accent: 0x1c1c1c },
+  wohnbau: { glyph: 'ziegel', layout: 'band', accent: 0xf2efe6 },
+  wohnwelt: { glyph: 'sofa', layout: 'mitte', accent: 0xf0c020 },
+  kraus: { glyph: 'schild', layout: 'links', accent: 0xf2efe6 },
+  datenwerk: { glyph: 'monitor', layout: 'links', accent: 0xf2efe6 },
+  feldmann: { glyph: 'auto', layout: 'band', accent: 0xc0392b },
+  albers: { glyph: 'paragraf', layout: 'schrift', accent: 0xf2efe6 },
+  windkraft: { glyph: 'blitz', layout: 'rund', accent: 0xf2efe6 },
+  klinikum: { glyph: 'kreuz', layout: 'rund', accent: 0xf2efe6 },
+  hafenlogistik: { glyph: 'kiste', layout: 'band', accent: 0x1c1c1c },
+  hafenbank: { glyph: 'muenze', layout: 'mitte', accent: 0xf0c020 },
+  kanalquelle: { glyph: 'tropfen', layout: 'mitte', accent: 0xf2efe6 },
+  flughafen: { glyph: 'flugzeug', layout: 'links', accent: 0xf2efe6 },
 };
 
 // Schriftmarke aus dem Namen: jedes Wort ein Strich, so lang wie das Wort (gestaucht), ein großer

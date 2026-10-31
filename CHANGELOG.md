@@ -6,6 +6,11 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-31-1 – Mehr Sponsoren
+
+### Neu
+- **Mehr Sponsoren:** Zwölf größere Firmen aus der Region (Wohnungsbau, Möbelhaus, Autogruppe, IT-Systemhaus, Klinikum, Windkraft, Hafenbank, Regionalflughafen und andere) fragen ab Bezirksliga, Landesliga oder Verbandsliga an – jetzt 72 Sponsoren. Dazu neue Werbeplätze: Rückensponsor ab Bezirksliga, Hosensponsor ab Verbandsliga. Ab Bezirksliga steht vorn auf der Brust immer eine größere Firma, sofern eine frei ist.
+
 ## 2026-10-30-7 – Rivalitäten
 
 ### Neu

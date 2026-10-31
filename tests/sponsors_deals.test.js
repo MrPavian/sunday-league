@@ -204,7 +204,7 @@ describe('Angebot ablehnen und eigene Kündigung', () => {
 });
 
 describe('Branchen und Wünsche', () => {
-  it('alle 60 Sponsoren haben eine Branche mit Namen in beiden Sprachen, jede Branche hat passende Wünsche', () => {
+  it('alle 72 Sponsoren haben eine Branche mit Namen in beiden Sprachen, jede Branche hat passende Wünsche', () => {
     for (const s of SPONSORS) {
       expect(BRANCHEN[s.branche], s.id).toBeTruthy();
       expect(BRANCHE_WISHES[s.branche], s.id).toBeTruthy();

@@ -964,7 +964,9 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
 - ~~Trainerauszeichnung (Trainer des Monats/der Saison)~~ – erledigt 2026-10-29 (coachawards.js).
 - Mehr Sponsoren, mehr Spielernamen, mehr Nationalitäten. Erledigt 2026-10-29: Namensauflage 8 mit Ukraine, Rumänien, Kosovo,
   Afghanistan, Bulgarien, Iran, Vietnam (BAMF-Migrationsbericht 2024, Tabelle 7-2), deutscher Anteil wie bisher; regionale Namen
-  (regionalnames.js). Offen: mehr Sponsoren, Herkunftsmischung je Bundesland.
+  (regionalnames.js). Mehr Sponsoren erledigt 2026-10-31: 12 größere Firmen der Region ab Bezirksliga/Landesliga/Verbandsliga
+  (72 insgesamt), Rückensponsor ab Bezirksliga, Hosensponsor ab Verbandsliga, Trikotbrust ab Bezirksliga nur für größere Firmen.
+  Offen: Herkunftsmischung je Bundesland, Sponsoren-Namen je Bundesland.
 
 **Kleinkram aus der Prüfung 11.9**
 - ~~Tim „Der Tiger“ im Hinterhof-Fenster: Clipping~~ – erledigt 2026-10-29: 0,5 m vor der Wand auf einem Kissen (gemessen: ab

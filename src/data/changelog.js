@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-31-1',
+    de: { title: 'Mehr Sponsoren', items: ['Zwölf größere Firmen aus der Region klopfen ab Bezirksliga, Landesliga und Verbandsliga an.', 'Neue Werbeplätze: Rückensponsor ab Bezirksliga, Hosensponsor ab Verbandsliga.', 'Weiter oben steht eine größere Firma auf der Trikotbrust – der Kiosk bleibt an der Bande.'] },
+    en: { title: 'More sponsors', items: ['Twelve bigger firms from the region come knocking from the County Senior League upwards.', 'New ad spaces: back-of-shirt sponsor from the County Senior League, shorts sponsor from the State League.', 'Higher up a bigger firm goes on the front of the shirt – the kiosk stays on the advertising boards.'] },
+  },
+  {
     id: '2026-10-30-7',
     de: { title: 'Rivalitäten', items: ['Aus Spitzen- und Kellerduellen, Rudelbildung, Wechseln zum Gegner und verlorenen Titelrennen werden Rivalitäten.', 'Gegen einen Rivalen geht es zu wie im Derby: hitziger, mehr Zuschauer, mehr Stimmung.', 'Unter Verein stehen deine Rivalen samt Vorgeschichte.'] },
     en: { title: 'Rivalries', items: ['Top and bottom clashes, melees, players moving to the other side and lost title races turn into rivalries.', 'Against a rival it feels like a derby: more heated, bigger crowd, more at stake for the mood.', 'Under Club you can see your rivals and their history.'] },

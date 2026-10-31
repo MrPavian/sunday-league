@@ -6,6 +6,11 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-31-1 – More sponsors
+
+### New
+- **More sponsors:** twelve bigger firms from the region (housing co-op, furniture store, motor group, IT services, hospital, wind power, harbour bank, regional airport and more) come knocking from the County Senior League, Regional League or State League – 72 sponsors now. Plus new ad spaces: back-of-shirt sponsor from the County Senior League, shorts sponsor from the State League. From the County Senior League on, the front of the shirt always goes to a bigger firm if one is free.
+
 ## 2026-10-30-7 – Rivalries
 
 ### New

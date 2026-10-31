@@ -21,7 +21,7 @@ const lum = (css) => { const n = parseInt(css.slice(1), 16); return (0.299 * (n 
 const SHIRTS = [0xf2efe6, 0x1c1c1c, 0xc0392b, 0x2f6fb5, 0x2e7d3a, 0xe0b020];
 
 describe('Sponsor-Logos', () => {
-  it('jeder der 60 Sponsoren hat ein eigenes Logo mit gültigem Zeichen (höchstens 5 × 4)', () => {
+  it('jeder der 72 Sponsoren hat ein eigenes Logo mit gültigem Zeichen (höchstens 5 × 4)', () => {
     for (const s of SPONSORS) {
       const logo = LOGOS[s.id];
       expect(logo, s.id).toBeTruthy();
