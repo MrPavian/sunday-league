@@ -379,3 +379,46 @@ Gebrauch).
 weit mehr als die Gewichtung. Wichtiger für die Ligen: Mit 0,035 je Punkt ergeben 7,7 Punkte Abstand nur ≈ 66 % der Punkte (Poisson, 1,4
 Tore je Team); für die realistischen 80 % je Liga braucht es bei echten Kadern ≈ 15 Punkte. Zwölf Ligen passen so nicht auf 1–99, unten
 kleinere Abstände (Nutzerentscheid) helfen nur teilweise.
+
+## 12. Umsetzungsplan Stärkemodell (2026-10-31)
+
+Grundlage: Entscheidungen in Abschnitt 10 (Skala über 99, rund 15 Punkte je Liga bei echten Kadern, unten kleinere Abstände, nur
+neue Karrieren, Anzeige „Stärke · Niveau“, verdeckte Boni). Die Engine soll so steil bleiben, wie sie ist.
+
+### 12.1 Messung: Die Engine sättigt über 1 (2026-10-31)
+
+`scripts/strength-steepness.mjs` mit `BASE` (Technikwerte beider Teams angehoben) und `CAP` (Obergrenze der Technikwerte, Körperwerte
+bleiben ≤ 0,98), Rasenplatz 7 gegen 7, 30 Spiele je Zeile, Unterschied 16 Stärkepunkte:
+
+| BASE | Wirkung je Stärkepunkt (Tore, log) | Punkte für den Stärkeren | Tore je Team bei D = 0 |
+|---|---|---|---|
+| 0 (heute) | 0,039 | 92 % | 1,68 |
+| +0,3 | 0,035 | 78 % | 1,25 |
+| +0,6 | 0,029 | 82 % | 1,20 |
+| +0,9 | 0,020 | 72 % | 1,28 |
+
+Je höher die Werte, desto weniger bringt ein Punkt: Formeln mit festen Obergrenzen (z. B. Ballkontrolle `clamp(0,45 + 0,5·Technik,
+0,2, 0,98)`, actions.js) sind ab Werten um 1 gesättigt. Ohne Umbau hätte ein Profikader mit Technik um 1,5 nur die halbe Wirkung je Punkt.
+
+### 12.2 Schritte
+
+1. **Engine für Werte über 1.** Alle Erfolgsformeln mit Technikwerten (Pass, Annahme, Zweikampf, Abschluss, Kopfball, Torwart) so
+   umbauen, dass sie bis 1 genau wie heute rechnen und darüber weiter steigen, statt an eine Grenze zu stoßen – möglichst als
+   Vergleich Angreifer gegen Verteidiger statt als feste Wahrscheinlichkeit. Prüfgröße: Wirkung je Punkt bei BASE 0 bis +1,2
+   innerhalb von ±15 %, Tore je Team bei D = 0 zwischen 1,2 und 1,7. Golden bleibt unverändert, weil sich unter 1 nichts ändert.
+2. **Werte und Skala.** Eine zentrale Obergrenze je Wert statt der verstreuten 0,98: Technikwerte bis etwa 2,5, Tempo, Ausdauer und
+   Körper bleiben ≤ 0,98 (die Laufgeschwindigkeit bleibt in echten m/s). Stärke ohne Deckel bei 99. Gilt nur für neue Karrieren
+   (Auflage im Spielstand); alte Spielstände rechnen wie bisher.
+3. **Ligaziele.** Mittlere Stärke je Stufe als Tabelle (Spielwerte, Abstand unten kleiner, oben rund 15): Vorschlag Freizeitliga 51
+   wie heute, dann +6, +7, +9, +11, +13, +14, +15 bis zur Oberliga (≈ 126), Profiligen je +15 (Bundesliga ≈ 186). Vor dem Einbau an
+   der Engine messen: Ein Ligaabstand soll ≈ 80 % der Punkte bringen (Abschnitt 7).
+4. **Spielerpool und Gegner** nach Ligaziel und Streuung statt fester Klassenmischungen; Klassen (OK bis Ex-Profi) bleiben als
+   Etiketten. Profis ohne pauschalen Zuschlag.
+5. **Gewichte V2** (11.6) mit der Umstellung einführen: Die Zahlen ändern sich für neue Karrieren ohnehin, und V2 bildet ab, was im
+   Spiel wirkt (Körper und Tempo im Mittelfeld, Torwart).
+6. **Entwicklung** in Stärkepunkten je Liga: verborgenes Potenzial, Trainingsumfang (teamtraining.js), Spielpraxis, Alterskurve; wer
+   über seiner Liga steht, wird bemerkt (Scouting, Abwerben).
+7. **Anzeige** „Stärke 54 · Niveau Landesliga“, verdeckte Boni (Weltklasse, Führungsspieler, Star der Liga) als Eigenschaften.
+8. **Neu eichen und Prüfgrößen als Tests** (Abschnitt 7): Ligaabstand, Tabellenspreizung, Pokal, Entwicklung, Torquote.
+
+Jeder Schritt endet mit Messung, Gesamtprüfung und Commit; Schritt 1 ist ohne sichtbare Änderung im heutigen Spiel.

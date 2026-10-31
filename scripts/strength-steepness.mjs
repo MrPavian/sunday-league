@@ -7,7 +7,7 @@
 // gewählt, dass der Stärkeunterschied trotzdem D ist (Bisektion). attr:<Wert>: nur dieser eine Wert, um ±D/200 verschoben.
 import { createRng } from '../src/core/rng.js';
 import { TEAM_PRESETS } from '../src/data/teams.js';
-import { generateTeam, ratePlayer } from '../src/sim/generator.js';
+import { generateTeam, RATING_WEIGHTS, TRAIT_RATING } from '../src/sim/generator.js';
 import { createMatch, stepMatch } from '../src/sim/match.js';
 import { PITCHES } from '../src/sim/pitch.js';
 import { normalizeTactic, systemFormation } from '../src/sim/tactics.js';
@@ -22,12 +22,17 @@ const STEPS = (process.argv[4] ?? '0,4,8,12,20').split(',').map(Number);
 const format = pitch.format ?? 5;
 const BENCH_ROLES = { 4: ['mid', 'fwd'], 5: ['def', 'mid', 'fwd'], 7: ['def', 'mid', 'fwd'], 9: ['gk', 'def', 'mid', 'fwd'], 11: ['gk', 'def', 'def', 'mid', 'mid', 'fwd', 'fwd'] }; // wie match.js
 const roles = [...systemFormation(format, normalizeTactic(TEAM_PRESETS[0].tactic, format).system).map((f) => f.role), ...(BENCH_ROLES[format] ?? [])];
-const clamp = (v) => Math.max(0.05, Math.min(0.98, v));
 const MODE = process.argv[5] ?? 'all';
 const PHYS = new Set(['pace', 'stamina', 'strength']);
+// Höhere Ligen (Konzept 12): BASE hebt bei beiden Teams die Technikwerte an, CAP ist deren Obergrenze (Körperwerte bleiben ≤ 0,98).
+const BASE = +(process.env.BASE ?? 0);
+const CAP = +(process.env.CAP ?? 0.98);
+const clampK = (k, v) => Math.max(0.05, Math.min(PHYS.has(k) ? 0.98 : CAP, v));
+// Stärke ohne Deckel bei 99 (sonst misst man oben die Grenze statt der Engine).
+const rate = (p) => Math.round(Object.entries(RATING_WEIGHTS[p.position] ?? RATING_WEIGHTS.mid).reduce((s, [k, w]) => s + p.attrs[k] * w, 0) * 100 + p.traits.reduce((b, t) => b + (TRAIT_RATING[t] ?? 1), 0));
 const [ONE, POS] = MODE.startsWith('attr:') ? MODE.slice(5).split('@') : [null, null]; // attr:pace[@def] – nur dieser Wert (nur diese Position), um ±D/200 (ohne Bisektion)
 const moves = (k) => (ONE ? k === ONE : MODE === 'all' || (MODE === 'phys') === PHYS.has(k));
-const shift = (team, preset, dx) => ({ ...preset, players: team.players.map((p) => { if (POS && p.position !== POS) return p; const attrs = Object.fromEntries(Object.entries(p.attrs).map(([k, v]) => [k, moves(k) ? clamp(v + dx) : v])); const q = { ...p, attrs }; return { ...q, rating: ratePlayer(q) }; }) });
+const shift = (team, preset, dx) => ({ ...preset, players: team.players.map((p) => { if (POS && p.position !== POS) return p; const attrs = Object.fromEntries(Object.entries(p.attrs).map(([k, v]) => [k, clampK(k, v + (PHYS.has(k) ? 0 : BASE) + (moves(k) ? dx : 0))])); const q = { ...p, attrs }; return { ...q, rating: rate(q) }; }) });
 const eleven = (t) => t.players.slice(0, format).reduce((s, p) => s + p.rating, 0) / format;
 
 const out = [];
@@ -62,4 +67,4 @@ for (const D of STEPS) {
   const perPoint = D ? Math.log((gs + 0.5) / (gw + 0.5)) / 2 / (realD / N) : 0;
   out.push({ D, realD: +(realD / N).toFixed(1), points: +((pts / N) * 100).toFixed(1), goalsPerTeam: +(goals / N / 2).toFixed(2), perPoint: +perPoint.toFixed(3) });
 }
-console.log(JSON.stringify({ pitch: pitch.id, format, N, mode: MODE, fx: process.env.FX ?? null, rows: out }));
+console.log(JSON.stringify({ pitch: pitch.id, format, N, mode: MODE, base: BASE, cap: CAP, fx: process.env.FX ?? null, rows: out }));
