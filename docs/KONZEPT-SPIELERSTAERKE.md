@@ -464,3 +464,37 @@ Stürmer 0,50). Das ändert das heutige Spiel gewollt (Golden neu).
 
 Folgen: Großfeld 15 % mehr Tore, Kopfballtore gleich (Kette unverändert) – Kopfball-Platzierung 1,6 → 2,0 m. Paraden-Test misst nur
 noch den Flug der Parade (Nutzer bestätigt). Rest-Abfall der Wirkung je Punkt (≈ 40 %) über die Ligaabstände ausgleichen (Schritt 3).
+
+### 12.5 Niveau je Spieler (2026-10-31, Nutzerentscheid)
+
+Gemessen (`defStrength`-Probekader, 12 je Verein): Ø Stärke je Klasse OK 40,1 · Gut 51,3 · Stark 62,0 · Dorfstar 71,7 · Superstar 79,9 ·
+Ex-Profi 87,0; je Liga heute 51,5 · 57,2 · 58,9 · 62,5 · 68,8 · 71,2 · 71,6 · 73,8. Die Ligen 5–8 mischen fast dieselben Klassen; mit
+Aufschlägen je Klasse allein kommen sie nicht auf ~15 Punkte Abstand.
+
+**Entscheidung:** Jeder Spieler im Pool hat zusätzlich zur Klasse ein festes **Niveau** 1–8 (Freizeitliga bis Oberliga). Im neuen
+Modell steigen seine Technikwerte so, dass seine Stärke um den Aufschlag seines Niveaus wächst (Tempo, Ausdauer, Körper bleiben):
+
+| Niveau | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| Ziel Ligamittel (beste n) | 51 | 57 | 64 | 73 | 84 | 97 | 111 | 126 |
+| Aufschlag (Punkte) | 0 | 5,5 | 12,5 | 21,5 | 32,5 | 45,5 | 59,5 | 74,5 |
+| Anteil im Pool (Spielwert) | 30 % | 22 % | 16 % | 12 % | 8 % | 6 % | 4 % | 2 % |
+
+Vereine, Gerüchte und Transfermarkt einer Liga ziehen Spieler ihres Niveaus (Klassenmischung wie heute in der Freizeitliga, damit
+die Etiketten OK bis Ex-Profi erhalten bleiben). Ziele und Anteile sind Spielwerte (unten kleinere Abstände nach Nutzerentscheid);
+an der Engine zu prüfen: ein Ligaabstand ≈ 80 % der Punkte oben, unten weniger.
+
+Durchgänge: (1) Niveau im Pool und Aufschlag, noch ohne Wirkung; (2) Vereinskader und Pyramide; (3) Gerüchte, Transfermarkt,
+Probetraining, Bolzplatz; (4) Pokal und Profis neu eichen, dann für neue Karrieren einschalten (Kennung strength: 3).
+
+Durchgang 1 (src/sim/niveau.js, noch ohne Wirkung im Spiel), an der Engine geprüft: Mannschaften aus Spielern eines Niveaus
+(je Rolle der beste aus 40 Zufallsspielern), Sportplatz 9 gegen 9, 60 Spiele je Zeile:
+
+| Begegnung | Stärke Startelf | Punkte für den Höheren | Tore |
+|---|---|---|---|
+| 1 gegen 1 (Kontrolle, 40 Spiele) | 61,8 / 61,1 | 46 % | 1,3 : 1,1 |
+| 1 gegen 2 | 67,0 / 61,1 | 66 % | 1,6 : 0,9 |
+| 4 gegen 5 | 93,8 / 83,8 | 78 % | 1,8 : 0,7 |
+| 7 gegen 8 | 135,3 / 120,2 | 81 % | 2,3 : 0,9 |
+
+Oben ≈ 80 % je Ligaabstand wie in Abschnitt 7 gefordert, unten kleinere Abstände (Nutzerentscheid).
