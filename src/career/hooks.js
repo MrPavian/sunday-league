@@ -11,7 +11,8 @@ import * as teamtraining from './teamtraining.js'; // Trainingsplan
 import * as referees from './referees.js'; // Schiedsrichter mit Gesicht
 import * as rivals from './rivals.js'; // Rivalitäten
 import * as chatlife from './chatlife.js'; // Chat-Leben
-export const FEATURES = [transfers, oldboys, women, scouting, teamtraining, referees, rivals, chatlife];
+import * as coachload from './coachload.js'; // roter Bereich der Trainer-Balken
+export const FEATURES = [transfers, oldboys, women, scouting, teamtraining, referees, rivals, chatlife, coachload];
 
 export function runHooks(name, career, ...args) {
   for (const f of FEATURES) f[name]?.(career, ...args);

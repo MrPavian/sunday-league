@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-31-5',
+    de: { title: 'Familie und Energie je Liga', items: ['Ab der Bezirksliga springt der Co-Trainer ein, wenn du ausfällst – sofern du einen hast.', 'Ab der Verbandsliga dauern Familienkrise und Burnout eine Woche statt zwei.', 'Im roten Bereich spürst du es schon vorher: Müde schaffst du eine Sache weniger in der Woche, und bei dicker Luft zuhause kommt die Familie nicht mehr mit an den Platz.'] },
+    en: { title: 'Family and energy by league', items: ['From the County Senior League on, your assistant steps in when you are out – if you have one.', 'From the State League on, a family crisis or burnout lasts one week instead of two.', 'In the red zone you feel it earlier: when you are tired you get one thing less done a week, and when things are tense at home the family stops coming to games.'] },
+  },
+  {
     id: '2026-10-31-4',
     de: { title: 'Mehr Leben im Chat', items: ['Jede Woche etwas aus dem Vereinsumfeld: Gemeinde, Nachbarn, Sponsoren, Fans, andere Vereine – und Dinge, mit denen keiner rechnet.', 'Die Spielansage und die Kreisblatt-Meldungen klingen nicht mehr jede Woche gleich.', 'Die Warnung vor dem gegnerischen Torjäger kommt nur noch, wenn er wieder getroffen hat.'] },
     en: { title: 'More life in the chat', items: ['Every week something from around the club: the parish, the neighbours, sponsors, fans, other clubs – and things nobody saw coming.', 'The match call and the Gazette reports no longer sound the same every week.', 'The warning about the opposing striker only comes when he has scored against you again.'] },

@@ -30,7 +30,7 @@ import { CUP_NAME, CUPS, cupOf, PRIZES, summerCupDue, summerCupRunning, tourname
 import { humanTie, pokalClub, pokalDue, pokalWonNow, POKALE, pokalOf, pokalWhen, roundName } from '../../career/pokal.js';
 import { levelName } from '../../career/bundespokal.js';
 import { MATCH } from '../../sim/match.js';
-import { coachAway, coachMode, energyLabel, isPresident, patienceLabel } from '../../career/personal.js';
+import { coachAway, coachMode, energyLabel, isPresident, patienceLabel, standInName } from '../../career/personal.js';
 import { PITCHES } from '../../sim/pitch.js';
 import { FIT_LOW, fitnessOf, fitnessPct } from '../../career/fitness.js';
 
@@ -131,7 +131,7 @@ export const homeScreens = {
     else if (winterCupRunning(c)) actions = `${button(tr('Zum Hallenturnier', 'To the indoor tournament'), { kind: 'primary big block', action: 'tab', value: 'cup' })}<p class="t-2">${tr('Der nächste Ligaspieltag steigt nach dem Turnier.', 'The next league match is after the tournament.')}</p>`;
     else if (isPresident(c)) actions = `${button(tr('Spiel von der Tribüne ansehen', 'Watch the game from the stand'), { kind: 'primary big block coach-play', action: 'onCoach' })}
         <div class="hub-alt">${button(tr('Liveticker', 'Live ticker'), { action: 'onSimulate' })}${button(tr('Nur das Ergebnis', 'Result only'), { action: 'onQuickSim' })}</div>`;
-    else if (coachAway(c)) actions = `<p class="warn">${tr('Du bist diese Woche nicht da – der Kapitän stellt auf, du bekommst nur das Ergebnis.', 'You are away this week – the captain picks the team, you just get the result.')}</p>${button(tr('Ergebnis abwarten', 'Wait for the result'), { kind: 'secondary big block', action: 'onSimulate' })}`;
+    else if (coachAway(c)) actions = `<p class="warn">${tr(`Du bist diese Woche nicht da – ${standInName(c)} stellt auf, du bekommst nur das Ergebnis.`, `You are away this week – ${standInName(c)} picks the team, you just get the result.`)}</p>${button(tr('Ergebnis abwarten', 'Wait for the result'), { kind: 'secondary big block', action: 'onSimulate' })}`;
     else
       actions = `${button(tr('Anpfiff – an der Seitenlinie', 'Kick-off – on the touchline'), { kind: 'primary big block coach-play', action: 'onCoach' })}
         <div class="hub-alt">${button(tr('Liveticker mit Entscheidungen', 'Live ticker with decisions'), { action: 'onSimulate' })}</div>`;

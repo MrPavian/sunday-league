@@ -256,7 +256,7 @@ export function weeklyPersonal(c) {
     adjustEnergy(c, 12);
   } else {
     const scouting = Math.max(0, 2 - (w?.actions ?? 2));
-    const sunday = k.flags.familyAtGames ? 1.5 : 3;
+    const sunday = k.flags.familyAtGames && k.patience >= RED ? 1.5 : 3; // roter Bereich: die Familie kommt nicht mehr mit
     adjustPatience(c, 4 - sunday - (w?.training ? 2 - trainingRelief(c) : 0) - scouting); // Flutlicht: Training nach Feierabend
     // In der Kreisklasse kommt Papierkram dazu: Spielberichte, Passwesen, Schiri-Ansetzung.
     adjustEnergy(c, 1 - 1.5 - missingStaff(c) - (w?.training ? 1.5 : 0) - (k.flags.kasse ? 2 : 0) - ((c.level ?? 1) > 1 ? 1 : 0));
@@ -285,7 +285,7 @@ export function personalWeek(c) {
   if (crisis === 'familienkrise') k.patience = Math.max(k.patience, 35);
   if (crisis === 'burnout') k.energy = Math.max(k.energy, 45);
   if (crisis) {
-    k.awayWeeks = 2;
+    k.awayWeeks = crisisWeeks(c);
     const def = CRISES[crisis];
     c.week.event = { id: crisis, ctx: {}, text: def.text(c), options: def.options.map((o) => o.label), choice: null, result: null, story: 'Privat' };
   }
@@ -299,14 +299,24 @@ const sendAway = (c, weeks = 1) => {
   if (c.coach.idx != null && c.week?.availability[c.coach.idx] !== undefined) c.week.availability[c.coach.idx] = 'no';
 };
 
+// Abstufung nach Liga (vom Nutzer entschieden 2026-10-31): Ab der Bezirksliga springt der Co-Trainer ein, wenn einer besetzt ist,
+// ab der Verbandsliga dauert eine Krise nur eine Woche (mehr Leute um einen herum). Grenzen sind Spielwerte – belegt ist nur,
+// dass es Spielertrainer bis in die Bezirksliga gibt und oben öfter trainiert wird (Quellen in teamtraining.js).
+export const RED = 25; // roter Bereich der Balken (Spielwert): kostet schon vor der 0 etwas
+export const crisisWeeks = (c) => ((c.level ?? 1) >= 7 ? 1 : 2);
+export const standIn = (c) => ((c.level ?? 1) >= 5 && c.staff?.cotrainer ? 'cotrainer' : 'kapitaen');
+export const standInName = (c) => (standIn(c) === 'cotrainer' ? tr('der Co-Trainer', 'the assistant') : tr('der Kapitän', 'the captain'));
+const weeksText = (c) => (crisisWeeks(c) === 1 ? tr('Die nächste Woche', 'The next week') : tr('Die nächsten zwei Wochen', 'The next two weeks'));
+const upper = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
 export const CRISES = {
   familienkrise: {
-    text: (c) => tr(`${partnerOf(c)}: „So geht das nicht weiter. Jedes Wochenende Fußball, jeden Abend WhatsApp mit der Mannschaft." Die nächsten zwei Wochen gehörst du der Familie.`, `${partnerOf(c)}: "This can't go on. Football every weekend, WhatsApp with the team every night." The next two weeks belong to your family.`),
-    options: [{ label: tr('Verstanden.', 'Understood.'), effect: () => tr('Der Kapitän übernimmt. Du hast das Handy aus – fast immer.', 'The captain takes over. Your phone stays off – almost always.') }],
+    text: (c) => tr(`${partnerOf(c)}: „So geht das nicht weiter. Jedes Wochenende Fußball, jeden Abend WhatsApp mit der Mannschaft." ${weeksText(c)} gehörst du der Familie.`, `${partnerOf(c)}: "This can't go on. Football every weekend, WhatsApp with the team every night." ${weeksText(c)} belong${crisisWeeks(c) === 1 ? 's' : ''} to your family.`),
+    options: [{ label: tr('Verstanden.', 'Understood.'), effect: (c) => tr(`${upper(standInName(c))} übernimmt. Du hast das Handy aus – fast immer.`, `${upper(standInName(c))} takes over. Your phone stays off – almost always.`) }],
   },
   burnout: {
-    text: () => tr('Du wachst nachts auf und denkst an Aufstellungen. Der Hausarzt schreibt dich zwei Wochen krank: „Auch vom Ehrenamt."', 'You wake up at night thinking about line-ups. The GP signs you off for two weeks: "From volunteering too."'),
-    options: [{ label: tr('Okay …', 'Okay …'), effect: () => tr('Zwei Wochen ohne Verein. Der Co-Trainer und der Kapitän halten den Laden am Laufen.', 'Two weeks without the club. The assistant and the captain keep things ticking over.') }],
+    text: (c) => tr(`Du wachst nachts auf und denkst an Aufstellungen. Der Hausarzt schreibt dich ${crisisWeeks(c) === 1 ? 'eine Woche' : 'zwei Wochen'} krank: „Auch vom Ehrenamt."`, `You wake up at night thinking about line-ups. The GP signs you off for ${crisisWeeks(c) === 1 ? 'a week' : 'two weeks'}: "From volunteering too."`),
+    options: [{ label: tr('Okay …', 'Okay …'), effect: (c) => tr(`${crisisWeeks(c) === 1 ? 'Eine Woche' : 'Zwei Wochen'} ohne Verein. ${upper(standInName(c))} hält den Laden am Laufen.`, `${crisisWeeks(c) === 1 ? 'A week' : 'Two weeks'} without the club. ${upper(standInName(c))} keeps things ticking over.`) }],
   },
 };
 

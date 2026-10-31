@@ -6,6 +6,11 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-31-5 – Familie und Energie je Liga
+
+### Geändert
+- **Familie und Energie je Liga:** Ab der Bezirksliga springt der Co-Trainer statt des Kapitäns ein, wenn du ausfällst (sofern das Amt besetzt ist). Ab der Verbandsliga dauern Familienkrise und Burnout eine Woche statt zwei. Im roten Bereich (unter 25) wirkt es schon vor der Krise: Bei leerer Energie schaffst du eine Sache weniger in der Woche, bei dicker Luft zuhause kommt die Familie nicht mehr mit zu den Spielen.
+
 ## 2026-10-31-4 – Mehr Leben im Chat
 
 ### Neu

@@ -6,6 +6,11 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-31-5 – Family and energy by league
+
+### Changed
+- **Family and energy by league:** from the County Senior League on, your assistant rather than the captain steps in when you are out (if the post is filled). From the State League on, a family crisis or burnout lasts one week instead of two. In the red zone (below 25) it bites before the crisis: with no energy left you get one thing less done a week, and when things are tense at home the family stops coming to games.
+
 ## 2026-10-31-4 – More life in the chat
 
 ### New

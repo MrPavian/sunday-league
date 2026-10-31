@@ -1043,6 +1043,13 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   anderen Vereinen, Wetter, Saisonphase und Unerwartetem (36 Vorlagen, dieselbe frühestens nach 16 Wochen). Danach 799 Vorlagen,
   keine einzelne mehr über 62. Offen: Banter-Lob (die drei häufigsten Sprüche), Wechselmeldungen, mehr Vorlagen für höhere Ligen.
 
+- **Familie und Energie nach Liga** (vom Nutzer entschieden 2026-10-31, `personal.js`, `coachload.js`): ab Bezirksliga springt
+  der Co-Trainer ein (wenn besetzt), ab Verbandsliga dauert Familienkrise/Burnout eine statt zwei Wochen; roter Bereich (< 25):
+  Energie kostet eine Aktion je Woche, Familie den günstigeren Sonntag. Gemessen vorher (6 Karrieren × 4 Saisons, Trainer
+  trainiert selbst): Energie in rund 28 % der Wochen rot, etwa ein Burnout in vier Saisons, Familie nie rot. Grenzen und Schwelle
+  sind Spielwerte (keine Quelle zum Zeitaufwand der Trainer oben gefunden). Offen: Vorstand und Erfolgsdruck in höheren Ligen
+  (eigenes Thema, Stuhl wackelt bei Negativserie).
+
 ### 11.14 Spielerstärke und Entwicklung über alle Ligen (vom Nutzer gewünscht, 2026-10-29)
 - Konzept: [docs/KONZEPT-SPIELERSTAERKE.md](docs/KONZEPT-SPIELERSTAERKE.md). Eine absolute Leistungsskala in Elo-Einheiten. Die
   Profiligen sind belegt (Bundesliga 1977, 2. Liga 1722, 3. Liga 1518, Regionalliga 1265, im Mittel 237 je Stufe). Die

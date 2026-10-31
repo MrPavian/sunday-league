@@ -30,7 +30,7 @@ import { FESTIVAL_TEAMS, resultLabel, youthLeague, youthPos, youthTable } from '
 import { FOCUS, ownKids, poachChance, poachKid, scoutList, talentGuess, TEAMS, teamOfAge } from '../../career/academy.js';
 import { COACH_KINDS, coachCandidates, COURSE_COST, FOCUS_FIT, fitLabel, initTeams, SELF_ENERGY, selfQuality } from '../../career/youthteams.js';
 import { chemistry, REL, relationLabel, shortName } from '../../career/relations.js';
-import { coachAway, isCoach, isPresident, trainingLocked } from '../../career/personal.js';
+import { coachAway, isCoach, isPresident, standInName, trainingLocked } from '../../career/personal.js';
 import { TRAITS } from '../../data/traits.js';
 import { jobName } from '../../data/names.js';
 import { tierById } from '../../data/tiers.js';
@@ -311,7 +311,7 @@ export const teamScreens = {
       const xi = formation.map((slot, i) => `<li>${ROLE_P[slot.role]}: ${lineup[i] != null ? this.p(lineup[i]).name : tr('Aushilfe', 'Stand-in')}</li>`).join('');
       return `${this.coachBanner(tr('Der Trainer stellt auf.', 'The manager picks the team.'))}<h4>${tr('Startelf', 'Starting line-up')}</h4><ul class="bench">${xi}</ul><h4>${tr('Bank', 'Bench')}</h4><ul class="bench">${benchList}</ul>`;
     }
-    if (coachAway(c)) return `<p class="warn">${tr('Du bist diese Woche nicht da. Der Kapitän stellt auf – nach bestem Wissen und Gewissen.', 'You are away this week. The captain picks the team – to the best of his knowledge.')}</p><h4>${tr('Bank', 'Bench')}</h4><ul class="bench">${benchList}</ul>`;
+    if (coachAway(c)) return `<p class="warn">${tr(`Du bist diese Woche nicht da. ${standInName(c).replace(/^d/, 'D')} stellt auf – nach bestem Wissen und Gewissen.`, `You are away this week. ${standInName(c).replace(/^t/, 'T')} picks the team – to the best of his knowledge.`)}</p><h4>${tr('Bank', 'Bench')}</h4><ul class="bench">${benchList}</ul>`;
     const ROLE = tr({ gk: 'Tor', def: 'Abwehr', mid: 'Mitte', fwd: 'Sturm' }, { gk: 'GK', def: 'Def', mid: 'Mid', fwd: 'Att' });
     const pick = this.pick;
     const snap = this.justSet ?? new Set();
