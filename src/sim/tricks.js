@@ -5,7 +5,7 @@
 //
 // Wer was kann, wird wie die Spielerprofile aus Werten, Eigenschaften und Name abgeleitet –
 // keine neuen Spielstandsdaten, derselbe Spieler hat immer dasselbe Repertoire.
-import { cap1, contest, sure } from './skill.js';
+import { cap1, contest, sure, vs } from './skill.js';
 import { tr } from '../core/i18n.js';
 import { clamp, dist2d, len, norm, rotate } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
@@ -248,11 +248,11 @@ function acrobatic(m, p, kind, toGoal, dGoal, untrained = false) {
   p.vel.z *= 0.3;
   const fatigue = 1 - p.stamina;
   // Voll getroffen? Sonst geht der Ball irgendwohin.
-  const clean = rng.chance(sure(clamp(0.3 + 0.45 * cap1(p.attrs.technique) + 0.15 * cap1(p.attrs.shooting) - 0.15 * fatigue - (kind === 'fallrueck' ? 0.08 : 0) - (untrained ? 0.15 : 0), 0.1, 0.8), p.attrs.technique));
+  const clean = rng.chance(sure(clamp(0.3 + 0.45 * cap1(vs(m, p, 'technique')) + 0.15 * cap1(vs(m, p, 'shooting')) - 0.15 * fatigue - (kind === 'fallrueck' ? 0.08 : 0) - (untrained ? 0.15 : 0), 0.1, 0.8), vs(m, p, 'technique')));
   const gw = pitch.goalHalfWidth;
   const aimZ = rng.range(-gw * 0.8, gw * 0.8);
   let dir = norm(attackDir(m, p.team) * pitch.halfLength - p.pos.x, aimZ - p.pos.z);
-  dir = rotate(dir, rng.gauss() * (clean ? 0.08 + 0.12 * (1 - cap1(p.attrs.shooting)) : 0.5));
+  dir = rotate(dir, rng.gauss() * (clean ? 0.08 + 0.12 * (1 - cap1(vs(m, p, 'shooting'))) : 0.5));
   const speed = clean ? rng.range(13, 19) : rng.range(6, 11);
   ball.vel.x = dir.x * speed;
   ball.vel.z = dir.z * speed;

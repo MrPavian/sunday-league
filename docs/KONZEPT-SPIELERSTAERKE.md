@@ -443,3 +443,24 @@ Messung (Rasenplatz, 120 Spiele je Zeile, 16 Punkte Unterschied, nur Technikwert
 
 Tore stabil; die Wirkung je Punkt sinkt noch (Ziel ±15 % nicht erreicht), ein Teil schon unter 1. Nächster Schritt: je Formel messen,
 was oben noch sättigt; sonst oben größere Ligaabstände (Entscheidung beim Nutzer).
+
+### 12.4 Fehler gegen den Gegner (2026-10-31, Nutzerentscheid)
+
+Gemessen je Wert (BASE 0 gegen +1,2, 80 Spiele): Technik, Passen und Zweikampf wirkten oben fast nicht mehr (0,048 → 0,004 je Punkt),
+weil ihre Formeln Fehler rechnen, die bei zwei sehr guten Teams für beide gegen null gehen; Abschluss und Torwart wirkten weiter.
+Nutzerentscheid: Fehler gegen den Gegner rechnen. `vs()` (sim/skill.js): eigener Wert minus 0,8 × (Niveau der gegnerischen Mannschaft
+im passenden Wert − Schnitt heutiger Hobbyteams; Zweikampf 0,42, Technik 0,45, Kopfball 0,44). Passen, Annahme, Abschluss gegen
+Zweikampf; Grätschen und Fouls gegen Technik; Kopfball gegen Kopfball. Torwart gegen Schütze mit Skalenabgleich (Torhüter 0,61,
+Stürmer 0,50). Das ändert das heutige Spiel gewollt (Golden neu).
+
+| BASE | Wirkung je Punkt | Punkte für den Stärkeren (16 Punkte) | Tore je Team |
+|---|---|---|---|
+| 0 | 0,053 | 91 % | 1,59 |
+| +0,3 | 0,046 | 88 % | 1,27 |
+| +0,6 | 0,039 | 84 % | 1,22 |
+| +0,9 | 0,041 | 80 % | 1,47 |
+| +1,2 | 0,032 | 77 % | 1,52 |
+| +1,5 | 0,031 | 78 % | 1,50 |
+
+Folgen: Großfeld 15 % mehr Tore, Kopfballtore gleich (Kette unverändert) – Kopfball-Platzierung 1,6 → 2,0 m. Paraden-Test misst nur
+noch den Flug der Parade (Nutzer bestätigt). Rest-Abfall der Wirkung je Punkt (≈ 40 %) über die Ligaabstände ausgleichen (Schritt 3).

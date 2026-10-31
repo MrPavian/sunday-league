@@ -1,5 +1,5 @@
 // Grätschen, Stochern, Fouls, Schürfwunden – und wer danach meckert.
-import { cap1, contest } from './skill.js';
+import { cap1, contest, vs } from './skill.js';
 import { tr } from '../core/i18n.js';
 import { clamp, dist2d, len, rotate } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
@@ -103,7 +103,7 @@ export function injure(m, p) {
 
 function knockBall(m, p, spread, minSpeed, maxSpeed) {
   const { ball, rng } = m;
-  const dir = rotate(p.facing, rng.gauss() * spread * (1 - cap1(p.attrs.tackling)));
+  const dir = rotate(p.facing, rng.gauss() * spread * (1 - cap1(vs(m, p, 'tackling'))));
   const speed = rng.range(minSpeed, maxSpeed);
   ball.vel.x = dir.x * speed;
   ball.vel.y = 0.3;
@@ -157,7 +157,7 @@ export function resolveTackles(m) {
       let foul;
       if (slide) {
         const fromBehind = o.facing.x * p.facing.x + o.facing.z * p.facing.z > 0.5;
-        foul = p.tackleWon !== true || rng.chance(0.12 * (1 - cap1(p.attrs.tackling)) + (fromBehind ? 0.2 : 0) + (o.shielding ? 0.25 : 0));
+        foul = p.tackleWon !== true || rng.chance(0.12 * (1 - cap1(vs(m, p, 'tackling'))) + (fromBehind ? 0.2 : 0) + (o.shielding ? 0.25 : 0));
         o.state = 'down';
         o.stateTimer = foul ? 1.4 : 0.7;
         o.pending = null;

@@ -1,5 +1,5 @@
 import { styleOf } from './plan.js';
-import { cap1, contest, errScale, over, soft, sure, tilt } from './skill.js';
+import { cap1, contest, errScale, over, soft, sure, tilt, vs } from './skill.js';
 import { bondBonus, bondOf, isBad } from './bonds.js';
 // Bewegung und Ballkontakte: Laufen, Schuss, Pass, Kopfball, Torwart, Dribbling.
 import { clamp, dist2d, hypot, len, norm, rotate } from '../core/math.js';
@@ -142,7 +142,7 @@ export function tryExecute(m, p) {
     if (p.role === 'gk') m.keeperRelease = { id: p.id, team: p.team, time: m.time, lofted: !!a.lofted };
   } else {
     // Luftloch – gehört in der Kreisklasse dazu.
-    const whiff = (0.05 * (1 - cap1(p.attrs.technique)) + 0.04 * STAMINA.skill * fatigue) * (hasTrait(p, 'ballsicher') ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.3 : 1) * (p.id === m.controlledId ? 0.5 : 1);
+    const whiff = (0.05 * (1 - cap1(vs(m, p, 'technique'))) + 0.04 * STAMINA.skill * fatigue) * (hasTrait(p, 'ballsicher') ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.3 : 1) * (p.id === m.controlledId ? 0.5 : 1);
     if (!a.placed && m.rng.chance(whiff)) {
       m.events.push({ type: 'whiff', playerId: p.id });
       return;
@@ -176,13 +176,13 @@ function shoot(m, p, a, fatigue) {
   const power = clamp(a.power ?? 0.5, 0.1, 1);
   // Streuung: Technik, Müdigkeit, Wucht. Die KI streut etwas mehr als der Mensch,
   // der selbst zielt – sonst treffen Amateure wie Profis.
-  const sigma = (0.025 + 0.16 * (1 - cap1(p.attrs.shooting))) * errScale(p.attrs.shooting) + 0.08 * STAMINA.skill * fatigue + 0.05 * power + (hammer ? 0.03 : 0) + (p.id === m.controlledId ? 0 : 0.005 + (aiSkill(m, p) < 1 ? 0.05 : aiSkill(m, p) > 1 ? -0.015 : 0));
+  const sigma = (0.025 + 0.16 * (1 - cap1(vs(m, p, 'shooting')))) * errScale(vs(m, p, 'shooting')) + 0.08 * STAMINA.skill * fatigue + 0.05 * power + (hammer ? 0.03 : 0) + (p.id === m.controlledId ? 0 : 0.005 + (aiSkill(m, p) < 1 ? 0.05 : aiSkill(m, p) > 1 ? -0.015 : 0));
   // Elfmeter: in Ruhe platziert, ohne Gegner am Fuß – deutlich weniger Streuung.
   // Ebene 3: Wer bedrängt abzieht, streut mehr – nervöse Spieler noch mehr.
   // Direktabnahme und Schuss aus der Drehung sind schwerer zu platzieren.
   dir = rotate(dir, rng.gauss() * sigma * (a.placed ? 0.35 : pressureChaos(m, p)) * (a.first ? 1.2 : 1) * (a.turn ? 1.25 : 1) * (flat?.aimBoost ?? 1));
   const speed = (8 + 18 * power) * (0.85 + 0.15 * soft(p.attrs.shooting)) * (hammer ? 1.15 : 1) * (flat?.shotBoost ?? 1);
-  let vy = 0.8 + 5 * power * power + Math.abs(rng.gauss()) * 1.2 * (1 - cap1(p.attrs.shooting)) * power;
+  let vy = 0.8 + 5 * power * power + Math.abs(rng.gauss()) * 1.2 * (1 - cap1(vs(m, p, 'shooting'))) * power;
   // Halle: hoch nur vorm Tor, weiter weg bleibt der Schuss flach.
   if (flat && Math.abs(p.pos.x - attackDir(m, p.team) * m.pitch.halfLength) > flat.shotNear) vy = Math.min(vy, flat.shotVy);
   ball.vel.x = dir.x * speed;
@@ -339,7 +339,7 @@ function pass(m, p, a, fatigue, fromHands) {
     const lz0 = clamp(lead ? lead.z : target.pos.z + target.vel.z * 0.35, -pitch.halfWidth + edge, pitch.halfWidth - edge);
     // Eckstoß: Die Flanke landet nicht auf den Zentimeter beim Mitspieler, sondern streut um den Zielpunkt (Standardabweichung
     // in Metern, gewählt, nicht gemessen; sonst fiel aus gut 13 % der Ecken ein Tor, real sind es 3–5 %).
-    const sc = a.zone && a.lofted ? CORNER_SCATTER * (1.4 - cap1(p.attrs.passing)) * errScale(p.attrs.passing) : 0;
+    const sc = a.zone && a.lofted ? CORNER_SCATTER * (1.4 - cap1(vs(m, p, 'passing'))) * errScale(vs(m, p, 'passing')) : 0;
     // Gestreut, aber im Feld: Ohne Grenze lag der Zielpunkt einer Ecke (2–3,5 m vor der Torlinie, Streuung um 2,5 m) oft hinter
     // der Linie – der Ball flog direkt ins Toraus (gemessen, scripts/corner-check.mjs). Ohne Streuung bleibt alles wie vorher.
     const lx = sc ? clamp(lx0 + rng.gauss() * sc, -pitch.halfLength + 1, pitch.halfLength - 1) : lx0;
@@ -375,9 +375,9 @@ function pass(m, p, a, fatigue, fromHands) {
       speed = clamp(3.5 + d * 0.75, 5.5, 16);
       vy = d > 16 && !pitch.flatPlay ? 3.5 : 0.2;
     }
-    const sigma = ((0.02 + 0.12 * (1 - cap1(p.attrs.passing))) * errScale(p.attrs.passing) + 0.05 * STAMINA.skill * fatigue) * (eye ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.6 : 1) * (hasProfile(p, 'spielmacher') ? 0.85 : 1) * pressureChaos(m, p);
+    const sigma = ((0.02 + 0.12 * (1 - cap1(vs(m, p, 'passing')))) * errScale(vs(m, p, 'passing')) + 0.05 * STAMINA.skill * fatigue) * (eye ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.6 : 1) * (hasProfile(p, 'spielmacher') ? 0.85 : 1) * pressureChaos(m, p);
     dir = rotate(dir, rng.gauss() * sigma);
-    speed *= 1 + rng.gauss() * 0.08 * (1 - cap1(p.attrs.passing));
+    speed *= 1 + rng.gauss() * 0.08 * (1 - cap1(vs(m, p, 'passing')));
     if (p.id === m.controlledId) m.pendingSwitch = { receiver: target.id, kicker: p.id };
   }
   if (fromHands) vy = Math.max(vy, 1.5);
@@ -475,6 +475,8 @@ export function inHandZone(pitch, pos, goalX, margin = 0) {
   return Math.abs(pos.x - goalX) <= HAND_ZONE.depth + margin && Math.abs(pos.z) <= pitch.goalHalfWidth + HAND_ZONE.side + margin;
 }
 
+// Abstand der Skalen Torwartspiel (Torhüter, Ø 0,61) und Abschluss (Stürmer, Ø 0,50) bzw. Technik (Ø 0,45, +0,05) in heutigen Kadern.
+const KEEPER_VS_SHOT = 0.11;
 export function keeperSaves(m) {
   const { ball, rng, pitch } = m;
   if (ball.holder) return;
@@ -488,7 +490,8 @@ export function keeperSaves(m) {
     // Werte über 1 (sim/skill.js): Torwart gegen Schütze – gleich gute rechnen wie heute bei 1 (gemessen: sonst fing der Profi-Torwart
     // fast fünfmal so oft, die Tore fielen trotz mehr Schüssen).
     const shooterOf = p.attrs.keeping > 1 || ball.lastTouch != null ? m.players.find((c) => c.id === ball.lastTouch && c.team !== p.team) : null;
-    const kEdge = over(p.attrs.keeping) - over(shooterOf?.attrs.shooting ?? 0);
+    // Schütze auf die Torwart-Skala gehoben (heutige Kader: Torwartspiel der Torhüter im Schnitt 0,61, Abschluss der Stürmer 0,50).
+    const kEdge = over(p.attrs.keeping) - over((shooterOf?.attrs.shooting ?? 0) + KEEPER_VS_SHOT);
     if (!hands && (!inKeeperBox(pitch, ball.pos, goalX, 0.3) || !inKeeperBox(pitch, p.pos, goalX, 0.3))) continue;
     // Inkl. Hechtsprung. Vor großen Toren (Asche, Rasen) streckt er sich weiter –
     // sonst deckt er dort anteilig viel weniger ab als vor dem Jackentor.
@@ -513,7 +516,7 @@ export function keeperSaves(m) {
       p.catchCooldown = 0.9;
       p.diveAnim = 0.5;
       p.diveSide = Math.sign(ball.pos.z - p.pos.z) || 1;
-      if (!rng.chance(0.52 + 0.35 * cap1(p.attrs.keeping) - 0.15 * cap1(carrier.attrs.technique) + contest(p.attrs.keeping, carrier.attrs.technique, 0.25))) {
+      if (!rng.chance(0.52 + 0.35 * cap1(p.attrs.keeping) - 0.15 * cap1(carrier.attrs.technique) + contest(p.attrs.keeping, carrier.attrs.technique + KEEPER_VS_SHOT + 0.05, 0.25))) {
         m.events.push({ type: 'beaten', playerId: p.id });
         return;
       }
@@ -629,7 +632,8 @@ export const HEAD_DUEL = { dist: 1.5, factor: 0.6, contest: 0.6 }; // contest: s
 export const KEEPER_CLAIM_Y = 2.6; // so hoch fängt der Torwart eine Flanke (m, Spielwert; Sprung mit gestreckten Armen)
 export const HEAD_MISS = 0.45;
 export const HEAD_KEEP = 0.75; // Anteil des Flankentempos, der beim Kopfball aufs Tor bleibt (Spielwert, eingemessen)
-export const HEAD_PLACE = 1.6; // weiteste Platzierung eines Kopfballs neben der Tormitte (m, Spielwert, eingemessen)
+export const HEAD_PLACE = 2.0; // weiteste Platzierung eines Kopfballs neben der Tormitte (m, Spielwert; 1,6 → 2,0 am 2026-10-31: Mit der
+// Fehlerrechnung gegen den Gegner fielen 15 % mehr Tore, die Kopfballtore nicht – Großfeld: jeder vierte Kopfball aufs Tor gefangen, nur 13 % Tore)
 export const HEAD_CLEAR = { speed: 8, vy: [3, 5] }; // Klärender Kopfball am eigenen Tor: Tempo ab 8 m/s (+5 · Kopfball), Steigung (Spielwert)
 export const HEAD_GRAZE = 0.7; // Anteil der nicht sauber getroffenen Kopfbälle, die den Ball noch streifen (Spielwert)
 // Zielstreuung eines Kopfballs aufs Tor (Bogenmaß, zusätzlich zur Streuung durch die Kopfballstärke): real kommen nur rund 34 % der
@@ -674,7 +678,7 @@ export function headerTouch(m) {
   p.kickCooldown = 0.35;
   p.headAnim = 0.3;
   const monster = hasTrait(p, 'kopfball');
-  const skill = clamp(p.attrs.heading + (monster ? 0.2 : 0), 0, 1);
+  const skill = clamp(vs(m, p, 'heading') + (monster ? 0.2 : 0), 0, 1);
   // Bedrängt (Gegner im Nacken): Der Kopfball gelingt seltener – bei Ecken steht jedem Angreifer ein Verteidiger gegenüber.
   // Faktor 0,6 gewählt, nicht gemessen; Maßstab war der Anteil der Ecken, aus denen ein Tor fällt (real rund 3–5 %).
   // Körper: Gegen den kräftigsten Decker im Nacken zählt der Unterschied (Mitte 0,5 = wie bisher, STRENGTH_FX.head).
@@ -684,7 +688,7 @@ export function headerTouch(m) {
     const f = clamp(HEAD_DUEL.factor + STRENGTH_FX.head * (strengthOf(p) - strengthOf(o)), 0.2, 1);
     duel = Math.min(duel, f);
   }
-  if (!rng.chance(sure((0.35 + 0.4 * skill) * duel, p.attrs.heading))) {
+  if (!rng.chance(sure((0.35 + 0.4 * skill) * duel, vs(m, p, 'heading')))) {
     // Nicht sauber getroffen: Meist streift er ihn noch (Kopf, Schulter, Hinterkopf) – der Ball wird abgefälscht und verliert
     // Tempo. Ganz verpasst wird er selten. Vorher flog jeder verpasste Kopfball unberührt weiter, gemessen ging so bei Ecken
     // jeder dritte Ball trotz Spieler in Reichweite ins Aus (scripts/corner-check.mjs). Anteil HEAD_GRAZE gewählt, nicht gemessen.
@@ -711,7 +715,7 @@ export function headerTouch(m) {
   // Aufs Tor geköpft wird bis knapp hinter den Elfmeterpunkt (Großfeld 11 m) – fest 8 m hieß dort: nie.
   const nearGoal = dist2d(p.pos, goal) < Math.max(8, (pitch.penaltyDistance ?? 0) + 2);
   let dir = nearGoal ? norm(goal.x - p.pos.x, goal.z - p.pos.z) : norm(s * 0.8 + p.facing.x * 0.2, p.facing.z * 0.5);
-  dir = rotate(dir, rng.gauss() * ((nearGoal ? HEAD_AIM : 0.1) + 0.4 * (1 - skill)) * errScale(p.attrs.heading) * (monster ? 0.5 : 1));
+  dir = rotate(dir, rng.gauss() * ((nearGoal ? HEAD_AIM : 0.1) + 0.4 * (1 - skill)) * errScale(vs(m, p, 'heading')) * (monster ? 0.5 : 1));
   // Aufs Tor: Das Tempo der Flanke bleibt erhalten, der Kopf legt bis zu 4,5 m/s drauf (Sprung-/Standkopfball,
   // MDPI Appl. Sci. 14/946, 2024). Vorher immer 4–8 m/s – der Torwart hielt 14 von 22 Kopfbällen aufs Tor.
   const incoming = hypot(ball.vel.x, ball.vel.z);
@@ -721,7 +725,7 @@ export function headerTouch(m) {
   const own = -s;
   if (!nearGoal && ball.vel.x * own > 0 && p.pos.x * own > pitch.halfLength * 0.45 && incoming > 3) {
     const pressed = m.players.some((o) => o.team !== p.team && o.role !== 'gk' && o.state === 'normal' && dist2d(o.pos, p.pos) < 2);
-    if (pressed && rng.chance(HEAD_MISS * (1.3 - skill) * errScale(p.attrs.heading))) {
+    if (pressed && rng.chance(HEAD_MISS * (1.3 - skill) * errScale(vs(m, p, 'heading')))) {
       const d2 = rotate(norm(ball.vel.x, ball.vel.z), rng.gauss() * 0.5);
       const v = Math.max(5, incoming * rng.range(0.6, 0.9));
       ball.vel.x = d2.x * v;
@@ -907,7 +911,7 @@ export function dribbleTouch(m) {
     return;
   }
 
-  const tech = p.attrs.technique;
+  const tech = vs(m, p, 'technique');
   const fatigue = 1 - p.stamina;
   const calm = hasTrait(p, 'ballsicher') || hasTrait(p, 'ex_profi') ? 0.5 : 1;
   const bs = ballSpeed(ball);

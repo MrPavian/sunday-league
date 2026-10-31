@@ -1,5 +1,5 @@
 // KI: Wer läuft an, wer sichert ab, wer deckt, wer läuft sich frei.
-import { cap1, errScale, soft, sure } from './skill.js';
+import { cap1, errScale, soft, sure, vs } from './skill.js';
 import { clamp, dist2d, hypot, len, norm } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
 import { BALL_RADIUS, BOARD_BOUNCE, ballSpeed, rollDistance } from './ball.js';
@@ -614,11 +614,11 @@ export function outfieldIntent(m, p, dt) {
     // der Ball weg, bevor er sich entschieden hat. Die Wand beim Doppelpass spielt direkt.
     if (dBall < 1.3 && !p.pending && !ball.holder && p.decideTimer > 0.1) {
       if (m.combo?.wall === p.id && !m.combo.returned) p.decideTimer = 0.1;
-      else if (shotOn(m, p, oppGoal)) p.decideTimer = Math.min(p.decideTimer, (0.06 + 0.12 * (1 - cap1(p.attrs.technique))) * errScale(p.attrs.technique));
+      else if (shotOn(m, p, oppGoal)) p.decideTimer = Math.min(p.decideTimer, (0.06 + 0.12 * (1 - cap1(vs(m, p, 'technique')))) * errScale(vs(m, p, 'technique')));
     }
     if (dBall < 1.3 && p.decideTimer <= 0 && !p.pending && !ball.holder) {
       // Amateure brauchen einen Moment, bis sie sich entscheiden.
-      p.decideTimer = ((0.4 + (1 - cap1(p.attrs.technique)) * 0.4) * errScale(p.attrs.technique) + m.rng.next() * 0.25) / (aiSkill(m, p) * fst.tempo);
+      p.decideTimer = ((0.4 + (1 - cap1(vs(m, p, 'technique'))) * 0.4) * errScale(vs(m, p, 'technique')) + m.rng.next() * 0.25) / (aiSkill(m, p) * fst.tempo);
       aiDecide(m, p, oppGoal);
     }
     // Ball am Fuß: mit dem Ball nach vorne, nicht um ihn herumlaufen. Wer vor dem
@@ -656,7 +656,7 @@ export function outfieldIntent(m, p, dt) {
     // Technik hat, öfter. Nicht aus der eigenen Hälfte, nicht mit dem Rücken zum Tor.
     if (!p.pending && dist2d(p.pos, ball.pos) < 1.8 && ball.pos.y < 1.1 && p.firstTry !== m.pass && shotOn(m, p, oppGoal)) {
       p.firstTry = m.pass;
-      if (m.rng.chance(sure(0.35 + 0.45 * cap1(p.attrs.technique), p.attrs.technique))) {
+      if (m.rng.chance(sure(0.35 + 0.45 * cap1(vs(m, p, 'technique')), vs(m, p, 'technique')))) {
         const gw = pitch.goalHalfWidth;
         p.pending = { type: 'shoot', power: clamp(0.35 + dist2d(p.pos, oppGoal) / 20, 0.4, 0.9), target: { x: oppGoal.x, z: (m.rng.chance(0.5) ? 1 : -1) * m.rng.range(gw * 0.4, gw * 1.0) }, ttl: 0.35, first: true };
       }
@@ -789,7 +789,7 @@ function aiDecide(m, p, oppGoal) {
       return;
     }
     if (m.time - (p.holdUpStart ?? -9) > 3) p.holdUpStart = m.time;
-    if (m.time - p.holdUpStart < 0.8 + 1.0 * soft(p.attrs.technique)) {
+    if (m.time - p.holdUpStart < 0.8 + 1.0 * soft(vs(m, p, 'technique'))) {
       p.holdUp = m.time;
       p.decideTimer = 0.25;
       return;
@@ -930,7 +930,7 @@ function aiDecide(m, p, oppGoal) {
   });
   const selfish = hasProfile(p, 'solist') || hasProfile(p, 'ballmagnet') ? 0.75 : hasProfile(p, 'teamplayer') ? 1.2 : 1;
   // Befreiungsschlag: Bedrängt im eigenen Drittel schlägt die Abwehr den Ball lieber weg, als ihn im Aufbau zu verlieren.
-  if (underPressure && pitch.boundary === 'lines' && p.role === 'def' && p.pos.x * s0 < -pitch.halfLength * CLEAR_ZONE && rng.chance(CLEAR_CHANCE * (1.2 - cap1(p.attrs.passing)) * errScale(p.attrs.passing) * (1 - 0.3 * st.risk))) {
+  if (underPressure && pitch.boundary === 'lines' && p.role === 'def' && p.pos.x * s0 < -pitch.halfLength * CLEAR_ZONE && rng.chance(CLEAR_CHANCE * (1.2 - cap1(vs(m, p, 'passing'))) * errScale(vs(m, p, 'passing')) * (1 - 0.3 * st.risk))) {
     p.pending = { type: 'pass', ttl: 0.3, cone: -0.2, clear: true };
     return;
   }

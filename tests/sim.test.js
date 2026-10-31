@@ -607,13 +607,19 @@ describe('feel: parries, corners, set pieces', () => {
     for (const seed of [1, 2, 3, 4, 5, 6]) {
       const m = createMatch({ seed, pitch: PARKING_LOT, human: false });
       let watch = 0;
+      let keeper = null;
       for (let i = 0; i < 60 * 600 && m.phase !== 'ended'; i++) {
         stepMatch(m, undefined, DT);
         // Fausten ist gewollt hoch (eigener Test unten) – hier nur echte Paraden zur Seite.
-        if (m.events.some((e) => e.type === 'save' && !e.punch)) {
+        const save = m.events.find((e) => e.type === 'save' && !e.punch);
+        if (save) {
           parries++;
           watch = 30;
+          keeper = save.playerId;
         }
+        // Nur der Flug der Parade selbst: Berührt ein anderer Spieler den Abpraller, endet die Messung (vom Nutzer bestätigt
+        // 2026-10-31 – vorher zählte ein hochgespielter Nachschuss eines Feldspielers als Paradenhöhe).
+        if (watch > 0 && m.ball.lastTouch !== keeper) watch = 0;
         if (watch-- > 0 && !m.ball.holder) maxY = Math.max(maxY, m.ball.pos.y);
         m.events.length = 0;
       }

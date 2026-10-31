@@ -25,7 +25,7 @@
 //     Ballführenden, Kopfballduell). Die Engine kennt ≈ 80–130 solcher Begegnungen je Spiel, echt zählt die Liga 189 Zweikämpfe.
 //     Eingestellt ist die Hälfte der echten Quote (≈ 0,06 statt 0,113): Das gibt 5–8 Fouls je Spiel, ein Pfiff alle 40–60 s des
 //     Zeitraffer-Spiels. Mehr würde den Spielfluss zerhacken (gewählt, nicht gemessen; vorher 2–4,7 Fouls bei 0,15 je Grätsche/Stochern).
-import { cap1, errScale } from './skill.js';
+import { cap1, errScale, vs } from './skill.js';
 import { clamp, dist2d, len } from '../core/math.js';
 import { createRng } from '../core/rng.js';
 import { hasTrait } from '../data/traits.js';
@@ -255,7 +255,7 @@ export function stepContactFouls(m, dt) {
     const rel = ((o.pos.x - carrier.pos.x) * dir.x + (o.pos.z - carrier.pos.z) * dir.z) / Math.max(0.1, d); // +1 voraus, -1 dahinter
     const beaten = rel < -0.2 && speed > 2.5;
     const kind = rel < -0.3 ? 'shirt' : rel > 0.4 ? 'trip' : 'push';
-    let rate = FOUL.contactPerSec * sizeFactor(m.pitch) * (1.6 - 0.9 * cap1(o.attrs.tackling)) * errScale(o.attrs.tackling) * clamp(speed / 5, 0.5, 1.5) * (beaten ? FOUL.beaten : 1) * roughness(m, o);
+    let rate = FOUL.contactPerSec * sizeFactor(m.pitch) * (1.6 - 0.9 * cap1(vs(m, o, 'tackling'))) * errScale(vs(m, o, 'tackling')) * clamp(speed / 5, 0.5, 1.5) * (beaten ? FOUL.beaten : 1) * roughness(m, o);
     if (carrier.shielding) rate *= 0.7;
     if (inAttackBox(m, carrier)) rate *= FOUL.box * boxFactor(m.pitch);
     if (!m.referee) rate *= FOUL.noRef;
@@ -280,7 +280,7 @@ export function headerDuelFoul(m, p) {
   const o = near.sort((a, b) => dist2d(a.pos, p.pos) - dist2d(b.pos, p.pos))[0];
   duel(m, o, p);
   const attacking = p.pos.x * attackDir(m, p.team) > 0; // p köpft in der gegnerischen Hälfte: o verteidigt
-  let chance = FOUL.header * (1.5 - 0.7 * cap1(o.attrs.tackling)) * errScale(o.attrs.tackling) * roughness(m, o);
+  let chance = FOUL.header * (1.5 - 0.7 * cap1(vs(m, o, 'tackling'))) * errScale(vs(m, o, 'tackling')) * roughness(m, o);
   if (!attacking) chance *= FOUL.headerAttacker; // Stürmerfoul an dem, der klärt
   else if (inAttackBox(m, p)) chance *= Math.sqrt(FOUL.box * boxFactor(m.pitch)); // Ecken und Flanken: dort fallen real viele Elfmeter
   if (!m.referee) chance *= FOUL.noRef;

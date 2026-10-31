@@ -17,3 +17,27 @@ export const sure = (p, x) => (x <= 1 ? p : 1 - (1 - p) * errScale(x));
 export const tilt = (p, d) => (d >= 0 ? 1 - (1 - p) * errScale(1 + d) : p * errScale(1 - d));
 // Unterschied zweier Werte oberhalb von 1, gewichtet mit k (für Zweikampf-Formeln: Teil bis 1 bleibt wie bisher).
 export const contest = (a, b, k) => k * (over(a) - over(b));
+
+// Fehler gegen den Gegner (Nutzerentscheid 2026-10-31, Konzept 12.4): Wie sauber ein Spieler passt, annimmt, schießt, köpft oder
+// grätscht, hängt vom Niveau der Gegner ab. Der eigene Wert wird um das Niveau der gegnerischen Mannschaft im passenden Wert
+// verschoben, gemessen am Durchschnitt heutiger Hobbyteams (REF, Feldspieler, 400 erzeugte Kader). So wirkt ein Unterschied auf
+// jedem Niveau gleich stark; PRESS.w < 1 lässt Profis gegen Profis trotzdem etwas sauberer spielen (Spielwert).
+export const VS = { technique: 'tackling', passing: 'tackling', shooting: 'tackling', tackling: 'technique', heading: 'heading' };
+export const REF = { tackling: 0.42, technique: 0.45, heading: 0.44 };
+export const PRESS = { w: 0.8 };
+function teamLevel(m, team, attr) {
+  const key = `${team}:${attr}:${Math.floor(m.time ?? 0)}`; // je Spielsekunde neu (Wechsel, Platzverweise)
+  const c = (m._lvl ??= {});
+  if (c[key] != null) return c[key];
+  let s = 0;
+  let n = 0;
+  for (const q of m.players) if (q.team === team && q.role !== 'gk' && q.attrs[attr] != null) (s += q.attrs[attr]), n++;
+  for (const k of Object.keys(c)) if (k.startsWith(`${team}:${attr}:`)) delete c[k];
+  return (c[key] = n ? s / n : REF[attr]);
+}
+export function vs(m, p, attr) {
+  const o = VS[attr];
+  const v = p.attrs[attr];
+  if (!o || !m?.players) return v;
+  return v - PRESS.w * (teamLevel(m, 1 - p.team, o) - REF[o]);
+}
