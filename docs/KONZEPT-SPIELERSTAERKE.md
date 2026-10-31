@@ -498,3 +498,8 @@ Durchgang 1 (src/sim/niveau.js, noch ohne Wirkung im Spiel), an der Engine gepr�
 | 7 gegen 8 | 135,3 / 120,2 | 81 % | 2,3 : 0,9 |
 
 Oben ≈ 80 % je Ligaabstand wie in Abschnitt 7 gefordert, unten kleinere Abstände (Nutzerentscheid).
+
+Durchgang 2 (career.js squadPicker mit Liga-Stufe, clubNiveaus, playerOf, pyramid.js defStrength; an strength: 3 gebunden, noch
+nicht eingeschaltet). Gemessen (6 Kaderziehungen je Verein, beste n): Liga 1–8 Ø 54,2 · 61,8 · 68,1 · 76,7 · 87,2 · 99,8 · 113,1 ·
+128,9 (2–5 Punkte über dem Ziel, Abstände stimmen). Spanne der Vereine innerhalb einer Liga oben zu klein (Verbandsliga 111–114,
+Oberliga 128–130) – in Durchgang 4 einstellen, zusammen mit dem Schnellmodell (pokal.js QUICK) für das neue Modell.

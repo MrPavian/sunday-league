@@ -4,6 +4,8 @@
 // die anderen werden per Schnellmodell ausgespielt (Hin- und Rückrunde, Torerwartung wie im Pokal: QUICK in pokal.js).
 // Die Ligen ohne den eigenen Verein haben je fünf Vereine (wie clubs.js); Zusatzvereine der großen Liga (EXTRA_CLUBS) gehören
 // nur zur Liga des eigenen Vereins und steigen nicht.
+import { lifted, niveauOf } from '../sim/niveau.js';
+import { clubNiveaus } from './career.js';
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { PITCHES } from '../sim/pitch.js';
@@ -43,7 +45,8 @@ export function venueFor(venue, level) {
 // seiner Kadermischung (tiers) und Kadergröße, gezogen aus dem Spielerpool ohne ihn zu belegen (fest je Verein und Stufe).
 // Ein Mittel über die Klassen allein lag nur 3–5 Punkte zwischen den Ligen – zu wenig, die Tabellen wären fast Zufall.
 const strCache = new Map();
-export function defStrength(def, pool, level) {
+export function defStrength(def, pool, level, model = 1) {
+  if (model >= 3) return defStrengthNiveau(def, pool, level);
   const key = `${def.id}:${level}`;
   if (strCache.has(key)) return strCache.get(key);
   const league = LEAGUES[level];
@@ -67,6 +70,40 @@ export function defStrength(def, pool, level) {
   strCache.set(key, v);
   return v;
 }
+// Stärkemodell 3 (Konzept Spielerstärke 12.5): Probekader nach Niveau (career.js clubNiveaus) in der Klassenmischung der
+// Freizeitliga, Stärke mit dem Aufschlag des Niveaus (sim/niveau.js).
+const NIV_MIX = Object.entries({ ok: 0.5, gut: 0.35, stark: 0.13, dorfstar: 0.02 });
+let byTierNiv = null;
+function defStrengthNiveau(def, pool, level) {
+  const key = `n3:${def.id}:${level}`;
+  if (strCache.has(key)) return strCache.get(key);
+  if (!byTierNiv) {
+    byTierNiv = {};
+    for (const p of pool.everyone()) (byTierNiv[`${p.tier}:${niveauOf(p.poolIndex)}`] ??= []).push(p);
+  }
+  const league = LEAGUES[level];
+  const size = SQUAD_SIZE[league.squadShape] ?? 12;
+  const n = league.format ?? 5;
+  const rng = createRng(hashSeed(level, 3, ...[...def.id].map((ch) => ch.charCodeAt(0))));
+  const niv = Object.entries(clubNiveaus(def.tiers, level));
+  const pick = (list) => {
+    let u = rng.next() * list.reduce((s, [, w]) => s + w, 0);
+    return (list.find(([, w]) => (u -= w) < 0) ?? list[0])[0];
+  };
+  let v = 0;
+  for (let rep = 0; rep < STR_SAMPLES; rep++) {
+    const ratings = [];
+    for (let k = 0; k < size; k++) {
+      const nv = Number(pick(niv));
+      const list = byTierNiv[`${pick(NIV_MIX)}:${nv}`];
+      if (list?.length) ratings.push(lifted(list[Math.floor(rng.next() * list.length)], nv).rating);
+    }
+    const top = ratings.sort((a, b) => b - a).slice(0, n);
+    v += top.reduce((s, x) => s + x, 0) / Math.max(1, top.length) / STR_SAMPLES;
+  }
+  strCache.set(key, v);
+  return v;
+}
 // Kadergröße je Liga (wie SQUAD_SHAPES in career.js); Mittel über STR_SAMPLES Probekader, damit ein Ausreißer nicht zählt.
 const STR_SAMPLES = 12;
 const SQUAD_SIZE = { small: 9, large: 13, xl: 15, xxl: 20 };
@@ -75,7 +112,7 @@ const SQUAD_SIZE = { small: 9, large: 13, xl: 15, xxl: 20 };
 export function simTable(career, level, pool) {
   const defs = membersOf(career, level);
   const rng = createRng(hashSeed(career.seed, career.season, level, 7331));
-  const rows = defs.map((d) => ({ id: d.id, pts: 0, gd: 0, gf: 0, str: defStrength(d, pool, level) }));
+  const rows = defs.map((d) => ({ id: d.id, pts: 0, gd: 0, gf: 0, str: defStrength(d, pool, level, career.strength ?? 1) }));
   for (const h of rows)
     for (const a of rows) {
       if (h === a) continue;

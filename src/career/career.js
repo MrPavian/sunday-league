@@ -1,5 +1,6 @@
 // Karriere: eine Saison in der Freizeitliga. Der Zustand ist reines JSON
 // (speicherbar); Spieler werden nur über ihre Pool-Nummer referenziert.
+import { lifted, niveauOf } from '../sim/niveau.js';
 import { attrMax } from '../sim/skill.js';
 import { logGrade, logSeason, monthlyAward, seasonAward } from './awards.js';
 import { getLang, tr } from '../core/i18n.js';
@@ -135,7 +136,8 @@ const rawPlayer = (career, idx) => career.custom?.[idx] ?? poolPlayer(idx);
 // Spieler, wie er in dieser Karriere gerade ist: Pool-Grundwerte plus
 // Entwicklung, und jede Saison ein Jahr älter.
 export function playerOf(career, idx) {
-  const base = rawPlayer(career, idx);
+  // Stärkemodell 3: Pool-Spieler mit dem Aufschlag ihres Niveaus (sim/niveau.js); eigene Spieler (custom) ohne.
+  const base = (career.strength ?? 1) >= 3 && !career.custom?.[idx] && idx < CUSTOM_BASE ? lifted(rawPlayer(career, idx)) : rawPlayer(career, idx);
   const delta = career.players[idx]?.delta;
   const years = (career.season ?? 1) - 1;
   const extra = career.players[idx]?.addTraits; // z. B. „Ex-Profi" nach der Rückkehr
@@ -148,7 +150,7 @@ export function playerOf(career, idx) {
   const job = career.players[idx]?.job; // Jobwechsel aus einer Lebensgeschichte
   const profession = job ? job : base.profession.startsWith('Schüler') && age >= 19 ? (base.poolIndex % 2 ? 'Student (1. Semester)' : 'Azubi Bürokaufmann') : base.profession;
   const p = { ...base, attrs, age, profession, traits: extra ? [...new Set([...base.traits, ...extra])] : base.traits, look: agedLook(base.look, base.age, age, idx) };
-  p.rating = ratePlayer(p); // Stärke ohne Deckel kommt mit Schritt 3 (gestreckte Klassen, Pokalmodell neu eichen)
+  p.rating = ratePlayer(p, model >= 3 ? Infinity : 99); // Stärkemodell 3: ohne Deckel bei 99
   return p;
 }
 
@@ -206,14 +208,21 @@ export function setSquadExtra(career, extra) {
 }
 
 // Kader aus dem Pool ziehen – nach Klassen-Gewichten und Positionen.
-export function squadPicker(rng, used) {
+// level (Stärkemodell 3, Konzept Spielerstärke 12.5): Spieler nach Niveau statt nach Klasse – ein Verein zieht Spieler seines
+// Liga-Niveaus, stärkere Vereine (reichere Klassenmischung als der Ligaschnitt) auch ein paar vom Niveau darüber, schwächere
+// vom Niveau darunter. Die Klassen (Etiketten OK bis Ex-Profi) kommen dann in der Mischung der Freizeitliga.
+// Stärkemodell neuer Karrieren: 2 = Werte über 1 erlaubt; 3 = Niveau je Spieler (Konzept 12.5, wird mit Durchgang 4 eingeschaltet).
+export const STRENGTH_MODEL = 2;
+export function squadPicker(rng, used, level = null) {
   const pool = getPool();
   const byTierPos = {};
   for (const p of pool.everyone()) (byTierPos[`${p.tier}:${p.position}`] ??= []).push(p.poolIndex);
-  return (tiers, shape) =>
-    shape.map((position) => {
+  if (level) for (const p of pool.everyone()) (byTierPos[`${p.tier}:${p.position}:${niveauOf(p.poolIndex)}`] ??= []).push(p.poolIndex);
+  return (tiers, shape) => {
+    const niv = level ? clubNiveaus(tiers, level) : null;
+    return shape.map((position) => {
       for (let attempt = 0; attempt < 60; attempt++) {
-        const list = byTierPos[`${weighted(rng, tiers)}:${position}`];
+        const list = byTierPos[niv ? `${weighted(rng, NIVEAU_TIER_MIX)}:${position}:${weighted(rng, niv)}` : `${weighted(rng, tiers)}:${position}`];
         if (!list?.length) continue;
         const idx = rng.pick(list);
         if (!used.has(idx)) {
@@ -223,6 +232,29 @@ export function squadPicker(rng, used) {
       }
       throw new Error('Pool erschöpft');
     });
+  };
+}
+// Klassenmischung im Stärkemodell 3 (wie die Freizeitliga heute) und Niveau-Mischung eines Vereins aus seiner Klassenmischung.
+const NIVEAU_TIER_MIX = { ok: 0.5, gut: 0.35, stark: 0.13, dorfstar: 0.02 };
+const TIER_RANK = { ok: 0, gut: 1, stark: 2, dorfstar: 3, superstar: 4, legende: 5 };
+const tierScore = (tiers) => {
+  const e = Object.entries(tiers ?? { ok: 1 });
+  return e.reduce((s, [t, w]) => s + (TIER_RANK[t] ?? 0) * w, 0) / (e.reduce((s, [, w]) => s + w, 0) || 1);
+};
+const leagueScore = new Map();
+export const CLUB_NIVEAU_SPREAD = 2; // Abweichung der Klassenmischung vom Ligaschnitt → Anteil Spieler vom Nachbar-Niveau (Spielwert)
+export function clubNiveaus(tiers, level) {
+  if (!leagueScore.has(level)) {
+    const defs = LEAGUES[level]?.clubs ?? [];
+    leagueScore.set(level, defs.length ? defs.reduce((s, d) => s + tierScore(d.tiers), 0) / defs.length : tierScore(tiers));
+  }
+  const q = tierScore(tiers) - leagueScore.get(level);
+  const up = level < 8 ? Math.min(0.5, Math.max(0, q * CLUB_NIVEAU_SPREAD)) : 0;
+  const down = level > 1 ? Math.min(0.5, Math.max(0, -q * CLUB_NIVEAU_SPREAD)) : 0;
+  const w = { [level]: 1 - up - down };
+  if (up) w[level + 1] = up;
+  if (down) w[level - 1] = down;
+  return w;
 }
 
 export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null, leagueSize = 6 } = {}) {
@@ -230,7 +262,7 @@ export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null,
   setNameEdition(names);
   const rng = createRng(seed);
   const league = LEAGUES[1];
-  const pick = squadPicker(rng, new Set());
+  const pick = squadPicker(rng, new Set(), STRENGTH_MODEL >= 3 ? 1 : null);
   const human = { ...HUMAN_CLUB_DEFAULT, ...club, human: true, venue: league.humanVenue };
   const clubs = [human, ...leagueClubs(league, leagueSize).map((c) => ({ ...c, human: false }))].map((c) => ({
     ...c,
@@ -243,7 +275,7 @@ export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null,
   const career = {
     version: SAVE_VERSION,
     names,
-    strength: 2, // Stärkemodell 2 (Konzept Spielerstärke 12): nur neue Karrieren, alte Spielstände bleiben bei 1
+    strength: STRENGTH_MODEL, // Stärkemodell (Konzept Spielerstärke 12): nur neue Karrieren, alte Spielstände behalten ihres
     seed,
     level: 1,
     league: league.name,
@@ -337,7 +369,7 @@ export function nextSeason(career) {
   sagaNotes.push(...movesNotes(career, cpuMoved, newLevel));
   if (newLevel === level) {
     const used = new Set([...clubs.flatMap((c) => c.squad), ...(career.youth?.prospects ?? []), ...(career.alumni ?? []).map((a) => a.idx)]);
-    const pickFusion = squadPicker(createRng(hashSeed(career.seed, career.season, 98)), used);
+    const pickFusion = squadPicker(createRng(hashSeed(career.seed, career.season, 98)), used, (career.strength ?? 1) >= 3 ? level : null);
     clubs = swapMembers(career, clubs, newLevel, (tiers) => pickFusion(tiers, SQUAD_SHAPES[league.squadShape])); // Auf- und Absteiger tauschen
     const fused = applyFusion(career, clubs, (tiers) => pickFusion(tiers, SQUAD_SHAPES[league.squadShape]), freshRecord);
     clubs = fused.clubs;
@@ -348,7 +380,7 @@ export function nextSeason(career) {
   if (newLevel !== level) {
     // Neue Liga, neue Gegner. Die alten Gegner verlassen den Spielstand.
     const used = new Set(human.squad);
-    const pick = squadPicker(rng, used);
+    const pick = squadPicker(rng, used, (career.strength ?? 1) >= 3 ? newLevel : null);
     for (const c of career.clubs) if (!c.human) for (const idx of c.squad) delete career.players[idx];
     clubs = [human, ...[...membersOf(career, newLevel), ...(size >= 8 ? (EXTRA_CLUBS[newLevel] ?? []).map((e) => localized(career, e, newLevel, ensureLeagues(career))) : [])].map((c) => ({ ...c, human: false, squad: pick(c.tiers, SQUAD_SHAPES[league.squadShape]) }))];
     for (const c of clubs) for (const idx of c.squad) career.players[idx] ??= freshRecord();
