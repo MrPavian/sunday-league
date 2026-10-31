@@ -1036,6 +1036,12 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   mit denen man nicht rechnet, auch ohne Entscheidung, einfach als Farbe im Vereinsleben.
 - Vor dem Einbau: zählen, welche Nachrichten wie oft kommen (über viele Saisons), damit die neuen die Lücken füllen statt die
   Häufigen noch häufiger zu machen.
+- Erster Ausbau 2026-10-31: gezählt (6 Karrieren × 4 Saisons, 264 Wochen): 17 Nachrichten je Woche, 733 Vorlagen; am häufigsten
+  die Torjäger-Warnung (118, fast jede zweite Woche), die Spielansage (2 × 117) und die Rudelbildung (rund 60). Torjäger-Warnung nur
+  noch, wenn er seit der letzten Warnung getroffen hat (3 Varianten), Spielansage 5 Varianten, Rudelbildung 3 Varianten. Neu
+  `src/career/chatlife.js`: jede Woche eine, manchmal zwei Nachrichten aus Ort, Gemeinde, Nachbarschaft, Sponsoren, Fans,
+  anderen Vereinen, Wetter, Saisonphase und Unerwartetem (36 Vorlagen, dieselbe frühestens nach 16 Wochen). Danach 799 Vorlagen,
+  keine einzelne mehr über 62. Offen: Banter-Lob (die drei häufigsten Sprüche), Wechselmeldungen, mehr Vorlagen für höhere Ligen.
 
 ### 11.14 Spielerstärke und Entwicklung über alle Ligen (vom Nutzer gewünscht, 2026-10-29)
 - Konzept: [docs/KONZEPT-SPIELERSTAERKE.md](docs/KONZEPT-SPIELERSTAERKE.md). Eine absolute Leistungsskala in Elo-Einheiten. Die

@@ -78,7 +78,11 @@ export function afterMatchVoice(c, prepared, oppId) {
   let news;
   if (heat > 2.8) {
     c.feuds[oppId] = Math.max(-3, feudOf(c, oppId) - 1);
-    news = tr(`Nach dem Abpfiff gegen ${opp.name}: Rudelbildung am Mittelkreis. ${coach.name} brüllt was von „Treter". Das Rückspiel wird heiß.`, `After the final whistle against ${opp.name}: a melee in the centre circle. ${coach.name} shouts something about “thugs”. The return fixture will be spicy.`);
+    // Varianten ohne Zufallsstrom (gezählt: derselbe Satz kam rund 60-mal in 264 Wochen, ROADMAP 11.13).
+    news = tr(
+      [`Nach dem Abpfiff gegen ${opp.name}: Rudelbildung am Mittelkreis. ${coach.name} brüllt was von „Treter". Das Rückspiel wird heiß.`, `Abpfiff gegen ${opp.name}, und dann ging es erst los: Geschubse bis zur Kabine. ${coach.name} verweigert den Handschlag.`, `Gegen ${opp.name} fliegen nach dem Spiel noch die Trinkflaschen. ${coach.name}: „Mit denen sind wir noch nicht fertig."`],
+      [`After the final whistle against ${opp.name}: a melee in the centre circle. ${coach.name} shouts something about “thugs”. The return fixture will be spicy.`, `Final whistle against ${opp.name}, and then it really started: shoving all the way to the dressing rooms. ${coach.name} refuses the handshake.`, `Against ${opp.name} the water bottles were still flying after the game. ${coach.name}: “We're not done with them yet.”`],
+    )[((c.season ?? 1) * 5 + c.round) % 3];
     chronicle(c, tr(`Rudelbildung gegen ${opp.name}.`, `A melee against ${opp.name}.`));
   } else if (heat < 1.3) {
     c.feuds[oppId] = Math.min(3, feudOf(c, oppId) + 1);

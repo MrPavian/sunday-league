@@ -6,6 +6,11 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-31-4 – More life in the chat
+
+### New
+- **More life in the chat:** counted first: 17 messages a week, but mostly replies, the match call and the same striker warning. Now every week brings something from around the club – the parish, neighbours, sponsors, fans, other clubs, the weather and the unexpected (the same message at most once every 16 weeks). The match call and the melee report have variants, and the striker warning only comes when he has scored again.
+
 ## 2026-10-31-3 – Tidier club pages
 
 ### Changed

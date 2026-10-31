@@ -546,7 +546,13 @@ export function startWeek(career) {
   const fixture = humanFixture(career);
   const postponed = sperreCheck(career, weather, fixture); // Platzsperre: Nachholspiel am Mittwoch
   const opponent = clubById(career, fixture.home === club.id ? fixture.away : fixture.home);
-  chat.push({ from: null, text: tr(`Sonntag gegen ${opponent.name}${fixture.home === club.id ? ' bei uns' : ' auswärts'}. Wer kann?`, `Sunday against ${opponent.name}${fixture.home === club.id ? ' at ours' : ' away'}. Who can make it?`), time: time(), me: true });
+  // Die Frage des Trainers in Varianten (gezählt: dieselben zwei Sätze standen in jeder Woche, ROADMAP 11.13). Ohne Zufallsstrom.
+  const where = fixture.home === club.id;
+  const ask = tr(
+    [`Sonntag gegen ${opponent.name}${where ? ' bei uns' : ' auswärts'}. Wer kann?`, `${where ? 'Heimspiel' : 'Auswärtsspiel'} gegen ${opponent.name}. Bitte bis Freitag zu- oder absagen.`, `Sonntag: ${opponent.name}${where ? ', bei uns' : ', auswärts'}. Daumen hoch, wer dabei ist.`, `Nächster Gegner: ${opponent.name}${where ? ' auf unserem Platz' : ', wir fahren hin'}. Wer ist dabei?`, `Leute, ${opponent.name}${where ? ' kommt zu uns' : ' wartet auf uns'}. Wer hat Zeit?`],
+    [`Sunday against ${opponent.name}${where ? ' at ours' : ' away'}. Who can make it?`, `${where ? 'Home game' : 'Away game'} against ${opponent.name}. Please say yes or no by Friday.`, `Sunday: ${opponent.name}${where ? ', at ours' : ', away'}. Thumbs up if you're in.`, `Next up: ${opponent.name}${where ? ' on our pitch' : ', we travel'}. Who's in?`, `Lads, ${opponent.name}${where ? ' are coming to us' : ' are waiting for us'}. Who's free?`],
+  );
+  chat.push({ from: null, text: ask[((career.season ?? 1) * 7 + career.round) % ask.length], time: time(), me: true });
 
   // Nicht zwei Mal derselbe Satz in einer Woche (und möglichst nicht wie letzte Woche) –
   // so einfallslos ist keine Gruppe.

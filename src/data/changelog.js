@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-31-4',
+    de: { title: 'Mehr Leben im Chat', items: ['Jede Woche etwas aus dem Vereinsumfeld: Gemeinde, Nachbarn, Sponsoren, Fans, andere Vereine – und Dinge, mit denen keiner rechnet.', 'Die Spielansage und die Kreisblatt-Meldungen klingen nicht mehr jede Woche gleich.', 'Die Warnung vor dem gegnerischen Torjäger kommt nur noch, wenn er wieder getroffen hat.'] },
+    en: { title: 'More life in the chat', items: ['Every week something from around the club: the parish, the neighbours, sponsors, fans, other clubs – and things nobody saw coming.', 'The match call and the Gazette reports no longer sound the same every week.', 'The warning about the opposing striker only comes when he has scored against you again.'] },
+  },
+  {
     id: '2026-10-31-3',
     de: { title: 'Übersichtlicher Verein', items: ['Der Reiter Verein ist in Unterseiten geteilt: Du, Anlage, Vereinsleben, Trikot und Wappen.', 'Die Ausbaugruppen (Vereinsheim, Sportplatz, Tribünen, Gastro) lassen sich auf- und zuklappen.', 'Jugend: A-Jugend und Jugendteams sind eigene Reiter. Kasse: Strafenkatalog und Kassenbuch zum Aufklappen.'] },
     en: { title: 'Tidier club pages', items: ['The Club tab is split into sub-pages: You, Grounds, Club life, Kit and Crest.', 'The upgrade groups (clubhouse, pitch, stands, catering) can be expanded and collapsed.', 'Youth: U19s and youth teams have their own tabs. Kitty: fines list and ledger can be expanded.'] },

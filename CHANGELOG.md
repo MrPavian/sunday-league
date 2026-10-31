@@ -6,6 +6,11 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-31-4 – Mehr Leben im Chat
+
+### Neu
+- **Mehr Leben im Chat:** Vorher gezählt: 17 Nachrichten je Woche, aber fast nur Zusagen, die Spielansage und dieselbe Torjäger-Warnung. Jetzt kommt jede Woche etwas aus dem Vereinsumfeld dazu – Gemeinde, Nachbarn, Sponsoren, Fans, andere Vereine, Wetter und Unerwartetes (dieselbe Nachricht frühestens nach 16 Wochen). Spielansage und Rudelbildung-Meldung haben Varianten, die Torjäger-Warnung kommt nur noch, wenn er wieder getroffen hat.
+
 ## 2026-10-31-3 – Übersichtlicher Verein
 
 ### Geändert

@@ -10,7 +10,8 @@ import * as scouting from './scouting.js'; // Scouting
 import * as teamtraining from './teamtraining.js'; // Trainingsplan
 import * as referees from './referees.js'; // Schiedsrichter mit Gesicht
 import * as rivals from './rivals.js'; // Rivalitäten
-export const FEATURES = [transfers, oldboys, women, scouting, teamtraining, referees, rivals];
+import * as chatlife from './chatlife.js'; // Chat-Leben
+export const FEATURES = [transfers, oldboys, women, scouting, teamtraining, referees, rivals, chatlife];
 
 export function runHooks(name, career, ...args) {
   for (const f of FEATURES) f[name]?.(career, ...args);

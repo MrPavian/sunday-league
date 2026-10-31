@@ -125,9 +125,16 @@ export function preMatchMemories(c, opponent, chat) {
     const idx = formers[0];
     const f = c.formers[idx];
     chat.push({ from: talker, text: f.grumpy ? tr(`Wisst ihr, wer bei ${opponent.short} spielt? ${firstName(c, idx)}. Der ist damals im Streit gegangen. Dem zeigen wir's.`, `Guess who plays for ${opponent.short}? ${firstName(c, idx)}. Left us after a row. Let's show him.`) : reunion(c, idx, opponent, f), time: 'Mi 19:12', memory: true });
-  } else if (nemesis.length) {
+  } else if (nemesis.length && (c.nemesisSaid?.[nemesis[0]] ?? 0) < c.nemesis[nemesis[0]]) {
+    // Nur wenn er seit der letzten Warnung wieder getroffen hat (gezählt: sonst stand derselbe Satz fast jede zweite Woche im Chat).
     const idx = nemesis[0];
-    chat.push({ from: talker, text: tr(`Achtung: ${surname(c, idx)} von ${opponent.short} hat uns schon ${c.nemesis[idx]} Dinger eingeschenkt. Einer klebt Sonntag an ihm.`, `Heads up: ${surname(c, idx)} from ${opponent.short} has put ${c.nemesis[idx]} past us. Someone stays glued to him on Sunday.`), time: 'Mi 19:12', memory: true });
+    (c.nemesisSaid ??= {})[idx] = c.nemesis[idx];
+    const n = c.nemesis[idx];
+    const say = tr(
+      [`Achtung: ${surname(c, idx)} von ${opponent.short} hat uns schon ${n} Dinger eingeschenkt. Einer klebt Sonntag an ihm.`, `${surname(c, idx)} schon wieder. ${n} Tore gegen uns – der kriegt Sonntag einen Schatten.`, `Wer nimmt ${surname(c, idx)}? Der hat uns ${n}-mal getroffen. Ich hab keine Lust auf Nummer ${n + 1}.`],
+      [`Heads up: ${surname(c, idx)} from ${opponent.short} has put ${n} past us. Someone stays glued to him on Sunday.`, `${surname(c, idx)} again. ${n} goals against us – he gets a shadow on Sunday.`, `Who's taking ${surname(c, idx)}? He's scored ${n} against us. I don't fancy number ${n + 1}.`],
+    );
+    chat.push({ from: talker, text: say[(n + (c.round ?? 0)) % say.length], time: 'Mi 19:12', memory: true });
   }
   if (ours.length) chat.push({ from: ours[0], text: tr(`Gegen meinen Ex-Verein. Ich bin heiß.`, `Against my old club. I'm fired up.`), time: 'Do 07:40', memory: true });
 }
