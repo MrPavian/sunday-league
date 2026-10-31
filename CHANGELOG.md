@@ -9,7 +9,7 @@ Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**
 ## 2026-10-31-3 – Übersichtlicher Verein
 
 ### Geändert
-- **Übersichtlicher Verein:** Der Reiter Verein war auf dem Handy fast zwölf Bildschirmhöhen lang. Jetzt hat er Unterseiten – Du, Anlage, Vereinsleben, Trikot und Wappen –, und die Ausbaugruppen lassen sich aufklappen (offen ist die Gruppe, in der gerade gebaut wird). Aus dem Präsidium führt „Ausbau im Verein“ direkt zur Anlage.
+- **Übersichtlicher Verein:** Der Reiter Verein war auf dem Handy fast zwölf Bildschirmhöhen lang. Jetzt hat er Unterseiten – Du, Anlage, Vereinsleben, Trikot und Wappen –, und die Ausbaugruppen lassen sich aufklappen (offen ist die Gruppe, in der gerade gebaut wird). Aus dem Präsidium führt „Ausbau im Verein“ direkt zur Anlage. Unter Jugend sind A-Jugend und Jugendteams eigene Reiter, in der Kasse lassen sich Strafenkatalog und Kassenbuch aufklappen. Keine Seite ist jetzt länger als dreieinhalb Bildschirmhöhen.
 
 ## 2026-10-31-2 – Zuschauer und Tribünen
 

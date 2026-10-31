@@ -520,11 +520,13 @@ export const teamScreens = {
     const alumni = c.alumni.length
       ? c.alumni.map((a) => tr(`<li>${a.name} – ${a.apps} Spiele, ${a.goals} Tore · ${a.role} (seit Saison ${a.season + 1})</li>`, `<li>${a.name} – ${a.apps} games, ${a.goals} goals · ${roleName(a.role)} (since season ${a.season + 1})</li>`)).join('')
       : `<li><em>${tr('noch niemand – der Verein ist jung', 'nobody yet – the club is young')}</em></li>`;
-    // Unterreiter: eigene Jugend (A-Jugend zuerst), Talente anderer Vereine, Ehrenamt & Ehemalige.
-    const sub = ['own', 'scout', 'club'].includes(this.youthTab) ? this.youthTab : 'own';
+    // Unterreiter: A-Jugend, Jugendmannschaften (gemessen am Handy: beides zusammen 5,4 Bildschirmhöhen), Talente anderer Vereine,
+    // Ehrenamt & Ehemalige.
+    const sub = ['own', 'teams', 'scout', 'club'].includes(this.youthTab) ? this.youthTab : 'own';
     const scouts = scoutList(c).filter((k) => k.status === 'open').length;
-    const subTabs = uiTabs([['own', tr('Eigene Jugend', 'Our youth')], ['scout', tr('Andere Vereine', 'Other clubs'), scouts || null], ['club', tr('Ehrenamt & Ehemalige', 'Volunteers & alumni')]], sub, 'youthTab');
+    const subTabs = uiTabs([['own', tr('A-Jugend', 'U19s')], ['teams', tr('Jugendteams', 'Youth teams')], ['scout', tr('Andere Vereine', 'Other clubs'), scouts || null], ['club', tr('Ehrenamt & Ehemalige', 'Volunteers & alumni')]], sub, 'youthTab');
     if (sub === 'scout') return `${subTabs}${this.scoutBlock()}`;
+    if (sub === 'teams') return `${subTabs}${this.academyBlock()}`;
     if (sub === 'club')
       return `${subTabs}
       ${this.staffBlock()}
@@ -536,8 +538,7 @@ export const teamScreens = {
         ? `<table class="squad prospects"><thead><tr><th>${tr('Talent', 'Talent')}</th><th>${tr('Pos.', 'Pos.')}</th><th>${tr('Stärke', 'Rating')}</th><th>${tr('Einschätzung', 'Assessment')}</th><th></th></tr></thead><tbody>${prospects}</tbody></table>
            <p class="empty">${tr('Talente entwickeln sich auch in der Jugend. Mit 20 wechseln sie zum Nachbarn, wenn du sie nicht hochziehst.', 'Talents develop in the youth team too. At 20 they leave for a neighbouring club if you do not promote them.')}${full ? tr(' Kader voll – erst Platz schaffen.', ' Squad full – make room first.') : ''}</p>
            <p class="empty">${tr(`Bis zu ${MAX_UP} dürfen bei der Ersten mittrainieren: Sie lernen schneller, und nach ${REIFE_WEEKS} Wochen kennen sie das Tempo – sonst sind sie nach dem Hochziehen erst einmal nervös. Ein Pate (ab ${PATE_AGE}) bringt ihnen noch mehr bei.`, `Up to ${MAX_UP} can train with the first team: they learn faster, and after ${REIFE_WEEKS} weeks they know the pace – otherwise they are nervous after promotion. A mentor (${PATE_AGE}+) teaches them even more.`)}</p>`
-        : `<p class="empty">${tr('Kein Talent in der A-Jugend. Der nächste Jahrgang kommt zur neuen Saison.', 'No talent in the U19s. The next intake arrives with the new season.')}</p>`}
-      ${this.academyBlock()}`;
+        : `<p class="empty">${tr('Kein Talent in der A-Jugend. Der nächste Jahrgang kommt zur neuen Saison.', 'No talent in the U19s. The next intake arrives with the new season.')}</p>`}`;
   },
 
   // Ehrenamt: jedes Amt selbst besetzen – aus dem Kader (umsonst) oder per Aushang (Pauschale).

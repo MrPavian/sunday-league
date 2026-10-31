@@ -9,7 +9,7 @@ In the game, the same highlights are under **Settings → What's new**.
 ## 2026-10-31-3 – Tidier club pages
 
 ### Changed
-- **Tidier club pages:** on a phone the Club tab was almost twelve screens long. It now has sub-pages – You, Grounds, Club life, Kit and Crest – and the upgrade groups can be expanded (the group with work in progress is open). From the president’s office, “Club expansion” leads straight to Grounds.
+- **Tidier club pages:** on a phone the Club tab was almost twelve screens long. It now has sub-pages – You, Grounds, Club life, Kit and Crest – and the upgrade groups can be expanded (the group with work in progress is open). From the president’s office, “Club expansion” leads straight to Grounds. Under Youth, the U19s and the youth teams have their own tabs; in the kitty, the fines list and the ledger can be expanded. No page is now longer than three and a half screens.
 
 ## 2026-10-31-2 – Crowds and stands
 

@@ -560,9 +560,9 @@ export const clubScreens = {
       <div class="cash-grid">
         <section><h4>${tr('Sponsoren', 'Sponsors')}</h4><ul class="plain">${active}</ul>
           ${c.sponsorNote && c.round === 0 ? `<p class="reply ok">${c.sponsorNote}</p>` : ''}${offers ? `<h4>${tr('Angebote für diese Saison', 'Offers for this season')}</h4><div class="rumors">${offers}</div>` : c.round === 0 ? '' : `<p class="empty">${tr('Neue Angebote gibt es vor der nächsten Saison.', 'New offers come before next season.')}</p>`}</section>
-        <section><h4>${tr('Strafenkatalog', 'Fines list')}</h4><ul class="plain fines">${FINES.map((f) => `<li>${f.strict && spielberichtStreng(c) ? f.strict : f.label} <b>${euro(f.amount)}</b></li>`).join('')}</ul>
-          <h4>${tr('Sünderkartei', 'Hall of shame')}</h4><ol class="plain">${sinners || `<li><em>${tr('alle brav', 'all well behaved')}</em></li>`}</ol></section>
-        <section><h4>${tr('Kassenbuch', 'Ledger')}</h4><ul class="plain ledger">${ledger || `<li><em>${tr('noch keine Buchungen', 'no entries yet')}</em></li>`}</ul></section>
+        <section><h4>${tr('Sünderkartei', 'Hall of shame')}</h4><ol class="plain">${sinners || `<li><em>${tr('alle brav', 'all well behaved')}</em></li>`}</ol>
+          <details class="fac-group cash-fold"><summary><h4 class="sub">${tr('Strafenkatalog', 'Fines list')}</h4></summary><ul class="plain fines">${FINES.map((f) => `<li>${f.strict && spielberichtStreng(c) ? f.strict : f.label} <b>${euro(f.amount)}</b></li>`).join('')}</ul></details></section>
+        <section><details class="fac-group cash-fold"><summary><h4 class="sub">${tr('Kassenbuch', 'Ledger')} <small>${(c.ledger ?? []).length} ${tr('Buchungen', 'entries')}</small></h4></summary><ul class="plain ledger">${ledger || `<li><em>${tr('noch keine Buchungen', 'no entries yet')}</em></li>`}</ul></details></section>
       </div>`;
   },
 };
