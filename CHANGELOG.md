@@ -6,6 +6,11 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-31-6 – Neues Stärkemodell (neue Karrieren)
+
+### Geändert
+- **Neues Stärkemodell (neue Karrieren):** Jeder Spieler hat ein festes Niveau von Freizeitliga bis Oberliga, die Ligen liegen dadurch deutlich weiter auseinander (Freizeitliga um 54, Oberliga um 128, Profis 180–195; die Stärke geht über 99). Ein Klassenhöherer holt oben rund 80 % der Punkte, unten etwas weniger. Pass-, Annahme-, Schuss- und Zweikampffehler hängen jetzt vom Gegner ab. Laufende Karrieren spielen mit dem alten Modell weiter.
+
 ## 2026-10-31-5 – Familie und Energie je Liga
 
 ### Geändert

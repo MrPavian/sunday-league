@@ -170,8 +170,9 @@ export function bundDraw(c, cup) {
     const free = PROFIS.filter((p) => !cup.guests.some((g) => g.id === `pokal-bund-${p.id}`));
     def = { ...rng.pick(free), tiers: klass.tiers };
   }
-  const squad = squadPicker(rng, takenIndices(c))(def.tiers, SQUAD_SHAPES.xxl);
-  for (const idx of squad) c.players[idx] = { ...fresh(), delta: Object.fromEntries(PROFI_ATTRS.map((k) => [k, klass.boost])) };
+  const m3 = (c.strength ?? 1) >= 3;
+  const squad = squadPicker(rng, takenIndices(c), m3 ? OBERLIGA_LEVEL : null)(def.tiers, SQUAD_SHAPES.xxl);
+  for (const idx of squad) c.players[idx] = { ...fresh(), delta: m3 ? profiDelta(klass) : Object.fromEntries(PROFI_ATTRS.map((k) => [k, klass.boost])) };
   const guest = { ...def, id: `pokal-bund-${def.id}`, human: false, venue: 'grossfeld', squad, level: klass.level, klass: klass === PROFI_KLASSEN.erst ? 'erst' : klass === PROFI_KLASSEN.zweit ? 'zweit' : 'amateur' };
   cup.guests.push(guest);
   cup.levels[guest.id] = guest.level;
@@ -326,6 +327,28 @@ export const QUICK = { base: 1.4, perPoint: 0.03, home: 0.3 };
 // 4,8 / 3,5 % (Kader „mittel") und 5,3 / 3,8 % (Kader „bezirk", der stärkste Bezirksligist); das schnelle Modell
 // liefert mit perPoint 0,04 4,7 / 4,4 % (Kader „mittel", 4800 Würfe; mit 0,035: 7,6 / 6,9 %, mit 0,045: 3,1 / 2,9 %).
 export const QUICK_BUND = { perPoint: 0.04 };
+// Stärkemodell 3 (Konzept Spielerstärke 12.5): Steigung nach dem Niveau der Partie, an der Engine gemessen (Mannschaften eines Niveaus,
+// 60 Spiele je Paar, Logarithmus des Torverhältnisses / 2 / Stärkeunterschied): 0,051 (Niveau 1 gg 2, Ø 64), 0,049 (4 gg 5, Ø 89),
+// 0,033 (7 gg 8, Ø 128). Dazwischen linear, darunter und darüber konstant.
+// Stärkemodell 3: Profis aus Oberliga-Niveau, Technikwerte um den Abstand zum Ziel ihrer Liga angehoben (15 Punkte je Liga über der
+// Oberliga: Regionalliga 141, 3. Liga 156, 2. Liga 171, Bundesliga 186 – Konzept Abschnitt 10, Spielwerte); Tempo und Ausdauer
+// behalten den alten Profi-Zuschlag (gedeckelt bei 0,98). 0,7 = Anteil der Technikwerte an der Stärke (Gewichte, generator.js).
+export const PRO_TARGET = { 9: 141, 10: 156, 11: 171, 12: 186 };
+export const FIELD_STRENGTH_3 = { erst: [186, 3], zweit: [171, 3], amateur: [129, 3] };
+function profiDelta(klass) {
+  const tech = ((PRO_TARGET[klass.level] ?? 129) - 129) / (100 * 0.7);
+  return Object.fromEntries(PROFI_ATTRS.map((k) => [k, k === 'pace' || k === 'stamina' ? klass.boost : tech]));
+}
+// Gegen Profis (Abstand 50–70 Punkte) ist die Engine flacher: Oberligist (≈ 125) gegen Zweit-/Erstligist (179 / 194), weiter in 5,5 % /
+// 3,0 % (scripts/bundespokal-calibrate.mjs … oberliga, je 200 Spiele; Tore 0,33 : 2,64 bzw. 0,20 : 2,76 in den ersten 100).
+// QUICK_BUND3 so eingestellt, dass das Schnellmodell dazu passt: 0,02 → 5,1 % / 1,4 % (0,019: 6,3 / 2,2; 0,018: 7,6 / 2,8).
+export const QUICK_BUND3 = { perPoint: 0.02 };
+export function quickSlope(c, sa, sb, bund = false) {
+  if ((c?.strength ?? 1) < 3) return bund ? QUICK_BUND.perPoint : QUICK.perPoint;
+  if (bund) return QUICK_BUND3.perPoint;
+  const m = (sa + sb) / 2;
+  return m <= 89 ? 0.05 : m >= 128 ? 0.033 : 0.05 - ((m - 89) / (128 - 89)) * 0.017;
+}
 const strength = (c, club, n) => {
   const r = club.squad.map((i) => playerOf(c, i).rating).sort((a, b) => b - a).slice(0, n);
   return r.reduce((s, x) => s + x, 0) / Math.max(1, r.length);
@@ -345,8 +368,10 @@ export const poisson = (rng, l) => {
   return k;
 };
 export function quickTie(c, cup, tie, rng) {
-  const d = teamStrength(c, cup, tie.home, tie) - teamStrength(c, cup, tie.away, tie);
-  const pp = tie.kind === 'bund' ? QUICK_BUND.perPoint : QUICK.perPoint;
+  const sh = teamStrength(c, cup, tie.home, tie);
+  const sa = teamStrength(c, cup, tie.away, tie);
+  const d = sh - sa;
+  const pp = quickSlope(c, sh, sa, tie.kind === 'bund');
   const lh = QUICK.base * Math.exp(pp * d + QUICK.home);
   const la = QUICK.base * Math.exp(-pp * d);
   tie.result = { home: poisson(rng, lh), away: poisson(rng, la) };
@@ -412,7 +437,8 @@ function initField(c, cup) {
   const rng = createRng((c.seed * 97 + c.season * 331 + 7177) >>> 0);
   const me = humanClub(c);
   const gauss = () => Math.sqrt(-2 * Math.log(1 - rng.next())) * Math.cos(2 * Math.PI * rng.next());
-  const entry = (f) => ({ ...f, level: f.klass === 'erst' ? PROFI_KLASSEN.erst.level : f.klass === 'zweit' ? PROFI_KLASSEN.zweit.level : OBERLIGA_LEVEL, str: +(FIELD_STRENGTH[f.klass][0] + gauss() * FIELD_STRENGTH[f.klass][1]).toFixed(1) });
+  const FS = (c.strength ?? 1) >= 3 ? FIELD_STRENGTH_3 : FIELD_STRENGTH;
+  const entry = (f) => ({ ...f, level: f.klass === 'erst' ? PROFI_KLASSEN.erst.level : f.klass === 'zweit' ? PROFI_KLASSEN.zweit.level : OBERLIGA_LEVEL, str: +(FS[f.klass][0] + gauss() * FS[f.klass][1]).toFixed(1) });
   cup.field = [{ id: me.id, name: me.name, short: me.short, klass: 'human', level: c.level ?? 1 }, ...FIELD_PROS().map(entry), ...FIELD_AMATEURS().map(entry)];
   cup.alive = cup.field.map((f) => f.id);
   cup.fieldTies = [];
@@ -443,8 +469,9 @@ function playFieldRound(c, cup, r, humanTie) {
   for (let i = 0; i + 1 < rest.length; i += 2) {
     const [a, b] = lvl(rest[i + 1]) < lvl(rest[i]) ? [rest[i + 1], rest[i]] : [rest[i], rest[i + 1]];
     const d = str(a) - str(b);
-    const lh = QUICK.base * Math.exp(QUICK_BUND.perPoint * d + QUICK.home);
-    const la = QUICK.base * Math.exp(-QUICK_BUND.perPoint * d);
+    const pp = quickSlope(c, str(a), str(b), true);
+    const lh = QUICK.base * Math.exp(pp * d + QUICK.home);
+    const la = QUICK.base * Math.exp(-pp * d);
     const t = { round: r, home: a, away: b, result: { home: poisson(rng, lh), away: poisson(rng, la) }, pens: null };
     if (t.result.home === t.result.away) t.pens = rng.chance(0.5) ? { home: 5, away: 4 } : { home: 4, away: 5 };
     cup.fieldTies.push(t);

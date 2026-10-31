@@ -451,6 +451,7 @@ describe('player development', () => {
     c.players[old.poolIndex] = { apps: 8, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 };
     const y0 = playerOf(c, young.poolIndex);
     const o0 = playerOf(c, old.poolIndex);
+    const poolRating = pool.get(young.poolIndex).rating; // Pool-Stärke vorher (im neuen Stärkemodell ist die Karriere-Stärke gewollt höher)
     developPlayers(c);
     c.season = 2;
     const y1 = playerOf(c, young.poolIndex);
@@ -459,7 +460,7 @@ describe('player development', () => {
     expect(y1.rating).toBeGreaterThan(y0.rating);
     expect(o1.attrs.pace).toBeLessThan(o0.attrs.pace);
     // Der Pool selbst bleibt unverändert.
-    expect(pool.get(young.poolIndex).rating).toBe(y0.rating);
+    expect(pool.get(young.poolIndex).rating).toBe(poolRating);
   });
 });
 

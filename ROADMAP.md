@@ -1061,6 +1061,10 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   (Weltklasse, Führungsspieler, Star der Liga), nur neue Karrieren, unten kleinere Abstände (Spielwert), Anzeige „Stärke · Niveau“.
   Voraussetzung für die Profiligen.
 
+- **Umsetzung 2026-10-31** (Konzept Abschnitt 12): Engine für Werte über 1, Fehler gegen den Gegner, Niveau je Spieler (Freizeitliga
+  bis Oberliga), Vereine/Zugänge/Pokal nach Niveau, Schnellmodell und Profis neu geeicht – für neue Karrieren eingeschaltet. Offen:
+  Anzeige „Stärke · Niveau“, Entwicklung in Stärkepunkten je Liga, verdeckte Boni, Regionalliga und 3. Liga spielbar.
+
 ### 11.15 Physik-Engine für Effekte prüfen (vom Nutzer vorgeschlagen, 2026-10-29)
 - [Jolt Physics](https://github.com/jrouwe/JoltPhysics) (C++, im Browser über den WebAssembly-Port JoltPhysics.js) prüfen – **nur für
   die Darstellung**, nicht für die Spielsimulation. Die Ballphysik ist eingemessen, und der Golden-Test sichert, dass jedes Spiel aus

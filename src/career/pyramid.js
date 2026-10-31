@@ -10,7 +10,7 @@ import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { PITCHES } from '../sim/pitch.js';
 import { EXTRA_CLUBS, LEAGUES, MAX_LEVEL } from './clubs.js';
-import { poisson, QUICK } from './pokal.js';
+import { poisson, QUICK, quickSlope } from './pokal.js';
 import { leagueTitle, localized } from './verband.js';
 
 const hashSeed = (...parts) => parts.reduce((h, p) => (Math.imul(h ^ p, 0x9e3779b1) + 0x7f4a7c15) >>> 0, 0x2545f491); // wie career.js
@@ -117,8 +117,9 @@ export function simTable(career, level, pool) {
     for (const a of rows) {
       if (h === a) continue;
       const d = h.str - a.str;
-      const gh = poisson(rng, QUICK.base * Math.exp(QUICK.perPoint * d + QUICK.home));
-      const ga = poisson(rng, QUICK.base * Math.exp(-QUICK.perPoint * d));
+      const pp = quickSlope(career, h.str, a.str);
+      const gh = poisson(rng, QUICK.base * Math.exp(pp * d + QUICK.home));
+      const ga = poisson(rng, QUICK.base * Math.exp(-pp * d));
       h.gf += gh;
       a.gf += ga;
       h.gd += gh - ga;

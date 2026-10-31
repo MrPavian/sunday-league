@@ -6,6 +6,11 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-31-6 – New strength model (new careers)
+
+### Changed
+- **New strength model (new careers):** every player has a fixed level from Sunday league to the top amateur tier, so the leagues are much further apart (Sunday league around 54, top amateur tier around 128, pros 180–195; ratings go beyond 99). A side one level up takes about 80 % of the points higher up, a little less lower down. Passing, control, shooting and tackling mistakes now depend on the opponent. Careers already under way keep the old model.
+
 ## 2026-10-31-5 – Family and energy by league
 
 ### Changed

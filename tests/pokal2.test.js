@@ -830,14 +830,19 @@ describe('Überregionaler Pokal: mehrere Runden, Spielort, Einnahmen', () => {
 // Außenseiterchance gegen die Profis: gemessen mit scripts/bundespokal-calibrate.mjs, je 400 Spiele, beide Mannschaften von der
 // KI. Kader „mittel" (Zugänge, wie sie ein Bezirksligist anwirbt): Zweitligist 4,8 %, Erstligist 3,5 %; Zielband 3–5 %.
 describe('Außenseiterchance gegen Profis (gemessen)', () => {
-  const MEASURED = { zweit: 0.048, erst: 0.035 };
+  // Neues Stärkemodell (Karrieren mit strength: 3, Konzept Spielerstärke 12.5): In den Bundespokal kommen Landespokalsieger, also
+  // gemessen mit einem Oberligisten (Niveau 8, Stärke ≈ 125) gegen Profis (179 / 194): scripts/bundespokal-calibrate.mjs … oberliga,
+  // je 200 Spiele: Zweitligist 5,5 %, Erstligist 3,0 % (Standardfehler ≈ 1,5 Punkte). Altes Modell: Bezirksliga-Kader wie bisher
+  // (4,8 % / 3,5 %, je 400 Spiele).
+  const MODEL3 = createCareer({ seed: 1 }).strength >= 3;
+  const MEASURED = MODEL3 ? { zweit: 0.055, erst: 0.03 } : { zweit: 0.048, erst: 0.035 };
   const TIERS = { ok: 0.14, gut: 0.33, stark: 0.3, dorfstar: 0.16, superstar: 0.06, legende: 0.01 };
   const setup = (seed, klass) => {
     BUND_ERST[0] = klass === 'erst' ? 1 : 0;
-    const c = at(5, seed);
+    const c = at(MODEL3 ? 8 : 5, seed);
     c.bundQual = c.season;
     const me = humanClub(c);
-    me.squad = squadPicker(createRng(77 + seed), new Set())(TIERS, SQUAD_SHAPES.xxl);
+    me.squad = MODEL3 ? squadPicker(createRng(77 + seed), new Set(), 8)(LEAGUES[8].clubs[2].tiers, SQUAD_SHAPES.xxl) : squadPicker(createRng(77 + seed), new Set())(TIERS, SQUAD_SHAPES.xxl);
     for (const idx of me.squad) c.players[idx] ??= { apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 };
     return { c, cup: startPokal(c, 'bund') };
   };

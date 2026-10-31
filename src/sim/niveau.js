@@ -33,12 +33,27 @@ export function niveauOf(poolIndex) {
 // Anteil der Technikwerte an der Stärke je Position (Gewichte ohne Tempo, Ausdauer, Körper).
 const techShare = (pos) => Object.entries(RATING_WEIGHTS[pos] ?? RATING_WEIGHTS.mid).reduce((s, [k, w]) => s + (PHYS_ATTRS.has(k) ? 0 : w), 0);
 
-// Spieler im neuen Modell: Technikwerte um den Aufschlag seines Niveaus angehoben, Stärke ohne Deckel.
-export function lifted(p, niveau = niveauOf(p.poolIndex)) {
+// Welche Werte der Aufschlag hebt: Feldspieler alle Technikwerte außer dem Torwartspiel (sonst stellte die Aufstellung einen
+// Verteidiger ins Tor, position.test), Torhüter nur ihre eigenen (Torwartspiel, Passen, Technik).
+const GK_LIFT = new Set(['keeping', 'passing', 'technique']);
+const liftsAttr = (pos, k) => !PHYS_ATTRS.has(k) && (pos === 'gk' ? GK_LIFT.has(k) : k !== 'keeping');
+
+// Spieler im neuen Modell: Technikwerte um den Aufschlag seines Niveaus angehoben, Stärke ohne Deckel. Pool-Spieler sind fest –
+// das Ergebnis wird je Spieler zwischengespeichert (playerOf ruft es sehr oft; ohne Speicher liefen Tests in Zeitüberschreitung).
+const liftCache = new WeakMap();
+export function lifted(p, niveau) {
+  if (niveau == null) {
+    let q = liftCache.get(p);
+    if (!q) liftCache.set(p, (q = liftNow(p, niveauOf(p.poolIndex))));
+    return q;
+  }
+  return liftNow(p, niveau);
+}
+function liftNow(p, niveau) {
   const lift = NIVEAU_LIFT[Math.max(1, Math.min(8, niveau)) - 1];
   if (!lift) return { ...p, niveau, rating: ratePlayer(p, Infinity) };
   const d = lift / (100 * techShare(p.position));
-  const attrs = Object.fromEntries(Object.entries(p.attrs).map(([k, v]) => [k, PHYS_ATTRS.has(k) ? v : v + d]));
+  const attrs = Object.fromEntries(Object.entries(p.attrs).map(([k, v]) => [k, liftsAttr(p.position, k) ? v + d : v]));
   const q = { ...p, attrs, niveau };
   q.rating = ratePlayer(q, Infinity);
   return q;

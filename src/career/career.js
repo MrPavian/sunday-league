@@ -212,7 +212,7 @@ export function setSquadExtra(career, extra) {
 // Liga-Niveaus, stärkere Vereine (reichere Klassenmischung als der Ligaschnitt) auch ein paar vom Niveau darüber, schwächere
 // vom Niveau darunter. Die Klassen (Etiketten OK bis Ex-Profi) kommen dann in der Mischung der Freizeitliga.
 // Stärkemodell neuer Karrieren: 2 = Werte über 1 erlaubt; 3 = Niveau je Spieler (Konzept 12.5, wird mit Durchgang 4 eingeschaltet).
-export const STRENGTH_MODEL = 2;
+export const STRENGTH_MODEL = 3;
 export function squadPicker(rng, used, level = null) {
   const pool = getPool();
   const byTierPos = {};
@@ -241,16 +241,19 @@ const tierScore = (tiers) => {
   const e = Object.entries(tiers ?? { ok: 1 });
   return e.reduce((s, [t, w]) => s + (TIER_RANK[t] ?? 0) * w, 0) / (e.reduce((s, [, w]) => s + w, 0) || 1);
 };
-const leagueScore = new Map();
-export const CLUB_NIVEAU_SPREAD = 2; // Abweichung der Klassenmischung vom Ligaschnitt → Anteil Spieler vom Nachbar-Niveau (Spielwert)
+const leagueScores = new Map();
+// Spreizung innerhalb einer Liga (Spielwert): Der Verein mit der reichsten Klassenmischung seiner Liga zieht CLUB_NIVEAU_SPREAD
+// seiner Spieler vom Niveau darüber, der ärmste ebenso viele vom Niveau darunter, dazwischen nach Rang. Rang statt Abstand, weil die
+// Mischungen der Stufen 6–8 fast gleich sind (hergeleitet, clubs.js) – sonst lägen dort alle Vereine gleichauf (gemessen 2026-10-31).
+export const CLUB_NIVEAU_SPREAD = 0.5;
 export function clubNiveaus(tiers, level) {
-  if (!leagueScore.has(level)) {
-    const defs = LEAGUES[level]?.clubs ?? [];
-    leagueScore.set(level, defs.length ? defs.reduce((s, d) => s + tierScore(d.tiers), 0) / defs.length : tierScore(tiers));
-  }
-  const q = tierScore(tiers) - leagueScore.get(level);
-  const up = level < 8 ? Math.min(0.5, Math.max(0, q * CLUB_NIVEAU_SPREAD)) : 0;
-  const down = level > 1 ? Math.min(0.5, Math.max(0, -q * CLUB_NIVEAU_SPREAD)) : 0;
+  if (!leagueScores.has(level)) leagueScores.set(level, (LEAGUES[level]?.clubs ?? []).map((d) => tierScore(d.tiers)));
+  const scores = leagueScores.get(level);
+  const sc = tierScore(tiers);
+  const pct = scores.length ? (scores.filter((x) => x < sc - 1e-9).length + 0.5 * scores.filter((x) => Math.abs(x - sc) <= 1e-9).length) / scores.length : 0.5;
+  const q = (2 * pct - 1) * CLUB_NIVEAU_SPREAD;
+  const up = level < 8 ? Math.max(0, q) : 0;
+  const down = level > 1 ? Math.max(0, -q) : 0;
   const w = { [level]: 1 - up - down };
   if (up) w[level + 1] = up;
   if (down) w[level - 1] = down;
@@ -369,6 +372,7 @@ export function nextSeason(career) {
   sagaNotes.push(...movesNotes(career, cpuMoved, newLevel));
   if (newLevel === level) {
     const used = new Set([...clubs.flatMap((c) => c.squad), ...(career.youth?.prospects ?? []), ...(career.alumni ?? []).map((a) => a.idx)]);
+    if ((career.strength ?? 1) >= 3) for (const idx of career.relegation?.opponent?.squad ?? []) used.add(idx); // wie unten beim Ligawechsel
     const pickFusion = squadPicker(createRng(hashSeed(career.seed, career.season, 98)), used, (career.strength ?? 1) >= 3 ? level : null);
     clubs = swapMembers(career, clubs, newLevel, (tiers) => pickFusion(tiers, SQUAD_SHAPES[league.squadShape])); // Auf- und Absteiger tauschen
     const fused = applyFusion(career, clubs, (tiers) => pickFusion(tiers, SQUAD_SHAPES[league.squadShape]), freshRecord);
@@ -380,6 +384,9 @@ export function nextSeason(career) {
   if (newLevel !== level) {
     // Neue Liga, neue Gegner. Die alten Gegner verlassen den Spielstand.
     const used = new Set(human.squad);
+    // Stärkemodell 3: Die Auswahl je Niveau ist kleiner – den Relegationsgegner ausnehmen, sonst landen seine Spieler in der neuen
+    // Liga und ihr Datensatz bleibt (gemessen: career.test „play-off“).
+    if ((career.strength ?? 1) >= 3) for (const idx of career.relegation?.opponent?.squad ?? []) used.add(idx);
     const pick = squadPicker(rng, used, (career.strength ?? 1) >= 3 ? newLevel : null);
     for (const c of career.clubs) if (!c.human) for (const idx of c.squad) delete career.players[idx];
     clubs = [human, ...[...membersOf(career, newLevel), ...(size >= 8 ? (EXTRA_CLUBS[newLevel] ?? []).map((e) => localized(career, e, newLevel, ensureLeagues(career))) : [])].map((c) => ({ ...c, human: false, squad: pick(c.tiers, SQUAD_SHAPES[league.squadShape]) }))];

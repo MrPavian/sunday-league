@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-31-6',
+    de: { title: 'Neues Stärkemodell (neue Karrieren)', items: ['Jeder Spieler hat jetzt ein festes Niveau von Freizeitliga bis Oberliga. Die Ligen liegen dadurch deutlich weiter auseinander.', 'Stärkezahlen gehen über 99: Freizeitliga um 54, Oberliga um 128, Profis 180 bis 195.', 'Wer aufsteigt, braucht bessere Leute – ein Klassenhöherer holt oben rund 80 % der Punkte.', 'Fehler hängen jetzt vom Gegner ab: Gegen starke Teams passt und schießt man unsauberer.', 'Laufende Karrieren spielen mit dem alten Modell weiter.'] },
+    en: { title: 'New strength model (new careers)', items: ['Every player now has a fixed level from Sunday league to the top amateur tier. The leagues are much further apart.', 'Ratings go beyond 99: Sunday league around 54, top amateur tier around 128, pros 180 to 195.', 'Promotion means you need better players – a side one level up takes about 80 % of the points.', 'Mistakes now depend on the opponent: against strong sides passes and shots get sloppier.', 'Careers already under way keep the old model.'] },
+  },
+  {
     id: '2026-10-31-5',
     de: { title: 'Familie und Energie je Liga', items: ['Ab der Bezirksliga springt der Co-Trainer ein, wenn du ausfällst – sofern du einen hast.', 'Ab der Verbandsliga dauern Familienkrise und Burnout eine Woche statt zwei.', 'Im roten Bereich spürst du es schon vorher: Müde schaffst du eine Sache weniger in der Woche, und bei dicker Luft zuhause kommt die Familie nicht mehr mit an den Platz.'] },
     en: { title: 'Family and energy by league', items: ['From the County Senior League on, your assistant steps in when you are out – if you have one.', 'From the State League on, a family crisis or burnout lasts one week instead of two.', 'In the red zone you feel it earlier: when you are tired you get one thing less done a week, and when things are tense at home the family stops coming to games.'] },

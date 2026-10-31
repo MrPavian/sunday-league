@@ -58,7 +58,10 @@ describe('Werben: Gespräch', () => {
   it('Ansprechen kostet eine Aktion, nach zwei Argumenten entscheidet er – mit Treffern deutlich öfter ja', () => {
     let hitYes = 0;
     let missYes = 0;
-    for (let seed = 1; seed <= 40; seed++) {
+    // 400 statt 40 Seeds, Schwelle mitgewachsen (+80 statt +8, gleicher Unterschied je Versuch): Erwartet sind rund 27 Prozentpunkte
+    // (Grundchance 0,75: ohne Treffer ≈ 68 %, mit beiden Treffern 95 %), verlangt 20. Mit dem neuen Stärkemodell (andere Spieler, gleiche
+    // Klassen und Grundchance – gemessen) fiel der Zufall bei 40 und 80 Seeds knapp darunter.
+    for (let seed = 1; seed <= 400; seed++) {
       for (const hit of [true, false]) {
         const c = fresh(seed);
         const r = c.week.rumors[0];
@@ -74,8 +77,8 @@ describe('Werben: Gespräch', () => {
         if (res.joined) expect(humanClub(c).squad).toContain(r.idx);
       }
     }
-    expect(hitYes).toBeGreaterThan(missYes + 8);
-  });
+    expect(hitYes).toBeGreaterThan(missYes + 80);
+  }, 120000);
 
   it('Fahrgeld kostet 30 €', () => {
     const c = fresh();

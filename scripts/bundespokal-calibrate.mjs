@@ -1,7 +1,7 @@
 // Misst an der echten Engine die Außenseiterchance des Amateurs gegen den Profi im überregionalen Pokal
 // (Runde 1, Großfeld 11 gegen 11, Heimrecht des Amateurs). Beide Mannschaften spielt die KI – ein Mensch
 // am Gamepad kann besser oder schlechter sein als die KI, die Zahl ist der Richtwert für die Balance.
-//   node scripts/bundespokal-calibrate.mjs [Spiele=200] [Kader=bezirk|mittel|stark] [Klasse=zweit|erst] [extra]
+//   node scripts/bundespokal-calibrate.mjs [Spiele=200] [Kader=bezirk|mittel|stark|oberliga] [Klasse=zweit|erst] [extra]
 // Klasse: Zweit- oder Erstligist als Gegner (erzwingt BUND_ERST der Runde 1); Runde 1 = Heimspiel des Amateurs.
 // Kader: bezirk = Zusammensetzung des stärksten Bezirksligisten (clubs.js), mittel = Zugänge, wie sie ein Bezirksligist
 // anwirbt (RUMOR_TIERS_BY_LEVEL[5] in career.js), stark = Auswahl-Kader.
@@ -29,10 +29,11 @@ let win = 0, draw = 0, lose = 0, regWin = 0, goalsF = 0, goalsA = 0, et = 0, str
 const t0 = Date.now();
 for (let i = 0; i < N; i++) {
   const c = createCareer({ seed: 1000 + SEED0 + i });
-  c.level = 5;
+  // oberliga: Stärkemodell 3 (neue Karrieren) – ein Oberligist mit Spielern vom Niveau 8 (Konzept Spielerstärke 12.5).
+  c.level = SQUAD === 'oberliga' ? 8 : 5;
   c.bundQual = c.season;
   const me = humanClub(c);
-  me.squad = squadPicker(createRng(77 + SEED0 + i), new Set())(TIERS, SQUAD_SHAPES.xxl);
+  me.squad = SQUAD === 'oberliga' ? squadPicker(createRng(77 + SEED0 + i), new Set(), 8)(LEAGUES[8].clubs[2].tiers, SQUAD_SHAPES.xxl) : squadPicker(createRng(77 + SEED0 + i), new Set())(TIERS, SQUAD_SHAPES.xxl);
   for (const idx of me.squad) c.players[idx] ??= { apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 };
   const cup = startPokal(c, 'bund');
   const tie = cup.ties[0];

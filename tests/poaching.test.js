@@ -28,8 +28,11 @@ function benchCareer() {
   const club = humanClub(c);
   // Drei Spieltage gespielt, einer kaum dabei.
   for (let r = 0; r < 3; r++) for (const f of c.fixtures[r]) f.result = { home: 1, away: 1 };
-  const idx = club.squad.find((i) => !c.players[i].grumpy && playerOf(c, i).rating < 60);
+  const idx = club.squad.find((i) => !c.players[i].grumpy && playerOf(c, i).rating < 60) ?? club.squad.find((i) => !c.players[i].grumpy && i !== c.coach?.idx);
   for (const i of club.squad) c.players[i].playShare = i === idx ? 0.5 : 3;
+  // Nur er kommt in Frage: Die anderen sind gerade außer Form, also auch keine „Leistungsträger“ (poaching.js poachCandidates).
+  // Vorher hing es an der Kaderreihenfolge, wer zuerst gezogen wird – mit dem neuen Stärkemodell kam ein Leistungsträger zuerst.
+  for (const i of club.squad) if (i !== idx) c.players[i].form = -0.1;
   return { c, club, idx };
 }
 

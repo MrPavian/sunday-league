@@ -503,3 +503,12 @@ Durchgang 2 (career.js squadPicker mit Liga-Stufe, clubNiveaus, playerOf, pyrami
 nicht eingeschaltet). Gemessen (6 Kaderziehungen je Verein, beste n): Liga 1–8 Ø 54,2 · 61,8 · 68,1 · 76,7 · 87,2 · 99,8 · 113,1 ·
 128,9 (2–5 Punkte über dem Ziel, Abstände stimmen). Spanne der Vereine innerhalb einer Liga oben zu klein (Verbandsliga 111–114,
 Oberliga 128–130) – in Durchgang 4 einstellen, zusammen mit dem Schnellmodell (pokal.js QUICK) für das neue Modell.
+
+Durchgang 3 und 4 (2026-10-31): Zugänge und fremde Kader nach Niveau (niveauFits, arrivalTiers); Schnellmodell mit Steigung nach
+Niveau (quickSlope: 0,05 unten, 0,033 oben, gegen Profis 0,02); Profis aus Niveau 8 mit Technik-Aufschlag zum Ligaziel (gemessen
+179 / 194 statt 171 / 186, weil der Tempo-/Ausdauerzuschlag mitzählt); Bundespokal-Feld 186 / 171 / 129; Spreizung innerhalb einer
+Liga nach Rang (bis 50 % vom Nachbar-Niveau, Spitze und Ende ≈ ein Niveau auseinander). Engine: Oberligist gegen Zweit-/Erstligist
+weiter in 5,5 % / 3,0 % (je 200 Spiele). **Eingeschaltet für neue Karrieren (strength: 3).** Behoben beim Einschalten: Aufschlag hob
+das Torwartspiel der Feldspieler (Verteidiger im Tor), Relegationsgegner blieb in der neuen Liga, Zwischenspeicher für angehobene
+Spieler (sonst Zeitüberschreitungen). Tests mit Zufallsverläufen robuster gemacht (Nutzerentscheid). Offen: Anzeige „Stärke · Niveau“,
+Entwicklung in Stärkepunkten je Liga (Schritt 6), verdeckte Boni (Schritt 7), Regionalliga/3. Liga als spielbare Ligen.

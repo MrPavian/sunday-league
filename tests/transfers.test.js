@@ -517,12 +517,26 @@ describe('Abwerbung nur in der Wechselperiode, Vereinslose jederzeit', () => {
     const taken = takenIndices(c);
     expect(free.every((i) => !taken.has(i))).toBe(true);
     while (humanClub(c).squad.length >= maxSquad(c)) humanClub(c).squad.pop();
-    const idx = free[0];
-    expect(approachFree(c, idx)).toBe('ok');
-    expect(approachFree(c, idx)).toBe('busy');
-    const i = c.week.rumors.findIndex((r) => r.idx === idx);
-    c.week.actions = 1;
-    expect(recruit(c, i)).toBe('joined'); // Zusage ist je Woche und Spieler fest gewürfelt (Seed 3: ja)
+    expect(approachFree(c, free[0])).toBe('ok');
+    expect(approachFree(c, free[0])).toBe('busy');
+    // Die Zusage ist je Woche und Spieler fest gewürfelt – welcher zusagt, hängt von den gezogenen Spielern ab (neues Stärkemodell:
+    // andere Spieler). Deshalb der Reihe nach, bis einer zusagt; jede Antwort muss ja oder nein sein.
+    let idx = null;
+    for (const cand of free.slice(0, 6)) {
+      if (cand !== free[0]) {
+        c.week.actions = 1;
+        if (approachFree(c, cand) !== 'ok') continue;
+      }
+      const i = c.week.rumors.findIndex((r) => r.idx === cand);
+      c.week.actions = 1;
+      const res = recruit(c, i);
+      expect(['joined', 'declined']).toContain(res);
+      if (res === 'joined') {
+        idx = cand;
+        break;
+      }
+    }
+    expect(idx).not.toBeNull();
     expect(humanClub(c).squad).toContain(idx);
     expect(freeAgents(c)).not.toContain(idx);
   });
