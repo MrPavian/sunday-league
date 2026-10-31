@@ -983,7 +983,10 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
 
 ### 11.11 Weitere Wünsche (vom Nutzer, 2026-10-22)
 - **Übersichtlichkeit:** Lange Menüs (z. B. Verein: Kasse, Ausbau, Platz, Fest, Präsidium; Mannschaft) in Unterseiten bzw.
-  aufklappbare Bereiche gliedern. Zuerst messen, welche Seiten auf dem Handy am längsten sind.
+  aufklappbare Bereiche gliedern. Zuerst messen, welche Seiten auf dem Handy am längsten sind. Erster Schritt 2026-10-31: gemessen
+  (Handy 360 × 780, Spielstand Mitte 3. Saison): Verein 11,7 Bildschirmhöhen, Jugend 5,4, Kasse 3,3, alles andere ≤ 2. Der Reiter
+  Verein hat jetzt Unterseiten (Du, Anlage, Vereinsleben, Trikot, Wappen; längste 3,5), die Ausbaugruppen sind aufklappbar.
+  Offen: Jugend (5,4) und Kasse (3,3).
 - **Hinterhof neu (vom Nutzer ausdrücklich gewünschte andere Kameraperspektive):** Blick wie aus dem 1. oder 2. Stock des
   Hauses auf den Hof – steiler von oben, von der Hauswandseite, ggf. Fensterbrett/Rahmen im Vordergrund. Nur der Hinterhof.
 - ~~**Jugendspielerinnen → Frauenteam:**~~ erledigt 2026-10-29 (women.js `addFromYouth`). Bisher: Heute erhöhen Mädchen mit 16 nur einen abstrakten Stärkewert (`saga.frauen`), ohne

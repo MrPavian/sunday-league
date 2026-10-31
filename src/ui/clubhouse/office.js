@@ -58,7 +58,7 @@ export const officeScreens = {
       ${goals}
       <h4>${tr('Geld und Ausbau', 'Money and expansion')}</h4>
       <p class="t-2">${tr('Kasse', 'Kitty')}: <b>${euro(c.cash)}</b>${h ? tr(` · Trainerlohn ${euro(weeklySalary(c))} pro Woche`, ` · manager wages ${euro(weeklySalary(c))} a week`) : ''}</p>
-      <div class="ui-row"><button type="button" data-action="tab" data-value="cash">${tr('Kasse und Sponsoren', 'Kitty and sponsors')}</button><button type="button" data-action="tab" data-value="club">${tr('Ausbau im Verein', 'Club expansion')}</button></div>
+      <div class="ui-row"><button type="button" data-action="tab" data-value="cash">${tr('Kasse und Sponsoren', 'Kitty and sponsors')}</button><button type="button" data-action="clubSub" data-value="anlage">${tr('Ausbau im Verein', 'Club expansion')}</button></div>
       ${log.length ? `<h4>${tr('Frühere Trainer', 'Former managers')}</h4><ul class="plain">${log.map((l) => `<li>${esc(l.name)} (${tr('Saison', 'season')} ${l.from}–${l.to}, ${why[l.why] ?? l.why})</li>`).join('')}</ul>` : ''}
     </div>`;
   },

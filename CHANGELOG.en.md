@@ -6,6 +6,11 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-31-3 – Tidier club pages
+
+### Changed
+- **Tidier club pages:** on a phone the Club tab was almost twelve screens long. It now has sub-pages – You, Grounds, Club life, Kit and Crest – and the upgrade groups can be expanded (the group with work in progress is open). From the president’s office, “Club expansion” leads straight to Grounds.
+
 ## 2026-10-31-2 – Crowds and stands
 
 ### New

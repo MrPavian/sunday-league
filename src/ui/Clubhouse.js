@@ -95,6 +95,11 @@ export class Clubhouse {
     // Karten umdrehen: Knopf überall, Wischen nur im Kartenstapel (im Profil blättert Wischen weiter).
     bindFlips(root, (id, on) => ((this.flipped[id] = on), haptic('tap')), { scope: '.squad-deck' });
     this.busy = null;
+    // Aufgeklappte Ausbaugruppe merken (club.js facilityBlock), damit sie nach dem Neuzeichnen offen bleibt.
+    root.addEventListener('toggle', (e) => {
+      const g = e.target?.closest?.('details.fac-group');
+      if (g) this.facOpen = g.open ? g.dataset.group : this.facOpen === g.dataset.group ? null : this.facOpen;
+    }, true);
     root.addEventListener('click', (e) => {
       const t = e.target.closest('[data-action]');
       if (!t || this.busy || this.suppressClick) return;
@@ -152,6 +157,10 @@ export class Clubhouse {
         k.pattern = value;
         k.third ??= 0x1d2b44; // dritte Farbe für Retro-Muster: Dunkelblau als Start
       } else if (action === 'kitGroup') this.kitGroup = value;
+      else if (action === 'clubSub') {
+        this.clubSub = value; // Unterseiten des Reiters Verein (club.js); aus dem Präsidium direkt zum Ausbau
+        this.tab = 'club';
+      }
       else if (action === 'kitCollar') this.draftKit().collar = value;
       else if (action === 'kitSleeves') this.draftKit().sleeves = value;
       else if (action.startsWith('crest')) this.crestAction(action, value);

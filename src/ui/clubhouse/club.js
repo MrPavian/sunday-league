@@ -32,6 +32,9 @@ import { portraitSVG } from '../portrait.js';
 import { RIVAL, rivalLabel, rivalList } from '../../career/rivals.js';
 import { gateStats } from '../../career/attendance.js';
 
+// Unterseiten des Reiters Verein.
+export const CLUB_SUBS = () => [['me', tr('Du', 'You')], ['anlage', tr('Anlage', 'Grounds')], ['leben', tr('Vereinsleben', 'Club life')], ['trikot', tr('Trikot', 'Kit')], ['wappen', tr('Wappen', 'Crest')]];
+
 export const clubScreens = {
   tab_club() {
     const c = this.career;
@@ -51,17 +54,16 @@ export const clubScreens = {
           <p class="empty">${isPresident(c) ? tr('Im Präsidium bleibt mehr Zeit für die Familie: kein Sonntag an der Linie, kein Training. Dafür zählt, wen du als Trainer geholt hast.', 'In the president\'s office there is more time for the family: no Sundays on the touchline, no training. What counts now is who you hired as manager.') : tr('Training, Scouting und Spieltage kosten Zeit mit der Familie. Unbesetzte Posten (Co-Trainer, Wirt, Platzwart) und Zusatzämter ziehen Energie. Ist einer der beiden Werte leer, fällst du zwei Wochen aus.', 'Training, scouting and matchdays cost family time. Empty posts (assistant, bar manager, groundsman) and extra duties drain energy. If either bar runs empty, you are out for two weeks.')}</p>
         </div>`
       : '';
-    return `
-      ${profile}
-      ${this.platzBlock()}
-      ${this.facilityBlock()}
-      ${this.clubLifeBlock()}
-      ${this.rivalBlock()}
-      ${this.refereeBlock()}
-      ${this.festivalCard()}
-      ${this.chronicleBlock()}
-      ${this.kitForm()}
-      ${this.crestBlock()}`;
+    // Unterseiten (ROADMAP 11.11 Übersichtlichkeit): gemessen war die Seite am Handy fast zwölf Bildschirmhöhen lang.
+    const subs = CLUB_SUBS().filter(([id]) => id !== 'me' || profile);
+    const sub = subs.some(([id]) => id === this.clubSub) ? this.clubSub : subs[0][0];
+    const body =
+      sub === 'me' ? profile
+      : sub === 'anlage' ? `${this.platzBlock()}${this.facilityBlock()}`
+      : sub === 'leben' ? `${this.clubLifeBlock()}${this.festivalCard()}${this.rivalBlock()}${this.refereeBlock()}${this.chronicleBlock()}`
+      : sub === 'trikot' ? this.kitForm()
+      : this.crestBlock();
+    return `${uiTabs(subs, sub, 'clubSub').replace('class="ui-tabs"', 'class="ui-tabs club-subs"')}<div class="club-sub" data-sub="${sub}">${body}</div>`;
   },
 
   // Zuschauer bei Heimspielen (attendance.js): Schnitt, Auslastung, Rekord, ausverkauft, draußen geblieben.
@@ -435,7 +437,11 @@ export const clubScreens = {
     };
     const groups = FACILITY_GROUPS.map((g) => {
       const rows = Object.entries(FACILITIES).filter(([, d]) => (d.group ?? 'heim') === g.id).map(row).join('');
-      return rows ? `<h4 class="sub">${g.name}${g.id === 'tribuene' ? ` <small>${tr('Fassungsvermögen', 'capacity')}: ${capacity(c)}</small>` : ''}</h4>${g.id === 'tribuene' ? this.gateBlock() : ''}<ul class="plain">${rows}</ul>` : '';
+      // Aufklappbar (ROADMAP 11.11): offen ist nur die Gruppe, in der gerade gebaut wird oder etwas in der Warteschlange steht.
+      const ids = Object.entries(FACILITIES).filter(([, d]) => (d.group ?? 'heim') === g.id).map(([id]) => id);
+      const open = ids.includes(f.building?.id) || f.queue.some((q) => ids.includes(q.id)) || this.facOpen === g.id;
+      const done = ids.filter((id) => f.built[id]).length;
+      return rows ? `<details class="fac-group" data-group="${g.id}"${open ? ' open' : ''}><summary><h4 class="sub">${g.name} <small>${done}/${ids.length}${g.id === 'tribuene' ? ` · ${tr('Fassungsvermögen', 'capacity')}: ${capacity(c)}` : ''}</small></h4></summary>${g.id === 'tribuene' ? this.gateBlock() : ''}<ul class="plain">${rows}</ul></details>` : '';
     }).join('');
     return `<div class="facilities"><h4>${tr('Vereinsheim und Anlage ausbauen', 'Upgrade clubhouse and grounds')} <small>${tr('Kasse', 'Kitty')}: ${euro(c.cash)}</small></h4>
       ${f.note ? `<p class="reply ok">${f.note}</p>` : ''}${groups}</div>`;

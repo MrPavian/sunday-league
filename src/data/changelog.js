@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-31-3',
+    de: { title: 'Übersichtlicher Verein', items: ['Der Reiter Verein ist in Unterseiten geteilt: Du, Anlage, Vereinsleben, Trikot und Wappen.', 'Die Ausbaugruppen (Vereinsheim, Sportplatz, Tribünen, Gastro) lassen sich auf- und zuklappen.'] },
+    en: { title: 'Tidier club pages', items: ['The Club tab is split into sub-pages: You, Grounds, Club life, Kit and Crest.', 'The upgrade groups (clubhouse, pitch, stands, catering) can be expanded and collapsed.'] },
+  },
+  {
     id: '2026-10-31-2',
     de: { title: 'Zuschauer und Tribünen', items: ['Unter Verein → Tribünen siehst du Zuschauerschnitt, Auslastung und Rekord.', 'Ist ein Heimspiel ausverkauft, steht da, wie viele draußen bleiben mussten – und welcher Ausbau helfen würde.', 'Ab Bezirksliga auch der Eintritt, der dabei entgangen ist.'] },
     en: { title: 'Crowds and stands', items: ['Under Club → Stands you can see average attendance, how full the ground is and the record.', 'When a home game sells out, it shows how many had to stay outside – and which upgrade would help.', 'From the County Senior League on, also the gate money you missed out on.'] },

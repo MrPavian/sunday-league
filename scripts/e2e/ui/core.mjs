@@ -2,7 +2,7 @@
 import { CHANGELOG, NEWEST_ID } from '../../../src/data/changelog.js';
 import { BASE, checker, click, hScroll, launch, newCareer, page, settle, SIZES, smallTargets, visible } from '../lib.mjs';
 
-const TABS = [['home'], ['team', 'squad'], ['team', 'lineup'], ['team', 'tactic'], ['team', 'training'], ['team', 'youth'], ['team', 'transfers'], ['season', 'table'], ['season', 'fixtures'], ['season', 'cup'], ['club', 'cash'], ['club', 'club'], ['club', 'museum'], ['pub'], ['phone', 'chat']];
+const TABS = [['home'], ['team', 'squad'], ['team', 'lineup'], ['team', 'tactic'], ['team', 'training'], ['team', 'youth'], ['team', 'transfers'], ['season', 'table'], ['season', 'fixtures'], ['season', 'cup'], ['club', 'cash'], ['club', 'club', 'me'], ['club', 'club', 'anlage'], ['club', 'club', 'leben'], ['club', 'club', 'trikot'], ['club', 'club', 'wappen'], ['club', 'museum'], ['pub'], ['phone', 'chat']];
 // Bewusst schmal: Tageskästchen im Kalender (große Spieltag-Knöpfe darunter sind die Alternative).
 export const NARROW_OK = ['.cal-day'];
 
@@ -10,12 +10,16 @@ export async function screens(b, size) {
   const ok = checker(`Vereinsheim-Bildschirme (${size})`);
   const p = await page(b, size);
   await newCareer(p);
-  for (const [area, tab] of TABS) {
+  for (const [area, tab, sub] of TABS) {
     await click(p, `[data-action="area"][data-value="${area}"]`);
     if (tab) await p.evaluate((t) => document.querySelector(`[data-action="tab"][data-value="${t}"]`)?.click(), tab);
+    if (sub) {
+      await p.waitForTimeout(150);
+      await click(p, `[data-action="clubSub"][data-value="${sub}"]`); // Unterseiten des Reiters Verein
+    }
     await p.waitForTimeout(250);
     await settle(p);
-    const label = tab ?? area;
+    const label = sub ? `${tab}/${sub}` : tab ?? area;
     ok(!(await hScroll(p)), `${label}: seitliches Scrollen`);
     if (SIZES[size].touch) {
       const small = await smallTargets(p, '#club button', NARROW_OK);

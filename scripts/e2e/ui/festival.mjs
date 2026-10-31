@@ -39,6 +39,8 @@ export async function festivalAndSummer(b, size, shots) {
   // Planungsblatt im Verein.
   await click(p, '[data-action="area"][data-value="club"]');
   await p.evaluate(() => document.querySelector('[data-action="tab"][data-value="club"]')?.click());
+  await p.waitForTimeout(200);
+  await p.evaluate(() => document.querySelector('[data-action="clubSub"][data-value="leben"]')?.click()); // Unterseite (club.js CLUB_SUBS)
   await p.waitForTimeout(400);
   ok(!!(await p.$('[data-testid="fest-plan"]')), 'Verein: kein Planungsblatt fürs Vereinsfest');
   await click(p, '.fest-part[data-value="grill"]');

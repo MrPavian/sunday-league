@@ -1943,3 +1943,9 @@ body.manager #end { padding-bottom: 84px; }
 .rival-tag { font-size: 0.8em; padding: 0 4px; border: 2px solid #000; background: #6b4f2a; color: #fff; }
 .rival-tag.hot, .hub-opp .rival-tag { background: #b03a2e; }
 .rival-bar { display: block; width: 80px; height: 6px; background: linear-gradient(90deg, #b03a2e var(--v), rgba(255, 255, 255, 0.15) var(--v)); border: 1px solid #000; }
+.club-subs { margin-bottom: 8px; }
+.fac-group > summary { cursor: pointer; list-style: none; min-height: 44px; display: flex; align-items: center; }
+.fac-group > summary::-webkit-details-marker { display: none; }
+.fac-group > summary h4::before { content: '▸ '; }
+.fac-group[open] > summary h4::before { content: '▾ '; }
+.fac-group > summary h4 { margin: 0; }
