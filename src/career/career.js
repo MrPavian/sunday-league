@@ -12,6 +12,7 @@ import { createPlayerPool, ratePlayer } from '../sim/generator.js';
 import { slotRating } from '../sim/position.js';
 import { ATTR_KEYS, ensureStrength } from '../sim/strength.js';
 import { afterMatchPositions, deliverGrumbles, famAt, migratePositions, posFamOf } from './positions.js';
+import { isRival } from './rivals.js';
 import { applyReferee, recordReferee } from './referees.js';
 import { createMatch, MATCH, stepMatch } from '../sim/match.js';
 import { PITCHES } from '../sim/pitch.js';
@@ -1184,7 +1185,7 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   const persona = (club) => (club.human ? (isPresident(career) ? career.hired?.persona ?? null : null) : coachOf(club).type); // Präsidium: der eingestellte Trainer stellt im Spiel um
   match.coachPersona = humanIsAway ? [persona(away), persona(home)] : [persona(home), persona(away)];
   // Derby: hitziger, mehr Karten – außer man hat sich aufs faire Grillen geeinigt.
-  match.derby = (isDerbyFixture(career, fixture) && !career.week?.derbyFair) || grudgeMatch(career, home.human ? away.id : home.id);
+  match.derby = (isDerbyFixture(career, fixture) && !career.week?.derbyFair) || grudgeMatch(career, home.human ? away.id : home.id) || ((home.human || away.human) && isRival(career, home.human ? away.id : home.id));
   if (home.human || away.human) applyReferee(career, match); // Schiri aus dem festen Stamm (referees.js)
   // Eigenes Spiel: Manchmal kommt am Spieltag etwas dazwischen.
   if (home.human || away.human) matchdaySurprise(match, humanIsAway || home.human ? 0 : 1, createRng(hashSeed(career.seed, career.season, career.round, 77)), 0.28, null, career.level ?? 1);

@@ -6,6 +6,11 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-30-7 – Rivalries
+
+### New
+- **Rivalries:** besides the league derby, rivalries now grow out of what happens: top and bottom clashes in the second half of the season, melees, players moving to the other side and a narrowly lost title race. From “Rival” on the match is refereed like a derby, more people come and the result hits the mood harder. Over the summer things cool down a little; meet again after promotion or relegation and the rivalry lives on. Under Club you can see the list with every reason.
+
 ## 2026-10-30-6 – Referees with faces
 
 ### New

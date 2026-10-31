@@ -23,6 +23,7 @@ import { vacant } from '../../career/president.js';
 import { talk } from '../../career/pub.js';
 import { weatherLine } from '../../career/weather.js';
 import { refereeLine } from '../../career/referees.js';
+import { isRival, rivalLabel, rivalPoints } from '../../career/rivals.js';
 import { nachholLabel } from '../../career/platz.js';
 import { derbyOf, isDerbyFixture } from '../../career/derby.js';
 import { CUP_NAME, CUPS, cupOf, PRIZES, summerCupDue, summerCupRunning, tournamentOpen, winterCupDue, winterCupRunning } from '../../career/tournament.js';
@@ -142,7 +143,7 @@ export const homeScreens = {
           <i>–</i>
           <span>${crestSVG(crestOf(ac), { size: 44, short: ac.short, ...(ac.human ? crestExtras(c) : {}), label: ac.name })}<b>${ac.short}</b></span>
         </div>
-        <p class="t-body hub-opp">${home ? tr('Heimspiel', 'Home') : tr('Auswärts', 'Away')} ${tr('gegen', 'against')} <b>${opp.name}</b></p>
+        <p class="t-body hub-opp">${home ? tr('Heimspiel', 'Home') : tr('Auswärts', 'Away')} ${tr('gegen', 'against')} <b>${opp.name}</b>${isRival(c, opp.id) ? ` <b class="rival-tag" data-testid="rival-tag">${rivalLabel(rivalPoints(c, opp.id))}</b>` : ''}</p>
         <p class="t-2">${venue.name} · ${venue.surface.name} · ${venue.format} ${tr('gegen', 'v')} ${venue.format}</p>
         <p class="t-2 kit-line">${kitLine(hc, ac, home)}</p>
         <p class="t-2 weather">${weatherLine(c.week?.weather)}</p>

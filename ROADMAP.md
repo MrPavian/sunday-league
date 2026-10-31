@@ -945,7 +945,11 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   je Ebene (Kreis, Bezirk, Verband) mit Name, Pixel-Gesicht, Art zu pfeifen und Eigenheit; das eigene Ligaspiel pfeift einer aus dem Stamm
   (gleiches Aussehen im 3D-Spiel), Bilanz und Karten mit dem eigenen Verein, Ansage auf der Spielkarte und im Mannschaftschat, Liste unter
   Verein. Offen: Schiri-Beschwerden mit Gedächtnis, Pokal- und Relegationsspiele, Assistenten als Figuren.
-- Mehr Rivalitäten.
+- ~~Mehr Rivalitäten.~~ Erster Ausbau 2026-10-30 (`src/career/rivals.js`): Rivalitäten wachsen aus Spitzen- und Kellerduellen der
+  zweiten Saisonhälfte, Rudelbildung, Wechseln zum Gegner und knapp verlorenem Titelrennen; Punkte mit Gründen, ab „Rivale“ Derby-Charakter
+  (hitziger gepfiffen, mehr Zuschauer, Ergebnis wirkt stärker auf die Stimmung), Abkühlen im Sommer, bleibt beim Auf- und Abstieg erhalten.
+  Schwellen gemessen (6 Karrieren × 5 Saisons: ab Saison 2 meist 1–2 Rivalen-Spiele je Saison). Offen: Retortenclub mit reichem Sponsor,
+  Relegationsgegner, Rivalitäten der Fans (Tiger).
 - Finanzsystem anpassen und erweitern; Sponsoring erweitern; Ausstattungsvertrag (Ausrüster). Erledigt 2026-10-29: Schiri-Spesen
   nach der Verbandstabelle (Westfalen 2025/26), Stadionausbau (2500 Plätze) ab Landesliga. Ausrüster erledigt (outfitter.js). Offen:
   Vertragsspieler ab Oberliga (Quellen bisher nur Foren/FAQ: 200–1500 € im Monat; gehört zum Profi-Übergang), Fahrtkosten der

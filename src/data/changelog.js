@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-30-7',
+    de: { title: 'Rivalitäten', items: ['Aus Spitzen- und Kellerduellen, Rudelbildung, Wechseln zum Gegner und verlorenen Titelrennen werden Rivalitäten.', 'Gegen einen Rivalen geht es zu wie im Derby: hitziger, mehr Zuschauer, mehr Stimmung.', 'Unter Verein stehen deine Rivalen samt Vorgeschichte.'] },
+    en: { title: 'Rivalries', items: ['Top and bottom clashes, melees, players moving to the other side and lost title races turn into rivalries.', 'Against a rival it feels like a derby: more heated, bigger crowd, more at stake for the mood.', 'Under Club you can see your rivals and their history.'] },
+  },
+  {
     id: '2026-10-30-6',
     de: { title: 'Schiedsrichter mit Gesicht', items: ['Jede Ebene hat ihre festen Schiris: gleicher Name, gleiches Gesicht, gleiche Art zu pfeifen.', 'Auf der Spielkarte steht, wer Sonntag pfeift – und wie es bisher mit ihm lief.', 'Unter Verein siehst du alle Schiris deiner Ebene mit Eigenheiten und Bilanz.'] },
     en: { title: 'Referees with faces', items: ['Every level has its regular referees: same name, same face, same way of reffing.', 'The match card shows who is reffing on Sunday – and how it has gone with him so far.', 'Under Club you can see all referees at your level with their quirks and record.'] },

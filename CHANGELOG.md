@@ -6,6 +6,11 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-30-7 – Rivalitäten
+
+### Neu
+- **Rivalitäten:** Neben dem Derby-Gegner der Liga entstehen jetzt Rivalitäten aus dem, was passiert: Spitzen- und Kellerduelle in der zweiten Saisonhälfte, Rudelbildung, Spieler, die zum Gegner wechseln, und ein knapp verlorenes Titelrennen. Ab „Rivale“ wird das Spiel wie ein Derby gepfiffen, es kommen mehr Zuschauer und das Ergebnis schlägt stärker auf die Stimmung. Im Sommer kühlt es etwas ab; trifft man sich nach Auf- oder Abstieg wieder, lebt die Rivalität weiter. Unter Verein steht die Liste mit allen Gründen.
+
 ## 2026-10-30-6 – Schiedsrichter mit Gesicht
 
 ### Neu

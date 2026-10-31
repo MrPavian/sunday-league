@@ -29,6 +29,7 @@ import { hex, first, euro } from './shared.js';
 import { bandOf, BANDS, history, officialAssistants, pool, QUIRKS, refereeFor } from '../../career/referees.js';
 import { REF_TRAITS } from '../../sim/referee.js';
 import { portraitSVG } from '../portrait.js';
+import { RIVAL, rivalLabel, rivalList } from '../../career/rivals.js';
 
 export const clubScreens = {
   tab_club() {
@@ -54,11 +55,22 @@ export const clubScreens = {
       ${this.platzBlock()}
       ${this.facilityBlock()}
       ${this.clubLifeBlock()}
+      ${this.rivalBlock()}
       ${this.refereeBlock()}
       ${this.festivalCard()}
       ${this.chronicleBlock()}
       ${this.kitForm()}
       ${this.crestBlock()}`;
+  },
+
+  // Rivalitäten (rivals.js): Punkte, Stufe, Gründe. Derby-Gegner der Liga steht in der Derby-Woche ohnehin im Mittelpunkt.
+  rivalBlock() {
+    const list = rivalList(this.career);
+    if (!list.length) return '';
+    const rows = list.map((r) => `<li class="oh-row rival-row" data-testid="rival-row"><span class="oh-name">${esc(r.name ?? '?')} <b class="rival-tag${r.pts >= RIVAL ? ' hot' : ''}">${rivalLabel(r.pts)}</b><small>${r.reasons.map((x) => esc(x.text)).join(' · ')}</small></span><span class="oh-meta"><i class="rival-bar" style="--v:${r.pts * 10}%"></i><small>${r.here ? tr('in deiner Liga', 'in your league') : tr('gerade woanders', 'elsewhere for now')}</small></span></li>`);
+    return `<details class="rival-block"><summary>${tr('Rivalen', 'Rivals')} (${list.length})</summary>
+      <p class="t-2">${tr('Rivalitäten wachsen aus Spitzen- und Kellerduellen, Rudelbildung, Wechseln zum Gegner und verlorenen Titelrennen. Ab „Rivale“ wird das Spiel wie ein Derby. Jeden Sommer kühlt es etwas ab.', 'Rivalries grow from top and bottom clashes, melees, players moving to the other side and lost title races. From “Rival” on, the match is played like a derby. Every summer things cool down a little.')}</p>
+      <ul class="plain">${rows.join('')}</ul></details>`;
   },
 
   // Schiris der eigenen Ebene (referees.js): Gesicht, Art zu pfeifen, Eigenheit, Bilanz mit uns.
