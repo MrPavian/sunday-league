@@ -1,4 +1,5 @@
 // Mannschaftskasse, Strafenkatalog, Sponsoren und die Saisonabschlussfahrt.
+import { recordGate } from './attendance.js';
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { closeSponsors, normalizeSponsors, paySponsors } from './sponsors.js';
@@ -85,6 +86,7 @@ export function matchFinances(career, fixture, prepared, level) {
     const fans = bv ? prepared.match.crowd : Math.min(base, capacity(career)); // Bundespokal: die angezeigte Zuschauerzahl des Spiels wird abgerechnet
     career.flags ??= {};
     career.flags.fans = { round: career.round, n: fans }; // für die Unterschriftenlisten
+    if (!bv) recordGate(career, base, fans, (prepared.humanIsAway ? prepared.home : prepared.away)?.name ?? ''); // Zuschauerstatistik (attendance.js)
     const wirt = (career.staff?.wirt ? 1.3 : 1) * salesMul(career, career.week?.weather?.id); // Wirt, Grill & Theke, Biergarten
     const wirt0 = bv ? bv.theke : 1; // im Stadion bleibt das meiste Geschäft beim Betreiber
     book(career, tr(`Getränkeverkauf (${fans} Zuschauer)${career.staff?.wirt ? ` – Wirt ${career.staff.wirt.name.split(' ')[0]}` : ''}${salesMul(career) > 1 ? ' – mit Grill' : ''}`, `Drinks sales (${fans} spectators)${career.staff?.wirt ? ` – bar manager ${career.staff.wirt.name.split(' ')[0]}` : ''}${salesMul(career) > 1 ? ' – with barbecue' : ''}`), Math.round(fans * 2.5 * wirt * wirt0));

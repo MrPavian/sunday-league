@@ -6,6 +6,11 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-10-31-2 – Zuschauer und Tribünen
+
+### Neu
+- **Zuschauer und Tribünen:** Unter Verein → Tribünen stehen jetzt Zuschauerschnitt der Saison, Auslastung, Rekord und die letzten Spielzeiten. Ist ein Heimspiel ausverkauft, meldet das Kreisblatt, wie viele draußen bleiben mussten und welcher Ausbau als Nächstes Platz schafft; ab der Bezirksliga wird auch der entgangene Eintritt gezählt. Neue Rekorde stehen ebenfalls im Kreisblatt.
+
 ## 2026-10-31-1 – Mehr Sponsoren
 
 ### Neu

@@ -59,7 +59,7 @@ export const FACILITY_GROUPS = [
 
 // Stufen: der höchste Ausbau zählt. Zuschauerbedarf (fansMul) und Fassungsvermögen (capacity) – Spielwerte; die Tribüne
 // (ab 1.33) und das Grundmaß waren schon vorher so (unverändert, damit alte Spielstände gleich bleiben).
-const STAND_TIERS = [['stadion', 1.65, 2500], ['tribdach', 1.65, 1000], ['sitzplaetze', 1.55, 800], ['tribuene', 1.33, 600], ['stehstufen', 1.12, 400]];
+export const STAND_TIERS = [['stadion', 1.65, 2500], ['tribdach', 1.65, 1000], ['sitzplaetze', 1.55, 800], ['tribuene', 1.33, 600], ['stehstufen', 1.12, 400]];
 const stand = (c) => STAND_TIERS.find(([id]) => hasFacility(c, id));
 export const standLevel = (c) => (stand(c) ? STAND_TIERS.length - STAND_TIERS.indexOf(stand(c)) : 0);
 export const CAPACITY_BASE = 250; // Spielwert: Zaun und Wiese rund um den Platz

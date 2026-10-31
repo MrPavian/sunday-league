@@ -930,8 +930,11 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   Dialektfärbung bei Spitznamen und Ereignistexten. Nur erfundene Orte und Vereine, keine echten Vereine nachbilden.
 
 **Verein, Kader, Wirtschaft**
-- Tribünen ausbauen als eigenes Feature (steht in 11.9 unter Ausbau; hier vertiefen: Stehstufen, Sitzplätze, Dach,
-  Zuschauerzahl und Einnahmen).
+- ~~Tribünen ausbauen als eigenes Feature~~ (Stehstufen, Tribüne, Sitzplätze, Dach und Stadion mit Fassungsvermögen gab es schon,
+  facilities.js). Vertieft 2026-10-31 (`src/career/attendance.js`): Zuschauerschnitt, Auslastung, Rekord, ausverkaufte Heimspiele,
+  draußen Gebliebene und entgangener Eintritt (ab Bezirksliga), Hinweis auf den nächsten Ausbau, Saisonarchiv; Anzeige unter Verein →
+  Tribünen, Meldungen im Kreisblatt. Offen: Aufpreis für Sitzplätze (keine belastbare Quelle für Preise unterhalb der Regionalliga
+  gefunden), Ausbaustufen im 3D-Bild außer der Stahlrohrtribüne auf dem Großfeld.
 - ~~Integriertes Scouting.~~ Erster Ausbau 2026-10-30 (`src/career/scouting.js`): Kenntnis fremder Spieler in vier Stufen (unbekannt,
   gesehen, beobachtet, gescoutet); der Transfermarkt zeigt die Stärke als Spanne (±12/7/3, Spielwerte), Klasse und Eigenschaften erst ab
   „beobachtet“, sortiert nach der Schätzung. Eigene Liga und Gegner nach dem Spiel „gesehen“; „Spiel anschauen“ (eine Aktion) deckt einen

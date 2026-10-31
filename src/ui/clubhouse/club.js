@@ -30,6 +30,7 @@ import { bandOf, BANDS, history, officialAssistants, pool, QUIRKS, refereeFor } 
 import { REF_TRAITS } from '../../sim/referee.js';
 import { portraitSVG } from '../portrait.js';
 import { RIVAL, rivalLabel, rivalList } from '../../career/rivals.js';
+import { gateStats } from '../../career/attendance.js';
 
 export const clubScreens = {
   tab_club() {
@@ -61,6 +62,21 @@ export const clubScreens = {
       ${this.chronicleBlock()}
       ${this.kitForm()}
       ${this.crestBlock()}`;
+  },
+
+  // Zuschauer bei Heimspielen (attendance.js): Schnitt, Auslastung, Rekord, ausverkauft, draußen geblieben.
+  gateBlock() {
+    const c = this.career;
+    const s = gateStats(c);
+    if (!s || (!s.games && !s.record)) return `<p class="t-2 gate-line">${tr('Noch kein Heimspiel – hier stehen bald Zuschauerschnitt und Rekord.', 'No home game yet – average attendance and record will appear here.')}</p>`;
+    const parts = [
+      s.games ? tr(`Schnitt diese Saison: <b>${s.avg}</b> (${s.load} % ausgelastet)`, `Average this season: <b>${s.avg}</b> (${s.load} % full)`) : '',
+      s.record ? tr(`Rekord: <b>${s.record.n}</b>${s.record.opp ? ` gegen ${esc(s.record.opp)}` : ''} (${s.record.season}. Saison)`, `Record: <b>${s.record.n}</b>${s.record.opp ? ` against ${esc(s.record.opp)}` : ''} (season ${s.record.season})`) : '',
+      s.soldOut ? tr(`${s.soldOut}× ausverkauft, ${s.turnedAway} mussten draußen bleiben${s.lostEntry ? ` (entgangener Eintritt ${euro(s.lostEntry)})` : ''}`, `${s.soldOut}× sold out, ${s.turnedAway} turned away${s.lostEntry ? ` (lost gate money ${euro(s.lostEntry)})` : ''}`) : '',
+      s.soldOut && s.next ? tr(`Nächster Schritt: ${s.next.name} (Platz für ${s.next.capacity})`, `Next step: ${s.next.name} (room for ${s.next.capacity})`) : '',
+    ].filter(Boolean);
+    const past = (s.seasons ?? []).slice(-3).map((x) => tr(`${x.season}. Saison: Ø ${x.avg}, max. ${x.max}${x.soldOut ? `, ${x.soldOut}× ausverkauft` : ''}`, `Season ${x.season}: avg ${x.avg}, max ${x.max}${x.soldOut ? `, ${x.soldOut}× sold out` : ''}`));
+    return `<div class="gate-stats" data-testid="gate-stats"><p class="t-2">${parts.join(' · ')}</p>${past.length ? `<p class="t-2"><small>${past.join(' · ')}</small></p>` : ''}</div>`;
   },
 
   // Rivalitäten (rivals.js): Punkte, Stufe, Gründe. Derby-Gegner der Liga steht in der Derby-Woche ohnehin im Mittelpunkt.
@@ -419,7 +435,7 @@ export const clubScreens = {
     };
     const groups = FACILITY_GROUPS.map((g) => {
       const rows = Object.entries(FACILITIES).filter(([, d]) => (d.group ?? 'heim') === g.id).map(row).join('');
-      return rows ? `<h4 class="sub">${g.name}${g.id === 'tribuene' ? ` <small>${tr('Fassungsvermögen', 'capacity')}: ${capacity(c)}</small>` : ''}</h4><ul class="plain">${rows}</ul>` : '';
+      return rows ? `<h4 class="sub">${g.name}${g.id === 'tribuene' ? ` <small>${tr('Fassungsvermögen', 'capacity')}: ${capacity(c)}</small>` : ''}</h4>${g.id === 'tribuene' ? this.gateBlock() : ''}<ul class="plain">${rows}</ul>` : '';
     }).join('');
     return `<div class="facilities"><h4>${tr('Vereinsheim und Anlage ausbauen', 'Upgrade clubhouse and grounds')} <small>${tr('Kasse', 'Kitty')}: ${euro(c.cash)}</small></h4>
       ${f.note ? `<p class="reply ok">${f.note}</p>` : ''}${groups}</div>`;

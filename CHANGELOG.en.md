@@ -6,6 +6,11 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-10-31-2 – Crowds and stands
+
+### New
+- **Crowds and stands:** under Club → Stands you now see the season’s average attendance, how full the ground is, the record and the last few seasons. When a home game sells out, the District Gazette reports how many had to stay outside and which upgrade adds room next; from the County Senior League on, the gate money you missed out on is counted too. New records make the Gazette as well.
+
 ## 2026-10-31-1 – More sponsors
 
 ### New

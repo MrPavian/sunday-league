@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-10-31-2',
+    de: { title: 'Zuschauer und Tribünen', items: ['Unter Verein → Tribünen siehst du Zuschauerschnitt, Auslastung und Rekord.', 'Ist ein Heimspiel ausverkauft, steht da, wie viele draußen bleiben mussten – und welcher Ausbau helfen würde.', 'Ab Bezirksliga auch der Eintritt, der dabei entgangen ist.'] },
+    en: { title: 'Crowds and stands', items: ['Under Club → Stands you can see average attendance, how full the ground is and the record.', 'When a home game sells out, it shows how many had to stay outside – and which upgrade would help.', 'From the County Senior League on, also the gate money you missed out on.'] },
+  },
+  {
     id: '2026-10-31-1',
     de: { title: 'Mehr Sponsoren', items: ['Zwölf größere Firmen aus der Region klopfen ab Bezirksliga, Landesliga und Verbandsliga an.', 'Neue Werbeplätze: Rückensponsor ab Bezirksliga, Hosensponsor ab Verbandsliga.', 'Weiter oben steht eine größere Firma auf der Trikotbrust – der Kiosk bleibt an der Bande.'] },
     en: { title: 'More sponsors', items: ['Twelve bigger firms from the region come knocking from the County Senior League upwards.', 'New ad spaces: back-of-shirt sponsor from the County Senior League, shorts sponsor from the State League.', 'Higher up a bigger firm goes on the front of the shirt – the kiosk stays on the advertising boards.'] },
