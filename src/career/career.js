@@ -1,5 +1,6 @@
 // Karriere: eine Saison in der Freizeitliga. Der Zustand ist reines JSON
 // (speicherbar); Spieler werden nur über ihre Pool-Nummer referenziert.
+import { attrMax } from '../sim/skill.js';
 import { logGrade, logSeason, monthlyAward, seasonAward } from './awards.js';
 import { getLang, tr } from '../core/i18n.js';
 import { legacySeasonEnd } from './legacy.js';
@@ -140,13 +141,14 @@ export function playerOf(career, idx) {
   const extra = career.players[idx]?.addTraits; // z. B. „Ex-Profi" nach der Rückkehr
   if (!delta && years === 0 && !career.players[idx]?.job && !extra) return base;
   const attrs = { ...base.attrs };
-  if (delta) for (const k of ATTR_KEYS) if (attrs[k] != null) attrs[k] = Math.max(0.05, Math.min(0.98, attrs[k] + (delta[k] ?? 0)));
+  const model = career.strength ?? 1; // Stärkemodell 2: Technikwerte über 1, Stärke ohne Deckel (sim/skill.js attrMax)
+  if (delta) for (const k of ATTR_KEYS) if (attrs[k] != null) attrs[k] = Math.max(0.05, Math.min(attrMax(k, model), attrs[k] + (delta[k] ?? 0)));
   const age = base.age + years;
   // Aus Schülern werden mit der Zeit Studenten oder Azubis.
   const job = career.players[idx]?.job; // Jobwechsel aus einer Lebensgeschichte
   const profession = job ? job : base.profession.startsWith('Schüler') && age >= 19 ? (base.poolIndex % 2 ? 'Student (1. Semester)' : 'Azubi Bürokaufmann') : base.profession;
   const p = { ...base, attrs, age, profession, traits: extra ? [...new Set([...base.traits, ...extra])] : base.traits, look: agedLook(base.look, base.age, age, idx) };
-  p.rating = ratePlayer(p);
+  p.rating = ratePlayer(p); // Stärke ohne Deckel kommt mit Schritt 3 (gestreckte Klassen, Pokalmodell neu eichen)
   return p;
 }
 
@@ -241,6 +243,7 @@ export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null,
   const career = {
     version: SAVE_VERSION,
     names,
+    strength: 2, // Stärkemodell 2 (Konzept Spielerstärke 12): nur neue Karrieren, alte Spielstände bleiben bei 1
     seed,
     level: 1,
     league: league.name,

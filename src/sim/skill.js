@@ -7,6 +7,12 @@
 // SOFT und FLOOR sind Spielwerte, an der Engine gemessen (scripts/strength-steepness.mjs mit BASE/CAP, Konzept 12.1).
 export const SKILL = { soft: 0.3, floor: 0.25 };
 
+// Obergrenze je Wert (Konzept 12.2 Schritt 2): Im Stärkemodell 2 (neue Karrieren ab 2026-10-31) dürfen die Technikwerte über 1;
+// Tempo, Ausdauer und Körper bleiben bei 0,98 (die Laufgeschwindigkeit bleibt in echten m/s). Modell 1 (alte Spielstände): alles 0,98.
+export const PHYS_ATTRS = new Set(['pace', 'stamina', 'strength']);
+export const TECH_MAX = 3;
+export const attrMax = (k, model = 1) => (model >= 2 && !PHYS_ATTRS.has(k) ? TECH_MAX : 0.98);
+
 export const cap1 = (x) => (x > 1 ? 1 : x);
 export const over = (x) => (x > 1 ? x - 1 : 0);
 export const soft = (x) => (x <= 1 ? x : 1 + SKILL.soft * (1 - Math.exp(-(x - 1) / SKILL.soft)));

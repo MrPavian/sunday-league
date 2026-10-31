@@ -177,12 +177,13 @@ export const RATING_WEIGHTS_V2 = {
 // Besonderheiten zählen mit: Ex-Profis spielen deutlich über ihren Laufwerten.
 export const TRAIT_RATING = { ex_profi: 12, meckerer: -2, raucher: -2 };
 
-export function ratePlayer(p) {
+// max: Obergrenze der Stärke – 99 im alten Modell, im Stärkemodell 2 (neue Karrieren) ohne Deckel (Konzept 12.2).
+export function ratePlayer(p, max = 99) {
   const w = RATING_WEIGHTS[p.position] ?? RATING_WEIGHTS.mid;
   let sum = 0;
   for (const [k, v] of Object.entries(w)) sum += p.attrs[k] * v;
   const bonus = p.traits.reduce((b, t) => b + (TRAIT_RATING[t] ?? 1), 0);
-  return Math.max(1, Math.min(99, Math.round(sum * 100 + bonus)));
+  return Math.max(1, Math.min(max, Math.round(sum * 100 + bonus)));
 }
 
 export function generateTeam(rng, preset, roles, { tierWeights = HOBBY_TIER_WEIGHTS } = {}) {
