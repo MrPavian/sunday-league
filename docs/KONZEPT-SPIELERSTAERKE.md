@@ -535,7 +535,7 @@ Gemessen (scripts/development-check.mjs 60, 8 Einsätze je Saison), 16- bis 20-J
 | Oberliga | +18,6 / 18,8 % / 8,7 % | +27,3 / 29,0 % / 4,3 % |
 
 30- bis 34-Jährige Oberliga: −8,7 → −10,0 (nur der Technik-Abbau wächst mit). Golden unverändert (Stufe 1). Offen in Schritt 6:
-Bremse in zu tiefer Liga, „über seiner Liga“ wird bemerkt.
+Bremse in zu tiefer Liga, „über seiner Liga“ wird bemerkt (erledigt, siehe 12.7).
 
 ### 12.6 Talent (2026-11-04, Nutzerentscheid)
 
@@ -565,3 +565,28 @@ gleicht den mittleren Faktor (0,945) aus. Gemessen (development-check.mjs 200, K
 Mehr hängen Gebliebene als früher (11–12 %) ist gewollt (Ausgereizte). Anzeige: geschätzt (Nutzerentscheid), Sicherheit aus
 Saisons im Verein, Spielpraxis, Co-Trainer, Beobachten; unter 45 % nur grob („könnte was werden“), sonst „wohl …“, ab 85 % genau;
 manchmal eine Stufe daneben (fest je Saison). Auf der Spielerkarte (bis 23 Jahre) und in der Jugend-Liste.
+
+### 12.7 Zu tiefe Liga: Bremse und Durchlässigkeit (2026-11-04, Nutzerentscheid)
+
+Umsetzung von Abschnitt 5 („Wer sich in einer zu tiefen Liga aufhält, entwickelt sich langsamer“, „Wer über seiner Liga steht,
+wird bemerkt“). Nur strength ≥ 3. „Über seiner Liga“ = Niveau-Stufe seiner Stärke (Mittelpunkte zwischen den Zielwerten, wie
+niveauLevel) über der Stufe der eigenen Liga (development.js `aboveLeague`).
+
+- **Bremse** (Nutzerentscheid „mittel“, Spielwerte ohne Quelle): Grundzuwachs × 0,8 je Liga darüber, höchstens bis × 0,5
+  (`BRAKE`, `brakeOf`); Durchbruch und Knoten bleiben ungebremst. Zwei Ligen zu tief: × 0,64.
+- **Hinweis:** Auf der Spielerkarte „Niveau … (über seiner Liga)“.
+- **Abwerbeversuch:** Neuer Grund `above` (Gewicht 1,5 je Liga darüber, nur in Form); Werber ist ein Verein der Liga darüber aus
+  den Nachbarligen des Transfermarkts. Sagt er zu, kommt das Angebot zur nächsten Wechselperiode (planDeparture), wie bei
+  Zusagen außerhalb der Periode.
+- **Wechselwunsch** (poaching.js `wechselwunsch`, Gewicht 12, Gate 0,3 je Ereigniswoche, Spielwerte): Wer zwei Ligen darüber
+  steht oder eine und höchstens 23 ist, will höher spielen – einmal je Saison. Freigeben (Angebot eines höheren Vereins zur
+  nächsten Periode), „gemeinsam nach oben“ (meist Schwung, sonst leicht verstimmt) oder halten (verstimmt für 3 Wochen, Form −0,3).
+
+Gemessen (development-check.mjs 200, wie 12.6, 16- bis 20-Jährige, 8 Saisons): Die Bremse trifft vor allem starke Junge in
+tiefen Ligen, im Schnitt wenig.
+
+| Liga | Ø vorher | Ø jetzt | Ausnahme vorher | Ausnahme jetzt |
+|---|---|---|---|---|
+| Freizeitliga | +7,2 | +6,7 | +11,3 | +10,3 |
+| Bezirksliga | +13,9 | +13,4 | +21,3 | +19,6 |
+| Oberliga | +23,0 | +22,0 | +39,3 | +34,3 |

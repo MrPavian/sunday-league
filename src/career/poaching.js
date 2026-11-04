@@ -25,7 +25,9 @@ import { adjustForm, adjustMood } from './events.js';
 import { canLose, first, joinRival, outcome } from './outcomes.js';
 import { isCoach } from './personal.js';
 import { chronicle } from './sagas.js';
-import { inTransfers, planDeparture } from './transfers.js';
+import { aboveLeague } from './development.js';
+import { ensureNeighbors, inTransfers, planDeparture, tstate } from './transfers.js';
+import { leagueTitle } from './verband.js';
 import { windowAt } from './transferrules.js';
 
 const POACH_GATE = 0.6; // so oft wird überhaupt ein Kandidat gesucht (je Ereigniswoche)
@@ -56,10 +58,19 @@ function poachCandidates(c) {
     const p = playerOf(c, idx);
     if (rec.grumpy > 0) out.push({ idx, why: 'grumpy', w: 2 });
     else if (played >= 3 && (rec.playShare ?? rec.apps) <= played * 0.45) out.push({ idx, why: 'bench', w: 2 }); // Spielzeit, nicht Einsätze
+    else if (aboveLeague(c, p.rating) > 0 && (rec.form ?? 0) >= 0) out.push({ idx, why: 'above', w: 1.5 * aboveLeague(c, p.rating) }); // Stärkemodell 3: zu gut für die Liga
     else if (p.rating >= top && (rec.form ?? 0) >= 0) out.push({ idx, why: 'star', w: 1.2 });
   }
   return out;
 }
+
+// Ein Verein aus der Liga darüber (Nachbarligen im Transfermarkt), für Spieler, die über ihrer Liga stehen.
+export function higherSuitor(c, rng) {
+  ensureNeighbors(c);
+  const up = tstate(c).neighbors.filter((n) => n.level > (c.level ?? 1));
+  return up.length ? up[Math.floor(rng.next() * up.length)] : null;
+}
+const leagueOf = (c, id) => { const n = tstate(c).neighbors.find((x) => x.id === id); return n ? ` (${leagueTitle(c, n.level)})` : ''; };
 
 // Wer wirbt? Oft der Derby-Rivale, sonst ein Verein aus der Liga – lieber einer von oben.
 function suitor(c, rng) {
@@ -71,10 +82,13 @@ function suitor(c, rng) {
   return pick.club.id;
 }
 
+const MOVE_WISH_GATE = 0.3; // Spielwert: so oft meldet sich ein Kandidat (je Ereigniswoche)
+const wish = (c, idx) => ((c.flags.moveWish ??= {})[idx] = c.season);
 const mark = (c, idx) => ((c.flags.poached ??= {})[idx] = c.season);
 // 'now' = gewechselt (Wechselperiode), 'later' = vorgemerkt bis zur nächsten, false = bleibt.
 const leaveFor = (c, ctx) => {
   mark(c, ctx.s);
+  if (!clubById(c, ctx.club)) return planDeparture(c, ctx.s, ctx.club) ? 'later' : false; // Verein einer anderen Liga: Angebot zur nächsten Periode
   if (windowAt(c)) return joinRival(c, ctx.s, ctx.club) ? 'now' : false;
   return planDeparture(c, ctx.s, ctx.club) ? 'later' : false;
 };
@@ -84,7 +98,8 @@ const leave = (c, ctx, now, later, stay) => {
   const how = leaveFor(c, ctx);
   return how === 'now' ? now() : how === 'later' ? later() + WINDOW_TAIL() : stay;
 };
-const clubName = (c, ctx) => clubById(c, ctx.club)?.name;
+const anyClubName = (c, id) => clubById(c, id)?.name ?? tstate(c).neighbors.find((n) => n.id === id)?.name ?? '?';
+const clubName = (c, ctx) => anyClubName(c, ctx.club);
 
 export const POACH_EVENTS = {
   abwerbeversuch: {
@@ -95,15 +110,16 @@ export const POACH_EVENTS = {
       if (!cands.length || !canLose(c)) return null;
       let r = rng.next() * cands.reduce((s, x) => s + x.w, 0);
       const hit = cands.find((x) => (r -= x.w) < 0) ?? cands[0];
-      const club = suitor(c, rng);
+      const club = (hit.why === 'above' ? higherSuitor(c, rng)?.id : null) ?? suitor(c, rng);
       return club ? { s: hit.idx, why: hit.why, club } : null;
     },
     text(c, ctx) {
       const n = first(c, ctx.s);
-      const club = clubById(c, ctx.club)?.name ?? '?';
+      const club = anyClubName(c, ctx.club);
       const rival = ctx.club === c.flags?.derbyRival;
       const tail = rival ? tr(' Ausgerechnet der Derby-Rivale.', ' Your derby rivals, of all clubs.') : '';
       if (ctx.why === 'bench') return tr(`${n} hat ein Angebot von ${club}: „Bei uns spielst du jeden Sonntag." Bei dir sitzt er oft draußen. Bis Sonntag will er sich entscheiden.${tail}`, `${n} has an offer from ${club}: "With us you play every Sunday." With you he is often on the bench. He wants to decide by Sunday.${tail}`);
+      if (ctx.why === 'above') return tr(`${club}${leagueOf(c, ctx.club)} hat ${n} beobachtet: „Der ist zu gut für eure Liga." Sie wollen ihn holen. Bis Sonntag will er sich entscheiden.${tail}`, `${club}${leagueOf(c, ctx.club)} have been watching ${n}: "He is too good for your league." They want to sign him. He wants to decide by Sunday.${tail}`);
       if (ctx.why === 'grumpy') return tr(`${n} grummelt ohnehin schon – und jetzt hat ${club} angerufen. Er überlegt ernsthaft zu wechseln.${tail}`, `${n} is already sulking – and now ${club} have called. He is seriously thinking about switching.${tail}`);
       return tr(`${club} wirbt um ${n}: Der Trainer drüben hat ihn beim letzten Duell beobachtet. Er fühlt sich geschmeichelt.${tail}`, `${club} are courting ${n}: their manager watched him in the last meeting. He is flattered.${tail}`);
     },
@@ -111,7 +127,7 @@ export const POACH_EVENTS = {
       {
         label: tr('Unter vier Augen reden', 'Have a word in private'),
         effect: outcome([
-          { w: (c, ctx) => (ctx.why === 'star' ? 3 : 2) + 2 * (c.mood ?? 0), run: (c, ctx) => (mark(c, ctx.s), adjustForm(c, ctx.s, 0.3), tr(`${first(c, ctx.s)} bleibt: „Hier sind meine Jungs." Er geht mit Schwung in die Woche.`, `${first(c, ctx.s)} stays: "My lads are here." He goes into the week with fresh energy.`)) },
+          { w: (c, ctx) => (ctx.why === 'star' ? 3 : 2) + 2 * (c.mood ?? 0) - (ctx.why === 'above' ? 1 : 0), run: (c, ctx) => (mark(c, ctx.s), adjustForm(c, ctx.s, 0.3), tr(`${first(c, ctx.s)} bleibt: „Hier sind meine Jungs." Er geht mit Schwung in die Woche.`, `${first(c, ctx.s)} stays: "My lads are here." He goes into the week with fresh energy.`)) },
           { w: 1, run: (c, ctx) => (mark(c, ctx.s), (c.players[ctx.s].grumpy = 1), tr(`${first(c, ctx.s)} bleibt – aber überzeugt klingt anders.`, `${first(c, ctx.s)} stays – but he does not sound convinced.`)) },
           { w: (c, ctx) => (canLose(c) ? (ctx.why === 'grumpy' ? 2 : 1) : 0), run: (c, ctx) => leave(c, ctx, () => tr(`Das Gespräch hilft nicht. ${first(c, ctx.s)} wechselt zu ${clubName(c, ctx)}.`, `The talk does not help. ${first(c, ctx.s)} joins ${clubName(c, ctx)}.`), () => tr(`Das Gespräch hilft nicht. ${first(c, ctx.s)} sagt ${clubName(c, ctx)} zu.`, `The talk does not help. ${first(c, ctx.s)} says yes to ${clubName(c, ctx)}.`), tr('Er bleibt. Vorerst.', 'He stays. For now.')) },
         ]),
@@ -119,7 +135,7 @@ export const POACH_EVENTS = {
       {
         label: tr('Einsatz am Sonntag versprechen', 'Promise him a game on Sunday'),
         effect: outcome([
-          { w: (c, ctx) => (ctx.why === 'star' ? 2 : 5), run: (c, ctx) => (mark(c, ctx.s), (c.flags.promise = { idx: ctx.s, round: c.round }), tr(`${first(c, ctx.s)} sagt ${clubById(c, ctx.club)?.name} ab. Jetzt musst du dein Versprechen halten.`, `${first(c, ctx.s)} turns down ${clubById(c, ctx.club)?.name}. Now you have to keep your promise.`)) },
+          { w: (c, ctx) => (ctx.why === 'star' ? 2 : 5), run: (c, ctx) => (mark(c, ctx.s), (c.flags.promise = { idx: ctx.s, round: c.round }), tr(`${first(c, ctx.s)} sagt ${clubName(c, ctx)} ab. Jetzt musst du dein Versprechen halten.`, `${first(c, ctx.s)} turns down ${clubName(c, ctx)}. Now you have to keep your promise.`)) },
           { w: 1, run: (c, ctx) => (mark(c, ctx.s), (c.flags.promise = { idx: ctx.s, round: c.round }), adjustMood(c, -0.04), tr('Er bleibt. Aber das spricht sich rum – jetzt wollen noch zwei andere ein Versprechen.', 'He stays. But word gets round – now two others want a promise too.')) },
           { w: (c) => (canLose(c) ? 0.7 : 0), run: (c, ctx) => leave(c, ctx, () => tr(`${first(c, ctx.s)} glaubt dir nicht und unterschreibt drüben.`, `${first(c, ctx.s)} does not believe you and signs over there.`), () => tr(`${first(c, ctx.s)} glaubt dir nicht und sagt drüben zu.`, `${first(c, ctx.s)} does not believe you and says yes over there.`), tr('Er bleibt. Vorerst.', 'He stays. For now.')) },
         ]),
@@ -138,6 +154,46 @@ export const POACH_EVENTS = {
           { w: (c) => (canLose(c) ? 4 : 0), run: (c, ctx) => leave(c, ctx, () => (adjustMood(c, -0.02), tr(`${first(c, ctx.s)} wechselt zu ${clubName(c, ctx)}. Das nächste Duell wird pikant.`, `${first(c, ctx.s)} joins ${clubName(c, ctx)}. The next meeting will be spicy.`)), () => (adjustMood(c, -0.02), tr(`${first(c, ctx.s)} sagt ${clubName(c, ctx)} zu.`, `${first(c, ctx.s)} says yes to ${clubName(c, ctx)}.`)), tr('Er bleibt.', 'He stays.')) },
           { w: 1, run: (c, ctx) => (mark(c, ctx.s), tr(`Am Ende war es nur Gerede: ${first(c, ctx.s)} bleibt.`, `In the end it was just talk: ${first(c, ctx.s)} stays.`)) },
         ]),
+      },
+    ],
+  },
+
+  // Stärkemodell 3: Wer deutlich über seiner Liga steht, will selbst höher spielen (Nutzerentscheid: Hinweis, Abwerben und Wechselwunsch).
+  wechselwunsch: {
+    weight: 12,
+    needs(c, rng) {
+      if ((c.strength ?? 1) < 3 || !rng.chance(MOVE_WISH_GATE)) return null;
+      const cands = humanClub(c).squad.filter((idx) => {
+        const rec = c.players[idx];
+        if (!rec || isCoach(c, idx) || c.flags?.moveWish?.[idx] === c.season || c.flags?.poached?.[idx] === c.season || inTransfers(c, idx)) return false;
+        const p = playerOf(c, idx);
+        const over = aboveLeague(c, p.rating);
+        return over >= 2 || (over >= 1 && p.age <= 23);
+      });
+      if (!cands.length) return null;
+      return { s: cands[Math.floor(rng.next() * cands.length)] };
+    },
+    text: (c, ctx) => tr(`${first(c, ctx.s)} kommt nach dem Training zu dir: „Ich will höher spielen. In der Liga lerne ich nichts mehr dazu."`, `${first(c, ctx.s)} comes to see you after training: "I want to play at a higher level. I am not learning anything more in this league."`),
+    options: [
+      {
+        label: tr('Freigeben, wenn ein höherer Verein anfragt', 'Release him if a higher club asks'),
+        effect: (c, ctx, rng) => {
+          wish(c, ctx.s);
+          const up = canLose(c) ? higherSuitor(c, rng ?? { next: () => 0 }) : null;
+          if (up && planDeparture(c, ctx.s, up.id)) return tr(`${first(c, ctx.s)} bedankt sich. ${up.name} hat schon Interesse – zur nächsten Wechselperiode kommt die Anfrage.`, `${first(c, ctx.s)} thanks you. ${up.name} are already interested – the request will come in the next transfer period.`);
+          return tr(`${first(c, ctx.s)} bedankt sich. Noch hat kein höherer Verein angefragt – er hält die Augen offen.`, `${first(c, ctx.s)} thanks you. No higher club has asked yet – he is keeping his eyes open.`);
+        },
+      },
+      {
+        label: tr('„Wir gehen gemeinsam nach oben."', '"We are going up together."'),
+        effect: outcome([
+          { w: (c) => 2 + 2 * (c.mood ?? 0), run: (c, ctx) => (wish(c, ctx.s), adjustForm(c, ctx.s, 0.2), tr(`${first(c, ctx.s)} nickt: „Dann aber richtig." Er zieht im Training an.`, `${first(c, ctx.s)} nods: "Then let us do it properly." He steps it up in training.`)) },
+          { w: 2, run: (c, ctx) => (wish(c, ctx.s), (c.players[ctx.s].grumpy = 1), tr(`${first(c, ctx.s)} bleibt – aber er glaubt nicht so recht daran.`, `${first(c, ctx.s)} stays – but he does not really believe it.`)) },
+        ]),
+      },
+      {
+        label: tr('„Du bleibst hier."', '"You are staying here."'),
+        effect: (c, ctx) => (wish(c, ctx.s), (c.players[ctx.s].grumpy = 3), adjustForm(c, ctx.s, -0.3), adjustMood(c, -0.02), tr(`${first(c, ctx.s)} geht wortlos. In der Kabine ist er seitdem auffällig still.`, `${first(c, ctx.s)} walks off without a word. He has been noticeably quiet in the dressing room since.`)),
       },
     ],
   },

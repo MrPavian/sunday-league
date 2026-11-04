@@ -10,7 +10,7 @@ import { coachLevel } from '../prefs.js';
 import { button, haptic, icon, segmented, tabs as uiTabs } from '../ds.js';
 import { LEAGUES } from '../../career/clubs.js';
 import { leagueTitle, niveauName, niveauText } from '../../career/verband.js';
-import { playerTalentGuess } from '../../career/development.js';
+import { aboveLeague, playerTalentGuess } from '../../career/development.js';
 import { ATTR_LABELS } from '../attrLabels.js';
 import { isLight, playerCard as collectorCard, trainerCard } from '../world.js';
 import { planTarget } from '../../sim/plan.js';
@@ -122,7 +122,8 @@ export const teamScreens = {
     const traits = (p.traits ?? []).filter((t) => TRAITS[t]).map((t) => TRAITS[t].name);
     const niveau = niveauName(c, p.rating); // Anzeige „Stärke · Niveau“: auf der Karte steht die Stärke vorn, das Niveau hinten
     const guess = p.age <= 23 ? playerTalentGuess(c, idx) : null; // Talent (geschätzt, wird mit der Zeit genauer) nur bei Jungen
-    const extra = `<p class="m-card-extra">${niveau ? `${tr('Niveau', 'Level')} ${niveau} · ` : ''}${guess ? `${tr('Talent', 'Talent')}: ${guess.text} · ` : ''}${jobName(p.profession)}${traits.length ? ` · ${traits.slice(0, 2).join(' · ')}` : ''}</p>`;
+    const above = aboveLeague(c, p.rating) > 0 ? ` (${tr('über seiner Liga', 'above his league')})` : ''; // fällt auch anderen auf (poaching.js)
+    const extra = `<p class="m-card-extra">${niveau ? `${tr('Niveau', 'Level')} ${niveau}${above} · ` : ''}${guess ? `${tr('Talent', 'Talent')}: ${guess.text} · ` : ''}${jobName(p.profession)}${traits.length ? ` · ${traits.slice(0, 2).join(' · ')}` : ''}</p>`;
     const marks = `${r.awards?.length ? '★' : ''}${isCoach(c, idx) ? ` ${tr('Du', 'You')}` : ''}`;
     return collectorCard({
       id: idx,

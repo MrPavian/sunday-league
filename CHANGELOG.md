@@ -6,6 +6,12 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-04-2 – Zu gut für die Liga
+
+### Geändert
+- **Zu tiefe Liga bremst (neue Karrieren):** Wer über dem Niveau seiner Liga steht, lernt weniger dazu – je Liga darüber etwas weniger Zuwachs, höchstens die Hälfte. Talent bleibt der stärkere Faktor.
+- **Das fällt auf:** Auf der Spielerkarte steht „über seiner Liga“. Vereine aus der Liga darüber versuchen solche Spieler abzuwerben, und manche Spieler kommen selbst und wollen höher spielen – du kannst sie freigeben, ihnen den gemeinsamen Aufstieg versprechen oder sie halten, dann sind sie sauer.
+
 ## 2026-11-04-1 – Liganiveau, Entwicklung und Talent
 
 ### Geändert

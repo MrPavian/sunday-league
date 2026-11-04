@@ -163,13 +163,20 @@ const niveauLevelOf = (r) => {
   for (let i = 1; i < TARGETS.length; i++) if (r >= (TARGETS[i - 1] + TARGETS[i]) / 2) n = i + 1;
   return n;
 };
+
+// Zu tiefe Liga (Konzept Spielerstärke 5 und 12.7, Nutzerentscheid „mittel“): Wer über dem Niveau seiner Liga steht, lernt
+// weniger – Gegner und Training fordern ihn nicht. Je Liga darüber ×0,8, höchstens bis ×0,5 (Spielwerte, keine Quelle).
+export const BRAKE = { step: 0.8, floor: 0.5 };
+// Um wie viele Ligen ein Spieler über dem Niveau der eigenen Liga steht (0 = passt oder darunter; nur Stärkemodell 3).
+export const aboveLeague = (career, rating) => ((career?.strength ?? 1) < 3 || rating == null ? 0 : Math.max(0, niveauLevelOf(rating) - (career.level ?? 1)));
+export const brakeOf = (over) => Math.max(BRAKE.floor, BRAKE.step ** Math.max(0, over));
 export function seasonGain(career, idx, p, mul, changed) {
   const prof = devProfile(career, idx, p.position);
   const lk = leagueGrowth(career);
   const k = eloScale(career);
   const talent = talentOf(career, idx);
   const tm = talent ? talent.mul * TALENT_NORM : 1;
-  let gain = seasonCurve(prof, p.age) * lk * SCALE * mul * k * tm;
+  let gain = seasonCurve(prof, p.age) * lk * SCALE * mul * k * tm * brakeOf(aboveLeague(career, p.rating));
   let event = null;
   if (prof.type === 'durchbruch' && p.age === prof.breakAge) {
     gain += JUMP * lk ** JUMP_DAMP * Math.min(1.2, mul) * k;

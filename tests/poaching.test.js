@@ -132,4 +132,42 @@ describe('Profivertrag (sehr selten)', () => {
     placeFormers(c);
     expect(c.clubs.some((cl) => cl.squad.includes(idx))).toBe(false);
   });
+
+  it('Stärkemodell 3: wer über seiner Liga steht, wird von einem Verein der Liga darüber umworben', () => {
+    const c = createCareer({ seed: 5 });
+    c.strength = 3;
+    c.level = 1;
+    const club = humanClub(c);
+    const idx = club.squad.find((i) => !c.players[i].coach && !c.players[i].grumpy);
+    for (const i of club.squad) {
+      c.players[i].form = i === idx ? 0.2 : -0.1;
+      c.players[i].playShare = 3;
+      if (i !== idx) playerOf(c, i).rating = 40;
+    }
+    playerOf(c, idx).rating = 70; // deutlich über der Freizeitliga
+    const ctx = POACH_EVENTS.abwerbeversuch.needs(c, yes);
+    expect(ctx?.s).toBe(idx);
+    expect(ctx.why).toBe('above');
+    expect(ctx.club.startsWith('n:')).toBe(true);
+    expect(POACH_EVENTS.abwerbeversuch.text(c, ctx)).toContain('zu gut');
+    // Zusage an einen Verein einer anderen Liga: Angebot zur nächsten Wechselperiode, er spielt solange weiter
+    POACH_EVENTS.abwerbeversuch.options[3].effect(c, ctx, yes);
+    expect(club.squad).toContain(idx);
+  });
+
+  it('Wechselwunsch: nur im Stärkemodell 3, einmal je Saison, „Du bleibst hier“ macht ihn sauer', () => {
+    const c = createCareer({ seed: 5 });
+    c.level = 1;
+    const club = humanClub(c);
+    const idx = club.squad.find((i) => !c.players[i].coach);
+    for (const i of club.squad) playerOf(c, i).rating = i === idx ? 70 : 40;
+    c.strength = 1;
+    expect(POACH_EVENTS.wechselwunsch.needs(c, yes)).toBeNull();
+    c.strength = 3;
+    const ctx = POACH_EVENTS.wechselwunsch.needs(c, yes);
+    expect(ctx?.s).toBe(idx);
+    POACH_EVENTS.wechselwunsch.options[2].effect(c, ctx, yes);
+    expect(c.players[idx].grumpy).toBe(3);
+    expect(POACH_EVENTS.wechselwunsch.needs(c, yes)).toBeNull(); // diese Saison schon gesagt
+  });
 });

@@ -6,6 +6,12 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-04-2 – Too good for the league
+
+### Changed
+- **A league that is too low holds players back (new careers):** anyone above the level of their league learns less – a little less progress per league above, at most half. Talent stays the bigger factor.
+- **People notice:** the player card says “above his league”. Clubs from the league above try to poach such players, and some players come to you themselves wanting to play higher – you can release them, promise to go up together or hold on to them, which makes them sulk.
+
 ## 2026-11-04-1 – League level, development and talent
 
 ### Changed

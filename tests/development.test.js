@@ -1,7 +1,8 @@
 // Entwicklung der eigenen Spieler (development.js): verborgene Typen, Liga-Deckel, Durchbruch, geplatzter Knoten.
 import { describe, expect, it } from 'vitest';
 import { createCareer, developPlayers, humanClub, migrateCareer, playerOf } from '../src/career/career.js';
-import { DEV_TYPES, devProfile, eloScale, environmentChanged, PEAK_AGE, seasonCurve, seasonGain, TALENT_NORM, playerTalentGuess, talentOf, TALENTS } from '../src/career/development.js';
+import { NIVEAU_TARGET } from '../src/sim/niveau.js';
+import { aboveLeague, BRAKE, brakeOf, DEV_TYPES, devProfile, eloScale, leagueGrowth, environmentChanged, PEAK_AGE, seasonCurve, seasonGain, TALENT_NORM, playerTalentGuess, talentOf, TALENTS } from '../src/career/development.js';
 
 const BASE = createCareer({ seed: 7 });
 const fresh = () => JSON.parse(JSON.stringify(BASE));
@@ -158,5 +159,36 @@ describe('Talent', () => {
     c.staff = { cotrainer: true };
     expect(playerTalentGuess(c, 9).sure).toBeGreaterThan(a);
     expect(playerTalentGuess(c, 9).text).toBeTruthy();
+  });
+});
+
+// Zu tiefe Liga bremst (Konzept Spielerstärke 12.7, Nutzerentscheid „mittel“: ×0,8 je Liga, höchstens bis ×0,5).
+describe('Bremse in zu tiefer Liga', () => {
+  it('×0,8 je Liga über dem Niveau, nie unter ×0,5; altes Stärkemodell ohne Bremse', () => {
+    expect(brakeOf(0)).toBe(1);
+    expect(brakeOf(1)).toBeCloseTo(0.8, 10);
+    expect(brakeOf(2)).toBeCloseTo(0.64, 10);
+    expect(brakeOf(9)).toBe(BRAKE.floor);
+    expect(aboveLeague({ strength: 1, level: 1 }, NIVEAU_TARGET[4])).toBe(0);
+    expect(aboveLeague({ strength: 3, level: 1 }, NIVEAU_TARGET[2])).toBe(2);
+    expect(aboveLeague({ strength: 3, level: 5 }, NIVEAU_TARGET[2])).toBe(0);
+  });
+  it('derselbe Spieler legt zwei Ligen zu tief nur 64 % zu', () => {
+    const run = (level) => {
+      const c = fresh();
+      c.strength = 3;
+      c.level = level;
+      const idx = humanClub(c).squad[0];
+      c.players[idx] ??= {};
+      c.players[idx].ceil = 999; // Obergrenze hier nicht im Weg
+      const p = { ...playerOf(c, idx), age: 18, rating: NIVEAU_TARGET[2] };
+      return seasonGain(c, idx, p, 1.3, false).gain;
+    };
+    const fits = run(3);
+    expect(fits).toBeGreaterThan(0);
+    // Stufen 1–5 haben dieselbe Elo-Skala; der Ligafaktor (LEAGUE_GROWTH) kommt getrennt dazu.
+    const c1 = { ...fresh(), level: 1 };
+    const c3 = { ...fresh(), level: 3 };
+    expect(run(1) / fits).toBeCloseTo(0.64 * (leagueGrowth(c1) / leagueGrowth(c3)), 5);
   });
 });
