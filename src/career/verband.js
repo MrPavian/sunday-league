@@ -7,6 +7,7 @@
 // Bezirksname: weiter der erfundene „Kanal“-Bezirk – keine echten Kreise oder Orte, Verbandsnamen nur als Region, ohne Kürzel.
 import { tr } from '../core/i18n.js';
 import { LEAGUES } from './clubs.js';
+import { NIVEAU_TARGET, PRO_TARGET } from '../sim/niveau.js';
 
 // tiers: [Stufe 2, Stufe 3, Stufe 4, Stufe 5]; upper: [Stufe 6, Stufe 7, Stufe 8] = 7., 6. und 5. Liga (Oberliga), aus derselben
 // Tabelle, die Oberliga-Namen nach „Oberliga (Fußball)“ in der deutschen Wikipedia (abgerufen 2026-10-29). Stufe 6 bekommt den
@@ -125,3 +126,24 @@ export function usedNames(career, leagues) {
 }
 // Regionaler Name für einen später dazukommenden CPU-Verein (Stufe ≥ 2, nur mit gewähltem Verband).
 export const localized = (career, def, level, leagues) => (career.verband && level >= 2 ? { ...def, ...(regionalName(career, def, usedNames(career, leagues)) ?? {}) } : def);
+
+// Anzeige „Stärke · Niveau“ (Konzept Spielerstärke 10, Entscheid „Zahl und Liganiveau“): Zu welcher Liga passt eine Stärke? Gemessen an
+// den Zielwerten des Stärkemodells 3 (sim/niveau.js NIVEAU_TARGET, darüber pokal.js PRO_TARGET); Grenze ist jeweils die Mitte zwischen
+// zwei Zielen. Nur für neue Karrieren (strength ≥ 3) – in alten Spielständen passen die Zahlen nicht zu den Zielen, dort null.
+const PRO_NAMES = () => [tr('Regionalliga', 'Regional League'), tr('3. Liga', 'Third Division'), tr('2. Liga', 'Second Division'), tr('1. Liga', 'First Division')];
+const TARGETS = [...NIVEAU_TARGET, ...Object.values(PRO_TARGET)];
+export function niveauLevel(rating, targets = TARGETS) {
+  let n = 1;
+  for (let i = 1; i < targets.length; i++) if (rating >= (targets[i - 1] + targets[i]) / 2) n = i + 1;
+  return n;
+}
+// Text für die Anzeige: „ · Niveau Landesliga“ (approx: „etwa“, bei geschätzter Stärke); leer in alten Spielständen.
+export function niveauText(career, rating, approx = false) {
+  const n = niveauName(career, rating);
+  return n ? ` · ${approx ? tr('Niveau etwa', 'level about') : tr('Niveau', 'level')} ${n}` : '';
+}
+export function niveauName(career, rating) {
+  if ((career?.strength ?? 1) < 3 || rating == null) return null;
+  const n = niveauLevel(rating);
+  return n > 8 ? PRO_NAMES()[n - 9] : leagueTitle(career, n).replace(/ Kanalbezirk$| Canal District$| Staffel Kanal$| Canal Group$/, '');
+}

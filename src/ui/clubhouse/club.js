@@ -9,7 +9,7 @@ import { button, esc, tabs as uiTabs } from '../ds.js';
 import { CREST_BAND_TEXTS, CREST_COLORS, CREST_DIVISION_GROUPS, CREST_DIVISIONS, CREST_OVERLAYS, CREST_SHAPES, CREST_SYMBOL_GROUPS, CREST_SYMBOLS, crestExtras, crestOf, crestSVG, defaultCrest, THIRD_COLOR_DIVISIONS } from '../crest.js';
 import { awayKitOf, humanClub, KIT_COLLARS, KIT_COLORS, KIT_PATTERNS, KIT_SLEEVES, kitEditable, updateCrest, setFounded, clampFounded, foundedRange, playerOf, table } from '../../career/career.js';
 import { spielberichtStreng } from '../../career/spielbericht.js';
-import { leagueTitle, VERBAND_CHOICES, verbandLeagues } from '../../career/verband.js';
+import { leagueTitle, niveauText, VERBAND_CHOICES, verbandLeagues } from '../../career/verband.js';
 import { FINES, MEMBER_FEE, SLOTS } from '../../career/finances.js';
 import { travelCost } from '../../career/travel.js';
 import { freeKitLeft, kitPrice, OUTFITTER_SEASONS, outfitterDef, outfitterOf, outfitterOffers } from '../../career/outfitter.js';
@@ -42,7 +42,7 @@ export const clubScreens = {
     const me = k?.idx != null ? this.p(k.idx) : null;
     const profile = k
       ? `<div class="me-card"><h4>${tr('Du', 'You')} – ${isPresident(c) ? tr('Präsident', 'president') : coachPlaying(c) ? tr('Spielertrainer', 'player-manager') : tr('Trainer', 'manager')}${k.generation > 1 ? tr(` <small>(${k.generation}. Trainer-Ära)</small>`, ` <small>(manager era no. ${k.generation})</small>`) : ''}</h4>
-          <p><b>${coachName(c)}</b>${me ? ` · ${me.age}${tr(' J.', ' yrs')} · ${jobName(me.profession)}${coachPlaying(c) ? ` · ${POSITIONS[me.position]} · ${tr('Stärke', 'Rating')} ${me.rating}` : ''}` : ''}${k.oldBoys ? tr(' · kickt bei den Alten Herren', ' · plays for the old boys') : ''}</p>
+          <p><b>${coachName(c)}</b>${me ? ` · ${me.age}${tr(' J.', ' yrs')} · ${jobName(me.profession)}${coachPlaying(c) ? ` · ${POSITIONS[me.position]} · ${tr('Stärke', 'Rating')} ${me.rating}${niveauText(c, me.rating)}` : ''}` : ''}${k.oldBoys ? tr(' · kickt bei den Alten Herren', ' · plays for the old boys') : ''}</p>
           ${k.style && (coachPlaying(c) || k.mode !== 'coachOnly') ? `<p>${tr('Spielertyp', 'Player type')}: ${STYLES[k.style]?.name ?? ''}</p>` : ''}
           <p>${k.relation ? familyText(k.relation, k.children ?? []) : k.family}${k.flags.kasse ? tr(' · machst nebenbei die Vereinskasse', ' · also keeping the club accounts') : ''}${k.flags.familyAtGames ? tr(' · die Familie kommt sonntags mit', ' · the family comes along on Sundays') : ''}</p>
           ${(k.children ?? []).length ? `<ul class="plain">${k.children.map((ch) => {

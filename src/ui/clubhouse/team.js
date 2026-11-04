@@ -9,7 +9,7 @@ import { GROUP_LABELS, ORDERS, packLines, SIMPLE, SIMPLE_IDS } from '../../sim/c
 import { coachLevel } from '../prefs.js';
 import { button, haptic, icon, segmented, tabs as uiTabs } from '../ds.js';
 import { LEAGUES } from '../../career/clubs.js';
-import { leagueTitle } from '../../career/verband.js';
+import { leagueTitle, niveauName, niveauText } from '../../career/verband.js';
 import { ATTR_LABELS } from '../attrLabels.js';
 import { isLight, playerCard as collectorCard, trainerCard } from '../world.js';
 import { planTarget } from '../../sim/plan.js';
@@ -119,7 +119,8 @@ export const teamScreens = {
       .filter(([k]) => p.attrs[k] != null && (k !== 'keeping' || p.position === 'gk' || p.attrs.keeping > 0.4))
       .map(([k, label]) => [label, Math.round(p.attrs[k] * 100)]);
     const traits = (p.traits ?? []).filter((t) => TRAITS[t]).map((t) => TRAITS[t].name);
-    const extra = `<p class="m-card-extra">${jobName(p.profession)}${traits.length ? ` · ${traits.slice(0, 2).join(' · ')}` : ''}</p>`;
+    const niveau = niveauName(c, p.rating); // Anzeige „Stärke · Niveau“: auf der Karte steht die Stärke vorn, das Niveau hinten
+    const extra = `<p class="m-card-extra">${niveau ? `${tr('Niveau', 'Level')} ${niveau} · ` : ''}${jobName(p.profession)}${traits.length ? ` · ${traits.slice(0, 2).join(' · ')}` : ''}</p>`;
     const marks = `${r.awards?.length ? '★' : ''}${isCoach(c, idx) ? ` ${tr('Du', 'You')}` : ''}`;
     return collectorCard({
       id: idx,
@@ -396,7 +397,7 @@ export const teamScreens = {
         const tier = tierById(p.tier);
         const known = r.scouted;
         const badge = known ? `<span class="badge" style="--c:${tier.color}">${tier.name}</span>` : '<span class="badge unknown">?</span>';
-        const rating = known ? `${tr('Stärke', 'Rating')} ${p.rating}` : `${tr('Stärke ca.', 'Rating approx.')} ${r.range[0]}–${r.range[1]}`;
+        const rating = known ? `${tr('Stärke', 'Rating')} ${p.rating}${niveauText(c, p.rating)}` : `${tr('Stärke ca.', 'Rating approx.')} ${r.range[0]}–${r.range[1]}${niveauText(c, (r.range[0] + r.range[1]) / 2, true)}`;
         const traits = known && p.traits.length ? `<p class="traits">${p.traits.map((t) => `<i title="${TRAITS[t].desc}">${TRAITS[t].name}</i>`).join('')}</p>` : '';
         const story = known && p.backstory ? `<p class="story">${p.backstory}</p>` : '';
         const chance = Math.round(recruitChance(c, r) * 100);

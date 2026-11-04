@@ -17,6 +17,7 @@ import { TRAITS } from '../../data/traits.js';
 import { jobName } from '../../data/names.js';
 import { tierById } from '../../data/tiers.js';
 import { POSITIONS } from '../../sim/generator.js';
+import { niveauText } from '../../career/verband.js';
 import { bolzplatz, canBolz, canWatch, estimate, estimateText, LEVEL_NAMES, watchClub } from '../../career/scouting.js';
 
 const SUBS = ['rumors', 'market', 'own', 'news'];
@@ -150,7 +151,7 @@ export const transferScreens = {
     const watch = button(tr(`Spiel von ${club.name} anschauen (1 Aktion)`, `Watch ${club.name} play (1 action)`), { kind: 'secondary', action: 'tfWatch', value: club.id, disabled: !canWatch(c, club), 'data-testid': 'tf-watch' });
     const head = `<div class="tf-card">
       <p class="who">${est.traits ? tierBadge(p) : ''} <b>${p.name}</b>${p.title ? ` <em>${p.title}</em>` : ''}</p>
-      <p class="t-2">${POSITIONS[p.position]} · ${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)} · ${tr('Stärke', 'Rating')} <b>${estimateText(est)}</b> <small>(${LEVEL_NAMES()[est.level]})</small></p>
+      <p class="t-2">${POSITIONS[p.position]} · ${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)} · ${tr('Stärke', 'Rating')} <b>${estimateText(est)}</b> <small>(${LEVEL_NAMES()[est.level]})</small>${niveauText(c, est.mid, !est.exact)}</p>
       <p class="t-2">${club.name} (${row.neighbor ? tr('Nachbarliga', 'neighbouring league') : tr('deine Liga', 'your league')}) · ${tr('Vereinsstärke', 'club strength')} ${Math.round(clubRating(c, club))} · ${importanceLabel(row.importance)}${row.clubId === c.flags?.derbyRival ? ` · <b>${tr('Derby-Rivale', 'derby rival')}</b>` : ''}</p>
       ${traits}${p.backstory ? `<p class="story">${p.backstory}</p>` : ''}${est.exact ? '' : `<p>${watch}</p>`}</div>`;
     // Schritt 1: Verein

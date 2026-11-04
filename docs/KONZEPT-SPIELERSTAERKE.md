@@ -510,5 +510,12 @@ Niveau (quickSlope: 0,05 unten, 0,033 oben, gegen Profis 0,02); Profis aus Nivea
 Liga nach Rang (bis 50 % vom Nachbar-Niveau, Spitze und Ende ≈ ein Niveau auseinander). Engine: Oberligist gegen Zweit-/Erstligist
 weiter in 5,5 % / 3,0 % (je 200 Spiele). **Eingeschaltet für neue Karrieren (strength: 3).** Behoben beim Einschalten: Aufschlag hob
 das Torwartspiel der Feldspieler (Verteidiger im Tor), Relegationsgegner blieb in der neuen Liga, Zwischenspeicher für angehobene
-Spieler (sonst Zeitüberschreitungen). Tests mit Zufallsverläufen robuster gemacht (Nutzerentscheid). Offen: Anzeige „Stärke · Niveau“,
+Spieler (sonst Zeitüberschreitungen). Tests mit Zufallsverläufen robuster gemacht (Nutzerentscheid). Offen:
 Entwicklung in Stärkepunkten je Liga (Schritt 6), verdeckte Boni (Schritt 7), Regionalliga/3. Liga als spielbare Ligen.
+
+Durchgang 5 (2026-11-04): **Anzeige „Stärke · Niveau“** (Schritt 7, erster Teil). Das angezeigte Niveau kommt aus der aktuellen Stärke,
+nicht aus dem verborgenen Pool-Niveau – so wandert es mit der Entwicklung. Grenze ist die Mitte zwischen zwei Ligazielen
+(NIVEAU_TARGET 51…126, darüber PRO_TARGET 141/156/171/186, jetzt in sim/niveau.js); Namen aus dem gewählten Verband (leagueTitle),
+über der Oberliga Regionalliga, 3. Liga, 2. Liga, 1. Liga. Nur für strength ≥ 3. Orte: Spielerkarte (Rückseite), Gerüchteküche,
+Transfermarkt (bei Schätzung „Niveau etwa“ aus der Mitte der Spanne), eigenes Trainerprofil. Alte Herren und Frauen haben eigene
+Skalen und zeigen kein Niveau.

@@ -10,6 +10,8 @@ import { PHYS_ATTRS } from './skill.js';
 export const NIVEAU_TARGET = [51, 57, 64, 73, 84, 97, 111, 126]; // Ligamittel der besten n je Niveau 1–8
 export const NIVEAU_BASE = 51.5; // heutiges Mittel der Freizeitliga (gemessen, Konzept 12.5) – darauf setzen die Aufschläge auf
 export const NIVEAU_LIFT = NIVEAU_TARGET.map((t, i) => (i === 0 ? 0 : t - NIVEAU_BASE));
+// Profiligen über der Oberliga (Regionalliga 9 bis 1. Liga 12): 15 Punkte je Liga, Konzept Abschnitt 10, Spielwerte (pokal.js).
+export const PRO_TARGET = { 9: 141, 10: 156, 11: 171, 12: 186 };
 export const NIVEAU_SHARE = [0.3, 0.22, 0.16, 0.12, 0.08, 0.06, 0.04, 0.02]; // Anteil im Pool, wie eine Pyramide (Spielwert)
 
 const hash = (i) => (Math.imul((i + 1) ^ 0x5bd1e995, 0x9e3779b1) + 0x2545f491) >>> 0;

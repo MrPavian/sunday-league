@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-04-1',
+    de: { title: 'Stärke mit Liganiveau', items: ['Neben der Stärkezahl steht jetzt, zu welcher Liga ein Spieler passt, z. B. „Stärke 84 · Niveau Bezirksliga“.', 'Zu sehen auf der Spielerkarte, in der Gerüchteküche, auf dem Transfermarkt und bei dir selbst – bei geschätzter Stärke als „Niveau etwa …“.', 'Gilt für neue Karrieren.'] },
+    en: { title: 'Rating with league level', items: ['Next to the rating it now says which league a player fits, e.g. “Rating 84 · level County Senior League”.', 'Shown on the player card, in the rumour mill, on the transfer market and for yourself – as “level about …” when the rating is an estimate.', 'Applies to new careers.'] },
+  },
+  {
     id: '2026-10-31-6',
     de: { title: 'Neues Stärkemodell (neue Karrieren)', items: ['Jeder Spieler hat jetzt ein festes Niveau von Freizeitliga bis Oberliga. Die Ligen liegen dadurch deutlich weiter auseinander.', 'Stärkezahlen gehen über 99: Freizeitliga um 54, Oberliga um 128, Profis 180 bis 195.', 'Wer aufsteigt, braucht bessere Leute – ein Klassenhöherer holt oben rund 80 % der Punkte.', 'Fehler hängen jetzt vom Gegner ab: Gegen starke Teams passt und schießt man unsauberer.', 'Laufende Karrieren spielen mit dem alten Modell weiter.'] },
     en: { title: 'New strength model (new careers)', items: ['Every player now has a fixed level from Sunday league to the top amateur tier. The leagues are much further apart.', 'Ratings go beyond 99: Sunday league around 54, top amateur tier around 128, pros 180 to 195.', 'Promotion means you need better players – a side one level up takes about 80 % of the points.', 'Mistakes now depend on the opponent: against strong sides passes and shots get sloppier.', 'Careers already under way keep the old model.'] },

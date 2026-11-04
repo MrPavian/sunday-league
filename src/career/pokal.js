@@ -11,6 +11,7 @@
 // Gespielt wird im Format des Gastgebers: Wer als Bezirksligist zum Kreisklassen-Verein muss, spielt 7 gegen 7.
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
+import { PRO_TARGET } from '../sim/niveau.js';
 import { createMatch, EXTRA_SHARE, MATCH, matchDuration } from '../sim/match.js';
 import { BUND_PITCHES, PITCHES } from '../sim/pitch.js';
 import { shootoutScore } from '../sim/shootout.js';
@@ -333,7 +334,6 @@ export const QUICK_BUND = { perPoint: 0.04 };
 // Stärkemodell 3: Profis aus Oberliga-Niveau, Technikwerte um den Abstand zum Ziel ihrer Liga angehoben (15 Punkte je Liga über der
 // Oberliga: Regionalliga 141, 3. Liga 156, 2. Liga 171, Bundesliga 186 – Konzept Abschnitt 10, Spielwerte); Tempo und Ausdauer
 // behalten den alten Profi-Zuschlag (gedeckelt bei 0,98). 0,7 = Anteil der Technikwerte an der Stärke (Gewichte, generator.js).
-export const PRO_TARGET = { 9: 141, 10: 156, 11: 171, 12: 186 };
 export const FIELD_STRENGTH_3 = { erst: [186, 3], zweit: [171, 3], amateur: [129, 3] };
 function profiDelta(klass) {
   const tech = ((PRO_TARGET[klass.level] ?? 129) - 129) / (100 * 0.7);

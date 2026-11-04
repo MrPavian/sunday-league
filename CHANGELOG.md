@@ -6,6 +6,11 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-04-1 – Stärke mit Liganiveau
+
+### Geändert
+- **Stärke mit Liganiveau (neue Karrieren):** Neben der Stärkezahl steht jetzt, zu welcher Liga ein Spieler passt, z. B. „Stärke 84 · Niveau Bezirksliga“ – auf der Spielerkarte, in der Gerüchteküche, auf dem Transfermarkt und bei dir selbst. Ist die Stärke nur geschätzt, heißt es „Niveau etwa …“. Die Ligennamen folgen deinem Verband; über der Oberliga Regionalliga bis 1. Liga.
+
 ## 2026-10-31-6 – Neues Stärkemodell (neue Karrieren)
 
 ### Geändert
