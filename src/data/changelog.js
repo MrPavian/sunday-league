@@ -3,8 +3,8 @@
 export const CHANGELOG = [
   {
     id: '2026-11-04-1',
-    de: { title: 'Stärke mit Liganiveau', items: ['Neben der Stärkezahl steht jetzt, zu welcher Liga ein Spieler passt, z. B. „Stärke 84 · Niveau Bezirksliga“.', 'Zu sehen auf der Spielerkarte, in der Gerüchteküche, auf dem Transfermarkt und bei dir selbst – bei geschätzter Stärke als „Niveau etwa …“.', 'Gilt für neue Karrieren.'] },
-    en: { title: 'Rating with league level', items: ['Next to the rating it now says which league a player fits, e.g. “Rating 84 · level County Senior League”.', 'Shown on the player card, in the rumour mill, on the transfer market and for yourself – as “level about …” when the rating is an estimate.', 'Applies to new careers.'] },
+    de: { title: 'Stärke mit Liganiveau, Entwicklung je Liga', items: ['Neben der Stärkezahl steht jetzt, zu welcher Liga ein Spieler passt, z. B. „Stärke 84 · Niveau Bezirksliga“.', 'Zu sehen auf der Spielerkarte, in der Gerüchteküche, auf dem Transfermarkt und bei dir selbst – bei geschätzter Stärke als „Niveau etwa …“.', 'Ab der Landesliga legen Spieler mehr Stärkepunkte zu, weil oben ein Punkt weniger bewirkt – ein junger Oberliga-Spieler rund 27 statt 19 in acht Saisons.', 'Gilt für neue Karrieren.'] },
+    en: { title: 'Rating with league level, development by league', items: ['Next to the rating it now says which league a player fits, e.g. “Rating 84 · level County Senior League”.', 'Shown on the player card, in the rumour mill, on the transfer market and for yourself – as “level about …” when the rating is an estimate.', 'From the Regional League Canal Group upwards players gain more rating points, because higher up a point counts for less – a young top-amateur player about 27 instead of 19 over eight seasons.', 'Applies to new careers.'] },
   },
   {
     id: '2026-10-31-6',

@@ -519,3 +519,20 @@ nicht aus dem verborgenen Pool-Niveau – so wandert es mit der Entwicklung. Gre
 über der Oberliga Regionalliga, 3. Liga, 2. Liga, 1. Liga. Nur für strength ≥ 3. Orte: Spielerkarte (Rückseite), Gerüchteküche,
 Transfermarkt (bei Schätzung „Niveau etwa“ aus der Mitte der Spanne), eigenes Trainerprofil. Alte Herren und Frauen haben eigene
 Skalen und zeigen kein Niveau.
+
+Durchgang 6 (2026-11-04): **Entwicklung in Spielstärke** (Schritt 6, erster Teil). Die Zielwerte des Nutzers (16- bis 20-Jährige +8
+Freizeitliga, +14 Bezirksliga in 8 Saisons) gelten in Spielstärke: Faktor = 0,05 / Wirkung je Punkt am Ligaziel (`slopeAt`, jetzt
+in sim/niveau.js, dieselbe Messung wie quickSlope) auf Zuwachs, Durchbruch, Knoten und den Abbau der Technikwerte; Tempo, Ausdauer
+und Körper bauen weiter in echten Größen ab. Faktor Stufe 1–5: 1; Landesliga 1,08; Verbandsliga 1,24; Oberliga 1,47.
+Gemessen (scripts/development-check.mjs 60, 8 Einsätze je Saison), 16- bis 20-Jährige, Ø / Durchbruch / hängen geblieben:
+
+| Liga | altes Modell | neues Modell |
+|---|---|---|
+| Freizeitliga | +8,1 / 5,8 % / 11,6 % | +8,1 / 5,8 % / 11,6 % |
+| Bezirksliga | +13,6 / 10,1 % / 11,6 % | +13,6 / 10,1 % / 11,6 % |
+| Landesliga | – | +16,3 / 14,5 % / 10,1 % |
+| Verbandsliga | – | +20,8 / 24,6 % / 7,2 % |
+| Oberliga | +18,6 / 18,8 % / 8,7 % | +27,3 / 29,0 % / 4,3 % |
+
+30- bis 34-Jährige Oberliga: −8,7 → −10,0 (nur der Technik-Abbau wächst mit). Golden unverändert (Stufe 1). Offen in Schritt 6:
+verborgenes Potenzial (Obergrenze), Bremse in zu tiefer Liga, „über seiner Liga“ wird bemerkt – braucht Nutzerentscheide.

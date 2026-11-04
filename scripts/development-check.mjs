@@ -2,15 +2,17 @@
 // Spielpraxis (8 Einsätze), ohne Tapetenwechsel. Zielwerte (Nutzer, 2026-10-23) für 16- bis 20-Jährige:
 // Ø etwa +8 (Freizeitliga) bzw. +14 (Bezirksliga), 5–10 % Durchbrüche (mindestens 7 über dem Ligaschnitt, also etwa
 // +15 bzw. +21), 10–15 % bei höchstens +3.
-//   node scripts/development-check.mjs [N=60]
+//   node scripts/development-check.mjs [N=60]   (STRENGTH=1 für das alte Stärkemodell, LEVELS=1,5,8 für andere Ligen)
 import { createCareer, developPlayers, humanClub, playerOf } from '../src/career/career.js';
 
 const N = Number(process.argv[2] ?? 60);
 const out = {};
-for (const level of [1, 5]) {
+const LEVELS = (process.env.LEVELS ?? '1,5').split(',').map(Number);
+for (const level of LEVELS) {
   const rows = [];
   for (let seed = 1; seed <= N; seed++) {
     const c = createCareer({ seed });
+    if (process.env.STRENGTH) c.strength = Number(process.env.STRENGTH);
     c.level = level;
     const sq = humanClub(c).squad;
     const start = Object.fromEntries(sq.map((i) => [i, playerOf(c, i)]));

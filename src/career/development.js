@@ -14,6 +14,8 @@
 // Gemessen (scripts/development-check.mjs 150, 200 Spieler je Liga): Freizeitliga Ø +8,0, 7 % Durchbruch, 12 % hängen;
 // Bezirksliga Ø +13,5, 10 % Durchbruch, 11 % hängen. Vorher (ohne Typen und Liga): Ø +25 in jeder Liga.
 
+import { NIVEAU_TARGET, SLOPE, slopeAt } from '../sim/niveau.js';
+
 const hash = (...parts) => parts.reduce((h, p) => (Math.imul(h ^ p, 0x9e3779b1) + 0x7f4a7c15) >>> 0, 0x6a09e667);
 const unit = (...parts) => hash(...parts) / 4294967296;
 
@@ -78,6 +80,12 @@ export function seasonCurve(prof, age) {
   }
 }
 
+// Stärkemodell 3 (Konzept Spielerstärke 5 und 12.2 Schritt 6: „Zielwerte in Elo übersetzen“): Die Zielwerte oben gelten in
+// Spielstärke (Elo), nicht in Punkten. Bis zur Bezirksliga wirkt ein Punkt in der Engine wie im alten Modell (0,05); darüber
+// weniger (Oberliga 0,033), also braucht derselbe Fortschritt mehr Punkte. Faktor = 0,05 / Wirkung je Punkt am Ligaziel – Oberliga
+// ×1,47. Gilt für Zuwachs und den Abbau der Technikwerte; Tempo, Ausdauer und Körper bleiben echte Größen und bauen gleich ab.
+export const eloScale = (career) => ((career?.strength ?? 1) < 3 ? 1 : SLOPE.low / slopeAt(NIVEAU_TARGET[Math.max(1, Math.min(NIVEAU_TARGET.length, career.level ?? 1)) - 1]));
+
 export const leagueGrowth = (career) => LEAGUE_GROWTH[Math.max(1, Math.min(LEAGUE_GROWTH.length, career.level ?? 1)) - 1];
 
 // Tapetenwechsel seit der letzten Vorbereitung: neu im Verein, neuer Trainer oder neue Spielidee.
@@ -103,14 +111,15 @@ export function rememberEnvironment(career, club) {
 export function seasonGain(career, idx, p, mul, changed) {
   const prof = devProfile(career, idx, p.position);
   const lk = leagueGrowth(career);
-  let gain = seasonCurve(prof, p.age) * lk * SCALE * mul;
+  const k = eloScale(career);
+  let gain = seasonCurve(prof, p.age) * lk * SCALE * mul * k;
   let event = null;
   if (prof.type === 'durchbruch' && p.age === prof.breakAge) {
-    gain += JUMP * lk ** JUMP_DAMP * Math.min(1.2, mul);
+    gain += JUMP * lk ** JUMP_DAMP * Math.min(1.2, mul) * k;
     event = 'durchbruch';
   } else if (changed && prof.type !== 'durchbruch' && p.age <= prof.peak + 1 && unit(career.seed ?? 0, idx, career.season ?? 1, 4244) < KNOT_CHANCE) {
     // Neue Mannschaft, neuer Trainer, andere Taktik: Der Knoten platzt – und wer feststeckte, entwickelt sich wieder normal.
-    gain += JUMP * KNOT_JUMP * lk ** JUMP_DAMP * Math.min(1.2, mul);
+    gain += JUMP * KNOT_JUMP * lk ** JUMP_DAMP * Math.min(1.2, mul) * k;
     event = 'knoten';
     if (prof.type === 'stagniert') career.players[idx].devType = 'normal';
   } else if (prof.type === 'stagniert' && p.age === prof.stopAge) event = 'stillstand';

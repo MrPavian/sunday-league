@@ -6,10 +6,11 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
-## 2026-11-04-1 – Rating with league level
+## 2026-11-04-1 – Rating with league level, development by league
 
 ### Changed
 - **Rating with league level (new careers):** next to the rating it now says which league a player fits, e.g. “Rating 84 · level County Senior League” – on the player card, in the rumour mill, on the transfer market and for yourself. If the rating is only an estimate, it says “level about …”. League names follow your association; above the top amateur tier, Regional League to First Division.
+- **Development by league (new careers):** from the Regional League Canal Group upwards, players gain more rating points – higher up a point counts for less, so the same progress takes more points. A young top-amateur player gains about 27 instead of 19 points over eight seasons; up to the County Senior League nothing changes.
 
 ## 2026-10-31-6 – New strength model (new careers)
 

@@ -1,7 +1,7 @@
 // Entwicklung der eigenen Spieler (development.js): verborgene Typen, Liga-Deckel, Durchbruch, geplatzter Knoten.
 import { describe, expect, it } from 'vitest';
 import { createCareer, developPlayers, humanClub, migrateCareer, playerOf } from '../src/career/career.js';
-import { DEV_TYPES, devProfile, environmentChanged, PEAK_AGE, seasonCurve, seasonGain } from '../src/career/development.js';
+import { DEV_TYPES, devProfile, eloScale, environmentChanged, PEAK_AGE, seasonCurve, seasonGain } from '../src/career/development.js';
 
 const BASE = createCareer({ seed: 7 });
 const fresh = () => JSON.parse(JSON.stringify(BASE));
@@ -94,5 +94,30 @@ describe('Entwicklung je Spieler', () => {
     const rep = developPlayers(m);
     expect(rep.map((r) => r.idx)).toEqual(humanClub(m).squad);
     for (const r of rep) expect(r.before).toBe(before[r.idx]);
+  });
+});
+
+// Stärkemodell 3: Zuwachs in Spielstärke statt in Punkten (Konzept Spielerstärke 12.2 Schritt 6).
+describe('Entwicklung in Spielstärke (Stärkemodell 3)', () => {
+  it('bis zur Bezirksliga wie bisher, darüber mehr Punkte, alte Spielstände unverändert', () => {
+    expect(eloScale({ strength: 1, level: 8 })).toBe(1);
+    for (const level of [1, 2, 3, 4, 5]) expect(eloScale({ strength: 3, level })).toBe(1);
+    const s = [6, 7, 8].map((level) => eloScale({ strength: 3, level }));
+    expect(s[0]).toBeGreaterThan(1);
+    expect(s[1]).toBeGreaterThan(s[0]);
+    expect(s[2]).toBeCloseTo(0.05 / 0.0339, 2); // Oberliga: Wirkung je Punkt 0,033 statt 0,05
+  });
+  it('ein Oberliga-Spieler legt im neuen Modell entsprechend mehr Punkte zu', () => {
+    const run = (strength) => {
+      const c = fresh();
+      c.strength = strength;
+      c.level = 8;
+      const idx = humanClub(c).squad[0];
+      c.players[idx] ??= {};
+      const p = { ...playerOf(c, idx), age: 18 };
+      return seasonGain(c, idx, p, 1.3, false).gain;
+    };
+    const old = run(1);
+    if (old > 0) expect(run(3) / old).toBeCloseTo(eloScale({ strength: 3, level: 8 }), 5);
   });
 });

@@ -11,7 +11,7 @@
 // Gespielt wird im Format des Gastgebers: Wer als Bezirksligist zum Kreisklassen-Verein muss, spielt 7 gegen 7.
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
-import { PRO_TARGET } from '../sim/niveau.js';
+import { PRO_TARGET, slopeAt } from '../sim/niveau.js';
 import { createMatch, EXTRA_SHARE, MATCH, matchDuration } from '../sim/match.js';
 import { BUND_PITCHES, PITCHES } from '../sim/pitch.js';
 import { shootoutScore } from '../sim/shootout.js';
@@ -346,8 +346,7 @@ export const QUICK_BUND3 = { perPoint: 0.02 };
 export function quickSlope(c, sa, sb, bund = false) {
   if ((c?.strength ?? 1) < 3) return bund ? QUICK_BUND.perPoint : QUICK.perPoint;
   if (bund) return QUICK_BUND3.perPoint;
-  const m = (sa + sb) / 2;
-  return m <= 89 ? 0.05 : m >= 128 ? 0.033 : 0.05 - ((m - 89) / (128 - 89)) * 0.017;
+  return slopeAt((sa + sb) / 2);
 }
 const strength = (c, club, n) => {
   const r = club.squad.map((i) => playerOf(c, i).rating).sort((a, b) => b - a).slice(0, n);

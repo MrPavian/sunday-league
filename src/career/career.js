@@ -42,7 +42,7 @@ import { coachWeek, hiredGrowth, presidentSeasonEnd, weeklyHired } from './presi
 import { childrenGrowUp, coachAway, coachName, initCoach, isCoach, isPresident, personalWeek, seasonPersonal, weeklyPersonal } from './personal.js';
 import { absenceFactor, advanceArcs, applyForm, autoResolve, resultMood, rollNotice, rollWeekEvent, weeklyMood } from './events.js';
 import { developYouth, expireYouth, initYouth, retirements, youthIntake } from './youth.js';
-import { environmentChanged, rememberEnvironment, seasonGain } from './development.js';
+import { eloScale, environmentChanged, rememberEnvironment, seasonGain } from './development.js';
 import { applyCards, banGames, banReason, isBanned, resetYellows, tickBans } from './suspensions.js';
 import { book, closeSeasonFinances, initFinances, KIT_COST, makeOffers, matchFinances, UPPER_FANS, weeklyFinances } from './finances.js';
 
@@ -179,7 +179,7 @@ export function developPlayers(career) {
       if (age >= onset && (k === 'pace' || k === 'stamina')) d -= age >= onset + 3 ? 0.035 : 0.015;
       // Körper: baut ab dem Einsetzen langsam ab – halb so schnell wie Tempo/Ausdauer.
       if (age >= onset && k === 'strength') d -= age >= onset + 3 ? 0.018 : 0.008;
-      if (age >= onset + 3 && k !== 'pace' && k !== 'stamina' && k !== 'strength') d -= 0.008;
+      if (age >= onset + 3 && k !== 'pace' && k !== 'stamina' && k !== 'strength') d -= 0.008 * eloScale(career); // Modell 3: Abbau in Spielstärke
       rec.delta[k] = (rec.delta[k] ?? 0) + d;
     }
     rec.devSeen = career.season;

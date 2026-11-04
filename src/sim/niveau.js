@@ -12,6 +12,10 @@ export const NIVEAU_BASE = 51.5; // heutiges Mittel der Freizeitliga (gemessen, 
 export const NIVEAU_LIFT = NIVEAU_TARGET.map((t, i) => (i === 0 ? 0 : t - NIVEAU_BASE));
 // Profiligen über der Oberliga (Regionalliga 9 bis 1. Liga 12): 15 Punkte je Liga, Konzept Abschnitt 10, Spielwerte (pokal.js).
 export const PRO_TARGET = { 9: 141, 10: 156, 11: 171, 12: 186 };
+// Wirkung eines Stärkepunkts in der Engine je Niveau der Partie (mittlere Stärke m), gemessen (Konzept 12.5, pokal.js quickSlope):
+// 0,051 (Niveau 1 gg 2, Ø 64), 0,049 (4 gg 5, Ø 89), 0,033 (7 gg 8, Ø 128); dazwischen linear, darunter und darüber konstant.
+export const SLOPE = { low: 0.05, high: 0.033, from: 89, to: 128 };
+export const slopeAt = (m) => (m <= SLOPE.from ? SLOPE.low : m >= SLOPE.to ? SLOPE.high : SLOPE.low - ((m - SLOPE.from) / (SLOPE.to - SLOPE.from)) * (SLOPE.low - SLOPE.high));
 export const NIVEAU_SHARE = [0.3, 0.22, 0.16, 0.12, 0.08, 0.06, 0.04, 0.02]; // Anteil im Pool, wie eine Pyramide (Spielwert)
 
 const hash = (i) => (Math.imul((i + 1) ^ 0x5bd1e995, 0x9e3779b1) + 0x2545f491) >>> 0;
