@@ -535,4 +535,33 @@ Gemessen (scripts/development-check.mjs 60, 8 Einsätze je Saison), 16- bis 20-J
 | Oberliga | +18,6 / 18,8 % / 8,7 % | +27,3 / 29,0 % / 4,3 % |
 
 30- bis 34-Jährige Oberliga: −8,7 → −10,0 (nur der Technik-Abbau wächst mit). Golden unverändert (Stufe 1). Offen in Schritt 6:
-verborgenes Potenzial (Obergrenze), Bremse in zu tiefer Liga, „über seiner Liga“ wird bemerkt – braucht Nutzerentscheide.
+Bremse in zu tiefer Liga, „über seiner Liga“ wird bemerkt.
+
+### 12.6 Talent (2026-11-04, Nutzerentscheid)
+
+Nutzerwunsch: Junge Spieler sollen je nach Talent stark zulegen, normal besser werden oder stehen bleiben. Entscheid: festes,
+verborgenes Talent je Spieler (development.js `TALENTS`, eigener Zufall über createRng – mit `unit()` allein hing es eng am
+Entwicklungstyp, gemessen) mit Zuwachsfaktor und Obergrenze (Luft in Ligaabständen seines Niveaus über seiner Stärke beim ersten
+Saisonwechsel bei uns). Die Entwicklungstypen bleiben für den Zeitpunkt. Nur strength ≥ 3.
+
+| Talent | Anteil | Zuwachs | Luft |
+|---|---|---|---|
+| Ausnahmetalent | 5 % | ×1,4 | 4 Ligaabstände |
+| großes Talent | 15 % | ×1,2 | 3 |
+| normal | 50 % | ×1 | 2 |
+| begrenzt | 20 % | ×0,75 | 1 |
+| ausgereizt | 10 % | ×0,45 | 0,25 |
+
+Zuerst ×1,8 bis ×0,2 vorgeschlagen; damit lagen die Durchbrüche (≥ 7 über dem Schnitt) über den Zielwerten des Nutzers (bis 15 %,
+tests/development.test.js) – Nutzerentscheid „Streuung kleiner machen“: ×1,4 bis ×0,45 (Test: 12,9 % Bezirksliga). TALENT_NORM 1,06
+gleicht den mittleren Faktor (0,945) aus. Gemessen (development-check.mjs 200, Kader der jeweiligen Liga, 16- bis 20-Jährige, 8 Saisons):
+
+| Liga | Ø | ausgereizt | begrenzt | normal | groß | Ausnahme | hängen (≤ +3) |
+|---|---|---|---|---|---|---|---|
+| Freizeitliga | +7,2 | +1,6 | +4,7 | +8,0 | +11,6 | +11,3 | 21 % |
+| Bezirksliga | +13,9 | +2,7 | +9,8 | +15,5 | +18,4 | +21,3 | 20 % |
+| Oberliga | +23,0 | +3,4 | +13,9 | +25,4 | +32,4 | +39,3 | 10 % |
+
+Mehr hängen Gebliebene als früher (11–12 %) ist gewollt (Ausgereizte). Anzeige: geschätzt (Nutzerentscheid), Sicherheit aus
+Saisons im Verein, Spielpraxis, Co-Trainer, Beobachten; unter 45 % nur grob („könnte was werden“), sonst „wohl …“, ab 85 % genau;
+manchmal eine Stufe daneben (fest je Saison). Auf der Spielerkarte (bis 23 Jahre) und in der Jugend-Liste.

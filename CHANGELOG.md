@@ -6,11 +6,12 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
-## 2026-11-04-1 – Stärke mit Liganiveau, Entwicklung je Liga
+## 2026-11-04-1 – Liganiveau, Entwicklung und Talent
 
 ### Geändert
 - **Stärke mit Liganiveau (neue Karrieren):** Neben der Stärkezahl steht jetzt, zu welcher Liga ein Spieler passt, z. B. „Stärke 84 · Niveau Bezirksliga“ – auf der Spielerkarte, in der Gerüchteküche, auf dem Transfermarkt und bei dir selbst. Ist die Stärke nur geschätzt, heißt es „Niveau etwa …“. Die Ligennamen folgen deinem Verband; über der Oberliga Regionalliga bis 1. Liga.
 - **Entwicklung je Liga (neue Karrieren):** Ab der Landesliga legen Spieler mehr Stärkepunkte zu – oben bewirkt ein Punkt weniger, also braucht derselbe Fortschritt mehr Punkte. Ein junger Oberliga-Spieler gewinnt in acht Saisons rund 27 statt 19 Punkte; bis zur Bezirksliga bleibt alles, wie es war.
+- **Talent (neue Karrieren):** Jeder Spieler hat ein verborgenes Talent – vom Ausnahmetalent bis „ausgereizt“. Es bestimmt, wie viel ein junger Spieler zulegt und wie weit er kommt: Manche schießen nach oben, viele werden normal besser, manche bleiben fast stehen. Auf der Spielerkarte und in der Jugend steht eine Einschätzung, die mit Saisons im Verein, Spielpraxis und Co-Trainer genauer wird – und manchmal danebenliegt.
 
 ## 2026-10-31-6 – Neues Stärkemodell (neue Karrieren)
 

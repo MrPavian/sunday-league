@@ -1,7 +1,7 @@
 // Entwicklung der eigenen Spieler (development.js): verborgene Typen, Liga-Deckel, Durchbruch, geplatzter Knoten.
 import { describe, expect, it } from 'vitest';
 import { createCareer, developPlayers, humanClub, migrateCareer, playerOf } from '../src/career/career.js';
-import { DEV_TYPES, devProfile, eloScale, environmentChanged, PEAK_AGE, seasonCurve, seasonGain } from '../src/career/development.js';
+import { DEV_TYPES, devProfile, eloScale, environmentChanged, PEAK_AGE, seasonCurve, seasonGain, TALENT_NORM, playerTalentGuess, talentOf, TALENTS } from '../src/career/development.js';
 
 const BASE = createCareer({ seed: 7 });
 const fresh = () => JSON.parse(JSON.stringify(BASE));
@@ -114,10 +114,49 @@ describe('Entwicklung in Spielstärke (Stärkemodell 3)', () => {
       c.level = 8;
       const idx = humanClub(c).squad[0];
       c.players[idx] ??= {};
+      c.players[idx].ceil = 999; // Obergrenze hier nicht im Weg
       const p = { ...playerOf(c, idx), age: 18 };
       return seasonGain(c, idx, p, 1.3, false).gain;
     };
     const old = run(1);
-    if (old > 0) expect(run(3) / old).toBeCloseTo(eloScale({ strength: 3, level: 8 }), 5);
+    const c3 = { ...fresh(), strength: 3 };
+    const tm = talentOf(c3, humanClub(c3).squad[0]).mul * TALENT_NORM;
+    if (old > 0) expect(run(3) / old).toBeCloseTo(eloScale({ strength: 3, level: 8 }) * tm, 5);
+  });
+});
+
+// Talent (Nutzerentscheid 2026-11-04): fest je Spieler, bestimmt Zuwachs und Obergrenze; Anzeige geschätzt.
+describe('Talent', () => {
+  it('nur im neuen Modell, Anteile wie festgelegt und unabhängig vom Entwicklungstyp', () => {
+    expect(talentOf({ seed: 1, strength: 1, players: {} }, 5)).toBeNull();
+    const n = {};
+    const both = {};
+    for (let seed = 1; seed <= 40; seed++)
+      for (let idx = 0; idx < 250; idx++) {
+        const c = { seed, strength: 3, players: {} };
+        const t = talentOf(c, idx).id;
+        n[t] = (n[t] ?? 0) + 1;
+        if (devProfile(c, idx).type === 'frueh') both[t] = (both[t] ?? 0) + 1;
+      }
+    for (const t of TALENTS) {
+      expect(n[t.id] / 10000).toBeCloseTo(t.share, 1);
+      expect(both[t.id] / n[t.id]).toBeGreaterThan(0.1); // Frühentwickler (15 %) gibt es in jeder Talentstufe
+      expect(both[t.id] / n[t.id]).toBeLessThan(0.2);
+    }
+  });
+  it('Obergrenze: über ihr legt keiner mehr zu, Ausgereizte kaum', () => {
+    const c = fresh();
+    c.strength = 3;
+    const idx = humanClub(c).squad.find((i) => talentOf(c, i).id === 'ausgereizt') ?? humanClub(c).squad[0];
+    c.players[idx].ceil = playerOf(c, idx).rating;
+    expect(seasonGain(c, idx, { ...playerOf(c, idx), age: 17 }, 1.3, false).gain).toBe(0);
+  });
+  it('die Schätzung wird mit Saisons im Verein und Co-Trainer sicherer', () => {
+    const c = { seed: 3, strength: 3, season: 1, players: { 9: {} } };
+    const a = playerTalentGuess(c, 9).sure;
+    c.players[9] = { seasons: [{}, {}], apps: 8 };
+    c.staff = { cotrainer: true };
+    expect(playerTalentGuess(c, 9).sure).toBeGreaterThan(a);
+    expect(playerTalentGuess(c, 9).text).toBeTruthy();
   });
 });

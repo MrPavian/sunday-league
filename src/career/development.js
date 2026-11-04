@@ -14,7 +14,9 @@
 // Gemessen (scripts/development-check.mjs 150, 200 Spieler je Liga): Freizeitliga Ø +8,0, 7 % Durchbruch, 12 % hängen;
 // Bezirksliga Ø +13,5, 10 % Durchbruch, 11 % hängen. Vorher (ohne Typen und Liga): Ø +25 in jeder Liga.
 
-import { NIVEAU_TARGET, SLOPE, slopeAt } from '../sim/niveau.js';
+import { tr } from '../core/i18n.js';
+import { createRng } from '../core/rng.js';
+import { NIVEAU_TARGET, PRO_TARGET, SLOPE, slopeAt } from '../sim/niveau.js';
 
 const hash = (...parts) => parts.reduce((h, p) => (Math.imul(h ^ p, 0x9e3779b1) + 0x7f4a7c15) >>> 0, 0x6a09e667);
 const unit = (...parts) => hash(...parts) / 4294967296;
@@ -86,6 +88,54 @@ export function seasonCurve(prof, age) {
 // ×1,47. Gilt für Zuwachs und den Abbau der Technikwerte; Tempo, Ausdauer und Körper bleiben echte Größen und bauen gleich ab.
 export const eloScale = (career) => ((career?.strength ?? 1) < 3 ? 1 : SLOPE.low / slopeAt(NIVEAU_TARGET[Math.max(1, Math.min(NIVEAU_TARGET.length, career.level ?? 1)) - 1]));
 
+// --- Talent (Nutzerentscheid 2026-11-04, Stärkemodell 3) ------------------------------------------------------------------
+// Jeder Spieler hat ein festes, verborgenes Talent: Es bestimmt, wie viel er zulegt (mul) und wie weit er kommt (room, in
+// Ligaabständen seines Niveaus über seiner Stärke beim ersten Saisonwechsel bei uns: eine Liga Luft im eigenen Niveau plus „up“
+// Ligen darüber). Die Entwicklungstypen oben bleiben für den Zeitpunkt. Anteile, Faktoren und Luft sind Spielwerte (Vorschlag,
+// vom Nutzer bestätigt; Faktoren danach enger, ×1,4 bis ×0,45, damit die Zielwerte 5–15 % Durchbruch halten – Nutzerentscheid); TALENT_NORM gleicht aus, damit der Schnitt bei den Zielwerten oben bleibt (gemessen, Konzept 12.6).
+export const TALENTS = [
+  { id: 'ausnahme', share: 0.05, mul: 1.4, room: 4 },
+  { id: 'gross', share: 0.15, mul: 1.2, room: 3 },
+  { id: 'normal', share: 0.5, mul: 1, room: 2 },
+  { id: 'begrenzt', share: 0.2, mul: 0.75, room: 1 },
+  { id: 'ausgereizt', share: 0.1, mul: 0.45, room: 0.25 },
+];
+export const TALENT_NORM = 1.06;
+export const TALENT_NAMES = () => ({ ausnahme: tr('Ausnahmetalent', 'exceptional talent'), gross: tr('großes Talent', 'big talent'), normal: tr('normales Talent', 'normal talent'), begrenzt: tr('begrenztes Talent', 'limited talent'), ausgereizt: tr('ausgereizt', 'maxed out') });
+const TARGETS = [...NIVEAU_TARGET, ...Object.values(PRO_TARGET)];
+export function talentOf(career, idx) {
+  if ((career?.strength ?? 1) < 3) return null;
+  // Eigener Zufall, durch createRng gemischt: unit() allein hinge eng mit dem Entwicklungstyp zusammen (gemessen: fast alle
+  // Ausgereizten wären Frühentwickler).
+  let u = createRng(hash(career.seed ?? 0, idx, 4246)).next();
+  for (const t of TALENTS) if ((u -= t.share) < 0) return t;
+  return TALENTS[TALENTS.length - 1];
+}
+// Ligaabstand am Niveau n (zur nächsten Liga; ganz oben der letzte Abstand).
+const gapAt = (n) => {
+  const i = Math.max(0, Math.min(TARGETS.length - 2, n - 1));
+  return TARGETS[i + 1] - TARGETS[i];
+};
+export const talentRoom = (t, niveau) => t.room * gapAt(niveau);
+
+// Geschätztes Talent (Nutzerentscheid: „geschätzt, wird genauer“): Anfangs grob, mit Saisons im Verein, Spielpraxis, Co-Trainer
+// und Beobachten genauer; liegt manchmal eine Stufe daneben (fest je Saison, ohne die Zufallsströme der Karriere).
+export function playerTalentGuess(career, idx) {
+  const t = talentOf(career, idx);
+  if (!t) return null;
+  const rec = career.players[idx] ?? {};
+  const k = Math.min(1, 0.2 + 0.25 * (rec.seasons?.length ?? 0) + (rec.apps >= 5 ? 0.15 : 0) + (career.staff?.cotrainer ? 0.2 : 0) + (rec.scouted ? 0.2 : 0));
+  let i = TALENTS.indexOf(t);
+  const u = createRng(hash(career.seed ?? 0, idx, career.season ?? 1, 4247)).next();
+  if (u < (1 - k) * 0.6) i = Math.max(0, Math.min(TALENTS.length - 1, i + (u < (1 - k) * 0.3 ? -1 : 1)));
+  const id = TALENTS[i].id;
+  if (k < 0.45) {
+    const vague = i <= 1 ? tr('könnte was werden', 'could become something') : i >= 3 ? tr('wirkt eher ausgereizt', 'looks rather limited') : tr('schwer zu sagen', 'hard to say');
+    return { id, sure: k, text: vague };
+  }
+  return { id, sure: k, text: k >= 0.85 ? TALENT_NAMES()[id] : tr(`wohl ${TALENT_NAMES()[id]}`, `probably ${TALENT_NAMES()[id]}`) };
+}
+
 export const leagueGrowth = (career) => LEAGUE_GROWTH[Math.max(1, Math.min(LEAGUE_GROWTH.length, career.level ?? 1)) - 1];
 
 // Tapetenwechsel seit der letzten Vorbereitung: neu im Verein, neuer Trainer oder neue Spielidee.
@@ -108,11 +158,18 @@ export function rememberEnvironment(career, club) {
 
 // Saisonzuwachs eines Spielers in Stärkepunkten (ohne körperlichen Abbau) und was dabei passiert ist.
 // mul: Spielpraxis × Trainer × Ausstattung (aus developPlayers).
+const niveauLevelOf = (r) => {
+  let n = 1;
+  for (let i = 1; i < TARGETS.length; i++) if (r >= (TARGETS[i - 1] + TARGETS[i]) / 2) n = i + 1;
+  return n;
+};
 export function seasonGain(career, idx, p, mul, changed) {
   const prof = devProfile(career, idx, p.position);
   const lk = leagueGrowth(career);
   const k = eloScale(career);
-  let gain = seasonCurve(prof, p.age) * lk * SCALE * mul * k;
+  const talent = talentOf(career, idx);
+  const tm = talent ? talent.mul * TALENT_NORM : 1;
+  let gain = seasonCurve(prof, p.age) * lk * SCALE * mul * k * tm;
   let event = null;
   if (prof.type === 'durchbruch' && p.age === prof.breakAge) {
     gain += JUMP * lk ** JUMP_DAMP * Math.min(1.2, mul) * k;
@@ -123,5 +180,11 @@ export function seasonGain(career, idx, p, mul, changed) {
     event = 'knoten';
     if (prof.type === 'stagniert') career.players[idx].devType = 'normal';
   } else if (prof.type === 'stagniert' && p.age === prof.stopAge) event = 'stillstand';
+  if (talent && p.rating != null) {
+    // Obergrenze: beim ersten Saisonwechsel bei uns festgelegt (Stärke dann + Luft des Talents), danach fest.
+    const rec = (career.players[idx] ??= {});
+    rec.ceil ??= Math.round(p.rating + talentRoom(talent, p.niveau ?? niveauLevelOf(p.rating)));
+    gain = Math.min(gain, Math.max(0, rec.ceil - p.rating));
+  }
   return { gain, event, prof };
 }

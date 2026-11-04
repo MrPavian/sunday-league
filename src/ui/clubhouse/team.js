@@ -10,6 +10,7 @@ import { coachLevel } from '../prefs.js';
 import { button, haptic, icon, segmented, tabs as uiTabs } from '../ds.js';
 import { LEAGUES } from '../../career/clubs.js';
 import { leagueTitle, niveauName, niveauText } from '../../career/verband.js';
+import { playerTalentGuess } from '../../career/development.js';
 import { ATTR_LABELS } from '../attrLabels.js';
 import { isLight, playerCard as collectorCard, trainerCard } from '../world.js';
 import { planTarget } from '../../sim/plan.js';
@@ -120,7 +121,8 @@ export const teamScreens = {
       .map(([k, label]) => [label, Math.round(p.attrs[k] * 100)]);
     const traits = (p.traits ?? []).filter((t) => TRAITS[t]).map((t) => TRAITS[t].name);
     const niveau = niveauName(c, p.rating); // Anzeige „Stärke · Niveau“: auf der Karte steht die Stärke vorn, das Niveau hinten
-    const extra = `<p class="m-card-extra">${niveau ? `${tr('Niveau', 'Level')} ${niveau} · ` : ''}${jobName(p.profession)}${traits.length ? ` · ${traits.slice(0, 2).join(' · ')}` : ''}</p>`;
+    const guess = p.age <= 23 ? playerTalentGuess(c, idx) : null; // Talent (geschätzt, wird mit der Zeit genauer) nur bei Jungen
+    const extra = `<p class="m-card-extra">${niveau ? `${tr('Niveau', 'Level')} ${niveau} · ` : ''}${guess ? `${tr('Talent', 'Talent')}: ${guess.text} · ` : ''}${jobName(p.profession)}${traits.length ? ` · ${traits.slice(0, 2).join(' · ')}` : ''}</p>`;
     const marks = `${r.awards?.length ? '★' : ''}${isCoach(c, idx) ? ` ${tr('Du', 'You')}` : ''}`;
     return collectorCard({
       id: idx,
@@ -511,7 +513,7 @@ export const teamScreens = {
       .map((idx) => ({ idx, p: this.p(idx) }))
       .sort((a, b) => b.p.rating - a.p.rating)
       .map(({ idx, p }) => {
-        const talent = p.rating >= 50 ? tr('großes Talent', 'big talent') : p.rating >= 40 ? tr('solide', 'solid') : tr('noch roh', 'still raw');
+        const talent = playerTalentGuess(c, idx)?.text ?? (p.rating >= 50 ? tr('großes Talent', 'big talent') : p.rating >= 40 ? tr('solide', 'solid') : tr('noch roh', 'still raw'));
         return `<tr><td><b>${p.name}</b><small>${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)}${p.parentName ? ` · ${tr('Sohn von', 'son of')} ${p.parentName}` : ''}</small></td><td>${POSITIONS[p.position]}</td>
           <td class="num">${p.rating}</td><td><em>${talent}</em></td>
           <td><button class="primary tiny" data-action="promote" data-value="${idx}" ${full ? 'disabled' : ''}>${tr('Hochziehen', 'Promote')}</button></td></tr>
