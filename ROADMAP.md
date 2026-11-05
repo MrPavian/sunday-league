@@ -1,7 +1,7 @@
 # Sunday League – Game Design, Featureliste & Roadmap
 
 > Arbeitstitel: **Sunday League** (Alternativen: *Kreisklasse*, *Asche & Ehre*, *Dritte Halbzeit*)
-> Status: spielbarer Prototyp mit vollständiger Karriere · Stand: 2026-09-25 · Überblick: [docs/OVERVIEW.md](docs/OVERVIEW.md)
+> Status: spielbarer Prototyp mit vollständiger Karriere · Stand: 2026-11-05 · Überblick: [docs/OVERVIEW.md](docs/OVERVIEW.md)
 
 ---
 
@@ -1013,7 +1013,9 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   44 px) öffnet ihre Sache darunter: Wirt → Runde und Neuigkeiten, Opa Heinz → Stammtisch und Bierdeckel-Taktik, Dartscheibe → Duell,
   Spieler → Einzelgespräch mit Dossier und Traum. Liste aller Ansprechpartner als Alternative; die klassische Ansicht zeigt nur Liste
   und Inhalte. Hochkant (vom Nutzer gewünscht): näher ran, seitlich wischen, die Kamera fährt zur gewählten Person.
-  Kosten: 39 Draw Calls, 6 Tsd. Dreiecke (Halle 61 / 32 Tsd.). Offen: Vereinsheim („Heute“) als 3D-Raum, Prosten
+  Kosten: 39 Draw Calls, 6 Tsd. Dreiecke (Halle 61 / 32 Tsd.). Licht 2026-11-05 (Nutzerbefund „Raum ohne Licht“): eigener Look ohne
+  Spielwetter und Nebel, warme Punktlichter über der Theke, leuchtende Lampen; dazu Abendspiele heller und der Parkplatz-Asphalt
+  heller, abends eine Nuance dunkler. Offen: Vereinsheim („Heute“) als 3D-Raum, Prosten
   als gemeinsame Geste, Wimpel/Flaggen nach Erfolgen im Pokal.
 - Kneipe bzw. Vereinsheim als begehbarer 3D-Raum im Stil des Spiels (Pixel-Shader, Low-Poly-Figuren wie auf dem Platz),
   statt der heutigen Kneipen-Seite. Heute: Vereinsheim-Szene als gezeichneter Raum (`src/ui/ClubScene.js`), Kneipe als
@@ -1062,8 +1064,18 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   Voraussetzung für die Profiligen.
 
 - **Umsetzung 2026-10-31** (Konzept Abschnitt 12): Engine für Werte über 1, Fehler gegen den Gegner, Niveau je Spieler (Freizeitliga
-  bis Oberliga), Vereine/Zugänge/Pokal nach Niveau, Schnellmodell und Profis neu geeicht – für neue Karrieren eingeschaltet. Offen:
-  Anzeige „Stärke · Niveau“, Entwicklung in Stärkepunkten je Liga, verdeckte Boni, Regionalliga und 3. Liga spielbar.
+  bis Oberliga), Vereine/Zugänge/Pokal nach Niveau, Schnellmodell und Profis neu geeicht – für neue Karrieren eingeschaltet.
+- ✅ **Erledigt 2026-11-04/05** (alles nur für neue Karrieren, Golden unverändert):
+  - Anzeige „Stärke · Niveau“ auf Spielerkarte, Gerüchteküche, Transfermarkt und beim Trainer (`b291b95`).
+  - Entwicklung in Stärkepunkten je Liga: oben mehr Punkte, weil ein Punkt dort weniger bewirkt (`9e9e67c`).
+  - Verborgenes Talent je Spieler, die Einschätzung auf der Karte wird mit der Zeit genauer (Konzept 12.6, `17a01a9`).
+  - Zu tiefe Liga (Konzept 12.7, `25f57a8`): Wer über dem Niveau seiner Liga steht, lernt weniger dazu (je Liga ×0,8, höchstens
+    halb). Die Karte zeigt „über seiner Liga“, Vereine der Liga darüber werben ab, manche wollen selbst wechseln.
+  - Eigene Jugend (Konzept 12.8, `8de7757`): Das Akademietalent der Kinder verschiebt das Spielertalent (nur Tendenz). Jugendleben:
+    Abiklausuren, Ausbildung, erste Liebe, andere Interessen, Führerschein, Heimweh im Internat, Gastfamilien ab der Verbandsliga.
+  - Unruhe in der Kabine (Konzept 12.8): Schlechte Laune steckt an, Grüppchen, Mannschaftsrat, vergiftetes Klima. Streik nur
+    einzeln (Nutzerklarstellung): Wer einen Wechsel verweigert bekommt, streikt manchmal, um ihn zu erzwingen.
+- Offen: verdeckte Boni (Weltklasse, Führungsspieler, Star der Liga), Regionalliga und 3. Liga spielbar.
 
 ### 11.15 Physik-Engine für Effekte prüfen (vom Nutzer vorgeschlagen, 2026-10-29)
 - [Jolt Physics](https://github.com/jrouwe/JoltPhysics) (C++, im Browser über den WebAssembly-Port JoltPhysics.js) prüfen – **nur für
