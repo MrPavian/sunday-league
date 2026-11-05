@@ -13,10 +13,11 @@
 // Alle Zufälle laufen über eigene, aus Saison/Fenster abgeleitete Ströme – nichts verschiebt die bestehenden Würfe.
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
-import { LEAGUES } from './clubs.js';
+import { LEAGUES, maxLevel } from './clubs.js';
+import { CONTRACT, isPro, sign, transferFee } from './contracts.js';
 import { book } from './finances.js';
 import { askAround, knownMotives, pickArgument, startTalk } from './recruiting.js';
-import { arrivalTiers, clubById, getPool, humanClub, joinSquad, maxSquad, MIN_SQUAD, niveauFits, playerOf, recruitChance, releasePlayer, squadPicker, SQUAD_SHAPES, takenIndices } from './career.js';
+import { arrivalTiers, clubById, getPool, humanClub, joinSquad, maxSquad, MIN_SQUAD, niveauFits, playerOf, proMap, recruitChance, releasePlayer, squadPicker, SQUAD_SHAPES, takenIndices } from './career.js';
 import { coachAway, isCoach } from './personal.js';
 import { adjustMood } from './events.js';
 import { rememberNewClub } from './memory.js';
@@ -113,8 +114,8 @@ function genNeighbors(c) {
   const pick0 = m3 ? null : squadPicker(rng, used);
   for (const lv of [(c.level ?? 1) - 1, (c.level ?? 1) + 1]) {
     const league = LEAGUES[lv];
-    if (!league) continue;
-    const pick = pick0 ?? squadPicker(rng, used, lv);
+    if (!league || lv > maxLevel(c)) continue; // alte Spielstände: über der Oberliga gibt es nichts
+    const pick = pick0 ?? squadPicker(rng, used, lv, proMap(c));
     const defs = [...membersOf(c, lv)]; // Vereinsliste der Nachbarliga (pyramid.js, mit Auf- und Absteigern)
     for (let k = 0; k < NEIGHBOR_CLUBS && defs.length; k++) {
       const def = defs.splice(Math.floor(rng.next() * defs.length), 1)[0];
@@ -162,12 +163,16 @@ export function marketList(c, { scope = 'all', pos = 'all', sort = 'rating' } = 
   return rows.sort(by[sort] ?? by.rating);
 }
 
+// Profiligen (contracts.js): Wer aus einem Profiverein kommt, kostet Ablöse statt Ausbildungsentschädigung.
+export const proFee = (c, fromLevel) => !!c.pro && fromLevel >= CONTRACT.from;
+const feeFor = (c, idx, fromLevel, toLevel, opts) => (proFee(c, fromLevel) ? transferFee(c, idx, fromLevel) : trainingFee(fromLevel, toLevel, opts));
+
 // Gebühr, die der abgebende Verein verlangt (Ausbildungsentschädigung), für uns als Käufer.
 export function priceOf(c, idx, kind = windowAt(c) ?? 'summer') {
   const src = clubOfPlayer(c, idx);
   if (!src) return 0;
   const p = playerOf(c, idx);
-  const base = trainingFee(src.level, c.level ?? 1, { age: p.age });
+  const base = feeFor(c, idx, src.level, c.level ?? 1, { age: p.age });
   return kind === 'winter' ? winterFee(base, importanceOf(c, src.club, idx)) : base;
 }
 
@@ -247,9 +252,11 @@ function completeSigning(c, d) {
   const rec = c.players[idx];
   rec.since = c.season;
   rec.sinceKind = d.kind;
+  if (isPro(c)) sign(c, idx); // Profiligen: Vertrag zur Forderung (contracts.js)
   const name = playerOf(c, idx).name;
+  const proDeal = proFee(c, src.level ?? c.level ?? 1); // Ablöse statt Ausbildungsentschädigung (contracts.js)
   if (owed > 0) {
-    book(c, tr(`Ausbildungsentschädigung an ${src.name}`, `Training compensation to ${src.name}`), -owed);
+    book(c, proDeal ? tr(`Ablöse an ${src.name}`, `Transfer fee to ${src.name}`) : tr(`Ausbildungsentschädigung an ${src.name}`, `Training compensation to ${src.name}`), -owed);
     t.stats.paid += owed;
   }
   if (d.handgeld > 0) {
@@ -260,8 +267,8 @@ function completeSigning(c, d) {
   t.stats.in++;
   const rng = createRng(hashSeed(c.seed, c.season, c.round, idx, 6104));
   if (free) {
-    pushLog(c, 'in', tr(`${name} wechselt von ${src.name} zu uns${owed ? ` (Ausbildungsentschädigung ${owed} €)` : ''}.`, `${name} moves from ${src.name} to us${owed ? ` (training compensation €${owed})` : ''}.`));
-    press(c, tr(`Kreisblatt: ${name} wechselt von ${src.name} zu ${me.name}.${owed ? ` Der Verein bekommt ${owed} € Ausbildungsentschädigung.` : ''}`, `District Gazette: ${name} moves from ${src.name} to ${me.name}.${owed ? ` The club receives €${owed} in training compensation.` : ''}`));
+    pushLog(c, 'in', tr(`${name} wechselt von ${src.name} zu uns${owed ? ` (${proDeal ? 'Ablöse' : 'Ausbildungsentschädigung'} ${owed} €)` : ''}.`, `${name} moves from ${src.name} to us${owed ? ` (${proDeal ? 'transfer fee' : 'training compensation'} €${owed})` : ''}.`));
+    press(c, tr(`Kreisblatt: ${name} wechselt von ${src.name} zu ${me.name}.${owed ? ` Der Verein bekommt ${owed} € ${proDeal ? 'Ablöse' : 'Ausbildungsentschädigung'}.` : ''}`, `District Gazette: ${name} moves from ${src.name} to ${me.name}.${owed ? ` The club receives €${owed} in ${proDeal ? 'transfer fees' : 'training compensation'}.` : ''}`));
     addRel(c, src.id, 0);
     talk(c, rng, [tr(`Ey, ${first(c, idx)} von ${src.short}? Der kann was.`, `Hey, ${first(c, idx)} from ${src.short}? He can play.`), tr(`Bei ${src.short} haben sie ihn ungern gehen lassen, hab ich gehört.`, `I heard ${src.short} did not want to let him go.`), tr('Wer hat ihn überredet – der Wirt oder das Handgeld?', 'Who talked him round – the landlord or the signing-on money?')], [idx]);
   } else {
@@ -282,7 +289,7 @@ function completeSigning(c, d) {
 // Ersatz für einen Abgang aus dem Pool, passend zu den Stufen des Vereins (ligagerecht).
 function refill(c, club, position, rng) {
   try {
-    const [inn] = squadPicker(rng, takenIndices(c), (c.strength ?? 1) >= 3 ? club.level ?? c.level ?? 1 : null)(club.tiers, [position]);
+    const [inn] = squadPicker(rng, takenIndices(c), (c.strength ?? 1) >= 3 ? club.level ?? c.level ?? 1 : null, proMap(c))(club.tiers, [position]);
     club.squad.push(inn);
     if (!club.neighbor) c.players[inn] ??= freshRecord();
     return inn;
@@ -334,7 +341,7 @@ function makeOffers(c, kind, key) {
     let made = 0;
     for (const { club, level } of fits) {
       if (!rng.chance(wish ? 0.7 : 0.75)) continue;
-      const base = trainingFee(c.level ?? 1, level, { age: p.age, seasonsAtClub: rec?.seasons?.length ?? 0, recent: recentJoin(c, idx, kind) });
+      const base = feeFor(c, idx, c.level ?? 1, level, { age: p.age, seasonsAtClub: rec?.seasons?.length ?? 0, recent: recentJoin(c, idx, kind) });
       t.offers.push({ id: t.nextOffer++, idx, club: club.id, key, kind, base, fee: kind === 'winter' ? winterFee(base, imp) : base, wish, counter: false });
       made++;
     }
@@ -364,7 +371,7 @@ function duePending(c, kind, key) {
     const club = anyClub(c, x.club); // nach Auf-/Abstieg kann der Verein weg sein – dann verfällt die Zusage
     if (!club || !me.squad.includes(x.idx) || t.offers.some((o) => o.idx === x.idx && o.club === x.club)) continue;
     const p = playerOf(c, x.idx);
-    const base = trainingFee(c.level ?? 1, levelOf(c, club), { age: p.age, seasonsAtClub: c.players[x.idx]?.seasons?.length ?? 0, recent: recentJoin(c, x.idx, kind) });
+    const base = feeFor(c, x.idx, c.level ?? 1, levelOf(c, club), { age: p.age, seasonsAtClub: c.players[x.idx]?.seasons?.length ?? 0, recent: recentJoin(c, x.idx, kind) });
     const imp = importanceIn(me.squad, x.idx, ratingOf(c), positionOf(c));
     t.offers.push({ id: t.nextOffer++, idx: x.idx, club: club.id, key, kind, base, fee: kind === 'winter' ? winterFee(base, imp) : base, wish: true, poached: true, counter: false });
   }
@@ -399,7 +406,7 @@ export function acceptOffer(c, id) {
   absorb(c, club, o.idx);
   ((c.flags ??= {}).poached ??= {})[o.idx] = c.season; // poaching.js: dieses Jahr kein zweiter Versuch
   if (o.fee > 0) {
-    book(c, tr(`Ausbildungsentschädigung von ${club.name}`, `Training compensation from ${club.name}`), o.fee);
+    book(c, proFee(c, c.level ?? 1) ? tr(`Ablöse von ${club.name}`, `Transfer fee from ${club.name}`) : tr(`Ausbildungsentschädigung von ${club.name}`, `Training compensation from ${club.name}`), o.fee);
     t.stats.received += o.fee;
   }
   t.stats.out++;
@@ -415,7 +422,8 @@ export function noteDeparture(c, idx, club, { name = playerOf(c, idx).name, fee 
   if (!club) return;
   tstate(c);
   const rng = createRng(hashSeed(c.seed, c.season, c.round, idx, 6106));
-  pushLog(c, 'out', tr(`${name} wechselt zu ${club.name}${fee ? ` (${fee} € Ausbildungsentschädigung)` : ''}.`, `${name} moves to ${club.name}${fee ? ` (€${fee} training compensation)` : ''}.`));
+  const word = proFee(c, c.level ?? 1) ? tr('Ablöse', 'transfer fee') : tr('Ausbildungsentschädigung', 'training compensation');
+  pushLog(c, 'out', tr(`${name} wechselt zu ${club.name}${fee ? ` (${fee} € ${word})` : ''}.`, `${name} moves to ${club.name}${fee ? ` (€${fee} ${word})` : ''}.`));
   press(c, tr(`Kreisblatt: ${name} verlässt ${humanClub(c).name} und spielt künftig für ${club.name}.${fee ? ` Entschädigung: ${fee} €.` : ''}`, `District Gazette: ${name} leaves ${humanClub(c).name} and will play for ${club.name}.${fee ? ` Compensation: €${fee}.` : ''}`));
   talk(c, rng, [tr(`${first(c, idx)} bei ${club.short}? Dem schenken die nichts.`, `${first(c, idx)} at ${club.short}? They will not give him an inch.`), tr('Wer holt jetzt die Kiste Bier für die dritte Halbzeit?', 'Who fetches the crate of beer for the third half now?'), tr('Hoffentlich spielt er nicht ausgerechnet gegen uns gut.', 'Let us hope he does not play well against us of all teams.')], [idx]);
 }

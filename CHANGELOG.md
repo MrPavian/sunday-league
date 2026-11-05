@@ -6,6 +6,16 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-05-2 – Regionalliga und 3. Liga
+
+### Neu
+- **Zwei Ligen mehr:** Über der Oberliga kommen die Regionalliga (je nach Bundesland Nord, Nordost, West, Südwest oder Bayern) und die 3. Liga. Die Gegner sind eine bzw. zwei Ligen stärker als in der Oberliga, es kommen deutlich mehr Zuschauer, in der 3. Liga gibt es Fernsehgeld.
+- **Verträge:** Ab der Regionalliga sind deine Spieler Vertragsspieler mit Monatsgehalt und Laufzeit; das steht im Spielerprofil. Im letzten Vertragsjahr kannst du verlängern – wer sauer ist, will nicht. Wer nicht verlängert, geht im Sommer ablösefrei. Vorzeitig auflösen kostet eine Abfindung.
+- **Ablöse:** Spieler von Profivereinen kosten Ablöse statt Ausbildungsentschädigung; der Transfermarkt zeigt dazu die Gehaltsforderung.
+- **Zulassung:** Für die Regionalliga braucht ihr ein Stadion für 2500 und Flutlicht, für die 3. Liga 5001 Plätze mit 2000 Sitzplätzen und Flutlicht mit 800 Lux – dazu eine Rücklage auf dem Konto. Was noch fehlt, steht unter Verein → Anlage. Ohne Zulassung kein Aufstieg.
+- **Aufstiegsverzicht:** Jeder Verein kann auf den Aufstieg verzichten, meist aus Geldgründen – unten öfter als oben. Verzichtet der Meister deiner Liga, steigt der Zweite direkt auf. Der Meister der 3. Liga verzichtet vorerst immer, eine 2. Liga gibt es noch nicht. Die besten vier der 3. Liga spielen im überregionalen Pokal.
+- Gilt für neue Karrieren.
+
 ## 2026-11-05-1 – Weltklasse, Führungsspieler, Star der Liga
 
 ### Neu

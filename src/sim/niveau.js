@@ -9,9 +9,12 @@ import { PHYS_ATTRS } from './skill.js';
 
 export const NIVEAU_TARGET = [51, 57, 64, 73, 84, 97, 111, 126]; // Ligamittel der besten n je Niveau 1–8
 export const NIVEAU_BASE = 51.5; // heutiges Mittel der Freizeitliga (gemessen, Konzept 12.5) – darauf setzen die Aufschläge auf
-export const NIVEAU_LIFT = NIVEAU_TARGET.map((t, i) => (i === 0 ? 0 : t - NIVEAU_BASE));
 // Profiligen über der Oberliga (Regionalliga 9 bis 1. Liga 12): 15 Punkte je Liga, Konzept Abschnitt 10, Spielwerte (pokal.js).
 export const PRO_TARGET = { 9: 141, 10: 156, 11: 171, 12: 186 };
+// Aufschlag je Niveau 1–10; Niveau 9 und 10 (Regionalliga, 3. Liga) gibt es nur für Spieler, die ein Profiverein holt (career.proNiv,
+// Konzept Profiligen) – der Pool selbst bleibt bei 1–8.
+export const NIVEAU_LIFT = [...NIVEAU_TARGET, PRO_TARGET[9], PRO_TARGET[10]].map((t, i) => (i === 0 ? 0 : t - NIVEAU_BASE));
+export const TOP_NIVEAU = NIVEAU_LIFT.length;
 // Wirkung eines Stärkepunkts in der Engine je Niveau der Partie (mittlere Stärke m), gemessen (Konzept 12.5, pokal.js quickSlope):
 // 0,051 (Niveau 1 gg 2, Ø 64), 0,049 (4 gg 5, Ø 89), 0,033 (7 gg 8, Ø 128); dazwischen linear, darunter und darüber konstant.
 export const SLOPE = { low: 0.05, high: 0.033, from: 89, to: 128 };
@@ -47,6 +50,7 @@ const liftsAttr = (pos, k) => !PHYS_ATTRS.has(k) && (pos === 'gk' ? GK_LIFT.has(
 // Spieler im neuen Modell: Technikwerte um den Aufschlag seines Niveaus angehoben, Stärke ohne Deckel. Pool-Spieler sind fest –
 // das Ergebnis wird je Spieler zwischengespeichert (playerOf ruft es sehr oft; ohne Speicher liefen Tests in Zeitüberschreitung).
 const liftCache = new WeakMap();
+const proCache = new WeakMap();
 export function lifted(p, niveau) {
   if (niveau == null) {
     let q = liftCache.get(p);
@@ -55,8 +59,16 @@ export function lifted(p, niveau) {
   }
   return liftNow(p, niveau);
 }
+// Wie lifted, mit festem Niveau und Speicher (Profispieler, playerOf).
+export function liftedAt(p, niveau) {
+  let m = proCache.get(p);
+  if (!m) proCache.set(p, (m = new Map()));
+  let q = m.get(niveau);
+  if (!q) m.set(niveau, (q = liftNow(p, niveau)));
+  return q;
+}
 function liftNow(p, niveau) {
-  const lift = NIVEAU_LIFT[Math.max(1, Math.min(8, niveau)) - 1];
+  const lift = NIVEAU_LIFT[Math.max(1, Math.min(TOP_NIVEAU, niveau)) - 1];
   if (!lift) return { ...p, niveau, rating: ratePlayer(p, Infinity) };
   const d = lift / (100 * techShare(p.position));
   const attrs = Object.fromEntries(Object.entries(p.attrs).map(([k, v]) => [k, liftsAttr(p.position, k) ? v + d : v]));

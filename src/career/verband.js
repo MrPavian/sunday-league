@@ -6,7 +6,7 @@
 // bis zur 10. Liga), rückt alles eine Liga nach oben (7.–10.). Stufe 1 bleibt die erfundene Freizeitliga.
 // Bezirksname: weiter der erfundene „Kanal“-Bezirk – keine echten Kreise oder Orte, Verbandsnamen nur als Region, ohne Kürzel.
 import { tr } from '../core/i18n.js';
-import { LEAGUES } from './clubs.js';
+import { LEAGUES, maxLevel } from './clubs.js';
 import { NIVEAU_TARGET, PRO_TARGET } from '../sim/niveau.js';
 
 // tiers: [Stufe 2, Stufe 3, Stufe 4, Stufe 5]; upper: [Stufe 6, Stufe 7, Stufe 8] = 7., 6. und 5. Liga (Oberliga), aus derselben
@@ -43,8 +43,18 @@ export const VERBAND_IDS = Object.keys(VERBAENDE);
 export const verbandOf = (career) => VERBAENDE[career?.verband] ?? VERBAENDE.kanal;
 
 // Name einer Liga im gewählten Verband: Klasse und der erfundene Bezirk (Stufe 1: Freizeitliga, ohne Verband die bisherigen Namen).
+// Regionalliga-Staffel je Verband (de.wikipedia „Fußball-Regionalliga“, fünf Staffeln: Nord, Nordost, West, Südwest, Bayern).
+export const RL_STAFFEL = {
+  schleswig: 'Nord', hamburg: 'Nord', niedersachsen: 'Nord', bremen: 'Nord',
+  mecklenburg: 'Nordost', brandenburg: 'Nordost', berlin: 'Nordost', sachsenanhalt: 'Nordost', thueringen: 'Nordost', sachsen: 'Nordost',
+  niederrhein: 'West', mittelrhein: 'West', westfalen: 'West',
+  rheinland: 'Südwest', suedwest: 'Südwest', saarland: 'Südwest', hessen: 'Südwest', baden: 'Südwest', suedbaden: 'Südwest', wuerttemberg: 'Südwest',
+  bayern: 'Bayern',
+};
+const STAFFEL_EN = { Nord: 'North', Nordost: 'North-East', West: 'West', Südwest: 'South-West', Bayern: 'Bavaria' };
 export function leagueTitle(career, level) {
   const v = verbandOf(career);
+  if (level === 9 && RL_STAFFEL[career?.verband]) return tr(`Regionalliga ${RL_STAFFEL[career.verband]}`, `Regional League ${STAFFEL_EN[RL_STAFFEL[career.verband]]}`);
   if (!v.tiers || level < 2 || level > 8) return LEAGUES[level]?.name ?? '';
   if (level === 6) return tr(`${v.upper[0]} Staffel Kanal`, `${v.upper[0]} Canal Group`);
   if (level > 6) return v.upper[level - 6];
@@ -55,7 +65,7 @@ export function leagueTitle(career, level) {
 export const VERBAND_CHOICES = () => VERBAND_IDS.filter((id) => VERBAENDE[id].land).map((id) => ({ id, label: VERBAENDE[id].land === VERBAENDE[id].region ? VERBAENDE[id].region : `${VERBAENDE[id].land} – ${VERBAENDE[id].region}` }));
 
 // Kurzinfo für die Auswahl: die Ligen von Stufe 1 bis 8.
-export const verbandLeagues = (career) => [1, 2, 3, 4, 5, 6, 7, 8].map((l) => leagueTitle(career, l).replace(/ Kanalbezirk$| Canal District$| Staffel Kanal$| Canal Group$/, '')).join(' → ');
+export const verbandLeagues = (career) => Array.from({ length: maxLevel(career) }, (_, i) => i + 1).map((l) => leagueTitle(career, l).replace(/ Kanalbezirk$| Canal District$| Staffel Kanal$| Canal Group$/, '')).join(' → ');
 
 // --- Regionale Vereinsnamen (vom Nutzer gewünscht, 2026-10-21) --------------------------------------------------------
 // Ortsnamen: Stamm aus dem erfundenen Kanalbezirk (Schleuse, Pegel, Düker …) mit einer Endung, die für die Region typisch ist
@@ -131,6 +141,7 @@ export const localized = (career, def, level, leagues) => (career.verband && lev
 // den Zielwerten des Stärkemodells 3 (sim/niveau.js NIVEAU_TARGET, darüber pokal.js PRO_TARGET); Grenze ist jeweils die Mitte zwischen
 // zwei Zielen. Nur für neue Karrieren (strength ≥ 3) – in alten Spielständen passen die Zahlen nicht zu den Zielen, dort null.
 const PRO_NAMES = () => [tr('Regionalliga', 'Regional League'), tr('3. Liga', 'Third Division'), tr('2. Liga', 'Second Division'), tr('1. Liga', 'First Division')];
+export const proLeagueName = (level) => PRO_NAMES()[level - 9] ?? '';
 const TARGETS = [...NIVEAU_TARGET, ...Object.values(PRO_TARGET)];
 export function niveauLevel(rating, targets = TARGETS) {
   let n = 1;

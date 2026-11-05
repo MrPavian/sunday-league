@@ -289,6 +289,25 @@ export const OL_CLUBS = [
   club('ol-hafenkrone', 'SV Hafenkrone 1912', 'Harbour Crown 1912', ['SHK', 'HCR'], { shirt: 0x1f5f5b, shorts: 0xe3c35a, socks: 0x1f5f5b, pattern: 'nadel', second: 0xe3c35a }, 0xc0392b, OBERLIGA[0].tiers),
 ];
 
+// Profiligen (Konzept Profiligen, Nutzerentscheid 2026-11-05, nur neue Karrieren): Regionalliga (Stufe 9, 4. Liga) und 3. Liga
+// (Stufe 10). Erfundene Vereine. Die Kadermischung bestimmt im Stärkemodell 3 nur die Rangfolge in der Liga (career.js clubNiveaus).
+const P9 = { ok: 0.02, gut: 0.15, stark: 0.38, dorfstar: 0.3, superstar: 0.14, legende: 0.01 };
+const P10 = { ok: 0.01, gut: 0.12, stark: 0.36, dorfstar: 0.32, superstar: 0.17, legende: 0.02 };
+export const RL_CLUBS = [
+  club('rl-hafenstern', 'SV Hafenstern 1909', 'Harbour Star 1909', ['SHS', 'HST'], { shirt: 0x1f3a6b, shorts: 0xf2efe6, socks: 0x1f3a6b, pattern: 'brustring', second: 0xf2efe6 }, 0xe0b020, P9),
+  club('rl-kranwerk', 'Eintracht Kranwerk', 'Craneworks United', ['EKW', 'CWU'], { shirt: 0xc8352f, shorts: 0x1c1c1c, socks: 0xc8352f, pattern: 'streifen', second: 0x1c1c1c }, 0x2e8b57, vary(P9, 0.03)),
+  club('rl-lotsenhaus', 'FC Lotsenhaus', 'Pilot House FC', ['FCL', 'PHF'], { shirt: 0x2a6f97, shorts: 0x2a6f97, socks: 0xf2efe6, pattern: 'uni', second: 0xf2efe6 }, 0xd9822b, vary(P9, -0.02)),
+  club('rl-dockland', 'SpVgg Dockland 1921', 'Dockland 1921', ['SDL', 'DKL'], { shirt: 0x5a6e2f, shorts: 0xe3c35a, socks: 0x5a6e2f, pattern: 'schaerpe', second: 0xe3c35a }, 0x6b2a8a, vary(P9, 0.05)),
+  club('rl-sturmflut', 'VfL Sturmflut', 'Storm Tide VfL', ['VSF', 'STV'], { shirt: 0x3b4a8f, shorts: 0xf2efe6, socks: 0x3b4a8f, pattern: 'karo', second: 0xf2efe6 }, 0xc0392b, vary(P9, 0.01)),
+];
+export const DL_CLUBS = [
+  club('dl-kanalstadt', '1. FC Kanalstadt', 'Canal Town 1st FC', ['FKS', 'CT1'], { shirt: 0xb02a2a, shorts: 0xf2efe6, socks: 0xb02a2a, pattern: 'uni', second: 0xf2efe6 }, 0x1c1c1c, P10),
+  club('dl-nordmole', 'Borussia Nordmole', 'North Pier Borussia', ['BNM', 'NPB'], { shirt: 0xe3c35a, shorts: 0x1c1c1c, socks: 0xe3c35a, pattern: 'uni', second: 0x1c1c1c }, 0x2f6fb5, vary(P10, 0.03)),
+  club('dl-werfthafen', 'SC Werfthafen 05', 'Shipyard Harbour 05', ['SWH', 'SH5'], { shirt: 0x1f5f5b, shorts: 0xf2efe6, socks: 0x1f5f5b, pattern: 'schulter', second: 0xf2efe6 }, 0xe8742a, vary(P10, -0.02)),
+  club('dl-schleuse', 'Fortuna Schleusenstadt', 'Lock Town Fortune', ['FSS', 'LTF'], { shirt: 0xf2efe6, shorts: 0x6a2c8c, socks: 0x6a2c8c, pattern: 'haelften', second: 0x6a2c8c }, 0x3fa05a, vary(P10, 0.05)),
+  club('dl-deichtor', 'TSV 1862 Deichtor', 'Dyke Gate 1862', ['TDT', 'DG2'], { shirt: 0x4fa3e0, shorts: 0xf2efe6, socks: 0x4fa3e0, pattern: 'ringel', second: 0xf2efe6 }, 0xc8352f, vary(P10, 0.01)),
+];
+
 // Zwei weitere Vereine je Liga für die große Staffel (8 Teams, 14 Spieltage).
 export const EXTRA_CLUBS = {
   1: [
@@ -403,11 +422,23 @@ export const EXTRA_CLUBS = {
     club('ol-werftring', 'FC Werftring', 'Dockring FC', ['FWR', 'DRF'], { shirt: 0x6e2f5a, shorts: 0xf2efe6, socks: 0x6e2f5a, pattern: 'schulter', second: 0xf2efe6 }, 0xe8742a, OBERLIGA[1].tiers),
     club('ol-deichgraf', 'TSV Deichgraf', 'Dyke Reeve TSV', ['TDG', 'DRT'], { shirt: 0x3a7d44, shorts: 0x3a7d44, socks: 0xf2efe6, pattern: 'ringel', second: 0xf2efe6 }, 0x6b2a8a, OBERLIGA[2].tiers),
   ],
+  9: [
+    club('rl-ankerwerk', 'SV Ankerwerk', 'Anchorworks SV', ['SAW', 'AWS'], { shirt: 0x7a1f3d, shorts: 0xf2efe6, socks: 0x7a1f3d, pattern: 'chevron', second: 0xf2efe6 }, 0xe0b020, vary(P9, 0.02)),
+    club('rl-moewenkai', 'FSV Möwenkai', 'Gull Quay FSV', ['FMK', 'GQF'], { shirt: 0x9bb7d4, shorts: 0x1f2a44, socks: 0x9bb7d4, pattern: 'uni', second: 0x1f2a44 }, 0xc8352f, vary(P9, -0.01)),
+  ],
+  10: [
+    club('dl-bojenhof', 'Rot-Weiß Bojenhof', 'Buoy Yard Red & White', ['RWH', 'BYR'], { shirt: 0xc0392b, shorts: 0xf2efe6, socks: 0xf2efe6, pattern: 'brustring', second: 0xf2efe6 }, 0x1f3a6b, vary(P10, 0.02)),
+    club('dl-seewarte', 'SpVgg Seewarte', 'Sea Watch Athletic', ['SSW', 'SWA'], { shirt: 0x2b2b5e, shorts: 0xd9822b, socks: 0x2b2b5e, pattern: 'streifen', second: 0xd9822b }, 0x3fa05a, vary(P10, -0.01)),
+  ],
 };
 
 export const leagueClubs = (league, size = 6) => [...league.clubs, ...(size >= 8 ? EXTRA_CLUBS[league.level] ?? [] : [])];
 
-export const MAX_LEVEL = 8;
+export const MAX_LEVEL = 8; // oberste Stufe alter Spielstände
+// Profiligen: Karrieren mit career.pro reichen bis zur 3. Liga (Stufe 10). Der Meister der 3. Liga verzichtet vorerst auf den
+// Aufstieg (Nutzerentscheid 2026-11-05: eine 2. Liga gibt es noch nicht).
+export const PRO_MAX_LEVEL = 10;
+export const maxLevel = (career) => (career?.pro ? PRO_MAX_LEVEL : MAX_LEVEL);
 
 export const LEAGUES = {
   1: { level: 1, name: LEAGUE_NAME, referee: false, format: null, humanVenue: 'hinterhof', clubs: AI_CLUBS, squadShape: 'small', maxSquad: 12, derby: { club: 'kanal', name: tr('Kanal-Derby', 'Canal Derby') } },
@@ -418,4 +449,6 @@ export const LEAGUES = {
   6: { level: 6, name: tr('Landesliga Staffel Kanal', 'Regional League Canal Group'), referee: true, format: 11, humanVenue: 'grossfeld', clubs: LL_CLUBS, squadShape: 'xxl', maxSquad: 22, derby: { club: 'll-westfalia', name: tr('Kanalstadt-Derby', 'Canal Town Derby') } },
   7: { level: 7, name: tr('Verbandsliga', 'State League'), referee: true, format: 11, humanVenue: 'grossfeld', clubs: VL_CLUBS, squadShape: 'xxl', maxSquad: 22, derby: { club: 'vl-leuchtfeuer', name: tr('Leuchtfeuer-Derby', 'Beacon Derby') } },
   8: { level: 8, name: tr('Oberliga', 'Regional Premier League'), referee: true, format: 11, humanVenue: 'grossfeld', clubs: OL_CLUBS, squadShape: 'xxl', maxSquad: 22, derby: { club: 'ol-oberhafen', name: tr('Oberhafen-Derby', 'Upper Harbour Derby') } },
+  9: { level: 9, name: tr('Regionalliga', 'Regional League'), referee: true, format: 11, humanVenue: 'grossfeld', clubs: RL_CLUBS, squadShape: 'xxl', maxSquad: 24, pro: true, derby: { club: 'rl-hafenstern', name: tr('Hafenstern-Derby', 'Harbour Star Derby') } },
+  10: { level: 10, name: tr('3. Liga', 'Third Division'), referee: true, format: 11, humanVenue: 'grossfeld', clubs: DL_CLUBS, squadShape: 'xxl', maxSquad: 26, pro: true, derby: { club: 'dl-kanalstadt', name: tr('Kanalstadt-Klassiker', 'Canal Town Classic') } },
 };

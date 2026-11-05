@@ -1077,7 +1077,10 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
     einzeln (Nutzerklarstellung): Wer einen Wechsel verweigert bekommt, streikt manchmal, um ihn zu erzwingen.
 - ✅ Verdeckte Boni 2026-11-05 (Konzept 12.9): Weltklasse, Führungsspieler (Stufe über Anführer), Star der Liga (relativ zur Liga),
   mit der Zeit entdeckt; Wirkung im Spiel gemessen.
-- Offen: Regionalliga und 3. Liga spielbar.
+- ✅ Regionalliga und 3. Liga spielbar 2026-11-05 ([docs/KONZEPT-PROFILIGEN.md](docs/KONZEPT-PROFILIGEN.md), nur neue Karrieren):
+  Regionalliga-Staffel nach Verband, 3. Liga als oberste Stufe (Meister verzichtet, keine 2. Liga), Spielerverträge mit Gehalt
+  und Laufzeit, Ablöse, Zulassung (Stadion, Flutlicht, Finanznachweis), Aufstiegsverzicht eigener und fremder Vereine.
+  Offen: 2. Liga, Ticketschnitt der 3. Liga, Lizenzgebühren.
 
 ### 11.15 Physik-Engine für Effekte prüfen (vom Nutzer vorgeschlagen, 2026-10-29)
 - [Jolt Physics](https://github.com/jrouwe/JoltPhysics) (C++, im Browser über den WebAssembly-Port JoltPhysics.js) prüfen – **nur für

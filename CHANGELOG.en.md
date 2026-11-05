@@ -6,6 +6,16 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-05-2 – Regional League and Third Division
+
+### New
+- **Two more leagues:** above the top amateur tier come the Regional League (North, North-East, West, South-West or Bavaria, depending on your state) and the Third Division. Opponents are one and two leagues stronger than in the top amateur tier, far more fans come, and the Third Division pays TV money.
+- **Contracts:** from the Regional League on your players are contracted professionals with a monthly wage and a term; it shows in the player profile. In the final year you can extend – a sulking player will not. Anyone not extended leaves on a free in the summer. Ending a contract early costs severance pay.
+- **Transfer fees:** players from pro clubs cost a transfer fee instead of training compensation; the transfer market also shows their wage demand.
+- **Licence:** the Regional League needs a stadium for 2,500 and floodlights, the Third Division 5,001 places with 2,000 seats and 800-lux floodlights – plus a reserve in the bank. What is missing is shown under Club → Grounds. No licence, no promotion.
+- **Turning down promotion:** any club can decline promotion, usually for money reasons – lower down more often than higher up. If the champions of your league decline, the runners-up go straight up. The Third Division champions always decline for now, as there is no second division yet. The top four of the Third Division play in the national cup.
+- Applies to new careers.
+
 ## 2026-11-05-1 – World class, team leaders, star of the league
 
 ### New

@@ -3,7 +3,8 @@
 import { describe, expect, it } from 'vitest';
 import { createCareer, getPool, humanClub, nextSeason, seasonOver, finishRound, table } from '../src/career/career.js';
 import { ensureLeagues, membersOf, simTable, venueFor } from '../src/career/pyramid.js';
-import { LEAGUES, MAX_LEVEL } from '../src/career/clubs.js';
+import { LEAGUES, MAX_LEVEL, maxLevel } from '../src/career/clubs.js';
+import { cpuWaives } from '../src/career/license.js';
 import { PITCHES } from '../src/sim/pitch.js';
 
 const playSeason = (c, score = (f) => ({ home: 1, away: 0 })) => {
@@ -20,15 +21,18 @@ describe('Ligenpyramide', () => {
     const before = Object.fromEntries(Object.entries(ensureLeagues(c)).map(([l, d]) => [l, d.map((x) => x.id)]));
     const ids0 = allIds(c);
     const lower = simTable(c, 3, getPool()); // Stufe 3 ohne eigenen Verein: der Erste steigt auf
+    const upFrom3 = cpuWaives(c, 3, lower[0]) ? lower[1] : lower[0]; // es sei denn, er verzichtet (license.js)
     playSeason(c);
     nextSeason(c);
     const after = ensureLeagues(c);
-    for (let l = 1; l <= MAX_LEVEL; l++) expect(after[l]).toHaveLength(5);
+    const top = maxLevel(c); // neue Karrieren: bis zur 3. Liga
+    expect(top).toBe(10);
+    for (let l = 1; l <= top; l++) expect(after[l]).toHaveLength(5);
     expect(allIds(c)).toEqual(ids0);
-    expect(after[4].some((d) => d.id === lower[0])).toBe(true);
+    expect(after[4].some((d) => d.id === upFrom3)).toBe(true);
     let changed = 0;
-    for (let l = 1; l <= MAX_LEVEL; l++) changed += after[l].filter((d) => !before[l].includes(d.id)).length;
-    expect(changed).toBe(2 * (MAX_LEVEL - 1)); // an jeder Grenze ein Auf- und ein Absteiger
+    for (let l = 1; l <= top; l++) changed += after[l].filter((d) => !before[l].includes(d.id)).length;
+    expect(changed).toBe(2 * (top - 1)); // an jeder Grenze ein Auf- und ein Absteiger
   });
 
   it('eigene Liga: der beste CPU-Verein steigt auf, ein Absteiger von oben kommt mit Kader dazu', () => {

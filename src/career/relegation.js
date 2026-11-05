@@ -8,8 +8,9 @@ import { createMatch, MATCH } from '../sim/match.js';
 import { PITCHES } from '../sim/pitch.js';
 import { shootoutScore } from '../sim/shootout.js';
 import { subRuleFor } from '../sim/squad.js';
-import { LEAGUES, MAX_LEVEL } from './clubs.js';
-import { humanClub, resolveKits, simulateSync, squadPicker, SQUAD_SHAPES, table, teamForMatch } from './career.js';
+import { LEAGUES, maxLevel } from './clubs.js';
+import { championWaives, promotionBlock } from './license.js';
+import { humanClub, proMap, resolveKits, simulateSync, squadPicker, SQUAD_SHAPES, table, teamForMatch } from './career.js';
 import { adjustMood } from './events.js';
 import { applyWeather, rollWeather } from './weather.js';
 import { coachAway, isCoach } from './personal.js';
@@ -25,7 +26,8 @@ export function relegationNeeded(career) {
   const level = career.level ?? 1;
   const rows = table(career);
   const pos = rows.findIndex((r) => r.club.human) + 1;
-  if (pos === 2 && level < MAX_LEVEL) return { kind: 'up', level, other: level + 1 };
+  // Profiligen (license.js): Verzichtet der Meister, steigt der Zweite direkt auf; ohne Zulassung oder bei Verzicht keine Relegation.
+  if (pos === 2 && level < maxLevel(career) && !championWaives(career, rows) && !promotionBlock(career)) return { kind: 'up', level, other: level + 1 };
   if (pos === rows.length - 1 && level > 1) return { kind: 'stay', level, other: level - 1 };
   return null;
 }
@@ -42,7 +44,7 @@ export function startRelegation(career) {
   const def = need.kind === 'up' ? sorted[0] : sorted[sorted.length - 1];
   const rng = createRng((career.seed * 977 + career.season * 31) >>> 0);
   const used = new Set([...career.clubs.flatMap((c) => c.squad), ...(career.youth?.prospects ?? []), ...(career.alumni ?? []).map((a) => a.idx)]);
-  const squad = squadPicker(rng, used, (career.strength ?? 1) >= 3 ? need.other : null)(def.tiers, SQUAD_SHAPES[LEAGUES[Math.max(need.level, need.other)].squadShape]);
+  const squad = squadPicker(rng, used, (career.strength ?? 1) >= 3 ? need.other : null, proMap(career))(def.tiers, SQUAD_SHAPES[LEAGUES[Math.max(need.level, need.other)].squadShape]);
   for (const idx of squad) career.players[idx] ??= { apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 };
   const opponent = { ...def, id: RELEGATION_ID, human: false, squad };
   // Hinspiel beim Unterklassigen, Rückspiel beim Höherklassigen.

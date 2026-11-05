@@ -12,7 +12,8 @@ import { phone } from '../world.js';
 import { homeView } from '../prefs.js';
 import { crestExtras, crestOf, crestSVG } from '../crest.js';
 import { relegationNeeded, relegationOf } from '../../career/relegation.js';
-import { LEAGUES, MAX_LEVEL } from '../../career/clubs.js';
+import { LEAGUES, MAX_LEVEL, maxLevel } from '../../career/clubs.js';
+import { blockText, championWaives, licenseNeeds, promotionBlock } from '../../career/license.js';
 import { leagueTitle } from '../../career/verband.js';
 import { clubById, humanClub, kitChoice, leagueOf, humanFixture, playerOf, seasonOver, table } from '../../career/career.js';
 import { DESTINATIONS, tripChoose, tripStage, tripState, tripVerdict } from '../../career/trip.js';
@@ -263,7 +264,13 @@ export const homeScreens = {
     const last = pos === t.length;
     let msg;
     const rel = relegationOf(c);
-    if (pos === 1 && level === 1) msg = tr('MEISTER! Aufstieg in die Kreisklasse C – eigener Rasenplatz, Schiri, 7 gegen 7. Die Runde im Vereinsheim geht aufs Haus.', 'CHAMPIONS! Promotion to District League C – your own grass pitch, a referee, 7-a-side. The round at the clubhouse is on the house.');
+    const block = c.pro ? promotionBlock(c, level) : null; // Profiligen (license.js)
+    const upNow = (pos === 1 && level < maxLevel(c)) || (pos === 2 && championWaives(c, t));
+    if (c.pro && pos === 1 && level >= maxLevel(c)) msg = tr(`MEISTER der ${leagueTitle(c, level)}! ${blockText(c, 'top', level)}`, `${leagueTitle(c, level)} CHAMPIONS! ${blockText(c, 'top', level)}`);
+    else if (c.pro && upNow && block) msg = tr(`${pos === 1 ? 'MEISTER!' : 'Vizemeister – und der Meister verzichtet!'} ${blockText(c, block, level)}`, `${pos === 1 ? 'CHAMPIONS!' : 'Runners-up – and the champions waive promotion!'} ${blockText(c, block, level)}`);
+    else if (c.pro && pos === 2 && championWaives(c, t)) msg = tr(`Vizemeister – und ${champ.name} verzichtet auf den Aufstieg! Ihr steigt direkt auf in die ${leagueTitle(c, level + 1)}.`, `Runners-up – and ${champ.name} turn down promotion! You go straight up to the ${leagueTitle(c, level + 1)}.`);
+    else if (c.pro && pos === 1 && level >= 3) msg = tr(`MEISTER der ${leagueTitle(c, level)}! Aufstieg in die ${leagueTitle(c, level + 1)}.`, `${leagueTitle(c, level)} CHAMPIONS! Promotion to the ${leagueTitle(c, level + 1)}.`);
+    else if (pos === 1 && level === 1) msg = tr('MEISTER! Aufstieg in die Kreisklasse C – eigener Rasenplatz, Schiri, 7 gegen 7. Die Runde im Vereinsheim geht aufs Haus.', 'CHAMPIONS! Promotion to District League C – your own grass pitch, a referee, 7-a-side. The round at the clubhouse is on the house.');
     else if (pos === 1 && level === 2) msg = tr('MEISTER der Kreisklasse C! Aufstieg in die Kreisklasse B – stärkere Gegner, mehr Zuschauer, mehr Geld.', 'District League C CHAMPIONS! Promotion to District League B – tougher opponents, bigger crowds, more money.');
     else if (pos === 1) msg = tr('MEISTER der Kreisklasse B! Ganz oben im Kanalbezirk. Die Schale bekommt einen Ehrenplatz im Vereinsheim.', 'District League B CHAMPIONS! The top of the Canal District. The trophy gets pride of place in the clubhouse.');
     else if (last && level > 1) msg = tr(`Letzter Platz – Abstieg in die ${leagueTitle(c, level - 1)}. Kopf hoch, nächstes Jahr geht's wieder rauf.`, `Bottom of the table – relegated to the ${leagueTitle(c, level - 1)}. Chin up, next year we go again.`);
@@ -288,8 +295,22 @@ export const homeScreens = {
         ${this.miniTable()}
         ${chronicle}
         ${this.tripBlock()}
+        ${this.waiveAside(upNow || (pos === 2 && relegationNeeded(c)) || !!rel?.won && rel.kind === 'up')}
         ${this.legacyAside() ?? this.relegationAside() ?? this.cupAside()}
       </div>`;
+  },
+
+  // Profiligen (license.js): Zulassung für die Liga darüber und freiwilliger Verzicht auf den Aufstieg.
+  waiveAside(up) {
+    const c = this.career;
+    const level = c.level ?? 1;
+    const waived = c.flags?.waiveUp === c.season;
+    if (!c.pro || !(up || waived) || level >= maxLevel(c)) return '';
+    const needs = licenseNeeds(c, level + 1);
+    const list = needs.length ? `<ul class="license">${needs.map((x) => `<li>${x.ok ? '✓' : '✗'} ${x.label}</li>`).join('')}</ul>` : '';
+    return `<div class="ui-card" data-testid="waive"><p class="label">${tr(`Zulassung ${leagueTitle(c, level + 1)}`, `Licence ${leagueTitle(c, level + 1)}`)}</p>${list}
+      ${button(waived ? tr('Doch aufsteigen', 'Go up after all') : tr('Auf den Aufstieg verzichten', 'Waive promotion'), { kind: 'ghost', action: 'waiveUp', value: waived ? 0 : 1, 'data-testid': 'waive-up' })}
+      <p class="t-2">${waived ? tr('Ihr bleibt in der Liga. Das Geld reicht für ein weiteres Jahr hier.', 'You stay in this league. The money lasts another year here.') : tr('Verzichten kann jeder Verein – meist aus Geldgründen. Dann steigt der Nächste auf.', 'Any club can waive promotion – usually for money reasons. Then the next club goes up.')}</p></div>`;
   },
 
   // Relegation: Hin- und Rückspiel, bevor es in den Sommer geht.

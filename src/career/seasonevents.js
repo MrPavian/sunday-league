@@ -6,7 +6,7 @@
 // Kasse ±15 … 150 €, Absage 1 Woche, „angefressen" 1–3 Wochen.
 import { tr } from '../core/i18n.js';
 import { humanClub, playerOf, table } from './career.js';
-import { MAX_LEVEL } from './clubs.js';
+import { maxLevel } from './clubs.js';
 import { adjustForm, adjustMood } from './events.js';
 import { book } from './finances.js';
 import { hasFacility } from './facilities.js';
@@ -58,7 +58,7 @@ export const SEASON_EVENTS = {
   aufstiegsfeier: seasonal('aufstiegsfeier', {
     weight: 10,
     needs: (c) => {
-      if (level(c) >= MAX_LEVEL || seasonDone(c, 'aufstiegsfeier') || c.round < rounds(c) - 3) return null;
+      if (level(c) >= maxLevel(c) || seasonDone(c, 'aufstiegsfeier') || c.round < rounds(c) - 3) return null;
       const { pos } = standing(c);
       return pos >= 1 && pos <= 2 ? { pos, left: rounds(c) - c.round } : null;
     },

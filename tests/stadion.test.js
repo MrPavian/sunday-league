@@ -31,6 +31,7 @@ describe('Schiri-Spesen', () => {
     expect(refFee(6)).toBe(45 + 2 * 35);
     expect(refFee(7)).toBe(50 + 2 * 40);
     expect(refFee(8)).toBe(75 + 2 * 50);
-    expect(refFee(11)).toBe(refFee(8));
+    expect([9, 10].map(refFee)).toEqual([400, 900]); // Profiligen (Spielwerte, Konzept Profiligen 2)
+    expect(refFee(11)).toBe(refFee(10));
   });
 });

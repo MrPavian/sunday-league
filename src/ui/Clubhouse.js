@@ -15,6 +15,8 @@ const SCROLLERS = '.club-panel, .club-main, .club-body, .club-folder, .folder-sh
 const scrollKey = (el) => SCROLLERS.split(', ').find((sel) => el.matches(sel));
 import { setSquadExtra, setVerband, argueRumor, askRumor, currentLineup, humanClub, updateClub, updateCrest, setFounded, clampFounded, foundedRange, setClubTactic, setClubPlan, maxSquad, recruit, releasePlayer, scoutRumor, talkRumor, nudge, playerOf, resetLineup, setLineupSlot, seasonOver, table } from '../career/career.js';
 import { verbandLeagues } from '../career/verband.js';
+import { extend as extendContract, releaseWithPay } from '../career/contracts.js';
+import { setWaive } from '../career/license.js';
 import { appointCoach, startCourse } from '../career/youthteams.js';
 import { acceptSponsor, bookTrip } from '../career/finances.js';
 import { kitPrice, signOutfitter } from '../career/outfitter.js';
@@ -361,7 +363,14 @@ export class Clubhouse {
           return;
         }
         this.confirmRelease = null;
-        releasePlayer(this.career, Number(value));
+        releaseWithPay(this.career, Number(value)); // Profiligen: mit Abfindung (contracts.js), sonst wie bisher
+        this.h.onChange();
+      } else if (action === 'waiveUp') {
+        setWaive(this.career, Number(value) === 1); // Aufstiegsverzicht (license.js)
+        this.h.onChange();
+      } else if (action === 'extendContract') {
+        const [idx, years] = String(value).split(':').map(Number);
+        extendContract(this.career, idx, years);
         this.h.onChange();
       } else if (action === 'tacticSystem' || action === 'tacticStyle') {
         const { format } = currentLineup(this.career);

@@ -9,7 +9,8 @@ import { jobFits, styleFit } from '../../sim/fit.js';
 import { GROUP_LABELS, ORDERS, packLines, SIMPLE, SIMPLE_IDS } from '../../sim/commands.js';
 import { coachLevel } from '../prefs.js';
 import { button, haptic, icon, segmented, tabs as uiTabs } from '../ds.js';
-import { LEAGUES } from '../../career/clubs.js';
+import { LEAGUES, maxLevel } from '../../career/clubs.js';
+import { contractOf, extendOffer, isPro, releaseCost, yearsLeft } from '../../career/contracts.js';
 import { leagueTitle, niveauName, niveauText } from '../../career/verband.js';
 import { aboveLeague, playerTalentGuess } from '../../career/development.js';
 import { ATTR_LABELS } from '../attrLabels.js';
@@ -44,6 +45,20 @@ import { FOCUS as TRAIN_FOCUS, MAX_DAYS, MIN_DAYS, normDays, plan as trainPlan, 
 const roleLabelCap = (role) => (role === 'jugendleiter' ? tr('Jugendleiter', 'Youth director') : STAFF_ROLES[role].name);
 
 // Entdeckte verdeckte Boni (bonuses.js) als Chips über den Eigenheiten.
+// Profiligen (contracts.js): Vertrag mit Gehalt und Laufzeit, im letzten Jahr mit Verlängerung.
+const eur = (v) => Math.round(v).toLocaleString('de-DE');
+const contractBlock = (c, idx) => {
+  const k = isPro(c) ? contractOf(c, idx) : null;
+  if (!k) return '';
+  const left = yearsLeft(c, idx);
+  const offer = left <= 1 ? extendOffer(c, idx) : null;
+  const ext = offer
+    ? offer.refuses
+      ? `<p class="t-2">${tr('Er ist sauer und will gerade nicht über einen neuen Vertrag reden.', 'He is sulking and will not talk about a new contract right now.')}</p>`
+      : `<p class="t-2">${tr(`Verlängern – er will ${eur(offer.salary)} € im Monat:`, `Extend – he wants €${eur(offer.salary)} a month:`)}</p><div class="ui-row">${[1, 2, 3].map((y) => button(tr(`${y} ${y === 1 ? 'Jahr' : 'Jahre'}`, `${y} ${y === 1 ? 'year' : 'years'}`), { kind: 'ghost', action: 'extendContract', value: `${idx}:${y}` })).join('')}</div>`
+    : '';
+  return `<div class="contract" data-testid="contract"><p class="t-2"><b>${tr('Vertrag', 'Contract')}</b> ${tr(`bis Saison ${k.until}`, `until season ${k.until}`)} · ${eur(k.salary)} ${tr('€ im Monat', '€ a month')}${left <= 1 ? ` · <b>${tr('läuft aus', 'expiring')}</b>` : ''}</p>${ext}</div>`;
+};
 const bonusChips = (c, idx) => {
   const ids = knownBonuses(c, idx);
   if (!ids.length) return '';
@@ -113,7 +128,7 @@ export const teamScreens = {
     const std = LEAGUES[c.level ?? 1].maxSquad;
     const max = maxSquad(c);
     const extra = c.squadExtra ?? 0;
-    const byLeague = Object.values(LEAGUES).map((l) => `${leagueTitle(c, l.level)}: ${l.maxSquad}`).join(' · ');
+    const byLeague = Object.values(LEAGUES).filter((l) => l.level <= maxLevel(c)).map((l) => `${leagueTitle(c, l.level)}: ${l.maxSquad}`).join(' · ');
     return `<div class="t-2 squad-limit" data-testid="squad-limit">${tr('Kadergrenze', 'Squad limit')} <b>${max}</b> <small>(${tr('Standard', 'default')} ${std}${extra ? `, ${extra > 0 ? '+' : ''}${extra}` : ''})</small>
       ${button('−', { action: 'squadLimit', value: extra - 1, disabled: max <= MIN_SQUAD, 'aria-label': tr('Kadergrenze senken', 'Lower squad limit') })}${button('+', { action: 'squadLimit', value: extra + 1, disabled: extra >= SQUAD_EXTRA_MAX, 'aria-label': tr('Kadergrenze erhöhen', 'Raise squad limit') })}
       <details><summary><small>${tr('Standard je Liga', 'Default per league')}</small></summary><small>${byLeague}</small></details></div>`;
@@ -192,6 +207,7 @@ export const teamScreens = {
           ${perk ? `<p class="t-2">${perk.label}</p>` : ''}
           ${rels ? `<p class="t-2 rel-line">${rels}</p>` : ''}
           ${r.awards?.length ? `<p class="t-2">★ ${r.awards.map(awardLabel).join(' · ')}</p>` : ''}
+          ${contractBlock(c, idx)}
           ${bonusChips(c, idx)}
           ${p.traits?.length ? `<div class="ui-chips">${p.traits.filter((t) => TRAITS[t]).map((t) => `<span class="ui-chip plain" title="${TRAITS[t].desc}">${TRAITS[t].name}</span>`).join('')}</div>` : ''}
         </div>`;
@@ -215,7 +231,7 @@ export const teamScreens = {
         </div>
         ${uiTabs([['overview', tr('Übersicht', 'Overview')], ['attrs', tr('Attribute', 'Attributes')], ['stats', tr('Statistik', 'Stats')]], tab, 'profileTab')}
         <div class="profile-body">${body}</div>
-        ${canRelease ? `<div class="profile-foot">${this.confirmRelease === idx ? button(tr('Wirklich verabschieden?', 'Really release him?'), { kind: 'danger', action: 'release', value: idx }) : button(tr('Verabschieden', 'Release'), { kind: 'ghost', action: 'release', value: idx })}</div>` : ''}
+        ${canRelease ? `<div class="profile-foot">${this.confirmRelease === idx ? button(releaseCost(c, idx) ? tr(`Wirklich auflösen? Abfindung ${eur(releaseCost(c, idx))} €`, `Really end his contract? Severance €${eur(releaseCost(c, idx))}`) : tr('Wirklich verabschieden?', 'Really release him?'), { kind: 'danger', action: 'release', value: idx }) : button(tr('Verabschieden', 'Release'), { kind: 'ghost', action: 'release', value: idx })}</div>` : ''}
       </div>`;
   },
 

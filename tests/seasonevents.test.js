@@ -1,4 +1,5 @@
 // Ereignisse für Saisonende, Karrieremitte und höhere Ligen (src/career/seasonevents.js) und das Derby-Rückspiel.
+import { maxLevel } from '../src/career/clubs.js';
 import { describe, expect, it } from 'vitest';
 import { createCareer, humanClub, migrateCareer, nextSeason, playerOf, seasonOver, finishRound } from '../src/career/career.js';
 import { resolveEvent, rollWeekEvent } from '../src/career/events.js';
@@ -52,7 +53,7 @@ describe('Saison-Ereignisse: Aufbau', () => {
     play(m, 8, 'top');
     expect(SEASON_EVENTS.abstiegskrise.needs(m, rng)).toBeNull();
     // ganz oben gibt es keinen Aufstieg mehr
-    m.level = 8; // Oberliga
+    m.level = maxLevel(m); // neue Karrieren: 3. Liga (alte Spielstände: Oberliga)
     expect(SEASON_EVENTS.aufstiegsfeier.needs(m, rng)).toBeNull();
     // Flutlicht-Defekt braucht ein Flutlicht, Kabine nur ohne neue Kabine
     const f = createCareer({ seed: 4 });

@@ -39,6 +39,13 @@ export const FACILITIES = {
   // https://wdfv.de/download/herren-regionalliga-west/herren-regionalliga-west-richtlinien-fuer-das-allgemeine-zulassungsverfahren.pdf;
   // BFV-Erklärung zur Spielstätte 2024/25). Für die Oberliga gibt es keine Mindestgröße. Preis, Bauzeit und Nebenkosten sind Spielwerte.
   stadion: { group: 'tribuene', land: true, minLevel: 6, name: tr('Stadionausbau', 'Stadium upgrade'), cost: 6000, weeks: 10, upkeep: 8, needs: ['tribdach'], desc: tr('Stehwälle rundum, Kassenhäuschen, Ordner: Platz für 2500 – so viel verlangt die Regionalliga.', 'Terracing all round, ticket booths, stewards: room for 2,500 – what the Regionalliga requires.'), done: tr('Das Stadion ist fertig. Beim ersten Heimspiel verläuft sich der Platzwart auf dem Weg zum Kassenhäuschen.', 'The stadium is finished. At the first home game the groundsman gets lost on the way to the ticket booth.') },
+  // Profiligen (Konzept Profiligen 4, Zulassung): 3. Liga mindestens 5001 Plätze, davon 2000 Sitzplätze, und Flutlicht mit
+  // mindestens 800 Lux (DFB, „Neu in der 3. Liga: das Zulassungsverfahren“, https://www.dfb.de/news/detail/neu-in-der-3-liga-das-zulassungsverfahren-253312/;
+  // Flutlicht: DFB-Beschluss „Rasenheizung, Flutlicht, Nachhaltigkeit“). Die Arena (15 000) ist eine Spielvariante für mehr Zuschauer.
+  // Preise, Bauzeiten und Nebenkosten sind Spielwerte (auf die Kassen der Profiligen geeicht, scripts/pro-audit.mjs).
+  drittliga: { group: 'tribuene', land: true, minLevel: 9, name: tr('Drittliga-Stadion', 'Third-division stadium'), cost: 120000, weeks: 16, upkeep: 300, needs: ['stadion'], desc: tr('Ausbau auf 5001 Plätze, davon 2000 Sitzplätze, Gästeblock, Ordnerdienst – so viel verlangt die 3. Liga.', 'Expansion to 5,001 places including 2,000 seats, an away block and stewards – what the 3. Liga requires.'), done: tr('Das Drittliga-Stadion steht. Der Platzwart hat jetzt ein Funkgerät.', 'The third-division stadium is ready. The groundsman now has a radio.') },
+  arena: { group: 'tribuene', land: true, minLevel: 10, name: tr('Arena', 'Arena'), cost: 600000, weeks: 30, upkeep: 900, needs: ['drittliga'], desc: tr('Rundum überdacht, Platz für 15 000.', 'Covered all round, room for 15,000.'), done: tr('Die Arena ist fertig. Beim ersten Spiel steht die halbe Stadt Schlange.', 'The arena is finished. Half the town queues at the first game.') },
+  flutlicht800: { group: 'platz', minLevel: 9, name: tr('Flutlicht 800 Lux', 'Floodlights (800 lux)'), cost: 40000, weeks: 6, upkeep: 60, needs: ['flutlicht'], desc: tr('Stadionflutlicht mit mindestens 800 Lux für Abendspiele im Fernsehen – Pflicht in der 3. Liga.', 'Stadium floodlights of at least 800 lux for televised evening games – required in the 3. Liga.'), done: tr('Das neue Flutlicht ist so hell, dass die Nachbarn Rollläden kaufen.', 'The new floodlights are so bright the neighbours buy shutters.') },
   tribuene: { group: 'tribuene', name: tr('Kleine Tribüne', 'Small stand'), cost: 700, weeks: 4, upkeep: 2, needs: ['grill'], desc: tr('Drei Stufen, ein Dach – ein Drittel mehr Zuschauer.', 'Three steps and a roof – a third more spectators.'), done: tr('Die Tribüne steht! Drei Stufen Beton und ein Dach aus dem Baumarkt.', 'The stand is up! Three concrete steps and a roof from the DIY store.') },
 };
 
@@ -59,7 +66,7 @@ export const FACILITY_GROUPS = [
 
 // Stufen: der höchste Ausbau zählt. Zuschauerbedarf (fansMul) und Fassungsvermögen (capacity) – Spielwerte; die Tribüne
 // (ab 1.33) und das Grundmaß waren schon vorher so (unverändert, damit alte Spielstände gleich bleiben).
-export const STAND_TIERS = [['stadion', 1.65, 2500], ['tribdach', 1.65, 1000], ['sitzplaetze', 1.55, 800], ['tribuene', 1.33, 600], ['stehstufen', 1.12, 400]];
+export const STAND_TIERS = [['arena', 1.65, 15000], ['drittliga', 1.65, 5001], ['stadion', 1.65, 2500], ['tribdach', 1.65, 1000], ['sitzplaetze', 1.55, 800], ['tribuene', 1.33, 600], ['stehstufen', 1.12, 400]];
 const stand = (c) => STAND_TIERS.find(([id]) => hasFacility(c, id));
 export const standLevel = (c) => (stand(c) ? STAND_TIERS.length - STAND_TIERS.indexOf(stand(c)) : 0);
 export const CAPACITY_BASE = 250; // Spielwert: Zaun und Wiese rund um den Platz

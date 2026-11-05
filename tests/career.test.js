@@ -1,3 +1,4 @@
+import { cpuWaives } from '../src/career/license.js';
 import { describe, expect, it } from 'vitest';
 import {
   buildLineup,
@@ -574,7 +575,7 @@ describe('leagues and relegation play-offs', () => {
   // Saison so ausgehen lassen, dass der eigene Verein Zweiter wird.
   const finishAsRunnerUp = (c) => {
     const me = humanClub(c).id;
-    const leader = c.clubs.find((x) => !x.human).id;
+    const leader = c.clubs.find((x) => !x.human && !cpuWaives(c, c.level ?? 1, x.id)).id; // ein Meister, der nicht verzichtet (license.js)
     for (const round of c.fixtures) {
       for (const f of round) {
         const involves = (id) => f.home === id || f.away === id;
@@ -627,7 +628,7 @@ describe('leagues and relegation play-offs', () => {
     expect(relegationNeeded(c)).toMatchObject({ kind: 'up', level: 4, other: 5 });
   });
 
-  it('the Oberliga (11 v 11) is the top league – its champion stays at the top', async () => {
+  it('old saves: the Oberliga (11 v 11) is the top league – its champion stays at the top', async () => {
     const { LEAGUES, MAX_LEVEL } = await import('../src/career/clubs.js');
     expect(MAX_LEVEL).toBe(8); // Pyramide bis zur Oberliga (Stufen 6–8 seit 2026-10-29)
     for (let l = 5; l <= MAX_LEVEL; l++) {
@@ -635,9 +636,33 @@ describe('leagues and relegation play-offs', () => {
       expect(LEAGUES[l].format).toBe(11);
     }
     const c = createCareer({ seed: 32 });
+    delete c.pro; // Spielstand von vor den Profiligen
     c.level = MAX_LEVEL;
     const { relegationNeeded } = await import('../src/career/relegation.js');
     finishAsRunnerUp(c);
     expect(relegationNeeded(c)).toBeNull(); // von ganz oben gibt es keinen Aufstieg
+  });
+
+  it('new careers: the Oberliga runner-up plays off for the Regionalliga, the 3. Liga is the top', async () => {
+    const { LEAGUES, maxLevel, PRO_MAX_LEVEL } = await import('../src/career/clubs.js');
+    const c = createCareer({ seed: 32 });
+    expect(maxLevel(c)).toBe(PRO_MAX_LEVEL);
+    expect(PRO_MAX_LEVEL).toBe(10);
+    for (const l of [9, 10]) {
+      expect(LEAGUES[l].clubs.length).toBe(5);
+      expect(LEAGUES[l].format).toBe(11);
+    }
+    const { relegationNeeded } = await import('../src/career/relegation.js');
+    c.level = 8;
+    finishAsRunnerUp(c);
+    expect(relegationNeeded(c)).toBeNull(); // ohne Zulassung (Stadion, Flutlicht, Rücklage) keine Relegation
+    const { facilities } = await import('../src/career/facilities.js');
+    Object.assign(facilities(c).built, { stadion: 1, flutlicht: 1 });
+    c.cash = 1e5;
+    expect(relegationNeeded(c)).toMatchObject({ kind: 'up', level: 8, other: 9 });
+    const d = createCareer({ seed: 32 });
+    d.level = 10;
+    finishAsRunnerUp(d);
+    expect(relegationNeeded(d)).toBeNull();
   });
 });

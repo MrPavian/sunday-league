@@ -31,6 +31,8 @@ import { REF_TRAITS } from '../../sim/referee.js';
 import { portraitSVG } from '../portrait.js';
 import { RIVAL, rivalLabel, rivalList } from '../../career/rivals.js';
 import { gateStats } from '../../career/attendance.js';
+import { maxLevel } from '../../career/clubs.js';
+import { licenseNeeds } from '../../career/license.js';
 
 // Unterseiten des Reiters Verein.
 export const CLUB_SUBS = () => [['me', tr('Du', 'You')], ['anlage', tr('Anlage', 'Grounds')], ['leben', tr('Vereinsleben', 'Club life')], ['trikot', tr('Trikot', 'Kit')], ['wappen', tr('Wappen', 'Crest')]];
@@ -436,15 +438,19 @@ export const clubScreens = {
       return `<li class="facility${built ? ' built' : ''}"><div><b>${def.name}</b> <small>${buildWeeks(c, id, 'handwerker')} ${plural(buildWeeks(c, id, 'handwerker'), 'Woche', 'Wochen', 'week', 'weeks')}${def.upkeep ? ` · ${euro(def.upkeep)}${tr('/Woche Nebenkosten', '/week running costs')}` : ''}${extra}</small><br><small>${def.desc}</small></div><div class="state">${state}</div></li>`;
     };
     const groups = FACILITY_GROUPS.map((g) => {
-      const rows = Object.entries(FACILITIES).filter(([, d]) => (d.group ?? 'heim') === g.id).map(row).join('');
+      const rows = Object.entries(FACILITIES).filter(([, d]) => (d.group ?? 'heim') === g.id && (d.minLevel ?? 1) <= maxLevel(c)).map(row).join(''); // alte Spielstände: keine Profi-Ausbauten
       // Aufklappbar (ROADMAP 11.11): offen ist nur die Gruppe, in der gerade gebaut wird oder etwas in der Warteschlange steht.
-      const ids = Object.entries(FACILITIES).filter(([, d]) => (d.group ?? 'heim') === g.id).map(([id]) => id);
+      const ids = Object.entries(FACILITIES).filter(([, d]) => (d.group ?? 'heim') === g.id && (d.minLevel ?? 1) <= maxLevel(c)).map(([id]) => id);
       const open = ids.includes(f.building?.id) || f.queue.some((q) => ids.includes(q.id)) || this.facOpen === g.id;
       const done = ids.filter((id) => f.built[id]).length;
       return rows ? `<details class="fac-group" data-group="${g.id}"${open ? ' open' : ''}><summary><h4 class="sub">${g.name} <small>${done}/${ids.length}${g.id === 'tribuene' ? ` · ${tr('Fassungsvermögen', 'capacity')}: ${capacity(c)}` : ''}</small></h4></summary>${g.id === 'tribuene' ? this.gateBlock() : ''}<ul class="plain">${rows}</ul></details>` : '';
     }).join('');
+    // Profiligen (license.js): Was die Zulassung für die Liga darüber verlangt – rechtzeitig bauen, ein Stadion dauert.
+    const lv = c.level ?? 1;
+    const needs = c.pro && lv >= 7 && lv < maxLevel(c) ? licenseNeeds(c, Math.max(9, lv + 1)) : [];
+    const lic = needs.length ? `<div class="license" data-testid="license"><p class="t-2"><b>${tr(`Zulassung ${leagueTitle(c, Math.max(9, lv + 1))}`, `Licence ${leagueTitle(c, Math.max(9, lv + 1))}`)}</b> – ${tr('wird am Saisonende geprüft', 'checked at the end of the season')}</p><ul class="plain">${needs.map((x) => `<li>${x.ok ? '✓' : '✗'} ${x.label}</li>`).join('')}</ul></div>` : '';
     return `<div class="facilities"><h4>${tr('Vereinsheim und Anlage ausbauen', 'Upgrade clubhouse and grounds')} <small>${tr('Kasse', 'Kitty')}: ${euro(c.cash)}</small></h4>
-      ${f.note ? `<p class="reply ok">${f.note}</p>` : ''}${groups}</div>`;
+      ${lic}${f.note ? `<p class="reply ok">${f.note}</p>` : ''}${groups}</div>`;
   },
 
   // Vereinsleben: was die Entscheidungen rund ums Vereinsheim dauerhaft verändert haben.

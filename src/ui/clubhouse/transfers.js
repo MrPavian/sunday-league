@@ -10,7 +10,7 @@ import { coachAway, isCoach } from '../../career/personal.js';
 import { importanceLabel, trainingFee, windowLabel, FEE_BASE } from '../../career/transferrules.js';
 import {
   acceptOffer, anyClub, approachFree, argueDeal, askAroundDeal, askClub, clubRating, counterOffer, declineOffer, EXTRA_STEPS, HANDGELD_STEPS, listPlayer, loanIn, loanOut,
-  freeAgents, loansIn, loansOut, marketList, MAX_REQUESTS, playerChance, priceOf, setHandgeld, talkDeal, tstate, windowInfo,
+  freeAgents, loansIn, loansOut, marketList, MAX_REQUESTS, playerChance, priceOf, proFee, setHandgeld, talkDeal, tstate, windowInfo,
 } from '../../career/transfers.js';
 import { banGames } from '../../career/suspensions.js';
 import { TRAITS } from '../../data/traits.js';
@@ -18,6 +18,7 @@ import { jobName } from '../../data/names.js';
 import { tierById } from '../../data/tiers.js';
 import { POSITIONS } from '../../sim/generator.js';
 import { niveauText } from '../../career/verband.js';
+import { isPro, salaryDemand } from '../../career/contracts.js';
 import { bolzplatz, canBolz, canWatch, estimate, estimateText, LEVEL_NAMES, watchClub } from '../../career/scouting.js';
 
 const SUBS = ['rumors', 'market', 'own', 'news'];
@@ -144,6 +145,9 @@ export const transferScreens = {
     const full = me.squad.length >= maxSquad(c);
     const away = coachAway(c);
     const price = priceOf(c, idx, info.kind ?? 'summer');
+    const pf = proFee(c, row.neighbor ? club.level : c.level ?? 1); // Profiverein: Ablöse statt Ausbildungsentschädigung
+    const [fDe, fEn] = pf ? ['Ablöse', 'Transfer fee'] : ['Ausbildungsentschädigung', 'Training compensation'];
+    const wage = isPro(c) ? `<p class="t-2">${tr(`Gehaltsforderung: ${euro(salaryDemand(c, idx))} im Monat`, `Wage demand: ${euro(salaryDemand(c, idx))} a month`)}</p>` : '';
     const winter = info.kind === 'winter';
     const tier = tierById(p.tier);
     const est = estimate(c, idx);
@@ -159,14 +163,14 @@ export const transferScreens = {
     if (d) {
       step1 =
         d.decision === 'ja'
-          ? `<p class="reply ok">${tr(`${club.name} gibt ihn frei.`, `${club.name} agree to release him.`)} ${d.fee + d.extra ? tr(`Ausbildungsentschädigung ${euro(d.fee + d.extra)} (wird bei der Zusage fällig).`, `Training compensation ${euro(d.fee + d.extra)} (due when he signs).`) : tr('Keine Entschädigung fällig.', 'No compensation due.')}</p>`
+          ? `<p class="reply ok">${tr(`${club.name} gibt ihn frei.`, `${club.name} agree to release him.`)} ${d.fee + d.extra ? tr(`${fDe} ${euro(d.fee + d.extra)} (wird bei der Zusage fällig).`, `${fEn} ${euro(d.fee + d.extra)} (due when he signs).`) : tr('Keine Entschädigung fällig.', 'No compensation due.')}</p>`
           : `<p class="reply no">${tr(`${club.name} verweigert die Freigabe.`, `${club.name} refuse to release him.`)} ${tr(`Du kannst ihn trotzdem ansprechen: Meldet er sich ohne Freigabe ab, darf er ${info.wait} Spieltage nicht spielen (Wartefrist, sechs Monate). Dein Verhältnis zum Verein leidet.`, `You can still approach him: if he deregisters without a release he cannot play for ${info.wait} match days (waiting period, six months). Your relationship with the club suffers.`)}</p>`;
     } else if (!info.open) step1 = `<p class="hint">${tr('Anfragen sind nur in der Wechselperiode möglich.', 'Requests are only possible during a transfer period.')}</p>`;
     else {
       const extraSeg = winter
         ? `<p class="hint">${tr('Winter: Der Betrag ist frei verhandelbar. Zusätzliches Geld an den Verein erhöht die Chance auf die Freigabe.', 'Winter: the amount is negotiable. Extra money for the club improves the chance of a release.')}</p>${segmented('extra', EXTRA_STEPS.map((v) => [v, v ? `+${v} €` : tr('nichts extra', 'nothing extra')]), this.tf.extra ?? 0, { action: 'tfFilter' })}`
-        : `<p class="hint">${tr('Sommer: Die Ausbildungsentschädigung ist festgeschrieben.', 'Summer: the training compensation is fixed.')}</p>`;
-      step1 = `<p class="t-2">${price ? tr(`Ausbildungsentschädigung: ${euro(price)}${winter ? ' (Verhandlungsbasis)' : ''}`, `Training compensation: ${euro(price)}${winter ? ' (starting point)' : ''}`) : tr('Keine Ausbildungsentschädigung (Freizeitliga).', 'No training compensation (casual league).')}</p>${extraSeg}
+        : `<p class="hint">${tr(`Sommer: Die ${fDe} ist festgeschrieben.`, `Summer: the ${fEn.toLowerCase()} is fixed.`)}</p>`;
+      step1 = `${wage}<p class="t-2">${price ? tr(`${fDe}: ${euro(price)}${winter ? ' (Verhandlungsbasis)' : ''}`, `${fEn}: ${euro(price)}${winter ? ' (starting point)' : ''}`) : tr('Keine Ausbildungsentschädigung (Freizeitliga).', 'No training compensation (casual league).')}</p>${extraSeg}
         <div class="actions">${button(tr('Beim Verein anfragen', 'Ask the club'), { kind: 'primary', action: 'tfAsk', value: idx, disabled: full || info.left <= 0 || me.squad.length >= maxSquad(c), 'data-testid': 'tf-ask' })}</div>
         ${full ? `<p class="warn">${MSG().full}</p>` : ''}`;
     }
@@ -208,7 +212,7 @@ export const transferScreens = {
         const p = this.p(o.idx);
         if (!club) return '';
         return `<article class="tf-card" data-testid="tf-offer"><p><b>${club.name}</b> ${tr('möchte', 'want')} <b>${p.name}</b> (${tr('Stärke', 'rating')} ${p.rating}${o.wish ? `, ${tr('will wohl weg', 'seems to want out')}` : ''})</p>
-          <p class="t-2">${o.fee ? tr(`Ausbildungsentschädigung für uns: ${euro(o.fee)}${o.kind === 'winter' ? ' (verhandelbar)' : ''}`, `Training compensation for us: ${euro(o.fee)}${o.kind === 'winter' ? ' (negotiable)' : ''}`) : tr('Keine Entschädigung (Freizeitliga).', 'No compensation (casual league).')}</p>
+          <p class="t-2">${o.fee ? (proFee(c, c.level ?? 1) ? tr(`Ablöse für uns: ${euro(o.fee)}${o.kind === 'winter' ? ' (verhandelbar)' : ''}`, `Transfer fee for us: ${euro(o.fee)}${o.kind === 'winter' ? ' (negotiable)' : ''}`) : tr(`Ausbildungsentschädigung für uns: ${euro(o.fee)}${o.kind === 'winter' ? ' (verhandelbar)' : ''}`, `Training compensation for us: ${euro(o.fee)}${o.kind === 'winter' ? ' (negotiable)' : ''}`)) : tr('Keine Entschädigung (Freizeitliga).', 'No compensation (casual league).')}</p>
           <div class="actions">${button(tr('Freigabe erteilen', 'Grant release'), { kind: 'primary', action: 'tfAccept', value: o.id, disabled: me.squad.length <= MIN_SQUAD, 'data-testid': 'tf-accept' })}${button(tr('Freigabe verweigern', 'Refuse release'), { action: 'tfDecline', value: o.id })}${o.kind === 'winter' && !o.counter && o.base > 0 ? button(tr('Mehr verlangen (+50 %)', 'Ask for more (+50%)'), { action: 'tfCounter', value: o.id }) : ''}</div>
           ${o.wish ? `<p class="hint">${tr('Wer weg will und festgehalten wird, ist sauer.', 'Someone who wants out and is held back will sulk.')}</p>` : ''}</article>`;
       })

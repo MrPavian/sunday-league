@@ -13,7 +13,8 @@ import * as rivals from './rivals.js'; // Rivalitäten
 import * as chatlife from './chatlife.js'; // Chat-Leben
 import * as coachload from './coachload.js'; // roter Bereich der Trainer-Balken
 import * as bonuses from './bonuses.js'; // verdeckte Boni: Weltklasse, Führungsspieler, Star der Liga
-export const FEATURES = [transfers, oldboys, women, scouting, teamtraining, referees, rivals, chatlife, coachload, bonuses];
+import * as contracts from './contracts.js'; // Spielerverträge in den Profiligen
+export const FEATURES = [transfers, oldboys, women, scouting, teamtraining, referees, rivals, chatlife, coachload, bonuses, contracts];
 
 export function runHooks(name, career, ...args) {
   for (const f of FEATURES) f[name]?.(career, ...args);

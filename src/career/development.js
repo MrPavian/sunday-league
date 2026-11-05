@@ -25,7 +25,8 @@ const unit = (...parts) => hash(...parts) / 4294967296;
 export const PEAK_AGE = { fwd: 25, mid: 26, def: 27, gk: 30 };
 // Wie viel Entwicklung die Liga hergibt (Trainingsumfang, Mitspieler), Stufe 1 (Freizeitliga) bis 8 (Oberliga). Stufen 6–8
 // HERGELEITET: der letzte Schritt (+0,13) gleichmäßig fortgesetzt.
-export const LEAGUE_GROWTH = [0.57, 0.65, 0.75, 0.87, 1, 1.13, 1.26, 1.39];
+// Profiligen (Stufen 9–10, Konzept Profiligen): ebenso fortgesetzt, HERGELEITET.
+export const LEAGUE_GROWTH = [0.57, 0.65, 0.75, 0.87, 1, 1.13, 1.26, 1.39, 1.52, 1.65];
 // Anteile der Entwicklungstypen.
 export const DEV_TYPES = [
   ['normal', 0.38],

@@ -4,14 +4,15 @@
 // die anderen werden per Schnellmodell ausgespielt (Hin- und Rückrunde, Torerwartung wie im Pokal: QUICK in pokal.js).
 // Die Ligen ohne den eigenen Verein haben je fünf Vereine (wie clubs.js); Zusatzvereine der großen Liga (EXTRA_CLUBS) gehören
 // nur zur Liga des eigenen Vereins und steigen nicht.
-import { lifted, niveauOf } from '../sim/niveau.js';
+import { lifted, niveauOf, TOP_NIVEAU } from '../sim/niveau.js';
 import { clubNiveaus } from './career.js';
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { PITCHES } from '../sim/pitch.js';
-import { EXTRA_CLUBS, LEAGUES, MAX_LEVEL } from './clubs.js';
+import { EXTRA_CLUBS, LEAGUES, maxLevel } from './clubs.js';
 import { poisson, QUICK, quickSlope } from './pokal.js';
 import { leagueTitle, localized } from './verband.js';
+import { cpuWaives } from './license.js';
 
 const hashSeed = (...parts) => parts.reduce((h, p) => (Math.imul(h ^ p, 0x9e3779b1) + 0x7f4a7c15) >>> 0, 0x2545f491); // wie career.js
 const stripSquad = ({ squad, human, ...def }) => def;
@@ -22,7 +23,7 @@ const isExtra = (level, id) => (EXTRA_CLUBS[level] ?? []).some((e) => e.id === i
 export function ensureLeagues(career) {
   const own = career.level ?? 1;
   career.leagues ??= {};
-  for (let l = 1; l <= MAX_LEVEL; l++) {
+  for (let l = 1; l <= maxLevel(career); l++) {
     if (career.leagues[l]) continue;
     career.leagues[l] = l === own ? career.clubs.filter((c) => !c.human && !isExtra(l, c.id)).map(stripSquad) : LEAGUES[l].clubs.map((d) => localized(career, { ...d }, l, career.leagues));
   }
@@ -45,8 +46,8 @@ export function venueFor(venue, level) {
 // seiner Kadermischung (tiers) und Kadergröße, gezogen aus dem Spielerpool ohne ihn zu belegen (fest je Verein und Stufe).
 // Ein Mittel über die Klassen allein lag nur 3–5 Punkte zwischen den Ligen – zu wenig, die Tabellen wären fast Zufall.
 const strCache = new Map();
-export function defStrength(def, pool, level, model = 1) {
-  if (model >= 3) return defStrengthNiveau(def, pool, level);
+export function defStrength(def, pool, level, model = 1, topNiv = 8) {
+  if (model >= 3) return defStrengthNiveau(def, pool, level, topNiv);
   const key = `${def.id}:${level}`;
   if (strCache.has(key)) return strCache.get(key);
   const league = LEAGUES[level];
@@ -74,8 +75,8 @@ export function defStrength(def, pool, level, model = 1) {
 // Freizeitliga, Stärke mit dem Aufschlag des Niveaus (sim/niveau.js).
 const NIV_MIX = Object.entries({ ok: 0.5, gut: 0.35, stark: 0.13, dorfstar: 0.02 });
 let byTierNiv = null;
-function defStrengthNiveau(def, pool, level) {
-  const key = `n3:${def.id}:${level}`;
+function defStrengthNiveau(def, pool, level, topNiv = 8) {
+  const key = `n3:${def.id}:${level}:${topNiv}`;
   if (strCache.has(key)) return strCache.get(key);
   if (!byTierNiv) {
     byTierNiv = {};
@@ -85,7 +86,7 @@ function defStrengthNiveau(def, pool, level) {
   const size = SQUAD_SIZE[league.squadShape] ?? 12;
   const n = league.format ?? 5;
   const rng = createRng(hashSeed(level, 3, ...[...def.id].map((ch) => ch.charCodeAt(0))));
-  const niv = Object.entries(clubNiveaus(def.tiers, level));
+  const niv = Object.entries(clubNiveaus(def.tiers, level, topNiv));
   const pick = (list) => {
     let u = rng.next() * list.reduce((s, [, w]) => s + w, 0);
     return (list.find(([, w]) => (u -= w) < 0) ?? list[0])[0];
@@ -95,7 +96,7 @@ function defStrengthNiveau(def, pool, level) {
     const ratings = [];
     for (let k = 0; k < size; k++) {
       const nv = Number(pick(niv));
-      const list = byTierNiv[`${pick(NIV_MIX)}:${nv}`];
+      const list = byTierNiv[`${pick(NIV_MIX)}:${Math.min(8, nv)}`]; // Profi-Niveau 9/10: aus dem Pool der Oberliga angehoben
       if (list?.length) ratings.push(lifted(list[Math.floor(rng.next() * list.length)], nv).rating);
     }
     const top = ratings.sort((a, b) => b - a).slice(0, n);
@@ -112,7 +113,7 @@ const SQUAD_SIZE = { small: 9, large: 13, xl: 15, xxl: 20 };
 export function simTable(career, level, pool) {
   const defs = membersOf(career, level);
   const rng = createRng(hashSeed(career.seed, career.season, level, 7331));
-  const rows = defs.map((d) => ({ id: d.id, pts: 0, gd: 0, gf: 0, str: defStrength(d, pool, level, career.strength ?? 1) }));
+  const rows = defs.map((d) => ({ id: d.id, pts: 0, gd: 0, gf: 0, str: defStrength(d, pool, level, career.strength ?? 1, career.pro ? TOP_NIVEAU : 8) }));
   for (const h of rows)
     for (const a of rows) {
       if (h === a) continue;
@@ -140,17 +141,19 @@ export function cpuMoves(career, ownOrder, pool) {
   const leagues = ensureLeagues(career);
   const own = career.level ?? 1;
   const order = {};
-  for (let l = 1; l <= MAX_LEVEL; l++) order[l] = l === own ? ownOrder.filter((id) => leagues[l].some((d) => d.id === id)) : simTable(career, l, pool);
+  for (let l = 1; l <= maxLevel(career); l++) order[l] = l === own ? ownOrder.filter((id) => leagues[l].some((d) => d.id === id)) : simTable(career, l, pool);
   const moves = [];
-  for (let l = 1; l < MAX_LEVEL; l++) {
-    const upId = order[l][0];
+  for (let l = 1; l < maxLevel(career); l++) {
+    // Profiligen (license.js): Der Beste verzichtet manchmal auf den Aufstieg – dann geht der Nächste (nur ein Verzicht je Grenze).
+    const waived = cpuWaives(career, l, order[l][0]) && order[l][1] ? order[l][0] : null;
+    const upId = waived ? order[l][1] : order[l][0];
     const downId = order[l + 1].at(-1);
     if (!upId || !downId) continue;
     const up = leagues[l].find((d) => d.id === upId);
     const down = leagues[l + 1].find((d) => d.id === downId);
     leagues[l] = leagues[l].filter((d) => d.id !== upId).concat({ ...down, venue: venueFor(down.venue, l) });
     leagues[l + 1] = leagues[l + 1].filter((d) => d.id !== downId).concat({ ...up, venue: venueFor(up.venue, l + 1) });
-    moves.push({ level: l, up: up.name, down: down.name, upId, downId });
+    moves.push({ level: l, up: up.name, down: down.name, upId, downId, ...(waived ? { waived: leagues[l].find((d) => d.id === waived)?.name } : {}) });
   }
   return moves;
 }
@@ -159,7 +162,7 @@ export function cpuMoves(career, ownOrder, pool) {
 export function movesNotes(career, moves, level) {
   return moves
     .filter((m) => m.level === level || m.level === level - 1)
-    .map((m) => tr(`Kreisblatt: ${m.up} steigt in die ${leagueTitle(career, m.level + 1)} auf, ${m.down} muss runter in die ${leagueTitle(career, m.level)}.`, `District Gazette: ${m.up} go up to the ${leagueTitle(career, m.level + 1)}, ${m.down} drop to the ${leagueTitle(career, m.level)}.`));
+    .map((m) => (m.waived ? tr(`Kreisblatt: ${m.waived} verzichtet auf den Aufstieg – zu teuer. `, `District Gazette: ${m.waived} turn down promotion – too expensive. `) : '') + tr(`Kreisblatt: ${m.up} steigt in die ${leagueTitle(career, m.level + 1)} auf, ${m.down} muss runter in die ${leagueTitle(career, m.level)}.`, `District Gazette: ${m.up} go up to the ${leagueTitle(career, m.level + 1)}, ${m.down} drop to the ${leagueTitle(career, m.level)}.`));
 }
 
 // Nach dem Saisonwechsel: Die eigene Liga hält ihre Vereinsliste aus den tatsächlichen Gegnern (Fusionen, neue Vereine).
