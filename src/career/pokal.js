@@ -19,7 +19,7 @@ import { LEAGUES, MAX_LEVEL } from './clubs.js';
 import { humanClub, playerOf, resolveKits, seasonOver, squadPicker, SQUAD_SHAPES, takenIndices, teamForMatch } from './career.js';
 import { isCoach } from './personal.js';
 import { adjustMood } from './events.js';
-import { BUND_AWAY, BUND_ERST, BUND_NAME, BUND_PRIZE, BUND_PRIZE_WINNER, BUND_ROUND_NAMES, BUND_SPONSOR, BUND_TEXT, BUND_VENUES, FIELD_AMATEURS, FIELD_PROS, FIELD_STRENGTH, OBERLIGA, PROFI_ATTRS, PROFI_KLASSEN, PROFIS } from './bundespokal.js';
+import { BUND_AWAY, BUND_ERST, BUND_NAME, BUND_PRIZE, BUND_PRIZE_UNIT_MAX, BUND_PRIZE_WINNER, BUND_ROUND_NAMES, BUND_SPONSOR, BUND_TEXT, BUND_VENUES, FIELD_AMATEURS, FIELD_PROS, FIELD_STRENGTH, OBERLIGA, PROFI_ATTRS, PROFI_KLASSEN, PROFIS } from './bundespokal.js';
 import { adjustFitness, afterMatchFitness, fitnessOf, MATCH_COST } from './fitness.js';
 import { applyCards } from './suspensions.js';
 import { bundVenueAutoResolve } from './bundevents.js';
@@ -525,7 +525,7 @@ function bundMemory(c, cup, tie, won) {
   }
   // Rundenprämie des Verbands (Verdopplung je Runde, siehe BUND_PRIZE) – wer mitspielt, bekommt sie, ob Sieg oder Niederlage.
   const mult = last ? (won ? BUND_PRIZE_WINNER : BUND_PRIZE[5]) : BUND_PRIZE[r];
-  const prize = Math.round(homeUnit(c.level ?? 1) * mult);
+  const prize = Math.round(Math.min(homeUnit(c.level ?? 1), BUND_PRIZE_UNIT_MAX) * mult);
   book(c, tr(`Rundenprämie ${BUND_NAME} (${rname})`, `${BUND_NAME} round bonus (${rname})`), prize);
   cup.log.push(tr(`Rundenprämie des Verbands: ${prize} €.`, `Round bonus from the association: €${prize}.`));
   // Foto mit dem Star des Profivereins: kommt in die Vitrine (einmal je Verein), wenn das Spiel wirklich stattfand.

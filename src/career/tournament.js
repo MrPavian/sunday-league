@@ -293,9 +293,9 @@ function finishTournament(c, kind) {
 
 // Sommerturnier danach: Theke und Startgelder (nur als Gastgeber), Spielpraxis für die Form, Kreisblatt-Zeile.
 // Zuschauer je Spiel: Spielwerte, nach Liga gestaffelt (kleiner als ein Ligaheimspiel, dafür viele Spiele an einem Tag).
-const LEVEL_MUL = [0, 1, 1.3, 1.6, 2, 2.6, 4, 5.5, 6.9, 25.4, 178.6]; // Kosten wachsen mit der Liga wie im Vereinsfest (festival.js); Stufen 6–10: 2,6 × upperScale
+const LEVEL_MUL = [0, 1, 1.3, 1.6, 2, 2.6, 4, 5.5, 6.9, 25.4, 178.6, 536.5, 733.4]; // Kosten wachsen mit der Liga wie im Vereinsfest (festival.js); Stufen 6–12: 2,6 × upperScale
 export const hostCost = (c, size = 4) => Math.round((CUPS.sommer.hostBase + CUPS.sommer.hostPerTeam * size) * LEVEL_MUL[Math.min(LEVEL_MUL.length - 1, Math.max(1, c.level ?? 1))]);
-export const SUMMER_FANS = [0, [10, 24], [16, 34], [24, 46], [34, 64], [50, 110], [78, 171], [105, 232], [132, 291], [488, 1074], [3436, 7558]]; // Stufen 6–10: Stufe 5 × upperScale (finances.js)
+export const SUMMER_FANS = [0, [10, 24], [16, 34], [24, 46], [34, 64], [50, 110], [78, 171], [105, 232], [132, 291], [488, 1074], [3436, 7558], [10316, 22696], [14104, 31028]]; // Stufen 6–12: Stufe 5 × upperScale (finances.js)
 function summerAftermath(c, t) {
   const cfg = CUPS.sommer;
   const me = humanClub(c).id;

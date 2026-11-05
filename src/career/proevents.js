@@ -69,7 +69,7 @@ export const PRO_EVENTS = {
 
   pyro: {
     weight: 1,
-    needs: (c) => (level(c) >= 9 && c.round >= 2 && !once(c, 'pyro') ? { fine: level(c) >= 10 ? 6000 : 1500 } : null),
+    needs: (c) => (level(c) >= 9 && c.round >= 2 && !once(c, 'pyro') ? { fine: [1500, 6000, 20000, 50000][Math.min(3, level(c) - 9)] } : null), // Strafen Spielwerte; 2./1. Liga höher
     text: (c, ctx) => tr(`Pyrotechnik im eigenen Block beim letzten Spiel. Der Verband schickt den Bescheid: ${eur(ctx.fine)} € Geldstrafe.`, `Pyrotechnics in your own block at the last game. The association sends the notice: a €${eur(ctx.fine)} fine.`),
     options: [
       { label: tr('Zahlen', 'Pay'), effect: (c, ctx) => (book(c, tr('Verbandsstrafe Pyrotechnik', 'Association fine: pyrotechnics'), -ctx.fine), tr('Bezahlt. Der Kassenwart seufzt.', 'Paid. The treasurer sighs.')) },

@@ -1,12 +1,13 @@
-# Konzept: Profiligen (Regionalliga und 3. Liga)
+# Konzept: Profiligen (Regionalliga bis 1. Liga)
 
 Stand 2026-11-05. Vom Nutzer gewünscht (ROADMAP 11.14, „Regionalliga und 3. Liga spielbar“). Entscheidungen des Nutzers vom
 2026-11-05:
 
 - **Umfang „alles auf einmal“:** Ligen, Spielerverträge mit Gehalt und Laufzeit, Ablöse, Zulassung (Stadion, Flutlicht,
   Finanznachweis) in einem Schritt.
-- **Oberste Stufe:** Die 3. Liga ist vorerst die oberste Stufe. Ihr Meister verzichtet aus finanziellen Gründen auf den
-  Aufstieg. Verzichten kann jeder Verein in jeder Liga, unten kommt es häufiger vor.
+- **Oberste Stufe:** Zuerst war die 3. Liga oben (ihr Meister verzichtete). Seit dem Nutzerentscheid vom 2026-11-05
+  („direkt 1. und 2. Liga erstellen“) reicht die Pyramide bis zur 1. Liga (Stufe 12), siehe Abschnitt 6.
+  Verzichten kann jeder Verein in jeder Liga, unten kommt es häufiger vor.
 - **Nur neue Karrieren:** Kennung `career.pro` (1). Alte Spielstände bleiben bei der Oberliga als oberster Stufe.
 
 Kennzeichnung der Werte: **belegt** (mit Quelle), **hergeleitet** (aus belegten Werten gerechnet) oder **Spielwert**
@@ -124,8 +125,8 @@ Fehlt etwas, steigt der Verein nicht auf. Die Anforderungen stehen ab der Verban
   West 2023/24“). Kaan-Marienborn zog wegen der Stadionauflagen zurück (ebenda). Die SpVgg Unterhaching verzichtete 2026 auf die
   Relegation zur 3. Liga, weil die wirtschaftlichen Rahmenbedingungen fehlten (ran.de, flashscore.de).
 - **Meister der eigenen Liga verzichtet:** Dann steigt der Zweite direkt auf, ohne Relegation.
-- **3. Liga:** Ihr Meister verzichtet immer, weil es noch keine 2. Liga gibt. Die besten vier spielen in der nächsten Saison den
-  überregionalen Pokal (DFB-Regel).
+- **3. Liga:** Ihr Meister steigt in die 2. Liga auf, wenn er die Zulassung hat (Abschnitt 6). Die besten vier spielen in der
+  nächsten Saison den überregionalen Pokal (DFB-Regel); aus der 2. und 1. Liga spielen ihn alle.
 
 ## 5. Messung (`scripts/pro-audit.mjs`, Seed 5)
 
@@ -144,5 +145,42 @@ Offen:
 - echte Spesenordnung der Schiris;
 - Ticketschnitt der 3. Liga;
 - Lizenzgebühren;
-- Merchandising als eigener Bereich;
-- eine 2. Liga.
+- Merchandising als eigener Bereich.
+
+## 6. 2. Liga und 1. Liga (Stufen 11 und 12, seit 2026-11-05)
+
+Fünf erfundene Vereine je Liga (dazu zwei für die große Staffel), Profi-Niveau 171 und 186 (`PRO_TARGET`).
+
+| Wert | 2. Liga | 1. Liga | Art und Quelle |
+|---|---|---|---|
+| Zuschauer je Spiel (Mitte) | 28 886 | 39 490 | belegt: Saisonartikel 2023/24, deutsche Wikipedia |
+| Gehalt je Spieler und Monat (Schnitt) | 46 000 € | 265 000 € | hergeleitet: Personal Spielbetrieb (DFL-Wirtschaftsreport 2025: 296,9 / 1722,0 Mio. €) ÷ 18 ÷ 12 ÷ 30 |
+| Fernsehgeld je Spieltag | 471 000 € | 2 782 000 € | hergeleitet: Medienerlöse (288,3 / 1702,7 Mio. €) ÷ 18 ÷ 34 |
+| Vermarktung je Spieltag | 511 000 € | 2 339 000 € | hergeleitet: Werbung + Merchandising (216,5 + 96,4 / 1146,1 + 285,4 Mio. €) ÷ 18 ÷ 34 |
+| Eintritt (Listenpreis) | 39 € | 64 € | hergeleitet: Spielbetrieb (273,4 / 599,0 Mio. €) ÷ 18 ÷ 17 ÷ Zuschauer, ohne Theke |
+| Spielbetrieb je Spieltag | 944 000 € | 3 286 000 € | hergeleitet: Ligamittlerer ohne Transfers etwa ausgeglichen |
+| Schiri-Gespann | 2500 € | 5000 € | Spielwert |
+
+Zulassung (`license.js`):
+
+- **2. Liga:** 15 000 Plätze, davon 3000 überdachte Sitzplätze (im Spiel die Arena), Rasenheizung, Flutlicht mit 1200 Lux.
+  Belege: Landeshauptstadt Stuttgart, Gemeinderatsdrucksache 2008 zum Waldau-Stadion (15 000 / 3000, Rasenheizung als Voraussetzung,
+  Einbau 1,0–1,2 Mio. €, Betrieb 60 000–80 000 € im Jahr); StadiumDB 2024 (1200 Lux reichen für die 2. Liga).
+- **1. Liga:** 8000 Sitzplätze bei 15 000 Plätzen (Sky Sport zu Holstein Kiel), Flutlicht mit 1800 Lux (StadiumDB 2024),
+  Rasenheizung.
+- Neue Ausbauten: Rasenheizung (keine Platzsperre bei Frost und Schnee), Flutlicht 1200 und 1800 Lux, Sitzplatzausbau (8000),
+  Großarena (50 000 Plätze, Spielwert).
+
+Bundespokal: Die Rundenprämie wächst mit den Heimspieleinnahmen der Liga, höchstens aber bis zum echten Betrag der ersten Runde
+(211 886 €). Ohne diese Grenze hätte ein Erstligist in einer Saison 29 Mio. € Prämie bekommen.
+
+Messung (`START=10` bzw. `START=11 node scripts/pro-audit.mjs 5`, Ligamittlerer, Heimspiele als Erwartung bei 15 000 Plätzen):
+
+| Liga | Gehälter je Monat | Saldo Saison 1 | Saldo Saison 2 |
+|---|---|---|---|
+| 2. Liga | 1 185 900 € / 628 750 € | −848 550 € | +3 519 603 € |
+| 1. Liga | 4 762 950 € / 4 065 100 € | +10 490 342 € | +9 706 412 € |
+
+Die 1. Liga liegt im Plus, weil der Kader im Spiel rund 20 statt 30 Spieler hat und die Gehälter so niedriger sind als in echt.
+Offen: Pokalgegner, wenn man selbst Profi ist (das Feld besteht weiter aus eigenen Profivereinen des Pokals); Logen und
+Business-Plätze als eigener Bereich.

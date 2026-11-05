@@ -32,6 +32,7 @@ describe('Schiri-Spesen', () => {
     expect(refFee(7)).toBe(50 + 2 * 40);
     expect(refFee(8)).toBe(75 + 2 * 50);
     expect([9, 10].map(refFee)).toEqual([400, 900]); // Profiligen (Spielwerte, Konzept Profiligen 2)
-    expect(refFee(11)).toBe(refFee(10));
+    expect([11, 12].map(refFee)).toEqual([2500, 5000]); // 2./1. Liga (Spielwerte)
+    expect(refFee(13)).toBe(refFee(12));
   });
 });

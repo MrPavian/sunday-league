@@ -1,4 +1,4 @@
-// Profiligen (Konzept Profiligen, Nutzerentscheid 2026-11-05): Regionalliga und 3. Liga, Verträge, Zulassung, Aufstiegsverzicht.
+// Profiligen (Konzept Profiligen, Nutzerentscheid 2026-11-05): Regionalliga bis 1. Liga, Verträge, Zulassung, Aufstiegsverzicht.
 import { describe, expect, it } from 'vitest';
 import { createCareer, finishRound, humanClub, nextSeason, playerOf, seasonOver, table } from '../src/career/career.js';
 import { maxLevel, MAX_LEVEL, PRO_MAX_LEVEL } from '../src/career/clubs.js';
@@ -28,9 +28,10 @@ const license = (c, ...ids) => {
 };
 
 describe('Profiligen: Stufen und alte Spielstände', () => {
-  it('neue Karrieren reichen bis zur 3. Liga, alte bleiben bei der Oberliga', () => {
+  it('neue Karrieren reichen bis zur 1. Liga, alte bleiben bei der Oberliga', () => {
     const c = createCareer({ seed: 3 });
     expect(maxLevel(c)).toBe(PRO_MAX_LEVEL);
+    expect(PRO_MAX_LEVEL).toBe(12);
     const old = createCareer({ seed: 3 });
     delete old.pro;
     expect(maxLevel(old)).toBe(MAX_LEVEL);
@@ -131,14 +132,37 @@ describe('Aufstiegsverzicht', () => {
     expect(c.history.at(-1).upBlock).toBe('waived');
   });
 
-  it('der Meister der 3. Liga verzichtet immer (keine 2. Liga); die besten vier spielen den überregionalen Pokal', () => {
+  it('der Meister der 3. Liga braucht die Zulassung der 2. Liga (Arena, Rasenheizung, 1200 Lux); die besten vier spielen den überregionalen Pokal', () => {
     const c = createCareer({ seed: 11 });
     c.level = 10;
     play(c);
     nextSeason(c);
     expect(c.level).toBe(10);
+    expect(c.history.at(-1).upBlock).toBe('license');
+    expect(c.bundQual).toBe(c.season);
+    const d = createCareer({ seed: 11 });
+    d.level = 10;
+    play(d);
+    license(d, 'stadion', 'flutlicht', 'drittliga', 'flutlicht800', 'arena', 'rasenheizung', 'flutlicht1200');
+    d.cash = 1e8;
+    nextSeason(d);
+    expect(d.level).toBe(11);
+  });
+
+  it('2. Liga und 1. Liga: ganz oben kein Aufstieg mehr, alle spielen den überregionalen Pokal', () => {
+    const c = createCareer({ seed: 11 });
+    c.level = 12;
+    play(c);
+    nextSeason(c);
+    expect(c.level).toBe(12);
     expect(c.history.at(-1).upBlock).toBe('top');
     expect(c.bundQual).toBe(c.season);
+    const z = createCareer({ seed: 12 });
+    z.level = 11;
+    play(z, 0, 0);
+    nextSeason(z);
+    expect(z.bundQual).toBe(z.season);
+    expect(licenseNeeds(z, 12).map((x) => x.id)).toEqual(['stadion', 'rasen', 'flutlicht', 'geld']);
   });
 
   it('CPU-Meister verzichten unten öfter als oben, etwa im eingestellten Anteil', () => {

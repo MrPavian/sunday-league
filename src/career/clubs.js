@@ -308,6 +308,24 @@ export const DL_CLUBS = [
   club('dl-deichtor', 'TSV 1862 Deichtor', 'Dyke Gate 1862', ['TDT', 'DG2'], { shirt: 0x4fa3e0, shorts: 0xf2efe6, socks: 0x4fa3e0, pattern: 'ringel', second: 0xf2efe6 }, 0xc8352f, vary(P10, 0.01)),
 ];
 
+// 2. Liga (Stufe 11) und 1. Liga (Stufe 12), Nutzerentscheid 2026-11-05 („direkt 1. und 2. Liga erstellen“). Erfundene Vereine.
+const P11 = { ok: 0.01, gut: 0.1, stark: 0.34, dorfstar: 0.33, superstar: 0.2, legende: 0.02 };
+const P12 = { ok: 0, gut: 0.08, stark: 0.32, dorfstar: 0.34, superstar: 0.23, legende: 0.03 };
+export const ZL_CLUBS = [
+  club('zl-sturmhafen', 'FC Sturmhafen 1902', 'Storm Harbour 1902', ['FSH', 'SH2'], { shirt: 0x1f3a6b, shorts: 0x1f3a6b, socks: 0xf2efe6, pattern: 'vbrust', second: 0xf2efe6 }, 0xc8352f, P11),
+  club('zl-kaiserkai', 'SV Kaiserkai', 'Emperor Quay SV', ['SKK', 'EQS'], { shirt: 0xf2efe6, shorts: 0x1c1c1c, socks: 0xf2efe6, pattern: 'mittelstreifen', second: 0x1c1c1c }, 0x2f6fb5, vary(P11, 0.03)),
+  club('zl-moorbrueck', 'VfB Moorbrück', 'Moorbridge VfB', ['VMB', 'MBV'], { shirt: 0x3a7d44, shorts: 0xf2efe6, socks: 0x3a7d44, pattern: 'streifen', second: 0xf2efe6 }, 0xd9822b, vary(P11, -0.02)),
+  club('zl-salzwerk', 'Eintracht Salzwerk', 'Saltworks United', ['ESW', 'SWU'], { shirt: 0x8a1c2b, shorts: 0xf2efe6, socks: 0x8a1c2b, pattern: 'schulter', second: 0xf2efe6 }, 0x3fa05a, vary(P11, 0.05)),
+  club('zl-fischmarkt', 'SC Fischmarkt 07', 'Fish Market 07', ['SFM', 'FM7'], { shirt: 0x2a6f97, shorts: 0xe3c35a, socks: 0x2a6f97, pattern: 'ringel', second: 0xe3c35a }, 0x6b2a8a, vary(P11, 0.01)),
+];
+export const BL_CLUBS = [
+  club('bl-nordstern', 'FC Nordstern 1888', 'North Star 1888', ['FNS', 'NS8'], { shirt: 0xc0392b, shorts: 0xf2efe6, socks: 0xc0392b, pattern: 'uni', second: 0xf2efe6 }, 0x1f3a6b, P12),
+  club('bl-kogge', 'SV Kogge 1910', 'Cog 1910', ['SVK', 'C10'], { shirt: 0x1c1c1c, shorts: 0x1c1c1c, socks: 0xe3c35a, pattern: 'streifen', second: 0xe3c35a }, 0xc8352f, vary(P12, 0.03)),
+  club('bl-brueckenstadt', 'Rot-Weiß Brückenstadt', 'Bridge Town Red & White', ['RWB', 'BTR'], { shirt: 0xf2efe6, shorts: 0xc0392b, socks: 0xc0392b, pattern: 'diagonal', second: 0xc0392b }, 0x2e8b57, vary(P12, -0.02)),
+  club('bl-ankerplatz', 'Ankerplatz 04', 'Anchor Square 04', ['AP4', 'AS4'], { shirt: 0x2b4fa8, shorts: 0xf2efe6, socks: 0x2b4fa8, pattern: 'brustring', second: 0xf2efe6 }, 0xe8742a, vary(P12, 0.05)),
+  club('bl-wellenbrecher', 'VfL Wellenbrecher', 'Breakwater VfL', ['VWB', 'BWV'], { shirt: 0x4fa3e0, shorts: 0x1f2a44, socks: 0x4fa3e0, pattern: 'haelften', second: 0x1f2a44 }, 0xe0b020, vary(P12, 0.01)),
+];
+
 // Zwei weitere Vereine je Liga für die große Staffel (8 Teams, 14 Spieltage).
 export const EXTRA_CLUBS = {
   1: [
@@ -430,14 +448,21 @@ export const EXTRA_CLUBS = {
     club('dl-bojenhof', 'Rot-Weiß Bojenhof', 'Buoy Yard Red & White', ['RWH', 'BYR'], { shirt: 0xc0392b, shorts: 0xf2efe6, socks: 0xf2efe6, pattern: 'brustring', second: 0xf2efe6 }, 0x1f3a6b, vary(P10, 0.02)),
     club('dl-seewarte', 'SpVgg Seewarte', 'Sea Watch Athletic', ['SSW', 'SWA'], { shirt: 0x2b2b5e, shorts: 0xd9822b, socks: 0x2b2b5e, pattern: 'streifen', second: 0xd9822b }, 0x3fa05a, vary(P10, -0.01)),
   ],
+  11: [
+    club('zl-lotsenturm', 'TuS Lotsenturm', 'Pilot Tower TuS', ['TLT', 'PTT'], { shirt: 0xe8742a, shorts: 0x1c1c1c, socks: 0xe8742a, pattern: 'uni', second: 0x1c1c1c }, 0x2f6fb5, vary(P11, 0.02)),
+    club('zl-reederei', 'SpVgg Reederei', 'Shipowners Athletic', ['SRD', 'SOA'], { shirt: 0x5a6e2f, shorts: 0xf2efe6, socks: 0x5a6e2f, pattern: 'nadel', second: 0xf2efe6 }, 0xc0392b, vary(P11, -0.01)),
+  ],
+  12: [
+    club('bl-seemoewe', 'TSG Seemöwe', 'Seagull TSG', ['TSM', 'SGT'], { shirt: 0x1f5f5b, shorts: 0xf2efe6, socks: 0x1f5f5b, pattern: 'schaerpe', second: 0xf2efe6 }, 0xd9822b, vary(P12, 0.02)),
+    club('bl-dreimast', 'Union Dreimast', 'Three-Master Union', ['UDM', 'TMU'], { shirt: 0x6a2c8c, shorts: 0xf2efe6, socks: 0x6a2c8c, pattern: 'karo', second: 0xf2efe6 }, 0xe0b020, vary(P12, -0.01)),
+  ],
 };
 
 export const leagueClubs = (league, size = 6) => [...league.clubs, ...(size >= 8 ? EXTRA_CLUBS[league.level] ?? [] : [])];
 
 export const MAX_LEVEL = 8; // oberste Stufe alter Spielstände
-// Profiligen: Karrieren mit career.pro reichen bis zur 3. Liga (Stufe 10). Der Meister der 3. Liga verzichtet vorerst auf den
-// Aufstieg (Nutzerentscheid 2026-11-05: eine 2. Liga gibt es noch nicht).
-export const PRO_MAX_LEVEL = 10;
+// Profiligen: Karrieren mit career.pro reichen bis zur 1. Liga (Stufe 12; 2. und 1. Liga seit 2026-11-05).
+export const PRO_MAX_LEVEL = 12;
 export const maxLevel = (career) => (career?.pro ? PRO_MAX_LEVEL : MAX_LEVEL);
 
 export const LEAGUES = {
@@ -451,4 +476,6 @@ export const LEAGUES = {
   8: { level: 8, name: tr('Oberliga', 'Regional Premier League'), referee: true, format: 11, humanVenue: 'grossfeld', clubs: OL_CLUBS, squadShape: 'xxl', maxSquad: 22, derby: { club: 'ol-oberhafen', name: tr('Oberhafen-Derby', 'Upper Harbour Derby') } },
   9: { level: 9, name: tr('Regionalliga', 'Regional League'), referee: true, format: 11, humanVenue: 'grossfeld', clubs: RL_CLUBS, squadShape: 'xxl', maxSquad: 24, pro: true, derby: { club: 'rl-hafenstern', name: tr('Hafenstern-Derby', 'Harbour Star Derby') } },
   10: { level: 10, name: tr('3. Liga', 'Third Division'), referee: true, format: 11, humanVenue: 'grossfeld', clubs: DL_CLUBS, squadShape: 'xxl', maxSquad: 26, pro: true, derby: { club: 'dl-kanalstadt', name: tr('Kanalstadt-Klassiker', 'Canal Town Classic') } },
+  11: { level: 11, name: tr('2. Liga', 'Second Division'), referee: true, format: 11, humanVenue: 'grossfeld', clubs: ZL_CLUBS, squadShape: 'xxl', maxSquad: 28, pro: true, derby: { club: 'zl-sturmhafen', name: tr('Sturmhafen-Derby', 'Storm Harbour Derby') } },
+  12: { level: 12, name: tr('1. Liga', 'First Division'), referee: true, format: 11, humanVenue: 'grossfeld', clubs: BL_CLUBS, squadShape: 'xxl', maxSquad: 30, pro: true, derby: { club: 'bl-nordstern', name: tr('Nordstern-Klassiker', 'North Star Classic') } },
 };

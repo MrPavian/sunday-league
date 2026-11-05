@@ -13,7 +13,8 @@ export const NIVEAU_BASE = 51.5; // heutiges Mittel der Freizeitliga (gemessen, 
 export const PRO_TARGET = { 9: 141, 10: 156, 11: 171, 12: 186 };
 // Aufschlag je Niveau 1–10; Niveau 9 und 10 (Regionalliga, 3. Liga) gibt es nur für Spieler, die ein Profiverein holt (career.proNiv,
 // Konzept Profiligen) – der Pool selbst bleibt bei 1–8.
-export const NIVEAU_LIFT = [...NIVEAU_TARGET, PRO_TARGET[9], PRO_TARGET[10]].map((t, i) => (i === 0 ? 0 : t - NIVEAU_BASE));
+// 2. und 1. Liga (11, 12) seit 2026-11-05 ebenso.
+export const NIVEAU_LIFT = [...NIVEAU_TARGET, PRO_TARGET[9], PRO_TARGET[10], PRO_TARGET[11], PRO_TARGET[12]].map((t, i) => (i === 0 ? 0 : t - NIVEAU_BASE));
 export const TOP_NIVEAU = NIVEAU_LIFT.length;
 // Wirkung eines Stärkepunkts in der Engine je Niveau der Partie (mittlere Stärke m), gemessen (Konzept 12.5, pokal.js quickSlope):
 // 0,051 (Niveau 1 gg 2, Ø 64), 0,049 (4 gg 5, Ø 89), 0,033 (7 gg 8, Ø 128); dazwischen linear, darunter und darüber konstant.

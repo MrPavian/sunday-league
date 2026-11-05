@@ -14,7 +14,7 @@ import { tr } from '../core/i18n.js';
 import { adjustEnergy, adjustPatience, isPresident } from './personal.js';
 
 // Regionalliga und 3. Liga je 5 sind Spielwerte (Halbprofis und Profis; keine Zählung gefunden; mehr als MAX_DAYS gibt es nicht).
-export const TRAINING_NORM = [1, 2, 2, 2, 3, 3, 4, 4, 5, 5]; // Stufe 1 (Freizeitliga) bis 10 (3. Liga)
+export const TRAINING_NORM = [1, 2, 2, 2, 3, 3, 4, 4, 5, 5, 5, 5]; // Stufe 1 (Freizeitliga) bis 12 (1. Liga); 2./1. Liga wie die 3. Liga (MAX_DAYS)
 export const MIN_DAYS = 1;
 export const MAX_DAYS = 5;
 export const PER_DAY = 0.12; // Entwicklung je Tag über/unter der Norm (Spielwert)

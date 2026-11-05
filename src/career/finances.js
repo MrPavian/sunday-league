@@ -108,8 +108,8 @@ export function matchFinances(career, fixture, prepared, level) {
 
 // Durchschnittliche Einnahmen eines Heimspiels der Stufe (mittlere Zuschauerzahl × Theke, ab Bezirksliga plus Eintritt):
 // Maßeinheit für Prämien und Mieten im überregionalen Pokal (bundespokal.js).
-const MEAN_FANS = [0, 9.5, 29, 45, 67.5, 140, 217.5, 295, 370, 1367, 9620]; // Mitte der Spannen in matchFinances (5–14, 18–40, 30–60, 45–90, 80–200, UPPER_FANS)
-export const TOP_FIN = MEAN_FANS.length - 1; // höchste Stufe mit eigenen Werten (3. Liga)
+const MEAN_FANS = [0, 9.5, 29, 45, 67.5, 140, 217.5, 295, 370, 1367, 9620, 28886, 39490]; // Mitte der Spannen in matchFinances (5–14, 18–40, 30–60, 45–90, 80–200, UPPER_FANS)
+export const TOP_FIN = MEAN_FANS.length - 1; // höchste Stufe mit eigenen Werten (1. Liga)
 export const homeUnit = (level) => Math.round(MEAN_FANS[Math.min(TOP_FIN, Math.max(1, level))] * (2.5 + (level > 4 ? entryFee(level) : 0)));
 
 // Stufen 6–8 (Landesliga, Verbandsliga, Oberliga). Belegt ist nur die Oberliga: Oberliga Westfalen im Schnitt 298, 352 und
@@ -119,7 +119,9 @@ export const homeUnit = (level) => Math.round(MEAN_FANS[Math.min(TOP_FIN, Math.m
 // Profiligen (Konzept Profiligen 2): Regionalliga 2023/24 im Schnitt 940 (Nord), 945 (Bayern) und 2217 (West) Zuschauer je Spiel
 // (Saisonartikel „Fußball-Regionalliga Nord/Bayern/West 2023/24“, deutsche Wikipedia, abgerufen 2026-11-05), Mittel 1367;
 // 3. Liga 2023/24: 9620 je Spiel („3. Fußball-Liga 2023/24“, ebenda). Spanne wie oben ±43 % um die Mitte.
-export const UPPER_FANS = { 6: [125, 310], 7: [170, 420], 8: [210, 530], 9: [780, 1955], 10: [5485, 13755] };
+// 2. Liga 2023/24: 28 886 je Spiel, 1. Liga („Bundesliga“) 39 490 („2. Fußball-Bundesliga 2023/24“, „Fußball-Bundesliga 2023/24“,
+// deutsche Wikipedia, abgerufen 2026-11-05). Spanne wie oben ±43 %.
+export const UPPER_FANS = { 6: [125, 310], 7: [170, 420], 8: [210, 530], 9: [780, 1955], 10: [5485, 13755], 11: [16465, 41307], 12: [22509, 56471] };
 // Kosten und Erträge der Stufen 6–8, die nur bis zur Bezirksliga eingestellt waren (Kosten, Sponsoren, Feste, Turniere):
 // mit der Zuschauerzahl hochgerechnet (hergeleitet, siehe oben), z. B. Oberliga 370 / 140 ≈ 2,6 × Bezirksliga.
 export const upperScale = (level) => MEAN_FANS[Math.min(TOP_FIN, Math.max(5, level))] / MEAN_FANS[5];
@@ -127,14 +129,19 @@ export const upperScale = (level) => MEAN_FANS[Math.min(TOP_FIN, Math.max(5, lev
 // Ab der Kreisklasse kostet der Spielbetrieb: Verband, Versicherung, Trikotwäsche –
 // und die guten Leute wollen Fahrgeld. Wer oben mitspielen will, muss rechnen. Stufen 6–10: 150 € × upperScale (hergeleitet;
 // in den Profiligen stehen dafür Ordner, Stadion, Verwaltung).
-export const OPS_COST = [0, 0, 40, 70, 100, 150, 233, 316, 396, 1465, 10307];
+// 2. und 1. Liga HERGELEITET aus dem DFL-Wirtschaftsreport 2025 (Saison 2023/24, Summen aller 18 Klubs, Tsd. €): Spielbetrieb,
+// Medien, Werbung und Merchandising abzüglich Personal Spielbetrieb, je Klub ÷ 34 Spieltage – so wirtschaftet ein Ligamittlerer
+// ohne Transfers und übrige Erträge etwa ausgeglichen. 2. Liga (273 421 + 288 271 + 216 538 + 96 430 − 296 909) / 18 / 34 ≈ 944 000 €,
+// 1. Liga (598 974 + 1 702 707 + 1 146 103 + 285 436 − 1 721 994) / 18 / 34 ≈ 3 286 000 €. Darin stecken Verwaltung, Nachwuchs,
+// Stadion und alles Übrige, was das Spiel nicht einzeln führt.
+export const OPS_COST = [0, 0, 40, 70, 100, 150, 233, 316, 396, 1465, 10307, 944000, 3286000];
 // Schiedsrichter-Spesen je Heimspiel (der Gastgeber zahlt), Stufen wie im Verband Westfalen, Saison 2025/26: Kreisliga 27 €,
 // Bezirksliga 35 €, Landesliga 45 € + 2 × 35 € Assistenten, Westfalenliga 50 € + 2 × 40 €, Oberliga 75 € + 2 × 50 €
 // (Kreisschiedsrichterausschuss Paderborn, https://www.flvw-kreis-paderborn.de/data/downloads/SR_Spesen_Kreis_PB_01.07.2025.pdf).
 // Andere Verbände zahlen ähnlich (Bezirksliga 30–62 €, Oberliga 60–100 € für den Schiri). Annahme ohne Quelle: Assistenten erst
 // ab der Landesliga. Fahrtkosten (0,30 €/km) fehlen, die Entfernungen kennt das Spiel nicht. Vorher pauschal 20–80 €.
 // Regionalliga 400 € und 3. Liga 900 € (Schiri und zwei Assistenten) sind Spielwerte – keine Spesenordnung gefunden.
-const REF_FEE = [0, 0, 27, 27, 27, 35, 115, 130, 175, 400, 900];
+const REF_FEE = [0, 0, 27, 27, 27, 35, 115, 130, 175, 400, 900, 2500, 5000]; // 2./1. Liga: Spielwerte (das Gespann zahlt dort der Ligaverband, im Spiel der Gastgeber)
 export const refFee = (level) => REF_FEE[Math.min(TOP_FIN, Math.max(1, level))];
 export const FAHRGELD = { stark: 3, dorfstar: 6, superstar: 10, legende: 12 };
 export const ENTRY_FEE = 2.2; // 3 € Eintritt, Kinder und Mitglieder frei
@@ -144,7 +151,11 @@ export const ENTRY_FEE = 2.2; // 3 € Eintritt, Kinder und Mitglieder frei
 // Regionalliga 11 € HERGELEITET aus zwei Stehplatzpreisen: 8 € (BSG Chemie Leipzig nach dem Aufstieg 2017, Sachsen Fernsehen) und
 // 14,50 € (Stuttgarter Kickers, Stuttgarter Zeitung). 3. Liga 15 € HERGELEITET: kein Ligaschnitt gefunden; die 2. Bundesliga nimmt im
 // Schnitt 12,55 € je Stehplatz und 24,70 € je Karte (2024/25, bundesliga.com „Ticketrekord“), die 3. Liga liegt darunter.
-const ENTRY_BY_LEVEL = { 6: 5, 7: 6, 8: 7, 9: 11, 10: 15 };
+// 2. Liga 39 € und 1. Liga 64 € HERGELEITET: Erlöse aus dem Spielbetrieb je Klub (DFL-Wirtschaftsreport 2025: 273,4 Mio. € bzw.
+// 599,0 Mio. € für 18 Klubs) ÷ 17 Heimspiele ÷ Zuschauerschnitt ≈ 30,90 € bzw. 49,60 € je Zuschauer, abzüglich der Theke (2,50 €)
+// und mit dem Abschlag oben zurückgerechnet. Darin stecken Logen und Business-Plätze; der reine Ticketschnitt der 2. Liga lag
+// 2024/25 bei 24,70 € (bundesliga.com).
+const ENTRY_BY_LEVEL = { 6: 5, 7: 6, 8: 7, 9: 11, 10: 15, 11: 39, 12: 64 };
 export const entryFee = (level) => (ENTRY_BY_LEVEL[level] ? +((ENTRY_BY_LEVEL[level] * ENTRY_FEE) / 3).toFixed(2) : ENTRY_FEE);
 
 // Bezirksliga: Aufwandsentschädigung statt Fahrgeld (je Woche). Recherche: etwa die Hälfte
@@ -213,12 +224,15 @@ export function weeklyFinances(career) {
 }
 // Fernsehgeld je Spieltag: 3. Liga rund 1,31 Mio. € je Klub und Saison (DFB, Medienvertrag ab 2023/24) ÷ 38 Spieltage (HERGELEITET,
 // wie die Gehälter in contracts.js). Regionalliga: kein nennenswertes Fernsehgeld (Spielwert 0, keine Zahl gefunden).
-export const TV_MONEY = { 10: Math.round(1310000 / 38) };
+// 2. und 1. Liga: Medienerlöse je Klub (DFL-Wirtschaftsreport 2025, Saison 2023/24: 288,3 bzw. 1702,7 Mio. € für 18 Klubs) ÷ 34.
+export const TV_MONEY = { 10: Math.round(1310000 / 38), 11: Math.round(288271000 / 18 / 34), 12: Math.round(1702707000 / 18 / 34) };
 // Vermarktung in der 3. Liga je Spieltag: SPIELWERT. Echte Drittligisten nehmen im Schnitt 16,2 Mio. € ein (DFB-Saisonreport
 // 2023/24), nur ein Teil davon über Fernsehen und Eintritt; ihre übrigen Kosten außer den Gehältern bildet das Spiel nicht ab.
 // Eingestellt, dass ein Verein mit dem Kader eines Ligamittleren und dem Drittliga-Stadion etwa ausgeglichen wirtschaftet
 // (scripts/pro-audit.mjs, Seed 5: ohne −368 000 € je Saison, mit +72 000 €; der stärkste Kader der Liga −591 000 €).
-export const MARKETING = { 10: 40000 };
+// 2. und 1. Liga HERGELEITET: Werbung und Merchandising je Klub (DFL-Wirtschaftsreport 2025: 216,5 + 96,4 bzw. 1146,1 + 285,4 Mio. €
+// für 18 Klubs) ÷ 34 Spieltage.
+export const MARKETING = { 10: 40000, 11: Math.round((216538000 + 96430000) / 18 / 34), 12: Math.round((1146103000 + 285436000) / 18 / 34) };
 
 // Saisonende: Boni auszahlen, Verträge laufen aus, Stimmung aus der Fahrt übernehmen.
 export function closeSeasonFinances(career, summary) {

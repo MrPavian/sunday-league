@@ -1,6 +1,6 @@
 // Profiligen (Konzept Profiligen): Geldfluss einer Saison in Regionalliga und 3. Liga mit einem ligatypischen Kader.
 // Der eigene Kader wird durch den Kader des stärksten CPU-Vereins ersetzt, damit Gehälter und Stärke zur Liga passen.
-// Aufruf: node scripts/pro-audit.mjs [seed]
+// Aufruf: node scripts/pro-audit.mjs [seed]   (START=10 node … für 2. und 1. Liga)
 import { createCareer, humanClub, nextSeason, seasonOver, finishRound, playerOf, table } from '../src/career/career.js';
 import { payroll } from '../src/career/contracts.js';
 import { facilities, capacity, fansMul } from '../src/career/facilities.js';
@@ -23,11 +23,12 @@ const tap = () => {
   c.ledger.push = (...xs) => (all.push(...xs), push(...xs));
   c.ledger.tapped = true;
 };
-c.level = 8;
-c.cash = 1e7;
-for (const id of ['stadion', 'flutlicht', 'drittliga', 'flutlicht800']) facilities(c).built[id] = 1; // Zulassung (license.js)
+const start = Number(process.env.START ?? 8);
+c.level = start;
+c.cash = 1e8; // reicht für jeden Finanznachweis (license.js)
+for (const id of ['stadion', 'flutlicht', 'drittliga', 'flutlicht800', 'arena', 'rasenheizung', 'flutlicht1200', 'sitzplatz8000', 'flutlicht1800']) facilities(c).built[id] = 1; // Zulassung (license.js)
 playSeason(true);
-nextSeason(c); // → Regionalliga
+nextSeason(c); // → nächste Stufe
 for (let s = 0; s < 2; s++) {
   // eigener Kader = stärkster CPU-Kader der Liga
   const sorted = c.clubs.filter((x) => !x.human).sort((a, b) => top11(b) - top11(a));

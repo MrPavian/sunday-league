@@ -1081,7 +1081,8 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
 - ✅ Regionalliga und 3. Liga spielbar 2026-11-05 ([docs/KONZEPT-PROFILIGEN.md](docs/KONZEPT-PROFILIGEN.md), nur neue Karrieren):
   Regionalliga-Staffel nach Verband, 3. Liga als oberste Stufe (Meister verzichtet, keine 2. Liga), Spielerverträge mit Gehalt
   und Laufzeit, Ablöse, Zulassung (Stadion, Flutlicht, Finanznachweis), Aufstiegsverzicht eigener und fremder Vereine.
-  Offen: 2. Liga, Ticketschnitt der 3. Liga, Lizenzgebühren.
+  Offen: Ticketschnitt der 3. Liga, Lizenzgebühren.
+- ✅ 2. Liga und 1. Liga 2026-11-05 (Konzept Profiligen 6): Vereine, Finanzen nach DFL-Wirtschaftsreport, Zulassung nach DFL.
 
 ### 11.15 Physik-Engine für Effekte prüfen (vom Nutzer vorgeschlagen, 2026-10-29)
 - [Jolt Physics](https://github.com/jrouwe/JoltPhysics) (C++, im Browser über den WebAssembly-Port JoltPhysics.js) prüfen – **nur für
@@ -1101,7 +1102,7 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
 ### 11.17 Nächste Schritte (vom Nutzer festgelegt, 2026-11-05)
 Reihenfolge nach Nutzerentscheid: zuerst 2. und 1. Liga, dann „so weiter wie vorgeschlagen“.
 1. **2. Liga und 1. Liga** (Stufen 11 und 12): echte Aufstiege aus der 3. Liga, Lizenz nach DFL (Stadion, Rasenheizung, Flutlicht),
-   Gehälter, Fernsehgeld und Vermarktung nach dem DFL-Wirtschaftsreport. *In Arbeit.*
+   Gehälter, Fernsehgeld und Vermarktung nach dem DFL-Wirtschaftsreport. ✅ erledigt 2026-11-05.
 2. **Vereinswechsel im Sommer und ligaübergreifend:** Anfragen von oben für erfolgreiche Trainer, nach einer Entlassung auch von unten.
 3. **Eintrittspreise selbst festlegen, Dauerkarten:** Stehplatz und Sitzplatz einstellbar, Zuschauer und Kasse reagieren.
 4. **Zweite Mannschaft und U19 als eigene Teams** (ab der Regionalliga).

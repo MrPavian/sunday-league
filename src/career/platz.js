@@ -304,6 +304,7 @@ export function sperreReason(c, weather, fixture) {
   if (c.round >= c.fixtures.length - 2) return null;
   if (c.round - p.lastSperre <= 1) return null;
   if (hasFacility(c, 'trainingsplatz')) return null;
+  if (hasFacility(c, 'rasenheizung') && (weather.id === 'frost' || weather.id === 'schnee')) return null; // Rasenheizung (facilities.js)
   const th = SPERRE_AB[weather.id];
   return th && p.cond < th ? weather.id : null;
 }

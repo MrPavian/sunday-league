@@ -14,7 +14,7 @@ import { chronicle } from './sagas.js';
 import { isPresident } from './personal.js';
 import { forceOutHired } from './president.js';
 
-export const PRESSURE = [0, 0, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.75, 0.9]; // Gewicht je Stufe 1–10
+export const PRESSURE = [0, 0, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.75, 0.9, 1, 1.1]; // Gewicht je Stufe 1–12 (Spielwerte, 2./1. Liga fortgesetzt)
 export const TRUST = {
   start: 60, // neue Karriere
   newClub: 55, // nach einem Vereinswechsel

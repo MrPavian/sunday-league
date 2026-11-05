@@ -643,12 +643,12 @@ describe('leagues and relegation play-offs', () => {
     expect(relegationNeeded(c)).toBeNull(); // von ganz oben gibt es keinen Aufstieg
   });
 
-  it('new careers: the Oberliga runner-up plays off for the Regionalliga, the 3. Liga is the top', async () => {
+  it('new careers: the Oberliga runner-up plays off for the Regionalliga, the 1. Liga is the top', async () => {
     const { LEAGUES, maxLevel, PRO_MAX_LEVEL } = await import('../src/career/clubs.js');
     const c = createCareer({ seed: 32 });
     expect(maxLevel(c)).toBe(PRO_MAX_LEVEL);
-    expect(PRO_MAX_LEVEL).toBe(10);
-    for (const l of [9, 10]) {
+    expect(PRO_MAX_LEVEL).toBe(12);
+    for (const l of [9, 10, 11, 12]) {
       expect(LEAGUES[l].clubs.length).toBe(5);
       expect(LEAGUES[l].format).toBe(11);
     }

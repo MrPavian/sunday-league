@@ -306,7 +306,7 @@ export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null,
     version: SAVE_VERSION,
     names,
     strength: STRENGTH_MODEL, // Stärkemodell (Konzept Spielerstärke 12): nur neue Karrieren, alte Spielstände behalten ihres
-    pro: PRO_MODEL, // Profiligen (Regionalliga, 3. Liga, Verträge, Zulassung): nur neue Karrieren
+    pro: PRO_MODEL, // Profiligen (Regionalliga bis 1. Liga, Verträge, Zulassung): nur neue Karrieren
     pressure: 1, // Vorstand und Erfolgsdruck (pressure.js): nur neue Karrieren
     seed,
     level: 1,
@@ -351,7 +351,7 @@ export function nextSeason(career) {
   // Direkt rauf als Meister, direkt runter als Letzter – dazwischen entscheidet die Relegation.
   autoRelegation(career);
   const rel = relegationOutcome(career);
-  // Profiligen (license.js): Verzichtet der Meister, ist der Zweite direkt durch; Zulassung, eigener Verzicht, 3. Liga ganz oben.
+  // Profiligen (license.js): Verzichtet der Meister, ist der Zweite direkt durch; Zulassung, eigener Verzicht, 1. Liga ganz oben.
   const sporting = (pos === 1 && level < maxLevel(career)) || (pos === 2 && championWaives(career, rows)) || !!rel?.promoted;
   const upBlock = pos === 1 || sporting ? promotionBlock(career, level) : null;
   const promoted = sporting && !upBlock;
@@ -359,7 +359,7 @@ export function nextSeason(career) {
   const scorer = humanClub(career).squad.map((idx) => ({ idx, goals: career.players[idx]?.goals ?? 0 })).sort((a, b) => b.goals - a.goals)[0];
   const topScorer = scorer?.goals ? { name: playerOf(career, scorer.idx).name, goals: scorer.goals } : null;
   career.history = [...(career.history ?? []), { season: career.season, league: career.league, pos, champion: rows[0].club.name, topScorer, promoted, relegated, ...(career.pro ? { level, upBlock } : {}) }];
-  if (career.pro && level === 10 && pos <= 4) career.bundQual = career.season + 1; // 3. Liga: die besten vier im überregionalen Pokal (DFB-Regel)
+  if (career.pro && ((level === 10 && pos <= 4) || level >= 11)) career.bundQual = career.season + 1; // 3. Liga: die besten vier im überregionalen Pokal (DFB-Regel); 2. und 1. Liga: alle
   const goalVerdict = seasonGoalVerdict(career, pos); // hat der Vorstand bekommen, was er wollte?
   const presidentNotes = presidentSeasonEnd(career, pos); // Präsidium: Zufriedenheit des Trainers, Angebote von außen
 
@@ -1293,7 +1293,7 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   if (home.human || away.human) matchdaySurprise(match, humanIsAway || home.human ? 0 : 1, createRng(hashSeed(career.seed, career.season, career.round, 77)), 0.28, null, career.level ?? 1);
   // Zuschauer am Zaun – für die Geräuschkulisse (die Kasse zählt nach dem Spiel selbst).
   const level = career.level ?? 1;
-  const fans = level > 5 ? rng.int(...UPPER_FANS[Math.min(10, level)]) : level > 4 ? rng.int(80, 200) : level > 3 ? rng.int(45, 90) : level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14);
+  const fans = level > 5 ? rng.int(...UPPER_FANS[Math.min(12, level)]) : level > 4 ? rng.int(80, 200) : level > 3 ? rng.int(45, 90) : level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14);
   match.crowd = Math.round(fans * (match.derby ? 1.8 : 1) * (home.human ? fansMul(career) : 1));
   if (home.human) match.crowd = Math.min(match.crowd, capacity(career)); // Fassungsvermögen (facilities.js)
   match.homeTeam = humanIsAway ? 1 : 0;

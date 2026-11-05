@@ -25,8 +25,8 @@ describe('Ligenpyramide', () => {
     playSeason(c);
     nextSeason(c);
     const after = ensureLeagues(c);
-    const top = maxLevel(c); // neue Karrieren: bis zur 3. Liga
-    expect(top).toBe(10);
+    const top = maxLevel(c); // neue Karrieren: bis zur 1. Liga
+    expect(top).toBe(12);
     for (let l = 1; l <= top; l++) expect(after[l]).toHaveLength(5);
     expect(allIds(c)).toEqual(ids0);
     expect(after[4].some((d) => d.id === upFrom3)).toBe(true);

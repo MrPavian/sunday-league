@@ -6,6 +6,19 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-05-7 – 2. Liga und 1. Liga
+
+### Neu
+- **2. Liga und 1. Liga:** Die Pyramide reicht jetzt bis ganz nach oben, mit je sieben erfundenen Vereinen. Der Meister der 3. Liga steigt wieder auf, wenn er die Zulassung hat.
+- **Geld wie in echt im Schnitt:** Gehälter, Fernsehgeld, Vermarktung und Eintritt sind aus dem Wirtschaftsbericht der Profiligen hergeleitet, die Zuschauer aus den Ligaschnitten 2023/24.
+- **Zulassung:** 2. Liga mit 15 000 Plätzen (3000 überdachte Sitzplätze), Rasenheizung und Flutlicht mit 1200 Lux; 1. Liga mit 8000 Sitzplätzen und 1800 Lux.
+- **Neue Ausbauten:** Rasenheizung (keine Platzsperre mehr bei Frost und Schnee), Flutlicht mit 1200 und 1800 Lux, Sitzplatzausbau, Großarena für 50 000.
+- Aus der 2. und 1. Liga spielen alle Vereine den Bundespokal.
+
+### Geändert
+- Die Rundenprämie im Bundespokal ist auf den echten Betrag gedeckelt – in der 1. Liga wären es sonst Millionen je Runde gewesen.
+- Pyrostrafen in der 2. und 1. Liga höher.
+
 ## 2026-11-05-6 – Mehrere Wechsel, eigene Taktiken, schärfere Figuren
 
 ### Neu

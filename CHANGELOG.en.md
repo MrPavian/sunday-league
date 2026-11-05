@@ -6,6 +6,19 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-05-7 – Second and first division
+
+### New
+- **Second and first division:** the pyramid now goes all the way to the top, with seven fictional clubs each. The 3. Liga champions go up again if they hold a licence.
+- **Money as on average in reality:** wages, TV money, marketing and tickets are derived from the professional leagues' financial report, crowds from the 2023/24 league averages.
+- **Licensing:** second division with 15,000 places (3,000 covered seats), undersoil heating and 1,200 lux floodlights; first division with 8,000 seats and 1,800 lux.
+- **New facilities:** undersoil heating (no more closures for frost and snow), 1,200 and 1,800 lux floodlights, seating expansion, a grand arena for 50,000.
+- Every club from the second and first division plays in the Bundespokal.
+
+### Changed
+- The Bundespokal round bonus is capped at the real amount – in the first division it would otherwise have been millions per round.
+- Higher pyro fines in the second and first division.
+
 ## 2026-11-05-6 – Several subs, your own tactics, sharper figures
 
 ### New

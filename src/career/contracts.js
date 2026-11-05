@@ -20,13 +20,15 @@ import { isCoach } from './personal.js';
 import { book } from './finances.js';
 import { chronicle } from './sagas.js';
 
+// 2. und 1. Liga (seit 2026-11-05) HERGELEITET: Personalaufwand Spielbetrieb je Klub (DFL-Wirtschaftsreport 2025, Saison 2023/24:
+// 296,9 bzw. 1722,0 Mio. € für 18 Klubs) ÷ 12 Monate ÷ 30 Spieler im Kader ≈ 46 000 € bzw. 265 000 € im Monat.
 export const CONTRACT = {
   from: 9, // ab der Regionalliga
-  mean: { 9: 1000, 10: 15000 }, // € im Monat
+  mean: { 9: 1000, 10: 15000, 11: 46000, 12: 265000 }, // € im Monat (2./1. Liga hergeleitet, siehe oben)
   spread: 6.5, // Spitzengehalt / Schnitt bei einer Liga Stärkeabstand
   span: 15, // Stärkepunkte je Liga
   min: 0.25, // Untergrenze (× Schnitt)
-  rounds: { 9: 34, 10: 38 }, // echte Spieltage je Saison
+  rounds: { 9: 34, 10: 38, 11: 34, 12: 34 }, // echte Spieltage je Saison
   years: [1, 3], // Laufzeit bei Vertragsabschluss
   raise: 1.1, // Verlängerung: 10 % Aufschlag auf die Forderung
   fee: 0.5, // Ablöse = Jahresgehalt × Restlaufzeit × 0,5
@@ -35,7 +37,7 @@ export const CONTRACT = {
 
 const hash = (...parts) => parts.reduce((h, p) => (Math.imul(h ^ (p | 0), 0x9e3779b1) + 0x7f4a7c15) >>> 0, 0x1b873593);
 export const isPro = (c, level = c?.level ?? 1) => !!c?.pro && level >= CONTRACT.from;
-const lvlOf = (level) => Math.max(CONTRACT.from, Math.min(10, level));
+const lvlOf = (level) => Math.max(CONTRACT.from, Math.min(12, level));
 
 // Monatsgehalt, das ein Spieler in dieser Liga verlangt (auf 50 € gerundet).
 export function salaryDemand(c, idx, level = c.level ?? 1) {

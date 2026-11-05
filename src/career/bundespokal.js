@@ -114,6 +114,8 @@ export const BUND_GATE_SHARE = 0.45;
 // Mehrfaches seiner normalen Saisoneinnahmen ein, hier ist es ein Heimspiel mehr.
 export const BUND_PRIZE = [1, 2, 4, 8, 16, 13.6]; // Finalist; Sieger: BUND_PRIZE_WINNER
 export const BUND_PRIZE_WINNER = 20.4;
+// Höchstens der echte Betrag der ersten Runde (211.886 €, siehe oben): In der 2. und 1. Liga brächte ein Heimspiel sonst ein Vielfaches.
+export const BUND_PRIZE_UNIT_MAX = 211886;
 // Hauptsponsor: Vielfache seines Saisonziel-Bonus für jede gewonnene Runde (siehe PRAEMIE in pokal.js).
 export const BUND_SPONSOR = [3, 1, 1, 1, 1, 3];
 export const BUND_ROUND_NAMES = () => [tr('1. Runde', 'First round'), tr('2. Runde', 'Second round'), tr('Achtelfinale', 'Round of 16'), tr('Viertelfinale', 'Quarter-final'), tr('Halbfinale', 'Semi-final'), tr('Finale', 'Final')];

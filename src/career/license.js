@@ -9,14 +9,21 @@
 //  - Verzicht: Der eigene Verein kann jederzeit auf einen Aufstieg verzichten (aus Geldgründen, wie FC Hennef 05 als
 //    Mittelrheinliga-Meister 2023, de.wikipedia „Fußball-Regionalliga West 2023/24“). CPU-Vereine verzichten auch – unten öfter
 //    als oben (Nutzerentscheid; Anteile Spielwerte). Verzichtet der Meister der eigenen Liga, steigt der Zweite direkt auf.
-//  - Der Meister der 3. Liga verzichtet vorerst immer: eine 2. Liga gibt es im Spiel noch nicht.
+//  - 2. Liga (seit 2026-11-05): 15 000 Plätze, davon 3000 überdachte Sitzplätze, und Rasenheizung (Landeshauptstadt Stuttgart,
+//    Gemeinderatsdrucksache 2008 zum Waldau-Stadion: „Eine Rasenheizung ist Voraussetzung für die Zulassung zum Spielbetrieb in der
+//    2. Bundesliga“; „Fassungsvermögen von 15.000 Zuschauern, davon mindestens 3.000 überdachte Sitzplätze“) – im Spiel die Arena
+//    (rundum überdacht) und facilities.js „rasenheizung“. Flutlicht 1200 Lux (StadiumDB 2024 zum Stadion eines Aufsteigers: 1200 Lux
+//    „meets the standards for the second division“).
+//  - 1. Liga: mindestens 8000 Sitzplätze bei 15 000 Plätzen (Sky Sport, DFL zu Holstein Kiel) und Flutlicht mit 1800 Lux
+//    (StadiumDB 2024) – facilities.js „sitzplatz8000“, „flutlicht1800“; Rasenheizung wie in der 2. Liga.
+//  - Ganz oben (1. Liga) gibt es keinen Aufstieg mehr.
 import { tr } from '../core/i18n.js';
 import { maxLevel } from './clubs.js';
 import { hasFacility } from './facilities.js';
 import { OPS_COST } from './finances.js';
 
 // Anteil der CPU-Meister, die auf den Aufstieg aus Stufe l verzichten (Spielwerte, unten öfter).
-export const WAIVE_SHARE = [0, 0.2, 0.18, 0.16, 0.14, 0.12, 0.1, 0.08, 0.08, 0.06];
+export const WAIVE_SHARE = [0, 0.2, 0.18, 0.16, 0.14, 0.12, 0.1, 0.08, 0.08, 0.06, 0.04, 0.02];
 export const RESERVE_WEEKS = 4;
 
 const hash = (...parts) => parts.reduce((h, p) => (Math.imul(h ^ (p | 0), 0x9e3779b1) + 0x7f4a7c15) >>> 0, 0x85ebca6b);
@@ -38,7 +45,19 @@ export function championWaives(c, rows, level = c.level ?? 1) {
 export function licenseNeeds(c, target) {
   if (!c?.pro || target < 9) return [];
   const reserve = RESERVE_WEEKS * (OPS_COST[target] ?? 0);
-  const items = target >= 10
+  const items = target >= 12
+    ? [
+        { id: 'stadion', label: tr('Stadion mit 15 000 Plätzen, davon 8000 Sitzplätze (Sitzplatzausbau)', 'Stadium with 15,000 places incl. 8,000 seats (seating expansion)'), ok: hasFacility(c, 'sitzplatz8000') },
+        { id: 'rasen', label: tr('Rasenheizung', 'Undersoil heating'), ok: hasFacility(c, 'rasenheizung') },
+        { id: 'flutlicht', label: tr('Flutlicht mit 1800 Lux', 'Floodlights of 1,800 lux'), ok: hasFacility(c, 'flutlicht1800') },
+      ]
+    : target >= 11
+    ? [
+        { id: 'stadion', label: tr('Stadion mit 15 000 Plätzen, 3000 überdachte Sitzplätze (Arena)', 'Stadium with 15,000 places, 3,000 covered seats (arena)'), ok: hasFacility(c, 'arena') },
+        { id: 'rasen', label: tr('Rasenheizung', 'Undersoil heating'), ok: hasFacility(c, 'rasenheizung') },
+        { id: 'flutlicht', label: tr('Flutlicht mit 1200 Lux', 'Floodlights of 1,200 lux'), ok: hasFacility(c, 'flutlicht1200') },
+      ]
+    : target >= 10
     ? [
         { id: 'stadion', label: tr('Stadion mit 5001 Plätzen, 2000 Sitzplätze (Drittliga-Stadion)', 'Stadium with 5,001 places, 2,000 seats (third-division stadium)'), ok: hasFacility(c, 'drittliga') || hasFacility(c, 'arena') },
         { id: 'flutlicht', label: tr('Flutlicht mit 800 Lux', 'Floodlights of 800 lux'), ok: hasFacility(c, 'flutlicht800') },
@@ -52,7 +71,7 @@ export function licenseNeeds(c, target) {
 }
 export const licensed = (c, target) => licenseNeeds(c, target).every((x) => x.ok);
 
-// Saisonende: Darf der eigene Verein rauf? reason: 'top' (3. Liga, keine 2. Liga), 'license', 'waived' (selbst verzichtet).
+// Saisonende: Darf der eigene Verein rauf? reason: 'top' (1. Liga, ganz oben), 'license', 'waived' (selbst verzichtet).
 export function promotionBlock(c, level = c.level ?? 1) {
   if (!c?.pro) return null;
   if (level >= maxLevel(c)) return 'top';
@@ -67,7 +86,7 @@ export function setWaive(c, on) {
 }
 
 export function blockText(c, reason, level = c.level ?? 1) {
-  if (reason === 'top') return tr('Sportlich wäre es der Aufstieg in die 2. Liga – der Verein verzichtet aus finanziellen Gründen und bleibt in der 3. Liga.', 'On the pitch it would mean promotion to the second division – the club waives it for financial reasons and stays in the 3. Liga.');
+  if (reason === 'top') return tr('Höher geht es nicht: Meister der höchsten Liga des Landes.', 'It does not get any higher: champions of the top league in the country.');
   if (reason === 'waived') return tr('Der Verein verzichtet auf den Aufstieg – das Geld reicht nicht für die Liga darüber.', 'The club waives promotion – the money is not enough for the league above.');
   if (reason === 'license') {
     const miss = licenseNeeds(c, level + 1).filter((x) => !x.ok).map((x) => x.label).join(', ');

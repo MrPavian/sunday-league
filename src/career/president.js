@@ -29,7 +29,7 @@ import { promoteProspect } from './youth.js';
 export { isPresident };
 
 // Wochenlohn je Liga-Stufe (Spielwert), skaliert mit dem Ruf des Trainers.
-const SALARY_BASE = [0, 12, 20, 30, 42, 56, 87, 118, 148, 547, 3848]; // Stufen 6–10: 56 × upperScale (finances.js), hergeleitet
+const SALARY_BASE = [0, 12, 20, 30, 42, 56, 87, 118, 148, 547, 3848, 11554, 15796]; // Stufen 6–12: 56 × upperScale (finances.js), hergeleitet
 export const SEVERANCE_WEEKS = 6; // Abfindung bei Entlassung: sechs Wochenlöhne (Spielwert)
 export const HIRE_FEE_WEEKS = 2; // Handgeld ab der zweiten Einstellung: zwei Wochenlöhne (Spielwert)
 const PERSONAS = ['stratege', 'oldschool', 'grossmaul', 'kumpeltyp']; // wie bei den Trainern der Gegner (opponents.js)
