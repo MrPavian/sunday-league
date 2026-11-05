@@ -8,6 +8,7 @@ import { homeMatchEffects, rentPerMatch } from './platz.js';
 import { playerOf } from './career.js';
 import { tripSpirit } from './trip.js';
 import { BUND_GATE_SHARE, BUND_VENUES } from './bundespokal.js';
+import { starFans } from './bonuses.js';
 export { bookTrip } from './trip.js';
 
 export const START_CASH = 100;
@@ -77,7 +78,7 @@ export function matchFinances(career, fixture, prepared, level) {
 
   if (homeHuman) {
     const rng = createRng(career.seed + career.season * 97 + career.round * 13);
-    const press = (career.flags?.pressWeeks > 0 ? 1.4 : 1) * (m.derby ? 1.8 : 1); // Kreisblatt-Porträt, Derby
+    const press = (career.flags?.pressWeeks > 0 ? 1.4 : 1) * (m.derby ? 1.8 : 1) * starFans(career); // Kreisblatt-Porträt, Derby, Stars der Liga (bonuses.js)
     const wf = { sonne: 1.2, hitze: 0.9, regen: 0.6, wind: 0.85, nebel: 0.8, frost: 0.7, schnee: 0.5 }[career.week?.weather?.id] ?? 1;
     const weatherFans = roofRelief(career) && wf < 1 ? 1 - (1 - wf) / 2 : wf; // Tribünendach: die Wetterbremse halbiert sich
     const pe = homeMatchEffects(career); // Platzsperre/Nachholspiel, Acker, Linien

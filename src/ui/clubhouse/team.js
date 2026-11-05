@@ -1,5 +1,6 @@
 // MANNSCHAFT: Kader (Karten), Spielerprofil, Aufstellung (Magnettafel), Taktik, Training, Jugend, Transfers.
 // Methoden des Vereinsheims (this = Clubhouse), aus Clubhouse.js herausgelöst – Verhalten unverändert.
+import { BONUS_DESC, BONUS_NAMES, knownBonuses } from '../../career/bonuses.js';
 import { tr } from '../../core/i18n.js';
 import { spielberichtStreng, statusFor } from '../../career/spielbericht.js';
 import { kitPreviewURL } from '../../render/kitPaint.js';
@@ -41,6 +42,15 @@ import { banGames, banLabel, banReason, isBanned, yellowCount, YELLOW_LIMIT } fr
 import { FOCUS as TRAIN_FOCUS, MAX_DAYS, MIN_DAYS, normDays, plan as trainPlan, planSummary } from '../../career/teamtraining.js';
 
 const roleLabelCap = (role) => (role === 'jugendleiter' ? tr('Jugendleiter', 'Youth director') : STAFF_ROLES[role].name);
+
+// Entdeckte verdeckte Boni (bonuses.js) als Chips über den Eigenheiten.
+const bonusChips = (c, idx) => {
+  const ids = knownBonuses(c, idx);
+  if (!ids.length) return '';
+  const names = BONUS_NAMES();
+  const desc = BONUS_DESC();
+  return `<div class="ui-chips">${ids.map((id) => `<span class="ui-chip" title="${desc[id]}">★ ${names[id]}</span>`).join('')}</div>`;
+};
 
 export const teamScreens = {
   // Kader als Spielerkarten. Ebene 1: Name, Position, Stärke, Sonntag. Alles Weitere im Profil.
@@ -119,7 +129,8 @@ export const teamScreens = {
     const attrs = Object.entries(ATTR_LABELS)
       .filter(([k]) => p.attrs[k] != null && (k !== 'keeping' || p.position === 'gk' || p.attrs.keeping > 0.4))
       .map(([k, label]) => [label, Math.round(p.attrs[k] * 100)]);
-    const traits = (p.traits ?? []).filter((t) => TRAITS[t]).map((t) => TRAITS[t].name);
+    const bonusNames = BONUS_NAMES();
+    const traits = [...knownBonuses(c, idx).map((id) => bonusNames[id]), ...(p.traits ?? []).filter((t) => TRAITS[t]).map((t) => TRAITS[t].name)]; // entdeckte Boni zuerst (bonuses.js)
     const niveau = niveauName(c, p.rating); // Anzeige „Stärke · Niveau“: auf der Karte steht die Stärke vorn, das Niveau hinten
     const guess = p.age <= 23 ? playerTalentGuess(c, idx) : null; // Talent (geschätzt, wird mit der Zeit genauer) nur bei Jungen
     const above = aboveLeague(c, p.rating) > 0 ? ` (${tr('über seiner Liga', 'above his league')})` : ''; // fällt auch anderen auf (poaching.js)
@@ -165,6 +176,7 @@ export const teamScreens = {
           return `<div class="attr-row"><span>${label}</span><i style="--v:${v}%"></i><b>${v}</b></div>`;
         })
         .join('')}</div>
+        ${bonusChips(c, idx)}
         ${p.traits?.length ? `<p class="ui-section-title">${tr('Eigenheiten', 'Traits')}</p><div class="ui-chips">${p.traits.filter((t) => TRAITS[t]).map((t) => `<span class="ui-chip plain" title="${TRAITS[t].desc}">${TRAITS[t].name}</span>`).join('')}</div>` : ''}`;
     } else if (tab === 'stats') {
       body = `<div class="ui-row profile-stats">
@@ -180,6 +192,7 @@ export const teamScreens = {
           ${perk ? `<p class="t-2">${perk.label}</p>` : ''}
           ${rels ? `<p class="t-2 rel-line">${rels}</p>` : ''}
           ${r.awards?.length ? `<p class="t-2">★ ${r.awards.map(awardLabel).join(' · ')}</p>` : ''}
+          ${bonusChips(c, idx)}
           ${p.traits?.length ? `<div class="ui-chips">${p.traits.filter((t) => TRAITS[t]).map((t) => `<span class="ui-chip plain" title="${TRAITS[t].desc}">${TRAITS[t].name}</span>`).join('')}</div>` : ''}
         </div>`;
     }

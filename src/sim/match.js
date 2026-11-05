@@ -3,6 +3,7 @@
 import { createRng } from '../core/rng.js';
 import { dist2d, hypot, norm } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
+import { hasBonus } from './bonus.js';
 import { TEAM_PRESETS } from '../data/teams.js';
 import { applyJobPerks } from '../data/jobs.js';
 import { bodyBlock, carryBall, dribbleTouch, headerTouch, keeperSaves, movePlayer, separatePlayers, SHOT_CREDIT, tryExecute } from './actions.js';
@@ -282,7 +283,7 @@ function step(m, input, dt) {
   if (input.switchPlayer) switchToNearest(m);
   updateTactics(m, dt);
 
-  const leaders = m.players.filter((p) => hasTrait(p, 'anfuehrer') || hasTrait(p, 'ex_profi'));
+  const leaders = m.players.filter((p) => hasTrait(p, 'anfuehrer') || hasTrait(p, 'ex_profi') || hasBonus(p, 'fuehrung'));
   for (const p of m.players) {
     p.kickCooldown = Math.max(0, p.kickCooldown - dt);
     p.kickAnim = Math.max(0, p.kickAnim - dt);

@@ -1,4 +1,5 @@
 // KI: Wer läuft an, wer sichert ab, wer deckt, wer läuft sich frei.
+import { BONUS_SIM, hasBonus } from './bonus.js';
 import { cap1, errScale, soft, sure, vs } from './skill.js';
 import { clamp, dist2d, hypot, len, norm } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
@@ -169,7 +170,7 @@ export function updateTactics(m, dt) {
         }
         taken.add(best.id);
         const dir = norm(ownGoal.x - best.pos.x, ownGoal.z - best.pos.z);
-        let gap = st.pressZone === 'high' ? 1 : 1.5;
+        let gap = (st.pressZone === 'high' ? 1 : 1.5) * (hasBonus(best, 'star') ? BONUS_SIM.starMark : 1); // Star der Liga: enger decken (bonus.js)
         // Nach außen lenken: Die Mitte wird eng gedeckt, auf den Außen bleibt Abstand – dorthin gehen die Anspiele.
         if (st.funnel === 'wide') gap *= Math.abs(best.pos.z) > pitch.halfWidth * FUNNEL_WING ? funnelOf(pitch).loose : FUNNEL_TIGHT;
         let mz = best.pos.z + dir.z * gap;

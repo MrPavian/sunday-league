@@ -6,6 +6,15 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-05-1 – World class, team leaders, star of the league
+
+### New
+- **Hidden bonuses:** some players have something special that is not in their rating. You discover it over time – after a few games, sooner with an assistant coach, straight away by scouting. Then it shows on the card and profile.
+- **World class:** when it gets tight late on, he plays more precisely and keeps his nerve. Measured: about a third more goals for his team in tight closing phases.
+- **Team leader:** the step above a leader. Next to him the others run more, stay calmer under pressure, and the team gets less nervous when narrowly ahead. In the dressing room bad moods spread less often and talks work better.
+- **Star of the league:** after four matchdays the District Gazette crowns the three strongest players in the league. Opponents mark him tighter, more fans come, other clubs want him – and on the bench he sulks. After promotion or relegation the title is gone.
+- Applies to new careers.
+
 ## 2026-11-04-3 – Youth, love, school – and transfer strikes
 
 ### New

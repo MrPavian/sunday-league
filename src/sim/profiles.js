@@ -14,6 +14,7 @@ import { tr } from '../core/i18n.js';
 import { dist2d } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
 import { resultPressure } from './mentality.js';
+import { BONUS_SIM, hasBonus } from './bonus.js';
 
 export const PROFILES = {
   spielmacher: { label: tr('Spielmacher', 'Playmaker'), desc: tr('Fordert den Ball und verteilt ihn.', 'Demands the ball and distributes it.') },
@@ -84,8 +85,11 @@ export function pressureChaos(m, p) {
   if (!pr) return 1;
   let k = 0.3;
   let jitter = 0.5; // Ergebnisdruck (mentality.js): verstärkt die Streuung beim knapp Führenden
-  if (hasProfile(p, 'nervoes')) (k = 0.6), (jitter = 1);
+  if (hasBonus(p, 'weltklasse') || hasBonus(p, 'fuehrung')) (k = 0.1), (jitter = 0); // verdeckte Boni (bonus.js): unbeirrt
+  else if (hasProfile(p, 'nervoes')) (k = 0.6), (jitter = 1);
   else if (hasProfile(p, 'ruhepol')) (k = 0.1), (jitter = 0);
   else if (m.players.some((q) => q !== p && q.team === p.team && hasProfile(q, 'ruhepol') && dist2d(q.pos, p.pos) < 10)) (k = 0.2), (jitter = 0.25);
+  else if (m.players.some((q) => q !== p && q.team === p.team && hasBonus(q, 'fuehrung') && dist2d(q.pos, p.pos) < BONUS_SIM.leaderRange)) (k = 0.2), (jitter = 0.25);
+  if (jitter && m.players.some((q) => q.team === p.team && hasBonus(q, 'fuehrung'))) jitter *= BONUS_SIM.leaderJitter;
   return 1 + k * pr * (1 + jitter * resultPressure(m, p.team));
 }

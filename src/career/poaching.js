@@ -26,6 +26,7 @@ import { canLose, first, joinRival, leaveTeam, outcome, sitOut } from './outcome
 import { isCoach } from './personal.js';
 import { chronicle } from './sagas.js';
 import { aboveLeague } from './development.js';
+import { BONUS, isStar } from './bonuses.js';
 import { busyFor } from './teenlife.js';
 import { ensureNeighbors, inTransfers, planDeparture, tstate } from './transfers.js';
 import { leagueTitle } from './verband.js';
@@ -60,6 +61,7 @@ function poachCandidates(c) {
     if (rec.grumpy > 0) out.push({ idx, why: 'grumpy', w: 2 });
     else if (played >= 3 && (rec.playShare ?? rec.apps) <= played * 0.45) out.push({ idx, why: 'bench', w: 2 }); // Spielzeit, nicht Einsätze
     else if (aboveLeague(c, p.rating) > 0 && (rec.form ?? 0) >= 0) out.push({ idx, why: 'above', w: 1.5 * aboveLeague(c, p.rating) }); // Stärkemodell 3: zu gut für die Liga
+    else if (isStar(c, idx)) out.push({ idx, why: 'star', w: 1.2 * BONUS.starPoach }); // Star der Liga (bonuses.js): alle wollen ihn
     else if (p.rating >= top && (rec.form ?? 0) >= 0) out.push({ idx, why: 'star', w: 1.2 });
   }
   return out;

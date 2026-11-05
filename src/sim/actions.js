@@ -12,6 +12,7 @@ import { aiSkill, keeperReaction, laneScore, WIDE_LANE } from './ai.js';
 export const WIDE_OPEN = 0.55;
 import { knockSpeed } from './knocks.js';
 import { markOffside } from './offside.js';
+import { clutchAim } from './bonus.js';
 import { hasProfile, pressureChaos } from './profiles.js';
 import { fooled, tryTrick } from './tricks.js';
 import { PINGPONG, STRENGTH_FX, strengthOf } from './strength.js';
@@ -180,7 +181,7 @@ function shoot(m, p, a, fatigue) {
   // Elfmeter: in Ruhe platziert, ohne Gegner am Fuß – deutlich weniger Streuung.
   // Ebene 3: Wer bedrängt abzieht, streut mehr – nervöse Spieler noch mehr.
   // Direktabnahme und Schuss aus der Drehung sind schwerer zu platzieren.
-  dir = rotate(dir, rng.gauss() * sigma * (a.placed ? 0.35 : pressureChaos(m, p)) * (a.first ? 1.2 : 1) * (a.turn ? 1.25 : 1) * (flat?.aimBoost ?? 1));
+  dir = rotate(dir, rng.gauss() * sigma * (a.placed ? 0.35 : pressureChaos(m, p)) * (a.first ? 1.2 : 1) * (a.turn ? 1.25 : 1) * (flat?.aimBoost ?? 1) * clutchAim(m, p));
   const speed = (8 + 18 * power) * (0.85 + 0.15 * soft(p.attrs.shooting)) * (hammer ? 1.15 : 1) * (flat?.shotBoost ?? 1);
   let vy = 0.8 + 5 * power * power + Math.abs(rng.gauss()) * 1.2 * (1 - cap1(vs(m, p, 'shooting'))) * power;
   // Halle: hoch nur vorm Tor, weiter weg bleibt der Schuss flach.
@@ -375,7 +376,7 @@ function pass(m, p, a, fatigue, fromHands) {
       speed = clamp(3.5 + d * 0.75, 5.5, 16);
       vy = d > 16 && !pitch.flatPlay ? 3.5 : 0.2;
     }
-    const sigma = ((0.02 + 0.12 * (1 - cap1(vs(m, p, 'passing')))) * errScale(vs(m, p, 'passing')) + 0.05 * STAMINA.skill * fatigue) * (eye ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.6 : 1) * (hasProfile(p, 'spielmacher') ? 0.85 : 1) * pressureChaos(m, p);
+    const sigma = ((0.02 + 0.12 * (1 - cap1(vs(m, p, 'passing')))) * errScale(vs(m, p, 'passing')) + 0.05 * STAMINA.skill * fatigue) * (eye ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.6 : 1) * (hasProfile(p, 'spielmacher') ? 0.85 : 1) * pressureChaos(m, p) * clutchAim(m, p);
     dir = rotate(dir, rng.gauss() * sigma);
     speed *= 1 + rng.gauss() * 0.08 * (1 - cap1(vs(m, p, 'passing')));
     if (p.id === m.controlledId) m.pendingSwitch = { receiver: target.id, kicker: p.id };

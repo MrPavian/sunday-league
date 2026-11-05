@@ -620,3 +620,36 @@ tiefen Ligen, im Schnitt wenig.
   fehlt die ganze Saison. Abmelden ohne Freigabe ist bei Amateuren möglich, beim neuen Verein gilt dann eine Wartefrist
   (z. B. Spielrecht erst ab 1. November bei Wechsel im Sommer, Fußball-Verband Mittelrhein; drei Monate, Sächsischer FV); der
   abgebende Verein bekommt nichts.
+
+### 12.9 Verdeckte Boni: Weltklasse, Führungsspieler, Star der Liga (2026-11-05, Nutzerentscheid)
+
+Entscheide: **mit der Zeit entdecken**, **Führungsspieler als Stufe über „Anführer“**, **Star relativ zur Liga**. Nur neue Karrieren
+(Stärkemodell 3); die Boni stecken nicht in der Stärkezahl. Code: `src/career/bonuses.js` (Vergabe, Entdecken, Kreisblatt, Kabine,
+Zuschauer, Abwerben), `src/sim/bonus.js` (Wirkung im Spiel). Alle Anteile, Schwellen und Wirkungen sind Spielwerte.
+
+- **Weltklasse** (etwa jeder Hundertste, fest je Karriere und Spieler): In der Schlussphase (ab 75 % der Spielzeit) bei höchstens einem
+  Tor Abstand streuen Pass und Schuss nur 75 % so stark; unter Druck bleibt er ruhig wie ein Ruhepol.
+- **Führungsspieler** (3 %, bei „Anführer“ 25 %): Aura wie ein Anführer (Mitspieler in der Nähe ermüden langsamer), er selbst bleibt
+  unter Druck ruhig, Mitspieler im Umkreis von 12 m streuen weniger, und seine Mannschaft zittert bei knapper Führung nur halb so
+  stark. In der Kabine steckt Unruhe nur halb so oft an, Kabinenansprache und Aussprache mit dem Mannschaftsrat gelingen eher.
+- **Star der Liga**: Nach dem ersten „Monat“ (4 Spieltage) kürt das Kreisblatt die drei stärksten Spieler aller Vereine der Liga. Bis
+  zur nächsten Kür bleiben sie Stars, nach einem Auf- oder Abstieg ist der Titel weg. Gegner decken ihn enger (Abstand ×0,7), je
+  eigenem Star kommen 10 % mehr Zuschauer, andere Vereine werben ihn doppelt so gern ab, und nach zwei Spieltagen in Folge ohne
+  Einsatz ist er sauer.
+- **Entdecken**: Weltklasse nach 8, Führungsspieler nach 6 Einsätzen im eigenen Verein (mit Co-Trainer je 3 früher), sofort durch
+  Scouting; der Star ist öffentlich. Bis dahin wirken die Boni unsichtbar. Entdeckte Boni stehen auf Karte und Profil vor den
+  Eigenheiten.
+
+**Messung** (`node scripts/bonus-audit.mjs 400 rasenplatz`, dieselben 400 Spiele mit und ohne Bonus für einen Spieler der Mannschaft 0,
+Standardfehler der Tordifferenz ≈ 0,1):
+
+| Bonus | Tordifferenz je Spiel | Punkte je Spiel | Tore in enger Schlussphase (eigene : Gegner) |
+|---|---|---|---|
+| ohne | −0,04 | 1,39 | 0,21 : 0,23 |
+| Weltklasse (Stürmer) | +0,13 | 1,51 | 0,28 : 0,21 |
+| Führungsspieler (Mittelfeld) | +0,07 | 1,38 | 0,25 : 0,23 |
+| Star der Liga (Stürmer, nur enger gedeckt) | −0,07 | 1,38 | 0,20 : 0,24 |
+
+Weltklasse wirkt sichtbar dort, wo sie soll (späte Tore +30 %), etwa +0,17 Tore je Spiel – für einen einzelnen Spieler spürbar, aber
+kein Freifahrtschein. Führungsspieler und Star liegen im Rauschen; beim Star ist das gewollt, sein Nutzen liegt neben dem Platz.
+Golden unverändert (ohne `p.bonus` rechnet die Engine wie vorher).

@@ -6,6 +6,15 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-05-1 – Weltklasse, Führungsspieler, Star der Liga
+
+### Neu
+- **Verdeckte Boni:** Manche Spieler haben etwas Besonderes, das nicht in der Stärkezahl steht. Du entdeckst es mit der Zeit – nach einigen Einsätzen, mit Co-Trainer früher, durch Scouting sofort. Dann steht es auf Karte und Profil.
+- **Weltklasse:** Wenn es spät im Spiel eng wird, spielt er genauer und lässt sich nicht beirren. Gemessen: in engen Schlussphasen rund ein Drittel mehr Tore für seine Mannschaft.
+- **Führungsspieler:** die Stufe über dem Anführer. Neben ihm laufen die anderen mehr, unter Druck bleiben sie ruhiger, die Mannschaft zittert weniger bei knapper Führung. In der Kabine steckt schlechte Laune seltener an, Aussprachen gelingen eher.
+- **Star der Liga:** Nach vier Spieltagen kürt das Kreisblatt die drei Stärksten der Liga. Gegner decken ihn enger, es kommen mehr Zuschauer, andere Vereine wollen ihn – und auf der Bank wird er sauer. Nach einem Auf- oder Abstieg ist der Titel weg.
+- Gilt für neue Karrieren.
+
 ## 2026-11-04-3 – Jugend, Liebe, Schule – und Wechselstreik
 
 ### Neu

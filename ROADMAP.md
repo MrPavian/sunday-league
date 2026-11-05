@@ -1075,7 +1075,9 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
     Abiklausuren, Ausbildung, erste Liebe, andere Interessen, Führerschein, Heimweh im Internat, Gastfamilien ab der Verbandsliga.
   - Unruhe in der Kabine (Konzept 12.8): Schlechte Laune steckt an, Grüppchen, Mannschaftsrat, vergiftetes Klima. Streik nur
     einzeln (Nutzerklarstellung): Wer einen Wechsel verweigert bekommt, streikt manchmal, um ihn zu erzwingen.
-- Offen: verdeckte Boni (Weltklasse, Führungsspieler, Star der Liga), Regionalliga und 3. Liga spielbar.
+- ✅ Verdeckte Boni 2026-11-05 (Konzept 12.9): Weltklasse, Führungsspieler (Stufe über Anführer), Star der Liga (relativ zur Liga),
+  mit der Zeit entdeckt; Wirkung im Spiel gemessen.
+- Offen: Regionalliga und 3. Liga spielbar.
 
 ### 11.15 Physik-Engine für Effekte prüfen (vom Nutzer vorgeschlagen, 2026-10-29)
 - [Jolt Physics](https://github.com/jrouwe/JoltPhysics) (C++, im Browser über den WebAssembly-Port JoltPhysics.js) prüfen – **nur für

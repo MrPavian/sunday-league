@@ -71,6 +71,7 @@ import { shirtSponsor, sleeveSponsor, sponsorColor, SPONSORS } from './sponsors.
 import { advancePokale, bundChat } from './pokal.js';
 import { bundVenueEvent } from './bundevents.js';
 import { initTiger, tigerWeek } from './tiger.js';
+import { bonusesOf } from './bonuses.js';
 
 export const SAVE_VERSION = 1;
 export const POOL_SEED = 1921;
@@ -1170,6 +1171,10 @@ export function teamForMatch(career, club, format, availability, rng) {
   const players = [...lineup, ...bench].map((idx) => {
     const p = helpers.includes(idx) ? helperOf(career, club, idx) : applyForm(copyPlayer(playerOf(career, idx)), career.players[idx], club.human ? career.mood ?? 0 : 0);
     p.posFam = posFamOf(career, idx); // Gewöhnung je Rolle für position.js
+    if (!helpers.includes(idx)) {
+      const bonus = bonusesOf(career, idx); // verdeckte Boni (bonuses.js), nur Stärkemodell 3
+      if (bonus.length) p.bonus = bonus;
+    }
     if (late.includes(idx)) p.late = true;
     if (penalty.includes(idx)) p.penalty = true; // Strafbank: kein Nachrücker bei Überraschungen am Spieltag
     const fit = helpers.includes(idx) ? 1 : fitnessOf(career, idx);
