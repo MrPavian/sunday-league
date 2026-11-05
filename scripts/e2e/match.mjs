@@ -33,8 +33,14 @@ async function trainerFlow(b) {
   await p.click('[data-tap="info"]');
   await p.waitForTimeout(600);
   t0 = await t();
-  await p.waitForTimeout(700);
-  ok((await t()) > t0, 'Spiel steht bei offenem Info-Blatt');
+  // Bis zu 3 s warten (vorher fest 0,7 s): Steht die Uhr gerade kurz (Unterbrechung, Last), war das zu knapp.
+  // Geprüft wird weiter dasselbe – hält das Info-Blatt das Spiel an, schlägt es fehl (Nutzer-OK 2026-11-05).
+  let running = false;
+  for (let i = 0; i < 30 && !running; i++) {
+    await p.waitForTimeout(100);
+    running = (await t()) > t0;
+  }
+  ok(running, 'Spiel steht bei offenem Info-Blatt');
   await p.keyboard.press('Escape');
   await p.waitForTimeout(400);
   await p.click('[data-tap="sub"]');
