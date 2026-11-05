@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-04-3',
+    de: { title: 'Jugend, Liebe, Schule – und Wechselstreik', items: ['Wer als Kind viel Talent hatte, wird eher ein großes Talent – sicher ist es nicht.', 'Abiklausuren, Ausbildung, erste Liebe und Liebeskummer, Band, Gaming, Partys und der Führerschein.', 'Kinder im Internat wollen manchmal zurück; ab der Verbandsliga brauchen junge Neue eine Gastfamilie.', 'Schlechte Laune steckt an: Grüppchen in der Kabine, Aussprache mit dem Mannschaftsrat. Und wer einen Wechsel verweigert bekommt, streikt manchmal – bleibst du hart, meldet er sich vielleicht ohne Freigabe ab.', 'Abendspiele und die Kneipe sind deutlich heller und kontrastreicher.'] },
+    en: { title: 'Youth, love, school – and transfer strikes', items: ['A kid with lots of talent is more likely to become a big talent – but it is no guarantee.', 'Final exams, apprenticeships, first love and heartbreak, bands, gaming, parties and the driving test.', 'Kids at a boarding academy sometimes want to come back; from the State League on, young signings need a host family.', 'Bad moods spread: cliques in the dressing room, a meeting with the players’ council. And a player refused a move sometimes goes on strike – stand firm and he may deregister without a release.', 'Evening games and the pub are much brighter and crisper.'] },
+  },
+  {
     id: '2026-11-04-2',
     de: { title: 'Zu gut für die Liga', items: ['Wer über dem Niveau seiner Liga steht, lernt weniger dazu – je Liga darüber etwas weniger, höchstens die Hälfte.', 'Auf der Spielerkarte steht dann „über seiner Liga“.', 'Vereine aus der Liga darüber versuchen solche Spieler abzuwerben.', 'Manche wollen selbst höher spielen: freigeben, gemeinsamen Aufstieg versprechen oder halten – dann sind sie sauer.', 'Gilt für neue Karrieren.'] },
     en: { title: 'Too good for the league', items: ['Anyone above the level of their league learns less – a little less per league above, at most half.', 'The player card then says “above his league”.', 'Clubs from the league above try to poach such players.', 'Some want to play higher themselves: release them, promise to go up together or hold on to them – then they sulk.', 'Applies to new careers.'] },

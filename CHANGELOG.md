@@ -6,6 +6,16 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-04-3 – Jugend, Liebe, Schule – und Wechselstreik
+
+### Neu
+- **Talent aus der eigenen Jugend:** Wer als Kind viel Talent hatte, wird eher ein großes Talent – sicher ist es nicht, Spätzünder und Abstürze gibt es weiter. Bei eigenen Jungs ist die Einschätzung von Anfang an genauer.
+- **Jugendleben:** Abiklausuren, Ausbildung mit Schichtdienst, erste Liebe und Liebeskummer, Band, Gaming, Fitnessstudio und Partys, der Führerschein. Bei den Kindern andere Hobbys und der erste Schwarm. Manches kostet Form oder Trainingszeit, manches den Spieler.
+- **Internat und Gastfamilien:** Kinder, die ins Leistungszentrum gewechselt sind, wollen manchmal zurück. Ab der Verbandsliga brauchen junge Neue von weiter weg eine Gastfamilie – sonst kommt Heimweh.
+- **Schlechte Laune steckt an:** Wer sauer ist, zieht bei schlechter Stimmung andere mit. Daraus werden Grüppchen in der Kabine und eine Aussprache mit dem Mannschaftsrat – wer abblockt, vergiftet das Klima.
+- **Heller abends und in der Kneipe:** Abendspiele unter Flutlicht oder Laternen sind deutlich heller und kontrastreicher, ohne die Abendstimmung zu verlieren. Die Kneipe lag hinter einer halbdunklen Fläche und übernahm das Licht des Platzes – jetzt hat sie ihr eigenes, warmes Licht.
+- **Wechselstreik:** Wer einen Wechsel verweigert bekommt, bleibt manchmal einfach dem Training fern, um ihn zu erzwingen. Du kannst ihn suspendieren, freigeben oder hart bleiben – dann meldet er sich womöglich ohne Freigabe ab, und ihr bekommt nichts.
+
 ## 2026-11-04-2 – Zu gut für die Liga
 
 ### Geändert

@@ -6,6 +6,16 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-04-3 – Youth, love, school – and transfer strikes
+
+### New
+- **Talent from your own youth section:** a kid with lots of talent is more likely to become a big talent – but it is no guarantee, late bloomers and flops still happen. For your own lads the estimate is more accurate from the start.
+- **Growing up:** final exams, apprenticeships with shift work, first love and heartbreak, bands, gaming, the gym and parties, the driving test. For the kids, other hobbies and the first crush. Some of it costs form or training time, some of it costs you the player.
+- **Boarding academies and host families:** kids who moved to a pro academy sometimes want to come back. From the State League on, young signings from further away need a host family – otherwise homesickness sets in.
+- **Bad moods spread:** sulking players drag others along when the mood is bad. That turns into cliques in the dressing room and a meeting with the players’ council – shut it down and the atmosphere turns poisonous.
+- **Brighter evenings and pub:** evening games under floodlights or street lamps are much brighter and crisper, without losing the evening feel. The pub sat behind a semi-dark layer and took on the pitch’s lighting – now it has its own warm light.
+- **Transfer strike:** a player who is refused a move sometimes simply stays away from training to force it. You can suspend him, release him or stand firm – then he may deregister without a release, and you get nothing.
+
 ## 2026-11-04-2 – Too good for the league
 
 ### Changed

@@ -590,3 +590,33 @@ tiefen Ligen, im Schnitt wenig.
 | Freizeitliga | +7,2 | +6,7 | +11,3 | +10,3 |
 | Bezirksliga | +13,9 | +13,4 | +21,3 | +19,6 |
 | Oberliga | +23,0 | +22,0 | +39,3 | +34,3 |
+
+### 12.8 Eigene Jugend, Jugendleben und Unruhe (2026-11-04, Nutzerentscheid)
+
+- **Kindertalent → Talent** (Nutzerentscheid „nur Tendenz“): Wer aus der eigenen Jugend kommt (academy.js `graduate`), trägt
+  sein Kindertalent (0–1) mit (`kidTalent`). talentOf verschiebt den Zufallswert um (0,5 − Kindertalent) × 0,6 (`KID_PULL`,
+  Spielwert). Gemessen (Test): Kindertalent 0,9 → 44 % großes oder Ausnahmetalent (sonst 20 %), 0,2 → 2 %. Die
+  Talent-Einschätzung ist bei eigenen Jungs von Anfang an 0,2 sicherer (man kennt sie seit Jahren).
+- **Jugendleben** (teenlife.js, Spielwerte bis auf die Internat-Rückkehr): Abiklausuren (17–19), Ausbildung mit
+  Schichtdienst (16–19), erste Liebe und Liebeskummer (16–21), andere Interessen (Band, Gaming, Fitnessstudio, Partys; 16–21,
+  kann zum Aufhören führen), Führerschein (17–19), Kinder 12–15 mit anderen Hobbys oder Schwarm (Spaß am Fußball). Wirkt über
+  Form, Grummeln und zeitweise öfter absagen (`busyFor`, endet automatisch).
+- **Internat:** Kinder, die ins Leistungszentrum gewechselt sind, können zurückwollen. Belegt: In Internaten und
+  Auswahlmannschaften wird jährlich etwa ein Viertel der Spieler ausgetauscht (Studie TU Kaiserslautern 2013, zitiert bei
+  Correctiv 2018) → `NLZ_RETURN_SEASON` 0,25 je Saison, drei Saisons lang. Rückkehr bis 15 in die Jugend, ab 16 in die A-Jugend.
+- **Gastfamilien** ab der Verbandsliga (Stufe 7): Neue bis 19 von außerhalb brauchen eine Bleibe; Gastfamilie, Fahrdienst
+  oder pendeln, später Heimweh.
+- **Unruhe im Team** (unrest.js): Druck = Grummler + 1 bei Stimmung ≤ −0,2 + 1 bei ≤ −0,5. Ab Druck 2 und Stimmung ≤ 0,1:
+  Grüppchen → Mannschaftsrat; wer abblockt, vergiftet das Klima (Stimmung −0,02 je Woche, bis der Druck unter 2 fällt). Wer
+  2+ Wochen sauer ist, steckt bei Stimmung ≤ 0 mit 25 % je Woche einen Mitspieler an (`CONTAGION`). Ohne Ansteckung kam die
+  Unruhe nie zustande (gemessen: 0 von 1650 Wochen mit ≥ 2 Grummlern bei zufälligen Antworten), mit ihr in 0,5 % der Wochen.
+  Zuerst als Mannschaftsstreik bis zum Nichtantreten gebaut – Nutzerklarstellung: gemeint war der Streik eines einzelnen
+  Spielers, der einen Wechsel erzwingen will. Der Mannschaftsstreik ist wieder draußen.
+- **Wechselstreik** (poaching.js `wechselstreik`, Vorbild Dembélé beim BVB, August 2017: unentschuldigt vom Training
+  ferngeblieben, nachdem der Verein ein Angebot abgelehnt hatte; suspendiert, später verkauft): Wer einen Wechsel verweigert
+  bekommt (abgelehntes Angebot mit Wechselwunsch, transfers.js declineOffer, oder „Du bleibst hier“ beim Wechselwunsch), bleibt
+  ab der Woche danach, solange er grummelt, mit 50 % je Ereigniswoche weg (Spielwert), einmal. Suspendieren (meist kommt er
+  zurück), freigeben (Angebot bzw. Wechsel wie beim Abwerben) oder hart bleiben – dann meldet er sich ohne Freigabe ab oder
+  fehlt die ganze Saison. Abmelden ohne Freigabe ist bei Amateuren möglich, beim neuen Verein gilt dann eine Wartefrist
+  (z. B. Spielrecht erst ab 1. November bei Wechsel im Sommer, Fußball-Verband Mittelrhein; drei Monate, Sächsischer FV); der
+  abgebende Verein bekommt nichts.

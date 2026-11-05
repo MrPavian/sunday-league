@@ -13,7 +13,7 @@ import { DebugOverlay } from './render/DebugOverlay.js';
 import { cameraViewHeight, createGovernor, detectPlatform, gpuName, LADDER, pickInitialQuality, QUALITY, setCurrentQuality } from './render/quality.js';
 import { applyLighting } from './render/props.js';
 import { buildCrowd } from './render/crowd.js';
-import { moodOf, pickTimeOfDay, resolveLighting } from './render/lighting.js';
+import { moodOf, pickTimeOfDay, PUB_LOOK, resolveLighting } from './render/lighting.js';
 import { setEmissiveLevel } from './render/materials.js';
 import { disposeTree, mergeStatic } from './render/merge.js';
 import { applyColorSafeKits } from './render/colorSafe.js';
@@ -473,7 +473,11 @@ function frame(now) {
       btn.hidden = !at || at.x < pubRect.x - 4 || at.x > pubRect.x + pubRect.width + 4; // hochkant: außerhalb des Ausschnitts
       if (at) btn.style.transform = `translate(${(at.x - pubRect.x).toFixed(0)}px, ${(at.y - pubRect.y).toFixed(0)}px) translate(-50%, -100%)`;
     }
-    pixel.render(pubView.scene, pubView.camera, { moving: true });
+    // Lampen leuchten immer (die Leuchtstärke ist global und kommt sonst vom Platz – tagsüber 0: „Raum ohne Licht“);
+    // danach stellt updateLighting den Platz wieder her.
+    setEmissiveLevel(pixel.quality.emissive);
+    lightMood = null;
+    pixel.renderIndoor(pubView.scene, pubView.camera, PUB_LOOK, { moving: true }); // eigenes Licht, nicht das des Platzes
   } else {
     updateLighting();
     pixel.render(scene, rig.camera, { moving: !(subPanel.isOpen || planPanel.isOpen || halfPanel.isOpen) });

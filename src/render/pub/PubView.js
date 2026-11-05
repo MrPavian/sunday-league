@@ -116,7 +116,7 @@ function room(root, club, titles) {
   for (const o of root.children.slice(-3)) o.rotation.z = Math.PI / 2;
   root.add(box(0.05, 0.01, 0.6, 0xf2efe6, w / 2 - 2.4, 0.006, 1.4));
   // Lampen über Theke und Stammtisch.
-  for (const x of [-3.4, 1.6]) root.add(box(0.03, 0.6, 0.03, 0x2a2a2a, x, h - 0.3, -0.6), new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.18, 0.5), emissiveToon(0xffe2a0, 0xffe2a0, 1.1)).translateX(x).translateY(h - 0.65).translateZ(-0.6));
+  for (const x of [-3.4, 1.6]) root.add(box(0.03, 0.6, 0.03, 0x2a2a2a, x, h - 0.3, -0.6), new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.18, 0.5), emissiveToon(0xffe2a0, 0xffe2a0, 1.6)).translateX(x).translateY(h - 0.65).translateZ(-0.6));
   // Vereinsfarben: Wimpelkette, Schals, Name über der Theke, Meisterwimpel.
   pennants(root, colors, h - 0.15, -1.2, -w / 2 + 0.3, w / 2 - 0.3);
   scarf(root, colors, 0.2, 2.6, BACK + 0.1, 0.15);
@@ -147,10 +147,20 @@ export class PubView {
   constructor({ club, wirt = null, cast = [], titles = [], seed = 1 }) {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x1a1410);
-    const hemi = new THREE.HemisphereLight(0xffe7c2, 0x3a2a1c, 1.5);
-    const lamp = new THREE.DirectionalLight(0xffe0b0, 1.6);
+    // Grundlicht gedämpft, das Licht kommt aus den Lampen über Theke und Stammtisch (warme Lichtinseln) und etwas vom Fenster.
+    // Vorher nur Grundlicht 1,5 + gerichtetes Licht 1,6: gleichmäßig, ohne Lichtquelle – „Raum ohne Licht“ (Nutzer 2026-11-04).
+    const hemi = new THREE.HemisphereLight(0xffe7c2, 0x3a2a1c, 1.0);
+    const lamp = new THREE.DirectionalLight(0xffe0b0, 0.9);
     lamp.position.set(-2, 8, 6);
     this.scene.add(hemi, lamp);
+    for (const x of [-3.4, 1.6]) {
+      const pool = new THREE.PointLight(0xffd29a, 9, 7.5, 1.4);
+      pool.position.set(x, ROOM.h - 0.85, -0.6);
+      this.scene.add(pool);
+    }
+    const win = new THREE.PointLight(0x9fb4e0, 2.5, 4, 1.5);
+    win.position.set(3.4, 2.0, BACK + 0.8);
+    this.scene.add(win);
     this.root = new THREE.Group();
     this.scene.add(this.root);
     room(this.root, club, titles);

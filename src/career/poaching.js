@@ -22,10 +22,11 @@ import { tr } from '../core/i18n.js';
 import { book } from './finances.js';
 import { clubById, humanClub, playerOf, releasePlayer, table } from './career.js';
 import { adjustForm, adjustMood } from './events.js';
-import { canLose, first, joinRival, outcome } from './outcomes.js';
+import { canLose, first, joinRival, leaveTeam, outcome, sitOut } from './outcomes.js';
 import { isCoach } from './personal.js';
 import { chronicle } from './sagas.js';
 import { aboveLeague } from './development.js';
+import { busyFor } from './teenlife.js';
 import { ensureNeighbors, inTransfers, planDeparture, tstate } from './transfers.js';
 import { leagueTitle } from './verband.js';
 import { windowAt } from './transferrules.js';
@@ -82,6 +83,7 @@ function suitor(c, rng) {
   return pick.club.id;
 }
 
+const STRIKE_GATE = 0.5; // Spielwert: so oft wird aus dem Frust ein Streik (je Ereigniswoche)
 const MOVE_WISH_GATE = 0.3; // Spielwert: so oft meldet sich ein Kandidat (je Ereigniswoche)
 const wish = (c, idx) => ((c.flags.moveWish ??= {})[idx] = c.season);
 const mark = (c, idx) => ((c.flags.poached ??= {})[idx] = c.season);
@@ -98,6 +100,20 @@ const leave = (c, ctx, now, later, stay) => {
   const how = leaveFor(c, ctx);
   return how === 'now' ? now() : how === 'later' ? later() + WINDOW_TAIL() : stay;
 };
+const struck = (c, ctx) => {
+  const w = c.players[ctx.s]?.wantsOut;
+  if (w) w.struck = true;
+};
+// Abmelden ohne Freigabe: Er geht, ihr bekommt keine Ausbildungsentschädigung.
+function goWithout(c, ctx, pre) {
+  struck(c, ctx);
+  const n = first(c, ctx.s);
+  const club = clubName(c, ctx);
+  if (!leaveTeam(c, ctx.s)) return pre + tr('Er droht, sich abzumelden – tut es dann aber doch nicht.', 'He threatens to deregister – but in the end he does not.');
+  adjustMood(c, -0.02);
+  chronicle(c, tr(`${n} meldet sich ohne Freigabe ab und wechselt zu ${club}.`, `${n} deregisters without a release and moves to ${club}.`));
+  return pre + tr(`${n} meldet sich ohne Freigabe ab und geht zu ${club}. Dort muss er eine Wartefrist absitzen – ihr bekommt keinen Cent.`, `${n} deregisters without a release and goes to ${club}. He has to sit out a waiting period there – you do not get a penny.`);
+}
 const anyClubName = (c, id) => clubById(c, id)?.name ?? tstate(c).neighbors.find((n) => n.id === id)?.name ?? '?';
 const clubName = (c, ctx) => anyClubName(c, ctx.club);
 
@@ -193,7 +209,50 @@ export const POACH_EVENTS = {
       },
       {
         label: tr('„Du bleibst hier."', '"You are staying here."'),
-        effect: (c, ctx) => (wish(c, ctx.s), (c.players[ctx.s].grumpy = 3), adjustForm(c, ctx.s, -0.3), adjustMood(c, -0.02), tr(`${first(c, ctx.s)} geht wortlos. In der Kabine ist er seitdem auffällig still.`, `${first(c, ctx.s)} walks off without a word. He has been noticeably quiet in the dressing room since.`)),
+        effect: (c, ctx, rng) => (wish(c, ctx.s), (c.players[ctx.s].wantsOut = { club: higherSuitor(c, rng ?? { next: () => 0 })?.id ?? null, season: c.season, round: c.round ?? 0 }), (c.players[ctx.s].grumpy = 3), adjustForm(c, ctx.s, -0.3), adjustMood(c, -0.02), tr(`${first(c, ctx.s)} geht wortlos. In der Kabine ist er seitdem auffällig still.`, `${first(c, ctx.s)} walks off without a word. He has been noticeably quiet in the dressing room since.`)),
+      },
+    ],
+  },
+
+  // Wechselstreik (Nutzerwunsch, Vorbild Dembélé beim BVB im August 2017: unentschuldigt vom Training ferngeblieben, um den
+  // abgelehnten Wechsel zu erzwingen; der Verein suspendierte ihn, am Ende wurde er verkauft). Wer einen Wechsel verweigert
+  // bekommt (Angebot abgelehnt oder „Du bleibst hier“), bleibt in den Wochen danach manchmal einfach weg.
+  // Amateure können sich auch ohne Freigabe abmelden – dann gilt eine Wartefrist beim neuen Verein (z. B. Spielrecht erst ab
+  // 1. November bei Abmeldung im Sommer, FVM; drei Monate, SFV). Der abgebende Verein bekommt dann nichts.
+  wechselstreik: {
+    weight: 20,
+    needs(c, rng) {
+      const cands = humanClub(c).squad.filter((idx) => {
+        const r = c.players[idx];
+        const w = r?.wantsOut;
+        if (!w || w.struck || isCoach(c, idx) || inTransfers(c, idx) || !(r.grumpy > 0)) return false;
+        return c.season > w.season || (c.round ?? 0) - w.round >= 1;
+      });
+      if (!cands.length || !rng.chance(STRIKE_GATE)) return null;
+      const s = cands[Math.floor(rng.next() * cands.length)];
+      const want = c.players[s].wantsOut;
+      const club = want.club && (clubById(c, want.club) || tstate(c).neighbors.some((n) => n.id === want.club)) ? want.club : higherSuitor(c, rng)?.id ?? suitor(c, rng);
+      return club ? { s, club } : null;
+    },
+    text: (c, ctx) => tr(`${first(c, ctx.s)} erscheint nicht zum Training, das Handy ist aus. Über einen Mitspieler lässt er ausrichten: Er kommt erst wieder, wenn ihr ihn zu ${clubName(c, ctx)} gehen lasst.`, `${first(c, ctx.s)} does not turn up to training and his phone is off. Through a team-mate he lets you know: he will not be back until you let him go to ${clubName(c, ctx)}.`),
+    options: [
+      {
+        label: tr('Suspendieren – so nicht', 'Suspend him – not like this'),
+        effect: outcome([
+          { w: 2, run: (c, ctx) => (struck(c, ctx), sitOut(c, ctx.s), busyFor(c, ctx.s, 4, 2), adjustMood(c, 0.03), (c.players[ctx.s].grumpy = 1), tr(`Zwei Wochen suspendiert. Die Mannschaft steht hinter dir. ${first(c, ctx.s)} kommt danach kleinlaut zurück und entschuldigt sich in der Kabine.`, `Suspended for two weeks. The team backs you. ${first(c, ctx.s)} comes back sheepishly afterwards and apologises in the dressing room.`)) },
+          { w: (c) => (canLose(c) ? 1 : 0), run: (c, ctx) => goWithout(c, ctx, tr('Die Suspendierung beeindruckt ihn nicht. ', 'The suspension does not impress him. ')) },
+        ]),
+      },
+      {
+        label: tr('Nachgeben und freigeben', 'Give in and release him'),
+        effect: (c, ctx) => (struck(c, ctx), adjustMood(c, -0.03), leave(c, ctx, () => tr(`${first(c, ctx.s)} wechselt zu ${clubName(c, ctx)}. In der Kabine sagt einer: „Streiken lohnt sich also."`, `${first(c, ctx.s)} joins ${clubName(c, ctx)}. In the dressing room someone says: "So striking pays off."`), () => tr(`Du gibst ihn frei. ${clubName(c, ctx)} fragt zur nächsten Wechselperiode offiziell an.`, `You release him. ${clubName(c, ctx)} will ask officially in the next transfer period.`), tr('Er bleibt am Ende doch.', 'In the end he stays after all.'))),
+      },
+      {
+        label: tr('Hart bleiben – ohne Freigabe kein Wechsel', 'Stand firm – no release, no move'),
+        effect: outcome([
+          { w: (c) => (canLose(c) ? 1 : 0), run: (c, ctx) => goWithout(c, ctx, '') },
+          { w: 1, run: (c, ctx) => (struck(c, ctx), busyFor(c, ctx.s, 4, 99), (c.players[ctx.s].grumpy = 3), adjustMood(c, -0.04), tr(`${first(c, ctx.s)} bleibt gemeldet, aber er kommt nicht mehr. Für dich ist er diese Saison praktisch weg.`, `${first(c, ctx.s)} stays registered, but he no longer turns up. For you he is as good as gone this season.`)) },
+        ]),
       },
     ],
   },

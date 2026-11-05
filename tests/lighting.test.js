@@ -115,3 +115,28 @@ describe('Tageszeit und Stimmung eines Spiels', () => {
     expect(shadowBias(20).bias).toBeLessThan(shadowBias(60).bias);
   });
 });
+
+// Nutzerbefund 2026-11-04 „viel zu düster“: Abends spannt der Kontrast um einen tiefen Mittelpunkt (sonst drückt er das
+// ganze Nachtbild nach unten), tagsüber bleibt alles beim Alten; die Kneipe hat einen eigenen Look ohne Nebel.
+describe('Abend und Kneipe nicht zu düster', () => {
+  it('Kontrast-Mittelpunkt: tagsüber 0,5, abends tiefer; Kneipe ohne Nebel', async () => {
+    const { PUB_LOOK, resolveLighting } = await import('../src/render/lighting.js');
+    expect(resolveLighting({ venue: 'parkplatz', time: 'DAY' }).post.contrastPivot).toBe(0.5);
+    const night = resolveLighting({ venue: 'parkplatz', time: 'EVENING' }).post;
+    expect(night.contrastPivot).toBeLessThan(0.3);
+    expect(resolveLighting({ venue: 'hinterhof', time: 'EVENING' }).post.brightness).toBeGreaterThan(1);
+    expect(PUB_LOOK.fogAmount).toBe(0);
+    expect(PUB_LOOK.contrastPivot).toBeLessThan(0.5);
+  });
+
+  // Nutzerwunsch „abends darf der Parkplatz ruhig eine Nuance dunkler“: nur abends, nur dort.
+  it('Parkplatz abends eine Nuance dunkler, tagsüber unverändert', async () => {
+    const { resolveLighting, VENUES } = await import('../src/render/lighting.js');
+    const at = (venue, time) => resolveLighting({ venue, time }).post.brightness;
+    expect(at('parkplatz', 'EVENING')).toBeLessThan(at('hinterhof', 'EVENING'));
+    expect(at('parkplatz', 'EVENING')).toBeGreaterThan(0.9);
+    expect(resolveLighting({ venue: 'parkplatz', time: 'EVENING' }).floodField).toBeLessThan(resolveLighting({ venue: 'park', time: 'EVENING' }).floodField);
+    expect(at('parkplatz', 'DAY')).toBe(at('hinterhof', 'DAY'));
+    expect(Object.entries(VENUES).filter(([, v]) => v.nightBrightness != null || v.nightFlood != null).map(([k]) => k)).toEqual(['parkplatz']);
+  });
+});

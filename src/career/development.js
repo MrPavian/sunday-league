@@ -103,11 +103,16 @@ export const TALENTS = [
 export const TALENT_NORM = 1.06;
 export const TALENT_NAMES = () => ({ ausnahme: tr('Ausnahmetalent', 'exceptional talent'), gross: tr('großes Talent', 'big talent'), normal: tr('normales Talent', 'normal talent'), begrenzt: tr('begrenztes Talent', 'limited talent'), ausgereizt: tr('ausgereizt', 'maxed out') });
 const TARGETS = [...NIVEAU_TARGET, ...Object.values(PRO_TARGET)];
+export const KID_PULL = 0.6;
 export function talentOf(career, idx) {
   if ((career?.strength ?? 1) < 3) return null;
   // Eigener Zufall, durch createRng gemischt: unit() allein hinge eng mit dem Entwicklungstyp zusammen (gemessen: fast alle
   // Ausgereizten wären Frühentwickler).
   let u = createRng(hash(career.seed ?? 0, idx, 4246)).next();
+  // Eigene Jugend (academy.js graduate): Das Kindertalent verschiebt nur die Wahrscheinlichkeiten (Nutzerentscheid „nur Tendenz“) –
+  // Spätzünder und Abstürze bleiben häufig. KID_PULL ist ein Spielwert.
+  const kid = career.players?.[idx]?.kidTalent;
+  if (kid != null) u = Math.max(0, Math.min(0.999999, u + (0.5 - kid) * KID_PULL));
   for (const t of TALENTS) if ((u -= t.share) < 0) return t;
   return TALENTS[TALENTS.length - 1];
 }
@@ -124,7 +129,7 @@ export function playerTalentGuess(career, idx) {
   const t = talentOf(career, idx);
   if (!t) return null;
   const rec = career.players[idx] ?? {};
-  const k = Math.min(1, 0.2 + 0.25 * (rec.seasons?.length ?? 0) + (rec.apps >= 5 ? 0.15 : 0) + (career.staff?.cotrainer ? 0.2 : 0) + (rec.scouted ? 0.2 : 0));
+  const k = Math.min(1, 0.2 + 0.25 * (rec.seasons?.length ?? 0) + (rec.apps >= 5 ? 0.15 : 0) + (career.staff?.cotrainer ? 0.2 : 0) + (rec.scouted ? 0.2 : 0) + (rec.kidTalent != null ? 0.2 : 0)); // eigene Jugend: seit Jahren bekannt
   let i = TALENTS.indexOf(t);
   const u = createRng(hash(career.seed ?? 0, idx, career.season ?? 1, 4247)).next();
   if (u < (1 - k) * 0.6) i = Math.max(0, Math.min(TALENTS.length - 1, i + (u < (1 - k) * 0.3 ? -1 : 1)));

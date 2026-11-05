@@ -24,6 +24,8 @@ beforeAll(async () => {
     academy: await import('../src/career/academy.js'),
     sponsors: await import('../src/career/sponsors.js'),
     leagueevents: await import('../src/career/leagueevents.js'),
+    teenlife: await import('../src/career/teenlife.js'),
+    unrest: await import('../src/career/unrest.js'),
     i18n: await import('../src/core/i18n.js'),
   };
 });
@@ -37,7 +39,7 @@ describe('English mode', () => {
   });
 
   it('every event text, option and outcome is English', async () => {
-    const regs = [m.events.EVENTS, m.stories.STORY_STARTS, m.personal.PERSONAL_EVENTS, m.sagas.SAGA_EVENTS, m.social.SOCIAL_EVENTS, m.derby.DERBY_EVENTS, m.injuries.INJURY_EVENTS, m.life.LIFE_EVENTS, m.academy.ACADEMY_EVENTS, m.sponsors.SPONSOR_EVENTS, m.leagueevents.LEAGUE_EVENTS];
+    const regs = [m.events.EVENTS, m.stories.STORY_STARTS, m.personal.PERSONAL_EVENTS, m.sagas.SAGA_EVENTS, m.social.SOCIAL_EVENTS, m.derby.DERBY_EVENTS, m.injuries.INJURY_EVENTS, m.life.LIFE_EVENTS, m.academy.ACADEMY_EVENTS, m.sponsors.SPONSOR_EVENTS, m.leagueevents.LEAGUE_EVENTS, m.teenlife.TEEN_EVENTS, m.unrest.UNREST_EVENTS];
     const bad = [];
     let checked = 0;
     for (const reg of regs) {

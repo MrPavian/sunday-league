@@ -43,6 +43,7 @@ function unfitNote(c, club) {
 }
 import { hex, first, euro, shareChooser } from './shared.js';
 import { travelCost } from '../../career/travel.js';
+import { unrestStage } from '../../career/unrest.js';
 
 // Jugendspieltag vom Wochenende (kurz): „Jugend: D 3:1 · C 0:2 · E Spielfest".
 function youthNote(c) {
@@ -120,6 +121,7 @@ export const homeScreens = {
       vacant(c) ? tr('Trainerstelle vakant – im Präsidium einen neuen Trainer verpflichten.', 'Manager post vacant – hire a new manager from the president\'s office.') : '',
       unfitNote(c, club),
       youthNote(c),
+      [null, tr('Unruhe in der Kabine: Grüppchen.', 'Unrest in the dressing room: cliques.'), tr('Unruhe: Das Klima in der Kabine ist vergiftet.', 'Unrest: the atmosphere in the dressing room is poisonous.')][Math.min(2, unrestStage(c))] ?? '', // unrest.js
     ].filter(Boolean);
     const stories = storyLabels(c);
     let actions;

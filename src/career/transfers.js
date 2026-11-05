@@ -430,6 +430,7 @@ export function declineOffer(c, id) {
   const rec = c.players[o.idx];
   if (o.wish && rec) {
     rec.grumpy = 3;
+    rec.wantsOut = { club: o.club, season: c.season, round: c.round ?? 0 }; // kann zum Wechselstreik führen (poaching.js)
     adjustMood(c, -0.02);
     c.week?.chat.push({ from: o.idx, text: tr('Ihr haltet mich fest? Super. Dann kickt halt ohne Laune.', 'You are holding me back? Great. Then play without my enthusiasm.'), time: 'Sa 18:30' });
   }

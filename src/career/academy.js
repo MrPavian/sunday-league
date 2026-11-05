@@ -184,13 +184,13 @@ export function seasonAcademy(c) {
 }
 
 // Aus dem Kind wird ein Spieler mit 16 – Talent entscheidet über die Stufe.
-function graduate(c, k, rng) {
+export function graduate(c, k, rng) {
   const tier = k.talent >= 0.9 ? 'dorfstar' : k.talent >= 0.72 ? 'stark' : k.talent >= 0.5 ? 'gut' : 'ok';
   const p = generatePlayer(rng, { role: k.position, tier });
   const player = { ...p, name: k.name, age: 16 - ((c.season ?? 1) - 1), profession: 'Schüler', position: k.position, backstory: tr('Aus der eigenen Jugend, seit der E-Jugend im Verein.', 'Came up through the club, at the youth section since the U11s.'), custom: 'youth' };
   player.rating = ratePlayer(player);
   const idx = addCustomPlayer(c, player);
-  c.players[idx] = { apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 };
+  c.players[idx] = { apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0, kidTalent: k.talent }; // Tendenz fürs Talent (development.js talentOf)
   c.youth.prospects.push(idx);
   return idx;
 }
@@ -267,7 +267,7 @@ function nlzTrial(c, ctx, rng, withYou, pre = '') {
   }
   book(c, tr(`Ausbildungsentschädigung ${ctx.club} (${k.name})`, `Training compensation ${ctx.club} (${k.name})`), ctx.amount);
   chronicle(c, tr(`${k.name} (${k.age}) wechselt aus der eigenen Jugend ins Leistungszentrum des ${ctx.club}.`, `${k.name} (${k.age}) moves from the club's youth section to the ${ctx.club} academy.`));
-  c.youth.nlz = [...(c.youth.nlz ?? []), { name: k.name, club: ctx.club, season: c.season, age: k.age, amount: ctx.amount }];
+  c.youth.nlz = [...(c.youth.nlz ?? []), { name: k.name, club: ctx.club, season: c.season, age: k.age, amount: ctx.amount, kid: { ...k } }]; // kid: für eine Rückkehr (teenlife.js)
   drop(c, ctx);
   adjustMood(c, withYou ? 0.05 : 0.03);
   return pre + tr(`Bestanden! ${nm} wechselt zum ${ctx.club}. ${euro(ctx.amount)} € Ausbildungsentschädigung gehen an den Verein – und alle sind stolz.`, `Passed! ${nm} moves to ${ctx.club}. €${euro(ctx.amount)} in training compensation comes to the club – and everyone is proud.`);

@@ -1285,6 +1285,7 @@ line.tb-chalk { stroke-width: 1; }
 #club.see-through { background: transparent; }
 #club.see-through .club-main > * { position: relative; z-index: 1; }
 #club.see-through .club-main > .club-body { z-index: auto; }
+#club.see-through .club-body:has(.pub-stage) { background: none; } /* Kneipe: Bühne nicht durch die halbdunkle Fläche (--panel, 78 %) zeigen – Nutzerbefund 2026-11-04 „zu dunkel“ */
 #club.see-through .hub > * { position: relative; z-index: 1; }
 #club.see-through .hub > .hub-scene { z-index: auto; }
 #club.see-through .club-scene > * { position: relative; }

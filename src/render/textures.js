@@ -32,9 +32,11 @@ export function makeAsphaltTexture(rng, { width, depth, texelsPerMeter = 12 }) {
 
   for (let i = 0; i < W * H; i++) {
     const n = (rng.next() - 0.5) * 14;
-    data[i * 4] = 78 + n;
-    data[i * 4 + 1] = 80 + n;
-    data[i * 4 + 2] = 84 + n;
+    // Gealterter Asphalt (Albedo um 0,12–0,15, hergeleitet aus gängigen Werten 0,05–0,10 frisch, 0,10–0,15 gealtert);
+    // vorher 78/80/84 ≈ 0,08 – wirkte schwarz (Nutzerbefund 2026-11-04).
+    data[i * 4] = 100 + n;
+    data[i * 4 + 1] = 102 + n;
+    data[i * 4 + 2] = 106 + n;
     data[i * 4 + 3] = 255;
   }
   const put = (px, py, r, g, b, a = 1) => {

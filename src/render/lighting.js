@@ -9,7 +9,7 @@
 // überschreiben einzelne Werte. Tönung, Sättigung und Kontrast werden anschließend mit
 // Tageszeit und Spielort multipliziert.
 export const LOOKS = {
-  klar: { aoStrength: 0.35, bloom: 0.45, tint: [1.03, 1.0, 0.95], saturation: 1.1, contrast: 1.06, vignette: 0.3, fogColor: [0.62, 0.74, 0.85], fogAmount: 0.18, fogStart: 24, fogEnd: 60, dither: 0.02, snowCover: 0 },
+  klar: { contrastPivot: 0.5, aoStrength: 0.35, bloom: 0.45, tint: [1.03, 1.0, 0.95], saturation: 1.1, contrast: 1.06, vignette: 0.3, fogColor: [0.62, 0.74, 0.85], fogAmount: 0.18, fogStart: 24, fogEnd: 60, dither: 0.02, snowCover: 0 },
   hitze: { tint: [1.09, 1.0, 0.86], saturation: 1.15, bloom: 0.8, fogColor: [0.95, 0.88, 0.7], fogAmount: 0.22 },
   overcast: { tint: [0.99, 1.0, 1.02], saturation: 0.92, contrast: 0.98, bloom: 0.25, fogColor: [0.72, 0.75, 0.78], fogAmount: 0.26, fogStart: 24, fogEnd: 56 },
   rain: { tint: [0.88, 0.93, 1.0], saturation: 0.78, contrast: 0.98, bloom: 0.2, fogColor: [0.55, 0.6, 0.66], fogAmount: 0.4, fogStart: 22, fogEnd: 50 },
@@ -45,9 +45,11 @@ export const TIMES = {
   },
   EVENING: {
     label: 'Abend (Flutlicht)', sun: [0.12, 0.8, 0.58], sunColor: 0xfff2dc, sunIntensity: 2.2,
-    hemiSky: 0x42507a, hemiGround: 0x2a2a30, hemiIntensity: 0.85, rimColor: 0xffd9a0, rimIntensity: 1.0, shadow: 0.9,
+    hemiSky: 0x4c5a84, hemiGround: 0x303036, hemiIntensity: 1.0, rimColor: 0xffd9a0, rimIntensity: 1.0, shadow: 0.9,
     sky: 0x1c2438, skyMix: 1, emissive: 1, flood: 1,
-    post: { tint: [0.95, 0.98, 1.1], saturation: 0.95, contrast: 1.08, brightness: 1, fogColor: [0.16, 0.19, 0.27], vignette: 0.6 },
+    // Nutzerbefund 2026-11-04 „viel zu düster“: Der Kontrast um linear 0,5 drückte das ganze Nachtbild nach unten (fast alle
+    // Werte liegen darunter). Abends spannt er um 0,25, dazu etwas mehr Himmelslicht und Grundhelligkeit (vorher 0,85 und 1).
+    post: { tint: [0.95, 0.98, 1.1], saturation: 0.95, contrast: 1.08, contrastPivot: 0.25, brightness: 1.05, fogColor: [0.16, 0.19, 0.27], vignette: 0.6 },
   },
   INDOOR: {
     label: 'Halle', sun: [0.15, 0.95, 0.27], sunColor: 0xf6f8ff, sunIntensity: 1.6,
@@ -80,7 +82,7 @@ export const MOODS = {
 // footprints (Spuren auf nassem Boden; im Schnee gibt es sie überall draußen).
 export const VENUES = {
   hinterhof: { sky: 0xb4c4cf, ground: 0x6a5a48, sunMul: 0.9, hemiMul: 1.12, wet: 0.9, surface: 'concrete', weather: { puddles: 0.8, splash: 0.6, snow: 0.6, footprints: false }, flood: 'yard', post: { tint: [1.03, 1.0, 0.96], saturation: 0.98, contrast: 1.03, brightness: 1 } },
-  parkplatz: { sky: 0xa9bccb, ground: 0x55565a, sunMul: 1, hemiMul: 1, wet: 1, surface: 'asphalt', weather: { puddles: 1.25, splash: 0.55, snow: 0.5, footprints: false }, flood: 'street', post: { tint: [0.98, 0.99, 1.03], saturation: 0.95, contrast: 1.04, brightness: 1 } },
+  parkplatz: { sky: 0xa9bccb, ground: 0x55565a, sunMul: 1, hemiMul: 1, wet: 1, surface: 'asphalt', weather: { puddles: 1.25, splash: 0.55, snow: 0.5, footprints: false }, flood: 'street', post: { tint: [0.98, 0.99, 1.03], saturation: 0.95, contrast: 1.04, brightness: 1 }, nightBrightness: 0.9, nightFlood: 0.6 }, // abends eine Nuance dunkler (Nutzerwunsch, Spielwert)
   park: { sky: 0x9cc3e0, ground: 0x4f7040, sunMul: 1.08, hemiMul: 1, wet: 0.8, surface: 'grass', weather: { puddles: 0.8, splash: 0.9, snow: 1, footprints: true }, flood: 'street', post: { tint: [0.99, 1.02, 1.0], saturation: 1.03, contrast: 1.0, brightness: 1.02 } },
   ascheplatz: { sky: 0xa9b6c0, ground: 0x7a4a30, sunMul: 0.94, hemiMul: 1.07, wet: 0.75, surface: 'ash', weather: { puddles: 0.6, splash: 0.75, snow: 1.1, footprints: true }, flood: 'stadium', post: { tint: [1.02, 0.99, 0.97], saturation: 1.0, contrast: 1.05, brightness: 1 } },
   rasenplatz: { sky: 0x9ec4de, ground: 0x4a6a3a, sunMul: 1.06, hemiMul: 1, wet: 0.85, surface: 'grass', weather: { puddles: 0.7, splash: 1, snow: 1, footprints: true }, flood: 'stadium', post: { tint: [1.0, 1.01, 0.99], saturation: 1.05, contrast: 1.03, brightness: 1 } },
@@ -97,7 +99,7 @@ export const VENUES = {
 // Wie hell das Spielfeld abends selbst ist (1 = ganz im Flutlicht), je Flutlichtart.
 // Stadion: Grundlicht auf dem Feld, hell wird es erst in den Lichtpools der Masten.
 export const FLOOD_FIELD = { stadium: 0.45, street: 0.72, yard: 0.72, none: 0 };
-export const FLOOD = { color: [1.05, 1.0, 0.92], night: [0.36, 0.4, 0.55], halo: 14 };
+export const FLOOD = { color: [1.05, 1.0, 0.92], night: [0.42, 0.46, 0.6], halo: 14 }; // night vorher 0,36/0,40/0,55 (zu düster)
 
 const DEG = 180 / Math.PI;
 const rgb = (hex) => [((hex >> 16) & 255) / 255, ((hex >> 8) & 255) / 255, (hex & 255) / 255];
@@ -174,10 +176,12 @@ export function resolveLighting({ venue = 'parkplatz', mood = 'CLEAR', time = 'D
     post.fogColor = m.skyIsFog ? [0.24, 0.27, 0.33] : t.post.fogColor;
     post.vignette = Math.max(post.vignette, t.post.vignette);
     post.bloom = Math.max(post.bloom, 0.6);
+    post.contrastPivot = t.post.contrastPivot ?? post.contrastPivot;
+    post.brightness *= v.nightBrightness ?? 1;
   }
   if (m.skyIsFog && !night) post.fogColor = rgb(sky);
 
-  const floodField = night ? FLOOD_FIELD[v.flood] ?? 0 : 0;
+  const floodField = night ? (FLOOD_FIELD[v.flood] ?? 0) * (v.nightFlood ?? 1) : 0;
   return {
     venue, mood: v.indoor ? 'INDOOR' : mood, time: v.indoor ? 'INDOOR' : time, label: t.label,
     sky,
@@ -199,3 +203,7 @@ export function shadowBias(elevationDeg) {
   const s = Math.max(0.2, Math.sin(elevationDeg / DEG));
   return { bias: -0.0008 - 0.0004 * (1 / s - 1), normalBias: 0.02 + 0.02 * (1 / s - 1) };
 }
+
+// Kneipe (render/pub/PubView.js): eigener Look statt dem des Platzes im Hintergrund (sonst abends Flutlichtdunkel, bei Regen
+// nass) – warm, etwas Kontrast, kein Nebel.
+export const PUB_LOOK = { ...LOOKS.klar, tint: [1.02, 1.0, 0.96], saturation: 1.05, contrast: 1.08, contrastPivot: 0.3, brightness: 1, vignette: 0.15, fogAmount: 0, bloom: 0.45 };

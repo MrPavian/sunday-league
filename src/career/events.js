@@ -16,6 +16,8 @@ import { LIFE_EVENTS } from './life.js';
 import { ACADEMY_EVENTS } from './academy.js';
 import { SPONSOR_EVENTS } from './sponsors.js';
 import { POACH_EVENTS } from './poaching.js';
+import { TEEN_EVENTS } from './teenlife.js';
+import { UNREST_EVENTS, weeklyUnrest } from './unrest.js';
 import { CLUBLIFE_EVENTS } from './clublife.js';
 import { OLDBOYS_EVENTS } from './oldboysevents.js';
 import { LEAGUE_EVENTS } from './leagueevents.js';
@@ -77,8 +79,15 @@ export function weeklyMood(career) {
     if (!rec) continue;
     rec.form = (rec.form ?? 0) * 0.5;
     if (rec.grumpy > 0) rec.grumpy--;
+    // Zeitweise weniger Zeit (teenlife.js busyFor): danach wieder normal.
+    const u = rec.absenceUntil;
+    if (u && (career.season > u.season || (career.round ?? 0) >= u.round)) {
+      delete rec.absenceMul;
+      delete rec.absenceUntil;
+    }
   }
   if (career.flags?.pressWeeks > 0) career.flags.pressWeeks--;
+  weeklyUnrest(career); // Unruhe flaut ab, wenn kaum noch jemand sauer ist
 }
 
 // Ergebnis schlägt auf die Laune.
@@ -624,6 +633,8 @@ const eventPacks = () => (packs ??= [
   { pack: TIGER_EVENTS, roll: true },
   { pack: CLUBLIFE_EVENTS, roll: false },
   { pack: OLDBOYS_EVENTS, roll: true }, // Alte Herren: nur mit Team (needs prüft)
+  { pack: TEEN_EVENTS, roll: true }, // Jugend abseits des Platzes (teenlife.js)
+  { pack: UNREST_EVENTS, roll: true }, // Unruhe bis zum Streik (unrest.js)
   { pack: CRISES, roll: false },
 ]);
 const rolledEntries = () => eventPacks().filter((x) => x.roll).flatMap((x) => Object.entries(x.pack));

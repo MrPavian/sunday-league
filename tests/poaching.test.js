@@ -18,6 +18,8 @@ import { LOCAL_EVENTS } from '../src/career/localevents.js';
 import { PHASE_EVENTS } from '../src/career/phaseevents.js';
 import { compensation, COMPENSATION_PER_YEAR, POACH_EVENTS, PRO_CLUBS, proSeasonChance } from '../src/career/poaching.js';
 import { placeFormers } from '../src/career/memory.js';
+import { TEEN_EVENTS } from '../src/career/teenlife.js';
+import { UNREST_EVENTS } from '../src/career/unrest.js';
 
 // Würfel, der immer „ja" sagt und den ersten Ausgang nimmt.
 const yes = { chance: () => true, next: () => 0, int: (a) => a, pick: (a) => a[0], range: (a) => a };
@@ -38,7 +40,7 @@ function benchCareer() {
 
 describe('Ereignisse', () => {
   it('jeder Ereignis-Name kommt nur einmal vor (sonst wird das falsche Ereignis aufgelöst)', () => {
-    const pools = { EVENTS, STORY_STARTS, PERSONAL_EVENTS, SAGA_EVENTS, SOCIAL_EVENTS, BANTER_EVENTS, DERBY_EVENTS, INJURY_EVENTS, LIFE_EVENTS, ACADEMY_EVENTS, SPONSOR_EVENTS, POACH_EVENTS, LEAGUE_EVENTS, SEASON_EVENTS, LOCAL_EVENTS, PHASE_EVENTS, CLUBLIFE_EVENTS, CRISES };
+    const pools = { EVENTS, STORY_STARTS, PERSONAL_EVENTS, SAGA_EVENTS, SOCIAL_EVENTS, BANTER_EVENTS, DERBY_EVENTS, INJURY_EVENTS, LIFE_EVENTS, ACADEMY_EVENTS, SPONSOR_EVENTS, POACH_EVENTS, LEAGUE_EVENTS, SEASON_EVENTS, LOCAL_EVENTS, PHASE_EVENTS, CLUBLIFE_EVENTS, TEEN_EVENTS, UNREST_EVENTS, CRISES };
     const seen = {};
     const dupes = [];
     for (const [pool, evs] of Object.entries(pools)) for (const id of Object.keys(evs)) (seen[id] ? dupes.push(`${id}: ${seen[id]} + ${pool}`) : (seen[id] = pool));
@@ -170,4 +172,45 @@ describe('Profivertrag (sehr selten)', () => {
     expect(c.players[idx].grumpy).toBe(3);
     expect(POACH_EVENTS.wechselwunsch.needs(c, yes)).toBeNull(); // diese Saison schon gesagt
   });
+
+  it('Wechselstreik: wer einen abgelehnten Wechsel erzwingen will, bleibt weg – suspendieren, freigeben oder hart bleiben', () => {
+    const setup = () => {
+      const c = createCareer({ seed: 5 });
+      const idx = humanClub(c).squad.find((i) => !c.players[i].coach);
+      const rival = c.clubs.find((x) => !x.human).id;
+      c.players[idx].grumpy = 3;
+      c.players[idx].wantsOut = { club: rival, season: c.season, round: c.round };
+      return { c, idx, rival };
+    };
+    const { c, idx, rival } = setup();
+    expect(POACH_EVENTS.wechselstreik.needs(c, yes)).toBeNull(); // nicht in derselben Woche
+    c.round += 1;
+    const ctx = POACH_EVENTS.wechselstreik.needs(c, yes);
+    expect(ctx).toEqual({ s: idx, club: rival });
+    expect(POACH_EVENTS.wechselstreik.text(c, ctx)).toContain('Training');
+    POACH_EVENTS.wechselstreik.options[0].effect(c, ctx, yes); // suspendiert, kommt zurück
+    expect(humanClub(c).squad).toContain(idx);
+    expect(c.players[idx].absenceMul).toBe(4);
+    expect(POACH_EVENTS.wechselstreik.needs(c, yes)).toBeNull(); // einmal gestreikt
+    // Hart bleiben, erster Ausgang: Er meldet sich ohne Freigabe ab – keine Ausbildungsentschädigung.
+    const h = setup();
+    h.c.round += 1;
+    const cash = h.c.cash;
+    const hctx = POACH_EVENTS.wechselstreik.needs(h.c, yes);
+    POACH_EVENTS.wechselstreik.options[2].effect(h.c, hctx, yes);
+    expect(humanClub(h.c).squad).not.toContain(h.idx);
+    expect(h.c.cash).toBe(cash);
+  });
+
+  it('abgelehnter Wechselwunsch merkt sich den Verein (Grundlage für den Wechselstreik)', () => {
+    const c = createCareer({ seed: 5 });
+    c.level = 1;
+    const idx = humanClub(c).squad.find((i) => !c.players[i].coach);
+    for (const i of humanClub(c).squad) playerOf(c, i).rating = i === idx ? 70 : 40;
+    c.strength = 3;
+    const ctx = POACH_EVENTS.wechselwunsch.needs(c, yes);
+    POACH_EVENTS.wechselwunsch.options[2].effect(c, ctx, yes);
+    expect(c.players[idx].wantsOut).toBeTruthy();
+  });
 });
+

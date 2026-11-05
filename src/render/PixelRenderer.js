@@ -54,6 +54,7 @@ const postFragment = /* glsl */ `
   uniform vec3 tint;
   uniform float saturation;
   uniform float contrast;
+  uniform float contrastPivot; // Kontrast-Mittelpunkt (linear): tagsüber 0,5, abends und in der Kneipe tiefer
   uniform float vignette;
   uniform vec3 fogColor;
   uniform float fogAmount;
@@ -374,7 +375,7 @@ const postFragment = /* glsl */ `
     // wirkte das Bild im A/B-Vergleich flau (Phase 7 geprüft und verworfen).
     c *= tint;
     c = mix(vec3(luma(c)), c, saturation);
-    c = (c - 0.5) * contrast + 0.5;
+    c = (c - contrastPivot) * contrast + contrastPivot;
     c *= brightness;
 
     // Dunst (oben berechnet). Figuren im Vordergrund bleiben lesbar: nur gut halb so viel.
@@ -537,6 +538,7 @@ export class PixelRenderer {
         dither: { value: 0.02 },
         snowCover: { value: 0 },
         brightness: { value: 1 },
+        contrastPivot: { value: 0.5 },
         camWorld: { value: new THREE.Matrix4() },
         floodAmount: { value: 0 },
         floodField: { value: 0 },
@@ -897,6 +899,24 @@ export class PixelRenderer {
   // Schattenkarte beim nächsten Bild sicher neu zeichnen (Spielortwechsel, Qualität).
   markShadowsDirty() {
     this.shadowDirty = true;
+  }
+
+  // Innenraum mit eigenem Licht (Kneipe): ohne Flutlicht, Wetter und Nebel des zuletzt gezeigten Spiels, mit eigenem Look.
+  // Vorher lief die Kneipe durch den Look des Platzes im Hintergrund – abends im Flutlichtdunkel, bei Regen nass.
+  renderIndoor(scene, camera, look, opts) {
+    const u = this.postMaterial.uniforms;
+    const keys = ['floodAmount', 'floodField', 'wetness', 'snowCover', 'frost', 'mist', 'heatHaze', 'cloudAmount'];
+    const saved = keys.map((k) => u[k]?.value);
+    const { postParams, weather, heads } = this;
+    this.weather = null;
+    this.heads = [];
+    for (const k of keys) if (u[k]) u[k].value = 0;
+    this.postParams = look;
+    this.applyPost();
+    this.render(scene, camera, opts);
+    keys.forEach((k, i) => u[k] && (u[k].value = saved[i]));
+    Object.assign(this, { postParams, weather, heads });
+    this.applyPost();
   }
 
   // moving: Bewegt sich gerade etwas? Wenn nicht (Pause, Menü), bleibt die Schattenkarte stehen.

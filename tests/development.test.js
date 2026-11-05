@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { createCareer, developPlayers, humanClub, migrateCareer, playerOf } from '../src/career/career.js';
 import { NIVEAU_TARGET } from '../src/sim/niveau.js';
-import { aboveLeague, BRAKE, brakeOf, DEV_TYPES, devProfile, eloScale, leagueGrowth, environmentChanged, PEAK_AGE, seasonCurve, seasonGain, TALENT_NORM, playerTalentGuess, talentOf, TALENTS } from '../src/career/development.js';
+import { aboveLeague, BRAKE, KID_PULL, brakeOf, DEV_TYPES, devProfile, eloScale, leagueGrowth, environmentChanged, PEAK_AGE, seasonCurve, seasonGain, TALENT_NORM, playerTalentGuess, talentOf, TALENTS } from '../src/career/development.js';
 
 const BASE = createCareer({ seed: 7 });
 const fresh = () => JSON.parse(JSON.stringify(BASE));
@@ -190,5 +190,26 @@ describe('Bremse in zu tiefer Liga', () => {
     const c1 = { ...fresh(), level: 1 };
     const c3 = { ...fresh(), level: 3 };
     expect(run(1) / fits).toBeCloseTo(0.64 * (leagueGrowth(c1) / leagueGrowth(c3)), 5);
+  });
+});
+
+// Eigene Jugend: Das Kindertalent ist nur eine Tendenz (Nutzerentscheid), Spätzünder und Abstürze bleiben.
+describe('Kindertalent als Tendenz', () => {
+  it('hohes Kindertalent macht große Talente wahrscheinlicher, aber nicht sicher', () => {
+    const top = (kidTalent) => {
+      const c = { seed: 11, strength: 3, players: {} };
+      let n = 0;
+      for (let idx = 0; idx < 2000; idx++) {
+        c.players[idx] = { kidTalent };
+        if (['ausnahme', 'gross'].includes(talentOf(c, idx).id)) n++;
+      }
+      return n / 2000;
+    };
+    expect(KID_PULL).toBe(0.6);
+    const hi = top(0.9);
+    const lo = top(0.2);
+    expect(hi).toBeGreaterThan(0.35); // ohne Kindertalent: 20 %
+    expect(hi).toBeLessThan(0.6); // keine Garantie
+    expect(lo).toBeLessThan(0.05);
   });
 });
