@@ -6,6 +6,39 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-05-6 – Mehrere Wechsel, eigene Taktiken, schärfere Figuren
+
+### Neu
+- **Mehrere Wechsel auf einmal:** Im Wechselmenü ein Paar wählen, „+ Weiterer Wechsel“ (oder Leertaste), das nächste Paar wählen – alle gehen beim nächsten Stopp zusammen. Eingeplante Wechsel stehen in einer Liste und lassen sich wieder streichen.
+- **Wechselregeln nach Liga (recherchiert):** Freizeitliga beliebig oft; ab der Kreisklasse fünf Wechsel, wie bei den Herren-Amateuren (Sächsischer FV, § 56 Abs. 7 Spielordnung; Württembergischer FV, Schiedsrichter-Merkblatt 2024/25 – bisher vier bis zur Kreisliga A); in Regionalliga und 3. Liga fünf Wechsel in höchstens drei Unterbrechungen, die Halbzeit zählt nicht mit (DFB-Fußballregeln, Regel 3). Rückwechsel weiter nirgends.
+- **Taktiken speichern:** Unter Mannschaft → Taktik „Meine Taktiken“: System, Spielstil und Spielplan unter einem Namen ablegen (bis zu acht), mit einem Tipp wieder einstellen, löschen oder unter gleichem Namen überschreiben. Die Taktiken gehören dir und kommen bei einem Vereinswechsel mit.
+- **Abwerben mit Ablöse:** Wird in der Regionalliga oder 3. Liga ein Vertragsspieler abgeworben, zahlt der neue Verein jetzt Ablöse – vorher ging er ablösefrei.
+
+### Geändert
+- **Grafik:** Die Figuren haben eine eingebackene Schattierung (Unterseiten dunkler, jedes Körperteil unten etwas dunkler als oben) und eine Stufe mehr Licht – Hose, Beine, Arme und Kopf setzen sich deutlicher ab. Dazu Schuhsohlen in Kontrastfarbe. Kein zusätzlicher Draw Call, rund 24 Dreiecke mehr je Figur.
+- **Trikots gleichmäßig:** Längsstreifen, Nadelstreifen, Ringel, Karo, breite Querstreifen, Kantenstreifen, Doppel- und Ton-in-Ton-Streifen liegen jetzt spiegelgleich zur Mitte und passen an den Kanten zu Seite und Rücken – vorher wirkten sie versetzt. Das Kreuz sitzt mittig.
+
+## 2026-11-05-5 – Neue Trikots, Namen, Ereignisse und Sprüche
+
+### Neu
+- **Trikotvorlagen nach Farben:** 18 neue Muster, im Editor sortiert in einfarbig (Ton in Ton – Streifen, Ringel, Karo, Diagonale, Schattenverlauf und Pixel als dunklere oder hellere Schattierung der Hauptfarbe), zweifarbig (Doppelstreifen, Mittelstreifen, Kreuz, V-Brust, Saumband, Viertel) und dreifarbig (Trikolore, drei Bänder, Doppelring, Streifenpaar, Doppelwinkel, Schulter mit Kante). Die Retro-Muster bleiben eine eigene Gruppe.
+- **Mehr Namen:** neue deutsche Karrieren bekommen mehr Vor- und Nachnamen in jeder Herkunftsgruppe (Namensauflage 9). Werte und Aussehen der Spieler bleiben gleich.
+- **Ereignisse ab der Oberliga:** Pressekonferenz nach Niederlagen, der Berater will mehr Gehalt, Fanprotest gegen Preise, Verbandsstrafe für Pyrotechnik, VIP-Abend der Sponsoren, ein Social-Media-Ausrutscher, die Rasenheizung bei Frost, ein Zweitligist will dein Talent, das Fernsehen verlegt auf Montag, Dopingkontrolle, Livestream-Angebot in der Regionalliga.
+- **Chat:** 20 neue Nachrichten rund um den Verein – Profi-Alltag (Eisbad, GPS-Daten, Fanshop, Mannschaftsbus) erst oben, Amateur-Alltag (Pfandkasse, Trikotwäsche, Bratwurststand) unten – dazu 15 neue Zusagen und 8 neue Absagen.
+
+### Geändert
+- **Alle Ereignisse geprüft** (193 Stück), ob sie zu Liga, Platz und Professionalität passen. Was oben nicht passt, kommt dort nicht mehr: z. B. Arbeitseinsatz, Tombola, Trikots einlaufen lassen, Fahrgemeinschaft, Platzwart Walter, Aufwandsentschädigung, „Sportgericht im Nebenzimmer“. Berufsgeschichten (Schicht, Montage, Beförderung) gibt es bis zur Regionalliga, in der 3. Liga nicht mehr. Platzereignisse (Platzsperre, Sturm, Schnee, Arbeitseinsatz) nicht in der Halle, der Nachbar vom Hinterhof nur auf kleinen Plätzen im Wohngebiet. Die Lizenz-Erinnerung kommt ab der Landesliga vom Verband statt vom Kreis.
+- Ebenso die Chat-Nachrichten: Nachbarn am Zaun, Bettlaken-Banner oder die nasse Kabine gibt es oben nicht mehr.
+
+## 2026-11-05-4 – Tastenhilfe aus dem Weg
+
+### Behoben
+- **Tastenhilfe:** Das Feld mit den Tasten (1–4 Zurufe, X Auswechseln …) saß oben rechts neben der Anzeigetafel und verdeckte bei mittlerer Fensterbreite den Namen der Gastmannschaft. Es sitzt jetzt darunter und blendet sich nach acht Sekunden aus; mit H holst du es zurück.
+
+### Geändert
+- Neue Karrieren sind schneller angelegt (die Spielerlisten werden nur noch einmal gebaut).
+- Die 3D-Grafik läuft auf three.js r187 statt r186. Geprüft auf sechs Spielorten tags und abends: gleiche Draw Calls, gleiche Helligkeit, gleiches Bild.
+
 ## 2026-11-05-3 – Der Stuhl wackelt
 
 ### Neu

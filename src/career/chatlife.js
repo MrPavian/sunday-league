@@ -372,7 +372,204 @@ export const LIFE = [
         `${firstOf(c, m)} became a dad! No name yet. He's suggesting "Kevin-Cup". She isn't.`,
       ),
   },
+  {
+    id: "pro_eisbad",
+    from: "mate",
+    text: (c, rng, m) =>
+      tr(
+        `Eisbad nach dem Training: ${firstOf(c, m)} hat 40 Sekunden geschafft und behauptet jetzt, er spüre seine Zehen „auf eine neue Art“.`,
+        `Ice bath after training: ${firstOf(c, m)} lasted 40 seconds and now claims he can feel his toes "in a new way".`,
+      ),
+  },
+  {
+    id: "pro_gps",
+    from: "mate",
+    text: (c, rng, m) =>
+      tr(
+        `GPS-Daten von gestern: ${firstOf(c, m)} ist 11,8 km gelaufen. Davon geschätzt zwei zur Trinkflasche.`,
+        `Yesterday's GPS data: ${firstOf(c, m)} ran 11.8 km. An estimated two of them to the water bottle.`,
+      ),
+  },
+  {
+    id: "pro_koch",
+    from: null,
+    text: (c, rng, m) =>
+      tr(
+        `Neuer Koch im Leistungszentrum. Es gibt Quinoa. Im Gruppenchat wird eine Petition für Currywurst gestartet.`,
+        `New chef at the training centre. There is quinoa. A petition for currywurst has started in the group chat.`,
+      ),
+  },
+  {
+    id: "pro_fanshop",
+    from: null,
+    text: (c, rng, m) =>
+      tr(
+        `Fanshop meldet: Das Trikot mit der Nummer von ${firstOf(c, m)} ist ausverkauft. Er hat drei davon selbst gekauft. Für die Oma.`,
+        `Fan shop reports: the shirt with ${firstOf(c, m)}'s number is sold out. He bought three himself. For his gran.`,
+      ),
+  },
+  {
+    id: "pro_autogramme",
+    from: "mate",
+    text: (c, rng, m) =>
+      tr(
+        `Autogrammstunde im Einkaufszentrum: ${firstOf(c, m)} hat 200 Karten unterschrieben und einmal aus Versehen einen Kassenbon.`,
+        `Signing session at the shopping centre: ${firstOf(c, m)} signed 200 cards and once, by accident, a receipt.`,
+      ),
+  },
+  {
+    id: "pro_bus",
+    from: "mate",
+    text: (c, rng, m) =>
+      tr(
+        `Mannschaftsbus: Wer hat wieder die hintere Bank besetzt? ${firstOf(c, m)} sagt, das sei Gewohnheitsrecht seit der Regionalliga.`,
+        `Team bus: who has taken the back seat again? ${firstOf(c, m)} says it's been customary law since the regional league.`,
+      ),
+  },
+  {
+    id: "pro_presse",
+    from: "mate",
+    text: (c, rng, m) =>
+      tr(
+        `Die Lokalzeitung hat ${firstOf(c, m)} zum „Mann des Spiels“ gekürt. Er hat das Zitat nicht gesagt, findet es aber gut.`,
+        `The local paper named ${firstOf(c, m)} "man of the match". He never said that quote, but he likes it.`,
+      ),
+  },
+  {
+    id: "pro_frisur",
+    from: "mate",
+    text: (c, rng, m) =>
+      tr(
+        `${firstOf(c, m)} hat eine neue Frisur, „für die Fernsehbilder“. Der Kameramann hat ihn trotzdem nur von hinten.`,
+        `${firstOf(c, m)} has a new haircut, "for the TV pictures". The cameraman still only got him from behind.`,
+      ),
+  },
+  {
+    id: "pro_stadionkarte",
+    from: null,
+    text: (c, rng, m) =>
+      tr(
+        `Ticketing meldet: Das Heimspiel am Samstag ist fast ausverkauft. Gästeblock inklusive. Der Platzwart hat den Rasen zweimal gekämmt.`,
+        `Ticketing reports: Saturday's home game is almost sold out. Away block included. The groundsman has combed the grass twice.`,
+      ),
+  },
+  {
+    id: "pro_ernaehrung",
+    from: "mate",
+    text: (c, rng, m) =>
+      tr(
+        `Die Ernährungsberaterin hat ${firstOf(c, m)} beim Bäcker gesehen. Mit zwei Puddingteilchen. Er sagt, eins war für sie.`,
+        `The nutritionist spotted ${firstOf(c, m)} at the bakery. With two custard pastries. He says one was for her.`,
+      ),
+  },
+  {
+    id: "am_pfand",
+    from: "mate",
+    text: (c, rng, m) =>
+      tr(
+        `Pfandkasse ist voll: 34,50 € Leergut aus der Kabine. ${firstOf(c, m)} schlägt vor, davon Bälle zu kaufen. Oder Bier. Wieder Pfand.`,
+        `The deposit kitty is full: €34.50 in empties from the dressing room. ${firstOf(c, m)} suggests buying balls with it. Or beer. More deposits.`,
+      ),
+  },
+  {
+    id: "am_trikotwaesche",
+    from: "mate",
+    text: (c, rng, m) =>
+      tr(
+        `Diese Woche wäscht ${firstOf(c, m)} die Trikots. Bitte Taschen leeren – letztes Mal war ein Taschentuch drin, und jetzt ist alles flauschig.`,
+        `This week ${firstOf(c, m)} is washing the kits. Empty your pockets – last time there was a tissue in there and now everything is fluffy.`,
+      ),
+  },
+  {
+    id: "am_kabinenmusik_box",
+    from: "mate",
+    text: (c, rng, m) =>
+      tr(
+        `Wer hat die Musikbox mit nach Hause genommen? Ohne Schlager vor dem Spiel läuft ${firstOf(c, m)} nicht warm.`,
+        `Who took the speaker home? Without pop songs before the game, ${firstOf(c, m)} doesn't warm up.`,
+      ),
+  },
+  {
+    id: "am_bratwurst",
+    from: null,
+    text: (c, rng, m) =>
+      tr(
+        `Bratwurststand meldet Rekord: 61 Würste am Sonntag. Die Senftube hat es nicht überlebt.`,
+        `The sausage stall reports a record: 61 sausages on Sunday. The mustard tube did not survive.`,
+      ),
+  },
+  {
+    id: "am_schichtplan",
+    from: "mate",
+    text: (c, rng, m) =>
+      tr(
+        `${firstOf(c, m)} hat den neuen Schichtplan: Sonntag frei! Er hat das Foto dreimal in die Gruppe geschickt.`,
+        `${firstOf(c, m)} has the new shift rota: Sunday off! He sent the photo to the group three times.`,
+      ),
+  },
+  {
+    id: "kabine_lied",
+    from: "mate",
+    text: (c, rng, m) =>
+      tr(
+        `Neuer Siegesgesang in der Kabine. Text von ${firstOf(c, m)}, Melodie geklaut. Wir arbeiten noch am Reim auf „Abstiegskampf“.`,
+        `New victory song in the dressing room. Lyrics by ${firstOf(c, m)}, tune borrowed. We're still working on a rhyme for "relegation battle".`,
+      ),
+  },
+  {
+    id: "geburtstag_kuchen",
+    from: "mate",
+    text: (c, rng, m) =>
+      tr(
+        `${firstOf(c, m)} hat Geburtstag und Kuchen mitgebracht. Selbstgebacken, sagt er. Das Preisschild klebt noch dran.`,
+        `It's ${firstOf(c, m)}'s birthday and he brought cake. Home-made, he says. The price tag is still on it.`,
+      ),
+  },
+  {
+    id: "taktiktafel",
+    from: "mate",
+    text: (c, rng, m) =>
+      tr(
+        `Jemand hat auf die Taktiktafel einen Hasen gemalt. ${firstOf(c, m)} schwört, das sei eine Laufwegskizze.`,
+        `Someone drew a rabbit on the tactics board. ${firstOf(c, m)} swears it's a sketch of running lines.`,
+      ),
+  },
+  {
+    id: "schuhe_neu",
+    from: "mate",
+    text: (c, rng, m) =>
+      tr(
+        `${firstOf(c, m)} hat neue Schuhe in Neongelb. Man sieht ihn jetzt vom Parkplatz aus. Ob das taktisch klug ist, bleibt offen.`,
+        `${firstOf(c, m)} has new boots in neon yellow. You can now see him from the car park. Whether that's tactically wise remains open.`,
+      ),
+  },
+  {
+    id: "tipprunde",
+    from: "mate",
+    text: (c, rng, m) =>
+      tr(
+        `Zwischenstand Tipprunde: ${firstOf(c, m)} führt. Er tippt immer 2:1. Immer.`,
+        `Prediction league standings: ${firstOf(c, m)} is top. He always predicts 2-1. Always.`,
+      ),
+  },
 ];
+
+// Passt die Nachricht zur Liga? (vom Nutzer gewünscht, 2026-11-05: alles auf Liga und Professionalität prüfen.) Dorfkram wie
+// Nachbarn am Zaun, Bettlaken-Banner oder die nasse Kabine gibt es oben nicht mehr; Profi-Alltag erst ab der Oberliga.
+const lvl = (c) => c.level ?? 1;
+const upTo = (n) => (c) => lvl(c) <= n;
+const village = (c) => lvl(c) <= 7 && !hasFacility(c, "stadion");
+export const LIFE_FIT = {
+  nachbar_ball: village, nachbar_licht: village, nachbar_hund: village, nachbar_kuchen: village,
+  feuerwehr: upTo(8), wahl: upTo(8), kinder_autogramm: upTo(8), fan_banner: upTo(8), fan_trommel: upTo(8),
+  nachbarverein: upTo(7), altherren: upTo(8), schnee: upTo(9), regen: upTo(7), saisonstart: upTo(8), rosa: upTo(8), tor_weg: upTo(8),
+  // neu: Profi-Alltag
+  pro_eisbad: (c) => lvl(c) >= 8, pro_gps: (c) => lvl(c) >= 9, pro_koch: (c) => lvl(c) >= 9, pro_fanshop: (c) => lvl(c) >= 9,
+  pro_autogramme: (c) => lvl(c) >= 9, pro_bus: (c) => lvl(c) >= 9, pro_presse: (c) => lvl(c) >= 8, pro_frisur: (c) => lvl(c) >= 9,
+  pro_stadionkarte: (c) => lvl(c) >= 9, pro_ernaehrung: (c) => lvl(c) >= 8,
+  // neu: Amateur-Alltag
+  am_pfand: upTo(8), am_trikotwaesche: upTo(7), am_kabinenmusik_box: upTo(8), am_bratwurst: upTo(8), am_schichtplan: upTo(9),
+};
 
 const TIMES = [
   "Mo 12:41",
@@ -400,7 +597,7 @@ export function startWeek(c) {
     const used = new Set(
       st.recent.filter((r) => st.week - r.week < GAP).map((r) => r.id),
     );
-    const pool = LIFE.filter((e) => !used.has(e.id) && (!e.if || e.if(c)));
+    const pool = LIFE.filter((e) => !used.has(e.id) && (!e.if || e.if(c)) && (LIFE_FIT[e.id]?.(c) ?? true));
     if (!pool.length) return;
     const e = rng.pick(pool);
     const mate = rng.pick(squad); // um wen es geht

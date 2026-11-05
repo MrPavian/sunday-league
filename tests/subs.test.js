@@ -1,15 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { createMatch } from '../src/sim/match.js';
 import { PITCHES } from '../src/sim/pitch.js';
-import { FREE_SUBS, LIMITED_SUBS, planSub, processSubs, subRuleFor, subsLeft, usableBench } from '../src/sim/squad.js';
+import { AMATEUR_SUBS, FREE_SUBS, LIMITED_SUBS, planSub, planSubs, PRO_SUBS, processSubs, subRuleFor, subsLeft, usableBench, windowsLeft } from '../src/sim/squad.js';
 
 const fresh = (seed = 1) => createMatch({ seed, pitch: PITCHES.rasenplatz, human: true });
 
 describe('substitution rules', () => {
-  it('by league: rolling in the recreational league and friendlies, limited from the district league up', () => {
+  // Recherche 2026-11-05: Herren-Amateure fünf Wechsel (SFV, wfv), Profiligen fünf Wechsel in drei Gelegenheiten plus Halbzeit.
+  it('by league: rolling in the recreational league and friendlies, five from the district league up, three windows in the pro leagues', () => {
     expect(subRuleFor('liga', 1)).toBe(FREE_SUBS);
     expect(subRuleFor('liga')).toBe(FREE_SUBS);
-    expect(subRuleFor('liga', 2)).toBe(LIMITED_SUBS);
+    expect(subRuleFor('liga', 2)).toBe(AMATEUR_SUBS);
+    expect(subRuleFor('liga', 8)).toBe(AMATEUR_SUBS);
+    expect(AMATEUR_SUBS.limit).toBe(5);
+    expect(subRuleFor('liga', 9)).toBe(PRO_SUBS);
+    expect(PRO_SUBS).toMatchObject({ limit: 5, windows: 3 });
     expect(subRuleFor('frei', 3)).toBe(FREE_SUBS);
     expect(subRuleFor('begrenzt', 1)).toBe(LIMITED_SUBS);
   });
@@ -58,5 +63,40 @@ describe('substitution rules', () => {
     const out = m.players.find((p) => p.team === 0 && p.role !== 'gk');
     expect(usableBench(m, 0).length).toBeGreaterThan(0);
     expect(planSub(m, 0, out.id, usableBench(m, 0)[0].id)).toBe(false);
+  });
+
+  it('several subs at once: all at the next stoppage, counting as one window', () => {
+    const m = fresh(4);
+    m.subRule = PRO_SUBS;
+    m.bench[0].forEach((b) => (b.late = false));
+    const outs = m.players.filter((p) => p.team === 0 && p.role !== 'gk').slice(0, 3);
+    const ins = usableBench(m, 0).slice(0, 3);
+    expect(ins.length).toBe(3);
+    expect(planSubs(m, 0, outs.map((o, i) => ({ outId: o.id, inId: ins[i].id })))).toBe(true);
+    processSubs(m);
+    for (const i of ins) expect(m.players).toContain(i);
+    expect(m.subsUsed[0]).toBe(3);
+    expect(windowsLeft(m, 0)).toBe(2);
+  });
+
+  it('pro leagues: after three windows no more subs – except at half-time', () => {
+    const m = fresh(5);
+    m.subRule = PRO_SUBS;
+    while (m.bench[0].length < 7) m.bench[0].push({ ...m.bench[0][0], id: `0-extra${m.bench[0].length}` });
+    m.bench[0].forEach((b) => (b.late = false));
+    for (let k = 0; k < 3; k++) {
+      const out = m.players.find((p) => p.team === 0 && p.role !== 'gk' && !p.usedUp);
+      planSub(m, 0, out.id, usableBench(m, 0)[0].id);
+      processSubs(m);
+    }
+    expect(windowsLeft(m, 0)).toBe(0);
+    const out = m.players.find((p) => p.team === 0 && p.role !== 'gk');
+    planSub(m, 0, out.id, usableBench(m, 0)[0].id);
+    processSubs(m);
+    expect(m.subsUsed[0]).toBe(3); // keine Gelegenheit mehr
+    m.phase = 'halftime';
+    planSub(m, 0, out.id, usableBench(m, 0)[0].id);
+    processSubs(m);
+    expect(m.subsUsed[0]).toBe(4); // Halbzeit zählt nicht
   });
 });

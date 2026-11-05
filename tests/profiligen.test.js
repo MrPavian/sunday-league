@@ -80,7 +80,10 @@ describe('Verträge', () => {
     c.cash = 1e6;
     for (const f of c.fixtures[c.round]) f.result ??= { home: 1, away: 1 };
     finishRound(c); // die Woche wird mit dem Spieltag abgerechnet
-    expect(c.ledger.some((e) => /Gehälter|Wages/.test(e.text) && e.amount === -pay.round)).toBe(true);
+    // Abgerechnet wird der Kader zum Zahltag: Wer in der Woche abgeworben wurde (gegen Ablöse), bekommt kein Gehalt mehr.
+    const now = payroll(c);
+    expect(now.n).toBeGreaterThan(0);
+    expect(c.ledger.some((e) => /Gehälter|Wages/.test(e.text) && e.amount === -now.round)).toBe(true);
   });
 
   it('Gehalt nach Stärke: Liga-Niveau verdient den Schnitt, eine Liga darüber das 6,5-Fache', () => {

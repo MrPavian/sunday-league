@@ -13,6 +13,9 @@ import { Builder, faceUV, kitUV, prism } from './geometry.js';
 // Team-Atlas: Spieler eines Teams teilen sich Textur und Material (1 Draw Call je
 // Spieler statt vorher etwa sieben), Dreck bleibt trotzdem pro Spieler.
 
+// Eingebackene Schattierung (Spielwerte, am Bild eingestellt): Unterseiten × 0,72, von oben nach unten je Teil bis × 0,86.
+export const SHADE = { under: 0.72, grad: 0.14 };
+
 // Low-Poly-Fußballer. Bauch, Glatze, Bart und Größe kommen aus dem generierten
 // Aussehen; Frisur, Schulterbreite, Beinlänge und Kopfgröße leiten sich daraus ab.
 // atlas: gemeinsamer Team-Atlas (sonst bekommt die Figur einen eigenen).
@@ -483,10 +486,25 @@ function bakeGeometry(b, world, d) {
     // Texturierte Stellen tragen ihre Farbe in der Textur – Ecke weiß.
     const white = useAtlas && (part.uv === 'kit' || part.uv === 'plaster' || part.uv === 'sleeve');
     c.setHex(white ? 0xffffff : part.color);
+    // Grafik-Upgrade (vom Nutzer gewünscht 2026-11-05, ohne Mehrkosten): eingebackene Schattierung in den Eckfarben –
+    // Unterseiten dunkler, jedes Körperteil unten etwas dunkler als oben. So setzen sich Hose, Beine, Arme und Kopf
+    // deutlicher voneinander ab; keine zusätzlichen Dreiecke, kein Shader, kein Draw Call.
+    const py = g.attributes.position.array;
+    let yMin = Infinity;
+    let yMax = -Infinity;
     for (let i = 0; i < n; i++) {
-      col[(o + i) * 3] = c.r;
-      col[(o + i) * 3 + 1] = c.g;
-      col[(o + i) * 3 + 2] = c.b;
+      yMin = Math.min(yMin, py[i * 3 + 1]);
+      yMax = Math.max(yMax, py[i * 3 + 1]);
+    }
+    const span = yMax - yMin || 1;
+    const nn = g.attributes.normal.array;
+    for (let i = 0; i < n; i++) {
+      const t = (py[i * 3 + 1] - yMin) / span;
+      const under = nn[i * 3 + 1] < -0.5 ? SHADE.under : 1;
+      const k = useAtlas ? under * (1 - SHADE.grad + SHADE.grad * t) : 1; // nur im Spiel (mit Atlas); Werkzeuge und Tests sehen die reinen Farben
+      col[(o + i) * 3] = c.r * k;
+      col[(o + i) * 3 + 1] = c.g * k;
+      col[(o + i) * 3 + 2] = c.b * k;
       si[(o + i) * 4] = B[part.bone];
       sw[(o + i) * 4] = 1;
     }

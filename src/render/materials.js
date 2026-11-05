@@ -7,12 +7,20 @@ gradient.magFilter = THREE.NearestFilter;
 gradient.generateMipmaps = false;
 gradient.needsUpdate = true;
 
+// Spielfiguren (Grafik-Upgrade 2026-11-05, ohne Mehrkosten): vier Stufen statt drei – Schulter, Brust und Beine bekommen
+// eine Zwischenstufe und wirken plastischer. Gleiche Shader-Variante, nur eine andere 4 × 1-Textur.
+export const FIGURE_GRADIENT = new THREE.DataTexture(new Uint8Array([84, 150, 208, 255]), 4, 1, THREE.RedFormat);
+FIGURE_GRADIENT.minFilter = THREE.NearestFilter;
+FIGURE_GRADIENT.magFilter = THREE.NearestFilter;
+FIGURE_GRADIENT.generateMipmaps = false;
+FIGURE_GRADIENT.needsUpdate = true;
+
 const cache = new Map();
 
-export function toon(color, { map = null } = {}) {
+export function toon(color, { map = null, gradientMap = gradient } = {}) {
   const key = map ? null : color;
   if (key !== null && cache.has(key)) return cache.get(key);
-  const mat = new THREE.MeshToonMaterial({ color, gradientMap: gradient, map });
+  const mat = new THREE.MeshToonMaterial({ color, gradientMap, map });
   if (key !== null) cache.set(key, mat);
   return mat;
 }

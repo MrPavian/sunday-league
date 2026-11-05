@@ -48,8 +48,8 @@ describe('English names', () => {
     expect(origins.nameLocale()).toBe('de'); // Schiri & Co. passend zur Karriere
   });
 
-  it('new German careers use edition 8 (names fit the origin, more origins: tests/names_origin.test.js); edition 6 has more names, edition 4 keeps its smaller pool', () => {
-    expect(names.nameEditionFor('de')).toBe(8);
+  it('new German careers use edition 9 (names fit the origin, more origins and names: tests/names_origin.test.js); edition 6 has more names, edition 4 keeps its smaller pool', () => {
+    expect(names.nameEditionFor('de')).toBe(9);
     const fresh = career.createCareer({ seed: 7 });
     fresh.names = 6;
     career.migrateCareer(fresh);

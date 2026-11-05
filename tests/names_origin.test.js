@@ -13,7 +13,20 @@ const GERMAN = new Set(Array.from({ length: 3000 }, (_, i) => germanFirst(create
 const STRICT = ['tr', 'ar', 'wa', 'yu', 'gr', 'pt', 'it'];
 
 describe('Namen nach Herkunft (Auflage 7)', () => {
-  it('neue deutsche Karrieren nutzen Auflage 8 (mit den neuen Herkunftsgruppen)', () => expect(NAME_EDITION).toBe(8));
+  it('neue deutsche Karrieren nutzen Auflage 9 (Auflage 8 mit mehr Namen je Herkunft)', () => expect(NAME_EDITION).toBe(9));
+
+  it('Auflage 9: mehr verschiedene Namen als Auflage 8, gleiche Werte und Herkünfte', () => {
+    const names = (ed) => {
+      setNameLocale(nameLocaleOf(ed));
+      const pool = createPlayerPool({ seed: 1921, edition: ed });
+      return pool.everyone().slice(0, 4000);
+    };
+    const a = names(8);
+    const b = names(9);
+    expect(new Set(b.map((p) => p.name)).size).toBeGreaterThan(new Set(a.map((p) => p.name)).size);
+    for (let i = 0; i < 400; i++) expect(b[i].attrs.pace).toBe(a[i].attrs.pace);
+    setNameLocale(nameLocaleOf(NAME_EDITION));
+  });
 
   it('türkische, arabische, westafrikanische … Nachnamen haben keinen deutschen Vornamen; Werte wie Auflage 6 (bis auf Körper)', () => {
     setNameLocale(nameLocaleOf(7));

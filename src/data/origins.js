@@ -188,6 +188,34 @@ const nonDe = (o) => Object.entries(o).filter(([id]) => id !== 'de').reduce((sum
 const KEEP_DE = nonDe(ORIGINS) / (nonDe(ORIGINS) + nonDe(ORIGINS_NEW));
 const scaled = (o) => Object.fromEntries(Object.entries(o).map(([id, x]) => [id, id === 'de' ? x : { ...x, w: x.w * KEEP_DE }]));
 const DE_SET_8 = nameSet({ ...scaled({ ...ORIGINS_STRICT, ...Object.fromEntries(Object.entries(ORIGINS_NEW).map(([id, o]) => [id, { ...o, ...STRICT }])) }), de: { ...ORIGINS.de, last: DE_LAST_MORE } }, DE_FIRST_MORE, 'de');
+// Neunte Auflage (neue deutsche Karrieren, vom Nutzer gewünscht 2026-11-05: „Namenslisten nochmal erweitern“): wie Auflage 8,
+// dazu mehr Vor- und Nachnamen in jeder Herkunftsgruppe. Gleiche Gewichte und gleich viele Zufallszahlen je Name: Werte und
+// Aussehen der Spieler bleiben, nur die Namen streuen breiter. Keine echten Fußballer (pronames.js, notPro).
+const DE_FIRST_9 = {
+  young: [...DE_FIRST_MORE.young, 'Matteo', 'Henry', 'Oskar', 'Mats', 'Levi', 'Milan', 'Tilo', 'Hannes', 'Malte', 'Ole', 'Piet', 'Jasper', 'Fiete', 'Carl', 'Bastian', 'Kilian', 'Constantin', 'Jarne', 'Tjark', 'Arne'],
+  mid: [...DE_FIRST_MORE.mid, 'Alexander', 'Matthias', 'Christopher', 'Dominik', 'Martin', 'Philipp', 'Steffen', 'Oliver', 'Robert', 'Nils', 'Hendrik', 'Lars', 'Sven-Ole', 'Gregor', 'Moritz', 'Julian', 'Mirco', 'Kai-Uwe'],
+  old: [...DE_FIRST_MORE.old, 'Rainer', 'Bernd', 'Klaus', 'Peter', 'Norbert', 'Rolf', 'Heinz', 'Jürgen', 'Gerhard', 'Hubert', 'Erwin', 'Fritz', 'Willi', 'Egon', 'Detlev', 'Hans-Peter', 'Wolf-Dieter', 'Burkhard'],
+};
+const DE_LAST_9 = [
+  ...DE_LAST_MORE,
+  'Kohlhaas', 'Rösner', 'Gerdes', 'Ostendorf', 'Meinert', 'Hilgers', 'Wienecke', 'Sprenger', 'Lüdtke', 'Wendland', 'Bormann', 'Tegeler', 'Langhorst', 'Kortmann', 'Austermann', 'Bertram', 'Stöver', 'Harms', 'Eilers', 'Janssen',
+  'Kleinert', 'Ziemer', 'Pfeffer', 'Hundt', 'Kretschmer', 'Wenzel', 'Stolz', 'Ruland', 'Mertens', 'Gehrke', 'Rohde', 'Fiedler', 'Brenner', 'Eckert', 'Steiner', 'Hauser', 'Lechner', 'Pichler', 'Wimmer', 'Reiter',
+  'Brandl', 'Obermeier', 'Huber-Stein', 'Kettler', 'Wüst', 'Schlüter', 'Böttcher', 'Lehnert', 'Fleischer', 'Zander', 'Kirchner', 'Henkel', 'Siebert', 'Gebauer', 'Löffler', 'Wiegand', 'Scheffler', 'Dörr', 'Unger', 'Trautmann',
+];
+const MORE_9 = {
+  pl: { last: ['Zając', 'Krawczyk', 'Piotrowski', 'Pawlak', 'Michalski', 'Jabłoński', 'Wieczorek', 'Majewski', 'Olszewski', 'Stępień', 'Malinowski', 'Jaworski'], first: ['Wojciech', 'Grzegorz', 'Rafał', 'Sebastian', 'Damian', 'Szymon', 'Patryk', 'Dawid'] },
+  ruhr: { last: ['Kowalczik', 'Schimanski', 'Brzoska', 'Pawlowski', 'Matuschek', 'Sobotta', 'Wollny', 'Gorzelanny'] },
+  tr: { last: ['Arslan', 'Doğan', 'Kılıç', 'Aslan', 'Çetin', 'Kara', 'Koç', 'Kurt', 'Özdemir', 'Polat', 'Aydın', 'Erdem', 'Güneş', 'Yıldırım', 'Akın', 'Bulut'], first: ['Eren', 'Berkay', 'Kerem', 'Arda', 'Furkan', 'Umut', 'Selim', 'Baran', 'Deniz', 'Kaan', 'Mert', 'Ozan'] },
+  russ: { last: ['Klassen', 'Dück', 'Harder', 'Enns', 'Thiessen', 'Rempel', 'Neufeld', 'Isaak', 'Martens', 'Heinrichs'], first: ['Artjom', 'Roman', 'Maxim', 'Nikita', 'Alexej', 'Ilja', 'Wladimir', 'Jewgeni'] },
+  yu: { last: ['Kovačević', 'Babić', 'Marić', 'Pavlović', 'Ilić', 'Đorđević', 'Stojanović', 'Popović', 'Lukić', 'Vuković'], first: ['Marko', 'Stefan', 'Luka', 'Ivan', 'Dejan', 'Nemanja', 'Bojan', 'Danijel'] },
+  it: { last: ['Ricci', 'Marino', 'Greco', 'Bruno', 'Gallo', 'Conti', 'De Luca', 'Mancini', 'Costa', 'Giordano', 'Rizzo', 'Lombardi'], first: ['Marco', 'Luca', 'Davide', 'Stefano', 'Matteo', 'Alessandro', 'Fabio', 'Roberto'] },
+  gr: { last: ['Papadakis', 'Vlachos', 'Karagiannis', 'Oikonomou', 'Makris', 'Antoniou', 'Stavropoulos', 'Pappas'], first: ['Christos', 'Panagiotis', 'Vasilis', 'Ioannis', 'Stelios', 'Thanos'] },
+  pt: { last: ['Pereira', 'Oliveira', 'Rodrigues', 'Martins', 'Sousa', 'Fernandes', 'Gonçalves', 'Lopes'], first: ['Pedro', 'Miguel', 'Ricardo', 'Diogo', 'Bruno', 'Hugo'] },
+  ar: { last: ['Khalil', 'Saleh', 'Nasser', 'Hamdan', 'Youssef', 'Bakir', 'Rahman', 'Ayoub', 'Darwish', 'Farah'], first: ['Yassin', 'Mahmoud', 'Tarek', 'Rami', 'Khaled', 'Nabil', 'Ziad', 'Ayman'] },
+  wa: { last: ['Owusu', 'Asante', 'Ndiaye', 'Sarr', 'Koné', 'Ouattara', 'Adjei', 'Appiah', 'Mbaye', 'Camara'], first: ['Yaw', 'Kojo', 'Mamadou', 'Abdoulaye', 'Seydou', 'Kwabena', 'Lamine', 'Issa'] },
+};
+const grow = (o) => Object.fromEntries(Object.entries(o).map(([id, x]) => [id, MORE_9[id] ? { ...x, last: [...x.last, ...MORE_9[id].last], first: x.first?.length ? [...x.first, ...(MORE_9[id].first ?? [])] : x.first } : x]));
+const DE_SET_9 = nameSet(grow({ ...scaled({ ...ORIGINS_STRICT, ...Object.fromEntries(Object.entries(ORIGINS_NEW).map(([id, o]) => [id, { ...o, ...STRICT }])) }), de: { ...ORIGINS.de, last: DE_LAST_9 } }), DE_FIRST_9, 'de');
 const EN_SET = nameSet(ORIGINS_EN, LOCAL_FIRST_EN, 'gb');
 
 // Welcher Satz gerade gilt, hängt an der Namensauflage der Karriere (career.js, setNameEdition) –
@@ -195,7 +223,7 @@ const EN_SET = nameSet(ORIGINS_EN, LOCAL_FIRST_EN, 'gb');
 let SET = DE_SET;
 // locale: 'de' (Auflage 4 und älter), 'de6' (Auflage 6, mehr Namen), 'de7' (Auflage 7, Namen passend zur Herkunft), 'en' (Auflage 5).
 export const setNameLocale = (locale) => {
-  SET = locale === 'en' ? EN_SET : locale === 'de8' ? DE_SET_8 : locale === 'de7' ? DE_SET_STRICT : locale === 'de6' ? DE_SET_MORE : DE_SET;
+  SET = locale === 'en' ? EN_SET : locale === 'de9' ? DE_SET_9 : locale === 'de8' ? DE_SET_8 : locale === 'de7' ? DE_SET_STRICT : locale === 'de6' ? DE_SET_MORE : DE_SET;
 };
 export const nameLocale = () => (SET === EN_SET ? 'en' : 'de');
 
@@ -205,6 +233,7 @@ export const personIdentityEN = EN_SET.identity;
 export const personIdentityDE6 = DE_SET_MORE.identity;
 export const personIdentityDE7 = DE_SET_STRICT.identity;
 export const personIdentityDE8 = DE_SET_8.identity;
+export const personIdentityDE9 = DE_SET_9.identity;
 
 // Ein ganzer Name, passend zum Alter – mit Herkunft, damit das Aussehen dazu passen kann.
 // Regionale Namen (regionalnames.js): Bundesland der Karriere, null = keine (ohne Verband, englische Namen, alte Spielstände).

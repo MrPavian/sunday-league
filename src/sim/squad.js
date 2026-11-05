@@ -7,17 +7,28 @@ import { formationSpot } from './formation.js';
 import { setControlled } from './players.js';
 import { applyPositionMalus, bestForRole, posGrade } from './position.js';
 
-export const FREE_SUBS = { limit: Infinity, reentry: false };
-export const LIMITED_SUBS = { limit: 4, reentry: false };
-export const BEZIRK_SUBS = { limit: 5, reentry: false }; // Bezirksliga: fünf Wechsel, kein Rückwechsel (z. B. FVM 2024/25)
+// windows: wie oft im Spiel gewechselt werden darf (Unterbrechungen mit Wechseln; die Halbzeit zählt nicht mit).
+export const FREE_SUBS = { limit: Infinity, reentry: false, windows: Infinity };
+export const LIMITED_SUBS = { limit: 4, reentry: false, windows: Infinity }; // Einstellung „begrenzt“
+// Wechselregeln je Liga (recherchiert 2026-11-05, Nutzerwunsch „Regeln der Ligen einhalten“):
+//  - Amateure (Kreisklasse bis Oberliga): fünf Auswechslungen bei den Herren – Sächsischer FV, Hinweise Spielbetrieb 2024/25
+//    (§ 56 Abs. 7 SFV-Spielordnung), Württembergischer FV, Schiedsrichter-Merkblatt 2024/25. Eine Begrenzung der
+//    Wechselgelegenheiten nennen die Amateurbestimmungen nicht. Rückwechsel nur in einzelnen untersten Kreisklassen einiger
+//    Verbände – im Spiel nirgends (Nutzerentscheid 2026-10-23: raus ist raus).
+//  - Regionalliga und 3. Liga: fünf Auswechslungen in höchstens drei Wechselgelegenheiten, dazu die Halbzeitpause (DFB-
+//    Fußballregeln 2023/24, Regel 3; für die 3. Liga Durchführungsbestimmungen zu § 31 Nr. 3a DFB-Spielordnung). Für die
+//    Regionalliga fand sich keine eigene Bestimmung – sie spielt nach denselben Regeln (hergeleitet).
+export const AMATEUR_SUBS = { limit: 5, reentry: false, windows: Infinity };
+export const PRO_SUBS = { limit: 5, reentry: false, windows: 3 };
+export const BEZIRK_SUBS = AMATEUR_SUBS; // alter Name
 
-// Welche Regel gilt? mode aus den Einstellungen: 'liga' (Freizeitliga frei, ab der
-// Kreisklasse begrenzt; Freundschaftsspiele frei), 'frei' oder 'begrenzt'.
+// Welche Regel gilt? mode aus den Einstellungen: 'liga' (Freizeitliga frei, ab der Kreisklasse fünf Wechsel, Profiligen
+// zusätzlich drei Gelegenheiten; Freundschaftsspiele frei), 'frei' oder 'begrenzt'.
 export function subRuleFor(mode, level = null) {
   if (mode === 'frei') return FREE_SUBS;
   if (mode === 'begrenzt') return LIMITED_SUBS;
-  if ((level ?? 1) >= 5) return BEZIRK_SUBS;
-  return (level ?? 1) > 1 ? LIMITED_SUBS : FREE_SUBS;
+  if ((level ?? 1) >= 9) return PRO_SUBS;
+  return (level ?? 1) > 1 ? AMATEUR_SUBS : FREE_SUBS;
 }
 
 export function makeEntity(pl, team, index, role, home) {
@@ -79,16 +90,40 @@ export function requestSub(m, team) {
 
 // Geplanter Wechsel: genau dieser raus, genau der rein – bei der nächsten Unterbrechung.
 export function planSub(m, team, outId, inId) {
-  const out = m.players.find((p) => p.id === outId && p.team === team);
-  const inn = usableBench(m, team).find((p) => p.id === inId);
-  if (!out || !inn || !subsLeft(m, team)) return false;
-  (m.subPlan ??= [null, null])[team] = { outId, inId };
+  return planSubs(m, team, [{ outId, inId }]);
+}
+// Mehrere Wechsel auf einmal (vom Nutzer gewünscht 2026-11-05): alle bei der nächsten Unterbrechung, zusammen eine Gelegenheit.
+// Ungültige Paare (doppelt, nicht auf dem Platz, nicht auf der Bank) fallen weg; mehr als die verbleibenden Wechsel geht nicht.
+export function planSubs(m, team, pairs) {
+  const outs = new Set();
+  const ins = new Set();
+  const ok = [];
+  for (const { outId, inId } of pairs) {
+    if (ok.length >= subsLeft(m, team) || outs.has(outId) || ins.has(inId)) continue;
+    const out = m.players.find((p) => p.id === outId && p.team === team);
+    const inn = usableBench(m, team).find((p) => p.id === inId);
+    if (!out || !inn) continue;
+    outs.add(outId);
+    ins.add(inId);
+    ok.push({ outId, inId });
+  }
+  if (!ok.length) return false;
+  (m.subPlan ??= [null, null])[team] = ok;
   m.events.push({ type: 'sub_requested', team });
   return true;
 }
 
 const rule = (m) => m.subRule ?? FREE_SUBS;
 export const subsLeft = (m, team) => rule(m).limit - (m.subsUsed?.[team] ?? 0);
+// Wechselgelegenheiten: In der Halbzeit zählt es nicht (Regel 3).
+export const windowsLeft = (m, team) => (rule(m).windows ?? Infinity) - (m.subWindows?.[team] ?? 0);
+const atHalftime = (m) => m.phase === 'halftime';
+export const canSubNow = (m, team) => subsLeft(m, team) > 0 && (atHalftime(m) || windowsLeft(m, team) > 0);
+// Geplante Wechsel (mehrere auf einmal, eine Unterbrechung): Liste von { outId, inId }; alte Spielstände hatten ein Paar.
+export const plannedSubs = (m, team) => {
+  const p = m.subPlan?.[team];
+  return !p ? [] : Array.isArray(p) ? p : [p];
+};
 // Wer darf rein? Nicht verletzt, nicht schon ausgewechselt, nicht noch im Auto.
 export const usableBench = (m, team) => m.bench[team].filter((b) => !b.usedUp && !b.mustLeave && !(b.late && m.half === 1));
 
@@ -119,42 +154,54 @@ function leaveInjured(m, p) {
 // Wird an jeder Unterbrechung aufgerufen (Standard, Tor, Halbzeit).
 export function processSubs(m) {
   for (let team = 0; team < 2; team++) {
+    const before = m.subsUsed?.[team] ?? 0;
+    processTeam(m, team);
+    // Eine Gelegenheit verbraucht, wenn in dieser Unterbrechung gewechselt wurde (nicht in der Halbzeit).
+    if ((m.subsUsed?.[team] ?? 0) > before && !atHalftime(m) && Number.isFinite(rule(m).windows ?? Infinity)) (m.subWindows ??= [0, 0])[team]++;
+  }
+}
+function processTeam(m, team) {
+  {
     // 1. Verletzte zuerst – egal, wer coacht.
     for (const hurt of m.players.filter((p) => p.team === team && p.mustLeave)) {
-      const pool = subsLeft(m, team) > 0 ? usableBench(m, team) : [];
+      const pool = canSubNow(m, team) ? usableBench(m, team) : [];
       // Dieselbe Rolle zuerst, sonst der mit dem kleinsten Positionsabzug (ein Feldspieler ersetzt keinen Torwart, wenn es anders geht).
       const incoming = pool.length ? bestForRole(hurt.role === 'gk' ? pool : pool.filter((b) => b.position !== 'gk').length ? pool.filter((b) => b.position !== 'gk') : pool, hurt.role) : null;
       if (incoming) substitute(m, hurt, incoming, { forced: true });
       else leaveInjured(m, hurt);
     }
     // 2. Selbst geplanter Wechsel.
-    const plan = m.subPlan?.[team];
-    if (plan) {
+    const plan = plannedSubs(m, team);
+    if (plan.length) {
       m.subPlan[team] = null;
       m.subRequests[team] = false;
-      const out = m.players.find((p) => p.id === plan.outId);
-      const inn = usableBench(m, team).find((p) => p.id === plan.inId);
-      if (out && inn && subsLeft(m, team) > 0) substitute(m, out, inn);
-      continue;
+      for (const pair of plan) {
+        const out = m.players.find((p) => p.id === pair.outId);
+        const inn = usableBench(m, team).find((p) => p.id === pair.inId);
+        if (out && inn && canSubNow(m, team)) substitute(m, out, inn);
+      }
+      return;
     }
     // 3. Automatisch: Wer selbst spielt oder coacht, wechselt nur auf Wunsch.
     const human = team === m.humanTeam || (m.manager && team === m.coachTeam);
-    if (human && !m.subRequests[team]) continue;
+    if (human && !m.subRequests[team]) return;
     m.subRequests[team] = false;
-    if (subsLeft(m, team) <= 0) continue;
+    if (!canSubNow(m, team)) return;
     // Begrenzte Wechsel: Die KI hält den letzten für eine Verletzung zurück, bis es spät ist.
-    if (!human && Number.isFinite(rule(m).limit) && Math.min(subsLeft(m, team), usableBench(m, team).length) === 1 && m.time < m.duration * 0.8) continue;
+    if (!human && Number.isFinite(rule(m).limit) && Math.min(subsLeft(m, team), usableBench(m, team).length) === 1 && m.time < m.duration * 0.8) return;
+    // Begrenzte Gelegenheiten (Profiligen): die letzte hält die KI ebenso zurück.
+    if (!human && windowsLeft(m, team) === 1 && !atHalftime(m) && m.time < m.duration * 0.8) return;
     const ready = usableBench(m, team);
-    if (!ready.length) continue;
+    if (!ready.length) return;
     const onPitch = m.players.filter((p) => p.team === team && p.role !== 'gk');
     const tired = onPitch.reduce((a, b) => (b.stamina < a.stamina ? b : a), onPitch[0]);
-    if (!tired) continue;
+    if (!tired) return;
     // Die KI wechselt erst, wenn jemand wirklich platt ist.
-    if (!human && (tired.stamina > 0.45 || m.rng.next() < 0.3)) continue;
+    if (!human && (tired.stamina > 0.45 || m.rng.next() < 0.3)) return;
     // Die KI wechselt nur auf die eigene Position. Gibt es keinen frischen Ersatz dafür, bleibt der Müde draußen
     // (ein Nachbar oder gar ein Feldspieler auf weiter Position wäre mit Abzug oft schlechter als der Müde).
     const fresh = human ? ready : ready.filter((b) => b.stamina > tired.stamina + 0.2 && posGrade(b.position, tired.role) === 'own');
-    if (!fresh.length) continue;
+    if (!fresh.length) return;
     const incoming = bestForRole(fresh, tired.role); // Position vor Frische, sonst kleinster Abzug
     substitute(m, tired, incoming);
   }

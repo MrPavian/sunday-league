@@ -7,6 +7,9 @@ import { statusFor } from './spielbericht.js';
 import { humanClub, joinSquad, MIN_SQUAD, playerOf, releasePlayer } from './career.js';
 import { noteDeparture } from './transfers.js';
 import { noteTransfer } from './rivals.js';
+import { book } from './finances.js';
+import { contractOf, isPro, transferFee } from './contracts.js';
+import { tr } from '../core/i18n.js';
 
 // outcome([{ w, if, run }]) → effect(c, ctx, rng) für eine Event-Option.
 export function outcome(list) {
@@ -35,7 +38,10 @@ export function leaveTeam(c, idx) {
 // Der Albtraum: Er wechselt ausgerechnet zum Derby-Rivalen.
 export function joinRival(c, idx, rivalId) {
   const rival = c.clubs.find((x) => x.id === rivalId);
+  // Profiligen: Wer unter Vertrag steht, geht nur gegen Ablöse (contracts.js) – sonst wäre das Abwerben ein Gratiswechsel.
+  const fee = isPro(c) && contractOf(c, idx) ? transferFee(c, idx, c.level) : 0;
   if (!rival || !leaveTeam(c, idx)) return false;
+  if (fee) book(c, tr(`Ablöse von ${rival.name}`, `Transfer fee from ${rival.name}`), fee);
   rival.squad.push(idx);
   rememberNewClub(c, idx, rivalId);
   c.players[idx] = { apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 };

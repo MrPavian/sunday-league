@@ -1097,3 +1097,28 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   dritter Farbe (kitPaint.js RETRO_MODELS, Vorbilder aus Trikot-Ranglisten und Sammlerseiten), Editor in Abschnitten mit
   Vorschaukacheln. Ohne Vereinsnamen im Muster, ohne Wappen, Sponsoren, Hersteller. Offen: Ligue 1 / La Liga (Quellen nennen
   PSG auswärts 96/97 und Barcelona auswärts 95–97, aber ohne Musterbeschreibung).
+
+### 11.17 Nächste Schritte (vom Nutzer festgelegt, 2026-11-05)
+Reihenfolge nach Nutzerentscheid: zuerst 2. und 1. Liga, dann „so weiter wie vorgeschlagen“.
+1. **2. Liga und 1. Liga** (Stufen 11 und 12): echte Aufstiege aus der 3. Liga, Lizenz nach DFL (Stadion, Rasenheizung, Flutlicht),
+   Gehälter, Fernsehgeld und Vermarktung nach dem DFL-Wirtschaftsreport. *In Arbeit.*
+2. **Vereinswechsel im Sommer und ligaübergreifend:** Anfragen von oben für erfolgreiche Trainer, nach einer Entlassung auch von unten.
+3. **Eintrittspreise selbst festlegen, Dauerkarten:** Stehplatz und Sitzplatz einstellbar, Zuschauer und Kasse reagieren.
+4. **Zweite Mannschaft und U19 als eigene Teams** (ab der Regionalliga).
+5. **Trainerteam ab der Regionalliga:** Torwart-, Athletiktrainer, Physio mit Gehalt und Wirkung.
+6. **Stadionbau sichtbar machen:** Drittliga-Stadion und Arena wachsen in 3D.
+7. **Taktikvorlagen im Spiel umschalten** (z. B. „ab Minute 70 mauern“).
+8. **Gegner-Scouting vor dem Spiel:** Stärken, Lieblingsstil, gefährlichster Spieler; Genauigkeit nach eigenem Scouting.
+9. **Wetter mit spürbarerer Wirkung** (tiefer Platz, Wind) – nur mit Messung wie beim Bonus-Audit.
+10. **Englische Namensliste erweitern.**
+11. **Saisonrückblick als teilbare Seite.**
+12. **Erfolge und Meilensteine** (siehe 8.4).
+13. **Internationaler Wettbewerb** (vom Nutzer gewünscht, 2026-11-05): Die besten Vereine der 1. Liga spielen in einem
+    erfundenen europäischen Wettbewerb gegen erfundene Vereine aus erfundenen Städten anderer Länder (Gruppenphase, K.-o.-Runden
+    unter der Woche, wie der Bundespokal neben der Liga). Offen: Format, Startplätze, Prämien nach Quellen.
+14. **Turniere der Nationalmannschaften** (vom Nutzer gewünscht, 2026-11-05; Entwurf [docs/KONZEPT-NATIONALTEAMS.md](docs/KONZEPT-NATIONALTEAMS.md)):
+    Weltmeisterschaft, Europameisterschaft und alle Kontinentalmeisterschaften (Afrika, Asien, Südamerika, Nord- und
+    Mittelamerika, Ozeanien) im Hintergrund simuliert. Eigene Spieler werden nach Herkunft und Stärke nominiert, fehlen bei
+    Winterturnieren (Afrika, Asien) einige Spieltage und kommen mit einem Turnier-Schub auf den Marktwert zurück.
+15. **Nationaltrainer werden** (später): Anfragen von Verbänden ab gutem Ruf, Neben- oder Hauptamt, eigener Kader aus allen
+    Spielern des Landes, Turnierspiele in 3D.

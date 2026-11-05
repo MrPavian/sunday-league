@@ -31,7 +31,7 @@ describe('Großfeld: 11 gegen 11', () => {
     for (const s of Object.values(systemsFor(11))) expect(s.formation).toHaveLength(11);
     expect(PITCHES.sportplatz.penaltyDistance).toBe(8); // DFB-9er
     expect(subRuleFor('liga', 5)).toBe(BEZIRK_SUBS);
-    expect(BEZIRK_SUBS).toEqual({ limit: 5, reentry: false });
+    expect(BEZIRK_SUBS).toMatchObject({ limit: 5, reentry: false }); // dazu windows (Wechselgelegenheiten, squad.js)
   });
 });
 

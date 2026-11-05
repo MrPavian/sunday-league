@@ -4,7 +4,7 @@
 import { tr } from '../core/i18n.js';
 import { matchMinutes, minute90 } from './minute.js';
 import { enableManager, MENTALITIES, setMentality, shout } from './coach.js';
-import { substitute, subsLeft, usableBench } from './squad.js';
+import { canSubNow, substitute, subsLeft, usableBench } from './squad.js';
 import { answerCard } from './coachfeed.js';
 
 
@@ -111,7 +111,7 @@ function subDecision(tl) {
         label: tr(`${b.name} bringen`, `Bring on ${b.name}`),
         line: tr(`Wechsel: ${b.name} kommt für ${surname(tired)}.`, `Substitution: ${b.name} replaces ${surname(tired)}.`),
         apply: (mm) => {
-          if (mm.players.includes(tired) && usableBench(mm, team).includes(b) && subsLeft(mm, team) > 0) substitute(mm, tired, b);
+          if (mm.players.includes(tired) && usableBench(mm, team).includes(b) && canSubNow(mm, team)) substitute(mm, tired, b);
         },
       })),
     ],

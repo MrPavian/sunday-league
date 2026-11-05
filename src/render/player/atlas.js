@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { pixelTexture, toon } from '../materials.js';
+import { FIGURE_GRADIENT, pixelTexture, toon } from '../materials.js';
 import { paintKit, paintSleeve, REGION, sleeveColor } from '../kitPaint.js';
 
 // --- Team-Atlas -------------------------------------------------------------------
@@ -151,7 +151,7 @@ export class KitAtlas {
     this.canvas.height = TILE_H * capacity;
     this.ctx = this.canvas.getContext('2d');
     this.texture = pixelTexture(this.canvas);
-    this.material = toon(0xffffff, { map: this.texture });
+    this.material = toon(0xffffff, { map: this.texture, gradientMap: FIGURE_GRADIENT });
     this.material.vertexColors = true;
     if (edge) {
       // Ohne Mischen schreibt das Material seine Deckkraft in den Alphakanal – der

@@ -4,7 +4,7 @@
 import { attackDir } from '../sim/players.js';
 import { CLIMB, FAN_CLIMB } from '../sim/incidents.js';
 import { GEO } from '../sim/shelter.js';
-import { subsLeft, usableBench } from '../sim/squad.js';
+import { plannedSubs, subsLeft, usableBench } from '../sim/squad.js';
 
 // Vergebene Chance: Der Schütze greift sich an den Kopf (Pfosten, Latte, vorbei) oder winkt ab
 // (gehalten); der Torwart ballt nach der Parade kurz die Faust. state merkt sich den letzten Schuss.
@@ -134,8 +134,7 @@ export function warmupPicks(match, team, count, exclude = null) {
   if (!pool.length) return [];
   const out = [];
   const take = (b) => b && !out.includes(b) && out.length < count && out.push(b);
-  const plan = match.subPlan?.[team];
-  if (plan) take(pool.find((b) => b.id === plan.inId));
+  for (const plan of plannedSubs(match, team)) take(pool.find((b) => b.id === plan.inId));
   let tired = null;
   for (const p of match.players) if (p.team === team && p.role !== 'gk' && (!tired || p.stamina < tired.stamina)) tired = p;
   if (tired) take(pool.find((b) => b.position === tired.role));

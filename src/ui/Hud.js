@@ -46,6 +46,10 @@ export class Hud {
   init(match) {
     this.spectator = match.humanTeam == null;
     this.refreshHelp();
+    // Tastenhilfe: zum Anpfiff sichtbar, nach einigen Sekunden weg (vom Nutzer gemeldet: sie überlagerte die Anzeigetafel);
+    // H blendet sie wieder ein und aus.
+    this.$('.help').classList.remove('hidden');
+    this.helpTimer = HELP_SECONDS;
     const r = match.referee;
     this.introPending = match.surprise ? match.surprise.text : match.derby ? `DERBY! ${r ? `${tr('Schiri', 'Referee')}: ${r.name}` : tr('Heute wird es heiß.', 'It is going to get heated.')}` : r ? `${tr('Schiri heute', 'Referee today')}: ${r.name} (${REF_TRAITS[r.trait].name})` : null;
     match.teams.forEach((t, i) => {
@@ -91,6 +95,7 @@ export class Hud {
   }
 
   toggleHelp() {
+    this.helpTimer = 0; // selbst gewählt: bleibt, wie es ist
     this.$('.help').classList.toggle('hidden');
   }
 
@@ -223,8 +228,11 @@ export class Hud {
     } else this.$('.clock').textContent = `${halfLabel(match)} · ${matchMinute(match, match.time)}'`;
 
     if (this.toastTimer > 0 && (this.toastTimer -= dt) <= 0) this.hideToast();
+    if (this.helpTimer > 0 && (this.helpTimer -= dt) <= 0) this.$('.help').classList.add('hidden');
   }
 }
+
+export const HELP_SECONDS = 8; // so lange steht die Tastenhilfe nach dem Anpfiff (Spielwert)
 
 // Tastenhilfe für den Trainer an der Seitenlinie (feste Belegung).
 function helpText(spectator = false) {

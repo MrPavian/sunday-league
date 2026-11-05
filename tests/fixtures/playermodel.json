@@ -36,7 +36,7 @@
   "standard": {
    "verts": 1296,
    "bones": 15,
-   "geo": "4630d33cff69a4ec",
+   "geo": "1b199466373b1014",
    "skeleton": "b44d5934651fe50c",
    "inverse": "2421b64b975b0e67",
    "meta": "b8fb84985b66f077",
@@ -65,7 +65,7 @@
   "glatze": {
    "verts": 1332,
    "bones": 15,
-   "geo": "1879a8b819e9c7bb",
+   "geo": "12fad332c31b9c91",
    "skeleton": "b44d5934651fe50c",
    "inverse": "2421b64b975b0e67",
    "meta": "26a94f7eb4441ee1",
@@ -83,7 +83,7 @@
   "halbglatze": {
    "verts": 1368,
    "bones": 15,
-   "geo": "1ebc30d6b468d73b",
+   "geo": "15092c7ea766dd1f",
    "skeleton": "b44d5934651fe50c",
    "inverse": "2421b64b975b0e67",
    "meta": "c8abcb3d00785c29",
@@ -112,7 +112,7 @@
   "mutze-polizei": {
    "verts": 1368,
    "bones": 15,
-   "geo": "62671427302ccc86",
+   "geo": "d752fad1d7fb42dd",
    "skeleton": "b44d5934651fe50c",
    "inverse": "2421b64b975b0e67",
    "meta": "76e4fc845fa11418",
@@ -141,7 +141,7 @@
   "torwart": {
    "verts": 1440,
    "bones": 15,
-   "geo": "2f59b8357a5d875e",
+   "geo": "9572ae3315438793",
    "skeleton": "b44d5934651fe50c",
    "inverse": "2421b64b975b0e67",
    "meta": "e8c1c461c55021ec",
@@ -159,7 +159,7 @@
   "torwart-gruen-hell": {
    "verts": 1440,
    "bones": 15,
-   "geo": "5401429dc6cabec7",
+   "geo": "b1beb8cd0f4367aa",
    "skeleton": "b44d5934651fe50c",
    "inverse": "2421b64b975b0e67",
    "meta": "0056839ea64c73d2",
@@ -177,7 +177,7 @@
   "sponsor-aermel": {
    "verts": 1368,
    "bones": 15,
-   "geo": "9199ac5d59c25577",
+   "geo": "6cf1de34389190e8",
    "skeleton": "f0faf40e53bf07dc",
    "inverse": "090282890d310aa8",
    "meta": "ce081059c614eb66",
@@ -195,7 +195,7 @@
   "bauch": {
    "verts": 1296,
    "bones": 15,
-   "geo": "99aefbcb1b35cbf0",
+   "geo": "18cde8d687b2a51a",
    "skeleton": "46773899af51fa96",
    "inverse": "a26540339a4f4cc0",
    "meta": "82be4b404d5a86cb",
@@ -213,7 +213,7 @@
   "paunch": {
    "verts": 1296,
    "bones": 15,
-   "geo": "d82d3a554278a9af",
+   "geo": "188c469a7699a2d2",
    "skeleton": "716c47cd1c89a2ce",
    "inverse": "c4ee37a2c977f3ba",
    "meta": "b8fb84985b66f077",
@@ -231,7 +231,7 @@
   "dose-tiger": {
    "verts": 1584,
    "bones": 15,
-   "geo": "7787513176c69bf6",
+   "geo": "e2a3cd654749dde3",
    "skeleton": "b44d5934651fe50c",
    "inverse": "2421b64b975b0e67",
    "meta": "22998cf34018c8de",
@@ -260,7 +260,7 @@
   "schiri": {
    "verts": 1440,
    "bones": 18,
-   "geo": "87b5166f74fc3952",
+   "geo": "02c4ebce61f1875e",
    "skeleton": "2fc18ea32c43886f",
    "inverse": "350b1ae4eb5c45db",
    "meta": "e8c1c461c55021ec",
@@ -289,7 +289,7 @@
   "lange-hose": {
    "verts": 1332,
    "bones": 15,
-   "geo": "15408fb3572b816e",
+   "geo": "54f9c8051a083e87",
    "skeleton": "00b4c541491e9209",
    "inverse": "dca85ff59957c687",
    "meta": "e3d87622bdcf87e4",
@@ -318,7 +318,7 @@
   "bartstil-koteletten": {
    "verts": 1296,
    "bones": 15,
-   "geo": "4630d33cff69a4ec",
+   "geo": "1b199466373b1014",
    "skeleton": "b44d5934651fe50c",
    "inverse": "2421b64b975b0e67",
    "meta": "43176a246e0d8879",
@@ -2096,14 +2096,14 @@
  },
  "atlas": {
   "standard": "87de6a09b2022079",
-  "glatze": "1a7d5c47facdcd22",
+  "glatze": "ef7f9448a3461f7f",
   "halbglatze": "c95be7c5c1dd5caa",
   "mutze-polizei": "9e935e520427ac21",
-  "torwart": "feacc44f42d77768",
-  "torwart-gruen-hell": "62e49c142aab96e1",
-  "sponsor-aermel": "10dac7a02b5ec3a5",
+  "torwart": "b9da7ae16d7514d1",
+  "torwart-gruen-hell": "51591a8910b0fbff",
+  "sponsor-aermel": "980da6b2c4a23f2c",
   "bauch": "53626417644c586d",
-  "paunch": "fd3119d80d86276f",
+  "paunch": "34205e4093dcf6af",
   "dose-tiger": "06a0bf385037ab12",
   "schiri": "7eaef96d78e9c10b",
   "lange-hose": "f096107675747613",

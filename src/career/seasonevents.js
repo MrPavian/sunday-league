@@ -394,7 +394,7 @@ export const SEASON_EVENTS = {
   lizenzpflicht: seasonal('lizenzpflicht', {
     weight: 6,
     needs: (c) => (level(c) >= 4 && c.round >= 1 && c.round <= rounds(c) - 4 && !seasonDone(c, 'lizenzpflicht') ? {} : null),
-    text: (c) => tr(`Der Kreis erinnert: In der ${c.league} braucht der Trainer eine gültige Lizenz. Deine ist abgelaufen – oder war nie da. Im Frühjahr wird kontrolliert.`, `The league reminds you: in the ${c.league} the manager needs a valid licence. Yours has run out – or was never there. Checks come in spring.`),
+    text: (c) => tr(`${level(c) >= 6 ? 'Der Verband' : 'Der Kreis'} erinnert: In der ${c.league} braucht der Trainer eine gültige Lizenz. Deine ist abgelaufen – oder war nie da. Im Frühjahr wird kontrolliert.`, `The league reminds you: in the ${c.league} the manager needs a valid licence. Yours has run out – or was never there. Checks come in spring.`),
     options: [
       {
         label: tr('Lehrgang buchen (150 €, drei Abende)', 'Book a course (€150, three evenings)'),

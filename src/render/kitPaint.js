@@ -13,19 +13,21 @@ const luminance = (hex) => (0.299 * ((hex >> 16) & 255) + 0.587 * ((hex >> 8) & 
 // face: 'front' | 'back' | 'left' | 'right'; x läuft aus Sicht des Betrachters.
 const PATTERNS = {
   uni: () => false,
-  streifen: (x) => Math.floor(x / 4) % 2 === 1,
-  nadel: (x) => x % 4 === 1,
-  ringel: (x, y) => Math.floor(y / 4) % 2 === 1,
+  // Gleichmäßig (vom Nutzer gemeldet 2026-11-05: Streifen sahen versetzt aus): Längsmuster liegen spiegelgleich zur Mitte jeder
+  // Fläche, damit sie an den Kanten zu Seite und Rücken passen – Rand 2 px Hauptfarbe, Streifen 4 px (2|4|4|4|2).
+  streifen: (x) => ((x + 2) >> 2) % 2 === 1,
+  nadel: (x) => x === 1 || x === 5 || x === 10 || x === 14, // spiegelgleich (Abstand 4|5|4)
+  ringel: (x, y) => ((y + 2) >> 2) % 2 === 1, // Ringe mittig, oben und unten gleich breit
   brustring: (x, y) => y >= 5 && y <= 9,
   haelften: (x, y, face) => (face === 'left' ? false : face === 'right' ? true : face === 'front' ? x >= 8 : x < 8),
   schaerpe: (x, y, face) => (face === 'front' ? Math.abs(x - y) <= 2 : face === 'back' ? Math.abs(15 - x - y) <= 2 : false),
-  karo: (x, y) => (Math.floor(x / 4) + Math.floor(y / 4)) % 2 === 1,
+  karo: (x, y) => (((x + 2) >> 2) + ((y + 2) >> 2)) % 2 === 1,
   chevron: (x, y, face) => (face === 'front' || face === 'back') && Math.abs(y - (2 + Math.abs(x - 7.5) * 0.8)) <= 1.2,
   seiten: (x, y, face) => face === 'left' || face === 'right' || x <= 1 || x >= 14,
   schulter: (x, y) => y <= 3,
   // Dazu: Diagonalstreifen, breite Querstreifen, Farbverlauf (4×4-Raster, oben Hauptfarbe, unten zweite), Ärmelfeld.
   diagonal: (x, y, face) => Math.floor(((face === 'back' ? 15 - x : x) + y) / 4) % 2 === 1,
-  breit: (x, y) => Math.floor(y / 6) % 2 === 1,
+  breit: (x, y) => Math.floor((y * 3) / 16) === 1, // drei gleich breite Bänder, das mittlere in der Zweitfarbe
   verlauf: (x, y) => BAYER[(y & 3) * 4 + (x & 3)] < (y * 16) / 15,
   aermel: (x, y, face) => face === 'left' || face === 'right' || (y <= 5 && (x <= 2 || x >= 13)),
   // --- Retro (vom Nutzer gewünscht, 2026-10-29): Muster nach legendären Trikots, frei einfärbbar, ohne Vereinsnamen, Wappen
@@ -75,10 +77,47 @@ const PATTERNS = {
     return (px === 2 && py >= 1 && py <= 3) || (py === 2 && px >= 1 && px <= 3) ? 2 : face === 'left' || face === 'right' || y <= 3 ? 1 : 0;
   },
   brustband3: (x, y) => (y === 5 || y === 9 ? 1 : y >= 6 && y <= 8 ? (y === 7 ? 2 : 1) : 0),
-  kante: (x, y) => (x % 6 === 5 ? 2 : Math.floor(x / 6) % 2 === 1 ? 1 : 0),
+  kante: (x) => (x === 2 || x === 5 || x === 10 || x === 13 ? 2 : ((x + 2) >> 2) % 2 === 1 ? 1 : 0), // Streifen wie oben, Kanten in der 3. Farbe
+  // --- Vorlagen nach Farbzahl (vom Nutzer gewünscht, 2026-11-05) -----------------------------------------------------
+  // Einfarbig, Ton in Ton: nur die Hauptfarbe, Muster als dunklere (3) oder hellere (4) Schattierung derselben Farbe.
+  tonstreifen: (x) => (((x + 2) >> 2) % 2 === 1 ? 3 : 0),
+  tonringel: (x, y) => (((y + 2) >> 2) % 2 === 1 ? 3 : 0),
+  tonkaro: (x, y) => ((((x + 2) >> 2) + ((y + 2) >> 2)) % 2 === 1 ? 3 : 0),
+  tondiagonal: (x, y, face) => (Math.floor(((face === 'back' ? 15 - x : x) + y) / 3) % 2 === 1 ? 4 : 0),
+  tonschatten: (x, y) => (BAYER[(y & 3) * 4 + (x & 3)] < y - 3 ? 3 : 0),
+  tonpixel: (x, y) => (((x * 7 + y * 13) ^ (x * y)) % 9 === 0 ? 4 : 0),
+  // Zweifarbig.
+  doppelstreifen: (x) => x === 4 || x === 5 || x === 10 || x === 11, // zwei Streifen, spiegelgleich
+  mittelstreifen: (x, y, face) => (face === 'front' || face === 'back') && x >= 6 && x <= 9,
+  kreuz: (x, y, face) => (face === 'front' || face === 'back') && ((x >= 7 && x <= 8) || (y >= 6 && y <= 7)), // mittig
+  vbrust: (x, y, face) => (face === 'front' || face === 'back') && Math.abs(y - (9 - Math.abs(x - 7.5) * 1.1)) <= 1, // V zur Brustmitte
+  saum: (x, y) => y >= 12,
+  quadranten: (x, y, face) => (face === 'left' ? y >= 8 : face === 'right' ? y < 8 : (x >= 8) !== (y >= 8)),
+  // Dreifarbig: 0 Hauptfarbe, 1 zweite, 2 dritte.
+  trikolore: (x, y, face) => (face === 'left' ? 0 : face === 'right' ? 2 : [0, 1, 2][Math.min(2, Math.floor((face === 'back' ? 15 - x : x) / 5.34))]),
+  dreiband: (x, y) => [0, 1, 2][Math.min(2, Math.floor(y / 5.34))],
+  doppelring: (x, y) => (y >= 5 && y <= 6 ? 1 : y >= 8 && y <= 9 ? 2 : 0),
+  streifenpaar: (x) => (x === 3 || x === 12 ? 1 : x === 4 || x === 11 ? 2 : 0),
+  winkel3: (x, y, face) => {
+    if (face !== 'front' && face !== 'back') return 0;
+    const d = y - (2 + Math.abs(x - 7.5) * 0.8);
+    return Math.abs(d) <= 1 ? 1 : Math.abs(d - 2.2) <= 0.8 ? 2 : 0;
+  },
+  schulter3: (x, y) => (y <= 2 ? 1 : y === 3 ? 2 : 0),
 };
+// Vorlagen nach Farbzahl für den Editor (Retro-Muster stehen in einer eigenen Gruppe, RETRO_MODELS).
+export const ONE_COLOR = new Set(['uni', 'tonstreifen', 'tonringel', 'tonkaro', 'tondiagonal', 'tonschatten', 'tonpixel']);
+export const patternColors = (id) => (THREE_COLOR.has(id) ? 3 : ONE_COLOR.has(id) ? 1 : 2);
+// Schattierung der Hauptfarbe für Ton in Ton: dunkler (3) bzw. heller (4), sichtbar, aber nicht als zweite Farbe.
+const shade = (hex, f) => {
+  const ch = (k) => (hex >> k) & 255;
+  const mix = (v) => Math.round(f < 0 ? v * (1 + f) : v + (255 - v) * f);
+  return (mix(ch(16)) << 16) | (mix(ch(8)) << 8) | mix(ch(0));
+};
+export const toneDark = (hex) => shade(hex, luminance(hex) < 0.2 ? 0.16 : -0.18);
+export const toneLight = (hex) => shade(hex, luminance(hex) > 0.8 ? -0.12 : 0.16);
 // Muster mit dritter Farbe (Editor zeigt dann die dritte Farbreihe).
-export const THREE_COLOR = new Set(['zickzack', 'fluegel', 'keile', 'welle', 'blitz', 'krakel', 'regenbogen', 'konfetti', 'sterne', 'brustband3', 'kante']);
+export const THREE_COLOR = new Set(['zickzack', 'fluegel', 'keile', 'welle', 'blitz', 'krakel', 'regenbogen', 'konfetti', 'sterne', 'brustband3', 'kante', 'trikolore', 'dreiband', 'doppelring', 'streifenpaar', 'winkel3', 'schulter3']);
 // Retro-Muster: Vorbild (nur als Hinweis im Editor, keine Nachbildung von Wappen, Sponsoren oder Herstellern).
 export const RETRO_MODELS = tr(
   {
@@ -117,7 +156,7 @@ export const RETRO_MODELS = tr(
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 export const PATTERN_IDS = Object.keys(PATTERNS);
 // Muster, bei denen der Ärmel schon in der Zweitfarbe steckt.
-export const SECOND_SLEEVE = ['seiten', 'schulter', 'aermel', 'fluegel', 'zacken', 'sterne'];
+export const SECOND_SLEEVE = ['seiten', 'schulter', 'aermel', 'fluegel', 'zacken', 'sterne', 'schulter3'];
 export const sleeveColor = (kit) => (SECOND_SLEEVE.includes(kit.pattern) || kit.sleeves === 'second') && kit.second != null ? kit.second : kit.shirt;
 
 // Kragenarten als Pixel im Atlas (Vorderseite oben, hinten schmaler Streifen) – keine Zusatzfläche.
@@ -244,12 +283,14 @@ export function paintKit(ctx, kit, { sponsor = null, dirt = 0, splats = null, di
   const a = css(kit.shirt);
   const b = css(kit.second ?? kit.shirt);
   const t = css(kit.third ?? kit.second ?? kit.shirt);
+  const dk = css(toneDark(kit.shirt));
+  const lt = css(toneLight(kit.shirt));
   faces.forEach((face, fi) => {
     const ox = x0 + fi * 16;
     for (let y = 0; y < 16; y++)
       for (let x = 0; x < 16; x++) {
         const v = fn(x, y, face);
-        ctx.fillStyle = v === 2 ? t : v ? b : a;
+        ctx.fillStyle = v === 2 ? t : v === 3 ? dk : v === 4 ? lt : v ? b : a;
         ctx.fillRect(ox + x, y, 1, 1);
       }
     // Falten: unter den Armen, an der Taille und ein Zug schräg zur Hüfte – leicht dunkler, damit der
@@ -263,7 +304,7 @@ export function paintKit(ctx, kit, { sponsor = null, dirt = 0, splats = null, di
       ctx.fillStyle = css(collarInk(kit));
       for (const [x, y, w, h] of collar) ctx.fillRect(ox + x, y, w, h);
     }
-    if (face === 'front' && sponsor) { const v = fn(8, 8, face); paintSponsor(ctx, ox, kit, sponsor, v === 2 ? kit.third ?? kit.second ?? kit.shirt : v ? kit.second ?? kit.shirt : kit.shirt); }
+    if (face === 'front' && sponsor) { const v = fn(8, 8, face); paintSponsor(ctx, ox, kit, sponsor, v === 2 ? kit.third ?? kit.second ?? kit.shirt : v === 3 ? toneDark(kit.shirt) : v === 4 ? toneLight(kit.shirt) : v ? kit.second ?? kit.shirt : kit.shirt); }
   });
   if (wet > 0) paintWet(ctx, wet, x0, faces);
   if (dirt > 0 && splats) {

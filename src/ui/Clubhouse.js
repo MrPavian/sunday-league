@@ -18,6 +18,7 @@ import { verbandLeagues } from '../career/verband.js';
 import { extend as extendContract, releaseWithPay } from '../career/contracts.js';
 import { setWaive } from '../career/license.js';
 import { takeOver } from '../career/clubchange.js';
+import { applyPreset, deletePreset, savePreset } from '../career/tacticpresets.js';
 import { appointCoach, startCourse } from '../career/youthteams.js';
 import { acceptSponsor, bookTrip } from '../career/finances.js';
 import { kitPrice, signOutfitter } from '../career/outfitter.js';
@@ -365,6 +366,18 @@ export class Clubhouse {
         }
         this.confirmRelease = null;
         releaseWithPay(this.career, Number(value)); // Profiligen: mit Abfindung (contracts.js), sonst wie bisher
+        this.h.onChange();
+      } else if (action === 'presetSave') {
+        const name = this.root.querySelector('[data-preset-name]')?.value ?? '';
+        const r = savePreset(this.career, name);
+        this.presetNote = r.ok ? null : r.reason === 'name' ? tr('Bitte einen Namen eingeben.', 'Please enter a name.') : tr('Alle Plätze belegt – erst eine Vorlage löschen.', 'All slots used – delete a preset first.');
+        this.h.onChange();
+      } else if (action === 'presetApply') {
+        applyPreset(this.career, value);
+        this.presetNote = null;
+        this.h.onChange();
+      } else if (action === 'presetDelete') {
+        deletePreset(this.career, value);
         this.h.onChange();
       } else if (action === 'takeOver') {
         takeOver(this.career, value); // nach der Entlassung: neuer Verein (clubchange.js)

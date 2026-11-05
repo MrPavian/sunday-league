@@ -33,6 +33,8 @@ import { isCoach } from './personal.js';
 import { isBanned } from './suspensions.js';
 import { adjustFitness } from './fitness.js';
 import { setRelation } from './relations.js';
+import { fitsEvent } from './eventfit.js';
+import { PRO_EVENTS } from './proevents.js';
 
 const EVENT_CHANCE = 0.65; // pro Woche
 const NO_REPEAT = 4; // Wochen, bevor dasselbe Ereignis wiederkommen darf
@@ -636,6 +638,7 @@ const eventPacks = () => (packs ??= [
   { pack: TEEN_EVENTS, roll: true }, // Jugend abseits des Platzes (teenlife.js)
   { pack: UNREST_EVENTS, roll: true }, // Unruhe bis zum Streik (unrest.js)
   { pack: CRISES, roll: false },
+  { pack: PRO_EVENTS, roll: true }, // Oberliga bis 3. Liga: Profi-Alltag (proevents.js) – hinten, damit der Zufall unten gleich bleibt
 ]);
 const rolledEntries = () => eventPacks().filter((x) => x.roll).flatMap((x) => Object.entries(x.pack));
 
@@ -657,7 +660,7 @@ export function rollWeekEvent(career) {
     if (recent.has(id)) continue;
     if (STORY_STARTS[id] && (storiesFull || storySeason.has(id))) continue; // jede Geschichte höchstens einmal pro Saison
     const ctx = ev.needs(career, rng);
-    if (ctx) candidates.push({ id, ev, ctx });
+    if (ctx && fitsEvent(career, id)) candidates.push({ id, ev, ctx }); // passt es zu Liga und Platz? (eventfit.js, nach needs: Zufall bleibt)
   }
   if (!candidates.length) return null;
   let r = rng.next() * candidates.reduce((s, c) => s + c.ev.weight, 0);

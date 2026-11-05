@@ -6,6 +6,39 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-05-6 – Several subs, your own tactics, sharper figures
+
+### New
+- **Several substitutions at once:** pick a pair in the sub menu, "+ Another change" (or space), pick the next pair – all go together at the next stoppage. Planned changes are listed and can be removed again.
+- **Substitution rules by league (researched):** unlimited in the recreational league; five from the district league up, as in men's amateur football (Saxony FA, Spielordnung § 56(7); Württemberg FA, referee notes 2024/25 – previously four up to the District Premier Division); in the Regional League and Third Division five in at most three stoppages, half-time does not count (DFB Laws of the Game, Law 3). Still no re-entry anywhere.
+- **Save tactics:** under Team → Tactics "My tactics": store system, playing style and game plan under a name (up to eight), switch back with one tap, delete, or overwrite under the same name. The tactics belong to you and move with you when you change clubs.
+- **Poaching with a fee:** if a contracted player is poached in the Regionalliga or 3. Liga, the new club now pays a transfer fee – before, he left for free.
+
+### Changed
+- **Graphics:** figures get baked-in shading (undersides darker, every body part slightly darker at the bottom than at the top) and one more light step – shorts, legs, arms and head stand apart more clearly. Plus boot soles in a contrasting colour. No extra draw call, about 24 more triangles per figure.
+- **Even kits:** stripes, pinstripes, hoops, checks, wide hoops, edged stripes, double and tonal stripes now sit mirror-symmetrically around the centre and meet the sides and back at the edges – before they looked offset. The cross is centred.
+
+## 2026-11-05-5 – New kits, names, events and chat lines
+
+### New
+- **Kit templates by colours:** 18 new patterns, sorted in the editor into one colour (tonal – stripes, hoops, checks, diagonal, shadow fade and pixels as a darker or lighter shade of the main colour), two colours (double stripes, centre stripe, cross, V chest, hem band, quarters) and three colours (tricolour, three bands, double hoop, stripe pairs, double chevron, edged yoke). The retro patterns remain a group of their own.
+- **More names:** new German careers get more first and last names in every origin group (name edition 9). Players' attributes and looks stay the same.
+- **Events from the top amateur tier up:** press conference after defeats, the agent wants a raise, fan protest about prices, an association fine for pyrotechnics, the sponsors' VIP evening, a social-media slip, undersoil heating in the frost, a second-division club wants your talent, TV moves you to Monday, doping control, a live-stream offer in the Regional League.
+- **Chat:** 20 new messages about the club – pro life (ice bath, GPS data, fan shop, team bus) only higher up, amateur life (bottle deposits, kit washing, sausage stall) lower down – plus 15 new yes and 8 new no replies.
+
+### Changed
+- **Every event checked** (193 of them) against league, pitch and professionalism. What does not fit higher up no longer appears there: e.g. work parties, raffles, shrunken kits, car pools, Walter the groundsman, expense allowances, "the disciplinary panel in a pub back room". Job stories (shifts, field work, promotion) appear up to the Regional League, not in the Third Division. Pitch events (closure, storm, snow, work party) not in the hall, the backyard neighbour only on small pitches in residential areas. The licence reminder comes from the association instead of the district from the Regional League Canal Group up.
+- Likewise for chat messages: neighbours at the fence, bed-sheet banners or the leaking dressing room no longer appear higher up.
+
+## 2026-11-05-4 – Key help out of the way
+
+### Fixed
+- **Key help:** the box with the keys (1–4 shouts, X substitute …) sat top right next to the scoreboard and covered the away team's name at medium window widths. It now sits below and fades out after eight seconds; press H to bring it back.
+
+### Changed
+- New careers are set up faster (the player lists are only built once).
+- The 3D graphics run on three.js r187 instead of r186. Checked on six venues by day and evening: same draw calls, same brightness, same picture.
+
 ## 2026-11-05-3 – The seat gets hot
 
 ### New

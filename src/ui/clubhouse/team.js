@@ -8,9 +8,10 @@ import { STYLES as PLAY_STYLES, systemsFor } from '../../sim/tactics.js';
 import { jobFits, styleFit } from '../../sim/fit.js';
 import { GROUP_LABELS, ORDERS, packLines, SIMPLE, SIMPLE_IDS } from '../../sim/commands.js';
 import { coachLevel } from '../prefs.js';
-import { button, haptic, icon, segmented, tabs as uiTabs } from '../ds.js';
+import { button, esc, haptic, icon, segmented, tabs as uiTabs } from '../ds.js';
 import { LEAGUES, maxLevel } from '../../career/clubs.js';
 import { contractOf, extendOffer, isPro, releaseCost, yearsLeft } from '../../career/contracts.js';
+import { NAME_MAX, PRESET_MAX, presetActive, presetsOf } from '../../career/tacticpresets.js';
 import { leagueTitle, niveauName, niveauText } from '../../career/verband.js';
 import { aboveLeague, playerTalentGuess } from '../../career/development.js';
 import { ATTR_LABELS } from '../attrLabels.js';
@@ -262,6 +263,19 @@ export const teamScreens = {
       <p class="hint">${tr('Damit laufen die Jungs auf. Im Spiel kannst du jederzeit abweichen.', 'This is how the lads start. You can change it at any time during the match.')} <button class="linkish" data-action="planLevel">${pro ? tr('Weniger Optionen', 'Fewer options') : tr('Alle Befehle zeigen', 'Show all orders')}</button>${summary.length ? ` <button class="linkish" data-action="planReset">${tr('Zurücksetzen', 'Reset')}</button>` : ''}</p>`;
   },
 
+  // Taktik-Vorlagen (tacticpresets.js): gespeicherte Taktiken mit Namen – ein Tipp stellt alles um.
+  presetBlock() {
+    const c = this.career;
+    const list = presetsOf(c);
+    const chips = list.map((p) => `<span class="preset${presetActive(c, p) ? ' active' : ''}"><button data-action="presetApply" data-value="${p.id}" aria-pressed="${presetActive(c, p)}" title="${esc(`${PLAY_STYLES[p.style]?.label ?? ''}`)}">${esc(p.name)}</button><button class="linkish" data-action="presetDelete" data-value="${p.id}" aria-label="${tr(`Vorlage ${esc(p.name)} löschen`, `Delete preset ${esc(p.name)}`)}">✕</button></span>`).join('');
+    const full = list.length >= PRESET_MAX;
+    return `<div class="presets" data-testid="presets"><p class="ui-section-title">${tr('Meine Taktiken', 'My tactics')} <small>${list.length}/${PRESET_MAX}</small></p>
+      ${chips ? `<div class="styles">${chips}</div>` : `<p class="hint">${tr('Noch keine gespeichert. Stell System, Stil und Spielplan ein und gib der Taktik einen Namen.', 'None saved yet. Set system, style and game plan and give the tactic a name.')}</p>`}
+      <div class="preset-save"><input data-preset-name maxlength="${NAME_MAX}" placeholder="${tr('Name, z. B. „Auswärts mauern“', 'Name, e.g. "Park the bus away"')}" aria-label="${tr('Name der Taktik', 'Tactic name')}">${button(tr('Aktuelle Taktik speichern', 'Save current tactic'), { kind: 'secondary', action: 'presetSave', 'data-testid': 'preset-save' })}</div>
+      ${full ? `<p class="hint">${tr('Alle Plätze belegt – gleicher Name überschreibt, sonst erst eine löschen.', 'All slots used – the same name overwrites, otherwise delete one first.')}</p>` : ''}
+      ${this.presetNote ? `<p class="warn">${this.presetNote}</p>` : ''}</div>`;
+  },
+
   // Taktik: System, Spielstil, Passung, Spielplan-Befehle (früher oben in der Aufstellung).
   tab_tactic() {
     const c = this.career;
@@ -290,6 +304,7 @@ export const teamScreens = {
       <div class="tactic-board${ro ? ' read-only' : ''}">
         ${ro ? this.coachBanner(tr('Die Taktik legt der Trainer fest.', 'The manager decides the tactics.')) : ''}
         <div class="club-tboard m-board"><span class="tray" aria-hidden="true"></span></div>
+        ${ro ? '' : this.presetBlock()}
         <p class="ui-section-title">${tr('System', 'System')} · ${formation.length} ${tr('gegen', 'v')} ${formation.length}</p>
         <div class="systems">${systems}</div>
         <p class="ui-section-title">${tr('Spielstil', 'Playing style')}</p>

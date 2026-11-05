@@ -221,12 +221,26 @@ export const PRO_MODEL = 1; // Konzept Profiligen, Nutzerentscheid 2026-11-05
 // fest zugeschrieben (playerOf hebt sie dann an) – der Pool hat oben zu wenige Spieler für ganze Profiligen.
 export const PRO_SOURCE = [6, 7, 8];
 export const proMap = (career) => (career?.pro ? (career.proNiv ??= {}) : null);
+// Listen je Klasse, Position und Niveau hängen nur am Pool – einmal bauen statt bei jedem Picker (gemessen: ein Drittel der Zeit
+// von createCareer). Die Listen werden nur gelesen.
+const pickLists = new WeakMap();
+function poolLists(pool) {
+  let l = pickLists.get(pool);
+  if (!l) {
+    l = { base: {}, niv: {}, pro: {} };
+    for (const p of pool.everyone()) {
+      (l.base[`${p.tier}:${p.position}`] ??= []).push(p.poolIndex);
+      const n = niveauOf(p.poolIndex);
+      (l.niv[`${p.tier}:${p.position}:${n}`] ??= []).push(p.poolIndex);
+      if (PRO_SOURCE.includes(n)) (l.pro[`${p.tier}:${p.position}:P`] ??= []).push(p.poolIndex);
+    }
+    pickLists.set(pool, l);
+  }
+  return l;
+}
 export function squadPicker(rng, used, level = null, pro = null) {
-  const pool = getPool();
-  const byTierPos = {};
-  for (const p of pool.everyone()) (byTierPos[`${p.tier}:${p.position}`] ??= []).push(p.poolIndex);
-  if (level) for (const p of pool.everyone()) (byTierPos[`${p.tier}:${p.position}:${niveauOf(p.poolIndex)}`] ??= []).push(p.poolIndex);
-  if (level >= 8 && pro) for (const p of pool.everyone()) if (PRO_SOURCE.includes(niveauOf(p.poolIndex))) (byTierPos[`${p.tier}:${p.position}:P`] ??= []).push(p.poolIndex); // Niveau 9+ erst ab der Oberliga möglich
+  const lists = poolLists(getPool());
+  const byTierPos = { ...lists.base, ...(level ? lists.niv : {}), ...(level >= 8 && pro ? lists.pro : {}) }; // Niveau 9+ erst ab der Oberliga möglich
   const top = pro ? TOP_NIVEAU : 8;
   return (tiers, shape) => {
     const niv = level ? clubNiveaus(tiers, level, top) : null;
@@ -1006,9 +1020,11 @@ export function releasePlayer(career, idx, { force = false } = {}) {
 export const KIT_COLORS = [0xf2efe6, 0x1c1c1c, 0xc8352f, 0x8c2f2f, 0xe8742a, 0xe0b020, 0x2e6b3a, 0x5cc46a, 0x2f6fb5, 0x1d2b44, 0x4fa3e0, 0x6b4f8c, 0x9a6b4f, 0x8a9096];
 export const KIT_PATTERNS = tr(
   { uni: 'Uni', streifen: 'Längsstreifen', nadel: 'Nadelstreifen', ringel: 'Ringel', brustring: 'Brustring', haelften: 'Halb/halb', schaerpe: 'Schärpe', karo: 'Karo', chevron: 'Winkel', seiten: 'Seitenbahnen', schulter: 'Schulterpasse', diagonal: 'Diagonalstreifen', breit: 'Breite Querstreifen', verlauf: 'Farbverlauf', aermel: 'Ärmelfeld',
-    zickzack: 'Zickzack', fluegel: 'Flügel', zacken: 'Zacken', halbton: 'Halbton', krakel: 'Krakel', regenbogen: 'Regenbogen', konfetti: 'Konfetti', linien: 'Linienbruch', welle: 'Welle', sterne: 'Sternschultern', brustband3: 'Brustband dreifarbig', keile: 'Keile', blitz: 'Blitz', kante: 'Streifen mit Kante' },
+    zickzack: 'Zickzack', fluegel: 'Flügel', zacken: 'Zacken', halbton: 'Halbton', krakel: 'Krakel', regenbogen: 'Regenbogen', konfetti: 'Konfetti', linien: 'Linienbruch', welle: 'Welle', sterne: 'Sternschultern', brustband3: 'Brustband dreifarbig', keile: 'Keile', blitz: 'Blitz', kante: 'Streifen mit Kante',
+    tonstreifen: 'Ton-Streifen', tonringel: 'Ton-Ringel', tonkaro: 'Ton-Karo', tondiagonal: 'Ton-Diagonale', tonschatten: 'Schattenverlauf', tonpixel: 'Ton-Pixel', doppelstreifen: 'Doppelstreifen', mittelstreifen: 'Mittelstreifen', kreuz: 'Kreuz', vbrust: 'V-Brust', saum: 'Saumband', quadranten: 'Viertel', trikolore: 'Trikolore', dreiband: 'Drei Bänder', doppelring: 'Doppelring', streifenpaar: 'Streifenpaar', winkel3: 'Doppelwinkel', schulter3: 'Schulter mit Kante' },
   { uni: 'Plain', streifen: 'Stripes', nadel: 'Pinstripes', ringel: 'Hoops', brustring: 'Chest band', haelften: 'Halves', schaerpe: 'Sash', karo: 'Checks', chevron: 'Chevron', seiten: 'Side panels', schulter: 'Shoulder yoke', diagonal: 'Diagonal stripes', breit: 'Wide hoops', verlauf: 'Gradient', aermel: 'Sleeve panels',
-    zickzack: 'Zigzag', fluegel: 'Wings', zacken: 'Jags', halbton: 'Halftone', krakel: 'Squiggles', regenbogen: 'Rainbow', konfetti: 'Confetti', linien: 'Broken lines', welle: 'Wave', sterne: 'Star shoulders', brustband3: 'Three-colour chest band', keile: 'Wedges', blitz: 'Lightning', kante: 'Edged stripes' },
+    zickzack: 'Zigzag', fluegel: 'Wings', zacken: 'Jags', halbton: 'Halftone', krakel: 'Squiggles', regenbogen: 'Rainbow', konfetti: 'Confetti', linien: 'Broken lines', welle: 'Wave', sterne: 'Star shoulders', brustband3: 'Three-colour chest band', keile: 'Wedges', blitz: 'Lightning', kante: 'Edged stripes',
+    tonstreifen: 'Tonal stripes', tonringel: 'Tonal hoops', tonkaro: 'Tonal checks', tondiagonal: 'Tonal diagonal', tonschatten: 'Shadow fade', tonpixel: 'Tonal pixels', doppelstreifen: 'Double stripes', mittelstreifen: 'Centre stripe', kreuz: 'Cross', vbrust: 'V chest', saum: 'Hem band', quadranten: 'Quarters', trikolore: 'Tricolour', dreiband: 'Three bands', doppelring: 'Double hoop', streifenpaar: 'Stripe pairs', winkel3: 'Double chevron', schulter3: 'Edged yoke' },
 );
 // Kragenart und Ärmelfarbe: optionale Felder am Trikot (alte Stände: Standard / Hauptfarbe).
 export const KIT_COLLARS = tr({ standard: 'Schlicht', rund: 'Rundhals', v: 'V-Ausschnitt', polo: 'Polokragen' }, { standard: 'Plain', rund: 'Crew neck', v: 'V-neck', polo: 'Polo collar' });
