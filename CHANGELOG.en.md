@@ -6,6 +6,15 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-05-3 – The seat gets hot
+
+### New
+- **Backing from the board:** the board measures every league game against the season target. How strictly depends on the league: not at all in the Sunday league, barely in the district leagues, clearly from the Regional League Canal Group up, hard in the Regional League and Third Division. Shown under Club → You.
+- **Warning and ultimatum:** if the backing drops, first a warning, then an ultimatum – four points from the next three league games. If not, you are sacked. In the summer there may be an ultimatum for the start of the season.
+- **New club:** after the sack up to three clubs from the same league get in touch. You take over their squad, league position and fixtures; kitty, grounds, sponsors and youth start afresh. Your old club plays on – you will meet again.
+- **As president:** the members apply the pressure. A narrowly lost motion of no confidence costs the hired manager, a clearly lost one (or the second within two seasons) costs you the office – then it goes on as manager at another club.
+- Applies to new careers.
+
 ## 2026-11-05-2 – Regional League and Third Division
 
 ### New

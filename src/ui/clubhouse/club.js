@@ -33,6 +33,7 @@ import { RIVAL, rivalLabel, rivalList } from '../../career/rivals.js';
 import { gateStats } from '../../career/attendance.js';
 import { maxLevel } from '../../career/clubs.js';
 import { licenseNeeds } from '../../career/license.js';
+import { trustLabel, trustOf, weight } from '../../career/pressure.js';
 
 // Unterseiten des Reiters Verein.
 export const CLUB_SUBS = () => [['me', tr('Du', 'You')], ['anlage', tr('Anlage', 'Grounds')], ['leben', tr('Vereinsleben', 'Club life')], ['trikot', tr('Trikot', 'Kit')], ['wappen', tr('Wappen', 'Crest')]];
@@ -53,6 +54,7 @@ export const clubScreens = {
             return `<li>${ch.sex === 'w' ? tr('Tochter', 'Daughter') : tr('Sohn', 'Son')} ${ch.name}, ${age}${tr(' J.', ' yrs')} – ${where}</li>`;
           }).join('')}</ul>` : ''}
           ${this.meBars()}
+          ${this.trustLine()}
           <p class="empty">${isPresident(c) ? tr('Im Präsidium bleibt mehr Zeit für die Familie: kein Sonntag an der Linie, kein Training. Dafür zählt, wen du als Trainer geholt hast.', 'In the president\'s office there is more time for the family: no Sundays on the touchline, no training. What counts now is who you hired as manager.') : tr('Training, Scouting und Spieltage kosten Zeit mit der Familie. Unbesetzte Posten (Co-Trainer, Wirt, Platzwart) und Zusatzämter ziehen Energie. Ist einer der beiden Werte leer, fällst du zwei Wochen aus.', 'Training, scouting and matchdays cost family time. Empty posts (assistant, bar manager, groundsman) and extra duties drain energy. If either bar runs empty, you are out for two weeks.')}</p>
         </div>`
       : '';
@@ -401,6 +403,17 @@ export const clubScreens = {
     }
     const offers = outfitterOffers(c).map((d) => `<button class="successor" data-action="outfitter" data-value="${d.id}"><b>${d.name}</b><small>${d.line}</small><small>${terms(d)} · ${OUTFITTER_SEASONS} ${tr('Saisons', 'seasons')}</small></button>`).join('');
     return `<div class="outfitter" data-testid="outfitter"><h4>${tr('Ausrüster gesucht', 'Looking for a kit supplier')}</h4><small>${tr('Ein Ausrüstervertrag macht neue Trikotsätze billiger. Nur einer zur Zeit.', 'A supplier deal makes new kits cheaper. Only one at a time.')}</small>${offers}</div>`;
+  },
+
+  // Vorstand und Erfolgsdruck (pressure.js): Rückhalt, Ultimatum, frühere Vereine.
+  trustLine() {
+    const c = this.career;
+    const v = trustOf(c);
+    if (v == null || !weight(c)) return '';
+    const u = c.board?.ultimatum;
+    const who = isPresident(c) ? tr('Rückhalt bei den Mitgliedern', 'Backing from the members') : tr('Rückhalt im Vorstand', 'Backing from the board');
+    const past = (c.pastClubs ?? []).length ? `<p class="t-2">${tr('Frühere Vereine', 'Former clubs')}: ${c.pastClubs.map((p) => `${esc(p.name)} (${p.from}–${p.to})`).join(', ')}</p>` : '';
+    return `<div class="trust" data-testid="trust"><div class="attr-row"><span>${who}</span><i style="--v:${v}%"></i><b>${v}</b></div><p class="t-2">${trustLabel(v)}</p>${u ? `<p class="warn">${tr(`Ultimatum: noch ${u.left} Ligaspiele, ${u.pts}/${u.need} Punkte`, `Ultimatum: ${u.left} league games left, ${u.pts}/${u.need} points`)}</p>` : ''}${past}</div>`;
   },
 
   // Vereinsheim, Sportplatz, Tribünen, Gastro ausbauen: Handwerker oder Arbeitseinsatz, mit Bauschlange.

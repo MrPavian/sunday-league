@@ -293,6 +293,7 @@ export function createCareer({ seed = Date.now() % 1e9, club = {}, coach = null,
     names,
     strength: STRENGTH_MODEL, // Stärkemodell (Konzept Spielerstärke 12): nur neue Karrieren, alte Spielstände behalten ihres
     pro: PRO_MODEL, // Profiligen (Regionalliga, 3. Liga, Verträge, Zulassung): nur neue Karrieren
+    pressure: 1, // Vorstand und Erfolgsdruck (pressure.js): nur neue Karrieren
     seed,
     level: 1,
     league: league.name,

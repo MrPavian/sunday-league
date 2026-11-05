@@ -1049,8 +1049,9 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
   der Co-Trainer ein (wenn besetzt), ab Verbandsliga dauert Familienkrise/Burnout eine statt zwei Wochen; roter Bereich (< 25):
   Energie kostet eine Aktion je Woche, Familie den günstigeren Sonntag. Gemessen vorher (6 Karrieren × 4 Saisons, Trainer
   trainiert selbst): Energie in rund 28 % der Wochen rot, etwa ein Burnout in vier Saisons, Familie nie rot. Grenzen und Schwelle
-  sind Spielwerte (keine Quelle zum Zeitaufwand der Trainer oben gefunden). Offen: Vorstand und Erfolgsdruck in höheren Ligen
-  (eigenes Thema, Stuhl wackelt bei Negativserie).
+  sind Spielwerte (keine Quelle zum Zeitaufwand der Trainer oben gefunden). Vorstand und Erfolgsdruck ✅ 2026-11-05
+  ([docs/KONZEPT-VORSTAND.md](docs/KONZEPT-VORSTAND.md)): Rückhalt je Liga, Warnung, Ultimatum, Entlassung mit Angeboten anderer
+  Vereine, als Präsident Misstrauensantrag der Mitglieder (nur neue Karrieren).
 
 ### 11.14 Spielerstärke und Entwicklung über alle Ligen (vom Nutzer gewünscht, 2026-10-29)
 - Konzept: [docs/KONZEPT-SPIELERSTAERKE.md](docs/KONZEPT-SPIELERSTAERKE.md). Eine absolute Leistungsskala in Elo-Einheiten. Die

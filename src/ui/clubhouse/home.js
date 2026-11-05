@@ -14,6 +14,8 @@ import { crestExtras, crestOf, crestSVG } from '../crest.js';
 import { relegationNeeded, relegationOf } from '../../career/relegation.js';
 import { LEAGUES, MAX_LEVEL, maxLevel } from '../../career/clubs.js';
 import { blockText, championWaives, licenseNeeds, promotionBlock } from '../../career/license.js';
+import { firedState, offerClubs } from '../../career/pressure.js';
+import { startCash } from '../../career/clubchange.js';
 import { leagueTitle } from '../../career/verband.js';
 import { clubById, humanClub, kitChoice, leagueOf, humanFixture, playerOf, seasonOver, table } from '../../career/career.js';
 import { DESTINATIONS, tripChoose, tripStage, tripState, tripVerdict } from '../../career/trip.js';
@@ -68,7 +70,7 @@ export const homeScreens = {
   hub() {
     const c = this.career;
     const over = seasonOver(c);
-    const main = (over || this.results ? '' : this.pokalWonCard()) + (over ? this.seasonEnd() : this.results ? this.roundResults() : c.week?.midweek ? this.midweekCard() : c.week?.breakWeek ? this.breakCard() : this.nextMatch());
+    const main = firedState(c) && !this.results ? this.firedCard() : (over || this.results ? '' : this.pokalWonCard()) + (over ? this.seasonEnd() : this.results ? this.roundResults() : c.week?.midweek ? this.midweekCard() : c.week?.breakWeek ? this.breakCard() : this.nextMatch());
     const mine = [];
     // Während der Ergebnisanzeige ist der eben gespielte Spieltag schon dabei.
     for (let i = Math.min(this.results ? c.round : c.round - 1, c.fixtures.length - 1); i >= 0 && mine.length < 5; i--) {
@@ -298,6 +300,21 @@ export const homeScreens = {
         ${this.waiveAside(upNow || (pos === 2 && relegationNeeded(c)) || !!rel?.won && rel.kind === 'up')}
         ${this.legacyAside() ?? this.relegationAside() ?? this.cupAside()}
       </div>`;
+  },
+
+  // Entlassen (pressure.js): Angebote anderer Vereine der Liga – erst nach der Wahl geht es weiter (clubchange.js).
+  firedCard() {
+    const c = this.career;
+    const f = firedState(c);
+    const rows = table(c);
+    const offers = offerClubs(c).map((club) => {
+      const pos = rows.findIndex((r) => r.club.id === club.id) + 1;
+      return `<button class="successor" data-action="takeOver" data-value="${club.id}" data-testid="take-over"><b>${club.name}</b><small>${tr(`Platz ${pos} · ${rows[pos - 1]?.pts ?? 0} Punkte · Startkasse ${startCash(c.level ?? 1).toLocaleString('de-DE')} €`, `Place ${pos} · ${rows[pos - 1]?.pts ?? 0} points · starting kitty €${startCash(c.level ?? 1).toLocaleString('en-GB')}`)}</small></button>`;
+    }).join('');
+    return `<div class="fixture-card" data-testid="fired"><p class="label">${f.reason === 'president' ? tr('Abgewählt', 'Voted out') : tr('Entlassen', 'Sacked')}</p>
+      <h3>${tr('Wie geht es weiter?', 'What next?')}</h3>
+      <p>${tr(`Diese Vereine aus der ${leagueTitle(c, c.level ?? 1)} wollen dich als Trainer. Du übernimmst Kader, Tabellenplatz und Spielplan – Kasse, Anlage und Sponsoren fangen neu an.`, `These clubs from the ${leagueTitle(c, c.level ?? 1)} want you as manager. You take over their squad, league position and fixtures – kitty, grounds and sponsors start afresh.`)}</p>
+      <div class="ui-stack">${offers}</div></div>`;
   },
 
   // Profiligen (license.js): Zulassung für die Liga darüber und freiwilliger Verzicht auf den Aufstieg.

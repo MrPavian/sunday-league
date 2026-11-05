@@ -6,6 +6,15 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-05-3 – Der Stuhl wackelt
+
+### Neu
+- **Rückhalt im Vorstand:** Der Vorstand misst jedes Ligaspiel am Saisonziel. Wie streng, hängt an der Liga: in der Freizeitliga gar nicht, in den Kreisligen kaum, ab der Landesliga deutlich, in Regionalliga und 3. Liga hart. Zu sehen unter Verein → Du.
+- **Warnung und Ultimatum:** Sinkt der Rückhalt, kommt erst eine Warnung, dann ein Ultimatum – vier Punkte aus den nächsten drei Ligaspielen. Klappt es nicht, bist du entlassen. Im Sommer gibt es notfalls ein Ultimatum für den Saisonstart.
+- **Neuer Verein:** Nach der Entlassung melden sich bis zu drei Vereine derselben Liga. Du übernimmst Kader, Tabellenplatz und Spielplan; Kasse, Anlage, Sponsoren und Jugend fangen neu an. Dein alter Verein spielt weiter – ihr trefft euch wieder.
+- **Als Präsident:** Die Mitglieder machen Druck. Ein knapp verlorener Misstrauensantrag kostet den eingestellten Trainer, ein deutlich verlorener (oder der zweite binnen zwei Saisons) dich das Amt – dann geht es als Trainer bei einem anderen Verein weiter.
+- Gilt für neue Karrieren.
+
 ## 2026-11-05-2 – Regionalliga und 3. Liga
 
 ### Neu

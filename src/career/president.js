@@ -252,6 +252,14 @@ function releaseHired(c, why) {
   return h;
 }
 
+// Misstrauensantrag knapp verloren (pressure.js): Die Mitglieder setzen den Trainer ab – ohne Abfindung, der Vertrag des
+// Ehrenamts endet mit dem Beschluss (Spielwert). Liefert den bisherigen Trainer oder null.
+export function forceOutHired(c) {
+  const h = releaseHired(c, 'members');
+  if (h) chronicle(c, tr(`${h.name} muss auf Beschluss der Mitglieder als Trainer gehen.`, `${h.name} has to go as manager by decision of the members.`));
+  return h;
+}
+
 // Trainer entlassen: kostet die Abfindung (Schulden gibt es nicht – ohne Geld keine Entlassung).
 export function fireCoach(c) {
   if (!isPresident(c) || !c.hired) return { ok: false, reason: 'nocoach' };
