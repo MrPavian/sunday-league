@@ -38,9 +38,9 @@ export async function festivalAndSummer(b, size, shots) {
   ok(!(await p.$('[data-testid="summer-invite"]')) && !!(await p.$('[data-action="onCoach"]')), 'Nach dem Abbrechen: Einladung weg, Anpfiff da');
   // Planungsblatt im Verein.
   await click(p, '[data-action="area"][data-value="club"]');
-  await p.evaluate(() => document.querySelector('[data-action="tab"][data-value="club"]')?.click());
+  await p.evaluate(() => document.querySelector('[data-action="tab"][data-value="leben"]')?.click());
   await p.waitForTimeout(200);
-  await p.evaluate(() => document.querySelector('[data-action="clubSub"][data-value="leben"]')?.click()); // Unterseite (club.js CLUB_SUBS)
+  await p.evaluate(() => void 0); // eigener Reiter seit dem flachen Menü (2026-11-06)
   await p.waitForTimeout(400);
   ok(!!(await p.$('[data-testid="fest-plan"]')), 'Verein: kein Planungsblatt fürs Vereinsfest');
   await click(p, '.fest-part[data-value="grill"]');

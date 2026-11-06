@@ -18,6 +18,11 @@ In the game, the same highlights are under **Settings → What's new**.
   - **Stadium surroundings:** car park, club shop, forecourt with shuttle – more spectators and matchday income.
 - **Youth academy required from the second division** for a licence, as in reality. Clubs already in the first or second division have one.
 
+### Changed
+- **Tidier menus:** at most two levels. The club section has no sub-tabs any more – kitty, grounds, club life, kit & crest, museum and you are tabs of their own (the president's office sits under "You"). Youth, women and old boys are together under **Squad → Teams**.
+- The grounds are sorted into three themes: pitch and stadium, team, club. The crest editor only opens when you want it.
+- On phones, tabs no longer run off the side but sit in a tidy grid; the squad-limit buttons stay together.
+
 ## 2026-11-06-3 – Ticket prices, season tickets and a squad that cannot run dry
 
 ### New

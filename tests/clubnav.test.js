@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { areaOfTab, CLUB_AREAS, Clubhouse } from '../src/ui/Clubhouse.js';
+import { areaOfTab, CLUB_AREAS, Clubhouse, resolveTab } from '../src/ui/Clubhouse.js';
 import { ICON_NAMES } from '../src/ui/ds.js';
 
 // UI 2.0: Vereinsheim mit höchstens zwei Ebenen (Bereich → Tab). Kein Bildschirm darf beim
@@ -8,8 +8,13 @@ describe('Vereinsheim-Navigation', () => {
   const screens = Object.getOwnPropertyNames(Clubhouse.prototype).filter((n) => n.startsWith('tab_')).map((n) => n.slice(4));
 
   it('jeder bisherige Tab ist genau einem Bereich zugeordnet, jeder Bereichs-Tab existiert', () => {
-    expect(screens.length).toBe(17); // 13 bisherige + Taktik (aus der Aufstellung herausgelöst) + Präsidium (nur nach der Trainereinstellung sichtbar) + Alte Herren + Frauen (nur mit Frauenteam sichtbar)
-    for (const t of screens) expect(CLUB_AREAS.filter((a) => a.tabs.includes(t))).toHaveLength(1);
+    // Flaches Menü (2026-11-06): 17 bisherige + Anlage, Vereinsleben, Trikot & Wappen, Du, Teams. Die alten Namen (Verein,
+    // Präsidium, Jugend, Frauen, Alte Herren) sind Teile neuer Reiter und führen über resolveTab dorthin.
+    expect(screens.length).toBe(22);
+    const ALIASES = ['club', 'office', 'youth', 'women', 'oldboys'];
+    for (const t of screens) expect(CLUB_AREAS.filter((a) => a.tabs.includes(ALIASES.includes(t) ? resolveTab(t).tab : t))).toHaveLength(1);
+    for (const t of ALIASES) expect(CLUB_AREAS.some((a) => a.tabs.includes(t))).toBe(false);
+    for (const a of CLUB_AREAS) expect(a.tabs.length).toBeLessThanOrEqual(6); // am Handy ein Raster mit höchstens zwei Zeilen
     for (const a of CLUB_AREAS) for (const t of a.tabs) if (t !== 'home') expect(screens).toContain(t);
   });
 
@@ -23,5 +28,8 @@ describe('Vereinsheim-Navigation', () => {
     expect(areaOfTab('cup').id).toBe('season');
     expect(areaOfTab('chat').id).toBe('phone');
     expect(areaOfTab('unbekannt').id).toBe('home');
+    expect(areaOfTab('oldboys').id).toBe('team');
+    expect(areaOfTab('office').id).toBe('club');
+    expect(resolveTab('club', 'wappen').tab).toBe('kit');
   });
 });

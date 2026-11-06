@@ -37,10 +37,9 @@ import { licenseNeeds } from '../../career/license.js';
 import { trustLabel, trustOf, weight } from '../../career/pressure.js';
 
 // Unterseiten des Reiters Verein.
-export const CLUB_SUBS = () => [['me', tr('Du', 'You')], ['anlage', tr('Anlage', 'Grounds')], ['leben', tr('Vereinsleben', 'Club life')], ['trikot', tr('Trikot', 'Kit')], ['wappen', tr('Wappen', 'Crest')]];
 
 export const clubScreens = {
-  tab_club() {
+  profileCard() {
     const c = this.career;
     const k = c.coach;
     const me = k?.idx != null ? this.p(k.idx) : null;
@@ -59,16 +58,26 @@ export const clubScreens = {
           <p class="empty">${isPresident(c) ? tr('Im Präsidium bleibt mehr Zeit für die Familie: kein Sonntag an der Linie, kein Training. Dafür zählt, wen du als Trainer geholt hast.', 'In the president\'s office there is more time for the family: no Sundays on the touchline, no training. What counts now is who you hired as manager.') : tr('Training, Scouting und Spieltage kosten Zeit mit der Familie. Unbesetzte Posten (Co-Trainer, Wirt, Platzwart) und Zusatzämter ziehen Energie. Ist einer der beiden Werte leer, fällst du zwei Wochen aus.', 'Training, scouting and matchdays cost family time. Empty posts (assistant, bar manager, groundsman) and extra duties drain energy. If either bar runs empty, you are out for two weeks.')}</p>
         </div>`
       : '';
-    // Unterseiten (ROADMAP 11.11 Übersichtlichkeit): gemessen war die Seite am Handy fast zwölf Bildschirmhöhen lang.
-    const subs = CLUB_SUBS().filter(([id]) => id !== 'me' || profile);
-    const sub = subs.some(([id]) => id === this.clubSub) ? this.clubSub : subs[0][0];
-    const body =
-      sub === 'me' ? profile
-      : sub === 'anlage' ? `${this.platzBlock()}${this.facilityBlock()}`
-      : sub === 'leben' ? `${this.clubLifeBlock()}${this.festivalCard()}${this.rivalBlock()}${this.refereeBlock()}${this.chronicleBlock()}`
-      : sub === 'trikot' ? this.kitForm()
-      : this.crestBlock();
-    return `${uiTabs(subs, sub, 'clubSub').replace('class="ui-tabs"', 'class="ui-tabs club-subs"')}<div class="club-sub" data-sub="${sub}">${body}</div>`;
+    return profile;
+  },
+
+  // Verein (Menü flach, 2026-11-06): jede frühere Unterseite ist ein eigener Reiter.
+  tab_me() {
+    return `${this.profileCard()}${isPresident(this.career) ? this.tab_office() : ''}`;
+  },
+  tab_anlage() {
+    return `${this.platzBlock()}${this.facilityBlock()}`;
+  },
+  tab_leben() {
+    return `${this.clubLifeBlock()}${this.festivalCard()}${this.rivalBlock()}${this.refereeBlock()}${this.chronicleBlock()}`;
+  },
+  // Trikot oben; der Wappen-Editor (viele Knöpfe) klappt erst auf Wunsch auf und bleibt dann offen.
+  tab_kit() {
+    return `${this.kitForm()}<details class="fac-group crest-more" data-keep="crest"${this.keepOpen?.crest ? ' open' : ''}><summary><h4 class="sub">${tr('Wappen', 'Crest')}</h4></summary>${this.crestBlock()}</details>`;
+  },
+  // Alter Name (Spielstände, Links): führt auf die Anlage.
+  tab_club() {
+    return this.tab_anlage();
   },
 
   // Zuschauer bei Heimspielen (attendance.js): Schnitt, Auslastung, Rekord, ausverkauft, draußen geblieben.
@@ -473,13 +482,24 @@ export const clubScreens = {
       const extra = def.land && !built ? ` · ${tr('Genehmigung der Gemeinde', 'council permit')}` : '';
       return `<li class="facility${built ? ' built' : ''}"><div><b>${def.name}</b> <small>${buildWeeks(c, id, 'handwerker')} ${plural(buildWeeks(c, id, 'handwerker'), 'Woche', 'Wochen', 'week', 'weeks')}${def.upkeep ? ` · ${euro(def.upkeep)}${tr('/Woche Nebenkosten', '/week running costs')}` : ''}${extra}</small><br><small>${def.desc}</small></div><div class="state">${state}</div></li>`;
     };
-    const groups = FACILITY_GROUPS.map((g) => {
+    // Drei Themen statt zehn Gruppen untereinander (Menü flach, 2026-11-06).
+    const THEMES = [
+      [tr('Platz und Stadion', 'Pitch and stadium'), ['platz', 'tribuene', 'umfeld', 'gastro']],
+      [tr('Mannschaft', 'Team'), ['training', 'team', 'medizin']],
+      [tr('Verein', 'Club'), ['heim', 'buero', 'jugend']],
+    ];
+    const groupHtml = (g) => {
       const rows = Object.entries(FACILITIES).filter(([, d]) => (d.group ?? 'heim') === g.id && (d.minLevel ?? 1) <= maxLevel(c)).map(row).join(''); // alte Spielstände: keine Profi-Ausbauten
       // Aufklappbar (ROADMAP 11.11): offen ist nur die Gruppe, in der gerade gebaut wird oder etwas in der Warteschlange steht.
       const ids = Object.entries(FACILITIES).filter(([, d]) => (d.group ?? 'heim') === g.id && (d.minLevel ?? 1) <= maxLevel(c)).map(([id]) => id);
       const open = ids.includes(f.building?.id) || f.queue.some((q) => ids.includes(q.id)) || this.facOpen === g.id;
       const done = ids.filter((id) => f.built[id]).length;
       return rows ? `<details class="fac-group" data-group="${g.id}"${open ? ' open' : ''}><summary><h4 class="sub">${g.name} <small>${done}/${ids.length}${g.id === 'tribuene' ? ` · ${tr('Fassungsvermögen', 'capacity')}: ${capacity(c)}` : ''}</small></h4></summary>${g.id === 'tribuene' ? this.gateBlock() + this.ticketBlock() : ''}<ul class="plain">${rows}</ul></details>` : '';
+    };
+    const byId = Object.fromEntries(FACILITY_GROUPS.map((g) => [g.id, g]));
+    const groups = THEMES.map(([name, ids]) => {
+      const inner = ids.map((id) => byId[id] && groupHtml(byId[id])).filter(Boolean).join('');
+      return inner ? `<p class="t-cap fac-theme">${name}</p>${inner}` : '';
     }).join('');
     // Profiligen (license.js): Was die Zulassung für die Liga darüber verlangt – rechtzeitig bauen, ein Stadion dauert.
     const lv = c.level ?? 1;

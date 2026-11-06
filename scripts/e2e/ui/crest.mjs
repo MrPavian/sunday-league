@@ -35,9 +35,9 @@ export async function crestEditor(b, size, shots) {
   await click(p, '.career [data-c="continue"]');
   await p.waitForTimeout(1500);
   await click(p, '[data-action="area"][data-value="club"]');
-  await p.evaluate(() => document.querySelector('[data-action="tab"][data-value="club"]')?.click());
+  await p.evaluate(() => document.querySelector('[data-action="tab"][data-value="kit"]')?.click());
   await p.waitForTimeout(200);
-  await p.evaluate(() => document.querySelector('[data-action="clubSub"][data-value="wappen"]')?.click()); // Unterseite (club.js CLUB_SUBS)
+  await p.evaluate(() => document.querySelector('.crest-more:not([open]) summary')?.click()); // Wappen-Editor aufklappen (club.js tab_kit)
   await p.waitForTimeout(400);
   ok(!!(await p.$('[data-testid="crest-editor"]')), 'Wappen-Editor fehlt im Reiter Verein');
   await p.evaluate(() => document.querySelector('[data-testid="crest-editor"]')?.scrollIntoView({ block: 'start' }));

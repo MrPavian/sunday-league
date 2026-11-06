@@ -140,8 +140,8 @@ export const teamScreens = {
     const max = maxSquad(c);
     const extra = c.squadExtra ?? 0;
     const byLeague = Object.values(LEAGUES).filter((l) => l.level <= maxLevel(c)).map((l) => `${leagueTitle(c, l.level)}: ${l.maxSquad}`).join(' · ');
-    return `<div class="t-2 squad-limit" data-testid="squad-limit">${tr('Kadergrenze', 'Squad limit')} <b>${max}</b> <small>(${tr('Standard', 'default')} ${std}${extra ? `, ${extra > 0 ? '+' : ''}${extra}` : ''})</small>
-      ${button('−', { action: 'squadLimit', value: extra - 1, disabled: max <= MIN_SQUAD, 'aria-label': tr('Kadergrenze senken', 'Lower squad limit') })}${button('+', { action: 'squadLimit', value: extra + 1, disabled: extra >= SQUAD_EXTRA_MAX, 'aria-label': tr('Kadergrenze erhöhen', 'Raise squad limit') })}
+    return `<div class="t-2 squad-limit" data-testid="squad-limit"><span>${tr('Kadergrenze', 'Squad limit')} <b>${max}</b> <small>(${tr('Standard', 'default')} ${std}${extra ? `, ${extra > 0 ? '+' : ''}${extra}` : ''})</small></span>
+      <span class="stepper">${button('−', { action: 'squadLimit', value: extra - 1, disabled: max <= MIN_SQUAD, 'aria-label': tr('Kadergrenze senken', 'Lower squad limit') })}${button('+', { action: 'squadLimit', value: extra + 1, disabled: extra >= SQUAD_EXTRA_MAX, 'aria-label': tr('Kadergrenze erhöhen', 'Raise squad limit') })}</span>
       <details><summary><small>${tr('Standard je Liga', 'Default per league')}</small></summary><small>${byLeague}</small></details></div>`;
   },
 
@@ -559,6 +559,19 @@ export const teamScreens = {
       <p class="chat-head">${tr('Stationen', 'Stations')} ${tt.stations.length}/${MAX_STATIONS}${done ? tr(` · noch ${tt.invites} Einladung${tt.invites === 1 ? '' : 'en'}`, ` · ${tt.invites} invitation${tt.invites === 1 ? '' : 's'} left`) : tr(' · wähle, was du sehen willst', ' · choose what you want to see')}</p>
       <div class="stations">${stationButtons}</div>
       <table class="squad training"><thead><tr><th>${tr('Teilnehmer', 'Trialist')}</th>${tt.stations.map((id) => `<th class="num">${STATIONS[id].name}<small>${STATIONS[id].unit}</small></th>`).join('')}<th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  },
+
+  // Teams (Menü flach, 2026-11-06): Jugend, Frauen und Alte Herren auf einer Seite; das zuletzt angesteuerte Team steht oben.
+  tab_teams() {
+    const c = this.career;
+    const parts = [
+      ['youth', tr('Jugend', 'Youth'), () => this.tab_youth()],
+      ...(c.women ? [['women', tr('Frauen', 'Women'), () => this.tab_women()]] : []),
+      ['oldboys', tr('Alte Herren', 'Old boys'), () => this.tab_oldboys()],
+    ];
+    const f = parts.findIndex(([id]) => id === this.teamsFocus);
+    if (f > 0) parts.unshift(...parts.splice(f, 1));
+    return parts.map(([id, label, html]) => `<section class="teams-part" data-team="${id}"><h3 class="teams-head">${label}</h3>${html()}</section>`).join('');
   },
 
   tab_youth() {

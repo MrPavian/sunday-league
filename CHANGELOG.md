@@ -18,6 +18,11 @@ Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**
   - **Stadionumfeld:** Parkplatz, Fanshop, Vorplatz mit Shuttle – mehr Zuschauer und Einnahmen am Spieltag.
 - **Nachwuchsleistungszentrum ab der 2. Liga Pflicht** für die Zulassung, wie in echt. Wer schon in der 2. oder 1. Liga spielt, hat es.
 
+### Geändert
+- **Übersichtlichere Menüs:** höchstens zwei Ebenen. Im Verein gibt es keine Unterreiter mehr – Kasse, Anlage, Vereinsleben, Trikot & Wappen, Museum und Du sind eigene Reiter (das Präsidium steht unter „Du“). Jugend, Frauen und Alte Herren stehen zusammen unter **Mannschaft → Teams**.
+- Die Anlage ist nach drei Themen sortiert: Platz und Stadion, Mannschaft, Verein. Der Wappen-Editor klappt erst auf Wunsch auf.
+- Reiter laufen am Handy nicht mehr seitlich aus dem Bild, sondern stehen in einem ordentlichen Raster; die Kadergrenze-Knöpfe bleiben beisammen.
+
 ## 2026-11-06-3 – Eintrittspreise, Dauerkarten und ein Kader, der nicht leerläuft
 
 ### Neu

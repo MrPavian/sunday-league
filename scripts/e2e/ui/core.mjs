@@ -2,7 +2,7 @@
 import { CHANGELOG, NEWEST_ID } from '../../../src/data/changelog.js';
 import { BASE, checker, click, hScroll, launch, newCareer, page, settle, SIZES, smallTargets, visible } from '../lib.mjs';
 
-const TABS = [['home'], ['team', 'squad'], ['team', 'lineup'], ['team', 'tactic'], ['team', 'training'], ['team', 'youth'], ['team', 'youth', 'youthTab:teams'], ['team', 'transfers'], ['season', 'table'], ['season', 'fixtures'], ['season', 'cup'], ['club', 'cash'], ['club', 'club', 'clubSub:me'], ['club', 'club', 'clubSub:anlage'], ['club', 'club', 'clubSub:leben'], ['club', 'club', 'clubSub:trikot'], ['club', 'club', 'clubSub:wappen'], ['club', 'museum'], ['pub'], ['phone', 'chat']];
+const TABS = [['home'], ['team', 'squad'], ['team', 'lineup'], ['team', 'tactic'], ['team', 'training'], ['team', 'teams'], ['team', 'teams', 'youthTab:teams'], ['team', 'transfers'], ['season', 'table'], ['season', 'fixtures'], ['season', 'cup'], ['club', 'cash'], ['club', 'anlage'], ['club', 'leben'], ['club', 'kit'], ['club', 'me'], ['club', 'museum'], ['pub'], ['phone', 'chat']];
 // Bewusst schmal: Tageskästchen im Kalender (große Spieltag-Knöpfe darunter sind die Alternative).
 export const NARROW_OK = ['.cal-day'];
 

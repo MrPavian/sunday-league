@@ -16,9 +16,9 @@ export async function platzAnlage(b, size) {
   await click(p, '.career [data-c="continue"]');
   await p.waitForTimeout(1500);
   await click(p, '[data-action="area"][data-value="club"]');
-  await p.evaluate(() => document.querySelector('[data-action="tab"][data-value="club"]')?.click());
+  await p.evaluate(() => document.querySelector('[data-action="tab"][data-value="anlage"]')?.click());
   await p.waitForTimeout(200);
-  await p.evaluate(() => document.querySelector('[data-action="clubSub"][data-value="anlage"]')?.click()); // Unterseite (club.js CLUB_SUBS)
+  await p.evaluate(() => void 0); // eigener Reiter seit dem flachen Menü (2026-11-06)
   await p.waitForTimeout(400);
   await settle(p);
   ok(!!(await p.$('.facilities.platz')), 'Platz-Block fehlt');

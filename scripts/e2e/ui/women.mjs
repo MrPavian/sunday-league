@@ -22,8 +22,10 @@ export async function frauen(b, size, shots) {
   const none = await page(b, size, { query: '?notitle&debug', store: { 'sunday-league:career': JSON.stringify(career(false)) } });
   await click(none, '.career [data-c="continue"]');
   await none.waitForTimeout(1500);
-  await click(none, '[data-action="area"][data-value="club"]');
-  ok(!(await none.$('[data-action="tab"][data-value="women"]')), 'Reiter Frauen ohne Frauenteam');
+  await click(none, '[data-action="area"][data-value="team"]');
+  await none.evaluate(() => document.querySelector('[data-action="tab"][data-value="teams"]')?.click());
+  await none.waitForTimeout(300);
+  ok(!(await none.$('[data-team="women"]')), 'Frauen unter Teams ohne Frauenteam');
   await none.context().close();
 
   const p = await page(b, size, { query: '?notitle&debug', store: { 'sunday-league:career': JSON.stringify(career(true)) } });
@@ -39,8 +41,8 @@ export async function frauen(b, size, shots) {
   };
   await click(p, '.career [data-c="continue"]');
   await p.waitForTimeout(1500);
-  await click(p, '[data-action="area"][data-value="club"]');
-  await p.evaluate(() => document.querySelector('[data-action="tab"][data-value="women"]')?.click());
+  await click(p, '[data-action="area"][data-value="team"]');
+  await p.evaluate(() => document.querySelector('[data-action="tab"][data-value="teams"]')?.click());
   await p.waitForTimeout(400);
   ok(!!(await p.$('[data-testid="women"]')), 'Reiter Frauen fehlt');
   const subs = await p.$$eval('[data-testid="women"] .ui-tabs [data-action="woSub"]', (e) => e.map((x) => x.dataset.value));

@@ -59,9 +59,11 @@ import { hex, dartPoints, leagueName } from './clubhouse/shared.js';
 // Bereich; data-action="tab" mit einem alten Tab-Namen funktioniert deshalb weiter.
 const AREAS = [
   { id: 'home', icon: 'home', label: () => tr('Heute', 'Today'), tabs: ['home'] },
-  { id: 'team', icon: 'team', label: () => tr('Mannschaft', 'Squad'), tabs: ['squad', 'lineup', 'tactic', 'training', 'youth', 'transfers'] },
+  { id: 'team', icon: 'team', label: () => tr('Mannschaft', 'Squad'), tabs: ['squad', 'lineup', 'tactic', 'training', 'transfers', 'teams'] },
   { id: 'season', icon: 'season', label: () => tr('Saison', 'Season'), tabs: ['table', 'fixtures', 'cup'] },
-  { id: 'club', icon: 'club', label: () => tr('Verein', 'Club'), tabs: ['cash', 'club', 'office', 'oldboys', 'women', 'museum'] }, // 'office' (Präsidium) nur nach dem Traineramt, 'women' nur mit Frauenteam, siehe visibleTabs
+  // Menü-Aufräumen (Nutzerentscheid 2026-11-06, „flach, höchstens zwei Ebenen"): keine Unterreiter mehr im Verein; Präsidium steht
+  // unter „Du", Jugend, Frauen und Alte Herren zusammen unter „Teams" (Mannschaft).
+  { id: 'club', icon: 'club', label: () => tr('Verein', 'Club'), tabs: ['cash', 'anlage', 'leben', 'kit', 'museum', 'me'] },
   { id: 'pub', icon: 'pub', label: () => tr('Kneipe', 'Pub'), tabs: ['pub'] },
   { id: 'phone', icon: 'phone', label: () => tr('Handy', 'Phone'), tabs: ['chat'] },
 ];
@@ -74,6 +76,11 @@ const TAB_LABELS = () => ({
   transfers: tr('Transfers', 'Transfers'),
   training: tr('Training', 'Training'),
   youth: tr('Jugend', 'Youth'),
+  teams: tr('Teams', 'Teams'),
+  anlage: tr('Anlage', 'Grounds'),
+  leben: tr('Vereinsleben', 'Club life'),
+  kit: tr('Trikot & Wappen', 'Kit & crest'),
+  me: tr('Du', 'You'),
   table: tr('Tabelle', 'Table'),
   cup: tr('Turnier', 'Cup'),
   club: tr('Verein', 'Club'),
@@ -84,9 +91,16 @@ const TAB_LABELS = () => ({
   cash: tr('Kasse', 'Kitty'),
   fixtures: tr('Spielplan', 'Fixtures'),
 });
-// Das Präsidium gibt es erst nach der Trainereinstellung (president.js).
-const visibleTabs = (area, c) => area.tabs.filter((t) => (t !== 'office' || isPresident(c)) && (t !== 'women' || !!c.women));
-export const areaOfTab = (tab) => AREAS.find((a) => a.tabs.includes(tab)) ?? AREAS[0];
+const visibleTabs = (area) => area.tabs;
+// Alte Reiter-Namen (Knöpfe, Spielstände, Tests) führen auf die neuen Reiter; focus = welcher Teil oben steht.
+const CLUB_SUB_TAB = { me: 'me', anlage: 'anlage', leben: 'leben', trikot: 'kit', wappen: 'kit' };
+export function resolveTab(tab, clubSub = null) {
+  if (tab === 'club') return { tab: CLUB_SUB_TAB[clubSub] ?? 'anlage' };
+  if (tab === 'office') return { tab: 'me' };
+  if (tab === 'youth' || tab === 'women' || tab === 'oldboys') return { tab: 'teams', focus: tab };
+  return { tab };
+}
+export const areaOfTab = (tab) => AREAS.find((a) => a.tabs.includes(resolveTab(tab).tab)) ?? AREAS[0];
 export const CLUB_AREAS = AREAS;
 
 // Vereinsheim: Chatgruppe, Kader, Tabelle, Spielplan – und der nächste Spieltag.
@@ -103,14 +117,19 @@ export class Clubhouse {
     // Aufgeklappte Ausbaugruppe merken (club.js facilityBlock), damit sie nach dem Neuzeichnen offen bleibt.
     root.addEventListener('toggle', (e) => {
       const g = e.target?.closest?.('details.fac-group');
-      if (g) this.facOpen = g.open ? g.dataset.group : this.facOpen === g.dataset.group ? null : this.facOpen;
+      if (g && g.dataset.keep) (this.keepOpen ??= {})[g.dataset.keep] = g.open;
+      else if (g) this.facOpen = g.open ? g.dataset.group : this.facOpen === g.dataset.group ? null : this.facOpen;
     }, true);
     root.addEventListener('click', (e) => {
       const t = e.target.closest('[data-action]');
       if (!t || this.busy || this.suppressClick) return;
       if (t.classList.contains('m-card-open') && performance.now() - Number(root.dataset.swiped ?? 0) < 400) return; // war ein Wischen
       const { action, value } = t.dataset;
-      if (action === 'tab') this.tab = value;
+      if (action === 'tab') {
+        const r = resolveTab(value, this.clubSub);
+        this.tab = r.tab;
+        if (r.focus) this.teamsFocus = r.focus;
+      }
       else if (action === 'area') {
         const area = AREAS.find((a) => a.id === value) ?? AREAS[0];
         this.tab = this.lastTab[area.id] ?? area.tabs[0];
@@ -163,8 +182,8 @@ export class Clubhouse {
         k.third ??= 0x1d2b44; // dritte Farbe für Retro-Muster: Dunkelblau als Start
       } else if (action === 'kitGroup') this.kitGroup = value;
       else if (action === 'clubSub') {
-        this.clubSub = value; // Unterseiten des Reiters Verein (club.js); aus dem Präsidium direkt zum Ausbau
-        this.tab = 'club';
+        this.clubSub = value; // alte Unterseiten des Vereins: jetzt eigene Reiter (aus dem Präsidium direkt zum Ausbau)
+        this.tab = resolveTab('club', value).tab;
       }
       else if (action === 'kitCollar') this.draftKit().collar = value;
       else if (action === 'kitSleeves') this.draftKit().sleeves = value;
@@ -718,8 +737,9 @@ export class Clubhouse {
     if (c.founding) return this.renderFounding();
     const over = seasonOver(c);
     const roundNo = Math.min(c.round + 1, c.fixtures.length);
-    if (this.tab === 'office' && !isPresident(c)) this.tab = 'club'; // das Präsidium gibt es erst nach der Trainereinstellung
-    if (this.tab === 'women' && !c.women) this.tab = 'club';
+    const rt = resolveTab(this.tab, this.clubSub); // z. B. nach dem Spiel der Alten Herren: tab = 'oldboys'
+    this.tab = rt.tab;
+    if (rt.focus) this.teamsFocus = rt.focus;
     if (this.tab === 'home' || !this[`tab_${this.tab}`]) this.tab = 'home';
     const area = areaOfTab(this.tab);
     this.lastTab[area.id] = this.tab;
@@ -732,11 +752,11 @@ export class Clubhouse {
     const labels = TAB_LABELS();
     // Bereich „Verein" ist die Vereinsmappe: Register statt Reiterleiste, Inhalt in der Kartonmappe.
     const folder = area.id === 'club';
-    const areaTabs = visibleTabs(area, c);
+    const areaTabs = visibleTabs(area);
     const sub = areaTabs.length > 1
       ? folder
-        ? `<div class="m-tabs folder-tabs" role="tablist">${areaTabs.map((t) => `<button role="tab" aria-selected="${t === this.tab}" data-action="tab" data-value="${t}">${labels[t]}</button>`).join('')}</div>`
-        : uiTabs(areaTabs.map((t) => [t, labels[t]]), this.tab, 'tab')
+        ? `<div class="m-tabs folder-tabs${areaTabs.length > 4 ? ' tabs-grid' : ''}" role="tablist">${areaTabs.map((t) => `<button role="tab" aria-selected="${t === this.tab}" data-action="tab" data-value="${t}">${labels[t]}</button>`).join('')}</div>`
+        : uiTabs(areaTabs.map((t) => [t, labels[t]]), this.tab, 'tab').replace('class="ui-tabs"', `class="ui-tabs${areaTabs.length > 4 ? ' tabs-grid' : ''}"`)
       : '';
     // Im Vereinsheim („Heute") ist das Fenster der Szene durchsichtig: dahinter läuft der eigene Platz.
     this.root.classList.toggle('see-through', (area.id === 'home' || this.tab === 'pub') && homeView() !== 'klassisch');

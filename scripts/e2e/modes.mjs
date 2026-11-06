@@ -21,7 +21,7 @@ const INCIDENTS = { hund: 'park', zaun: 'hinterhof', autoalarm: 'parkplatz', pol
 // gemessen: Autoalarm 26 von 30 Seeds, alte wie neue Ballphysik). Der Browser-Test prüft den Ablauf, nicht die Rate: bis zu
 // drei Seeds, der erste mit Vorfall zählt. Die Rate prüfen die Unit-Tests.
 const INCIDENT_SEED = { autoalarm: [15, 7, 21], zaun: [11, 7, 21] };
-const TABS = [['home'], ['team', 'squad'], ['team', 'lineup'], ['team', 'tactic'], ['team', 'training'], ['team', 'youth'], ['team', 'transfers'], ['season', 'table'], ['season', 'fixtures'], ['season', 'cup'], ['club', 'cash'], ['club', 'club'], ['club', 'museum'], ['pub'], ['phone', 'chat']];
+const TABS = [['home'], ['team', 'squad'], ['team', 'lineup'], ['team', 'tactic'], ['team', 'training'], ['team', 'teams'], ['team', 'transfers'], ['season', 'table'], ['season', 'fixtures'], ['season', 'cup'], ['club', 'cash'], ['club', 'anlage'], ['club', 'leben'], ['club', 'kit'], ['club', 'museum'], ['club', 'me'], ['pub'], ['phone', 'chat']];
 
 const frame = (p) => p.evaluate(() => globalThis.__sl?.diag?.frame ?? -1);
 async function running(p) {
@@ -421,7 +421,7 @@ export async function clubSetup(b) {
   // Ehrenamt: Wirt aus dem Kader, Platzwart per Aushang.
   await click(p, '[data-action="area"][data-value="team"]');
   await p.waitForTimeout(300);
-  await click(p, '[data-action="tab"][data-value="youth"]');
+  await click(p, '[data-action="tab"][data-value="teams"]');
   await p.waitForTimeout(300);
   await click(p, '[data-action="youthTab"][data-value="club"]');
   await p.waitForTimeout(300);
@@ -541,7 +541,7 @@ export async function presidentFlow(b, shots = process.env.E2E_SHOTS) {
     await p.waitForTimeout(300);
     ok(!(await p.$('[data-action="slotPick"]')), `${size}: Aufstellung nicht lesend`);
     await click(p, '[data-action="area"][data-value="club"]');
-    await click(p, '[data-action="tab"][data-value="office"]');
+    await click(p, '[data-action="tab"][data-value="me"]'); // Präsidium steht unter „Du" (flaches Menü)
     await p.waitForTimeout(400);
     await settle(p);
     ok(!!(await p.$('.office-coach')) && !!(await p.$('[data-action="presidentGoal"]')), `${size}: Präsidium zeigt Trainer/Saisonziel nicht`);
