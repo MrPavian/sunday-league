@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-06-4',
+    de: { title: 'Vereinsgelände: Training, Medizin, Geschäftsstelle, Jugend und Umfeld', items: ['Sechs neue Ausbau-Bereiche, je in drei Stufen von Ehrenamt bis Profi: Trainingsgelände, Teamgebäude, Medizin, Geschäftsstelle, Jugend und Stadionumfeld.', 'Jeder Ausbau wirkt spürbar: schnellere Entwicklung, kürzere Ausfälle, weniger Verletzungen, mehr Sponsorengeld, mehr Zuschauer, mehr Talente.', 'Ab der 2. Liga braucht die Zulassung ein Nachwuchsleistungszentrum – wie in echt.'] },
+    en: { title: 'Club grounds: training, medical, club office, youth and surroundings', items: ['Six new upgrade areas, each in three steps from volunteers to professionals: training ground, team building, medical, club office, youth and stadium surroundings.', 'Every upgrade makes a real difference: faster development, shorter absences, fewer injuries, more sponsor money, more spectators, more talents.', 'From the second division up, a licence needs a youth academy – as in reality.'] },
+  },
+  {
     id: '2026-11-06-3',
     de: { title: 'Eintrittspreise, Dauerkarten und ein Kader, der nicht leerläuft', items: ['Eintritt selbst festlegen (ab der Bezirksliga): billiger bringt mehr Zuschauer, teurer lohnt sich nur bei vollem Stadion. Ab dem Drittliga-Stadion mit eigenem Sitzplatzpreis.', 'Dauerkarten: Geld zum Saisonstart, die Inhaber kommen auch bei Regen.', 'Fehler behoben: Liefen in den Profiligen alle Verträge aus, stand nach einer Saison kein Spieler mehr im Kader. Jetzt verlängert der Verein notfalls die Besten um ein Jahr.', 'Ein Absturz bei Ereignissen mit leerem Kader ist behoben.'] },
     en: { title: 'Ticket prices, season tickets and a squad that cannot run dry', items: ['Set your own entry price (from the district league up): cheaper brings more spectators, dearer only pays with a full ground. From the third-division stadium with a separate seat price.', 'Season tickets: money at the start of the season, and holders turn up even in the rain.', 'Fixed: when every contract ran out in the professional leagues, the squad was empty after one season. Now the club extends the best players by a year if needed.', 'Fixed a crash in events with an empty squad.'] },

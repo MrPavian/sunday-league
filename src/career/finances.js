@@ -3,7 +3,7 @@ import { recordGate } from './attendance.js';
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { closeSponsors, normalizeSponsors, paySponsors } from './sponsors.js';
-import { capacity, fansMul, roofRelief, salesMul, travelMul } from './facilities.js';
+import { capacity, fanshopIncome, fansMul, roofRelief, salesMul, sponsorMul, travelMul } from './facilities.js';
 import { homeMatchEffects, rentPerMatch } from './platz.js';
 import { playerOf } from './career.js';
 import { tripSpirit } from './trip.js';
@@ -95,6 +95,8 @@ export function matchFinances(career, fixture, prepared, level) {
     const wirt = (career.staff?.wirt ? 1.3 : 1) * salesMul(career, career.week?.weather?.id); // Wirt, Grill & Theke, Biergarten
     const wirt0 = bv ? bv.theke : 1; // im Stadion bleibt das meiste Geschäft beim Betreiber
     book(career, tr(`Getränkeverkauf (${fans} Zuschauer)${career.staff?.wirt ? ` – Wirt ${career.staff.wirt.name.split(' ')[0]}` : ''}${salesMul(career) > 1 ? ' – mit Grill' : ''}`, `Drinks sales (${fans} spectators)${career.staff?.wirt ? ` – bar manager ${career.staff.wirt.name.split(' ')[0]}` : ''}${salesMul(career) > 1 ? ' – with barbecue' : ''}`), Math.round(fans * 2.5 * wirt * wirt0));
+    const shop = bv ? 0 : fanshopIncome(career, fans); // Fanshop (facilities.js)
+    if (shop) book(career, tr(`Fanshop (${fans} Zuschauer)`, `Club shop (${fans} spectators)`), shop);
     // Bezirksliga: Eintritt (3 € – Kinder und Mitglieder frei, daher im Schnitt etwas weniger).
     if (bv) book(career, tr(`Eintrittsanteil ${BUND_GATE_SHARE * 100} % (${fans} Zuschauer)`, `Gate share ${BUND_GATE_SHARE * 100} % (${fans} spectators)`), Math.round(fans * ENTRY_FEE * BUND_GATE_SHARE));
     else if (level > 4 && dk) book(career, tr(`Eintritt (${fans - dk} Tageskarten, ${dk} Dauerkarten)`, `Gate money (${fans - dk} day tickets, ${dk} season tickets)`), Math.round((fans - dk) * gate.perFan));
@@ -222,7 +224,8 @@ export function weeklyFinances(career) {
     const tv = TV_MONEY[career.level];
     if (tv) book(career, tr('Fernsehgeld', 'TV money'), tv);
     const mk = MARKETING[career.level];
-    if (mk) book(career, tr('Vermarktung (Werbung, Fanartikel, Catering)', 'Marketing (advertising, merchandise, catering)'), mk);
+    const mm = sponsorMul(career); // Geschäftsstelle, Marketing (facilities.js)
+    if (mk) book(career, tr('Vermarktung (Werbung, Fanartikel, Catering)', 'Marketing (advertising, merchandise, catering)'), mm === 1 ? mk : Math.round(mk * mm));
     return;
   }
   const fg = fahrgeld(career);

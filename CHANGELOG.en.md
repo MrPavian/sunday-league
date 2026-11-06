@@ -6,6 +6,18 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-06-4 – Club grounds: training, medical, club office, youth and surroundings
+
+### New
+- **Six new upgrade areas** in the clubhouse, each in three steps from volunteers to professionals:
+  - **Training ground:** goalkeeper and fitness corner, indoor hall, training centre – all players develop faster.
+  - **Team building:** weights room, recovery with sauna and ice bath, video room – fit again sooner, fewer injuries, more insight when you watch a game.
+  - **Medical:** treatment room, physiotherapy, medical department – shorter absences and fewer injuries.
+  - **Club office:** club office, headquarters, marketing and ticketing – more sponsor money, more spectators.
+  - **Youth:** youth centre, school partnership, youth boarding house, youth academy – more and better talents.
+  - **Stadium surroundings:** car park, club shop, forecourt with shuttle – more spectators and matchday income.
+- **Youth academy required from the second division** for a licence, as in reality. Clubs already in the first or second division have one.
+
 ## 2026-11-06-3 – Ticket prices, season tickets and a squad that cannot run dry
 
 ### New

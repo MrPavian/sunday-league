@@ -147,7 +147,7 @@ describe('Aufstiegsverzicht', () => {
     expect(c.history.at(-1).upBlock).toBe('waived');
   });
 
-  it('der Meister der 3. Liga braucht die Zulassung der 2. Liga (Arena, Rasenheizung, 1200 Lux); die besten vier spielen den überregionalen Pokal', () => {
+  it('der Meister der 3. Liga braucht die Zulassung der 2. Liga (Arena, Rasenheizung, 1200 Lux, NLZ); die besten vier spielen den überregionalen Pokal', () => {
     const c = createCareer({ seed: 11 });
     c.level = 10;
     play(c);
@@ -158,7 +158,7 @@ describe('Aufstiegsverzicht', () => {
     const d = createCareer({ seed: 11 });
     d.level = 10;
     play(d);
-    license(d, 'stadion', 'flutlicht', 'drittliga', 'flutlicht800', 'arena', 'rasenheizung', 'flutlicht1200');
+    license(d, 'stadion', 'flutlicht', 'drittliga', 'flutlicht800', 'arena', 'rasenheizung', 'flutlicht1200', 'nlz'); // NLZ: Pflicht ab der 2. Liga (seit 2026-11-06)
     d.cash = 1e8;
     nextSeason(d);
     expect(d.level).toBe(11);
@@ -177,7 +177,7 @@ describe('Aufstiegsverzicht', () => {
     play(z, 0, 0);
     nextSeason(z);
     expect(z.bundQual).toBe(z.season);
-    expect(licenseNeeds(z, 12).map((x) => x.id)).toEqual(['stadion', 'rasen', 'flutlicht', 'geld']);
+    expect(licenseNeeds(z, 12).map((x) => x.id)).toEqual(['stadion', 'rasen', 'flutlicht', 'nlz', 'geld']);
   });
 
   it('CPU-Meister verzichten unten öfter als oben, etwa im eingestellten Anteil', () => {

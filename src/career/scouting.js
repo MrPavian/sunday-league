@@ -9,6 +9,7 @@ import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { addRumor, humanClub, playerOf } from './career.js';
 import { coachAway } from './personal.js';
+import { videoSteps } from './facilities.js';
 
 // ± Stärke je Stufe (Spielwert): unbekannt, gesehen, beobachtet (Eigenschaften sichtbar), gescoutet (genau).
 export const SPREAD = [12, 7, 3, 0];
@@ -57,7 +58,8 @@ export function watchClub(c, club) {
   const rng = createRng(hash(c.seed ?? 0, c.season, c.round, club.squad.length, 4401));
   // Wer auffällt: die Besten, mit etwas Zufall (ein schwacher Tag ist auch dabei).
   const ranked = [...club.squad].map((i) => ({ i, v: playerOf(c, i).rating + rng.range(-6, 6) })).sort((a, b) => b.v - a.v);
-  for (const [n, { i }] of ranked.entries()) observe(c, i, n < STARS ? 2 : 1);
+  const extra = videoSteps(c); // Videoraum: ein Schritt mehr
+  for (const [n, { i }] of ranked.entries()) observe(c, i, (n < STARS ? 2 : 1) + extra);
   const best = ranked[0] && playerOf(c, ranked[0].i);
   return tr(`Du schaust dir ${club.name} an.${best ? ` Am meisten fällt ${best.name} auf.` : ''}`, `You watch ${club.name}.${best ? ` ${best.name} stands out most.` : ''}`);
 }

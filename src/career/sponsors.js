@@ -12,6 +12,7 @@ import { lateOr } from './spielbericht.js';
 import { isCoach } from './personal.js';
 import { isBanned } from './suspensions.js';
 import { chronicle } from './sagas.js';
+import { sponsorMul } from './facilities.js';
 import { BRANCHEN, newWish, WISH_PENALTY, WISHES, wishCost, wishLabel } from './sponsorwish.js';
 
 export { BRANCHEN, WISHES, wishCost, wishLabel };
@@ -389,7 +390,9 @@ export function paySponsors(career) {
       s.owed = (s.owed ?? 0) + s.weekly;
       continue; // „Kommt nächste Woche, versprochen."
     }
-    book(career, `${s.name} (${SLOTS[s.slot]})`, s.weekly + (s.owed ?? 0));
+    const due = s.weekly + (s.owed ?? 0);
+    const mul = sponsorMul(career); // Vereinsbüro, Geschäftsstelle, Marketing (facilities.js)
+    book(career, `${s.name} (${SLOTS[s.slot]})`, mul === 1 ? due : Math.round(due * mul));
     s.owed = 0;
   }
   // Wer ganz unten ist, kündigt mitten in der Saison – außer ein mehrjähriger Vertrag bindet ihn (dafür gibt es den Abschlag).

@@ -6,7 +6,7 @@
 // Wirkung: Startausdauer im Spiel (sim/squad.js), Verletzungsrisiko unter 70 %
 // (injuries.js), automatische Aufstellung (career.js buildLineup). Fehlt der Wert (alter
 // Spielstand), gilt 100 %.
-import { hasFacility } from './facilities.js';
+import { hasFacility, recoveryBonus } from './facilities.js';
 import { SHIFT_JOBS } from './chat.js';
 
 export const FIT_MIN = 0.5;
@@ -39,6 +39,7 @@ export function weeklyFitness(c, playerOf, humanSquad) {
     let r = RECOVERY * ((p.age ?? 25) >= 33 ? 0.7 : 1);
     if (p.profession === 'Fitnesstrainer') r += 0.04;
     if (own.has(idx) && hasFacility(c, 'flutlicht')) r += 0.03;
+    if (own.has(idx)) r += recoveryBonus(c); // Kraftraum, Regeneration
     const cap = fitnessCap(p);
     rec.fitness = rec.fitness >= cap ? rec.fitness : clampFit(Math.min(cap, rec.fitness + r));
     if (rec.fitness >= 1) delete rec.fitness;

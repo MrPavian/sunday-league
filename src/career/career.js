@@ -7,7 +7,7 @@ import { getLang, tr } from '../core/i18n.js';
 import { legacySeasonEnd } from './legacy.js';
 import { sponsorResult } from './sponsors.js';
 import { autoTrip } from './trip.js';
-import { absenceMul as facilityAbsence, capacity, fansMul, recruitBonus, weeklyFacilities, youthExtra, youthGrowthMul } from './facilities.js';
+import { absenceMul as facilityAbsence, capacity, fansMul, growthMul, recruitBonus, weeklyFacilities, youthExtra, youthGrowthMul } from './facilities.js';
 import { applyPlatz, ensureVertrag, nachholAbsence, platz, platzNewSeason, sperreCheck, sperreText, weeklyPlatz } from './platz.js';
 import { createRng } from '../core/rng.js';
 import { createPlayerPool, ratePlayer } from '../sim/generator.js';
@@ -171,7 +171,7 @@ export function developPlayers(career) {
     const age = before.age;
     const practice = rec.apps >= 5 ? 1.3 : rec.apps >= 2 ? 1 : 0.6;
     const coach = (career.staff?.cotrainer ? 1.15 : 1) * hiredGrowth(career);
-    const mul = practice * coach * (age <= 23 ? youthGrowthMul(career) : 1) * trainingGrowth(career); // Trainingsplan (teamtraining.js)
+    const mul = practice * coach * (age <= 23 ? youthGrowthMul(career) : 1) * trainingGrowth(career) * growthMul(career); // Trainingsplan (teamtraining.js), Trainingsgelände
     const { gain, event, prof } = seasonGain(career, idx, before, mul, environmentChanged(career, idx, club));
     const onset = 31 + prof.declineShift; // körperlicher Abbau ab hier, die zweite Stufe drei Jahre später
     rec.delta ??= {};

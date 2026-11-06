@@ -19,7 +19,7 @@
 //  - Ganz oben (1. Liga) gibt es keinen Aufstieg mehr.
 import { tr } from '../core/i18n.js';
 import { maxLevel } from './clubs.js';
-import { hasFacility } from './facilities.js';
+import { facilities, hasFacility } from './facilities.js';
 import { OPS_COST } from './finances.js';
 
 // Anteil der CPU-Meister, die auf den Aufstieg aus Stufe l verzichten (Spielwerte, unten öfter).
@@ -41,6 +41,10 @@ export function championWaives(c, rows, level = c.level ?? 1) {
   return !!champ && !champ.human && level < maxLevel(c) && cpuWaives(c, level, champ.id);
 }
 
+// Leistungszentrum: Vereine der Bundesliga und 2. Bundesliga müssen eines führen (§ 3 Nr. 2 Lizenzordnung; DFB, „FAQ zur
+// Lizenzierung von Leistungszentren“, https://www.dfb.de/news/faq-zur-lizenzierung-von-leistungszentren) – seit 2001 bzw. 2002.
+const NLZ_NEED = (c) => (facilities(c), { id: 'nlz', label: tr('Nachwuchsleistungszentrum', 'Youth academy (NLZ)'), ok: hasFacility(c, 'nlz') });
+
 // Was die Zulassung für Stufe `target` verlangt – Liste mit erfüllt/nicht erfüllt.
 export function licenseNeeds(c, target) {
   if (!c?.pro || target < 9) return [];
@@ -50,12 +54,14 @@ export function licenseNeeds(c, target) {
         { id: 'stadion', label: tr('Stadion mit 15 000 Plätzen, davon 8000 Sitzplätze (Sitzplatzausbau)', 'Stadium with 15,000 places incl. 8,000 seats (seating expansion)'), ok: hasFacility(c, 'sitzplatz8000') },
         { id: 'rasen', label: tr('Rasenheizung', 'Undersoil heating'), ok: hasFacility(c, 'rasenheizung') },
         { id: 'flutlicht', label: tr('Flutlicht mit 1800 Lux', 'Floodlights of 1,800 lux'), ok: hasFacility(c, 'flutlicht1800') },
+        NLZ_NEED(c),
       ]
     : target >= 11
     ? [
         { id: 'stadion', label: tr('Stadion mit 15 000 Plätzen, 3000 überdachte Sitzplätze (Arena)', 'Stadium with 15,000 places, 3,000 covered seats (arena)'), ok: hasFacility(c, 'arena') },
         { id: 'rasen', label: tr('Rasenheizung', 'Undersoil heating'), ok: hasFacility(c, 'rasenheizung') },
         { id: 'flutlicht', label: tr('Flutlicht mit 1200 Lux', 'Floodlights of 1,200 lux'), ok: hasFacility(c, 'flutlicht1200') },
+        NLZ_NEED(c),
       ]
     : target >= 10
     ? [

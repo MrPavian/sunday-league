@@ -33,7 +33,7 @@ const BASE_FACILITIES = [
   [7, ['sitzplaetze', 'tribdach']],
   [8, ['stadion']],
   [10, ['drittliga', 'flutlicht800']],
-  [11, ['arena', 'rasenheizung', 'flutlicht1200']], // was die Zulassung der Liga verlangt (license.js)
+  [11, ['arena', 'rasenheizung', 'flutlicht1200', 'nlz']], // was die Zulassung der Liga verlangt (license.js)
   [12, ['sitzplatz8000', 'flutlicht1800']],
 ];
 export const startCash = (level) => Math.max(200, Math.round(homeUnit(level) * 6)); // sechs mittlere Heimspiele (Spielwert)

@@ -1147,7 +1147,14 @@ Reihenfolge nach Nutzerentscheid: zuerst 2. und 1. Liga, dann „so weiter wie v
     Länderspielfenster; Zahl der Fenster im gestauchten Spielkalender als Spielwert mit dem Nutzer abstimmen.
 15. **Nationaltrainer werden** (später): Anfragen von Verbänden ab gutem Ruf, Neben- oder Hauptamt, eigener Kader aus allen
     Spielern des Landes, Turnierspiele in 3D.
-16. **Vereinsgelände ausbauen** (vom Nutzer gewünscht, 2026-11-06): Bisher gibt es vier Ausbau-Gruppen (Vereinsheim, Sportplatz,
+16. **Vereinsgelände ausbauen** (vom Nutzer gewünscht, 2026-11-06). **Erste Lieferung gebaut 2026-11-06** (Nutzerentscheid: alle sechs
+    Bereiche, je drei Stufen; Wirkung spürbar, nicht Pflicht, voll ausgebaut etwa 10–20 % je Bereich; NLZ ab der 2. Liga Pflicht wie
+    in echt, § 3 Nr. 2 Lizenzordnung): Trainingsgelände (Athletikecke, Halle, Trainingszentrum → Entwicklung), Teamgebäude (Kraftraum,
+    Regeneration, Videoraum → Erholung, Verletzungen, Scouting), Medizin (Behandlungsraum, Physio, medizinische Abteilung →
+    Ausfallzeit, Verletzungen), Geschäftsstelle (Büro, Geschäftsstelle, Marketing → Sponsoren, Zuschauer), Jugend (Jugendhaus,
+    Schulkooperation, Internat, NLZ → Talente, Entwicklung), Stadionumfeld (Parkplatz, Fanshop, Vorplatz → Zuschauer, Einnahmen);
+    facilities.js, tests/gelaende.test.js. Offen: Sichtbarkeit in 3D, Stadion-Erweiterung in mehr Stufen, Mehrzweckhalle, Fan-Treff,
+    Wohnheim; Wirkungen nach Rückmeldung nachjustieren. Bisher gibt es vier Ausbau-Gruppen (Vereinsheim, Sportplatz,
     Tribünen, Gastro; facilities.js). Neu dazu, je mit Kosten, Bauzeit, Unterhalt und spürbarer Wirkung im Spiel:
     - **Stadion:** Ausbau und Erweiterung in Stufen (auch in 3D sichtbar, siehe Punkt 6), dazu das **Umfeld**: Parkplätze,
       Anbindung, Fanshop, Vorplatz, Flutlicht- und Rasentechnik.

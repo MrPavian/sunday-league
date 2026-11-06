@@ -6,6 +6,18 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-06-4 – Vereinsgelände: Training, Medizin, Geschäftsstelle, Jugend und Umfeld
+
+### Neu
+- **Sechs neue Ausbau-Bereiche** im Vereinsheim, je in drei Stufen von Ehrenamt bis Profi:
+  - **Trainingsgelände:** Torwart- und Athletikecke, Trainingshalle, Trainingszentrum – alle Spieler entwickeln sich schneller.
+  - **Teamgebäude:** Kraftraum, Regeneration mit Sauna und Eisbecken, Videoraum – schneller wieder fit, weniger Verletzungen, mehr Wissen beim Spiel-Anschauen.
+  - **Medizin:** Behandlungsraum, Physiotherapie, medizinische Abteilung – kürzere Ausfälle und weniger Verletzungen.
+  - **Geschäftsstelle:** Vereinsbüro, Geschäftsstelle, Marketing und Ticketing – mehr Geld von Sponsoren, mehr Zuschauer.
+  - **Jugend:** Jugendhaus, Schulkooperation, Jugendinternat, Nachwuchsleistungszentrum – mehr und bessere Talente.
+  - **Stadionumfeld:** Parkplatz, Fanshop, Vorplatz mit Shuttle – mehr Zuschauer und Einnahmen am Spieltag.
+- **Nachwuchsleistungszentrum ab der 2. Liga Pflicht** für die Zulassung, wie in echt. Wer schon in der 2. oder 1. Liga spielt, hat es.
+
 ## 2026-11-06-3 – Eintrittspreise, Dauerkarten und ein Kader, der nicht leerläuft
 
 ### Neu
