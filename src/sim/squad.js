@@ -67,6 +67,20 @@ export function makeEntity(pl, team, index, role, home) {
     injury: null,
     mood: null, // Torjubel: scorer | celebrate | sad
     yellow: 0,
+    // Felder, die erst im Spiel dazukommen: von Anfang an da (undefined, also wie fehlend), damit alle Spieler dieselbe Form
+    // haben – der JavaScript-Motor rechnet dann schneller (gemessen 2026-11-06). Im Spielstand stehen sie nicht (JSON lässt
+    // undefined weg).
+    shielding: undefined,
+    holdingId: undefined,
+    trickAnim: undefined,
+    acroAnim: undefined,
+    keeperTz: undefined,
+    supportTimer: undefined,
+    supportSpot: undefined,
+    boxState: undefined,
+    holdUpStart: undefined,
+    holdUp: undefined,
+    recoverFrom: undefined,
   };
 }
 

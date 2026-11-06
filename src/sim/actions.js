@@ -90,6 +90,8 @@ export function separatePlayers(m) {
       const b = ps[j].pos;
       const dx = b.x - a.x;
       const dz = b.z - a.z;
+      // Schneller Vorabtest ohne Wurzel (großzügig, damit genau dieselben Paare wie vorher geschoben werden).
+      if (dx > 0.56 || dx < -0.56 || dx * dx + dz * dz > 0.31) continue;
       const d = len(dx, dz);
       if (d > 0 && d < 0.55) {
         const push = (0.55 - d) / 2;

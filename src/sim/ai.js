@@ -56,7 +56,7 @@ export function updateTactics(m, dt) {
   // (umdrehen, zurücklaufen) – er presst nicht sofort mit (siehe caught unten).
   if (possession != null && m.lastPossession != null && possession !== m.lastPossession) (m.lostAt ??= [-9, -9])[m.lastPossession] = m.time;
   m.lastPossession = possession;
-  m.tactics = {};
+  m.tactics = Object.create(null);
   considerCombo(m, keeperBox(pitch).depth);
   // Letzte Linie je Team (x des hintersten Feldspielers) – für Läufe in die Tiefe.
   m.defLine = [0, 1].map((t) => {

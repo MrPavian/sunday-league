@@ -426,6 +426,12 @@ Gleichzeitig hat das Match noch Lücken, die man beim Spielen sofort merkt.
   schneller (3,6 statt 3,9 s je Spieltag). Einschalten nach Messung auf einem echten Handy.
 - **Schneller Testlauf** `npm run test:quick` (2026-11-06): ohne die neun Dateien, die viele ganze Spiele rechnen (zusammen gut
   die Hälfte der Rechenzeit). Vor jeder Lieferung weiter der volle Lauf.
+- **Spiel-Engine schneller** (Messung 2026-11-06, scratch bench2/stat): Eingeschwungen kostet ein Spiel etwa 1 s Rechenzeit, verteilt
+  über die ganze KI (Laufwege 14 %, Spielschritt 21 %, Bewegung, Absichern …) – kein einzelner Engpass. Byte-gleiche Kleinigkeiten
+  (feste Form der Spielerobjekte, Laufwege-Tabelle ohne Prototyp, Abstandstest ohne Wurzel) helfen nur beim Anlauf (erste Spiele
+  nach dem Start ≈ 5 %), eingeschwungen nicht messbar. Laufwege seltener berechnen bringt wenig und ändert das Spiel (30 statt
+  60 je Sekunde: −7 % Zeit; 20: −17 % Zeit, aber 2,08 statt 2,42 Tore je Spiel) – verworfen. Der Hebel bleibt das parallele Rechnen
+  (Web Worker oben) – nach Messung auf einem echten Handy.
 - **Eingaben aufzeichnen** (Seed + Input-Stream) → Replays, Desync-Tests, später Online.
 - **Asset-Pipeline**: Blender → glTF für detailliertere Modelle; Animationen weiter prozedural plus ein paar
   handgemachte Keyframe-Clips (Jubel, Hechtsprung).
