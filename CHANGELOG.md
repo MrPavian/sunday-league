@@ -6,6 +6,19 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-06-3 – Eintrittspreise, Dauerkarten und ein Kader, der nicht leerläuft
+
+### Neu
+- **Eintrittspreise:** ab der Bezirksliga selbst festlegen, 50 bis 200 % des Ligapreises. Billiger bringt mehr Zuschauer (und Durst an der Theke), teurer kostet spürbar Zuschauer und lohnt sich nur, wenn sonst Leute draußen bleiben. Ab dem Drittliga-Stadion gibt es einen eigenen Sitzplatzpreis.
+- **Dauerkarten:** 20 % unter der Tageskarte, Geld zum Saisonstart (oder sofort für die restlichen Heimspiele). Die Inhaber kommen auch bei Regen.
+
+### Behoben
+- In den Profiligen konnte der Kader leerlaufen: Liefen alle Verträge aus und verlängerte man nicht, stand nach einer Saison kein Spieler mehr da. Jetzt verlängert der Verein notfalls die Besten um ein Jahr, damit mindestens elf plus drei Spieler bleiben – mit einem Hinweis im Chat.
+- Ereignisse mit leerem Kader stürzten ab.
+
+### Technik
+- Hintergrundspiele können parallel in Web Workern laufen (gleiche Ergebnisse, vorerst nur zum Testen eingeschaltet).
+
 ## 2026-11-06-2 – Weltmeisterschaft, Europameisterschaft und Kontinentalturniere
 
 ### Neu

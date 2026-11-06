@@ -648,6 +648,7 @@ export function rollWeekEvent(career) {
   career.eventLog ??= [];
   const rng = createRng((career.seed * 7 + career.season * 131 + career.round * 17 + 3) >>> 0);
   if (career.week.event) return null; // eine Geschichte verlangt schon eine Entscheidung
+  if (humanClub(career).squad.filter((i) => !isCoach(career, i)).length < 2) return null; // ohne Mannschaft keine Geschichten (Langzeitlauf 2026-11-06)
   // Was im Chat hochkocht, landet diese Woche beim Trainer.
   const chatHeat = [career.flags?.chatFeud, career.flags?.dauerabsager].some((f) => f && f.round === career.round && f.season === career.season);
   const urgent = derbyThisWeek(career) || career.flags?.injuryNews || career.flags?.invalid || chatHeat || chainDue(career) || phaseChainDue(career) || tigerChainDue(career);

@@ -18,6 +18,7 @@ import { verbandLeagues } from '../career/verband.js';
 import { extend as extendContract, releaseWithPay } from '../career/contracts.js';
 import { setWaive } from '../career/license.js';
 import { setSummerMove, takeOver } from '../career/clubchange.js';
+import { setPrice, setSeasonTickets, TICKETS } from '../career/tickets.js';
 import { applyPreset, deletePreset, savePreset } from '../career/tacticpresets.js';
 import { appointCoach, startCourse } from '../career/youthteams.js';
 import { acceptSponsor, bookTrip } from '../career/finances.js';
@@ -384,6 +385,13 @@ export class Clubhouse {
         this.h.onChange();
       } else if (action === 'summerMove') {
         setSummerMove(this.career, value); // Sommer-Anfrage annehmen oder wieder absagen (clubchange.js)
+        this.h.onChange();
+      } else if (action === 'ticketPrice') {
+        const [kind, dir] = String(value).split(':');
+        setPrice(this.career, kind, Number(dir) * TICKETS.step); // Eintrittspreise (tickets.js)
+        this.h.onChange();
+      } else if (action === 'seasonTickets') {
+        setSeasonTickets(this.career, Number(value) === 1);
         this.h.onChange();
       } else if (action === 'waiveUp') {
         setWaive(this.career, Number(value) === 1); // Aufstiegsverzicht (license.js)

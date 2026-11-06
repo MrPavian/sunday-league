@@ -16,7 +16,8 @@
 import { natBoostMul } from './natboost.js';
 import { tr } from '../core/i18n.js';
 import { PRO_TARGET } from '../sim/niveau.js';
-import { humanClub, playerOf, releasePlayer, takenIndices } from './career.js';
+import { humanClub, MIN_SQUAD, playerOf, releasePlayer, takenIndices } from './career.js';
+import { LEAGUES } from './clubs.js';
 import { isCoach } from './personal.js';
 import { book } from './finances.js';
 import { chronicle } from './sagas.js';
@@ -148,15 +149,28 @@ export function nextSeason(c) {
     for (const k of Object.keys(c.proNiv)) if (!keep.has(Number(k))) delete c.proNiv[k];
   }
   if (!isPro(c)) return;
-  for (const idx of [...humanClub(c).squad]) {
-    const k = contractOf(c, idx);
-    if (!k || isCoach(c, idx) || k.until >= (c.season ?? 1)) continue;
+  // Mindestkader (Spielwert: Spielerzahl der Liga plus drei Wechsel): Laufen mehr Verträge aus, als der Kader verkraftet, verlängert
+  // der Verein die Besten automatisch um ein Jahr zu ihrer Forderung – sonst stünde nach einer Saison ohne Verlängerungen keine
+  // Mannschaft mehr auf dem Platz (gefunden im Langzeitlauf 2026-11-06: Kader 7 → 1 → 0).
+  const club = humanClub(c);
+  const due = club.squad.filter((idx) => contractOf(c, idx) && !isCoach(c, idx) && contractOf(c, idx).until < (c.season ?? 1)).sort((a, b) => playerOf(c, b).rating - playerOf(c, a).rating);
+  const minKeep = Math.max(MIN_SQUAD, (LEAGUES[Math.min(12, c.level ?? 1)]?.format ?? 5) + 3);
+  let keep = Math.max(0, minKeep - (club.squad.length - due.length));
+  const kept = [];
+  for (const idx of due) {
+    if (keep > 0) {
+      keep--;
+      kept.push(playerOf(c, idx).name);
+      sign(c, idx, 1);
+      continue;
+    }
     const name = playerOf(c, idx).name;
     if (releasePlayer(c, idx, { force: true })) {
       c.week?.chat.splice(1, 0, { from: null, text: tr(`Vertrag ausgelaufen: ${name} geht ablösefrei.`, `Contract expired: ${name} leaves on a free.`), time: 'Mo 09:00' });
       chronicle(c, tr(`${name} geht nach Vertragsende ablösefrei.`, `${name} leaves on a free at the end of his contract.`));
     }
   }
+  if (kept.length) c.week?.chat.splice(1, 0, { from: null, text: tr(`Notverlängerung um ein Jahr, damit eine Mannschaft steht: ${kept.join(', ')}. Hol Verstärkung – und verlängere rechtzeitig selbst.`, `Emergency one-year extension so there is a team at all: ${kept.join(', ')}. Sign reinforcements – and extend in time yourself.`), time: 'Mo 09:00' });
 }
 
 // Hinweis in den letzten drei Spieltagen: Wessen Vertrag ausläuft?

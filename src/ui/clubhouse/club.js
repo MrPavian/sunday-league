@@ -11,6 +11,7 @@ import { awayKitOf, humanClub, KIT_COLLARS, KIT_COLORS, KIT_PATTERNS, KIT_SLEEVE
 import { spielberichtStreng } from '../../career/spielbericht.js';
 import { leagueTitle, niveauText, VERBAND_CHOICES, verbandLeagues } from '../../career/verband.js';
 import { FINES, MEMBER_FEE, SLOTS } from '../../career/finances.js';
+import { demandMul, priceRatio, prices, TICKETS, ticketsOn } from '../../career/tickets.js';
 import { travelCost } from '../../career/travel.js';
 import { freeKitLeft, kitPrice, OUTFITTER_SEASONS, outfitterDef, outfitterOf, outfitterOffers } from '../../career/outfitter.js';
 import { shareChooser } from './shared.js';
@@ -83,6 +84,26 @@ export const clubScreens = {
     ].filter(Boolean);
     const past = (s.seasons ?? []).slice(-3).map((x) => tr(`${x.season}. Saison: Ø ${x.avg}, max. ${x.max}${x.soldOut ? `, ${x.soldOut}× ausverkauft` : ''}`, `Season ${x.season}: avg ${x.avg}, max ${x.max}${x.soldOut ? `, ${x.soldOut}× sold out` : ''}`));
     return `<div class="gate-stats" data-testid="gate-stats"><p class="t-2">${parts.join(' · ')}</p>${past.length ? `<p class="t-2"><small>${past.join(' · ')}</small></p>` : ''}</div>`;
+  },
+
+  // Eintrittspreise und Dauerkarten (tickets.js), ab der Bezirksliga.
+  ticketBlock() {
+    const c = this.career;
+    if (!ticketsOn(c)) return '';
+    const pr = prices(c);
+    const t = c.tickets ?? {};
+    const pct = (f) => `${Math.round((f ?? 1) * 100)} %`;
+    const row = (kind, label, eur) => `<div class="ui-row ticket-row" data-testid="ticket-${kind}"><span>${label}: <b>${euro(eur)}</b> <small>(${pct(t[kind])} ${tr('des Ligapreises', 'of the league price')})</small></span>${button('−', { kind: 'ghost', action: 'ticketPrice', value: `${kind}:-1`, 'data-testid': `ticket-${kind}-down` })}${button('+', { kind: 'ghost', action: 'ticketPrice', value: `${kind}:1`, 'data-testid': `ticket-${kind}-up` })}</div>`;
+    const sold = t.sold?.season === c.season ? t.sold : null;
+    const r = priceRatio(c);
+    const fans = Math.round((demandMul(r) - 1) * 100);
+    const hint = r === 1 ? tr('Ligaüblich.', 'Usual for the league.') : r < 1 ? tr(`Günstiger: etwa ${fans} % mehr Zuschauer – mehr Durst an der Theke, weniger je Karte.`, `Cheaper: about ${fans}% more spectators – more thirst at the bar, less per ticket.`) : tr(`Teurer: etwa ${-fans} % weniger Zuschauer. Lohnt sich nur, wenn sonst Leute draußen bleiben.`, `Dearer: about ${-fans}% fewer spectators. Only pays when people would otherwise be turned away.`);
+    return `<div class="ticket-block" data-testid="tickets"><p class="t-cap">${tr('Eintrittspreise', 'Ticket prices')}</p>
+      ${row('stand', pr.seats ? tr('Stehplatz', 'Standing') : tr('Eintritt', 'Entry'), pr.stand)}
+      ${pr.seats ? row('seat', tr(`Sitzplatz (${Math.round(pr.seats * 100)} % der Plätze)`, `Seat (${Math.round(pr.seats * 100)}% of places)`), pr.seat) : ''}
+      <p class="t-2">${hint}</p>
+      <div class="ui-row">${button(t.dk ? tr('Dauerkarten: an', 'Season tickets: on') : tr('Dauerkarten anbieten', 'Offer season tickets'), { kind: t.dk ? 'primary' : 'ghost', action: 'seasonTickets', value: t.dk ? 0 : 1, 'data-testid': 'season-tickets' })}</div>
+      <p class="t-2">${sold ? tr(`Diese Saison: ${sold.n} Dauerkarten für ${sold.games} Heimspiele verkauft (${euro(sold.amount)}). Die Inhaber kommen auch bei Regen.`, `This season: ${sold.n} season tickets sold for ${sold.games} home games (${euro(sold.amount)}). Holders turn up even in the rain.`) : tr(`Dauerkarten ${Math.round(TICKETS.dkDiscount * 100)} % unter der Tageskarte: Geld sofort, volle Ränge auch bei schlechtem Wetter. Verkauft wird zum Saisonstart bzw. sofort für die restlichen Heimspiele.`, `Season tickets ${Math.round(TICKETS.dkDiscount * 100)}% below the day price: money up front, full terraces even in bad weather. Sold at the start of the season, or now for the remaining home games.`)}</p></div>`;
   },
 
   // Rivalitäten (rivals.js): Punkte, Stufe, Gründe. Derby-Gegner der Liga steht in der Derby-Woche ohnehin im Mittelpunkt.
@@ -458,7 +479,7 @@ export const clubScreens = {
       const ids = Object.entries(FACILITIES).filter(([, d]) => (d.group ?? 'heim') === g.id && (d.minLevel ?? 1) <= maxLevel(c)).map(([id]) => id);
       const open = ids.includes(f.building?.id) || f.queue.some((q) => ids.includes(q.id)) || this.facOpen === g.id;
       const done = ids.filter((id) => f.built[id]).length;
-      return rows ? `<details class="fac-group" data-group="${g.id}"${open ? ' open' : ''}><summary><h4 class="sub">${g.name} <small>${done}/${ids.length}${g.id === 'tribuene' ? ` · ${tr('Fassungsvermögen', 'capacity')}: ${capacity(c)}` : ''}</small></h4></summary>${g.id === 'tribuene' ? this.gateBlock() : ''}<ul class="plain">${rows}</ul></details>` : '';
+      return rows ? `<details class="fac-group" data-group="${g.id}"${open ? ' open' : ''}><summary><h4 class="sub">${g.name} <small>${done}/${ids.length}${g.id === 'tribuene' ? ` · ${tr('Fassungsvermögen', 'capacity')}: ${capacity(c)}` : ''}</small></h4></summary>${g.id === 'tribuene' ? this.gateBlock() + this.ticketBlock() : ''}<ul class="plain">${rows}</ul></details>` : '';
     }).join('');
     // Profiligen (license.js): Was die Zulassung für die Liga darüber verlangt – rechtzeitig bauen, ein Stadion dauert.
     const lv = c.level ?? 1;

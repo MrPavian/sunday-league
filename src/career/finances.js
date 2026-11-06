@@ -10,6 +10,7 @@ import { tripSpirit } from './trip.js';
 import { BUND_GATE_SHARE, BUND_VENUES } from './bundespokal.js';
 import { starFans } from './bonuses.js';
 import { isPro, payroll } from './contracts.js';
+import { gateOf } from './tickets.js';
 export { bookTrip } from './trip.js';
 
 export const START_CASH = 100;
@@ -83,9 +84,11 @@ export function matchFinances(career, fixture, prepared, level) {
     const wf = { sonne: 1.2, hitze: 0.9, regen: 0.6, wind: 0.85, nebel: 0.8, frost: 0.7, schnee: 0.5 }[career.week?.weather?.id] ?? 1;
     const weatherFans = roofRelief(career) && wf < 1 ? 1 - (1 - wf) / 2 : wf; // Tribünendach: die Wetterbremse halbiert sich
     const pe = homeMatchEffects(career); // Platzsperre/Nachholspiel, Acker, Linien
-    const base = Math.round((level > 5 ? rng.int(...UPPER_FANS[Math.min(TOP_FIN, level)]) : level > 4 ? rng.int(80, 200) : level > 3 ? rng.int(45, 90) : level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14)) * press * weatherFans * fansMul(career) * pe.fans);
+    const gate = gateOf(career, level); // eigene Eintrittspreise und Dauerkarten (tickets.js); ohne Einstellung wie bisher
+    const base = Math.round((level > 5 ? rng.int(...UPPER_FANS[Math.min(TOP_FIN, level)]) : level > 4 ? rng.int(80, 200) : level > 3 ? rng.int(45, 90) : level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14)) * press * weatherFans * fansMul(career) * pe.fans * gate.mul);
     const bv = prepared.bund ? BUND_VENUES[prepared.bund.venue] : null; // überregionaler Pokal: Spielort bestimmt die Kulisse
-    const fans = bv ? prepared.match.crowd : Math.min(base, capacity(career)); // Bundespokal: die angezeigte Zuschauerzahl des Spiels wird abgerechnet
+    const dk = bv ? 0 : Math.min(gate.dk, capacity(career)); // Dauerkarten-Inhaber kommen auch bei schlechtem Wetter
+    const fans = bv ? prepared.match.crowd : Math.max(dk, Math.min(base, capacity(career))); // Bundespokal: die angezeigte Zuschauerzahl des Spiels wird abgerechnet
     career.flags ??= {};
     career.flags.fans = { round: career.round, n: fans }; // für die Unterschriftenlisten
     if (!bv) recordGate(career, base, fans, (prepared.humanIsAway ? prepared.home : prepared.away)?.name ?? ''); // Zuschauerstatistik (attendance.js)
@@ -94,7 +97,8 @@ export function matchFinances(career, fixture, prepared, level) {
     book(career, tr(`Getränkeverkauf (${fans} Zuschauer)${career.staff?.wirt ? ` – Wirt ${career.staff.wirt.name.split(' ')[0]}` : ''}${salesMul(career) > 1 ? ' – mit Grill' : ''}`, `Drinks sales (${fans} spectators)${career.staff?.wirt ? ` – bar manager ${career.staff.wirt.name.split(' ')[0]}` : ''}${salesMul(career) > 1 ? ' – with barbecue' : ''}`), Math.round(fans * 2.5 * wirt * wirt0));
     // Bezirksliga: Eintritt (3 € – Kinder und Mitglieder frei, daher im Schnitt etwas weniger).
     if (bv) book(career, tr(`Eintrittsanteil ${BUND_GATE_SHARE * 100} % (${fans} Zuschauer)`, `Gate share ${BUND_GATE_SHARE * 100} % (${fans} spectators)`), Math.round(fans * ENTRY_FEE * BUND_GATE_SHARE));
-    else if (level > 4) book(career, tr(`Eintritt (${fans} Zuschauer)`, `Gate money (${fans} spectators)`), Math.round(fans * entryFee(level)));
+    else if (level > 4 && dk) book(career, tr(`Eintritt (${fans - dk} Tageskarten, ${dk} Dauerkarten)`, `Gate money (${fans - dk} day tickets, ${dk} season tickets)`), Math.round((fans - dk) * gate.perFan));
+    else if (level > 4) book(career, tr(`Eintritt (${fans} Zuschauer)`, `Gate money (${fans} spectators)`), Math.round(fans * gate.perFan));
     if (level > 1) {
       book(career, tr('Schiri-Gebühr', 'Referee fee'), -refFee(level));
       // Tribüne oder Stadion kosten ihre eigene Miete (bundevents.js) – dann keine zusätzliche Platzmiete.
@@ -156,6 +160,8 @@ export const ENTRY_FEE = 2.2; // 3 € Eintritt, Kinder und Mitglieder frei
 // und mit dem Abschlag oben zurückgerechnet. Darin stecken Logen und Business-Plätze; der reine Ticketschnitt der 2. Liga lag
 // 2024/25 bei 24,70 € (bundesliga.com).
 const ENTRY_BY_LEVEL = { 6: 5, 7: 6, 8: 7, 9: 11, 10: 15, 11: 39, 12: 64 };
+export const listPrice = (level) => ENTRY_BY_LEVEL[level] ?? 3; // Aushangpreis Stehplatz/Schnitt (Bezirksliga 3 €), tickets.js
+export const meanFans = (level) => MEAN_FANS[Math.min(TOP_FIN, Math.max(1, level))];
 export const entryFee = (level) => (ENTRY_BY_LEVEL[level] ? +((ENTRY_BY_LEVEL[level] * ENTRY_FEE) / 3).toFixed(2) : ENTRY_FEE);
 
 // Bezirksliga: Aufwandsentschädigung statt Fahrgeld (je Woche). Recherche: etwa die Hälfte

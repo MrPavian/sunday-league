@@ -6,6 +6,19 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-06-3 – Ticket prices, season tickets and a squad that cannot run dry
+
+### New
+- **Ticket prices:** set your own from the district league up, 50 to 200% of the league price. Cheaper brings more spectators (and more thirst at the bar), dearer costs noticeably and only pays when people would otherwise be turned away. From the third-division stadium there is a separate seat price.
+- **Season tickets:** 20% below the day price, money at the start of the season (or right away for the remaining home games). Holders turn up even in the rain.
+
+### Fixed
+- In the professional leagues the squad could run dry: if every contract ran out and you did not extend, nobody was left after one season. Now the club extends the best players by a year if needed, so at least eleven plus three remain – with a note in the chat.
+- Events crashed with an empty squad.
+
+### Technical
+- Background matches can run in parallel in web workers (same results, switched on for testing only for now).
+
 ## 2026-11-06-2 – World Cup, European Championship and continental tournaments
 
 ### New

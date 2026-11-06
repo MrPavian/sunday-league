@@ -23,6 +23,7 @@ import { finishFirstLeg, prepareRelegationMatch, recordRelegationLeg, startReleg
 import { finishMidweek, humanTie, POKALE, pokalOf, pokalWhen, preparePokalMatch, recordPokalResult, roundName } from '../career/pokal.js';
 import { pendingGame, playDue, prepareOldBoysMatch, recordOldBoysResult } from '../career/oldboys.js';
 import { coachLevel } from '../ui/prefs.js';
+import { runFixtures, warmWorkers } from '../career/bgsim.js';
 import { finishAll as finishNat, nextOwnMatch, prepareNatMatch, quickOwnMatch, recordNatMatch, stepLabel, tournamentName } from '../career/nationalteams.js';
 
 export function createMatchflow(ctx) {
@@ -54,6 +55,7 @@ export function createMatchflow(ctx) {
     loadVenue(humanClub(ctx.career).venue, venueExtras(ctx.career));
     startMatch(false);
     ctx.clubhouse.show(ctx.career, { results });
+    warmWorkers(ctx.career); // Hintergrundspiele: Worker schon jetzt hochfahren (bgsim.js)
     if (!results) resumeRound();
   }
 
@@ -172,12 +174,8 @@ export function createMatchflow(ctx) {
     if (resuming) return;
     resuming = true;
     ctx.clubhouse.setBusy(tr('Spieltag läuft … die anderen Plätze melden sich gleich.', 'Matchday under way … the other grounds will report in shortly.'));
-    for (const f of currentFixtures(ctx.career)) {
-      if (f === playedFixture || f.result) continue;
-      const prepared = prepareMatch(ctx.career, f, { duration: testDuration });
-      await simulate(prepared);
-      recordResult(ctx.career, f, prepared);
-    }
+    // Die übrigen Spiele parallel in Web Workern (bgsim.js), sonst wie bisher nacheinander – dasselbe Ergebnis.
+    await runFixtures(ctx.career, currentFixtures(ctx.career).filter((f) => f !== playedFixture && !f.result), { duration: testDuration });
     await playDue(ctx.career, (prepared) => simulate(prepared), true); // Alte Herren: das Freitagsspiel, falls niemand zugeschaut hat
     saveCareer(ctx.career);
     resuming = false;

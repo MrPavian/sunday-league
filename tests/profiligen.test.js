@@ -4,7 +4,7 @@ import { createCareer, finishRound, humanClub, nextSeason, playerOf, seasonOver,
 import { maxLevel, MAX_LEVEL, PRO_MAX_LEVEL } from '../src/career/clubs.js';
 import { facilities } from '../src/career/facilities.js';
 import { championWaives, cpuWaives, licenseNeeds, licensed, promotionBlock, setWaive, WAIVE_SHARE } from '../src/career/license.js';
-import { CONTRACT, contractOf, extend, extendOffer, nextSeason as contractsNextSeason, payroll, perRound, salaryDemand, transferFee } from '../src/career/contracts.js';
+import { CONTRACT, contractOf, extend, extendOffer, nextSeason as contractsNextSeason, payroll, perRound, salaryDemand, sign, transferFee } from '../src/career/contracts.js';
 import { priceOf } from '../src/career/transfers.js';
 import { trainingFee } from '../src/career/transferrules.js';
 import { PRO_TARGET } from '../src/sim/niveau.js';
@@ -97,6 +97,10 @@ describe('Verträge', () => {
 
   it('auslaufende Verträge: verlängern mit Aufschlag, wer sauer ist, will nicht; sonst geht er ablösefrei', () => {
     const c = pro();
+    // Kader über den Mindestkader (Spielerzahl + 3) auffüllen – sonst greift die Notverlängerung (Test unten).
+    const extra = c.clubs.find((x) => !x.human).squad.splice(0, 10);
+    me(c).squad.push(...extra);
+    for (const idx of extra) sign(c, idx, 3);
     const [a, b] = me(c).squad.filter((i) => i !== c.coach?.idx);
     contractOf(c, a).until = c.season;
     contractOf(c, b).until = c.season;
@@ -110,6 +114,17 @@ describe('Verträge', () => {
     contractsNextSeason(c);
     expect(me(c).squad).toContain(a);
     expect(me(c).squad).not.toContain(b);
+  });
+
+  it('Notverlängerung: Laufen zu viele Verträge aus, bleiben die Besten ein Jahr – der Kader fällt nie unter Spielerzahl + 3', () => {
+    const c = pro();
+    const squad = me(c).squad.filter((i) => i !== c.coach?.idx);
+    for (const idx of squad) contractOf(c, idx).until = c.season;
+    const before = me(c).squad.length;
+    c.season++;
+    contractsNextSeason(c);
+    expect(me(c).squad.length).toBe(Math.min(before, 11 + 3));
+    for (const idx of me(c).squad.filter((i) => i !== c.coach?.idx)) expect(contractOf(c, idx).until).toBe(c.season);
   });
 
   it('Spieler eines Profivereins kosten Ablöse statt Ausbildungsentschädigung', () => {

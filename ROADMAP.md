@@ -421,7 +421,11 @@ Gleichzeitig hat das Match noch Lücken, die man beim Spielen sofort merkt.
 
 ### 8.5 Technik
 
-- **Simulation im Web Worker** für schnelle Hintergrund-Simulation ganzer Spieltage.
+- **Simulation im Web Worker** für schnelle Hintergrund-Simulation ganzer Spieltage. Gebaut 2026-11-06 (bgsim.js, simworker.js),
+  Byte für Byte gleiche Ergebnisse (tests/bgsim.test.js); vorerst nur mit `?worker` an – im Browser-Test auf vier Kernen kaum
+  schneller (3,6 statt 3,9 s je Spieltag). Einschalten nach Messung auf einem echten Handy.
+- **Schneller Testlauf** `npm run test:quick` (2026-11-06): ohne die neun Dateien, die viele ganze Spiele rechnen (zusammen gut
+  die Hälfte der Rechenzeit). Vor jeder Lieferung weiter der volle Lauf.
 - **Eingaben aufzeichnen** (Seed + Input-Stream) → Replays, Desync-Tests, später Online.
 - **Asset-Pipeline**: Blender → glTF für detailliertere Modelle; Animationen weiter prozedural plus ein paar
   handgemachte Keyframe-Clips (Jubel, Hechtsprung).
@@ -1108,6 +1112,9 @@ Reihenfolge nach Nutzerentscheid: zuerst 2. und 1. Liga, dann „so weiter wie v
    darüber (Meister zwei, sonst eine; Spielwerte), wirksam zur neuen Saison. Entlassen im Sommer: dazu ein Verein von unten.
    Offen: Anfragen von unten nach einer Entlassung mitten in der Saison (die Liga darunter hat dann keinen Spielplan).
 3. **Eintrittspreise selbst festlegen, Dauerkarten:** Stehplatz und Sitzplatz einstellbar, Zuschauer und Kasse reagieren.
+   ✅ erledigt 2026-11-06 (tickets.js): ab der Bezirksliga, 50–200 % des Ligapreises, Sitzplätze ab dem Drittliga-Stadion
+   (Sitzplatz = 1,8 × Stehplatz, hergeleitet), Nachfrage-Elastizität 0,5 darunter / 1,5 darüber (Spielwerte), Dauerkarten mit
+   Anteil 1./2. Liga 55/57 % (Quelle), darunter Spielwerte, 20 % Rabatt (Spielwert). Offen: Logen/Business-Plätze, Preisprotest der Fans.
 4. **Zweite Mannschaft und U19 als eigene Teams** (ab der Regionalliga).
 5. **Trainerteam ab der Regionalliga:** Torwart-, Athletiktrainer, Physio mit Gehalt und Wirkung.
 6. **Stadionbau sichtbar machen:** Drittliga-Stadion und Arena wachsen in 3D.
@@ -1134,3 +1141,20 @@ Reihenfolge nach Nutzerentscheid: zuerst 2. und 1. Liga, dann „so weiter wie v
     Länderspielfenster; Zahl der Fenster im gestauchten Spielkalender als Spielwert mit dem Nutzer abstimmen.
 15. **Nationaltrainer werden** (später): Anfragen von Verbänden ab gutem Ruf, Neben- oder Hauptamt, eigener Kader aus allen
     Spielern des Landes, Turnierspiele in 3D.
+16. **Vereinsgelände ausbauen** (vom Nutzer gewünscht, 2026-11-06): Bisher gibt es vier Ausbau-Gruppen (Vereinsheim, Sportplatz,
+    Tribünen, Gastro; facilities.js). Neu dazu, je mit Kosten, Bauzeit, Unterhalt und spürbarer Wirkung im Spiel:
+    - **Stadion:** Ausbau und Erweiterung in Stufen (auch in 3D sichtbar, siehe Punkt 6), dazu das **Umfeld**: Parkplätze,
+      Anbindung, Fanshop, Vorplatz, Flutlicht- und Rasentechnik.
+    - **Trainingsplätze:** zusätzliche Plätze (Rasen, Kunstrasen, Halle), Torwart- und Athletikbereich – wirken auf
+      Trainingsplan, Entwicklung und Platzschonung (Platzsperre, Verschleiß).
+    - **Teamgebäude:** Kabinen, Kraftraum, Regeneration (Sauna, Eisbecken), Videoraum – wirken auf Fitness, Erholung und Taktik.
+    - **Medizinische Abteilung:** Behandlungsraum, Physio, Ärzte – kürzere Ausfallzeiten und weniger Verletzungen (mit
+      Trainerteam, Punkt 5).
+    - **Management/Geschäftsstelle:** Büros, Scouting-Abteilung, Marketing, Ticketing – wirken auf Sponsoren, Scouting,
+      Zuschauer und Kosten.
+    - **Jugendgebäude:** Nachwuchsleistungszentrum mit Internat und Schulkooperation – besserer Jahrgang, mehr Talente, weniger
+      Abwanderung (mit Akademie und NLZ, academy.js / nlz.js).
+    - **und weitere:** z. B. Mehrzweckhalle, Fan-Treff, Museum (es gibt museum.js), Wohnheim.
+    Je Stufe Voraussetzungen nach Liga (unten Ehrenamt und Eigenleistung, oben Profi-Standard). Vorher recherchieren: Kosten
+    echter Bauten (Trainingszentrum, NLZ, Funktionsgebäude) und belegbare Wirkungen; Wirkungen ohne Quelle sind Spielwerte und
+    werden mit dem Nutzer abgestimmt. Messung wie beim Bonus-Audit, damit kein Ausbau Pflicht oder wirkungslos ist.
