@@ -204,7 +204,8 @@ export const homeScreens = {
     const runHTML = running.map((t) => {
       const own = Object.entries(t.own).flatMap(([nid, list]) => list.map((idx) => `${esc(playerOf(c, idx).name)} (${nationName(nid)})`));
       const log = t.log.slice(-4).map((l) => `<li>${esc(l)}</li>`).join('');
-      return `<p class="t-2"><b>${tournamentName(t.id)} ${t.year}</b> · ${stepLabel(t.step)}${own.length ? ` · ${tr('dabei', 'called up')}: ${own.join(', ')}` : ''}</p>${log ? `<ul class="nat-log">${log}</ul>` : ''}`;
+      const failed = t.failed?.length ? `<p class="t-2">${tr('In der Qualifikation gescheitert', 'Knocked out in qualifying')}: ${t.failed.map(nationName).join(', ')}</p>` : '';
+      return `<p class="t-2"><b>${tournamentName(t.id)} ${t.year}</b> · ${stepLabel(t.step)}${own.length ? ` · ${tr('dabei', 'called up')}: ${own.join(', ')}` : ''}</p>${failed}${log ? `<ul class="nat-log">${log}</ul>` : ''}`;
     }).join('');
     const nextHTML = next
       ? `<p class="t-body">${tr('Nächstes Spiel', 'Next game')}: <b>${nationName(next.m.home)} – ${nationName(next.m.away)}</b> (${stepLabel(next.m.step)})</p>

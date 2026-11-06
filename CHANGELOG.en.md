@@ -15,6 +15,7 @@ In the game, the same highlights are under **Settings → What's new**.
 - **Market value:** appearances, goals and long runs raise wage demands, fees and asking prices – fully for two seasons, then half.
 - **Compensation:** at the World Cup the world body pays €5,000 per player per day.
 - **Winter:** the Africa and Asia championships run during the winter break; whoever goes far misses league games afterwards.
+- **Qualifying:** before each tournament the countries of each continent play groups home and away; group winners and the best runners-up go through. Even big countries can miss out – it makes the Gazette.
 
 ## 2026-11-06-1 – Summer moves to other clubs
 

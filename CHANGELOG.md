@@ -15,6 +15,7 @@ Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**
 - **Marktwert:** Einsätze, Tore und weite Wege heben Gehaltsforderung, Ablöse und Kaufpreis – voll für zwei Saisons, dann halb.
 - **Entschädigung:** Bei der Weltmeisterschaft zahlt der Weltverband 5000 € je Spieler und Tag.
 - **Winter:** Afrika- und Asienmeisterschaft laufen in der Winterpause; wer weit kommt, fehlt danach Ligaspiele.
+- **Qualifikation:** Vor jedem Turnier spielen die Länder ihres Kontinents Gruppen mit Hin- und Rückspiel; weiter sind die Gruppensieger und die besten Zweiten. Auch große Länder können scheitern – das steht im Kreisblatt.
 
 ## 2026-11-06-1 – Vereinswechsel im Sommer
 

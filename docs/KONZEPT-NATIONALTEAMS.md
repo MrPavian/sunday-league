@@ -137,8 +137,19 @@ Code: `src/career/nationalteams.js`, Länder und Namen `src/data/nations.js`, Ma
 - **Ablauf im Spiel:** Sommerturniere beginnen nach dem letzten Spieltag (Karte im Saisonende), Winterturniere in der
   Winterpause (Karte in der Pause). Wer weitermacht, ohne zu Ende zu schauen, bekommt den Rest im Schnellmodell.
 
+- **Qualifikation (Variante 1, Nutzerentscheid 2026-11-06):** beim Turnierstart im Schnellmodell auf einen Schlag. Gruppen je
+  Verband mit Hin- und Rückspiel; Gruppensieger weiter, freie Plätze an die besten Zweiten, dann Dritten; Play-offs vereinfacht
+  als Rangliste. Gruppenzahl wie in echt, wo bekannt: Weltmeisterschaft Europa 12 Gruppen (12 Sieger + 4 über Play-offs),
+  Südamerika eine Liga (die besten 6), Afrika 9 Gruppen (prüfen); Europameisterschaft 12 Gruppen (12 Sieger + 8 beste Zweite
+  + 4 über Play-offs, [UEFA](https://www.uefa.com/news-media/news/0299-1dcf36ade17c-099c9d4b7d85-1000--uefa-euro-2028-qualification-system-approved/)).
+  Sonst halb so viele Gruppen wie Plätze (Spielwert). Gemessen über 200 Karrieren: Weltmeisterschaft – Stufe 1 scheitert in
+  1,5 %, Stufe 2 in 14 %, Stufe 3 in 52 % der Fälle; Europameisterschaft 0,2 / 4,7 / 38 %. Afrika und Asien haben im Spiel kaum
+  mehr Länder als Plätze (26 bzw. 29 für 24) – dort scheitert fast nur, wer klein ist. Große Länder, die scheitern, stehen im
+  Kreisblatt; eigene Spieler eines gescheiterten Landes bekommen eine Nachricht.
+- **Qualifikation Variante 2 (Roadmap):** über die Saison verteilt in Länderspielfenstern, Spiele mit eigenen Spielern ansehbar.
+
 Offen: Stolz in der Kabine (Stimmung), Schiedsrichter aus anderen Ländern (bisher die Namensliste des Spiels), Spiel um Platz
-drei, Gastgeber, Qualifikation als eigene Spiele, Nationaltrainer (Abschnitt 8).
+drei, Gastgeber, Qualifikation als eigene Spiele (Variante 2), Nationaltrainer (Abschnitt 8).
 
 ## 10. Offene Fragen an den Nutzer (beantwortet 2026-11-06)
 

@@ -162,17 +162,88 @@ function squadOf(c, t, nation) {
 }
 
 // --- Feld, Gruppen, Spielplan -------------------------------------------------------------------------------------------
+// Qualifikation (Variante 1, Nutzerentscheid 2026-11-06): beim Turnierstart auf einen Schlag im Schnellmodell ausgespielt.
+// Je Verband Gruppen mit Hin- und Rückspiel (Heimvorteil wie in simTable); weiter sind die Gruppensieger, die übrigen Plätze gehen
+// an die besten Zweiten, dann die besten Dritten (nach Punkten, Tordifferenz und Toren je Spiel). Play-offs sind dabei
+// vereinfacht: Ihre Plätze gehen an die Nächstbesten der Rangliste. Wo ein Verband nicht mehr Länder hat als Plätze, gibt es keine.
+// Gruppenzahl: wo bekannt wie in echt, sonst halb so viele wie Plätze (höchstens ein Drittel der Länder, Spielwert).
+//  - Weltmeisterschaft, Europa: 12 Gruppen, die 12 Sieger direkt, 4 Plätze über Play-offs (Quali 2026; hier die 4 besten Zweiten).
+//  - Weltmeisterschaft, Südamerika: eine Liga, jeder gegen jeden mit Hin- und Rückspiel, die besten 6 (Quali 2026).
+//  - Weltmeisterschaft, Afrika: 9 Gruppen, die Sieger direkt (Quali 2026, prüfen).
+//  - Europameisterschaft: 12 Gruppen, Sieger und 8 beste Zweite direkt, 4 Plätze über Play-offs (Quali 2028; hier die Nächstbesten).
+// Im Spiel hat Europa 37 Länder (in echt 54) – die Gruppen sind darum kleiner als die echten Vierer- und Fünfergruppen.
+export const QUALI_GROUPS = { wm: { uefa: 12, conmebol: 1, caf: 9 }, em: { uefa: 12 } };
+const formOf = (c, year, nid) => (((hash(c.seed ?? 0, year, idHash(nid), 9) % 1000) / 1000) - 0.5) * 2 * NAT.form;
+const targetOf = (c, year, nid) => NAT.tier[NATIONS[nid].tier] + formOf(c, year, nid);
+
+function qualiGroup(c, year, key, ids, str) {
+  const rng = createRng(hash(c.seed ?? 0, year, idHash(key), 13));
+  const rows = Object.fromEntries(ids.map((nid) => [nid, { nid, p: 0, pts: 0, gf: 0, ga: 0 }]));
+  for (const h of ids)
+    for (const a of ids) {
+      if (h === a) continue;
+      const d = str[h] - str[a];
+      const pp = quickSlope(c, str[h], str[a]);
+      const gh = poisson(rng, QUICK.base * Math.exp(pp * d + QUICK.home));
+      const ga = poisson(rng, QUICK.base * Math.exp(-pp * d));
+      const H = rows[h];
+      const A = rows[a];
+      H.p++;
+      A.p++;
+      H.gf += gh;
+      H.ga += ga;
+      A.gf += ga;
+      A.ga += gh;
+      if (gh > ga) H.pts += 3;
+      else if (gh < ga) A.pts += 3;
+      else {
+        H.pts++;
+        A.pts++;
+      }
+    }
+  return Object.values(rows).sort((x, y) => y.pts - x.pts || y.gf - y.ga - (x.gf - x.ga) || y.gf - x.gf || str[y.nid] - str[x.nid]);
+}
+const perGame = (r) => [r.pts / r.p, (r.gf - r.ga) / r.p, r.gf / r.p];
+const byPerGame = (x, y) => {
+  const a = perGame(x);
+  const b = perGame(y);
+  return b[0] - a[0] || b[1] - a[1] || b[2] - a[2];
+};
+
 function makeField(c, id, year) {
   const cfg = TOURNAMENTS[id];
   const field = [];
+  const quali = {};
   for (const [conf, n] of Object.entries(cfg.slots)) {
-    const pool = Object.entries(NATIONS)
-      .filter(([, x]) => x.conf === conf)
-      .map(([nid, x]) => ({ nid, s: NAT.tier[x.tier] + ((hash(c.seed ?? 0, year, idHash(nid), 5) % 1000) / 1000 - 0.5) * 2 * NAT.form * 2 }))
-      .sort((a, b) => b.s - a.s);
-    field.push(...pool.slice(0, n).map((x) => x.nid));
+    const ids = Object.keys(NATIONS).filter((nid) => NATIONS[nid].conf === conf);
+    const str = Object.fromEntries(ids.map((nid) => [nid, targetOf(c, year, nid)]));
+    const sorted = [...ids].sort((a, b) => str[b] - str[a]);
+    if (ids.length <= n) {
+      field.push(...sorted);
+      continue;
+    }
+    const G = QUALI_GROUPS[id]?.[conf] ?? Math.max(1, Math.min(Math.floor(ids.length / 3), Math.ceil(n / 2)));
+    // Lostöpfe nach Stärke, je Gruppe einer aus jedem Topf (gemischt fest je Karriere und Jahr).
+    const rng = createRng(hash(c.seed ?? 0, year, idHash(id), idHash(conf), 11));
+    const groups = Array.from({ length: G }, () => []);
+    for (let pot = 0; pot * G < sorted.length; pot++) {
+      const list = sorted.slice(pot * G, pot * G + G);
+      for (let i = list.length - 1; i > 0; i--) {
+        const j = rng.int(0, i);
+        [list[i], list[j]] = [list[j], list[i]];
+      }
+      list.forEach((nid, i) => groups[i].push(nid));
+    }
+    const tables = groups.map((g, gi) => qualiGroup(c, year, `${id}-${conf}-${gi}`, g, str));
+    const qualified = [];
+    for (let place = 0; qualified.length < n && place < 6; place++) {
+      const rows = tables.map((tb) => tb[place]).filter(Boolean).sort(byPerGame);
+      qualified.push(...rows.slice(0, n - qualified.length).map((r) => r.nid));
+    }
+    field.push(...qualified);
+    quali[conf] = tables.map((tb) => tb.map((r) => ({ nid: r.nid, pts: r.pts, gd: r.gf - r.ga, q: qualified.includes(r.nid) })));
   }
-  return field;
+  return { field, quali };
 }
 
 function drawGroups(t, rng) {
@@ -263,21 +334,26 @@ export function startTournament(c, id) {
   const cfg = TOURNAMENTS[id];
   const year = yearFor(c, cfg);
   if (natCups(c).some((t) => t.id === id && t.year === year) || (c.natHistory ?? []).some((h) => h.id === id && h.year === year)) return null;
-  const field = makeField(c, id, year);
+  const { field, quali } = makeField(c, id, year);
   const target = {};
-  for (const nid of field) target[nid] = NAT.tier[NATIONS[nid].tier] + (((hash(c.seed ?? 0, year, idHash(nid), 9) % 1000) / 1000) - 0.5) * 2 * NAT.form;
+  for (const nid of field) target[nid] = targetOf(c, year, nid);
   const ko = (cfg.groups * 2 + cfg.best3) | 0;
   const steps = ['g1', 'g2', 'g3'];
   for (let n = ko; n >= 2; n /= 2) steps.push(STEP_NAMES[n]);
-  const t = { id, year, season: c.season ?? 1, field, target, str: {}, own: {}, stats: {}, steps, step: null, matches: [], groups: [], done: false, log: [] };
+  const t = { id, year, season: c.season ?? 1, field, quali, target, str: {}, own: {}, stats: {}, steps, step: null, matches: [], groups: [], done: false, log: [] };
   // Nominierung: eigene Spieler aus den Profiligen, deren Land dabei ist und die gut genug sind.
   const taken = takenIndices(c);
   for (const nid of field) {
     const { xi } = lineupFrom(fillSquad(c, t, nid, taken));
     t.str[nid] = strengthOf(xi);
   }
+  // Gescheitert in der Qualifikation: große Länder (Stufe 1–2) ins Kreisblatt, eigene Spieler ohne Turnier in den Chat.
+  const out = Object.values(quali).flat(2).filter((r) => !r.q).map((r) => r.nid);
+  t.failed = out.filter((nid) => NATIONS[nid].tier <= 2);
   if (proNow(c)) {
     const club = humanClub(c);
+    const missing = club.squad.filter((idx) => c.natLock?.[idx] && out.includes(c.natLock[idx]));
+    if (missing.length) note(c, tr(`Qualifikation zur ${tournamentName(id)} ${year}: ohne ${missing.map((idx) => `${playerOf(c, idx).name} (${nationName(c.natLock[idx])})`).join(', ')} – das Land hat es nicht geschafft.`, `Qualifying for the ${tournamentName(id)} ${year}: no place for ${missing.map((idx) => `${playerOf(c, idx).name} (${nationName(c.natLock[idx])})`).join(', ')} – the country did not make it.`));
     for (const idx of club.squad) {
       if (isCoach(c, idx) || (c.players[idx]?.injuryWeeks ?? 0) > 0) continue;
       const nid = nationOf(c, idx);
@@ -301,6 +377,7 @@ export function startTournament(c, id) {
   natCups(c).push(t);
   const ownIdx = Object.values(t.own).flat();
   const name = tournamentName(id);
+  if (t.failed.length) note(c, tr(`Kreisblatt: Ohne ${t.failed.map(nationName).join(', ')} – in der Qualifikation zur ${name} ${year} gescheitert.`, `District Gazette: no ${t.failed.map(nationName).join(', ')} – knocked out in qualifying for the ${name} ${year}.`));
   if (ownIdx.length) {
     const list = ownIdx.map((idx) => `${playerOf(c, idx).name} (${nationName(t.stats[idx].nat)})`).join(', ');
     note(c, tr(`${name} ${year}: Nominiert aus unserem Kader – ${list}.`, `${name} ${year}: called up from our squad – ${list}.`));
@@ -496,7 +573,7 @@ function finish(c, t) {
     }
     own.push({ idx: i, name: playerOf(c, i).name, nat: s.nat, apps: s.apps, goals: s.goals, reached, boost: Math.round(v * 100), missed: s.missed ?? 0, pay: s.pay ?? 0 });
   }
-  const entry = { id: t.id, year: t.year, season: t.season, winner, runnerUp: final ? (winner === final.home ? final.away : final.home) : null, own, log: t.log.slice(-12) };
+  const entry = { id: t.id, year: t.year, season: t.season, failed: t.failed ?? [], winner, runnerUp: final ? (winner === final.home ? final.away : final.home) : null, own, log: t.log.slice(-12) };
   (c.natHistory ??= []).push(entry);
   if (c.natHistory.length > 16) c.natHistory.splice(0, c.natHistory.length - 16);
   c.natCups = natCups(c).filter((x) => x !== t);

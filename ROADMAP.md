@@ -1125,6 +1125,12 @@ Reihenfolge nach Nutzerentscheid: zuerst 2. und 1. Liga, dann „so weiter wie v
     Mittelamerika, Ozeanien) im Hintergrund simuliert. Eigene Spieler werden nach Herkunft und Stärke nominiert, fehlen bei
     Winterturnieren (Afrika, Asien) einige Spieltage und kommen mit einem Turnier-Schub auf den Marktwert zurück.
     ✅ erste Fassung 2026-11-06 (nationalteams.js): Nominierung nur aus den Profiligen, Spiele der eigenen Spieler im Stadion in 3D,
-    neutrale Namen. Offen: Stimmung, ausländische Schiris, Spiel um Platz drei, Qualifikation (Konzept Abschnitt 11).
+    neutrale Namen. Qualifikation Variante 1 (2026-11-06): beim Turnierstart im Schnellmodell, Gruppen je Verband wie in echt.
+    Offen: Stimmung, ausländische Schiris, Spiel um Platz drei (Konzept Abschnitt 11).
+    **Qualifikation Variante 2** (vom Nutzer auf die Roadmap gesetzt, 2026-11-06): über die Saison verteilt in Länderspielfenstern
+    zwischen bestimmten Spieltagen (die Liga ruht, kein Ligaspiel fällt aus). Spiele eines Landes mit eigenen Spielern als Karte im
+    Vereinsheim (im Stadion ansehen, nur Ergebnis, vorspulen), Gruppentabelle einsehbar, Einsätze zählen wenig für den Marktwert,
+    etwas Müdigkeit und Verletzungsrisiko. Gastgeber automatisch dabei. Vorher recherchieren: Formate je Verband, Play-offs,
+    Länderspielfenster; Zahl der Fenster im gestauchten Spielkalender als Spielwert mit dem Nutzer abstimmen.
 15. **Nationaltrainer werden** (später): Anfragen von Verbänden ab gutem Ruf, Neben- oder Hauptamt, eigener Kader aus allen
     Spielern des Landes, Turnierspiele in 3D.

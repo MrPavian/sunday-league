@@ -68,6 +68,37 @@ describe('Feld und Format', () => {
   });
 });
 
+describe('Qualifikation', () => {
+  it('Gruppen je Verband, die Weitergekommenen bilden das Feld; ohne Überzahl keine Qualifikation', () => {
+    const c = career(1, 3);
+    const t = startTournament(c, 'wm');
+    expect(t.quali.uefa).toHaveLength(12); // wie in echt zwölf Gruppen
+    expect(t.quali.conmebol).toHaveLength(1); // eine Liga
+    expect(t.quali.caf).toHaveLength(9);
+    for (const [conf, tables] of Object.entries(t.quali)) {
+      const q = tables.flat().filter((r) => r.q).map((r) => r.nid);
+      expect(q.length, conf).toBe(TOURNAMENTS.wm.slots[conf]);
+      for (const nid of q) expect(t.field).toContain(nid);
+      for (const tb of tables) expect(tb[0].q, `${conf}: Gruppensieger`).toBe(true);
+    }
+    const nam = startTournament(career(1, 3), 'nam'); // 16 Länder, 16 Plätze
+    expect(nam.quali).toEqual({});
+  });
+  it('auch große Länder können scheitern – das steht im Kreisblatt', () => {
+    let failed = 0;
+    for (let seed = 1; seed <= 60 && !failed; seed++) {
+      const c = career(1, seed);
+      const t = startTournament(c, 'wm');
+      if (t.failed.length) {
+        failed++;
+        expect(c.natHistory.at(-1).failed).toEqual(t.failed);
+        expect([...(c.week?.chat ?? []).map((m) => m.text), ...(c.pendingNews ?? [])].some((x) => /Qualifikation/.test(x))).toBe(true);
+      }
+    }
+    expect(failed).toBe(1);
+  });
+});
+
 describe('Nominierung', () => {
   it('nur aus den Profiligen, nur für Teilnehmerländer, nur wer gut genug ist', () => {
     const low = career(8);
