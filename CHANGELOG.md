@@ -6,6 +6,13 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-06-1 – Vereinswechsel im Sommer
+
+### Neu
+- **Anfragen im Sommer:** Wer die Saison unter den ersten drei beendet, bekommt Anfragen aus der Liga darüber, als Meister zwei. In der 1. Liga melden sich Vereine aus der oberen Tabellenhälfte derselben Liga.
+- **Zusage am Saisonende:** Ein Tipp auf den Verein sagt zu, ein zweiter nimmt die Zusage zurück. Der Wechsel gilt zur neuen Saison: Der neue Verein spielt dort, wo er nach Auf- und Abstieg steht, mit neuem Kader und Spielplan. Kasse, Anlage und Sponsoren fangen neu an; Familie, Auszeichnungen und die eigene Figur kommen mit. Der alte Verein spielt als Gegner weiter.
+- **Entlassen im Sommer:** Dazu ruft ein Verein aus der Liga darunter an.
+
 ## 2026-11-05-7 – 2. Liga und 1. Liga
 
 ### Neu

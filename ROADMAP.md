@@ -1104,6 +1104,9 @@ Reihenfolge nach Nutzerentscheid: zuerst 2. und 1. Liga, dann „so weiter wie v
 1. **2. Liga und 1. Liga** (Stufen 11 und 12): echte Aufstiege aus der 3. Liga, Lizenz nach DFL (Stadion, Rasenheizung, Flutlicht),
    Gehälter, Fernsehgeld und Vermarktung nach dem DFL-Wirtschaftsreport. ✅ erledigt 2026-11-05.
 2. **Vereinswechsel im Sommer und ligaübergreifend:** Anfragen von oben für erfolgreiche Trainer, nach einer Entlassung auch von unten.
+   ✅ erledigt 2026-11-06 (clubchange.js summerOffers/moveTo, pressure.js lowerOffers): Platz 1–3 bekommt Anfragen aus der Liga
+   darüber (Meister zwei, sonst eine; Spielwerte), wirksam zur neuen Saison. Entlassen im Sommer: dazu ein Verein von unten.
+   Offen: Anfragen von unten nach einer Entlassung mitten in der Saison (die Liga darunter hat dann keinen Spielplan).
 3. **Eintrittspreise selbst festlegen, Dauerkarten:** Stehplatz und Sitzplatz einstellbar, Zuschauer und Kasse reagieren.
 4. **Zweite Mannschaft und U19 als eigene Teams** (ab der Regionalliga).
 5. **Trainerteam ab der Regionalliga:** Torwart-, Athletiktrainer, Physio mit Gehalt und Wirkung.

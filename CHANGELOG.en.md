@@ -6,6 +6,13 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-06-1 – Summer moves to other clubs
+
+### New
+- **Summer offers:** finish the season in the top three and clubs from the league above get in touch, two if you are champions. In the first division clubs from the top half of the same league call.
+- **Accept at the end of the season:** one tap on the club accepts, a second tap withdraws. The move takes effect next season: the new club plays wherever it ends up after promotion and relegation, with a new squad and fixtures. Kitty, grounds and sponsors start afresh; family, awards and your own player come with you. Your old club stays on as an opponent.
+- **Sacked in the summer:** a club from the league below calls as well.
+
 ## 2026-11-05-7 – Second and first division
 
 ### New

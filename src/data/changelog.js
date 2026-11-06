@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-06-1',
+    de: { title: 'Vereinswechsel im Sommer', items: ['Unter den ersten drei? Am Saisonende fragen Vereine aus der Liga darüber an – als Meister gleich zwei. In der 1. Liga melden sich die großen Vereine derselben Liga.', 'Zusagen mit einem Tipp, noch einmal tippen zum Bleiben. Der Wechsel gilt ab der neuen Saison: neuer Kader, neuer Spielplan, Kasse und Anlage fangen neu an.', 'Im Sommer entlassen? Dann ruft auch ein Verein aus der Liga darunter an.'] },
+    en: { title: 'Summer moves to other clubs', items: ['In the top three? At the end of the season clubs from the league above get in touch – two if you are champions. In the first division the big clubs of the same league call.', 'Accept with one tap, tap again to stay. The move takes effect next season: new squad, new fixtures, kitty and grounds start afresh.', 'Sacked in the summer? Then a club from the league below calls too.'] },
+  },
+  {
     id: '2026-11-05-7',
     de: { title: '2. Liga und 1. Liga', items: ['Die Pyramide reicht jetzt bis ganz nach oben: 2. Liga und 1. Liga mit eigenen Vereinen. Der Meister der 3. Liga steigt wieder auf.', 'Geld nach dem Wirtschaftsbericht der Profiligen: Gehälter, Fernsehgeld, Vermarktung, Eintritt und Zuschauer wie in echt im Schnitt.', 'Zulassung wie in echt: 15 000 Plätze, Rasenheizung, Flutlicht mit 1200 Lux (2. Liga) bzw. 8000 Sitzplätze und 1800 Lux (1. Liga).', 'Neue Ausbauten: Rasenheizung (keine Platzsperre mehr bei Frost), helleres Flutlicht, Sitzplatzausbau, Großarena für 50 000.'] },
     en: { title: 'Second and first division', items: ['The pyramid now goes all the way to the top: second and first division with their own clubs. The 3. Liga champions go up again.', 'Money based on the professional leagues\' financial report: wages, TV money, marketing, tickets and crowds as on average in reality.', 'Licensing as in reality: 15,000 places, undersoil heating, 1,200 lux floodlights (second division) or 8,000 seats and 1,800 lux (first division).', 'New facilities: undersoil heating (no more frozen-pitch closures), brighter floodlights, seating expansion, a grand arena for 50,000.'] },

@@ -15,7 +15,8 @@ import * as coachload from './coachload.js'; // roter Bereich der Trainer-Balken
 import * as bonuses from './bonuses.js'; // verdeckte Boni: Weltklasse, Führungsspieler, Star der Liga
 import * as contracts from './contracts.js'; // Spielerverträge in den Profiligen
 import * as pressure from './pressure.js'; // Vorstand und Erfolgsdruck
-export const FEATURES = [transfers, oldboys, women, scouting, teamtraining, referees, rivals, chatlife, coachload, bonuses, contracts, pressure];
+import * as clubchange from './clubchange.js'; // Sommerwechsel in eine andere Liga
+export const FEATURES = [transfers, oldboys, women, scouting, teamtraining, referees, rivals, chatlife, coachload, bonuses, contracts, pressure, clubchange];
 
 export function runHooks(name, career, ...args) {
   for (const f of FEATURES) f[name]?.(career, ...args);

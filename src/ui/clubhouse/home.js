@@ -15,7 +15,7 @@ import { relegationNeeded, relegationOf } from '../../career/relegation.js';
 import { LEAGUES, MAX_LEVEL, maxLevel } from '../../career/clubs.js';
 import { blockText, championWaives, licenseNeeds, promotionBlock } from '../../career/license.js';
 import { firedState, offerClubs } from '../../career/pressure.js';
-import { startCash } from '../../career/clubchange.js';
+import { startCash, summerMove, summerOffers } from '../../career/clubchange.js';
 import { leagueTitle } from '../../career/verband.js';
 import { clubById, humanClub, kitChoice, leagueOf, humanFixture, playerOf, seasonOver, table } from '../../career/career.js';
 import { DESTINATIONS, tripChoose, tripStage, tripState, tripVerdict } from '../../career/trip.js';
@@ -298,6 +298,7 @@ export const homeScreens = {
         ${chronicle}
         ${this.tripBlock()}
         ${this.waiveAside(upNow || (pos === 2 && relegationNeeded(c)) || !!rel?.won && rel.kind === 'up')}
+        ${this.summerAside()}
         ${this.legacyAside() ?? this.relegationAside() ?? this.cupAside()}
       </div>`;
   },
@@ -311,10 +312,24 @@ export const homeScreens = {
       const pos = rows.findIndex((r) => r.club.id === club.id) + 1;
       return `<button class="successor" data-action="takeOver" data-value="${club.id}" data-testid="take-over"><b>${club.name}</b><small>${tr(`Platz ${pos} · ${rows[pos - 1]?.pts ?? 0} Punkte · Startkasse ${startCash(c.level ?? 1).toLocaleString('de-DE')} €`, `Place ${pos} · ${rows[pos - 1]?.pts ?? 0} points · starting kitty €${startCash(c.level ?? 1).toLocaleString('en-GB')}`)}</small></button>`;
     }).join('');
+    const away = (f.away ?? []).map((o) => `<button class="successor" data-action="takeOver" data-value="${o.id}" data-testid="take-over-away"><b>${o.name}</b><small>${tr(`${leagueTitle(c, o.level)} · eine Liga tiefer · Startkasse ${startCash(o.level).toLocaleString('de-DE')} €`, `${leagueTitle(c, o.level)} · one league down · starting kitty €${startCash(o.level).toLocaleString('en-GB')}`)}</small></button>`).join('');
     return `<div class="fixture-card" data-testid="fired"><p class="label">${f.reason === 'president' ? tr('Abgewählt', 'Voted out') : tr('Entlassen', 'Sacked')}</p>
       <h3>${tr('Wie geht es weiter?', 'What next?')}</h3>
       <p>${tr(`Diese Vereine aus der ${leagueTitle(c, c.level ?? 1)} wollen dich als Trainer. Du übernimmst Kader, Tabellenplatz und Spielplan – Kasse, Anlage und Sponsoren fangen neu an.`, `These clubs from the ${leagueTitle(c, c.level ?? 1)} want you as manager. You take over their squad, league position and fixtures – kitty, grounds and sponsors start afresh.`)}</p>
-      <div class="ui-stack">${offers}</div></div>`;
+      ${away ? `<p class="t-2">${tr('Aus der Liga darunter ruft auch einer an: Dort bekommst du einen neuen Kader und einen neuen Spielplan.', 'A club from the league below has called too: there you get a new squad and new fixtures.')}</p>` : ''}
+      <div class="ui-stack">${offers}${away}</div></div>`;
+  },
+
+  // Sommer (clubchange.js): Anfragen anderer Vereine für einen erfolgreichen Trainer, wirksam zur neuen Saison.
+  summerAside() {
+    const c = this.career;
+    const offers = summerOffers(c);
+    if (!offers.length) return '';
+    const chosen = summerMove(c)?.id;
+    const list = offers.map((o) => `<button class="successor${chosen === o.id ? ' active' : ''}" data-action="summerMove" data-value="${o.id}" data-testid="summer-offer"><b>${chosen === o.id ? '✓ ' : ''}${o.name}</b><small>${leagueTitle(c, o.level)} · ${tr(`Startkasse ${startCash(o.level).toLocaleString('de-DE')} €`, `starting kitty €${startCash(o.level).toLocaleString('en-GB')}`)}</small></button>`).join('');
+    return `<div class="ui-card" data-testid="summer-offers"><p class="label">${tr('Anfragen anderer Vereine', 'Offers from other clubs')}</p>
+      <p class="t-2">${chosen ? tr('Zugesagt: Zur neuen Saison trainierst du dort. Noch einmal tippen, um doch zu bleiben.', 'Accepted: you will manage there from next season. Tap again to stay after all.') : tr('Deine Saison hat sich herumgesprochen. Wechselst du, fangen Kader, Kasse, Anlage und Sponsoren dort neu an; Familie, Auszeichnungen und deine eigene Figur kommen mit.', 'Word of your season has got around. If you move, squad, kitty, grounds and sponsors start afresh there; family, awards and your own player come with you.')}</p>
+      <div class="ui-stack">${list}</div></div>`;
   },
 
   // Profiligen (license.js): Zulassung für die Liga darüber und freiwilliger Verzicht auf den Aufstieg.

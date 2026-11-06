@@ -2,7 +2,8 @@
 //  - Rückhalt (0–100): Der Vorstand misst jedes Ligaspiel am Saisonziel (board.js). Wie stark ein Ergebnis zählt, wächst mit der
 //    Liga: in der Freizeitliga gar nicht, in den Kreisligen kaum, ab der Landesliga deutlich, in Regionalliga und 3. Liga hart.
 //  - Unter 40: Warnung. Unter 25: Ultimatum – aus den nächsten drei Ligaspielen vier Punkte. Klappt es nicht, ist der Trainer
-//    entlassen und bekommt Angebote anderer Vereine der Liga (clubchange.js); die Karriere geht dort weiter.
+//    entlassen und bekommt Angebote anderer Vereine der Liga (clubchange.js); die Karriere geht dort weiter. Im Sommer entlassen:
+//    dazu ein Angebot aus der Liga darunter (lowerOffers).
 //  - Als Präsident (personal.js isPresident) machen die Mitglieder Druck: Unter 25 kommt ein Misstrauensantrag. Knapp verloren
 //    (Rückhalt noch mindestens 12): Der eingestellte Trainer muss gehen, man bleibt Präsident und holt einen neuen. Deutlich
 //    verloren oder der zweite verlorene Antrag binnen zwei Saisons: abgewählt – Angebote anderer Vereine, als Trainer.
@@ -13,6 +14,7 @@ import { clubById, humanClub, seasonOver, table } from './career.js';
 import { chronicle } from './sagas.js';
 import { isPresident } from './personal.js';
 import { forceOutHired } from './president.js';
+import { ensureLeagues } from './pyramid.js';
 
 export const PRESSURE = [0, 0, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.75, 0.9, 1, 1.1]; // Gewicht je Stufe 1–12 (Spielwerte, 2./1. Liga fortgesetzt)
 export const TRUST = {
@@ -74,14 +76,27 @@ export function makeOffers(c, exclude) {
   return order.slice(0, TRUST.offers).map((x) => x.id);
 }
 
+// Entlassung im Sommer (vor dem ersten Spieltag): dazu ein Verein aus der Liga darunter (clubchange.js moveTo, Spielwert: einer).
+export function lowerOffers(c) {
+  const level = c.level ?? 1;
+  if ((c.round ?? 0) !== 0 || level <= 1) return [];
+  const pool = ensureLeagues(c)[level - 1] ?? [];
+  return pool
+    .map((d) => ({ id: d.id, name: d.name, level: level - 1, h: hash(c.seed ?? 0, c.season ?? 1, 7, [...d.id].reduce((s, ch) => s + ch.charCodeAt(0), 0)) }))
+    .sort((x, y) => x.h - y.h)
+    .slice(0, 1)
+    .map(({ h, ...o }) => o);
+}
+
 function fire(c, reason) {
   const b = board(c);
   const club = humanClub(c);
   b.ultimatum = null;
-  b.fired = { season: c.season, round: c.round, reason, from: club.id, offers: makeOffers(c, club.id) };
+  b.fired = { season: c.season, round: c.round, reason, from: club.id, offers: makeOffers(c, club.id), away: lowerOffers(c) };
+  const n = b.fired.offers.length + b.fired.away.length;
   const text = reason === 'president'
-    ? tr(`Außerordentliche Mitgliederversammlung: Du bist als Präsident abgewählt. ${b.fired.offers.length} Vereine haben schon angerufen.`, `Extraordinary general meeting: you have been voted out as president. ${b.fired.offers.length} clubs have already called.`)
-    : tr(`${BOARD()}: „Wir trennen uns. Danke für alles.“ Du bist entlassen. ${b.fired.offers.length} Vereine haben schon angerufen.`, `${BOARD()}: "We are parting ways. Thanks for everything." You have been sacked. ${b.fired.offers.length} clubs have already called.`);
+    ? tr(`Außerordentliche Mitgliederversammlung: Du bist als Präsident abgewählt. ${n} Vereine haben schon angerufen.`, `Extraordinary general meeting: you have been voted out as president. ${n} clubs have already called.`)
+    : tr(`${BOARD()}: „Wir trennen uns. Danke für alles.“ Du bist entlassen. ${n} Vereine haben schon angerufen.`, `${BOARD()}: "We are parting ways. Thanks for everything." You have been sacked. ${n} clubs have already called.`);
   post(c, text);
   chronicle(c, reason === 'president' ? tr('Der Präsident wird von den Mitgliedern abgewählt.', 'The president is voted out by the members.') : tr('Der Trainer wird entlassen.', 'The manager is sacked.'));
   (c.pendingNews ??= []).push(tr(`Kreisblatt: ${club.name} trennt sich von ${reason === 'president' ? 'seinem Präsidenten' : 'seinem Trainer'}.`, `District Gazette: ${club.name} part ways with their ${reason === 'president' ? 'president' : 'manager'}.`));
@@ -159,6 +174,7 @@ export function nextSeason(c, summary) {
   if (!on(c)) return;
   const b = board(c);
   if (b.fired) return;
+  if (c.summerMove?.season === (c.season ?? 1) - 1) return; // Sommerwechsel angenommen – der neue Verein fängt neu an (clubchange.js)
   const w = PRESSURE[Math.max(1, Math.min(PRESSURE.length - 1, (c.level ?? 1) - (summary?.promoted ? 1 : summary?.relegated ? -1 : 0)))] ?? 0;
   if (summary?.promoted) b.trust = clamp(b.trust + TRUST.promoted);
   if (summary?.relegated) b.trust = clamp(b.trust - TRUST.relegated * w);
