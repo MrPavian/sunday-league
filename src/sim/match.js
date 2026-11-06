@@ -21,7 +21,7 @@ import { makeEntity, requestSub, restBench, subRuleFor, swapSides } from './squa
 import { shout } from './coach.js';
 import { createStats, trackStep } from './stats.js';
 import { createReferee, stepReferee } from './referee.js';
-import { carRule, restartFromOut, startSetPiece } from './setpieces.js';
+import { carRule, keepOffThrower, restartFromOut, startSetPiece } from './setpieces.js';
 import { checkOffside } from './offside.js';
 import { applyHold } from './holding.js';
 import { settleAdvantage, stepAdvantage, stepContactFouls } from './fouls.js';
@@ -320,6 +320,7 @@ function step(m, input, dt) {
   }
   if (m.phase !== 'play') return;
   separatePlayers(m);
+  keepOffThrower(m); // Regel 15: 2 m Abstand zum Werfer
   if (stepContactFouls(m, dt)) return;
   if (resolveTackles(m)) return;
   if (stepAdvantage(m)) return;

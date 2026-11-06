@@ -30,6 +30,13 @@ describe('Winterpause', () => {
     expect(humanFixture(c)).toBe(f);
   });
 
+  // Vom Nutzer gemeldet (2026-11-06): In der Winterpause standen die Gerüchte am Brett, aber 0 Aktionen – alles blieb ausgegraut.
+  it('Gerüchteküche in der Pause: laufende Gerüchte bleiben, die Wochenaktionen gibt es auch hier', () => {
+    const c = toWinter(93);
+    expect(c.week.rumors.length).toBeGreaterThan(0);
+    expect(c.week.actions).toBe(2);
+  });
+
   it('Sperren werden in der Pause nicht abgesessen, Verletzungen heilen weiter', () => {
     const c = toWinter(95);
     const [a, b] = humanClub(c).squad.filter((i) => i !== c.coach?.idx);

@@ -18,6 +18,7 @@ import { verbandLeagues } from '../career/verband.js';
 import { extend as extendContract, releaseWithPay } from '../career/contracts.js';
 import { setWaive } from '../career/license.js';
 import { setSummerMove, takeOver } from '../career/clubchange.js';
+import { CLUB_STEPS, OFFER_STEP, startTutorial, stopTutorial, tutorialActive, TutorialBubble } from './Tutorial.js';
 import { setPrice, setSeasonTickets, TICKETS } from '../career/tickets.js';
 import { applyPreset, deletePreset, savePreset } from '../career/tacticpresets.js';
 import { appointCoach, startCourse } from '../career/youthteams.js';
@@ -114,6 +115,9 @@ export class Clubhouse {
     // Karten umdrehen: Knopf überall, Wischen nur im Kartenstapel (im Profil blättert Wischen weiter).
     bindFlips(root, (id, on) => ((this.flipped[id] = on), haptic('tap')), { scope: '.squad-deck' });
     this.busy = null;
+    // Tutorial-Sprechblase (Tutorial.js): liegt über allem, nur solange das Vereinsheim offen ist.
+    // Ohne Browser (Unit-Tests mit Attrappe als root) gibt es keine Blase.
+    this.tut = typeof document === 'undefined' ? { show() {}, hide() {}, open: false } : new TutorialBubble(document.body.appendChild(document.createElement('div')));
     // Aufgeklappte Ausbaugruppe merken (club.js facilityBlock), damit sie nach dem Neuzeichnen offen bleibt.
     root.addEventListener('toggle', (e) => {
       const g = e.target?.closest?.('details.fac-group');
@@ -194,6 +198,7 @@ export class Clubhouse {
         if (this.crestDraft) updateCrest(this.career, this.crestDraft, this.crestYear);
         else if (this.crestYear != null) setFounded(this.career, this.crestYear);
         delete this.career.founding;
+        this.career.tutorial = { offer: true }; // Tutorial anbieten (Heute, ganz oben)
         this.draft = null;
         this.crestDraft = null;
         this.crestYear = null;
@@ -693,6 +698,44 @@ export class Clubhouse {
   hide() {
     this.root.hidden = true;
     this.syncPub3d(true);
+    this.tut.hide();
+  }
+
+  // Tour durchs Vereinsheim: der aktuelle Schritt als Sprechblase; „Weiter“ öffnet den Reiter des nächsten Schritts.
+  syncTutorial() {
+    const c = this.career;
+    if (this.root.hidden || c.founding || this.busy) return this.tut.hide();
+    if (c.tutorial?.offer && !this.results) {
+      const answer = (yes) => {
+        if (yes) startTutorial(c);
+        else stopTutorial(c);
+        this.tab = CLUB_STEPS()[0].tab;
+        this.h.onChange();
+        this.render();
+      };
+      return this.tut.show(OFFER_STEP(), { onNext: () => answer(true), onStop: () => answer(false), nextLabel: tr('Ja, gern', 'Yes, please'), stopLabel: tr('Nein, danke', 'No, thanks') });
+    }
+    if (!tutorialActive(c, 'club')) return this.tut.hide();
+    const steps = CLUB_STEPS();
+    const i = Math.min(c.tutorial.club, steps.length - 1);
+    this.tut.show(steps[i], {
+      index: i,
+      total: steps.length,
+      onNext: () => {
+        if (i + 1 >= steps.length) stopTutorial(c, 'club');
+        else c.tutorial.club = i + 1;
+        this.openPlayer = null;
+        this.pick = null;
+        this.tab = steps[Math.min(i + 1, steps.length - 1)].tab;
+        this.h.onChange();
+        this.render();
+      },
+      onStop: () => {
+        stopTutorial(c);
+        this.h.onChange();
+        this.render();
+      },
+    });
   }
 
   // 3D-Kneipe (render/pub/PubView.js): solange die Bühne im Reiter steht; main.js rendert sie statt des Platzes.
@@ -734,7 +777,7 @@ export class Clubhouse {
   render() {
     const c = this.career;
     const club = humanClub(c);
-    if (c.founding) return this.renderFounding();
+    if (c.founding) return this.tut.hide(), this.renderFounding();
     const over = seasonOver(c);
     const roundNo = Math.min(c.round + 1, c.fixtures.length);
     const rt = resolveTab(this.tab, this.clubSub); // z. B. nach dem Spiel der Alten Herren: tab = 'oldboys'
@@ -793,6 +836,7 @@ export class Clubhouse {
       slot.appendChild(this.tboard.el);
       this.tboard.update(this.boardData.formation, this.boardData.target);
     }
+    this.syncTutorial();
   }
 
 }

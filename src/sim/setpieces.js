@@ -98,6 +98,34 @@ export function startSetPiece(m, { type, team, spot = { x: 0, z: 0 }, takerId = 
   m.events.push({ type: 'setpiece', kind: type, team, playerId: taker.id });
 }
 
+// Einwurf: Solange der Werfer den Ball in den Händen hat, halten Gegner mindestens 2 m Abstand zur Stelle des Einwurfs
+// (IFAB, Spielregeln Regel 15.1: „Alle Gegner müssen mindestens 2 m von der Stelle an der Seitenlinie entfernt stehen, an der
+// der Einwurf ausgeführt wird“). Vorher liefen Gegner nach dem Wegschieben (DISTANCE) wieder direkt vor den Werfer, und viele
+// Würfe prallten gleich zurück ins Aus (vom Nutzer gemeldet 2026-11-06; gemessen: 24–41 % der Würfe mit Gegner unter 2 m).
+export const THROWIN_DISTANCE = 2;
+export function keepOffThrower(m) {
+  const sp = m.setPiece;
+  if (sp?.type !== 'throwin' || sp.taken || m.ball.holder !== sp.takerId) return;
+  const t = getPlayer(m, sp.takerId);
+  if (!t) return;
+  for (const p of m.players) {
+    if (p.team === sp.team) continue;
+    const dx = p.pos.x - t.pos.x;
+    const dz = p.pos.z - t.pos.z;
+    const d = len(dx, dz);
+    if (d >= THROWIN_DISTANCE) continue;
+    // Nach außen auf den Kreis schieben, zur Not ins Feld hinein; was nach innen läuft, bleibt stehen.
+    const n = d > 0.01 ? { x: dx / d, z: dz / d } : { x: 0, z: -Math.sign(t.pos.z) || 1 };
+    p.pos.x = t.pos.x + n.x * THROWIN_DISTANCE;
+    p.pos.z = t.pos.z + n.z * THROWIN_DISTANCE;
+    const inward = p.vel.x * n.x + p.vel.z * n.z;
+    if (inward < 0) {
+      p.vel.x -= inward * n.x;
+      p.vel.z -= inward * n.z;
+    }
+  }
+}
+
 // Elfmeter: Alle raus aus dem Strafraum und hinter den Ball, der Torwart auf die Linie.
 function clearBox(m, team, taker, spot) {
   const { pitch } = m;

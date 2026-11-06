@@ -1419,7 +1419,8 @@ export function finishRound(career) {
 // Spieltag, vor dem die Winterpause liegt (Saisonmitte; die Pokale meiden diese Woche, pokal.js).
 export const winterRound = (c) => Math.floor(c.fixtures.length / 2);
 
-// Woche der Winterpause: kein Ligaspiel, keine Ereignisse und Gerüchte (die laufenden bleiben am Brett). Wer verletzt,
+// Woche der Winterpause: kein Ligaspiel, keine Ereignisse und Gerüchte (die laufenden bleiben am Brett). Die Wochenaktionen gibt es
+// trotzdem – die Wechselperiode II ist offen (vorher 0: alles am Brett blieb ausgegraut, vom Nutzer gemeldet 2026-11-06). Wer verletzt,
 // gesperrt oder verreist ist, fehlt beim Hallenturnier – sonst sind alle da (wie relegationWeek).
 function winterBreakWeek(career) {
   const club = humanClub(career);
@@ -1429,7 +1430,7 @@ function winterBreakWeek(career) {
     availability[idx] = (isCoach(career, idx) && coachAway(career)) || rec.injuryWeeks > 0 || isBanned(career, idx) || rec.awayWeeks > 0 ? 'no' : 'yes';
   }
   const text = tr('Winterpause! Kein Ligaspiel diese Woche. Wer Lust hat: Hallenturnier am Wochenende.', 'Winter break! No league game this week. Anyone up for it: indoor tournament at the weekend.');
-  return { breakWeek: 'winter', availability, chat: [{ from: null, text, time: 'Mo 08:00', me: true }], nudges: 0, nudged: [], lineup: null, training: null, event: null, weather: rollWeather(career), postponed: null, rumors: career.week?.rumors ?? [], actions: 0 };
+  return { breakWeek: 'winter', availability, chat: [{ from: null, text, time: 'Mo 08:00', me: true }], nudges: 0, nudged: [], lineup: null, training: null, event: null, weather: rollWeather(career), postponed: null, rumors: career.week?.rumors ?? [], actions: SCOUT_ACTIONS };
 }
 
 // „Weiter“ nach der Winterpause: Die Woche zählt für Kasse, Erholung, Verletzungen und Ämter, aber nicht als Spieltag

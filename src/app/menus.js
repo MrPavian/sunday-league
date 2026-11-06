@@ -8,6 +8,7 @@ import { activeSlot, createCareer, deleteCareer, exportCareer, humanClub, import
 import { HALF_MAX, HALF_MIN, MATCH, MATCH_LENGTHS, matchDuration } from '../sim/match.js';
 import { PITCHES } from '../sim/pitch.js';
 import { coachLevel, homeView, setCoachLevel, setHomeView } from '../ui/prefs.js';
+import { startTutorial, tutorialActive } from '../ui/Tutorial.js';
 
 export function remember(key, value) {
   try {
@@ -50,7 +51,7 @@ export function createMenus(ctx) {
     onSettings() {
       ctx.menu.paused = true;
       settings.show({
-        state: () => ({ muted: sound.muted, effects: pixel.effects, tempo: ctx.tempo, tempos: ctx.TEMPOS, volume: sound.volume, safeKits: ctx.colorSafe, length: MATCH.halves ? 'custom' : MATCH.length, cupShort: MATCH.cupShare < 1, pokalExtra: MATCH.pokalExtra, subs: MATCH.subs, coachLevel: coachLevel(), homeView: homeView(), haptics: hapticsOn(), leagueSize: ctx.career ? ctx.career.nextLeagueSize ?? ctx.career.leagueSize ?? 6 : ctx.leagueSize, leagueSizeNow: ctx.career?.leagueSize ?? null }),
+        state: () => ({ muted: sound.muted, effects: pixel.effects, tempo: ctx.tempo, tempos: ctx.TEMPOS, volume: sound.volume, safeKits: ctx.colorSafe, length: MATCH.halves ? 'custom' : MATCH.length, cupShort: MATCH.cupShare < 1, pokalExtra: MATCH.pokalExtra, subs: MATCH.subs, coachLevel: coachLevel(), homeView: homeView(), haptics: hapticsOn(), leagueSize: ctx.career ? ctx.career.nextLeagueSize ?? ctx.career.leagueSize ?? 6 : ctx.leagueSize, leagueSizeNow: ctx.career?.leagueSize ?? null, tutorial: ctx.career && !ctx.career.founding ? (tutorialActive(ctx.career, 'club') ? 'running' : 'off') : null }),
         onLang: switchLanguage,
         onChange(key, value) {
           if (key === 'sound' && sound.muted !== (value === 'off')) sound.toggleMute();
@@ -96,6 +97,11 @@ export function createMenus(ctx) {
               ctx.career.nextLeagueSize = ctx.leagueSize === (ctx.career.leagueSize ?? 6) ? null : ctx.leagueSize;
               saveCareer(ctx.career);
             }
+          }
+          if (key === 'tutorial' && ctx.career) {
+            startTutorial(ctx.career);
+            saveCareer(ctx.career);
+            if (ctx.clubhouse) ctx.clubhouse.tab = 'home'; // Rundgang beginnt auf „Heute“
           }
           if (key === 'coachlevel') setCoachLevel(value);
           if (key === 'homeview') setHomeView(value);

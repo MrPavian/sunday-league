@@ -5,7 +5,7 @@
 // Geprüft wird: keine Seitenfehler, Bildschleife läuft, Spiel erreicht den Abpfiff.
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { checker, click, founding, hScroll, launch, leaveHalftime, newCareer, page, settle, smallTargets, visible } from './lib.mjs';
+import { checker, click, declineTutorial, founding, hScroll, launch, leaveHalftime, newCareer, page, settle, smallTargets, visible } from './lib.mjs';
 import { createCareer } from '../../src/career/career.js';
 import { stepDown } from '../../src/career/legacy.js';
 
@@ -407,6 +407,7 @@ export async function clubSetup(b) {
   ok(!!(await p.$('#club [data-action="kitSide"][data-value="away"].active')), 'Auswärts-Reiter nicht aktiv');
   await click(p, '[data-action="foundClub"]');
   await p.waitForTimeout(1000);
+  await declineTutorial(p);
   const kits = await p.evaluate(() => JSON.parse(localStorage.getItem('sunday-league:career')).clubs.find((c) => c.human));
   ok(kits.awayKit?.shirt === awayPick && kits.kit.shirt === homeShirt, `Auswärtstrikot nicht gespeichert (${kits.awayKit?.shirt} statt ${awayPick}, Heim ${kits.kit.shirt} statt ${homeShirt})`);
   const kitLine = await p.evaluate(() => document.querySelector('#club .kit-line')?.textContent ?? '');

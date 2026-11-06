@@ -32,6 +32,7 @@ import { ShoutBar } from './ui/ShoutBar.js';
 import { SubPanel } from './ui/SubPanel.js';
 import { PlanPanel } from './ui/PlanPanel.js';
 import { HalftimePanel } from './ui/HalftimePanel.js';
+import { MATCH_STEPS, stopTutorial, tutorialActive, TutorialBubble } from './ui/Tutorial.js';
 import { coachLevel } from './ui/prefs.js';
 import { enableManager } from './sim/coach.js';
 import { Settings } from './ui/Settings.js';
@@ -352,6 +353,41 @@ function guardFps(dt) {
   hud.toast(tr('Effekte automatisch aus – für ein flüssigeres Spiel (Einstellungen)', 'Effects switched off automatically for smoother play (Settings)'), 3, 2);
 }
 
+// Tutorial am ersten Spieltag (Tutorial.js): Hinweise an der Seitenlinie, das Spiel steht, solange einer offen ist.
+const tutMatch = new TutorialBubble(document.body.appendChild(document.createElement('div')));
+function tutorialTick() {
+  const on = mode === 'play' && careerMatch && career && match.manager && tutorialActive(career, 'match');
+  if (!on) return void (tutMatch.open && tutMatch.hide());
+  const steps = MATCH_STEPS();
+  const done = (part = 'match') => {
+    stopTutorial(career, part);
+    saveCareer(career);
+    tutMatch.hide();
+  };
+  let i = career.tutorial.match;
+  if (tutMatch.open) {
+    // Halbzeit-Hinweis: Geht es weiter, ist auch der Hinweis erledigt.
+    if (steps[i]?.id === 'half' && !halfPanel.isOpen) done();
+    return;
+  }
+  if (subPanel.isOpen || planPanel.isOpen) return;
+  const half = steps.findIndex((x) => x.id === 'half');
+  if (i < half && steps[half].when(match)) i = career.tutorial.match = half; // Halbzeit kam vor der ersten Lagekarte
+  if (match.phase === 'ended' || i >= steps.length) return done();
+  if (!steps[i].when(match)) return;
+  tutMatch.show(steps[i], {
+    index: i,
+    total: steps.length,
+    onNext: () => {
+      if (i + 1 >= steps.length) return done();
+      career.tutorial.match = i + 1;
+      saveCareer(career);
+      tutMatch.hide();
+    },
+    onStop: () => done(null),
+  });
+}
+
 let last = performance.now();
 let acc = 0;
 function frame(now) {
@@ -382,6 +418,9 @@ function frame(now) {
     acc = 0;
     input.poll();
     if (mode !== 'play' || halfPanel.match !== match) halfPanel.close();
+  } else if (tutMatch.open) {
+    acc = 0;
+    input.poll();
   }
   while (acc >= STEP) {
     let raw = input.poll();
@@ -445,6 +484,7 @@ function frame(now) {
   if (DIAG) DIAG.sys = 'hud';
   hud.update(match, dt);
   shoutBar.update(match);
+  tutorialTick();
   if (DIAG) DIAG.sys = 'sound/crowd/camera';
   sound.update(dt, mode === 'play' ? match : null);
   crowd?.update(dt);

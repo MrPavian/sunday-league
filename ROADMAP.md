@@ -326,7 +326,7 @@ Liga- und Vereinsnamen bleiben fiktiv (keine Lizenzen nötig); regionale Variant
 - [ ] Alle Spielstätten (Park bis Amateurstadion), Wetter & Tageszeiten
 - [ ] Challenges, Turniere (Halle, Sommerfest), Bolzplatz-Modus
 - [ ] Audio-Atmosphäre, Musik, Stadionsprecher
-- [ ] Balancing, Tutorial/Onboarding, Lokalisierung (DE/EN)
+- [ ] Balancing, Tutorial/Onboarding, Lokalisierung (DE/EN) — Tutorial gebaut 2026-11-06 (ui/Tutorial.js)
 - [ ] Performance, Controller-Support, Barrierefreiheit
 
 **Meilenstein M7:** Content-complete Beta → Early Access
@@ -1111,6 +1111,9 @@ als anderer Weg. Haken für die Alten Herren: `coach.oldBoys` (das Team selbst f
 
 ### 11.17 Nächste Schritte (vom Nutzer festgelegt, 2026-11-05)
 Reihenfolge nach Nutzerentscheid: zuerst 2. und 1. Liga, dann „so weiter wie vorgeschlagen“.
+Reihenfolge ab 2026-11-06 (Nutzerentscheid): Tutorial ausliefern, dann **Hinterhof-Blick** (11.11), dann ein **großer Bugsuch-Test**
+(lange Karrieren über alle Ligen, alte Spielstände, Oberfläche auf allen Größen, Balance-Stichprobe), danach **Punkt 7** (Taktik
+im Spiel umschalten) und **Punkt 5** (Trainerteam).
 1. **2. Liga und 1. Liga** (Stufen 11 und 12): echte Aufstiege aus der 3. Liga, Lizenz nach DFL (Stadion, Rasenheizung, Flutlicht),
    Gehälter, Fernsehgeld und Vermarktung nach dem DFL-Wirtschaftsreport. ✅ erledigt 2026-11-05.
 2. **Vereinswechsel im Sommer und ligaübergreifend:** Anfragen von oben für erfolgreiche Trainer, nach einer Entlassung auch von unten.

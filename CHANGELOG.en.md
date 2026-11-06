@@ -6,6 +6,19 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-06-5 – A tutorial to get started
+
+### New
+- **Optional tutorial:** after founding your club, the game asks whether you would like a quick tour.
+  - **Clubhouse tour:** eleven steps from "Today" via phone, line-up, tactics, training, transfers, season, kitty and grounds to the pub. Each step opens its tab and highlights what it is about.
+  - **First match on the touchline:** tips on tactics and shouts, substitutions, the assistant, situation cards and half-time – each when the moment comes. The match is paused while a tip is open.
+  - Stop any time with "End tutorial", restart it in **Settings → Game**. On a computer, Enter moves on.
+
+### Fixed
+- **Youth did not match the league:** the new U19 intake (and new old-boys players) was drawn from the whole player pool – so even in the recreational league 17-year-olds rated 70 to over 100 joined the club. Now, like outside signings, it comes from your own league's level. The same applied to the player-manager if you do not create your own.
+- **Throw-ins:** opponents now keep 2 m from the thrower, as in Law 15. Before, one often stood right in front, and the ball bounced straight back out.
+- **Winter break:** the rumour mill was greyed out because the break week had no actions. Now you get the usual two – the transfer window is open after all.
+
 ## 2026-11-06-4 – Club grounds: training, medical, club office, youth and surroundings
 
 ### New

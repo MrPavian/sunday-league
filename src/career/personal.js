@@ -4,7 +4,7 @@
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { book } from './finances.js';
-import { addCustomPlayer, getPool, humanClub, maxSquad, playerOf } from './career.js';
+import { addCustomPlayer, getPool, humanClub, maxSquad, niveauFits, playerOf } from './career.js';
 import { generatePlayer, ratePlayer } from '../sim/generator.js';
 import { deriveStrength } from '../sim/strength.js';
 import { adjustMood } from './events.js';
@@ -176,7 +176,8 @@ export function initCoach(career, input = null) {
   if (club.squad.length < maxSquad(career)) {
     for (let i = 0; i < 400 && idx === null; i++) {
       const p = pool.get(rng.int(0, pool.size - 1));
-      if (!taken.has(p.poolIndex) && p.tier === 'gut' && p.age >= 30 && p.age <= 38) idx = p.poolIndex;
+      // Stärkemodell 3: vom Niveau der eigenen Liga (sonst stand ein Spielertrainer mit Stärke 135 in der Freizeitliga, 2026-11-06).
+      if (!taken.has(p.poolIndex) && p.tier === 'gut' && p.age >= 30 && p.age <= 38 && niveauFits(career, p.poolIndex)) idx = p.poolIndex;
     }
   }
   const family = rng.pick(FAMILIES);

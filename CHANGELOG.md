@@ -6,6 +6,19 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-06-5 – Tutorial für den Einstieg
+
+### Neu
+- **Wählbares Tutorial:** Nach der Vereinsgründung fragt das Spiel, ob du eine kurze Führung möchtest.
+  - **Rundgang durchs Vereinsheim:** elf Schritte von „Heute“ über Handy, Aufstellung, Taktik, Training, Transfers, Saison, Kasse und Anlage bis zur Kneipe. Jeder Schritt öffnet seinen Reiter und hebt hervor, worum es geht.
+  - **Erster Spieltag an der Seitenlinie:** Hinweise zu Taktik und Zurufen, Wechseln, Co-Trainer, Lagekarte und Halbzeit – jeweils dann, wenn es so weit ist. Solange ein Hinweis offen ist, steht das Spiel.
+  - Jederzeit mit „Tutorial beenden“ abbrechbar, in den **Einstellungen → Spiel** neu startbar. Am Rechner geht es mit Enter weiter.
+
+### Behoben
+- **Jugend passte nicht zur Liga:** Der neue A-Jugend-Jahrgang (und neue Spieler der Alten Herren) kam aus dem ganzen Spielerpool – so standen schon in der Freizeitliga 17-Jährige mit Stärke 70 bis über 100 im Verein. Jetzt kommt er wie Zugänge von außen vom Niveau der eigenen Liga. Dasselbe galt für den Spielertrainer, wenn man keinen eigenen anlegt.
+- **Einwurf:** Gegner halten jetzt 2 m Abstand zum Werfer, wie in Regel 15. Vorher stellte sich oft einer direkt davor, und der Ball prallte gleich zurück ins Aus.
+- **Winterpause:** Die Gerüchteküche war ausgegraut, weil es in der Pausenwoche keine Aktionen gab. Jetzt gibt es die üblichen zwei – die Wechselperiode ist ja offen.
+
 ## 2026-11-06-4 – Vereinsgelände: Training, Medizin, Geschäftsstelle, Jugend und Umfeld
 
 ### Neu

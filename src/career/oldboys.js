@@ -20,7 +20,7 @@ import { createRng } from '../core/rng.js';
 import { createMatch, MATCH, stepMatch } from '../sim/match.js';
 import { PITCHES } from '../sim/pitch.js';
 import { subRuleFor } from '../sim/squad.js';
-import { getPool, humanClub, leagueOf, MIN_SQUAD, playerOf, resolveKits, roundRobin, takenIndices, teamForMatch } from './career.js';
+import { getPool, humanClub, leagueOf, MIN_SQUAD, niveauFits, playerOf, resolveKits, roundRobin, takenIndices, teamForMatch } from './career.js';
 import { adjustMood } from './events.js';
 import { book } from './finances.js';
 import { applyWeather } from './weather.js';
@@ -148,7 +148,8 @@ function pickOld(c, rng, positions, weights, used) {
       if (!list?.length) continue;
       const idx = rng.pick(list);
       const age = getPool().get(idx).age + years;
-      if (used.has(idx) || age < AGE_MIN || age > AGE_MAX - 3) continue;
+      // Stärkemodell 3: vom Niveau der eigenen Liga (niveauFits) – wie Jugend und Zugänge (2026-11-06).
+      if (used.has(idx) || age < AGE_MIN || age > AGE_MAX - 3 || !niveauFits(c, idx)) continue;
       used.add(idx);
       out.push(idx);
       break;

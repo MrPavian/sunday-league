@@ -53,21 +53,28 @@ export async function page(browser, size = 'land', { query = '?notitle', store =
 export const click = (p, sel) => p.evaluate((s) => { const el = document.querySelector(s); if (!el) throw new Error(`fehlt: ${s}`); el.click(); }, sel);
 export const visible = (p, id) => p.evaluate((i) => !document.getElementById(i).hidden, id);
 
-export async function newCareer(p) {
+export async function newCareer(p, { tutorial = false } = {}) {
   await p.click('.career button');
   await p.waitForTimeout(500);
   await p.fill('#cc-first', 'Erika');
   await p.fill('#cc-last', 'Test');
   await p.click('#creator [data-action="done"]');
   await p.waitForTimeout(1500);
-  await founding(p);
+  await founding(p, { tutorial });
 }
 
 // Gründungsversammlung (Name, Trikot, Wappen) mit den Vorgaben abschließen.
-export async function founding(p) {
+// Danach fragt das Spiel nach dem Tutorial: Für die übrigen Abläufe „Nein, danke“ (sonst bestätigt ein Enter es).
+export async function founding(p, { tutorial = false } = {}) {
   if (!(await p.$('[data-action="foundClub"]'))) return;
   await click(p, '[data-action="foundClub"]');
   await p.waitForTimeout(800);
+  if (!tutorial) await declineTutorial(p);
+}
+
+export async function declineTutorial(p) {
+  await p.evaluate(() => document.querySelector('.tutorial:not([hidden]) .tut-bubble[data-step="offer"] [data-tut="stop"]')?.click());
+  await p.waitForTimeout(200);
 }
 
 // Karrierespiel als Trainer bis zum Abpfiff, zurück ins Vereinsheim.

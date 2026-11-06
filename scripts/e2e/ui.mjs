@@ -13,6 +13,7 @@ import { kneipe } from './ui/pub.mjs';
 import { transferMarkt } from './ui/transfers.mjs';
 import { relegation } from './ui/relegation.mjs';
 import { winterBreak } from './ui/winter.mjs';
+import { tutorial } from './ui/tutorial.mjs';
 
 export async function run({ sizes = Object.keys(SIZES) } = {}) {
   const b = await launch();
@@ -29,6 +30,7 @@ export async function run({ sizes = Object.keys(SIZES) } = {}) {
   for (const s of sizes) fails += await frauen(b, s, process.env.E2E_SHOTS);
   for (const s of sizes) fails += await kneipe(b, s, process.env.E2E_SHOTS);
   for (const s of sizes) fails += await phoneAndShare(b, s);
+  for (const s of sizes) fails += await tutorial(b, s, process.env.E2E_SHOTS);
   fails += await relegation(b);
   fails += await winterBreak(b);
   fails += await tickerRound(b);

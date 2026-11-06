@@ -4,6 +4,7 @@ import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { hasTrait } from '../data/traits.js';
 import { ATTR_KEYS } from '../sim/strength.js';
+import { niveauFits } from './career.js';
 import { onPromote } from './bridge.js';
 
 const YOUTH_MAX_AGE = 19;
@@ -30,7 +31,10 @@ export function youthIntake(career, deps, rng = createRng(career.seed + career.s
   const quality = career.youth.coach.quality;
   const count = 2 + (quality >= 0.6 ? 1 : 0) + (deps.extra ?? 0); // Jugendhaus: einer mehr
   const used = taken(career);
-  const young = pool.everyone().filter((p) => !used.has(p.poolIndex) && playerOf(career, p.poolIndex).age <= 18 && p.tier !== 'legende');
+  // Stärkemodell 3: Jeder Pool-Spieler hat ein Niveau (sim/niveau.js, Aufschlag je Liga). Der eigene Jahrgang kommt vom Niveau der
+  // eigenen Liga (niveauFits, wie Zugänge von außen) – sonst stand ein 17-Jähriger vom Profi-Niveau (Stärke bis 125) in der A-Jugend
+  // eines Freizeitligisten (vom Nutzer gemeldet, 2026-11-06). Bessere Jahrgänge bringen Jugendtrainer, Jugendhaus, Internat und NLZ.
+  const young = pool.everyone().filter((p) => !used.has(p.poolIndex) && niveauFits(career, p.poolIndex) && playerOf(career, p.poolIndex).age <= 18 && p.tier !== 'legende');
   // Ein guter Jugendtrainer holt öfter die Talentierten.
   const weights = { ok: 0.65 - quality * 0.3, gut: 0.3 + quality * 0.2, stark: 0.05 + quality * 0.1 };
   const intake = [];

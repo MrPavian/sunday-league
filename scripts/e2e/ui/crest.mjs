@@ -1,7 +1,7 @@
 // Oberfläche: Wappen-Editor (Gründungsversammlung und Reiter „Verein“). Reiter Form / Muster / Farben / Symbol / Band & Jahr,
 // Live-Vorschau ändert sich, Gründungsjahr einstellbar und gespeichert; kein seitliches Scrollen, auf Touch keine Schaltflächen unter 44 px.
 import { createCareer } from '../../../src/career/career.js';
-import { checker, click, hScroll, page, settle, SIZES, smallTargets } from '../lib.mjs';
+import { checker, click, declineTutorial, hScroll, page, settle, SIZES, smallTargets } from '../lib.mjs';
 
 const TABS = ['form', 'muster', 'farben', 'symbol', 'band'];
 
@@ -123,6 +123,7 @@ export async function crestEditor(b, size, shots) {
   await q.dispatchEvent('[data-crest-year]', 'change');
   await click(q, '[data-action="foundClub"]');
   await q.waitForTimeout(800);
+  await declineTutorial(q);
   const s2 = await q.evaluate(() => JSON.parse(localStorage.getItem('sunday-league:career')));
   ok(s2.founded === 1911 && !s2.founding, `Gründung: Jahr ${s2.founded}, founding ${s2.founding}`);
   ok(s2.clubs.find((x) => x.human).crest?.division === 'diag3', 'Gründung: Muster nicht gespeichert');
