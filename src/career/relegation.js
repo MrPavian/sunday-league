@@ -10,7 +10,7 @@ import { shootoutScore } from '../sim/shootout.js';
 import { subRuleFor } from '../sim/squad.js';
 import { LEAGUES, maxLevel } from './clubs.js';
 import { championWaives, promotionBlock } from './license.js';
-import { humanClub, proMap, resolveKits, simulateSync, squadPicker, SQUAD_SHAPES, table, teamForMatch } from './career.js';
+import { humanClub, proMap, resolveKits, simulateSync, squadPicker, SQUAD_SHAPES, table, takenIndices, teamForMatch } from './career.js';
 import { adjustMood } from './events.js';
 import { applyWeather, rollWeather } from './weather.js';
 import { coachAway, isCoach } from './personal.js';
@@ -43,7 +43,7 @@ export function startRelegation(career) {
   const sorted = [...membersOf(career, need.other)].sort((a, b) => strength(a) - strength(b)); // aktuelle Vereinsliste (pyramid.js)
   const def = need.kind === 'up' ? sorted[0] : sorted[sorted.length - 1];
   const rng = createRng((career.seed * 977 + career.season * 31) >>> 0);
-  const used = new Set([...career.clubs.flatMap((c) => c.squad), ...(career.youth?.prospects ?? []), ...(career.alumni ?? []).map((a) => a.idx)]);
+  const used = takenIndices(career); // auch Alte Herren, Nachbarligen, Pokalgäste
   const squad = squadPicker(rng, used, (career.strength ?? 1) >= 3 ? need.other : null, proMap(career))(def.tiers, SQUAD_SHAPES[LEAGUES[Math.max(need.level, need.other)].squadShape]);
   for (const idx of squad) career.players[idx] ??= { apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 };
   const opponent = { ...def, id: RELEGATION_ID, human: false, squad };

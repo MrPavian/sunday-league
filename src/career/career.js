@@ -131,6 +131,13 @@ export function addCustomPlayer(career, player) {
   CUSTOM.set(idx, p);
   return idx;
 }
+// Eigene Jugend (Akademie, Söhne von Ex-Spielern, Trainerkinder): beim Hochkommen bekommt der Spieler das Niveau seines Vereins –
+// eine Stufe unter der Liga, in den Profiligen zwei (Spielwert, 2026-11-06; vorher blieb er auf Kreisliga-Stärke, in der 1. Liga
+// kam ein Toptalent mit 76 bei einem Liga-Median von 179). Ohne Angabe (ältere Spielstände) wie bisher ohne Aufschlag.
+export const youthNiveau = (career) => {
+  const lv = career.level ?? 1;
+  return Math.max(1, lv > 8 ? lv - 2 : lv - 1);
+};
 export const poolPlayer = (index) => CUSTOM.get(index) ?? getPool().get(index);
 const rawPlayer = (career, idx) => career.custom?.[idx] ?? poolPlayer(idx);
 
@@ -140,7 +147,9 @@ const rawPlayer = (career, idx) => career.custom?.[idx] ?? poolPlayer(idx);
 export function playerOf(career, idx) {
   // Stärkemodell 3: Pool-Spieler mit dem Aufschlag ihres Niveaus (sim/niveau.js); eigene Spieler (custom) ohne.
   const pn = career.proNiv?.[idx]; // Profi-Niveau 9/10 (squadPicker)
-  const base = (career.strength ?? 1) >= 3 && !career.custom?.[idx] && idx < CUSTOM_BASE ? (pn ? liftedAt(rawPlayer(career, idx), pn) : lifted(rawPlayer(career, idx))) : rawPlayer(career, idx);
+  const own = career.custom?.[idx];
+  const model3 = (career.strength ?? 1) >= 3;
+  const base = model3 && own?.niv ? liftedAt(own, own.niv) : model3 && !own && idx < CUSTOM_BASE ? (pn ? liftedAt(rawPlayer(career, idx), pn) : lifted(rawPlayer(career, idx))) : rawPlayer(career, idx);
   const delta = career.players[idx]?.delta;
   const years = (career.season ?? 1) - 1;
   const extra = career.players[idx]?.addTraits; // z. B. „Ex-Profi" nach der Rückkehr
@@ -405,7 +414,9 @@ export function nextSeason(career) {
   sagaNotes.push(...movesNotes(career, cpuMoved, newLevel));
   if (upBlock) sagaNotes.push(blockText(career, upBlock, level)); // Profiligen: kein Aufstieg trotz Platz (license.js)
   if (newLevel === level) {
-    const used = new Set([...clubs.flatMap((c) => c.squad), ...(career.youth?.prospects ?? []), ...(career.alumni ?? []).map((a) => a.idx)]);
+    // Alle, die schon irgendwo spielen (takenIndices: auch Alte Herren, Nachbarligen, Pokalgäste) – vorher fehlten die Alten Herren,
+    // und ein Ü32-Spieler stand zugleich im Kader eines Gegners (Langzeitlauf, 2026-11-06).
+    const used = takenIndices(career);
     if ((career.strength ?? 1) >= 3) for (const idx of career.relegation?.opponent?.squad ?? []) used.add(idx); // wie unten beim Ligawechsel
     const pickFusion = squadPicker(createRng(hashSeed(career.seed, career.season, 98)), used, (career.strength ?? 1) >= 3 ? level : null, proMap(career));
     clubs = swapMembers(career, clubs, newLevel, (tiers) => pickFusion(tiers, SQUAD_SHAPES[league.squadShape])); // Auf- und Absteiger tauschen
@@ -417,7 +428,9 @@ export function nextSeason(career) {
   } else if (career.saga.fusion) career.saga.fusion = null; // Liga gewechselt – der Nachbar spielt woanders
   if (newLevel !== level) {
     // Neue Liga, neue Gegner. Die alten Gegner verlassen den Spielstand.
-    const used = new Set(human.squad);
+    // Die alten Gegner werden frei; alle anderen Vergebenen (Jugend, Alte Herren, Nachbarligen, Pokalgäste) bleiben ausgenommen.
+    const oldCpu = new Set(career.clubs.filter((c) => !c.human).flatMap((c) => c.squad));
+    const used = new Set([...human.squad, ...[...takenIndices(career)].filter((i) => !oldCpu.has(i))]);
     // Stärkemodell 3: Die Auswahl je Niveau ist kleiner – den Relegationsgegner ausnehmen, sonst landen seine Spieler in der neuen
     // Liga und ihr Datensatz bleibt (gemessen: career.test „play-off“).
     if ((career.strength ?? 1) >= 3) for (const idx of career.relegation?.opponent?.squad ?? []) used.add(idx);

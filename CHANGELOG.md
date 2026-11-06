@@ -6,6 +6,17 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-06-6 – Neues Startbild und Blick aus dem Vereinsheim
+
+### Neu
+- **Startbild neu gezeichnet:** Sonntagmorgen auf dem Dorfplatz, jetzt gestochen scharf auf jedem Bildschirm – jedes Bildpixel ist gleich groß. Mehr zu sehen: das Dorf mit Kirche, die tief stehende Sonne, eine kleine Tribüne, Vögel, Rauch vom Grill und der Platzwart, der mit dem Kreidewagen die Linien nachzieht. Logo und Schrift überdecken nichts mehr, auf flachen Bildschirmen wird das Logo kleiner.
+- **Fenster im Vereinsheim:** Unter „Heute“ schaust du jetzt von oben auf den Platz, wie aus dem ersten oder zweiten Stock.
+
+### Behoben
+- **Eigene Jugend in höheren Ligen:** Spieler aus der eigenen Jugend, Söhne ehemaliger Spieler und Kinder des Trainers kamen immer mit Kreisliga-Stärke hoch – in der 1. Liga war selbst ein Toptalent chancenlos. Jetzt kommen sie eine Stufe unter dem Niveau der Liga hoch, in den Profiligen zwei Stufen darunter.
+- **Doppelte Spieler nach Auf- oder Abstieg:** Beim Zusammenstellen der neuen Liga konnte ein Spieler der Alten Herren gleichzeitig im Kader eines Gegners landen.
+- **Sommerfest:** Der Spieler, der nach dem Fest mitspielen will, kommt jetzt vom Niveau der eigenen Liga und spielt sicher nirgendwo sonst.
+
 ## 2026-11-06-5 – Tutorial für den Einstieg
 
 ### Neu

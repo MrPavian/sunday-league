@@ -3,7 +3,7 @@
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { book } from './finances.js';
-import { arrivalTiers, getPool, humanClub, joinSquad, niveauFits, playerOf } from './career.js';
+import { arrivalTiers, getPool, humanClub, joinSquad, niveauFits, playerOf, takenIndices } from './career.js';
 import { advanceStories, arcsOf, STORY_STARTS, storyDecision } from './stories.js';
 import { CRISES, PERSONAL_EVENTS } from './personal.js';
 import { SAGA_EVENTS } from './sagas.js';
@@ -543,7 +543,10 @@ export const EVENTS = {
               c.flags.summerfest = true;
               book(c, tr('Sommerfest: Hüpfburg & Grill', 'Summer party: bouncy castle & barbecue'), -50);
               book(c, tr('Sommerfest: Einnahmen', 'Summer party: takings'), 120);
-              const p = getPool().everyone().find((q) => q.tier === 'gut' && !c.clubs.some((x) => x.squad.includes(q.poolIndex)) && q.poolIndex % 7 === c.round);
+              // Nur wer frei ist (auch nicht bei Nachbarn, Alten Herren, Jugend) und zum Niveau der Liga passt (vorher: jedes Niveau).
+              const taken = takenIndices(c);
+              const free = getPool().everyone().filter((q) => q.tier === 'gut' && !taken.has(q.poolIndex) && niveauFits(c, q.poolIndex));
+              const p = free.length ? free[(c.round * 7 + c.season) % free.length] : null;
               if (p && joinSquad(c, p.poolIndex, tr('War beim Sommerfest – ich will mitspielen!', 'I was at the summer party – I want to play!'))) return tr(`120 € eingenommen, und ${p.name} will mitspielen!`, `€120 taken, and ${p.name} wants to play!`);
               return tr('120 € eingenommen. Und die Hüpfburg hat überlebt.', '€120 taken. And the bouncy castle survived.');
             },

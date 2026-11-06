@@ -10,7 +10,7 @@
 // CPU-Verein in seiner Liga weiter.
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
-import { clubById, humanClub, migrateCareer, proMap, roundRobin, seasonOver, squadPicker, SQUAD_SHAPES, startWeek, table } from './career.js';
+import { clubById, humanClub, migrateCareer, proMap, roundRobin, seasonOver, squadPicker, SQUAD_SHAPES, startWeek, table, takenIndices } from './career.js';
 import { EXTRA_CLUBS, LEAGUES, maxLevel } from './clubs.js';
 import { leagueTitle, localized } from './verband.js';
 import { ensureContracts } from './contracts.js';
@@ -161,7 +161,7 @@ export function moveTo(c, clubId, wanted, reason = 'summer') {
   const { squad: s0, human: h0, ...neuDef } = def;
   // Neue Liga: frische Kader für alle (wie beim Auf- und Abstieg in career.js nextSeason).
   const league = LEAGUES[level];
-  const used = new Set(Object.keys(c.players).map(Number));
+  const used = new Set([...Object.keys(c.players).map(Number), ...takenIndices(c)]);
   const pick = squadPicker(createRng(hash(c.seed ?? 0, c.season ?? 1, 97, idHash(clubId))), used, (c.strength ?? 1) >= 3 ? level : null, proMap(c));
   const shape = SQUAD_SHAPES[league.squadShape];
   const size = c.leagueSize ?? 6;

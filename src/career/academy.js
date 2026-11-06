@@ -8,7 +8,7 @@ import { girlName, lastName, personName } from '../data/origins.js';
 import { addFromYouth } from './women.js';
 import { generatePlayer, ratePlayer } from '../sim/generator.js';
 import { book } from './finances.js';
-import { addCustomPlayer, humanClub, maxSquad, playerOf } from './career.js';
+import { addCustomPlayer, humanClub, maxSquad, playerOf, youthNiveau } from './career.js';
 import { adjustMood } from './events.js';
 import { outcome } from './outcomes.js';
 import { adjustEnergy, childAge } from './personal.js';
@@ -189,6 +189,7 @@ export function graduate(c, k, rng) {
   const p = generatePlayer(rng, { role: k.position, tier });
   const player = { ...p, name: k.name, age: 16 - ((c.season ?? 1) - 1), profession: 'Schüler', position: k.position, backstory: tr('Aus der eigenen Jugend, seit der E-Jugend im Verein.', 'Came up through the club, at the youth section since the U11s.'), custom: 'youth' };
   player.rating = ratePlayer(player);
+  player.niv = youthNiveau(c); // Niveau des Vereins (career.js youthNiveau)
   const idx = addCustomPlayer(c, player);
   c.players[idx] = { apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0, kidTalent: k.talent }; // Tendenz fürs Talent (development.js talentOf)
   c.youth.prospects.push(idx);

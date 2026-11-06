@@ -6,6 +6,17 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-06-6 – New title screen and a view from the clubhouse
+
+### New
+- **Title screen redrawn:** Sunday morning at the village pitch, now pin-sharp on every screen – every pixel the same size. More to see: the village with its church, the low morning sun, a small stand, birds, smoke from the barbecue and the groundsman remarking the lines with his chalk cart. Logo and text no longer cover anything, and on short screens the logo gets smaller.
+- **Clubhouse window:** under "Today" you now look down on the pitch, as if from the first or second floor.
+
+### Fixed
+- **Own youth in higher leagues:** players from your own youth section, sons of former players and the manager's children always came up at county-league strength – in the first division even a top talent stood no chance. Now they come up one level below the league, two levels below in the professional leagues.
+- **Duplicate players after promotion or relegation:** when the new league was put together, an old boys player could end up in an opponent's squad at the same time.
+- **Summer party:** the player who wants to join after the party now comes from your league's level and is sure not to play anywhere else.
+
 ## 2026-11-06-5 – A tutorial to get started
 
 ### New

@@ -4,7 +4,7 @@
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { book } from './finances.js';
-import { addCustomPlayer, getPool, humanClub, maxSquad, niveauFits, playerOf } from './career.js';
+import { addCustomPlayer, getPool, humanClub, maxSquad, niveauFits, playerOf, youthNiveau } from './career.js';
 import { generatePlayer, ratePlayer } from '../sim/generator.js';
 import { deriveStrength } from '../sim/strength.js';
 import { adjustMood } from './events.js';
@@ -212,6 +212,7 @@ export function childrenGrowUp(c) {
     // Ein eigener Spieler entsteht erst, wenn er alt genug ist. Das Alter
     // wird auf Saison 1 zurückgerechnet, weil playerOf jede Saison ein Jahr draufschlägt.
     const player = createKidPlayer(child, k, parent, age - ((c.season ?? 1) - 1), c.seed);
+    player.niv = youthNiveau(c); // Niveau des Vereins (career.js youthNiveau)
     const idx = addCustomPlayer(c, player);
     child.idx = idx;
     c.players[idx] = { apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0 };

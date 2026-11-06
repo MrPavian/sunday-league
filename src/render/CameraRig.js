@@ -16,10 +16,9 @@ export class CameraRig {
     this.viewHeight = viewHeight;
     this.offset = offset;
     this.baseOffset = offset.clone();
-    // Blick aus dem Vereinsheim-Fenster: etwas flacher (≈ 16° statt ≈ 20°), wie aus dem ersten
-    // Stock an der Seitenlinie. Flacher geht mit der Parallelprojektion nicht – der Platz würde
-    // zu einem Strich gestaucht.
-    this.windowOffset = new THREE.Vector3(0, 7, 24.5);
+    // Blick aus dem Vereinsheim-Fenster: von oben aus dem 1./2. Stock, ≈ 32° statt ≈ 20° wie im Spiel
+    // (Spielwert, vom Nutzer gewünscht 2026-11-06; vorher ≈ 16°, flacher als im Spiel).
+    this.windowOffset = new THREE.Vector3(0, 12.5, 20);
     // near < 0: Parallelprojektion – Boden vor der Kameraposition (Hochformat, Großfeld) wird nicht
     // abgeschnitten. Die Tiefe ab der Kamera (Dunst, Himmel im Shader) bleibt für alles andere gleich.
     this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -40, 160);
