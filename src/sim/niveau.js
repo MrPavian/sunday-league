@@ -68,8 +68,15 @@ export function liftedAt(p, niveau) {
   if (!q) m.set(niveau, (q = liftNow(p, niveau)));
   return q;
 }
+// Über der 1. Liga (Nationalteams, nationalteams.js): Technikwerte so angehoben, dass die Stärke um target − NIVEAU_BASE wächst –
+// dieselbe Rechnung wie für die Niveaus, nur mit freiem Ziel. Nicht zwischengespeichert (wenige Spieler je Turnierspiel).
+export function liftedTo(p, target) {
+  return liftWith(p, Math.max(0, target - NIVEAU_BASE), TOP_NIVEAU);
+}
 function liftNow(p, niveau) {
-  const lift = NIVEAU_LIFT[Math.max(1, Math.min(TOP_NIVEAU, niveau)) - 1];
+  return liftWith(p, NIVEAU_LIFT[Math.max(1, Math.min(TOP_NIVEAU, niveau)) - 1], niveau);
+}
+function liftWith(p, lift, niveau) {
   if (!lift) return { ...p, niveau, rating: ratePlayer(p, Infinity) };
   const d = lift / (100 * techShare(p.position));
   const attrs = Object.fromEntries(Object.entries(p.attrs).map(([k, v]) => [k, liftsAttr(p.position, k) ? v + d : v]));

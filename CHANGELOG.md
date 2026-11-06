@@ -6,6 +6,16 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-06-2 – Weltmeisterschaft, Europameisterschaft und Kontinentalturniere
+
+### Neu
+- **Turniere der Nationalteams:** Weltmeisterschaft (48 Teams), Europameisterschaft (24), Afrika- und Asienmeisterschaft (je 24), Südamerika (16), Nord- und Mittelamerika (16) und Ozeanien (8) – im echten Rhythmus, mit Gruppen, besten Dritten und K.-o.-Runde. Länder echt, Namen neutral, alle Spieler erfunden.
+- **Nominierung ab der Regionalliga:** Eigene Spieler fahren zu ihrem Land, wenn es dabei ist und sie gut genug sind. Die Herkunft entscheidet; wer zwei Länder hat, spielt oft für das, in dem er lebt.
+- **Im Stadion ansehen:** Die Spiele ihres Landes laufen in 3D im Turnierstadion, beide Teams von der KI. Oder nur das Ergebnis, oder das Turnier vorspulen.
+- **Marktwert:** Einsätze, Tore und weite Wege heben Gehaltsforderung, Ablöse und Kaufpreis – voll für zwei Saisons, dann halb.
+- **Entschädigung:** Bei der Weltmeisterschaft zahlt der Weltverband 5000 € je Spieler und Tag.
+- **Winter:** Afrika- und Asienmeisterschaft laufen in der Winterpause; wer weit kommt, fehlt danach Ligaspiele.
+
 ## 2026-11-06-1 – Vereinswechsel im Sommer
 
 ### Neu

@@ -11,6 +11,7 @@
 //  - CPU-Wechsel: nur in den Wechselfristen, Kaderstärke bleibt ligagerecht (Zugang muss in die Stufen des neuen Vereins
 //    passen, der abgebende Verein holt Ersatz seiner Stufen aus dem Pool, der aufnehmende lässt seinen Schwächsten ziehen).
 // Alle Zufälle laufen über eigene, aus Saison/Fenster abgeleitete Ströme – nichts verschiebt die bestehenden Würfe.
+import { natBoostMul } from './natboost.js';
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { LEAGUES, maxLevel } from './clubs.js';
@@ -172,7 +173,7 @@ export function priceOf(c, idx, kind = windowAt(c) ?? 'summer') {
   const src = clubOfPlayer(c, idx);
   if (!src) return 0;
   const p = playerOf(c, idx);
-  const base = feeFor(c, idx, src.level, c.level ?? 1, { age: p.age });
+  const base = Math.round(feeFor(c, idx, src.level, c.level ?? 1, { age: p.age }) * natBoostMul(c, idx)); // Turnier-Schub (natboost.js)
   return kind === 'winter' ? winterFee(base, importanceOf(c, src.club, idx)) : base;
 }
 

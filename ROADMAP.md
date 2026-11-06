@@ -1124,5 +1124,7 @@ Reihenfolge nach Nutzerentscheid: zuerst 2. und 1. Liga, dann „so weiter wie v
     Weltmeisterschaft, Europameisterschaft und alle Kontinentalmeisterschaften (Afrika, Asien, Südamerika, Nord- und
     Mittelamerika, Ozeanien) im Hintergrund simuliert. Eigene Spieler werden nach Herkunft und Stärke nominiert, fehlen bei
     Winterturnieren (Afrika, Asien) einige Spieltage und kommen mit einem Turnier-Schub auf den Marktwert zurück.
+    ✅ erste Fassung 2026-11-06 (nationalteams.js): Nominierung nur aus den Profiligen, Spiele der eigenen Spieler im Stadion in 3D,
+    neutrale Namen. Offen: Stimmung, ausländische Schiris, Spiel um Platz drei, Qualifikation (Konzept Abschnitt 11).
 15. **Nationaltrainer werden** (später): Anfragen von Verbänden ab gutem Ruf, Neben- oder Hauptamt, eigener Kader aus allen
     Spielern des Landes, Turnierspiele in 3D.

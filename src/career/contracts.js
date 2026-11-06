@@ -13,6 +13,7 @@
 //  - Jahresbeträge je Spieltag: geteilt durch die echte Zahl der Spieltage (Regionalliga 34, 3. Liga 38), damit Gehälter,
 //    Eintritt und Fernsehgeld im Spiel im selben Verhältnis stehen wie in echt (HERGELEITET).
 //  - Laufzeiten, Ablöse und Verlängerung sind Spielwerte.
+import { natBoostMul } from './natboost.js';
 import { tr } from '../core/i18n.js';
 import { PRO_TARGET } from '../sim/niveau.js';
 import { humanClub, playerOf, releasePlayer, takenIndices } from './career.js';
@@ -45,7 +46,7 @@ export function salaryDemand(c, idx, level = c.level ?? 1) {
   const mean = CONTRACT.mean[l];
   const rating = playerOf(c, idx).rating;
   const f = Math.max(CONTRACT.min, Math.min(CONTRACT.spread, CONTRACT.spread ** ((rating - PRO_TARGET[l]) / CONTRACT.span)));
-  return Math.max(50, Math.round((mean * f) / 50) * 50);
+  return Math.max(50, Math.round((mean * f * natBoostMul(c, idx)) / 50) * 50); // Turnier-Schub (natboost.js)
 }
 // Monatsgehalt in Kosten je Spieltag.
 export const perRound = (monthly, level) => Math.round((monthly * 12) / CONTRACT.rounds[lvlOf(level)]);

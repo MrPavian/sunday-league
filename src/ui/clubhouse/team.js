@@ -11,6 +11,8 @@ import { coachLevel } from '../prefs.js';
 import { button, esc, haptic, icon, segmented, tabs as uiTabs } from '../ds.js';
 import { LEAGUES, maxLevel } from '../../career/clubs.js';
 import { contractOf, extendOffer, isPro, releaseCost, yearsLeft } from '../../career/contracts.js';
+import { natBoostMul } from '../../career/natboost.js';
+import { nationName } from '../../career/nationalteams.js';
 import { NAME_MAX, PRESET_MAX, presetActive, presetsOf } from '../../career/tacticpresets.js';
 import { leagueTitle, niveauName, niveauText } from '../../career/verband.js';
 import { aboveLeague, playerTalentGuess } from '../../career/development.js';
@@ -59,6 +61,14 @@ const contractBlock = (c, idx) => {
       : `<p class="t-2">${tr(`Verlängern – er will ${eur(offer.salary)} € im Monat:`, `Extend – he wants €${eur(offer.salary)} a month:`)}</p><div class="ui-row">${[1, 2, 3].map((y) => button(tr(`${y} ${y === 1 ? 'Jahr' : 'Jahre'}`, `${y} ${y === 1 ? 'year' : 'years'}`), { kind: 'ghost', action: 'extendContract', value: `${idx}:${y}` })).join('')}</div>`
     : '';
   return `<div class="contract" data-testid="contract"><p class="t-2"><b>${tr('Vertrag', 'Contract')}</b> ${tr(`bis Saison ${k.until}`, `until season ${k.until}`)} · ${eur(k.salary)} ${tr('€ im Monat', '€ a month')}${left <= 1 ? ` · <b>${tr('läuft aus', 'expiring')}</b>` : ''}</p>${ext}</div>`;
+};
+// Nationalspieler (nationalteams.js): Land, Einsätze, Tore und der Turnier-Schub auf den Marktwert.
+const natBlock = (c, idx) => {
+  const rec = c.players?.[idx];
+  const nid = c.natLock?.[idx];
+  if (!nid || !rec) return '';
+  const boost = Math.round((natBoostMul(c, idx) - 1) * 100);
+  return `<p class="t-2" data-testid="nat-player"><b>${tr('Nationalspieler', 'International')}</b> ${nationName(nid)} · ${tr(`${rec.natCaps ?? 0} Turnierspiele, ${rec.natGoals ?? 0} Tore`, `${rec.natCaps ?? 0} tournament games, ${rec.natGoals ?? 0} goals`)}${boost ? ` · ${tr(`Marktwert +${boost} %`, `market value +${boost}%`)}` : ''}</p>`;
 };
 const bonusChips = (c, idx) => {
   const ids = knownBonuses(c, idx);
@@ -209,6 +219,7 @@ export const teamScreens = {
           ${rels ? `<p class="t-2 rel-line">${rels}</p>` : ''}
           ${r.awards?.length ? `<p class="t-2">★ ${r.awards.map(awardLabel).join(' · ')}</p>` : ''}
           ${contractBlock(c, idx)}
+          ${natBlock(c, idx)}
           ${bonusChips(c, idx)}
           ${p.traits?.length ? `<div class="ui-chips">${p.traits.filter((t) => TRAITS[t]).map((t) => `<span class="ui-chip plain" title="${TRAITS[t].desc}">${TRAITS[t].name}</span>`).join('')}</div>` : ''}
         </div>`;

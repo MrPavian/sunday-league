@@ -3,7 +3,10 @@
 Vom Nutzer gewünscht (2026-11-05): Weltmeisterschaft, Europameisterschaft, Afrikameisterschaft und alle anderen
 Kontinentalmeisterschaften simulieren. Spieler können dort ihren Marktwert steigern. Für später: Nationaltrainer werden.
 
-Status: **Entwurf, noch nicht gebaut.** Werte mit „Spielwert“ sind frei gewählt, mit „Quelle“ belegt, mit „prüfen“ noch offen.
+Status: **erste Fassung gebaut (2026-11-06)**, Abschnitt 11. Werte mit „Spielwert“ sind frei gewählt, mit „Quelle“ belegt, mit „prüfen“ noch offen.
+
+Nutzerentscheide 2026-11-06: (1) nominiert wird nur aus den Profiligen, (2) die Spiele laufen direkt als 3D-Spiel, (3) neutrale
+Turniernamen.
 
 ## 1. Grundidee
 
@@ -93,7 +96,51 @@ Daraus wird beim ersten Bedarf **einmal** die Nationalität für das Nationaltea
   Roadmap (ROADMAP 11.17). Dieses Konzept betrifft nur die Nationalteams.
 - Alte Spielstände: wie bei den Profiligen nur für neue Karrieren oder als Schalter (Entscheidung offen).
 
-## 10. Offene Fragen an den Nutzer
+## 11. Gebaut (2026-11-06)
+
+Code: `src/career/nationalteams.js`, Länder und Namen `src/data/nations.js`, Marktwert `src/career/natboost.js`, Tests
+`tests/nationalteams.test.js`.
+
+| Turnier | Teams | Format | Zeit | Rhythmus | Quelle / Status |
+|---|---|---|---|---|---|
+| Weltmeisterschaft | 48 | 12 Gruppen, 8 beste Dritte → Runde der 32 | 11.6.–19.7. | 4 Jahre (2030, 2034 …) | Format und Termine 2026; Plätze je Verband wie 2026, die zwei Play-off-Plätze an Asien und Nord-/Mittelamerika (Spielwert) |
+| Europameisterschaft | 24 | 6 Gruppen, 4 beste Dritte → Achtelfinale | 9.6.–9.7. | 4 Jahre (2028) | [Wikipedia, Euro 2028](https://en.wikipedia.org/wiki/UEFA_Euro_2028), [SI](https://www.si.com/soccer/uefa-euro-2028-dates-venues-host-cities-format-schedule) |
+| Südamerikameisterschaft | 16 (10 + 6 Gäste) | 4 Gruppen → Viertelfinale | Juni/Juli | 4 Jahre (2028) | [Wikipedia, 2028 Copa América](https://en.wikipedia.org/wiki/2028_Copa_Am%C3%A9rica) – Format vorläufig; Termine wie 2024 (prüfen) |
+| Nord- und Mittelamerika | 16 | 4 Gruppen → Viertelfinale | Juni/Juli | 2 Jahre (2027) | [Verband: Qualifikation 2027](https://www.concacaf.com/news/2027-concacaf-gold-cup-qualification-pathway-confirmed) |
+| Afrikameisterschaft | 24 | 6 Gruppen, 4 beste Dritte → Achtelfinale | 21.12.–18.1. | 2 Jahre im Winter (Spielwert) | Termine der Ausgabe 2025; Takt: Vier-Jahres-Takt ab 2028 angekündigt ([People Daily](https://peopledaily.digital/sports/afcon-to-be-held-every-four-years-from-2028-caf-announces)), später widersprüchliche Berichte ([Foot Africa](https://foot-africa.com/en/news/every-two-years-or-three-years-the-new-caf-calendar-raises-questions-about-the-future-of-the-africa-cup-of-nations-1404008/)) – prüfen |
+| Asienmeisterschaft | 24 | 6 Gruppen, 4 beste Dritte → Achtelfinale | 7.1.–5.2. | 4 Jahre (Januar 2027) | [Wikipedia, 2027 AFC Asian Cup](https://en.wikipedia.org/wiki/2027_AFC_Asian_Cup), [WAM](https://www.wam.ae/en/article/bhkj9ai-afc-asian-cup-saudi-arabia-2027-dates-venues) |
+| Ozeanienmeisterschaft | 8 | 2 Gruppen → Halbfinale | Juni | 4 Jahre (Spielwert, prüfen) | [Wikipedia, 2024 OFC Nations Cup](https://en.wikipedia.org/wiki/2024_OFC_Men%27s_Nations_Cup) (8 gemeldet, 7 gespielt) |
+
+- **Länder:** 126 echte Länder mit neutralen Namen, Landesfarben als Trikot, Stärkestufe 1–5 grob nach den Gruppen der
+  Weltrangliste (Spielwert). Stärke = Ligamittel der besten elf: 196 / 186 / 176 / 164 / 150 (an der 1. Liga mit 186 angelehnt),
+  dazu ± 6 Turnierform je Land und Turnier (Spielwert). Die Teilnehmer jedes Verbands sind die Stärksten nach dieser Rechnung.
+- **Kader:** Die übrigen Spieler sind erfunden – Pool-Spieler, auf die Stärke des Landes gehoben (`liftedTo`), mit Namen
+  (`NAME_GROUPS`, häufige Namen, frei kombiniert) und Aussehen des Landes. Nichts davon wird gespeichert, die Kader entstehen je
+  Spiel neu (fest je Karriere, Jahr und Land).
+- **Nationalität:** aus der Herkunft des Nachnamens; mit zweiter Herkunft in 45 % der Fälle das Land, in dem er lebt (Spielwert).
+  Nach der ersten Nominierung fest (`career.natLock`).
+- **Nominierung:** nur ab der Regionalliga (Stufe 9), nicht verletzt, Stärke höchstens 8 unter der Stärke seines Landes
+  (Spielwert), höchstens 26 je Land (Weltmeisterschaft seit 2022; für die anderen Turniere prüfen).
+- **Spiele:** Spiele eines Landes mit eigenen Spielern: „Im Stadion ansehen“ (3D, beide Teams von der KI, Zuschauermodus wie
+  beim Präsidenten), „Nur Ergebnis“ oder „Turnier vorspulen“. Alle anderen Spiele rechnet das Schnellmodell (wie `simTable`), in
+  der K.-o.-Runde mit Verlängerung und Elfmeterschießen. Kein Spiel um Platz drei.
+- **Marktwert:** Schub = (2 % je Einsatz + 4 % je Tor + Runde: Achtelfinale 4 %, Viertelfinale 8 %, Halbfinale 12 %, Finale 16 %,
+  Titel 22 %) × Gewicht des Turniers (Weltmeisterschaft 1, Europa 0,9, Südamerika 0,8, Afrika/Asien 0,6, Nord-/Mittelamerika 0,5,
+  Ozeanien 0,3), höchstens 40 % – alles Spielwerte. Wirkt auf Gehaltsforderung, Ablöse und Kaufpreis; voll in dieser und der
+  nächsten Saison, dann halb, dann weg.
+- **Entschädigung:** nur Weltmeisterschaft, 5000 € je Spieler und Tag bis zum Ausscheiden (hergeleitet aus dem Mindestbetrag
+  von etwa 5000 US-Dollar 2026, [Weltverband](https://inside.fifa.com/organisation/media-releases/landmark-club-benefits-programme-world-cup-2026);
+  2022 waren es etwa 10 950 US-Dollar laut [Outlook India](https://www.outlookindia.com/sports/football/fifa-club-benefits-programme-boost-world-cup-2026)).
+- **Winter:** Der Spielkalender ist gestaucht (nach der Hinrunde geht es erst im Frühjahr weiter). Darum zählen die echten
+  Spieltage der 1. Liga ab dem Ende ihrer Winterpause (Spielwert: 10. Januar, wöchentlich) bis zum Ausscheiden, umgerechnet auf
+  die Spieltage der eigenen Liga (`missedRounds`). Asienmeisterschaft bis zum Finale: etwa vier echte Spieltage.
+- **Ablauf im Spiel:** Sommerturniere beginnen nach dem letzten Spieltag (Karte im Saisonende), Winterturniere in der
+  Winterpause (Karte in der Pause). Wer weitermacht, ohne zu Ende zu schauen, bekommt den Rest im Schnellmodell.
+
+Offen: Stolz in der Kabine (Stimmung), Schiedsrichter aus anderen Ländern (bisher die Namensliste des Spiels), Spiel um Platz
+drei, Gastgeber, Qualifikation als eigene Spiele, Nationaltrainer (Abschnitt 8).
+
+## 10. Offene Fragen an den Nutzer (beantwortet 2026-11-06)
 
 1. Turniere nur ab den Profiligen (Regionalliga aufwärts) oder auch Amateure? (Vorschlag: nur Profiligen – Amateure werden
    nicht nominiert.)

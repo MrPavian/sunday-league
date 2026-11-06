@@ -23,6 +23,7 @@ import { finishFirstLeg, prepareRelegationMatch, recordRelegationLeg, startReleg
 import { finishMidweek, humanTie, POKALE, pokalOf, pokalWhen, preparePokalMatch, recordPokalResult, roundName } from '../career/pokal.js';
 import { pendingGame, playDue, prepareOldBoysMatch, recordOldBoysResult } from '../career/oldboys.js';
 import { coachLevel } from '../ui/prefs.js';
+import { finishAll as finishNat, nextOwnMatch, prepareNatMatch, quickOwnMatch, recordNatMatch, stepLabel, tournamentName } from '../career/nationalteams.js';
 
 export function createMatchflow(ctx) {
   const { hud, ticker, endScreen, planPanel, subPanel, halfPanel, creator, hireScreen, testDuration, loadVenue, showMatch, startMatch, setMode } = ctx;
@@ -262,13 +263,27 @@ export function createMatchflow(ctx) {
     });
   }
 
+  // Nationalteams: Spiel eines Landes mit eigenen Spielern im Stadion ansehen (beide Teams von der KI, Zuschauermodus).
+  function playNatMatch() {
+    const next = nextOwnMatch(ctx.career);
+    if (!next) return openClubhouse();
+    const prepared = prepareNatMatch(ctx.career, next, { duration: testDuration });
+    ctx.careerMatch = { prepared, nat: true };
+    loadVenue(prepared.pitch.id);
+    ctx.clubhouse.hide();
+    setMode('play');
+    showMatch(prepared.match);
+    hud.toast(`${tournamentName(next.t.id)} ${next.t.year} · ${stepLabel(next.m.step)}`, 3, 2);
+  }
+
   // Abpfiff: Ergebnis sofort werten und speichern – nicht erst, wenn der Spieler das
   // Kreisblatt weglegt. Wer die App auf dem Ergebnis-Bildschirm schließt, verliert nichts.
   function commitCareerMatch() {
     if (!ctx.careerMatch || ctx.careerMatch.committed) return;
-    const { prepared, fixture, cup, relegation, pokal } = ctx.careerMatch;
+    const { prepared, fixture, cup, relegation, pokal, nat } = ctx.careerMatch;
     ctx.careerMatch.committed = true;
-    if (pokal) recordPokalResult(ctx.career, prepared);
+    if (nat) recordNatMatch(ctx.career, prepared);
+    else if (pokal) recordPokalResult(ctx.career, prepared);
     else if (relegation) recordRelegationLeg(ctx.career, prepared);
     else if (cup) recordCupResult(ctx.career, cup, prepared);
     else recordResult(ctx.career, fixture, prepared);
@@ -306,7 +321,19 @@ export function createMatchflow(ctx) {
         },
       });
     },
+    onNatWatch: () => playNatMatch(),
+    onNatQuick() {
+      quickOwnMatch(ctx.career);
+      saveCareer(ctx.career);
+      openClubhouse();
+    },
+    onNatFinish() {
+      finishNat(ctx.career);
+      saveCareer(ctx.career);
+      openClubhouse();
+    },
     onBreakDone() {
+      finishNat(ctx.career, 'winter'); // was im Winter noch läuft, ohne Zuschauen zu Ende (Abwesenheit danach)
       finishWinterBreak(ctx.career); // Winterpause vorbei: Woche des nächsten Spieltags
       saveCareer(ctx.career);
       openClubhouse();
@@ -368,6 +395,7 @@ export function createMatchflow(ctx) {
       });
     },
     onNewSeason() {
+      finishNat(ctx.career, 'summer'); // Sommerturniere vor dem Saisonwechsel abschließen
       nextSeason(ctx.career);
       saveCareer(ctx.career);
       openClubhouse();

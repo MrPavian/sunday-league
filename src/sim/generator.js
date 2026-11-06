@@ -67,6 +67,9 @@ function careerFacts(rng, age) {
   };
 }
 
+// Aussehen nach Herkunft für Spieler außerhalb des Pools (Nationalteams: erfundene Kaderspieler, nationalteams.js).
+export const lookFor = (rng, age, origin) => makeLook(rng, age, {}, origin);
+
 // origin: Herkunft aus der Namenswahl (ab Auflage 4) – Haut und Haar passen dann dazu.
 // Ohne Herkunft bleibt es beim alten Würfeln, damit alte Spielstände gleich aussehen.
 function makeLook(rng, age, overrides = {}, origin = null) {

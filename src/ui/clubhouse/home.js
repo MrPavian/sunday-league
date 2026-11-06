@@ -16,6 +16,7 @@ import { LEAGUES, MAX_LEVEL, maxLevel } from '../../career/clubs.js';
 import { blockText, championWaives, licenseNeeds, promotionBlock } from '../../career/license.js';
 import { firedState, offerClubs } from '../../career/pressure.js';
 import { startCash, summerMove, summerOffers } from '../../career/clubchange.js';
+import { nationName, natRunning, nextOwnMatch, reachLabel, recentNat, stepLabel, tournamentName } from '../../career/nationalteams.js';
 import { leagueTitle } from '../../career/verband.js';
 import { clubById, humanClub, kitChoice, leagueOf, humanFixture, playerOf, seasonOver, table } from '../../career/career.js';
 import { DESTINATIONS, tripChoose, tripStage, tripState, tripVerdict } from '../../career/trip.js';
@@ -190,7 +191,27 @@ export const homeScreens = {
     else body = `${t && !t.skipped && t.log.length ? `<p class="reply ok">${t.log.at(-1)}</p>` : `<p class="t-2">${tr('Ruhige Woche: Beine hochlegen, Kasse zählen.', 'A quiet week: feet up, count the takings.')}</p>`}
       <div class="hub-actions">${button(tr('Weiter zum nächsten Spieltag', 'On to the next matchday'), { kind: 'primary big block', action: 'onBreakDone' })}</div>`;
     return `<article class="ui-card hub-card break-card"><p class="t-cap">${tr('Winterpause', 'Winter break')} · ${tr('kein Ligaspiel', 'no league game')}</p>
-      <h3 class="t-h2">${CUPS.halle.name}</h3>${body}</article>`;
+      <h3 class="t-h2">${CUPS.halle.name}</h3>${body}${this.natAside()}</article>`;
+  },
+
+  // Turniere der Nationalteams (nationalteams.js): eigene Spieler unterwegs – nächstes Spiel ansehen (3D) oder nur das Ergebnis.
+  natAside() {
+    const c = this.career;
+    const running = natRunning(c);
+    const done = recentNat(c).filter((h) => h.own.length);
+    if (!running.length && !done.length) return '';
+    const next = nextOwnMatch(c);
+    const runHTML = running.map((t) => {
+      const own = Object.entries(t.own).flatMap(([nid, list]) => list.map((idx) => `${esc(playerOf(c, idx).name)} (${nationName(nid)})`));
+      const log = t.log.slice(-4).map((l) => `<li>${esc(l)}</li>`).join('');
+      return `<p class="t-2"><b>${tournamentName(t.id)} ${t.year}</b> · ${stepLabel(t.step)}${own.length ? ` · ${tr('dabei', 'called up')}: ${own.join(', ')}` : ''}</p>${log ? `<ul class="nat-log">${log}</ul>` : ''}`;
+    }).join('');
+    const nextHTML = next
+      ? `<p class="t-body">${tr('Nächstes Spiel', 'Next game')}: <b>${nationName(next.m.home)} – ${nationName(next.m.away)}</b> (${stepLabel(next.m.step)})</p>
+        <div class="ui-row">${button(tr('Im Stadion ansehen', 'Watch in the stadium'), { kind: 'primary', action: 'onNatWatch', 'data-testid': 'nat-watch' })}${button(tr('Nur Ergebnis', 'Result only'), { action: 'onNatQuick', 'data-testid': 'nat-quick' })}${button(tr('Turnier vorspulen', 'Skip to the end'), { kind: 'ghost', action: 'onNatFinish', 'data-testid': 'nat-finish' })}</div>`
+      : '';
+    const doneHTML = done.map((h) => `<p class="t-2"><b>${tournamentName(h.id)} ${h.year}</b>: ${tr('Sieger', 'Winner')} ${nationName(h.winner)}. ${h.own.map((o) => tr(`${esc(o.name)} (${nationName(o.nat)}): ${o.apps} Spiele, ${o.goals} Tore, ${reachLabel(o.reached)}${o.boost ? `, Marktwert +${o.boost} %` : ''}${o.missed ? `, fehlt ${o.missed} Ligaspiele` : ''}`, `${esc(o.name)} (${nationName(o.nat)}): ${o.apps} games, ${o.goals} goals, ${reachLabel(o.reached)}${o.boost ? `, market value +${o.boost}%` : ''}${o.missed ? `, misses ${o.missed} league games` : ''}`)).join(' · ')}</p>`).join('');
+    return `<div class="ui-card" data-testid="nat-card"><p class="label">${tr('Nationalteams', 'National teams')}</p>${runHTML}${nextHTML}${doneHTML}</div>`;
   },
 
   // Englische Woche: nach dem Pokalspiel erst das Ergebnis, dann „Weiter zum …“ (pokal.js finishMidweek).
@@ -299,6 +320,7 @@ export const homeScreens = {
         ${this.tripBlock()}
         ${this.waiveAside(upNow || (pos === 2 && relegationNeeded(c)) || !!rel?.won && rel.kind === 'up')}
         ${this.summerAside()}
+        ${this.natAside()}
         ${this.legacyAside() ?? this.relegationAside() ?? this.cupAside()}
       </div>`;
   },

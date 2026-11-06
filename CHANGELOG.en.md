@@ -6,6 +6,16 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-06-2 – World Cup, European Championship and continental tournaments
+
+### New
+- **National team tournaments:** World Cup (48 teams), European Championship (24), Africa and Asia championships (24 each), South America (16), North and Central America (16) and Oceania (8) – on their real schedule, with groups, best third-placed teams and knockout rounds. Real countries, neutral names, all players fictional.
+- **Call-ups from the Regional League up:** your players join their country if it qualified and they are good enough. Heritage decides; players with two countries often play for the one they live in.
+- **Watch in the stadium:** their country's games run in 3D in the tournament stadium, both teams AI-controlled. Or just the result, or skip to the end.
+- **Market value:** appearances, goals and long runs raise wage demands, fees and asking prices – fully for two seasons, then half.
+- **Compensation:** at the World Cup the world body pays €5,000 per player per day.
+- **Winter:** the Africa and Asia championships run during the winter break; whoever goes far misses league games afterwards.
+
 ## 2026-11-06-1 – Summer moves to other clubs
 
 ### New
