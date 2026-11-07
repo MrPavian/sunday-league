@@ -67,7 +67,7 @@ async function variants(b, label, list, query) {
 const ONLY = process.env.E2E_ONLY ? new Set(process.env.E2E_ONLY.split(',')) : null;
 const VENUE = process.env.E2E_VENUE ? new Set(process.env.E2E_VENUE.split(',')) : null;
 const atVenue = (v) => !VENUE || VENUE.has(v);
-const BUDGET = { halle: [61, 33500], rasenplatz: [108, 35000], sportplatz: [113, 44500], grossfeld: [117, 55000], grossfeld_tribuene: [121, 62000], stadion: [98, 58500], ascheplatz: [76, 25000], park: [79, 18600] };
+const BUDGET = { halle: [61, 33500], rasenplatz: [108, 35000], sportplatz: [113, 44500], grossfeld: [117, 55000], grossfeld_tribuene: [121, 62000], stadion: [98, 58500], ascheplatz: [76, 25000], park: [79, 18600], 'grossfeld&stage=grossarena': [121, 62000] }; // Stadionausbau (stands.js): Grenzen wie beim Tribünenplatz, gemessen 111 / 48,5 Tsd.
 async function budget(b) {
   const list = Object.entries(BUDGET).filter(([v]) => atVenue(v));
   const ok = checker(`Grafik-Budget je Spielort (${list.length})`);
@@ -77,7 +77,7 @@ async function budget(b) {
     await p.waitForTimeout(3000);
     // Ohne Karriere zeigt das Testspiel nur 80 Zuschauer; Stadion und Tribünenplatz des überregionalen Pokals sind aber voll
     // (match.crowd bis 3500). Gemessen wird deshalb mit der ganzen Menge (schlechtester Fall, mehr als jede Qualitätsstufe zeigt).
-    if (venue === 'stadion' || venue === 'grossfeld_tribuene') {
+    if (venue === 'stadion' || venue === 'grossfeld_tribuene' || venue.includes('stage=')) {
       await p.evaluate(() => __sl.crowd.setShown(__sl.crowd.n));
       await p.waitForTimeout(500);
     }

@@ -194,13 +194,14 @@ function loadVenue(id, ads = null) {
     disposeTree(venueRoot);
   }
   // Testschalter: ?surface=grass|ash|… spielt den Platz mit anderer Physik.
-  pitch = { ...venue.pitch, surface: SURFACES[params.get('surface')] ?? venue.pitch.surface, sponsorAds: venueAds };
+  // Stadionausbau des eigenen Platzes (venueExtras.stage); Testschalter ?stage=arena zeigt eine Stufe ohne Karriere.
+  pitch = { ...venue.pitch, surface: SURFACES[params.get('surface')] ?? venue.pitch.surface, sponsorAds: venueAds, stage: venueAds?.stage ?? params.get('stage') ?? undefined, extraStand: venue.pitch.extraStand || (!!venueAds?.extraStand && (venue.pitch.base ?? venue.id) === 'grossfeld') }; // Stahlrohrtribüne nur auf dem Großfeld (Grafik-Budget)
   venueRoot = new THREE.Group();
   lightMood = null;
   venueInfo = venue.build(venueRoot, pitch, createRng(venue.id.length * 7919), scene);
   // Statische Kulisse zu wenigen Meshes verschmelzen (?nomerge zum Vergleichen).
   // Zuschauer-Plätze zur gemeinsamen Crowd (zwei Draw Calls), dann statische Kulisse verschmelzen.
-  crowd = buildCrowd(venueRoot, venue.id);
+  crowd = buildCrowd(venueRoot, venue.id, venueInfo.crowdCap);
   if (!params.has('nomerge')) mergeStatic(venueRoot);
   scene.add(venueRoot);
   pixel.applyShadowSize(scene);
@@ -228,6 +229,8 @@ function showMatch(m) {
   pixel.classifyShadowCasters(scene, venueRoot);
   pixel.setTeamEdges([m.teams[0].kit.shirt, m.teams[1].kit.shirt, m.referee?.kit?.shirt ?? 0x1c1c1c]);
   crowd?.setMatch(match);
+  // Heimspiel im ausgebauten Stadion: kurzer Blick auf die Ränge vor dem Anpfiff (Testschalter ?intro).
+  if ((pitch.stage && careerMatch?.prepared?.match === m && !careerMatch.prepared.humanIsAway) || (params.has('intro') && m.humanTeam !== null)) rig.startIntro();
   hud.init(match);
   if (m.manager) shoutBar.show();
   else shoutBar.hide();

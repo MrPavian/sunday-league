@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-07-5',
+    de: { title: 'Stadionbau sichtbar', items: ['Auf dem eigenen Großfeld wächst das Stadion mit jeder Ausbaustufe: Stehwälle, überdachte Haupttribüne mit Sitzen in Vereinsfarben, Gästeblock, Dächer über den Kurven, zweiter Rang in der Großarena.', 'Heimspiele im ausgebauten Stadion beginnen mit einem kurzen Blick auf die Ränge.', 'Behoben: Die Stahlrohrtribüne (Sitzplätze) wird im Ligaspiel jetzt gezeichnet.'] },
+    en: { title: 'Stadium growth you can see', items: ['On your own full-size pitch the stadium grows with every upgrade: terraces, a covered main stand with seats in club colours, an away block, roofs over the ends, a second tier in the grand arena.', 'Home games in an upgraded stadium open with a short look at the stands.', 'Fixed: the scaffold stand (Seats) is now drawn in league matches.'] },
+  },
+  {
     id: '2026-11-07-4',
     de: { title: 'Zweite Mannschaft', items: ['Ab der Regionalliga kannst du unter Mannschaft → Teams eine Zweite Mannschaft melden – mit eigener Liga, Tabelle, Auf- und Abstieg.', 'Wer am Wochenende bei der Ersten nicht spielt, bekommt in der Zweiten Spielpraxis: Er entwickelt sich besser und murrt weniger. A-Jugendliche ab 18 spielen mit und wachsen schneller.', 'Wie beim DFB: Die Zweite beginnt ganz unten und spielt höchstens eine Liga unter der Ersten – die Zweite eines Drittligisten nie in der Regionalliga.'] },
     en: { title: 'Reserve team', items: ['From the Regionalliga you can register a reserve team under Squad → Teams – with its own league, table, promotion and relegation.', 'Anyone who does not play for the first team at the weekend gets match practice in the reserves: they develop better and grumble less. U19 players aged 18+ join in and grow faster.', 'As with the DFB: the reserves start at the bottom and play at most one league below the first team – a third-division club’s reserves never in the Regionalliga.'] },

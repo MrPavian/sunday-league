@@ -5,6 +5,7 @@ import { addLights, box, cylinder, ground, makeBench, makeDog, makeFence, makeFl
 import { crowdRow, makeSpectator } from '../spectators.js';
 import { GEO, bandeX, BANDE_W } from '../../sim/shelter.js';
 import { groundTexels, makeLawnTexture, makeSignTextureWide } from '../textures.js';
+import { buildStands, STAGE_CROWD, stageRank } from './stands.js';
 
 // Lokale Sponsoren – selbst gemalte Banden, wie sie auf jedem Dorfplatz hängen.
 export const SPONSORS = [
@@ -76,7 +77,8 @@ export function buildLawn(root, pitch, rng, scene) {
   }
   // Zusatztribüne (Pokalspiel gegen einen Profi): Stahlrohrtribüne mit Sitzreihen auf der Gegengerade neben der kleinen
   // Tribüne (auf der Kameraseite würde sie das Spielfeld verdecken).
-  if (pitch.extraStand) {
+  const stage = hl >= 50 ? pitch.stage ?? null : null; // Stadionausbau (stands.js), nur auf dem Großfeld
+  if (pitch.extraStand || stage) {
     const sx = -28;
     const sz0 = -hw - 5;
     for (let step = 0; step < 6; step++) {
@@ -138,7 +140,7 @@ export function buildLawn(root, pitch, rng, scene) {
   for (let i = 0; i < 18; i++) {
     const t = makeTree(rng, rng.range(1.1, 1.5));
     t.position.set(rng.range(-40 * k, 40 * k), 0, -rng.range(hw + 15, hw + 24));
-    root.add(t);
+    if (stageRank(stage) < 2) root.add(t); // hinter der Haupttribüne stehen keine Bäume (Zufall wird trotzdem gezogen: Rest der Szene wie vorher)
   }
   root.add(box(W - 6, 0.06, 0.06, 0x8a9096, 0, 0.9, hw + 2.5));
 
@@ -148,6 +150,7 @@ export function buildLawn(root, pitch, rng, scene) {
   for (let step = 0; step < 3; step++) for (const o of crowdRow(401 + step, { x0: -8.6, x1: 8.6, z: tz - step * 1.2, y: 0.4 + step * 0.4, n: 12, sitting: true })) root.add(o);
   for (const [x0, x1, s] of [[-31 * k, -11 * k, 411], [11 * k, 31 * k, 412]]) for (const o of crowdRow(s, { x0, x1, z: bandZ - 0.9, n: 6, dz: 0.35, jitter: 0.8 })) root.add(o);
   // Der Budenwirt steht hinter der Theke (als Letzter, damit sich der Rest der Szene nicht verschiebt).
+  if (stage) buildStands(root, pitch, stage, { seat: pitch.sponsorAds?.seat, name: pitch.sponsorAds?.arena ?? '' });
   const vendor = makeSpectator(rng, { x: bx + 0.2, z: bz - 0.2, facing: 0 });
   vendor.userData.crowdSlot.vendor = true; // geht nicht selbst zur Bude
   root.add(vendor);
@@ -155,5 +158,5 @@ export function buildLawn(root, pitch, rng, scene) {
   // (gleicher Ausschnitt wie auf dem 7er-Feld mit 48 %) und davon nur ≈ 11 m voraus; der Ball war 7 % der Spielzeit nicht im Bild,
   // weil die Kamera seitlich nur ±4,5 m folgte (68 m Breite; scripts/bigpitch-audit.mjs).
   const big = hl >= 50;
-  return { viewHeight: big ? 19 : 15, viewHeightPortrait: big ? 16 : undefined, lead: big ? 0.4 : 0, bounds: { x: hl + 5.5, z: big ? 12 : 4.5 }, lights }; // x: etwas Luft hinter dem Zaun, dort steht Tim „Der Tiger“ (src/render/tiger.js)
+  return { viewHeight: big ? 19 : 15, viewHeightPortrait: big ? 16 : undefined, lead: big ? 0.4 : 0, bounds: { x: hl + 5.5, z: big ? 12 : 4.5 }, lights, crowdCap: stage ? STAGE_CROWD[stage] : undefined }; // x: etwas Luft hinter dem Zaun, dort steht Tim „Der Tiger“ (src/render/tiger.js)
 }

@@ -56,7 +56,29 @@ export class CameraRig {
       if (near < h) bottom = -near;
     }
     Object.assign(this.camera, { left: -h * aspect, right: h * aspect, top: bottom + 2 * h, bottom });
+    this.base = { left: -h * aspect, right: h * aspect, top: bottom + 2 * h, bottom };
     this.camera.updateProjectionMatrix();
+  }
+
+  // Eröffnungsbild (Heimspiel im ausgebauten Stadion, render/venues/stands.js): erst weit draußen mit Blick auf die Ränge,
+  // dann in dur Sekunden auf die Spielkamera zoomen. Nur Darstellung; im Vereinsheim-Fenster entfällt es.
+  startIntro(dur = 3.5, scale = 5, lookZ = -30) {
+    this.intro = { t: 0, dur, scale, lookZ };
+  }
+
+  stepIntro(dt) {
+    const it = this.intro;
+    if (!it || !this.base) return 0;
+    if (this.windowed) return ((this.intro = null), 0);
+    it.t += dt;
+    const u = Math.min(1, it.t / it.dur);
+    const w = u < 0.25 ? 1 : (1 - (u - 0.25) / 0.75) ** 3; // kurz stehen, dann sanft heran
+    const f = 1 + (it.scale - 1) * w;
+    const b = this.base;
+    Object.assign(this.camera, { left: b.left * f, right: b.right * f, top: b.top * f, bottom: b.bottom * f });
+    this.camera.updateProjectionMatrix();
+    if (u >= 1) this.intro = null;
+    return it.lookZ * w;
   }
 
   // Vereinsheim-Fenster: Das ganze Kamerabild erscheint im Fensterausschnitt (rect in CSS-Pixeln,
@@ -89,6 +111,7 @@ export class CameraRig {
   // ahead: Spielrichtung des Ballbesitzers (+1/-1, 0 = Richtung beibehalten), lead: Anteil der halben Bildbreite, um den der
   // Ball hinter der Bildmitte liegt (Vorausschau, nur Großfeld/Stadion; langsam geglättet, damit ein Ballverlust nicht ruckt).
   follow(x, z, dt, bounds, ahead = 0, lead = 0, vx = 0) {
+    const look = this.stepIntro(dt);
     const halfW = this.camera.right;
     if (ahead) this.aheadDir = ahead;
     const wantLead = this.windowed ? 0 : (this.aheadDir ?? 0) * lead * halfW;
@@ -98,8 +121,8 @@ export class CameraRig {
     // (Folgerate 4/s) – lange Pässe auf dem Großfeld (bis 24 m/s) liefen aus dem Bild (gemessen: Ball 7 % der Spielzeit nicht im Bild).
     const flight = lead > 0 && !this.windowed ? Math.max(-VEL_LEAD_MAX, Math.min(VEL_LEAD_MAX, vx * VEL_LEAD)) : 0;
     const tx = Math.max(-maxX, Math.min(maxX, x + this.leadX + flight));
-    const tz = Math.max(-bounds.z, Math.min(bounds.z, z * 0.35));
-    const k = 1 - Math.exp(-dt * 4);
+    const tz = Math.max(-bounds.z, Math.min(bounds.z, z * 0.35)) + look;
+    const k = this.intro ? 1 : 1 - Math.exp(-dt * 4);
     this.target.x += (tx - this.target.x) * k;
     this.target.z += (tz - this.target.z) * k;
 

@@ -6,6 +6,15 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-07-5 – Stadium growth you can see
+
+### New
+- **The stadium grows with you:** On your own full-size pitch you now see the stand upgrades in the match. Stadium upgrade: terraces behind both goals. Third-division stadium: a covered main stand behind the clubhouse with seats in club colours, plus an away block. Arena: roofs over the ends and a low tier on the camera side. Seating expansion: seats behind the goals too. Grand arena: a second tier and taller ends. With naming rights, the stadium name hangs under the roof.
+- **Opening shot:** At home games in an upgraded stadium the camera briefly shows the stands before kick-off, then zooms onto the pitch.
+
+### Fixed
+- **Scaffold stand:** With "Seats", the scaffold stand should stand on the full-size pitch – in league matches it was not drawn until now.
+
 ## 2026-11-07-4 – Reserve team
 
 ### New

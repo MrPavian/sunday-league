@@ -6,6 +6,15 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-07-5 – Stadionbau sichtbar
+
+### Neu
+- **Das Stadion wächst mit:** Auf dem eigenen Großfeld siehst du die Ausbaustufen der Tribünen jetzt im Spiel. Stadionausbau: Stehwälle hinter beiden Toren. Drittliga-Stadion: eine überdachte Haupttribüne hinter dem Vereinsheim mit Sitzschalen in Vereinsfarben, dazu ein Gästeblock. Arena: Dächer über den Kurven und ein flacher Rang auf der Kameraseite. Sitzplatzausbau: Sitzschalen auch hinter den Toren. Großarena: ein zweiter Rang und höhere Kurven. Mit Namensrechten steht der Stadionname unter dem Dach.
+- **Eröffnungsbild:** Bei Heimspielen im ausgebauten Stadion zeigt die Kamera vor dem Anpfiff kurz die Ränge und zoomt dann aufs Spielfeld.
+
+### Behoben
+- **Stahlrohrtribüne:** Mit „Sitzplätze“ sollte auf dem Großfeld die Stahlrohrtribüne stehen – im Ligaspiel wurde sie bisher nicht gezeichnet.
+
 ## 2026-11-07-4 – Zweite Mannschaft
 
 ### Neu

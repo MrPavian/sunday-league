@@ -103,6 +103,9 @@ export function facilities(c) {
 }
 export const KUNST_HIRE = 8; // Spielwert €/Woche
 export const hasFacility = (c, id) => !!c.facilities?.built?.[id];
+// Sichtbarer Stadionausbau (render/venues/stands.js): höchste gebaute Stufe ab „stadion“, sonst null.
+const STAGE_ORDER = ['grossarena', 'sitzplatz8000', 'arena', 'drittliga', 'stadion'];
+export const standStage = (c) => STAGE_ORDER.find((id) => hasFacility(c, id)) ?? null;
 
 export const FACILITY_GROUPS = [
   { id: 'heim', name: tr('Vereinsheim', 'Clubhouse') },

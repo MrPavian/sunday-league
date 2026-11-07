@@ -1136,6 +1136,11 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
    Torwarttrainer hergeleitet wie Athletiktrainer), 2./1. Liga Spielwerte; Wirkung Spielwerte (Torhüter bis +20 % Entwicklung,
    Verletzungen bis −10 %, Ausfallzeit bis −15 %). Offen: Trainerteam der CPU-Vereine, Co-Trainer als bezahlte Stelle in den Profiligen.
 6. **Stadionbau sichtbar machen:** Drittliga-Stadion und Arena wachsen in 3D.
+   ✅ erledigt 2026-11-07 (render/venues/stands.js, facilities.js standStage): auf dem eigenen Großfeld je Stufe mehr Ränge
+   (Stehwälle → Haupttribüne mit Gästeblock → Kurvendächer und Rang auf der Kameraseite → Sitzschalen → zweiter Rang), Sitze in
+   Vereinsfarben, Stadionname der Namensrechte; kurzes Eröffnungsbild bei Heimspielen. Im Grafik-Budget (Großarena gemessen
+   111 Draw Calls / 48,5 Tsd. Dreiecke, ANDROID_MEDIUM, volle Menge). Behoben: Stahlrohrtribüne der Sitzplätze fehlte im Ligaspiel.
+   Offen: Umfeld (Parkplatz, Fanshop, Vorplatz) und Trainingsplätze in 3D; Ausbau auf kleineren Plätzen als dem Großfeld.
 7. **Taktikvorlagen im Spiel umschalten** (z. B. „ab Minute 70 mauern“).
    ✅ erledigt 2026-11-07 (sim/switches.js, tacticpresets.js): Vorlagen im Taktik-Blatt per Tipp ausspielen; bis zu zwei Regeln
    „ab Minute X, bei Spielstand Y → Vorlage Z“ (Minuten 30–85 auf 90 gerechnet, Anzahl Spielwert), greifen auch im Ticker und im

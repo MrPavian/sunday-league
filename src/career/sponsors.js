@@ -12,7 +12,7 @@ import { lateOr } from './spielbericht.js';
 import { isCoach } from './personal.js';
 import { isBanned } from './suspensions.js';
 import { chronicle } from './sagas.js';
-import { sponsorMul } from './facilities.js';
+import { hasFacility, sponsorMul, standStage } from './facilities.js';
 import { BRANCHEN, newWish, WISH_PENALTY, WISHES, wishCost, wishLabel } from './sponsorwish.js';
 
 export { BRANCHEN, WISHES, wishCost, wishLabel };
@@ -125,8 +125,14 @@ export const bandeSponsor = (career) => career?.sponsors?.find((s) => s.slot ===
 export function venueExtras(career) {
   const b = bandeSponsor(career);
   const arena = arenaOf(career);
-  if (!b && !arena) return null;
-  return { bande: b ? { id: b.id, name: b.name, color: sponsorColor(b) } : null, arena };
+  // Ausbau des eigenen Platzes für die 3D-Kulisse: Stahlrohrtribüne ab den Sitzplätzen, Ränge ab dem Stadionausbau (stands.js).
+  const stage = standStage(career);
+  const extraStand = hasFacility(career, 'sitzplaetze');
+  if (!b && !arena && !stage && !extraStand) return null;
+  const out = { bande: b ? { id: b.id, name: b.name, color: sponsorColor(b) } : null, arena };
+  if (extraStand) out.extraStand = true;
+  if (stage) Object.assign(out, { stage, seat: humanClub(career).kit?.shirt ?? null });
+  return out;
 }
 
 export const SLOTS = tr(

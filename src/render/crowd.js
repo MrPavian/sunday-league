@@ -173,7 +173,7 @@ function patch(shader) {
 // Volle Hütte: Stadion und Tribünenplatz des überregionalen Pokals zeigen mehr als MAX_TILES Leute (schlanke Figuren,
 // siehe oben). Die Menge bleibt eine instanzierte Gruppe (2 Draw Calls); Leute ab MAX_TILES teilen sich die Farbpaletten der ersten.
 export const CROWD_CAP = { stadion: 1100, grossfeld_tribuene: 520 };
-export function buildCrowd(root, venueId = '') {
+export function buildCrowd(root, venueId = '', cap = undefined) {
   const slots = [];
   root.traverse((o) => o.userData.crowdSlot && slots.push(o));
   for (const o of slots) o.parent.remove(o);
@@ -191,7 +191,8 @@ export function buildCrowd(root, venueId = '') {
     if (kept.some((k) => Math.hypot(k.x - s.x, k.z - s.z) < 0.5 && Math.abs(k.y - s.y) < 0.3)) continue;
     kept.push(s);
   }
-  const crowd = new Crowd(root, kept.slice(0, CROWD_CAP[venueId] ?? MAX_TILES).map((s, i) => ({ ...s, i, seed })), venueId);
+  const lite = cap != null || venueId in CROWD_CAP; // volle Hütte: schlanke Figuren
+  const crowd = new Crowd(root, kept.slice(0, cap ?? CROWD_CAP[venueId] ?? MAX_TILES).map((s, i) => ({ ...s, i, seed })), venueId, lite);
   if (booth?.x != null) crowd.setBooth(booth);
   return crowd;
 }
@@ -210,7 +211,7 @@ const YAW_MAX = 0.8; // so weit dreht sich ein Zuschauer zum Ball (Bogenmaß)
 const YAW_EASE = 0.3; // Anteil der Restdrehung je Takt
 
 export class Crowd {
-  constructor(root, slots, venueId) {
+  constructor(root, slots, venueId, lite = venueId in CROWD_CAP) {
     this.venueId = venueId;
     this.indoor = venueId === 'halle';
     // Reihenfolge nach festem Zufallsrang: Bei wenig Publikum bleiben die ersten stehen.
@@ -236,7 +237,6 @@ export class Crowd {
     depth.onBeforeCompile = patch;
     depth.customProgramCacheKey = () => 'crowd-depth';
 
-    const lite = venueId in CROWD_CAP;
     this.lite = lite;
     const body = lite ? bodyGeometryLite() : bodyGeometry();
     const arm = lite ? armGeometryLite() : armGeometry();
