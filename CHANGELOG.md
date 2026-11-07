@@ -6,6 +6,11 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-07-9 – Saisonrückblick als Seite
+
+### Neu
+- **Sonderheft als Seite teilen:** Am Saisonende gibt es das Kreisblatt-Sonderheft neben dem Bild auch als eigene Seite – mit Wappen, Abschlusstabelle, allen Spielen und den Zahlen jedes Spielers (Einsätze, Tore, Vorlagen, Notenschnitt). Verschicken per Messenger oder Mail, öffnet sich in jedem Browser, auch ohne Internet. Auch ältere Sonderhefte im Archiv lassen sich teilen; dort fehlen nur Tabelle, Spiele und Kader.
+
 ## 2026-11-07-8 – Mehr englische Namen
 
 ### Neu

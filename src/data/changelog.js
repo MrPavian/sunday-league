@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-07-9',
+    de: { title: 'Saisonrückblick als Seite', items: ['Das Kreisblatt-Sonderheft am Saisonende gibt es jetzt auch als eigene Seite: mit Wappen, Abschlusstabelle, allen Spielen und den Zahlen jedes Spielers.', 'Die Seite lässt sich per Messenger oder Mail verschicken und öffnet sich in jedem Browser, auch ohne Internet. Ältere Sonderhefte im Archiv kannst du ebenfalls teilen.'] },
+    en: { title: 'Season review as a page', items: ['The Kreisblatt special at season’s end now also comes as its own page: with crest, final table, every match and each player’s numbers.', 'Send the page by messenger or email; it opens in any browser, even offline. Older specials in the archive can be shared too.'] },
+  },
+  {
     id: '2026-11-07-8',
     de: { title: 'Mehr englische Namen', items: ['Neue Karrieren auf Englisch würfeln aus deutlich mehr Vor- und Nachnamen, auch walisische, schottische und nordenglische.', 'Mehr Namen auch für Spieler mit irischen, osteuropäischen, südasiatischen, afrikanischen und karibischen Wurzeln. Bestehende Spielstände behalten ihre Spieler.'] },
     en: { title: 'More English names', items: ['New careers in English draw from many more first names and surnames, Welsh, Scottish and northern English ones too.', 'More names for players with Irish, Eastern European, South Asian, African and Caribbean roots as well. Existing saves keep their players.'] },

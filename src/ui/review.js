@@ -5,13 +5,13 @@ import { esc } from './ds.js';
 
 const masthead = (r) => `${tr('KREISBLATT', 'KREISBLATT')} · ${tr('Sonderheft', 'Special issue')} ${r.year}/${String(r.year + 1).slice(2)}`;
 
-export function reviewHTML(r, { share = false } = {}) {
+export function reviewHTML(r, { share = false, page = null } = {}) {
   return `<article class="review">
     <p class="review-mast">${masthead(r)}</p>
     <h3>${esc(r.headline)}</h3>
     <p class="review-sub">${esc(r.league)} · ${tr('Platz', 'Place')} ${r.pos} · ${esc(r.sub)}</p>
     <dl>${r.items.map((i) => `<dt>${esc(i.label)}</dt><dd>${esc(i.text)}</dd>`).join('')}</dl>
-    ${share ? `<button class="tiny" data-action="reviewshare">${tr('Als Bild teilen', 'Share as image')}</button>` : ''}
+    ${share || page != null ? `<p class="review-share">${share ? `<button class="tiny" data-action="reviewshare">${tr('Als Bild teilen', 'Share as image')}</button>` : ''}<button class="tiny" data-action="reviewpage" data-value="${page ?? ''}" data-testid="review-page">${tr('Als Seite teilen', 'Share as page')}</button></p>` : ''}
   </article>`;
 }
 

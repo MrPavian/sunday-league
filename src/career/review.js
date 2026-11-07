@@ -7,6 +7,8 @@ import { GOALS } from './board.js';
 import { humanClub, playerOf, table } from './career.js';
 import { yearOf } from './sagas.js';
 
+const POS_ORDER = ['gk', 'def', 'mid', 'fwd'];
+
 function humanResults(c) {
   const me = humanClub(c).id;
   const out = [];
@@ -58,7 +60,16 @@ export function seasonReview(c) {
   const g = c.goal?.season === c.season ? c.goal : null;
   if (g) items.push({ label: tr('Zeugnis vom Vorstand', 'Board report'), text: `${GOALS[g.type].name}: ${pos <= g.target ? tr('erreicht ✔', 'achieved ✔') : tr('verfehlt ✘', 'missed ✘')}` });
   const sub = own ? tr(`${own.w} Siege, ${own.d} Remis, ${own.l} Niederlagen · ${own.gf}:${own.ga} Tore · ${own.pts} Punkte`, `${own.w} won, ${own.d} drawn, ${own.l} lost · goals ${own.gf}-${own.ga} · ${own.pts} points`) : '';
-  return { season: c.season, year: yearOf(c), league: c.league, club: club.name, pos, headline: headline(c, pos, rows.length, club.name), sub, items };
+  // Für die teilbare Seite (ui/reviewpage.js): Abschlusstabelle, alle Ligaspiele, Kaderzahlen.
+  const tableRows = rows.map((r) => ({ name: r.club.name, w: r.w, d: r.d, l: r.l, gf: r.gf, ga: r.ga, pts: r.pts, ...(r.club.human ? { mine: true } : {}) }));
+  const squadRows = squad
+    .map((idx) => {
+      const rec = c.players[idx];
+      const p = playerOf(c, idx);
+      return { pos: p.position, name: p.name, apps: rec.apps ?? 0, goals: rec.goals ?? 0, assists: rec.assists ?? 0, grade: rec.graded ? Math.round((rec.gradeSum / rec.graded) * 10) / 10 : null };
+    })
+    .sort((a, b) => POS_ORDER.indexOf(a.pos) - POS_ORDER.indexOf(b.pos) || b.apps - a.apps);
+  return { season: c.season, year: yearOf(c), league: c.league, club: club.name, pos, headline: headline(c, pos, rows.length, club.name), sub, items, table: tableRows, results: res, squad: squadRows };
 }
 
 // Beim Saisonwechsel ins Archiv (bevor die Saisonwerte zurückgesetzt werden).

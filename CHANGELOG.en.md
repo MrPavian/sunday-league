@@ -6,6 +6,11 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-07-9 – Season review as a page
+
+### New
+- **Share the special as a page:** At season’s end the Kreisblatt special now comes as its own page as well as an image – with crest, final table, every match and each player’s numbers (apps, goals, assists, average grade). Send it by messenger or email; it opens in any browser, even offline. Older specials in the archive can be shared too; they just lack the table, matches and squad.
+
 ## 2026-11-07-8 – More English names
 
 ### New

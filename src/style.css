@@ -872,6 +872,7 @@ body.touch .coach-play:not(.ui-btn) { background: #2f6f3a; }
 .review dt { margin-top: 7px; font-weight: 700; color: #7a1d1d; text-transform: uppercase; font-size: var(--fs-caption); }
 .review dd { margin: 0; }
 .review button { margin-top: 10px; text-shadow: none; }
+.review .review-share { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
 .museum details { margin: 4px 0; }
 .museum summary { cursor: pointer; }
 

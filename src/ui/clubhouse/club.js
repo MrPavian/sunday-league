@@ -545,7 +545,7 @@ export const clubScreens = {
       <section><h4>${tr('Rekorde', 'Records')}</h4>${records}</section>
       <section><h4>${tr('Vereinslegenden', 'Club legends')}</h4>${legends}</section>
       <section><h4>${tr('Trikot- und Wappenarchiv', 'Kit and crest archive')}</h4>${kits}${crests}</section>
-      ${(c.reviews ?? []).length ? `<section><h4>${tr('Sonderhefte', 'Season specials')}</h4>${[...c.reviews].reverse().map((r) => `<details><summary>${r.year}/${String(r.year + 1).slice(2)} · ${r.headline}</summary>${reviewHTML(r)}</details>`).join('')}</section>` : ''}
+      ${(c.reviews ?? []).length ? `<section><h4>${tr('Sonderhefte', 'Season specials')}</h4>${[...c.reviews].reverse().map((r) => `<details><summary>${r.year}/${String(r.year + 1).slice(2)} · ${r.headline}</summary>${reviewHTML(r, { page: r.season })}</details>`).join('')}</section>` : ''}
     </div>`;
   },
 

@@ -2,6 +2,7 @@ import { tr } from '../core/i18n.js';
 import { museum } from '../career/museum.js';
 import { seasonReview } from '../career/review.js';
 import { shareReview } from './review.js';
+import { shareReviewPage } from './reviewpage.js';
 import { GROUP_LABELS, SIMPLE } from '../sim/commands.js';
 import { coachLevel, homeView, setCoachLevel } from './prefs.js';
 import { button, haptic, icon, tabs as uiTabs } from './ds.js';
@@ -305,6 +306,12 @@ export class Clubhouse {
         } else this.render(), this.animateDart();
       } else if (action === 'reviewshare') {
         shareReview(seasonReview(this.career));
+      } else if (action === 'reviewpage') {
+        // Leer = laufende Saison, sonst ein archiviertes Sonderheft (club.js).
+        const c = this.career;
+        const r = value === '' || value == null ? seasonReview(c) : (c.reviews ?? []).find((x) => String(x.season) === String(value));
+        const me = humanClub(c);
+        if (r) shareReviewPage(r, { crest: crestSVG(crestOf(me), { size: 56, short: me.short, ...crestExtras(c), label: me.name }) });
       } else if (action === 'tipsoff') {
         this.career.tipsOff = true;
         this.career.week.chat = this.career.week.chat.filter((m) => !m.tip);

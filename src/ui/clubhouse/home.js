@@ -340,7 +340,7 @@ export const homeScreens = {
         <h3>${tr('Platz', 'Position')} ${pos}</h3>
         <p>${msg}</p>
         <p>${tr('Meister', 'Champions')}: <b>${champ.name}</b></p>
-        ${reviewHTML(seasonReview(c), { share: true })}
+        ${reviewHTML(seasonReview(c), { share: true, page: '' })}
         ${this.miniTable()}
         ${chronicle}
         ${this.tripBlock()}

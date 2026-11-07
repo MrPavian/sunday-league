@@ -1162,7 +1162,10 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
     schottische und nordenglische), je Jahrgang 30–40 Vornamen mehr nach den ONS-Vornamenlisten, alle Herkunftsgruppen größer.
     Gewichte nach Zensus 2021 unverändert; keine echten Fußballer (notPro). Neue englische Karrieren nutzen Auflage 10, alte
     behalten 5.
-11. **Saisonrückblick als teilbare Seite.**
+11. ✅ **Saisonrückblick als teilbare Seite** (2026-11-07): Neben „Als Bild teilen“ erzeugt „Als Seite teilen“ eine
+    eigenständige HTML-Datei (src/ui/reviewpage.js, kein Skript, kein Netz, helles und dunkles Farbschema) mit Wappen,
+    Höhepunkten, Abschlusstabelle, allen Ligaspielen und Kaderzahlen (Einsätze, Tore, Vorlagen, Notenschnitt). Das
+    Sonderheft im Archiv speichert diese Abschnitte jetzt mit; ältere Sonderhefte lassen sich ohne sie teilen.
 12. **Erfolge und Meilensteine** (siehe 8.4).
 13. **Internationaler Wettbewerb** (vom Nutzer gewünscht, 2026-11-05): Die besten Vereine der 1. Liga spielen in einem
     erfundenen europäischen Wettbewerb gegen erfundene Vereine aus erfundenen Städten anderer Länder (Gruppenphase, K.-o.-Runden
