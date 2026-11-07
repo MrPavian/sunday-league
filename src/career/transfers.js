@@ -351,7 +351,7 @@ function makeOffers(c, kind, key) {
   for (const idx of t.listed) if (me.squad.includes(idx)) add(idx, false);
   // Wechselwillige (grummeln oder sitzen draußen) bekommen von sich aus Angebote – höchstens eins je Periode.
   const played = c.fixtures.slice(0, c.round).length;
-  const wishers = me.squad.filter((i) => !isCoach(c, i) && !t.listed.includes(i) && c.flags?.poached?.[i] !== c.season && ((c.players[i]?.grumpy ?? 0) > 0 || (played >= 3 && (c.players[i]?.playShare ?? c.players[i]?.apps ?? 9) <= played * 0.35)));
+  const wishers = me.squad.filter((i) => !isCoach(c, i) && !t.listed.includes(i) && c.flags?.poached?.[i] !== c.season && ((c.players[i]?.grumpy ?? 0) > 0 || (played >= 3 && (c.players[i]?.playShare ?? c.players[i]?.apps ?? 9) + 0.5 * (c.players[i]?.apps2 ?? 0) <= played * 0.35)));
   if (wishers.length && rng.chance(0.5)) add(rng.pick(wishers), true);
 }
 

@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-07-4',
+    de: { title: 'Zweite Mannschaft', items: ['Ab der Regionalliga kannst du unter Mannschaft → Teams eine Zweite Mannschaft melden – mit eigener Liga, Tabelle, Auf- und Abstieg.', 'Wer am Wochenende bei der Ersten nicht spielt, bekommt in der Zweiten Spielpraxis: Er entwickelt sich besser und murrt weniger. A-Jugendliche ab 18 spielen mit und wachsen schneller.', 'Wie beim DFB: Die Zweite beginnt ganz unten und spielt höchstens eine Liga unter der Ersten – die Zweite eines Drittligisten nie in der Regionalliga.'] },
+    en: { title: 'Reserve team', items: ['From the Regionalliga you can register a reserve team under Squad → Teams – with its own league, table, promotion and relegation.', 'Anyone who does not play for the first team at the weekend gets match practice in the reserves: they develop better and grumble less. U19 players aged 18+ join in and grow faster.', 'As with the DFB: the reserves start at the bottom and play at most one league below the first team – a third-division club’s reserves never in the Regionalliga.'] },
+  },
+  {
     id: '2026-11-07-3',
     de: { title: 'Trainerteam ab der Regionalliga', items: ['Ab der Regionalliga: Torwarttrainer, Athletiktrainer und Physiotherapeut einstellen (Mannschaft → Training).', 'Jede Saison zwei Bewerber je Aufgabe – günstiger oder erfahrener. Das Gehalt richtet sich nach Liga und Erfahrung: in der Regionalliga auf Minijob-Basis, ab der 3. Liga in Vollzeit.', 'Spürbare Wirkung: Torhüter entwickeln sich schneller, weniger Verletzungen, Verletzte sind schneller zurück.'] },
     en: { title: 'Coaching staff from the Regionalliga', items: ['From the Regionalliga: hire a goalkeeper coach, a fitness coach and a physiotherapist (Squad → Training).', 'Two applicants per job every season – cheaper or more experienced. Wages depend on league and experience: part-time (mini-job) in the Regionalliga, full-time from the 3. Liga.', 'A real difference: goalkeepers develop faster, fewer injuries, injured players return sooner.'] },

@@ -6,6 +6,14 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-07-4 – Reserve team
+
+### New
+- **Reserve team:** from the Regionalliga, register reserves under Squad → Teams. They play in their own 16-team league with a table, two promoted and three relegated; matches run in the background, the result appears in the chat every Monday.
+- **Match practice:** the reserves field whoever did not play for the first team at the weekend, plus U19 players aged 18+; the reserves' own amateurs fill the remaining places. Anyone with at least five reserve appearances develops like a squad player rather than someone who only sits on the bench. Reserve appearances count half towards complaints about playing time. U19 players with five appearances develop 15 % faster.
+- **DFB rules:** new reserves start in the lowest division (Kreisklasse C). Two teams of one club never play in the same league – the reserves at most one league below the first team, a third-division club's reserves never in the Regionalliga. If the first team is relegated, the reserves are moved down where necessary.
+- **Costs:** referees, travel and fees, €80 to €200 a week depending on the reserves' league.
+
 ## 2026-11-07-3 – Coaching staff from the Regionalliga
 
 ### New

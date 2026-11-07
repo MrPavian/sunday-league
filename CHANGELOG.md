@@ -6,6 +6,14 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-07-4 – Zweite Mannschaft
+
+### Neu
+- **Zweite Mannschaft:** Ab der Regionalliga meldest du unter Mannschaft → Teams eine Zweite. Sie spielt in einer eigenen Liga mit 16 Mannschaften, Tabelle, zwei Aufsteigern und drei Absteigern; die Spiele laufen im Hintergrund, das Ergebnis steht jeden Montag im Chat.
+- **Spielpraxis:** In der Zweiten spielt, wer am Wochenende bei der Ersten nicht zum Einsatz kam, dazu A-Jugendliche ab 18; die übrigen Plätze besetzen die eigenen Amateure der Zweiten. Wer mindestens fünfmal in der Zweiten spielt, entwickelt sich wie ein Ergänzungsspieler statt wie einer, der nur auf der Bank sitzt. Einsätze in der Zweiten zählen halb, wenn es um Ärger wegen fehlender Spielzeit geht. A-Jugendliche mit fünf Einsätzen entwickeln sich 15 % schneller.
+- **Regeln wie beim DFB:** Eine neue Zweite beginnt in der untersten Klasse (Kreisklasse C). Zwei Mannschaften eines Vereins spielen nie in derselben Liga – die Zweite höchstens eine Liga unter der Ersten, die eines Drittligisten nie in der Regionalliga. Steigt die Erste ab, wird die Zweite wenn nötig zurückgestuft.
+- **Kosten:** Schiedsrichter, Fahrten und Meldegeld, je nach Liga der Zweiten 80 bis 200 € pro Woche.
+
 ## 2026-11-07-3 – Trainerteam ab der Regionalliga
 
 ### Neu

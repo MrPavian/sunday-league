@@ -75,6 +75,7 @@ import { initTiger, tigerWeek } from './tiger.js';
 import { bonusesOf } from './bonuses.js';
 import { matchTactic } from './tacticpresets.js';
 import { keeperGrowthMul, weeklyTeam } from './coachteam.js';
+import { reserveMatchday, reserveSeasonEnd } from './reserve.js';
 
 export const SAVE_VERSION = 1;
 export const POOL_SEED = 1921;
@@ -180,7 +181,7 @@ export function developPlayers(career) {
     const rec = career.players[idx];
     const before = playerOf(career, idx);
     const age = before.age;
-    const practice = rec.apps >= 5 ? 1.3 : rec.apps >= 2 ? 1 : 0.6;
+    const practice = rec.apps >= 5 ? 1.3 : rec.apps >= 2 || (rec.apps2 ?? 0) >= 5 ? 1 : 0.6; // Spielpraxis in der Zweiten (reserve.js) zählt wie ein Ergänzungsspieler
     const coach = (career.staff?.cotrainer ? 1.15 : 1) * hiredGrowth(career);
     const mul = practice * coach * (age <= 23 ? youthGrowthMul(career) : 1) * trainingGrowth(career) * growthMul(career) * (before.position === 'gk' ? keeperGrowthMul(career) : 1); // Trainingsplan (teamtraining.js), Trainingsgelände, Torwarttrainer (coachteam.js)
     const { gain, event, prof } = seasonGain(career, idx, before, mul, environmentChanged(career, idx, club));
@@ -381,7 +382,7 @@ export function nextSeason(career) {
 
   // Entwicklung zuerst – die Einsätze dieser Saison zählen als Spielpraxis.
   const development = developPlayers(career);
-  developYouth(career, (idx) => youthFactor(career, idx, career.fixtures.length));
+  developYouth(career, (idx) => youthFactor(career, idx, career.fixtures.length) * ((career.players[idx]?.apps2 ?? 0) >= 5 ? 1.15 : 1)); // A-Jugendliche mit Einsätzen in der Zweiten: +15 % (Spielwert)
   seasonBridge(career);
   const retired = retirements(career, youthDeps(), MIN_SQUAD);
 
@@ -389,6 +390,7 @@ export function nextSeason(career) {
   for (const rec of Object.values(career.players)) {
     delete rec.fitness;
     delete rec.playShare;
+    delete rec.apps2;
     rec.total = {
       apps: (rec.total?.apps ?? 0) + rec.apps,
       goals: (rec.total?.goals ?? 0) + rec.goals,
@@ -415,6 +417,8 @@ export function nextSeason(career) {
   career.nextLeagueSize = null;
   sagaNotes.push(...movesNotes(career, cpuMoved, newLevel));
   if (upBlock) sagaNotes.push(blockText(career, upBlock, level)); // Profiligen: kein Aufstieg trotz Platz (license.js)
+  const reserveNote = reserveSeasonEnd(career, newLevel); // Zweite Mannschaft: Platz, Auf-/Abstieg, nie höher als eine Liga unter der Ersten
+  if (reserveNote) sagaNotes.push(reserveNote);
   if (newLevel === level) {
     // Alle, die schon irgendwo spielen (takenIndices: auch Alte Herren, Nachbarligen, Pokalgäste) – vorher fehlten die Alten Herren,
     // und ein Ü32-Spieler stand zugleich im Kader eines Gegners (Langzeitlauf, 2026-11-06).
@@ -1422,6 +1426,15 @@ export function finishRound(career) {
   const staffNotes = weeklyStaff(career, { squad: humanClub(career).squad }); // Pauschalen, freie Ämter
   staffNotes.push(...weeklyHired(career)); // Lohn und Laune des eingestellten Trainers (Präsidium)
   staffNotes.push(...weeklyTeam(career)); // Gehälter Trainerteam (ab der Regionalliga)
+  const club2 = humanClub(career);
+  const line2 = reserveMatchday(career, {
+    playerOf,
+    squad: club2.squad,
+    prospects: career.youth?.prospects ?? [],
+    usedFirst: new Set(club2.squad.filter((idx) => career.players[idx]?.lastApp === career.round)),
+    unavailable: (idx) => { const r = career.players[idx]; return !r || r.injuryWeeks > 0 || r.awayWeeks > 0 || (r.ban?.games ?? 0) > 0; },
+  });
+  if (line2) staffNotes.push(line2);
   career.round++;
   // Winterpause (vom Nutzer gewünscht, 2026-10-21): eine eigene Woche ohne Ligaspiel vor dem Spieltag nach der Hinrunde –
   // dort liegt das Hallenturnier. Vorher lag es in der Woche des Spieltags, direkt vor dem Ligaspiel.

@@ -1126,6 +1126,10 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
    (Sitzplatz = 1,8 × Stehplatz, hergeleitet), Nachfrage-Elastizität 0,5 darunter / 1,5 darüber (Spielwerte), Dauerkarten mit
    Anteil 1./2. Liga 55/57 % (Quelle), darunter Spielwerte, 20 % Rabatt (Spielwert). Offen: Logen/Business-Plätze, Preisprotest der Fans.
 4. **Zweite Mannschaft und U19 als eigene Teams** (ab der Regionalliga).
+   ✅ Zweite Mannschaft erledigt 2026-11-07 (reserve.js, Mannschaft → Teams): eigene Liga (16 Teams, Schnellmodell), Start in der
+   Kreisklasse C, höchstens eine Liga unter der Ersten, Zweite eines Drittligisten nicht in der Regionalliga (DFB, „Wo dürfen zweite
+   Mannschaften spielen?“); Spielpraxis für Nicht-Eingesetzte und A-Jugendliche ab 18; Kosten, Gegnerstärke, Wirkung Spielwerte.
+   Offen: U19 als eigenes Team mit eigener Liga (A-Junioren-Bundesliga/Regionalliga).
 5. **Trainerteam ab der Regionalliga:** Torwart-, Athletiktrainer, Physio mit Gehalt und Wirkung.
    ✅ erledigt 2026-11-07 (coachteam.js, Mannschaft → Training): je Aufgabe zwei Bewerber pro Saison; Gehalt Regionalliga bis zur
    Minijob-Grenze 603 € (DRV 2026), 3. Liga nach Medianen (Athletiktrainer 36 400 €/Jahr StepStone, Physio 3452 €/Monat Entgeltatlas;

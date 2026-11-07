@@ -30,6 +30,7 @@ import { ARG_IDS, ARGUMENTS, knownMotives, MOTIVES } from '../../career/recruiti
 import { currentLineup, humanClub, lineupOf, runningCup, nextPitch, maxSquad, MIN_SQUAD, recruit, recruitChance, setLineupSlot, SQUAD_EXTRA_MAX, table } from '../../career/career.js';
 import { inviteChance, isRawDiamond, MAX_STATIONS, STATIONS, TRAINING_COST, trainingDone } from '../../career/training.js';
 import { roleName, STAFF_ROLES } from '../../career/youth.js';
+import { canRegister, RESERVE_FROM, reserveCap, reserveCost, reserveOf, RESERVE_ROUNDS, reserveTable } from '../../career/reserve.js';
 import { currentSalary, teamCandidates, teamOf, teamOpen, TEAM_FROM, TEAM_ROLE_IDS, TEAM_ROLES } from '../../career/coachteam.js';
 import { canAffordOutside, EHRENAMT_MONTH, feeOf, holderOf, outsideCandidate, ROLES as STAFF_ROLE_IDS, squadCandidates, STAFF_MIN_AGE, UEBUNGSLEITER_MONTH } from '../../career/staff.js';
 import { personaTags } from '../../career/kidpersona.js';
@@ -609,10 +610,31 @@ export const teamScreens = {
       ['youth', tr('Jugend', 'Youth'), () => this.tab_youth()],
       ...(c.women ? [['women', tr('Frauen', 'Women'), () => this.tab_women()]] : []),
       ['oldboys', tr('Alte Herren', 'Old boys'), () => this.tab_oldboys()],
+      ...((c.level ?? 1) >= RESERVE_FROM || reserveOf(c) ? [['reserve', tr('Zweite Mannschaft', 'Reserves'), () => this.reservePart()]] : []),
     ];
     const f = parts.findIndex(([id]) => id === this.teamsFocus);
     if (f > 0) parts.unshift(...parts.splice(f, 1));
     return parts.map(([id, label, html]) => `<section class="teams-part" data-team="${id}"><h3 class="teams-head">${label}</h3>${html()}</section>`).join('');
+  },
+
+  // Zweite Mannschaft (reserve.js): melden, Liga mit Tabelle, letzter Spieltag.
+  reservePart() {
+    const c = this.career;
+    const res = reserveOf(c);
+    const off = !c.week || this.results;
+    if (!res)
+      return `<p>${tr('Wer am Wochenende bei der Ersten nicht spielt, bekommt in der Zweiten Spielpraxis – dazu A-Jugendliche ab 18. Eine neue Zweite beginnt in der untersten Klasse und darf höchstens eine Liga unter der Ersten spielen (DFB-Regel).', 'Anyone who does not play for the first team at the weekend gets match practice in the reserves – plus U19 players aged 18 and over. New reserves start in the lowest division and may play at most one league below the first team (DFB rule).')}</p>
+        ${canRegister(c) ? button(tr(`Zweite Mannschaft melden (${reserveCost(2)} € je Woche)`, `Register reserves (€${reserveCost(2)} a week)`), { kind: 'secondary', action: 'reserveRegister', disabled: !!off, 'data-testid': 'reserve-register' }) : ''}`;
+    const rows = reserveTable(res)
+      .map((t, i) => `<tr class="${t.own ? 'me' : ''}"><td class="num">${i + 1}</td><td>${esc(t.own ? `${humanClub(c).name} II` : t.name)}</td><td class="num">${t.w + t.d + t.l}</td><td class="num">${t.gf}:${t.ga}</td><td class="num"><b>${t.p}</b></td></tr>`)
+      .join('');
+    const last = res.last ? tr(`Letztes Spiel gegen ${esc(res.last.opp)}: ${res.last.gf}:${res.last.ga}.`, `Last game v ${esc(res.last.opp)}: ${res.last.gf}–${res.last.ga}.`) : '';
+    const capName = leagueTitle(c, reserveCap(c.level ?? 1));
+    return `<p><b>${leagueTitle(c, res.level)}</b> · ${tr('Spieltag', 'Matchday')} ${res.round}/${RESERVE_ROUNDS} · ${reserveCost(res.level)} €${tr(' je Woche', ' a week')}</p>
+      ${last ? `<p>${last}</p>` : ''}
+      <table class="table reserve-table"><thead><tr><th>#</th><th>${tr('Verein', 'Club')}</th><th>${tr('Sp.', 'P')}</th><th>${tr('Tore', 'Goals')}</th><th>${tr('Pkt.', 'Pts')}</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="hint">${tr(`Zwei steigen auf, drei ab. Höchstens bis ${capName} – eine Liga unter der Ersten.`, `Two go up, three go down. At most ${capName} – a league below the first team.`)}</p>
+      ${button(this.confirmWithdraw ? tr('Wirklich abmelden? Nochmal tippen', 'Really withdraw? Tap again') : tr('Zweite abmelden', 'Withdraw reserves'), { kind: 'ghost', action: 'reserveWithdraw', disabled: !!off })}`;
   },
 
   tab_youth() {
