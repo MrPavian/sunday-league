@@ -6,6 +6,12 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-07-6 – Opponent check
+
+### New
+- **Opponent check before the match:** the match card under “Today” now shows what you know about your next opponent: form over the last five games, league position, strength, style, strengths and weakness, and who is most dangerous.
+- **The better you watch, the sharper it gets:** if you hardly know their players you only see a rough range. “Watch the opponent” (costs one action of the week) and a tip from the landlord make the report more precise – right down to system and weak spot.
+
 ## 2026-11-07-5 – Stadium growth you can see
 
 ### New

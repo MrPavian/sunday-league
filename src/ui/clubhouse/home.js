@@ -26,6 +26,9 @@ import { coachAge, legacy, legacyPrompt, stepDown, successionCandidates } from '
 import { vacant } from '../../career/president.js';
 import { talk } from '../../career/pub.js';
 import { weatherLine } from '../../career/weather.js';
+import { LEVEL_TEXT, scoutReport } from '../../career/opponentscout.js';
+import { canWatch } from '../../career/scouting.js';
+import { ATTR_LABELS } from '../attrLabels.js';
 import { refereeLine } from '../../career/referees.js';
 import { isRival, rivalLabel, rivalPoints } from '../../career/rivals.js';
 import { nachholLabel } from '../../career/platz.js';
@@ -163,12 +166,33 @@ export const homeScreens = {
         ${c.goal?.season === c.season ? `<p class="t-2 goal-line">${tr('Saisonziel', 'Season target')}: <b>${GOALS[c.goal.type].name}</b> · ${tr('jetzt', 'now')} ${place}. ${tr('Platz', 'place')} <small>(${tr('Ziel', 'target')}: ${tr('bis Platz', 'top')} ${c.goal.target})</small></p>` : ''}
         ${notes.length ? `<ul class="hub-notes">${notes.map((n) => `<li>${n}</li>`).join('')}</ul>` : ''}
         ${stories.length ? `<ul class="stories">${stories.map((x) => `<li>${x}</li>`).join('')}</ul>` : ''}
+        ${this.oppCheck(opp, venue.format)}
         ${this.meBars()}
         ${summerCupDue(c) || summerCupRunning(c) ? this.summerCard() : ''}
         ${winterCupDue(c) ? `<div class="winter-cup"><p class="label">${tr('Winterpause', 'Winter break')}</p><p>${tr(`Am Wochenende: <b>${CUPS.halle.name}</b> in der ${CUPS.halle.place}. Acht Teams, Bande, Handballtore – ${CUPS.halle.prizes.winner} € für den Sieger.`, `This weekend: <b>${CUPS.halle.name}</b> at ${CUPS.halle.place}. Eight teams, boards, handball goals – €${CUPS.halle.prizes.winner} for the winner.`)}</p>
           <div class="ui-row">${button(tr('Anmelden', 'Enter'), { kind: 'primary', action: 'onCupStart', value: 'halle' })}${button(tr('Diesmal nicht', 'Not this time'), { action: 'onCupSkip', value: 'halle' })}</div></div>` : ''}
         <div class="hub-actions">${actions}</div>
       </article>`;
+  },
+
+  // Gegner-Check (opponentscout.js): was man über den nächsten Gegner weiß – genauer, je besser man ihn beobachtet hat.
+  oppCheck(opp, format) {
+    const c = this.career;
+    const r = scoutReport(c, opp, format);
+    const FORM = { w: ['S', 'W', '#5cc46a'], d: ['U', 'D', '#e0b020'], l: ['N', 'L', '#d9534f'] };
+    const form = r.form.length ? r.form.map((x) => `<span class="ui-chip" style="--c:${FORM[x][2]}">${tr(FORM[x][0], FORM[x][1])}</span>`).join('') : `<span class="t-2">${tr('noch keine Spiele', 'no games yet')}</span>`;
+    const lines = [
+      `${tr('Tabelle', 'Table')}: ${r.place ? `${r.place}.` : '–'} · ${tr('Stärke', 'Strength')}: <b>${r.level ? (r.strength.exact ? r.strength.lo : `${r.strength.lo}–${r.strength.hi}`) : '?'}</b>`,
+      r.style ? `${tr('Spielweise', 'Style')}: <b>${esc(r.style)}</b>${r.system ? ` · ${tr('System', 'System')} <b>${esc(r.system)}</b>` : ''}` : '',
+      r.strengths.length ? `${tr('Stark in', 'Strong at')}: <b>${r.strengths.map((k) => ATTR_LABELS[k]).join(', ')}</b>${r.weakness ? ` · ${tr('schwach in', 'weak at')}: <b>${ATTR_LABELS[r.weakness]}</b>` : ''}` : '',
+      r.danger ? `${tr('Aufpassen auf', 'Watch out for')}: <b>${esc(r.danger.name)}</b> (${r.danger.goals} ${tr('Tore', 'goals')}, ${tr('Stärke', 'rating')} ${r.danger.rating})` : '',
+    ].filter(Boolean);
+    const watch = canWatch(c, opp) ? button(tr('Gegner beobachten (1 Aktion)', 'Watch the opponent (1 action)'), { action: 'oppWatch', value: opp.id }) : '';
+    return `<details class="opp-check" data-testid="opp-check"${this.oppNote ? ' open' : ''}><summary>${tr('Gegner-Check', 'Opponent check')} <small>${'●'.repeat(r.level)}${'○'.repeat(3 - r.level)}</small></summary>
+      <div class="ui-chips">${tr('Form', 'Form')}: ${form}</div>
+      ${lines.map((l) => `<p class="t-2">${l}</p>`).join('')}
+      <p class="t-2"><i>${LEVEL_TEXT()[r.level]}</i></p>
+      ${this.oppNote ? `<p class="t-2">${esc(this.oppNote)}</p>` : ''}${watch}</details>`;
   },
 
   // Gleich nach dem gewonnenen Finale: Sieg-Meldung ganz oben, nicht erst im Pokal-Reiter.

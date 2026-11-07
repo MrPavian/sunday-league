@@ -6,6 +6,12 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-07-6 – Gegner-Check
+
+### Neu
+- **Gegner-Check vor dem Spiel:** Auf der Spielkarte unter „Heute“ steht jetzt, was du über den nächsten Gegner weißt: Form der letzten fünf Spiele, Tabellenplatz, Stärke, Spielweise, Stärken und Schwäche und wer bei ihnen am gefährlichsten ist.
+- **Je besser beobachtet, desto genauer:** Kennst du die Spieler kaum, siehst du nur eine grobe Spanne. Mit „Gegner beobachten“ (kostet eine Aktion der Woche) und einem Tipp vom Wirt wird der Bericht genauer – bis zu System und Schwachstelle.
+
 ## 2026-11-07-5 – Stadionbau sichtbar
 
 ### Neu

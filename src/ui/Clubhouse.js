@@ -30,6 +30,7 @@ import { setTripShare } from '../career/travel.js';
 import { tripChoose } from '../career/trip.js';
 import { build, dequeue, enqueue } from '../career/facilities.js';
 import { buyGround, care, longLease, playAnyway, renew } from '../career/platz.js';
+import { watchClub } from '../career/scouting.js';
 import { cancelSponsor, declineOffer, fulfillWish, negotiate } from '../career/sponsors.js';
 import { inviteTrialist, runStation, startTraining } from '../career/training.js';
 import { promoteProspect } from '../career/youth.js';
@@ -231,6 +232,10 @@ export class Clubhouse {
         this.h.onChange();
       } else if (action === 'pachtRenew' || action === 'pachtLong' || action === 'pachtBuy') {
         (action === 'pachtRenew' ? renew : action === 'pachtLong' ? longLease : buyGround)(this.career);
+        this.h.onChange();
+      } else if (action === 'oppWatch') {
+        const club = this.career.clubs.find((x) => x.id === value);
+        this.oppNote = (club && watchClub(this.career, club)) || '';
         this.h.onChange();
       } else if (action === 'playAnyway') {
         playAnyway(this.career);
@@ -728,6 +733,7 @@ export class Clubhouse {
   show(career, { results = null } = {}) {
     this.career = career;
     this.results = results;
+    this.oppNote = null;
     this.busy = null;
     this.root.hidden = false;
     this.render();

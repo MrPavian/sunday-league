@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-07-6',
+    de: { title: 'Gegner-Check', items: ['Auf der Spielkarte unter „Heute“: Form, Tabellenplatz, Stärke, Spielweise, Stärken und Schwäche des nächsten Gegners und sein gefährlichster Spieler.', 'Je besser du den Gegner kennst, desto genauer der Bericht. „Gegner beobachten“ kostet eine Aktion der Woche, ein Tipp vom Wirt hilft auch.'] },
+    en: { title: 'Opponent check', items: ['On the match card under “Today”: form, league position, strength, style, strengths and weakness of your next opponent and their most dangerous player.', 'The better you know them, the sharper the report. “Watch the opponent” costs one action of the week; a tip from the landlord helps too.'] },
+  },
+  {
     id: '2026-11-07-5',
     de: { title: 'Stadionbau sichtbar', items: ['Auf dem eigenen Großfeld wächst das Stadion mit jeder Ausbaustufe: Stehwälle, überdachte Haupttribüne mit Sitzen in Vereinsfarben, Gästeblock, Dächer über den Kurven, zweiter Rang in der Großarena.', 'Heimspiele im ausgebauten Stadion beginnen mit einem kurzen Blick auf die Ränge.', 'Behoben: Die Stahlrohrtribüne (Sitzplätze) wird im Ligaspiel jetzt gezeichnet.'] },
     en: { title: 'Stadium growth you can see', items: ['On your own full-size pitch the stadium grows with every upgrade: terraces, a covered main stand with seats in club colours, an away block, roofs over the ends, a second tier in the grand arena.', 'Home games in an upgraded stadium open with a short look at the stands.', 'Fixed: the scaffold stand (Seats) is now drawn in league matches.'] },

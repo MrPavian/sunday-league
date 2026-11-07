@@ -1146,6 +1146,10 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
    „ab Minute X, bei Spielstand Y → Vorlage Z“ (Minuten 30–85 auf 90 gerechnet, Anzahl Spielwert), greifen auch im Ticker und im
    simulierten Spiel; im Spiel streichbar. Ohne Regeln unverändert (Golden). Offen: Regeln für Rote Karten oder Unterzahl.
 8. **Gegner-Scouting vor dem Spiel:** Stärken, Lieblingsstil, gefährlichster Spieler; Genauigkeit nach eigenem Scouting.
+   ✅ erledigt 2026-11-07 (career/opponentscout.js, Heute-Karte „Gegner-Check“): Form, Tabellenplatz, Teamstärke als Spanne,
+   Spielweise, ab Stufe 2 System, Stärken und Schwäche, gefährlichster Spieler. Genauigkeit = gerundetes Mittel der Kenntnis
+   (scouting.js) über die besten elf, Tipp vom Wirt +1; „Gegner beobachten“ kostet eine Wochenaktion. Nur Anzeige, keine Wirkung
+   auf das Spiel (Golden unverändert). Stufen und Spannen: Spielwerte. Offen: Bericht auch vor Pokalspielen.
 9. **Wetter mit spürbarerer Wirkung** (tiefer Platz, Wind) – nur mit Messung wie beim Bonus-Audit.
 10. **Englische Namensliste erweitern.**
 11. **Saisonrückblick als teilbare Seite.**

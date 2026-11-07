@@ -1035,6 +1035,10 @@ body.touch .coach-play:not(.ui-btn) { background: #2f6f3a; }
 .hub-match > .t-2 { margin: 0; text-align: center; }
 .hub-match .weather { color: #9fc4e0; }
 .hub-facts { justify-content: center; }
+.opp-check { border-top: 1px solid rgba(255,255,255,.12); padding-top: var(--s2); }
+.opp-check summary { cursor: pointer; font-weight: 600; }
+.opp-check summary small { color: var(--accent, #e0b020); letter-spacing: 2px; margin-left: var(--s1); }
+.opp-check p { margin: var(--s1) 0; }
 .hub-notes { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--s1); }
 .hub-notes li { padding-left: var(--s3); border-left: 4px solid var(--warn); color: #f0d68a; font-size: var(--fs-secondary); }
 .hub-actions { display: grid; gap: var(--s2); margin-top: var(--s2); }
