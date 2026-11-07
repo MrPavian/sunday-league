@@ -671,7 +671,7 @@ export function rollWeekEvent(career) {
   // In der Derbywoche geht es um nichts anderes (bisher konnte ein Zufallsereignis dazwischenfunken).
   // Ein fälliges Folge-Ereignis einer Kette (Reportage, Rückkehr, Fanbus …) kommt in seiner Woche.
   const chosen = (derbyThisWeek(career) && candidates.find((c) => DERBY_EVENTS[c.id])) || candidates.find((c) => c.ev.followUp) || candidates.find((c) => (r -= c.ev.weight) < 0) || candidates[0];
-  const event = { id: chosen.id, ctx: chosen.ctx, text: chosen.ev.text(career, chosen.ctx), options: chosen.ev.options.map((o) => labelOf(o, career)), choice: null, result: null, story: STORY_STARTS[chosen.id] ? 'Neue Geschichte' : PERSONAL_EVENTS[chosen.id] ? 'Privat' : SAGA_EVENTS[chosen.id] ? 'Vereinsgeschichte' : null };
+  const event = { id: chosen.id, ctx: chosen.ctx, members: squadRefs(career, chosen.ctx), text: chosen.ev.text(career, chosen.ctx), options: chosen.ev.options.map((o) => labelOf(o, career)), choice: null, result: null, story: STORY_STARTS[chosen.id] ? 'Neue Geschichte' : PERSONAL_EVENTS[chosen.id] ? 'Privat' : SAGA_EVENTS[chosen.id] ? 'Vereinsgeschichte' : null };
   career.week.event = event;
   career.eventLog.push({ id: chosen.id, season: career.season, round: career.round });
   if (career.eventLog.length > 40) career.eventLog.shift();
@@ -696,12 +696,27 @@ export function eventView(career, e) {
   }
 }
 
+// Spieler aus dem eigenen Kader, um die es im Ereignis geht (beim Ziehen festgehalten).
+function squadRefs(career, ctx) {
+  const squad = new Set(humanClub(career).squad);
+  return [...new Set(Object.values(ctx ?? {}).filter((v) => typeof v === 'number' && squad.has(v)))];
+}
+
 export function resolveEvent(career, choice, slot = 'event') {
   const e = career.week?.[slot];
   if (!e || e.choice !== null) return null;
   const def = eventDef(career, e.id);
   const option = def?.options[choice];
   if (!option) return null;
+  // Ist ein Beteiligter inzwischen weg (Wechsel, Vertragsende), hat sich die Sache erledigt – vorher stürzte die Wirkung ab,
+  // weil sein Datensatz fehlte (Langzeitlauf 2. Liga, 2026-11-07: rivalen_zoff).
+  const gone = (e.members ?? []).filter((idx) => !humanClub(career).squad.includes(idx));
+  if (gone.length) {
+    e.choice = choice;
+    e.effects = [];
+    e.result = tr(`Hat sich erledigt: ${playerOf(career, gone[0]).name} spielt nicht mehr bei uns.`, `No longer an issue: ${playerOf(career, gone[0]).name} does not play for us any more.`);
+    return e.result;
+  }
   const rng = createRng((career.seed * 13 + career.round * 7 + choice + e.id.length) >>> 0);
   e.choice = choice;
   const before = snapshot(career);
@@ -741,7 +756,7 @@ export function rollNotice(career) {
   if (!due && !pool.length) return null;
   let r = rng.next() * pool.reduce((sum, x) => sum + x.ev.weight, 0);
   const pick = due ?? pool.find((x) => (r -= x.ev.weight) < 0) ?? pool[0];
-  w.notice = { id: pick.id, ctx: pick.ctx, text: pick.ev.text(career, pick.ctx), options: pick.ev.options.map((o) => labelOf(o, career)), choice: null, result: null, story: 'Vereinsleben' }; // Beschriftung kann von der Liga abhängen (Trainingslager) – nur Text speichern
+  w.notice = { id: pick.id, ctx: pick.ctx, members: squadRefs(career, pick.ctx), text: pick.ev.text(career, pick.ctx), options: pick.ev.options.map((o) => labelOf(o, career)), choice: null, result: null, story: 'Vereinsleben' }; // Beschriftung kann von der Liga abhängen (Trainingslager) – nur Text speichern
   return w.notice;
 }
 

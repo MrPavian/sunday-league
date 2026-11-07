@@ -6,6 +6,14 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-07-1 – Bugsuche: Fehler aus langen Karrieren
+
+### Behoben
+- **Jugendspieler zum Profiverein:** Wenn du erst „Bleib doch bei uns …“ gesagt hast und er trotzdem ging, wurde die Ausbildungsentschädigung doppelt gebucht und der Zeitungsartikel stand später zweimal im Chat.
+- **Entscheidungen der Woche:** Ist ein Beteiligter inzwischen nicht mehr im Verein (Wechsel, Vertragsende), steht jetzt „Hat sich erledigt“ – vorher konnte das Spiel an dieser Stelle hängen bleiben.
+- **Alte Herren:** Ein Ehemaliger, der zu den Alten Herren gegangen war, konnte zur neuen Saison zusätzlich bei einem Gegner unterkommen und spielte dann für zwei Mannschaften.
+- **Chatgruppe:** Zwei Gesperrte schreiben nicht mehr denselben Satz – jeder hat seinen eigenen.
+
 ## 2026-11-06-6 – Neues Startbild und Blick aus dem Vereinsheim
 
 ### Neu

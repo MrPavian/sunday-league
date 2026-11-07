@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-07-1',
+    de: { title: 'Bugsuche: Fehler aus langen Karrieren', items: ['Jugendspieler zum Profiverein: Die Ausbildungsentschädigung wird nicht mehr doppelt gebucht, der Zeitungsartikel kommt nur einmal.', 'Entscheidungen der Woche: Ist ein Beteiligter nicht mehr im Verein, hat sich die Sache erledigt – kein Hängenbleiben mehr.', 'Alte Herren: Niemand spielt mehr gleichzeitig für die Alten Herren und einen Gegner.', 'Chatgruppe: Gesperrte schreiben nicht mehr alle denselben Satz.'] },
+    en: { title: 'Bug hunt: fixes from long careers', items: ['Youth player off to a pro club: the development fee is no longer booked twice, and the newspaper story only appears once.', 'Decisions of the week: if someone involved has left the club, the matter is closed – no more getting stuck.', 'Old boys: nobody plays for the old boys and an opponent at the same time any more.', 'Group chat: suspended players no longer all write the same sentence.'] },
+  },
+  {
     id: '2026-11-06-6',
     de: { title: 'Neues Startbild und Blick aus dem Vereinsheim', items: ['Startbild neu gezeichnet: Sonntagmorgen auf dem Dorfplatz, gestochen scharf auf jedem Bildschirm – mit Dorf und Kirche, Morgensonne, Tribüne und dem Platzwart am Kreidewagen.', 'Fenster im Vereinsheim: Unter „Heute“ schaust du jetzt von oben auf den Platz, wie aus dem ersten oder zweiten Stock.', 'Eigene Jugend wächst mit der Liga: Talente aus dem eigenen Verein kommen jetzt passend zum Niveau hoch, auch in den Profiligen.', 'Behoben: doppelte Spieler nach Auf- oder Abstieg; der Neue vom Sommerfest passt jetzt zur Liga.'] },
     en: { title: 'New title screen and a view from the clubhouse', items: ['Title screen redrawn: Sunday morning at the village pitch, pin-sharp on every screen – with village and church, morning sun, a stand and the groundsman with his chalk cart.', 'Clubhouse window: under "Today" you now look down on the pitch, as if from the first or second floor.', 'Your own youth grows with the league: home-grown talents now come up at a fitting level, in the professional leagues too.', 'Fixed: duplicate players after promotion or relegation; the newcomer from the summer party now fits your league.'] },

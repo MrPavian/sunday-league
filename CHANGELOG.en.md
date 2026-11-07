@@ -6,6 +6,14 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-07-1 – Bug hunt: fixes from long careers
+
+### Fixed
+- **Youth player off to a pro club:** if you first said "Stay with us instead …" and he went anyway, the development fee was booked twice and the newspaper story later appeared twice in the chat.
+- **Decisions of the week:** if someone involved has left the club in the meantime (transfer, end of contract), it now says "No longer an issue" – before, the game could get stuck at that point.
+- **Old boys:** a former player who had joined the old boys could also end up with an opponent at the start of the new season and then played for two teams.
+- **Group chat:** two suspended players no longer write the same sentence – each has his own.
+
 ## 2026-11-06-6 – New title screen and a view from the clubhouse
 
 ### New

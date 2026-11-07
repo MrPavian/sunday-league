@@ -173,8 +173,7 @@ zu einem Verein auf, der sich vom Parkplatz bis ins Amateurstadion hocharbeitet.
 | **Pokal-Wochenende** | Kreispokal-Modus: Außenseiter gegen Höherklassige, K.-o.-Spiele. |
 | **Turniere & Events** | Hallenturnier im Winter (Futsal-artig), Sommerfest-Blitzturnier, Firmencup, Elfmeterschießen-Event, Alte-Herren-Spiel. |
 | **Challenges** | Szenarien: „Gewinne mit 9 Mann“, „Halte das 1:0 auf Schlammboden“, „Aufstieg ohne Transfers“, „Nur Spieler über 35“. |
-| **Couch-Koop / Versus** | 2–4 Spieler lokal, gemeinsam ein Team oder gegeneinander. |
-| **Online-Freizeitliga** (Post-Launch) | Asynchrone Ligen mit Freunden, jeder managt einen Verein, Spiele werden simuliert oder live gespielt. |
+| ~~Couch-Koop / Versus~~, ~~Online-Freizeitliga~~ | **Gestrichen** (vom Nutzer entschieden 2026-11-07: kein Koop, kein Mehrspieler). |
 
 ### 3.4 Minispiele & Scouting
 
@@ -238,6 +237,8 @@ Liga- und Vereinsnamen bleiben fiktiv (keine Lizenzen nötig); regionale Variant
 
 ## 6. Roadmap
 
+> Stand 2026-11-07 (Bugsuch-Test): Die Phasen 0–7 sind bis auf die als „teilweise“ markierten Punkte umgesetzt; offen sind vor allem Phase 8 und die Wünsche in Abschnitt 11.17.
+
 ### Phase 0 – Pre-Production (ca. 3–4 Wochen)
 - [x] Engine-Entscheidung (three.js) & Projekt-Setup (Vite, Vitest)
 - [x] Art-Style-Prototyp: prozedurale Spielermodelle, Parkplatz-Szene, Pixel-/Outline-Shader, Kamera
@@ -268,7 +269,7 @@ Liga- und Vereinsnamen bleiben fiktiv (keine Lizenzen nötig); regionale Variant
 - [x] Gameplay-Überarbeitung: Ballannahme und Passauswahl, Zielhilfe, Torwart-Reaktionszeit, Eins gegen eins,
   Distanzschüsse, Restverteidigung, keine Ecken-Hänger, aktive Mitspieler
 - [x] Pixelschrift im Projekt statt Google Fonts
-- [ ] Minimal-UI: Halbzeit, Endstand-Screen
+- [x] Minimal-UI: Halbzeit, Endstand-Screen – erledigt (HalftimePanel, EndScreen)
 
 **Meilenstein M1:** Spielbare Vertical Slice – ein Match von Anfang bis Ende, das Spaß macht.
 
@@ -279,65 +280,63 @@ Liga- und Vereinsnamen bleiben fiktiv (keine Lizenzen nötig); regionale Variant
 - [x] Platzwahl-Menü mit KI-Vorschau im Hintergrund
 
 ### Phase 2 – Team & Kader (ca. 4–6 Wochen)
-- [ ] 11v11 auf Rasen/Asche, Formationen & Taktik-Grundeinstellungen
-- [ ] Prozeduraler Spielergenerator (Aussehen, Name, Beruf, Traits)
-- [ ] Kaderverwaltung, Aufstellung, Einwechslungen
-- [ ] Teamchemie-Grundsystem
-- [ ] Match-Simulation (ungespielte Partien) auf Basis derselben Engine
+- [x] 11v11 auf Rasen/Asche, Formationen & Taktik-Grundeinstellungen – erledigt (Großfeld, Taktiktafel)
+- [x] Prozeduraler Spielergenerator (Aussehen, Name, Beruf, Traits) – erledigt (sim/generator.js)
+- [x] Kaderverwaltung, Aufstellung, Einwechslungen – erledigt (Mannschaft, Wechseltafel)
+- [x] Teamchemie-Grundsystem – erledigt (sim/bonds.js, career/relations.js)
+- [x] Match-Simulation (ungespielte Partien) auf Basis derselben Engine – erledigt (simulateSync, Web Worker)
 
 **Meilenstein M2:** Eigene Mannschaft zusammenstellen und gegen generierte Gegner spielen.
 
 ### Phase 3 – Saison & Liga (ca. 4–6 Wochen)
-- [ ] Spielplan, Tabelle, Auf- und Abstieg über mehrere Ligen
-- [ ] Wochenrhythmus: Training → Chatgruppe → Spieltag → Dritte Halbzeit
-- [ ] „Wer kann Sonntag?“-Chat mit Zu-/Absagen
-- [ ] Verletzungen, Karten, Sperren
-- [ ] Speichern/Laden
+- [x] Spielplan, Tabelle, Auf- und Abstieg über mehrere Ligen – erledigt (12 Stufen bis zur 1. Liga)
+- [x] Wochenrhythmus: Training → Chatgruppe → Spieltag → Dritte Halbzeit – erledigt
+- [x] „Wer kann Sonntag?“-Chat mit Zu-/Absagen – erledigt
+- [x] Verletzungen, Karten, Sperren – erledigt
+- [x] Speichern/Laden – erledigt (Spielstände)
 
 **Meilenstein M3:** Eine komplette Saison spielbar – der Kern-Loop steht.
 
 ### Phase 4 – Verein & Wirtschaft (ca. 4–6 Wochen)
-- [ ] Vereinsfinanzen, Sponsoren mit Zielen
-- [ ] Trikot- und Wappen-Editor (saisonweise)
-- [ ] Vereinsheim- und Platzausbau
-- [ ] Zuschauer- und Fansystem
+- [x] Vereinsfinanzen, Sponsoren mit Zielen – erledigt
+- [x] Trikot- und Wappen-Editor (saisonweise) – erledigt
+- [x] Vereinsheim- und Platzausbau – erledigt (Anlage, Vereinsgelände)
+- [x] Zuschauer- und Fansystem – erledigt
 
 **Meilenstein M4:** Der Verein wächst sichtbar über mehrere Saisons.
 
 ### Phase 5 – Transfers, Scouting & Nachwuchs (ca. 4–6 Wochen)
-- [ ] Transfersystem mit Überzeugungsgesprächen und Nicht-Geld-Deals
-- [ ] Open Training als Minispiel-Sammlung
-- [ ] Bolzplatz-Scouting
-- [ ] Jugendabteilung & Nachwuchsspieler
-- [ ] Verborgene Traits & Entdeckung
+- [x] Transfersystem mit Überzeugungsgesprächen und Nicht-Geld-Deals – erledigt (Transfermarkt, Argumente)
+- [ ] Open Training als Minispiel-Sammlung – teilweise (offen: Probetraining gibt es, Minispiele nicht)
+- [x] Bolzplatz-Scouting – erledigt (career/scouting.js)
+- [x] Jugendabteilung & Nachwuchsspieler – erledigt
+- [x] Verborgene Traits & Entdeckung – erledigt (career/scouting.js: Eigenschaften erst nach Beobachtung)
 
 **Meilenstein M5:** Rohdiamanten finden, formen und in die erste Elf bringen.
 
 ### Phase 6 – Leben, Story & Atmosphäre (ca. 4–6 Wochen)
-- [ ] Alltags-Eventsystem (Jobs, Familie, Samstagabend-Faktor)
-- [ ] Dritte-Halbzeit-Szenen & Beziehungsnetz
-- [ ] Kreisblatt/Lokalzeitung, Vereins-Social-Media
-- [ ] Rivalitäten & Derbys, Kreispokal
+- [x] Alltags-Eventsystem (Jobs, Familie, Samstagabend-Faktor) – erledigt
+- [x] Dritte-Halbzeit-Szenen & Beziehungsnetz – erledigt (Kneipe, Beziehungen)
+- [x] Kreisblatt/Lokalzeitung, Vereins-Social-Media – erledigt (Kreisblatt, career/social.js)
+- [x] Rivalitäten & Derbys, Kreispokal – erledigt (Fehden, Pokale)
 - [x] Schiedsrichter-Persönlichkeiten (2026-10-30, referees.js)
 
 **Meilenstein M6:** Das Spiel erzählt eigene Geschichten.
 
 ### Phase 7 – Content & Polish (ca. 6–8 Wochen)
-- [ ] Alle Spielstätten (Park bis Amateurstadion), Wetter & Tageszeiten
-- [ ] Challenges, Turniere (Halle, Sommerfest), Bolzplatz-Modus
-- [ ] Audio-Atmosphäre, Musik, Stadionsprecher
-- [ ] Balancing, Tutorial/Onboarding, Lokalisierung (DE/EN) — Tutorial gebaut 2026-11-06 (ui/Tutorial.js)
-- [ ] Performance, Controller-Support, Barrierefreiheit
+- [x] Alle Spielstätten (Park bis Amateurstadion), Wetter & Tageszeiten – erledigt (bis zum Stadion)
+- [ ] Challenges, Turniere (Halle, Sommerfest), Bolzplatz-Modus – teilweise (Turniere erledigt; Challenges und Bolzplatz-Modus offen)
+- [ ] Audio-Atmosphäre, Musik, Stadionsprecher – teilweise (Geräusche je Spielort vorhanden; Musik und Stadionsprecher offen)
+- [x] Balancing, Tutorial/Onboarding, Lokalisierung (DE/EN) — Tutorial gebaut 2026-11-06 (ui/Tutorial.js) – erledigt (Tutorial 2026-11-06 (ui/Tutorial.js); Balancing laufend)
+- [ ] Performance, Controller-Support, Barrierefreiheit – teilweise (Qualitätsstufen und Gamepad vorhanden; Barrierefreiheit offen)
 
 **Meilenstein M7:** Content-complete Beta → Early Access
 
 ### Phase 8 – Post-Launch
-Wird erst auf ausdrücklichen Auftrag des Nutzers bearbeitet (Couch-Koop, Online-Liga, Editoren/Modding).
-- [ ] Couch-Koop & lokales Versus
-- [ ] Online-Freizeitliga mit Freunden
-- [ ] Einzelspieler-Karriere
+Wird erst auf ausdrücklichen Auftrag des Nutzers bearbeitet (Editoren/Modding). Couch-Koop, Versus und Online-Liga sind gestrichen (Nutzer, 2026-11-07: kein Koop, kein Mehrspieler).
+- [x] Einzelspieler-Karriere – erledigt
 - [ ] Editoren & Modding-Support (Spieler-/Liga-Packs)
-- [ ] Saisonale Events (Winterpause, Hallenmasters, Sommerfest)
+- [x] Saisonale Events (Winterpause, Hallenmasters, Sommerfest) – erledigt (Winterpause mit Hallenturnier, Sommerturnier, Vereinsfest)
 
 ### MVP-Definition (Minimum für ersten öffentlichen Test)
 Phase 0–3 + Trikot-Editor + 3 Spielstätten (Parkplatz, Ascheplatz, Rasenplatz) + 15 Traits.
@@ -413,6 +412,8 @@ Gleichzeitig hat das Match noch Lücken, die man beim Spielen sofort merkt.
 - **Lokalzeitung „Kreisblatt“** als zentrale Bühne: Spielberichte, Noten, Gerüchte, Leserbriefe.
 
 ### 8.4 Online & Community (nach Release)
+
+> Gestrichen sind alle Mehrspieler-Teile (Geister-Spiele gegen Freunde, Freundes-Liga) – vom Nutzer entschieden 2026-11-07: kein Koop, kein Mehrspieler. Teilen von Trikot-/Wappen-Codes und Achievements bleiben möglich.
 
 - **Geister-Spiele**: Das Team eines Freundes als Gegner, wahlweise simuliert oder selbst gespielt.
 - **Asynchrone Freundes-Liga**: jede Woche ein Spieltag, alle Partien simuliert, das eigene Spiel optional live.

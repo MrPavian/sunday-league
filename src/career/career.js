@@ -571,6 +571,12 @@ function aiTurnover(career, clubs, pick) {
   return [];
 }
 
+const BAN_TAILS = [
+  ['Ich steh am Zaun und motze.', "I'll be at the fence, grumbling."],
+  ['Ich komm trotzdem und schlepp die Getränke.', "I'm coming anyway and I'll carry the drinks."],
+  ['Ich mach den Linienrichter, wenn ihr einen braucht.', "I'll run the line if you need someone."],
+  ['Tut mir leid, Jungs. Ich steh mit Bratwurst an der Bande.', "Sorry, lads. I'll be at the barrier with a sausage."],
+]
 const freshRecord = () => ({ apps: 0, goals: 0, assists: 0, gradeSum: 0, graded: 0, injuryWeeks: 0, posXp: {} });
 
 function weighted(rng, weights) {
@@ -665,7 +671,9 @@ export function startWeek(career) {
     if (isBanned(career, idx)) {
       const n = banGames(career, idx);
       status = 'no';
-      text = tr(`Gesperrt (${banReason(rec.ban.reason)}) – noch ${n} ${n === 1 ? 'Spiel' : 'Spiele'}. Ich steh am Zaun und motze.`, `Suspended (${banReason(rec.ban.reason)}) – ${n} more ${n === 1 ? 'game' : 'games'}. I'll be at the fence, grumbling.`);
+      // Zweiter Satz je Spieler verschieden (sonst stand bei zwei Gesperrten derselbe Satz zweimal im Chat, Langzeitlauf 2026-11-07).
+      const tail = BAN_TAILS[idx % BAN_TAILS.length];
+      text = tr(`Gesperrt (${banReason(rec.ban.reason)}) – noch ${n} ${n === 1 ? 'Spiel' : 'Spiele'}. ${tail[0]}`, `Suspended (${banReason(rec.ban.reason)}) – ${n} more ${n === 1 ? 'game' : 'games'}. ${tail[1]}`);
     } else if (rec.injuryWeeks > 0) {
       status = 'no';
       text = rec.injury && rec.injuryWeeks > 1 ? tr(`Noch ${rec.injuryWeeks} Wochen raus (${rec.injury.label}). Ich komm aber gucken.`, `Out for ${rec.injuryWeeks} more weeks (${rec.injury.label}). I'll come and watch though.`) : fresh(INJURED);

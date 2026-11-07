@@ -185,7 +185,9 @@ export const SAGA_EVENTS = {
             adjustMood(c, 0.05);
             return tr(`${first(c, ctx.s)} bleibt: „Hier sind meine Kumpels." Die Kabine feiert ihn.`, `${first(c, ctx.s)} stays: "My mates are here." The changing room cheers him on.`);
           }
-          return tr(`${goPro(c, ctx, rng, 100)} Die Entschädigung fällt kleiner aus – ihr habt gezögert.`, `${goPro(c, ctx, rng, 100)} The fee comes out smaller – you hesitated.`);
+          // Einmal ausführen – vorher stand goPro in beiden Sprachfassungen und lief doppelt (Geld zweimal gebucht, Zeitungsartikel doppelt).
+          const went = goPro(c, ctx, rng, 100);
+          return tr(`${went} Die Entschädigung fällt kleiner aus – ihr habt gezögert.`, `${went} The fee comes out smaller – you hesitated.`);
         },
       },
     ],
@@ -236,7 +238,8 @@ function goPro(c, ctx, rng, money) {
   if (c.week) delete c.week.availability[ctx.s];
   delete c.players[ctx.s];
   book(c, tr(`Ausbildungsentschädigung ${p.name}`, `Development fee ${p.name}`), money);
-  s.pros.push({ idx: ctx.s, name: p.name, club: ctx.club, season: c.season, returnSeason: c.season + 3 + rng.int(0, 2), back: false, news: false });
+  // Nur einmal eintragen (sonst stand derselbe Zeitungsartikel zweimal im Chat, Langzeitlauf 2026-11-06).
+  if (!s.pros.some((x) => x.idx === ctx.s && !x.back)) s.pros.push({ idx: ctx.s, name: p.name, club: ctx.club, season: c.season, returnSeason: c.season + 3 + rng.int(0, 2), back: false, news: false });
   s.scoutTarget = null;
   adjustMood(c, 0.1);
   chronicle(c, tr(`${p.name} aus der eigenen Jugend unterschreibt beim ${ctx.club}.`, `${p.name}, from the club's own youth ranks, signs for ${ctx.club}.`));

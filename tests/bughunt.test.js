@@ -4,6 +4,9 @@ import { createCareer, finishRound, getPool, humanClub, nextSeason, playerOf, se
 import { graduate } from '../src/career/academy.js';
 import { createRng } from '../src/core/rng.js';
 import { niveauOf } from '../src/sim/niveau.js';
+import { resolveEvent } from '../src/career/events.js';
+import { placeFormers } from '../src/career/memory.js';
+import { initSagas, SAGA_EVENTS } from '../src/career/sagas.js';
 
 const grad = (c, talent) => {
   c.youth ??= {};
@@ -46,6 +49,35 @@ describe('Bugsuche 2026-11-06', () => {
     nextSeason(c);
     expect(c.level).toBe(2);
     const set = new Set(oh);
+    expect(c.clubs.flatMap((k) => k.squad).filter((i) => set.has(i))).toEqual([]);
+  }, 120000);
+  it('Profi-Scout nach Zögern: Wechsel nur einmal (Geld einmal gebucht, ein Eintrag)', () => {
+    const c = createCareer({ seed: 5 });
+    initSagas(c);
+    const idx = humanClub(c).squad.find((i) => i !== c.coach?.idx);
+    const cash0 = c.cash;
+    const rng = { chance: () => false, int: (a) => a, next: () => 0.5, pick: (xs) => xs[0] };
+    SAGA_EVENTS.profi_scout.options[1].effect(c, { s: idx, club: 'Test' }, rng);
+    expect(c.cash - cash0).toBe(100);
+    expect(c.saga.pros.filter((x) => x.idx === idx)).toHaveLength(1);
+  });
+  it('Ereignis mit einem Spieler, der inzwischen weg ist: erledigt statt Absturz', () => {
+    const c = createCareer({ seed: 5 });
+    const [a, b] = humanClub(c).squad.filter((i) => i !== c.coach?.idx);
+    c.week.event = { id: 'rivalen_zoff', ctx: { a, b }, members: [a, b], text: '', options: ['x', 'y', 'z'], choice: null, result: null };
+    humanClub(c).squad = humanClub(c).squad.filter((i) => i !== b);
+    delete c.players[b];
+    const r = resolveEvent(c, 1);
+    expect(r).toMatch(/erledigt|No longer/);
+  });
+  it('Ehemalige bei den Alten Herren werden nicht zusätzlich bei einem Gegner untergebracht', () => {
+    const c = createCareer({ seed: 9 });
+    const taken = takenIndices(c);
+    const ids = getPool().everyone().filter((p) => !taken.has(p.poolIndex)).slice(0, 30).map((p) => p.poolIndex);
+    c.formers = Object.fromEntries(ids.map((i) => [i, { season: 1 }]));
+    c.oldBoys = { squad: [...ids], offers: [] };
+    placeFormers(c);
+    const set = new Set(ids);
     expect(c.clubs.flatMap((k) => k.squad).filter((i) => set.has(i))).toEqual([]);
   });
 });

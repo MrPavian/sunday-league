@@ -3,7 +3,7 @@
 // Ticker und Einträge in die Chronik – „ausgerechnet der".
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
-import { humanClub, playerOf } from './career.js';
+import { humanClub, playerOf, takenIndices } from './career.js';
 import { chronicle } from './sagas.js';
 
 const surname = (c, idx) => playerOf(c, idx)?.name.split(' ').slice(-1)[0] ?? '?';
@@ -32,11 +32,14 @@ export function rememberArrival(c, idx) {
 export function placeFormers(c) {
   const rng = createRng((c.seed * 131 + c.season * 17 + 3) >>> 0);
   const others = c.clubs.filter((cl) => !cl.human);
+  // Wer schon irgendwo spielt (auch Alte Herren, Nachbarligen, Jugend), bleibt dort – vorher stand ein Ehemaliger, der zu den
+  // Alten Herren gegangen war, zugleich im Kader eines Gegners (Langzeitlauf Regionalliga, 2026-11-07).
+  const taken = takenIndices(c);
   for (const [k, f] of Object.entries(c.formers ?? {})) {
     const idx = Number(k);
     if (f.pro) continue; // Profi geworden – kommt nicht mehr in die Kreisliga
     if (f.club && others.some((cl) => cl.id === f.club && cl.squad.includes(idx))) continue;
-    if (c.clubs.some((cl) => cl.squad.includes(idx))) continue;
+    if (c.clubs.some((cl) => cl.squad.includes(idx)) || taken.has(idx)) continue;
     if (!others.length || !rng.chance(0.45)) continue;
     const club = rng.pick(others);
     // Er verdrängt dort einen – bevorzugt auf seiner Position –, damit die Kader nicht wachsen.
