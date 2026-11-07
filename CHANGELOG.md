@@ -6,6 +6,11 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-07-8 – Mehr englische Namen
+
+### Neu
+- **Englische Karrieren mit mehr Namen:** Neue Karrieren auf Englisch würfeln aus deutlich mehr Vor- und Nachnamen – auch walisische, schottische und nordenglische, dazu mehr Namen in allen Herkunftsgruppen. Bestehende Spielstände behalten ihre Spieler.
+
 ## 2026-11-07-7 – Tiefer Platz und echter Wind
 
 ### Neu

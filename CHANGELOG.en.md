@@ -6,6 +6,11 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-07-8 – More English names
+
+### New
+- **English careers with more names:** new careers in English draw from many more first names and surnames – Welsh, Scottish and northern English ones too, plus more names in every community. Existing saves keep their players.
+
 ## 2026-11-07-7 – Heavy pitches and real wind
 
 ### New

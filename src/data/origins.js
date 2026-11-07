@@ -1,4 +1,5 @@
 import { LOCAL_FIRST_EN, LOOK_GROUP_EN, ORIGINS_EN } from './origins_en.js';
+import { LOCAL_FIRST_EN_10, ORIGINS_EN_10 } from './origins_en10.js';
 import { PRO_NAMES } from './pronames.js';
 import { REGION_NAMES, TIMELESS } from './regionalnames.js';
 
@@ -217,19 +218,22 @@ const MORE_9 = {
 const grow = (o) => Object.fromEntries(Object.entries(o).map(([id, x]) => [id, MORE_9[id] ? { ...x, last: [...x.last, ...MORE_9[id].last], first: x.first?.length ? [...x.first, ...(MORE_9[id].first ?? [])] : x.first } : x]));
 const DE_SET_9 = nameSet(grow({ ...scaled({ ...ORIGINS_STRICT, ...Object.fromEntries(Object.entries(ORIGINS_NEW).map(([id, o]) => [id, { ...o, ...STRICT }])) }), de: { ...ORIGINS.de, last: DE_LAST_9 } }), DE_FIRST_9, 'de');
 const EN_SET = nameSet(ORIGINS_EN, LOCAL_FIRST_EN, 'gb');
+// Zehnte Auflage (neue englische Karrieren): mehr Vor- und Nachnamen je Herkunftsgruppe (origins_en10.js).
+const EN_SET_10 = nameSet(ORIGINS_EN_10, LOCAL_FIRST_EN_10, 'gb');
 
 // Welcher Satz gerade gilt, hängt an der Namensauflage der Karriere (career.js, setNameEdition) –
 // nicht an der Sprache: Eine deutsche Karriere behält ihre Namen auch auf Englisch.
 let SET = DE_SET;
 // locale: 'de' (Auflage 4 und älter), 'de6' (Auflage 6, mehr Namen), 'de7' (Auflage 7, Namen passend zur Herkunft), 'en' (Auflage 5).
 export const setNameLocale = (locale) => {
-  SET = locale === 'en' ? EN_SET : locale === 'de9' ? DE_SET_9 : locale === 'de8' ? DE_SET_8 : locale === 'de7' ? DE_SET_STRICT : locale === 'de6' ? DE_SET_MORE : DE_SET;
+  SET = locale === 'en10' ? EN_SET_10 : locale === 'en' ? EN_SET : locale === 'de9' ? DE_SET_9 : locale === 'de8' ? DE_SET_8 : locale === 'de7' ? DE_SET_STRICT : locale === 'de6' ? DE_SET_MORE : DE_SET;
 };
-export const nameLocale = () => (SET === EN_SET ? 'en' : 'de');
+export const nameLocale = () => (SET === EN_SET || SET === EN_SET_10 ? 'en' : 'de');
 
 // Feste Sätze für den Spielerpool (Auflage 4 deutsch, 5 englisch).
 export const personIdentityDE = DE_SET.identity;
 export const personIdentityEN = EN_SET.identity;
+export const personIdentityEN10 = EN_SET_10.identity;
 export const personIdentityDE6 = DE_SET_MORE.identity;
 export const personIdentityDE7 = DE_SET_STRICT.identity;
 export const personIdentityDE8 = DE_SET_8.identity;
@@ -271,7 +275,7 @@ export function regionalize(name, age, key, land = REGION) {
 
 export const personIdentity = (rng, age = 30) => {
   const id = SET.identity(rng, age);
-  return REGION && SET !== EN_SET ? { ...id, name: regionalize(id.name, age, strHash(`${id.name}:${age}`)) } : id;
+  return REGION && SET !== EN_SET && SET !== EN_SET_10 ? { ...id, name: regionalize(id.name, age, strHash(`${id.name}:${age}`)) } : id;
 };
 export const personName = (rng, age = 30) => personIdentity(rng, age).name;
 

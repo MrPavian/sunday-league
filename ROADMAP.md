@@ -1158,6 +1158,10 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
    Sturmböen um 60 km/h (vorher halb so stark). Messung nachher: tiefer Platz Tore 3,44 → 3,02, Restkraft 0,526 → 0,483;
    Wind Schüsse 31,9 → 30,5, Kopfbälle 12,5 → 11,6. Golden unverändert (ohne Wetter). Offen: Nebel nur Optik (Sichtweite der KI).
 10. **Englische Namensliste erweitern.**
+    ✅ erledigt 2026-11-07 (data/origins_en10.js, Namensauflage 10): rund 90 britische Nachnamen mehr (dazu walisische,
+    schottische und nordenglische), je Jahrgang 30–40 Vornamen mehr nach den ONS-Vornamenlisten, alle Herkunftsgruppen größer.
+    Gewichte nach Zensus 2021 unverändert; keine echten Fußballer (notPro). Neue englische Karrieren nutzen Auflage 10, alte
+    behalten 5.
 11. **Saisonrückblick als teilbare Seite.**
 12. **Erfolge und Meilensteine** (siehe 8.4).
 13. **Internationaler Wettbewerb** (vom Nutzer gewünscht, 2026-11-05): Die besten Vereine der 1. Liga spielen in einem

@@ -102,7 +102,7 @@ export const getPool = () => (poolCache ??= createPlayerPool({ seed: POOL_SEED, 
 // Alte Spielstände würfeln ihre Spieler mit der ersten Namensauflage. region: Bundesland der Karriere (nur deutsche Auflagen).
 export function setNameEdition(edition = 1, region = null) {
   setNameLocale(nameLocaleOf(edition)); // Schiri, Trainer, Kinder … passend zu den Spielern
-  const land = nameLocaleOf(edition) === 'en' ? null : region;
+  const land = nameLocaleOf(edition).startsWith('en') ? null : region;
   setNameRegion(land);
   if (edition === poolEdition && land === poolRegion) return;
   poolEdition = edition;

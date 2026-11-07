@@ -1,5 +1,5 @@
 import { getLang } from '../core/i18n.js';
-import { personIdentityDE, personIdentityDE6, personIdentityDE7, personIdentityDE8, personIdentityDE9, personIdentityEN } from './origins.js';
+import { personIdentityDE, personIdentityDE6, personIdentityDE7, personIdentityDE8, personIdentityDE9, personIdentityEN, personIdentityEN10 } from './origins.js';
 
 // Erste Auflage der Namen: Alte Spielstände würfeln ihre Spieler damit, damit
 // aus dem Kowalski von gestern nicht plötzlich ein anderer wird.
@@ -84,11 +84,13 @@ export const NAME_EDITIONS = {
   8: { identity: personIdentityDE8, jobs: PROFESSIONS },
   // Neunte Auflage: wie 8, mit mehr Vor- und Nachnamen in jeder Herkunftsgruppe (origins.js DE_SET_9).
   9: { identity: personIdentityDE9, jobs: PROFESSIONS },
+  // Zehnte Auflage: englische Karriere mit mehr Vor- und Nachnamen (origins_en10.js). Alte englische Spielstände behalten 5.
+  10: { identity: personIdentityEN10, jobs: PROFESSIONS },
 };
 export const NAME_EDITION = 9;
-export const NAME_EDITION_EN = 5;
+export const NAME_EDITION_EN = 10;
 // Welcher Namenssatz zu einer Auflage gehört (für Schiri, Trainer, Kinder … in origins.js).
-export const nameLocaleOf = (edition) => (edition === NAME_EDITION_EN ? 'en' : edition === 9 ? 'de9' : edition === 8 ? 'de8' : edition === 7 ? 'de7' : edition === 6 ? 'de6' : 'de');
+export const nameLocaleOf = (edition) => (edition === 10 ? 'en10' : edition === 5 ? 'en' : edition === 9 ? 'de9' : edition === 8 ? 'de8' : edition === 7 ? 'de7' : edition === 6 ? 'de6' : 'de');
 export const nameEditionFor = (lang) => (lang === 'en' ? NAME_EDITION_EN : NAME_EDITION);
 
 export const SKIN_TONES = [0xf1d0b5, 0xe6b894, 0xd29f7a, 0xb57c55, 0x8d5a3b, 0x6b4128];
