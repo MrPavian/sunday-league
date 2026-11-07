@@ -20,6 +20,7 @@ import { setWaive } from '../career/license.js';
 import { setSummerMove, takeOver } from '../career/clubchange.js';
 import { CLUB_STEPS, OFFER_STEP, startTutorial, stopTutorial, tutorialActive, TutorialBubble } from './Tutorial.js';
 import { setPrice, setSeasonTickets, TICKETS } from '../career/tickets.js';
+import { hireTeam, releaseTeam } from '../career/coachteam.js';
 import { addSwitch, applyPreset, deletePreset, removeSwitch, savePreset, setSwitch } from '../career/tacticpresets.js';
 import { appointCoach, startCourse } from '../career/youthteams.js';
 import { acceptSponsor, bookTrip } from '../career/finances.js';
@@ -400,6 +401,13 @@ export class Clubhouse {
       } else if (action === 'presetApply') {
         applyPreset(this.career, value);
         this.presetNote = null;
+        this.h.onChange();
+      } else if (action === 'teamHire') {
+        const [role, id] = String(value).split(':');
+        hireTeam(this.career, role, id);
+        this.h.onChange();
+      } else if (action === 'teamRelease') {
+        releaseTeam(this.career, value);
         this.h.onChange();
       } else if (action === 'switchAdd') {
         addSwitch(this.career);

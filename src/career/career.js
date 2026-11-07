@@ -74,6 +74,7 @@ import { bundVenueEvent } from './bundevents.js';
 import { initTiger, tigerWeek } from './tiger.js';
 import { bonusesOf } from './bonuses.js';
 import { matchTactic } from './tacticpresets.js';
+import { keeperGrowthMul, weeklyTeam } from './coachteam.js';
 
 export const SAVE_VERSION = 1;
 export const POOL_SEED = 1921;
@@ -181,7 +182,7 @@ export function developPlayers(career) {
     const age = before.age;
     const practice = rec.apps >= 5 ? 1.3 : rec.apps >= 2 ? 1 : 0.6;
     const coach = (career.staff?.cotrainer ? 1.15 : 1) * hiredGrowth(career);
-    const mul = practice * coach * (age <= 23 ? youthGrowthMul(career) : 1) * trainingGrowth(career) * growthMul(career); // Trainingsplan (teamtraining.js), Trainingsgelände
+    const mul = practice * coach * (age <= 23 ? youthGrowthMul(career) : 1) * trainingGrowth(career) * growthMul(career) * (before.position === 'gk' ? keeperGrowthMul(career) : 1); // Trainingsplan (teamtraining.js), Trainingsgelände, Torwarttrainer (coachteam.js)
     const { gain, event, prof } = seasonGain(career, idx, before, mul, environmentChanged(career, idx, club));
     const onset = 31 + prof.declineShift; // körperlicher Abbau ab hier, die zweite Stufe drei Jahre später
     rec.delta ??= {};
@@ -1420,6 +1421,7 @@ export function finishRound(career) {
   }
   const staffNotes = weeklyStaff(career, { squad: humanClub(career).squad }); // Pauschalen, freie Ämter
   staffNotes.push(...weeklyHired(career)); // Lohn und Laune des eingestellten Trainers (Präsidium)
+  staffNotes.push(...weeklyTeam(career)); // Gehälter Trainerteam (ab der Regionalliga)
   career.round++;
   // Winterpause (vom Nutzer gewünscht, 2026-10-21): eine eigene Woche ohne Ligaspiel vor dem Spieltag nach der Hinrunde –
   // dort liegt das Hallenturnier. Vorher lag es in der Woche des Spieltags, direkt vor dem Ligaspiel.
@@ -1472,6 +1474,7 @@ export function finishWinterBreak(career) {
   }
   const notes = weeklyStaff(career, { squad: humanClub(career).squad });
   notes.push(...weeklyHired(career));
+  notes.push(...weeklyTeam(career));
   (career.flags ??= {}).winterBreak = career.season;
   startWeek(career);
   for (const text of notes) career.week?.chat.push({ from: null, text, time: 'Mo 08:00' });

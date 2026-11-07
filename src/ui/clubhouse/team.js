@@ -30,6 +30,7 @@ import { ARG_IDS, ARGUMENTS, knownMotives, MOTIVES } from '../../career/recruiti
 import { currentLineup, humanClub, lineupOf, runningCup, nextPitch, maxSquad, MIN_SQUAD, recruit, recruitChance, setLineupSlot, SQUAD_EXTRA_MAX, table } from '../../career/career.js';
 import { inviteChance, isRawDiamond, MAX_STATIONS, STATIONS, TRAINING_COST, trainingDone } from '../../career/training.js';
 import { roleName, STAFF_ROLES } from '../../career/youth.js';
+import { currentSalary, teamCandidates, teamOf, teamOpen, TEAM_FROM, TEAM_ROLE_IDS, TEAM_ROLES } from '../../career/coachteam.js';
 import { canAffordOutside, EHRENAMT_MONTH, feeOf, holderOf, outsideCandidate, ROLES as STAFF_ROLE_IDS, squadCandidates, STAFF_MIN_AGE, UEBUNGSLEITER_MONTH } from '../../career/staff.js';
 import { personaTags } from '../../career/kidpersona.js';
 import { MAX_UP, PATE_AGE, pateCandidates, pateOf, REIFE_WEEKS, reifeOf, trainingUp } from '../../career/bridge.js';
@@ -531,8 +532,30 @@ export const teamScreens = {
   tab_training() {
     const c = this.career;
     const w = c.week;
-    if (!w || this.results) return `${this.trainingPlanBlock()}<p class="empty">${tr('Das nächste Open Training gibt es nach dem Wochenstart.', 'The next open training is available once the week starts.')}</p>`;
-    return this.trainingPlanBlock() + this.openTraining();
+    if (!w || this.results) return `${this.trainingPlanBlock()}${this.coachTeamBlock()}<p class="empty">${tr('Das nächste Open Training gibt es nach dem Wochenstart.', 'The next open training is available once the week starts.')}</p>`;
+    return this.trainingPlanBlock() + this.coachTeamBlock() + this.openTraining();
+  },
+
+  // Trainerteam ab der Regionalliga (coachteam.js): Torwarttrainer, Athletiktrainer, Physio mit Gehalt.
+  coachTeamBlock() {
+    const c = this.career;
+    if (!teamOpen(c)) return (c.level ?? 1) >= TEAM_FROM - 1 ? `<p class="hint">${tr('Ab der Regionalliga kannst du ein Trainerteam einstellen: Torwarttrainer, Athletiktrainer und Physiotherapeut.', 'From the Regionalliga you can hire coaching staff: goalkeeper coach, fitness coach and physiotherapist.')}</p>` : '';
+    const off = !c.week || this.results;
+    const stars = (q) => '★'.repeat(Math.max(1, Math.round(q * 5))) + '☆'.repeat(5 - Math.max(1, Math.round(q * 5)));
+    const rows = TEAM_ROLE_IDS.map((role) => {
+      const h = teamOf(c)[role];
+      const r = TEAM_ROLES[role];
+      if (h)
+        return `<li data-role="${role}"><b>${r.name}:</b> ${esc(h.name)} <span class="stars">${stars(h.quality)}</span> <small>${eur(currentSalary(c, role))} €${tr('/Monat', '/month')} – ${r.effect}</small>
+          <button class="tiny" data-action="teamRelease" data-value="${role}" ${off ? 'disabled' : ''}>${tr('Entlassen', 'Dismiss')}</button></li>`;
+      const cands = teamCandidates(c, role)
+        .map((x) => `<button class="tiny" data-action="teamHire" data-value="${role}:${x.id}" ${off || (c.cash ?? 0) < x.salary ? 'disabled' : ''}>${esc(x.name)}, ${x.age} ${stars(x.quality)} · ${eur(x.salary)} €${tr('/Monat', '/month')}</button>`)
+        .join('');
+      return `<li data-role="${role}"><b>${r.name}:</b> <em>${tr('unbesetzt', 'vacant')}</em><small> – ${r.effect}</small><div class="actions">${cands}</div></li>`;
+    }).join('');
+    return `<div class="coach-team" data-testid="coach-team"><p class="ui-section-title">${tr('Trainerteam', 'Coaching staff')}</p>
+      <ul class="plain staff">${rows}</ul>
+      <p class="hint">${tr('Das Gehalt richtet sich nach Liga und Erfahrung und geht jede Woche von der Kasse ab. Jede Saison melden sich neue Bewerber.', 'Wages depend on league and experience and come out of the kitty every week. New applicants come forward every season.')}</p></div>`;
   },
 
   openTraining() {

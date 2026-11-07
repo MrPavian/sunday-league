@@ -1127,6 +1127,10 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
    Anteil 1./2. Liga 55/57 % (Quelle), darunter Spielwerte, 20 % Rabatt (Spielwert). Offen: Logen/Business-Plätze, Preisprotest der Fans.
 4. **Zweite Mannschaft und U19 als eigene Teams** (ab der Regionalliga).
 5. **Trainerteam ab der Regionalliga:** Torwart-, Athletiktrainer, Physio mit Gehalt und Wirkung.
+   ✅ erledigt 2026-11-07 (coachteam.js, Mannschaft → Training): je Aufgabe zwei Bewerber pro Saison; Gehalt Regionalliga bis zur
+   Minijob-Grenze 603 € (DRV 2026), 3. Liga nach Medianen (Athletiktrainer 36 400 €/Jahr StepStone, Physio 3452 €/Monat Entgeltatlas;
+   Torwarttrainer hergeleitet wie Athletiktrainer), 2./1. Liga Spielwerte; Wirkung Spielwerte (Torhüter bis +20 % Entwicklung,
+   Verletzungen bis −10 %, Ausfallzeit bis −15 %). Offen: Trainerteam der CPU-Vereine, Co-Trainer als bezahlte Stelle in den Profiligen.
 6. **Stadionbau sichtbar machen:** Drittliga-Stadion und Arena wachsen in 3D.
 7. **Taktikvorlagen im Spiel umschalten** (z. B. „ab Minute 70 mauern“).
    ✅ erledigt 2026-11-07 (sim/switches.js, tacticpresets.js): Vorlagen im Taktik-Blatt per Tipp ausspielen; bis zu zwei Regeln

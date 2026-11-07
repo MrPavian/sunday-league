@@ -6,6 +6,13 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-07-3 – Coaching staff from the Regionalliga
+
+### New
+- **Coaching staff:** from the Regionalliga, hire a goalkeeper coach, a fitness coach and a physiotherapist under Squad → Training.
+- **Applicants and wages:** every season two people apply for each job, a cheaper one and a more experienced one. In the Regionalliga they work as mini-jobbers (at most €603 a month, the 2026 limit). From the 3. Liga they are full-time employees; wages follow the usual pay for fitness coaches and physiotherapists and rise with league and experience. Wages come out of the kitty every week; if it is empty, the person leaves. After relegation below the Regionalliga, the staff look for a new club.
+- **Effect:** with a goalkeeper coach, goalkeepers develop up to 20 % faster. A fitness coach cuts injuries by up to 10 % and gets players fit sooner. With a physiotherapist, injured players return up to 15 % sooner. The more experienced, the stronger the effect.
+
 ## 2026-11-07-2 – Switch tactics during the match
 
 ### New

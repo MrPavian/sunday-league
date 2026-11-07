@@ -83,7 +83,7 @@ function ballDebug(ctx) {
 export function installTestHooks(ctx) {
   const { params, pixel, scene, rig } = ctx;
   if (params.has('ds')) import('../ui/StyleGuide.js').then((m) => m.showStyleGuide());
-  if (params.has('debug')) globalThis.__sl = { renderer: pixel.renderer, pixel, scene, THREE, rig, get match() { return ctx.match; }, get view() { return ctx.view; }, get crowd() { return ctx.crowd; }, get weather() { return ctx.view?.weather; }, get sound() { return ctx.sound; }, showVenue: (id) => (ctx.loadVenue(id), ctx.startMatch(false)) };
+  if (params.has('debug')) globalThis.__sl = { renderer: pixel.renderer, pixel, scene, THREE, rig, get match() { return ctx.match; }, get career() { return ctx.career; }, get view() { return ctx.view; }, get crowd() { return ctx.crowd; }, get weather() { return ctx.view?.weather; }, get sound() { return ctx.sound; }, showVenue: (id) => (ctx.loadVenue(id), ctx.startMatch(false)) };
   // Nur mit ?debug: Herzschlag und „letztes System" je Bild – zeigt bei einem Hänger, wo es stand.
   // Reine Diagnose: setzt nichts zurück und startet nichts neu.
   const DIAG = params.has('debug') ? { frame: 0, simStep: 0, sys: '-', stalls: 0, errors: [] } : null;

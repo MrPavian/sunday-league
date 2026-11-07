@@ -13,6 +13,7 @@ import { chronicle } from './sagas.js';
 import { roleName } from './youth.js';
 import { FIT_LOW } from './fitness.js';
 import { injuryChanceMul, injuryWeeksMul } from './facilities.js';
+import { teamInjuryChanceMul, teamInjuryWeeksMul } from './coachteam.js';
 import { tr, euroFmt } from '../core/i18n.js';
 
 export const INJURIES = {
@@ -51,7 +52,7 @@ export function rollInjuries(c, prepared, fixtureRound = c.round) {
     if (hasTrait(p, 'raucher')) chance *= 1.2;
     if ((p.injury?.severity ?? 0) >= 2) chance += 0.15; // die Schürfwunde war schlimmer als gedacht
     if ((p.fitness ?? 1) < FIT_LOW) chance *= 1.6; // nicht fit: Muskeln machen eher zu
-    chance *= injuryChanceMul(c); // Kraftraum, Physio, medizinische Abteilung
+    chance *= injuryChanceMul(c) * teamInjuryChanceMul(c); // Kraftraum, Physio, medizinische Abteilung, Athletiktrainer
     // Im Spiel verletzt? Dann ist die Diagnose genau das – eine Prellung ohne Auswechslung
     // ist oft am Montag schon vergessen.
     const knock = p.knock;
@@ -62,7 +63,7 @@ export function rollInjuries(c, prepared, fixtureRound = c.round) {
     const rolled = rng.int(def.weeks[0], def.weeks[1]);
     // Medizin am Platz (facilities.js) und Physio im Kader: Es zählt das Bessere, zusammen höchstens 10 % mehr.
     const fac = injuryWeeksMul(c);
-    const share = medic ? Math.min(0.75, fac * 0.9) : fac;
+    const share = (medic ? Math.min(0.75, fac * 0.9) : fac) * teamInjuryWeeksMul(c); // dazu der Physiotherapeut im Trainerteam
     const weeks = share < 1 ? Math.max(1, Math.round(rolled * share)) : rolled;
     rec.injuryWeeks = Math.max(rec.injuryWeeks ?? 0, weeks);
     rec.injury = { type, label: def.label, weeks };

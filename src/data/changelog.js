@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-07-3',
+    de: { title: 'Trainerteam ab der Regionalliga', items: ['Ab der Regionalliga: Torwarttrainer, Athletiktrainer und Physiotherapeut einstellen (Mannschaft → Training).', 'Jede Saison zwei Bewerber je Aufgabe – günstiger oder erfahrener. Das Gehalt richtet sich nach Liga und Erfahrung: in der Regionalliga auf Minijob-Basis, ab der 3. Liga in Vollzeit.', 'Spürbare Wirkung: Torhüter entwickeln sich schneller, weniger Verletzungen, Verletzte sind schneller zurück.'] },
+    en: { title: 'Coaching staff from the Regionalliga', items: ['From the Regionalliga: hire a goalkeeper coach, a fitness coach and a physiotherapist (Squad → Training).', 'Two applicants per job every season – cheaper or more experienced. Wages depend on league and experience: part-time (mini-job) in the Regionalliga, full-time from the 3. Liga.', 'A real difference: goalkeepers develop faster, fewer injuries, injured players return sooner.'] },
+  },
+  {
     id: '2026-11-07-2',
     de: { title: 'Taktik im Spiel umschalten', items: ['Taktik-Vorlagen im Spiel per Tipp ausspielen: Im Taktik-Blatt stehen jetzt alle gespeicherten Taktiken – ein Tipp stellt Stil, System und Spielplan um.', 'Umschalten nach Plan: Unter Mannschaft → Taktik bis zu zwei Regeln festlegen, z. B. „ab Minute 70, bei Führung → Mauern“. Die Mannschaft stellt dann von selbst um, auch im Liveticker.', 'Im Spiel siehst du, welche Regel noch wartet, und kannst sie für dieses Spiel streichen.'] },
     en: { title: 'Switch tactics during the match', items: ['Play your tactic presets with one tap during the match: the tactics sheet now lists all your saved tactics – one tap changes style, system and game plan.', 'Switch by plan: under Squad → Tactics, set up to two rules, e.g. \"from minute 70, when leading → Park the bus\". The team then switches on its own, in the live ticker too.', 'During the match you can see which rule is still waiting and drop it for this match.'] },

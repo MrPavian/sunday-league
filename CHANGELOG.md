@@ -6,6 +6,13 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-07-3 – Trainerteam ab der Regionalliga
+
+### Neu
+- **Trainerteam:** Ab der Regionalliga stellst du unter Mannschaft → Training einen Torwarttrainer, einen Athletiktrainer und einen Physiotherapeuten ein.
+- **Bewerber und Gehalt:** Jede Saison melden sich je Aufgabe zwei Leute, ein günstigerer und ein erfahrener. In der Regionalliga arbeiten sie auf Minijob-Basis (höchstens 603 € im Monat, die Grenze für 2026). Ab der 3. Liga sind sie in Vollzeit angestellt; das Gehalt orientiert sich an den üblichen Gehältern für Athletiktrainer und Physiotherapeuten und steigt mit Liga und Erfahrung. Das Gehalt geht jede Woche von der Kasse ab; ist sie leer, geht die Person. Nach einem Abstieg unter die Regionalliga sucht sich das Trainerteam einen neuen Verein.
+- **Wirkung:** Mit einem Torwarttrainer entwickeln sich Torhüter bis zu 20 % schneller. Ein Athletiktrainer senkt die Verletzungen um bis zu 10 % und macht schneller wieder fit. Mit einem Physiotherapeuten sind Verletzte bis zu 15 % schneller zurück. Je erfahrener, desto stärker die Wirkung.
+
 ## 2026-11-07-2 – Taktik im Spiel umschalten
 
 ### Neu
