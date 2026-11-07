@@ -1151,6 +1151,12 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
    (scouting.js) über die besten elf, Tipp vom Wirt +1; „Gegner beobachten“ kostet eine Wochenaktion. Nur Anzeige, keine Wirkung
    auf das Spiel (Golden unverändert). Stufen und Spannen: Spielwerte. Offen: Bericht auch vor Pokalspielen.
 9. **Wetter mit spürbarerer Wirkung** (tiefer Platz, Wind) – nur mit Messung wie beim Bonus-Audit.
+   ✅ erledigt 2026-11-07 (weather.js deepGround, ball.js WIND_ACCEL, scripts/weather-audit.mjs): Messung vorher (200 Spiele je
+   Wetter, Rasenplatz, gleiche Seeds): Regen, Wind und Nebel ohne messbare Wirkung, nur Hitze (Restkraft −22 %) und Schnee.
+   Neu: tiefer Platz bei Regen Oktober–März auf Rasen, Wiese, Asche (Rollwiderstand ×1,6 Spielwert; Laufkosten ×1,15 HERGELEITET
+   aus Lejeune et al. 1998, Sand 1,2–1,6-fach) mit Hinweis auf der Spielkarte; Wind auf hohe Bälle HERGELEITET ≈ 3,8 m/s² bei
+   Sturmböen um 60 km/h (vorher halb so stark). Messung nachher: tiefer Platz Tore 3,44 → 3,02, Restkraft 0,526 → 0,483;
+   Wind Schüsse 31,9 → 30,5, Kopfbälle 12,5 → 11,6. Golden unverändert (ohne Wetter). Offen: Nebel nur Optik (Sichtweite der KI).
 10. **Englische Namensliste erweitern.**
 11. **Saisonrückblick als teilbare Seite.**
 12. **Erfolge und Meilensteine** (siehe 8.4).

@@ -25,7 +25,7 @@ import { storyLabels } from '../../career/stories.js';
 import { coachAge, legacy, legacyPrompt, stepDown, successionCandidates } from '../../career/legacy.js';
 import { vacant } from '../../career/president.js';
 import { talk } from '../../career/pub.js';
-import { weatherLine } from '../../career/weather.js';
+import { deepGround, weatherLine } from '../../career/weather.js';
 import { LEVEL_TEXT, scoutReport } from '../../career/opponentscout.js';
 import { canWatch } from '../../career/scouting.js';
 import { ATTR_LABELS } from '../attrLabels.js';
@@ -126,6 +126,7 @@ export const homeScreens = {
       w.postponed ? `${tr(`Platzsperre: Das Spiel wird am ${nachholLabel(c)} nachgeholt (weniger Zuschauer, mehr Absagen).`, `Pitch closed: the game is replayed on ${nachholLabel(c)} (fewer spectators, more drop-outs).`)} ${button(tr('Trotzdem spielen', 'Play anyway'), { action: 'playAnyway' })}` : '',
       count('yes') < venue.format ? tr('Zu wenige Zusagen – es hilft jemand aus dem Bekanntenkreis aus.', 'Not enough players – someone from a mate\'s circle will help out.') : '',
       vacant(c) ? tr('Trainerstelle vakant – im Präsidium einen neuen Trainer verpflichten.', 'Manager post vacant – hire a new manager from the president\'s office.') : '',
+      deepGround(w.weather, venue.surface.id) ? tr('Tiefer Boden: Der Ball bleibt im Matsch hängen, das Laufen kostet mehr Kraft.', 'Heavy pitch: the ball sticks in the mud, running costs more energy.') : '',
       unfitNote(c, club),
       youthNote(c),
       [null, tr('Unruhe in der Kabine: Grüppchen.', 'Unrest in the dressing room: cliques.'), tr('Unruhe: Das Klima in der Kabine ist vergiftet.', 'Unrest: the atmosphere in the dressing room is poisonous.')][Math.min(2, unrestStage(c))] ?? '', // unrest.js

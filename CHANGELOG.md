@@ -6,6 +6,12 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-07-7 – Tiefer Platz und echter Wind
+
+### Neu
+- **Tiefer Platz:** Regnet es zwischen Oktober und März, weicht Rasen oder Asche auf. Der Ball bleibt im Matsch hängen, Laufen kostet spürbar mehr Kraft, es fallen weniger Tore. Die Spielkarte warnt vorher. Kunstrasen bleibt nur nass.
+- **Wind mit Wirkung:** Bei Sturmböen treiben hohe Bälle jetzt deutlich ab – flach spielen lohnt sich.
+
 ## 2026-11-07-6 – Gegner-Check
 
 ### Neu

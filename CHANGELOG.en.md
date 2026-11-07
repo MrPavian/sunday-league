@@ -6,6 +6,12 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-07-7 – Heavy pitches and real wind
+
+### New
+- **Heavy pitch:** when it rains between October and March, grass and cinder pitches turn soft. The ball sticks in the mud, running costs noticeably more energy and fewer goals are scored. The match card warns you beforehand. Artificial turf just gets wet.
+- **Wind that matters:** in gales, high balls now drift clearly – keeping it on the ground pays off.
+
 ## 2026-11-07-6 – Opponent check
 
 ### New

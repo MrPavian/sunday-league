@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-07-7',
+    de: { title: 'Tiefer Platz und echter Wind', items: ['Regen von Oktober bis März macht Rasen und Asche tief: Der Ball bleibt hängen, Laufen kostet mehr Kraft. Die Spielkarte warnt vorher.', 'Bei Sturmböen treiben hohe Bälle deutlich ab – flach spielen lohnt sich.'] },
+    en: { title: 'Heavy pitches and real wind', items: ['Rain from October to March makes grass and cinder pitches heavy: the ball sticks, running costs more energy. The match card warns you beforehand.', 'In gales, high balls drift clearly – keeping it on the ground pays off.'] },
+  },
+  {
     id: '2026-11-07-6',
     de: { title: 'Gegner-Check', items: ['Auf der Spielkarte unter „Heute“: Form, Tabellenplatz, Stärke, Spielweise, Stärken und Schwäche des nächsten Gegners und sein gefährlichster Spieler.', 'Je besser du den Gegner kennst, desto genauer der Bericht. „Gegner beobachten“ kostet eine Aktion der Woche, ein Tipp vom Wirt hilft auch.'] },
     en: { title: 'Opponent check', items: ['On the match card under “Today”: form, league position, strength, style, strengths and weakness of your next opponent and their most dangerous player.', 'The better you know them, the sharper the report. “Watch the opponent” costs one action of the week; a tip from the landlord helps too.'] },

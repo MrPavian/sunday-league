@@ -1,6 +1,7 @@
 import { hypot, hypot3 } from '../core/math.js';
 import { SURFACES } from './surfaces.js';
 import { endWallX } from './players.js';
+export const WIND_ACCEL = 1.2;
 
 export const BALL_RADIUS = 0.11;
 const G = 9.81;
@@ -43,10 +44,12 @@ export function stepBall(ball, pitch, dt) {
   const prevX = pos.x;
 
   vel.y -= G * dt;
-  // Wind drückt hohe Bälle ab.
+  // Wind drückt hohe Bälle ab. HERGELEITET: Sturmböen um 60 km/h (17 m/s) auf einen ruhenden Ball, F = ½ ρ c_w A v² mit
+  // ρ 1,2 kg/m³, c_w 0,25, A 0,038 m² ≈ 1,65 N; bei 0,43 kg ≈ 3,8 m/s². WEATHER.wind 3,2 × WIND_ACCEL 1,2 ≈ 3,8 (vorher 0,6:
+  // in weather-audit nicht messbar).
   if (pitch.wind && pos.y > 0.5) {
-    vel.x += pitch.wind.x * dt * 0.6;
-    vel.z += pitch.wind.z * dt * 0.6;
+    vel.x += pitch.wind.x * dt * WIND_ACCEL;
+    vel.z += pitch.wind.z * dt * WIND_ACCEL;
   }
   pos.x += vel.x * dt;
   pos.y += vel.y * dt;
