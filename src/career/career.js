@@ -76,6 +76,7 @@ import { bonusesOf } from './bonuses.js';
 import { matchTactic } from './tacticpresets.js';
 import { keeperGrowthMul, weeklyTeam } from './coachteam.js';
 import { reserveMatchday, reserveSeasonEnd } from './reserve.js';
+import { careerAchievements, matchAchievements, seasonAchievements } from './achievements.js';
 
 export const SAVE_VERSION = 1;
 export const POOL_SEED = 1921;
@@ -371,6 +372,7 @@ export function nextSeason(career) {
   const scorer = humanClub(career).squad.map((idx) => ({ idx, goals: career.players[idx]?.goals ?? 0 })).sort((a, b) => b.goals - a.goals)[0];
   const topScorer = scorer?.goals ? { name: playerOf(career, scorer.idx).name, goals: scorer.goals } : null;
   career.history = [...(career.history ?? []), { season: career.season, league: career.league, pos, champion: rows[0].club.name, topScorer, promoted, relegated, ...(career.pro ? { level, upBlock } : {}) }];
+  seasonAchievements(career, { pos, size: rows.length, own: rows[pos - 1], promoted });
   if (career.pro && ((level === 10 && pos <= 4) || level >= 11)) career.bundQual = career.season + 1; // 3. Liga: die besten vier im überregionalen Pokal (DFB-Regel); 2. und 1. Liga: alle
   const goalVerdict = seasonGoalVerdict(career, pos); // hat der Vorstand bekommen, was er wollte?
   const presidentNotes = presidentSeasonEnd(career, pos); // Präsidium: Zufriedenheit des Trainers, Angebote von außen
@@ -1381,6 +1383,7 @@ export function recordResult(career, fixture, prepared) {
     applyCards(career, prepared); // Sperren aus Rot, Gelb-Rot, fünf Gelben
     memoryAfterMatch(career, prepared); // „ausgerechnet der Ex"
     heirMoments(career); // erstes Tor des Juniors
+    matchAchievements(career, m, allPlayers(m)); // Erfolge (achievements.js)
     afterMatchPositions(career, m, humanClub(career).squad); // Gewöhnung & Murren (positions.js)
     afterMatchVoice(career, prepared, fixture.home === humanId ? fixture.away : fixture.home);
     const homeSide = fixture.home === humanId;
@@ -1435,6 +1438,7 @@ export function finishRound(career) {
     unavailable: (idx) => { const r = career.players[idx]; return !r || r.injuryWeeks > 0 || r.awayWeeks > 0 || (r.ban?.games ?? 0) > 0; },
   });
   if (line2) staffNotes.push(line2);
+  careerAchievements(career); // Pokalsieg, Profiluft, Treue (achievements.js)
   career.round++;
   // Winterpause (vom Nutzer gewünscht, 2026-10-21): eine eigene Woche ohne Ligaspiel vor dem Spieltag nach der Hinrunde –
   // dort liegt das Hallenturnier. Vorher lag es in der Woche des Spieltags, direkt vor dem Ligaspiel.

@@ -6,6 +6,11 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-08-1 – Erfolge
+
+### Neu
+- **Erfolge im Vereinsmuseum:** 19 kleine Meilensteine mit Augenzwinkern – erster Sieg, Zu-Null, Dreierpack, Kantersieg, Comeback nach zwei Toren Rückstand, der Keeper trifft, „Luftloch-König“, „Asche im Knie ×3“, „Ans Auto ×5“, erstes Eigentor, erste Rote Karte, Meister, Aufstieg, ungeschlagene Saison, Rote Laterne, Pokalsieg, Regionalliga, 1. Liga und zehn Jahre Treue. Jeder neue Erfolg steht einmal im Kreisblatt. Bestehende Spielstände bekommen Meistertitel und Aufstiege aus der Chronik still nachgetragen.
+
 ## 2026-11-07-9 – Saisonrückblick als Seite
 
 ### Neu

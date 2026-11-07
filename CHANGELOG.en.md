@@ -6,6 +6,11 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-08-1 – Achievements
+
+### New
+- **Achievements in the club museum:** 19 small, tongue-in-cheek milestones – first win, clean sheet, hat-trick, thrashing, comeback from two down, goalkeeper scores, “King of air shots”, “Cinders in the knee ×3”, “Off a car ×5”, first own goal, first red card, champions, promotion, unbeaten season, wooden spoon, cup win, Regionalliga, 1. Liga and ten years of loyalty. Every new achievement makes the District Gazette once. Existing saves get their titles and promotions filled in quietly from the chronicle.
+
 ## 2026-11-07-9 – Season review as a page
 
 ### New

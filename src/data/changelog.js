@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-08-1',
+    de: { title: 'Erfolge', items: ['Neu im Vereinsmuseum: 19 Erfolge mit Augenzwinkern – vom ersten Dreier über „Luftloch-König“ und „Ans Auto ×5“ bis „Ganz oben“.', 'Jeder neue Erfolg steht einmal im Kreisblatt. Bestehende Spielstände bekommen Meistertitel und Aufstiege aus der Chronik nachgetragen.'] },
+    en: { title: 'Achievements', items: ['New in the club museum: 19 tongue-in-cheek achievements – from your first three points via “King of air shots” and “Off a car ×5” to “The very top”.', 'Every new achievement makes the District Gazette once. Existing saves get their titles and promotions filled in from the chronicle.'] },
+  },
+  {
     id: '2026-11-07-9',
     de: { title: 'Saisonrückblick als Seite', items: ['Das Kreisblatt-Sonderheft am Saisonende gibt es jetzt auch als eigene Seite: mit Wappen, Abschlusstabelle, allen Spielen und den Zahlen jedes Spielers.', 'Die Seite lässt sich per Messenger oder Mail verschicken und öffnet sich in jedem Browser, auch ohne Internet. Ältere Sonderhefte im Archiv kannst du ebenfalls teilen.'] },
     en: { title: 'Season review as a page', items: ['The Kreisblatt special at season’s end now also comes as its own page: with crest, final table, every match and each player’s numbers.', 'Send the page by messenger or email; it opens in any browser, even offline. Older specials in the archive can be shared too.'] },

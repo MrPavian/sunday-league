@@ -2000,3 +2000,10 @@ body.manager #end { padding-bottom: 84px; }
 .tut-focus { outline: 3px solid #f2c94c !important; outline-offset: 2px; animation: tut-pulse 1.2s steps(3) infinite; }
 @keyframes tut-pulse { 50% { outline-color: #fff2b3; } }
 @media (prefers-reduced-motion: reduce) { .tut-focus { animation: none; } }
+
+/* Erfolge im Vereinsmuseum (career/achievements.js) */
+.museum .ach-count { margin: 0 0 6px; font-weight: 700; }
+.museum .achievements { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 6px; }
+.museum .achievements li { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border: 1px solid currentColor; border-radius: 6px; }
+.museum .achievements li.open { opacity: 0.55; border-style: dashed; }
+.museum .achievements small { font-size: var(--fs-caption); }

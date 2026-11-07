@@ -418,7 +418,7 @@ Gleichzeitig hat das Match noch Lücken, die man beim Spielen sofort merkt.
 - **Geister-Spiele**: Das Team eines Freundes als Gegner, wahlweise simuliert oder selbst gespielt.
 - **Asynchrone Freundes-Liga**: jede Woche ein Spieltag, alle Partien simuliert, das eigene Spiel optional live.
 - **Trikot- und Wappen-Codes** zum Teilen, Steam Workshop für Liga- und Namenspakete.
-- **Achievements** mit Augenzwinkern: „Luftloch-König“, „Asche im Knie ×3“, „Ans Auto – 5× in einem Spiel“.
+- ✅ **Achievements** mit Augenzwinkern (umgesetzt 2026-11-07, 11.17 Punkt 12): „Luftloch-König“, „Asche im Knie ×3“, „Ans Auto – 5× in einem Spiel“.
 
 ### 8.5 Technik
 
@@ -1166,7 +1166,9 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
     eigenständige HTML-Datei (src/ui/reviewpage.js, kein Skript, kein Netz, helles und dunkles Farbschema) mit Wappen,
     Höhepunkten, Abschlusstabelle, allen Ligaspielen und Kaderzahlen (Einsätze, Tore, Vorlagen, Notenschnitt). Das
     Sonderheft im Archiv speichert diese Abschnitte jetzt mit; ältere Sonderhefte lassen sich ohne sie teilen.
-12. **Erfolge und Meilensteine** (siehe 8.4).
+12. ✅ **Erfolge und Meilensteine** (2026-11-07): 19 Erfolge (src/career/achievements.js) – 11 aus dem eigenen Ligaspiel,
+    4 am Saisonende, 4 aus der Karriere. Anzeige im Vereinsmuseum, jeder neue einmal im Kreisblatt; alte Spielstände bekommen
+    Meister und Aufstieg still aus der Chronik. Alle Schwellen sind Spielwerte; kein Zufall, Spielablauf unverändert.
 13. **Internationaler Wettbewerb** (vom Nutzer gewünscht, 2026-11-05): Die besten Vereine der 1. Liga spielen in einem
     erfundenen europäischen Wettbewerb gegen erfundene Vereine aus erfundenen Städten anderer Länder (Gruppenphase, K.-o.-Runden
     unter der Woche, wie der Bundespokal neben der Liga). Offen: Format, Startplätze, Prämien nach Quellen.

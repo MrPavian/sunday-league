@@ -3,6 +3,7 @@
 import { plural, tr } from '../../core/i18n.js';
 import { kitPreviewURL, patternColors, RETRO_MODELS, THREE_COLOR } from '../../render/kitPaint.js';
 import { museum } from '../../career/museum.js';
+import { achievementList } from '../../career/achievements.js';
 import { clubLife, FEE_NAMES, neighborText } from '../../career/clublife.js';
 import { reviewHTML } from '../review.js';
 import { button, esc, tabs as uiTabs } from '../ds.js';
@@ -539,8 +540,11 @@ export const clubScreens = {
     const legends = mu.legends.length ? `<ol class="plain">${mu.legends.map((l) => `<li><span>${l.name}${l.active ? '' : ` <small>(${tr('ehemalig', 'former')})</small>`}</span><b>${l.goals} ${plural(l.goals, 'Tor', 'Tore', 'goal', 'goals')} · ${l.apps} ${plural(l.apps, 'Spiel', 'Spiele', 'app', 'apps')}</b></li>`).join('')}</ol>` : empty(tr('Noch keine Legenden.', 'No legends yet.'));
     const kits = `<div class="archive">${mu.kits.map((k) => `<figure><span class="kit-mini" style="background:url(${kitPreviewURL(k.kit)}) center/100% 100%"></span><figcaption>S${k.season}${k.now ? tr(' (aktuell)', ' (current)') : ''}</figcaption></figure>`).join('')}</div>`;
     const crests = mu.crests.length ? `<div class="archive">${mu.crests.map((k) => `<figure>${crestSVG(k.crest, { size: 40, short: club.short, year: crestExtras(c).year })}<figcaption>S${k.season}${k.now ? tr(' (aktuell)', ' (current)') : ''}</figcaption></figure>`).join('')}</div>` : '';
+    const ach = achievementList(c);
+    const achievements = `<p class="ach-count">${ach.count} / ${ach.total}</p><ul class="achievements" data-testid="achievements">${ach.list.map((a) => `<li class="${a.got ? 'got' : 'open'}"><b>${a.got ? '★' : '☆'} ${esc(a.name)}</b><small>${esc(a.text)}${a.got ? ` · ${a.got.year}` : ''}</small></li>`).join('')}</ul>`;
     return `<div class="museum">
       <section><h4>${tr('Vitrine', 'Trophy cabinet')}</h4>${trophies}</section>
+      <section><h4>${tr('Erfolge', 'Achievements')}</h4>${achievements}</section>
       <section><h4>${tr('Ehrentafel', 'Roll of honour')}</h4>${awards}${coachAwards}</section>
       <section><h4>${tr('Rekorde', 'Records')}</h4>${records}</section>
       <section><h4>${tr('Vereinslegenden', 'Club legends')}</h4>${legends}</section>
