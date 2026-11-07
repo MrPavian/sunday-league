@@ -202,6 +202,9 @@ export function createCommentator(m, seed = 1) {
         case 'jitters':
           add(tr(`Nur noch ein Tor Vorsprung – bei ${team(e.team)} flattern jetzt die Nerven.`, `Just one goal in it now – nerves are fraying for ${team(e.team)}.`));
           break;
+        case 'tactic_switch':
+          add(tr(`${team(e.team)} stellt um: „${e.name}“.`, `${team(e.team)} switch to "${e.name}".`), 'info');
+          break;
         case 'second_wind':
           add(tr(`${surname(who(e.playerId))} hat die zweite Luft gefunden und zieht noch mal an.`, `${surname(who(e.playerId))} has found his second wind and picks up the pace again.`));
           break;

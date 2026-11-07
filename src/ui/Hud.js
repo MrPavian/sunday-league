@@ -129,6 +129,7 @@ export class Hud {
         clearTimeout(this.bubbleTimer);
         this.bubbleTimer = setTimeout(() => (b.hidden = true), 1600);
       }
+      if (e.type === 'tactic_switch' && (e.team === match.humanTeam || (match.manager && e.team === match.coachTeam))) this.toast(tr(`${e.minute}′ Umgeschaltet: ${e.name}`, `${e.minute}′ Switched: ${e.name}`), 2.4, 2);
       const p = e.playerId && findAnyPlayer(match, e.playerId);
       const first = p ? p.name.split(' ')[0] : '';
       if (e.type === 'goal') {

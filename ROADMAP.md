@@ -1129,6 +1129,9 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
 5. **Trainerteam ab der Regionalliga:** Torwart-, Athletiktrainer, Physio mit Gehalt und Wirkung.
 6. **Stadionbau sichtbar machen:** Drittliga-Stadion und Arena wachsen in 3D.
 7. **Taktikvorlagen im Spiel umschalten** (z. B. „ab Minute 70 mauern“).
+   ✅ erledigt 2026-11-07 (sim/switches.js, tacticpresets.js): Vorlagen im Taktik-Blatt per Tipp ausspielen; bis zu zwei Regeln
+   „ab Minute X, bei Spielstand Y → Vorlage Z“ (Minuten 30–85 auf 90 gerechnet, Anzahl Spielwert), greifen auch im Ticker und im
+   simulierten Spiel; im Spiel streichbar. Ohne Regeln unverändert (Golden). Offen: Regeln für Rote Karten oder Unterzahl.
 8. **Gegner-Scouting vor dem Spiel:** Stärken, Lieblingsstil, gefährlichster Spieler; Genauigkeit nach eigenem Scouting.
 9. **Wetter mit spürbarerer Wirkung** (tiefer Platz, Wind) – nur mit Messung wie beim Bonus-Audit.
 10. **Englische Namensliste erweitern.**

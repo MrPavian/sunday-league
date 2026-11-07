@@ -73,6 +73,7 @@ import { advancePokale, bundChat } from './pokal.js';
 import { bundVenueEvent } from './bundevents.js';
 import { initTiger, tigerWeek } from './tiger.js';
 import { bonusesOf } from './bonuses.js';
+import { matchTactic } from './tacticpresets.js';
 
 export const SAVE_VERSION = 1;
 export const POOL_SEED = 1921;
@@ -1246,7 +1247,7 @@ export function teamForMatch(career, club, format, availability, rng) {
   const regular = [...lineup, ...bench].filter((idx) => !helpers.includes(idx));
   const rels = club.human ? relsMap(relationsAmong(career, regular)) : {};
   for (const p of players) if ((career.players[p.poolIndex]?.form ?? 0) >= 0.3) p.hot = true;
-  return { rels, name: club.name, short: club.short, kit: club.kit, keeperKit: club.keeperKit, crest: club.crest ?? defaultCrest(club), tactic: tacticOf(club, format), sponsor: clubSponsor(career, club), sleeve: club.human ? clubSleeve(career) : null, players, helpers };
+  return { rels, name: club.name, short: club.short, kit: club.kit, keeperKit: club.keeperKit, crest: club.crest ?? defaultCrest(club), tactic: club.human ? { ...tacticOf(club, format), ...matchTactic(career, format) } : tacticOf(club, format), sponsor: clubSponsor(career, club), sleeve: club.human ? clubSleeve(career) : null, players, helpers };
 }
 
 // Wer steht vorne auf dem Trikot? Beim eigenen Verein der Trikotsponsor, bei den

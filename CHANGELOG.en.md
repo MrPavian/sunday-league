@@ -6,6 +6,13 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-07-2 – Switch tactics during the match
+
+### New
+- **Tactic presets during the match:** the tactics sheet now lists all your saved tactics under "My tactics". One tap changes style, system and game plan at once.
+- **Switch by plan:** under Squad → Tactics you can set up to two rules: from which minute (30 to 85), at which score (any, leading, level, behind) and to which preset. Example: "from minute 70, when leading → Park the bus". The team then switches on its own – on the touchline, in the live ticker and in simulated matches. The minute is counted on a 90-minute scale, so "from 70" means the closing stage on every pitch.
+- **Keep track during the match:** the tactics sheet shows which rule is still waiting; you can drop it for this match. A short note appears when the team switches.
+
 ## 2026-11-07-1 – Bug hunt: fixes from long careers
 
 ### Fixed

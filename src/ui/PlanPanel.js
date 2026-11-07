@@ -3,6 +3,7 @@ import { applySimple, GROUP_LABELS, ORDERS, packLines, simpleActive, SIMPLE, SIM
 import { activeShouts, shout, SHOUTS } from '../sim/coach.js';
 import { execution, ORDER_GROUPS, orderOf, planTarget, setOrder, setStyle, setSystem } from '../sim/plan.js';
 import { STYLES, systemsFor } from '../sim/tactics.js';
+import { applyTactic, cancelSwitch, whenLabel } from '../sim/switches.js';
 import { button, esc, haptic } from './ds.js';
 import { setCoachLevel } from './prefs.js';
 import { TacticBoard } from './TacticBoard.js';
@@ -43,6 +44,14 @@ export class PlanPanel {
       } else if (action === 'style') {
         setStyle(m, this.team, value);
         this.preview = { label: STYLES[value].label, text: STYLES[value].desc };
+      } else if (action === 'preset') {
+        const t = m.presets?.[this.team]?.find((x) => x.id === Number(value));
+        if (t) {
+          applyTactic(m, this.team, t, 'plan');
+          this.preview = { label: t.name, text: tr('Vorlage ausgespielt: Stil, System und Spielplan sind umgestellt.', 'Preset played: style, system and game plan have changed.') };
+        }
+      } else if (action === 'switchCancel') {
+        if (cancelSwitch(m, this.team, Number(value))) this.preview = { label: tr('Umschalten', 'Switch'), text: tr('Regel für dieses Spiel gestrichen.', 'Rule dropped for this match.') };
       } else if (action === 'reset') {
         for (const g of ORDER_GROUPS) setOrder(m, this.team, g, null, { by: 'plan' });
         this.preview = { label: tr('Grundstil', 'Base style'), text: tr('Alle Befehle aufgehoben.', 'All orders cleared.') };
@@ -93,6 +102,19 @@ export class PlanPanel {
     done?.();
   }
 
+  // Meine Taktiken (Vorlagen aus dem Vereinsheim) per Tipp ausspielen, dazu die Umschalt-Regeln dieses Spiels.
+  presetRow() {
+    const m = this.match;
+    const list = m.presets?.[this.team];
+    if (!list?.length) return '';
+    const rules = (m.switches?.[this.team] ?? [])
+      .map((r, i) => `<li class="${r.done ? 'done' : ''}">${tr('ab', 'from')} ${r.minute}′, ${esc(whenLabel(r.when))} → <b>${esc(r.name)}</b> ${r.cancelled ? tr('· gestrichen', '· dropped') : r.done ? tr('· umgeschaltet', '· switched') : `<button class="linkish" data-action="switchCancel" data-value="${i}">${tr('streichen', 'drop')}</button>`}</li>`)
+      .join('');
+    return `<p class="ui-section-title">${tr('Meine Taktiken', 'My tactics')}</p>
+      <div class="chips presets">${list.map((t) => `<button data-action="preset" data-value="${t.id}">${esc(t.name)}</button>`).join('')}</div>
+      ${rules ? `<ul class="switch-list">${rules}</ul>` : ''}`;
+  }
+
   render() {
     const m = this.match;
     const team = this.team;
@@ -122,6 +144,7 @@ export class PlanPanel {
       <p class="ui-section-title">${tr('Aktiv', 'Active')}</p>
       <div class="ui-chips">${active.length ? active.map((a) => `<span class="ui-chip">${a}</span>`).join('') : `<span class="ui-chip plain">${tr('nur der Grundstil', 'base style only')} · ${STYLES[style].label}</span>`}</div>
       ${this.preview ? `<p class="tp-preview" aria-live="polite"><b>${esc(this.preview.label)}</b> ${esc(this.preview.text)}</p>` : ''}
+      ${this.presetRow()}
       <p class="ui-section-title">${tr('System', 'System')}</p>
       <div class="chips systems">${systems}</div>
       <p class="ui-section-title">${tr('Zurufe', 'Shouts')}</p>

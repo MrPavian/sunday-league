@@ -6,6 +6,13 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-07-2 – Taktik im Spiel umschalten
+
+### Neu
+- **Taktik-Vorlagen im Spiel:** Im Taktik-Blatt stehen jetzt alle gespeicherten Taktiken unter „Meine Taktiken“. Ein Tipp stellt Stil, System und Spielplan auf einmal um.
+- **Umschalten nach Plan:** Unter Mannschaft → Taktik kannst du bis zu zwei Regeln festlegen: ab welcher Minute (30 bis 85), bei welchem Spielstand (egal, Führung, Unentschieden, Rückstand) und auf welche Vorlage. Beispiel: „ab Minute 70, bei Führung → Mauern“. Die Mannschaft stellt dann von selbst um – an der Seitenlinie, im Liveticker und im simulierten Spiel. Die Minute zählt auf 90 Minuten gerechnet, damit „ab 70“ auf jedem Platz die Schlussphase meint.
+- **Im Spiel im Blick:** Das Taktik-Blatt zeigt, welche Regel noch wartet; du kannst sie für dieses Spiel streichen. Beim Umschalten erscheint ein kurzer Hinweis.
+
 ## 2026-11-07-1 – Bugsuche: Fehler aus langen Karrieren
 
 ### Behoben

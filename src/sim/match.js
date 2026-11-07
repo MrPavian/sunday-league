@@ -34,6 +34,7 @@ import { stepLog } from './matchlog.js';
 import { stepSituations } from './situations.js';
 import { answerCard, stepCoachFeed } from './coachfeed.js';
 import { aiCoachHalftime, stepAiCoach } from './aicoach.js';
+import { prepareSwitches, stepSwitches } from './switches.js';
 import { afterGoal } from './mentality.js';
 
 export { attackDir, getPlayer } from './players.js';
@@ -148,6 +149,9 @@ export function createMatch({ seed = 1, pitch = PARKING_LOT, teams, kickoff = tr
   squads.forEach((team, ti) => {
     for (const [group, value] of Object.entries(team?.tactic?.orders ?? {})) setOrder(m, ti, group, value, { by: 'plan' });
   });
+  // Umschalt-Regeln und Vorlagen für das Taktik-Blatt (switches.js); nur der eigene Verein bringt welche mit.
+  m.switches = squads.map((team) => prepareSwitches(team?.tactic?.switches));
+  m.presets = squads.map((team) => team?.tactic?.presets ?? null);
   m.incidentPlan = incidents ? planIncident(m, seed) : null;
   if (kickoff) startSetPiece(m, { type: 'kickoff', team: 0 });
   return m;
@@ -172,6 +176,8 @@ export function stepMatch(m, input = NO_INPUT, dt) {
   stepLog(m);
   stepSituations(m);
   if (m.manager) stepCoachFeed(m, m.coachTeam);
+  stepSwitches(m, 0);
+  stepSwitches(m, 1);
   stepAiCoach(m, 0);
   stepAiCoach(m, 1);
 }

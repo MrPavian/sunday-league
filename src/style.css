@@ -1975,6 +1975,10 @@ body.manager #end { padding-bottom: 84px; }
 .presets .preset.active > button:first-child { background: var(--accent); color: #000; }
 .preset-save { display: flex; gap: var(--s2); flex-wrap: wrap; }
 .preset-save input { flex: 1 1 160px; min-width: 0; }
+.switch-rule { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); }
+.switch-rule select { max-width: 100%; }
+.switch-list { list-style: none; margin: 0 0 var(--s2); padding: 0; font-size: 0.9em; }
+.switch-list li.done { opacity: 0.6; }
 
 /* Tutorial (ui/Tutorial.js): Sprechblase über allem (auch über der Halbzeit-Tafel), Ziel mit pulsierendem Rahmen. */
 .tutorial { position: fixed; inset: 0; z-index: 8; pointer-events: none; }

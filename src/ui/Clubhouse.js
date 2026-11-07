@@ -20,7 +20,7 @@ import { setWaive } from '../career/license.js';
 import { setSummerMove, takeOver } from '../career/clubchange.js';
 import { CLUB_STEPS, OFFER_STEP, startTutorial, stopTutorial, tutorialActive, TutorialBubble } from './Tutorial.js';
 import { setPrice, setSeasonTickets, TICKETS } from '../career/tickets.js';
-import { applyPreset, deletePreset, savePreset } from '../career/tacticpresets.js';
+import { addSwitch, applyPreset, deletePreset, removeSwitch, savePreset, setSwitch } from '../career/tacticpresets.js';
 import { appointCoach, startCourse } from '../career/youthteams.js';
 import { acceptSponsor, bookTrip } from '../career/finances.js';
 import { kitPrice, signOutfitter } from '../career/outfitter.js';
@@ -401,6 +401,12 @@ export class Clubhouse {
         applyPreset(this.career, value);
         this.presetNote = null;
         this.h.onChange();
+      } else if (action === 'switchAdd') {
+        addSwitch(this.career);
+        this.h.onChange();
+      } else if (action === 'switchRemove') {
+        removeSwitch(this.career, value);
+        this.h.onChange();
       } else if (action === 'presetDelete') {
         deletePreset(this.career, value);
         this.h.onChange();
@@ -670,6 +676,17 @@ export class Clubhouse {
     );
   }
 
+  // Taktik: Umschalt-Regeln (Minute, Spielstand, Vorlage).
+  bindSwitches() {
+    this.root.querySelectorAll('select[data-switch]').forEach((sel) =>
+      sel.addEventListener('change', () => {
+        setSwitch(this.career, sel.dataset.switch, sel.dataset.field, sel.value);
+        this.h.onChange();
+        this.render();
+      }),
+    );
+  }
+
   bindLineup() {
     this.bindDrag();
     this.bindProfileSwipe();
@@ -828,6 +845,7 @@ export class Clubhouse {
     this.bindPub();
     this.syncPub3d();
     this.bindPate();
+    this.bindSwitches();
     this.bindCalSwipe();
     this.bindClubForm();
     const slot = this.root.querySelector('.club-tboard');

@@ -13,7 +13,8 @@ import { LEAGUES, maxLevel } from '../../career/clubs.js';
 import { contractOf, extendOffer, isPro, releaseCost, yearsLeft } from '../../career/contracts.js';
 import { natBoostMul } from '../../career/natboost.js';
 import { nationName } from '../../career/nationalteams.js';
-import { NAME_MAX, PRESET_MAX, presetActive, presetsOf } from '../../career/tacticpresets.js';
+import { NAME_MAX, PRESET_MAX, presetActive, presetsOf, switchesOf } from '../../career/tacticpresets.js';
+import { SWITCH_MAX, SWITCH_MINUTES, SWITCH_WHEN, whenLabel } from '../../sim/switches.js';
 import { leagueTitle, niveauName, niveauText } from '../../career/verband.js';
 import { aboveLeague, playerTalentGuess } from '../../career/development.js';
 import { ATTR_LABELS } from '../attrLabels.js';
@@ -284,7 +285,24 @@ export const teamScreens = {
       ${chips ? `<div class="styles">${chips}</div>` : `<p class="hint">${tr('Noch keine gespeichert. Stell System, Stil und Spielplan ein und gib der Taktik einen Namen.', 'None saved yet. Set system, style and game plan and give the tactic a name.')}</p>`}
       <div class="preset-save"><input data-preset-name maxlength="${NAME_MAX}" placeholder="${tr('Name, z. B. „Auswärts mauern“', 'Name, e.g. "Park the bus away"')}" aria-label="${tr('Name der Taktik', 'Tactic name')}">${button(tr('Aktuelle Taktik speichern', 'Save current tactic'), { kind: 'secondary', action: 'presetSave', 'data-testid': 'preset-save' })}</div>
       ${full ? `<p class="hint">${tr('Alle Plätze belegt – gleicher Name überschreibt, sonst erst eine löschen.', 'All slots used – the same name overwrites, otherwise delete one first.')}</p>` : ''}
-      ${this.presetNote ? `<p class="warn">${this.presetNote}</p>` : ''}</div>`;
+      ${this.presetNote ? `<p class="warn">${this.presetNote}</p>` : ''}
+      ${list.length ? this.switchBlock(list) : ''}</div>`;
+  },
+
+  // Umschalten im Spiel (switches.js): „ab Minute 70, bei Führung → Mauern“.
+  switchBlock(presets) {
+    const rules = switchesOf(this.career);
+    const opt = (v, label, cur) => `<option value="${v}" ${String(v) === String(cur) ? 'selected' : ''}>${esc(label)}</option>`;
+    const rows = rules
+      .map((r, i) => `<div class="switch-rule" data-testid="switch-rule">
+        <label>${tr('ab Minute', 'from minute')} <select data-switch="${i}" data-field="minute">${SWITCH_MINUTES.map((m) => opt(m, String(m), r.minute)).join('')}</select></label>
+        <select data-switch="${i}" data-field="when" aria-label="${tr('Spielstand', 'Score')}">${SWITCH_WHEN.map((w) => opt(w, whenLabel(w), r.when)).join('')}</select>
+        <label>→ <select data-switch="${i}" data-field="preset">${presets.map((p) => opt(p.id, p.name, r.preset)).join('')}</select></label>
+        <button class="linkish" data-action="switchRemove" data-value="${i}" aria-label="${tr('Regel löschen', 'Delete rule')}">✕</button></div>`)
+      .join('');
+    return `<p class="ui-section-title">${tr('Im Spiel umschalten', 'Switch during the match')} <small>${rules.length}/${SWITCH_MAX}</small></p>
+      ${rows || `<p class="hint">${tr('Zum Beispiel: ab Minute 70, bei Führung, auf „Mauern“. Im Spiel kannst du jede Taktik auch per Tipp im Taktik-Blatt ausspielen.', 'For example: from minute 70, when leading, switch to "Park the bus". During the match you can also play any tactic with one tap on the tactics sheet.')}</p>`}
+      ${rules.length < SWITCH_MAX ? button(tr('Regel hinzufügen', 'Add rule'), { kind: 'secondary', action: 'switchAdd', 'data-testid': 'switch-add' }) : ''}`;
   },
 
   // Taktik: System, Spielstil, Passung, Spielplan-Befehle (früher oben in der Aufstellung).

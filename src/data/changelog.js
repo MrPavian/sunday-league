@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-07-2',
+    de: { title: 'Taktik im Spiel umschalten', items: ['Taktik-Vorlagen im Spiel per Tipp ausspielen: Im Taktik-Blatt stehen jetzt alle gespeicherten Taktiken – ein Tipp stellt Stil, System und Spielplan um.', 'Umschalten nach Plan: Unter Mannschaft → Taktik bis zu zwei Regeln festlegen, z. B. „ab Minute 70, bei Führung → Mauern“. Die Mannschaft stellt dann von selbst um, auch im Liveticker.', 'Im Spiel siehst du, welche Regel noch wartet, und kannst sie für dieses Spiel streichen.'] },
+    en: { title: 'Switch tactics during the match', items: ['Play your tactic presets with one tap during the match: the tactics sheet now lists all your saved tactics – one tap changes style, system and game plan.', 'Switch by plan: under Squad → Tactics, set up to two rules, e.g. \"from minute 70, when leading → Park the bus\". The team then switches on its own, in the live ticker too.', 'During the match you can see which rule is still waiting and drop it for this match.'] },
+  },
+  {
     id: '2026-11-07-1',
     de: { title: 'Bugsuche: Fehler aus langen Karrieren', items: ['Jugendspieler zum Profiverein: Die Ausbildungsentschädigung wird nicht mehr doppelt gebucht, der Zeitungsartikel kommt nur einmal.', 'Entscheidungen der Woche: Ist ein Beteiligter nicht mehr im Verein, hat sich die Sache erledigt – kein Hängenbleiben mehr.', 'Alte Herren: Niemand spielt mehr gleichzeitig für die Alten Herren und einen Gegner.', 'Chatgruppe: Gesperrte schreiben nicht mehr alle denselben Satz.'] },
     en: { title: 'Bug hunt: fixes from long careers', items: ['Youth player off to a pro club: the development fee is no longer booked twice, and the newspaper story only appears once.', 'Decisions of the week: if someone involved has left the club, the matter is closed – no more getting stuck.', 'Old boys: nobody plays for the old boys and an opponent at the same time any more.', 'Group chat: suspended players no longer all write the same sentence.'] },
