@@ -1216,9 +1216,13 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
     November und vor dem zweiten Spieltag nach der Winterpause (Spielwert). Gruppen mit Doppelrunde, Wintermeisterschaften nur mit
     den Herbstfenstern. Gastgeber wo bekannt (WM 2030 alle sechs, WM 2034, EM 2028 mit zwei reservierten Plätzen, EM 2032, Afrika
     2027, Asien 2027). Eigene Spieler: Karte im Vereinsheim (ansehen/Ergebnis/vorspulen, Gruppentabelle), Müdigkeit je Spiel
-    (höchstens 15 %), Verletzungsrisiko wie im Ligaspiel, Marktwert ein Viertel der Turnierwerte (Spielwerte). Offen: echte
-    Play-offs (bisher die Nächstbesten), Nations League, Fenster über zwei Saisons (in echt dauert die Qualifikation teils länger),
-    Abstellungsgebühr für Länderspiele.
+    (höchstens 15 %), Verletzungsrisiko wie im Ligaspiel, Marktwert ein Viertel der Turnierwerte (Spielwerte). 
+    ✅ **Echte Play-offs 2026-11-08** („Weiter“, natplayoffs.js): WM Europa wie 2026 (Pfade mit Halbfinale und Finale in einem
+    Spiel; Nations-League-Plätze an die besten Dritten, Spielwert), EM wie 2028 (je nach Gastgeberplätzen 2–3 Pfade oder 4 Duelle
+    mit Hin- und Rückspiel), interkontinentale Play-offs der WM wie 2026 (6 Teams, 2 gesetzt; Asien 8 und Nord-/Mittelamerika 6
+    feste Plätze). Im März-Fenster, ohne genug Termine beim Turnierstart. Offen: Nations League, Fenster über zwei Saisons (in echt
+    dauert die Qualifikation teils länger), eigene Ausscheidungen der Verbände für die interkontinentalen Play-offs (hier der
+    Nächstbeste), Abstellungsgebühr für Länderspiele.
 15. **Nationaltrainer werden** (später): Anfragen von Verbänden ab gutem Ruf, Neben- oder Hauptamt, eigener Kader aus allen
     Spielern des Landes, Turnierspiele in 3D.
 16. **Vereinsgelände ausbauen** (vom Nutzer gewünscht, 2026-11-06). **Erste Lieferung gebaut 2026-11-06** (Nutzerentscheid: alle sechs

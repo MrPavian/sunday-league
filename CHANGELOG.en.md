@@ -6,6 +6,15 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-08-7 – Qualifying play-offs
+
+### New
+- **Real play-offs:** the qualifying play-off places no longer go to the next best in the ranking – they are played for, in the format of the real competitions.
+- **World Cup, Europe (as in 2026):** the group winners go straight through, the other places are decided by four teams per path: a one-off semi-final and final, the better-seeded side at home in the semi-final, home advantage in the final drawn. The entrants are the group runners-up; the places that go through the Nations League in real life go to the best third-placed teams (there is no Nations League in the game).
+- **European Championship (as in 2028):** the group winners and the eight best runners-up go straight through, then up to two reserved places for the best-placed hosts. With two or three places left, one path each with a semi-final and final; with four left, eight teams in four two-legged ties (penalties if level on aggregate).
+- **Inter-confederation play-offs (World Cup, as in 2026):** six countries – one each from Asia, Africa, South America and Oceania, two from North and Central America – for two places. The two strongest are seeded into the finals, the other four play the semi-finals; all one-off games. As in real life, Asia and North/Central America have one fixed place fewer for this.
+- **In the March international break:** the groups are finished before, the semi-finals appear as a card in the clubhouse after the draw, the final follows the semi-finals. In the stadium there is extra time and a penalty shoot-out.
+
 ## 2026-11-08-6 – International breaks
 
 ### New

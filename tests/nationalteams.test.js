@@ -1,6 +1,7 @@
 // Turniere der Nationalteams (nationalteams.js, natboost.js): Kalender, Feld und Format, Nominierung nur aus den Profiligen,
 // Schnellmodell und 3D-Spiel, Marktwert-Schub, Abwesenheit nach Winterturnieren, Entschädigung bei der Weltmeisterschaft.
 import { afterEach, describe, expect, it } from 'vitest';
+import { INTER } from '../src/career/natplayoffs.js';
 import { createCareer, humanClub, playerOf, simulate } from '../src/career/career.js';
 import { NATIONS } from '../src/data/nations.js';
 import { dueTournaments, finishAll, missedRounds, NAT, natRunning, nextOwnMatch, prepareNatMatch, quickOwnMatch, recordNatMatch, startTournament, TOURNAMENTS } from '../src/career/nationalteams.js';
@@ -44,10 +45,14 @@ describe('Feld und Format', () => {
     for (const [id, cfg] of Object.entries(TOURNAMENTS)) {
       const c = career(1);
       const t = startTournament(c, id);
-      const size = Object.values(cfg.slots).reduce((a, b) => a + b, 0);
+      const size = Object.values(cfg.slots).reduce((a, b) => a + b, 0) + (INTER[id]?.places ?? 0); // + interkontinentale Play-offs
       expect(t.field, id).toHaveLength(size);
       expect(new Set(t.field).size).toBe(size);
-      for (const [conf, n] of Object.entries(cfg.slots)) expect(t.field.filter((x) => NATIONS[x].conf === conf), `${id} ${conf}`).toHaveLength(n);
+      for (const [conf, n] of Object.entries(cfg.slots)) {
+        const got = t.field.filter((x) => NATIONS[x].conf === conf).length;
+        expect(got, `${id} ${conf}`).toBeGreaterThanOrEqual(n);
+        expect(got, `${id} ${conf}`).toBeLessThanOrEqual(n + Math.min(INTER[id]?.from[conf] ?? 0, INTER[id]?.places ?? 0));
+      }
       expect(t.groups.every((g) => g.length === 4)).toBe(true);
       // Ohne eigene Spieler läuft das Turnier sofort durch.
       expect(t.done).toBe(true);
@@ -77,7 +82,8 @@ describe('Qualifikation', () => {
     expect(t.quali.caf).toHaveLength(9);
     for (const [conf, tables] of Object.entries(t.quali)) {
       const q = tables.flat().filter((r) => r.q).map((r) => r.nid);
-      expect(q.length, conf).toBe(TOURNAMENTS.wm.slots[conf]);
+      expect(q.length, conf).toBeGreaterThanOrEqual(TOURNAMENTS.wm.slots[conf]); // plus Sieger der interkontinentalen Play-offs
+      expect(q.length, conf).toBeLessThanOrEqual(TOURNAMENTS.wm.slots[conf] + (INTER.wm.from[conf] ?? 0));
       for (const nid of q) expect(t.field).toContain(nid);
       for (const tb of tables) expect(tb[0].q, `${conf}: Gruppensieger`).toBe(true);
     }

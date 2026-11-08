@@ -6,6 +6,15 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-08-7 – Play-offs der Qualifikation
+
+### Neu
+- **Echte Play-offs:** Die Play-off-Plätze der Qualifikation gehen nicht mehr an die Nächstbesten der Rangliste, sie werden gespielt – im Format der echten Vorbilder.
+- **Weltmeisterschaft, Europa (wie 2026):** Die Gruppensieger fahren direkt hin, die übrigen Plätze spielen je vier Teams in einem Pfad aus: Halbfinale und Finale in einem Spiel, die besser Gesetzten im Halbfinale zu Hause, Heimrecht im Finale gelost. Teilnehmer sind die Gruppenzweiten; die Plätze, die in echt über die Nations League vergeben werden, gehen an die besten Gruppendritten (die Nations League gibt es im Spiel nicht).
+- **Europameisterschaft (wie 2028):** Gruppensieger und die acht besten Zweiten direkt, dann bis zu zwei reservierte Plätze für die bestplatzierten Gastgeber. Bleiben zwei oder drei Plätze, je Platz ein Pfad mit Halbfinale und Finale; bleiben vier, acht Teams in vier Duellen mit Hin- und Rückspiel (bei Gleichstand im Gesamtergebnis Elfmeterschießen).
+- **Interkontinentale Play-offs (Weltmeisterschaft, wie 2026):** sechs Länder – je eins aus Asien, Afrika, Südamerika und Ozeanien, zwei aus Nord- und Mittelamerika – um zwei Plätze. Die zwei Stärksten stehen gesetzt im Finale, die anderen vier spielen die Halbfinals; alles in einem Spiel. Asien und Nord-/Mittelamerika haben dafür wie in echt je einen festen Platz weniger.
+- **In der Länderspielpause im März:** Die Gruppen sind vorher fertig, die Halbfinals stehen nach der Auslosung als Karte im Vereinsheim, das Finale folgt nach den Halbfinals. Im Stadion gibt es Verlängerung und Elfmeterschießen.
+
 ## 2026-11-08-6 – Länderspielpausen
 
 ### Neu

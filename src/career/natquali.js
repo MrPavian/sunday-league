@@ -11,6 +11,8 @@
 // Gruppen, Lostöpfe und Plätze wie in Variante 1 (nationalteams.js qualiSetup), jetzt mit Hin- und Rückspiel nach Spielplan
 // (Rundenturnier, Kreisverfahren). Mehr Spieltage als Termine (große Gruppen, Südamerika): mehrere Spieltage an einem Termin.
 // Gastgeber: wo bekannt automatisch dabei (HOSTS), die Europameisterschaft 2028 mit zwei reservierten Plätzen wie in echt.
+// Play-offs (natplayoffs.js): an den letzten zwei Terminen (März, wie in echt), die Gruppen davor. Halbfinal-Paarungen stehen erst
+// nach den Gruppen fest, die Finals nach den Halbfinals; ohne genug Termine werden sie beim Turnierstart gerechnet.
 //
 // Eigene Spieler (nur Profiligen, wie bei den Turnieren): nominiert nach Land und Stärke. Ihre Spiele stehen als Karte im
 // Vereinsheim (im Stadion ansehen, nur Ergebnis, Rest vorspulen); was offen bleibt, rechnet die nächste Woche. Kosten: etwas
@@ -23,7 +25,8 @@ import { adjustFitness, MATCH_COST } from './fitness.js';
 import { INJURIES, INJURY_BASE } from './injuries.js';
 import { isCoach } from './personal.js';
 import { monthOf } from './weather.js';
-import { hash, idHash, lineupFrom, NAT, nationName, nationOf, qualiSetup, quickMatch, squadOf, TOURNAMENTS, tournamentName, yearFor } from './nationalteams.js';
+import { hash, idHash, lineupFrom, NAT, nationName, nationOf, qualifiedFrom, qualiSetup, quickMatch, squadOf, TOURNAMENTS, tournamentName, yearFor } from './nationalteams.js';
+import { advancePlayoffs, finishPlayoffs, INTER, interDraw, PLAYOFFS, playoffDraw, playoffTeams, rankAll, schedulePlayoffs } from './natplayoffs.js';
 
 // Fenster: Monate im Spielkalender und Zahl der Termine (Kalender 2026–2030: Sep./Okt. 4 Spiele, Nov. 2, März 2).
 export const WINDOWS = [
@@ -114,7 +117,10 @@ export function planQuali(c) {
     // Wintermeisterschaft: nur Termine vor der Winterpause.
     const days = dayWin.map((wi, d) => (cfg.when === 'winter' && windows[wi].round >= half ? null : d)).filter((d) => d != null);
     if (!days.length) continue;
+    const poDays = days.length >= 4 ? days.slice(-2) : null;
     for (const conf of Object.keys(cfg.slots)) {
+      const po = poDays && (INTER[id] || PLAYOFFS[id]?.[conf]); // interkontinental: alle Gruppen vor den Play-offs fertig
+      const gDays = po ? days.slice(0, -2) : days;
       const setup = qualiSetup(c, id, year, conf);
       if (!setup.groups) continue;
       const key = `${id}-${year}-${conf}`;
@@ -123,11 +129,12 @@ export function planQuali(c) {
       const matches = [];
       rounds.forEach((list, g) =>
         list.forEach((day, md) => {
-          for (const [home, away] of day) matches.push({ step: `q${md + 1}`, md, day: days[Math.floor((md * days.length) / M)], g, home, away, result: null });
+          for (const [home, away] of day) matches.push({ step: `q${md + 1}`, md, day: gDays[Math.floor((md * gDays.length) / M)], g, home, away, result: null });
         }),
       );
-      q.comps.push({ key, isQuali: true, id, year, conf, groups: setup.groups, target: setup.str, str: { ...setup.str }, own: {}, stats: {}, matches, log: [] });
+      q.comps.push({ key, isQuali: true, id, year, conf, groups: setup.groups, target: setup.str, str: { ...setup.str }, own: {}, stats: {}, matches, log: [], poDays: po && PLAYOFFS[id]?.[conf] ? poDays : null });
     }
+    if (INTER[id] && poDays) q.comps.push({ key: `${id}-${year}-inter`, isQuali: true, id, year, conf: 'inter', groups: [], target: {}, str: {}, own: {}, stats: {}, matches: [], log: [], poDays });
   }
   c.natQuali = q;
   return q;
@@ -137,7 +144,7 @@ export function planQuali(c) {
 export function qualiTable(comp, g) {
   const rows = Object.fromEntries(comp.groups[g].map((nid) => [nid, { nid, p: 0, pts: 0, gf: 0, ga: 0 }]));
   for (const m of comp.matches) {
-    if (m.g !== g || !m.result) continue;
+    if (m.g !== g || !m.result) continue; // Play-off-Spiele haben g = -1
     const H = rows[m.home];
     const A = rows[m.away];
     H.p++;
@@ -161,8 +168,73 @@ export function qualiTable(comp, g) {
 export function qualiTables(c, id, year, conf) {
   const comp = qualiComp(c, `${id}-${year}-${conf}`);
   if (!comp) return null;
-  for (const m of comp.matches) if (!m.result) quickMatch(c, comp, m);
+  for (const m of comp.matches) if (m.g >= 0 && !m.result) quickMatch(c, comp, m);
   return comp.groups.map((_, g) => qualiTable(comp, g));
+}
+
+// Für den Turnierstart: Tabellen und Qualifizierte mit Play-offs (Offenes im Schnellmodell). qualified null = ohne Play-off-Regel.
+export function qualiOutcome(c, id, year, conf, setup) {
+  const comp = qualiComp(c, `${id}-${year}-${conf}`);
+  if (!comp) return null;
+  const tables = qualiTables(c, id, year, conf);
+  if (!comp.po) {
+    const draw = playoffDraw(c, id, year, conf, tables, setup);
+    if (!draw) return { tables, qualified: null };
+    schedulePlayoffs(comp, draw, [-1, -1]);
+  }
+  return { tables, qualified: finishPlayoffs(c, comp) };
+}
+
+// Interkontinentale Play-offs aus dem Saisonplan; null = nicht in Fenstern geplant.
+export function interOutcome(c, id, year, teams) {
+  const comp = qualiComp(c, `${id}-${year}-inter`);
+  if (!comp) return null;
+  if (!comp.po) setupInter(c, comp, teams, [-1, -1]);
+  return comp.po.paths.length ? finishPlayoffs(c, comp) : comp.po.direct;
+}
+function setupInter(c, comp, teams, days) {
+  const d = interDraw(c, comp.id, comp.year, teams);
+  Object.assign(comp.str, d.str);
+  Object.assign(comp.target, d.str);
+  schedulePlayoffs(comp, d, days);
+}
+// Teilnehmer der interkontinentalen Play-offs: je Verband die Nächstbesten hinter den Qualifizierten.
+function interTeams(c, id, year) {
+  return Object.entries(INTER[id].from).flatMap(([conf, n]) => {
+    const setup = qualiSetup(c, id, year, conf);
+    if (!setup.groups) return setup.direct.slice(setup.places, setup.places + n);
+    const tables = qualiTables(c, id, year, conf);
+    if (!tables) return [];
+    const qualified = qualifiedFrom(tables, setup.places, setup.reserved, setup.reservedSlots);
+    return rankAll(tables)
+      .filter((nid) => !qualified.includes(nid))
+      .slice(0, n);
+  });
+}
+// Fenster mit Play-off-Terminen: Paarungen auslosen, sobald die Gruppen fertig sind.
+function preparePlayoffs(c, q, days) {
+  for (const comp of q.comps) {
+    if (comp.po || !comp.poDays || !days.has(comp.poDays[0])) continue;
+    if (comp.conf === 'inter') {
+      setupInter(c, comp, interTeams(c, comp.id, comp.year), comp.poDays);
+      continue;
+    }
+    const draw = playoffDraw(c, comp.id, comp.year, comp.conf, qualiTables(c, comp.id, comp.year, comp.conf), qualiSetup(c, comp.id, comp.year, comp.conf));
+    if (draw) schedulePlayoffs(comp, draw, comp.poDays);
+  }
+}
+// Spiele ohne eigene Spieler im Fenster gleich als Ergebnis; Finals entstehen, sobald die Halbfinals gespielt sind.
+function settleOthers(c, comp, days) {
+  for (let guard = 0; guard < 8; guard++) {
+    for (const m of comp.matches) if (days.has(m.day) && !m.result && !isOwn(comp, m)) quickMatch(c, comp, m);
+    if (!advancePlayoffs(c, comp)) break;
+  }
+}
+// Nach einem eigenen Spiel (ansehen oder Ergebnis): Play-off weiterschalten, Spiele ohne eigene Spieler rechnen.
+export function qualiAfter(c, comp) {
+  const q = c.natQuali;
+  if (q?.open == null) advancePlayoffs(c, comp);
+  else settleOthers(c, comp, new Set(windowDays(q, q.openWin)));
 }
 
 // --- Fenster -----------------------------------------------------------------------------------------------------------------
@@ -195,11 +267,12 @@ function openWindow(c, wi) {
   q.open = c.round;
   q.openWin = wi;
   const days = new Set(windowDays(q, wi));
+  preparePlayoffs(c, q, days);
   const club = humanClub(c);
   const games = {}; // eigene Spieler: Spiele in diesem Fenster
   for (const comp of q.comps) {
     comp.own = {};
-    const nations = new Set(comp.groups.flat());
+    const nations = new Set([...comp.groups.flat(), ...playoffTeams(comp)]);
     if (proNow(c)) {
       for (const idx of club.squad) {
         const rec = c.players[idx];
@@ -216,11 +289,9 @@ function openWindow(c, wi) {
         }
       }
     }
-    for (const m of comp.matches) {
-      if (!days.has(m.day) || m.result) continue;
-      if (!isOwn(comp, m)) quickMatch(c, comp, m);
-      else for (const nid of [m.home, m.away]) if (comp.own[nid]) games[nid] = (games[nid] ?? 0) + 1;
-    }
+    for (const m of comp.matches) if (days.has(m.day) && !m.result && isOwn(comp, m)) for (const nid of [m.home, m.away]) if (comp.own[nid]) games[nid] = (games[nid] ?? 0) + 1;
+    // Play-off-Finale noch offen: als mögliches Spiel mitzählen (Müdigkeit).
+    for (const p of comp.po?.paths ?? []) if (p.legs === 1 && days.has(comp.po.days[1])) for (const nid of new Set([...p.semis.flat(), p.seed].filter(Boolean))) if (comp.own[nid]) games[nid] = (games[nid] ?? 0) + 1;
   }
   // Kosten für die Eigenen in der Startelf ihres Landes: Müdigkeit und Verletzungsrisiko je Spiel.
   const rng = createRng(hash(c.seed ?? 0, c.season ?? 1, c.round, 61));
@@ -251,7 +322,7 @@ function openWindow(c, wi) {
     }
   }
   // Wer verletzt ausfällt, macht ein Spiel ohne eigene Spieler daraus: gleich als Ergebnis.
-  for (const comp of q.comps) for (const m of comp.matches) if (days.has(m.day) && !m.result && !isOwn(comp, m)) quickMatch(c, comp, m);
+  for (const comp of q.comps) settleOthers(c, comp, days);
   if (away.length) note(c, tr(`Länderspielpause: unterwegs sind ${[...new Set(away)].join(', ')}. Die Spiele stehen im Vereinsheim.`, `International break: away are ${[...new Set(away)].join(', ')}. The games are in the clubhouse.`));
 }
 
@@ -261,7 +332,11 @@ export function playWindow(c) {
   const q = c.natQuali;
   if (!q || q.open == null) return;
   const days = new Set(windowDays(q, q.openWin));
-  for (const comp of q.comps) for (const m of comp.matches) if (days.has(m.day) && !m.result) quickMatch(c, comp, m);
+  for (const comp of q.comps)
+    for (let guard = 0; guard < 8; guard++) {
+      for (const m of comp.matches) if (days.has(m.day) && !m.result) quickMatch(c, comp, m);
+      if (!advancePlayoffs(c, comp)) break;
+    }
 }
 
 export function closeWindow(c) {
@@ -294,7 +369,7 @@ export function windowView(c) {
     const nations = Object.keys(comp.own).filter((nid) => comp.own[nid].length);
     if (!nations.length) continue;
     const games = comp.matches.filter((m) => days.has(m.day) && (nations.includes(m.home) || nations.includes(m.away)));
-    const groups = [...new Set(games.map((m) => m.g))].map((g) => ({ g, rows: qualiTable(comp, g), mine: nations.filter((nid) => comp.groups[g].includes(nid)) }));
+    const groups = [...new Set(games.map((m) => m.g).filter((g) => g >= 0))].map((g) => ({ g, rows: qualiTable(comp, g), mine: nations.filter((nid) => comp.groups[g].includes(nid)) }));
     list.push({ comp, name: tournamentName(comp.id), year: comp.year, players: nations.flatMap((nid) => comp.own[nid].map((idx) => ({ idx, nid }))), games, groups });
   }
   return { window: q.openWin, list };

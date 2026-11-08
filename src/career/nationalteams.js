@@ -26,13 +26,14 @@ import { book } from './finances.js';
 import { isCoach } from './personal.js';
 import { poisson, QUICK, quickSlope } from './pokal.js';
 import { chronicle, yearOf } from './sagas.js';
-import { hostsOf, nextQualiMatch, playWindow, qualiComp, qualiTables, qualiWeek } from './natquali.js';
+import { hostsOf, interOutcome, nextQualiMatch, playWindow, qualiAfter, qualiComp, qualiOutcome, qualiWeek } from './natquali.js';
+import { INTER, interDraw, playoffDraw, quickPlayoffs, rankAll } from './natplayoffs.js';
 
 // --- Turniere ---------------------------------------------------------------------------------------------------------
 // from/to: [Monat, Tag]. Quellen und Spielwerte stehen im Konzept (Abschnitt 2); kurz:
 //  wm   48 Teams, 12 Gruppen, 8 beste Dritte → Runde der 32 (Format 2026); 11.6.–19.7. wie 2026. Plätze je Verband wie 2026
-//       (Europa 16, Afrika 9, Asien 8, Südamerika 6, Nord-/Mittelamerika 6, Ozeanien 1), die zwei Plätze der Play-offs hier an Asien
-//       und Nord-/Mittelamerika (Spielwert). Entschädigung: mindestens 5000 US-Dollar je Spieler und Tag (Weltverband 2026), im
+//       (Europa 16, Afrika 9, Asien 8, Südamerika 6, Nord-/Mittelamerika 6, Ozeanien 1), die zwei übrigen Plätze über die
+//       interkontinentalen Play-offs (natplayoffs.js INTER). Entschädigung: mindestens 5000 US-Dollar je Spieler und Tag (Weltverband 2026), im
 //       Spiel 5000 € (hergeleitet).
 //  em   24 Teams, 6 Gruppen, 4 beste Dritte → Achtelfinale; 9.6.–9.7. (Ausgabe 2028).
 //  sam  16 Teams (10 aus Südamerika + 6 Gäste aus Nord-/Mittelamerika, erwartet für 2028), 4 Gruppen → Viertelfinale; Juni/Juli.
@@ -42,7 +43,7 @@ import { hostsOf, nextQualiMatch, playWindow, qualiComp, qualiTables, qualiWeek 
 //  asi  24 Teams, 7.1.–5.2. (Ausgabe 2027), alle vier Jahre.
 //  oce   8 Teams (Ausgabe 2024), 2 Gruppen → Halbfinale; Rhythmus alle vier Jahre: prüfen.
 export const TOURNAMENTS = {
-  wm: { de: 'Weltmeisterschaft', en: 'World Cup', groups: 12, best3: 8, when: 'summer', every: 4, anchor: 2026, from: [6, 11], to: [7, 19], slots: { uefa: 16, caf: 9, afc: 9, conmebol: 6, concacaf: 7, ofc: 1 }, weight: 1, pay: 5000 },
+  wm: { de: 'Weltmeisterschaft', en: 'World Cup', groups: 12, best3: 8, when: 'summer', every: 4, anchor: 2026, from: [6, 11], to: [7, 19], slots: { uefa: 16, caf: 9, afc: 8, conmebol: 6, concacaf: 6, ofc: 1 }, weight: 1, pay: 5000 },
   em: { de: 'Europameisterschaft', en: 'European Championship', groups: 6, best3: 4, when: 'summer', every: 4, anchor: 2028, from: [6, 9], to: [7, 9], slots: { uefa: 24 }, weight: 0.9 },
   sam: { de: 'Südamerikameisterschaft', en: 'South American Championship', groups: 4, best3: 0, when: 'summer', every: 4, anchor: 2028, from: [6, 20], to: [7, 14], slots: { conmebol: 10, concacaf: 6 }, weight: 0.8 },
   nam: { de: 'Nord- und Mittelamerikameisterschaft', en: 'North and Central American Championship', groups: 4, best3: 0, when: 'summer', every: 2, anchor: 2027, from: [6, 14], to: [7, 6], slots: { concacaf: 16 }, weight: 0.5 },
@@ -69,7 +70,7 @@ export const hash = (...parts) => parts.reduce((h, p) => (Math.imul(h ^ (p | 0),
 export const idHash = (id) => [...String(id)].reduce((s, ch) => Math.imul(s, 31) + ch.charCodeAt(0), 7) >>> 0;
 const STEP_NAMES = { 32: 'r32', 16: 'r16', 8: 'qf', 4: 'sf', 2: 'f' };
 export const stepLabel = (step) =>
-  /^q\d+$/.test(step) ? tr(`Qualifikation, ${step.slice(1)}. Spieltag`, `Qualifier, matchday ${step.slice(1)}`) : ({ g1: tr('1. Gruppenspiel', 'Group match 1'), g2: tr('2. Gruppenspiel', 'Group match 2'), g3: tr('3. Gruppenspiel', 'Group match 3'), r32: tr('Runde der letzten 32', 'Round of 32'), r16: tr('Achtelfinale', 'Round of 16'), qf: tr('Viertelfinale', 'Quarter-final'), sf: tr('Halbfinale', 'Semi-final'), f: tr('Finale', 'Final') })[step] ?? step;
+  /^q\d+$/.test(step) ? tr(`Qualifikation, ${step.slice(1)}. Spieltag`, `Qualifier, matchday ${step.slice(1)}`) : ({ p1: tr('Play-off-Halbfinale', 'Play-off semi-final'), p2: tr('Play-off-Finale', 'Play-off final'), l1: tr('Play-off, Hinspiel', 'Play-off, first leg'), l2: tr('Play-off, Rückspiel', 'Play-off, second leg'), g1: tr('1. Gruppenspiel', 'Group match 1'), g2: tr('2. Gruppenspiel', 'Group match 2'), g3: tr('3. Gruppenspiel', 'Group match 3'), r32: tr('Runde der letzten 32', 'Round of 32'), r16: tr('Achtelfinale', 'Round of 16'), qf: tr('Viertelfinale', 'Quarter-final'), sf: tr('Halbfinale', 'Semi-final'), f: tr('Finale', 'Final') })[step] ?? step;
 
 // Turnierjahr (Kalenderjahr): Sommer nach der Saison, Winter im Dezember bzw. Januar der Saison.
 export function yearFor(c, cfg) {
@@ -166,13 +167,13 @@ export function squadOf(c, t, nation) {
 // --- Feld, Gruppen, Spielplan -------------------------------------------------------------------------------------------
 // Qualifikation (Variante 1, Nutzerentscheid 2026-11-06): beim Turnierstart auf einen Schlag im Schnellmodell ausgespielt.
 // Je Verband Gruppen mit Hin- und Rückspiel (Heimvorteil wie in simTable); weiter sind die Gruppensieger, die übrigen Plätze gehen
-// an die besten Zweiten, dann die besten Dritten (nach Punkten, Tordifferenz und Toren je Spiel). Play-offs sind dabei
-// vereinfacht: Ihre Plätze gehen an die Nächstbesten der Rangliste. Wo ein Verband nicht mehr Länder hat als Plätze, gibt es keine.
+// an die besten Zweiten, dann die besten Dritten (nach Punkten, Tordifferenz und Toren je Spiel). Play-offs werden
+// gespielt (natplayoffs.js); ohne Regel gehen ihre Plätze an die Nächstbesten der Rangliste. Wo ein Verband nicht mehr Länder hat als Plätze, gibt es keine.
 // Gruppenzahl: wo bekannt wie in echt, sonst halb so viele wie Plätze (höchstens ein Drittel der Länder, Spielwert).
-//  - Weltmeisterschaft, Europa: 12 Gruppen, die 12 Sieger direkt, 4 Plätze über Play-offs (Quali 2026; hier die 4 besten Zweiten).
+//  - Weltmeisterschaft, Europa: 12 Gruppen, die 12 Sieger direkt, 4 Plätze über Play-offs (Quali 2026, natplayoffs.js).
 //  - Weltmeisterschaft, Südamerika: eine Liga, jeder gegen jeden mit Hin- und Rückspiel, die besten 6 (Quali 2026).
 //  - Weltmeisterschaft, Afrika: 9 Gruppen, die Sieger direkt (Quali 2026, prüfen).
-//  - Europameisterschaft: 12 Gruppen, Sieger und 8 beste Zweite direkt, 4 Plätze über Play-offs (Quali 2028; hier die Nächstbesten).
+//  - Europameisterschaft: 12 Gruppen, Sieger und 8 beste Zweite direkt, 4 Plätze über Play-offs (Quali 2028, natplayoffs.js).
 // Im Spiel hat Europa 37 Länder (in echt 54) – die Gruppen sind darum kleiner als die echten Vierer- und Fünfergruppen.
 export const QUALI_GROUPS = { wm: { uefa: 12, conmebol: 1, caf: 9 }, em: { uefa: 12 } };
 const formOf = (c, year, nid) => (((hash(c.seed ?? 0, year, idHash(nid), 9) % 1000) / 1000) - 0.5) * 2 * NAT.form;
@@ -255,19 +256,33 @@ export function makeField(c, id, year) {
   const cfg = TOURNAMENTS[id];
   const field = [];
   const quali = {};
+  const rest = {}; // Nächstbeste je Verband (interkontinentale Play-offs)
   for (const conf of Object.keys(cfg.slots)) {
     const setup = qualiSetup(c, id, year, conf);
     field.push(...setup.auto);
     if (!setup.groups) {
       field.push(...setup.direct.slice(0, setup.places));
+      rest[conf] = setup.direct.slice(setup.places);
       continue;
     }
     // Variante 2 (natquali.js): über die Saison in Länderspielfenstern gespielt – sonst Variante 1 auf einen Schlag.
-    const played = qualiTables(c, id, year, conf);
-    const tables = played ?? setup.groups.map((g, gi) => qualiGroup(c, year, `${id}-${conf}-${gi}`, g, setup.str));
-    const qualified = qualifiedFrom(tables, setup.places, setup.reserved, setup.reservedSlots);
+    const played = qualiOutcome(c, id, year, conf, setup);
+    const tables = played?.tables ?? setup.groups.map((g, gi) => qualiGroup(c, year, `${id}-${conf}-${gi}`, g, setup.str));
+    const draw = played ? null : playoffDraw(c, id, year, conf, tables, setup);
+    const qualified = played?.qualified ?? (draw ? quickPlayoffs(c, `${id}-${year}-${conf}-po`, year, draw, setup.str) : qualifiedFrom(tables, setup.places, setup.reserved, setup.reservedSlots));
     field.push(...qualified);
+    rest[conf] = rankAll(tables).filter((nid) => !qualified.includes(nid));
     quali[conf] = tables.map((tb) => tb.map((r) => ({ nid: r.nid, pts: r.pts, gd: r.gf - r.ga, q: qualified.includes(r.nid) })));
+  }
+  if (INTER[id]) {
+    const teams = Object.entries(INTER[id].from).flatMap(([conf, n]) => (rest[conf] ?? []).slice(0, n));
+    let won = interOutcome(c, id, year, teams);
+    if (!won) {
+      const d = interDraw(c, id, year, teams);
+      won = d.paths.length ? quickPlayoffs(c, `${id}-${year}-inter`, year, d, d.str) : d.direct;
+    }
+    field.push(...won);
+    for (const tb of Object.values(quali).flat()) for (const r of tb) if (won.includes(r.nid)) r.q = true;
   }
   return { field, quali };
 }
@@ -317,7 +332,7 @@ export function groupTable(t, gi) {
 }
 const H2H_CUPS = new Set(['wm', 'em']);
 
-const winnerOf = (m) => (m.result.home !== m.result.away ? (m.result.home > m.result.away ? m.home : m.away) : m.pens.home > m.pens.away ? m.home : m.away);
+export const winnerOf = (m) => (m.result.home !== m.result.away ? (m.result.home > m.result.away ? m.home : m.away) : m.pens.home > m.pens.away ? m.home : m.away);
 
 // Nächste Runde anlegen: nach den Gruppen die Qualifizierten (Erste, Zweite, beste Dritte), danach die Sieger paarweise.
 function nextStep(t) {
@@ -427,9 +442,9 @@ function note(c, text) {
 // --- Spiele -------------------------------------------------------------------------------------------------------------
 const ownNation = (t, nid) => !!t.own[nid]?.length;
 export const isOwnMatch = (t, m) => ownNation(t, m.home) || ownNation(t, m.away);
-const isKo = (m) => !m.step.startsWith('g') && !/^q\d+$/.test(m.step); // q1, q2 …: Qualifikation (natquali.js); qf ist das Viertelfinale
+const isKo = (m) => !m.step.startsWith('g') && !/^q\d+$/.test(m.step) && m.step !== 'l1' && m.step !== 'l2'; // q1, q2 …: Qualifikation (natquali.js), qf ist das Viertelfinale; l1/l2: Hin- und Rückspiel (Gesamtergebnis in natplayoffs.js)
 
-function quickPens(rng, a, b) {
+export function quickPens(rng, a, b) {
   const p = Math.max(0.35, Math.min(0.65, 0.5 + (a - b) * 0.01));
   const home = rng.chance(p);
   return home ? { home: 5, away: 4 } : { home: 4, away: 5 };
@@ -498,7 +513,8 @@ export function quickOwnMatch(c) {
   const next = nextOwnMatch(c);
   if (!next) return false;
   quickMatch(c, next.t, next.m);
-  if (!next.t.isQuali) settle(c, next.t);
+  if (next.t.isQuali) qualiAfter(c, next.t);
+  else settle(c, next.t);
   return true;
 }
 
@@ -554,7 +570,8 @@ export function recordNatMatch(c, prepared) {
   }
   m.watched = true;
   logMatch(c, t, m);
-  if (!t.isQuali) settle(c, t);
+  if (t.isQuali) qualiAfter(c, t);
+  else settle(c, t);
   return true;
 }
 

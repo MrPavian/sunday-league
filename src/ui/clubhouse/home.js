@@ -249,12 +249,12 @@ export const homeScreens = {
     const view = windowView(c);
     if (!view?.list.length) return '';
     const next = nextOwnMatch(c);
-    const res = (m) => (m.result ? `<b>${m.result.home}:${m.result.away}</b>` : '–:–');
-    const blocks = view.list.map(({ name, year, players, games, groups }) => {
+    const res = (m) => (m.result ? `<b>${m.result.home}:${m.result.away}</b>${m.pens ? ` ${tr('i. E.', 'pens')} ${m.pens.home}:${m.pens.away}` : m.et ? ` ${tr('n. V.', 'aet')}` : ''}` : '–:–');
+    const blocks = view.list.map(({ comp, name, year, players, games, groups }) => {
       const who = players.map(({ idx, nid }) => `${esc(playerOf(c, idx).name)} (${nationName(nid)})`).join(', ');
       const list = games.map((m) => `<li>${stepLabel(m.step)}: ${nationName(m.home)} ${res(m)} ${nationName(m.away)}</li>`).join('');
       const tables = groups.map(({ g, rows, mine }) => `<details class="nat-table"><summary>${tr('Gruppe', 'Group')} ${String.fromCharCode(65 + g)} (${mine.map(nationName).join(', ')})</summary><table class="ui-table compact"><tbody>${rows.map((r, i) => `<tr${mine.includes(r.nid) ? ' class="me"' : ''}><td>${i + 1}.</td><td>${nationName(r.nid)}</td><td>${r.p}</td><td>${r.gf}:${r.ga}</td><td><b>${r.pts}</b></td></tr>`).join('')}</tbody></table></details>`).join('');
-      return `<p class="t-2"><b>${tr(`Qualifikation zur ${name} ${year}`, `${name} ${year} qualifying`)}</b> · ${tr('dabei', 'called up')}: ${who}</p><ul class="nat-log">${list}</ul>${tables}`;
+      return `<p class="t-2"><b>${comp.conf === 'inter' ? tr(`Interkontinentale Play-offs zur ${name} ${year}`, `${name} ${year} inter-confederation play-offs`) : tr(`Qualifikation zur ${name} ${year}`, `${name} ${year} qualifying`)}</b> · ${tr('dabei', 'called up')}: ${who}</p><ul class="nat-log">${list}</ul>${tables}`;
     }).join('');
     const nextHTML = next?.t.isQuali
       ? `<p class="t-body">${tr('Nächstes Spiel', 'Next game')}: <b>${nationName(next.m.home)} – ${nationName(next.m.away)}</b> (${stepLabel(next.m.step)})</p>
