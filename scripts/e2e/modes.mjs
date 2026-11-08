@@ -684,9 +684,60 @@ export async function eventFold(b) {
   return ok.done();
 }
 
-// Vereinsheim „Heute": Raum mit Fenster (Kamera zeigt dort das ganze Bild) und klassische Kacheln.
+// Länderspielpause (natquali.js): Qualifikationsspiel eines eigenen Spielers als Karte, im Stadion ansehen, Rest vorspulen.
+export async function quali(b, shots = process.env.E2E_SHOTS) {
+  const ok = checker('Länderspielpause: Qualifikationsspiel als Karte, im Stadion ansehen, Gruppentabelle, Rest vorspulen');
+  const { createCareer, currentFixtures, finishRound, humanClub, nextSeason, seasonOver } = await import('../../src/career/career.js');
+  const c = createCareer({ seed: 11 });
+  const round = () => {
+    for (const f of currentFixtures(c)) f.result ??= { home: 1, away: 1 };
+    finishRound(c);
+  };
+  while (!seasonOver(c)) round();
+  nextSeason(c); // 2027/28: Qualifikation zur Europameisterschaft 2028
+  c.level = 12;
+  c.pro = true;
+  const idx = humanClub(c).squad[3];
+  c.players[idx].delta = Object.fromEntries(['pace', 'stamina', 'technique', 'passing', 'shooting', 'tackling', 'heading', 'keeping'].map((k) => [k, 3]));
+  (c.natLock ??= {})[idx] = 'ger';
+  const w0 = c.natQuali.windows[0].round;
+  while (c.round < w0) round();
+  ok(c.natQuali.open === w0, 'Fenster nicht geöffnet');
+  const p = await page(b, 'land', { query: '?notitle&debug&dauer=20', store: { 'sunday-league:career': JSON.stringify(c) } });
+  await click(p, '.career [data-c="continue"]');
+  await p.waitForTimeout(1500);
+  await click(p, '[data-action="area"][data-value="home"]').catch(() => {});
+  ok(!!(await p.waitForSelector('[data-testid="quali-card"]', { timeout: 15000 }).catch(() => null)), 'Karte der Länderspielpause fehlt');
+  const card = await p.evaluate(() => document.querySelector('[data-testid="quali-card"]')?.innerText ?? '');
+  ok(/Qualifikation zur Europameisterschaft 2028/.test(card) && /Deutschland/.test(card), `Karte ohne Wettbewerb/Land: ${card.slice(0, 160)}`);
+  ok(!!(await p.$('[data-testid="quali-card"] details.nat-table')), 'Gruppentabelle fehlt');
+  if (shots) await p.screenshot({ path: `${shots}/quali-card.png`, fullPage: true });
+  await click(p, '[data-testid="quali-watch"]');
+  await p.waitForTimeout(2500);
+  await p.waitForFunction(() => !document.getElementById('end').hidden, null, { timeout: 300000 }).catch(() => null);
+  ok(await visible(p, 'end'), 'Länderspiel im Stadion endet nicht');
+  await p.keyboard.press("Enter");
+  await p.waitForTimeout(1500);
+  await click(p, '[data-action="area"][data-value="home"]').catch(() => {});
+  ok(!!(await p.waitForSelector('[data-testid="quali-card"]', { timeout: 15000 }).catch(() => null)), 'nach dem Länderspiel fehlt die Karte');
+  const after = await p.evaluate(() => document.querySelector('[data-testid="quali-card"] .nat-log')?.innerText ?? '');
+  ok(/\d+:\d+/.test(after), `Ergebnis fehlt auf der Karte: ${after.slice(0, 120)}`);
+  if (await p.$('[data-testid="quali-finish"]')) {
+    await click(p, '[data-testid="quali-finish"]');
+    await p.waitForTimeout(800);
+  }
+  const done = await p.evaluate(() => document.querySelector('[data-testid="quali-card"]')?.innerText ?? '');
+  ok(/Alle Spiele dieser Länderspielpause sind gespielt/.test(done), `Pause nicht abgeschlossen: ${done.slice(-120)}`);
+  ok(!!(await p.$('[data-action="onSimulate"], [data-action="onCoach"]')), 'Ligaspiel fehlt nach der Länderspielpause');
+  if (shots) await p.screenshot({ path: `${shots}/quali-done.png`, fullPage: true });
+  ok(!p.errors.length, `Fehler ${p.errors.slice(0, 2).join(' | ')}`);
+  await p.context().close();
+  return ok.done();
+}
+
+// Vereinsheim „Heute": Raum ohne Fenster (seit 2026-11-08: Vitrine, Mannschaftsfoto oder große Tafeln, wechselbar) und klassische Kacheln.
 export async function homeViews(b) {
-  const ok = checker('Vereinsheim „Heute": Fenster zeigt den Platz, klassische Ansicht per Notizbuch');
+  const ok = checker('Vereinsheim „Heute": Wand wechselbar (Vitrine, Mannschaftsfoto, große Tafeln), klassische Ansicht per Notizbuch');
   for (const size of ['port', 'desk']) {
     const p = await page(b, size, { query: '?notitle&debug' });
     await p.click('.career button');
@@ -698,15 +749,24 @@ export async function homeViews(b) {
     await founding(p);
     await click(p, '[data-action="area"][data-value="home"]');
     await p.waitForTimeout(600);
-    const win = await p.evaluate(() => {
-      const r = document.querySelector('.cs-window')?.getBoundingClientRect();
-      const v = __sl.rig.camera.view;
-      return { rect: r && [r.x, r.y, r.width, r.height], view: v?.enabled ? [v.offsetX, v.offsetY, v.fullWidth, v.fullHeight] : null };
+    // Drei Wand-Varianten (Nutzerwunsch: wechselbar), durchgeschaltet mit ⇄: Vitrine → Mannschaftsfoto → Große Tafeln.
+    const room = () => p.evaluate(() => {
+      const wall = [...document.querySelectorAll('.cs-wall > .cs-obj')];
+      const club = document.getElementById('club');
+      return { wall: wall.map((e) => e.className.split(' ')[1]), window: !!document.querySelector('.cs-window'), see: club.classList.contains('see-through'), view: !!__sl.rig.camera.view?.enabled, magnets: document.querySelectorAll('.cs-whiteboard i').length, names: [...document.querySelectorAll('.cs-whiteboard em')].filter((e) => e.textContent.trim()).length, rows: document.querySelectorAll('.cs-cork .cs-row').length, dates: document.querySelectorAll('.cs-calsheet > i').length - 1, out: wall.filter((e) => { const r = e.getBoundingClientRect(); return r.right > innerWidth + 1 || r.left < -1; }).length, sw: Math.min(document.querySelector('.cs-switch')?.getBoundingClientRect().height ?? 0, document.querySelector('.cs-switch')?.getBoundingClientRect().width ?? 0) };
     });
-    ok(win.rect && win.view && Math.abs(win.view[0] + win.rect[0]) < 1 && Math.abs(win.view[1] + win.rect[1]) < 1 && Math.abs(win.view[3] - win.rect[3]) < 1, `${size}: Kamerabild liegt nicht im Fenster (${JSON.stringify(win)})`);
+    for (const [kind, first] of [['vitrine', 'cs-cabinet'], ['foto', 'cs-photo'], ['gross', null]]) {
+      const r = await room();
+      ok(JSON.stringify(r.wall) === JSON.stringify([...(first ? [first] : []), 'cs-board', 'cs-pin', 'cs-cal']) && !r.window && !r.see && !r.view && r.out === 0 && r.sw >= 44, `${size} ${kind}: Wand falsch (${JSON.stringify(r)})`);
+      if (kind === 'gross') ok(r.magnets >= 4 && r.names === r.magnets && r.rows === 3 && r.dates >= 1, `${size} ${kind}: Tafeln unvollständig (${JSON.stringify(r)})`);
+      else ok(r.names === 0 && r.rows === 0 && r.dates === 0, `${size} ${kind}: kleine Tafeln erwartet (${JSON.stringify(r)})`);
+      if (process.env.SHOTS) await p.screenshot({ path: `${process.env.SHOTS}/home-wall-${size}-${kind}.png` });
+      await click(p, '.cs-switch');
+      await p.waitForTimeout(300);
+    }
+    ok((await room()).wall[0] === 'cs-cabinet', `${size}: ⇄ führt nicht zurück zur Vitrine`);
     await click(p, '[data-action="area"][data-value="team"]');
     await p.waitForTimeout(400);
-    ok(!(await p.evaluate(() => __sl.rig.camera.view?.enabled)), `${size}: Fensteransicht bleibt nach dem Verlassen von „Heute" aktiv`);
     // Klassisch einstellen (Notizbuch → Grafik)
     await click(p, '.club-tools [data-action="onSettings"]');
     await p.waitForTimeout(300);
@@ -717,7 +777,7 @@ export async function homeViews(b) {
     await click(p, '[data-action="area"][data-value="home"]');
     await p.waitForTimeout(600);
     const cl = await p.evaluate(() => ({ tiles: document.querySelectorAll('.club-classic .cc-tile').length, window: !!document.querySelector('.cs-window'), see: document.getElementById('club').classList.contains('see-through'), h: Math.min(...[...document.querySelectorAll('.cc-tile')].map((e) => e.getBoundingClientRect().height)), view: !!__sl.rig.camera.view?.enabled }));
-    ok(cl.tiles === 10 && !cl.window && !cl.see && !cl.view, `${size}: klassische Ansicht falsch (${JSON.stringify(cl)})`);
+    ok(cl.tiles === 11 && !cl.window && !cl.see && !cl.view, `${size}: klassische Ansicht falsch (${JSON.stringify(cl)})`);
     ok(cl.h >= 44, `${size}: Kachel kleiner als 44 px (${cl.h})`);
     ok(!(await p.evaluate(() => document.scrollingElement.scrollWidth > innerWidth)), `${size}: seitliches Scrollen`);
     ok(!p.errors.length, `${size}: Fehler ${p.errors.slice(0, 2).join(' | ')}`);
@@ -801,6 +861,7 @@ export async function run() {
   if (!ONLY || ONLY.has('saveAtWhistle')) f += await saveAtWhistle(b);
   if (!ONLY || ONLY.has('pokal')) f += await pokal(b);
   if (!ONLY || ONLY.has('euro')) f += await euro(b);
+  if (!ONLY || ONLY.has('quali')) f += await quali(b);
   if (!ONLY || ONLY.has('oldSave')) f += await oldSave(b, process.env.E2E_OLD_SAVE ?? fileURLToPath(new URL('./fixtures/save-858e978.json', import.meta.url)));
   await b.close();
   return f;

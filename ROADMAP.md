@@ -1211,6 +1211,14 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
     Vereinsheim (im Stadion ansehen, nur Ergebnis, vorspulen), Gruppentabelle einsehbar, Einsätze zählen wenig für den Marktwert,
     etwas Müdigkeit und Verletzungsrisiko. Gastgeber automatisch dabei. Vorher recherchieren: Formate je Verband, Play-offs,
     Länderspielfenster; Zahl der Fenster im gestauchten Spielkalender als Spielwert mit dem Nutzer abstimmen.
+    ✅ **Variante 2 gebaut 2026-11-08** („mach einfach weiter“, natquali.js): drei Fenster wie im Kalender des Weltverbands 2026–2030
+    (Sep./Okt. bis 4 Spiele, Nov. 2, März 2; Juni nach der Saison), im gestauchten Kalender vor dem ersten Spieltag im Oktober bzw.
+    November und vor dem zweiten Spieltag nach der Winterpause (Spielwert). Gruppen mit Doppelrunde, Wintermeisterschaften nur mit
+    den Herbstfenstern. Gastgeber wo bekannt (WM 2030 alle sechs, WM 2034, EM 2028 mit zwei reservierten Plätzen, EM 2032, Afrika
+    2027, Asien 2027). Eigene Spieler: Karte im Vereinsheim (ansehen/Ergebnis/vorspulen, Gruppentabelle), Müdigkeit je Spiel
+    (höchstens 15 %), Verletzungsrisiko wie im Ligaspiel, Marktwert ein Viertel der Turnierwerte (Spielwerte). Offen: echte
+    Play-offs (bisher die Nächstbesten), Nations League, Fenster über zwei Saisons (in echt dauert die Qualifikation teils länger),
+    Abstellungsgebühr für Länderspiele.
 15. **Nationaltrainer werden** (später): Anfragen von Verbänden ab gutem Ruf, Neben- oder Hauptamt, eigener Kader aus allen
     Spielern des Landes, Turnierspiele in 3D.
 16. **Vereinsgelände ausbauen** (vom Nutzer gewünscht, 2026-11-06). **Erste Lieferung gebaut 2026-11-06** (Nutzerentscheid: alle sechs

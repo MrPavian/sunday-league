@@ -3,6 +3,7 @@ import { HALF_MAX, HALF_MIN, matchDuration, presetHalf } from '../sim/match.js';
 import { PITCHES } from '../sim/pitch.js';
 import { BUND_NAME } from '../career/bundespokal.js';
 import { whatsNewListHtml } from './whatsnew.js';
+import { WALL_LABEL, WALL_VIEWS } from './prefs.js';
 
 // Halbzeit je Platz: Voreinstellung als Ausgangspunkt, dann pro Platz in Viertelminuten anpassbar.
 const clock = (sec) => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}`;
@@ -121,7 +122,10 @@ export class Settings {
         <p class="hint">${tr('Das Spiel lädt kurz neu, dein Spielstand bleibt erhalten. Bereits geschriebene Chat- und Chronik-Einträge bleiben in der alten Sprache.', 'The game reloads briefly; your save is kept. Chat and chronicle entries already written stay in the old language.')}</p>
         <h4>${tr('Vereinsheim „Heute"', 'Clubhouse “Today”')}</h4>
         <div class="choice"><button class="${s.homeView === 'klassisch' ? '' : 'active'}" data-action="homeview" data-value="raum">${tr('Raum', 'Room')}</button><button class="${s.homeView === 'klassisch' ? 'active' : ''}" data-action="homeview" data-value="klassisch">${tr('Klassisch', 'Classic')}</button></div>
-        <p class="hint">${tr('Raum: Wand mit Taktiktafel, Fenster zum Platz und Tisch. Klassisch: dieselben Angaben als schlichte Kacheln, ohne Fenster.', 'Room: wall with tactics board, window onto the pitch and a desk. Classic: the same information as plain tiles, without the window.')}</p>
+        <p class="hint">${tr('Raum: Wand mit Taktiktafel, Pinnwand und Kalender, davor der Tisch. Klassisch: dieselben Angaben als schlichte Kacheln.', 'Room: wall with tactics board, notice board and calendar, the desk in front. Classic: the same information as plain tiles.')}</p>
+        <h4>${tr('Wand im Vereinsheim', 'Clubhouse wall')}</h4>
+        <div class="choice">${WALL_VIEWS.map((v) => `<button class="${s.wallView === v ? 'active' : ''}" data-action="wallview" data-value="${v}">${WALL_LABEL()[v]}</button>`).join('')}</div>
+        <p class="hint">${tr('Vitrine: deine Titel, Pokale und Aufstiege. Mannschaftsfoto: der Kader in Vereinsfarben, jede Saison neu. Große Tafeln: Aufstellung mit Namen, Tabellenausschnitt und die nächsten drei Termine. Auch an der Wand selbst umschaltbar (⇄).', 'Trophy cabinet: your titles, cups and promotions. Team photo: the squad in club colours, new every season. Big boards: line-up with names, your part of the table and the next three dates. Can also be switched on the wall itself (⇄).')}</p>
         <h4>${tr('Grafikeffekte', 'Graphics effects')}</h4>
         <div class="choice">${toggle('effects', s.effects, tr('An', 'On'), tr('Aus (schneller)', 'Off (faster)'))}</div>
         <p class="hint">${tr('Kontaktschatten, Glühen, Vignette und Dithering. Auf langsamen Rechnern lieber aus. Im Spiel: Taste G.', 'Contact shadows, glow, vignette and dithering. Better off on slow computers. In a match: key G.')}</p>

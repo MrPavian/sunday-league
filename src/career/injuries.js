@@ -27,6 +27,7 @@ export const INJURIES = {
 };
 export const SEVERE = 5; // ab so vielen Wochen gibt es eine Diagnose mit Entscheidung
 const BASE_CHANCE = 0.008; // pro Spieler und Spiel – dazu kommt, was im Spiel selbst passiert (sim/knocks.js)
+export const INJURY_BASE = BASE_CHANCE; // auch für Länderspiele (natquali.js)
 
 function rollType(rng) {
   let r = rng.next() * Object.values(INJURIES).reduce((s, i) => s + i.w, 0);

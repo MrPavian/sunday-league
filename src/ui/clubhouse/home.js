@@ -9,7 +9,7 @@ import { GOALS } from '../../career/board.js';
 import { button, esc, icon } from '../ds.js';
 import { clubScene } from '../ClubScene.js';
 import { phone } from '../world.js';
-import { homeView } from '../prefs.js';
+import { homeView, wallView } from '../prefs.js';
 import { crestExtras, crestOf, crestSVG } from '../crest.js';
 import { relegationNeeded, relegationOf } from '../../career/relegation.js';
 import { LEAGUES, MAX_LEVEL, maxLevel } from '../../career/clubs.js';
@@ -17,6 +17,7 @@ import { blockText, championWaives, licenseNeeds, promotionBlock } from '../../c
 import { firedState, offerClubs } from '../../career/pressure.js';
 import { startCash, summerMove, summerOffers } from '../../career/clubchange.js';
 import { nationName, natRunning, nextOwnMatch, reachLabel, recentNat, stepLabel, tournamentName } from '../../career/nationalteams.js';
+import { windowView } from '../../career/natquali.js';
 import { leagueTitle } from '../../career/verband.js';
 import { clubById, humanClub, kitChoice, leagueOf, humanFixture, playerOf, seasonOver, table } from '../../career/career.js';
 import { DESTINATIONS, tripChoose, tripStage, tripState, tripVerdict } from '../../career/trip.js';
@@ -102,10 +103,11 @@ export const homeScreens = {
     const side = `
       <div class="ui-card"><p class="t-cap">${tr('Letzte Ergebnisse', 'Recent results')}</p>${last}</div>
       ${pending ? `<button class="ui-card tap notify hub-pending" data-action="tab" data-value="chat"><p class="t-cap">${icon('phone', 16)} ${tr('Handy', 'Phone')}</p><p class="t-body">${tr('In der Gruppe wartet eine Entscheidung auf dich.', 'A decision is waiting for you in the group chat.')}</p></button>` : ''}
+      ${over || this.results ? '' : this.qualiAside()}
       ${this.noticeCard()}`;
     // Die Szene zeigt Tabellenplatz, Termin, Taktik und Handy als Objekte im Raum (ClubScene.js).
     const classic = homeView() === 'klassisch';
-    return `<div class="hub${classic ? ' classic' : ''}"><div class="hub-scene">${clubScene(c, { results: this.results, classic })}</div><section class="hub-main">${main}</section><aside class="hub-side ui-stack tight">${side}</aside></div>`;
+    return `<div class="hub${classic ? ' classic' : ''}"><div class="hub-scene">${clubScene(c, { results: this.results, classic, wall: wallView() })}</div><section class="hub-main">${main}</section><aside class="hub-side ui-stack tight">${side}</aside></div>`;
   },
 
   nextMatch() {
@@ -239,6 +241,26 @@ export const homeScreens = {
       : '';
     const doneHTML = done.map((h) => `<p class="t-2"><b>${tournamentName(h.id)} ${h.year}</b>: ${tr('Sieger', 'Winner')} ${nationName(h.winner)}. ${h.own.map((o) => tr(`${esc(o.name)} (${nationName(o.nat)}): ${o.apps} Spiele, ${o.goals} Tore, ${reachLabel(o.reached)}${o.boost ? `, Marktwert +${o.boost} %` : ''}${o.missed ? `, fehlt ${o.missed} Ligaspiele` : ''}`, `${esc(o.name)} (${nationName(o.nat)}): ${o.apps} games, ${o.goals} goals, ${reachLabel(o.reached)}${o.boost ? `, market value +${o.boost}%` : ''}${o.missed ? `, misses ${o.missed} league games` : ''}`)).join(' · ')}</p>`).join('');
     return `<div class="ui-card" data-testid="nat-card"><p class="label">${tr('Nationalteams', 'National teams')}</p>${runHTML}${nextHTML}${doneHTML}</div>`;
+  },
+
+  // Länderspielpause (natquali.js): Qualifikationsspiele der Länder mit eigenen Spielern – ansehen, nur Ergebnis oder vorspulen.
+  qualiAside() {
+    const c = this.career;
+    const view = windowView(c);
+    if (!view?.list.length) return '';
+    const next = nextOwnMatch(c);
+    const res = (m) => (m.result ? `<b>${m.result.home}:${m.result.away}</b>` : '–:–');
+    const blocks = view.list.map(({ name, year, players, games, groups }) => {
+      const who = players.map(({ idx, nid }) => `${esc(playerOf(c, idx).name)} (${nationName(nid)})`).join(', ');
+      const list = games.map((m) => `<li>${stepLabel(m.step)}: ${nationName(m.home)} ${res(m)} ${nationName(m.away)}</li>`).join('');
+      const tables = groups.map(({ g, rows, mine }) => `<details class="nat-table"><summary>${tr('Gruppe', 'Group')} ${String.fromCharCode(65 + g)} (${mine.map(nationName).join(', ')})</summary><table class="ui-table compact"><tbody>${rows.map((r, i) => `<tr${mine.includes(r.nid) ? ' class="me"' : ''}><td>${i + 1}.</td><td>${nationName(r.nid)}</td><td>${r.p}</td><td>${r.gf}:${r.ga}</td><td><b>${r.pts}</b></td></tr>`).join('')}</tbody></table></details>`).join('');
+      return `<p class="t-2"><b>${tr(`Qualifikation zur ${name} ${year}`, `${name} ${year} qualifying`)}</b> · ${tr('dabei', 'called up')}: ${who}</p><ul class="nat-log">${list}</ul>${tables}`;
+    }).join('');
+    const nextHTML = next?.t.isQuali
+      ? `<p class="t-body">${tr('Nächstes Spiel', 'Next game')}: <b>${nationName(next.m.home)} – ${nationName(next.m.away)}</b> (${stepLabel(next.m.step)})</p>
+        <div class="ui-row">${button(tr('Im Stadion ansehen', 'Watch in the stadium'), { kind: 'primary', action: 'onNatWatch', 'data-testid': 'quali-watch' })}${button(tr('Nur Ergebnis', 'Result only'), { action: 'onNatQuick', 'data-testid': 'quali-quick' })}${button(tr('Rest vorspulen', 'Skip the rest'), { kind: 'ghost', action: 'onNatFinish', 'data-testid': 'quali-finish' })}</div>`
+      : `<p class="t-2">${tr('Alle Spiele dieser Länderspielpause sind gespielt. Am Sonntag geht die Liga weiter.', 'All games of this international break are played. The league carries on on Sunday.')}</p>`;
+    return `<div class="ui-card" data-testid="quali-card"><p class="label">${tr('Länderspielpause', 'International break')}</p>${blocks}${nextHTML}</div>`;
   },
 
   // Englische Woche: nach dem Pokalspiel erst das Ergebnis, dann „Weiter zum …“ (pokal.js finishMidweek).

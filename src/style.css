@@ -1288,8 +1288,9 @@ line.tb-chalk { stroke-width: 1; }
 #shoutbar.ended .rotate-hint { display: none; } /* nach dem Abpfiff unnötig – und er läge unter dem Kreisblatt */
 
 /* ===== UI 3.0 Phase 2: Vereinsheim als Raum ===== */
-/* Durchsichtig nur im Bereich „Heute": der Raum wird um das Fenster herum gemalt (box-shadow),
-   durchs Fenster sieht man die 3D-Szene des eigenen Platzes, die ohnehin im Hintergrund läuft. */
+/* Vereinsheim „Heute": dunkle Wand mit Tapetenstreifen (früher malte das Fenster die Wand per box-shadow).
+   Durchsichtig ist nur noch die Kneipe – dort liegt der 3D-Raum hinter der Bühne. */
+#club:has(.club-scene) { background: repeating-linear-gradient(90deg, rgba(255, 240, 210, 0.025) 0 22px, transparent 22px 44px), #231b15; }
 #club.see-through { background: transparent; }
 #club.see-through .club-main > * { position: relative; z-index: 1; }
 #club.see-through .club-main > .club-body { z-index: auto; }
@@ -1309,23 +1310,6 @@ line.tb-chalk { stroke-width: 1; }
 .cs-wall::-webkit-scrollbar, .cs-desk::-webkit-scrollbar { display: none; }
 .cs-wall { padding: var(--s3) var(--s2) var(--s4); }
 .cs-desk { padding: var(--s3) var(--s3) var(--s2); background: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.08) 0 2px, transparent 2px 60px), linear-gradient(#7a5533, #5e3f24); border: 2px solid #000; border-top: 6px solid #8c6440; box-shadow: 0 3px 0 #000; }
-.cs-window {
-  flex: 1 1 260px;
-  min-width: 180px;
-  max-width: 560px;
-  height: 240px;
-  align-self: stretch;
-  position: relative;
-  z-index: 0 !important;
-  border: 8px solid #6b4a2b;
-  outline: 2px solid #000;
-  /* alles um das Fenster herum ist Wand – die 3D-Szene bleibt nur hier sichtbar */
-  box-shadow: inset 0 0 0 2px #000, 0 0 0 200vmax #231b15;
-  background: linear-gradient(rgba(170, 200, 230, 0.12), rgba(170, 200, 230, 0) 60%);
-}
-.cs-sash::before, .cs-sash::after { content: ''; position: absolute; background: #6b4a2b; border: 1px solid #000; }
-.cs-sash::before { left: calc(50% - 3px); top: 0; bottom: 0; width: 6px; }
-.cs-sash::after { top: calc(45% - 3px); left: 0; right: 0; height: 6px; }
 .club-panel button.cs-obj { flex: none; display: flex; flex-direction: column; align-items: center; gap: var(--s1); min-width: 96px; max-width: 150px; min-height: var(--touch); padding: var(--s1); color: var(--ink); background: transparent; border: 0; box-shadow: none; text-align: center; scroll-snap-align: start; text-shadow: var(--shadow); }
 .club-panel button.cs-obj:hover .cs-art { filter: brightness(1.12); }
 .club-panel button.cs-obj:active { transform: translateY(2px); }
@@ -1365,19 +1349,85 @@ line.tb-chalk { stroke-width: 1; }
 .cs-book i { position: absolute; right: 8px; top: 10px; width: 22px; height: 12px; background: #efe6d2; border: 1px solid #000; }
 @media (max-height: 520px) and (orientation: landscape) {
   .cs-wall { padding: var(--s2) var(--s2) var(--s3); }
-  .cs-window { height: 150px; }
   .cs-art { height: 68px; }
 }
-/* Wand scrollt nicht (overflow würde den gemalten Raum ums Fenster abschneiden) – sie bricht um. */
+/* Wand bricht um statt zu scrollen: alle fünf Objekte bleiben im Blick. */
 .cs-wall { overflow: visible; flex-wrap: wrap; justify-content: center; }
-.cs-wall > .cs-window { order: 0; }
-@media (max-width: 720px) { .cs-wall > .cs-window { flex: 1 1 100%; order: -1; height: auto; aspect-ratio: 16 / 10; } }
 /* Handy quer: Spielkarte links (Anpfiff bleibt im Bild), der Raum rechts daneben. */
 @media (max-height: 520px) and (orientation: landscape) {
   .hub { grid-template-columns: minmax(290px, 1fr) minmax(0, 1.15fr); grid-template-areas: 'main scene' 'side scene'; align-items: start; }
-  .cs-wall > .cs-window { flex: 1 1 100%; order: -1; height: auto; aspect-ratio: 16 / 9; max-height: 58vh; }
   .cs-desk { flex-wrap: wrap; justify-content: center; overflow: visible; }
   .club-panel button.cs-obj { min-width: 84px; }
+}
+/* Große Wandobjekte (statt Fenster, 2026-11-08): Vitrine, Mannschaftsfoto, Taktiktafel mit Namen, Pinnwand mit Tabellenausschnitt,
+   Kalender mit drei Terminen. */
+.club-panel .cs-wall button.cs-obj { max-width: 220px; }
+.wall-gross .cs-art, .cs-cabinet .cs-art, .cs-photo .cs-art { height: 120px; }
+.cs-wall .cs-label small { max-width: 200px; }
+.wall-gross .cs-whiteboard { width: 190px; height: 116px; }
+/* Wand wechseln (⇄): klein am Ende der Wand, Tippfläche trotzdem 44 px hoch. */
+.club-panel button.cs-switch { flex: none; align-self: center; order: 9; width: var(--touch); height: var(--touch); padding: 0; color: var(--ink-2); background: transparent; border: 0; box-shadow: none; font-size: 18px; opacity: 0.7; }
+.club-panel button.cs-switch:hover { opacity: 1; color: var(--ink); }
+.cs-whiteboard i em { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); font-style: normal; font-size: 9px; line-height: 1; color: #1d2a36; white-space: nowrap; text-shadow: none; }
+.wall-gross .cs-cork { width: 150px; height: 116px; }
+.cs-row { position: absolute; left: 8px; right: 8px; top: calc(8px + var(--r) * 32px); display: flex; gap: 4px; padding: 2px 5px; font-style: normal; font-size: var(--fs-caption); color: #2a2620; background: #f4efe1; border: 1px solid #000; transform: rotate(calc((var(--r) - 1) * 1.5deg)); text-shadow: none; white-space: nowrap; overflow: hidden; }
+.cs-row b { margin-left: auto; font-weight: inherit; }
+.cs-row.me { background: #fff4a8; box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5); }
+.wall-gross .cs-cork .cs-slip.n { left: auto; right: -6px; top: -8px; }
+.wall-gross .cs-calsheet { width: 120px; height: 116px; grid-template-rows: auto; align-content: start; }
+.cs-calsheet > i:not(:first-child) { padding: 3px 5px 0; font-style: normal; font-size: var(--fs-caption); color: #2a2620; background: none; border: 0; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cs-calsheet > i:not(:first-child) b { font-size: inherit; line-height: inherit; color: inherit; }
+.cs-calsheet > i.cup { color: #8a1f14; }
+.cs-calsheet > i:nth-child(2) { font-size: var(--fs-secondary); padding-top: 6px; }
+/* Vitrine: Glasschrank mit zwei Böden; Pokal, Meisterschale, Aufstiegswimpel, Erinnerungsfoto. */
+.cs-vitrine { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 50px; align-items: end; justify-items: center; width: 150px; height: 116px; padding: 4px 6px 6px; background: linear-gradient(115deg, rgba(255, 255, 255, 0.16) 0 18%, transparent 18% 30%, rgba(255, 255, 255, 0.08) 30% 34%, transparent 34%), linear-gradient(transparent 0 calc(50% - 3px), #6b4a2b calc(50% - 3px) 50%, transparent 50% calc(100% - 3px), #6b4a2b calc(100% - 3px)), #2c3a40; border: 6px solid #6b4a2b; outline: 2px solid #000; box-sizing: border-box; }
+.cs-vitrine.empty::after { content: ''; position: absolute; inset: 0; background: radial-gradient(rgba(220, 210, 190, 0.18) 1px, transparent 1.5px) 0 0 / 7px 7px; }
+.cs-vitrine i { position: relative; display: block; }
+.cs-vitrine .cs-cup { width: 18px; height: 26px; background: linear-gradient(#f3d36b, #c99a2a); border: 2px solid #000; border-radius: 2px 2px 9px 9px; clip-path: polygon(0 0, 100% 0, 100% 55%, 62% 70%, 62% 86%, 86% 86%, 86% 100%, 14% 100%, 14% 86%, 38% 86%, 38% 70%, 0 55%); }
+.cs-vitrine .cs-title { width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle, #f6f3ea 0 5px, #c9ccd2 6px 9px, #9aa0a8 10px); border: 2px solid #000; }
+.cs-vitrine .cs-up { width: 16px; height: 28px; background: linear-gradient(90deg, #3a2a20 0 2px, transparent 2px); }
+.cs-vitrine .cs-up::after { content: ''; position: absolute; left: 2px; top: 0; width: 14px; height: 18px; background: var(--kit, #c0392b); border: 1px solid #000; clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.cs-vitrine .cs-foto { width: 20px; height: 16px; background: linear-gradient(#8fb0c8 0 50%, #5d7f3a 50%); border: 2px solid #efe6d2; outline: 1px solid #000; }
+/* Mannschaftsfoto: Rahmen, Rasen, Menschen in Vereinsfarben, Schildchen mit der Saison. */
+.cs-teamphoto { display: grid; grid-template-rows: 1fr auto; width: 176px; height: 116px; padding: 6px; background: #efe6d2; border: 5px solid #3a2a20; outline: 2px solid #000; box-sizing: border-box; box-shadow: 3px 3px 0 #000; text-shadow: none; }
+.cs-shot { position: relative; overflow: hidden; background: linear-gradient(#9cc2de 0 46%, #4f8a3c 46%); border: 1px solid #000; }
+.cs-shot { --u: 13px; }
+.cs-shot i { position: absolute; width: var(--u); left: calc(50% + (var(--x) - (var(--n) - 1) / 2) * (var(--u) + 2px) - var(--u) / 2); }
+.cs-shot i::before { content: ''; position: absolute; left: calc(var(--u) * 0.2); top: 0; width: calc(var(--u) * 0.6); height: calc(var(--u) * 0.6); border-radius: 50%; background: #e2b48c; border: 1px solid #000; box-sizing: border-box; }
+.cs-shot i::after { content: ''; position: absolute; left: 0; top: calc(var(--u) * 0.6); width: var(--u); height: calc(var(--u) * 1.3); background: linear-gradient(var(--k) 0 58%, var(--s) 58%); border: 1px solid #000; box-sizing: border-box; }
+.cs-shot i.back { top: 16%; height: calc(var(--u) * 1.9); }
+.cs-shot i.front { top: 46%; height: calc(var(--u) * 1.6); transform: translateX(calc(var(--u) / 2 + 1px)); }
+.cs-shot i.front::after { height: calc(var(--u) * 0.95); }
+.cs-teamphoto small { padding-top: 3px; font-size: 9px; letter-spacing: 0.08em; color: #2a2620; text-align: center; text-transform: uppercase; }
+@media (max-height: 520px) and (orientation: landscape) {
+  .wall-gross .cs-art, .cs-cabinet .cs-art, .cs-photo .cs-art { height: 96px; }
+  .wall-gross .cs-whiteboard, .wall-gross .cs-cork, .wall-gross .cs-calsheet, .cs-vitrine, .cs-teamphoto { height: 92px; }
+  .wall-gross .cs-whiteboard { width: 150px; }
+  .cs-vitrine { grid-auto-rows: 38px; }
+  .cs-row { top: calc(6px + var(--r) * 25px); }
+}
+/* Schmale Handys hochkant: die ganze Wand in einer Reihe, die Objekte teilen sich die Breite. */
+@media (max-width: 420px) {
+  .cs-wall { flex-wrap: nowrap; gap: var(--s1); padding: var(--s2) var(--s1) var(--s3); }
+  .club-panel .cs-wall button.cs-obj { flex: 1 1 0; min-width: 0; max-width: none; padding: 2px; }
+  .cs-wall .cs-art { width: 100%; height: 70px; }
+  .cs-wall .cs-whiteboard { width: 100%; max-width: 104px; height: 60px; }
+  .cs-wall .cs-cork { width: 100%; max-width: 92px; height: 60px; }
+  .cs-wall .cs-calsheet { width: 100%; max-width: 58px; }
+  .wall-gross .cs-art, .cs-cabinet .cs-art, .cs-photo .cs-art { height: 84px; }
+  .wall-gross .cs-whiteboard, .wall-gross .cs-cork, .wall-gross .cs-calsheet, .cs-vitrine, .cs-teamphoto { width: 100%; max-width: 112px; height: 82px; }
+  .cs-vitrine { grid-template-columns: repeat(3, 1fr); grid-auto-rows: 33px; border-width: 4px; padding: 2px 3px 4px; }
+  .cs-vitrine i:nth-child(n + 7) { display: none; }
+  .cs-vitrine .cs-cup, .cs-vitrine .cs-title { transform: scale(0.8); transform-origin: bottom; }
+  .cs-teamphoto { padding: 3px; border-width: 4px; }
+  .cs-shot { --u: 6px; }
+  .cs-row { left: 3px; right: 3px; top: calc(4px + var(--r) * 23px); padding: 1px 3px; gap: 2px; }
+  .cs-calsheet > i:not(:first-child) { padding: 2px 3px 0; }
+  .cs-calsheet > i:nth-child(2) { font-size: var(--fs-caption); padding-top: 3px; }
+  .cs-whiteboard i em { font-size: 8px; }
+  .cs-wall .cs-label { width: 100%; min-width: 0; }
+  .cs-wall .cs-label b, .cs-wall .cs-label small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cs-wall .cs-label b { font-size: var(--fs-caption); }
 }
 /* Kleine Handys hochkant: erst das Spiel (Anpfiff im Bild), dann der Raum. */
 @media (orientation: portrait) and (max-height: 700px) { .hub { grid-template-areas: 'main' 'scene' 'side'; } }

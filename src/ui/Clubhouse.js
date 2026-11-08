@@ -4,7 +4,7 @@ import { seasonReview } from '../career/review.js';
 import { shareReview } from './review.js';
 import { shareReviewPage } from './reviewpage.js';
 import { GROUP_LABELS, SIMPLE } from '../sim/commands.js';
-import { coachLevel, homeView, setCoachLevel } from './prefs.js';
+import { coachLevel, homeView, setCoachLevel, setWallView } from './prefs.js';
 import { button, haptic, icon, tabs as uiTabs } from './ds.js';
 import { TacticBoard } from './TacticBoard.js';
 import { bindFlips, phone } from './world.js';
@@ -152,6 +152,7 @@ export class Clubhouse {
       else if (action === 'youthTab') this.youthTab = value;
       else if (action === 'playerStep') this.stepPlayer(Number(value));
       else if (action === 'squadSort') this.squadSort = value;
+      else if (action === 'wallView') setWallView(value);
       else if (action === 'slotPick' || action === 'benchPick') this.lineupPick(action === 'slotPick' ? { slot: Number(value) } : { idx: Number(value) });
       else if (action === 'pickCancel') this.pick = null;
       else if (action === 'poachKid') {
@@ -852,8 +853,8 @@ export class Clubhouse {
         ? `<div class="m-tabs folder-tabs${areaTabs.length > 4 ? ' tabs-grid' : ''}" role="tablist">${areaTabs.map((t) => `<button role="tab" aria-selected="${t === this.tab}" data-action="tab" data-value="${t}">${labels[t]}</button>`).join('')}</div>`
         : uiTabs(areaTabs.map((t) => [t, labels[t]]), this.tab, 'tab').replace('class="ui-tabs"', `class="ui-tabs${areaTabs.length > 4 ? ' tabs-grid' : ''}"`)
       : '';
-    // Im Vereinsheim („Heute") ist das Fenster der Szene durchsichtig: dahinter läuft der eigene Platz.
-    this.root.classList.toggle('see-through', (area.id === 'home' || this.tab === 'pub') && homeView() !== 'klassisch');
+    // Kneipe: Der 3D-Raum liegt hinter der Bühne, das Vereinsheim ist dort durchsichtig.
+    this.root.classList.toggle('see-through', this.tab === 'pub' && homeView() !== 'klassisch');
     // Neuer Bereich/Tab: Inhalt blendet einmal kurz ein (nicht bei jedem Neuzeichnen).
     const enter = this.shownTab !== this.tab;
     this.shownTab = this.tab;

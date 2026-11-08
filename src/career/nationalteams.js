@@ -26,6 +26,7 @@ import { book } from './finances.js';
 import { isCoach } from './personal.js';
 import { poisson, QUICK, quickSlope } from './pokal.js';
 import { chronicle, yearOf } from './sagas.js';
+import { hostsOf, nextQualiMatch, playWindow, qualiComp, qualiTables, qualiWeek } from './natquali.js';
 
 // --- Turniere ---------------------------------------------------------------------------------------------------------
 // from/to: [Monat, Tag]. Quellen und Spielwerte stehen im Konzept (Abschnitt 2); kurz:
@@ -64,14 +65,14 @@ export const NAT = {
   proFrom: 9, // nominiert wird nur aus den Profiligen (Nutzerentscheid 2026-11-06)
 };
 
-const hash = (...parts) => parts.reduce((h, p) => (Math.imul(h ^ (p | 0), 0x9e3779b1) + 0x7f4a7c15) >>> 0, 0x6c8e9cf5);
-const idHash = (id) => [...String(id)].reduce((s, ch) => Math.imul(s, 31) + ch.charCodeAt(0), 7) >>> 0;
+export const hash = (...parts) => parts.reduce((h, p) => (Math.imul(h ^ (p | 0), 0x9e3779b1) + 0x7f4a7c15) >>> 0, 0x6c8e9cf5);
+export const idHash = (id) => [...String(id)].reduce((s, ch) => Math.imul(s, 31) + ch.charCodeAt(0), 7) >>> 0;
 const STEP_NAMES = { 32: 'r32', 16: 'r16', 8: 'qf', 4: 'sf', 2: 'f' };
 export const stepLabel = (step) =>
-  ({ g1: tr('1. Gruppenspiel', 'Group match 1'), g2: tr('2. Gruppenspiel', 'Group match 2'), g3: tr('3. Gruppenspiel', 'Group match 3'), r32: tr('Runde der letzten 32', 'Round of 32'), r16: tr('Achtelfinale', 'Round of 16'), qf: tr('Viertelfinale', 'Quarter-final'), sf: tr('Halbfinale', 'Semi-final'), f: tr('Finale', 'Final') })[step] ?? step;
+  /^q\d+$/.test(step) ? tr(`Qualifikation, ${step.slice(1)}. Spieltag`, `Qualifier, matchday ${step.slice(1)}`) : ({ g1: tr('1. Gruppenspiel', 'Group match 1'), g2: tr('2. Gruppenspiel', 'Group match 2'), g3: tr('3. Gruppenspiel', 'Group match 3'), r32: tr('Runde der letzten 32', 'Round of 32'), r16: tr('Achtelfinale', 'Round of 16'), qf: tr('Viertelfinale', 'Quarter-final'), sf: tr('Halbfinale', 'Semi-final'), f: tr('Finale', 'Final') })[step] ?? step;
 
 // Turnierjahr (Kalenderjahr): Sommer nach der Saison, Winter im Dezember bzw. Januar der Saison.
-function yearFor(c, cfg) {
+export function yearFor(c, cfg) {
   const y = yearOf(c); // Saison 1 = 2026/27
   return cfg.from[0] >= 8 ? y : y + 1; // Dezember im ersten Jahr der Saison, sonst im zweiten
 }
@@ -136,7 +137,7 @@ function fillSquad(c, t, nation, taken) {
 }
 // Startelf (System des Landes) und Bank aus einem Kader: je Rolle die Stärksten.
 const SYSTEM = '4-4-2';
-function lineupFrom(players) {
+export function lineupFrom(players) {
   const formation = systemFormation(11, SYSTEM);
   const left = [...players].sort((a, b) => b.rating - a.rating);
   const take = (role) => {
@@ -150,7 +151,7 @@ function lineupFrom(players) {
 const strengthOf = (xi) => Math.round((xi.reduce((s, p) => s + p.rating, 0) / xi.length) * 10) / 10;
 
 // Kader eines Landes in diesem Turnier: eigene Nominierte ersetzen die schwächsten Erfundenen ihrer Position.
-function squadOf(c, t, nation) {
+export function squadOf(c, t, nation) {
   const taken = takenIndices(c);
   const fill = fillSquad(c, t, nation, taken);
   const own = (t.own[nation] ?? []).map((idx) => ({ ...playerOf(c, idx), nat: nation, own: true }));
@@ -175,7 +176,7 @@ function squadOf(c, t, nation) {
 // Im Spiel hat Europa 37 Länder (in echt 54) – die Gruppen sind darum kleiner als die echten Vierer- und Fünfergruppen.
 export const QUALI_GROUPS = { wm: { uefa: 12, conmebol: 1, caf: 9 }, em: { uefa: 12 } };
 const formOf = (c, year, nid) => (((hash(c.seed ?? 0, year, idHash(nid), 9) % 1000) / 1000) - 0.5) * 2 * NAT.form;
-const targetOf = (c, year, nid) => NAT.tier[NATIONS[nid].tier] + formOf(c, year, nid);
+export const targetOf = (c, year, nid) => NAT.tier[NATIONS[nid].tier] + formOf(c, year, nid);
 
 function qualiGroup(c, year, key, ids, str) {
   const rng = createRng(hash(c.seed ?? 0, year, idHash(key), 13));
@@ -204,43 +205,67 @@ function qualiGroup(c, year, key, ids, str) {
     }
   return Object.values(rows).sort((x, y) => y.pts - x.pts || y.gf - y.ga - (x.gf - x.ga) || y.gf - x.gf || str[y.nid] - str[x.nid]);
 }
-const perGame = (r) => [r.pts / r.p, (r.gf - r.ga) / r.p, r.gf / r.p];
-const byPerGame = (x, y) => {
+export const perGame = (r) => [r.pts / r.p, (r.gf - r.ga) / r.p, r.gf / r.p];
+export const byPerGame = (x, y) => {
   const a = perGame(x);
   const b = perGame(y);
   return b[0] - a[0] || b[1] - a[1] || b[2] - a[2];
 };
 
-function makeField(c, id, year) {
+// Lostöpfe nach Stärke, je Gruppe einer aus jedem Topf (gemischt fest je Karriere und Jahr). Gastgeber mit festem Platz spielen keine
+// Qualifikation (natquali.js HOSTS); ohne Qualifikation (Verband hat nicht mehr Länder als Plätze) null.
+export function qualiSetup(c, id, year, conf) {
+  const cfg = TOURNAMENTS[id];
+  const n = cfg.slots[conf];
+  const host = hostsOf(id, year);
+  const auto = host.auto.filter((nid) => NATIONS[nid]?.conf === conf);
+  const ids = Object.keys(NATIONS).filter((nid) => NATIONS[nid].conf === conf && !auto.includes(nid));
+  const str = Object.fromEntries(ids.map((nid) => [nid, targetOf(c, year, nid)]));
+  const sorted = [...ids].sort((a, b) => str[b] - str[a]);
+  const places = n - auto.length;
+  if (ids.length <= places) return { auto, direct: sorted, groups: null, str, places, reserved: [] };
+  const G = QUALI_GROUPS[id]?.[conf] ?? Math.max(1, Math.min(Math.floor(ids.length / 3), Math.ceil(places / 2)));
+  const rng = createRng(hash(c.seed ?? 0, year, idHash(id), idHash(conf), 11));
+  const groups = Array.from({ length: G }, () => []);
+  for (let pot = 0; pot * G < sorted.length; pot++) {
+    const list = sorted.slice(pot * G, pot * G + G);
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = rng.int(0, i);
+      [list[i], list[j]] = [list[j], list[i]];
+    }
+    list.forEach((nid, i) => groups[i].push(nid));
+  }
+  return { auto, direct: [], groups, str, places, reserved: host.reserved.filter((nid) => NATIONS[nid]?.conf === conf), reservedSlots: host.slots ?? 0 };
+}
+
+// Wer ist weiter? Erst die Gruppensieger, dann die besten Zweiten, Dritten … (je Spiel gerechnet). Reservierte Gastgeberplätze
+// (Europameisterschaft 2028): Gastgeber, die es nicht geschafft haben, übernehmen bis zu so viele der letzten Plätze.
+export function qualifiedFrom(tables, places, reserved = [], reservedSlots = 0) {
+  const qualified = [];
+  for (let place = 0; qualified.length < places && place < 8; place++) {
+    const rows = tables.map((tb) => tb[place]).filter(Boolean).sort(byPerGame);
+    qualified.push(...rows.slice(0, places - qualified.length).map((r) => r.nid));
+  }
+  const missing = reserved.filter((nid) => !qualified.includes(nid)).slice(0, reservedSlots);
+  if (missing.length) qualified.splice(qualified.length - missing.length, missing.length, ...missing);
+  return qualified;
+}
+
+export function makeField(c, id, year) {
   const cfg = TOURNAMENTS[id];
   const field = [];
   const quali = {};
-  for (const [conf, n] of Object.entries(cfg.slots)) {
-    const ids = Object.keys(NATIONS).filter((nid) => NATIONS[nid].conf === conf);
-    const str = Object.fromEntries(ids.map((nid) => [nid, targetOf(c, year, nid)]));
-    const sorted = [...ids].sort((a, b) => str[b] - str[a]);
-    if (ids.length <= n) {
-      field.push(...sorted);
+  for (const conf of Object.keys(cfg.slots)) {
+    const setup = qualiSetup(c, id, year, conf);
+    field.push(...setup.auto);
+    if (!setup.groups) {
+      field.push(...setup.direct.slice(0, setup.places));
       continue;
     }
-    const G = QUALI_GROUPS[id]?.[conf] ?? Math.max(1, Math.min(Math.floor(ids.length / 3), Math.ceil(n / 2)));
-    // Lostöpfe nach Stärke, je Gruppe einer aus jedem Topf (gemischt fest je Karriere und Jahr).
-    const rng = createRng(hash(c.seed ?? 0, year, idHash(id), idHash(conf), 11));
-    const groups = Array.from({ length: G }, () => []);
-    for (let pot = 0; pot * G < sorted.length; pot++) {
-      const list = sorted.slice(pot * G, pot * G + G);
-      for (let i = list.length - 1; i > 0; i--) {
-        const j = rng.int(0, i);
-        [list[i], list[j]] = [list[j], list[i]];
-      }
-      list.forEach((nid, i) => groups[i].push(nid));
-    }
-    const tables = groups.map((g, gi) => qualiGroup(c, year, `${id}-${conf}-${gi}`, g, str));
-    const qualified = [];
-    for (let place = 0; qualified.length < n && place < 6; place++) {
-      const rows = tables.map((tb) => tb[place]).filter(Boolean).sort(byPerGame);
-      qualified.push(...rows.slice(0, n - qualified.length).map((r) => r.nid));
-    }
+    // Variante 2 (natquali.js): über die Saison in Länderspielfenstern gespielt – sonst Variante 1 auf einen Schlag.
+    const played = qualiTables(c, id, year, conf);
+    const tables = played ?? setup.groups.map((g, gi) => qualiGroup(c, year, `${id}-${conf}-${gi}`, g, setup.str));
+    const qualified = qualifiedFrom(tables, setup.places, setup.reserved, setup.reservedSlots);
     field.push(...qualified);
     quali[conf] = tables.map((tb) => tb.map((r) => ({ nid: r.nid, pts: r.pts, gd: r.gf - r.ga, q: qualified.includes(r.nid) })));
   }
@@ -402,7 +427,7 @@ function note(c, text) {
 // --- Spiele -------------------------------------------------------------------------------------------------------------
 const ownNation = (t, nid) => !!t.own[nid]?.length;
 export const isOwnMatch = (t, m) => ownNation(t, m.home) || ownNation(t, m.away);
-const isKo = (m) => !m.step.startsWith('g');
+const isKo = (m) => !m.step.startsWith('g') && !/^q\d+$/.test(m.step); // q1, q2 …: Qualifikation (natquali.js); qf ist das Viertelfinale
 
 function quickPens(rng, a, b) {
   const p = Math.max(0.35, Math.min(0.65, 0.5 + (a - b) * 0.01));
@@ -410,9 +435,9 @@ function quickPens(rng, a, b) {
   return home ? { home: 5, away: 4 } : { home: 4, away: 5 };
 }
 
-function quickMatch(c, t, m) {
+export function quickMatch(c, t, m) {
   const i = t.matches.indexOf(m);
-  const rng = createRng(hash(c.seed ?? 0, t.year, idHash(t.id), i, 77));
+  const rng = createRng(hash(c.seed ?? 0, t.year, idHash(t.key ?? t.id), i, 77));
   const a = t.str[m.home];
   const b = t.str[m.away];
   const pp = quickSlope(c, a, b);
@@ -456,7 +481,7 @@ export function nextOwnMatch(c) {
     const m = t.matches.find((x) => x.step === t.step && !x.result && isOwnMatch(t, x));
     if (m) return { t, m };
   }
-  return null;
+  return nextQualiMatch(c); // Länderspielpause (natquali.js)
 }
 
 // Runde fertig rechnen und weiter, solange kein Spiel mit eigenen Spielern ansteht; am Ende abschließen.
@@ -473,12 +498,13 @@ export function quickOwnMatch(c) {
   const next = nextOwnMatch(c);
   if (!next) return false;
   quickMatch(c, next.t, next.m);
-  settle(c, next.t);
+  if (!next.t.isQuali) settle(c, next.t);
   return true;
 }
 
 // Alle laufenden Turniere (oder die eines Zeitpunkts) ohne Zuschauen zu Ende rechnen.
 export function finishAll(c, when = null) {
+  if (!when) playWindow(c); // Länderspielpause: der Rest nur als Ergebnis
   for (const t of natRunning(c, when)) {
     for (let guard = 0; guard < 200 && !t.done; guard++) {
       const m = t.matches.find((x) => x.step === t.step && !x.result);
@@ -491,7 +517,7 @@ export function finishAll(c, when = null) {
 // 3D-Spiel im Stadion: beide Teams von der KI, man schaut zu (Hud: Zuschauer, keine Zurufe und Wechsel).
 export function prepareNatMatch(c, { t, m }, { duration } = {}) {
   const i = t.matches.indexOf(m);
-  const rng = createRng(hash(c.seed ?? 0, t.year, idHash(t.id), i, 91));
+  const rng = createRng(hash(c.seed ?? 0, t.year, idHash(t.key ?? t.id), i, 91));
   const pitch = { ...STADIUM, name: tr('Turnierstadion', 'Tournament stadium'), format: 11, referee: true };
   const club = (nid) => ({ id: `nat-${nid}`, name: nationName(nid), short: nid.toUpperCase(), kit: NATIONS[nid].kit, keeperKit: { shirt: 0x2f8f5a, shorts: 0x1c1c1c, socks: 0x2f8f5a } });
   const kits = resolveKits(club(m.home), club(m.away));
@@ -504,12 +530,12 @@ export function prepareNatMatch(c, { t, m }, { duration } = {}) {
   match.knockout = isKo(m);
   match.extraTime = MATCH.pokalExtra;
   match.crowd = 3500; // ausverkauft (so viel, wie das Stadion zeigt)
-  return { match, humanIsAway: false, pitch, nat: { id: t.id, year: t.year, index: i } };
+  return { match, humanIsAway: false, pitch, nat: { id: t.id, year: t.year, index: i, ...(t.isQuali ? { key: t.key } : {}) } };
 }
 
 // Ergebnis des angesehenen Spiels eintragen (Tore und Einsätze der eigenen Spieler aus der Engine).
 export function recordNatMatch(c, prepared) {
-  const t = natCups(c).find((x) => x.id === prepared.nat.id && x.year === prepared.nat.year);
+  const t = prepared.nat.key ? qualiComp(c, prepared.nat.key) : natCups(c).find((x) => x.id === prepared.nat.id && x.year === prepared.nat.year);
   const m = t?.matches[prepared.nat.index];
   if (!m || m.result) return false;
   const g = prepared.match;
@@ -528,7 +554,7 @@ export function recordNatMatch(c, prepared) {
   }
   m.watched = true;
   logMatch(c, t, m);
-  settle(c, t);
+  if (!t.isQuali) settle(c, t);
   return true;
 }
 
@@ -615,6 +641,7 @@ export function breakWeek(c) {
 }
 // Nach der Winterpause bzw. zur neuen Saison: was noch läuft, wird ohne Zuschauen zu Ende gerechnet.
 export function startWeek(c) {
+  qualiWeek(c); // Länderspielfenster (natquali.js)
   if (c.week?.breakWeek) return;
   if (natRunning(c, 'winter').length) finishAll(c, 'winter');
 }

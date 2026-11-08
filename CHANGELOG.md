@@ -6,6 +6,24 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-08-6 – Länderspielpausen
+
+### Neu
+- **Qualifikation über die Saison:** Die Qualifikation zu Weltmeisterschaft, Europameisterschaft und den übrigen Kontinentalmeisterschaften wird nicht mehr beim Turnierstart auf einen Schlag gerechnet, sondern in drei Länderspielpausen wie im Kalender des Weltverbands 2026–2030: Herbst (September/Oktober, bis zu vier Spiele), November und März (je zwei). Im Spiel liegen sie zwischen zwei Spieltagen – die Liga ruht, kein Ligaspiel fällt aus. Afrika- und Asienmeisterschaft im Winter nutzen nur die Pausen davor.
+- **Gruppen mit Spielplan:** Hin- und Rückspiel, jeder einmal je Spieltag; Lostöpfe und Plätze wie bisher.
+- **Eigene Spieler:** Wer nominiert ist (nur Profiligen), dessen Spiel steht als Karte im Vereinsheim – im Stadion ansehen, nur Ergebnis oder Rest vorspulen, dazu die Gruppentabelle. Kosten: etwas Müdigkeit (je Spiel wie im Turnier, höchstens 15 %) und das Verletzungsrisiko eines Ligaspiels je Einsatz. Nutzen: ein kleiner Marktwert-Schub am Saisonende (ein Viertel der Turnierwerte).
+- **Gastgeber:** automatisch dabei, wo bekannt (Weltmeisterschaft 2030: alle sechs, 2034 Saudi-Arabien; Europameisterschaft 2028 mit zwei reservierten Plätzen für die Gastgeber wie in echt).
+- Alte Spielstände mitten in der Saison spielen die laufende Qualifikation wie bisher beim Turnierstart; ab der nächsten Saison gibt es die Pausen.
+
+## 2026-11-08-5 – Vereinsheim ohne Fenster
+
+### Geändert
+- **Kein Fenster mehr im Vereinsheim:** Der Blick auf den eigenen Platz passte nur zum Bolzplatz – vor dem Stadion wirkte er nicht mehr. An seiner Stelle gibt es drei Wand-Varianten zur Wahl, umschaltbar mit ⇄ an der Wand oder im Notizbuch (Grafik → Wand im Vereinsheim).
+- **Vitrine** (Vorgabe): Meisterschaften, Pokale, Aufstiege und Erinnerungsfotos auf zwei Glasböden, die neuesten vorn. Führt ins Museum. In der klassischen Ansicht immer als Kachel dabei.
+- **Mannschaftsfoto:** Der Kader in zwei Reihen in Vereinsfarben, der Torwart in seinen. Jede Saison ein neues. Führt zum Kader.
+- **Große Tafeln:** Die Taktiktafel zeigt die Nachnamen der Aufstellung, die Pinnwand den Tabellenausschnitt um den eigenen Platz, der Kalender die nächsten drei Termine mit Liga, Pokal und Europapokal (Pokaltermine rot).
+- Auf schmalen Handys hochkant steht die ganze Wand in einer Reihe, damit Tisch und Anpfiff schnell im Bild sind.
+
 ## 2026-11-08-4 – Europapokal
 
 ### Neu

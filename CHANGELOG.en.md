@@ -6,6 +6,24 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-08-6 – International breaks
+
+### New
+- **Qualifying through the season:** qualifying for the World Cup, the European Championship and the other continental championships is no longer worked out in one go at the start of the tournament, but in three international breaks as in the world governing body's 2026–2030 calendar: autumn (September/October, up to four games), November and March (two each). In the game they sit between two matchdays – the league rests, no league game is lost. The Africa and Asia championships in winter only use the breaks before them.
+- **Groups with a fixture list:** home and away, everyone plays once per matchday; pots and places as before.
+- **Your players:** if someone is called up (pro leagues only), their game is a card in the clubhouse – watch it in the stadium, take the result only or skip the rest, with the group table. Cost: a little tiredness (per game as at a tournament, at most 15%) and a league game's injury risk per appearance. Benefit: a small market value boost at the end of the season (a quarter of the tournament values).
+- **Hosts:** qualify automatically where known (2030 World Cup: all six, 2034 Saudi Arabia; 2028 European Championship with two places reserved for the hosts, as in real life).
+- Old saves in mid-season play the current qualifying as before at the start of the tournament; the breaks start next season.
+
+## 2026-11-08-5 – Clubhouse without the window
+
+### Changed
+- **No more window in the clubhouse:** the view of your own pitch only suited the kickabout ground – in front of a stadium it no longer worked. In its place there are three wall variants to choose from, switchable with ⇄ on the wall or in the notebook (Graphics → Clubhouse wall).
+- **Trophy cabinet** (default): titles, cups, promotions and souvenir photos on two glass shelves, newest first. Leads to the museum. Always a tile in the classic view.
+- **Team photo:** the squad in two rows in club colours, the keeper in theirs. A new one every season. Leads to the squad.
+- **Big boards:** the tactics board shows the surnames of your line-up, the notice board the part of the table around your place, the calendar the next three dates with league, cup and European games (cup dates in red).
+- On narrow phones in portrait the whole wall sits in one row, so the desk and kick-off come into view quickly.
+
 ## 2026-11-08-4 – European football
 
 ### New

@@ -491,10 +491,6 @@ function frame(now) {
   if (DIAG) DIAG.sys = 'sound/crowd/camera';
   sound.update(dt, mode === 'play' ? match : null);
   crowd?.update(dt);
-  // Vereinsheim „Heute": Das Spiel läuft im Fenster an der Wand – dort das ganze Kamerabild zeigen.
-  const clubWindow = mode === 'club' ? document.querySelector('#club.see-through .cs-window') : null;
-  const windowRect = clubWindow?.getBoundingClientRect();
-  rig.frameWindow(windowRect?.width > 0 && windowRect.height > 0 ? windowRect : null, window.innerWidth, window.innerHeight, pitch.halfLength, pitch.halfWidth);
   const touchTeam = match.ball.lastTouch != null ? getPlayer(match, match.ball.lastTouch)?.team : null;
   rig.follow(match.ball.pos.x, match.ball.pos.z, dt, venueInfo.bounds, touchTeam != null ? attackDir(match, touchTeam) : 0, venueInfo.lead ?? 0, match.ball.vel.x);
   // Ball 2.0: bei Tor oder hartem Pfostentreffer zuckt das Bild um genau ein internes Pixel
