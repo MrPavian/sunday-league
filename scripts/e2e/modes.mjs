@@ -315,6 +315,59 @@ export async function pokal(b) {
   return ok.done();
 }
 
+// Europapokal (europa.js): Meister der 1. Liga, erstes Spiel am Donnerstag der ersten Woche vor dem Ligaspiel, Ergebnis mit
+// „Weiter zum Sonntag“, Turnier-Tab mit Tabelle der Ligaphase.
+export async function euro(b, shots = process.env.E2E_SHOTS) {
+  const ok = checker('Europapokal: Donnerstagsspiel vor dem Ligaspiel, Ergebnis, Turnier-Tab mit Tabelle der Ligaphase');
+  const { createCareer, currentFixtures, finishRound, nextSeason, seasonOver } = await import('../../src/career/career.js');
+  const c = createCareer({ seed: 11 });
+  c.level = 12;
+  while (!seasonOver(c)) {
+    for (const f of currentFixtures(c)) {
+      const h = c.clubs.find((x) => x.id === f.home);
+      const a = c.clubs.find((x) => x.id === f.away);
+      f.result = h.human ? { home: 3, away: 0 } : a.human ? { home: 0, away: 3 } : { home: 1, away: 1 };
+    }
+    finishRound(c);
+  }
+  nextSeason(c);
+  ok(c.euroQual?.kind === 'eu1' && c.pokale?.eu1, 'Meister der 1. Liga nicht im obersten Europapokal');
+  const p = await page(b, 'land', { query: '?notitle&debug', store: { 'sunday-league:career': JSON.stringify(c) } });
+  await click(p, '.career [data-c="continue"]');
+  await p.waitForTimeout(1500);
+  await click(p, '[data-action="area"][data-value="home"]').catch(() => {});
+  ok(!!(await p.waitForSelector('[data-testid="euro-card"]', { timeout: 15000 }).catch(() => null)), 'Europapokal-Spiel fehlt auf der Startseite');
+  const card = await p.evaluate(() => document.querySelector('[data-testid="euro-card"]')?.innerText ?? '');
+  ok(/Donnerstag/i.test(card) && /Ligaphase, 1\. Spieltag/i.test(card), `Karte ohne Termin/Runde: ${card.slice(0, 120)}`);
+  ok(!(await p.$('[data-action="onSimulate"]')), 'Ligaspiel wird schon vor dem Europapokal angeboten');
+  if (shots) await p.screenshot({ path: `${shots}/euro-card.png` });
+  await click(p, '[data-action="onPokalSimulate"]');
+  await p.waitForTimeout(1000);
+  ok(await visible(p, 'ticker'), 'Liveticker fürs Europapokalspiel öffnet nicht');
+  for (let i = 0; i < 300 && (await visible(p, 'ticker')); i++) {
+    await p.evaluate(() => document.querySelector('#ticker .decision button, #ticker [data-action="done"], #ticker [data-action="skip"]')?.click());
+    await p.waitForTimeout(300);
+  }
+  await click(p, '[data-action="area"][data-value="home"]').catch(() => {});
+  ok(!!(await p.waitForSelector('.midweek-card [data-action="onMidweekDone"]', { timeout: 20000 }).catch(() => null)), 'nach dem Europapokalspiel fehlt „Weiter zum Sonntag“');
+  const mw = await p.evaluate(() => document.querySelector('.midweek-card')?.innerText ?? '');
+  ok(/Platz \d+ von 36/.test(mw), `Ergebnis ohne Tabellenplatz: ${mw.slice(0, 160)}`);
+  if (shots) await p.screenshot({ path: `${shots}/euro-midweek.png` });
+  await click(p, '[data-action="onMidweekDone"]');
+  await p.waitForTimeout(600);
+  ok(!!(await p.waitForSelector('[data-action="onSimulate"]', { state: 'attached', timeout: 20000 }).catch(() => null)), 'nach dem Europapokalspiel fehlt das Ligaspiel');
+  await click(p, '[data-action="area"][data-value="season"]').catch(() => {});
+  await p.waitForTimeout(400);
+  await click(p, '[data-action="tab"][data-value="cup"]').catch(() => {});
+  await p.waitForTimeout(600);
+  const rows = await p.evaluate(() => document.querySelectorAll('[data-testid="euro-table"] tbody tr').length);
+  ok(rows === 36, `Tabelle der Ligaphase mit ${rows} statt 36 Zeilen`);
+  if (shots) await p.screenshot({ path: `${shots}/euro-tab.png`, fullPage: true });
+  ok(!p.errors.length, `Fehler ${p.errors.slice(0, 2).join(' | ')}`);
+  await p.context().close();
+  return ok.done();
+}
+
 export async function oldSave(b, file) {
   const ok = checker('Alter Spielstand (mit dem Stand vor dem Audit erzeugt): laden, alle Tabs, Liveticker-Runde');
   const p = await page(b, 'land', { query: '?notitle&debug', store: { 'sunday-league:career': readFileSync(file, 'utf8') } });
@@ -747,6 +800,7 @@ export async function run() {
   if (!ONLY || ONLY.has('eventFold')) f += await eventFold(b);
   if (!ONLY || ONLY.has('saveAtWhistle')) f += await saveAtWhistle(b);
   if (!ONLY || ONLY.has('pokal')) f += await pokal(b);
+  if (!ONLY || ONLY.has('euro')) f += await euro(b);
   if (!ONLY || ONLY.has('oldSave')) f += await oldSave(b, process.env.E2E_OLD_SAVE ?? fileURLToPath(new URL('./fixtures/save-858e978.json', import.meta.url)));
   await b.close();
   return f;

@@ -1,15 +1,16 @@
 // SAISON: Tabelle (Pinnwand), Spielplan (Wandkalender), Turniere.
 // Methoden des Vereinsheims (this = Clubhouse), aus Clubhouse.js herausgelöst – Verhalten unverändert.
 import { tr } from '../../core/i18n.js';
-import { button, icon } from '../ds.js';
+import { button, esc, icon } from '../ds.js';
 import { crestOf, crestSVG } from '../crest.js';
 import { clubById, humanClub, seasonOver, table } from '../../career/career.js';
-import { dateLabel, matchDate, monthLabel } from '../../career/calendar.js';
+import { dateLabel, matchDate, monthLabel, weekdayDate, weekdayLabel } from '../../career/calendar.js';
 import { nachholLabel } from '../../career/platz.js';
 import { CUPS, cupClub, cupOf, groupTable, humanCupMatch, stageName, winterRound } from '../../career/tournament.js';
 import { fieldRound, POKALE, POKAL_KINDS, pokalClub, pokalEligible, pokalOf, roundName, roundTies, sponsorPraemie, tieOnPens } from '../../career/pokal.js';
 import { BUND_VENUES, levelName } from '../../career/bundespokal.js';
 import { leagueTitle } from '../../career/verband.js';
+import { countryName, EURO_NAMES, EURO_PRIZES, euroMoney, euroOf, euroTable, slotName, stageName as euroStage } from '../../career/europa.js';
 import { MAX_LEVEL } from '../../career/clubs.js';
 import { MATCH } from '../../sim/match.js';
 import { first, leagueName } from './shared.js';
@@ -28,7 +29,7 @@ export const seasonScreens = {
     const trophies = (c.trophies ?? []).length ? `<h4>${tr('Vitrine', 'Trophy cabinet')}</h4><ul class="plain trophies">${c.trophies.map((t) => `<li>${t.kind === 'foto' ? '' : `${tr('Pokal', 'Trophy')}: `}${t.name}</li>`).join('')}</ul>` : '';
     const running = ['sommer', 'halle', 'stadt'].filter((k) => cupOf(c, k) && !cupOf(c, k).skipped);
     const intro = `<p class="empty">${tr(`Drei Turniere pro Saison: das ${CUPS.sommer.name} vor dem ersten Spieltag (Einladung oder Heimturnier, 4–8 Teams, kurze Spiele), die ${CUPS.halle.name} in der Winterpause (Saisonmitte, ${CUPS.halle.place}, Bande und Handballtore) und die ${CUPS.stadt.name} im Sommer nach dem letzten Spieltag (${CUPS.stadt.place}).`, `Three tournaments per season: the ${CUPS.sommer.name} before the first matchday (invitation or home tournament, 4–8 teams, short matches), the ${CUPS.halle.name} in the winter break (mid-season, ${CUPS.halle.place}, boards and handball goals) and the ${CUPS.stadt.name} in summer after the last matchday (${CUPS.stadt.place}).`)}</p>`;
-    const pokale = POKAL_KINDS.filter((k) => pokalOf(c, k)).map((k) => this.pokalSection(k)).join('<hr>');
+    const pokale = [...(euroOf(c) ? [this.euroSection()] : []), ...POKAL_KINDS.filter((k) => pokalOf(c, k)).map((k) => this.pokalSection(k))].join('<hr>');
     const pokalIntro = (c.level ?? 1) < 2 ? `<p class="empty">${tr('Kreispokal gibt es ab der Kreisklasse C: K.-o.-Runden unter der Woche, Heimrecht für den Klassentieferen.', 'The District Cup starts in Division Three: knockout rounds midweek, home advantage for the lower-league side.')}</p>` : '';
     return `${pokale}${pokale ? '<hr>' : pokalIntro}${this.pokalWeg()}${running.length ? running.map((k) => this.cupSection(k)).join('<hr>') : intro}${trophies}`;
   },
@@ -66,6 +67,36 @@ export const seasonScreens = {
     const extra = `<p class="t-2">${tr('Bei Unentschieden', 'If level')}: ${MATCH.pokalExtra ? tr('Verlängerung, dann Elfmeterschießen', 'extra time, then penalties') : tr('direkt Elfmeterschießen', 'straight to penalties')} <small>(${tr('Einstellungen', 'Settings')})</small></p>`;
     const vs = guest ? `<p class="t-2">${tr('Gegner', 'Opponents')}: <b>${guest.name}</b> <small>(${levelName(cup.levels[guest.id], leagueTitle(c, Math.min(MAX_LEVEL, cup.levels[guest.id])))})</small></p>` : '';
     return `<p class="chat-head">${POKALE[kind].name} ${cup.year} · ${POKALE[kind].size === 2 ? '' : `${POKALE[kind].size} ${tr('Vereine', 'clubs')} · `}${rules}</p>${vs}${kind === 'bund' ? bundVenueLine(cup) : ''}${state}${prizeLine}${extra}${rounds.reverse().join('')}`;
+  },
+
+  // Europapokal: Tabelle der Ligaphase, eigene Spiele, K.-o.-Runden, Prämien.
+  euroSection() {
+    const c = this.career;
+    const cup = euroOf(c);
+    const me = humanClub(c).id;
+    const nameOf = (id) => esc(cup.field.find((f) => f.id === id)?.name ?? '?');
+    const p = EURO_PRIZES[cup.kind];
+    const rows = euroTable(c, cup);
+    const table = `<table class="squad cup-table euro-table" data-testid="euro-table"><thead><tr><th>#</th><th>${tr('Verein', 'Club')}</th><th>${tr('Sp.', 'P')}</th><th>${tr('Tore', 'Goals')}</th><th>${tr('Pkt.', 'Pts')}</th></tr></thead><tbody>${rows
+      .map((r, i) => `<tr class="${r.id === me ? 'mine' : ''} ${i < 8 ? 'through' : i < 24 ? 'playoff' : ''}"><td class="num">${i + 1}</td><td>${esc(r.name)} <small>${countryName(r.country)}</small></td><td class="num">${r.p}</td><td class="num">${r.gf}:${r.ga}</td><td class="num">${r.pts}</td></tr>`)
+      .join('')}</tbody></table>`;
+    const mine = cup.ties.map((t) => {
+      const opp = pokalClub(c, cup, t.home === me ? t.away : t.home);
+      const when = cup.slots[t.slot];
+      const res = t.result ? `<b>${t.result.home}:${t.result.away}</b>${t.et ? ` <small>${tr('n. V.', 'a.e.t.')}</small>` : ''}${t.pens ? ` <small>${tieOnPens(t)}</small>` : ''}` : '–:–';
+      return `<li class="mine"><small>${slotName(when)} · ${weekdayLabel(weekdayDate(c, when.week, when.day), when.day)}</small> ${t.home === me ? tr('gegen', 'v') : tr('bei', 'at')} ${esc(opp?.name ?? '?')} ${res}</li>`;
+    }).join('');
+    const ko = ['po', 'r16', 'qf', 'sf', 'f'].filter((st) => cup.ko[st]?.length).map((st) => `<h4>${euroStage(st)}</h4><ul class="plain cup-list">${cup.ko[st].map((t) => {
+      const legs = t.legs.filter((l) => l?.hg != null).map((l) => `${l.hg}:${l.ag}`).join(', ');
+      return `<li class="${t.a === me || t.b === me ? 'mine' : ''}">${nameOf(t.b)} – ${nameOf(t.a)} ${legs ? `<b>${legs}</b>` : '–:–'}${t.et ? ` <small>${tr('n. V.', 'a.e.t.')}</small>` : ''}${t.pens ? ` <small>(${t.pens.home}:${t.pens.away} ${tr('i. E.', 'pens')})</small>` : ''}${t.winner ? ` → ${nameOf(t.winner)}` : ''}</li>`;
+    }).join('')}</ul>`).reverse().join('');
+    const state = cup.done ? `<p class="reply ok">${cup.log.slice(-2).join(' ')}</p>` : cup.out ? `<p>${tr('Ihr seid raus – der Wettbewerb ist zu Ende gespielt.', 'You are out – the competition has been played to the end.')}</p>` : `<p>${tr('Ihr seid dabei. Die Spiele stehen dienstags und donnerstags auf der Startseite.', 'You are in. The games appear on the home page on Tuesdays and Thursdays.')}</p>`;
+    const rules = tr('Ligaphase mit 36 Vereinen, je 8 Spiele gegen Gegner aus vier Lostöpfen · Platz 1–8 direkt ins Achtelfinale, 9–24 in die Play-offs · K.-o.-Runden mit Hin- und Rückspiel, Endspiel neutral', 'League phase with 36 clubs, 8 games each against opponents from four pots · places 1–8 straight into the round of 16, 9–24 into the play-offs · two-legged knockout rounds, one-off final');
+    const prizes = tr(`Prämien (echte Beträge 2025/26): Startgeld ${euroMoney(p.start)}, Sieg ${euroMoney(p.win)}, Remis ${euroMoney(p.draw)}, Achtelfinale ${euroMoney(p.r16)}, Viertelfinale ${euroMoney(p.qf)}, Halbfinale ${euroMoney(p.sf)}, Endspiel ${euroMoney(p.f)}, Sieg im Endspiel +${euroMoney(p.winner)}.`, `Prize money (real 2025/26 amounts): starting fee ${euroMoney(p.start)}, win ${euroMoney(p.win)}, draw ${euroMoney(p.draw)}, round of 16 ${euroMoney(p.r16)}, quarter-finals ${euroMoney(p.qf)}, semi-finals ${euroMoney(p.sf)}, final ${euroMoney(p.f)}, winning the final +${euroMoney(p.winner)}.`);
+    return `<p class="chat-head" data-testid="euro-section">${EURO_NAMES[cup.kind]} ${cup.year} · ${rules}</p>${state}
+      <p class="t-2">${tr('Bisher eingenommen', 'Earned so far')}: <b>${euroMoney(cup.earned ?? 0)}</b></p><p class="t-2">${prizes}</p>
+      ${ko}<h4>${tr('Eure Spiele', 'Your games')}</h4><ul class="plain cup-list">${mine}</ul>
+      <details class="cup-field" ${cup.cursor <= 8 ? 'open' : ''}><summary>${tr('Tabelle der Ligaphase', 'League phase table')}</summary>${table}</details>`;
   },
 
   // Der Weg nach oben: Kreispokal → Bezirkspokal → Landespokal → überregionaler Pokal, mit Stand dieser Saison.

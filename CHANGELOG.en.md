@@ -6,6 +6,18 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-08-4 – European football
+
+### New
+- **European competitions:** places 1 and 2 in the 1. Liga play next season in the top one of three European competitions, place 3 in the second, place 4 in the third. The opponents are fictional clubs from 22 countries.
+- **The real format:** a league phase with 36 clubs in one table, each playing eight opponents from four pots (one home and one away from each pot, never a club from the same country). Places 1–8 go straight into the round of 16, 9–24 into the knockout play-offs, from 25th it is over. Then two legs, extra time and penalties if level after both, and a one-off final at a neutral ground.
+- **Tuesday and Thursday:** because the 1. Liga has only ten match weeks in the game, there are two European nights a week (9pm, floodlights), always before the league game on Sunday. The final is on the Thursday of the last week.
+- **Real-size prize money** (2025/26 amounts): starting fee, win and draw bonuses in the league phase, ranking bonus and round bonuses all the way to the final. Everything is under Season → Cup.
+- **Two new achievements:** European nights and European champions.
+
+### Changed
+- **No state cup for pro clubs:** as in real life, second- and top-flight clubs no longer play the state cup; they go straight into the National Cup.
+
 ## 2026-11-08-3 – U19s as their own team
 
 ### New

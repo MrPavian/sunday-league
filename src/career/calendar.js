@@ -33,3 +33,15 @@ export function dateLabel(d, { year = false } = {}) {
   return tr(`So., ${d.day}. ${SHORT()[d.month]}${year ? ` ${d.year}` : ''}`, `Sun ${d.day} ${SHORT()[d.month]}${year ? ` ${d.year}` : ''}`);
 }
 export const monthLabel = (d) => `${MONTHS[d.month]} ${d.year}`;
+
+// Termine unter der Woche (Europapokal): Dienstag und Donnerstag vor dem Spieltag (Sonntag − 5 bzw. − 3 Tage).
+const BEFORE_SUNDAY = { tue: 5, wed: 4, thu: 3, sat: 1 };
+export function weekdayDate(c, round, wd) {
+  const d = matchDate(c, round);
+  const t = new Date(Date.UTC(d.year, d.month - 1, d.day - (BEFORE_SUNDAY[wd] ?? 0)));
+  return { year: t.getUTCFullYear(), month: t.getUTCMonth() + 1, day: t.getUTCDate() };
+}
+export function weekdayLabel(d, wd) {
+  const W = { tue: tr('Di.', 'Tue'), wed: tr('Mi.', 'Wed'), thu: tr('Do.', 'Thu'), sat: tr('Sa.', 'Sat') }[wd];
+  return tr(`${W}, ${d.day}. ${SHORT()[d.month]}`, `${W} ${d.day} ${SHORT()[d.month]}`);
+}

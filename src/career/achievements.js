@@ -25,6 +25,8 @@ export const ACHIEVEMENTS = [
   { id: 'pokal', kind: 'career', name: () => tr('Pokalsieger', 'Cup winners'), text: () => tr('Einen Pokal gewonnen.', 'Won a cup.') },
   { id: 'profiluft', kind: 'career', name: () => tr('Profiluft', 'A taste of the pros'), text: () => tr('In der Regionalliga angekommen.', 'Reached the Regionalliga.') },
   { id: 'ganzOben', kind: 'career', name: () => tr('Ganz oben', 'The very top'), text: () => tr('In der 1. Liga angekommen.', 'Reached the 1. Liga.') },
+  { id: 'europa', kind: 'career', name: () => tr('Europäische Nächte', 'European nights'), text: () => tr('Im Europapokal dabei gewesen.', 'Played in European competition.') },
+  { id: 'europaSieg', kind: 'career', name: () => tr('Europapokalsieger', 'European champions'), text: () => tr('Einen Europapokal gewonnen.', 'Won a European trophy.') },
   { id: 'treue', kind: 'career', name: () => tr('Zehn Jahre Treue', 'Ten years of loyalty'), text: () => tr('Zehn Spielzeiten an der Seitenlinie.', 'Ten seasons on the touchline.') },
 ];
 const BY_ID = Object.fromEntries(ACHIEVEMENTS.map((a) => [a.id, a]));
@@ -93,6 +95,8 @@ export function careerAchievements(c) {
   const hit = (id) => unlock(c, id, { silent }) && out.push(id);
   const me = humanClub(c).id;
   if (Object.values(c.pokale ?? {}).some((cup) => cup?.done && cup.winner === me)) hit('pokal');
+  if (Object.values(c.pokale ?? {}).some((cup) => cup?.euro) || (c.euroHistory ?? []).length) hit('europa');
+  if (Object.values(c.pokale ?? {}).some((cup) => cup?.euro && cup.done && cup.winner === me) || (c.euroHistory ?? []).some((h) => h.reached === 'win')) hit('europaSieg');
   if ((c.level ?? 1) >= PRO_LEVEL) hit('profiluft');
   if ((c.level ?? 1) >= TOP_LEVEL) hit('ganzOben');
   if ((c.history ?? []).length >= 10) hit('treue');

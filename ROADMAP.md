@@ -1177,6 +1177,7 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
     - Geändert: Tabelle bei Punktgleichheit nach § 46 Nr. 1.3 (Tordifferenz, Tore, direkter Vergleich, Auswärtstore im direkten
       Vergleich, alle Auswärtstore; core/standings.js), Pokal-Heimrecht nach § 46 Nr. 2.1.1 (Amateur gegen Profi immer zu Hause,
       Profis in Runde 1/2 gegen Amateure, Finale neutral), WM/EM-Gruppen zuerst direkter Vergleich (FIFA 2026, UEFA EURO 2024).
+      Kein Landespokal mehr für Zweit- und Erstligisten (2026-11-08; sie stehen direkt im überregionalen Pokal, § 46 Nr. 2.1).
     - Geprüft, passt: fünf Gelbe = ein Spiel, danach neu zählen, Gelb im Platzverweis-Spiel verfällt (§ 43); Gelb-Rot = ein Spiel;
       Verlängerung 2 × 15 min (hier ein Drittel der Spielzeit) und Elfmeterschießen; fünf Wechsel, Profis in drei Gelegenheiten;
       Wechselperioden; Torwart hält nie länger als 8 s (IFAB Regel 12 seit 1.7.2025); kein Abseits nach Einwurf, Abstoß, Ecke;
@@ -1184,9 +1185,20 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
     - Offen: höchstens neun Ersatzspieler auf dem Spielbericht in der 1./2. Liga (DFL seit 2019/20, nur Sekundärquelle);
       Gelb-Rot sperrt auch für das nächste Spiel der Zweiten (§ 11 Nr. 3); Zeitstrafen unterhalb der Oberliga (Landesverbände);
       Gruppenregeln der übrigen Kontinentalturniere prüfen.
-13. **Internationaler Wettbewerb** (vom Nutzer gewünscht, 2026-11-05): Die besten Vereine der 1. Liga spielen in einem
-    erfundenen europäischen Wettbewerb gegen erfundene Vereine aus erfundenen Städten anderer Länder (Gruppenphase, K.-o.-Runden
-    unter der Woche, wie der Bundespokal neben der Liga). Offen: Format, Startplätze, Prämien nach Quellen.
+13. **Internationaler Wettbewerb** (vom Nutzer gewünscht, 2026-11-05) ✅ **2026-11-08** (europa.js, europadata.js,
+    tests/europa.test.js, e2e „euro“). Nutzerentscheide: echtes Format, drei Wettbewerbe, echte Prämien, zwei Abende je Woche.
+    - Drei erfundene Wettbewerbe (Namen nur in europadata.js), 74 erfundene Vereine aus 22 echten Ländern mit erfundenen Orten.
+      Startplätze: 1. Liga Platz 1–2 oberster, 3 zweiter, 4 dritter Wettbewerb (direkt in die Ligaphase, ohne Qualifikation).
+    - Format wie seit 2024/25: Ligaphase 36 Vereine, vier Töpfe nach Stärke, je Topf ein Heim- und ein Auswärtsgegner, kein
+      Gegner aus dem eigenen Land; Platz 1–8 Achtelfinale, 9–24 Play-offs (feste Paare 9/10–23/24 …), K.-o. mit Hin- und
+      Rückspiel (Rückspiel beim Gesetzten), Verlängerung und Elfmeterschießen, Endspiel neutral. Tabelle: Punkte, Tordifferenz,
+      Tore, Auswärtstore, Siege, Auswärtssiege, dann Stärke (statt Gegnerpunkten, Fair Play, Koeffizient).
+    - Kalender: 17 Termine, dienstags und donnerstags 21 Uhr, erste Woche nur donnerstags, nicht in der Winterpause,
+      Endspiel am Donnerstag der letzten Woche. Erholung über die 72-Stunden-Regel (pokal.js midweekGap).
+    - Prämien laut UEFA-Rundschreiben 32/2025 (Startgeld, Sieg/Remis, Platzierungsanteile, Zuschläge 1–8/9–16, Runden, Sieger).
+    - Spielwerte: Stärke der Teilnehmer (oberster 188 ± 7, zweiter 178 ± 6, dritter 170 ± 6), Länderklassen.
+    - Offen: „value pillar“ und Umverteilung nicht gezahlter Remis-Prämien, Supercup, Qualifikationsrunden, Startplatz für den
+      Pokalsieger, Klubkoeffizient für die Töpfe, eigene Stadien/Atmosphäre der Gegner in 3D, Fernsehgeld-Effekt auf Sponsoren.
 14. **Turniere der Nationalmannschaften** (vom Nutzer gewünscht, 2026-11-05; Entwurf [docs/KONZEPT-NATIONALTEAMS.md](docs/KONZEPT-NATIONALTEAMS.md)):
     Weltmeisterschaft, Europameisterschaft und alle Kontinentalmeisterschaften (Afrika, Asien, Südamerika, Nord- und
     Mittelamerika, Ozeanien) im Hintergrund simuliert. Eigene Spieler werden nach Herkunft und Stärke nominiert, fehlen bei

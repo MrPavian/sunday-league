@@ -6,6 +6,18 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-08-4 – Europapokal
+
+### Neu
+- **Europapokal:** Platz 1 und 2 der 1. Liga spielen in der nächsten Saison im obersten von drei europäischen Wettbewerben, Platz 3 im zweiten, Platz 4 im dritten. Die Gegner sind erfundene Vereine aus 22 Ländern.
+- **Echtes Format:** Ligaphase mit 36 Vereinen in einer Tabelle, jeder spielt acht Gegner aus vier Lostöpfen (aus jedem Topf einen zu Hause, einen auswärts, nie gegen einen Verein aus dem eigenen Land). Platz 1–8 direkt ins Achtelfinale, 9–24 in die K.-o.-Play-offs, ab Platz 25 ist Schluss. Danach Hin- und Rückspiel, bei Gleichstand nach beiden Spielen Verlängerung und Elfmeterschießen, das Endspiel auf neutralem Platz.
+- **Dienstag und Donnerstag:** Weil die 1. Liga im Spiel nur zehn Spielwochen hat, gibt es zwei Europapokal-Abende je Woche (21 Uhr, Flutlicht), immer vor dem Ligaspiel am Sonntag. Das Endspiel ist am Donnerstag der letzten Woche.
+- **Prämien in echter Höhe** (Beträge der Saison 2025/26): Startgeld, Sieg- und Remisprämien in der Ligaphase, Platzierungsprämie und Rundenprämien bis zum Endspiel. Alles steht unter Saison → Turnier.
+- **Zwei neue Erfolge:** Europäische Nächte und Europapokalsieger.
+
+### Geändert
+- **Kein Landespokal für Profis:** Zweit- und Erstligisten spielen wie in echt keinen Landespokal mehr, sie stehen direkt im Bundespokal.
+
 ## 2026-11-08-3 – A-Jugend als eigenes Team
 
 ### Neu

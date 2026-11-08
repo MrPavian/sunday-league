@@ -213,7 +213,7 @@ export function createMatchflow(ctx) {
     showMatch(prepared.match);
     spectatorToast();
     const cup = pokalOf(ctx.career, kind);
-    hud.toast(`${POKALE[kind].name} · ${roundName(cup, tie.round)} · ${pokalWhen(kind)}`, 3, 2);
+    hud.toast(`${POKALE[kind].name} · ${roundName(cup, tie.round)} · ${pokalWhen(kind, tie.day)}`, 3, 2);
   }
 
   function tickerPokal(kind) {

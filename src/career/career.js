@@ -70,6 +70,7 @@ import { defaultCrest } from '../ui/crest.js';
 import { clubTactic, normalizeTactic, systemFormation } from '../sim/tactics.js';
 import { shirtSponsor, sleeveSponsor, sponsorColor, SPONSORS } from './sponsors.js';
 import { advancePokale, bundChat } from './pokal.js';
+import { euroSeasonEnd } from './europa.js';
 import { bundVenueEvent } from './bundevents.js';
 import { initTiger, tigerWeek } from './tiger.js';
 import { bonusesOf } from './bonuses.js';
@@ -375,6 +376,7 @@ export function nextSeason(career) {
   const topScorer = scorer?.goals ? { name: playerOf(career, scorer.idx).name, goals: scorer.goals } : null;
   career.history = [...(career.history ?? []), { season: career.season, league: career.league, pos, champion: rows[0].club.name, topScorer, promoted, relegated, ...(career.pro ? { level, upBlock } : {}) }];
   seasonAchievements(career, { pos, size: rows.length, own: rows[pos - 1], promoted });
+  const euroNote = euroSeasonEnd(career, { pos, level, rows }); // Europapokal: Rest ausspielen, Startplatz für die nächste Saison (europa.js)
   if (career.pro && ((level === 10 && pos <= 4) || level >= 11)) career.bundQual = career.season + 1; // 3. Liga: die besten vier im überregionalen Pokal (DFB-Regel); 2. und 1. Liga: alle
   const goalVerdict = seasonGoalVerdict(career, pos); // hat der Vorstand bekommen, was er wollte?
   const presidentNotes = presidentSeasonEnd(career, pos); // Präsidium: Zufriedenheit des Trainers, Angebote von außen
@@ -426,6 +428,7 @@ export function nextSeason(career) {
   const reserveNote = reserveSeasonEnd(career, newLevel); // Zweite Mannschaft: Platz, Auf-/Abstieg, nie höher als eine Liga unter der Ersten
   if (reserveNote) sagaNotes.push(reserveNote);
   if (u19Note) sagaNotes.push(u19Note);
+  if (euroNote) sagaNotes.push(euroNote);
   if (newLevel === level) {
     // Alle, die schon irgendwo spielen (takenIndices: auch Alte Herren, Nachbarligen, Pokalgäste) – vorher fehlten die Alten Herren,
     // und ein Ü32-Spieler stand zugleich im Kader eines Gegners (Langzeitlauf, 2026-11-06).

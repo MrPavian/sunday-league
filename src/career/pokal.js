@@ -28,6 +28,8 @@ import { chronicle, yearOf } from './sagas.js';
 import { adjustRel, shirtSponsor } from './sponsors.js';
 import { applyWeather } from './weather.js';
 import { membersOf } from './pyramid.js';
+import { EURO_KINDS, EURO_NAMES } from './europadata.js';
+import { advanceEuro, euroHumanTie, euroWhen, prepareEuroMatch, recordEuroResult, slotName } from './europa.js';
 
 // Zufallssalze je Pokal (kreis/bezirk wie vor Einführung der übrigen Pokale, damit alte Auslosungen gleich bleiben):
 // [Teilnehmer, Auslosung, Spiel, Rundenabschluss].
@@ -40,11 +42,14 @@ export const POKALE = {
   bezirk: { name: tr('Bezirkspokal', 'County Cup'), size: 8, slots: [0.3, 0.55, 0.78] },
   land: { name: tr('Landespokal', 'State Cup'), size: 8, slots: [0.35, 0.58, 0.8] },
   bund: { name: BUND_NAME, size: 64, rounds: 6, slots: [0.08, 0.22, 0.38, 0.54, 0.7, 0.88], saturday: true },
+  // Europapokal (europa.js): eigener Ablauf mit Ligaphase und Hin- und Rückspielen, dienstags und donnerstags.
+  ...Object.fromEntries(EURO_KINDS.map((k) => [k, { name: EURO_NAMES[k], size: 36, euro: true }])),
 };
+const isEuroKind = (kind) => !!POKALE[kind]?.euro;
 const KINDS = ['kreis', 'bezirk', 'land', 'bund'];
 export const POKAL_KINDS = KINDS;
 // Wann wird gespielt? Pokale unter der Woche (Flutlicht), der überregionale Pokal am Samstag vor dem Ligaspieltag.
-export const pokalWhen = (kind) => (POKALE[kind].saturday ? tr('Samstag, 15:30 Uhr', 'Saturday, 3:30pm') : tr('Mittwoch, 19:30 Uhr', 'Wednesday, 7:30pm'));
+export const pokalWhen = (kind, day = null) => (isEuroKind(kind) ? euroWhen(day) : POKALE[kind].saturday ? tr('Samstag, 15:30 Uhr', 'Saturday, 3:30pm') : tr('Mittwoch, 19:30 Uhr', 'Wednesday, 7:30pm'));
 
 // Prämie des Hauptsponsors (Trikotsponsor) für Pokalerfolge, als Vielfaches seines Saisonziel-Bonus (s.bonus).
 // Herleitung: Der Bonus (makeOffer in sponsors.js: 40–80 € × Liga-Maßstab 1…6) ist das, was der Sponsor für ein
@@ -70,7 +75,9 @@ export function pokalEligible(c, kind) {
   const level = c.level ?? 1;
   // Ab der Landesliga (Stufe 6) spielt der Verein keinen Kreis- und Bezirkspokal mehr, sondern direkt im Landespokal.
   if (kind === 'kreis') return level >= 2 && level <= 5;
-  if (kind === 'land') return level >= 6 || (level >= 4 && c.landQual === c.season); // sonst nur der Bezirkspokalsieger der Vorsaison
+  // Landespokal: Landesliga bis 3. Liga. Erst- und Zweitligisten spielen in echt keinen Landespokal (sie stehen direkt im
+  // überregionalen Pokal, DFB-Spielordnung § 46 Nr. 2.1: 36 Vereine der Lizenzligen, die übrigen Plätze über die Landesverbände).
+  if (kind === 'land') return (level >= 6 && level < LEVEL_PROFI) || (level >= 4 && level < 6 && c.landQual === c.season); // sonst nur der Bezirkspokalsieger der Vorsaison
   if (kind === 'bund') return c.bundQual === c.season; // Landespokalsieger der Vorsaison
   return level === 5 || (level === 4 && c.pokalQual === c.season);
 }
@@ -203,6 +210,7 @@ function draw(c, kind, ids) {
 }
 
 export const roundName = (cup, r = cup.round) => {
+  if (cup.euro) return slotName(cup.slots[r]);
   if (cup.kind === 'bund') return BUND_ROUND_NAMES()[r];
   const left = POKALE[cup.kind].size / 2 ** r;
   return left === 2 ? tr('Finale', 'Final') : left === 4 ? tr('Halbfinale', 'Semi-final') : left === 8 ? tr('Viertelfinale', 'Quarter-final') : tr(`${r + 1}. Runde`, `Round ${r + 1}`);
@@ -213,6 +221,7 @@ export const tieWinner = (t) => (t.result.home + (t.pens?.home ?? 0) * 0.01 > t.
 
 // Das eigene Pokalspiel dieser Woche (vor dem Ligaspiel), sonst null.
 export function humanTie(c, kind) {
+  if (isEuroKind(kind)) return euroHumanTie(c, kind);
   const cup = pokalOf(c, kind);
   if (!cup || cup.done || cup.out || seasonOver(c) || cup.rounds[cup.round] !== c.round) return null;
   const me = humanClub(c).id;
@@ -220,9 +229,19 @@ export function humanTie(c, kind) {
 }
 // Pokal, den der eigene Verein in dieser Woche gerade gewonnen hat (Finale gespielt, Woche noch nicht vorbei).
 export const pokalWonNow = (c) => KINDS.find((k) => { const cup = pokalOf(c, k); return cup?.done && cup.winner === humanClub(c).id && cup.wonRound === c.round; }) ?? null;
-export const pokalDue = (c) => KINDS.map((k) => (humanTie(c, k) ? k : null)).find(Boolean) ?? null;
+// Reihenfolge der Woche: Dienstag (Europapokal), Mittwoch (Kreis-, Bezirks-, Landespokal), Donnerstag (Europapokal), Samstag (überregional).
+export function pokalDue(c) {
+  const eu = EURO_KINDS.find((k) => euroHumanTie(c, k));
+  const euTie = eu ? euroHumanTie(c, eu) : null;
+  if (euTie && euTie.day === 'tue') return eu;
+  const wed = ['kreis', 'bezirk', 'land'].find((k) => humanTie(c, k));
+  if (wed) return wed;
+  if (euTie) return eu;
+  return humanTie(c, 'bund') ? 'bund' : null;
+}
 
 export function preparePokalMatch(c, kind, tie, { human = false, duration } = {}) {
+  if (isEuroKind(kind)) return prepareEuroMatch(c, kind, tie, { human, duration });
   const cup = pokalOf(c, kind);
   if (kind === 'bund') bundVenueAutoResolve(c, cup.ties.indexOf(tie)); // offene Spielortfrage: vor dem Anpfiff gilt „eigener Platz"
   const home = pokalClub(c, cup, tie.home);
@@ -272,6 +291,7 @@ function penalties(teams, rng) {
 
 // Ergebnis des selbst gespielten (oder Liveticker-)Pokalspiels eintragen.
 export function recordPokalResult(c, prepared) {
+  if (isEuroKind(prepared.kind)) return recordEuroResult(c, prepared);
   const { tie, kind, match: m } = prepared;
   const cup = pokalOf(c, kind);
   const cost = {}; // Fitness, die das Pokalspiel gekostet hat – bis zum nächsten Spiel kommt ein Teil zurück (finishMidweek)
@@ -301,9 +321,11 @@ export function recordPokalResult(c, prepared) {
 // Erholung zwischen zwei Spielen einer Woche: Je nach Messgröße dauert sie 24–72 Stunden (Nédélec u. a. 2012, „Recovery
 // in Soccer Part I“, Sports Medicine 42, https://hal-insep.archives-ouvertes.fr/hal-01660950). Anstoßzeiten ab Montag 0 Uhr
 // in Stunden: Mittwoch 19:30, Samstag 15:30, Sonntag 10:30; ein Spiel dauert mit allem etwa 2 Stunden.
-const KICKOFF_H = { wed: 67.5, sat: 135.5, sun: 154.5 };
+// Europapokal: Dienstag und Donnerstag 21:00.
+const KICKOFF_H = { tue: 45, wed: 67.5, thu: 93, sat: 135.5, sun: 154.5 };
 const FULL_RECOVERY_H = 72;
-export const midweekGap = (fromKind, toKind) => KICKOFF_H[toKind ? (POKALE[toKind].saturday ? 'sat' : 'wed') : 'sun'] - KICKOFF_H[POKALE[fromKind].saturday ? 'sat' : 'wed'] - 2;
+const dayOfKind = (kind, day) => (day ?? (POKALE[kind].saturday ? 'sat' : 'wed'));
+export const midweekGap = (fromKind, toKind, fromDay = null, toDay = null) => KICKOFF_H[toKind ? dayOfKind(toKind, toDay) : 'sun'] - KICKOFF_H[dayOfKind(fromKind, fromDay)] - 2;
 
 // „Weiter zum …“ nach dem Pokalspiel: ein Teil der Fitness kommt zurück (höchstens ein normales Spiel; die Verlängerung
 // wirkt länger nach), eine Zeile im Chat, dann das nächste Spiel der Woche.
@@ -311,12 +333,15 @@ export function finishMidweek(c) {
   const mw = c.week?.midweek;
   if (!mw) return;
   const next = pokalDue(c);
-  const share = Math.max(0, Math.min(1, midweekGap(mw.kind, next) / FULL_RECOVERY_H));
+  const nextDay = next && isEuroKind(next) ? humanTie(c, next)?.day : null;
+  const share = Math.max(0, Math.min(1, midweekGap(mw.kind, next, mw.day ?? null, nextDay) / FULL_RECOVERY_H));
   for (const [idx, drop] of Object.entries(mw.cost ?? {})) adjustFitness(c, Number(idx), Math.min(drop, MATCH_COST) * share);
   const [a, b] = mw.result;
   const score = `${a}:${b}${mw.et ? ` ${tr('n. V.', 'a.e.t.')}` : ''}${mw.pens ? ` (${tr('i. E.', 'pens')} ${mw.pens[0]}:${mw.pens[1]})` : ''}`;
   const won = a + (mw.pens?.[0] ?? 0) * 0.01 > b + (mw.pens?.[1] ?? 0) * 0.01;
-  c.week.chat.push({ from: null, text: tr(`${POKALE[mw.kind].name}: ${score} gegen ${mw.opp}. ${won ? 'Weiter geht\'s!' : 'Ausgeschieden.'} ${next ? `Nächstes Spiel: ${POKALE[next].name}.` : 'Jetzt zählt der Sonntag.'}`, `${POKALE[mw.kind].name}: ${score} against ${mw.opp}. ${won ? 'Through!' : 'Knocked out.'} ${next ? `Next up: ${POKALE[next].name}.` : 'Now Sunday is what counts.'}`), time: POKALE[mw.kind].saturday ? 'Sa 18:10' : 'Mi 22:10', me: true });
+  const verdict = mw.note ?? (won ? tr('Weiter geht\'s!', 'Through!') : tr('Ausgeschieden.', 'Knocked out.'));
+  const time = { tue: tr('Di 23:10', 'Tue 23:10'), thu: tr('Do 23:10', 'Thu 23:10') }[mw.day] ?? (POKALE[mw.kind].saturday ? 'Sa 18:10' : 'Mi 22:10');
+  c.week.chat.push({ from: null, text: tr(`${POKALE[mw.kind].name}: ${score} gegen ${mw.opp}. ${verdict} ${next ? `Nächstes Spiel: ${POKALE[next].name}.` : 'Jetzt zählt der Sonntag.'}`, `${POKALE[mw.kind].name}: ${score} against ${mw.opp}. ${verdict} ${next ? `Next up: ${POKALE[next].name}.` : 'Now Sunday is what counts.'}`), time, me: true });
   delete c.week.midweek;
 }
 
@@ -594,6 +619,7 @@ export function advancePokale(c) {
     let guard = 0;
     while (!cup.done && cup.rounds[cup.round] < c.round && guard++ < 8) finishRound(c, kind);
   }
+  advanceEuro(c); // Europapokal (europa.js): anmelden in der ersten Woche, verpasste Termine ausspielen
 }
 
 function finishPokal(c, kind, winner) {

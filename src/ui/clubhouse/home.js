@@ -35,6 +35,7 @@ import { nachholLabel } from '../../career/platz.js';
 import { derbyOf, isDerbyFixture } from '../../career/derby.js';
 import { CUP_NAME, CUPS, cupOf, PRIZES, summerCupDue, summerCupRunning, tournamentOpen, winterCupDue, winterCupRunning } from '../../career/tournament.js';
 import { humanTie, pokalClub, pokalDue, pokalWonNow, POKALE, pokalOf, pokalWhen, roundName } from '../../career/pokal.js';
+import { countryName, euroMoney, firstLegOf } from '../../career/europa.js';
 import { levelName } from '../../career/bundespokal.js';
 import { MATCH } from '../../sim/match.js';
 import { coachAway, coachMode, energyLabel, isPresident, patienceLabel, standInName } from '../../career/personal.js';
@@ -247,16 +248,18 @@ export const homeScreens = {
     const [a, b] = mw.result;
     const won = a + (mw.pens?.[0] ?? 0) * 0.01 > b + (mw.pens?.[1] ?? 0) * 0.01;
     const next = pokalDue(c);
-    const label = next ? (POKALE[next].saturday ? tr('Weiter zum Samstag', 'On to Saturday') : tr('Weiter zum Mittwoch', 'On to Wednesday')) : tr('Weiter zum Sonntag', 'On to Sunday');
-    return `<article class="ui-card hub-card midweek-card"><p class="t-cap">${pokalWhen(mw.kind)} · <b>${POKALE[mw.kind].name}</b> · ${tr('Englische Woche', 'Midweek game')}</p>
+    const nextDay = next && POKALE[next].euro ? humanTie(c, next)?.day : null;
+    const label = next ? (nextDay === 'thu' ? tr('Weiter zum Donnerstag', 'On to Thursday') : POKALE[next].saturday ? tr('Weiter zum Samstag', 'On to Saturday') : tr('Weiter zum Mittwoch', 'On to Wednesday')) : tr('Weiter zum Sonntag', 'On to Sunday');
+    return `<article class="ui-card hub-card midweek-card"><p class="t-cap">${pokalWhen(mw.kind, mw.day)} · <b>${POKALE[mw.kind].name}</b> · ${tr('Englische Woche', 'Midweek game')}</p>
       <h3 class="t-h2">${a} : ${b}${mw.et ? ` <small>${tr('n. V.', 'a.e.t.')}</small>` : ''}${mw.pens ? ` <small>(${tr('i. E.', 'pens')} ${mw.pens[0]}:${mw.pens[1]})</small>` : ''}</h3>
-      <p class="t-body">${tr('gegen', 'against')} <b>${esc(mw.opp)}</b> – ${won ? tr('eine Runde weiter.', 'through to the next round.') : tr('ausgeschieden.', 'knocked out.')}</p>
+      <p class="t-body">${tr('gegen', 'against')} <b>${esc(mw.opp)}</b> – ${mw.note ? esc(mw.note) : won ? tr('eine Runde weiter.', 'through to the next round.') : tr('ausgeschieden.', 'knocked out.')}</p>
       <p class="t-2">${next ? tr(`Diese Woche wartet noch der ${POKALE[next].name}, danach die Liga am Sonntag.`, `The ${POKALE[next].name} is still to come this week, then the league on Sunday.`) : tr('Am Sonntag geht die Liga weiter. Bis dahin erholen sich die Beine – ganz frisch ist nach dem Pokal nicht jeder.', 'The league carries on on Sunday. Legs recover until then – not everyone will be completely fresh after the cup game.')}</p>
       <div class="hub-actions">${button(label, { kind: 'primary big block', action: 'onMidweekDone' })}</div></article>`;
   },
 
   // Pokalspiel unter der Woche: kommt vor dem Ligaspieltag.
   pokalCard(kind) {
+    if (POKALE[kind].euro) return this.euroCard(kind);
     const c = this.career;
     const cup = pokalOf(c, kind);
     const tie = humanTie(c, kind);
@@ -272,6 +275,26 @@ export const homeScreens = {
       <p class="t-body">${home ? tr('Heimspiel', 'Home') : tr('Auswärts', 'Away')} ${tr('gegen', 'against')} <b>${opp.name}</b> <small>(${lv(opp.id)})</small>${why}.</p>
       ${kind === 'bund' ? `<p class="t-2">${tr('Spielort', 'Venue')}: <b>${{ own: tr('eigener Platz', 'own pitch'), stands: tr('eigener Platz mit Stahlrohrtribüne', 'own pitch with scaffold stand'), stadium: tr('großes Stadion', 'big stadium') }[home ? tie.venue ?? 'own' : 'stadium']}</b></p>` : ''}
       <p class="t-2">${format} ${tr('gegen', 'v')} ${format} · ${MATCH.pokalExtra ? tr('bei Unentschieden Verlängerung, dann Elfmeterschießen', 'if level: extra time, then penalties') : tr('bei Unentschieden direkt Elfmeterschießen', 'if level: straight to penalties')} · ${tr('am Sonntag geht die Liga weiter', 'the league carries on on Sunday')}</p>
+      ${button(isPresident(c) ? tr('Spiel von der Tribüne ansehen', 'Watch the game from the stand') : tr('Anpfiff – an der Seitenlinie', 'Kick-off – on the touchline'), { kind: 'primary big block coach-play', action: 'onPokalCoach', value: kind })}
+      <div class="hub-alt">${button(isPresident(c) ? tr('Liveticker', 'Live ticker') : tr('Liveticker mit Entscheidungen', 'Live ticker with decisions'), { action: 'onPokalSimulate', value: kind })}</div></div>`;
+  },
+
+  // Europapokal: Dienstag oder Donnerstag, 21 Uhr – Ligaphase oder K.-o.-Runde mit Hin- und Rückspiel.
+  euroCard(kind) {
+    const c = this.career;
+    const cup = pokalOf(c, kind);
+    const tie = humanTie(c, kind);
+    const me = humanClub(c).id;
+    const home = tie.home === me;
+    const opp = pokalClub(c, cup, home ? tie.away : tie.home);
+    const first = firstLegOf(cup, tie);
+    const agg = first ? tr(`Hinspiel ${home ? first.home : first.away}:${home ? first.away : first.home} – es zählt das Gesamtergebnis, bei Gleichstand ${MATCH.pokalExtra ? 'Verlängerung und ' : ''}Elfmeterschießen.`, `First leg ${home ? first.home : first.away}:${home ? first.away : first.home} – aggregate counts; if level, ${MATCH.pokalExtra ? 'extra time and ' : ''}penalties.`) : '';
+    const where = tie.neutral ? tr('Endspiel im neutralen Stadion', 'Final at a neutral stadium') : home ? tr('Heimspiel', 'Home') : tr('Auswärts', 'Away');
+    const land = opp.country ? ` <small>(${countryName(opp.country)})</small>` : '';
+    return `<div class="pokal-card euro-card" data-testid="euro-card"><p class="t-cap">${pokalWhen(kind, tie.day)} · <b>${POKALE[kind].name}</b> · ${roundName(cup, tie.round)}</p>
+      <p class="t-body">${where} ${tr('gegen', 'against')} <b>${esc(opp.name)}</b>${land}.</p>
+      ${agg ? `<p class="t-2">${agg}</p>` : ''}
+      <p class="t-2">11 ${tr('gegen', 'v')} 11 · ${tr('Flutlicht', 'Floodlights')} · ${tr('bisher', 'so far')} ${euroMoney(cup.earned ?? 0)} ${tr('Prämien', 'prize money')}</p>
       ${button(isPresident(c) ? tr('Spiel von der Tribüne ansehen', 'Watch the game from the stand') : tr('Anpfiff – an der Seitenlinie', 'Kick-off – on the touchline'), { kind: 'primary big block coach-play', action: 'onPokalCoach', value: kind })}
       <div class="hub-alt">${button(isPresident(c) ? tr('Liveticker', 'Live ticker') : tr('Liveticker mit Entscheidungen', 'Live ticker with decisions'), { action: 'onPokalSimulate', value: kind })}</div></div>`;
   },
