@@ -6,6 +6,11 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-08-3 – U19s as their own team
+
+### New
+- **U19s with their own league:** From the Regionalliga your U19s play every week with a table (Squad → Teams). Without a youth academy in the state league – top at the halfway mark goes straight up to the main round of the U19 Youth League. With an academy always in the Youth League: first phase, then championship or main round, the best play the finals for the title. Talents with at least five appearances develop faster, the higher the round, the more.
+
 ## 2026-11-08-2 – Rules like real football
 
 ### Changed

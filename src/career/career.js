@@ -76,6 +76,7 @@ import { bonusesOf } from './bonuses.js';
 import { matchTactic } from './tacticpresets.js';
 import { keeperGrowthMul, weeklyTeam } from './coachteam.js';
 import { reserveMatchday, reserveSeasonEnd } from './reserve.js';
+import { ensureU19, u19Growth, u19Matchday, u19SeasonEnd } from './u19.js';
 import { rankTable } from '../core/standings.js';
 import { careerAchievements, matchAchievements, seasonAchievements } from './achievements.js';
 
@@ -385,7 +386,8 @@ export function nextSeason(career) {
 
   // Entwicklung zuerst – die Einsätze dieser Saison zählen als Spielpraxis.
   const development = developPlayers(career);
-  developYouth(career, (idx) => youthFactor(career, idx, career.fixtures.length) * ((career.players[idx]?.apps2 ?? 0) >= 5 ? 1.15 : 1)); // A-Jugendliche mit Einsätzen in der Zweiten: +15 % (Spielwert)
+  developYouth(career, (idx) => youthFactor(career, idx, career.fixtures.length) * Math.max((career.players[idx]?.apps2 ?? 0) >= 5 ? 1.15 : 1, u19Growth(career, idx))); // A-Jugendliche mit Einsätzen in der Zweiten: +15 % (Spielwert); in der A-Jugend je nach Runde (u19.js) – das Bessere zählt
+  const u19Note = career.u19 ? u19SeasonEnd(career, { playerOf, prospects: career.youth?.prospects ?? [] }) : null; // Rest der Runde, Endrunde, nächste Saison
   seasonBridge(career);
   const retired = retirements(career, youthDeps(), MIN_SQUAD);
 
@@ -394,6 +396,7 @@ export function nextSeason(career) {
     delete rec.fitness;
     delete rec.playShare;
     delete rec.apps2;
+    delete rec.appsU19;
     rec.total = {
       apps: (rec.total?.apps ?? 0) + rec.apps,
       goals: (rec.total?.goals ?? 0) + rec.goals,
@@ -422,6 +425,7 @@ export function nextSeason(career) {
   if (upBlock) sagaNotes.push(blockText(career, upBlock, level)); // Profiligen: kein Aufstieg trotz Platz (license.js)
   const reserveNote = reserveSeasonEnd(career, newLevel); // Zweite Mannschaft: Platz, Auf-/Abstieg, nie höher als eine Liga unter der Ersten
   if (reserveNote) sagaNotes.push(reserveNote);
+  if (u19Note) sagaNotes.push(u19Note);
   if (newLevel === level) {
     // Alle, die schon irgendwo spielen (takenIndices: auch Alte Herren, Nachbarligen, Pokalgäste) – vorher fehlten die Alten Herren,
     // und ein Ü32-Spieler stand zugleich im Kader eines Gegners (Langzeitlauf, 2026-11-06).
@@ -1439,6 +1443,11 @@ export function finishRound(career) {
     unavailable: (idx) => { const r = career.players[idx]; return !r || r.injuryWeeks > 0 || r.awayWeeks > 0 || (r.ban?.games ?? 0) > 0; },
   });
   if (line2) staffNotes.push(line2);
+  // A-Jugend als eigenes Team ab der Regionalliga (u19.js): ein Spieltag je Woche, Talente, die bei der Ersten nicht spielten.
+  if (ensureU19(career)) {
+    const lineU19 = u19Matchday(career, { playerOf, prospects: career.youth?.prospects ?? [], usedFirst: new Set((career.youth?.prospects ?? []).filter((idx) => career.players[idx]?.lastApp === career.round)), unavailable: (idx) => { const r = career.players[idx]; return !r || r.injuryWeeks > 0 || r.awayWeeks > 0; } });
+    if (lineU19) staffNotes.push(lineU19);
+  }
   careerAchievements(career); // Pokalsieg, Profiluft, Treue (achievements.js)
   career.round++;
   // Winterpause (vom Nutzer gewünscht, 2026-10-21): eine eigene Woche ohne Ligaspiel vor dem Spieltag nach der Hinrunde –

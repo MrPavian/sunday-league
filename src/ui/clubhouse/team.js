@@ -30,6 +30,7 @@ import { ARG_IDS, ARGUMENTS, knownMotives, MOTIVES } from '../../career/recruiti
 import { currentLineup, humanClub, lineupOf, runningCup, nextPitch, maxSquad, MIN_SQUAD, recruit, recruitChance, setLineupSlot, SQUAD_EXTRA_MAX, table } from '../../career/career.js';
 import { inviteChance, isRawDiamond, MAX_STATIONS, STATIONS, TRAINING_COST, trainingDone } from '../../career/training.js';
 import { roleName, STAFF_ROLES } from '../../career/youth.js';
+import { phaseName, u19Cost, u19Of, u19Table } from '../../career/u19.js';
 import { canRegister, RESERVE_FROM, reserveCap, reserveCost, reserveOf, RESERVE_ROUNDS, reserveTable } from '../../career/reserve.js';
 import { currentSalary, teamCandidates, teamOf, teamOpen, TEAM_FROM, TEAM_ROLE_IDS, TEAM_ROLES } from '../../career/coachteam.js';
 import { canAffordOutside, EHRENAMT_MONTH, feeOf, holderOf, outsideCandidate, ROLES as STAFF_ROLE_IDS, squadCandidates, STAFF_MIN_AGE, UEBUNGSLEITER_MONTH } from '../../career/staff.js';
@@ -611,6 +612,7 @@ export const teamScreens = {
       ...(c.women ? [['women', tr('Frauen', 'Women'), () => this.tab_women()]] : []),
       ['oldboys', tr('Alte Herren', 'Old boys'), () => this.tab_oldboys()],
       ...((c.level ?? 1) >= RESERVE_FROM || reserveOf(c) ? [['reserve', tr('Zweite Mannschaft', 'Reserves'), () => this.reservePart()]] : []),
+      ...(u19Of(c) ? [['u19', tr('A-Jugend', 'U19s'), () => this.u19Part()]] : []),
     ];
     const f = parts.findIndex(([id]) => id === this.teamsFocus);
     if (f > 0) parts.unshift(...parts.splice(f, 1));
@@ -635,6 +637,25 @@ export const teamScreens = {
       <table class="table reserve-table"><thead><tr><th>#</th><th>${tr('Verein', 'Club')}</th><th>${tr('Sp.', 'P')}</th><th>${tr('Tore', 'Goals')}</th><th>${tr('Pkt.', 'Pts')}</th></tr></thead><tbody>${rows}</tbody></table>
       <p class="hint">${tr(`Zwei steigen auf, drei ab. Höchstens bis ${capName} – eine Liga unter der Ersten.`, `Two go up, three go down. At most ${capName} – a league below the first team.`)}</p>
       ${button(this.confirmWithdraw ? tr('Wirklich abmelden? Nochmal tippen', 'Really withdraw? Tap again') : tr('Zweite abmelden', 'Withdraw reserves'), { kind: 'ghost', action: 'reserveWithdraw', disabled: !!off })}`;
+  },
+
+  // A-Jugend als eigenes Team (u19.js): Liga bzw. Runde der Nachwuchsliga, Tabelle, letzter Spieltag, bisherige Saisons.
+  u19Part() {
+    const c = this.career;
+    const u = u19Of(c);
+    const g = u.group;
+    const rows = u19Table(g)
+      .map((t, i) => `<tr class="${t.own ? 'me' : ''}"><td class="num">${i + 1}</td><td>${esc(t.own ? `${humanClub(c).name} U19` : t.name)}</td><td class="num">${t.w + t.d + t.l}</td><td class="num">${t.gf}:${t.ga}</td><td class="num"><b>${t.pts}</b></td></tr>`)
+      .join('');
+    const last = u.last ? tr(`Letztes Spiel ${u.last.home ? 'gegen' : 'bei'} ${esc(u.last.opp)}: ${u.last.gf}:${u.last.ga}.`, `Last game ${u.last.home ? 'v' : 'at'} ${esc(u.last.opp)}: ${u.last.gf}–${u.last.ga}.`) : '';
+    const rule = u.tier === 'nwl'
+      ? tr('Vorrunde: die ersten zwei in die Meisterrunde, die übrigen in die Hauptrunde. Die vier Besten jeder Meisterrunden-Gruppe spielen um die Deutsche Meisterschaft.', 'First phase: the top two go into the championship round, the rest into the main round. The best four of each championship group play for the national title.')
+      : tr('Wer nach der Hinrunde vorne steht, steigt direkt in die Hauptrunde der Nachwuchsliga auf. Mit einem Leistungszentrum spielt die A-Jugend immer dort.', 'Whoever is top at the halfway mark goes straight up to the main round of the Youth League. With a youth academy (NLZ) the U19s always play there.');
+    const hist = u.history.length ? `<p class="hint">${u.history.slice(-4).map((h) => `${tr('Saison', 'Season')} ${h.season}: ${phaseName(h.phase)} ${h.place}.${h.endrunde ? (h.endrunde === 'meister' ? tr(' · Meister!', ' · Champions!') : ` · ${tr('Endrunde', 'Finals')}: ${h.endrunde}`) : ''}`).join(' · ')}</p>` : '';
+    return `<p><b>${phaseName(g.phase)}</b> · ${tr('Spieltag', 'Matchday')} ${g.round} · ${u19Cost(u.tier)} €${tr(' je Woche', ' a week')}</p>
+      ${last ? `<p>${last}</p>` : ''}
+      <table class="table reserve-table" data-testid="u19-table"><thead><tr><th>#</th><th>${tr('Verein', 'Club')}</th><th>${tr('Sp.', 'P')}</th><th>${tr('Tore', 'Goals')}</th><th>${tr('Pkt.', 'Pts')}</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="hint">${rule} ${tr('Wer mindestens fünfmal spielt, entwickelt sich schneller – je höher die Runde, desto mehr.', 'Anyone who plays at least five times develops faster – the higher the round, the more.')}</p>${hist}`;
   },
 
   tab_youth() {

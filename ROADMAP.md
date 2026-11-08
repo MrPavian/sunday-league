@@ -1129,7 +1129,11 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
    ✅ Zweite Mannschaft erledigt 2026-11-07 (reserve.js, Mannschaft → Teams): eigene Liga (16 Teams, Schnellmodell), Start in der
    Kreisklasse C, höchstens eine Liga unter der Ersten, Zweite eines Drittligisten nicht in der Regionalliga (DFB, „Wo dürfen zweite
    Mannschaften spielen?“); Spielpraxis für Nicht-Eingesetzte und A-Jugendliche ab 18; Kosten, Gegnerstärke, Wirkung Spielwerte.
-   Offen: U19 als eigenes Team mit eigener Liga (A-Junioren-Bundesliga/Regionalliga).
+   ✅ U19 als eigenes Team erledigt 2026-11-08 (u19.js, Mannschaft → Teams): Modus nach der U19-DFB-Nachwuchsliga (dfb.de):
+   mit Leistungszentrum Vorrunde (8er-Gruppe, 14 Spieltage), dann Meisterrunde (Erste und Zweite, 6er-Gruppe, 10 Spieltage, die
+   besten vier in die Endrunde, K.-o. mit Verlängerung 2 × 15 und Elfmeterschießen) oder Hauptrunde (8er-Gruppe, 14 Spieltage,
+   obere Hälfte bleibt qualifiziert); ohne Leistungszentrum Verbandsliga (10 Teams, Spielwert), Herbstmeister direkt in die
+   Hauptrunde. Gegnerstärken, Kosten und Entwicklungsbonus (+8 bis +18 % ab fünf Einsätzen) sind Spielwerte.
 5. **Trainerteam ab der Regionalliga:** Torwart-, Athletiktrainer, Physio mit Gehalt und Wirkung.
    ✅ erledigt 2026-11-07 (coachteam.js, Mannschaft → Training): je Aufgabe zwei Bewerber pro Saison; Gehalt Regionalliga bis zur
    Minijob-Grenze 603 € (DRV 2026), 3. Liga nach Medianen (Athletiktrainer 36 400 €/Jahr StepStone, Physio 3452 €/Monat Entgeltatlas;

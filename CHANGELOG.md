@@ -6,6 +6,11 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-08-3 – A-Jugend als eigenes Team
+
+### Neu
+- **A-Jugend mit eigener Liga:** Ab der Regionalliga spielt die A-Jugend jede Woche mit Tabelle (Mannschaft → Teams). Ohne Leistungszentrum in der Verbandsliga – wer nach der Hinrunde vorne steht, steigt direkt in die Hauptrunde der U19-Nachwuchsliga auf. Mit Leistungszentrum immer in der Nachwuchsliga: Vorrunde, dann Meister- oder Hauptrunde, die Besten spielen die Endrunde um die Meisterschaft. Talente mit mindestens fünf Einsätzen entwickeln sich schneller, je höher die Runde, desto mehr.
+
 ## 2026-11-08-2 – Regeln wie im echten Fußball
 
 ### Geändert

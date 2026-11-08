@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-08-3',
+    de: { title: 'A-Jugend als eigenes Team', items: ['Ab der Regionalliga spielt deine A-Jugend jede Woche in einer eigenen Liga – ohne Leistungszentrum in der Verbandsliga, mit Leistungszentrum in der U19-Nachwuchsliga mit Vorrunde, Meister- oder Hauptrunde und Endrunde.', 'Wer in der Verbandsliga nach der Hinrunde vorne steht, steigt direkt in die Nachwuchsliga auf. Talente mit mindestens fünf Einsätzen entwickeln sich schneller. Zu sehen unter Mannschaft → Teams.'] },
+    en: { title: 'U19s as their own team', items: ['From the Regionalliga your U19s play every week in their own league – the state league without a youth academy, the U19 Youth League with a first phase, championship or main round and finals with one.', 'Top of the state league at the halfway mark means going straight up to the Youth League. Talents with at least five appearances develop faster. See Squad → Teams.'] },
+  },
+  {
     id: '2026-11-08-2',
     de: { title: 'Regeln wie im echten Fußball', items: ['Überregionaler Pokal: Als Amateur hast du gegen Profis bis zum Halbfinale immer Heimrecht, das Finale steigt neutral im Stadion. Als Zweit- oder Erstligist triffst du in den ersten beiden Runden auf Amateure – auswärts.', 'Tabelle: Bei Punktgleichheit zählen nach Tordifferenz und Toren jetzt der direkte Vergleich und die Auswärtstore. Bei Welt- und Europameisterschaft entscheidet zuerst der direkte Vergleich.'] },
     en: { title: 'Rules like real football', items: ['National knockout cup: as an amateur side you always have home advantage against pro clubs up to the semi-final; the final is played at a neutral stadium. As a second- or top-flight club you face amateurs in the first two rounds – away.', 'League table: when level on points, head-to-head and away goals now count after goal difference and goals scored. At the World Cup and European Championship head-to-head comes first.'] },
