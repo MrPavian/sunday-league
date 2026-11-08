@@ -10,6 +10,7 @@
 //  - Danach: Turnier-Schub auf den Marktwert (natboost.js), Entschädigung des Weltverbands nur bei der Weltmeisterschaft.
 // Die übrigen Kaderspieler sind erfunden: Pool-Spieler, auf die Stärke ihres Landes gehoben (niveau.js liftedTo), mit Namen und
 // Aussehen ihres Landes. Gespeichert wird nur, was zählt (Feld, Stärke, Spiele, eigene Spieler) – die Kader werden neu gebaut.
+import { rankTable } from '../core/standings.js';
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { NAME_GROUPS, NATIONS } from '../data/nations.js';
@@ -283,8 +284,13 @@ export function groupTable(t, gi) {
       a.pts++;
     }
   }
-  return Object.values(rows).sort((x, y) => y.pts - x.pts || y.gf - y.ga - (x.gf - x.ga) || y.gf - x.gf || t.str[y.nid] - t.str[x.nid]);
+  // Punktgleichheit (core/standings.js): Weltmeisterschaft und Europameisterschaft zuerst der direkte Vergleich, sonst
+  // Tordifferenz und Tore; zuletzt die Stärke statt Fair Play, Weltrangliste und Los.
+  const games = t.matches.filter((m) => m.g === gi && m.result).map((m) => ({ home: m.home, away: m.away, hg: m.result.home, ag: m.result.away }));
+  const list = Object.values(rows).map((r) => ({ ...r, id: r.nid }));
+  return rankTable(list, games, { mode: H2H_CUPS.has(t.id) ? 'h2h' : 'gd', fallback: (x, y) => t.str[y.nid] - t.str[x.nid] });
 }
+const H2H_CUPS = new Set(['wm', 'em']);
 
 const winnerOf = (m) => (m.result.home !== m.result.away ? (m.result.home > m.result.away ? m.home : m.away) : m.pens.home > m.pens.away ? m.home : m.away);
 

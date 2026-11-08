@@ -6,6 +6,12 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-08-2 – Regeln wie im echten Fußball
+
+### Geändert
+- **Heimrecht im Bundespokal:** Wie in der echten Spielordnung hat der Amateur gegen Profis bis zum Halbfinale immer Heimrecht. Das Finale wird neutral im Stadion gespielt. Als Zweit- oder Erstligist triffst du in den ersten beiden Runden auf Amateure und spielst bei ihnen auswärts.
+- **Tabelle bei Punktgleichheit:** Nach Tordifferenz und Toren entscheiden jetzt der direkte Vergleich, die Auswärtstore im direkten Vergleich und alle Auswärtstore. Bei Welt- und Europameisterschaft zählt in der Gruppe zuerst der direkte Vergleich.
+
 ## 2026-11-08-1 – Erfolge
 
 ### Neu

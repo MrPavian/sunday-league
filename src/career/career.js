@@ -76,6 +76,7 @@ import { bonusesOf } from './bonuses.js';
 import { matchTactic } from './tacticpresets.js';
 import { keeperGrowthMul, weeklyTeam } from './coachteam.js';
 import { reserveMatchday, reserveSeasonEnd } from './reserve.js';
+import { rankTable } from '../core/standings.js';
 import { careerAchievements, matchAchievements, seasonAchievements } from './achievements.js';
 
 export const SAVE_VERSION = 1;
@@ -1533,7 +1534,12 @@ export function table(career) {
         a.pts++;
       }
     }
-  return Object.values(rows).sort((x, y) => y.pts - x.pts || y.gf - y.ga - (x.gf - x.ga) || y.gf - x.gf || x.club.name.localeCompare(y.club.name));
+  // Punktgleichheit nach DFB-Spielordnung § 46 Nr. 1.3 (core/standings.js): Tordifferenz, Tore, direkter Vergleich, Auswärtstore.
+  const games = [];
+  for (const round of career.fixtures) for (const f of round) if (f.result) games.push({ home: f.home, away: f.away, hg: f.result.home, ag: f.result.away });
+  const list = Object.values(rows);
+  for (const r of list) r.id = r.club.id;
+  return rankTable(list, games, { fallback: (x, y) => x.club.name.localeCompare(y.club.name) });
 }
 
 // --- Speichern ---------------------------------------------------------------------

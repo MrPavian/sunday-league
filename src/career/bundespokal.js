@@ -79,9 +79,10 @@ export const PROFI_KLASSEN = {
 export const PROFI_ATTRS = ['pace', 'stamina', 'technique', 'passing', 'shooting', 'tackling', 'heading', 'keeping'];
 // Chance, dass der Gegner der Runde ein Erstligist ist (sonst Zweitligist): früh meist Zweitligist, ab Halbfinale Erstligist.
 export const BUND_ERST = [0.3, 0.5, 0.65, 0.85, 1, 1];
-// Heimrecht in den Runden 2…6: Der Amateur hat es gegen Höherklassige, wenn das Los es will – hier die Chance, dass
-// der Profi stattdessen zu Hause spielt (Auswärtsspiel im großen Stadion).
-export const BUND_AWAY = 0.4;
+// Heimrecht (DFB-Spielordnung § 46 Nr. 2.1.1, Abgleich 2026-11-07): gegen einen Profi hat der Amateur bis zum Halbfinale immer
+// Heimrecht; nur unter Gleichen (Amateur gegen Amateur, Profi gegen Profi) entscheidet das Los – die Chance auf ein
+// Auswärtsspiel ist dann die Hälfte. Früher (bis Version 145) spielte der Amateur ab Runde 2 in 40 % der Fälle auswärts.
+export const BUND_AWAY = 0.5;
 
 // Stufen der Pokalgegner über der Bezirksliga (5): Landesliga, Oberliga, Profi.
 // Stufen über der Oberliga (8): Regionalliga 9 und 3. Liga 10 gibt es im Spiel nicht, Zweitligist 11, Erstligist 12.

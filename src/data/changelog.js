@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-08-2',
+    de: { title: 'Regeln wie im echten Fußball', items: ['Überregionaler Pokal: Als Amateur hast du gegen Profis bis zum Halbfinale immer Heimrecht, das Finale steigt neutral im Stadion. Als Zweit- oder Erstligist triffst du in den ersten beiden Runden auf Amateure – auswärts.', 'Tabelle: Bei Punktgleichheit zählen nach Tordifferenz und Toren jetzt der direkte Vergleich und die Auswärtstore. Bei Welt- und Europameisterschaft entscheidet zuerst der direkte Vergleich.'] },
+    en: { title: 'Rules like real football', items: ['National knockout cup: as an amateur side you always have home advantage against pro clubs up to the semi-final; the final is played at a neutral stadium. As a second- or top-flight club you face amateurs in the first two rounds – away.', 'League table: when level on points, head-to-head and away goals now count after goal difference and goals scored. At the World Cup and European Championship head-to-head comes first.'] },
+  },
+  {
     id: '2026-11-08-1',
     de: { title: 'Erfolge', items: ['Neu im Vereinsmuseum: 19 Erfolge mit Augenzwinkern – vom ersten Dreier über „Luftloch-König“ und „Ans Auto ×5“ bis „Ganz oben“.', 'Jeder neue Erfolg steht einmal im Kreisblatt. Bestehende Spielstände bekommen Meistertitel und Aufstiege aus der Chronik nachgetragen.'] },
     en: { title: 'Achievements', items: ['New in the club museum: 19 tongue-in-cheek achievements – from your first three points via “King of air shots” and “Off a car ×5” to “The very top”.', 'Every new achievement makes the District Gazette once. Existing saves get their titles and promotions filled in from the chronicle.'] },

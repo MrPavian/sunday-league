@@ -1062,7 +1062,8 @@ export function keeperIntent(m, p, dt) {
   if (ball.holder === p.id) {
     p.holdTimer += dt;
     p.facing = { x: s, z: 0 };
-    // Erst abwerfen, wenn die Gegner aus dem Strafraum sind (spätestens nach 3 s).
+    // Erst abwerfen, wenn die Gegner aus dem Strafraum sind (spätestens nach 3 s). Die Regel erlaubt 8 s (IFAB Regel 12,
+    // seit 1.7.2025; sonst Eckstoß für den Gegner) – der Torwart wird nie vom Menschen gesteuert und bleibt immer darunter.
     // Ist ein Mitspieler frei, wirft er kurz – sonst Abschlag weit nach vorne.
     const crowded = m.players.some((o) => o.team !== p.team && dist2d(o.pos, p.pos) < keeperZone(pitch) * 0.6);
     if (!p.pending && (p.holdTimer > 3 || (p.holdTimer > 1.0 && !crowded))) {

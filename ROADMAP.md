@@ -1169,6 +1169,17 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
 12. ✅ **Erfolge und Meilensteine** (2026-11-07): 19 Erfolge (src/career/achievements.js) – 11 aus dem eigenen Ligaspiel,
     4 am Saisonende, 4 aus der Karriere. Anzeige im Vereinsmuseum, jeder neue einmal im Kreisblatt; alte Spielstände bekommen
     Meister und Aufstieg still aus der Chronik. Alle Schwellen sind Spielwerte; kein Zufall, Spielablauf unverändert.
+    **Regelwerks-Abgleich** (vom Nutzer beauftragt, 2026-11-07; Grundlage DFB-Spielordnung Stand 28.11.2025, IFAB 2025/26):
+    - Geändert: Tabelle bei Punktgleichheit nach § 46 Nr. 1.3 (Tordifferenz, Tore, direkter Vergleich, Auswärtstore im direkten
+      Vergleich, alle Auswärtstore; core/standings.js), Pokal-Heimrecht nach § 46 Nr. 2.1.1 (Amateur gegen Profi immer zu Hause,
+      Profis in Runde 1/2 gegen Amateure, Finale neutral), WM/EM-Gruppen zuerst direkter Vergleich (FIFA 2026, UEFA EURO 2024).
+    - Geprüft, passt: fünf Gelbe = ein Spiel, danach neu zählen, Gelb im Platzverweis-Spiel verfällt (§ 43); Gelb-Rot = ein Spiel;
+      Verlängerung 2 × 15 min (hier ein Drittel der Spielzeit) und Elfmeterschießen; fünf Wechsel, Profis in drei Gelegenheiten;
+      Wechselperioden; Torwart hält nie länger als 8 s (IFAB Regel 12 seit 1.7.2025); kein Abseits nach Einwurf, Abstoß, Ecke;
+      A-Junioren 17/18 im Kalenderjahr des Saisonbeginns, in der Zweiten ab 18 (vereinfacht).
+    - Offen: höchstens neun Ersatzspieler auf dem Spielbericht in der 1./2. Liga (DFL seit 2019/20, nur Sekundärquelle);
+      Gelb-Rot sperrt auch für das nächste Spiel der Zweiten (§ 11 Nr. 3); Zeitstrafen unterhalb der Oberliga (Landesverbände);
+      Gruppenregeln der übrigen Kontinentalturniere prüfen.
 13. **Internationaler Wettbewerb** (vom Nutzer gewünscht, 2026-11-05): Die besten Vereine der 1. Liga spielen in einem
     erfundenen europäischen Wettbewerb gegen erfundene Vereine aus erfundenen Städten anderer Länder (Gruppenphase, K.-o.-Runden
     unter der Woche, wie der Bundespokal neben der Liga). Offen: Format, Startplätze, Prämien nach Quellen.

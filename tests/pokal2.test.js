@@ -623,29 +623,38 @@ describe('Überregionaler Pokal: mehrere Runden, Spielort, Einnahmen', () => {
     for (const idx of guests) if (!c.clubs.some((x) => x.squad.includes(idx))) expect(c.players[idx]).toBeUndefined();
   });
 
-  it('Auslosung ab Runde 2: das Los kann das Auswärtsspiel im großen Stadion bringen, Runde 1 ist immer ein Heimspiel', () => {
-    let away = 0;
-    let total = 0;
+  it('Heimrecht nach DFB-Spielordnung § 46: der Amateur spielt gegen Profis bis zum Halbfinale immer zu Hause, das Endspiel neutral im Stadion', () => {
     for (let seed = 1; seed <= 25; seed++) {
       const c = bundCareer(seed);
       const cup = startPokal(c, 'bund');
       expect(cup.ties[0].home).toBe(humanClub(c).id);
-      for (let r = 1; r < 5; r++) {
+      for (let r = 1; r < cup.rounds.length; r++) {
         settle(c, 'bund', true);
         const t = cup.ties.at(-1);
-        total++;
-        if (t.home !== humanClub(c).id) {
-          away++;
+        const guest = cup.guests.find((g) => g.id === (t.home === humanClub(c).id ? t.away : t.home));
+        if (r === cup.rounds.length - 1) {
+          expect(t.neutral).toBe(true);
           expect(t.venue).toBe('stadium');
           c.round = cup.rounds[cup.round];
-          const p = preparePokalMatch(c, 'bund', t);
-          expect(p.pitch.id).toBe('stadion');
-          expect(p.humanIsAway).toBe(false); // ohne Mensch am Gamepad ist Team 0 trotzdem der Amateur
-        }
+          expect(preparePokalMatch(c, 'bund', t).pitch.id).toBe('stadion');
+        } else if (guest.klass !== 'amateur') expect(t.home).toBe(humanClub(c).id);
       }
     }
-    expect(away / total).toBeGreaterThan(0.2);
-    expect(away / total).toBeLessThan(0.6);
+  });
+
+  it('Heimrecht als Profi (2. Liga): Runde 1 und 2 gegen Amateure, beim Amateur auswärts', () => {
+    for (let seed = 1; seed <= 6; seed++) {
+      const c = at(11, seed);
+      c.bundQual = c.season;
+      const cup = startPokal(c, 'bund');
+      for (let r = 0; r < 2; r++) {
+        if (r) settle(c, 'bund', true);
+        const t = cup.ties.at(-1);
+        const guest = cup.guests.find((g) => g.id === t.home);
+        expect(guest?.klass).toBe('amateur');
+        expect(t.away).toBe(humanClub(c).id);
+      }
+    }
   });
 
   it('Spielort-Ereignis: erscheint nur vor einem Heimspiel, bietet drei Orte, wirkt auf Kasse, Stimmung und Platz', () => {

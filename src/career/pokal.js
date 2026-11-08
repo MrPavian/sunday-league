@@ -19,7 +19,7 @@ import { LEAGUES, MAX_LEVEL } from './clubs.js';
 import { humanClub, playerOf, resolveKits, seasonOver, squadPicker, SQUAD_SHAPES, takenIndices, teamForMatch } from './career.js';
 import { isCoach } from './personal.js';
 import { adjustMood } from './events.js';
-import { BUND_AWAY, BUND_ERST, BUND_NAME, BUND_PRIZE, BUND_PRIZE_UNIT_MAX, BUND_PRIZE_WINNER, BUND_ROUND_NAMES, BUND_SPONSOR, BUND_TEXT, BUND_VENUES, FIELD_AMATEURS, FIELD_PROS, FIELD_STRENGTH, OBERLIGA, PROFI_ATTRS, PROFI_KLASSEN, PROFIS } from './bundespokal.js';
+import { BUND_AWAY, BUND_ERST, LEVEL_PROFI, BUND_NAME, BUND_PRIZE, BUND_PRIZE_UNIT_MAX, BUND_PRIZE_WINNER, BUND_ROUND_NAMES, BUND_SPONSOR, BUND_TEXT, BUND_VENUES, FIELD_AMATEURS, FIELD_PROS, FIELD_STRENGTH, OBERLIGA, PROFI_ATTRS, PROFI_KLASSEN, PROFIS } from './bundespokal.js';
 import { adjustFitness, afterMatchFitness, fitnessOf, MATCH_COST } from './fitness.js';
 import { applyCards } from './suspensions.js';
 import { bundVenueAutoResolve } from './bundevents.js';
@@ -162,7 +162,9 @@ export function bundDraw(c, cup) {
     const want = klass === PROFI_KLASSEN.erst ? 'erst' : 'zweit';
     const pros = alive.filter((f) => f.klass === 'erst' || f.klass === 'zweit');
     // Bevorzugt die gezogene Klasse, sonst ein anderer Profi; sind keine Profis mehr dabei, ein Amateur (Oberliga-Kader).
-    const pool = pros.some((f) => f.klass === want) ? pros.filter((f) => f.klass === want) : pros.length ? pros : alive;
+    // Ist der eigene Verein selbst Profi (2. oder 1. Liga), kommen in Runde 1 und 2 nur Amateure als Gegner (zwei Lostöpfe).
+    const amas = alive.filter((f) => f.klass === 'amateur');
+    const pool = (c.level ?? 1) >= LEVEL_PROFI && r <= 1 && amas.length ? amas : pros.some((f) => f.klass === want) ? pros.filter((f) => f.klass === want) : pros.length ? pros : alive;
     const f = rng.pick(pool);
     klass = PROFI_KLASSEN[f.klass] ?? { level: OBERLIGA_LEVEL, boost: 0, tiers: OBERLIGA[0].tiers };
     const known = PROFIS.find((x) => x.id === f.id);
@@ -177,8 +179,15 @@ export function bundDraw(c, cup) {
   const guest = { ...def, id: `pokal-bund-${def.id}`, human: false, venue: 'grossfeld', squad, level: klass.level, klass: klass === PROFI_KLASSEN.erst ? 'erst' : klass === PROFI_KLASSEN.zweit ? 'zweit' : 'amateur' };
   cup.guests.push(guest);
   cup.levels[guest.id] = guest.level;
-  const away = r > 0 && rng.chance(BUND_AWAY);
-  cup.ties.push({ kind: 'bund', round: r, home: away ? guest.id : me, away: away ? me : guest.id, result: null, pens: null, venue: away ? 'stadium' : null });
+  // Heimrecht nach DFB-Spielordnung § 46 Nr. 2.1.1 (Stand 28.11.2025): Runde 1 und 2 losen Amateure gegen Profis, der zuerst
+  // gezogene Amateur hat Heimrecht; ab dem Achtelfinale hat der zuerst Gezogene Heimrecht, gegen einen Profi aber immer der
+  // Amateur. Amateur ist im Pokal auch die 3. Liga (Stufe ≤ 10). Das Endspiel findet an einem festen Ort statt (hier: neutral
+  // im Stadion). Unter Gleichen entscheidet das Los (BUND_AWAY = halbe Chance).
+  const final = r === cup.rounds.length - 1;
+  const meAmateur = (c.level ?? 1) < LEVEL_PROFI;
+  const guestAmateur = guest.klass === 'amateur';
+  const away = final ? false : meAmateur === guestAmateur ? rng.chance(BUND_AWAY) : !meAmateur;
+  cup.ties.push({ kind: 'bund', round: r, home: away ? guest.id : me, away: away ? me : guest.id, result: null, pens: null, venue: (away && !guestAmateur) || final ? 'stadium' : null, ...(final ? { neutral: true } : {}) });
 }
 
 // Auslosung: Paare in gezogener Reihenfolge; Heimrecht beim klassentieferen, sonst beim zuerst gezogenen.
@@ -222,7 +231,7 @@ export function preparePokalMatch(c, kind, tie, { human = false, duration } = {}
   const rng = createRng((c.seed * 433 + c.season * 59 + cup.ties.indexOf(tie) * 7919 + SALT[kind][2]) >>> 0);
   // Gegen den Profi: Großfeld, 11 gegen 11 – der Verband nimmt nichts anderes ab, auch wenn die Liga kleiner spielt.
   // Spielort der Heimspiele (Entscheidung per Ereignis, Standard eigener Platz); beim Profi immer das große Stadion.
-  const bundVenue = kind === 'bund' ? (home.human ? tie.venue ?? 'own' : 'stadium') : null;
+  const bundVenue = kind === 'bund' ? (home.human ? tie.venue ?? 'own' : home.klass === 'amateur' ? 'own' : 'stadium') : null; // beim Amateur auf dessen Platz
   const base = kind === 'bund' ? (bundVenue === 'own' ? PITCHES.grossfeld : BUND_PITCHES[BUND_VENUES[bundVenue].pitch]) : PITCHES[home.human ? home.venue : LEVEL_VENUE(homeLevel)] ?? PITCHES.rasenplatz;
   const format = kind === 'bund' ? 11 : LEAGUES[Math.min(MAX_LEVEL, Math.max(2, homeLevel))].format ?? base.format;
   const pitch = applyWeather({ ...base, format, referee: true }, c.week?.weather);
@@ -466,7 +475,9 @@ function playFieldRound(c, cup, r, humanTie) {
   const str = (id) => (id === me ? strength(c, humanClub(c), 11) : cup.field.find((f) => f.id === id).str);
   const lvl = (id) => cup.field.find((f) => f.id === id).level;
   for (let i = 0; i + 1 < rest.length; i += 2) {
-    const [a, b] = lvl(rest[i + 1]) < lvl(rest[i]) ? [rest[i + 1], rest[i]] : [rest[i], rest[i + 1]];
+    // Heimrecht: Amateur gegen Profi immer der Amateur, sonst der zuerst Gezogene (§ 46 DFB-SpO).
+    const ama = (id) => lvl(id) < LEVEL_PROFI;
+    const [a, b] = ama(rest[i + 1]) && !ama(rest[i]) ? [rest[i + 1], rest[i]] : [rest[i], rest[i + 1]];
     const d = str(a) - str(b);
     const pp = quickSlope(c, str(a), str(b), true);
     const lh = QUICK.base * Math.exp(pp * d + QUICK.home);

@@ -6,6 +6,12 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-08-2 – Rules like real football
+
+### Changed
+- **Home advantage in the National Cup:** As in the real regulations, an amateur side always plays at home against pro clubs up to the semi-final. The final is played at a neutral stadium. As a second- or top-flight club you face amateurs in the first two rounds and play away at their ground.
+- **League table when level on points:** After goal difference and goals scored, head-to-head, away goals in head-to-head and all away goals now decide. At the World Cup and European Championship head-to-head comes first in the groups.
+
 ## 2026-11-08-1 – Achievements
 
 ### New
