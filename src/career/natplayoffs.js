@@ -2,14 +2,16 @@
 // einfach an die Nächstbesten der Rangliste; jetzt wird gespielt – im Format der echten Vorbilder:
 //
 //  - Weltmeisterschaft, Europa (Quali 2026): 12 Gruppensieger direkt; 16 Teams in 4 Pfaden, je Halbfinale und Finale in einem
-//    Spiel, die Pfadsieger fahren hin. In echt: 12 Gruppenzweite + 4 Gruppensieger der Nations League; die Nations League gibt es
-//    im Spiel nicht, ihre 4 Plätze gehen an die besten Gruppendritten (Spielwert). Lostöpfe: echt nach Nations-League-Rangliste,
-//    hier nach der Qualifikations-Rangliste (Spielwert). Halbfinale: Topf 1 gegen 4, Topf 2 gegen 3, die besser Gesetzten zu Hause;
-//    Heimrecht im Finale wird gelost.
+//    Spiel, die Pfadsieger fahren hin. Teilnehmer wie echt: 12 Gruppenzweite + die bestplatzierten Gruppensieger der Nationenliga
+//    der Saison davor (natleague.js), die nicht schon über die Gruppe dabei sind, danach deren Gesamtrangliste. Gibt es keine
+//    passende Nationenliga (erste Qualifikation einer Karriere, alter Spielstand), gehen die Plätze an die besten Gruppendritten (Spielwert).
+//    Lostöpfe: echt die Zweiten nach Weltrangliste vor den Teams der Nations League, hier die Zweiten nach der
+//    Qualifikations-Rangliste vor den Teams der Nationenliga (Spielwert). Halbfinale: Topf 1 gegen 4, Topf 2 gegen 3, die besser
+//    Gesetzten zu Hause; Heimrecht im Finale wird gelost.
 //  - Europameisterschaft (Quali 2028): 12 Gruppensieger und 8 beste Zweite direkt, dann bis zu 2 reservierte Gastgeberplätze für
 //    die bestplatzierten Gastgeber, die es nicht direkt geschafft haben. Übrige Plätze über Play-offs: je Platz ein Pfad mit
 //    4 Teams (Halbfinale und Finale in einem Spiel); bleiben 4 Plätze (kein Gastgeberplatz gebraucht), 8 Teams in 4 Duellen mit
-//    Hin- und Rückspiel. Teilnehmer echt: übrige Zweite + Nations-League-Gruppensieger; hier übrige Zweite + beste Dritte (Spielwert).
+//    Hin- und Rückspiel. Teilnehmer wie echt: übrige Zweite + Gruppensieger der Nationenliga (wie oben, ohne sie beste Dritte).
 //    Andere Ausgaben (2032): dieselbe Regel (Spielwert, das echte Format steht noch nicht fest).
 //  - Weltmeisterschaft, interkontinentale Play-offs (2026): 6 Teams – je eins aus Asien, Afrika, Südamerika, Ozeanien, zwei aus
 //    Nord- und Mittelamerika (Verband des Gastgebers). Die zwei Stärksten (echt: Weltrangliste) stehen gesetzt im Finale, die
@@ -21,6 +23,7 @@
 // Quellen: Europäischer Verband (Qualifikationssystem EM 2028, 2025), Weltverband (Play-off-Turnier 2026), Wikipedia
 // („2026 FIFA World Cup qualification (UEFA)", „… inter-confederation play-offs").
 import { createRng } from '../core/rng.js';
+import { nlPlayoffPool } from './natleague.js';
 import { byPerGame, hash, idHash, quickMatch, quickPens, targetOf, winnerOf } from './nationalteams.js';
 
 // seconds: wie viele der besten Gruppenzweiten direkt weiter sind; fourTies: bei 4 offenen Plätzen Hin- und Rückspiel.
@@ -63,7 +66,10 @@ export function playoffDraw(c, id, year, conf, tables, setup) {
   const hosts = order.filter((nid) => setup.reserved.includes(nid) && !direct.includes(nid)).slice(0, setup.reservedSlots ?? 0);
   direct.push(...hosts);
   const k = setup.places - direct.length;
-  const pool = order.filter((nid) => !direct.includes(nid));
+  // Teilnehmer: übrige Gruppenzweite, dann die Nationenliga der Saison davor (natleague.js); ohne sie die nächsten der Rangliste.
+  const seconds = ranked(tables, 1).filter((nid) => !direct.includes(nid));
+  const nl = nlPlayoffPool(c, year, [...direct, ...seconds, ...setup.auto ?? []]);
+  const pool = nl ? [...seconds, ...nl.filter((nid) => order.includes(nid))] : order.filter((nid) => !direct.includes(nid));
   if (k <= 0) return { direct: direct.slice(0, setup.places), paths: [] };
   const rng = createRng(hash(c.seed ?? 0, year, idHash(id), idHash(conf), 21));
   if (rule.fourTies && k === 4 && pool.length >= 8) {
@@ -102,13 +108,17 @@ export function schedulePlayoffs(comp, draw, days) {
   draw.paths.forEach((p, path) => {
     if (p.legs === 2) {
       const [a, b] = p.semis[0];
-      comp.matches.push({ step: 'l1', path, md: -1, g: -1, day: days[0], home: b, away: a, result: null });
-      comp.matches.push({ step: 'l2', path, md: -1, g: -1, day: days[1], home: a, away: b, result: null });
+      const [s1, s2] = p.steps ?? ['l1', 'l2'];
+      comp.matches.push({ step: s1, path, md: -1, g: -1, day: days[0], home: b, away: a, result: null });
+      comp.matches.push({ step: s2, path, md: -1, g: -1, day: days[1], home: a, away: b, result: null });
     } else for (const [home, away] of p.semis) comp.matches.push({ step: 'p1', path, md: -1, g: -1, day: days[0], home, away, result: null });
   });
 }
 
-const legs = (comp, path) => [comp.matches.find((m) => m.path === path && m.step === 'l1'), comp.matches.find((m) => m.path === path && m.step === 'l2')];
+const legs = (comp, path) => {
+  const [s1, s2] = comp.po.paths[path].steps ?? ['l1', 'l2'];
+  return [comp.matches.find((m) => m.path === path && m.step === s1), comp.matches.find((m) => m.path === path && m.step === s2)];
+};
 function tieWinner(l1, l2) {
   const a = l2.home;
   const b = l2.away;

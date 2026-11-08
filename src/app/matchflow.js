@@ -271,7 +271,7 @@ export function createMatchflow(ctx) {
     ctx.clubhouse.hide();
     setMode('play');
     showMatch(prepared.match);
-    hud.toast(`${tournamentName(next.t.id)} ${next.t.year} · ${stepLabel(next.m.step)}`, 3, 2);
+    hud.toast(`${tournamentName(next.t.id)} ${next.t.yearLabel ?? next.t.year} · ${stepLabel(next.m.step)}`, 3, 2);
   }
 
   // Abpfiff: Ergebnis sofort werten und speichern – nicht erst, wenn der Spieler das

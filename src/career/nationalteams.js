@@ -51,7 +51,7 @@ export const TOURNAMENTS = {
   asi: { de: 'Asienmeisterschaft', en: 'Asian Championship', groups: 6, best3: 4, when: 'winter', every: 4, anchor: 2027, from: [1, 7], to: [2, 5], slots: { afc: 24 }, weight: 0.6 },
   oce: { de: 'Ozeanienmeisterschaft', en: 'Oceania Championship', groups: 2, best3: 0, when: 'summer', every: 4, anchor: 2028, from: [6, 15], to: [6, 30], slots: { ofc: 8 }, weight: 0.3 },
 };
-export const tournamentName = (id) => tr(TOURNAMENTS[id].de, TOURNAMENTS[id].en);
+export const tournamentName = (id) => (id === 'nl' ? tr('Nationenliga', 'League of Nations') : tr(TOURNAMENTS[id].de, TOURNAMENTS[id].en)); // nl: natleague.js
 export const nationName = (id) => (NATIONS[id] ? tr(NATIONS[id].de, NATIONS[id].en) : id);
 
 // Stärke der Länder (Ligamittel der besten elf, Spielwerte an PRO_TARGET angelehnt: 1. Liga 186) und Nominierung.
@@ -70,7 +70,7 @@ export const hash = (...parts) => parts.reduce((h, p) => (Math.imul(h ^ (p | 0),
 export const idHash = (id) => [...String(id)].reduce((s, ch) => Math.imul(s, 31) + ch.charCodeAt(0), 7) >>> 0;
 const STEP_NAMES = { 32: 'r32', 16: 'r16', 8: 'qf', 4: 'sf', 2: 'f' };
 export const stepLabel = (step) =>
-  /^q\d+$/.test(step) ? tr(`Qualifikation, ${step.slice(1)}. Spieltag`, `Qualifier, matchday ${step.slice(1)}`) : ({ p1: tr('Play-off-Halbfinale', 'Play-off semi-final'), p2: tr('Play-off-Finale', 'Play-off final'), l1: tr('Play-off, Hinspiel', 'Play-off, first leg'), l2: tr('Play-off, Rückspiel', 'Play-off, second leg'), g1: tr('1. Gruppenspiel', 'Group match 1'), g2: tr('2. Gruppenspiel', 'Group match 2'), g3: tr('3. Gruppenspiel', 'Group match 3'), r32: tr('Runde der letzten 32', 'Round of 32'), r16: tr('Achtelfinale', 'Round of 16'), qf: tr('Viertelfinale', 'Quarter-final'), sf: tr('Halbfinale', 'Semi-final'), f: tr('Finale', 'Final') })[step] ?? step;
+  /^q\d+$/.test(step) ? tr(`Qualifikation, ${step.slice(1)}. Spieltag`, `Qualifier, matchday ${step.slice(1)}`) : /^n\d+$/.test(step) ? tr(`${step.slice(1)}. Spieltag`, `Matchday ${step.slice(1)}`) : ({ v1: tr('Viertelfinale, Hinspiel', 'Quarter-final, first leg'), v2: tr('Viertelfinale, Rückspiel', 'Quarter-final, second leg'), a1: tr('Play-off Liga A/B, Hinspiel', 'League A/B play-off, first leg'), a2: tr('Play-off Liga A/B, Rückspiel', 'League A/B play-off, second leg'), p3: tr('Spiel um Platz 3', 'Third-place play-off'), p1: tr('Play-off-Halbfinale', 'Play-off semi-final'), p2: tr('Play-off-Finale', 'Play-off final'), l1: tr('Play-off, Hinspiel', 'Play-off, first leg'), l2: tr('Play-off, Rückspiel', 'Play-off, second leg'), g1: tr('1. Gruppenspiel', 'Group match 1'), g2: tr('2. Gruppenspiel', 'Group match 2'), g3: tr('3. Gruppenspiel', 'Group match 3'), r32: tr('Runde der letzten 32', 'Round of 32'), r16: tr('Achtelfinale', 'Round of 16'), qf: tr('Viertelfinale', 'Quarter-final'), sf: tr('Halbfinale', 'Semi-final'), f: tr('Finale', 'Final') })[step] ?? step;
 
 // Turnierjahr (Kalenderjahr): Sommer nach der Saison, Winter im Dezember bzw. Januar der Saison.
 export function yearFor(c, cfg) {
@@ -442,7 +442,7 @@ function note(c, text) {
 // --- Spiele -------------------------------------------------------------------------------------------------------------
 const ownNation = (t, nid) => !!t.own[nid]?.length;
 export const isOwnMatch = (t, m) => ownNation(t, m.home) || ownNation(t, m.away);
-const isKo = (m) => !m.step.startsWith('g') && !/^q\d+$/.test(m.step) && m.step !== 'l1' && m.step !== 'l2'; // q1, q2 …: Qualifikation (natquali.js), qf ist das Viertelfinale; l1/l2: Hin- und Rückspiel (Gesamtergebnis in natplayoffs.js)
+const isKo = (m) => !m.step.startsWith('g') && !/^[qn]\d+$/.test(m.step) && !/^[lva][12]$/.test(m.step); // q1, q2 …: Qualifikation (natquali.js), n1 …: Nationenliga (natleague.js), qf ist das Viertelfinale; l1/l2, v1/v2, a1/a2: Hin- und Rückspiel (Gesamtergebnis in natplayoffs.js)
 
 export function quickPens(rng, a, b) {
   const p = Math.max(0.35, Math.min(0.65, 0.5 + (a - b) * 0.01));

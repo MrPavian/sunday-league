@@ -6,6 +6,21 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-08-8 – Leagues for the European national teams
+
+### New
+- **League of Nations:** In the seasons without European qualifying (first 2026/27, as in reality), the game's 37 European countries play in three leagues with promotion and relegation. The model is the 2026/27 Nations League: six matchdays in September/October and November, home and away.
+- **League A:** 16 teams in four groups of four, as in reality. Group winners and runners-up play two-legged quarter-finals in March (the group winner at home in the second leg), and the four winners play the finals in the summer: semi-finals, third-place play-off and final.
+- **Promotion and relegation:** League A's last-placed teams go down and League B's group winners go up; League A's third-placed teams play League B's runners-up in March. Between B and C, the group winners and the worst last-placed teams swap places.
+- **Effect on qualifying:** As in reality, the best-ranked group winners who do not qualify through their group take the play-off places of the next World Cup or European Championship, followed by the best of the overall ranking. The third-placed teams are no longer part of them.
+- **Your players:** are called up for the League of Nations as well; their games are in the clubhouse during the international break, with league and group. Winners and new leagues of your countries arrive as news at the start of the season.
+
+### Game values
+- The game has 37 instead of 54 European countries: League B has 12 teams in groups of three, League C the rest. That is why there is no play-off between B and C.
+- The first edition sorts the leagues by strength.
+- The finals are calculated at the end of the season. In the second leg, a level aggregate goes straight to penalties without extra time.
+- The reform from 2028/29 (three leagues of 18 teams) has been decided but has no details yet; the game keeps the 2026/27 format.
+
 ## 2026-11-08-7 – Qualifying play-offs
 
 ### New

@@ -6,6 +6,21 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-08-8 – Ligen der europäischen Nationalteams
+
+### Neu
+- **Nationenliga:** In den Saisons ohne europäische Qualifikation (zuerst 2026/27, wie in echt) spielen die 37 europäischen Länder des Spiels in drei Ligen mit Auf- und Abstieg. Vorbild ist die Nations League 2026/27: sechs Spieltage im September/Oktober und November mit Hin- und Rückspiel.
+- **Liga A:** 16 Teams in vier Vierergruppen wie in echt. Gruppensieger und Zweite spielen im März das Viertelfinale mit Hin- und Rückspiel (der Gruppensieger im Rückspiel zu Hause), die vier Sieger im Sommer die Endrunde mit Halbfinale, Spiel um Platz 3 und Finale.
+- **Auf- und Abstieg:** Die Gruppenletzten der Liga A steigen ab, die Gruppensieger der Liga B auf; die Dritten der Liga A spielen im März gegen die Zweiten der Liga B. Zwischen B und C tauschen die Gruppensieger und die schlechtesten Gruppenletzten die Plätze.
+- **Folgen für die Qualifikation:** Wie in echt bekommen die bestplatzierten Gruppensieger, die sich nicht über ihre Gruppe qualifizieren, die Play-off-Plätze der nächsten Weltmeisterschaft bzw. Europameisterschaft, danach die Bestplatzierten der Gesamtrangliste. Die Gruppendritten sind dort nicht mehr dabei.
+- **Eigene Spieler:** werden auch für die Nationenliga nominiert; ihre Spiele stehen in der Länderspielpause im Vereinsheim, mit Liga und Gruppe. Sieger und neue Ligen der eigenen Länder kommen zum Saisonstart als Nachricht.
+
+### Spielwerte
+- Das Spiel kennt 37 statt 54 europäische Länder: Liga B hat 12 Teams in Dreiergruppen, Liga C den Rest. Deshalb gibt es zwischen B und C kein Play-off.
+- Die erste Ausgabe teilt die Ligen nach Stärke ein.
+- Die Endrunde wird beim Saisonende gerechnet. Im Rückspiel geht es bei Gleichstand ohne Verlängerung direkt ins Elfmeterschießen.
+- Die Reform ab 2028/29 (drei Ligen mit je 18 Teams) ist beschlossen, aber noch ohne Einzelheiten; das Spiel bleibt beim Format 2026/27.
+
 ## 2026-11-08-7 – Play-offs der Qualifikation
 
 ### Neu

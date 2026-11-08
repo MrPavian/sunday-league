@@ -11,6 +11,7 @@
 // Gruppen, Lostöpfe und Plätze wie in Variante 1 (nationalteams.js qualiSetup), jetzt mit Hin- und Rückspiel nach Spielplan
 // (Rundenturnier, Kreisverfahren). Mehr Spieltage als Termine (große Gruppen, Südamerika): mehrere Spieltage an einem Termin.
 // Gastgeber: wo bekannt automatisch dabei (HOSTS), die Europameisterschaft 2028 mit zwei reservierten Plätzen wie in echt.
+// Nationenliga (natleague.js): in den Saisons ohne europäische Qualifikation, Ligaphase im Herbst, K.-o.-Spiele im März.
 // Play-offs (natplayoffs.js): an den letzten zwei Terminen (März, wie in echt), die Gruppen davor. Halbfinal-Paarungen stehen erst
 // nach den Gruppen fest, die Finals nach den Halbfinals; ohne genug Termine werden sie beim Turnierstart gerechnet.
 //
@@ -26,6 +27,7 @@ import { INJURIES, INJURY_BASE } from './injuries.js';
 import { isCoach } from './personal.js';
 import { monthOf } from './weather.js';
 import { hash, idHash, lineupFrom, NAT, nationName, nationOf, qualifiedFrom, qualiSetup, quickMatch, squadOf, TOURNAMENTS, tournamentName, yearFor } from './nationalteams.js';
+import { leagueName, nlName, nlPrepare, nlSeasonEnd, planLeague } from './natleague.js';
 import { advancePlayoffs, finishPlayoffs, INTER, interDraw, PLAYOFFS, playoffDraw, playoffTeams, rankAll, schedulePlayoffs } from './natplayoffs.js';
 
 // Fenster: Monate im Spielkalender und Zahl der Termine (Kalender 2026–2030: Sep./Okt. 4 Spiele, Nov. 2, März 2).
@@ -136,6 +138,9 @@ export function planQuali(c) {
     }
     if (INTER[id] && poDays) q.comps.push({ key: `${id}-${year}-inter`, isQuali: true, id, year, conf: 'inter', groups: [], target: {}, str: {}, own: {}, stats: {}, matches: [], log: [], poDays });
   }
+  // Nationenliga (natleague.js): in den Saisons ohne europäische Qualifikation, alle Termine.
+  const nl = planLeague(c, yearFor(c, { from: [9] }), dayWin.map((_, d) => d));
+  if (nl) q.comps.push(nl);
   c.natQuali = q;
   return q;
 }
@@ -215,6 +220,10 @@ function interTeams(c, id, year) {
 function preparePlayoffs(c, q, days) {
   for (const comp of q.comps) {
     if (comp.po || !comp.poDays || !days.has(comp.poDays[0])) continue;
+    if (comp.nl) {
+      nlPrepare(c, comp, comp.poDays);
+      continue;
+    }
     if (comp.conf === 'inter') {
       setupInter(c, comp, interTeams(c, comp.id, comp.year), comp.poDays);
       continue;
@@ -379,6 +388,13 @@ export function windowView(c) {
 export function qualiSeasonEnd(c) {
   const q = c.natQuali;
   if (!q) return;
+  for (const comp of q.comps) {
+    if (!comp.nl) continue;
+    const { champion, promoted } = nlSeasonEnd(c, comp);
+    const own = new Set(Object.values(comp.stats).map((s) => s.nat));
+    const up = promoted.flatMap((ids, l) => ids.filter((nid) => own.has(nid)).map((nid) => `${nationName(nid)} (${leagueName(l)})`));
+    if (champion) note(c, tr(`${nlName()} ${comp.yearLabel}: Sieger ${nationName(champion)}.${up.length ? ` Neue Liga: ${up.join(', ')}.` : ''}`, `${nlName()} ${comp.yearLabel}: winners ${nationName(champion)}.${up.length ? ` New league: ${up.join(', ')}.` : ''}`));
+  }
   const sum = {};
   for (const comp of q.comps)
     for (const [idx, s] of Object.entries(comp.stats)) {

@@ -1220,7 +1220,12 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
     ✅ **Echte Play-offs 2026-11-08** („Weiter“, natplayoffs.js): WM Europa wie 2026 (Pfade mit Halbfinale und Finale in einem
     Spiel; Nations-League-Plätze an die besten Dritten, Spielwert), EM wie 2028 (je nach Gastgeberplätzen 2–3 Pfade oder 4 Duelle
     mit Hin- und Rückspiel), interkontinentale Play-offs der WM wie 2026 (6 Teams, 2 gesetzt; Asien 8 und Nord-/Mittelamerika 6
-    feste Plätze). Im März-Fenster, ohne genug Termine beim Turnierstart. Offen: Nations League, Fenster über zwei Saisons (in echt
+    feste Plätze). Im März-Fenster, ohne genug Termine beim Turnierstart.
+    ✅ **Nationenliga 2026-11-08** („Weiter“, natleague.js): Format der Nations League 2026/27 (Ligaphase im Herbst der Saisons ohne
+    europäische Qualifikation, Viertelfinale und Play-off A/B im März mit Hin- und Rückspiel, Endrunde beim Saisonende, Auf- und
+    Abstieg). Gruppensieger in den Play-offs der nächsten Qualifikation wie echt (statt der besten Dritten). Spielwerte: 37 Länder →
+    Liga A 16, B 12, C Rest (Dreiergruppen, B/C direkter Tausch); erste Ausgabe nach Stärke. Offen: Reform ab 2028/29 (Einzelheiten
+    fehlen noch), Fenster über zwei Saisons (in echt
     dauert die Qualifikation teils länger), eigene Ausscheidungen der Verbände für die interkontinentalen Play-offs (hier der
     Nächstbeste), Abstellungsgebühr für Länderspiele.
 15. **Nationaltrainer werden** (später): Anfragen von Verbänden ab gutem Ruf, Neben- oder Hauptamt, eigener Kader aus allen
