@@ -1227,7 +1227,10 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
     Liga A 16, B 12, C Rest (Dreiergruppen, B/C direkter Tausch); erste Ausgabe nach Stärke. Offen: Reform ab 2028/29 (Einzelheiten
     fehlen noch), Fenster über zwei Saisons (in echt
     dauert die Qualifikation teils länger), eigene Ausscheidungen der Verbände für die interkontinentalen Play-offs (hier der
-    Nächstbeste), Abstellungsgebühr für Länderspiele.
+    Nächstbeste).
+    ✅ **Abstellungsgebühren 2026-11-08** (Nutzer: „binde es so ein“): Europäischer Verband 3659 € je Spieler und Spiel (Quali und
+    Nationenliga), Weltverband 2362 je Spieler und Spiel (WM-Quali), EM-Entschädigung je Tag nach Kategorie (10 187 € / 6791 €
+    Spielwert / 3395 €), WM weiter 5000 je Tag.
 15. **Nationaltrainer werden** (später): Anfragen von Verbänden ab gutem Ruf, Neben- oder Hauptamt, eigener Kader aus allen
     Spielern des Landes, Turnierspiele in 3D.
 16. **Vereinsgelände ausbauen** (vom Nutzer gewünscht, 2026-11-06). **Erste Lieferung gebaut 2026-11-06** (Nutzerentscheid: alle sechs

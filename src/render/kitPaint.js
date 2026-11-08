@@ -9,6 +9,42 @@ export const REGION = { front: 0, back: 16, left: 32, right: 48 };
 const css = (n) => `#${(n >>> 0).toString(16).padStart(6, '0').slice(-6)}`;
 const luminance = (hex) => (0.299 * ((hex >> 16) & 255) + 0.587 * ((hex >> 8) & 255) + 0.114 * (hex & 255)) / 255;
 
+const side = (face) => face === 'left' || face === 'right';
+const bx = (x, face) => (face === 'back' ? 15 - x : x); // Rücken gespiegelt: links bleibt links am Körper
+// Sägezahn an den Seiten (Zähne alle 3 px, oben breit): links a, rechts b (am Körper), dazu ein V-Band (c, 0 = ohne) über der Brust.
+function saege(x, y, face, a, b, c) {
+  const v = 1 + (7.5 - Math.abs(x - 7.5)) * 0.5; // V-Band: an den Schultern oben, zur Mitte tiefer
+  if (c && !side(face) && y >= v && y < v + 1.6) return c;
+  if (face === 'left') return y >= 2 ? a : 0;
+  if (face === 'right') return y >= 2 ? b : 0;
+  if (c && y < v + 1.6) return 0;
+  const w = y < 2 ? 0 : [3, 2, 1][(y - 2) % 3];
+  const xx = bx(x, face);
+  return xx < w ? a : xx > 15 - w ? b : 0;
+}
+// Rauten im Raster (6 px, spiegelgleich zur Mitte), abwechselnd zweite und dritte Farbe.
+const raute = (x, y) => {
+  const u = Math.floor((x + y + 1) / 6);
+  const v = Math.floor((x - y + 31) / 6);
+  return (u + v) % 2 ? (u % 2 ? 1 : 2) : 0;
+};
+// Zickzack-Ringel: 2 px breite Zacken, alle 6 px eine Spitze.
+const zz = (x, y) => y >= 2 && (y + Math.round((Math.abs(((Math.abs(x - 7.5) + 1.5) % 6) - 3) * 2) / 3)) % 4 < 2; // spiegelgleich zur Mitte
+// Pinselstriche: Bänder mit ausgefransten Enden, spiegelgleich (1 = zweite, 2 = dritte Farbe).
+const pinsel = (x, y) => {
+  const row = [4, 5, 7, 8, 10, 11, 13].indexOf(y);
+  if (row < 0) return 0;
+  const from = 1 + ((y * 7) % 3);
+  return x >= from && x <= 15 - from ? (row === 2 || row === 3 || row === 6 ? 2 : 1) : 0;
+};
+// Fünfzackiger Stern mittig (Spitze oben).
+const stern = (x, y) => {
+  const dx = x - 7.5;
+  const dy = y - 8.2;
+  const t = ((Math.atan2(dx, -dy) + Math.PI * 2) % ((Math.PI * 2) / 5)) / ((Math.PI * 2) / 5);
+  return Math.hypot(dx, dy) <= 2.9 + 4.4 * Math.abs(1 - 2 * t);
+};
+
 // Jedes Muster sagt pro Pixel: Hauptfarbe (false) oder zweite Farbe (true).
 // face: 'front' | 'back' | 'left' | 'right'; x läuft aus Sicht des Betrachters.
 const PATTERNS = {
@@ -104,10 +140,59 @@ const PATTERNS = {
     return Math.abs(d) <= 1 ? 1 : Math.abs(d - 2.2) <= 0.8 ? 2 : 0;
   },
   schulter3: (x, y) => (y <= 2 ? 1 : y === 3 ? 2 : 0),
+  // --- Vorlagen aus den Trikotbögen des Nutzers (2026-11-08): 200 Trikots, davon die neuen Motive als einfärbbare 16 × 16-Muster
+  // nachgezeichnet (Umfärbungen und schon vorhandene Muster wie Uni, Ringel, Halb/halb, Schärpe, Karo nicht doppelt).
+  // 0 Hauptfarbe, 1 zweite, 2 dritte, 5 vierte Farbe (kit.fourth); 3/4 Ton in Ton.
+  rahmen: (x, y, face) => (side(face) ? y >= 5 : (y >= 5 && (x <= 1 || x >= 14)) || y >= 14),
+  feinringel: (x, y) => y >= 4 && y % 2 === 1,
+  blockkaro: (x, y, face) => (y <= 2 || y % 4 === 1 ? 1 : face === 'left' ? 0 : face === 'right' ? 2 : bx(x, face) < 8 ? 0 : 2),
+  dreiringel: (x, y) => (y <= 2 ? 0 : [1, 0, 2, 0][((y - 3) >> 1) % 4]),
+  viertel3: (x, y, face) => {
+    if (face === 'left') return y < 8 ? 1 : 0;
+    if (face === 'right') return y < 8 ? 0 : 2;
+    const xx = bx(x, face);
+    return xx < 8 && y < 8 ? 1 : xx >= 8 && y >= 8 ? 2 : 0;
+  },
+  schaerpe3: (x, y, face) => {
+    if (side(face)) return 0;
+    const d = bx(x, face) - y;
+    return Math.abs(d) <= 1 ? 1 : d >= 2 && d <= 3 ? 2 : 0;
+  },
+  vwinkel3: (x, y, face) => {
+    if (side(face)) return 0;
+    const d = y - (2 + (7.5 - Math.abs(x - 7.5)) * 0.6);
+    return d >= 0 && d < 2 ? 1 : d >= 3 && d < 5 ? 2 : 0;
+  },
+  vierband: (x, y) => (y <= 2 ? 0 : [1, 2, 5, 0][((y - 3) >> 1) % 4]),
+  wuerfel: (x, y, face) => {
+    if (side(face) || y < 3 || y > 13 || (y - 3) % 3 === 2) return 0;
+    const col = [1, 4, 7, 10, 13].findIndex((c) => x === c || x === c + 1); // fünf Spalten, spiegelgleich
+    return col < 0 ? 0 : [1, 2, 5, 2, 1][col];
+  },
+  saegewinkel4: (x, y, face) => saege(x, y, face, 1, 2, 5),
+  // Retro aus den Bögen: Sägezahn an den Seiten, Zickzack-Ringel, Rauten, Pinselstriche, Stern.
+  saege: (x, y, face) => saege(x, y, face, 1, 1, 0),
+  saege3: (x, y, face) => saege(x, y, face, 1, 2, 0),
+  saegepasse: (x, y, face) => saege(x, y, face, 1, 1, 2),
+  saegepinsel: (x, y, face) => saege(x, y, face, 1, 1, 0) || (!side(face) && pinsel(x, y) ? 2 : 0),
+  zickzackringel: (x, y) => zz(x, y),
+  harlekin: (x, y) => y <= 11 && raute(x, y) !== 0,
+  harlekin3: (x, y) => (y <= 11 ? raute(x, y) : 0),
+  pinsel: (x, y, face) => (side(face) ? 0 : pinsel(x, y) === 1 ? 1 : pinsel(x, y) === 2 ? 2 : 0),
+  stern: (x, y, face) => !side(face) && stern(x, y),
+  // Einfarbig (Ton in Ton) nach denselben Motiven.
+  tonzickzack: (x, y) => (zz(x, y) ? 3 : 0),
+  tonraute: (x, y) => (y <= 11 && raute(x, y) !== 0 ? 3 : 0),
+  tonsaege: (x, y, face) => (saege(x, y, face, 1, 1, 0) ? 3 : 0),
+  tonstern: (x, y, face) => (!side(face) && stern(x, y) ? 4 : 0),
 };
 // Vorlagen nach Farbzahl für den Editor (Retro-Muster stehen in einer eigenen Gruppe, RETRO_MODELS).
-export const ONE_COLOR = new Set(['uni', 'tonstreifen', 'tonringel', 'tonkaro', 'tondiagonal', 'tonschatten', 'tonpixel']);
-export const patternColors = (id) => (THREE_COLOR.has(id) ? 3 : ONE_COLOR.has(id) ? 1 : 2);
+export const ONE_COLOR = new Set(['uni', 'tonstreifen', 'tonringel', 'tonkaro', 'tondiagonal', 'tonschatten', 'tonpixel', 'tonzickzack', 'tonraute', 'tonsaege', 'tonstern']);
+// Muster mit vierter Farbe (Editor zeigt dann auch die vierte Farbreihe).
+export const FOUR_COLOR = new Set(['vierband', 'wuerfel', 'saegewinkel4']);
+export const patternColors = (id) => (FOUR_COLOR.has(id) ? 4 : THREE_COLOR.has(id) ? 3 : ONE_COLOR.has(id) ? 1 : 2);
+// Retro-Gruppe im Editor: die Vorbilder (RETRO_MODELS) und die verspielten Motive aus den Trikotbögen.
+export const RETRO_IDS = new Set(['zickzack', 'fluegel', 'zacken', 'halbton', 'krakel', 'regenbogen', 'konfetti', 'linien', 'welle', 'sterne', 'brustband3', 'keile', 'blitz', 'kante', 'stern', 'saege', 'saege3', 'saegepasse', 'saegepinsel', 'zickzackringel', 'harlekin', 'harlekin3', 'pinsel']);
 // Schattierung der Hauptfarbe für Ton in Ton: dunkler (3) bzw. heller (4), sichtbar, aber nicht als zweite Farbe.
 const shade = (hex, f) => {
   const ch = (k) => (hex >> k) & 255;
@@ -117,7 +202,7 @@ const shade = (hex, f) => {
 export const toneDark = (hex) => shade(hex, luminance(hex) < 0.2 ? 0.16 : -0.18);
 export const toneLight = (hex) => shade(hex, luminance(hex) > 0.8 ? -0.12 : 0.16);
 // Muster mit dritter Farbe (Editor zeigt dann die dritte Farbreihe).
-export const THREE_COLOR = new Set(['zickzack', 'fluegel', 'keile', 'welle', 'blitz', 'krakel', 'regenbogen', 'konfetti', 'sterne', 'brustband3', 'kante', 'trikolore', 'dreiband', 'doppelring', 'streifenpaar', 'winkel3', 'schulter3']);
+export const THREE_COLOR = new Set(['zickzack', 'fluegel', 'keile', 'welle', 'blitz', 'krakel', 'regenbogen', 'konfetti', 'sterne', 'brustband3', 'kante', 'trikolore', 'dreiband', 'doppelring', 'streifenpaar', 'winkel3', 'schulter3', 'blockkaro', 'dreiringel', 'viertel3', 'schaerpe3', 'vwinkel3', 'saege3', 'saegepasse', 'saegepinsel', 'harlekin3', 'pinsel']);
 // Retro-Muster: Vorbild (nur als Hinweis im Editor, keine Nachbildung von Wappen, Sponsoren oder Herstellern).
 export const RETRO_MODELS = tr(
   {
@@ -154,7 +239,13 @@ export const RETRO_MODELS = tr(
   },
 );
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+// Spiegelgleich (vom Nutzer gewünscht, 2026-11-08: „Achte auf Symmetrie“): Muster mit Zufalls- oder Rasterverteilung malen die
+// rechte Hälfte als Spiegel der linken. Absichtlich ungleich bleiben Halb/halb, Viertel, Schärpen, Diagonalen, Trikolore,
+// Regenbogen, Blockkaro, Blitz und Krakel (dort ist die Schräge oder das Durcheinander das Motiv).
+const mirror = (fn) => (x, y, face) => fn(x < 8 ? x : 15 - x, y, face);
+for (const id of ['verlauf', 'tonschatten', 'halbton', 'konfetti', 'tonpixel', 'linien', 'sterne', 'fluegel', 'zickzack', 'welle', 'keile']) PATTERNS[id] = mirror(PATTERNS[id]);
 export const PATTERN_IDS = Object.keys(PATTERNS);
+export const patternFn = (id) => PATTERNS[id] ?? PATTERNS.uni;
 // Muster, bei denen der Ärmel schon in der Zweitfarbe steckt.
 export const SECOND_SLEEVE = ['seiten', 'schulter', 'aermel', 'fluegel', 'zacken', 'sterne', 'schulter3'];
 export const sleeveColor = (kit) => (SECOND_SLEEVE.includes(kit.pattern) || kit.sleeves === 'second') && kit.second != null ? kit.second : kit.shirt;
@@ -283,6 +374,7 @@ export function paintKit(ctx, kit, { sponsor = null, dirt = 0, splats = null, di
   const a = css(kit.shirt);
   const b = css(kit.second ?? kit.shirt);
   const t = css(kit.third ?? kit.second ?? kit.shirt);
+  const f = css(kit.fourth ?? kit.third ?? kit.second ?? kit.shirt);
   const dk = css(toneDark(kit.shirt));
   const lt = css(toneLight(kit.shirt));
   faces.forEach((face, fi) => {
@@ -290,7 +382,7 @@ export function paintKit(ctx, kit, { sponsor = null, dirt = 0, splats = null, di
     for (let y = 0; y < 16; y++)
       for (let x = 0; x < 16; x++) {
         const v = fn(x, y, face);
-        ctx.fillStyle = v === 2 ? t : v === 3 ? dk : v === 4 ? lt : v ? b : a;
+        ctx.fillStyle = v === 2 ? t : v === 5 ? f : v === 3 ? dk : v === 4 ? lt : v ? b : a;
         ctx.fillRect(ox + x, y, 1, 1);
       }
     // Falten: unter den Armen, an der Taille und ein Zug schräg zur Hüfte – leicht dunkler, damit der
@@ -304,7 +396,7 @@ export function paintKit(ctx, kit, { sponsor = null, dirt = 0, splats = null, di
       ctx.fillStyle = css(collarInk(kit));
       for (const [x, y, w, h] of collar) ctx.fillRect(ox + x, y, w, h);
     }
-    if (face === 'front' && sponsor) { const v = fn(8, 8, face); paintSponsor(ctx, ox, kit, sponsor, v === 2 ? kit.third ?? kit.second ?? kit.shirt : v === 3 ? toneDark(kit.shirt) : v === 4 ? toneLight(kit.shirt) : v ? kit.second ?? kit.shirt : kit.shirt); }
+    if (face === 'front' && sponsor) { const v = fn(8, 8, face); paintSponsor(ctx, ox, kit, sponsor, v === 2 ? kit.third ?? kit.second ?? kit.shirt : v === 5 ? kit.fourth ?? kit.third ?? kit.second ?? kit.shirt : v === 3 ? toneDark(kit.shirt) : v === 4 ? toneLight(kit.shirt) : v ? kit.second ?? kit.shirt : kit.shirt); }
   });
   if (wet > 0) paintWet(ctx, wet, x0, faces);
   if (dirt > 0 && splats) {

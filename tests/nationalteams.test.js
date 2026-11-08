@@ -125,6 +125,28 @@ describe('Nominierung', () => {
 });
 
 describe('Spiele', () => {
+  it('Europameisterschaft: Entschädigung je Spieler und Tag nach Liga (1. Liga 10 187 €, ab der 3. Profiliga 3395 €)', () => {
+    for (const k of Object.keys(NAT.tier)) NAT.tier[k] = 60;
+    for (const [level, rate] of [
+      [12, 10187],
+      [10, 3395],
+    ]) {
+      const c = career(level, 9);
+      c.season = 2; // Sommer 2028
+      const nid = startTournament(career(level, 9), 'em').field[0];
+      callUp(c, [nid]);
+      const cash = c.cash;
+      startTournament(c, 'em');
+      finishAll(c);
+      const h = c.natHistory.at(-1);
+      expect(h.id).toBe('em');
+      expect(h.own.length).toBeGreaterThan(0);
+      for (const o of h.own) expect(o.pay % rate).toBe(0);
+      expect(h.own.every((o) => o.pay >= rate * 3)).toBe(true);
+      expect(c.cash).toBeCloseTo(cash + h.own.reduce((s, o) => s + o.pay, 0), 0);
+    }
+  });
+
   it('Schnellmodell bis zum Ende: Einsätze, Marktwert-Schub, Entschädigung bei der Weltmeisterschaft', () => {
     for (const k of Object.keys(NAT.tier)) NAT.tier[k] = 60; // alle Länder so schwach, dass die eigenen Spieler in die Startelf kommen
     const probe = career(9);

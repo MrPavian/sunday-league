@@ -95,5 +95,10 @@ describe('Nationenliga', () => {
     expect(html).toMatch(/Nationenliga 2026\/27/);
     expect(html).toMatch(/Liga A, Gruppe \d/);
     expect(html).toMatch(/1\. Spieltag/);
+    // Abstellungsgebühr des Europäischen Verbands: 3659 € je abgestelltem Spieler und Spiel.
+    const fee = cc.ledger.find((e) => /Abstellungsgebühren/.test(e.text));
+    expect(fee).toBeTruthy();
+    expect(fee.amount % 3659).toBe(0);
+    expect(fee.amount).toBeGreaterThanOrEqual(3659 * 2);
   }, 60000);
 });

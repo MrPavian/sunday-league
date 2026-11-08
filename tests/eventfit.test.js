@@ -77,7 +77,7 @@ describe('Chat nach Liga', () => {
 
 describe('Trikotvorlagen nach Farbzahl', () => {
   it('je mindestens sechs Vorlagen mit einer, zwei und drei Farben; alle benannt und malbar', () => {
-    const count = { 1: 0, 2: 0, 3: 0 };
+    const count = { 1: 0, 2: 0, 3: 0, 4: 0 };
     for (const id of Object.keys(KIT_PATTERNS)) count[patternColors(id)]++;
     expect(count[1]).toBeGreaterThanOrEqual(6);
     expect(count[2]).toBeGreaterThanOrEqual(6);

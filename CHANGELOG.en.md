@@ -6,6 +6,28 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-08-9 – Release fees and new kit templates
+
+### New
+- **Kit templates from your sheets:** The 200 shirts on the two sheets produced 23 new templates, all freely colourable. Recolours and patterns that already existed (plain, hoops, halves, sash, checks, chest band, shoulder yoke) are not duplicated.
+  - **1 colour (tonal):** tonal zigzag, tonal diamonds, tonal sawtooth, tonal star.
+  - **2 colours:** side frame, fine hoops.
+  - **3 colours:** block checks, three-colour hoops, three-colour quarters, double sash, double V.
+  - **4 colours (new, with a fourth colour):** four-colour hoops, block grid, sawtooth with chevron.
+  - **Retro:** sawtooth, two-sided sawtooth, sawtooth with yoke, sawtooth with brush, zigzag hoops, diamonds, harlequin, brush strokes, star.
+- **Editor:** a new "4 colours" group and a fourth colour row whenever a template needs it. If the main and second colours are the same (both white at the start), the pattern tiles now show the pattern in contrast instead of a blank area.
+- **More colours:** 29 instead of 14 – adding colours from your sheets (beige, pink, petrol, turquoise, lime, wine red, gold, silver, dark grey) and neon (yellow, green, orange, pink, cyan, violet).
+- **Mirror-symmetrical:** patterns with a grid or random spread (gradient, halftone, confetti, broken lines, star shoulders, wings, zigzag, wave, wedges and the new ones) are now mirror-symmetrical to the centre. Halves, quarters, sashes, diagonals, tricolour, rainbow, block checks, lightning and squiggles stay deliberately uneven.
+- **International breaks:** For every released player, the European governing body pays €3,659 per game (qualifiers and League of Nations, the fixed rate of the 2020–24 cycle). For World Cup qualifiers the world governing body additionally pays 2,362 per player and game (first time for 2026, stated in US dollars, used as euros in the game). The total appears in the accounts and in the international break news.
+- **European Championship:** compensation per player and day by club category, as at EURO 2024 (announced unchanged for 2028): €10,187 in the top division, €3,395 from the third professional tier down.
+- **World Cup:** stays at 5,000 per player and day (guide value for 2026, as euros).
+
+### Game values
+- The rate of the middle category has not been published; the second division gets the midpoint of €6,791.
+- In European World Cup qualifiers both bodies pay, because both programmes cover these games.
+- All of the country's games in the window that the player is released for count, including a possible play-off final.
+- Outside Europe there is no published programme for continental championships, so no payment.
+
 ## 2026-11-08-8 – Leagues for the European national teams
 
 ### New

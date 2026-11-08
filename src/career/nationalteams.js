@@ -35,7 +35,11 @@ import { INTER, interDraw, playoffDraw, quickPlayoffs, rankAll } from './natplay
 //       (Europa 16, Afrika 9, Asien 8, Südamerika 6, Nord-/Mittelamerika 6, Ozeanien 1), die zwei übrigen Plätze über die
 //       interkontinentalen Play-offs (natplayoffs.js INTER). Entschädigung: mindestens 5000 US-Dollar je Spieler und Tag (Weltverband 2026), im
 //       Spiel 5000 € (hergeleitet).
-//  em   24 Teams, 6 Gruppen, 4 beste Dritte → Achtelfinale; 9.6.–9.7. (Ausgabe 2028).
+//  em   24 Teams, 6 Gruppen, 4 beste Dritte → Achtelfinale; 9.6.–9.7. (Ausgabe 2028). Entschädigung des Europäischen Verbands je
+//       Spieler und Tag nach Kategorie des Vereins (Ausbildungsentschädigung des Weltverbands): 10 187 € bis 3395 € (EM 2024, für 2028
+//       gleich angekündigt). Im Spiel: 1. Liga 10 187 €, Ligen ab der 3. Profiliga 3395 €, 2. Liga dazwischen 6791 € (Spielwert,
+//       Mittelwert; der echte Satz der mittleren Kategorie ist nicht veröffentlicht).
+//  Kontinentalmeisterschaften außerhalb Europas: kein veröffentlichtes Entschädigungsprogramm, darum keine Zahlung.
 //  sam  16 Teams (10 aus Südamerika + 6 Gäste aus Nord-/Mittelamerika, erwartet für 2028), 4 Gruppen → Viertelfinale; Juni/Juli.
 //  nam  16 Teams, alle zwei Jahre (2027: Juni/Juli, 16 Teams).
 //  afr  24 Teams, 6 Gruppen → Achtelfinale; 21.12.–18.1. wie die Ausgabe 2025. Rhythmus alle zwei Jahre im Winter: Spielwert
@@ -44,7 +48,7 @@ import { INTER, interDraw, playoffDraw, quickPlayoffs, rankAll } from './natplay
 //  oce   8 Teams (Ausgabe 2024), 2 Gruppen → Halbfinale; Rhythmus alle vier Jahre: prüfen.
 export const TOURNAMENTS = {
   wm: { de: 'Weltmeisterschaft', en: 'World Cup', groups: 12, best3: 8, when: 'summer', every: 4, anchor: 2026, from: [6, 11], to: [7, 19], slots: { uefa: 16, caf: 9, afc: 8, conmebol: 6, concacaf: 6, ofc: 1 }, weight: 1, pay: 5000 },
-  em: { de: 'Europameisterschaft', en: 'European Championship', groups: 6, best3: 4, when: 'summer', every: 4, anchor: 2028, from: [6, 9], to: [7, 9], slots: { uefa: 24 }, weight: 0.9 },
+  em: { de: 'Europameisterschaft', en: 'European Championship', groups: 6, best3: 4, when: 'summer', every: 4, anchor: 2028, from: [6, 9], to: [7, 9], slots: { uefa: 24 }, weight: 0.9, pay: { 12: 10187, 11: 6791, 0: 3395 } },
   sam: { de: 'Südamerikameisterschaft', en: 'South American Championship', groups: 4, best3: 0, when: 'summer', every: 4, anchor: 2028, from: [6, 20], to: [7, 14], slots: { conmebol: 10, concacaf: 6 }, weight: 0.8 },
   nam: { de: 'Nord- und Mittelamerikameisterschaft', en: 'North and Central American Championship', groups: 4, best3: 0, when: 'summer', every: 2, anchor: 2027, from: [6, 14], to: [7, 6], slots: { concacaf: 16 }, weight: 0.5 },
   afr: { de: 'Afrikameisterschaft', en: 'Africa Championship', groups: 6, best3: 4, when: 'winter', every: 2, anchor: 2025, from: [12, 21], to: [1, 18], slots: { caf: 24 }, weight: 0.6 },
@@ -617,7 +621,7 @@ function finish(c, t) {
     }
     if (cfg.pay && humanClub(c).squad.includes(i)) {
       const days = Math.max(1, Math.round((exit - stepDate(t, 'g0')) / DAY) + 1);
-      s.pay = days * cfg.pay;
+      s.pay = days * (typeof cfg.pay === 'number' ? cfg.pay : (cfg.pay[c.level] ?? cfg.pay[0]));
       if (c.ledger) book(c, tr(`Abstellung ${playerOf(c, i).name} (${name}, ${days} Tage)`, `Release of ${playerOf(c, i).name} (${name}, ${days} days)`), s.pay);
     }
     own.push({ idx: i, name: playerOf(c, i).name, nat: s.nat, apps: s.apps, goals: s.goals, reached, boost: Math.round(v * 100), missed: s.missed ?? 0, pay: s.pay ?? 0 });

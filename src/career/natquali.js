@@ -23,6 +23,7 @@ import { createRng } from '../core/rng.js';
 import { NATIONS } from '../data/nations.js';
 import { humanClub, playerOf, winterRound } from './career.js';
 import { adjustFitness, MATCH_COST } from './fitness.js';
+import { book } from './finances.js';
 import { INJURIES, INJURY_BASE } from './injuries.js';
 import { isCoach } from './personal.js';
 import { monthOf } from './weather.js';
@@ -57,6 +58,10 @@ export const QUALI = {
   fatigueMax: 0.15, // höchstens so viel Fitness kostet ein Fenster (ein Spiel = MATCH_COST wie im Turnier)
   injuryMul: 1, // Verletzungsrisiko je Spiel wie im Ligaspiel (injuries.js INJURY_BASE)
   boost: { app: 0.005, goal: 0.01, max: 0.08 }, // Marktwert: ein Viertel der Turnierwerte (NAT.boost), Spielwert
+  // Abstellungsgebühr je abgestelltem Spieler und Spiel: Europäischer Verband 3659 € für Qualifikation und Nations League
+  // (Zyklus 2020–24, fester Satz), Weltverband 2362 US-Dollar für die WM-Qualifikation (erstmals für 2026, im Spiel 2362 €,
+  // hergeleitet wie bei der Turnier-Entschädigung). In der europäischen WM-Qualifikation zahlen beide.
+  release: { uefa: 3659, wm: 2362 },
 };
 
 // --- Termine ---------------------------------------------------------------------------------------------------------------
@@ -302,6 +307,13 @@ function openWindow(c, wi) {
     // Play-off-Finale noch offen: als mögliches Spiel mitzählen (Müdigkeit).
     for (const p of comp.po?.paths ?? []) if (p.legs === 1 && days.has(comp.po.days[1])) for (const nid of new Set([...p.semis.flat(), p.seed].filter(Boolean))) if (comp.own[nid]) games[nid] = (games[nid] ?? 0) + 1;
   }
+  // Abstellungsgebühr für die Eigenen (alle Nominierten, je Spiel ihres Landes in diesem Fenster).
+  let fee = 0;
+  for (const comp of q.comps) {
+    const rate = (comp.conf === 'uefa' ? QUALI.release.uefa : 0) + (comp.id === 'wm' ? QUALI.release.wm : 0);
+    for (const [nid, list] of Object.entries(comp.own)) fee += rate * (games[nid] ?? 0) * list.length;
+  }
+  if (fee && c.ledger) book(c, tr('Abstellungsgebühren Länderspielpause', 'Release fees, international break'), fee);
   // Kosten für die Eigenen in der Startelf ihres Landes: Müdigkeit und Verletzungsrisiko je Spiel.
   const rng = createRng(hash(c.seed ?? 0, c.season ?? 1, c.round, 61));
   const away = [];
@@ -332,7 +344,8 @@ function openWindow(c, wi) {
   }
   // Wer verletzt ausfällt, macht ein Spiel ohne eigene Spieler daraus: gleich als Ergebnis.
   for (const comp of q.comps) settleOthers(c, comp, days);
-  if (away.length) note(c, tr(`Länderspielpause: unterwegs sind ${[...new Set(away)].join(', ')}. Die Spiele stehen im Vereinsheim.`, `International break: away are ${[...new Set(away)].join(', ')}. The games are in the clubhouse.`));
+  const feeText = fee && c.ledger ? tr(` Abstellungsgebühren: ${fee.toLocaleString('de-DE')} €.`, ` Release fees: €${fee.toLocaleString('en-GB')}.`) : '';
+  if (away.length) note(c, tr(`Länderspielpause: unterwegs sind ${[...new Set(away)].join(', ')}. Die Spiele stehen im Vereinsheim.${feeText}`, `International break: away are ${[...new Set(away)].join(', ')}. The games are in the clubhouse.${feeText}`));
 }
 
 // Fenster schließen: offene Spiele nur als Ergebnis (Hook der Folgewoche oder „Rest vorspulen").

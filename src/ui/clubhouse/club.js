@@ -1,7 +1,7 @@
 // VEREIN (Vereinsmappe): Kasse, Verein (Name, Trikot, Wappen, Ausbau, Chronik), Museum.
 // Methoden des Vereinsheims (this = Clubhouse), aus Clubhouse.js herausgelöst – Verhalten unverändert.
 import { plural, tr } from '../../core/i18n.js';
-import { kitPreviewURL, patternColors, RETRO_MODELS, THREE_COLOR } from '../../render/kitPaint.js';
+import { kitPreviewURL, patternColors, RETRO_IDS, RETRO_MODELS } from '../../render/kitPaint.js';
 import { museum } from '../../career/museum.js';
 import { achievementList } from '../../career/achievements.js';
 import { clubLife, FEE_NAMES, neighborText } from '../../career/clublife.js';
@@ -151,10 +151,14 @@ export const clubScreens = {
     const away = this.kitSide === 'away';
     // Heim- oder Auswärtstrikot im Editor: d.kit ist der gerade bearbeitete Satz.
     const d = { ...this.draft, kit: this.draftKit() };
-    // Gruppen: Vorlagen nach Farbzahl (1-, 2-, 3-farbig) und Retro (vom Nutzer gewünscht, 2026-11-05).
-    const groupOf = (id) => (RETRO_MODELS[id] ? 'retro' : `f${patternColors(id)}`);
-    const group = ['f1', 'f2', 'f3', 'retro'].includes(this.kitGroup) ? this.kitGroup : groupOf(d.kit.pattern);
+    // Gruppen: Vorlagen nach Farbzahl (1- bis 4-farbig) und Retro (vom Nutzer gewünscht, 2026-11-05; 4-farbig 2026-11-08).
+    const groupOf = (id) => (RETRO_IDS.has(id) ? 'retro' : `f${patternColors(id)}`);
+    const group = ['f1', 'f2', 'f3', 'f4', 'retro'].includes(this.kitGroup) ? this.kitGroup : groupOf(d.kit.pattern);
     const patternIds = Object.keys(KIT_PATTERNS).filter((id) => groupOf(id) === group);
+    // Musterkacheln: Sind Haupt- und zweite Farbe gleich (Start: beides Weiß), malt die Kachel die zweite Farbe im Kontrast, damit das
+    // Muster zu sehen ist (nur die Vorschau, das Trikot bleibt, wie es ist).
+    const light = (v) => ((v >> 16) & 255) * 0.299 + ((v >> 8) & 255) * 0.587 + (v & 255) * 0.114 > 140;
+    const tileKit = (id) => ({ ...d.kit, pattern: id, ...(d.kit.second == null || d.kit.second === d.kit.shirt ? { second: light(d.kit.shirt) ? 0x1d2b44 : 0xf2efe6 } : {}) });
     const mainSponsor = shirtSponsor(c);
     const sponsorShown = mainSponsor ? { id: mainSponsor.id, name: mainSponsor.name, color: sponsorColor(mainSponsor) } : null;
     const shirtCss = (k) => `url(${kitPreviewURL(k, sponsorShown)}) center / 100% 100%`;
@@ -180,11 +184,11 @@ export const clubScreens = {
             <label>${tr('Kürzel', 'Short name')} <input data-field="short" value="${esc(d.short)}" maxlength="4" ${editable ? '' : 'disabled'}></label>
           </section>
           <section class="kit-sec"><h5>${tr('Muster', 'Pattern')}</h5>
-            <div class="swatch-row kit-side">${[['f1', tr('1-farbig', '1 colour')], ['f2', tr('2-farbig', '2 colours')], ['f3', tr('3-farbig', '3 colours')], ['retro', tr('Retro', 'Retro')]]
+            <div class="swatch-row kit-side">${[['f1', tr('1-farbig', '1 colour')], ['f2', tr('2-farbig', '2 colours')], ['f3', tr('3-farbig', '3 colours')], ['f4', tr('4-farbig', '4 colours')], ['retro', tr('Retro', 'Retro')]]
               .map(([id, label]) => `<button class="${group === id ? 'active' : ''}" data-action="kitGroup" data-value="${id}">${label}</button>`)
               .join('')}</div>
             <div class="pattern-grid">${patternIds
-              .map((id) => `<button class="pattern-tile ${d.kit.pattern === id ? 'active' : ''}" data-action="kitPattern" data-value="${id}" ${editable ? '' : 'disabled'} title="${esc(RETRO_MODELS[id] ? `${tr('Vorbild', 'Inspired by')}: ${RETRO_MODELS[id]}` : KIT_PATTERNS[id])}"><i style="background:url(${kitPreviewURL({ ...d.kit, pattern: id })}) center / 100% 100%"></i><span>${KIT_PATTERNS[id]}</span></button>`)
+              .map((id) => `<button class="pattern-tile ${d.kit.pattern === id ? 'active' : ''}" data-action="kitPattern" data-value="${id}" ${editable ? '' : 'disabled'} title="${esc(RETRO_MODELS[id] ? `${tr('Vorbild', 'Inspired by')}: ${RETRO_MODELS[id]}` : KIT_PATTERNS[id])}"><i style="background:url(${kitPreviewURL(tileKit(id))}) center / 100% 100%"></i><span>${KIT_PATTERNS[id]}</span></button>`)
               .join('')}</div>
             ${RETRO_MODELS[d.kit.pattern] ? `<small class="pattern-model">${tr('Vorbild', 'Inspired by')}: ${RETRO_MODELS[d.kit.pattern]} – ${tr('frei einfärbbar, ohne Wappen und Logos', 'any colours, no crests or logos')}</small>` : ''}
           </section>
@@ -199,7 +203,8 @@ export const clubScreens = {
           <section class="kit-sec"><h5>${tr('Farben', 'Colours')}</h5>
             ${swatches('shirt', tr('Trikot', 'Shirt'))}
             ${patternColors(d.kit.pattern) >= 2 || d.kit.sleeves === 'second' ? swatches('second', tr('2. Farbe', '2nd colour')) : ''}
-            ${THREE_COLOR.has(d.kit.pattern) ? swatches('third', tr('3. Farbe', '3rd colour')) : ''}
+            ${patternColors(d.kit.pattern) >= 3 ? swatches('third', tr('3. Farbe', '3rd colour')) : ''}
+            ${patternColors(d.kit.pattern) >= 4 ? swatches('fourth', tr('4. Farbe', '4th colour')) : ''}
             ${swatches('shorts', tr('Hose', 'Shorts'))}
             ${swatches('socks', tr('Stutzen', 'Socks'))}
           </section>

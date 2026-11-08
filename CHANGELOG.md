@@ -6,6 +6,28 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-08-9 – Abstellungsgebühren und neue Trikotvorlagen
+
+### Neu
+- **Trikotvorlagen aus deinen Bögen:** Aus den 200 Trikots der beiden Bögen sind 23 neue Vorlagen entstanden, alle frei einfärbbar. Umfärbungen und Muster, die es schon gab (Uni, Ringel, Halb/halb, Schärpe, Karo, Brustring, Schulterpasse), sind nicht doppelt dabei.
+  - **1-farbig (Ton in Ton):** Ton-Zickzack, Ton-Rauten, Ton-Sägezahn, Ton-Stern.
+  - **2-farbig:** Seitenrahmen, Feine Ringel.
+  - **3-farbig:** Blockkaro, Dreifarb-Ringel, Viertel dreifarbig, Doppelschärpe, Doppel-V.
+  - **4-farbig (neu, mit vierter Farbe):** Vierfarb-Ringel, Würfelraster, Sägezahn mit Winkel.
+  - **Retro:** Sägezahn, Sägezahn zweiseitig, Sägezahn mit Passe, Sägezahn mit Pinsel, Zickzack-Ringel, Rauten, Harlekin, Pinselstriche, Stern.
+- **Editor:** neue Gruppe „4-farbig“ und eine vierte Farbreihe, sobald eine Vorlage sie braucht. Sind Haupt- und zweite Farbe gleich (beim Start beides Weiß), zeigen die Musterkacheln das Muster jetzt im Kontrast statt einer leeren Fläche.
+- **Mehr Farben:** 29 statt 14 – dazu Farben aus deinen Bögen (Beige, Rosa, Petrol, Türkis, Hellgrün, Weinrot, Gold, Silber, Dunkelgrau) und Neon (Gelb, Grün, Orange, Pink, Cyan, Violett).
+- **Spiegelgleich:** Muster mit Raster oder Zufallsverteilung (Farbverlauf, Halbton, Konfetti, Linienbruch, Sternschultern, Flügel, Zickzack, Welle, Keile und die neuen) sind jetzt spiegelgleich zur Mitte. Absichtlich ungleich bleiben Halb/halb, Viertel, Schärpen, Diagonalen, Trikolore, Regenbogen, Blockkaro, Blitz und Krakel.
+- **Länderspielpausen:** Für jeden abgestellten Spieler zahlt der Europäische Verband 3659 € je Spiel (Qualifikation und Nationenliga, fester Satz des Zyklus 2020–24). Für die WM-Qualifikation zahlt der Weltverband zusätzlich 2362 je Spieler und Spiel (erstmals für 2026, in US-Dollar angegeben, im Spiel als Euro). Die Summe steht in der Kasse und in der Nachricht zur Länderspielpause.
+- **Europameisterschaft:** Entschädigung je Spieler und Tag nach der Kategorie des Vereins wie bei der EM 2024 (für 2028 gleich angekündigt): 10 187 € in der 1. Liga, 3395 € ab der 3. Profiliga.
+- **Weltmeisterschaft:** bleibt bei 5000 je Spieler und Tag (Richtwert für 2026, als Euro).
+
+### Spielwerte
+- Den Satz der mittleren Kategorie hat der Verband nicht veröffentlicht; die 2. Liga bekommt den Mittelwert von 6791 €.
+- In der europäischen WM-Qualifikation zahlen beide Verbände, weil beide Programme diese Spiele abdecken.
+- Gezählt werden alle Spiele des Landes im Fenster, für die der Spieler abgestellt ist, auch ein mögliches Play-off-Finale.
+- Außerhalb Europas gibt es für Kontinentalmeisterschaften kein veröffentlichtes Programm, deshalb keine Zahlung.
+
 ## 2026-11-08-8 – Ligen der europäischen Nationalteams
 
 ### Neu
