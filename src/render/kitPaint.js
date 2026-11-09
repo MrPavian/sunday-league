@@ -11,6 +11,7 @@ const luminance = (hex) => (0.299 * ((hex >> 16) & 255) + 0.587 * ((hex >> 8) & 
 
 const side = (face) => face === 'left' || face === 'right';
 const bx = (x, face) => (face === 'back' ? 15 - x : x); // Rücken gespiegelt: links bleibt links am Körper
+const xm = (x) => (x < 8 ? x : 15 - x); // Abstand zum nächsten Rand: spiegelgleiche Muster
 // Sägezahn an den Seiten (Zähne alle 3 px, oben breit): links a, rechts b (am Körper), dazu ein V-Band (c, 0 = ohne) über der Brust.
 function saege(x, y, face, a, b, c) {
   const v = 1 + (7.5 - Math.abs(x - 7.5)) * 0.5; // V-Band: an den Schultern oben, zur Mitte tiefer
@@ -30,12 +31,13 @@ const raute = (x, y) => {
 };
 // Zickzack-Ringel: 2 px breite Zacken, alle 6 px eine Spitze.
 const zz = (x, y) => y >= 2 && (y + Math.round((Math.abs(((Math.abs(x - 7.5) + 1.5) % 6) - 3) * 2) / 3)) % 4 < 2; // spiegelgleich zur Mitte
-// Pinselstriche: Bänder mit ausgefransten Enden, spiegelgleich (1 = zweite, 2 = dritte Farbe).
+// Pinselstriche wie im Vorbild: leicht schräge Bänder mit ausgefransten Enden (1 = zweite, 2 = dritte Farbe).
 const pinsel = (x, y) => {
-  const row = [4, 5, 7, 8, 10, 11, 13].indexOf(y);
+  const row = [4, 5, 7, 8, 10, 11, 13].indexOf(y - (x >> 3));
   if (row < 0) return 0;
   const from = 1 + ((y * 7) % 3);
-  return x >= from && x <= 15 - from ? (row === 2 || row === 3 || row === 6 ? 2 : 1) : 0;
+  const to = 14 - ((y * 5) % 3);
+  return x >= from && x <= to ? (row === 2 || row === 3 || row === 6 ? 2 : 1) : 0;
 };
 // Fünfzackiger Stern mittig (Spitze oben).
 const stern = (x, y) => {
@@ -166,8 +168,8 @@ const PATTERNS = {
   vierband: (x, y) => (y <= 2 ? 0 : [1, 2, 5, 0][((y - 3) >> 1) % 4]),
   wuerfel: (x, y, face) => {
     if (side(face) || y < 3 || y > 13 || (y - 3) % 3 === 2) return 0;
-    const col = [1, 4, 7, 10, 13].findIndex((c) => x === c || x === c + 1); // fünf Spalten, spiegelgleich
-    return col < 0 ? 0 : [1, 2, 5, 2, 1][col];
+    const col = [1, 5, 9, 13].findIndex((c) => x === c || x === c + 1); // vier Spalten wie im Vorbild (Farben 2, 3, 4, 2)
+    return col < 0 ? 0 : [1, 2, 5, 1][face === 'back' ? 3 - col : col];
   },
   saegewinkel4: (x, y, face) => saege(x, y, face, 1, 2, 5),
   // Retro aus den Bögen: Sägezahn an den Seiten, Zickzack-Ringel, Rauten, Pinselstriche, Stern.
@@ -185,14 +187,59 @@ const PATTERNS = {
   tonraute: (x, y) => (y <= 11 && raute(x, y) !== 0 ? 3 : 0),
   tonsaege: (x, y, face) => (saege(x, y, face, 1, 1, 0) ? 3 : 0),
   tonstern: (x, y, face) => (!side(face) && stern(x, y) ? 4 : 0),
+  // --- Vorlagen nach der Trikotgeschichte, die der Nutzer geschickt hat (2026-11-08): neue Motive, spiegelgleich, frei einfärbbar,
+  // ohne Wappen, Sponsoren oder Herstellerzeichen. xm = Abstand zum nächsten Rand (0–7), damit links und rechts gleich sind.
+  schulternaht: (x, y, face) => !side(face) && y <= 5 && (y === 5 - xm(x) || y === 3 - xm(x)), // zwei Linien entlang der Raglannaht
+  schulterdreieck: (x, y, face) => !side(face) && Math.abs(xm(x) - 3) + y * 0.8 <= 3.2, // Dreieck zwischen Kragen und Schulter
+  raglan: (x, y, face) => (side(face) ? y <= 2 : y < 6 - xm(x) * 1.2), // Raglanpasse: Schulter bis zum Kragen in der Zweitfarbe
+  passeband: (x, y) => y <= 3 || y === 9 || y === 10, // Schulterpasse und Brustband
+  seitenbalken: (x, y, face) => (side(face) ? y >= 3 && y % 4 !== 2 : xm(x) >= 1 && xm(x) <= 2 && y >= 3 && y % 4 !== 2), // unterbrochene Balken
+  westennaht: (x, y, face) => !side(face) && ((xm(x) === 2 && y >= 3 && y <= 10) || (y > 10 && xm(x) > 2 && Math.round(10 + (xm(x) - 2) * 0.6) === y)),
+  ringelpasse: (x, y) => y <= 2 || (y >= 5 && y % 3 === 2), // Passe und feine Linien
+  bogenseiten: (x, y, face) => {
+    if (side(face)) return y >= 3 ? 1 : 0;
+    const w = 1 + Math.floor(y / 4);
+    return y < 3 ? 0 : xm(x) < w ? 1 : xm(x) === w ? 2 : 0; // Seitenteil wird nach unten breiter, Kante in der 3. Farbe
+  },
+  schulterbalken: (x, y, face) => {
+    if (side(face) || y > 4) return 0;
+    const d = y - (7.5 - 1.25 * xm(x));
+    return Math.abs(d) <= 0.7 ? 1 : Math.abs(d - 2) <= 0.7 ? 2 : 0; // zwei schräge Balken je Schulter
+  },
+  pinselschulter: (x, y, face) => {
+    if (y > 5) return 0;
+    const xx = bx(x, face);
+    const h = ((xx * 73 + y * 151 + (side(face) ? 37 : 0)) ^ (xx * y * 29)) % 11;
+    return h < (xx < 8 || face === 'left' ? 9.5 : 7) - y * 1.6; // Pinselspritzer wie im Vorbild links dichter, nach unten weniger
+  },
+  winkelbalken: (x, y, face) => {
+    // Wie im Vorbild: links breite Schrägbalken bis zur Mitte, rechts zwei senkrechte Balken an der Schulter.
+    if (face === 'left') return y >= 3 && (y + 30) % 4 < 2;
+    if (face === 'right') return false;
+    const xx = bx(x, face);
+    return xx < 8 ? y >= 3 && (y - Math.round(xx * 0.6) + 30) % 4 < 2 : (xx === 11 || xx === 13) && y <= 6;
+  },
+  verlaufsringel: (x, y) => {
+    const band = [0, 0, 0, 0, 0, 1, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2][y]; // 2 voll, 1 gerastert (Übergang)
+    return band === 2 || (band === 1 && (xm(x) + y) % 2 === 0);
+  },
+  punktverlauf: (x, y) => y >= 5 && ((y % 2 === 0 && xm(x) % 2 === 0) || (y >= 10 && (xm(x) + y) % 2 === 0)), // Punkte, nach unten dichter
+  faechersaum: (x, y, face) => y === 8 || (y >= 10 && !side(face) && Math.floor((xm(x) + (y - 10) * 0.5) / 1.5) % 2 === 0), // Band, darunter Fächerstreifen
+  schulterband: (x, y, face) => (y === 1 || y === 2) && (side(face) || xm(x) <= 5) && (xm(x) + y) % 3 !== 0, // gemustertes Band über die Schultern
+  tonquadrate: (x, y) => ([3, 0, 3, 0, 0, 0, 0][((x >> 1) * 5 + (y >> 1) * 3) % 7] ?? 0), // verstreute Quadrate wie im Vorbild, dunkler Ton
+  tonscherben: (x, y) => {
+    const c = ((x >> 2) * 7 + (y >> 2) * 13 + (x >> 2) * (y >> 2) * 5) % 4; // Scherben wie im Vorbild ungeordnet
+    const up = (x & 3) > (y & 3);
+    return [3, 0, 3, 0][(c + (up ? 1 : 0)) % 4]; // Scherben im dunklen Ton
+  },
 };
 // Vorlagen nach Farbzahl für den Editor (Retro-Muster stehen in einer eigenen Gruppe, RETRO_MODELS).
-export const ONE_COLOR = new Set(['uni', 'tonstreifen', 'tonringel', 'tonkaro', 'tondiagonal', 'tonschatten', 'tonpixel', 'tonzickzack', 'tonraute', 'tonsaege', 'tonstern']);
+export const ONE_COLOR = new Set(['uni', 'tonstreifen', 'tonringel', 'tonkaro', 'tondiagonal', 'tonschatten', 'tonpixel', 'tonzickzack', 'tonraute', 'tonsaege', 'tonstern', 'tonquadrate', 'tonscherben']);
 // Muster mit vierter Farbe (Editor zeigt dann auch die vierte Farbreihe).
 export const FOUR_COLOR = new Set(['vierband', 'wuerfel', 'saegewinkel4']);
 export const patternColors = (id) => (FOUR_COLOR.has(id) ? 4 : THREE_COLOR.has(id) ? 3 : ONE_COLOR.has(id) ? 1 : 2);
 // Retro-Gruppe im Editor: die Vorbilder (RETRO_MODELS) und die verspielten Motive aus den Trikotbögen.
-export const RETRO_IDS = new Set(['zickzack', 'fluegel', 'zacken', 'halbton', 'krakel', 'regenbogen', 'konfetti', 'linien', 'welle', 'sterne', 'brustband3', 'keile', 'blitz', 'kante', 'stern', 'saege', 'saege3', 'saegepasse', 'saegepinsel', 'zickzackringel', 'harlekin', 'harlekin3', 'pinsel']);
+export const RETRO_IDS = new Set(['zickzack', 'fluegel', 'zacken', 'halbton', 'krakel', 'regenbogen', 'konfetti', 'linien', 'welle', 'sterne', 'brustband3', 'keile', 'blitz', 'kante', 'stern', 'saege', 'saege3', 'saegepasse', 'saegepinsel', 'zickzackringel', 'harlekin', 'harlekin3', 'pinsel', 'pinselschulter', 'winkelbalken', 'verlaufsringel', 'punktverlauf', 'faechersaum', 'schulterband']);
 // Schattierung der Hauptfarbe für Ton in Ton: dunkler (3) bzw. heller (4), sichtbar, aber nicht als zweite Farbe.
 const shade = (hex, f) => {
   const ch = (k) => (hex >> k) & 255;
@@ -202,7 +249,7 @@ const shade = (hex, f) => {
 export const toneDark = (hex) => shade(hex, luminance(hex) < 0.2 ? 0.16 : -0.18);
 export const toneLight = (hex) => shade(hex, luminance(hex) > 0.8 ? -0.12 : 0.16);
 // Muster mit dritter Farbe (Editor zeigt dann die dritte Farbreihe).
-export const THREE_COLOR = new Set(['zickzack', 'fluegel', 'keile', 'welle', 'blitz', 'krakel', 'regenbogen', 'konfetti', 'sterne', 'brustband3', 'kante', 'trikolore', 'dreiband', 'doppelring', 'streifenpaar', 'winkel3', 'schulter3', 'blockkaro', 'dreiringel', 'viertel3', 'schaerpe3', 'vwinkel3', 'saege3', 'saegepasse', 'saegepinsel', 'harlekin3', 'pinsel']);
+export const THREE_COLOR = new Set(['zickzack', 'fluegel', 'keile', 'welle', 'blitz', 'krakel', 'regenbogen', 'konfetti', 'sterne', 'brustband3', 'kante', 'trikolore', 'dreiband', 'doppelring', 'streifenpaar', 'winkel3', 'schulter3', 'blockkaro', 'dreiringel', 'viertel3', 'schaerpe3', 'vwinkel3', 'saege3', 'saegepasse', 'saegepinsel', 'harlekin3', 'pinsel', 'bogenseiten', 'schulterbalken']);
 // Retro-Muster: Vorbild (nur als Hinweis im Editor, keine Nachbildung von Wappen, Sponsoren oder Herstellern).
 export const RETRO_MODELS = tr(
   {
@@ -220,6 +267,12 @@ export const RETRO_MODELS = tr(
     keile: 'Spanien 1996 (eckiges Muster)',
     blitz: '90er-Blitzmuster',
     kante: '1860 München in den 90ern (Hellblau, Weiß, dunkelblaue Kanten)',
+    pinselschulter: 'Dortmund 1991–94 und 2025/26 (Pinsel auf den Schultern)',
+    winkelbalken: 'Dortmund 2014/15 (breite Schrägbalken)',
+    verlaufsringel: 'Dortmund 2017/18 (verlaufende Querbänder)',
+    punktverlauf: 'Dortmund 2011/12 (Punkte, nach unten dichter)',
+    faechersaum: 'Dortmund 2024/25 (Band und Fächerstreifen)',
+    schulterband: 'Dortmund 2019/20 (gemustertes Schulterband)',
   },
   {
     zickzack: 'Frankfurt away 1993/94 ("Tetra Pak")',
@@ -236,14 +289,21 @@ export const RETRO_MODELS = tr(
     keile: 'Spain 1996 (angular pattern)',
     blitz: '90s lightning pattern',
     kante: '1860 Munich in the 90s (sky blue, white, navy edges)',
+    pinselschulter: 'Dortmund 1991–94 and 2025/26 (brush strokes on the shoulders)',
+    winkelbalken: 'Dortmund 2014/15 (broad diagonal bars)',
+    verlaufsringel: 'Dortmund 2017/18 (fading hoops)',
+    punktverlauf: 'Dortmund 2011/12 (dots, denser towards the hem)',
+    faechersaum: 'Dortmund 2024/25 (band and fan stripes)',
+    schulterband: 'Dortmund 2019/20 (patterned shoulder band)',
   },
 );
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
-// Spiegelgleich (vom Nutzer gewünscht, 2026-11-08: „Achte auf Symmetrie“): Muster mit Zufalls- oder Rasterverteilung malen die
-// rechte Hälfte als Spiegel der linken. Absichtlich ungleich bleiben Halb/halb, Viertel, Schärpen, Diagonalen, Trikolore,
-// Regenbogen, Blockkaro, Blitz und Krakel (dort ist die Schräge oder das Durcheinander das Motiv).
+// Symmetrie (vom Nutzer gewünscht, 2026-11-08: „Achte auf Symmetrie“, dann „Wenn das Original keine Symmetrie hat, dann ohne.
+// Immer nah am Original“): spiegelgleich, wo das Vorbild es ist oder es kein Vorbild gibt (Raster- und Zufallsmuster ohne Vorbild,
+// Flügel, Sternschultern). Wie im Original ungleich: Allover-Drucke (Zickzack, Welle, Keile, Linienbruch, Konfetti, Krakel), Blitz,
+// Pinselstriche, Pinselschultern, Winkelbalken, Ton-Quadrate, Ton-Scherben, Würfelraster und die geteilten oder schrägen Muster.
 const mirror = (fn) => (x, y, face) => fn(x < 8 ? x : 15 - x, y, face);
-for (const id of ['verlauf', 'tonschatten', 'halbton', 'konfetti', 'tonpixel', 'linien', 'sterne', 'fluegel', 'zickzack', 'welle', 'keile']) PATTERNS[id] = mirror(PATTERNS[id]);
+for (const id of ['verlauf', 'tonschatten', 'halbton', 'tonpixel', 'sterne', 'fluegel']) PATTERNS[id] = mirror(PATTERNS[id]);
 export const PATTERN_IDS = Object.keys(PATTERNS);
 export const patternFn = (id) => PATTERNS[id] ?? PATTERNS.uni;
 // Muster, bei denen der Ärmel schon in der Zweitfarbe steckt.

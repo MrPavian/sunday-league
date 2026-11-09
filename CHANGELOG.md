@@ -6,6 +6,17 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-09-1 – Trikotvorlagen aus der Trikotgeschichte
+
+### Neu
+- **17 neue Vorlagen** nach der Trikotgeschichte, die du geschickt hast (39 Trikots von 1988 bis 2027). Nah am Original und frei einfärbbar, ohne Wappen, Sponsoren oder Herstellerzeichen. Motive, die es schon gab (Flügel, Zacken, Längs- und Nadelstreifen, Brustring, Mittelstreifen, Seitenbahnen, Halbton, Ton-Karo, Ton-Pixel, feine Ringel), sind nicht doppelt dabei.
+  - **1-farbig (Ton in Ton):** Ton-Quadrate, Ton-Scherben.
+  - **2-farbig:** Schulternaht, Schulterdreieck, Raglanpasse, Passe mit Brustband, Seitenbalken, Westennaht, Passe mit Linien.
+  - **3-farbig:** Bogenseiten (Seitenteil mit Kante), Schulterbalken.
+  - **Retro (mit Vorbild im Editor):** Pinselschultern, Winkelbalken, Verlaufsringel, Punktverlauf, Fächersaum, Schulterband.
+- **Symmetrie wie im Vorbild:** Wo das Original nicht spiegelgleich ist, ist es die Vorlage auch nicht: Winkelbalken (links Schrägbalken, rechts zwei senkrechte Balken wie 2014/15), Pinselschultern (links dichter), Ton-Quadrate und Ton-Scherben verstreut.
+- **Nachgebessert (Vorlagen vom 8. November):** Pinselstriche und Sägezahn mit Pinsel wieder schräg wie im Bogen, Würfelraster wieder mit vier Spalten in drei Farben wie im Bogen, die Allover-Muster Zickzack, Welle, Keile, Linienbruch und Konfetti wieder ohne Spiegelung. Spiegelgleich bleiben Flügel, Sternschultern und die Raster ohne Vorbild (Farbverlauf, Schattenverlauf, Halbton, Ton-Pixel).
+
 ## 2026-11-08-9 – Abstellungsgebühren und neue Trikotvorlagen
 
 ### Neu

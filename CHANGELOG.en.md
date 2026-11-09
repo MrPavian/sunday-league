@@ -6,6 +6,17 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-09-1 – Kit templates from the kit history
+
+### New
+- **17 new templates** based on the kit history you sent (39 shirts from 1988 to 2027). Close to the originals and freely colourable, without crests, sponsors or maker marks. Motifs that already existed (wings, jags, stripes and pinstripes, chest band, centre stripe, side panels, halftone, tonal checks, tonal pixels, fine hoops) are not duplicated.
+  - **1 colour (tonal):** tonal squares, tonal shards.
+  - **2 colours:** shoulder seams, shoulder triangles, raglan yoke, yoke and chest band, side bars, vest seam, yoke with lines.
+  - **3 colours:** curved side panels (panel with edge), shoulder bars.
+  - **Retro (with model shown in the editor):** brushed shoulders, chevron bars, fading hoops, dot fade, fan hem, shoulder band.
+- **Symmetry as in the original:** where the original is not mirror-symmetrical, neither is the template: chevron bars (diagonal bars on the left, two vertical bars on the right as in 2014/15), brushed shoulders (denser on the left), tonal squares and shards scattered.
+- **Reworked (templates from 8 November):** brush strokes and sawtooth with brush slanted again as on the sheet, block grid back to four columns in three colours as on the sheet, the all-over patterns zigzag, wave, wedges, broken lines and confetti no longer mirrored. Wings, star shoulders and the grids without a model (gradient, shadow fade, halftone, tonal pixels) stay mirror-symmetrical.
+
 ## 2026-11-08-9 – Release fees and new kit templates
 
 ### New

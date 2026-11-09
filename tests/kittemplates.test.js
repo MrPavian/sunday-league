@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { KIT_COLORS, KIT_PATTERNS } from '../src/career/career.js';
 import { FOUR_COLOR, PATTERN_IDS, patternColors, patternFn, paintKit, RETRO_IDS, RETRO_MODELS } from '../src/render/kitPaint.js';
 
-const NEW = ['rahmen', 'feinringel', 'blockkaro', 'dreiringel', 'viertel3', 'schaerpe3', 'vwinkel3', 'vierband', 'wuerfel', 'saegewinkel4', 'saege', 'saege3', 'saegepasse', 'saegepinsel', 'zickzackringel', 'harlekin', 'harlekin3', 'pinsel', 'stern', 'tonzickzack', 'tonraute', 'tonsaege', 'tonstern'];
+const NEW = ['rahmen', 'feinringel', 'blockkaro', 'dreiringel', 'viertel3', 'schaerpe3', 'vwinkel3', 'vierband', 'wuerfel', 'saegewinkel4', 'saege', 'saege3', 'saegepasse', 'saegepinsel', 'zickzackringel', 'harlekin', 'harlekin3', 'pinsel', 'stern', 'tonzickzack', 'tonraute', 'tonsaege', 'tonstern',
+  // nach der Trikotgeschichte (2026-11-08)
+  'schulternaht', 'schulterdreieck', 'raglan', 'passeband', 'seitenbalken', 'westennaht', 'ringelpasse', 'bogenseiten', 'schulterbalken', 'pinselschulter', 'winkelbalken', 'verlaufsringel', 'punktverlauf', 'faechersaum', 'schulterband', 'tonquadrate', 'tonscherben'];
 const COLORS = { shirt: 0x2f6fb5, second: 0xf2efe6, third: 0xc8352f, fourth: 0xe0b020 };
 const HEX = ['#2f6fb5', '#f2efe6', '#c8352f', '#e0b020'];
 function used(pattern) {
@@ -44,8 +46,9 @@ describe('Trikotvorlagen aus den Bögen', () => {
     }
   });
 
-  it('spiegelgleich: alle Muster außer den absichtlich schrägen oder geteilten (Nutzerwunsch „Achte auf Symmetrie“)', () => {
-    const ASYM = new Set(['haelften', 'schaerpe', 'diagonal', 'blitz', 'krakel', 'regenbogen', 'tondiagonal', 'quadranten', 'trikolore', 'blockkaro', 'viertel3', 'schaerpe3']);
+  it('spiegelgleich, wo das Vorbild es ist (Nutzer: „Achte auf Symmetrie“, dann „wenn das Original keine Symmetrie hat, dann ohne“)', () => {
+    // Wie im Original ungleich: geteilte und schräge Muster, Allover-Drucke, Pinsel, Winkelbalken 2014/15, Ton-Quadrate, Ton-Scherben, Würfelraster.
+    const ASYM = new Set(['haelften', 'schaerpe', 'diagonal', 'blitz', 'krakel', 'regenbogen', 'tondiagonal', 'quadranten', 'trikolore', 'blockkaro', 'viertel3', 'schaerpe3', 'zickzack', 'welle', 'keile', 'linien', 'konfetti', 'pinsel', 'saegepinsel', 'wuerfel', 'pinselschulter', 'winkelbalken', 'tonquadrate', 'tonscherben']);
     const SIDES = new Set(['saege3', 'saegewinkel4']); // Form spiegelgleich, links und rechts eigene Farbe
     const norm = (v) => (v === true ? 1 : v === false ? 0 : v);
     for (const id of PATTERN_IDS) {
