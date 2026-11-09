@@ -34,7 +34,7 @@ zu einem Verein auf, der sich vom Parkplatz bis ins Amateurstadion hocharbeitet.
 | Spieler | Vollamateure aus allen Schichten | Beruf, Alter, Lebenssituation beeinflussen Verfügbarkeit & Form |
 | Spieler | Besondere Fähigkeiten (Traits) | Bodenständig: „sehr schneller Läufer“, „gutes Auge“, „Pferdelunge“, „Anführer“, „steigert Teamchemie“ |
 | Kader | Transfers | Spieler werben, tauschen, überzeugen |
-| Kader | Challenges | Freischaltungen und Belohnungen über Aufgaben |
+| Kader | ~~Challenges~~ | **Gestrichen** (Nutzerentscheid 2026-11-09: reines Managerspiel, kein Modus neben der Karriere) |
 | Kader | Nachwuchs | Jugendabteilung, Talente aus dem Umfeld |
 | Minispiele | Open Training | Offenes Probetraining zum Entdecken von Rohdiamanten |
 | Verein | Trikot-Editor | Jede Saison neu gestaltbar (Farben, Muster, Sponsor, Wappen) |
@@ -169,10 +169,10 @@ zu einem Verein auf, der sich vom Parkplatz bis ins Amateurstadion hocharbeitet.
 |---|---|
 | **Karriere: Spielertrainer** (Hauptmodus) | Du bist Spieler + Trainer + Vereinsvorsitzender in Personalunion. Vom Parkplatz zur Oberliga. Dein Avatar altert und wechselt irgendwann ganz an die Seitenlinie. |
 | **Karriere: Einzelspieler** | Ein Normalo-Spieler, der sich von der Hobbyrunde hocharbeitet, Vereine wechselt, Job und Fußball vereinbaren muss. |
-| **Bolzplatz / Straße** | Schnelle Freundschaftsspiele 3v3 bis 7v7 mit Hausregeln (Jackentore, „Letzter Mann“, Torwart wechselt). |
+| ~~Bolzplatz / Straße~~ | **Gestrichen** (Nutzerentscheid 2026-11-09: reines Managerspiel; Freundschaftsspiel und Challenges wurden schon früher entfernt). |
 | **Pokal-Wochenende** | Kreispokal-Modus: Außenseiter gegen Höherklassige, K.-o.-Spiele. |
 | **Turniere & Events** | Hallenturnier im Winter (Futsal-artig), Sommerfest-Blitzturnier, Firmencup, Elfmeterschießen-Event, Alte-Herren-Spiel. |
-| **Challenges** | Szenarien: „Gewinne mit 9 Mann“, „Halte das 1:0 auf Schlammboden“, „Aufstieg ohne Transfers“, „Nur Spieler über 35“. |
+| ~~Challenges~~ | **Gestrichen** (Nutzerentscheid 2026-11-09, siehe oben). |
 | ~~Couch-Koop / Versus~~, ~~Online-Freizeitliga~~ | **Gestrichen** (vom Nutzer entschieden 2026-11-07: kein Koop, kein Mehrspieler). |
 
 ### 3.4 Minispiele & Scouting
@@ -325,7 +325,7 @@ Liga- und Vereinsnamen bleiben fiktiv (keine Lizenzen nötig); regionale Variant
 
 ### Phase 7 – Content & Polish (ca. 6–8 Wochen)
 - [x] Alle Spielstätten (Park bis Amateurstadion), Wetter & Tageszeiten – erledigt (bis zum Stadion)
-- [ ] Challenges, Turniere (Halle, Sommerfest), Bolzplatz-Modus – teilweise (Turniere erledigt; Challenges und Bolzplatz-Modus offen)
+- [x] Turniere (Halle, Sommerfest) – erledigt. ~~Challenges, Bolzplatz-Modus~~ gestrichen (Nutzerentscheid 2026-11-09: reines Managerspiel)
 - [ ] Audio-Atmosphäre, Musik, Stadionsprecher – teilweise (Geräusche je Spielort vorhanden; Musik und Stadionsprecher offen)
 - [x] Balancing, Tutorial/Onboarding, Lokalisierung (DE/EN) — Tutorial gebaut 2026-11-06 (ui/Tutorial.js) – erledigt (Tutorial 2026-11-06 (ui/Tutorial.js); Balancing laufend)
 - [ ] Performance, Controller-Support, Barrierefreiheit – teilweise (Qualitätsstufen und Gamepad vorhanden; Barrierefreiheit offen)
