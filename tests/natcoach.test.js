@@ -50,6 +50,7 @@ describe('Nationaltrainer im Nebenamt', () => {
     const all = candidates(c, 'ger');
     expect(all.some((p) => p.own && p.poolIndex === idx)).toBe(true);
     expect(all.filter((p) => !p.own).length).toBe(Object.values(NC.pool).reduce((a, b) => a + b, 0));
+    expect(new Set(all.map((p) => p.name)).size).toBe(all.length); // keine doppelten Namen
     const squad = coachSquad(c, 'ger');
     expect(squad).toHaveLength(NAT.squad);
     const out = squad.find((p) => p.position === 'fwd');

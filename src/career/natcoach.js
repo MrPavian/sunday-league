@@ -93,6 +93,7 @@ export function candidates(c, nid) {
   const target = targetOf(c, year, nid);
   const everyone = getPool().everyone();
   const out = [];
+  const used = new Set(own.map((p) => p.name));
   for (const [pos, k] of Object.entries(NC.pool))
     for (let i = 0; i < k; i++) {
       let base;
@@ -103,7 +104,10 @@ export function candidates(c, nid) {
       taken.add(base.poolIndex);
       // Breite im Kader: die Ersten je Position auf Länderniveau, dahinter etwas schwächer (Spielwert).
       const q = liftedTo(base, target - i * 0.8);
-      out.push({ ...q, position: pos, name: `${rng.pick(names.first)} ${rng.pick(names.last)}`, look: lookFor(rng, q.age, NATIONS[nid].look), traits: [], nat: nid, fill: true });
+      let name;
+      for (let tries = 0; tries < 30 && (!name || used.has(name)); tries++) name = `${rng.pick(names.first)} ${rng.pick(names.last)}`; // eindeutig im Kader
+      used.add(name);
+      out.push({ ...q, position: pos, name, look: lookFor(rng, q.age, NATIONS[nid].look), traits: [], nat: nid, fill: true });
     }
   return [...own, ...out];
 }

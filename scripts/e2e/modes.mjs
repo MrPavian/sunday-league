@@ -735,6 +735,83 @@ export async function quali(b, shots = process.env.E2E_SHOTS) {
   return ok.done();
 }
 
+// Nationaltrainer im Nebenamt (natcoach.js): Anfrage annehmen, Kader wählen, Länderspiel an der Seitenlinie coachen.
+export async function natCoach(b, shots = process.env.E2E_SHOTS) {
+  const ok = checker('Nationaltrainer: Anfrage annehmen, Kader wählen, Länderspiel an der Seitenlinie (Team 0, Trainermodus)');
+  const { createCareer, currentFixtures, finishRound, seasonOver } = await import('../../src/career/career.js');
+  const fresh = () => {
+    const c = createCareer({ seed: 11 });
+    c.level = 12;
+    c.pro = true;
+    return c;
+  };
+  // 1) Anfrage im Vereinsheim, annehmen, Kader ändern.
+  const c1 = fresh();
+  c1.natOffer = { nid: 'ger', season: c1.season ?? 1, rep: 70 };
+  let p = await page(b, 'desk', { query: '?notitle&debug&dauer=20', store: { 'sunday-league:career': JSON.stringify(c1) } });
+  await click(p, '.career [data-c="continue"]');
+  await p.waitForTimeout(1500);
+  await click(p, '[data-action="area"][data-value="home"]').catch(() => {});
+  ok(!!(await p.waitForSelector('[data-testid="natcoach-offer"]', { timeout: 15000 }).catch(() => null)), 'Anfrage-Karte fehlt');
+  if (shots) await p.screenshot({ path: `${shots}/natcoach-offer.png` });
+  await click(p, '[data-testid="natcoach-accept"]');
+  await p.waitForTimeout(500);
+  ok(!!(await p.$('[data-testid="natcoach-card"]')), 'Karte des Nationaltrainers fehlt nach dem Annehmen');
+  ok(await p.evaluate(() => __sl.career.natCoach?.nid === 'ger'), 'Amt nicht angenommen');
+  await p.evaluate(() => document.querySelector('[data-testid="natcoach-card"] details')?.setAttribute('open', ''));
+  const before = await p.evaluate(() => document.querySelectorAll('.natcoach-pick button.active').length);
+  await click(p, '.natcoach-pick button.active');
+  await p.waitForTimeout(400);
+  const after = await p.evaluate(() => document.querySelectorAll('.natcoach-pick button.active').length);
+  ok(before === 26 && after === 25, `Kaderwahl: ${before} → ${after}`);
+  ok(await p.evaluate(() => !!document.querySelector('[data-testid="natcoach-card"] details[open]')), 'Kaderliste schließt sich nach der Auswahl');
+  if (shots) {
+    await p.evaluate(() => document.querySelector('[data-testid="natcoach-card"]')?.scrollIntoView({ block: 'start' }));
+    await p.waitForTimeout(300);
+    await p.screenshot({ path: `${shots}/natcoach-squad.png` });
+  }
+  ok(!p.errors.length, `Fehler ${p.errors.slice(0, 2).join(' | ')}`);
+  await p.context().close();
+  // 2) Erste Länderspielpause: das eigene Land an der Seitenlinie.
+  const c2 = fresh();
+  c2.natCoach = { nid: 'ger', since: 1, pick: null, w: 0, d: 0, l: 0 };
+  const round = () => {
+    for (const f of currentFixtures(c2)) f.result ??= { home: 1, away: 1 };
+    finishRound(c2);
+  };
+  round();
+  const w0 = c2.natQuali?.windows[0]?.round;
+  while (!seasonOver(c2) && c2.round < w0) round();
+  ok(c2.natQuali?.open === w0, 'Fenster nicht geöffnet');
+  p = await page(b, 'desk', { query: '?notitle&debug&dauer=20', store: { 'sunday-league:career': JSON.stringify(c2) } });
+  await click(p, '.career [data-c="continue"]');
+  await p.waitForTimeout(1500);
+  await click(p, '[data-action="area"][data-value="home"]').catch(() => {});
+  ok(!!(await p.waitForSelector('[data-testid="quali-card"]', { timeout: 15000 }).catch(() => null)), 'Karte der Länderspielpause fehlt');
+  const card = await p.evaluate(() => document.querySelector('[data-testid="quali-card"]')?.innerText ?? '');
+  ok(/du coachst Deutschland/.test(card), `Karte ohne Hinweis aufs eigene Land: ${card.slice(0, 160)}`);
+  ok(/An die Seitenlinie/.test(card), 'Knopf „An die Seitenlinie“ fehlt');
+  if (shots) await p.screenshot({ path: `${shots}/natcoach-window.png` });
+  await click(p, '[data-testid="quali-watch"]');
+  await p.waitForTimeout(3000);
+  const m = await p.evaluate(() => ({ manager: !!__sl.match?.manager, team: __sl.match?.coachTeam, name: __sl.match?.teams[0]?.name, sub: __sl.match?.subRule?.limit }));
+  ok(m.manager && m.team === 0 && m.name === 'Deutschland' && m.sub === 5, `Trainermodus fehlt: ${JSON.stringify(m)}`);
+  if (shots) await p.screenshot({ path: `${shots}/natcoach-match.png` });
+  // Halbzeit im Trainermodus: Das Spiel wartet wie im Verein auf den Trainer.
+  await p.waitForFunction(() => !document.getElementById('halfpanel').hidden || !document.getElementById('end').hidden, null, { timeout: 300000 }).catch(() => null);
+  ok(await p.evaluate(() => !document.getElementById('halfpanel').hidden || !document.getElementById('end').hidden), 'Halbzeit im Trainermodus fehlt');
+  await leaveHalftime(p);
+  await p.waitForFunction(() => !document.getElementById('end').hidden, null, { timeout: 300000 }).catch(() => null);
+  ok(await visible(p, 'end'), 'Länderspiel an der Seitenlinie endet nicht');
+  await p.keyboard.press('Enter');
+  await p.waitForTimeout(1500);
+  const rec = await p.evaluate(() => __sl.career.natCoach);
+  ok(rec.w + rec.d + rec.l >= 1, `Bilanz nicht gezählt: ${JSON.stringify(rec)}`);
+  ok(!p.errors.length, `Fehler ${p.errors.slice(0, 2).join(' | ')}`);
+  await p.context().close();
+  return ok.done();
+}
+
 // Vereinsheim „Heute": Raum ohne Fenster (seit 2026-11-08: Vitrine, Mannschaftsfoto oder große Tafeln, wechselbar) und klassische Kacheln.
 export async function homeViews(b) {
   const ok = checker('Vereinsheim „Heute": Wand wechselbar (Vitrine, Mannschaftsfoto, große Tafeln), klassische Ansicht per Notizbuch');
@@ -862,6 +939,7 @@ export async function run() {
   if (!ONLY || ONLY.has('pokal')) f += await pokal(b);
   if (!ONLY || ONLY.has('euro')) f += await euro(b);
   if (!ONLY || ONLY.has('quali')) f += await quali(b);
+  if (!ONLY || ONLY.has('natCoach')) f += await natCoach(b);
   if (!ONLY || ONLY.has('oldSave')) f += await oldSave(b, process.env.E2E_OLD_SAVE ?? fileURLToPath(new URL('./fixtures/save-858e978.json', import.meta.url)));
   await b.close();
   return f;

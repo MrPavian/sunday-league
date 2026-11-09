@@ -6,6 +6,14 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-09-5 – Nationaltrainer nachgebessert
+
+### Behoben
+- **Doppelte Namen:** In der Kaderliste des Nationalteams kamen erfundene Namen doppelt vor (z. B. zweimal derselbe Stürmer). Jetzt ist jeder Name im Kader eindeutig.
+
+### Geprüft
+- Neue Browser-Prüfung „Nationaltrainer“: Anfrage annehmen, Kader ändern (Liste bleibt offen), Länderspielpause mit „du coachst …“, Spiel an der Seitenlinie mit Trainermodus, Halbzeit und bis zu fünf Wechseln, Bilanz danach.
+
 ## 2026-11-09-4 – Nationaltrainer im Nebenamt
 
 ### Neu

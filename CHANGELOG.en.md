@@ -6,6 +6,14 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-09-5 – National team manager polished
+
+### Fixed
+- **Duplicate names:** invented names appeared twice in the national team squad list (e.g. the same striker twice). Every name in the squad is now unique.
+
+### Checked
+- New browser check "national team manager": accept the offer, change the squad (list stays open), international break with "you manage …", touchline game in manager mode with half-time and up to five substitutions, record afterwards.
+
 ## 2026-11-09-4 – National team manager on the side
 
 ### New

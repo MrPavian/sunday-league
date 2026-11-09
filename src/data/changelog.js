@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-09-5',
+    de: { title: 'Nationaltrainer nachgebessert', items: ['In der Kaderliste des Nationalteams hat jetzt jeder Spieler einen eigenen Namen – vorher gab es manche Namen doppelt.', 'Neu geprüft im Browser: Anfrage annehmen, Kader ändern, Länderspielpause und das Spiel an der Seitenlinie mit Halbzeit und Wechseln.'] },
+    en: { title: 'National team manager polished', items: ['In the national team squad list every player now has a name of their own – some names used to appear twice.', 'Newly checked in the browser: accepting the offer, changing the squad, the international break and the touchline game with half-time and substitutions.'] },
+  },
+  {
     id: '2026-11-09-4',
     de: { title: 'Nationaltrainer im Nebenamt', items: ['Mit gutem Ruf fragen Verbände an: Nationaltrainer neben dem Verein. Kleine Länder melden sich früh, die großen erst, wenn du oben angekommen bist – alle 126 Länder des Spiels sind möglich.', 'Du stellst den Kader aus allen Spielern des Landes zusammen, auch aus deinem eigenen Verein, und stehst bei Qualifikation, Nationenliga und Turnieren an der Seitenlinie: Taktik, Zurufe und bis zu fünf Wechsel wie im Verein.', 'Annehmen, ablehnen oder das Amt jederzeit niederlegen – die Bilanz läuft mit.'] },
     en: { title: 'National team manager on the side', items: ['With a good reputation, federations come asking: national team manager alongside your club. Small countries call early, the big ones only once you have made it to the top – all 126 countries in the game are possible.', 'You pick the squad from all of the country\'s players, your own club included, and stand on the touchline in qualifying, the League of Nations and tournaments: tactics, shouts and up to five substitutions as at your club.', 'Accept, decline or resign at any time – your record is kept.'] },
