@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-09-3',
+    de: { title: 'Ausscheidungen für die interkontinentalen Play-offs', items: ['Wer in die interkontinentalen Play-offs der WM darf, spielen die Verbände jetzt aus wie in echt: Asien mit einer vierten Runde in zwei Dreiergruppen und einem Duell mit Hin- und Rückspiel, Afrika mit Halbfinale und Finale der vier besten Gruppenzweiten, Ozeanien mit Halbfinale und Finale (der Verlierer des Finals geht in die Play-offs).', 'Nord- und Mittelamerika spielt die Qualifikation jetzt in drei Gruppen wie in echt.'] },
+    en: { title: 'Eliminations for the inter-confederation play-offs', items: ['Who gets into the World Cup inter-confederation play-offs is now decided by the confederations as in reality: Asia with a fourth round in two groups of three and a two-legged tie, Africa with semi-finals and a final of the four best runners-up, Oceania with semi-finals and a final (the losing finalist goes into the play-offs).', 'North and Central America now plays qualifying in three groups, as in reality.'] },
+  },
+  {
     id: '2026-11-09-2',
     de: { title: 'Qualifikation über zwei Saisons', items: ['Die europäische Qualifikation zu Welt- und Europameisterschaft beginnt jetzt wie in echt schon im März der Saison davor: zwei Spieltage im März, zwei im Juni nach der Saison, der Rest im Herbst, Play-offs im März danach.', 'Im März spielen nur Gruppen ohne Viertelfinalisten der Ligen der Nationalteams – die steigen erst im Juni ein, wie in echt.', 'Steht dein Spieler schon im März im Einsatz, kommt das Spiel als Karte ins Vereinsheim.'] },
     en: { title: 'Qualifying over two seasons', items: ['European qualifying for the World Cup and the European Championship now starts in the March of the season before, as in reality: two matchdays in March, two in June after the season, the rest in the autumn, play-offs the following March.', 'In March only groups without quarter-finalists of the national team leagues play – those join in June, as in reality.', 'If your player is already called up in March, the game appears as a card in the clubhouse.'] },

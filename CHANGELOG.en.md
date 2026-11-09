@@ -6,6 +6,21 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-09-3 – Eliminations for the inter-confederation play-offs
+
+### New
+- **As in 2026 World Cup qualifying:** Until now each confederation simply sent its next best team. Now:
+  - **Asia:** The best six qualify directly. The next six play a fourth round in two groups of three, each team playing the others once. The group winners qualify, the runners-up play a two-legged tie for the play-off place.
+  - **Africa:** The nine group winners qualify, the four best runners-up play semi-finals and a final (one game each) for the play-off place.
+  - **Oceania:** The best four play semi-finals and a final. The winner qualifies, the losing finalist goes into the play-offs.
+  - **North and Central America:** qualifying in three groups as in reality; in 2026 the two best runners-up went into the play-offs.
+  - **South America:** as before, the seventh-placed team.
+
+### Game values
+- In the game Asia has four groups instead of three. So the best six of the ranking qualify directly (all group winners, then the best runners-up). The fourth round is seeded by the ranking, in reality by pots.
+- Without a host from North and Central America (2030 World Cup) the confederation has six fixed places. Then the next two of the ranking go into the play-offs.
+- The eliminations are calculated in the quick model, without a card in the clubhouse, with a fixed result.
+
 ## 2026-11-09-2 – Qualifying over two seasons
 
 ### New

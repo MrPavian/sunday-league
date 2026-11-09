@@ -6,6 +6,21 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-09-3 – Ausscheidungen für die interkontinentalen Play-offs
+
+### Neu
+- **Wie in der Qualifikation zur WM 2026:** Bisher schickte jeder Verband einfach seinen Nächstbesten. Jetzt gilt:
+  - **Asien:** Die sechs Besten fahren direkt. Die nächsten sechs spielen eine vierte Runde in zwei Dreiergruppen, jeder einmal gegen jeden. Die Gruppensieger fahren hin, die Zweiten spielen mit Hin- und Rückspiel um den Play-off-Platz.
+  - **Afrika:** Die neun Gruppensieger fahren hin, die vier besten Gruppenzweiten spielen Halbfinale und Finale (je ein Spiel) um den Play-off-Platz.
+  - **Ozeanien:** Die vier Besten spielen Halbfinale und Finale. Der Sieger fährt hin, der Verlierer des Finals geht in die Play-offs.
+  - **Nord- und Mittelamerika:** Qualifikation in drei Gruppen wie in echt; 2026 gingen die zwei besten Gruppenzweiten in die Play-offs.
+  - **Südamerika:** wie bisher, der Siebte.
+
+### Spielwerte
+- Im Spiel hat Asien vier Gruppen statt drei. Direkt fahren deshalb die sechs Besten der Rangliste (alle Gruppensieger, dann die besten Zweiten). Die vierte Runde wird nach der Rangliste gesetzt, in echt nach Lostöpfen.
+- Ohne Gastgeber aus Nord- und Mittelamerika (WM 2030) hat der Verband sechs feste Plätze. Dann gehen die nächsten zwei der Rangliste in die Play-offs.
+- Die Ausscheidungen werden im Schnellmodell gerechnet, ohne Karte im Vereinsheim, mit festem Ergebnis.
+
 ## 2026-11-09-2 – Qualifikation über zwei Saisons
 
 ### Neu

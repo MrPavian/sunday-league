@@ -28,6 +28,7 @@ import { poisson, QUICK, quickSlope } from './pokal.js';
 import { chronicle, yearOf } from './sagas.js';
 import { hostsOf, interOutcome, nextQualiMatch, playWindow, qualiAfter, qualiComp, qualiOutcome, qualiWeek } from './natquali.js';
 import { INTER, interDraw, playoffDraw, quickPlayoffs, rankAll } from './natplayoffs.js';
+import { confElim } from './natelim.js';
 
 // --- Turniere ---------------------------------------------------------------------------------------------------------
 // from/to: [Monat, Tag]. Quellen und Spielwerte stehen im Konzept (Abschnitt 2); kurz:
@@ -179,7 +180,7 @@ export function squadOf(c, t, nation) {
 //  - Weltmeisterschaft, Afrika: 9 Gruppen, die Sieger direkt (Quali 2026, prüfen).
 //  - Europameisterschaft: 12 Gruppen, Sieger und 8 beste Zweite direkt, 4 Plätze über Play-offs (Quali 2028, natplayoffs.js).
 // Im Spiel hat Europa 37 Länder (in echt 54) – die Gruppen sind darum kleiner als die echten Vierer- und Fünfergruppen.
-export const QUALI_GROUPS = { wm: { uefa: 12, conmebol: 1, caf: 9 }, em: { uefa: 12 } };
+export const QUALI_GROUPS = { wm: { uefa: 12, conmebol: 1, caf: 9, concacaf: 3 }, em: { uefa: 12 } }; // Nord-/Mittelamerika: drei Gruppen wie in der Endrunde der Quali 2026 (natelim.js)
 const formOf = (c, year, nid) => (((hash(c.seed ?? 0, year, idHash(nid), 9) % 1000) / 1000) - 0.5) * 2 * NAT.form;
 export const targetOf = (c, year, nid) => NAT.tier[NATIONS[nid].tier] + formOf(c, year, nid);
 
@@ -273,9 +274,10 @@ export function makeField(c, id, year) {
     const played = qualiOutcome(c, id, year, conf, setup);
     const tables = played?.tables ?? setup.groups.map((g, gi) => qualiGroup(c, year, `${id}-${conf}-${gi}`, g, setup.str));
     const draw = played ? null : playoffDraw(c, id, year, conf, tables, setup);
-    const qualified = played?.qualified ?? (draw ? quickPlayoffs(c, `${id}-${year}-${conf}-po`, year, draw, setup.str) : qualifiedFrom(tables, setup.places, setup.reserved, setup.reservedSlots));
+    const elim = played?.qualified || draw ? null : confElim(c, id, year, conf, tables, setup); // eigene Ausscheidung (natelim.js)
+    const qualified = played?.qualified ?? (draw ? quickPlayoffs(c, `${id}-${year}-${conf}-po`, year, draw, setup.str) : elim ? elim.qualified : qualifiedFrom(tables, setup.places, setup.reserved, setup.reservedSlots));
     field.push(...qualified);
-    rest[conf] = rankAll(tables).filter((nid) => !qualified.includes(nid));
+    rest[conf] = elim ? elim.entrants : rankAll(tables).filter((nid) => !qualified.includes(nid));
     quali[conf] = tables.map((tb) => tb.map((r) => ({ nid: r.nid, pts: r.pts, gd: r.gf - r.ga, q: qualified.includes(r.nid) })));
   }
   if (INTER[id]) {

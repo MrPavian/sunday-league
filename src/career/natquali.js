@@ -28,6 +28,7 @@ import { INJURIES, INJURY_BASE } from './injuries.js';
 import { isCoach } from './personal.js';
 import { monthOf } from './weather.js';
 import { hash, idHash, lineupFrom, NAT, nationName, nationOf, qualifiedFrom, qualiSetup, quickMatch, squadOf, TOURNAMENTS, tournamentName, yearFor } from './nationalteams.js';
+import { confElim } from './natelim.js';
 import { leagueName, nlName, nlPrepare, nlSeasonEnd, planLeague } from './natleague.js';
 import { advancePlayoffs, finishPlayoffs, INTER, interDraw, PLAYOFFS, playoffDraw, playoffTeams, rankAll, schedulePlayoffs } from './natplayoffs.js';
 
@@ -287,6 +288,8 @@ function interTeams(c, id, year) {
     if (!setup.groups) return setup.direct.slice(setup.places, setup.places + n);
     const tables = qualiTables(c, id, year, conf);
     if (!tables) return [];
+    const elim = confElim(c, id, year, conf, tables, setup); // eigene Ausscheidung des Verbands (natelim.js)
+    if (elim) return elim.entrants.slice(0, n);
     const qualified = qualifiedFrom(tables, setup.places, setup.reserved, setup.reservedSlots);
     return rankAll(tables)
       .filter((nid) => !qualified.includes(nid))

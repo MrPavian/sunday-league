@@ -16,7 +16,7 @@
 //  - Weltmeisterschaft, interkontinentale Play-offs (2026): 6 Teams – je eins aus Asien, Afrika, Südamerika, Ozeanien, zwei aus
 //    Nord- und Mittelamerika (Verband des Gastgebers). Die zwei Stärksten (echt: Weltrangliste) stehen gesetzt im Finale, die
 //    anderen vier losen zwei Halbfinals aus; alles in einem Spiel auf neutralem Platz, die zwei Pfadsieger fahren hin. Teilnehmer
-//    je Verband: hier der Nächstbeste der Qualifikation (in echt je nach Verband eigene Ausscheidungen, Spielwert). Für spätere
+//    je Verband: über die eigenen Ausscheidungen wie 2026 (natelim.js). Für spätere
 //    Weltmeisterschaften gilt dasselbe Format (Spielwert).
 //  - Rückspiel: Bei Gleichstand im Gesamtergebnis entscheidet gleich das Elfmeterschießen (keine Auswärtstorregel, wie seit 2021;
 //    die Verlängerung ist hier vereinfacht weggelassen).
