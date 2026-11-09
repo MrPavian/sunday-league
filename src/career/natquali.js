@@ -109,6 +109,64 @@ export function roundRobin(ids) {
   return [...first, ...first.map((day) => day.map(([h, a]) => [a, h]))];
 }
 
+// --- Über zwei Saisons (Europa) ---------------------------------------------------------------------------------------------
+// Wie die echte EM-Qualifikation 2028 (Europäischer Verband; Wikipedia „UEFA Euro 2028 qualifying“): Gruppenphase von März 2027
+// bis November 2027 – Spieltage 1–2 im März, 3–4 im Juni, 5–8 im September/Oktober, 9–10 im November –, Play-offs im März 2028.
+// Im März spielen nur die Gruppen ohne Viertelfinalisten der Nations League (echt: die Fünfergruppen; die Viertelfinalisten
+// werden in Vierergruppen gelost, die erst im Juni beginnen). Im Spiel: Die Gruppen starten im März der Saison davor, der Juni
+// liegt nach der Saison und wird beim Saisonende gerechnet, der Rest folgt in den Pausen der nächsten Saison. Gruppen mit einem
+// Viertelfinalisten der Nationenliga beginnen im Juni (Spielwert: das Spiel hat Dreier- und Vierergruppen, nicht Vierer und
+// Fünfer). Weltmeisterschaft, Europa: dasselbe (die WM-Qualifikation 2026 lief ebenfalls über ein Kalenderjahr; das Format ab 2028
+// ist noch nicht veröffentlicht, Spielwert). Alte Spielstände und die übrigen Verbände: wie bisher in einer Saison.
+export const TWO_SEASON = { em: ['uefa'], wm: ['uefa'] };
+const SLOTS = ['M1', 'M2', 'J1', 'J2', 'S1', 'S2', 'S3', 'S4', 'N1', 'N2'];
+const LATE = ['S1', 'S2', 'S3', 'S4', 'N1', 'N2'];
+const due = (cfg, year) => (((year - cfg.anchor) % cfg.every) + cfg.every) % cfg.every === 0;
+
+// Gruppen auslosen und Spieltage anlegen, die Termine folgen im März (slotEarly).
+function earlyComp(c, id, year, conf, march) {
+  const setup = qualiSetup(c, id, year, conf);
+  if (!setup.groups) return null;
+  const matches = [];
+  setup.groups.forEach((g, gi) =>
+    roundRobin(g).forEach((day, md) => {
+      for (const [home, away] of day) matches.push({ step: `q${md + 1}`, md, day: null, slot: null, g: gi, home, away, result: null });
+    }),
+  );
+  return { key: `${id}-${year}-${conf}`, isQuali: true, early: true, id, year, conf, groups: setup.groups, target: setup.str, str: { ...setup.str }, own: {}, stats: {}, matches, log: [], poDays: null, march };
+}
+// Spieltage auf die echten Termine verteilen; Gruppen mit einem Viertelfinalisten (qf) oder ohne März-Fenster beginnen im Juni.
+function slotEarly(comp, qf) {
+  if (comp.slotted) return;
+  comp.slotted = true;
+  comp.groups.forEach((g, gi) => {
+    const list = comp.march && !g.some((nid) => qf.has(nid)) ? SLOTS : SLOTS.slice(2);
+    const ms = comp.matches.filter((m) => m.g === gi);
+    const M = Math.max(...ms.map((m) => m.md)) + 1;
+    for (const m of ms) {
+      m.slot = list[Math.floor((m.md * list.length) / M)];
+      m.day = m.slot === 'M1' ? comp.march[0] : m.slot === 'M2' ? comp.march[1] : null;
+    }
+  });
+}
+// Neue Saison: die übernommene Qualifikation bekommt ihre Termine im Herbst und die Play-offs im März.
+function lateComp(comp, days) {
+  const poDays = days.length >= 4 ? days.slice(-2) : null;
+  const gDays = poDays ? days.slice(0, -2) : days;
+  for (const m of comp.matches) {
+    if (m.result) {
+      m.day = -1; // in der Vorsaison gespielt (März, Juni)
+      continue;
+    }
+    const k = LATE.indexOf(m.slot);
+    m.day = gDays[Math.floor((Math.max(0, k) * gDays.length) / LATE.length)];
+  }
+  comp.poDays = poDays && PLAYOFFS[comp.id]?.[comp.conf] ? poDays : null;
+  delete comp.early;
+  delete comp.march;
+  return comp;
+}
+
 // --- Saisonplan --------------------------------------------------------------------------------------------------------------
 export const qualiComp = (c, key) => c.natQuali?.comps.find((x) => x.key === key) ?? null;
 
@@ -118,9 +176,18 @@ export function planQuali(c) {
   const q = { season: c.season ?? 1, windows, comps: [], open: null };
   const dayWin = windows.flatMap((w, wi) => Array.from({ length: w.days }, () => wi));
   const half = winterRound(c);
+  const carry = c.natQualiCarry ?? [];
+  delete c.natQualiCarry;
+  const marchWi = windows.findIndex((w) => w.round >= half);
+  const march = marchWi >= 0 && windows[marchWi].days >= 2 ? dayWin.map((wi, d) => (wi === marchWi ? d : null)).filter((d) => d != null).slice(-2) : null;
   for (const [id, cfg] of Object.entries(TOURNAMENTS)) {
     const year = yearFor(c, cfg);
-    if ((((year - cfg.anchor) % cfg.every) + cfg.every) % cfg.every !== 0) continue;
+    // Über zwei Saisons: die Qualifikation zum Turnier des übernächsten Sommers beginnt im März dieser Saison.
+    if (TWO_SEASON[id] && due(cfg, year + 1)) for (const conf of TWO_SEASON[id]) {
+      const comp = earlyComp(c, id, year + 1, conf, march);
+      if (comp) q.comps.push(comp);
+    }
+    if (!due(cfg, year)) continue;
     // Wintermeisterschaft: nur Termine vor der Winterpause.
     const days = dayWin.map((wi, d) => (cfg.when === 'winter' && windows[wi].round >= half ? null : d)).filter((d) => d != null);
     if (!days.length) continue;
@@ -128,9 +195,14 @@ export function planQuali(c) {
     for (const conf of Object.keys(cfg.slots)) {
       const po = poDays && (INTER[id] || PLAYOFFS[id]?.[conf]); // interkontinental: alle Gruppen vor den Play-offs fertig
       const gDays = po ? days.slice(0, -2) : days;
+      const key = `${id}-${year}-${conf}`;
+      const kept = carry.find((x) => x.key === key);
+      if (kept) {
+        q.comps.push(lateComp(kept, days));
+        continue;
+      }
       const setup = qualiSetup(c, id, year, conf);
       if (!setup.groups) continue;
-      const key = `${id}-${year}-${conf}`;
       const rounds = setup.groups.map((g) => roundRobin(g));
       const M = Math.max(...rounds.map((r) => r.length));
       const matches = [];
@@ -177,7 +249,7 @@ export function qualiTable(comp, g) {
 // Qualifikation in Fenstern (alter Spielstand oder andere Saison) – dann Variante 1.
 export function qualiTables(c, id, year, conf) {
   const comp = qualiComp(c, `${id}-${year}-${conf}`);
-  if (!comp) return null;
+  if (!comp || comp.early) return null; // über zwei Saisons: erst in der Saison des Turniers
   for (const m of comp.matches) if (m.g >= 0 && !m.result) quickMatch(c, comp, m);
   return comp.groups.map((_, g) => qualiTable(comp, g));
 }
@@ -185,7 +257,7 @@ export function qualiTables(c, id, year, conf) {
 // Für den Turnierstart: Tabellen und Qualifizierte mit Play-offs (Offenes im Schnellmodell). qualified null = ohne Play-off-Regel.
 export function qualiOutcome(c, id, year, conf, setup) {
   const comp = qualiComp(c, `${id}-${year}-${conf}`);
-  if (!comp) return null;
+  if (!comp || comp.early) return null;
   const tables = qualiTables(c, id, year, conf);
   if (!comp.po) {
     const draw = playoffDraw(c, id, year, conf, tables, setup);
@@ -282,6 +354,10 @@ function openWindow(c, wi) {
   q.openWin = wi;
   const days = new Set(windowDays(q, wi));
   preparePlayoffs(c, q, days);
+  // Über zwei Saisons: im März die Termine festlegen, sobald die Viertelfinalisten der Nationenliga feststehen.
+  const nl = q.comps.find((x) => x.nl);
+  const qf = new Set((nl?.po?.paths ?? []).filter((p) => p.kind === 'qf').flatMap((p) => p.semis.flat()));
+  for (const comp of q.comps) if (comp.early && comp.march && days.has(comp.march[0])) slotEarly(comp, qf);
   const club = humanClub(c);
   const games = {}; // eigene Spieler: Spiele in diesem Fenster
   for (const comp of q.comps) {
@@ -391,6 +467,7 @@ export function windowView(c) {
     const nations = Object.keys(comp.own).filter((nid) => comp.own[nid].length);
     if (!nations.length) continue;
     const games = comp.matches.filter((m) => days.has(m.day) && (nations.includes(m.home) || nations.includes(m.away)));
+    if (!games.length && comp.early) continue; // Qualifikation der nächsten Saison ohne Spiel in dieser Pause
     const groups = [...new Set(games.map((m) => m.g).filter((g) => g >= 0))].map((g) => ({ g, rows: qualiTable(comp, g), mine: nations.filter((nid) => comp.groups[g].includes(nid)) }));
     list.push({ comp, name: tournamentName(comp.id), year: comp.year, players: nations.flatMap((nid) => comp.own[nid].map((idx) => ({ idx, nid }))), games, groups });
   }
@@ -401,6 +478,14 @@ export function windowView(c) {
 export function qualiSeasonEnd(c) {
   const q = c.natQuali;
   if (!q) return;
+  // Über zwei Saisons: was im März offen blieb und die Juni-Spieltage (nach der Saison) jetzt rechnen.
+  const carry = [];
+  for (const comp of q.comps) {
+    if (!comp.early) continue;
+    slotEarly(comp, new Set());
+    for (const m of comp.matches) if (!m.result && ['M1', 'M2', 'J1', 'J2'].includes(m.slot)) quickMatch(c, comp, m);
+    carry.push(comp);
+  }
   for (const comp of q.comps) {
     if (!comp.nl) continue;
     const { champion, promoted } = nlSeasonEnd(c, comp);
@@ -425,6 +510,8 @@ export function qualiSeasonEnd(c) {
     const before = rec.natBoost && (c.season ?? 1) - rec.natBoost.season <= 1 ? rec.natBoost.v : 0;
     if (v > before) rec.natBoost = { v: Math.round(v * 100) / 100, season: q.season };
   }
+  // Übernommene Qualifikation: Statistik ist verbucht, Nominierungen neu in der nächsten Saison.
+  if (carry.length) c.natQualiCarry = carry.map((comp) => ({ ...comp, own: {}, stats: {} }));
   delete c.natQuali;
 }
 

@@ -6,6 +6,18 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-09-2 – Qualifying over two seasons
+
+### New
+- **As in the real calendar of EURO 2028 qualifying:** matchdays 1–2 in March 2027, 3–4 in June 2027, 5–8 in September/October, 9–10 in November 2027, play-offs in March 2028. In the game, the groups of European qualifying (European Championship and World Cup) start in the March of the season before. June comes after the season and is calculated at the end of the season, the rest is played in the international breaks of the tournament season.
+- **March only without quarter-finalists:** As in reality, only groups without quarter-finalists of the League of Nations play in March; those groups start in June (in reality groups of four, the others groups of five).
+- **Your players:** a qualifier in the March of the season before appears as a card in the clubhouse, with the group table.
+
+### Game values
+- The game has groups of three and four instead of four and five. So it is not the group size that decides the start in March but whether a quarter-finalist is in the group.
+- World Cup, Europe: the same procedure. The format from 2028 has not been published yet.
+- The other confederations and old saves stay with one season.
+
 ## 2026-11-09-1 – Kit templates from the kit history
 
 ### New

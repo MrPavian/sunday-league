@@ -1225,7 +1225,10 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
     europäische Qualifikation, Viertelfinale und Play-off A/B im März mit Hin- und Rückspiel, Endrunde beim Saisonende, Auf- und
     Abstieg). Gruppensieger in den Play-offs der nächsten Qualifikation wie echt (statt der besten Dritten). Spielwerte: 37 Länder →
     Liga A 16, B 12, C Rest (Dreiergruppen, B/C direkter Tausch); erste Ausgabe nach Stärke. Offen: Reform ab 2028/29 (Einzelheiten
-    fehlen noch), Fenster über zwei Saisons (in echt
+    fehlen noch).
+    ✅ **Über zwei Saisons 2026-11-09** („Weiter“, natquali.js TWO_SEASON): europäische Qualifikation wie die EM-Quali 2028 – März der
+    Saison davor (nur Gruppen ohne Viertelfinalisten der Nationenliga), Juni beim Saisonende, Herbst und Play-offs in der Turniersaison.
+    Offen: andere Verbände über zwei Saisons (in echt
     dauert die Qualifikation teils länger), eigene Ausscheidungen der Verbände für die interkontinentalen Play-offs (hier der
     Nächstbeste).
     ✅ **Abstellungsgebühren 2026-11-08** (Nutzer: „binde es so ein“): Europäischer Verband 3659 € je Spieler und Spiel (Quali und

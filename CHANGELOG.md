@@ -6,6 +6,18 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-09-2 – Qualifikation über zwei Saisons
+
+### Neu
+- **Wie der echte Kalender der EM-Qualifikation 2028:** Spieltage 1–2 im März 2027, 3–4 im Juni 2027, 5–8 im September/Oktober, 9–10 im November 2027, Play-offs im März 2028. Im Spiel beginnen die Gruppen der europäischen Qualifikation (Europameisterschaft und Weltmeisterschaft) im März der Saison davor. Der Juni liegt nach der Saison und wird beim Saisonende gerechnet, der Rest läuft in den Länderspielpausen der Turniersaison.
+- **März nur ohne Viertelfinalisten:** Wie in echt spielen im März nur die Gruppen ohne Viertelfinalisten der Nationenliga; diese Gruppen beginnen im Juni (echt: Vierergruppen, die anderen Fünfergruppen).
+- **Eigene Spieler:** Ein Qualifikationsspiel im März der Saison davor steht als Karte im Vereinsheim, mit Gruppentabelle.
+
+### Spielwerte
+- Das Spiel hat Dreier- und Vierergruppen statt Vierer- und Fünfergruppen. Deshalb entscheidet nicht die Gruppengröße über den Start im März, sondern ob ein Viertelfinalist in der Gruppe ist.
+- Weltmeisterschaft, Europa: derselbe Ablauf. Das Format ab 2028 ist noch nicht veröffentlicht.
+- Die übrigen Verbände und alte Spielstände bleiben bei einer Saison.
+
 ## 2026-11-09-1 – Trikotvorlagen aus der Trikotgeschichte
 
 ### Neu
