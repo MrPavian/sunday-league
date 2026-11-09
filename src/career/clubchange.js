@@ -23,7 +23,7 @@ import { chronicle } from './sagas.js';
 import { ensureLeagues, syncOwnLeague } from './pyramid.js';
 
 // Vereinsgebunden: wird beim Wechsel gelöscht und von migrateCareer frisch angelegt.
-export const CLUB_KEYS = ['cash', 'ledger', 'sponsors', 'sponsorBans', 'offers', 'fines', 'seasonCards', 'spirit', 'tripBooked', 'platz', 'youth', 'staff', 'alumni', 'festival', 'cups', 'saga', 'tiger', 'eventLog', 'transfers', 'clubLife', 'renewals', 'facilities', 'rivals', 'relations', 'academy', 'women', 'oldBoys', 'hired', 'pendingGrumble', 'arcs', 'formers', 'pokale', 'euroQual', 'euroHistory', 'relegation', 'museum', 'reviews', 'founded'];
+export const CLUB_KEYS = ['cash', 'ledger', 'sponsors', 'sponsorBans', 'offers', 'fines', 'seasonCards', 'spirit', 'tripBooked', 'platz', 'youth', 'staff', 'alumni', 'festival', 'cups', 'saga', 'tiger', 'eventLog', 'transfers', 'clubLife', 'renewals', 'facilities', 'rivals', 'relations', 'academy', 'women', 'oldBoys', 'hired', 'pendingGrumble', 'arcs', 'formers', 'pokale', 'euroQual', 'euroHistory', 'superQual', 'superHistory', 'relegation', 'museum', 'reviews', 'founded'];
 const CLUB_FLAGS = ['derbyRival', 'unrest', 'poached', 'chatFeud', 'summerfest', 'anniversary', 'talentScout', 'pressWeeks', 'fans', 'waiveUp', 'derbyFair'];
 
 // Grundausstattung, die ein Verein dieser Liga schon hat (Spielwert): unten nichts, oben Stadion und Flutlicht.

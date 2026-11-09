@@ -6,6 +6,19 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-09-7 – Preisprotest und Spiel der Europapokalsieger
+
+### Neu
+- **Preisprotest der Fans:** Ab einem Eintrittspreis von 150 % des Ligapreises kann es bei jedem Heimspiel Protest geben (20 % Chance bei 150 %, bis 50 % bei 200 %, danach mindestens drei Heimspiele Ruhe).
+  - Spruchband „Fußball muss bezahlbar sein", Auszug in der Halbzeit, 10 % weniger zahlende Zuschauer, Stimmung im Verein sinkt.
+  - Dauerkarten-Inhaber kommen trotzdem.
+  - Vorbild: der Auszug in Liverpool in der 77. Minute gegen 77-Pfund-Karten (Februar 2016) und die Kampagne „Kein Zwanni". Alle Werte sind Spielwerte.
+  - Im Vereinsheim steht bei den Eintrittspreisen ein Hinweis.
+- **Spiel der Europapokalsieger zum Saisonstart:** Wer den obersten oder den zweiten Europapokal gewinnt, trifft in der ersten Woche der neuen Saison am Mittwochabend auf den Sieger des anderen Wettbewerbs.
+  - Ein Spiel im neutralen Stadion, spielbar in 3D. Bei Unentschieden geht es direkt ins Elfmeterschießen, wie in echt 2025.
+  - Prämien laut UEFA-Rundschreiben 32/2025: 4 Mio. € für jeden Teilnehmer, 1 Mio. € zusätzlich für den Sieger.
+  - Der Titel kommt in die Vitrine. Wer das Spiel verpasst, bekommt das Ergebnis ohne eigene Mannschaft gewertet.
+
 ## 2026-11-09-6 – Vereinsgelände in 3D und mehr
 
 ### Neu

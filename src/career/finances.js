@@ -10,7 +10,7 @@ import { tripSpirit } from './trip.js';
 import { BUND_GATE_SHARE, BUND_VENUES } from './bundespokal.js';
 import { starFans } from './bonuses.js';
 import { isPro, payroll } from './contracts.js';
-import { gateOf } from './tickets.js';
+import { fanProtest, gateOf } from './tickets.js';
 export { bookTrip } from './trip.js';
 
 export const START_CASH = 100;
@@ -85,7 +85,8 @@ export function matchFinances(career, fixture, prepared, level) {
     const weatherFans = roofRelief(career) && wf < 1 ? 1 - (1 - wf) / 2 : wf; // Tribünendach: die Wetterbremse halbiert sich
     const pe = homeMatchEffects(career); // Platzsperre/Nachholspiel, Acker, Linien
     const gate = gateOf(career, level); // eigene Eintrittspreise und Dauerkarten (tickets.js); ohne Einstellung wie bisher
-    const base = Math.round((level > 5 ? rng.int(...UPPER_FANS[Math.min(TOP_FIN, level)]) : level > 4 ? rng.int(80, 200) : level > 3 ? rng.int(45, 90) : level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14)) * press * weatherFans * fansMul(career) * pe.fans * gate.mul);
+    const protest = prepared.bund ? null : fanProtest(career, level); // zu teuer: Preisprotest der Fans (tickets.js)
+    const base = Math.round((level > 5 ? rng.int(...UPPER_FANS[Math.min(TOP_FIN, level)]) : level > 4 ? rng.int(80, 200) : level > 3 ? rng.int(45, 90) : level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14)) * press * weatherFans * fansMul(career) * pe.fans * gate.mul * (protest?.mul ?? 1));
     const bv = prepared.bund ? BUND_VENUES[prepared.bund.venue] : null; // überregionaler Pokal: Spielort bestimmt die Kulisse
     const dk = bv ? 0 : Math.min(gate.dk, capacity(career)); // Dauerkarten-Inhaber kommen auch bei schlechtem Wetter
     const fans = bv ? prepared.match.crowd : Math.max(dk, Math.min(base, capacity(career))); // Bundespokal: die angezeigte Zuschauerzahl des Spiels wird abgerechnet

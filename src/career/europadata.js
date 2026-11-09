@@ -9,6 +9,7 @@ export const EURO_NAMES = {
   eu1: tr('Sternenliga', 'Star League'),
   eu2: tr('Kontinentalpokal', 'Continental Cup'),
   eu3: tr('Grenzlandpokal', 'Borderland Cup'),
+  esc: tr('Großer Supercup', 'Grand Super Cup'), // Sieger des obersten gegen Sieger des zweiten Wettbewerbs (europa.js startSuper)
 };
 
 // Startplätze aus der 1. Liga (6 Vereine im Spiel). Vom Nutzer entschieden (2026-11-08): drei Wettbewerbe – Platz 1–2 im obersten,
@@ -26,6 +27,9 @@ export const EURO_QUAL = { 1: 'eu1', 2: 'eu1', 3: 'eu2', 4: 'eu3' };
 export const EURO_PRIZES = {
   eu1: { start: 18620000, win: 2100000, draw: 700000, share: 275000, top8: 2000000, top16: 1000000, po: 1000000, r16: 11000000, qf: 12500000, sf: 15000000, f: 18500000, winner: 6500000 },
   eu2: { start: 4310000, win: 450000, draw: 150000, share: 75000, top8: 600000, top16: 300000, po: 300000, r16: 1750000, qf: 2500000, sf: 4200000, f: 7000000, winner: 6000000 },
+  // Supercup (Abschnitt „2025 UEFA Super Cup" desselben Rundschreibens; Zahlen laut Berichten zum Spiel am 13.08.2025 in Udine):
+  // je Teilnehmer 4 Mio. €, der Sieger 1 Mio. € dazu.
+  esc: { start: 4000000, winner: 1000000 },
   eu3: { start: 3170000, win: 400000, draw: 133000, share: 28000, top8: 400000, top16: 200000, po: 200000, r16: 800000, qf: 1300000, sf: 2500000, f: 4000000, winner: 3000000 },
 };
 

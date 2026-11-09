@@ -44,6 +44,7 @@ export const POKALE = {
   bund: { name: BUND_NAME, size: 64, rounds: 6, slots: [0.08, 0.22, 0.38, 0.54, 0.7, 0.88], saturday: true },
   // Europapokal (europa.js): eigener Ablauf mit Ligaphase und Hin- und Rückspielen, dienstags und donnerstags.
   ...Object.fromEntries(EURO_KINDS.map((k) => [k, { name: EURO_NAMES[k], size: 36, euro: true }])),
+  esc: { name: EURO_NAMES.esc, size: 2, euro: true }, // Supercup (europa.js startSuper): ein Spiel am Mittwoch der ersten Woche
 };
 const isEuroKind = (kind) => !!POKALE[kind]?.euro;
 const KINDS = ['kreis', 'bezirk', 'land', 'bund'];
@@ -231,7 +232,7 @@ export function humanTie(c, kind) {
 export const pokalWonNow = (c) => KINDS.find((k) => { const cup = pokalOf(c, k); return cup?.done && cup.winner === humanClub(c).id && cup.wonRound === c.round; }) ?? null;
 // Reihenfolge der Woche: Dienstag (Europapokal), Mittwoch (Kreis-, Bezirks-, Landespokal), Donnerstag (Europapokal), Samstag (überregional).
 export function pokalDue(c) {
-  const eu = EURO_KINDS.find((k) => euroHumanTie(c, k));
+  const eu = [...EURO_KINDS, 'esc'].find((k) => euroHumanTie(c, k));
   const euTie = eu ? euroHumanTie(c, eu) : null;
   if (euTie && euTie.day === 'tue') return eu;
   const wed = ['kreis', 'bezirk', 'land'].find((k) => humanTie(c, k));

@@ -39,7 +39,7 @@ const N = 36;
 const POT = 9;
 const MATCHDAYS = 8;
 const KICKOFF = tr('21:00 Uhr', '9pm');
-const DAY_NAME = { tue: tr('Dienstag', 'Tuesday'), thu: tr('Donnerstag', 'Thursday') };
+const DAY_NAME = { tue: tr('Dienstag', 'Tuesday'), wed: tr('Mittwoch', 'Wednesday'), thu: tr('Donnerstag', 'Thursday') };
 export const euroWhen = (day) => `${DAY_NAME[day] ?? DAY_NAME.thu}, ${KICKOFF}`;
 export const isEuro = (kind) => EURO_KINDS.includes(kind);
 
@@ -293,6 +293,7 @@ export function prepareEuroMatch(c, kind, tie, { human = false, duration } = {})
   match.midweek = true; // Flutlicht
   match.extraTime = MATCH.pokalExtra;
   if (tie.stage === 'f') match.knockout = true;
+  if (cup.sc) match.extraTime = false; // Supercup: bei Unentschieden direkt Elfmeterschießen (so 2025 in Udine, 2:2 und 4:3 i. E.)
   const first = firstLegOf(cup, tie);
   if (first) {
     match.knockout = true;
@@ -332,13 +333,15 @@ export function recordEuroResult(c, prepared) {
   const me = humanClub(c).id;
   const ours = tie.home === me ? tie.result.home : tie.result.away;
   const theirs = tie.home === me ? tie.result.away : tie.result.home;
-  playSlot(c, cup, cup.cursor);
+  if (cup.sc) playSuper(c, cup, tie);
+  else playSlot(c, cup, cup.cursor);
   const opp = (clubById(c, tie.home === me ? tie.away : tie.home) ?? cup.guests.find((g) => g.id === (tie.home === me ? tie.away : tie.home))).name;
   if (c.week) c.week.midweek = { kind, day: tie.day, result: [ours, theirs], pens: tie.pens ? (tie.home === me ? [tie.pens.home, tie.pens.away] : [tie.pens.away, tie.pens.home]) : null, et: !!tie.et, opp, cost, note: euroNote(c, cup, tie) };
 }
 
 // Text unter dem Ergebnis im Vereinsheim.
 function euroNote(c, cup, tie) {
+  if (cup.sc) return cup.winner === humanClub(c).id ? tr(`${EURO_NAMES.esc}-Sieger!`, `${EURO_NAMES.esc} winners!`) : tr('Supercup verloren.', 'Super Cup lost.');
   if (cup.done) return cup.winner === humanClub(c).id ? tr(`${EURO_NAMES[cup.kind]}-Sieger!`, `${EURO_NAMES[cup.kind]} winners!`) : tr('Im Endspiel verloren.', 'Lost the final.');
   if (cup.out) return tr('Ausgeschieden.', 'Knocked out.');
   if (tie.stage === 'lp') {
@@ -618,6 +621,9 @@ function cleanupGuests(c, cup) {
 // --- Wochenablauf und Saisonwechsel ----------------------------------------------------------------------------------
 // Zu Wochenbeginn: anmelden (erste Woche) und Termine, deren Woche vorbei ist, ohne uns ausspielen.
 export function advanceEuro(c) {
+  if (c.superQual?.season === c.season && c.round === 0) startSuper(c);
+  const sc = c.pokale?.esc;
+  if (sc?.season === c.season && !sc.done && sc.slots[0].week < c.round) playSuper(c, sc, null);
   if (!euroOf(c) && euroEligible(c) && c.round === 0) startEuro(c);
   const cup = euroOf(c);
   if (!cup || cup.done) return;
@@ -639,6 +645,12 @@ export function euroSeasonEnd(c, { pos, level, rows }) {
     c.euroHistory = [...(c.euroHistory ?? []), { season: c.season, kind: cup.kind, reached: cup.reached ?? null, earned: cup.earned, winner: cup.field.find((f) => f.id === cup.winner)?.name ?? null }];
   }
   delete c.euroQual;
+  // Supercup zur nächsten Saison: Sieger des obersten oder des zweiten Wettbewerbs (gegen den Sieger des jeweils anderen).
+  if (cup?.winner === humanClub(c).id && (cup.kind === 'eu1' || cup.kind === 'eu2')) {
+    c.superQual = { season: c.season + 1, from: cup.kind };
+    const q = tr(`Zum Saisonstart: ${EURO_NAMES.esc} gegen den Sieger des ${EURO_NAMES[cup.kind === 'eu1' ? 'eu2' : 'eu1']}.`, `At the start of next season: ${EURO_NAMES.esc} against the ${EURO_NAMES[cup.kind === 'eu1' ? 'eu2' : 'eu1']} winners.`);
+    note = note ? `${note} ${q}` : q;
+  }
   if (level === EURO_LEVEL && EURO_QUAL[pos]) {
     const kind = EURO_QUAL[pos];
     const domestic = Object.fromEntries(EURO_KINDS.map((k) => [k, []]));
@@ -651,6 +663,61 @@ export function euroSeasonEnd(c, { pos, level, rows }) {
     note = note ? `${note} ${q}` : q;
   }
   return note;
+}
+
+// --- Supercup (ROADMAP 13, offen „Supercup", 2026-11-09) -------------------------------------------------------------
+// Vorbild: der europäische Supercup – ein Spiel im August zwischen den Siegern der beiden obersten Wettbewerbe, im neutralen Stadion,
+// bei Unentschieden direkt Elfmeterschießen. Im Spiel: in der ersten Woche der Saison am Mittwochabend (vor dem ersten Spieltag am
+// Sonntag; in echt meist eine Woche vor dem Ligastart – Spielwert). Der Gegner ist der Sieger des anderen Wettbewerbs: ein erfundener
+// Verein aus dem Pool des anderen Wettbewerbs; Stärke Mittel + eine Streuung (ein Sieger ist besser als der Schnitt, Spielwert).
+export function startSuper(c) {
+  const q = c.superQual;
+  if (!q || q.season !== c.season || (c.pokale?.esc?.season === c.season)) return null;
+  const other = q.from === 'eu1' ? 'eu2' : 'eu1';
+  const rng = createRng((c.seed * 173 + c.season * 6113 + 911) >>> 0);
+  const me = humanClub(c);
+  const top = Math.min(...EURO_TIERS[other]);
+  const pool = EURO_POOL.filter((x) => x.tier === top && x.country !== 'ger');
+  const x = pool[rng.int(0, pool.length - 1)];
+  const [mean, sd] = ((c.strength ?? 1) >= 3 ? EURO_STRENGTH : EURO_STRENGTH_OLD)[other];
+  const field = [{ id: me.id, name: me.name, short: me.short, country: 'ger', human: true }, { id: x.id, name: x.name, short: x.short, country: x.country, str: +(mean + sd).toFixed(1) }];
+  const cup = { kind: 'esc', euro: true, sc: true, from: q.from, season: c.season, year: yearOf(c), field, guests: [], levels: { [me.id]: EURO_LEVEL }, slots: [{ week: 0, day: 'wed', stage: 'f', leg: 0 }], cursor: 0, ties: [], out: false, winner: null, log: [], done: false, earned: 0 };
+  c.pokale ??= {};
+  c.pokale.esc = cup;
+  const home = rng.chance(0.5) ? me.id : x.id; // „Heimmannschaft" im neutralen Stadion: gelost
+  const h = guestFor(c, cup, home, rng);
+  const a = guestFor(c, cup, home === me.id ? x.id : me.id, rng);
+  cup.ties.push({ kind: 'esc', round: 0, slot: 0, stage: 'f', leg: 0, day: 'wed', home: h, away: a, result: null, pens: null, neutral: true });
+  prize(c, cup, 'start', tr('Startgeld', 'Participation fee'));
+  cup.log.push(tr(`${EURO_NAMES.esc} ${cup.year} gegen ${x.name} (${countryName(x.country)}), Sieger des ${EURO_NAMES[other]}.`, `${EURO_NAMES.esc} ${cup.year} against ${x.name} (${countryName(x.country)}), ${EURO_NAMES[other]} winners.`));
+  return cup;
+}
+
+// Ergebnis eintragen (eigenes Spiel) oder ohne uns per Schnellmodell, Sieger, Prämie.
+export function playSuper(c, cup, mine) {
+  if (cup.done) return;
+  const t = cup.ties[0];
+  const me = humanClub(c).id;
+  const rng = createRng((c.seed * 151 + c.season * 3571 + 4441) >>> 0);
+  if (!t.result) {
+    const g = quickGame(c, cup, toField(cup, t.home), toField(cup, t.away), rng, true);
+    t.result = { home: g.hg, away: g.ag };
+    t.quick = true;
+  }
+  if (t.result.home === t.result.away && !t.pens) t.pens = rng.chance(0.5) ? { home: 5, away: 4 } : { home: 4, away: 5 };
+  const winner = t.result.home + (t.pens?.home ?? 0) * 0.01 > t.result.away + (t.pens?.away ?? 0) * 0.01 ? t.home : t.away;
+  cup.winner = toField(cup, winner);
+  cup.reached = cup.winner === me ? 'win' : 'f';
+  cup.done = true;
+  cup.cursor = 1;
+  if (cup.winner === me) {
+    prize(c, cup, 'winner', tr('Siegprämie', 'Winner bonus'));
+    c.trophies = [...(c.trophies ?? []), { name: `${EURO_NAMES.esc} ${cup.year}`, season: c.season }];
+  }
+  logTie(c, cup, t);
+  c.superHistory = [...(c.superHistory ?? []), { season: c.season, won: cup.winner === me, opp: cup.field[1].name }];
+  delete c.superQual;
+  cleanupGuests(c, cup);
 }
 
 const fmtMoney = (v) => (v >= 1e6 ? tr(`${(v / 1e6).toFixed(1).replace('.', ',')} Mio. €`, `€${(v / 1e6).toFixed(1)}m`) : tr(`${Math.round(v / 1000)} Tsd. €`, `€${Math.round(v / 1000)}k`));

@@ -6,6 +6,19 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-09-7 – Price protest and the match of the European winners
+
+### New
+- **Fans' price protest:** from a ticket price of 150% of the league price, any home game may see a protest (20% chance at 150%, up to 50% at 200%, then at least three quiet home games).
+  - A banner reading "Football must be affordable", a walkout at half-time, 10% fewer paying spectators, and the club mood drops.
+  - Season-ticket holders still turn up.
+  - Model: the 77th-minute walkout in Liverpool against £77 tickets (February 2016) and the German "Kein Zwanni" campaign. All values are game values.
+  - The ticket prices panel in the clubhouse now carries a warning.
+- **Match of the European winners at the start of the season:** whoever wins the top or second European cup meets the winners of the other competition on a Wednesday night in the first week of the new season.
+  - One match at a neutral stadium, playable in 3D. If level, it goes straight to penalties, as in reality in 2025.
+  - Prize money per UEFA circular 32/2025: €4m for each club, €1m more for the winners.
+  - The trophy goes into the cabinet. If you miss the match, it is played without your input.
+
 ## 2026-11-09-6 – Club grounds in 3D and more
 
 ### New

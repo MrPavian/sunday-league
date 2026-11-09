@@ -13,6 +13,7 @@
 //    Sky); 3. Liga 45 %, Regionalliga 35 %, Bezirksliga bis Oberliga 15 % (Spielwerte, keine Zahl gefunden). Rabatt 20 % auf die
 //    Tageskarte (Spielwert, keine Quelle). Dauerkarten-Inhaber kommen auch bei Regen; 15 % bleiben trotzdem weg (Spielwert).
 import { tr } from '../core/i18n.js';
+import { createRng } from '../core/rng.js';
 import { book, entryFee, listPrice, meanFans } from './finances.js';
 import { capacity, fansMul, hasFacility } from './facilities.js';
 import { humanClub } from './career.js';
@@ -97,6 +98,35 @@ export function setSeasonTickets(c, on) {
   c.tickets.dk = !!on;
   if (on) sellSeasonTickets(c);
   return true;
+}
+
+// Preisprotest der Fans (ROADMAP 11.17 Punkt 3, offen „Preisprotest der Fans", 2026-11-09). Vorbild: Beim Heimspiel gegen
+// Sunderland am 6. Februar 2016 verließen in Liverpool tausende Zuschauer in der 77. Minute das Stadion – Protest gegen
+// Tageskarten für 77 Pfund (der Verein nahm die Erhöhung danach zurück); in Deutschland die Kampagne „Kein Zwanni – Fußball muss
+// bezahlbar sein" (ab 2010) mit Spruchbändern und Boykotten. Im Spiel (alles Spielwerte, keine belegten Größen):
+//  - ab einem Mischpreis von 150 % des Ligapreises kann es bei jedem Heimspiel Protest geben, 20 % Chance bei 150 %, bis 50 % bei
+//    200 %; nach einem Protest frühestens wieder nach drei Heimspielen,
+//  - Protest: Spruchband und Auszug, 10 % weniger zahlende Zuschauer (zusätzlich zur Preis-Nachfrage), Stimmung im Verein −0,03,
+//  - Dauerkarten-Inhaber kommen trotzdem (wie bei Regen).
+export const PROTEST = { from: 1.5, chance: [0.2, 0.5], mul: 0.9, mood: -0.03, gap: 3 };
+export function fanProtest(c, level = c.level ?? 1) {
+  const t = c.tickets;
+  if (!t || !ticketsOn(c, level)) return null;
+  const r = priceRatio(c);
+  const p = (t.protest ??= { games: PROTEST.gap });
+  p.games++;
+  if (r < PROTEST.from - 1e-9 || p.games <= PROTEST.gap) return null;
+  const [lo, hi] = PROTEST.chance;
+  const chance = lo + ((hi - lo) * (Math.min(TICKETS.max, r) - PROTEST.from)) / (TICKETS.max - PROTEST.from);
+  const rng = createRng(((c.seed ?? 0) * 31 + (c.season ?? 1) * 977 + (c.round ?? 0) * 59 + 7) >>> 0);
+  if (!rng.chance(chance)) return null;
+  p.games = 0;
+  p.last = { season: c.season, round: c.round };
+  p.count = (p.count ?? 0) + 1;
+  c.mood = Math.max(-1, Math.min(1, (c.mood ?? 0) + PROTEST.mood));
+  const pct = Math.round(r * 100);
+  (c.pendingNews ??= []).push(tr(`Preisprotest! Auf der Tribüne hängt ein Spruchband „Fußball muss bezahlbar sein", in der Halbzeit gehen einige Fans demonstrativ. Die Eintrittspreise liegen bei ${pct} % des Üblichen.`, `Price protest! A banner reads “Football must be affordable”, and at half-time some fans walk out. Ticket prices are at ${pct} % of the usual.`));
+  return { mul: PROTEST.mul, ratio: r };
 }
 
 // Hook (hooks.js): zur neuen Saison die Dauerkarten verkaufen.

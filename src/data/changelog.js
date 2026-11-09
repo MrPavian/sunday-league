@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-09-7',
+    de: { title: 'Preisprotest und Spiel der Europapokalsieger', items: ['Zu teure Eintrittskarten haben jetzt Folgen: Ab 150 % des üblichen Preises können die Fans protestieren – Spruchband, Auszug in der Halbzeit, weniger Zuschauer und schlechtere Stimmung im Verein. Je teurer, desto öfter.', 'Wer den obersten oder zweiten Europapokal gewinnt, spielt zum Saisonstart am Mittwochabend gegen den Sieger des anderen Wettbewerbs: ein Spiel im neutralen Stadion, bei Unentschieden direkt Elfmeterschießen, 4 Mio. € Startgeld und 1 Mio. € für den Sieger.'] },
+    en: { title: 'Price protest and the match of the European winners', items: ['Overpriced tickets now have consequences: from 150% of the usual price, fans may protest – a banner, a walkout at half-time, fewer spectators and a sourer mood in the club. The dearer, the more often.', 'Whoever wins the top or second European cup plays the winners of the other competition on a Wednesday night at the start of the season: one match at a neutral stadium, straight to penalties if level, €4m participation fee and €1m for the winners.'] },
+  },
+  {
     id: '2026-11-09-6',
     de: { title: 'Vereinsgelände in 3D und mehr', items: ['Was du auf dem Vereinsgelände baust, steht jetzt auch im Spiel neben dem Platz: Trainingsplatz, Halle und Trainingszentrum, Funktionsgebäude, Medizin, Geschäftsstelle, Jugendhaus bis zum Nachwuchsleistungszentrum, Parkplatz, Fanshop und Vorplatz mit Shuttlebus.', 'Weltmeisterschaft, Süd- und Afrikameisterschaft mit Spiel um Platz 3 wie in echt.', 'Gegner-Check jetzt auch vor Pokalspielen.', 'Taktik umschalten auch in Unter- oder Überzahl nach Platzverweisen, auf Wunsch ab Anpfiff.'] },
     en: { title: 'Club grounds in 3D and more', items: ['What you build on the club grounds now stands next to the pitch in the game: training pitch, hall and training centre, team building, medical block, club office, youth house up to the academy, car park, club shop and forecourt with shuttle bus.', 'World Cup, South American and Africa Championship with a third-place play-off as in reality.', 'Opponent check now also before cup games.', 'Switch tactics also when a man down or up after sendings-off, from kick-off if you like.'] },

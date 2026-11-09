@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { createCareer, finishRound, humanClub, prepareMatch, recordResult, seasonOver } from '../src/career/career.js';
 import { entryFee } from '../src/career/finances.js';
 import { facilities } from '../src/career/facilities.js';
-import { demandMul, gateOf, prices, priceRatio, seatShare, sellSeasonTickets, setPrice, setSeasonTickets, TICKETS, ticketsOn } from '../src/career/tickets.js';
+import { demandMul, fanProtest, gateOf, PROTEST, prices, priceRatio, seatShare, sellSeasonTickets, setPrice, setSeasonTickets, TICKETS, ticketsOn } from '../src/career/tickets.js';
 
 const at = (level, seed = 8) => {
   const c = createCareer({ seed });
@@ -92,5 +92,57 @@ describe('Dauerkarten', () => {
     }
     nextSeason(c);
     if (ticketsOn(c)) expect(c.tickets.sold.season).toBe(c.season);
+  });
+});
+
+describe('Preisprotest der Fans', () => {
+  it('nie bei normalen Preisen, ohne Einstellung oder unter der Bezirksliga', () => {
+    const c = at(6);
+    for (let i = 0; i < 30; i++) expect(fanProtest(c)).toBe(null);
+    setPrice(c, 'stand', 0.4); // 140 %
+    for (let i = 0; i < 30; i++) {
+      c.round = i;
+      expect(fanProtest(c)).toBe(null);
+    }
+    const low = at(4);
+    low.tickets = { stand: 2, seat: 1, dk: false };
+    expect(fanProtest(low)).toBe(null);
+  });
+  it('bei 200 % kommt es zum Protest: Meldung, Stimmung, weniger Zuschauer, danach Pause', () => {
+    const c = at(6);
+    setPrice(c, 'stand', 1);
+    expect(priceRatio(c)).toBeCloseTo(2);
+    c.mood = 0;
+    let hit = null;
+    let round = 0;
+    for (; round < 40 && !hit; round++) {
+      c.round = round;
+      hit = fanProtest(c);
+    }
+    expect(hit).toEqual({ mul: PROTEST.mul, ratio: 2 });
+    expect(c.mood).toBeCloseTo(PROTEST.mood);
+    expect(c.pendingNews.at(-1)).toMatch(/Preisprotest/);
+    for (let i = 0; i < PROTEST.gap; i++) {
+      c.round = round + i;
+      expect(fanProtest(c)).toBe(null); // frühestens nach drei Heimspielen wieder
+    }
+  });
+  it('häufiger, je teurer (feste Seeds)', () => {
+    const count = (f) => {
+      let n = 0;
+      for (let seed = 1; seed <= 40; seed++) {
+        const c = at(6, seed);
+        setPrice(c, 'stand', f);
+        for (let r = 0; r < 17; r++) {
+          c.round = r;
+          if (fanProtest(c)) n++;
+        }
+      }
+      return n;
+    };
+    const mid = count(0.6);
+    const top = count(1);
+    expect(mid).toBeGreaterThan(0);
+    expect(top).toBeGreaterThan(mid);
   });
 });

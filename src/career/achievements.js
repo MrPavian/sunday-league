@@ -96,7 +96,7 @@ export function careerAchievements(c) {
   const me = humanClub(c).id;
   if (Object.values(c.pokale ?? {}).some((cup) => cup?.done && cup.winner === me)) hit('pokal');
   if (Object.values(c.pokale ?? {}).some((cup) => cup?.euro) || (c.euroHistory ?? []).length) hit('europa');
-  if (Object.values(c.pokale ?? {}).some((cup) => cup?.euro && cup.done && cup.winner === me) || (c.euroHistory ?? []).some((h) => h.reached === 'win')) hit('europaSieg');
+  if (Object.values(c.pokale ?? {}).some((cup) => cup?.euro && !cup.sc && cup.done && cup.winner === me) || (c.euroHistory ?? []).some((h) => h.reached === 'win')) hit('europaSieg');
   if ((c.level ?? 1) >= PRO_LEVEL) hit('profiluft');
   if ((c.level ?? 1) >= TOP_LEVEL) hit('ganzOben');
   if ((c.history ?? []).length >= 10) hit('treue');

@@ -1124,7 +1124,9 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
 3. **Eintrittspreise selbst festlegen, Dauerkarten:** Stehplatz und Sitzplatz einstellbar, Zuschauer und Kasse reagieren.
    ✅ erledigt 2026-11-06 (tickets.js): ab der Bezirksliga, 50–200 % des Ligapreises, Sitzplätze ab dem Drittliga-Stadion
    (Sitzplatz = 1,8 × Stehplatz, hergeleitet), Nachfrage-Elastizität 0,5 darunter / 1,5 darüber (Spielwerte), Dauerkarten mit
-   Anteil 1./2. Liga 55/57 % (Quelle), darunter Spielwerte, 20 % Rabatt (Spielwert). Offen: Logen/Business-Plätze, Preisprotest der Fans.
+   Anteil 1./2. Liga 55/57 % (Quelle), darunter Spielwerte, 20 % Rabatt (Spielwert). ✅ Preisprotest der Fans 2026-11-09 (tickets.js
+   fanProtest, Spielwerte; Vorbild Liverpool 2016 und „Kein Zwanni"). Offen: Logen/Business-Plätze (keine belastbaren Zahlen unterhalb der
+   1. Liga gefunden).
 4. **Zweite Mannschaft und U19 als eigene Teams** (ab der Regionalliga).
    ✅ Zweite Mannschaft erledigt 2026-11-07 (reserve.js, Mannschaft → Teams): eigene Liga (16 Teams, Schnellmodell), Start in der
    Kreisklasse C, höchstens eine Liga unter der Ersten, Zweite eines Drittligisten nicht in der Regionalliga (DFB, „Wo dürfen zweite
@@ -1197,7 +1199,9 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
       Endspiel am Donnerstag der letzten Woche. Erholung über die 72-Stunden-Regel (pokal.js midweekGap).
     - Prämien laut UEFA-Rundschreiben 32/2025 (Startgeld, Sieg/Remis, Platzierungsanteile, Zuschläge 1–8/9–16, Runden, Sieger).
     - Spielwerte: Stärke der Teilnehmer (oberster 188 ± 7, zweiter 178 ± 6, dritter 170 ± 6), Länderklassen.
-    - Offen: „value pillar“ und Umverteilung nicht gezahlter Remis-Prämien, Supercup, Qualifikationsrunden, Startplatz für den
+    - ✅ Supercup 2026-11-09 (europa.js startSuper/playSuper): Sieger des obersten oder zweiten Wettbewerbs gegen den Sieger des
+      anderen, Mittwoch der ersten Woche, neutral, ohne Verlängerung; 4 Mio. € je Teilnehmer, 1 Mio. € für den Sieger (Rundschreiben 32/2025).
+    - Offen: „value pillar“ und Umverteilung nicht gezahlter Remis-Prämien, Qualifikationsrunden, Startplatz für den
       Pokalsieger, Klubkoeffizient für die Töpfe, eigene Stadien/Atmosphäre der Gegner in 3D, Fernsehgeld-Effekt auf Sponsoren.
 14. **Turniere der Nationalmannschaften** (vom Nutzer gewünscht, 2026-11-05; Entwurf [docs/KONZEPT-NATIONALTEAMS.md](docs/KONZEPT-NATIONALTEAMS.md)):
     Weltmeisterschaft, Europameisterschaft und alle Kontinentalmeisterschaften (Afrika, Asien, Südamerika, Nord- und
