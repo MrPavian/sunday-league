@@ -16,7 +16,8 @@ import { LEAGUES, MAX_LEVEL, maxLevel } from '../../career/clubs.js';
 import { blockText, championWaives, licenseNeeds, promotionBlock } from '../../career/license.js';
 import { firedState, offerClubs } from '../../career/pressure.js';
 import { startCash, summerMove, summerOffers } from '../../career/clubchange.js';
-import { nationName, natRunning, nextOwnMatch, reachLabel, recentNat, stepLabel, tournamentName } from '../../career/nationalteams.js';
+import { NAT, nationName, natRunning, nextOwnMatch, reachLabel, recentNat, stepLabel, tournamentName } from '../../career/nationalteams.js';
+import { candidates, coachSquad, natCoachLine } from '../../career/natcoach.js';
 import { windowView } from '../../career/natquali.js';
 import { leagueTitle } from '../../career/verband.js';
 import { clubById, humanClub, kitChoice, leagueOf, humanFixture, playerOf, seasonOver, table } from '../../career/career.js';
@@ -104,6 +105,7 @@ export const homeScreens = {
       <div class="ui-card"><p class="t-cap">${tr('Letzte Ergebnisse', 'Recent results')}</p>${last}</div>
       ${pending ? `<button class="ui-card tap notify hub-pending" data-action="tab" data-value="chat"><p class="t-cap">${icon('phone', 16)} ${tr('Handy', 'Phone')}</p><p class="t-body">${tr('In der Gruppe wartet eine Entscheidung auf dich.', 'A decision is waiting for you in the group chat.')}</p></button>` : ''}
       ${over || this.results ? '' : this.qualiAside()}
+      ${this.results ? '' : this.natCoachCard()}
       ${this.noticeCard()}`;
     // Die Szene zeigt Tabellenplatz, Termin, Taktik und Handy als Objekte im Raum (ClubScene.js).
     const classic = homeView() === 'klassisch';
@@ -222,6 +224,34 @@ export const homeScreens = {
       <h3 class="t-h2">${CUPS.halle.name}</h3>${body}${this.natAside()}</article>`;
   },
 
+  // Nationaltrainer im Nebenamt (natcoach.js): Anfrage, Kader aus allen Spielern des Landes, Amt niederlegen.
+  natCoachCard() {
+    const c = this.career;
+    const o = c.natOffer;
+    if (!c.natCoach && o && !o.declined && o.season === c.season) {
+      return `<div class="ui-card notify" data-testid="natcoach-offer"><p class="label">${tr('Anfrage', 'Offer')}</p>
+        <p class="t-body">${tr(`Der Verband von <b>${nationName(o.nid)}</b> fragt an: Nationaltrainer im Nebenamt – der Verein bleibt deiner. Dein Ruf: ${o.rep}.`, `The <b>${nationName(o.nid)}</b> federation is asking: national team manager alongside your club job – the club stays yours. Your reputation: ${o.rep}.`)}</p>
+        <div class="ui-row">${button(tr('Annehmen', 'Accept'), { kind: 'primary', action: 'natCoachAccept', 'data-testid': 'natcoach-accept' })}${button(tr('Ablehnen', 'Decline'), { kind: 'ghost', action: 'natCoachDecline' })}</div></div>`;
+    }
+    const nc = c.natCoach;
+    if (!nc) return '';
+    const all = candidates(c, nc.nid);
+    const squad = new Set(coachSquad(c, nc.nid).map((p) => p.poolIndex));
+    const POS = { gk: tr('Tor', 'GK'), def: tr('Abwehr', 'DEF'), mid: tr('Mittelfeld', 'MID'), fwd: tr('Sturm', 'FWD') };
+    const rows = Object.keys(POS)
+      .map((pos) => `<p class="t-cap">${POS[pos]}</p><div class="natcoach-pick">${all
+        .filter((p) => p.position === pos)
+        .sort((a, b) => b.rating - a.rating)
+        .map((p) => `<button class="${squad.has(p.poolIndex) ? 'active' : ''}" data-action="natCoachPick" data-value="${p.poolIndex}" title="${esc(p.name)}">${esc(p.name)}${p.own ? ' ★' : ''} <small>${Math.round(p.rating)}</small></button>`)
+        .join('')}</div>`)
+      .join('');
+    return `<div class="ui-card" data-testid="natcoach-card"><p class="label">${tr('Nationaltrainer', 'National team')}</p>
+      <p class="t-body">${natCoachLine(c)}</p>
+      <details class="natcoach-squad"${this.natSquadOpen ? ' open' : ''}><summary>${tr(`Kader (${squad.size} von ${NAT.squad}) – ★ aus deinem Verein`, `Squad (${squad.size} of ${NAT.squad}) – ★ from your club`)}</summary>${rows}
+        <div class="ui-row">${button(tr('Co-Trainer stellt auf', 'Assistant picks'), { kind: 'ghost', action: 'natCoachAuto' })}</div></details>
+      <div class="ui-row">${button(tr('Amt niederlegen', 'Resign'), { kind: 'ghost', action: 'natCoachQuit' })}</div></div>`;
+  },
+
   // Turniere der Nationalteams (nationalteams.js): eigene Spieler unterwegs – nächstes Spiel ansehen (3D) oder nur das Ergebnis.
   natAside() {
     const c = this.career;
@@ -233,11 +263,11 @@ export const homeScreens = {
       const own = Object.entries(t.own).flatMap(([nid, list]) => list.map((idx) => `${esc(playerOf(c, idx).name)} (${nationName(nid)})`));
       const log = t.log.slice(-4).map((l) => `<li>${esc(l)}</li>`).join('');
       const failed = t.failed?.length ? `<p class="t-2">${tr('In der Qualifikation gescheitert', 'Knocked out in qualifying')}: ${t.failed.map(nationName).join(', ')}</p>` : '';
-      return `<p class="t-2"><b>${tournamentName(t.id)} ${t.year}</b> · ${stepLabel(t.step)}${own.length ? ` · ${tr('dabei', 'called up')}: ${own.join(', ')}` : ''}</p>${failed}${log ? `<ul class="nat-log">${log}</ul>` : ''}`;
+      return `<p class="t-2"><b>${tournamentName(t.id)} ${t.year}</b> · ${stepLabel(t.step)}${t.coach ? ` · ${tr(`du coachst ${nationName(t.coach)}`, `you manage ${nationName(t.coach)}`)}` : ''}${own.length ? ` · ${tr('dabei', 'called up')}: ${own.join(', ')}` : ''}</p>${failed}${log ? `<ul class="nat-log">${log}</ul>` : ''}`;
     }).join('');
     const nextHTML = next
       ? `<p class="t-body">${tr('Nächstes Spiel', 'Next game')}: <b>${nationName(next.m.home)} – ${nationName(next.m.away)}</b> (${stepLabel(next.m.step)})</p>
-        <div class="ui-row">${button(tr('Im Stadion ansehen', 'Watch in the stadium'), { kind: 'primary', action: 'onNatWatch', 'data-testid': 'nat-watch' })}${button(tr('Nur Ergebnis', 'Result only'), { action: 'onNatQuick', 'data-testid': 'nat-quick' })}${button(tr('Turnier vorspulen', 'Skip to the end'), { kind: 'ghost', action: 'onNatFinish', 'data-testid': 'nat-finish' })}</div>`
+        <div class="ui-row">${button(next.t.coach && [next.m.home, next.m.away].includes(next.t.coach) ? tr('An die Seitenlinie', 'To the touchline') : tr('Im Stadion ansehen', 'Watch in the stadium'), { kind: 'primary', action: 'onNatWatch', 'data-testid': 'nat-watch' })}${button(tr('Nur Ergebnis', 'Result only'), { action: 'onNatQuick', 'data-testid': 'nat-quick' })}${button(tr('Turnier vorspulen', 'Skip to the end'), { kind: 'ghost', action: 'onNatFinish', 'data-testid': 'nat-finish' })}</div>`
       : '';
     const doneHTML = done.map((h) => `<p class="t-2"><b>${tournamentName(h.id)} ${h.year}</b>: ${tr('Sieger', 'Winner')} ${nationName(h.winner)}. ${h.own.map((o) => tr(`${esc(o.name)} (${nationName(o.nat)}): ${o.apps} Spiele, ${o.goals} Tore, ${reachLabel(o.reached)}${o.boost ? `, Marktwert +${o.boost} %` : ''}${o.missed ? `, fehlt ${o.missed} Ligaspiele` : ''}`, `${esc(o.name)} (${nationName(o.nat)}): ${o.apps} games, ${o.goals} goals, ${reachLabel(o.reached)}${o.boost ? `, market value +${o.boost}%` : ''}${o.missed ? `, misses ${o.missed} league games` : ''}`)).join(' · ')}</p>`).join('');
     return `<div class="ui-card" data-testid="nat-card"><p class="label">${tr('Nationalteams', 'National teams')}</p>${runHTML}${nextHTML}${doneHTML}</div>`;
@@ -254,11 +284,11 @@ export const homeScreens = {
       const who = players.map(({ idx, nid }) => `${esc(playerOf(c, idx).name)} (${nationName(nid)})`).join(', ');
       const list = games.map((m) => `<li>${stepLabel(m.step)}: ${nationName(m.home)} ${res(m)} ${nationName(m.away)}</li>`).join('');
       const tables = groups.map(({ g, rows, mine }) => `<details class="nat-table"><summary>${comp.groupNames?.[g] ?? `${tr('Gruppe', 'Group')} ${String.fromCharCode(65 + g)}`} (${mine.map(nationName).join(', ')})</summary><table class="ui-table compact"><tbody>${rows.map((r, i) => `<tr${mine.includes(r.nid) ? ' class="me"' : ''}><td>${i + 1}.</td><td>${nationName(r.nid)}</td><td>${r.p}</td><td>${r.gf}:${r.ga}</td><td><b>${r.pts}</b></td></tr>`).join('')}</tbody></table></details>`).join('');
-      return `<p class="t-2"><b>${comp.nl ? `${name} ${comp.yearLabel}` : comp.conf === 'inter' ? tr(`Interkontinentale Play-offs zur ${name} ${year}`, `${name} ${year} inter-confederation play-offs`) : tr(`Qualifikation zur ${name} ${year}`, `${name} ${year} qualifying`)}</b> · ${tr('dabei', 'called up')}: ${who}</p><ul class="nat-log">${list}</ul>${tables}`;
+      return `<p class="t-2"><b>${comp.nl ? `${name} ${comp.yearLabel}` : comp.conf === 'inter' ? tr(`Interkontinentale Play-offs zur ${name} ${year}`, `${name} ${year} inter-confederation play-offs`) : tr(`Qualifikation zur ${name} ${year}`, `${name} ${year} qualifying`)}</b>${comp.coach ? ` · ${tr(`du coachst ${nationName(comp.coach)}`, `you manage ${nationName(comp.coach)}`)}` : ''}${who ? ` · ${tr('dabei', 'called up')}: ${who}` : ''}</p><ul class="nat-log">${list}</ul>${tables}`;
     }).join('');
     const nextHTML = next?.t.isQuali
       ? `<p class="t-body">${tr('Nächstes Spiel', 'Next game')}: <b>${nationName(next.m.home)} – ${nationName(next.m.away)}</b> (${stepLabel(next.m.step)})</p>
-        <div class="ui-row">${button(tr('Im Stadion ansehen', 'Watch in the stadium'), { kind: 'primary', action: 'onNatWatch', 'data-testid': 'quali-watch' })}${button(tr('Nur Ergebnis', 'Result only'), { action: 'onNatQuick', 'data-testid': 'quali-quick' })}${button(tr('Rest vorspulen', 'Skip the rest'), { kind: 'ghost', action: 'onNatFinish', 'data-testid': 'quali-finish' })}</div>`
+        <div class="ui-row">${button(next.t.coach && [next.m.home, next.m.away].includes(next.t.coach) ? tr('An die Seitenlinie', 'To the touchline') : tr('Im Stadion ansehen', 'Watch in the stadium'), { kind: 'primary', action: 'onNatWatch', 'data-testid': 'quali-watch' })}${button(tr('Nur Ergebnis', 'Result only'), { action: 'onNatQuick', 'data-testid': 'quali-quick' })}${button(tr('Rest vorspulen', 'Skip the rest'), { kind: 'ghost', action: 'onNatFinish', 'data-testid': 'quali-finish' })}</div>`
       : `<p class="t-2">${tr('Alle Spiele dieser Länderspielpause sind gespielt. Am Sonntag geht die Liga weiter.', 'All games of this international break are played. The league carries on on Sunday.')}</p>`;
     return `<div class="ui-card" data-testid="quali-card"><p class="label">${tr('Länderspielpause', 'International break')}</p>${blocks}${nextHTML}</div>`;
   },

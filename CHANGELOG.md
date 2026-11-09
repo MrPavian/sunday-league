@@ -6,6 +6,20 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-09-4 – Nationaltrainer im Nebenamt
+
+### Neu
+- **Anfragen nach Ruf:** Zum Saisonstart kann ein Verband anfragen, sobald dein Verein in einer Profiliga spielt. Der Ruf ergibt sich aus Liga, Meistertiteln, Europapokal und Jahren im Amt. Kleine Länder fragen früh an, die großen erst mit sehr gutem Ruf; alle 126 Länder des Spiels sind möglich. Du kannst annehmen, ablehnen oder das Amt jederzeit niederlegen.
+- **Nur im Nebenamt:** Der Verein bleibt deiner (Nutzerentscheid). Das Land spielt in den Länderspielpausen und bei den Turnieren.
+- **Kader aus allen Spielern des Landes:** deine eigenen Vereinsspieler mit dieser Nationalität (★) und erfundene Kandidaten, die je Saison neu nachrücken. Du wählst 26 aus, ohne Auswahl stellt der Co-Trainer die Besten auf. Eigene Spieler im Kader gelten als nominiert.
+- **An der Seitenlinie:** Qualifikation, Nationenliga und Turnierspiele des eigenen Landes stehen als Karte im Vereinsheim. „An die Seitenlinie“ startet das 3D-Spiel mit Taktik, Zurufen und Wechseln wie im Verein, oder du nimmst nur das Ergebnis. Im Länderspiel sind bis zu fünf Wechsel erlaubt, ohne Rückwechsel (IFAB-Regel 3).
+- **Bilanz:** Siege, Remis und Niederlagen des eigenen Landes werden gezählt und fließen etwas in den Ruf ein.
+
+### Spielwerte
+- Ruf, Schwellen je Stärkestufe (Stufe 1 ab 85, Stufe 5 ab 30) und die Wahrscheinlichkeit einer Anfrage (50 % je Saison) sind nicht belegt.
+- Die Kandidaten sind erfunden: je Land 46 auf dem Niveau des Landes, dahinter etwas schwächer.
+- Kein Gehalt: Für Nationaltrainer im Nebenamt gibt es keine belegten Zahlen.
+
 ## 2026-11-09-3 – Ausscheidungen für die interkontinentalen Play-offs
 
 ### Neu

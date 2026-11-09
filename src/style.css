@@ -2057,3 +2057,7 @@ body.manager #end { padding-bottom: 84px; }
 .museum .achievements li { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border: 1px solid currentColor; border-radius: 6px; }
 .museum .achievements li.open { opacity: 0.55; border-style: dashed; }
 .museum .achievements small { font-size: var(--fs-caption); }
+/* Nationaltrainer: Kaderwahl (natcoach.js) */
+.natcoach-pick { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+.natcoach-pick button { font-size: 12px; padding: 2px 6px; opacity: 0.6; }
+.natcoach-pick button.active { opacity: 1; outline: 2px solid var(--accent); }

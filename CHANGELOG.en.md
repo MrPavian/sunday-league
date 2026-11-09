@@ -6,6 +6,20 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-09-4 – National team manager on the side
+
+### New
+- **Offers by reputation:** At the start of a season a federation may come asking once your club plays in a professional league. Reputation comes from your league, titles, European cups and years in the job. Small countries ask early, the big ones only with a very good reputation; all 126 countries in the game are possible. You can accept, decline or resign at any time.
+- **Only alongside the club:** The club stays yours (user decision). The country plays in the international breaks and at tournaments.
+- **Squad from all of the country's players:** your own club players of that nationality (★) and invented candidates who come through each season. You pick 26; without a choice the assistant picks the best. Your own players in the squad count as called up.
+- **On the touchline:** qualifiers, League of Nations and tournament games of your country appear as cards in the clubhouse. "To the touchline" starts the 3D game with tactics, shouts and substitutions as at your club, or you take the result only. Up to five substitutions are allowed, no rolling substitutes (IFAB Law 3).
+- **Record:** wins, draws and defeats of your country are counted and add a little to your reputation.
+
+### Game values
+- Reputation, the thresholds per strength tier (tier 1 from 85, tier 5 from 30) and the chance of an offer (50% per season) are not sourced.
+- The candidates are invented: 46 per country at the country's level, slightly weaker further down.
+- No salary: there are no sourced figures for part-time national team managers.
+
 ## 2026-11-09-3 – Eliminations for the inter-confederation play-offs
 
 ### New

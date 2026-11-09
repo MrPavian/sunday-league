@@ -29,6 +29,7 @@ import { isCoach } from './personal.js';
 import { monthOf } from './weather.js';
 import { hash, idHash, lineupFrom, NAT, nationName, nationOf, qualifiedFrom, qualiSetup, quickMatch, squadOf, TOURNAMENTS, tournamentName, yearFor } from './nationalteams.js';
 import { confElim } from './natelim.js';
+import { applyCoach } from './natcoach.js';
 import { leagueName, nlName, nlPrepare, nlSeasonEnd, planLeague } from './natleague.js';
 import { advancePlayoffs, finishPlayoffs, INTER, interDraw, PLAYOFFS, playoffDraw, playoffTeams, rankAll, schedulePlayoffs } from './natplayoffs.js';
 
@@ -333,7 +334,7 @@ const windowDays = (q, wi) => {
   for (let i = 0; i < wi; i++) d += q.windows[i].days;
   return Array.from({ length: q.windows[wi].days }, (_, k) => d + k);
 };
-const isOwn = (comp, m) => !!(comp.own[m.home]?.length || comp.own[m.away]?.length);
+const isOwn = (comp, m) => !!(comp.own[m.home]?.length || comp.own[m.away]?.length) || (!!comp.coach && (m.home === comp.coach || m.away === comp.coach)); // eigene Spieler oder Nationaltrainer
 
 // Wochenbeginn (Hook startWeek): neue Saison planen, ein offenes Fenster der Vorwoche abschließen, ein neues öffnen.
 export function qualiWeek(c) {
@@ -382,6 +383,7 @@ function openWindow(c, wi) {
         }
       }
     }
+    applyCoach(c, comp, nations); // Nationaltrainer: das eigene Land mit der eigenen Auswahl (natcoach.js)
     for (const m of comp.matches) if (days.has(m.day) && !m.result && isOwn(comp, m)) for (const nid of [m.home, m.away]) if (comp.own[nid]) games[nid] = (games[nid] ?? 0) + 1;
     // Play-off-Finale noch offen: als mögliches Spiel mitzählen (Müdigkeit).
     for (const p of comp.po?.paths ?? []) if (p.legs === 1 && days.has(comp.po.days[1])) for (const nid of new Set([...p.semis.flat(), p.seed].filter(Boolean))) if (comp.own[nid]) games[nid] = (games[nid] ?? 0) + 1;
@@ -467,7 +469,7 @@ export function windowView(c) {
   const days = new Set(windowDays(q, q.openWin));
   const list = [];
   for (const comp of q.comps) {
-    const nations = Object.keys(comp.own).filter((nid) => comp.own[nid].length);
+    const nations = Object.keys(comp.own).filter((nid) => comp.own[nid].length || nid === comp.coach);
     if (!nations.length) continue;
     const games = comp.matches.filter((m) => days.has(m.day) && (nations.includes(m.home) || nations.includes(m.away)));
     if (!games.length && comp.early) continue; // Qualifikation der nächsten Saison ohne Spiel in dieser Pause

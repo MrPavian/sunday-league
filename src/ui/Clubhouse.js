@@ -38,6 +38,7 @@ import { promoteProspect } from '../career/youth.js';
 import { setPate, toggleTrainUp } from '../career/bridge.js';
 import { resolveEvent } from '../career/events.js';
 import { legacy, resolveLegacy, stepDown, succeed, successionCandidates } from '../career/legacy.js';
+import { acceptNatCoach, declineNatCoach, quitNatCoach, togglePick } from '../career/natcoach.js';
 import { fireCoach, setPresidentGoal } from '../career/president.js';
 import { isPresident } from '../career/personal.js';
 import { askWirt, buyRound, playDart, setTactic, talk } from '../career/pub.js';
@@ -182,6 +183,17 @@ export class Clubhouse {
       }
       else if (action === 'chronicle') this.showChronicle = !this.showChronicle;
       else if (action === 'kitSide') this.kitSide = value;
+      else if (action.startsWith('natCoach')) {
+        // Nationaltrainer (natcoach.js): Anfrage, Kaderwahl, Rücktritt.
+        const c = this.career;
+        if (action === 'natCoachAccept') acceptNatCoach(c);
+        else if (action === 'natCoachDecline') declineNatCoach(c);
+        else if (action === 'natCoachQuit') quitNatCoach(c);
+        else if (action === 'natCoachPick') togglePick(c, Number(value));
+        else if (action === 'natCoachAuto' && c.natCoach) c.natCoach.pick = null;
+        this.natSquadOpen = action === 'natCoachPick' || action === 'natCoachAuto';
+        this.h.onChange();
+      }
       else if (action === 'kitColor') {
         const [part, color] = value.split(':');
         this.draftKit()[part] = Number(color);

@@ -1237,6 +1237,8 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
     Spielwert / 3395 €), WM weiter 5000 je Tag.
 15. **Nationaltrainer werden** (später): Anfragen von Verbänden ab gutem Ruf, Neben- oder Hauptamt, eigener Kader aus allen
     Spielern des Landes, Turnierspiele in 3D.
+    ✅ **Gebaut 2026-11-09** (Nutzerentscheid: nur Nebenamt, Anfragen aller 126 Länder nach Ruf, Spiele an der Seitenlinie wie im
+    Verein; natcoach.js). Offen: Hauptamt (bewusst nicht), Gehalt (keine belegten Zahlen), Entlassung bei Misserfolg.
 16. **Vereinsgelände ausbauen** (vom Nutzer gewünscht, 2026-11-06). **Erste Lieferung gebaut 2026-11-06** (Nutzerentscheid: alle sechs
     Bereiche, je drei Stufen; Wirkung spürbar, nicht Pflicht, voll ausgebaut etwa 10–20 % je Bereich; NLZ ab der 2. Liga Pflicht wie
     in echt, § 3 Nr. 2 Lizenzordnung): Trainingsgelände (Athletikecke, Halle, Trainingszentrum → Entwicklung), Teamgebäude (Kraftraum,

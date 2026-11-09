@@ -29,6 +29,7 @@ import { chronicle, yearOf } from './sagas.js';
 import { hostsOf, interOutcome, nextQualiMatch, playWindow, qualiAfter, qualiComp, qualiOutcome, qualiWeek } from './natquali.js';
 import { INTER, interDraw, playoffDraw, quickPlayoffs, rankAll } from './natplayoffs.js';
 import { confElim } from './natelim.js';
+import { applyCoach, coachSquad, natCoachResult, natCoachSeason } from './natcoach.js';
 
 // --- Turniere ---------------------------------------------------------------------------------------------------------
 // from/to: [Monat, Tag]. Quellen und Spielwerte stehen im Konzept (Abschnitt 2); kurz:
@@ -158,6 +159,7 @@ const strengthOf = (xi) => Math.round((xi.reduce((s, p) => s + p.rating, 0) / xi
 
 // Kader eines Landes in diesem Turnier: eigene Nominierte ersetzen die schwächsten Erfundenen ihrer Position.
 export function squadOf(c, t, nation) {
+  if (t.coach === nation) return coachSquad(c, nation); // Nationaltrainer: die eigene Auswahl (natcoach.js)
   const taken = takenIndices(c);
   const fill = fillSquad(c, t, nation, taken);
   const own = (t.own[nation] ?? []).map((idx) => ({ ...playerOf(c, idx), nat: nation, own: true }));
@@ -422,6 +424,7 @@ export function startTournament(c, id) {
       t.str[nid] = strengthOf(lineupFrom(squadOf(c, t, nid)).xi);
     }
   }
+  if (applyCoach(c, t, new Set(field))) t.str[t.coach] = strengthOf(lineupFrom(squadOf(c, t, t.coach)).xi); // Nationaltrainer
   t.groups = drawGroups(t, createRng(hash(c.seed ?? 0, year, idHash(id), 3)));
   t.step = 'g0';
   t.steps = ['g0', ...steps];
@@ -446,7 +449,7 @@ function note(c, text) {
 }
 
 // --- Spiele -------------------------------------------------------------------------------------------------------------
-const ownNation = (t, nid) => !!t.own[nid]?.length;
+const ownNation = (t, nid) => !!t.own[nid]?.length || t.coach === nid; // eigene Spieler oder das eigene Land als Nationaltrainer (natcoach.js)
 export const isOwnMatch = (t, m) => ownNation(t, m.home) || ownNation(t, m.away);
 const isKo = (m) => !m.step.startsWith('g') && !/^[qn]\d+$/.test(m.step) && !/^[lva][12]$/.test(m.step); // q1, q2 …: Qualifikation (natquali.js), n1 …: Nationenliga (natleague.js), qf ist das Viertelfinale; l1/l2, v1/v2, a1/a2: Hin- und Rückspiel (Gesamtergebnis in natplayoffs.js)
 
@@ -494,6 +497,7 @@ function logMatch(c, t, m) {
   const r = m.result;
   const extra = m.pens ? tr(` (i. E. ${m.pens.home}:${m.pens.away})`, ` (${m.pens.home}-${m.pens.away} pens)`) : m.et ? tr(' n. V.', ' aet') : '';
   t.log.push(`${stepLabel(m.step)}: ${nationName(m.home)} ${r.home}:${r.away} ${nationName(m.away)}${extra}`);
+  if (t.coach) natCoachResult(c, m);
 }
 
 // Nächstes offenes Spiel eines Landes mit eigenen Spielern (für Ansehen oder Ergebnis).
@@ -547,12 +551,19 @@ export function prepareNatMatch(c, { t, m }, { duration } = {}) {
     const { xi, bench } = lineupFrom(squadOf(c, t, nid));
     return { rels: {}, name: cl.name, short: cl.short, kit: cl.kit, keeperKit: cl.keeperKit, crest: cl.crest ?? null, tactic: { system: SYSTEM, style: 'ausgewogen' }, sponsor: null, sleeve: null, players: [...xi, ...bench].map((p) => ({ ...p })), helpers: [] };
   };
-  const teams = [team(kits.home, m.home), team(kits.away, m.away)];
-  const match = createMatch({ seed: rng.int(1, 1e9), pitch, teams, human: false, duration: duration ?? matchDuration(pitch), incidents: true });
+  // Nationaltrainer (natcoach.js): das eigene Land ist Team 0 und wird an der Seitenlinie gecoacht wie im Verein.
+  const coached = !!t.coach && (m.home === t.coach || m.away === t.coach);
+  const humanIsAway = coached && m.away === t.coach;
+  const home = team(kits.home, m.home);
+  const away = team(kits.away, m.away);
+  const teams = humanIsAway ? [away, home] : [home, away];
+  const match = createMatch({ seed: rng.int(1, 1e9), pitch, teams, human: coached, duration: duration ?? matchDuration(pitch), incidents: true });
   match.knockout = isKo(m);
   match.extraTime = MATCH.pokalExtra;
   match.crowd = 3500; // ausverkauft (so viel, wie das Stadion zeigt)
-  return { match, humanIsAway: false, pitch, nat: { id: t.id, year: t.year, index: i, ...(t.isQuali ? { key: t.key } : {}) } };
+  match.homeTeam = humanIsAway ? 1 : 0;
+  if (coached) match.subRule = { limit: 5, reentry: false }; // Länderspiel: bis zu fünf Wechsel, kein Rückwechsel (IFAB-Regel 3)
+  return { match, humanIsAway, coached, pitch, nat: { id: t.id, year: t.year, index: i, ...(t.isQuali ? { key: t.key } : {}) } };
 }
 
 // Ergebnis des angesehenen Spiels eintragen (Tore und Einsätze der eigenen Spieler aus der Engine).
@@ -561,12 +572,13 @@ export function recordNatMatch(c, prepared) {
   const m = t?.matches[prepared.nat.index];
   if (!m || m.result) return false;
   const g = prepared.match;
-  m.result = { home: g.score[0], away: g.score[1] };
+  const [h, a] = prepared.humanIsAway ? [1, 0] : [0, 1]; // Nationaltrainer auswärts: das eigene Land ist Team 0
+  m.result = { home: g.score[h], away: g.score[a] };
   if (g.extra) m.et = true;
   if (isKo(m) && m.result.home === m.result.away) {
     const so = g.shootout;
     const pens = so?.done ? shootoutScore(so) : null;
-    m.pens = pens ? { home: pens[0], away: pens[1] } : quickPens(createRng(hash(c.seed ?? 0, t.year, prepared.nat.index, 5)), t.str[m.home], t.str[m.away]);
+    m.pens = pens ? { home: pens[h], away: pens[a] } : quickPens(createRng(hash(c.seed ?? 0, t.year, prepared.nat.index, 5)), t.str[m.home], t.str[m.away]);
   }
   for (const p of [...g.players, ...g.bench.flat(), ...(g.sentOff ?? [])]) {
     const st = g.stats.players[p.id];
@@ -664,6 +676,7 @@ export function breakWeek(c) {
 }
 // Nach der Winterpause bzw. zur neuen Saison: was noch läuft, wird ohne Zuschauen zu Ende gerechnet.
 export function startWeek(c) {
+  if ((c.round ?? 0) === 0) natCoachSeason(c); // Anfrage als Nationaltrainer zum Saisonstart (natcoach.js)
   qualiWeek(c); // Länderspielfenster (natquali.js)
   if (c.week?.breakWeek) return;
   if (natRunning(c, 'winter').length) finishAll(c, 'winter');
