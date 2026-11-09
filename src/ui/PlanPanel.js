@@ -108,7 +108,7 @@ export class PlanPanel {
     const list = m.presets?.[this.team];
     if (!list?.length) return '';
     const rules = (m.switches?.[this.team] ?? [])
-      .map((r, i) => `<li class="${r.done ? 'done' : ''}">${tr('ab', 'from')} ${r.minute}′, ${esc(whenLabel(r.when))} → <b>${esc(r.name)}</b> ${r.cancelled ? tr('· gestrichen', '· dropped') : r.done ? tr('· umgeschaltet', '· switched') : `<button class="linkish" data-action="switchCancel" data-value="${i}">${tr('streichen', 'drop')}</button>`}</li>`)
+      .map((r, i) => `<li class="${r.done ? 'done' : ''}">${r.minute ? `${tr('ab', 'from')} ${r.minute}′` : tr('ab Anpfiff', 'from kick-off')}, ${esc(whenLabel(r.when))} → <b>${esc(r.name)}</b> ${r.cancelled ? tr('· gestrichen', '· dropped') : r.done ? tr('· umgeschaltet', '· switched') : `<button class="linkish" data-action="switchCancel" data-value="${i}">${tr('streichen', 'drop')}</button>`}</li>`)
       .join('');
     return `<p class="ui-section-title">${tr('Meine Taktiken', 'My tactics')}</p>
       <div class="chips presets">${list.map((t) => `<button data-action="preset" data-value="${t.id}">${esc(t.name)}</button>`).join('')}</div>

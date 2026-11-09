@@ -195,7 +195,7 @@ function loadVenue(id, ads = null) {
   }
   // Testschalter: ?surface=grass|ash|… spielt den Platz mit anderer Physik.
   // Stadionausbau des eigenen Platzes (venueExtras.stage); Testschalter ?stage=arena zeigt eine Stufe ohne Karriere.
-  pitch = { ...venue.pitch, surface: SURFACES[params.get('surface')] ?? venue.pitch.surface, sponsorAds: venueAds, stage: venueAds?.stage ?? params.get('stage') ?? undefined, extraStand: venue.pitch.extraStand || (!!venueAds?.extraStand && (venue.pitch.base ?? venue.id) === 'grossfeld') }; // Stahlrohrtribüne nur auf dem Großfeld (Grafik-Budget)
+  pitch = { ...venue.pitch, surface: SURFACES[params.get('surface')] ?? venue.pitch.surface, sponsorAds: venueAds, stage: venueAds?.stage ?? params.get('stage') ?? undefined, grounds: venueAds?.grounds ?? params.get('grounds')?.split(',') ?? undefined, extraStand: venue.pitch.extraStand || (!!venueAds?.extraStand && (venue.pitch.base ?? venue.id) === 'grossfeld') }; // Stahlrohrtribüne nur auf dem Großfeld (Grafik-Budget)
   venueRoot = new THREE.Group();
   lightMood = null;
   venueInfo = venue.build(venueRoot, pitch, createRng(venue.id.length * 7919), scene);

@@ -8,14 +8,21 @@ import { tr } from '../core/i18n.js';
 import { ORDER_GROUPS, setOrder, setStyle, setSystem } from './plan.js';
 
 export const SWITCH_MAX = 2; // Spielwert
-export const SWITCH_MINUTES = [30, 45, 60, 65, 70, 75, 80, 85]; // Spielwert: Auswahl im Vereinsheim
-export const SWITCH_WHEN = ['any', 'lead', 'draw', 'behind'];
+export const SWITCH_MINUTES = [0, 30, 45, 60, 65, 70, 75, 80, 85]; // Spielwert: Auswahl im Vereinsheim (0 = ab Anpfiff, z. B. für Unterzahl)
+// Spielstand oder Spielerzahl (2026-11-09, ROADMAP-Rest „Regeln für Rote Karten oder Unterzahl“): in Unter- bzw. Überzahl nach Platzverweisen.
+export const SWITCH_WHEN = ['any', 'lead', 'draw', 'behind', 'down', 'up'];
 
 export const whenLabel = (w) =>
-  ({ any: tr('egal wie es steht', 'whatever the score'), lead: tr('bei Führung', 'when leading'), draw: tr('bei Unentschieden', 'when level'), behind: tr('bei Rückstand', 'when behind') })[w] ?? w;
+  ({ any: tr('egal wie es steht', 'whatever the score'), lead: tr('bei Führung', 'when leading'), draw: tr('bei Unentschieden', 'when level'), behind: tr('bei Rückstand', 'when behind'), down: tr('in Unterzahl', 'when a man down'), up: tr('in Überzahl', 'when a man up') })[w] ?? w;
 
 // Passt der Spielstand zur Bedingung?
 export function scoreHolds(m, team, when) {
+  if (when === 'down' || when === 'up') {
+    // Platzverweise je Team (Gelb-Rot und Rot, referee.js/squad.js): Unterzahl = mehr eigene als gegnerische.
+    const off = (t) => (m.sentOff ?? []).filter((p) => p.team === t).length;
+    const n = off(team) - off(1 - team);
+    return when === 'down' ? n > 0 : n < 0;
+  }
   const d = m.score[team] - m.score[1 - team];
   if (when === 'lead') return d > 0;
   if (when === 'draw') return d === 0;

@@ -298,7 +298,7 @@ export const teamScreens = {
     const opt = (v, label, cur) => `<option value="${v}" ${String(v) === String(cur) ? 'selected' : ''}>${esc(label)}</option>`;
     const rows = rules
       .map((r, i) => `<div class="switch-rule" data-testid="switch-rule">
-        <label>${tr('ab Minute', 'from minute')} <select data-switch="${i}" data-field="minute">${SWITCH_MINUTES.map((m) => opt(m, String(m), r.minute)).join('')}</select></label>
+        <label>${tr('ab Minute', 'from minute')} <select data-switch="${i}" data-field="minute">${SWITCH_MINUTES.map((m) => opt(m, m ? String(m) : tr('Anpfiff', 'kick-off'), r.minute)).join('')}</select></label>
         <select data-switch="${i}" data-field="when" aria-label="${tr('Spielstand', 'Score')}">${SWITCH_WHEN.map((w) => opt(w, whenLabel(w), r.when)).join('')}</select>
         <label>→ <select data-switch="${i}" data-field="preset">${presets.map((p) => opt(p.id, p.name, r.preset)).join('')}</select></label>
         <button class="linkish" data-action="switchRemove" data-value="${i}" aria-label="${tr('Regel löschen', 'Delete rule')}">✕</button></div>`)

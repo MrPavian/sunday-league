@@ -6,6 +6,26 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-09-6 – Vereinsgelände in 3D und mehr
+
+### Neu
+- **Vereinsgelände in 3D:** Die gebauten Ausbauten stehen auf dem eigenen Rasenplatz neben dem Spielfeld, je Bereich die höchste Stufe:
+  - Am linken Platzende: Trainingsplatz (Linien, zwei Tore), Athletikecke mit Hürden, Trainingshalle, Trainingszentrum.
+  - Hinter dem Vereinsheim:
+    - Funktionsgebäude (Kraftraum, Regeneration, Videoraum), mit jeder Stufe ein Stockwerk mehr
+    - Medizin mit rotem Kreuz
+    - Geschäftsstelle mit Schild
+    - Jugendhaus, Internat und Nachwuchsleistungszentrum
+  - Rechts: Parkplatz mit Autos, Fanshop in Vereinsfarbe, Vorplatz mit Fahnen und Shuttlebus.
+  - Wo ein Gebäude steht, verschwinden die Bäume.
+  - Voll ausgebaut sind es 12 Draw Calls mehr (122 statt 110), im Grafik-Budget gemessen.
+- **Spiel um Platz 3** bei Weltmeisterschaft, Süd- und Afrikameisterschaft wie in echt; die Europameisterschaft hat keins. Eigene Spieler bekommen dafür einen eigenen Marktwert-Schub (Platz 3 etwas mehr als Platz 4, Spielwert).
+- **Gegner-Check vor Pokalspielen:** derselbe Bericht wie vor dem Ligaspiel, auf der Pokalkarte.
+- **Taktik umschalten bei Unter- oder Überzahl:** neue Bedingungen „in Unterzahl“ und „in Überzahl“ nach Platzverweisen, dazu „ab Anpfiff“ als Startzeit.
+
+### Gestrichen
+- **Nebel als Sichtweite der KI:** Bei so dichtem Nebel würde das Spiel ohnehin nicht stattfinden (Nutzerentscheid).
+
 ## 2026-11-09-5 – Nationaltrainer nachgebessert
 
 ### Behoben

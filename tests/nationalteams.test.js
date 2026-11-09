@@ -41,7 +41,7 @@ describe('Kalender', () => {
 
 describe('Feld und Format', () => {
   it('Teilnehmer je Verband, Gruppen zu vier, so viele Spiele wie in echt', () => {
-    const counts = { wm: 104 - 1, em: 51, sam: 32 - 1, nam: 31, afr: 52 - 1, asi: 51, oce: 15 }; // ohne Spiel um Platz drei
+    const counts = { wm: 104, em: 51, sam: 32, nam: 31, afr: 52, asi: 51, oce: 15 }; // wie in echt, mit Spiel um Platz drei bei WM, Süd- und Afrikameisterschaft (seit 2026-11-09)
     for (const [id, cfg] of Object.entries(TOURNAMENTS)) {
       const c = career(1);
       const t = startTournament(c, id);
@@ -125,6 +125,25 @@ describe('Nominierung', () => {
 });
 
 describe('Spiele', () => {
+  it('Spiel um Platz drei (WM, nicht EM): die Verlierer der Halbfinals, vor dem Finale', () => {
+    for (const [id, season] of [['wm', 4], ['em', 2]]) {
+      const c = career(9, 9);
+      c.season = season;
+      const t = startTournament(c, id);
+      finishAll(c);
+      const p3 = t.matches.filter((m) => m.step === 'p3');
+      if (id === 'em') {
+        expect(p3).toHaveLength(0);
+        continue;
+      }
+      expect(p3).toHaveLength(1);
+      const sf = t.matches.filter((m) => m.step === 'sf');
+      const losers = sf.map((m) => (m.home === (m.result.home > m.result.away || m.pens?.home > m.pens?.away ? m.home : m.away) ? m.away : m.home));
+      expect(new Set([p3[0].home, p3[0].away])).toEqual(new Set(losers));
+      expect(t.steps.indexOf('p3')).toBe(t.steps.indexOf('f') - 1);
+    }
+  });
+
   it('Europameisterschaft: Entschädigung je Spieler und Tag nach Liga (1. Liga 10 187 €, ab der 3. Profiliga 3395 €)', () => {
     for (const k of Object.keys(NAT.tier)) NAT.tier[k] = 60;
     for (const [level, rate] of [

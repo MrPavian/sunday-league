@@ -12,7 +12,7 @@ import { lateOr } from './spielbericht.js';
 import { isCoach } from './personal.js';
 import { isBanned } from './suspensions.js';
 import { chronicle } from './sagas.js';
-import { hasFacility, sponsorMul, standStage } from './facilities.js';
+import { GROUND_IDS, hasFacility, sponsorMul, standStage } from './facilities.js';
 import { BRANCHEN, newWish, WISH_PENALTY, WISHES, wishCost, wishLabel } from './sponsorwish.js';
 
 export { BRANCHEN, WISHES, wishCost, wishLabel };
@@ -128,9 +128,11 @@ export function venueExtras(career) {
   // Ausbau des eigenen Platzes für die 3D-Kulisse: Stahlrohrtribüne ab den Sitzplätzen, Ränge ab dem Stadionausbau (stands.js).
   const stage = standStage(career);
   const extraStand = hasFacility(career, 'sitzplaetze');
-  if (!b && !arena && !stage && !extraStand) return null;
+  const grounds = GROUND_IDS.filter((id) => hasFacility(career, id)); // Vereinsgelände in 3D (render/venues/grounds.js)
+  if (!b && !arena && !stage && !extraStand && !grounds.length) return null;
   const out = { bande: b ? { id: b.id, name: b.name, color: sponsorColor(b) } : null, arena };
   if (extraStand) out.extraStand = true;
+  if (grounds.length) Object.assign(out, { grounds, seat: humanClub(career).kit?.shirt ?? null });
   if (stage) Object.assign(out, { stage, seat: humanClub(career).kit?.shirt ?? null });
   return out;
 }

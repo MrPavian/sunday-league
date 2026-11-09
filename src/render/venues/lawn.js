@@ -6,6 +6,7 @@ import { crowdRow, makeSpectator } from '../spectators.js';
 import { GEO, bandeX, BANDE_W } from '../../sim/shelter.js';
 import { groundTexels, makeLawnTexture, makeSignTextureWide } from '../textures.js';
 import { buildStands, STAGE_CROWD, stageRank } from './stands.js';
+import { buildGrounds, clearTrees } from './grounds.js';
 
 // Lokale Sponsoren – selbst gemalte Banden, wie sie auf jedem Dorfplatz hängen.
 export const SPONSORS = [
@@ -140,6 +141,7 @@ export function buildLawn(root, pitch, rng, scene) {
   for (let i = 0; i < 18; i++) {
     const t = makeTree(rng, rng.range(1.1, 1.5));
     t.position.set(rng.range(-40 * k, 40 * k), 0, -rng.range(hw + 15, hw + 24));
+    t.userData.tree = true;
     if (stageRank(stage) < 2) root.add(t); // hinter der Haupttribüne stehen keine Bäume (Zufall wird trotzdem gezogen: Rest der Szene wie vorher)
   }
   root.add(box(W - 6, 0.06, 0.06, 0x8a9096, 0, 0.9, hw + 2.5));
@@ -151,6 +153,8 @@ export function buildLawn(root, pitch, rng, scene) {
   for (const [x0, x1, s] of [[-31 * k, -11 * k, 411], [11 * k, 31 * k, 412]]) for (const o of crowdRow(s, { x0, x1, z: bandZ - 0.9, n: 6, dz: 0.35, jitter: 0.8 })) root.add(o);
   // Der Budenwirt steht hinter der Theke (als Letzter, damit sich der Rest der Szene nicht verschiebt).
   if (stage) buildStands(root, pitch, stage, { seat: pitch.sponsorAds?.seat, name: pitch.sponsorAds?.arena ?? '' });
+  // Vereinsgelände (grounds.js): gebaute Ausbauten als Gebäude und Flächen; ohne Ausbau bleibt die Szene wie vorher.
+  if (pitch.grounds?.length) clearTrees(root, buildGrounds(root, pitch, pitch.grounds, { kit: pitch.sponsorAds?.seat ?? null }));
   const vendor = makeSpectator(rng, { x: bx + 0.2, z: bz - 0.2, facing: 0 });
   vendor.userData.crowdSlot.vendor = true; // geht nicht selbst zur Bude
   root.add(vendor);

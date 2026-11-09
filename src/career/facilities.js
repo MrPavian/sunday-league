@@ -103,6 +103,8 @@ export function facilities(c) {
 }
 export const KUNST_HIRE = 8; // Spielwert €/Woche
 export const hasFacility = (c, id) => !!c.facilities?.built?.[id];
+// Ausbauten, die auf dem eigenen Platz in 3D zu sehen sind (render/venues/grounds.js).
+export const GROUND_IDS = ['trainingsplatz', 'athletik', 'trainingshalle', 'trainingszentrum', 'kraftraum', 'regeneration', 'videoraum', 'behandlungsraum', 'physio', 'medabteilung', 'vereinsbuero', 'geschaeftsstelle', 'marketing', 'jugendhaus', 'internat', 'nlz', 'parkplatz', 'fanshop', 'vorplatz'];
 // Sichtbarer Stadionausbau (render/venues/stands.js): höchste gebaute Stufe ab „stadion“, sonst null.
 const STAGE_ORDER = ['grossarena', 'sitzplatz8000', 'arena', 'drittliga', 'stadion'];
 export const standStage = (c) => STAGE_ORDER.find((id) => hasFacility(c, id)) ?? null;

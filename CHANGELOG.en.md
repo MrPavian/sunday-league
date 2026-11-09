@@ -6,6 +6,26 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-09-6 – Club grounds in 3D and more
+
+### New
+- **Club grounds in 3D:** the facilities you have built stand on your own grass pitch next to the field, the highest stage per area:
+  - At the left end: training pitch (lines, two goals), fitness corner with hurdles, training hall, training centre.
+  - Behind the clubhouse:
+    - team building (weights room, recovery, video room), one storey more per stage
+    - medical block with a red cross
+    - club office with a sign
+    - youth house, boarding house and academy
+  - On the right: car park with cars, club shop in club colours, forecourt with flags and shuttle bus.
+  - Trees make way where a building stands.
+  - Fully built that is 12 draw calls more (122 instead of 110), measured in the graphics budget.
+- **Third-place play-off** at the World Cup, South American and Africa Championship as in reality; the European Championship has none. Your players get their own market value boost for it (third place a little more than fourth, game value).
+- **Opponent check before cup games:** the same report as before a league game, on the cup card.
+- **Switch tactics when a man down or up:** new conditions "when a man down" and "when a man up" after sendings-off, plus "kick-off" as start time.
+
+### Dropped
+- **Fog as AI visibility:** fog that thick would mean the game is off anyway (user decision).
+
 ## 2026-11-09-5 – National team manager polished
 
 ### Fixed

@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-09-6',
+    de: { title: 'Vereinsgelände in 3D und mehr', items: ['Was du auf dem Vereinsgelände baust, steht jetzt auch im Spiel neben dem Platz: Trainingsplatz, Halle und Trainingszentrum, Funktionsgebäude, Medizin, Geschäftsstelle, Jugendhaus bis zum Nachwuchsleistungszentrum, Parkplatz, Fanshop und Vorplatz mit Shuttlebus.', 'Weltmeisterschaft, Süd- und Afrikameisterschaft mit Spiel um Platz 3 wie in echt.', 'Gegner-Check jetzt auch vor Pokalspielen.', 'Taktik umschalten auch in Unter- oder Überzahl nach Platzverweisen, auf Wunsch ab Anpfiff.'] },
+    en: { title: 'Club grounds in 3D and more', items: ['What you build on the club grounds now stands next to the pitch in the game: training pitch, hall and training centre, team building, medical block, club office, youth house up to the academy, car park, club shop and forecourt with shuttle bus.', 'World Cup, South American and Africa Championship with a third-place play-off as in reality.', 'Opponent check now also before cup games.', 'Switch tactics also when a man down or up after sendings-off, from kick-off if you like.'] },
+  },
+  {
     id: '2026-11-09-5',
     de: { title: 'Nationaltrainer nachgebessert', items: ['In der Kaderliste des Nationalteams hat jetzt jeder Spieler einen eigenen Namen – vorher gab es manche Namen doppelt.', 'Neu geprüft im Browser: Anfrage annehmen, Kader ändern, Länderspielpause und das Spiel an der Seitenlinie mit Halbzeit und Wechseln.'] },
     en: { title: 'National team manager polished', items: ['In the national team squad list every player now has a name of their own – some names used to appear twice.', 'Newly checked in the browser: accepting the offer, changing the squad, the international break and the touchline game with half-time and substitutions.'] },

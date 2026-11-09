@@ -89,3 +89,19 @@ describe('Taktik im Spiel umschalten', () => {
     expect(p.match.presets[ti][0].name).toBe('Mauern');
   });
 });
+
+describe('Umschalten bei Unter- und Überzahl (Platzverweise)', () => {
+  it('„in Unterzahl“ greift erst nach einem eigenen Platzverweis, „in Überzahl“ nach einem gegnerischen', async () => {
+    const { scoreHolds, SWITCH_MINUTES, SWITCH_WHEN } = await import('../src/sim/switches.js');
+    expect(SWITCH_WHEN).toEqual(expect.arrayContaining(['down', 'up']));
+    expect(SWITCH_MINUTES[0]).toBe(0);
+    const m = { score: [0, 0], sentOff: [] };
+    expect(scoreHolds(m, 0, 'down')).toBe(false);
+    expect(scoreHolds(m, 0, 'up')).toBe(false);
+    m.sentOff.push({ team: 0 });
+    expect(scoreHolds(m, 0, 'down')).toBe(true);
+    expect(scoreHolds(m, 1, 'up')).toBe(true);
+    m.sentOff.push({ team: 1 });
+    expect(scoreHolds(m, 0, 'down')).toBe(false); // ausgeglichen
+  });
+});

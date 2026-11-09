@@ -49,11 +49,11 @@ import { applyCoach, coachSquad, natCoachResult, natCoachSeason } from './natcoa
 //  asi  24 Teams, 7.1.–5.2. (Ausgabe 2027), alle vier Jahre.
 //  oce   8 Teams (Ausgabe 2024), 2 Gruppen → Halbfinale; Rhythmus alle vier Jahre: prüfen.
 export const TOURNAMENTS = {
-  wm: { de: 'Weltmeisterschaft', en: 'World Cup', groups: 12, best3: 8, when: 'summer', every: 4, anchor: 2026, from: [6, 11], to: [7, 19], slots: { uefa: 16, caf: 9, afc: 8, conmebol: 6, concacaf: 6, ofc: 1 }, weight: 1, pay: 5000 },
+  wm: { de: 'Weltmeisterschaft', en: 'World Cup', groups: 12, best3: 8, when: 'summer', every: 4, anchor: 2026, from: [6, 11], to: [7, 19], slots: { uefa: 16, caf: 9, afc: 8, conmebol: 6, concacaf: 6, ofc: 1 }, weight: 1, pay: 5000 , third: true},
   em: { de: 'Europameisterschaft', en: 'European Championship', groups: 6, best3: 4, when: 'summer', every: 4, anchor: 2028, from: [6, 9], to: [7, 9], slots: { uefa: 24 }, weight: 0.9, pay: { 12: 10187, 11: 6791, 0: 3395 } },
-  sam: { de: 'Südamerikameisterschaft', en: 'South American Championship', groups: 4, best3: 0, when: 'summer', every: 4, anchor: 2028, from: [6, 20], to: [7, 14], slots: { conmebol: 10, concacaf: 6 }, weight: 0.8 },
+  sam: { de: 'Südamerikameisterschaft', en: 'South American Championship', groups: 4, best3: 0, when: 'summer', every: 4, anchor: 2028, from: [6, 20], to: [7, 14], slots: { conmebol: 10, concacaf: 6 }, weight: 0.8 , third: true},
   nam: { de: 'Nord- und Mittelamerikameisterschaft', en: 'North and Central American Championship', groups: 4, best3: 0, when: 'summer', every: 2, anchor: 2027, from: [6, 14], to: [7, 6], slots: { concacaf: 16 }, weight: 0.5 },
-  afr: { de: 'Afrikameisterschaft', en: 'Africa Championship', groups: 6, best3: 4, when: 'winter', every: 2, anchor: 2025, from: [12, 21], to: [1, 18], slots: { caf: 24 }, weight: 0.6 },
+  afr: { de: 'Afrikameisterschaft', en: 'Africa Championship', groups: 6, best3: 4, when: 'winter', every: 2, anchor: 2025, from: [12, 21], to: [1, 18], slots: { caf: 24 }, weight: 0.6 , third: true},
   asi: { de: 'Asienmeisterschaft', en: 'Asian Championship', groups: 6, best3: 4, when: 'winter', every: 4, anchor: 2027, from: [1, 7], to: [2, 5], slots: { afc: 24 }, weight: 0.6 },
   oce: { de: 'Ozeanienmeisterschaft', en: 'Oceania Championship', groups: 2, best3: 0, when: 'summer', every: 4, anchor: 2028, from: [6, 15], to: [6, 30], slots: { ofc: 8 }, weight: 0.3 },
 };
@@ -68,7 +68,7 @@ export const NAT = {
   squad: 26, // Kadergröße (Weltmeisterschaft seit 2022: 26 – prüfen für die anderen Turniere)
   shape: { gk: 3, def: 9, mid: 8, fwd: 6 },
   home: 0.45, // mit zweiter Herkunft: so oft für das Land, in dem er lebt (Spielwert)
-  boost: { app: 0.02, goal: 0.04, max: 0.4, stage: { group: 0, r32: 0.02, r16: 0.04, qf: 0.08, sf: 0.12, f: 0.16, win: 0.22 } }, // Spielwerte
+  boost: { app: 0.02, goal: 0.04, max: 0.4, stage: { group: 0, r32: 0.02, r16: 0.04, qf: 0.08, sf: 0.12, fourth: 0.12, third: 0.14, f: 0.16, win: 0.22 } }, // Spielwerte
   proFrom: 9, // nominiert wird nur aus den Profiligen (Nutzerentscheid 2026-11-06)
 };
 
@@ -360,8 +360,12 @@ function nextStep(t) {
     const seeded = [...firsts, ...seconds, ...thirds].map((r) => r.nid); // Gruppensieger gegen die Dritten, Zweite untereinander
     const n = seeded.length;
     for (let k = 0; k < n / 2; k++) t.matches.push({ step: next, home: seeded[k], away: seeded[n - 1 - k], result: null });
+  } else if (next === 'p3') {
+    // Spiel um Platz 3: die Verlierer der Halbfinals.
+    const sf = t.matches.filter((m) => m.step === 'sf');
+    t.matches.push({ step: 'p3', home: sf[0].home === winnerOf(sf[0]) ? sf[0].away : sf[0].home, away: sf[1].home === winnerOf(sf[1]) ? sf[1].away : sf[1].home, result: null });
   } else {
-    const prev = t.matches.filter((m) => m.step === t.step);
+    const prev = t.matches.filter((m) => m.step === (t.step === 'p3' ? 'sf' : t.step)); // nach dem Spiel um Platz 3: die Sieger der Halbfinals
     for (let k = 0; k + 1 < prev.length; k += 2) t.matches.push({ step: next, home: winnerOf(prev[k]), away: winnerOf(prev[k + 1]), result: null });
   }
   t.step = next;
@@ -394,6 +398,7 @@ export function startTournament(c, id) {
   const ko = (cfg.groups * 2 + cfg.best3) | 0;
   const steps = ['g1', 'g2', 'g3'];
   for (let n = ko; n >= 2; n /= 2) steps.push(STEP_NAMES[n]);
+  if (cfg.third) steps.splice(steps.length - 1, 0, 'p3'); // Spiel um Platz 3 vor dem Finale (WM, Süd-, Afrikameisterschaft)
   const t = { id, year, season: c.season ?? 1, field, quali, target, str: {}, own: {}, stats: {}, steps, step: null, matches: [], groups: [], done: false, log: [] };
   // Nominierung: eigene Spieler aus den Profiligen, deren Land dabei ist und die gut genug sind.
   const taken = takenIndices(c);
@@ -599,6 +604,7 @@ function reachedOf(t, nid) {
   if (!lost.length) return 'group';
   const last = lost.at(-1);
   if (last.result && winnerOf(last) === nid && last.step === 'f') return 'win';
+  if (last.step === 'p3') return last.result && winnerOf(last) === nid ? 'third' : 'fourth'; // Spiel um Platz 3
   return last.step;
 }
 
@@ -623,7 +629,7 @@ function finish(c, t) {
       rec.natGoals = (rec.natGoals ?? 0) + s.goals;
     }
     // Rückkehr: Datum des letzten Spiels seines Landes; Winterturniere kosten Ligaspiele.
-    const exit = stepDate(t, reached === 'win' ? 'f' : reached === 'group' ? 'g3' : reached);
+    const exit = stepDate(t, reached === 'win' ? 'f' : reached === 'group' ? 'g3' : reached === 'third' || reached === 'fourth' ? 'p3' : reached);
     if (cfg.when === 'winter' && rec && humanClub(c).squad.includes(i)) {
       const missed = missedRounds(c, t, exit);
       if (missed) {
@@ -659,7 +665,7 @@ export function missedRounds(c, t, exit) {
   return Math.max(1, Math.round((real * (c.fixtures?.length ?? WINTER.realRounds)) / WINTER.realRounds));
 }
 const natAge = (c, b) => (c.season ?? 1) - b.season;
-export const reachLabel = (r) => ({ group: tr('Vorrunde', 'group stage'), r32: tr('Runde der 32', 'round of 32'), r16: tr('Achtelfinale', 'round of 16'), qf: tr('Viertelfinale', 'quarter-final'), sf: tr('Halbfinale', 'semi-final'), f: tr('Finale', 'final'), win: tr('Titel', 'title') })[r] ?? r;
+export const reachLabel = (r) => ({ group: tr('Vorrunde', 'group stage'), r32: tr('Runde der 32', 'round of 32'), r16: tr('Achtelfinale', 'round of 16'), qf: tr('Viertelfinale', 'quarter-final'), sf: tr('Halbfinale', 'semi-final'), third: tr('Platz 3', 'third place'), fourth: tr('Platz 4', 'fourth place'), f: tr('Finale', 'final'), win: tr('Titel', 'title') })[r] ?? r;
 
 export const natHistory = (c) => c.natHistory ?? [];
 export const recentNat = (c) => natHistory(c).filter((h) => h.season === (c.season ?? 1));

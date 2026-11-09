@@ -1144,23 +1144,23 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
    (Stehwälle → Haupttribüne mit Gästeblock → Kurvendächer und Rang auf der Kameraseite → Sitzschalen → zweiter Rang), Sitze in
    Vereinsfarben, Stadionname der Namensrechte; kurzes Eröffnungsbild bei Heimspielen. Im Grafik-Budget (Großarena gemessen
    111 Draw Calls / 48,5 Tsd. Dreiecke, ANDROID_MEDIUM, volle Menge). Behoben: Stahlrohrtribüne der Sitzplätze fehlte im Ligaspiel.
-   Offen: Umfeld (Parkplatz, Fanshop, Vorplatz) und Trainingsplätze in 3D; Ausbau auf kleineren Plätzen als dem Großfeld.
+   ✅ Umfeld und Trainingsplätze in 3D 2026-11-09 (render/venues/grounds.js). Offen: Ausbau auf kleineren Plätzen als dem Rasenplatz.
 7. **Taktikvorlagen im Spiel umschalten** (z. B. „ab Minute 70 mauern“).
    ✅ erledigt 2026-11-07 (sim/switches.js, tacticpresets.js): Vorlagen im Taktik-Blatt per Tipp ausspielen; bis zu zwei Regeln
    „ab Minute X, bei Spielstand Y → Vorlage Z“ (Minuten 30–85 auf 90 gerechnet, Anzahl Spielwert), greifen auch im Ticker und im
-   simulierten Spiel; im Spiel streichbar. Ohne Regeln unverändert (Golden). Offen: Regeln für Rote Karten oder Unterzahl.
+   simulierten Spiel; im Spiel streichbar. Ohne Regeln unverändert (Golden). ✅ Unter-/Überzahl 2026-11-09 (Bedingungen „in Unterzahl“/„in Überzahl“, ab Anpfiff).
 8. **Gegner-Scouting vor dem Spiel:** Stärken, Lieblingsstil, gefährlichster Spieler; Genauigkeit nach eigenem Scouting.
    ✅ erledigt 2026-11-07 (career/opponentscout.js, Heute-Karte „Gegner-Check“): Form, Tabellenplatz, Teamstärke als Spanne,
    Spielweise, ab Stufe 2 System, Stärken und Schwäche, gefährlichster Spieler. Genauigkeit = gerundetes Mittel der Kenntnis
    (scouting.js) über die besten elf, Tipp vom Wirt +1; „Gegner beobachten“ kostet eine Wochenaktion. Nur Anzeige, keine Wirkung
-   auf das Spiel (Golden unverändert). Stufen und Spannen: Spielwerte. Offen: Bericht auch vor Pokalspielen.
+   auf das Spiel (Golden unverändert). Stufen und Spannen: Spielwerte. ✅ auch vor Pokalspielen 2026-11-09.
 9. **Wetter mit spürbarerer Wirkung** (tiefer Platz, Wind) – nur mit Messung wie beim Bonus-Audit.
    ✅ erledigt 2026-11-07 (weather.js deepGround, ball.js WIND_ACCEL, scripts/weather-audit.mjs): Messung vorher (200 Spiele je
    Wetter, Rasenplatz, gleiche Seeds): Regen, Wind und Nebel ohne messbare Wirkung, nur Hitze (Restkraft −22 %) und Schnee.
    Neu: tiefer Platz bei Regen Oktober–März auf Rasen, Wiese, Asche (Rollwiderstand ×1,6 Spielwert; Laufkosten ×1,15 HERGELEITET
    aus Lejeune et al. 1998, Sand 1,2–1,6-fach) mit Hinweis auf der Spielkarte; Wind auf hohe Bälle HERGELEITET ≈ 3,8 m/s² bei
    Sturmböen um 60 km/h (vorher halb so stark). Messung nachher: tiefer Platz Tore 3,44 → 3,02, Restkraft 0,526 → 0,483;
-   Wind Schüsse 31,9 → 30,5, Kopfbälle 12,5 → 11,6. Golden unverändert (ohne Wetter). Offen: Nebel nur Optik (Sichtweite der KI).
+   Wind Schüsse 31,9 → 30,5, Kopfbälle 12,5 → 11,6. Golden unverändert (ohne Wetter). Nebel als Sichtweite gestrichen (Nutzerentscheid 2026-11-09: bei so dichtem Nebel fiele das Spiel aus).
 10. **Englische Namensliste erweitern.**
     ✅ erledigt 2026-11-07 (data/origins_en10.js, Namensauflage 10): rund 90 britische Nachnamen mehr (dazu walisische,
     schottische und nordenglische), je Jahrgang 30–40 Vornamen mehr nach den ONS-Vornamenlisten, alle Herkunftsgruppen größer.
@@ -1205,7 +1205,7 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
     Winterturnieren (Afrika, Asien) einige Spieltage und kommen mit einem Turnier-Schub auf den Marktwert zurück.
     ✅ erste Fassung 2026-11-06 (nationalteams.js): Nominierung nur aus den Profiligen, Spiele der eigenen Spieler im Stadion in 3D,
     neutrale Namen. Qualifikation Variante 1 (2026-11-06): beim Turnierstart im Schnellmodell, Gruppen je Verband wie in echt.
-    Offen: Stimmung, ausländische Schiris, Spiel um Platz drei (Konzept Abschnitt 11).
+    ✅ Spiel um Platz drei 2026-11-09 (WM, Süd-, Afrikameisterschaft). Offen: Stimmung, ausländische Schiris (Konzept Abschnitt 11).
     **Qualifikation Variante 2** (vom Nutzer auf die Roadmap gesetzt, 2026-11-06): über die Saison verteilt in Länderspielfenstern
     zwischen bestimmten Spieltagen (die Liga ruht, kein Ligaspiel fällt aus). Spiele eines Landes mit eigenen Spielern als Karte im
     Vereinsheim (im Stadion ansehen, nur Ergebnis, vorspulen), Gruppentabelle einsehbar, Einsätze zählen wenig für den Marktwert,
@@ -1245,7 +1245,7 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
     Regeneration, Videoraum → Erholung, Verletzungen, Scouting), Medizin (Behandlungsraum, Physio, medizinische Abteilung →
     Ausfallzeit, Verletzungen), Geschäftsstelle (Büro, Geschäftsstelle, Marketing → Sponsoren, Zuschauer), Jugend (Jugendhaus,
     Schulkooperation, Internat, NLZ → Talente, Entwicklung), Stadionumfeld (Parkplatz, Fanshop, Vorplatz → Zuschauer, Einnahmen);
-    facilities.js, tests/gelaende.test.js. Offen: Sichtbarkeit in 3D, Stadion-Erweiterung in mehr Stufen, Mehrzweckhalle, Fan-Treff,
+    facilities.js, tests/gelaende.test.js. ✅ Sichtbarkeit in 3D 2026-11-09 (grounds.js). Offen: Stadion-Erweiterung in mehr Stufen, Mehrzweckhalle, Fan-Treff,
     Wohnheim; Wirkungen nach Rückmeldung nachjustieren. Bisher gibt es vier Ausbau-Gruppen (Vereinsheim, Sportplatz,
     Tribünen, Gastro; facilities.js). Neu dazu, je mit Kosten, Bauzeit, Unterhalt und spürbarer Wirkung im Spiel:
     - **Stadion:** Ausbau und Erweiterung in Stufen (auch in 3D sichtbar, siehe Punkt 6), dazu das **Umfeld**: Parkplätze,
