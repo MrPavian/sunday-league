@@ -107,6 +107,8 @@ export class Music {
   // Takte einplanen, solange sie in den nächsten 0,6 s beginnen.
   schedule() {
     if (!this.ctx || this.sound.silent()) return;
+    // Lief der Zeitgeber eine Weile nicht (Tab oder App im Hintergrund), nicht alle verpassten Takte auf einmal nachholen.
+    if (this.next < this.ctx.currentTime) this.next = this.ctx.currentTime + 0.1;
     while (this.next < this.ctx.currentTime + 0.6) {
       this.playBar(this.bar, this.next);
       this.bar = (this.bar + 1) % 16;
