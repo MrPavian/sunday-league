@@ -1016,6 +1016,76 @@ export async function privatLife(b) {
   return f;
 }
 
+// Großer Supercup (europa.js startSuper/playSuper): Karte auf der Startseite, ein Spiel im Liveticker, danach abgeschlossen
+// und in der Vereinsgeschichte – ohne Fehler und ohne Heimspiel-Abrechnung (neutraler Ort).
+export async function superCup(b) {
+  const ok = checker('Großer Supercup: Karte, Spiel, Abschluss');
+  const { createCareer } = await import('../../src/career/career.js');
+  const { advancePokale } = await import('../../src/career/pokal.js');
+  const c = createCareer({ seed: 7 });
+  c.level = 12;
+  c.pro = true;
+  c.superQual = { season: c.season, from: 'eu1' };
+  advancePokale(c);
+  ok(!!c.pokale?.esc, 'Supercup wird für den Europapokalsieger nicht angesetzt');
+  const p = await page(b, 'land', { query: '?notitle&debug', store: { 'sunday-league:career': JSON.stringify(c) } });
+  await click(p, '.career [data-c="continue"]');
+  await p.waitForTimeout(1500);
+  await click(p, '[data-action="area"][data-value="home"]').catch(() => {});
+  ok(!!(await p.waitForSelector('.euro-card', { timeout: 15000 }).catch(() => null)), 'Supercup-Karte fehlt auf der Startseite');
+  const card = await p.evaluate(() => document.querySelector('.euro-card')?.innerText ?? '');
+  ok(/Supercup/i.test(card), `Karte nennt den Supercup nicht: ${card.slice(0, 120)}`);
+  ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), 'Startseite scrollt quer');
+  await click(p, '[data-action="onPokalSimulate"]');
+  await p.waitForTimeout(1000);
+  ok(await visible(p, 'ticker'), 'Liveticker fürs Supercup-Spiel öffnet nicht');
+  for (let i = 0; i < 300 && (await visible(p, 'ticker')); i++) {
+    await p.evaluate(() => document.querySelector('#ticker .decision button, #ticker [data-action="done"], #ticker [data-action="skip"]')?.click());
+    await p.waitForTimeout(300);
+  }
+  const st = await p.evaluate(() => ({ done: !!__sl.career.pokale?.esc?.done, hist: (__sl.career.superHistory ?? []).length, home: (__sl.career.ledger ?? []).filter((l) => /Theke|Eintritt|Platzmiete|bar takings|gate/i.test(l.text ?? '')).length }));
+  ok(st.done, 'Supercup nach dem Spiel nicht abgeschlossen');
+  ok(st.hist === 1, `Supercup steht ${st.hist}-mal in der Geschichte`);
+  ok(st.home === 0, `neutraler Ort: ${st.home} Heimspiel-Buchungen`);
+  ok(!p.errors.length, `Fehler ${p.errors.slice(0, 2).join(' | ')}`);
+  await p.context().close();
+  return ok.done();
+}
+
+// Stadionsprecher (sim/announcer.js, main.js announce): Im Stadion kommen Begrüßung, Halbzeitstand, Zuschauerzahl und Endstand
+// wirklich als Einblendung an (Halbzeit und Endstand gingen früher unter der großen Einblendung des Spiels verloren); auf dem
+// kleinen Sportplatz ohne Anlage kommt nichts.
+export async function announcer(b) {
+  const ok = checker('Stadionsprecher');
+  const watch = async (venue) => {
+    const p = await page(b, 'land', { query: `?venue=${venue}&notitle&trainer&debug&dauer=30` });
+    await p.evaluate(() => {
+      window.__ann = [];
+      new MutationObserver(() => {
+        for (const el of document.querySelectorAll('#hud *')) {
+          const t = el.childElementCount ? '' : el.textContent;
+          if (/Stadionsprecher|Die Fans/.test(t) && !window.__ann.includes(t)) window.__ann.push(t);
+        }
+      }).observe(document.getElementById('hud'), { subtree: true, childList: true, characterData: true });
+    });
+    ok(await toEnd(p, 90), `${venue}: Spiel endet nicht`);
+    await p.waitForTimeout(2500);
+    const lines = await p.evaluate(() => window.__ann);
+    const endLate = await p.evaluate(() => document.getElementById('end').hidden);
+    await p.waitForTimeout(3500);
+    ok(await visible(p, 'end'), `${venue}: Spielbericht erscheint nicht`);
+    ok(!p.errors.length, `${venue}: Fehler ${p.errors.join(' | ')}`);
+    await p.context().close();
+    return { lines, endLate };
+  };
+  const big = await watch('stadion');
+  for (const [re, what] of [[/willkommen/i, 'Begrüßung'], [/Halbzeit/, 'Halbzeitstand'], [/Zuschauerzahl/, 'Zuschauerzahl'], [/Endstand/, 'Endstand']]) ok(big.lines.some((l) => re.test(l)), `Stadion: ${what} fehlt (${big.lines.length} Durchsagen)`);
+  ok(big.endLate, 'Stadion: Der Spielbericht verdeckt den Endstand des Sprechers');
+  const small = await watch('sportplatz');
+  ok(small.lines.length === 0, `Sportplatz ohne Anlage: ${small.lines.length} Durchsagen`);
+  return ok.done();
+}
+
 export async function run() {
   const b = await launch();
   let f = 0;
@@ -1041,6 +1111,8 @@ export async function run() {
   if (!ONLY || ONLY.has('natCoach')) f += await natCoach(b);
   if (!ONLY || ONLY.has('cupLineup')) f += await cupLineup(b);
   if (!ONLY || ONLY.has('privatLife')) f += await privatLife(b);
+  if (!ONLY || ONLY.has('announcer')) f += await announcer(b);
+  if (!ONLY || ONLY.has('superCup')) f += await superCup(b);
   if (!ONLY || ONLY.has('oldSave')) f += await oldSave(b, process.env.E2E_OLD_SAVE ?? fileURLToPath(new URL('./fixtures/save-858e978.json', import.meta.url)));
   await b.close();
   return f;

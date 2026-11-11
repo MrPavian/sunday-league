@@ -6,6 +6,16 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-11-3 – Stadionsprecher: Halbzeit und Endstand
+
+### Behoben
+- **Stadionsprecher:** Die Durchsagen zum Halbzeitstand und zum Endstand waren nie zu sehen. Die Halbzeit-Durchsage ging unter der großen Halbzeit-Einblendung verloren, den Endstand verdeckte sofort der Spielbericht. Jetzt kommt die Halbzeit-Durchsage nach der Einblendung, und der Spielbericht erscheint bei Spielen mit Sprecher gut drei Sekunden später.
+
+### Intern
+- Feste Browser-Tests für Stadionsprecher und Supercup.
+- Schneller Prüflauf für die laufende Arbeit (`npm run check:fast`).
+- Roadmap geteilt: `ROADMAP.md` enthält nur noch die offenen Punkte, alles Erledigte steht in `docs/ROADMAP-ARCHIV.md`.
+
 ## 2026-11-11-2 – Gehalt verhandeln und Umzug
 
 ### Neu

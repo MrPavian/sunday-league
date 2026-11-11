@@ -249,12 +249,13 @@ function showMatch(m) {
 let announcer = null;
 function announce(lines) {
   for (const l of lines) {
-    const delay = l.kind === 'goal' ? 2600 : l.kind === 'welcome' ? 1500 : 300;
+    // Halbzeit und Abpfiff: erst nach der großen Einblendung des Spiels (Hud.js: 3,5 s bzw. „ABPFIFF“), sonst geht die Durchsage unter.
+    const delay = l.kind === 'goal' ? 2600 : l.kind === 'welcome' ? 1500 : l.kind === 'half' ? 3700 : l.kind === 'end' ? 1300 : 300;
     const m0 = match;
     setTimeout(() => {
       if (m0 !== match || mode !== 'play') return;
       sound.gong();
-      hud.toast(`${tr('Stadionsprecher', 'Announcer')}: ${l.text}`, 3.2, 2);
+      hud.toast(`${tr('Stadionsprecher', 'Announcer')}: ${l.text}`, 3.2, l.kind === 'end' ? 9 : 2);
       speak(l.text);
       if (l.call) {
         setTimeout(() => {
@@ -519,7 +520,7 @@ function frame(now) {
       // Karrierespiel: Das Menü führt hier nirgends hin (das Ergebnis zählt) – Knopf weg.
       shoutBar.root.classList.toggle('no-menu', !!careerMatch);
       const keys = careerMatch ? tr('<b>Enter</b> weiter ins Vereinsheim', '<b>Enter</b> back to the clubhouse') : undefined;
-      setTimeout(() => ended === match && mode === 'play' && endScreen.show(ended, { keys }), 1200);
+      setTimeout(() => ended === match && mode === 'play' && endScreen.show(ended, { keys }), announcer ? 4600 : 1200); // mit Sprecher: Zeit für den Endstand
     }
     if (mode === 'play' && match.manager && match.events.some((e) => e.type === 'halftime')) openHalftime();
     match.events.length = 0;

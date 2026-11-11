@@ -2,7 +2,7 @@
 
 Dieses Dokument erklärt, was Sunday League ist, wie das Spiel aufgebaut ist und wie der Code organisiert ist.
 Es richtet sich an alle, die das Projekt kennenlernen, mitentwickeln oder bewerten wollen.
-Die ausführliche Ideensammlung und Roadmap steht in [ROADMAP.md](../ROADMAP.md).
+Die offenen Punkte stehen in [ROADMAP.md](../ROADMAP.md), die ausführliche Ideensammlung im [Archiv](ROADMAP-ARCHIV.md).
 
 **Inhalt**
 1. [Kurzfassung](#1-kurzfassung)

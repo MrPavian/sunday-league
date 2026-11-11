@@ -321,7 +321,7 @@ docs/          Screenshots und Projektüberblick
 ```
 
 Wie das alles zusammenhängt, steht im **[Projektüberblick](docs/OVERVIEW.md)**.
-Game Design, Ideen und Roadmap: **[ROADMAP.md](ROADMAP.md)**.
+Offene Punkte: **[ROADMAP.md](ROADMAP.md)** · Game Design, Ideen und alles Erledigte: **[Archiv](docs/ROADMAP-ARCHIV.md)**.
 
 ### Deployment
 

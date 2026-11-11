@@ -6,6 +6,16 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-11-3 – Stadium announcer: half-time and full time
+
+### Fixed
+- **Stadium announcer:** the announcements of the half-time and final score were never visible. The half-time one was lost under the big half-time banner, the final score was covered by the match report straight away. The half-time announcement now follows the banner, and in matches with an announcer the match report appears a good three seconds later.
+
+### Internal
+- Permanent browser tests for the stadium announcer and the Super Cup.
+- A fast check for work in progress (`npm run check:fast`).
+- Roadmap split: `ROADMAP.md` now holds only the open items, everything done is in `docs/ROADMAP-ARCHIV.md`.
+
 ## 2026-11-11-2 – Salary talks and moving house
 
 ### New
