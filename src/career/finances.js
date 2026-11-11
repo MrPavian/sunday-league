@@ -52,8 +52,9 @@ export function book(career, text, amount) {
 // Nach dem Spiel: Strafen für die eigenen Leute, Heimspiel-Einnahmen und -Kosten.
 export function matchFinances(career, fixture, prepared, level) {
   const human = career.clubs.find((c) => c.human);
-  const homeHuman = fixture.home === human.id;
-  if (!homeHuman && fixture.away !== human.id) return;
+  // Neutraler Spielort (Europapokal-Endspiel, Supercup): keine Heimspiel-Abrechnung, auch wenn man als „Heim“ gelost ist.
+  const homeHuman = fixture.home === human.id && !fixture.neutral;
+  if (!homeHuman && fixture.home !== human.id && fixture.away !== human.id) return;
   if (!homeHuman) awayTravel(career, fixture);
   if (!homeHuman && prepared.bund) {
     // Auswärts beim Profi: Anteil am Eintritt des großen Stadions (Getränke behält der Gastgeber).
@@ -61,7 +62,7 @@ export function matchFinances(career, fixture, prepared, level) {
     book(career, tr(`Eintrittsanteil ${BUND_GATE_SHARE * 100} % (${fansA} Zuschauer im Stadion)`, `Gate share ${BUND_GATE_SHARE * 100} % (${fansA} spectators in the stadium)`), Math.round(fansA * ENTRY_FEE * BUND_GATE_SHARE));
   }
   const m = prepared.match;
-  const team = m.humanTeam !== null ? 0 : homeHuman ? 0 : 1;
+  const team = m.humanTeam !== null ? 0 : fixture.home === human.id ? 0 : 1;
   let fines = 0;
   const players = [...m.players, ...m.bench[0], ...m.bench[1], ...m.sentOff].filter((p) => p.team === team && career.players[p.poolIndex]);
   for (const p of players) {

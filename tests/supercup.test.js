@@ -54,7 +54,9 @@ describe('Supercup', () => {
     expect(c.superQual).toBeUndefined();
     expect(c.superHistory).toHaveLength(1);
     const won = cup.winner === humanClub(c).id;
-    expect(cup.earned).toBe(won ? 5000000 : 4000000); // dazu die Abrechnung des Spieltags (Theke, wie beim Endspiel)
+    expect(cup.earned).toBe(won ? 5000000 : 4000000);
+    // Neutraler Ort: keine Heimspiel-Abrechnung (Theke, Eintritt, Schiri, Platzmiete), egal wer als „Heim“ gelost ist.
+    expect(c.ledger.some((l) => /Getränke|Eintritt|Schiri|Platzmiete/.test(l.text))).toBe(false);
     expect(c.week?.midweek?.note ?? '').toMatch(won ? /Sieger/ : /verloren/);
   });
 
