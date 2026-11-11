@@ -2067,3 +2067,9 @@ body.manager #end { padding-bottom: 84px; }
 .natcoach-pick { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
 .natcoach-pick button { font-size: 12px; padding: 2px 6px; opacity: 0.6; }
 .natcoach-pick button.active { opacity: 1; outline: 2px solid var(--accent); }
+/* Privatleben des Trainers (club.js privatBlock) */
+.priv-card .priv-kind { margin-top: var(--s2); }
+.priv-card .priv-row { flex-wrap: wrap; gap: var(--s1); }
+.priv-card .priv-row .ui-btn { font-size: 0.85em; }
+.priv-card .priv-inline { display: inline-flex; gap: var(--s1); margin-left: var(--s1); }
+.priv-card b.warn { color: #d9534f; }

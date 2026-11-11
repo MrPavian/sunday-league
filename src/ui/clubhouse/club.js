@@ -12,6 +12,7 @@ import { awayKitOf, humanClub, KIT_COLLARS, KIT_COLORS, KIT_PATTERNS, KIT_SLEEVE
 import { spielberichtStreng } from '../../career/spielbericht.js';
 import { leagueTitle, niveauText, VERBAND_CHOICES, verbandLeagues } from '../../career/verband.js';
 import { FINES, MEMBER_FEE, SLOTS } from '../../career/finances.js';
+import { auftreten, auftretenText, donateAmount, GOODS, goodName, kindLabel, LUX, luxName, priceOf, privat, seasonIncome, TRIP, tripOpen, typus, typusDesc, typusName, upkeep, weeklyIncome } from '../../career/privat.js';
 import { demandMul, priceRatio, prices, PROTEST, TICKETS, ticketsOn } from '../../career/tickets.js';
 import { travelCost } from '../../career/travel.js';
 import { freeKitLeft, kitPrice, OUTFITTER_SEASONS, outfitterDef, outfitterOf, outfitterOffers } from '../../career/outfitter.js';
@@ -64,7 +65,43 @@ export const clubScreens = {
 
   // Verein (Menü flach, 2026-11-06): jede frühere Unterseite ist ein eigener Reiter.
   tab_me() {
-    return `${this.profileCard()}${isPresident(this.career) ? this.tab_office() : ''}`;
+    return `${this.profileCard()}${this.privatBlock()}${isPresident(this.career) ? this.tab_office() : ''}`;
+  },
+  // Privatleben des Trainers (privat.js): Konto, Auftreten, Typus, Besitz, Familie.
+  privatBlock() {
+    const c = this.career;
+    const p = privat(c);
+    if (!p) return '';
+    const k = c.coach;
+    const a = auftreten(c);
+    const t = typus(c);
+    const minus = p.wallet < 0;
+    const tierRow = (kind) => {
+      const cur = p.own[kind];
+      const opts = GOODS[kind].tiers.map((_, i) => i).filter((i) => i !== cur && Math.abs(i - cur) <= 4);
+      const btn = (i) => {
+        const cost = priceOf(c, kind, i);
+        const afford = cost.net <= 0 || (!minus && p.wallet >= cost.net);
+        const label = `${goodName(kind, i)} · ${cost.net >= 0 ? euro(cost.net) : `+${euro(-cost.net)}`}`;
+        return button(label, { kind: 'ghost', action: 'privBuy', value: `${kind}:${i}`, disabled: !afford, 'data-testid': `priv-${kind}-${i}` });
+      };
+      return `<div class="priv-kind"><p class="t-cap">${kindLabel(kind)}: <b>${goodName(kind, cur)}</b>${GOODS[kind].tiers[cur].upkeep ? ` <small>(${tr('Unterhalt', 'upkeep')} ${euro(GOODS[kind].tiers[cur].upkeep)} ${tr('je Saison', 'per season')})</small>` : ''}</p><div class="ui-row priv-row">${opts.map(btn).join('')}</div></div>`;
+    };
+    const lux = Object.keys(LUX).map((id) => (p.lux.includes(id) ? button(`${luxName(id)} ✓ · ${tr('verkaufen', 'sell')} +${euro(LUX[id].price / 2)}`, { kind: 'ghost', action: 'privLuxSell', value: id }) : button(`${luxName(id)} · ${euro(LUX[id].price)}`, { kind: 'ghost', action: 'privLux', value: id, disabled: minus || p.wallet < LUX[id].price, 'data-testid': `priv-lux-${id}` }))).join('');
+    const don = donateAmount(c);
+    const partnerLine = k.relation !== 'single' && k.partnerName ? `<p class="t-2">${tr('An deiner Seite', 'By your side')}: <b>${esc(k.partnerName)}</b> <span class="ui-row priv-inline">${button(tr('Partnerin', 'Female partner'), { kind: k.partnerSex === 'm' ? 'ghost' : 'primary', action: 'privPartner', value: 'w' })}${button(tr('Partner', 'Male partner'), { kind: k.partnerSex === 'm' ? 'primary' : 'ghost', action: 'privPartner', value: 'm' })}</span></p>` : '';
+    return `<div class="me-card priv-card" data-testid="privat"><h4>${tr('Privat', 'Private life')}</h4>
+      <p><b data-testid="priv-wallet" class="${minus ? 'warn' : ''}">${euro(Math.round(p.wallet))}</b> ${tr('auf dem privaten Konto', 'in your private account')} · ${tr('Einkommen', 'income')} ${euro(seasonIncome(c))} ${tr('je Saison', 'per season')} <small>(${euro(weeklyIncome(c))} ${tr('je Spieltag', 'per matchday')})</small>${upkeep(c) ? ` · ${tr('Unterhalt', 'upkeep')} ${euro(upkeep(c))} ${tr('je Saison', 'per season')}` : ''}</p>
+      ${minus ? `<p class="warn">${tr('Das Konto ist im Minus: Kaufen geht nicht, und zu Hause hängt der Haussegen schief.', 'The account is overdrawn: no buying, and it is causing trouble at home.')}</p>` : ''}
+      <p class="t-2">${tr('Trainertyp', 'Manager type')}: <b data-testid="priv-type">${typusName(t)}</b> – ${typusDesc(t)}</p>
+      <p class="t-2">${tr('Auftreten', 'Appearance')}: <b>${a.glanz}</b> <small>(${tr('üblich in dieser Liga', 'usual in this league')}: ${a.expect}–${a.expect + 2})</small> – ${auftretenText(c)}</p>
+      ${partnerLine}
+      ${tierRow('home')}${tierRow('car')}${tierRow('wear')}
+      <div class="priv-kind"><p class="t-cap">${tr('Luxus', 'Luxury')}</p><div class="ui-row priv-row">${lux}${button(p.tripSeason === c.season ? tr('Fernreise ✓ (diese Saison)', 'Long-haul trip ✓ (this season)') : `${tr('Fernreise mit der Familie', 'Long-haul trip with the family')} · ${euro(TRIP.price)}`, { kind: 'ghost', action: 'privTrip', disabled: !tripOpen(c), 'data-testid': 'priv-trip' })}</div></div>
+      <div class="priv-kind"><p class="t-cap">${tr('Zurückgeben', 'Giving back')}${p.donated ? ` · ${tr('bisher gespendet', 'donated so far')} ${euro(p.donated)}` : ''}</p><div class="ui-row priv-row">${button(don ? `${tr('An die Vereinskasse spenden', 'Donate to the club')} · ${euro(don)}` : tr('An die Vereinskasse spenden', 'Donate to the club'), { action: 'privDonate', disabled: !don, 'data-testid': 'priv-donate' })}</div></div>
+      <div class="priv-kind"><p class="t-cap">${tr('Schwere Ereignisse (Trennung, Trauerfall)', 'Heavy events (separation, bereavement)')}</p><div class="ui-row priv-row">${button(tr('Können vorkommen', 'May occur'), { kind: p.heavy ? 'primary' : 'ghost', action: 'privHeavy', value: 1 })}${button(tr('Aus', 'Off'), { kind: p.heavy ? 'ghost' : 'primary', action: 'privHeavy', value: 0, 'data-testid': 'priv-heavy-off' })}</div></div>
+      <p class="empty">${tr('Dein Geld, nicht das des Vereins. Was du kaufst, wirkt: Ein Zuhause entspannt die Familie, ein Auto spart Kraft, und dein Auftreten sollte zur Liga passen – zu dick aufgetragen stört die Kabine, zu schlicht im Profifußball den Vorstand.', 'Your money, not the club\'s. What you buy has an effect: a home relaxes the family, a car saves energy, and your appearance should fit the league – too flashy bothers the dressing room, too plain in professional football bothers the board.')}</p>
+    </div>`;
   },
   tab_anlage() {
     return `${this.platzBlock()}${this.facilityBlock()}`;

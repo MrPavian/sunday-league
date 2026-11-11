@@ -976,6 +976,37 @@ export async function cupLineup(b) {
   return ok.done();
 }
 
+// Privatleben des Trainers (privat.js): Seite „Privat“ unter Verein → Ich, Kauf wirkt auf Konto und Besitz, kein Querscrollen.
+export async function privatLife(b) {
+  let f = 0;
+  for (const size of ['land', 'port']) {
+    const ok = checker(`Privatleben (${size})`);
+    const p = await page(b, size, { query: '?notitle&debug' });
+    await newCareer(p);
+    await p.waitForTimeout(800);
+    await click(p, '[data-action="area"][data-value="club"]').catch(() => {});
+    await p.waitForTimeout(300);
+    await click(p, '[data-action="tab"][data-value="me"]').catch(() => {});
+    await p.waitForTimeout(300);
+    ok(!!(await p.$('[data-testid="privat"]')), 'Block „Privat“ fehlt');
+    await p.evaluate(() => { __sl.career.coach.privat.wallet = 60000; });
+    await click(p, '[data-action="tab"][data-value="me"]').catch(() => {});
+    await p.waitForTimeout(300);
+    await click(p, '[data-testid="priv-car-2"]').catch(() => {});
+    await p.waitForTimeout(300);
+    ok(await p.evaluate(() => __sl.career.coach.privat.own.car === 2 && __sl.career.coach.privat.wallet === 25000), 'Autokauf wirkt nicht');
+    ok(await p.evaluate(() => /25[.,]000/.test(document.querySelector('[data-testid="priv-wallet"]')?.textContent ?? '')), 'Kontostand wird nach dem Kauf nicht neu angezeigt');
+    await click(p, '[data-testid="priv-heavy-off"]').catch(() => {});
+    await p.waitForTimeout(200);
+    ok(await p.evaluate(() => __sl.career.coach.privat.heavy === false), 'schwere Ereignisse lassen sich nicht abschalten');
+    ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), 'Seite scrollt quer');
+    ok(!p.errors.length, `Fehler: ${p.errors.join(' | ')}`);
+    await p.context().close();
+    f += ok.done();
+  }
+  return f;
+}
+
 export async function run() {
   const b = await launch();
   let f = 0;
@@ -1000,6 +1031,7 @@ export async function run() {
   if (!ONLY || ONLY.has('quali')) f += await quali(b);
   if (!ONLY || ONLY.has('natCoach')) f += await natCoach(b);
   if (!ONLY || ONLY.has('cupLineup')) f += await cupLineup(b);
+  if (!ONLY || ONLY.has('privatLife')) f += await privatLife(b);
   if (!ONLY || ONLY.has('oldSave')) f += await oldSave(b, process.env.E2E_OLD_SAVE ?? fileURLToPath(new URL('./fixtures/save-858e978.json', import.meta.url)));
   await b.close();
   return f;

@@ -19,6 +19,7 @@ import { lookFor } from '../sim/generator.js';
 import { liftedTo } from '../sim/niveau.js';
 import { getPool, humanClub, playerOf, takenIndices } from './career.js';
 import { isCoach } from './personal.js';
+import { statusBonus } from './privat.js';
 import { yearOf } from './sagas.js';
 import { hash, idHash, NAT, nationName, nationOf, targetOf } from './nationalteams.js';
 
@@ -38,7 +39,7 @@ export function coachRep(c) {
   const euro = (c.achievements?.europaSieg ? 12 : 0) + (c.achievements?.europa ? 5 : 0);
   const years = Math.min(8, (c.season ?? 1) - 1);
   const record = c.natCoach ? Math.min(6, (c.natCoach.w ?? 0) * 0.5) : 0;
-  return Math.max(0, Math.min(100, Math.round(base + titles + euro + years + record)));
+  return Math.max(0, Math.min(100, Math.round(base + titles + euro + years + record + statusBonus(c)))); // Auftreten passt zur Liga: +3 (privat.js)
 }
 
 const proNow = (c) => !!c.pro && (c.level ?? 1) >= NAT.proFrom;

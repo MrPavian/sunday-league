@@ -6,6 +6,33 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-11-1 – Privatleben des Trainers
+
+### Neu
+- **Eigenes Geld:** Der Trainer hat ein privates Konto, getrennt von der Vereinskasse. Je Spieltag kommt ein gleicher Teil des Saison-Einkommens dazu.
+  - Bis zur Oberliga bleiben 3000 € je Saison vom eigenen Beruf übrig (hergeleitet).
+  - Vom Verein: Bezirksliga 3000 € (Übungsleiterfreibetrag), Landes-, Verbands- und Oberliga 4800 / 7200 / 12 000 € (Spielwerte).
+  - Profiligen: Regionalliga 35 000 € (schwache Quelle), 3. Liga 150 000 € und 2. Liga 400 000 € (Spielwerte), 1. Liga 1,4 Mio. € (aus Presse-Schätzungen 2025/26).
+  - Die Vereinskasse wird dafür nicht zusätzlich belastet: Das Gehalt steckt in den laufenden Kosten des Spielbetriebs.
+- **Ausgeben** unter Verein → Ich → „Privat“:
+  - Wohnen, Auto und Kleidung in je fünf Stufen, mit Unterhalt je Saison. Beim Wechsel gibt es einen Teil des alten Preises zurück.
+  - Luxus: Uhr, Motorboot, Ferienhaus, dazu einmal je Saison eine Fernreise mit der Familie.
+  - Spenden an die Vereinskasse.
+  - Alle Preise sind Spielwerte.
+- **Wirkung:**
+  - Ein Zuhause entspannt die Familie, ein Auto spart Kraft.
+  - Das Auftreten wird mit dem Üblichen der Liga verglichen. Passt es im Profifußball, stärkt das Stellung und Ruf. Zu dick aufgetragen im Amateurverein drückt die Stimmung in der Kabine. Zu schlicht im Profifußball kostet Vertrauen beim Vorstand.
+  - **Trainertyp:** ergibt sich aus dem Verhalten – bodenständig, Sparfuchs, Lebemann, Geschäftsmann, Familienmensch oder Wohltäter – und wirkt einmal je Saison.
+- **Familienereignisse:** jemanden kennenlernen (Frau oder Mann), zusammenziehen, heiraten (klein oder groß), Kinder, Einschulung, Pubertät, Beziehungskrise, Trennung und Scheidung, Pflege der Mutter, Trauerfall.
+  - Entscheidungen wirken auf Geduld der Familie, Energie, Konto und Stimmung.
+  - Trennung und Trauerfall lassen sich auf der Seite „Privat“ abschalten.
+  - Partnerin oder Partner ist dort jederzeit umstellbar.
+- Gilt für selbst angelegte Trainer. Sehr alte Spielstände ohne eigenen Trainer bleiben, wie sie sind.
+
+### Behoben
+- **Neutraler Spielort:** Endspiel im Europapokal und Supercup wurden wie ein Heimspiel abgerechnet (Theke, Eintritt, Schiri, Platzmiete). Jetzt nicht mehr.
+- **Musik:** Nach einer Pause im Hintergrund holte das Vereinsheim-Thema alle verpassten Takte auf einmal nach.
+
 ## 2026-11-09-8 – Stadionsprecher, Musik und mehr
 
 ### Neu

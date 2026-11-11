@@ -1268,7 +1268,12 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
     Je Stufe Voraussetzungen nach Liga (unten Ehrenamt und Eigenleistung, oben Profi-Standard). Vorher recherchieren: Kosten
     echter Bauten (Trainingszentrum, NLZ, Funktionsgebäude) und belegbare Wirkungen; Wirkungen ohne Quelle sind Spielwerte und
     werden mit dem Nutzer abgestimmt. Messung wie beim Bonus-Audit, damit kein Ausbau Pflicht oder wirkungslos ist.
-17. **Privatleben des Trainers: Geld, Auftreten, Familie** (vom Nutzer gewünscht, 2026-11-10). Bisher gibt es nur „Geduld der
+17. **Privatleben des Trainers: Geld, Auftreten, Familie** (vom Nutzer gewünscht, 2026-11-10). ✅ **Erste Lieferung 2026-11-11** (privat.js,
+    tests/privat.test.js; Vorgaben ohne Rückmeldung: Partnerin/Partner frei wählbar, sachlicher Ton, Trennung und Trauerfall abschaltbar):
+    Konto mit Einkommen je Liga, Wohnen/Auto/Kleidung/Luxus/Reise/Spende, Auftreten gegen das Übliche der Liga, Trainertypus,
+    zehn Familienereignisse. Offen: Umzug bei Vereinswechsel (zieht die Familie mit?), Patchwork, Kind im eigenen Nachwuchs als
+    Ereignis, Presse-Meldungen zu Käufen, Besitz in 3D (Auto auf dem Parkplatz), Trainergehalt verhandeln, bessere Quellen für
+    Gehälter unterhalb der 1. Liga. Bisher gibt es nur „Geduld der
     Familie" und „Ehrenamts-Energie" (personal.js); der Trainer verdient nichts Eigenes und hat kein Privatleben mit Folgen.
     - **Eigenes Geld:** Trainergehalt (unten Aufwandsentschädigung, oben Vertrag mit Gehalt und Prämien) auf ein privates Konto,
       getrennt von der Vereinskasse. Vorher recherchieren: Trainergehälter je Liga; ohne Quelle Spielwerte, als solche markiert.

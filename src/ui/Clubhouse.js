@@ -14,6 +14,7 @@ import { appointStaff, releaseStaff } from '../career/staff.js';
 // Was im Vereinsheim scrollt (je nach Bildschirmgröße das Fenster, der Inhalt oder die Mappe).
 const SCROLLERS = '.club-panel, .club-main, .club-body, .club-folder, .folder-sheet';
 const scrollKey = (el) => SCROLLERS.split(', ').find((sel) => el.matches(sel));
+import { buy, buyLux, donate, sellLux, setHeavy, setPartnerSex, takeTrip } from '../career/privat.js';
 import { setSquadExtra, setVerband, argueRumor, askRumor, currentLineup, humanClub, updateClub, updateCrest, setFounded, clampFounded, foundedRange, setClubTactic, setClubPlan, maxSquad, recruit, releasePlayer, scoutRumor, talkRumor, nudge, playerOf, resetLineup, setLineupSlot, seasonOver, table } from '../career/career.js';
 import { verbandLeagues } from '../career/verband.js';
 import { extend as extendContract, releaseWithPay } from '../career/contracts.js';
@@ -463,6 +464,22 @@ export class Clubhouse {
       } else if (action === 'summerMove') {
         setSummerMove(this.career, value); // Sommer-Anfrage annehmen oder wieder absagen (clubchange.js)
         this.h.onChange();
+      } else if (action === 'privBuy') {
+        const [kind, tier] = String(value).split(':');
+        if (buy(this.career, kind, Number(tier))) this.h.onChange(); // Privatleben (privat.js)
+      } else if (action === 'privLux') {
+        if (buyLux(this.career, value)) this.h.onChange();
+      } else if (action === 'privLuxSell') {
+        if (sellLux(this.career, value)) this.h.onChange();
+      } else if (action === 'privTrip') {
+        if (takeTrip(this.career)) this.h.onChange();
+      } else if (action === 'privDonate') {
+        if (donate(this.career)) this.h.onChange();
+      } else if (action === 'privHeavy') {
+        setHeavy(this.career, Number(value) === 1);
+        this.h.onChange();
+      } else if (action === 'privPartner') {
+        if (setPartnerSex(this.career, value)) this.h.onChange();
       } else if (action === 'ticketPrice') {
         const [kind, dir] = String(value).split(':');
         setPrice(this.career, kind, Number(dir) * TICKETS.step); // Eintrittspreise (tickets.js)

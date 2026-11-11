@@ -70,6 +70,7 @@ import { defaultCrest } from '../ui/crest.js';
 import { clubTactic, normalizeTactic, systemFormation } from '../sim/tactics.js';
 import { shirtSponsor, sleeveSponsor, sponsorColor, SPONSORS } from './sponsors.js';
 import { advancePokale, bundChat } from './pokal.js';
+import { seasonPrivat, weeklyPrivat } from './privat.js';
 import { euroSeasonEnd } from './europa.js';
 import { bundVenueEvent } from './bundevents.js';
 import { initTiger, tigerWeek } from './tiger.js';
@@ -459,6 +460,7 @@ export function nextSeason(career) {
   if (career.relegation) for (const idx of career.relegation.opponent.squad) if (!clubs.some((c) => c.squad.includes(idx))) delete career.players[idx];
   if (career.flags) Object.assign(career.flags, { summerfest: false, anniversary: false });
   seasonPersonal(career, pos);
+  seasonPrivat(career); // Unterhalt, Wirkung des Trainertypus (privat.js)
   if (career.arcs) career.arcs = career.arcs.filter((a) => a.id !== 'bruder'); // neuer Spielplan
   Object.assign(career, {
     level: newLevel,
@@ -1433,6 +1435,7 @@ export function finishRound(career) {
   weeklyFinances(career);
   weeklyMood(career);
   weeklyPersonal(career);
+  weeklyPrivat(career); // privates Konto und Auftreten des Trainers (privat.js)
   sagaWeek(career);
   weeklyAcademy(career);
   weeklyYouthMatches(career, ownKids(career)); // Jugendspieltag am Wochenende

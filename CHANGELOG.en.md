@@ -6,6 +6,33 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-11-1 – The manager's private life
+
+### New
+- **Money of your own:** the manager has a private account, separate from the club's. Every matchday an equal share of the season's income is added.
+  - Up to the fifth tier, €3,000 a season is left over from your own job (derived).
+  - From the club: County League €3,000 (the tax-free coaching allowance), the three leagues above €4,800 / €7,200 / €12,000 (game values).
+  - Professional leagues: fourth tier €35,000 (weak source), third tier €150,000 and second tier €400,000 (game values), top flight €1.4m (from press estimates for 2025/26).
+  - The club's cash is not charged extra: the salary is part of the running costs already in the game.
+- **Spending** under Club → Me → "Private life":
+  - Home, car and clothes in five stages each, with upkeep per season. Changing stage returns part of the old price.
+  - Luxuries: a watch, a motorboat, a holiday home, plus one long-haul family trip per season.
+  - Donations to the club.
+  - All prices are game values.
+- **Effects:**
+  - A home relaxes the family, a car saves energy.
+  - Your appearance is compared with what is usual in the league. If it fits in professional football, it strengthens your standing and reputation. Too flashy at an amateur club lowers the dressing-room mood. Too plain in professional football costs trust with the board.
+  - **Manager type:** follows from your behaviour – down to earth, saver, bon vivant, businessman, family person or benefactor – and takes effect once a season.
+- **Family events:** meeting someone (a woman or a man), moving in together, getting married (small or big), children, first day at school, the teenage years, a relationship crisis, separation and divorce, caring for your mother, bereavement.
+  - Decisions affect the family's patience, your energy, the account and the mood.
+  - Separation and bereavement can be switched off on the "Private life" page.
+  - Female or male partner can be changed there at any time.
+- Applies to managers you created yourself. Very old saves without a created manager stay as they are.
+
+### Fixed
+- **Neutral venue:** European finals and the Super Cup were accounted for like a home game (bar, gate, referee, pitch rent). Not any more.
+- **Music:** after a spell in the background, the clubhouse theme played all the missed bars at once.
+
 ## 2026-11-09-8 – Stadium announcer, music and more
 
 ### New

@@ -6,6 +6,7 @@ import { book } from './finances.js';
 import { arrivalTiers, getPool, humanClub, joinSquad, niveauFits, playerOf, takenIndices } from './career.js';
 import { advanceStories, arcsOf, STORY_STARTS, storyDecision } from './stories.js';
 import { CRISES, PERSONAL_EVENTS } from './personal.js';
+import { PRIVAT_EVENTS } from './privat.js';
 import { SAGA_EVENTS } from './sagas.js';
 import { SOCIAL_EVENTS } from './social.js';
 import { consequences, snapshot } from './consequences.js';
@@ -621,6 +622,7 @@ const eventPacks = () => (packs ??= [
   { pack: EVENTS, roll: true },
   { pack: STORY_STARTS, roll: true },
   { pack: PERSONAL_EVENTS, roll: true },
+  { pack: PRIVAT_EVENTS, roll: true },
   { pack: SAGA_EVENTS, roll: true },
   { pack: SOCIAL_EVENTS, roll: true },
   { pack: BANTER_EVENTS, roll: true },
@@ -671,7 +673,7 @@ export function rollWeekEvent(career) {
   // In der Derbywoche geht es um nichts anderes (bisher konnte ein Zufallsereignis dazwischenfunken).
   // Ein fälliges Folge-Ereignis einer Kette (Reportage, Rückkehr, Fanbus …) kommt in seiner Woche.
   const chosen = (derbyThisWeek(career) && candidates.find((c) => DERBY_EVENTS[c.id])) || candidates.find((c) => c.ev.followUp) || candidates.find((c) => (r -= c.ev.weight) < 0) || candidates[0];
-  const event = { id: chosen.id, ctx: chosen.ctx, members: squadRefs(career, chosen.ctx), text: chosen.ev.text(career, chosen.ctx), options: chosen.ev.options.map((o) => labelOf(o, career)), choice: null, result: null, story: STORY_STARTS[chosen.id] ? 'Neue Geschichte' : PERSONAL_EVENTS[chosen.id] ? 'Privat' : SAGA_EVENTS[chosen.id] ? 'Vereinsgeschichte' : null };
+  const event = { id: chosen.id, ctx: chosen.ctx, members: squadRefs(career, chosen.ctx), text: chosen.ev.text(career, chosen.ctx), options: chosen.ev.options.map((o) => labelOf(o, career)), choice: null, result: null, story: STORY_STARTS[chosen.id] ? 'Neue Geschichte' : PERSONAL_EVENTS[chosen.id] || PRIVAT_EVENTS[chosen.id] ? 'Privat' : SAGA_EVENTS[chosen.id] ? 'Vereinsgeschichte' : null };
   career.week.event = event;
   career.eventLog.push({ id: chosen.id, season: career.season, round: career.round });
   if (career.eventLog.length > 40) career.eventLog.shift();

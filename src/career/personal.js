@@ -21,7 +21,7 @@ const FAMILIES = [
   { text: tr('Freundin, keine Kinder', 'girlfriend, no children'), kids: 0, partner: 'Deine Freundin' },
 ];
 // Partnerin/Partner steht intern auf Deutsch im Spielstand – für Texte in der aktuellen Sprache.
-const PARTNER_EN = { 'Deine Frau': 'Your wife', 'Deine Partnerin': 'Your partner', 'Deine Freundin': 'Your girlfriend', 'Deine Mutter': 'Your mum' };
+const PARTNER_EN = { 'Deine Frau': 'Your wife', 'Deine Partnerin': 'Your partner', 'Deine Freundin': 'Your girlfriend', 'Deine Mutter': 'Your mum', 'Dein Mann': 'Your husband', 'Dein Partner': 'Your partner' };
 export const partnerOf = (c) => {
   const p = c.coach?.partner;
   return p ? tr(p, PARTNER_EN[p] ?? p) : null;
@@ -71,6 +71,16 @@ export const STYLES = {
 };
 export const RELATIONS = tr({ single: 'Single', beziehung: 'In einer Beziehung', verheiratet: 'Verheiratet' }, { single: 'Single', beziehung: 'In a relationship', verheiratet: 'Married' });
 const PARTNER = { single: 'Deine Mutter', beziehung: 'Deine Partnerin', verheiratet: 'Deine Frau' };
+
+// Beziehungsstand ändern (privat.js: kennenlernen, heiraten, trennen). sex: 'w' | 'm' – frei wählbar (Nutzerwunsch 2026-11-10).
+export function setRelation(c, relation, sex = c.coach?.partnerSex ?? 'w') {
+  const k = c.coach;
+  if (!k) return;
+  k.relation = relation;
+  k.partnerSex = relation === 'single' ? null : sex ?? 'w';
+  k.partner = relation === 'single' ? PARTNER.single : k.partnerSex === 'm' ? (relation === 'verheiratet' ? 'Dein Mann' : 'Dein Partner') : PARTNER[relation];
+  k.family = familyText(relation, k.children ?? []);
+}
 
 export function familyText(relation, children = []) {
   const n = children.length;
@@ -295,7 +305,7 @@ export function personalWeek(c) {
   if (coachAway(c)) c.week.lineup = null;
 }
 
-const sendAway = (c, weeks = 1) => {
+export const sendAway = (c, weeks = 1) => {
   c.coach.awayWeeks = Math.max(c.coach.awayWeeks, weeks);
   if (c.week) c.week.lineup = null;
   if (c.coach.idx != null && c.week?.availability[c.coach.idx] !== undefined) c.week.availability[c.coach.idx] = 'no';
@@ -351,7 +361,7 @@ export const PERSONAL_EVENTS = {
           c.flags.anniversary = true;
           if (rng.chance(0.5)) return adjustPatience(c, 4), tr('Tankstellen-Blumen. Kam trotzdem gut an.', 'Petrol station flowers. Went down well anyway.');
           adjustPatience(c, -15);
-          return tr('Du hast es vergessen. Sie nicht.', 'You forgot. She did not.');
+          return c.coach.partnerSex === 'm' ? tr('Du hast es vergessen. Er nicht.', 'You forgot. He did not.') : tr('Du hast es vergessen. Sie nicht.', 'You forgot. She did not.');
         },
       },
     ],
