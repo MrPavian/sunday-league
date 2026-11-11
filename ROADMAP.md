@@ -1271,8 +1271,9 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
 17. **Privatleben des Trainers: Geld, Auftreten, Familie** (vom Nutzer gewünscht, 2026-11-10). ✅ **Erste Lieferung 2026-11-11** (privat.js,
     tests/privat.test.js; Vorgaben ohne Rückmeldung: Partnerin/Partner frei wählbar, sachlicher Ton, Trennung und Trauerfall abschaltbar):
     Konto mit Einkommen je Liga, Wohnen/Auto/Kleidung/Luxus/Reise/Spende, Auftreten gegen das Übliche der Liga, Trainertypus,
-    zehn Familienereignisse. Offen: Umzug bei Vereinswechsel (zieht die Familie mit?), Patchwork, Kind im eigenen Nachwuchs als
-    Ereignis, Presse-Meldungen zu Käufen, Besitz in 3D (Auto auf dem Parkplatz), Trainergehalt verhandeln, bessere Quellen für
+    zehn Familienereignisse. ✅ **Zweite Lieferung 2026-11-11:** Umzug oder Pendeln bei Vereinswechsel in die Ferne, Gehalt verhandeln (Faktor 0,7–1,5,
+    hängt am Vertrauen des Vorstands). Offen: Patchwork, Kind im eigenen Nachwuchs als
+    Ereignis, Presse-Meldungen zu Käufen, Besitz in 3D (Auto auf dem Parkplatz), bessere Quellen für
     Gehälter unterhalb der 1. Liga. Bisher gibt es nur „Geduld der
     Familie" und „Ehrenamts-Energie" (personal.js); der Trainer verdient nichts Eigenes und hat kein Privatleben mit Folgen.
     - **Eigenes Geld:** Trainergehalt (unten Aufwandsentschädigung, oben Vertrag mit Gehalt und Prämien) auf ein privates Konto,

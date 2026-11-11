@@ -6,6 +6,20 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-11-2 – Salary talks and moving house
+
+### New
+- **Salary talks:** where the club pays (from the County League up), the board asks for a contract talk once a season.
+  - Demand considerably more (+20%), ask for a moderate rise (+10%), leave things as they are, or take a cut for the club's sake (−10%).
+  - Your chances rise with the board's trust (10 to 90%). A rebuff costs trust, a cut earns trust and mood.
+  - The result is a factor on the usual salary of the league, between 70 and 150%. It is shown under Club → Me → "Private life".
+  - A club that courts you in the summer pays 10% more. After a sacking you start at the usual rate.
+- **Moving house on a change of club:** from the fourth tier the new club is always too far away, from the sixth tier when you change leagues. Below that you stay in the area.
+  - At first you commute: a second flat for €6,000 per season, and it wears on your energy and the family's patience.
+  - Moving costs €3,000 plus 5% of the value of your own home. Your partner and every school-age child do not take the move without grumbling.
+  - The question arrives as an event; you can also move later under "Private life".
+- All figures are game values.
+
 ## 2026-11-11-1 – The manager's private life
 
 ### New

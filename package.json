@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:quick": "vitest run --exclude tests/headers.test.js --exclude tests/wing.test.js --exclude tests/combos.test.js --exclude tests/president.test.js --exclude tests/pokal2.test.js --exclude tests/sim.test.js --exclude tests/incident_obstacles.test.js --exclude tests/corners.test.js --exclude tests/commands.test.js",
+    "check:fast": "node scripts/check-fast.mjs",
     "longrun": "node scripts/longrun.mjs",
     "android:sync": "vite build && cap sync android",
     "android:apk": "npm run android:sync && cd android && ./gradlew assembleDebug",

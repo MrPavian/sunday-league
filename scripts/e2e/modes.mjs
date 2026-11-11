@@ -999,6 +999,15 @@ export async function privatLife(b) {
     await click(p, '[data-testid="priv-heavy-off"]').catch(() => {});
     await p.waitForTimeout(200);
     ok(await p.evaluate(() => __sl.career.coach.privat.heavy === false), 'schwere Ereignisse lassen sich nicht abschalten');
+    // Pendeln nach einem Wechsel in die Ferne: Hinweis und Knopf „Umziehen“ (privat.js moveHome).
+    await p.evaluate(() => { Object.assign(__sl.career.coach.privat, { commute: true, salary: 1.2 }); });
+    await click(p, '[data-action="tab"][data-value="me"]').catch(() => {});
+    await p.waitForTimeout(300);
+    ok(!!(await p.$('[data-testid="priv-salary"]')), 'ausgehandeltes Gehalt wird nicht angezeigt');
+    await click(p, '[data-testid="priv-move"]').catch(() => {});
+    await p.waitForTimeout(300);
+    ok(await p.evaluate(() => __sl.career.coach.privat.commute === false && __sl.career.coach.privat.wallet === 22000), 'Umzug wirkt nicht');
+    ok(!(await p.$('[data-testid="priv-move"]')), 'Knopf „Umziehen“ bleibt nach dem Umzug stehen');
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), 'Seite scrollt quer');
     ok(!p.errors.length, `Fehler: ${p.errors.join(' | ')}`);
     await p.context().close();

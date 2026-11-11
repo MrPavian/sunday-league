@@ -12,7 +12,7 @@ import { awayKitOf, humanClub, KIT_COLLARS, KIT_COLORS, KIT_PATTERNS, KIT_SLEEVE
 import { spielberichtStreng } from '../../career/spielbericht.js';
 import { leagueTitle, niveauText, VERBAND_CHOICES, verbandLeagues } from '../../career/verband.js';
 import { FINES, MEMBER_FEE, SLOTS } from '../../career/finances.js';
-import { auftreten, auftretenText, donateAmount, GOODS, goodName, kindLabel, LUX, luxName, priceOf, privat, seasonIncome, TRIP, tripOpen, typus, typusDesc, typusName, upkeep, weeklyIncome } from '../../career/privat.js';
+import { auftreten, auftretenText, donateAmount, GOODS, goodName, kindLabel, LUX, luxName, MOVE, moveCost, priceOf, privat, salaryFactor, seasonIncome, TRIP, tripOpen, typus, typusDesc, typusName, upkeep, weeklyIncome } from '../../career/privat.js';
 import { demandMul, priceRatio, prices, PROTEST, TICKETS, ticketsOn } from '../../career/tickets.js';
 import { travelCost } from '../../career/travel.js';
 import { freeKitLeft, kitPrice, OUTFITTER_SEASONS, outfitterDef, outfitterOf, outfitterOffers } from '../../career/outfitter.js';
@@ -92,6 +92,8 @@ export const clubScreens = {
     const partnerLine = k.relation !== 'single' && k.partnerName ? `<p class="t-2">${tr('An deiner Seite', 'By your side')}: <b>${esc(k.partnerName)}</b> <span class="ui-row priv-inline">${button(tr('Partnerin', 'Female partner'), { kind: k.partnerSex === 'm' ? 'ghost' : 'primary', action: 'privPartner', value: 'w' })}${button(tr('Partner', 'Male partner'), { kind: k.partnerSex === 'm' ? 'primary' : 'ghost', action: 'privPartner', value: 'm' })}</span></p>` : '';
     return `<div class="me-card priv-card" data-testid="privat"><h4>${tr('Privat', 'Private life')}</h4>
       <p><b data-testid="priv-wallet" class="${minus ? 'warn' : ''}">${euro(Math.round(p.wallet))}</b> ${tr('auf dem privaten Konto', 'in your private account')} · ${tr('Einkommen', 'income')} ${euro(seasonIncome(c))} ${tr('je Saison', 'per season')} <small>(${euro(weeklyIncome(c))} ${tr('je Spieltag', 'per matchday')})</small>${upkeep(c) ? ` · ${tr('Unterhalt', 'upkeep')} ${euro(upkeep(c))} ${tr('je Saison', 'per season')}` : ''}</p>
+      ${salaryFactor(c) !== 1 ? `<p class="t-2" data-testid="priv-salary">${tr('Vertrag mit dem Verein', 'Contract with the club')}: <b>${salaryFactor(c) > 1 ? '+' : '−'}${Math.abs(Math.round((salaryFactor(c) - 1) * 100))} %</b> ${tr('zum Üblichen der Liga', 'against the usual in this league')}</p>` : ''}
+      ${p.commute ? `<div class="priv-kind"><p class="t-cap">${tr('Du pendelst: Zweitwohnung am Platz', 'You commute: second flat near the ground')} <small>(${euro(MOVE.second)} ${tr('je Saison, zehrt an Kraft und Familie', 'per season, wears on energy and family')})</small></p><div class="ui-row priv-row">${button(`${tr('Umziehen', 'Move')} · ${euro(moveCost(c))}`, { action: 'privMove', disabled: minus || p.wallet < moveCost(c), 'data-testid': 'priv-move' })}</div></div>` : ''}
       ${minus ? `<p class="warn">${tr('Das Konto ist im Minus: Kaufen geht nicht, und zu Hause hängt der Haussegen schief.', 'The account is overdrawn: no buying, and it is causing trouble at home.')}</p>` : ''}
       <p class="t-2">${tr('Trainertyp', 'Manager type')}: <b data-testid="priv-type">${typusName(t)}</b> – ${typusDesc(t)}</p>
       <p class="t-2">${tr('Auftreten', 'Appearance')}: <b>${a.glanz}</b> <small>(${tr('üblich in dieser Liga', 'usual in this league')}: ${a.expect}–${a.expect + 2})</small> – ${auftretenText(c)}</p>

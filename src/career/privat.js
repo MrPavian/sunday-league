@@ -26,6 +26,17 @@
 //    (Stimmung). Deutlich drunter im Profifußball: Die Presse spottet, der Vorstand rümpft die Nase (Vertrauen).
 //  - Wohnen ab Stufe 1: zu Hause ist es entspannter (Geduld der Familie). Auto ab Stufe 1: weniger Lauferei (Energie).
 //  - Trainertypus: ergibt sich aus dem Verhalten (nicht wählbar) und wirkt einmal je Saison.
+//
+// GEHALT VERHANDELN (Spielwerte, 2026-11-11): Wo der Verein zahlt (ab Bezirksliga), kommt einmal je Saison das Gespräch mit dem
+// Vorstand. Das Ergebnis ist ein Faktor auf das übliche Gehalt der Liga (0,7 bis 1,5). Ob eine Forderung durchgeht, hängt am
+// Vertrauen des Vorstands; eine abgelehnte Forderung kostet Vertrauen, ein Verzicht bringt welches. Ein Verein, der im Sommer um
+// dich geworben hat, zahlt von sich aus 10 % mehr; nach einer Entlassung fängt man beim Üblichen an. Wie das Gehalt selbst wird
+// auch der Aufschlag nicht aus der Vereinskasse gebucht (siehe oben).
+//
+// UMZUG (Spielwerte, 2026-11-11): Ein Wechsel zu einem Verein ab der Regionalliga oder in eine andere Liga ab der Verbandsliga
+// ist zu weit zum täglichen Fahren. Du pendelst zunächst (Zweitwohnung: Kosten je Saison, zehrt an Kraft und Familie), bis du
+// umziehst: Grundkosten plus 5 % vom Wert des eigenen Zuhauses (Nebenkosten für Verkauf und Neukauf). Der Umzug verlangt der
+// Familie etwas ab (Partnerin oder Partner, jedes Schulkind). Wechsel in den Ligen darunter bleiben in der Gegend.
 import { tr } from '../core/i18n.js';
 import { book } from './finances.js';
 import { playerOf } from './career.js';
@@ -39,6 +50,9 @@ export const PAY = {
 };
 // Übliches Auftreten je Liga (Summe der Stufen).
 export const EXPECT = (level) => (level >= 12 ? 10 : level === 11 ? 8 : level === 10 ? 6 : level === 9 ? 4 : level >= 5 ? 2 : 0);
+
+export const SALARY = { from: 5, min: 0.7, max: 1.5, ask: 0.2, fair: 0.1, waive: 0.1, summer: 1.1 };
+export const MOVE = { farFrom: 9, stateFrom: 7, base: 3000, homeShare: 0.05, second: 6000, partner: -8, school: -4 };
 
 const T = (de, en) => ({ de, en });
 export const GOODS = {
@@ -113,8 +127,11 @@ export function seasonIncome(c) {
   const level = c.level ?? 1;
   const job = level <= PAY.jobUntil ? PAY.job : 0;
   if (isPresident(c)) return PAY.job;
-  return job + (PAY.club[Math.min(12, level)] ?? 0);
+  return job + Math.round((PAY.club[Math.min(12, level)] ?? 0) * salaryFactor(c));
 }
+// Ausgehandelter Faktor auf das übliche Gehalt der Liga (1 = üblich).
+export const salaryFactor = (c) => c.coach?.privat?.salary ?? 1;
+export const clubPays = (c) => privatOn(c) && !isPresident(c) && (c.level ?? 1) >= SALARY.from;
 const weeks = (c) => Math.max(1, c.fixtures?.length ?? 1);
 export const weeklyIncome = (c) => Math.round(seasonIncome(c) / weeks(c));
 
@@ -247,8 +264,36 @@ export function setHeavy(c, on) {
 export const upkeep = (c) => {
   const p = privat(c);
   if (!p) return 0;
-  return Object.keys(GOODS).reduce((s, kind) => s + GOODS[kind].tiers[p.own[kind]].upkeep, 0) + p.lux.reduce((s, id) => s + (LUX[id]?.upkeep ?? 0), 0);
+  return Object.keys(GOODS).reduce((s, kind) => s + GOODS[kind].tiers[p.own[kind]].upkeep, 0) + p.lux.reduce((s, id) => s + (LUX[id]?.upkeep ?? 0), 0) + (p.commute ? MOVE.second : 0);
 };
+
+// --- Vereinswechsel: neuer Vertrag, und ist es zu weit zum Fahren? ---------------------------------------------------------
+// Aus clubchange.js (freshStart), wenn der neue Verein schon steht.
+export function clubChanged(c, oldLevel, reason) {
+  const p = privat(c);
+  if (!p) return;
+  p.salary = reason === 'summer' ? SALARY.summer : 1;
+  const level = c.level ?? 1;
+  if (level >= MOVE.farFrom || (level !== oldLevel && Math.max(level, oldLevel) >= MOVE.stateFrom)) {
+    p.commute = true;
+    p.moveAsk = true;
+  }
+}
+const schoolKids = (c) => (c.coach.children ?? []).filter((ch) => { const a = ch.age + ((c.season ?? 1) - 1); return a >= 6 && a <= 17; }).length;
+export const moveCost = (c) => {
+  const p = privat(c);
+  return p ? MOVE.base + Math.round(GOODS.home.tiers[p.own.home].price * MOVE.homeShare) : 0;
+};
+// Umziehen an den neuen Arbeitsort (Ereignis oder Knopf unter „Privat“).
+export function moveHome(c) {
+  const p = privat(c);
+  if (!p?.commute || p.wallet < moveCost(c)) return false;
+  p.wallet -= moveCost(c);
+  p.commute = false;
+  p.moveAsk = false;
+  if (c.coach.relation !== 'single' && c.coach.flags?.together !== false) adjustPatience(c, MOVE.partner + MOVE.school * schoolKids(c));
+  return true;
+}
 
 // --- Wochen- und Saisonlauf ----------------------------------------------------------------------------------------------
 // Nach jedem Spieltag (career.js finishRound).
@@ -262,6 +307,7 @@ export function weeklyPrivat(c) {
   if (p.own.home >= 1 && r % 2 === 0) adjustPatience(c, 1);
   if (p.own.car >= 1 && r % 2 === 1) adjustEnergy(c, 1);
   if (p.wallet < 0 && r % 2 === 0) adjustPatience(c, -2);
+  if (p.commute) r % 2 === 0 ? adjustEnergy(c, -1) : c.coach.relation !== 'single' && adjustPatience(c, -1);
   const a = auftreten(c);
   if (a.kind === 'protz' && r % 4 === 3) {
     mood(c, -0.02);
@@ -297,6 +343,18 @@ const partnerName = (c) => K(c).partnerName ?? '';
 const pay = (c, amount) => (privat(c).wallet -= amount);
 const can = (c, amount) => privat(c).wallet >= amount;
 const eur = (n) => tr(`${n.toLocaleString('de-DE')} €`, `€${n.toLocaleString('en-GB')}`);
+const clubPay = (c) => Math.round((PAY.club[Math.min(12, c.level ?? 1)] ?? 0) * salaryFactor(c));
+const pct = (c) => { const d = Math.round((salaryFactor(c) - 1) * 100); return `${d > 0 ? '+' : '−'}${Math.abs(d)} %`; };
+// Forderung an den Vorstand: Die Aussicht steigt mit dem Vertrauen (ab `from` Punkten, voll bei 50 mehr; Spielwerte).
+export const raiseChance = (c, from) => Math.max(0.1, Math.min(0.9, ((trustOf(c) ?? 50) - from) / 50));
+function negotiate(c, rng, step, from, penalty) {
+  const p = privat(c);
+  p.salaryAsked = c.season;
+  if (salaryFactor(c) >= SALARY.max) return tr('„Mehr als das zahlt in dieser Liga niemand.“ Es bleibt, wie es ist.', '"Nobody in this league pays more than that." It stays as it is.');
+  if (!rng.chance(raiseChance(c, from))) return trust(c, penalty), tr('Der Vorstand winkt ab: „Dafür sehen wir im Moment keinen Anlass.“ Die Stimmung im Raum ist danach kühler.', 'The board waves it off: "We see no reason for that at the moment." The mood in the room is cooler afterwards.');
+  p.salary = Math.min(SALARY.max, Math.round((salaryFactor(c) + step) * 100) / 100);
+  return tr(`Kurzes Zögern, dann ein Nicken. Neues Gehalt: ${eur(clubPay(c))} je Saison.`, `A brief hesitation, then a nod. New salary: ${eur(clubPay(c))} per season.`);
+}
 const NAMES_W = ['Anna', 'Lena', 'Marie', 'Sophie', 'Julia', 'Katrin', 'Nina', 'Sandra', 'Miriam', 'Aylin', 'Elif', 'Jana'];
 const NAMES_M = ['Jan', 'Tobias', 'Daniel', 'Markus', 'Stefan', 'Florian', 'Emre', 'Lukas', 'Philipp', 'Deniz', 'Marco', 'Sven'];
 const KIDS_W = ['Emma', 'Mia', 'Lina', 'Ella', 'Ida', 'Leni', 'Mila', 'Frieda'];
@@ -442,6 +500,49 @@ export const PRIVAT_EVENTS = {
           const r = split(c);
           mood(c, -0.02);
           return r.married ? tr(`Ihr trennt euch, später folgt die Scheidung.${r.cost ? ` Vom Konto geht die Hälfte (${eur(r.cost)}).` : ''} Die Kinder sehen euch beide. Es dauert, bis sich das Leben neu sortiert.`, `You separate, and the divorce follows later.${r.cost ? ` Half of the account goes (${eur(r.cost)}).` : ''} The children see you both. It takes time for life to settle again.`) : tr('Ihr trennt euch. Es dauert, bis sich das Leben neu sortiert.', 'You separate. It takes time for life to settle again.');
+        },
+      },
+    ],
+  },
+  priv_umzug: {
+    weight: 6,
+    needs: (c) => (ok(c) && privat(c).moveAsk && privat(c).commute ? {} : null),
+    text: (c) => (K(c).relation !== 'single' && K(c).flags.together !== false
+      ? tr(`Der neue Verein liegt zu weit weg, um jeden Tag zu fahren. ${partnerName(c) || 'Zu Hause'} fragt: „Und wir? Ziehen wir mit – oder sehen wir dich nur noch am Wochenende?“`, `The new club is too far away to drive every day. ${partnerName(c) || 'At home'} they ask: "And us? Do we move too – or will we only see you at weekends?"`)
+      : tr('Der neue Verein liegt zu weit weg, um jeden Tag zu fahren. Ziehst du um – oder nimmst du dir ein Zimmer am Platz und fährst am Wochenende heim?', 'The new club is too far away to drive every day. Do you move – or take a room near the ground and drive home at weekends?')),
+    options: [
+      {
+        label: (c) => tr(`Umziehen (${eur(moveCost(c))})`, `Move (${eur(moveCost(c))})`),
+        effect: (c) => {
+          const family = K(c).relation !== 'single' && K(c).flags.together !== false;
+          const kids = schoolKids(c);
+          if (!moveHome(c)) return (privat(c).moveAsk = false), tr('Das Konto gibt den Umzug noch nicht her. Du pendelst erst einmal – umziehen kannst du später unter „Privat“.', 'The account will not stretch to the move yet. You commute for now – you can move later under "Private life".');
+          return family
+            ? kids ? tr('Kartons, Abschiede, neue Schule. Es dauert, bis alle angekommen sind – aber ihr seid zusammen.', 'Boxes, goodbyes, a new school. It takes a while for everyone to settle – but you are together.') : tr('Kartons, Abschiede, eine neue Stadt. Es dauert, bis ihr angekommen seid – aber ihr seid zusammen.', 'Boxes, goodbyes, a new town. It takes a while to settle – but you are together.')
+            : tr('Zwei Fahrten mit dem Transporter, dann bist du da. Der Weg zum Platz dauert jetzt zehn Minuten.', 'Two trips with the van and you are there. The way to the ground now takes ten minutes.');
+        },
+      },
+      { label: () => tr(`Pendeln, Zweitwohnung am Platz (${eur(MOVE.second)} je Saison)`, `Commute, second flat near the ground (${eur(MOVE.second)} per season)`), effect: (c) => ((privat(c).moveAsk = false), tr('Montags hin, samstags zurück. Die Autobahn kennst du bald auswendig. Umziehen kannst du jederzeit unter „Privat“.', 'There on Mondays, back on Saturdays. You will soon know the motorway by heart. You can move at any time under "Private life".')) },
+    ],
+  },
+  priv_gehalt: {
+    weight: 2,
+    needs: (c) => (ok(c) && clubPays(c) && trustOf(c) != null && (c.round ?? 0) >= 4 && privat(c).salaryAsked !== c.season ? {} : null),
+    text: (c) => tr(`Der Vorstand bittet zum Gespräch über deinen Vertrag. Bisher bekommst du ${eur(clubPay(c))} je Saison vom Verein${salaryFactor(c) !== 1 ? ` (${pct(c)} zum Üblichen der Liga)` : ''}. „Wie stellen Sie sich das vor?“`, `The board asks for a talk about your contract. So far you get ${eur(clubPay(c))} per season from the club${salaryFactor(c) !== 1 ? ` (${pct(c)} against the usual in this league)` : ''}. "What do you have in mind?"`),
+    options: [
+      { label: tr('Deutlich mehr fordern (+20 %)', 'Demand considerably more (+20 %)'), effect: (c, ctx, rng) => negotiate(c, rng, SALARY.ask, 40, -3) },
+      { label: tr('Maßvoll mehr fordern (+10 %)', 'Ask for a moderate rise (+10 %)'), effect: (c, ctx, rng) => negotiate(c, rng, SALARY.fair, 25, -1) },
+      { label: tr('Alles bleibt, wie es ist', 'Everything stays as it is'), effect: (c) => ((privat(c).salaryAsked = c.season), tr('Ein Handschlag, fertig. Der Vertrag läuft weiter.', 'A handshake, done. The contract carries on.')) },
+      {
+        label: tr('Dem Verein zuliebe verzichten (−10 %)', 'Take a cut for the club\'s sake (−10 %)'),
+        effect: (c) => {
+          const p = privat(c);
+          p.salaryAsked = c.season;
+          if (salaryFactor(c) <= SALARY.min) return tr('Noch weniger geht nicht, sagt selbst der Kassenwart. Es bleibt, wie es ist.', 'Even the treasurer says it cannot go any lower. It stays as it is.');
+          p.salary = Math.max(SALARY.min, Math.round((salaryFactor(c) - SALARY.waive) * 100) / 100);
+          trust(c, 3);
+          mood(c, 0.02);
+          return tr(`Der Vorstand ist sichtlich beeindruckt, und in der Kabine spricht es sich herum. Neues Gehalt: ${eur(clubPay(c))} je Saison.`, `The board is visibly impressed, and word gets round the dressing room. New salary: ${eur(clubPay(c))} per season.`);
         },
       },
     ],

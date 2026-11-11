@@ -14,7 +14,7 @@ import { appointStaff, releaseStaff } from '../career/staff.js';
 // Was im Vereinsheim scrollt (je nach Bildschirmgröße das Fenster, der Inhalt oder die Mappe).
 const SCROLLERS = '.club-panel, .club-main, .club-body, .club-folder, .folder-sheet';
 const scrollKey = (el) => SCROLLERS.split(', ').find((sel) => el.matches(sel));
-import { buy, buyLux, donate, sellLux, setHeavy, setPartnerSex, takeTrip } from '../career/privat.js';
+import { buy, buyLux, donate, sellLux, setHeavy, setPartnerSex, takeTrip, moveHome } from '../career/privat.js';
 import { setSquadExtra, setVerband, argueRumor, askRumor, currentLineup, humanClub, updateClub, updateCrest, setFounded, clampFounded, foundedRange, setClubTactic, setClubPlan, maxSquad, recruit, releasePlayer, scoutRumor, talkRumor, nudge, playerOf, resetLineup, setLineupSlot, seasonOver, table } from '../career/career.js';
 import { verbandLeagues } from '../career/verband.js';
 import { extend as extendContract, releaseWithPay } from '../career/contracts.js';
@@ -475,6 +475,8 @@ export class Clubhouse {
         if (takeTrip(this.career)) this.h.onChange();
       } else if (action === 'privDonate') {
         if (donate(this.career)) this.h.onChange();
+      } else if (action === 'privMove') {
+        if (moveHome(this.career)) this.h.onChange();
       } else if (action === 'privHeavy') {
         setHeavy(this.career, Number(value) === 1);
         this.h.onChange();

@@ -6,6 +6,20 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-11-2 – Gehalt verhandeln und Umzug
+
+### Neu
+- **Gehalt verhandeln:** Wo der Verein zahlt (ab der Bezirksliga), kommt einmal je Saison das Vertragsgespräch mit dem Vorstand.
+  - Deutlich mehr fordern (+20 %), maßvoll mehr fordern (+10 %), alles lassen oder dem Verein zuliebe verzichten (−10 %).
+  - Die Aussicht steigt mit dem Vertrauen des Vorstands (10 bis 90 %). Eine Abfuhr kostet Vertrauen, ein Verzicht bringt Vertrauen und Stimmung.
+  - Das Ergebnis ist ein Faktor auf das übliche Gehalt der Liga, zwischen 70 und 150 %. Er steht unter Verein → Ich → „Privat“.
+  - Ein Verein, der im Sommer um dich wirbt, zahlt 10 % mehr. Nach einer Entlassung beginnt man beim Üblichen.
+- **Umzug bei Vereinswechsel:** Ab der Regionalliga ist der neue Verein immer zu weit weg, ab der Verbandsliga bei einem Wechsel über Ligagrenzen. Darunter bleibt man in der Gegend.
+  - Zunächst pendelst du: Zweitwohnung für 6000 € je Saison, dazu zehrt es an Kraft und an der Geduld der Familie.
+  - Umziehen kostet 3000 € plus 5 % vom Wert des eigenen Zuhauses. Partnerin oder Partner und jedes Schulkind tragen den Umzug nicht ohne Murren mit.
+  - Die Frage kommt als Ereignis; umziehen geht auch später unter „Privat“.
+- Alle Zahlen sind Spielwerte.
+
 ## 2026-11-11-1 – Privatleben des Trainers
 
 ### Neu

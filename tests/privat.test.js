@@ -3,7 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { createCareer, finishRound, currentFixtures } from '../src/career/career.js';
 import { createRng } from '../src/core/rng.js';
 import { coachRep } from '../src/career/natcoach.js';
-import { auftreten, buy, buyLux, donate, EXPECT, GOODS, PAY, priceOf, privat, privatOn, PRIVAT_EVENTS, seasonIncome, seasonPrivat, setHeavy, setPartnerSex, takeTrip, TRIP, typus, upkeep, weeklyIncome, weeklyPrivat } from '../src/career/privat.js';
+import { board } from '../src/career/pressure.js';
+import { nextSeason, seasonOver, table, humanClub } from '../src/career/career.js';
+import { setSummerMove, summerOffers } from '../src/career/clubchange.js';
+import { clubChanged, MOVE, moveCost, moveHome, raiseChance, SALARY, salaryFactor, auftreten, buy, buyLux, donate, EXPECT, GOODS, PAY, priceOf, privat, privatOn, PRIVAT_EVENTS, seasonIncome, seasonPrivat, setHeavy, setPartnerSex, takeTrip, TRIP, typus, upkeep, weeklyIncome, weeklyPrivat } from '../src/career/privat.js';
 
 const coach = (extra = {}) => ({ first: 'Erika', last: 'Test', style: 'spielmacher', mode: 'coachOnly', relation: 'single', children: [], ...extra });
 const make = (seed = 5, input = coach()) => createCareer({ seed, coach: input });
@@ -199,5 +202,151 @@ describe('Familienereignisse', () => {
     expect(PRIVAT_EVENTS.priv_einschulung.needs(c)).toBe(null);
     expect(setPartnerSex(c, 'm')).toBe(true);
     expect(c.coach.partner).toBe('Dein Mann');
+  });
+});
+
+describe('Gehalt verhandeln', () => {
+  const pro = (trust) => {
+    const c = make(21);
+    c.level = 9;
+    c.round = 4;
+    privat(c);
+    board(c).trust = trust;
+    return c;
+  };
+  it('nur wo der Verein zahlt, einmal je Saison; die Aussicht hängt am Vertrauen', () => {
+    const low = make(21);
+    low.round = 4;
+    expect(PRIVAT_EVENTS.priv_gehalt.needs(low)).toBe(null); // Kreisliga: kein Geld vom Verein
+    expect(raiseChance(pro(90), 40)).toBe(0.9);
+    expect(raiseChance(pro(40), 40)).toBe(0.1);
+    expect(raiseChance(pro(65), 40)).toBe(0.5);
+    const c = pro(90);
+    run('priv_gehalt', c, 2);
+    expect(salaryFactor(c)).toBe(1);
+    expect(PRIVAT_EVENTS.priv_gehalt.needs(c)).toBe(null);
+    c.season = 2;
+    expect(PRIVAT_EVENTS.priv_gehalt.needs(c)).not.toBe(null);
+  });
+  it('Forderung geht durch oder kostet Vertrauen; das Gehalt folgt dem Faktor; Obergrenze', () => {
+    let won = 0;
+    let lost = 0;
+    for (let seed = 1; seed <= 40; seed++) {
+      const c = pro(65);
+      run('priv_gehalt', c, 0, seed);
+      if (salaryFactor(c) === 1 + SALARY.ask) {
+        won++;
+        expect(seasonIncome(c)).toBe(Math.round(PAY.club[9] * 1.2));
+        expect(board(c).trust).toBe(65);
+      } else {
+        lost++;
+        expect(salaryFactor(c)).toBe(1);
+        expect(board(c).trust).toBe(62);
+      }
+    }
+    expect(won).toBeGreaterThan(8);
+    expect(lost).toBeGreaterThan(8);
+    const top = pro(90);
+    privat(top).salary = SALARY.max;
+    run('priv_gehalt', top, 0);
+    expect(salaryFactor(top)).toBe(SALARY.max);
+    expect(board(top).trust).toBe(90);
+  });
+  it('Verzicht bringt Vertrauen und senkt das Gehalt bis zur Untergrenze', () => {
+    const c = pro(50);
+    run('priv_gehalt', c, 3);
+    expect(salaryFactor(c)).toBe(0.9);
+    expect(board(c).trust).toBe(53);
+    expect(seasonIncome(c)).toBe(Math.round(PAY.club[9] * 0.9));
+    privat(c).salary = SALARY.min;
+    c.season = 2;
+    run('priv_gehalt', c, 3);
+    expect(salaryFactor(c)).toBe(SALARY.min);
+    expect(board(c).trust).toBe(53);
+  });
+});
+
+describe('Umzug bei Vereinswechsel', () => {
+  it('unten bleibt man in der Gegend; ab Verbandsliga über Ligagrenzen und ab Regionalliga immer zu weit', () => {
+    const a = make(22);
+    a.level = 3;
+    clubChanged(a, 2, 'summer');
+    expect(privat(a).commute).toBeUndefined();
+    expect(salaryFactor(a)).toBe(SALARY.summer); // umworben: 10 % mehr
+    const b = make(22);
+    b.level = 7;
+    clubChanged(b, 7, 'results');
+    expect(privat(b).commute).toBeUndefined(); // gleiche Liga
+    expect(salaryFactor(b)).toBe(1);
+    b.level = 6;
+    clubChanged(b, 7, 'results');
+    expect(privat(b).commute).toBe(true);
+    const d = make(22);
+    d.level = 9;
+    clubChanged(d, 9, 'results');
+    expect(privat(d)).toMatchObject({ commute: true, moveAsk: true });
+  });
+  it('Pendeln kostet Geld, Kraft und Geduld; Umziehen beendet es und verlangt der Familie etwas ab', () => {
+    const c = make(23, coach({ relation: 'verheiratet', children: [{ name: 'Paul', age: 8, sex: 'm' }] }));
+    const p = privat(c);
+    c.level = 9;
+    clubChanged(c, 8, 'summer');
+    expect(upkeep(c)).toBe(MOVE.second);
+    c.round = 2;
+    const e0 = c.coach.energy;
+    weeklyPrivat(c);
+    expect(c.coach.energy).toBe(e0 - 1);
+    c.round = 3;
+    const g0 = c.coach.patience;
+    weeklyPrivat(c);
+    expect(c.coach.patience).toBe(g0 - 1);
+    run('priv_umzug', c, 1); // pendeln
+    expect(p.commute).toBe(true);
+    expect(PRIVAT_EVENTS.priv_umzug.needs(c)).toBe(null);
+    p.own.home = 2;
+    expect(moveCost(c)).toBe(MOVE.base + GOODS.home.tiers[2].price * MOVE.homeShare);
+    p.wallet = 100;
+    expect(moveHome(c)).toBe(false);
+    p.wallet = 30000;
+    const g1 = c.coach.patience;
+    expect(moveHome(c)).toBe(true);
+    expect(p.wallet).toBe(30000 - 25500);
+    expect(p.commute).toBe(false);
+    expect(c.coach.patience).toBe(g1 + MOVE.partner + MOVE.school);
+    expect(upkeep(c)).toBe(GOODS.home.tiers[2].upkeep);
+    expect(moveHome(c)).toBe(false);
+  });
+  it('Ereignis: Umzug ohne Geld heißt erst einmal pendeln; allein zieht man ohne Abzug um', () => {
+    const c = make(24);
+    const p = privat(c);
+    c.level = 10;
+    clubChanged(c, 9, 'results');
+    p.wallet = 0;
+    expect(run('priv_umzug', c, 0)).toMatch(/pendelst|commute/);
+    expect(p.commute).toBe(true);
+    p.moveAsk = true;
+    p.wallet = 5000;
+    const g = c.coach.patience;
+    run('priv_umzug', c, 0);
+    expect(p.commute).toBe(false);
+    expect(p.wallet).toBe(2000);
+    expect(c.coach.patience).toBe(g);
+  });
+  it('echter Sommerwechsel setzt den neuen Vertrag', () => {
+    const c = make(41);
+    privat(c).salary = 0.8;
+    const cpu = c.clubs.filter((x) => !x.human).map((x) => x.id);
+    const rank = Object.fromEntries([humanClub(c).id, ...cpu].map((id, i) => [id, i]));
+    while (!seasonOver(c)) {
+      for (const f of c.fixtures[c.round]) f.result ??= rank[f.home] < rank[f.away] ? { home: 2, away: 0 } : { home: 0, away: 2 };
+      finishRound(c);
+    }
+    expect(table(c)[0].club.human).toBe(true);
+    const offer = summerOffers(c)[0];
+    setSummerMove(c, offer.id);
+    nextSeason(c);
+    expect(humanClub(c).id).toBe(offer.id);
+    expect(salaryFactor(c)).toBe(SALARY.summer);
+    expect(privat(c).commute).toBeUndefined(); // Kreisebene: bleibt in der Gegend
   });
 });

@@ -21,6 +21,7 @@ import { setSeasonGoal } from './board.js';
 import { board, TRUST } from './pressure.js';
 import { chronicle } from './sagas.js';
 import { ensureLeagues, syncOwnLeague } from './pyramid.js';
+import { clubChanged } from './privat.js';
 
 // Vereinsgebunden: wird beim Wechsel gelöscht und von migrateCareer frisch angelegt.
 export const CLUB_KEYS = ['cash', 'ledger', 'sponsors', 'sponsorBans', 'offers', 'fines', 'seasonCards', 'spirit', 'tripBooked', 'platz', 'youth', 'staff', 'alumni', 'festival', 'cups', 'saga', 'tiger', 'eventLog', 'transfers', 'clubLife', 'renewals', 'facilities', 'rivals', 'relations', 'academy', 'women', 'oldBoys', 'hired', 'pendingGrumble', 'arcs', 'formers', 'pokale', 'euroQual', 'euroHistory', 'superQual', 'superHistory', 'relegation', 'museum', 'reviews', 'founded'];
@@ -59,7 +60,7 @@ export function takeOver(c, clubId) {
 }
 
 // Was am Verein hängt, fängt neu an (Entlassung und Sommerwechsel).
-function freshStart(c, old, neu, reason, welcome = null) {
+function freshStart(c, old, neu, reason, welcome = null, oldLevel = c.level ?? 1) {
   const b0 = board(c);
   (c.pastClubs ??= []).push({ id: old.id, name: old.name, short: old.short, from: c.coach?.clubSince ?? 1, to: reason === 'summer' ? c.season - 1 : c.season, history: c.history ?? [], reason });
   c.history = [];
@@ -78,6 +79,7 @@ function freshStart(c, old, neu, reason, welcome = null) {
   for (const [lv, ids] of BASE_FACILITIES) if ((c.level ?? 1) >= lv) for (const id of ids) facilities(c).built[id] = c.season;
   const b = board(c);
   Object.assign(b, { trust: TRUST.newClub, warned: false, ultimatum: null, losses: 0, fired: null, votes: b0.votes ?? [] });
+  clubChanged(c, oldLevel, reason); // neuer Vertrag, Umzug oder Pendeln (privat.js)
   chronicle(c, tr(`Neuer Verein: ${neu.name} übernimmt den Trainer von ${old.name}.`, `New club: ${neu.name} take over the manager from ${old.name}.`));
   if (!seasonOver(c)) {
     c.week = null;
@@ -172,7 +174,7 @@ export function moveTo(c, clubId, wanted, reason = 'summer') {
   for (const club of clubs) for (const idx of club.squad) c.players[idx] ??= freshRecord();
   Object.assign(c, { level, league: leagueTitle(c, level), clubs, fixtures: roundRobin(clubs.map((x) => x.id), createRng(hash(c.seed ?? 0, c.season ?? 1, 96))) });
   syncOwnLeague(c);
-  freshStart(c, old, neu, reason, welcomeText(c, neu, reason, level < oldLevel));
+  freshStart(c, old, neu, reason, welcomeText(c, neu, reason, level < oldLevel), oldLevel);
   news(c, old, neu);
   return true;
 }
