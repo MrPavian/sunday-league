@@ -1212,10 +1212,17 @@ export function matchFormat(career) {
 
 // Aktuelle Aufstellung für die Anzeige: gewählte Spieler, Rest automatisch.
 // Aushilfen erscheinen als null ("Aushilfe").
+// Turnier: wer dabei ist (tournament.js cupAvailability legt t.avail beim ersten Spiel bzw. beim Aufstellen an).
+function lineupAvailability(career) {
+  const k = runningCup(career);
+  const a = k ? career.cups[k].avail : null;
+  if (!a) return career.week.availability;
+  return Object.fromEntries(humanClub(career).squad.map((idx) => [idx, (career.players[idx]?.injuryWeeks ?? 0) > 0 ? 'no' : a[idx] ?? 'yes']));
+}
 export function currentLineup(career) {
   const club = humanClub(career);
   const format = matchFormat(career);
-  const { lineup, bench, helpers } = buildLineup(career, club, format, career.week.availability, createRng(1), lineupOf(career));
+  const { lineup, bench, helpers } = buildLineup(career, club, format, lineupAvailability(career), createRng(1), lineupOf(career));
   return {
     format,
     formation: systemFormation(format, tacticOf(club, format).system),

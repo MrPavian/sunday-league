@@ -449,7 +449,7 @@ export const teamScreens = {
       <div class="lineup2${isLight(humanClub(c).kit.shirt) ? ' light-kit' : ''}">
         <div class="lp-head">
           <p class="t-cap">${runningCup(c) ? `${tr('Turnier', 'Tournament')} · ` : ''}${lineupOf(c) ? tr('Eigene Aufstellung', 'Your line-up') : tr('Automatisch aufgestellt (Stärke auf der Position, Form)', 'Picked automatically (strength in position, form)')} · ${PLAY_STYLES[tactic.style].label}</p>
-          <div class="ui-row">${pick ? button(tr('Abbrechen', 'Cancel'), { kind: 'ghost', action: 'pickCancel' }) : ''}${button(tr('Automatisch aufstellen', 'Pick automatically'), { action: 'autoLineup' })}</div>
+          <div class="ui-row">${pick ? button(tr('Abbrechen', 'Cancel'), { kind: 'ghost', action: 'pickCancel' }) : ''}${button(tr('Automatisch aufstellen', 'Pick automatically'), { action: 'autoLineup' })}${runningCup(c) ? button(tr('Zurück zum Turnier', 'Back to the tournament'), { kind: 'primary', action: 'tab', value: 'cup', 'data-testid': 'lineup-to-cup' }) : ''}</div>
         </div>
         <div class="lp-stage">
           <div class="lp-board m-board"><div class="lp-pitch" aria-label="${tr('Magnettafel', 'Magnet board')}"><i class="lp-box l"></i><i class="lp-box r"></i><i class="lp-mid"></i>${tokens}</div><span class="tray" aria-hidden="true"></span></div>

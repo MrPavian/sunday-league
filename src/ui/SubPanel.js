@@ -18,9 +18,11 @@ export class SubPanel {
   constructor(root) {
     this.root = root;
     this.match = null;
+    this.dragSetup(root);
     root.addEventListener('click', (e) => {
       const t = e.target.closest('[data-action]');
       if (!t || !this.match || performance.now() - (this.openedAt ?? 0) < 350) return;
+      if (performance.now() - (this.droppedAt ?? 0) < 400) return; // Klick nach dem Loslassen eines gezogenen Spielers
       const { action, value } = t.dataset;
       if (action === 'out') {
         if (this.queue.some((q) => q.outId === value)) return; // schon eingeplant
@@ -57,6 +59,92 @@ export class SubPanel {
       if (this.isOpen) this.render();
     });
     root.hidden = true;
+  }
+
+  // Ziehen und Ablegen (Nutzerwunsch 2026-11-09): einen Spieler von der Bank auf den ziehen, der raus soll (oder umgekehrt).
+  // Mit der Maus nach ein paar Pixeln Bewegung, am Handy nach kurzem Halten (sonst scrollt die Liste wie gewohnt). Abgelegt
+  // wird das Paar sofort eingeplant; Tippen und Tastatur funktionieren weiter wie bisher.
+  dragSetup(root) {
+    const LONG = 220; // ms Halten am Touchscreen
+    const MOVE = 8; // px, ab denen die Maus zieht
+    let d = null;
+    const cardAt = (x, y) => document.elementFromPoint(x, y)?.closest?.('.sub-card[data-action]');
+    const end = () => {
+      clearTimeout(d?.timer);
+      d?.ghost?.remove();
+      d?.card.classList.remove('dragging');
+      root.querySelectorAll('.drop-target').forEach((el) => el.classList.remove('drop-target'));
+      root.classList.remove('sub-dragging');
+      d = null;
+    };
+    const begin = (e) => {
+      d.active = true;
+      const r = d.card.getBoundingClientRect();
+      const g = d.card.cloneNode(true);
+      g.classList.add('sub-ghost');
+      g.style.width = `${r.width}px`;
+      g.style.left = `${r.left}px`;
+      g.style.top = `${r.top}px`;
+      d.dx = d.x0 - r.left;
+      d.dy = d.y0 - r.top;
+      root.appendChild(g);
+      d.ghost = g;
+      d.card.classList.add('dragging');
+      root.classList.add('sub-dragging');
+      navigator.vibrate?.(10);
+      move(e);
+    };
+    const move = (e) => {
+      if (!d?.active) return;
+      d.ghost.style.left = `${e.clientX - d.dx}px`;
+      d.ghost.style.top = `${e.clientY - d.dy}px`;
+      root.querySelectorAll('.drop-target').forEach((el) => el.classList.remove('drop-target'));
+      const t = cardAt(e.clientX, e.clientY);
+      if (t && t.dataset.action !== d.kind) t.classList.add('drop-target');
+      // Am Rand der Tafel mitscrollen (Handy: Raus und Rein stehen untereinander).
+      const panel = root.querySelector('.sub-panel');
+      const pr = panel?.getBoundingClientRect();
+      if (pr) panel.scrollTop += e.clientY < pr.top + 48 ? -12 : e.clientY > pr.bottom - 48 ? 12 : 0;
+    };
+    root.addEventListener('pointerdown', (e) => {
+      const card = e.target.closest('.sub-card[data-action]');
+      if (!card || !this.match || e.button > 0) return;
+      d = { card, kind: card.dataset.action, id: card.dataset.value, x0: e.clientX, y0: e.clientY, touch: e.pointerType !== 'mouse', active: false };
+      if (d.touch) d.timer = setTimeout(() => d && !d.active && begin({ clientX: d.x0, clientY: d.y0 }), LONG);
+    });
+    root.addEventListener('pointermove', (e) => {
+      if (!d) return;
+      if (!d.active) {
+        const far = Math.hypot(e.clientX - d.x0, e.clientY - d.y0) > MOVE;
+        if (far && d.touch) return end(); // Finger bewegt sich vor dem Halten: normales Scrollen
+        if (far) begin(e);
+        return;
+      }
+      e.preventDefault();
+      move(e);
+    });
+    // Während des Ziehens am Touchscreen nicht scrollen.
+    root.addEventListener('touchmove', (e) => d?.active && e.preventDefault(), { passive: false });
+    window.addEventListener('pointerup', (e) => {
+      if (!d) return;
+      if (d.active) {
+        const t = cardAt(e.clientX, e.clientY);
+        if (t && t.dataset.action !== d.kind) this.dropPair(d.kind === 'out' ? d.id : t.dataset.value, d.kind === 'in' ? d.id : t.dataset.value);
+        this.droppedAt = performance.now();
+      }
+      end();
+    });
+    window.addEventListener('pointercancel', end);
+    root.addEventListener('contextmenu', (e) => d && e.preventDefault()); // langes Drücken öffnet kein Menü
+  }
+
+  // Abgelegtes Paar einplanen (wie „+ Weiterer Wechsel"); ist nur noch ein Wechsel frei, bleibt es als gewählter Wechsel stehen.
+  dropPair(outId, inId) {
+    if (!this.match || this.queue.some((q) => q.outId === outId || q.inId === inId)) return;
+    this.outId = outId;
+    this.inId = inId;
+    if (this.room() > 1) this.add();
+    this.render();
   }
 
   get isOpen() {
@@ -183,7 +271,7 @@ export class SubPanel {
           ${blocked ? '' : `<button class="primary" data-action="confirm" data-testid="sub-confirm" ${total ? '' : 'disabled'}>${total > 1 ? tr(`${total} Wechsel (Enter)`, `${total} substitutions (Enter)`) : tr('Wechseln (Enter)', 'Substitute (Enter)')}</button><button data-action="add" data-testid="sub-add" ${canAdd ? '' : 'disabled'}>${tr('+ Weiterer Wechsel (Leertaste)', '+ Another change (Space)')}</button><button data-action="auto">${tr('Automatisch: der Müdeste', 'Automatic: the most tired')}</button>`}
           <button data-action="cancel">${tr('Zurück (Esc)', 'Back (Esc)')}</button>
         </footer>
-        <p class="hint">${tr('Das Spiel steht, solange du hier bist. Gewechselt wird beim nächsten Stopp.', 'The match is paused while you are here. The change happens at the next stoppage.')}</p>
+        <p class="hint">${tr('Spieler von der Bank auf den ziehen, der raus soll (am Handy kurz halten, dann ziehen) – oder antippen. Das Spiel steht, solange du hier bist. Gewechselt wird beim nächsten Stopp.', 'Drag a bench player onto the one who should come off (on a phone, hold briefly, then drag) – or tap. The match is paused while you are here. The change happens at the next stoppage.')}</p>
       </div>`;
   }
 }

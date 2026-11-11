@@ -100,6 +100,7 @@ export function startTournament(c, kind = 'stadt', opts = {}) {
     groups.forEach((g, gi) => round.forEach(([a, b]) => matches.push({ kind, stage: gi === 0 ? 'A' : 'B', round: r, home: g[a], away: g[b], result: null }))),
   );
   store(c)[kind] = { kind, season: c.season, year: yearOf(c), guests, groups, matches, round: 0, stage: 'group', winner: null, skipped: false, log: [], size, ...(opts.venue ? { venue: opts.venue } : {}), ...(opts.place ? { place: opts.place } : {}), ...(opts.host != null ? { host: !!opts.host } : {}) };
+  cupAvailability(c, kind); // wer beim Turnier dabei ist, steht ab jetzt fest (Aufstellung im Vereinsheim)
   if (kind === 'sommer' && opts.host) book(c, tr('Sommerturnier ausrichten (Pokale, Schiri, Bälle, Getränke vorab)', 'Hosting the summer tournament (trophies, referee, balls, drinks up front)'), -hostCost(c, size));
   return store(c)[kind];
 }
@@ -149,6 +150,20 @@ export function currentCupMatches(c, kind = 'stadt') {
 }
 export const humanCupMatch = (c, kind = 'stadt') => currentCupMatches(c, kind).find((m) => m.home === humanClub(c).id || m.away === humanClub(c).id) ?? null;
 
+// Wer beim Turnier dabei ist (eigener Verein): einmal je Turnier ausgewürfelt, damit Aufstellung und Spiel übereinstimmen
+// (Nutzerhinweis 2026-11-09: vor Hallenspielen ließ sich nicht aufstellen – die Absagen wurden erst je Spiel gelost und
+// warfen die eigene Aufstellung um). Wer sich im Turnier verletzt, fehlt ab dann.
+export function cupAvailability(c, kind) {
+  const t = cupOf(c, kind);
+  if (!t) return null;
+  const cfg = CUPS[kind];
+  if (!t.avail) {
+    const rng = createRng((c.seed * 613 + c.season * 31 + kind.length * 7 + 11) >>> 0);
+    t.avail = Object.fromEntries(humanClub(c).squad.map((idx) => [idx, rng.chance(cfg.absent) ? 'no' : 'yes']));
+  }
+  return Object.fromEntries(humanClub(c).squad.map((idx) => [idx, (c.players[idx]?.injuryWeeks ?? 0) > 0 ? 'no' : t.avail[idx] ?? 'yes']));
+}
+
 export function prepareCupMatch(c, m, { human = false, duration } = {}) {
   const kind = m.kind ?? 'stadt';
   const cfg = CUPS[kind];
@@ -157,7 +172,7 @@ export function prepareCupMatch(c, m, { human = false, duration } = {}) {
   const home = cupClub(c, m.home);
   const away = cupClub(c, m.away);
   const pitch = { ...PITCHES[t.venue ?? cfg.venue], format: 5, referee: true };
-  const avail = (club) => Object.fromEntries(club.squad.map((idx) => [idx, (c.players[idx]?.injuryWeeks ?? 0) > 0 || rng.chance(cfg.absent) ? 'no' : 'yes']));
+  const avail = (club) => (club.human ? cupAvailability(c, kind) : Object.fromEntries(club.squad.map((idx) => [idx, (c.players[idx]?.injuryWeeks ?? 0) > 0 || rng.chance(cfg.absent) ? 'no' : 'yes'])));
   const kits = resolveKits(home, away);
   const teamHome = teamForMatch(c, kits.home, 5, avail(home), rng);
   const teamAway = teamForMatch(c, kits.away, 5, avail(away), rng);

@@ -3,10 +3,10 @@
 import { tr } from '../../core/i18n.js';
 import { button, esc, icon } from '../ds.js';
 import { crestOf, crestSVG } from '../crest.js';
-import { clubById, humanClub, seasonOver, table } from '../../career/career.js';
+import { clubById, humanClub, playerOf, seasonOver, table } from '../../career/career.js';
 import { dateLabel, matchDate, monthLabel, weekdayDate, weekdayLabel } from '../../career/calendar.js';
 import { nachholLabel } from '../../career/platz.js';
-import { CUPS, cupClub, cupOf, groupTable, humanCupMatch, stageName, winterRound } from '../../career/tournament.js';
+import { CUPS, cupAvailability, cupClub, cupOf, groupTable, humanCupMatch, stageName, winterRound } from '../../career/tournament.js';
 import { fieldRound, POKALE, POKAL_KINDS, pokalClub, pokalEligible, pokalOf, roundName, roundTies, sponsorPraemie, tieOnPens } from '../../career/pokal.js';
 import { BUND_VENUES, levelName } from '../../career/bundespokal.js';
 import { leagueTitle } from '../../career/verband.js';
@@ -128,12 +128,16 @@ export const seasonScreens = {
       `<li class="${m.home === me || m.away === me ? 'mine' : ''}"><small>${stageName(m)}</small> ${cupClub(c, m.home).short} ${m.result ? `<b>${m.result.home}:${m.result.away}</b>${m.pens ? ` <small>(${m.pens.home}:${m.pens.away} ${tr('i. E.', 'pens')})</small>` : ''}` : '–:–'} ${cupClub(c, m.away).short}</li>`;
     const ko = t.matches.filter((m) => m.stage === 'SF' || m.stage === 'F');
     const next = humanCupMatch(c, kind);
+    const av = next ? cupAvailability(c, kind) : {};
+    const missing = Object.entries(av).filter(([, v]) => v === 'no').map(([idx]) => esc(playerOf(c, Number(idx)).name.split(' ')[0]));
     let action = '';
     if (t.stage === 'done') action = `<p class="reply ok">${t.log.at(-1) ?? ''}</p>`;
     else if (this.busy) action = `<p class="busy">${this.busy}</p>`;
     else if (next) {
       const opp = cupClub(c, next.home === me ? next.away : next.home);
       action = `<div class="fixture-card"><p class="label">${stageName(next)}</p><h3>${humanClub(c).short} – ${opp.short}</h3><p>${tr('gegen', 'against')} <b>${opp.name}</b>${next.stage !== 'A' && next.stage !== 'B' ? tr(' · bei Unentschieden Elfmeterschießen', ' · penalties if level') : ''}</p>
+        ${missing.length ? `<p class="t-2" data-testid="cup-missing">${tr('Nicht dabei', 'Not available')}: ${missing.join(', ')} <small>(${cfg.absentWhy})</small></p>` : ''}
+        <button data-action="tab" data-value="lineup" data-testid="cup-lineup">${tr('Aufstellung ändern', 'Change the line-up')}</button>
         <button class="primary coach-play" data-action="onCupCoach" data-value="${kind}">${tr('Trainer an der Seitenlinie', 'Manager on the touchline')}</button> <button data-action="onCupSimulate" data-value="${kind}">${tr('Liveticker mit Entscheidungen', 'Live ticker with decisions')}</button></div>`;
     } else action = `<p>${tr('Ihr seid raus – die anderen spielen noch.', 'You are out – the others are still playing.')}</p><button data-action="onCupSimulate" data-value="${kind}">${tr('Nächste Runde anschauen', 'Watch the next round')}</button>`;
     return `

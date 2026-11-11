@@ -57,3 +57,22 @@ export function setWallView(view) {
     // egal
   }
 }
+
+// Stadionsprecher (sim/announcer.js): 'text' (Durchsage als Einblendung mit Gong), 'stimme' (dazu die Sprachausgabe des Geräts,
+// wo vorhanden) oder 'aus'.
+const PA_KEY = 'sunday-league:announcer';
+export function announcerMode() {
+  try {
+    const v = localStorage.getItem(PA_KEY);
+    return v === 'stimme' || v === 'aus' ? v : 'text';
+  } catch {
+    return 'text';
+  }
+}
+export function setAnnouncerMode(v) {
+  try {
+    localStorage.setItem(PA_KEY, v === 'stimme' || v === 'aus' ? v : 'text');
+  } catch {
+    // egal
+  }
+}

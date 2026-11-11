@@ -917,6 +917,65 @@ export async function saveAtWhistle(b) {
   return ok.done();
 }
 
+// Aufstellung vor einem Hallenspiel (Nutzerhinweis 2026-11-09): Turnierkarte → „Aufstellung ändern“ → Bankspieler aufstellen →
+// Spiel an der Seitenlinie: genau dieser Spieler läuft auf. Dazu Wechseln per Ziehen und Ablegen (Maus) in einem Testspiel.
+export async function cupLineup(b) {
+  const ok = checker('Aufstellung beim Hallenturnier, Wechsel per Ziehen');
+  const { finishRound, currentFixtures } = await import('../../src/career/career.js');
+  const { startTournament, winterRound } = await import('../../src/career/tournament.js');
+  const c = createCareer({ seed: 31 });
+  while (c.round < winterRound(c)) {
+    for (const f of currentFixtures(c)) f.result = { home: 1, away: 1 };
+    finishRound(c);
+  }
+  startTournament(c, 'halle');
+  const p = await page(b, 'land', { query: '?notitle&debug', store: { 'sunday-league:career': JSON.stringify(c) } });
+  await click(p, '.career [data-c="continue"]');
+  await p.waitForTimeout(1500);
+  await click(p, '[data-action="tab"][data-value="cup"]').catch(() => {});
+  await p.waitForTimeout(400);
+  ok(!!(await p.$('[data-testid="cup-lineup"]')), 'Knopf „Aufstellung ändern“ fehlt auf der Turnierkarte');
+  await click(p, '[data-testid="cup-lineup"]').catch(() => {});
+  await p.waitForTimeout(500);
+  const benchIdx = await p.evaluate(() => document.querySelector('.lp-bench')?.dataset.value);
+  ok(!!benchIdx, 'keine Bank in der Aufstellung');
+  await click(p, '.lp-token[data-value="1"]').catch(() => {});
+  await p.waitForTimeout(150);
+  await click(p, `.lp-bench[data-value="${benchIdx}"]`).catch(() => {});
+  await p.waitForTimeout(300);
+  ok(await p.evaluate((idx) => __sl.career.week.cupLineup?.includes(Number(idx)), benchIdx), 'Turnier-Aufstellung nicht gespeichert');
+  ok(!!(await p.$('[data-testid="lineup-to-cup"]')), 'Knopf „Zurück zum Turnier“ fehlt in der Aufstellung');
+  await click(p, '[data-testid="lineup-to-cup"]').catch(() => {});
+  await p.waitForTimeout(400);
+  await click(p, '[data-action="onCupCoach"][data-value="halle"]').catch(() => {});
+  await p.waitForTimeout(2500);
+  ok(await p.evaluate((idx) => __sl.match?.players.some((q) => q.poolIndex === Number(idx)), benchIdx), 'aufgestellter Spieler läuft im Hallenspiel nicht auf');
+  ok(!p.errors.length, `Fehler: ${p.errors.join(' | ')}`);
+  await p.context().close();
+
+  const q = await page(b, 'desk', { query: '?venue=sportplatz&notitle&trainer&debug&dauer=120&seed=3' });
+  await q.waitForTimeout(1200);
+  await q.click('[data-tap="sub"]');
+  await q.waitForTimeout(600);
+  const outEl = q.locator('#subpanel [data-action="out"]').nth(2);
+  const inEl = q.locator('#subpanel [data-action="in"]').nth(1);
+  await outEl.scrollIntoViewIfNeeded();
+  const ids = [await outEl.getAttribute('data-value'), await inEl.getAttribute('data-value')];
+  const src = await inEl.boundingBox();
+  const tgt = await outEl.boundingBox();
+  await q.mouse.move(src.x + 20, src.y + 15);
+  await q.mouse.down();
+  await q.mouse.move(src.x + 60, src.y + 30, { steps: 5 });
+  await q.mouse.move(tgt.x + 30, tgt.y + 15, { steps: 10 });
+  ok(await q.evaluate(() => !!document.querySelector('.sub-ghost') && !!document.querySelector('.drop-target')), 'beim Ziehen fehlen Karte oder Ziel');
+  await q.mouse.up();
+  await q.waitForTimeout(300);
+  ok(await q.evaluate(([o, i]) => { const li = document.querySelector('#subpanel .sub-queue li'); const n = (id) => __sl.match.players.concat(__sl.match.bench.flat()).find((x) => x.id === id)?.name; return !!li && li.textContent.includes(n(o)) && li.textContent.includes(n(i)); }, ids), 'abgelegtes Paar steht nicht in der Wechselliste');
+  ok(!q.errors.length, `Fehler: ${q.errors.join(' | ')}`);
+  await q.context().close();
+  return ok.done();
+}
+
 export async function run() {
   const b = await launch();
   let f = 0;
@@ -940,6 +999,7 @@ export async function run() {
   if (!ONLY || ONLY.has('euro')) f += await euro(b);
   if (!ONLY || ONLY.has('quali')) f += await quali(b);
   if (!ONLY || ONLY.has('natCoach')) f += await natCoach(b);
+  if (!ONLY || ONLY.has('cupLineup')) f += await cupLineup(b);
   if (!ONLY || ONLY.has('oldSave')) f += await oldSave(b, process.env.E2E_OLD_SAVE ?? fileURLToPath(new URL('./fixtures/save-858e978.json', import.meta.url)));
   await b.close();
   return f;

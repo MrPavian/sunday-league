@@ -6,6 +6,32 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-09-8 – Stadium announcer, music and more
+
+### New
+- **Stadium announcer:** from 60 spectators there is a PA system, though not at the car park, the park or the backyard (game value). Every announcement starts with a chime, then the text appears. Announced are:
+  - A welcome before kick-off
+  - Home goals: the announcer calls the first name, the fans answer with the surname, then the new score
+  - Away goals
+  - Substitutions
+  - Attendance after a little over two thirds of the match
+  - Half-time and final score
+  - Settings → Sound: "Text", "With voice" (the device's speech output where available) or "Off".
+- **Music:** composed for the game and generated entirely in the game.
+  - A calm theme in the clubhouse and the menu.
+  - A short fanfare as the teams walk out, wherever there is an announcer.
+  - Quiet underneath everything else, can be switched off under Settings → Sound.
+
+### Improved
+- **Rain:** the white glints on the wet ground stood still and looked like frozen drops. Now they flash up briefly while it rains, like drops hitting the ground. Once the rain stops, a calmer, fainter sheen remains.
+- **Substitutions by drag and drop:** in the substitution panel, drag a bench player onto the one who should come off (or the other way round). The target lights up green, and letting go plans the change.
+  - On a phone: hold the card briefly, then drag. Otherwise the list scrolls as usual, and it scrolls along at the edge while you drag.
+  - Tapping and the keyboard still work.
+- **Line-ups at tournaments:** before indoor and other tournament games you could not really pick your line-up. Absences were drawn anew for every game and upset your own line-up.
+  - Now it is fixed at the start of the tournament who is missing (a cold, a holiday), for the whole tournament. Whoever gets injured during the tournament is out from then on.
+  - Your line-up takes the floor exactly as you set it.
+  - The tournament card shows who is unavailable and has a "Change the line-up" button. From the line-up, "Back to the tournament" takes you straight back to the game.
+
 ## 2026-11-09-7 – Price protest and the match of the European winners
 
 ### New

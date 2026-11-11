@@ -326,7 +326,8 @@ Liga- und Vereinsnamen bleiben fiktiv (keine Lizenzen nötig); regionale Variant
 ### Phase 7 – Content & Polish (ca. 6–8 Wochen)
 - [x] Alle Spielstätten (Park bis Amateurstadion), Wetter & Tageszeiten – erledigt (bis zum Stadion)
 - [x] Turniere (Halle, Sommerfest) – erledigt. ~~Challenges, Bolzplatz-Modus~~ gestrichen (Nutzerentscheid 2026-11-09: reines Managerspiel)
-- [ ] Audio-Atmosphäre, Musik, Stadionsprecher – teilweise (Geräusche je Spielort vorhanden; Musik und Stadionsprecher offen)
+- [x] Audio-Atmosphäre, Musik, Stadionsprecher – erledigt (Geräusche je Spielort; Stadionsprecher 2026-11-09 sim/announcer.js mit Gong, Fan-Ruf und
+  wahlweise Sprachausgabe; Musik 2026-11-09 audio/Music.js: eigenes Vereinsheim-Thema und Einlauf-Fanfare, synthetisch)
 - [x] Balancing, Tutorial/Onboarding, Lokalisierung (DE/EN) — Tutorial gebaut 2026-11-06 (ui/Tutorial.js) – erledigt (Tutorial 2026-11-06 (ui/Tutorial.js); Balancing laufend)
 - [ ] Performance, Controller-Support, Barrierefreiheit – teilweise (Qualitätsstufen und Gamepad vorhanden; Barrierefreiheit offen)
 
@@ -1267,3 +1268,19 @@ im Spiel umschalten) und **Punkt 5** (Trainerteam).
     Je Stufe Voraussetzungen nach Liga (unten Ehrenamt und Eigenleistung, oben Profi-Standard). Vorher recherchieren: Kosten
     echter Bauten (Trainingszentrum, NLZ, Funktionsgebäude) und belegbare Wirkungen; Wirkungen ohne Quelle sind Spielwerte und
     werden mit dem Nutzer abgestimmt. Messung wie beim Bonus-Audit, damit kein Ausbau Pflicht oder wirkungslos ist.
+17. **Privatleben des Trainers: Geld, Auftreten, Familie** (vom Nutzer gewünscht, 2026-11-10). Bisher gibt es nur „Geduld der
+    Familie" und „Ehrenamts-Energie" (personal.js); der Trainer verdient nichts Eigenes und hat kein Privatleben mit Folgen.
+    - **Eigenes Geld:** Trainergehalt (unten Aufwandsentschädigung, oben Vertrag mit Gehalt und Prämien) auf ein privates Konto,
+      getrennt von der Vereinskasse. Vorher recherchieren: Trainergehälter je Liga; ohne Quelle Spielwerte, als solche markiert.
+    - **Ausgeben:** Haus/Wohnung, Auto, Kleidung, Luxus (Uhr, Urlaub, Boot …), dazu Sparen und Spenden. Jede Stufe mit Preis und
+      laufenden Kosten.
+    - **Wirkung:** auf die **Außendarstellung** (Presse, Fans, Sponsoren), den **Trainertypus** (z. B. bodenständig, Lebemann,
+      Asket, Geschäftsmann – ergibt sich aus dem Verhalten, nicht gewählt) und die **Stellung** (Vorstand, Kabine, Anfragen anderer
+      Vereine und Verbände). Kein Kauf darf Pflicht oder wirkungslos sein; zu viel Protz im kleinen Verein kostet Rückhalt.
+    - **Familienereignisse, die ganze Bandbreite:** Partner kennenlernen, zusammenziehen, Verlobung, Hochzeit, Kinder (Geburt,
+      Einschulung, Pubertät, Kind im eigenen Nachwuchs), Hausbau und Umzug (auch bei Vereinswechsel: zieht die Familie mit?),
+      Krisen, Trennung und Scheidung (mit Kosten), neue Partnerschaft, Patchwork, Krankheit und Pflege der Eltern, Trauerfall,
+      Jubiläen. Entscheidungen mit Folgen für Geduld der Familie, Energie, Geld und Stimmung.
+    - **Darstellung:** Seite „Privat" im Vereinsheim (Konto, Besitz, Familie), Meldungen im Kreisblatt bzw. in der Presse.
+    - Offen, mit dem Nutzer abzustimmen: Geschlecht/Anrede des Partners frei wählbar, Ton bei schweren Ereignissen, ob Scheidung
+      und Trauerfall abschaltbar sein sollen.

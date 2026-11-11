@@ -6,6 +6,32 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-09-8 – Stadionsprecher, Musik und mehr
+
+### Neu
+- **Stadionsprecher:** Ab 60 Zuschauern gibt es eine Lautsprecheranlage, nicht auf Parkplatz, Park und Hinterhof (Spielwert). Bei jeder Durchsage ertönt erst ein Gong, dann erscheint der Text. Durchgesagt werden:
+  - Begrüßung vor dem Anpfiff
+  - Heimtore: Der Sprecher ruft den Vornamen, die Fans antworten mit dem Nachnamen, dann kommt der neue Spielstand
+  - Tore der Gäste
+  - Wechsel
+  - Zuschauerzahl nach gut zwei Dritteln der Spielzeit
+  - Halbzeit- und Endstand
+  - Einstellungen → Ton: „Durchsage", „Mit Stimme" (Sprachausgabe des Geräts, wo vorhanden) oder „Aus".
+- **Musik:** Selbst komponiert und komplett im Spiel erzeugt.
+  - Ruhiges Thema im Vereinsheim und im Menü.
+  - Kurze Fanfare zum Einlaufen, wo es einen Stadionsprecher gibt.
+  - Leise unter allem anderen, unter Einstellungen → Ton abschaltbar.
+
+### Verbessert
+- **Regen:** Die weißen Glanzpunkte auf dem nassen Boden standen still und sahen aus wie eingefrorene Tropfen. Jetzt funkeln sie bei Regen kurz auf und verlöschen wieder, wie aufschlagende Tropfen. Hört der Regen auf, bleibt ein ruhiger, schwächerer Glanz.
+- **Wechseln per Ziehen und Ablegen:** Ziehe in der Wechseltafel einen Spieler von der Bank auf den, der raus soll (oder umgekehrt). Das Ziel leuchtet grün, beim Loslassen ist der Wechsel eingeplant.
+  - Am Handy: Karte kurz halten, dann ziehen. Sonst scrollt die Liste wie gewohnt, am Rand scrollt sie beim Ziehen mit.
+  - Antippen und Tastatur gehen weiter.
+- **Aufstellung bei Turnieren:** Vor Hallen- und anderen Turnierspielen ließ sich nicht wirklich aufstellen. Die Absagen wurden erst bei jedem Spiel neu ausgelost und haben die eigene Aufstellung umgeworfen.
+  - Jetzt steht beim Turnierstart fest, wer fehlt (Erkältung, Urlaub), und zwar für das ganze Turnier. Wer sich im Turnier verletzt, fehlt ab dann.
+  - Deine Aufstellung läuft genau so auf.
+  - Die Turnierkarte zeigt, wer nicht dabei ist, und hat den Knopf „Aufstellung ändern“. Aus der Aufstellung geht es mit „Zurück zum Turnier“ direkt wieder zum Spiel.
+
 ## 2026-11-09-7 – Preisprotest und Spiel der Europapokalsieger
 
 ### Neu

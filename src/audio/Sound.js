@@ -46,6 +46,7 @@ export class Sound {
     this.master.connect(this.reverb).connect(this.wet).connect(this.ctx.destination);
     if (this.venue) this.setVenue(this.venue, true);
     this.applyGain();
+    this.onStart?.(); // z. B. Musik, die schon vor der Freigabe laufen sollte
   }
 
   toggleMute() {
@@ -366,6 +367,38 @@ export class Sound {
     [523, 659, 784, 1047].forEach((f, i) => this.tone('square', f, f, i === 3 ? 0.5 : 0.18, 0.08, d, t + 1.05 + i * 0.2));
   }
 
+  // Stadionsprecher: Gong der Lautsprecheranlage (drei Töne, abfallend) mit etwas Hall.
+  gong() {
+    if (!this.ctx || this.silent()) return;
+    const d = this.out(0);
+    const t = this.ctx.currentTime;
+    [784, 659, 523].forEach((f, i) => {
+      this.tone('sine', f, f, 1.1, 0.12, d, t + i * 0.42);
+      this.tone('sine', f * 2, f * 2, 0.5, 0.025, d, t + i * 0.42);
+    });
+    this.echo(1.6);
+  }
+  // Kurzer Hall für Durchsagen (auch im Freien klingt die Anlage über den Platz nach).
+  echo(sec) {
+    if (!this.wet) return;
+    const base = this.wet.gain.value;
+    const t = this.ctx.currentTime;
+    this.wet.gain.cancelScheduledValues(t);
+    this.wet.gain.setValueAtTime(Math.max(base, 0.22), t);
+    this.wet.gain.setValueAtTime(this.venueWet ?? 0, t + sec);
+  }
+  // Die Kurve ruft den Nachnamen: zwei kräftige „Silben" aus gefiltertem Rauschen, Stärke nach Menge.
+  chant(syllables = 2) {
+    if (!this.ctx || this.silent() || this.crowdLevel < 0.05) return;
+    const d = this.out(0);
+    const t = this.ctx.currentTime;
+    const peak = 0.12 + 0.18 * Math.min(1, this.crowdLevel);
+    for (let i = 0; i < syllables; i++) {
+      this.noise('bandpass', 620 - i * 90, 2.2, 0.32, peak, d, t + i * 0.36, 0.04);
+      this.noise('bandpass', 1250 - i * 140, 3, 0.28, peak * 0.5, d, t + i * 0.36, 0.04);
+    }
+  }
+
   // Grundrauschen der Zuschauer; Lautstärke folgt Menge und Spannung.
   ensureCrowdBed() {
     if (this.crowdBed || !this.ctx) return;
@@ -407,7 +440,8 @@ export class Sound {
     src.connect(f).connect(g).connect(this.master);
     src.start();
     this.bed = src;
-    this.wet.gain.value = id === 'halle' ? 0.32 : id === 'hinterhof' ? 0.1 : 0;
+    this.venueWet = id === 'halle' ? 0.32 : id === 'hinterhof' ? 0.1 : 0;
+    this.wet.gain.value = this.venueWet;
   }
 
   update(dt, match = null) {

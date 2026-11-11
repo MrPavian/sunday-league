@@ -3,6 +3,9 @@ import * as THREE from 'three';
 import '@fontsource/pixelify-sans/400.css';
 import '@fontsource/pixelify-sans/600.css';
 import { Sound } from './audio/Sound.js';
+import { Music } from './audio/Music.js';
+import { createAnnouncer, hasAnnouncer } from './sim/announcer.js';
+import { announcerMode } from './ui/prefs.js';
 import { loadCareer, saveCareer } from './career/career.js';
 import { createRng } from './core/rng.js';
 import { Input } from './input/Input.js';
@@ -106,6 +109,8 @@ shoutBar.onPlan = () => {
 let drainInput = false; // nach dem Schließen der Wechseltafel: liegengebliebene Tasten verwerfen
 const endScreen = new EndScreen(document.getElementById('end'));
 const sound = new Sound();
+const music = new Music(sound);
+sound.onStart = () => music.want && music.theme();
 const settings = new Settings(document.getElementById('settings'));
 // Ältere Einbettungen kennen den Container fürs Startbild noch nicht.
 const titleRoot = document.getElementById('title') ?? document.body.appendChild(Object.assign(document.createElement('div'), { id: 'title', hidden: true }));
@@ -148,7 +153,7 @@ const ticker = new Ticker(document.getElementById('ticker'));
 // Gemeinsamer Zustand für src/app/*: Zugriff auf die Variablen dieser Datei (keine Kopien), dazu die
 // Bausteine, die mehrere Teile brauchen. menu, clubhouse und die Abläufe aus app/ kommen weiter unten dazu.
 const ctx = {
-  params, canvas, scene, rig, pixel, platform, governor, gfx, hud, sound, settings, saveSlots, title, endScreen,
+  params, canvas, scene, rig, pixel, platform, governor, gfx, hud, sound, music, settings, saveSlots, title, endScreen,
   creator, hireScreen, ticker, subPanel, planPanel, halfPanel, testDuration, TEMPOS,
   loadVenue, showMatch, startMatch, setMode,
   get match() { return match; },
@@ -232,11 +237,48 @@ function showMatch(m) {
   // Heimspiel im ausgebauten Stadion: kurzer Blick auf die Ränge vor dem Anpfiff (Testschalter ?intro).
   if ((pitch.stage && careerMatch?.prepared?.match === m && !careerMatch.prepared.humanIsAway) || (params.has('intro') && m.humanTeam !== null)) rig.startIntro();
   hud.init(match);
+  // Stadionsprecher (sim/announcer.js): nur mit eigener Mannschaft und Lautsprecheranlage; dazu Einlaufmusik.
+  announcer = m.humanTeam !== null && announcerMode() !== 'aus' && hasAnnouncer(m) ? createAnnouncer(m, seed) : null;
+  if (announcer) music.walkout();
   if (m.manager) shoutBar.show();
   else shoutBar.hide();
 }
 
 // human: Testspiel mit eigener Mannschaft (Trainer-Modus, nur über die Test-URLs); false: Kulisse.
+// Durchsagen: Gong, Einblendung (nach der Tormeldung), auf Wunsch Sprachausgabe; beim Heimtor ruft die Kurve den Nachnamen.
+let announcer = null;
+function announce(lines) {
+  for (const l of lines) {
+    const delay = l.kind === 'goal' ? 2600 : l.kind === 'welcome' ? 1500 : 300;
+    const m0 = match;
+    setTimeout(() => {
+      if (m0 !== match || mode !== 'play') return;
+      sound.gong();
+      hud.toast(`${tr('Stadionsprecher', 'Announcer')}: ${l.text}`, 3.2, 2);
+      speak(l.text);
+      if (l.call) {
+        setTimeout(() => {
+          if (m0 !== match) return;
+          sound.chant(2);
+          hud.toast(`${tr('Die Fans', 'The fans')}: „${l.call.toUpperCase()}!“ – ${l.after}`, 3, 2);
+          speak(l.after);
+        }, 1700);
+      }
+    }, delay);
+  }
+}
+function speak(text) {
+  if (announcerMode() !== 'stimme' || sound.silent() || !('speechSynthesis' in window)) return;
+  try {
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = tr('de-DE', 'en-GB');
+    u.volume = Math.min(1, sound.volume);
+    window.speechSynthesis.speak(u);
+  } catch {
+    // ohne Sprachausgabe bleibt die Einblendung
+  }
+}
+
 function startMatch(human) {
   const matchPitch = testPitch(pitch, params);
   const m = createMatch({ seed: seed++, pitch: matchPitch, human, duration: testDuration, incidents: true });
@@ -246,6 +288,8 @@ function startMatch(human) {
 
 function setMode(next) {
   mode = next;
+  if (next === 'play') music.leave();
+  else music.theme(); // Vereinsheim und Menü: ruhiges Thema (audio/Music.js)
   if (next !== 'play') shoutBar.hide();
   document.body.classList.toggle('in-menu', next !== 'play');
   document.body.classList.toggle('in-club', next === 'club');
@@ -468,6 +512,7 @@ function frame(now) {
     view.handleEvents(match);
     crowd?.handleEvents(match);
     if (mode === 'play') sound.handle(match, rig.target.x);
+    if (mode === 'play' && announcer) announce(announcer.feed(match.events));
     if (mode === 'play' && match.events.some((e) => e.type === 'end')) {
       const ended = match;
       commitCareerMatch();

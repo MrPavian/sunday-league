@@ -79,7 +79,7 @@ const postFragment = /* glsl */ `
   // Wetter 2.0 (weather.js): Bodenreaktion je Untergrund, Frost, Bodennebel, Hitzeflimmern.
   uniform float time;
   uniform vec4 groundWet;    // dunkler, satter, Glanz-Anteil, Glanz-Länge (m)
-  uniform vec4 groundMisc;   // feuchte Flecken, Himmelsanteil, Schnee-Anteil, –
+  uniform vec4 groundMisc;   // feuchte Flecken, Himmelsanteil, Schnee-Anteil, Regen (0…1)
   uniform vec3 snowShade;    // Schnee im Schatten
   uniform float frost;
   uniform float mist;        // Bodennebel (0…1)
@@ -364,7 +364,12 @@ const postFragment = /* glsl */ `
       #if WETFX == 1
       if (!noCover && groundWet.z > 0.0) {
         vec2 wc = floor(wp.xz / vec2(px.x, groundWet.w));
-        float glint = step(1.0 - groundWet.z * w, hash21(wc)) * mix(1.0, lit, floodAmount);
+        // Bei Regen funkeln die Glanzpunkte kurz auf und verlöschen (jede Zelle würfelt etwa 6-mal je Sekunde neu, versetzt) –
+        // wie Tropfen, die auf den nassen Boden schlagen. Ohne Regen bleibt ein ruhiger, schwächerer Glanz (Nutzerhinweis
+        // 2026-11-09: stehende weiße Punkte sahen aus wie eingefrorene Tropfen).
+        float tick = floor(time * 6.0 + hash21(wc + 7.31) * 6.0);
+        float h = groundMisc.w > 0.0 ? hash21(wc + tick * 13.17) : hash21(wc);
+        float glint = step(1.0 - groundWet.z * w * mix(0.35, 1.0, groundMisc.w), h) * mix(1.0, lit, floodAmount);
         c = mix(c, glintColor, glint * 0.5);
       }
       #endif
@@ -694,7 +699,7 @@ export class PixelRenderer {
     const drift = (0.7 + 0.25 * Math.hypot(w.windX ?? 0, w.windZ ?? 0)) * w.time;
     u.cloudShift.value.set(drift * 0.94, drift * 0.33);
     u.groundWet.value.set(g.wetDark, g.wetSat, g.glint, g.streak);
-    u.groundMisc.value.set(g.spots, g.sky, g.snow, 0);
+    u.groundMisc.value.set(g.spots, g.sky, g.snow, Math.min(1, w.rain ?? 0));
     u.snowShade.value.set(g.snowShade[0], g.snowShade[1], g.snowShade[2]);
   }
 

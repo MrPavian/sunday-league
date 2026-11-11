@@ -112,6 +112,12 @@ export class Settings {
         <div class="choice">${toggle('sound', !s.muted, tr('An', 'On'), tr('Aus', 'Off'))}</div>
         <h4>${tr('Lautstärke', 'Volume')}</h4>
         <div class="choice"><input type="range" min="0" max="100" step="5" value="${Math.round(s.volume * 100)}" data-action="volume" aria-label="${tr('Lautstärke', 'Volume')}"></div>
+        <h4>${tr('Musik', 'Music')}</h4>
+        <div class="choice">${toggle('music', s.music, tr('An', 'On'), tr('Aus', 'Off'))}</div>
+        <p class="hint">${tr('Ruhige Musik im Vereinsheim und eine kurze Fanfare zum Einlaufen – selbst komponiert, leise unter allem anderen.', 'Calm music in the clubhouse and a short fanfare as the teams walk out – our own tunes, quietly underneath everything else.')}</p>
+        <h4>${tr('Stadionsprecher', 'Stadium announcer')}</h4>
+        <div class="choice">${[['text', tr('Durchsage', 'Text')], ['stimme', tr('Mit Stimme', 'With voice')], ['aus', tr('Aus', 'Off')]].map(([v, l]) => `<button class="${s.announcer === v ? 'active' : ''}" data-action="announcer" data-value="${v}">${l}</button>`).join('')}</div>
+        <p class="hint">${tr('Ab 60 Zuschauern gibt es eine Lautsprecheranlage: Gong, Begrüßung, Torschützen (der Sprecher ruft den Vornamen, die Fans den Nachnamen), Wechsel, Zuschauerzahl. „Mit Stimme" nutzt die Sprachausgabe des Geräts, wenn es eine hat.', 'From 60 spectators there is a PA system: chime, welcome, goalscorers (the announcer calls the first name, the fans the surname), substitutions, attendance. “With voice” uses the device\'s speech output if it has one.')}</p>
         <h4>${tr('Vibration', 'Vibration')}</h4>
         <div class="choice">${toggle('haptics', s.haptics, tr('Dezent', 'Subtle'), tr('Aus', 'Off'))}</div>
         <p class="hint">${tr('Kurzer, leichter Impuls bei neuen Nachrichten und Entscheidungen – nur auf Geräten, die vibrieren können.', 'A short, light pulse for new messages and decisions – only on devices that can vibrate.')}</p>

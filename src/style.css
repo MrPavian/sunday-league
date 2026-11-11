@@ -911,6 +911,12 @@ body.touch .coach-play:not(.ui-btn) { background: #2f6f3a; }
 .sub-row small { opacity: 0.7; }
 .sub-row.active { border-color: var(--accent); background: #2b2f1c; }
 .sub-row.active.col { box-shadow: 0 0 0 2px var(--accent); }
+/* Ziehen und Ablegen (SubPanel.dragSetup) */
+.sub-card { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.sub-card.dragging { opacity: 0.35; }
+.sub-ghost { position: fixed; z-index: 60; pointer-events: none; margin: 0; opacity: 0.92; transform: rotate(-3deg) scale(1.03); box-shadow: 4px 6px 0 rgba(0, 0, 0, 0.5); }
+.sub-dragging .sub-card:not(.dragging) { transition: transform 80ms; }
+.sub-card.drop-target { border-color: #9fe39f; background: #1f3322; transform: scale(1.03); box-shadow: 0 0 0 2px #9fe39f; }
 .sub-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sub-knock { color: #ff8a7a; font-style: normal; font-size: 0.85em; }
 .sub-stamina { grid-column: 1 / -1; height: 5px; background: linear-gradient(90deg, #6fd36f var(--v), #333 var(--v)); border: 1px solid #000; }
