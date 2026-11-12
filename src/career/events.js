@@ -646,6 +646,8 @@ const eventPacks = () => (packs ??= [
   { pack: PRO_EVENTS, roll: true }, // Oberliga bis 3. Liga: Profi-Alltag (proevents.js) – hinten, damit der Zufall unten gleich bleibt
 ]);
 const rolledEntries = () => eventPacks().filter((x) => x.roll).flatMap((x) => Object.entries(x.pack));
+// Für Messungen (scripts/events-count.mjs): alle Ereignisse, die wöchentlich gezogen werden können.
+export const rolledEventIds = () => rolledEntries().map(([id]) => id);
 
 // Zu Wochenbeginn höchstens ein Ereignis ziehen.
 export function rollWeekEvent(career) {

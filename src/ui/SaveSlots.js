@@ -21,7 +21,7 @@ export class SaveSlots {
         this.message = tr('Datei wird heruntergeladen.', 'Downloading the file.');
         return this.render();
       }
-      const needsConfirm = (action === 'delete' || action === 'new') && !this.slot(slot).empty;
+      const needsConfirm = (action === 'delete' || action === 'new' || action === 'restore') && !this.slot(slot).empty;
       if (needsConfirm && !(this.confirm?.action === action && this.confirm.slot === slot)) {
         this.confirm = { action, slot };
         return this.render();
@@ -29,7 +29,10 @@ export class SaveSlots {
       this.confirm = null;
       if (action === 'load') this.h.onLoad(slot);
       else if (action === 'new') this.h.onNew(slot);
-      else if (action === 'delete') {
+      else if (action === 'restore') {
+        this.message = this.h.onRestore(slot) ? tr(`Sicherung in Platz ${slot} zurückgeholt.`, `Backup restored in slot ${slot}.`) : tr('Die Sicherung ließ sich nicht laden.', 'The backup could not be loaded.');
+        this.render();
+      } else if (action === 'delete') {
         this.h.onDelete(slot);
         this.render();
       }
@@ -78,7 +81,7 @@ export class SaveSlots {
     const active = this.h.active();
     const btn = (action, slot, label, cls = '') => {
       const asking = this.confirm?.action === action && this.confirm.slot === slot;
-      const text = asking ? (action === 'delete' ? tr('Wirklich löschen?', 'Really delete?') : tr('Wirklich überschreiben?', 'Really overwrite?')) : label;
+      const text = asking ? (action === 'delete' ? tr('Wirklich löschen?', 'Really delete?') : action === 'restore' ? tr('Wirklich zurück? Der jetzige Stand geht verloren.', 'Really go back? The current state will be lost.') : tr('Wirklich überschreiben?', 'Really overwrite?')) : label;
       return `<button class="${cls}${asking ? ' danger' : ''}" data-action="${action}" data-slot="${slot}">${text}</button>`;
     };
     const cards = this.h
@@ -92,6 +95,7 @@ export class SaveSlots {
           <p><b>${s.club}</b>${s.coach ? ` · ${s.coach}` : ''}</p>
           <p>${tr('Saison', 'Season')} ${s.season} · ${tr('Spieltag', 'Matchday')} ${s.round}/${s.rounds}</p>
           <p class="hint">${s.savedAt ? `${tr('Gespeichert', 'Saved')} ${dateText(s.savedAt)}` : ''}</p>
+          ${s.backup ? `<p class="hint" data-testid="slot-backup">${tr(`Sicherung: Ende der ${s.backup.season}. Saison`, `Backup: end of season ${s.backup.season}`)}${s.backup.savedAt ? ` (${dateText(s.backup.savedAt)})` : ''} ${btn('restore', s.slot, tr('Dorthin zurück', 'Go back to it'))}</p>` : ''}
           <div class="row">${btn('load', s.slot, tr('Laden', 'Load'), 'primary')}${btn('export', s.slot, tr('Exportieren', 'Export'))}${btn('import', s.slot, tr('Importieren', 'Import'))}${btn('new', s.slot, tr('Neu anfangen', 'Start over'))}${btn('delete', s.slot, tr('Löschen', 'Delete'))}</div>
         </div>`;
       })
@@ -99,7 +103,7 @@ export class SaveSlots {
     this.root.innerHTML = `
       <div class="saves-panel">
         <header><h2>${tr('Spielstände', 'Saves')}</h2><button data-action="back">${tr('Zurück (Esc)', 'Back (Esc)')}</button></header>
-        <p class="hint">${tr('Gespeichert wird automatisch im Browser. Mit Export sicherst du einen Spielstand als Datei – zum Aufheben oder für einen anderen Rechner.', 'Saving happens automatically in the browser. Export backs a save up as a file – to keep it or move it to another computer.')}</p>
+        <p class="hint">${tr('Gespeichert wird automatisch im Browser, dazu je Platz eine Sicherung vom Ende der letzten Saison. Mit Export sicherst du einen Spielstand als Datei – zum Aufheben oder für einen anderen Rechner.', 'Saving happens automatically in the browser, plus one backup per slot from the end of last season. Export backs a save up as a file – to keep it or move it to another computer.')}</p>
         <div class="slots">${cards}</div>
         ${this.message ? `<p class="message" role="status">${this.message}</p>` : ''}
       </div>`;

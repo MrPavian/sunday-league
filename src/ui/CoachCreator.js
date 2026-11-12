@@ -1,3 +1,4 @@
+import { DIFFICULTIES, difficultyDesc, difficultyName } from '../career/difficulty.js';
 import { tr } from '../core/i18n.js';
 import { HAIR_COLORS, jobKey, jobName, PROFESSIONS, SKIN_TONES } from '../data/names.js';
 import { TRAITS } from '../data/traits.js';
@@ -19,6 +20,7 @@ export class CoachCreator {
       last: '',
       age: 32,
       relation: 'beziehung',
+      difficulty: 'normal', // Schwierigkeitsgrad (career/difficulty.js)
       profession: '', // leer – du trägst deinen Beruf selbst ein (sonst „Angestellter")
       style: 'spielmacher',
       look: { skin: SKIN_TONES[1], hair: HAIR_COLORS[1], bald: false, beard: false },
@@ -68,6 +70,7 @@ export class CoachCreator {
       d.age = Math.max(d.mode === 'coachOnly' ? 25 : 18, Math.min(d.mode === 'coachOnly' ? 70 : 55, d.age)); // Spielertrainer 18–55, Nur Trainer 25–70
     } else if (action === 'style') d.style = value;
     else if (action === 'relation') d.relation = value;
+    else if (action === 'careerLevel') d.difficulty = value;
     else if (action === 'skin') d.look.skin = Number(value);
     else if (action === 'hair') d.look.hair = Number(value);
     else if (action === 'bald') d.look.bald = !d.look.bald;
@@ -129,6 +132,8 @@ export class CoachCreator {
         <p class="lead">${this.successor ? (only ? tr(`Eine neue Ära beim ${this.successor}. Der Neue steht nur an der Seitenlinie.`, `A new era at ${this.successor}. The new manager stays on the touchline.`) : tr(`Eine neue Ära beim ${this.successor}. Bis 45 spielt der Neue selbst mit.`, `A new era at ${this.successor}. Up to 45, the new manager plays too.`)) : only ? tr('Du trainierst einen Freizeitverein von der Seitenlinie – ohne selbst zu spielen. Name, Trikot und Wappen des Vereins legst du gleich danach fest.', 'You manage a recreational club from the touchline – without playing yourself. You choose the club name, kit and crest right after this.') : tr('Du trainierst einen Freizeitverein – und stehst selbst mit auf dem Platz. Name, Trikot und Wappen des Vereins legst du gleich danach fest.', 'You manage a recreational club – and play in the team yourself. You choose the club name, kit and crest right after this.')}</p>
         <h4>${tr('Wie willst du starten?', 'How do you want to start?')}</h4>
         ${modes}
+        ${this.successor ? '' : `<h4>${tr('Schwierigkeit', 'Difficulty')} <small>– ${tr('später unter Verein → Du umstellbar', 'can be changed later under Club → Me')}</small></h4>
+        <div class="styles modes diff-choice" role="group" aria-label="${tr('Schwierigkeit', 'Difficulty')}">${DIFFICULTIES.map((id) => `<button type="button" class="style ${d.difficulty === id ? 'on' : ''}" data-action="careerLevel" data-value="${id}" aria-pressed="${d.difficulty === id}" data-testid="diff-${id}"><b>${difficultyName(id)}</b><span>${difficultyDesc(id)}</span></button>`).join('')}</div>`}
         <div class="creator-grid">
           <section>
             <div class="row">

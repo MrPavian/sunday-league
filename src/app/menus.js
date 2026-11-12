@@ -1,10 +1,11 @@
 // Hauptmenü und seine Fenster: Einstellungen, Spielstände (Export/Import), neue Karriere, Startablauf.
 // Den gemeinsamen Zustand (career, match, mode …) liefert das Kontextobjekt aus main.js.
+import { setDifficulty } from '../career/difficulty.js';
 import { langChosen, setLang, tr } from '../core/i18n.js';
 import { saveFile } from '../core/files.js';
 import { button, haptic, hapticsOn, setHaptics, Sheet } from '../ui/ds.js';
 import { checkWhatsNew, whatsNewLatestHtml } from '../ui/whatsnew.js';
-import { activeSlot, createCareer, deleteCareer, exportCareer, humanClub, importCareer, loadCareer, saveCareer, setActiveSlot, slotSummaries } from '../career/career.js';
+import { activeSlot, createCareer, deleteCareer, exportCareer, humanClub, importCareer, loadCareer, restoreBackup, saveCareer, setActiveSlot, slotSummaries } from '../career/career.js';
 import { HALF_MAX, HALF_MIN, MATCH, MATCH_LENGTHS, matchDuration } from '../sim/match.js';
 import { PITCHES } from '../sim/pitch.js';
 import { announcerMode, coachLevel, homeView, setAnnouncerMode, setCoachLevel, setHomeView, setWallView, wallView } from '../ui/prefs.js';
@@ -151,6 +152,12 @@ export function createMenus(ctx) {
           ctx.menu.paused = false;
           ctx.menu.onCareerNew();
         },
+        onRestore(slot) {
+          if (!restoreBackup(undefined, slot)) return false;
+          if (slot === activeSlot()) ctx.career = loadCareer();
+          ctx.menu.setCareer(saveInfo());
+          return true;
+        },
         onDelete(slot) {
           deleteCareer(undefined, slot);
           if (slot === activeSlot()) ctx.career = null;
@@ -193,6 +200,7 @@ export function createMenus(ctx) {
         onDone(coach) {
           creator.hide();
           ctx.career = createCareer({ seed: careerSeed, coach, leagueSize: ctx.leagueSize });
+          setDifficulty(ctx.career, coach?.difficulty); // im Trainer-Editor gewählt (career/difficulty.js)
           ctx.career.founding = true; // erst Name, Trikot und Wappen (Gründungsversammlung)
           saveCareer(ctx.career);
           ctx.openClubhouse();

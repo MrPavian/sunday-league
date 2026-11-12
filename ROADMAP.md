@@ -14,17 +14,44 @@ Reihenfolge: erst die Spielqualität (A), dann Ausbau des Bestehenden (B), dann 
 Android-Gerät steht nach Nutzerentscheid ganz am Ende.
 
 **A – Spielqualität**
-1. **Balance über lange Karrieren messen:** viele Karrieren über viele Saisons automatisch durchlaufen lassen und auswerten
-   (Entlassungen, Tempo der Aufstiege, Kasse, Stimmung, Vertrauen, Geduld der Familie, privates Konto). Kein Wert darf dauerhaft
-   am Anschlag hängen. Änderungen an Spielwerten nur mit Messung vorher und nachher.
-2. **Ereignisdichte prüfen:** zählen, welche Ereignisse in zehn Saisons nie vorkommen und welche sich zu oft wiederholen
-   (je Liga und je Paket); Gewichte danach richten.
-3. **Einstieg für neue Spieler:** die erste Stunde einer frischen Karriere wie ein Neuling durchklicken, Stolperstellen notieren
-   und beheben; Reiter unter „Verein" und „Mannschaft" entschlacken.
-4. **Spielstände absichern:** Export und Import als Datei gibt es schon (SaveSlots.js); offen ist eine automatische Sicherung
-   der letzten Stände, auf die man nach einem Fehler zurückgehen kann.
-5. **Schwierigkeitsgrad:** Wahl zu Beginn (entspannt, normal, hart), verschiebt Geduld des Vorstands und Geld. Spielwerte, als
-   solche markiert; „normal" bleibt der heutige Stand.
+1. **Balance über lange Karrieren messen.** ✅ **Erste Messung 2026-11-12** (`scripts/balance-audit.mjs`, echte simulierte
+   Spiele, selbst angelegter Trainer, drei Spielweisen; 12 Karrieren × 12 Saisons ab Liga 1 und je 6 × 6 mit Start in den Ligen
+   1, 5, 7, 9, 10, 12; keine Abstürze).
+   - Gemessen und belastbar: Stimmung, Energie und Vertrauen hängen nirgends dauerhaft am Anschlag. In den Ligen 1–5 gab es
+     keine Entlassung (252 Saisons), ab Liga 7 wird entlassen.
+   - **Befund Familie:** Die Geduld der Familie fällt bei einem Trainer, der jede Woche beide Aktionen nutzt, im Mittel nur auf
+     82–90 und im schlechtesten Zehntel auf 65–85 – der Bereich unter 60 wird praktisch nie erreicht. Die Ereignisse dafür
+     (familienwochenende, priv_krise, priv_trennung) kamen in keiner Messung vor. Die Werte hat der Nutzer am 2026-10-31
+     festgelegt. ✅ **Nutzerentscheid 2026-11-12:** „ein Mittelding, je nach Schwierigkeitsgrad schwieriger" – umgesetzt in
+     difficulty.js (normal: Krise unter 45, ab der Regionalliga ein Punkt Geduld weniger in jeder zweiten Woche; hart: unter 60,
+     ein Punkt je Woche; entspannt: wie vorher). Offen: nachmessen, sobald der Mess-Bot oben mithalten kann.
+   - **Behoben:** Fast jeder Trainer ohne Käufe galt als „Sparfuchs" (10 von 12 Saisons). Jetzt erst ab 20 000 € auf dem Konto
+     (Spielwert).
+   - **Nicht belastbar:** Kasse und Tabellenplatz in den oberen Ligen. Der Mess-Bot stellt nicht um, kauft kaum ein und steigt
+     von dort regelmäßig ab (im Mittel Platz 5 von 6); die 3 bis 7 Entlassungen je 10 Saisons oben messen den Bot, nicht das
+     Spiel. Der Start in den Ligen 5 und 7 trägt zudem den Unterhalt der vollen Zulassung (Kasse tief im Minus). Offen: ein Bot,
+     der spielt wie ein Mensch (Aufstellung, Transfers, Taktik), dann Kasse und Entlassungen oben neu messen.
+2. **Ereignisdichte prüfen.** ✅ **Erste Zählung 2026-11-12** (`scripts/events-count.mjs`: 72 Karrieren × 12 Saisons über alle
+   zwölf Ligen, 9504 Wochen, gemischte Ergebnisse ohne simulierte Spiele).
+   - In 67 % der Wochen gibt es ein Ereignis, in jeder Liga zwischen 63 und 71 %. Keines ist zu häufig: vorn liegen die
+     Derby-Wochen (je 5,9 %, so gewollt), Angebote (5,0 %) und Tims Runde (3,3 %); alles andere unter 2 %.
+   - 170 von 202 ziehbaren Ereignissen kamen vor. Von den 32 fehlenden gehen die meisten auf die Messung zurück (keine Alten
+     Herren und kein NLZ gegründet, keine simulierten Verletzungen, Vereinswechsel am Wechsel vorbei gesetzt). Echte Lücke: die
+     drei Familien-Ereignisse aus Punkt 1.
+   - Offen: prüfen, ob `grueppchen`/`mannschaftsrat` (Unruhe), `profi_scout`, `profi_rueckkehr`, `profivertrag`, `berater`,
+     `rasenheizung`, `elfmeter_training`, `tiger_schlaf`, `mittraining_graetsche`, `pate_meint` erreichbar sind; die Ligen 1 und 11
+     waren mit rund 150 Wochen dünn besetzt.
+3. **Einstieg für neue Spieler.** ✅ **Erster Durchgang 2026-11-12** (frische Karriere im Hochformat durchgeklickt und jede
+   Seite vermessen): Überschrift der Gründungsversammlung war abgeschnitten (behoben); die Kasse war in Woche 1 5,4 Bildschirme
+   lang – Ausrüster-Angebote jetzt eingeklappt; unter „Du" waren 17 von 35 Knöpfen gesperrt – der Privat-Block zeigt je Bereich
+   nur noch die nächste Stufe. Offen: Reiter zusammenlegen (Verein und Mannschaft haben je sechs), Startseite (2,9 Bildschirme),
+   Trikot-Editor (150 Knöpfe), ein zweiter Durchgang im Querformat und mit einem echten Neuling.
+4. **Spielstände absichern.** ✅ **2026-11-12** (career.js saveCareer/restoreBackup, tests/savebackup.test.js): je Speicherplatz
+   eine Sicherung vom Ende der letzten Saison, unter „Spielstände" mit „Dorthin zurück". Export und Import als Datei gab es schon.
+   Eine Sicherung je Platz, weil der Browser-Speicher knapp ist (ein Stand hat 100–230 KB, gemessen).
+5. **Schwierigkeitsgrad.** ✅ **2026-11-12** (career/difficulty.js, tests/difficulty.test.js): entspannt, normal, hart – Wahl
+   beim Anlegen des Trainers, umstellbar unter Verein → Du. Wirkt auf den Druck des Vorstands (×0,7 / 1 / 1,3), das
+   Sponsorengeld (×1,15 / 1 / 0,85) und die Familie (siehe Punkt 1). Alles Spielwerte; alte Spielstände laufen auf „normal".
 
 **B – Ausbau des Bestehenden** (Nutzerwunsch 2026-11-11)
 6. **3D-Spiel verbessern: Ecken und Einwürfe** (Abläufe, Laufwege, Varianten, Ausführung), danach weitere Standards. Mit Messung

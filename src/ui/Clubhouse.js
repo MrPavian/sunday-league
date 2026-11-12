@@ -1,3 +1,4 @@
+import { setDifficulty } from '../career/difficulty.js';
 import { tr } from '../core/i18n.js';
 import { museum } from '../career/museum.js';
 import { seasonReview } from '../career/review.js';
@@ -475,6 +476,8 @@ export class Clubhouse {
         if (takeTrip(this.career)) this.h.onChange();
       } else if (action === 'privDonate') {
         if (donate(this.career)) this.h.onChange();
+      } else if (action === 'careerLevel') {
+        if (setDifficulty(this.career, value)) this.h.onChange(); // Schwierigkeitsgrad (difficulty.js)
       } else if (action === 'privMove') {
         if (moveHome(this.career)) this.h.onChange();
       } else if (action === 'privHeavy') {

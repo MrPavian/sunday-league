@@ -255,7 +255,7 @@ function announce(lines) {
     setTimeout(() => {
       if (m0 !== match || mode !== 'play') return;
       sound.gong();
-      hud.toast(`${tr('Stadionsprecher', 'Announcer')}: ${l.text}`, 3.2, l.kind === 'end' ? 9 : 2);
+      hud.toastQueued(`${tr('Stadionsprecher', 'Announcer')}: ${l.text}`, 3.2, l.kind === 'end' ? 9 : 2); // wartet, falls gerade Wichtigeres steht
       speak(l.text);
       if (l.call) {
         setTimeout(() => {

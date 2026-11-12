@@ -117,7 +117,12 @@ describe('Kaufen und Wirkung', () => {
     const p = privat(c);
     p.wallet = 10000;
     p.earned = 10000;
+    expect(typus(c)).toBe('boden'); // ein paar Tausender sind noch kein volles Konto
+    p.wallet = 20000;
+    p.earned = 20000;
     expect(typus(c)).toBe('sparfuchs');
+    p.wallet = 10000;
+    p.earned = 10000;
     const cash = c.cash;
     expect(donate(c)).toBe(1000);
     expect(c.cash).toBe(cash + 1000);

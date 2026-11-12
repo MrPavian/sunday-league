@@ -6,6 +6,38 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-12-2 – Difficulty and an easier start
+
+### New
+- **Difficulty:** relaxed, normal or hard. Chosen when creating your manager, changeable at any time under Club → Me. Old saves run on "normal".
+  - Board: the league's pressure counts with a factor of 0.7 / 1 / 1.3.
+  - Sponsor money per matchday: factor 1.15 / 1 / 0.85.
+  - Family: see below.
+  - All figures are game values.
+
+### Changed
+- **Family in professional football:** measured, the family's patience never dropped below 65 and a relationship crisis never occurred. Now on "normal": from the fourth tier everyday life costs one point of patience every second week, and the crisis comes below 45 instead of below 35. On "hard": one point a week, crisis below 60. On "relaxed" it stays as before.
+- **Getting started:**
+  - Kitty: the supplier offers are folded away (the page was more than five screens long in the first week).
+  - Private life: only the next step per area is offered, one up and one down.
+  - The founding meeting's heading was cut off in portrait.
+
+### Fixed
+- **Stadium announcer:** an announcement could be lost on a slow frame rate because a more important banner was showing. It now waits and follows.
+
+## 2026-11-12-1 – Backup of your saves
+
+### New
+- **Automatic backup:** every save slot gets a backup from the end of last season. Under "Saves" it is shown on the slot's card; "Go back to it" restores it after asking.
+  - One backup per slot, because browser storage is tight. If it is full, the save itself takes priority and the backup is dropped.
+  - If a different save ends up in the slot (new career, import), the old backup is discarded.
+
+### Changed
+- **Manager type "saver":** only from €20,000 in your private account (game value). Measured before, almost everyone counted as a saver who could not yet afford anything in the lower leagues.
+
+### Internal
+- Long-career measurement (`scripts/balance-audit.mjs`) and event count across all leagues (`scripts/events-count.mjs`); results in `ROADMAP.md` 11.18.
+
 ## 2026-11-11-3 – Stadium announcer: half-time and full time
 
 ### Fixed

@@ -9,6 +9,7 @@
 //    verloren oder der zweite verlorene Antrag binnen zwei Saisons: abgewählt – Angebote anderer Vereine, als Trainer.
 //  - Saisonende: Ziel erreicht, übertroffen oder verfehlt, Auf- und Abstieg verschieben den Rückhalt.
 // Alle Zahlen sind Spielwerte (keine Quelle zur Geduld von Vorständen), gemessen mit scripts/pressure-audit.mjs.
+import { diff } from './difficulty.js';
 import { tr } from '../core/i18n.js';
 import { clubById, humanClub, seasonOver, table } from './career.js';
 import { chronicle } from './sagas.js';
@@ -46,7 +47,7 @@ const MEMBERS = () => tr('Mitglieder', 'Members');
 const hash = (...parts) => parts.reduce((h, p) => (Math.imul(h ^ (p | 0), 0x9e3779b1) + 0x7f4a7c15) >>> 0, 0x27d4eb2f);
 const clamp = (v) => Math.max(0, Math.min(100, v));
 const on = (c) => !!c?.pressure;
-export const weight = (c) => PRESSURE[Math.max(1, Math.min(PRESSURE.length - 1, c.level ?? 1))] ?? 0;
+export const weight = (c) => (PRESSURE[Math.max(1, Math.min(PRESSURE.length - 1, c.level ?? 1))] ?? 0) * diff(c).board; // Schwierigkeitsgrad (difficulty.js)
 
 export function board(c) {
   c.board ??= { trust: TRUST.start, warned: false, ultimatum: null, losses: 0, votes: [], fired: null };
@@ -175,7 +176,7 @@ export function nextSeason(c, summary) {
   const b = board(c);
   if (b.fired) return;
   if (c.summerMove?.season === (c.season ?? 1) - 1) return; // Sommerwechsel angenommen – der neue Verein fängt neu an (clubchange.js)
-  const w = PRESSURE[Math.max(1, Math.min(PRESSURE.length - 1, (c.level ?? 1) - (summary?.promoted ? 1 : summary?.relegated ? -1 : 0)))] ?? 0;
+  const w = (PRESSURE[Math.max(1, Math.min(PRESSURE.length - 1, (c.level ?? 1) - (summary?.promoted ? 1 : summary?.relegated ? -1 : 0)))] ?? 0) * diff(c).board;
   if (summary?.promoted) b.trust = clamp(b.trust + TRUST.promoted);
   if (summary?.relegated) b.trust = clamp(b.trust - TRUST.relegated * w);
   b.ultimatum = null;

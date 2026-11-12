@@ -59,6 +59,7 @@ export class Hud {
       el.style.setProperty('--kit', hex(t.kit.shirt));
     });
     this.$('.venue').innerHTML = `${match.pitch.name} · ${match.pitch.surface.name}${r ? ` · ${tr('Schiri', 'Referee')}: ${r.name}` : ''}<br><small>${match.teams.map((t, i) => `${t.short ?? t.name}: ${tacticLabel(match.plan?.[i], match.pitch.format)}`).join(' – ')}</small>`;
+    this.toastQueue = [];
     this.hideToast();
     this.refName = r?.name ?? null;
     this.edgeKey = null;
@@ -110,9 +111,21 @@ export class Hud {
     this.toastTimer = seconds;
   }
 
+  // Meldung, die nicht verloren gehen darf (Stadionsprecher): Läuft gerade eine wichtigere, wartet sie und kommt danach.
+  // Die Einblendungen zählen in Bildzeit, Zeitgeber in Echtzeit – bei langsamem Bild ging eine zeitlich abgepasste Meldung sonst unter.
+  toastQueued(text, seconds = 2, priority = 1) {
+    if (this.toastTimer > 0 && priority < this.toastPriority) {
+      this.toastQueue = [...(this.toastQueue ?? []), { text, seconds, priority }].slice(-3);
+      return;
+    }
+    this.toast(text, seconds, priority);
+  }
+
   hideToast() {
     this.$('.toast').hidden = true;
     this.toastTimer = 0;
+    const next = this.toastQueue?.shift();
+    if (next) this.toast(next.text, next.seconds, next.priority);
   }
 
   handleEvents(match) {

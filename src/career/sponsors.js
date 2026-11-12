@@ -2,6 +2,7 @@
 // zum Verein (0–100) und ein Saisonziel. Man kann nachverhandeln, verlängern,
 // verärgern – und manchmal will der Chef, dass sein Sohn mitspielt. Verträge laufen 1–3 Saisons,
 // jeder Sponsor hat je Saison einen Wunsch (sponsorwish.js), der Verein kann ablehnen und kündigen.
+import { diff } from './difficulty.js';
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { humanClub, playerOf, table } from './career.js';
@@ -399,7 +400,7 @@ export function paySponsors(career) {
       continue; // „Kommt nächste Woche, versprochen."
     }
     const due = s.weekly + (s.owed ?? 0);
-    const mul = sponsorMul(career); // Vereinsbüro, Geschäftsstelle, Marketing (facilities.js)
+    const mul = sponsorMul(career) * diff(career).sponsor; // Vereinsbüro, Geschäftsstelle, Marketing (facilities.js); Schwierigkeitsgrad (difficulty.js)
     book(career, `${s.name} (${SLOTS[s.slot]})`, mul === 1 ? due : Math.round(due * mul));
     s.owed = 0;
   }

@@ -6,6 +6,38 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-12-2 – Schwierigkeitsgrad und leichterer Einstieg
+
+### Neu
+- **Schwierigkeitsgrad:** entspannt, normal oder hart. Wahl beim Anlegen des Trainers, jederzeit umstellbar unter Verein → Du. Alte Spielstände laufen auf „normal“.
+  - Vorstand: Der Erfolgsdruck der Liga zählt mit dem Faktor 0,7 / 1 / 1,3.
+  - Sponsorengeld je Spieltag: Faktor 1,15 / 1 / 0,85.
+  - Familie: siehe unten.
+  - Alle Werte sind Spielwerte.
+
+### Geändert
+- **Familie im Profifußball:** Gemessen fiel die Geduld der Familie nie unter 65, eine Beziehungskrise kam nie vor. Jetzt auf „normal“: Ab der Regionalliga kostet der Alltag in jeder zweiten Woche einen Punkt Geduld, und die Krise kommt schon unter 45 statt unter 35. Auf „hart“: ein Punkt je Woche, Krise unter 60. Auf „entspannt“ bleibt es wie vorher.
+- **Einstieg:**
+  - Kasse: Die Ausrüster-Angebote sind eingeklappt (die Seite war in der ersten Woche über fünf Bildschirme lang).
+  - Privat: Je Bereich wird nur noch die nächste Stufe angeboten, eine hoch und eine runter.
+  - Die Überschrift der Gründungsversammlung war im Hochformat abgeschnitten.
+
+### Behoben
+- **Stadionsprecher:** Eine Durchsage konnte bei langsamem Bild verloren gehen, weil gerade eine wichtigere Einblendung stand. Sie wartet jetzt und kommt danach.
+
+## 2026-11-12-1 – Sicherung der Spielstände
+
+### Neu
+- **Automatische Sicherung:** Jeder Speicherplatz bekommt eine Sicherung vom Ende der letzten Saison. Unter „Spielstände“ steht sie auf der Karte des Platzes; „Dorthin zurück“ holt sie nach einer Nachfrage zurück.
+  - Eine Sicherung je Platz, weil der Speicher des Browsers knapp ist. Ist er voll, geht der Spielstand vor und die Sicherung fällt weg.
+  - Liegt ein anderer Spielstand im Platz (neue Karriere, Import), wird die alte Sicherung verworfen.
+
+### Geändert
+- **Trainertyp „Sparfuchs“:** erst ab 20 000 € auf dem privaten Konto (Spielwert). Gemessen galt vorher fast jeder als Sparfuchs, der sich in den unteren Ligen noch nichts leisten konnte.
+
+### Intern
+- Messung über lange Karrieren (`scripts/balance-audit.mjs`) und Ereignis-Zählung über alle Ligen (`scripts/events-count.mjs`); Ergebnisse in `ROADMAP.md` 11.18.
+
 ## 2026-11-11-3 – Stadionsprecher: Halbzeit und Endstand
 
 ### Behoben

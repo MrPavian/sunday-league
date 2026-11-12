@@ -1,5 +1,6 @@
 // VEREIN (Vereinsmappe): Kasse, Verein (Name, Trikot, Wappen, Ausbau, Chronik), Museum.
 // Methoden des Vereinsheims (this = Clubhouse), aus Clubhouse.js herausgelöst – Verhalten unverändert.
+import { DIFFICULTIES, difficultyDesc, difficultyName, difficultyOf } from '../../career/difficulty.js';
 import { plural, tr } from '../../core/i18n.js';
 import { kitPreviewURL, patternColors, RETRO_IDS, RETRO_MODELS } from '../../render/kitPaint.js';
 import { museum } from '../../career/museum.js';
@@ -65,7 +66,12 @@ export const clubScreens = {
 
   // Verein (Menü flach, 2026-11-06): jede frühere Unterseite ist ein eigener Reiter.
   tab_me() {
-    return `${this.profileCard()}${this.privatBlock()}${isPresident(this.career) ? this.tab_office() : ''}`;
+    return `${this.profileCard()}${this.privatBlock()}${this.difficultyCard()}${isPresident(this.career) ? this.tab_office() : ''}`;
+  },
+  // Schwierigkeitsgrad (career/difficulty.js): jederzeit umstellbar.
+  difficultyCard() {
+    const cur = difficultyOf(this.career);
+    return `<div class="me-card" data-testid="difficulty"><h4>${tr('Schwierigkeit', 'Difficulty')}</h4><div class="ui-row priv-row">${DIFFICULTIES.map((id) => button(difficultyName(id), { kind: id === cur ? 'primary' : 'ghost', action: 'careerLevel', value: id, 'data-testid': `difficulty-${id}` })).join('')}</div><p class="t-2">${difficultyDesc(cur)}</p></div>`;
   },
   // Privatleben des Trainers (privat.js): Konto, Auftreten, Typus, Besitz, Familie.
   privatBlock() {
@@ -78,7 +84,7 @@ export const clubScreens = {
     const minus = p.wallet < 0;
     const tierRow = (kind) => {
       const cur = p.own[kind];
-      const opts = GOODS[kind].tiers.map((_, i) => i).filter((i) => i !== cur && Math.abs(i - cur) <= 4);
+      const opts = GOODS[kind].tiers.map((_, i) => i).filter((i) => i !== cur && Math.abs(i - cur) <= 1); // nur eine Stufe hoch oder runter – sonst steht eine Wand gesperrter Knöpfe da
       const btn = (i) => {
         const cost = priceOf(c, kind, i);
         const afford = cost.net <= 0 || (!minus && p.wallet >= cost.net);
@@ -480,7 +486,8 @@ export const clubScreens = {
       return `<div class="outfitter" data-testid="outfitter"><h4>${tr('Ausrüster', 'Kit supplier')}: ${d.name}</h4><small>${terms(d)} · ${tr(`bis Saison ${o.until}`, `until season ${o.until}`)}${freeKitLeft(c) ? ` · ${tr('Freiware diese Saison noch offen', 'free set still available this season')}` : ''}</small></div>`;
     }
     const offers = outfitterOffers(c).map((d) => `<button class="successor" data-action="outfitter" data-value="${d.id}"><b>${d.name}</b><small>${d.line}</small><small>${terms(d)} · ${OUTFITTER_SEASONS} ${tr('Saisons', 'seasons')}</small></button>`).join('');
-    return `<div class="outfitter" data-testid="outfitter"><h4>${tr('Ausrüster gesucht', 'Looking for a kit supplier')}</h4><small>${tr('Ein Ausrüstervertrag macht neue Trikotsätze billiger. Nur einer zur Zeit.', 'A supplier deal makes new kits cheaper. Only one at a time.')}</small>${offers}</div>`;
+    // Eingeklappt (Einstieg, ROADMAP 11.18 Punkt 3): Die Kasse war in der ersten Woche über fünf Bildschirme lang.
+    return `<details class="fac-group cash-fold outfitter" data-testid="outfitter" data-keep="outfitter"${this.keepOpen?.outfitter ? ' open' : ''}><summary><h4 class="sub">${tr('Ausrüster gesucht', 'Looking for a kit supplier')} <small>${outfitterOffers(c).length} ${tr('Angebote', 'offers')}</small></h4></summary><small>${tr('Ein Ausrüstervertrag macht neue Trikotsätze billiger. Nur einer zur Zeit.', 'A supplier deal makes new kits cheaper. Only one at a time.')}</small>${offers}</details>`;
   },
 
   // Vorstand und Erfolgsdruck (pressure.js): Rückhalt, Ultimatum, frühere Vereine.

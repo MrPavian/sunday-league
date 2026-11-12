@@ -1597,10 +1597,69 @@ export function setActiveSlot(slot, storage = globalThis.localStorage) {
   }
 }
 
+// Automatische Sicherung (ROADMAP 11.18 Punkt 4): je Platz ein zweiter Stand – der letzte vor dem Saisonwechsel. Beginnt eine
+// neue Saison, wandert der bisher gespeicherte Stand (Ende der alten Saison) in die Sicherung; dorthin kann man unter
+// „Spielstände“ zurück. Eine Sicherung je Platz, weil der Browser-Speicher knapp ist (ein Stand hat 100–230 KB, gemessen über
+// 15 Saisons; drei Plätze mit Sicherung bleiben unter der üblichen Grenze von 5 MB). Reicht der Platz nicht, fällt die
+// Sicherung weg – der Spielstand selbst geht vor.
+const backupKey = (slot) => `${slotKey(slot)}:backup`;
+const metaKey = (slot) => `${slotKey(slot)}:meta`;
+const readMeta = (storage, slot) => {
+  try {
+    return JSON.parse(storage?.getItem(metaKey(slot)) ?? 'null');
+  } catch {
+    return null;
+  }
+};
+function rotateBackup(career, storage, slot) {
+  const meta = readMeta(storage, slot);
+  if (meta && meta.seed !== career.seed) storage.removeItem(backupKey(slot)); // anderer Spielstand im Platz: alte Sicherung gehört nicht dazu
+  else if (meta && career.season > meta.season) {
+    const old = storage.getItem(slotKey(slot));
+    if (old) {
+      try {
+        storage.setItem(backupKey(slot), old);
+      } catch {
+        storage.removeItem(backupKey(slot));
+      }
+    }
+  }
+}
+
 export function saveCareer(career, storage = globalThis.localStorage, slot = activeSlot(storage)) {
   try {
     career.savedAt = Date.now();
-    storage?.setItem(slotKey(slot), JSON.stringify(career));
+    const raw = JSON.stringify(career);
+    try {
+      rotateBackup(career, storage, slot);
+    } catch {
+      // ohne Sicherung weiter
+    }
+    try {
+      storage?.setItem(slotKey(slot), raw);
+    } catch {
+      storage.removeItem(backupKey(slot)); // Speicher voll: Sicherung opfern, noch einmal versuchen
+      storage.setItem(slotKey(slot), raw);
+    }
+    try {
+      storage?.setItem(metaKey(slot), JSON.stringify({ season: career.season, seed: career.seed }));
+    } catch {
+      // egal
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Die Sicherung wird zum Spielstand (der bisherige Stand ist danach weg; die Sicherung bleibt stehen).
+export function restoreBackup(storage = globalThis.localStorage, slot = activeSlot(storage)) {
+  try {
+    const raw = storage?.getItem(backupKey(slot));
+    const c = raw ? parseCareer(raw) : null;
+    if (!c) return false;
+    storage.setItem(slotKey(slot), raw);
+    storage.setItem(metaKey(slot), JSON.stringify({ season: c.season, seed: c.seed }));
     return true;
   } catch {
     return false;
@@ -1633,7 +1692,14 @@ export function slotSummaries(storage = globalThis.localStorage) {
     }
     if (!c || c.version !== SAVE_VERSION || !Array.isArray(c.clubs)) return { slot, empty: true };
     const club = c.clubs.find((x) => x.human);
-    return { slot, club: club?.name ?? '?', season: c.season, round: Math.min(c.round + 1, c.fixtures.length), rounds: c.fixtures.length, coach: c.coach ? `${c.coach.first ?? ''} ${c.coach.last ?? ''}`.trim() : '', savedAt: c.savedAt ?? null };
+    let backup = null;
+    try {
+      const b = JSON.parse(storage?.getItem(backupKey(slot)) ?? 'null');
+      if (b && b.version === SAVE_VERSION && Array.isArray(b.clubs)) backup = { season: b.season, round: Math.min(b.round + 1, b.fixtures.length), rounds: b.fixtures.length, savedAt: b.savedAt ?? null };
+    } catch {
+      backup = null;
+    }
+    return { slot, backup, club: club?.name ?? '?', season: c.season, round: Math.min(c.round + 1, c.fixtures.length), rounds: c.fixtures.length, coach: c.coach ? `${c.coach.first ?? ''} ${c.coach.last ?? ''}`.trim() : '', savedAt: c.savedAt ?? null };
   });
 }
 
@@ -1657,6 +1723,8 @@ export function importCareer(text) {
 export function deleteCareer(storage = globalThis.localStorage, slot = activeSlot(storage)) {
   try {
     storage?.removeItem(slotKey(slot));
+    storage?.removeItem(backupKey(slot));
+    storage?.removeItem(metaKey(slot));
   } catch {
     // egal
   }

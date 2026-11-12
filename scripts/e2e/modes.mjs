@@ -992,10 +992,14 @@ export async function privatLife(b) {
     await p.evaluate(() => { __sl.career.coach.privat.wallet = 60000; });
     await click(p, '[data-action="tab"][data-value="me"]').catch(() => {});
     await p.waitForTimeout(300);
+    // Angeboten wird je Bereich nur die nächste Stufe (eine hoch, eine runter): erst der Gebrauchte, dann der Neuwagen.
+    ok(!(await p.$('[data-testid="priv-car-2"]')), 'übernächste Stufe wird schon angeboten');
+    await click(p, '[data-testid="priv-car-1"]').catch(() => {});
+    await p.waitForTimeout(300);
     await click(p, '[data-testid="priv-car-2"]').catch(() => {});
     await p.waitForTimeout(300);
-    ok(await p.evaluate(() => __sl.career.coach.privat.own.car === 2 && __sl.career.coach.privat.wallet === 25000), 'Autokauf wirkt nicht');
-    ok(await p.evaluate(() => /25[.,]000/.test(document.querySelector('[data-testid="priv-wallet"]')?.textContent ?? '')), 'Kontostand wird nach dem Kauf nicht neu angezeigt');
+    ok(await p.evaluate(() => __sl.career.coach.privat.own.car === 2 && __sl.career.coach.privat.wallet === 21000), 'Autokauf wirkt nicht');
+    ok(await p.evaluate(() => /21[.,]000/.test(document.querySelector('[data-testid="priv-wallet"]')?.textContent ?? '')), 'Kontostand wird nach dem Kauf nicht neu angezeigt');
     await click(p, '[data-testid="priv-heavy-off"]').catch(() => {});
     await p.waitForTimeout(200);
     ok(await p.evaluate(() => __sl.career.coach.privat.heavy === false), 'schwere Ereignisse lassen sich nicht abschalten');
@@ -1006,10 +1010,53 @@ export async function privatLife(b) {
     ok(!!(await p.$('[data-testid="priv-salary"]')), 'ausgehandeltes Gehalt wird nicht angezeigt');
     await click(p, '[data-testid="priv-move"]').catch(() => {});
     await p.waitForTimeout(300);
-    ok(await p.evaluate(() => __sl.career.coach.privat.commute === false && __sl.career.coach.privat.wallet === 22000), 'Umzug wirkt nicht');
+    ok(await p.evaluate(() => __sl.career.coach.privat.commute === false && __sl.career.coach.privat.wallet === 18000), 'Umzug wirkt nicht');
     ok(!(await p.$('[data-testid="priv-move"]')), 'Knopf „Umziehen“ bleibt nach dem Umzug stehen');
+    // Schwierigkeitsgrad (difficulty.js): steht unter „Du“ und lässt sich umstellen.
+    ok(await p.evaluate(() => (__sl.career.difficulty ?? 'normal') === 'normal'), 'neue Karriere startet nicht auf „normal“');
+    await click(p, '[data-testid="difficulty-hart"]').catch(() => {});
+    await p.waitForTimeout(300);
+    ok(await p.evaluate(() => __sl.career.difficulty === 'hart' && document.querySelector('[data-testid="difficulty-hart"]')?.classList.contains('primary') !== false), 'Schwierigkeitsgrad lässt sich nicht umstellen');
     ok(!(await p.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)), 'Seite scrollt quer');
     ok(!p.errors.length, `Fehler: ${p.errors.join(' | ')}`);
+    await p.context().close();
+    f += ok.done();
+  }
+  return f;
+}
+
+// Sicherung der Spielstände (career.js saveCareer/restoreBackup): Die Sicherung vom Saisonende steht auf der Karte des Platzes,
+// „Dorthin zurück“ fragt nach und holt sie dann zurück.
+export async function saveBackup(b) {
+  let f = 0;
+  const { createCareer, finishRound, nextSeason, seasonOver } = await import('../../src/career/career.js');
+  const c = createCareer({ seed: 5 });
+  while (!seasonOver(c)) {
+    for (const x of c.fixtures[c.round]) x.result ??= { home: 1, away: 1 };
+    finishRound(c);
+  }
+  const old = JSON.stringify(c);
+  nextSeason(c);
+  for (const size of ['land', 'port']) {
+    const ok = checker(`Sicherung zurückholen (${size})`);
+    const p = await page(b, size, { query: '?notitle&debug', store: { 'sunday-league:career': JSON.stringify(c), 'sunday-league:career:backup': old, 'sunday-league:career:meta': JSON.stringify({ season: c.season, seed: c.seed }) } });
+    await click(p, '.saves-link');
+    await p.waitForTimeout(600);
+    ok(await visible(p, 'saves'), 'Spielstände öffnen nicht');
+    const line = await p.evaluate(() => document.querySelector('[data-testid="slot-backup"]')?.innerText ?? '');
+    ok(/Ende der 1\. Saison/.test(line), `Sicherung steht nicht auf der Karte: ${line.slice(0, 80)}`);
+    ok(!(await hScroll(p)), 'Spielstände scrollen quer');
+    await click(p, '#saves [data-action="restore"]');
+    await p.waitForTimeout(300);
+    ok(await p.evaluate(() => JSON.parse(localStorage.getItem('sunday-league:career')).season === 2), 'Sicherung ohne Nachfrage zurückgeholt');
+    await click(p, '#saves [data-action="restore"]');
+    await p.waitForTimeout(400);
+    ok(await p.evaluate(() => JSON.parse(localStorage.getItem('sunday-league:career')).season === 1), 'Sicherung wird nicht zurückgeholt');
+    ok(/Saison 1/.test(await p.evaluate(() => document.querySelector('#saves .slot')?.innerText ?? '')), 'Karte zeigt nach dem Zurückholen nicht die 1. Saison');
+    await click(p, '#saves [data-action="load"]');
+    await p.waitForTimeout(1500);
+    ok(await p.evaluate(() => __sl.career?.season === 1), 'geladener Stand ist nicht die Sicherung');
+    ok(!p.errors.length, `Fehler ${p.errors.slice(0, 2).join(' | ')}`);
     await p.context().close();
     f += ok.done();
   }
@@ -1113,6 +1160,7 @@ export async function run() {
   if (!ONLY || ONLY.has('privatLife')) f += await privatLife(b);
   if (!ONLY || ONLY.has('announcer')) f += await announcer(b);
   if (!ONLY || ONLY.has('superCup')) f += await superCup(b);
+  if (!ONLY || ONLY.has('saveBackup')) f += await saveBackup(b);
   if (!ONLY || ONLY.has('oldSave')) f += await oldSave(b, process.env.E2E_OLD_SAVE ?? fileURLToPath(new URL('./fixtures/save-858e978.json', import.meta.url)));
   await b.close();
   return f;

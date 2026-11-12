@@ -42,6 +42,7 @@ import { book } from './finances.js';
 import { playerOf } from './career.js';
 import { adjustEnergy, adjustPatience, isPresident, RED, sendAway, setRelation } from './personal.js';
 import { board, trustOf } from './pressure.js';
+import { diff } from './difficulty.js';
 
 export const PAY = {
   job: 3000,
@@ -51,6 +52,7 @@ export const PAY = {
 // Übliches Auftreten je Liga (Summe der Stufen).
 export const EXPECT = (level) => (level >= 12 ? 10 : level === 11 ? 8 : level === 10 ? 6 : level === 9 ? 4 : level >= 5 ? 2 : 0);
 
+export const SAVER_MIN = 20000;
 export const SALARY = { from: 5, min: 0.7, max: 1.5, ask: 0.2, fair: 0.1, waive: 0.1, summer: 1.1 };
 export const MOVE = { farFrom: 9, stateFrom: 7, base: 3000, homeShare: 0.05, second: 6000, partner: -8, school: -4 };
 
@@ -175,7 +177,9 @@ export function typus(c) {
   if (luxG >= 3 || auftreten(c).diff >= 3) return 'lebemann';
   if (p.own.wear >= 3 && p.own.car >= 3) return 'geschaeft';
   if (p.own.home >= 2 && (k.children ?? []).length >= 1 && k.patience >= 60) return 'familie';
-  if (glanz(c) === 0 && p.wallet >= 2 * Math.max(1, seasonIncome(c)) && p.earned >= 2 * PAY.job) return 'sparfuchs';
+  // Sparfuchs erst mit einem wirklich vollen Konto: Gemessen (balance-audit.mjs, 2026-11-12) galt vorher fast jeder als Sparfuchs,
+  // der unten noch gar nichts kaufen konnte (10 von 12 Saisons je Karriere). Jetzt mindestens 20 000 € (Spielwert).
+  if (glanz(c) === 0 && p.wallet >= Math.max(SAVER_MIN, 2 * seasonIncome(c)) && p.earned >= 2 * PAY.job) return 'sparfuchs';
   return 'boden';
 }
 export const typusName = (id) => name(TYPES[id].name);
@@ -479,7 +483,7 @@ export const PRIVAT_EVENTS = {
   },
   priv_krise: {
     weight: 3,
-    needs: (c) => (ok(c) && K(c).relation !== 'single' && K(c).partnerName && K(c).patience < 35 && K(c).flags.krisenRound !== `${c.season}:${Math.floor((c.round ?? 0) / 6)}` ? {} : null),
+    needs: (c) => (ok(c) && K(c).relation !== 'single' && K(c).partnerName && K(c).patience < diff(c).familyCrisis && K(c).flags.krisenRound !== `${c.season}:${Math.floor((c.round ?? 0) / 6)}` ? {} : null),
     text: (c) => tr(`${partnerName(c)}: „Wir reden nur noch über Termine. Ich weiß nicht mehr, wann wir zuletzt etwas zusammen gemacht haben.“`, `${partnerName(c)}: "We only ever talk about schedules. I do not remember when we last did something together."`),
     options: [
       { label: () => tr(`Paarberatung (${eur(HELP.counselling)})`, `Couples counselling (${eur(HELP.counselling)})`), effect: (c) => { K(c).flags.krisenRound = `${c.season}:${Math.floor((c.round ?? 0) / 6)}`; if (!can(c, HELP.counselling)) return adjustPatience(c, 4), tr('Dafür reicht das Geld gerade nicht. Ihr redet stattdessen einen Abend lang – immerhin.', 'There is not enough money for that right now. Instead you talk for an evening – it is a start.'); pay(c, HELP.counselling); adjustPatience(c, 15); K(c).krisen = Math.max(0, (K(c).krisen ?? 0) - 1); return tr('Sechs Termine. Unbequem, aber es hilft.', 'Six sessions. Uncomfortable, but it helps.'); } },

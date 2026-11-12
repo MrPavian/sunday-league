@@ -1,6 +1,7 @@
 // Die persönliche Ebene: Du bist Spielertrainer mit Job und Familie. Zwei Werte
 // halten alles zusammen – die Geduld deiner Familie und deine Ehrenamts-Energie.
 // Wer beides verheizt, fällt ein paar Wochen aus.
+import { familyLoad } from './difficulty.js';
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { book } from './finances.js';
@@ -269,7 +270,7 @@ export function weeklyPersonal(c) {
   } else {
     const scouting = Math.max(0, 2 - (w?.actions ?? 2));
     const sunday = k.flags.familyAtGames && k.patience >= RED ? 1.5 : 3; // roter Bereich: die Familie kommt nicht mehr mit
-    adjustPatience(c, 4 - sunday - (w?.training ? 2 - trainingRelief(c) : 0) - scouting); // Flutlicht: Training nach Feierabend
+    adjustPatience(c, 4 - sunday - (w?.training ? 2 - trainingRelief(c) : 0) - scouting - familyLoad(c)); // Flutlicht: Training nach Feierabend; Profi-Alltag (difficulty.js)
     // In der Kreisklasse kommt Papierkram dazu: Spielberichte, Passwesen, Schiri-Ansetzung.
     adjustEnergy(c, 1 - 1.5 - missingStaff(c) - (w?.training ? 1.5 : 0) - (k.flags.kasse ? 2 : 0) - ((c.level ?? 1) > 1 ? 1 : 0));
   }
