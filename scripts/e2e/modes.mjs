@@ -67,7 +67,8 @@ async function variants(b, label, list, query) {
 const ONLY = process.env.E2E_ONLY ? new Set(process.env.E2E_ONLY.split(',')) : null;
 const VENUE = process.env.E2E_VENUE ? new Set(process.env.E2E_VENUE.split(',')) : null;
 const atVenue = (v) => !VENUE || VENUE.has(v);
-const BUDGET = { halle: [61, 33500], rasenplatz: [108, 35000], sportplatz: [113, 44500], grossfeld: [117, 55000], grossfeld_tribuene: [121, 62000], stadion: [98, 58500], ascheplatz: [76, 25000], park: [79, 18600], 'grossfeld&stage=grossarena': [121, 62000], 'grossfeld&grounds=trainingsplatz,trainingszentrum,trainingshalle,athletik,videoraum,regeneration,kraftraum,medabteilung,physio,behandlungsraum,marketing,geschaeftsstelle,vereinsbuero,nlz,internat,jugendhaus,parkplatz,fanshop,vorplatz': [129, 62000] }; // Vereinsgelände voll ausgebaut (grounds.js): gemessen 122 / 56 Tsd. // Stadionausbau (stands.js): Grenzen wie beim Tribünenplatz, gemessen 111 / 48,5 Tsd.
+// Ascheplatz: Dreiecke 25 000 → 26 000 (vom Nutzer freigegeben, 2026-11-13: Platzwart und Linienrichter, gemessen 25 260).
+const BUDGET = { halle: [61, 33500], rasenplatz: [108, 35000], sportplatz: [113, 44500], grossfeld: [117, 55000], grossfeld_tribuene: [121, 62000], stadion: [98, 58500], ascheplatz: [76, 26000], park: [79, 18600], 'grossfeld&stage=grossarena': [121, 62000], 'grossfeld&grounds=trainingsplatz,trainingszentrum,trainingshalle,athletik,videoraum,regeneration,kraftraum,medabteilung,physio,behandlungsraum,marketing,geschaeftsstelle,vereinsbuero,nlz,internat,jugendhaus,parkplatz,fanshop,vorplatz': [129, 62000] }; // Vereinsgelände voll ausgebaut (grounds.js): gemessen 122 / 56 Tsd. // Stadionausbau (stands.js): Grenzen wie beim Tribünenplatz, gemessen 111 / 48,5 Tsd.
 async function budget(b) {
   const list = Object.entries(BUDGET).filter(([v]) => atVenue(v));
   const ok = checker(`Grafik-Budget je Spielort (${list.length})`);

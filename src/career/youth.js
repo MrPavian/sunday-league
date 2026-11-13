@@ -132,7 +132,7 @@ export function retirements(career, deps, minSquad, rng = createRng(career.seed 
     }
     const apps = (rec.total?.apps ?? 0) + rec.apps;
     const goals = (rec.total?.goals ?? 0) + rec.goals;
-    career.alumni.push({ idx, name: p.name, age: p.age, apps, goals, season: career.season, role });
+    career.alumni.push({ idx, name: p.name, age: p.age, apps, goals, season: career.season, role, number: career.numbers?.[idx] ?? null });
     book(career, tr(`Abschiedsparty für ${p.name}`, `Farewell party for ${p.name}`), 30);
     out.push({ idx, name: p.name, age: p.age, apps, goals, role });
   }

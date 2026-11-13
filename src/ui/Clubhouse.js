@@ -40,6 +40,7 @@ import { promoteProspect } from '../career/youth.js';
 import { setPate, toggleTrainUp } from '../career/bridge.js';
 import { resolveEvent } from '../career/events.js';
 import { legacy, resolveLegacy, stepDown, succeed, successionCandidates } from '../career/legacy.js';
+import { releaseNumber, setNumber } from '../career/numbers.js';
 import { acceptNatCoach, declineNatCoach, quitNatCoach, togglePick } from '../career/natcoach.js';
 import { fireCoach, setPresidentGoal } from '../career/president.js';
 import { isPresident } from '../career/personal.js';
@@ -489,6 +490,10 @@ export class Clubhouse {
         const [kind, dir] = String(value).split(':');
         setPrice(this.career, kind, Number(dir) * TICKETS.step); // Eintrittspreise (tickets.js)
         this.h.onChange();
+      } else if (action === 'releaseNumber') {
+        releaseNumber(this.career, Number(value)); // gesperrte Rückennummer wieder vergeben (numbers.js)
+        this.h.onChange();
+        this.render();
       } else if (action === 'seasonTickets') {
         setSeasonTickets(this.career, Number(value) === 1);
         this.h.onChange();
@@ -734,6 +739,17 @@ export class Clubhouse {
     });
   }
 
+  // Rückennummer im Spielerprofil ändern (numbers.js).
+  bindNumbers() {
+    this.root.querySelectorAll('select[data-shirtno]').forEach((sel) =>
+      sel.addEventListener('change', () => {
+        setNumber(this.career, Number(sel.dataset.shirtno), Number(sel.value));
+        this.h.onChange();
+        this.render();
+      }),
+    );
+  }
+
   // A-Jugend: Pate auswählen (Auswahlliste je Talent).
   bindPate() {
     this.root.querySelectorAll('select[data-pate]').forEach((sel) =>
@@ -915,6 +931,7 @@ export class Clubhouse {
     this.bindPub();
     this.syncPub3d();
     this.bindPate();
+    this.bindNumbers();
     this.bindSwitches();
     this.bindCalSwipe();
     this.bindClubForm();

@@ -73,7 +73,8 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
    Halbzeit, Verhandlungen – mehr Vorlagen, damit sich nichts schnell wiederholt. Deutsch und Englisch.
 
 **C – Neue Ideen**
-10. **Karriereende und Vermächtnis:** Der Trainer altert; Abschied mit Rückblick und Ehrentafel, Weiterspielen mit einem Nachfolger
+10. **Karriereende und Vermächtnis.** ✅ **2026-11-13:** Abschied, Nachfolger und Ehrenpräsident gab es schon (legacy.js); neu ist
+    der Rückblick der Ära (Aufstiege, Abstiege, beste Platzierung; tests/farewell.test.js). Ursprünglicher Punkt: Der Trainer altert; Abschied mit Rückblick und Ehrentafel, Weiterspielen mit einem Nachfolger
     im selben Verein.
 11. **Pressekonferenz ab der Regionalliga.** ✅ **Erste Lieferung 2026-11-13** (career/presse.js, tests/presse.test.js): Spitzenspiel
     mit Ansage und Nachfrage eine Woche später, Siegesserie, Personalfrage. Offen: Wirkung auf die Fans, Fragen nach Pokal- und
@@ -82,9 +83,13 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
 12. **Rivalität zwischen Trainern.** ✅ **Erste Lieferung 2026-11-13** (career/coachrival.js, tests/coachrival.test.js): ein
     Trainer mit Namen und Bilanz, folgt in eine neue Liga, Stichelei vor und Handschlag nach dem Duell. Offen: Gesicht,
     Wirkung der „Hitze“ aufs Spiel, mehr Ereignisse (Abwerben, gemeinsamer Lehrgang). Ursprünglicher Punkt: ein gegnerischer Trainer, der über mehrere Saisons wiederkehrt, mit Vorgeschichte.
-13. **Spieltag als Erlebnis im Amateurbereich:** Platzwart, Bratwurststand, Linienrichter aus dem eigenen Verein, ausgefallenes
+13. **Spieltag als Erlebnis im Amateurbereich.** ✅ **Erste Lieferung 2026-11-13** (render/props.js makeMatchdayStaff): Platzwart
+    mit Kreidewagen und Vereins-Linienrichter als stehende Figuren; die Bratwurstbude gab es schon. Offen: ausgefallenes
+    Flutlicht, bewegte Figuren. Ursprünglicher Punkt: Platzwart, Bratwurststand, Linienrichter aus dem eigenen Verein, ausgefallenes
     Flutlicht – kleine sichtbare Dinge am Platz.
-14. **Legenden des Vereins:** Abschiedsspiel, Trikotnummer wird nicht mehr vergeben, Rückkehr als Co-Trainer oder im Vorstand;
+14. **Legenden des Vereins.** ✅ **Erste Lieferung 2026-11-13** (career/legends.js, tests/legends.test.js): Abschied mit drei
+    Ehrungen, Tafel im Museum, Besuch beim Training. Feste Rückennummern ab der Kreisklasse C mit Sperre für Legenden (career/numbers.js,
+    tests/numbers.test.js; Ablauf nach 10 Saisons, Freigabe von Hand ab 3). Offen: Rückkehr in den Vorstand, Nummern der Gegner. Ursprünglicher Punkt: Abschiedsspiel, Trikotnummer wird nicht mehr vergeben, Rückkehr als Co-Trainer oder im Vorstand;
     verbindet Ehemalige (alumni) und Museum.
     (Nicht aufgenommen nach Nutzerentscheid: Saisonziele zum Selbstwählen.)
 

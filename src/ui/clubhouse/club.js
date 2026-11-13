@@ -35,6 +35,8 @@ import { REF_TRAITS } from '../../sim/referee.js';
 import { portraitSVG } from '../portrait.js';
 import { RIVAL, rivalLabel, rivalList } from '../../career/rivals.js';
 import { nemesis, nemesisHere, record } from '../../career/coachrival.js';
+import { HONOURS } from '../../career/legends.js';
+import { RETIRE_MAX, RETIRE_MIN } from '../../career/numbers.js';
 import { gateStats } from '../../career/attendance.js';
 import { maxLevel } from '../../career/clubs.js';
 import { licenseNeeds } from '../../career/license.js';
@@ -594,6 +596,10 @@ export const clubScreens = {
     const coachAwards = coachList.length ? `<ul class="plain">${coachList.map((a) => `<li>★ ${a.name} – ${a.kind === 'season' ? tr('Trainer der Saison', 'Manager of the Season') : tr('Trainer des Monats', 'Manager of the Month')} (S${a.season})</li>`).join('')}</ul>` : '';
     const records = mu.records.length ? `<ul class="plain">${mu.records.map((r) => `<li><b>${r.label}:</b> ${r.text}</li>`).join('')}</ul>` : empty(tr('Rekorde entstehen mit der Zeit.', 'Records come with time.'));
     const legends = mu.legends.length ? `<ol class="plain">${mu.legends.map((l) => `<li><span>${l.name}${l.active ? '' : ` <small>(${tr('ehemalig', 'former')})</small>`}</span><b>${l.goals} ${plural(l.goals, 'Tor', 'Tore', 'goal', 'goals')} · ${l.apps} ${plural(l.apps, 'Spiel', 'Spiele', 'app', 'apps')}</b></li>`).join('')}</ol>` : empty(tr('Noch keine Legenden.', 'No legends yet.'));
+    // Vereinslegenden (legends.js): verabschiedete Ehemalige mit ihrer Ehrung.
+    const honoured = mu.honoured.length ? `<h5>${tr('Verabschiedet', 'Honoured on retirement')}</h5><ul class="plain" data-testid="club-legends">${mu.honoured.map((l) => `<li><span>${esc(l.name)} <small>(${HONOURS[l.honour] ?? ''}, S${l.season})</small></span><b>${l.apps} ${plural(l.apps, 'Spiel', 'Spiele', 'app', 'apps')} · ${l.goals} ${plural(l.goals, 'Tor', 'Tore', 'goal', 'goals')}</b></li>`).join('')}</ul>` : '';
+    // Gesperrte Rückennummern (numbers.js): Freigabe von Hand nach drei Saisons, von selbst nach zehn.
+    const retired = mu.retired.length ? `<h5>${tr('Gesperrte Rückennummern', 'Retired shirt numbers')}</h5><ul class="plain" data-testid="retired-numbers">${mu.retired.map((r) => `<li><span><b>${r.n}</b> ${esc(r.name)} <small>(S${r.season})</small></span>${r.canRelease ? button(tr('Wieder vergeben', 'Issue again'), { kind: 'ghost', action: 'releaseNumber', value: r.n, 'data-testid': 'release-number' }) : `<small>${tr(`Freigabe ab S${r.season + RETIRE_MIN}`, `can be released from S${r.season + RETIRE_MIN}`)}</small>`}</li>`).join('')}</ul><p class="t-2">${tr(`Nach ${RETIRE_MAX} Saisons wird eine gesperrte Nummer von selbst wieder frei.`, `After ${RETIRE_MAX} seasons a retired number becomes free again by itself.`)}</p>` : '';
     const kits = `<div class="archive">${mu.kits.map((k) => `<figure><span class="kit-mini" style="background:url(${kitPreviewURL(k.kit)}) center/100% 100%"></span><figcaption>S${k.season}${k.now ? tr(' (aktuell)', ' (current)') : ''}</figcaption></figure>`).join('')}</div>`;
     const crests = mu.crests.length ? `<div class="archive">${mu.crests.map((k) => `<figure>${crestSVG(k.crest, { size: 40, short: club.short, year: crestExtras(c).year })}<figcaption>S${k.season}${k.now ? tr(' (aktuell)', ' (current)') : ''}</figcaption></figure>`).join('')}</div>` : '';
     const ach = achievementList(c);
@@ -603,7 +609,7 @@ export const clubScreens = {
       <section><h4>${tr('Erfolge', 'Achievements')}</h4>${achievements}</section>
       <section><h4>${tr('Ehrentafel', 'Roll of honour')}</h4>${awards}${coachAwards}</section>
       <section><h4>${tr('Rekorde', 'Records')}</h4>${records}</section>
-      <section><h4>${tr('Vereinslegenden', 'Club legends')}</h4>${legends}</section>
+      <section><h4>${tr('Vereinslegenden', 'Club legends')}</h4>${legends}${honoured}${retired}</section>
       <section><h4>${tr('Trikot- und Wappenarchiv', 'Kit and crest archive')}</h4>${kits}${crests}</section>
       ${(c.reviews ?? []).length ? `<section><h4>${tr('Sonderhefte', 'Season specials')}</h4>${[...c.reviews].reverse().map((r) => `<details><summary>${r.year}/${String(r.year + 1).slice(2)} · ${r.headline}</summary>${reviewHTML(r, { page: r.season })}</details>`).join('')}</section>` : ''}
     </div>`;

@@ -38,6 +38,7 @@ import { fitsEvent } from './eventfit.js';
 import { PRO_EVENTS } from './proevents.js';
 import { PRESS_EVENTS } from './presse.js';
 import { NEMESIS_EVENTS } from './coachrival.js';
+import { LEGEND_EVENTS } from './legends.js';
 
 const EVENT_CHANCE = 0.65; // pro Woche
 const NO_REPEAT = 4; // Wochen, bevor dasselbe Ereignis wiederkommen darf
@@ -648,6 +649,7 @@ const eventPacks = () => (packs ??= [
   { pack: PRO_EVENTS, roll: true }, // Oberliga bis 3. Liga: Profi-Alltag (proevents.js) – hinten, damit der Zufall unten gleich bleibt
   { pack: PRESS_EVENTS, roll: true }, // Pressekonferenz ab der Regionalliga (presse.js)
   { pack: NEMESIS_EVENTS, roll: true }, // Trainer-Rivale (coachrival.js)
+  { pack: LEGEND_EVENTS, roll: true }, // Vereinslegenden (legends.js)
 ]);
 const rolledEntries = () => eventPacks().filter((x) => x.roll).flatMap((x) => Object.entries(x.pack));
 // Für Messungen (scripts/events-count.mjs): alle Ereignisse, die wöchentlich gezogen werden können.

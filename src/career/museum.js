@@ -3,6 +3,8 @@
 import { tr } from '../core/i18n.js';
 import { BUND_NAME } from './bundespokal.js';
 import { humanClub, playerOf } from './career.js';
+import { clubLegends } from './legends.js';
+import { canRelease, retiredNumbers } from './numbers.js';
 
 export function museum(c) {
   const club = humanClub(c);
@@ -35,5 +37,5 @@ export function museum(c) {
 
   const kits = [...(club.kitHistory ?? []), { season: c.season, kit: club.kit, now: true }];
   const crests = [...(club.crestHistory ?? []), ...(club.crest ? [{ season: c.season, crest: club.crest, now: true }] : [])];
-  return { trophies, awards, records, legends, kits, crests };
+  return { trophies, awards, records, legends, honoured: clubLegends(c), retired: retiredNumbers(c).map((r) => ({ ...r, canRelease: canRelease(c, r) })), kits, crests };
 }

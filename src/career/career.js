@@ -15,6 +15,7 @@ import { slotRating } from '../sim/position.js';
 import { ATTR_KEYS, ensureStrength } from '../sim/strength.js';
 import { afterMatchPositions, deliverGrumbles, famAt, migratePositions, posFamOf } from './positions.js';
 import { isRival } from './rivals.js';
+import { numberOf } from './numbers.js';
 import { applyReferee, recordReferee } from './referees.js';
 import { createMatch, MATCH, stepMatch } from '../sim/match.js';
 import { PITCHES } from '../sim/pitch.js';
@@ -1263,6 +1264,8 @@ export function teamForMatch(career, club, format, availability, rng) {
   const players = [...lineup, ...bench].map((idx) => {
     const p = helpers.includes(idx) ? helperOf(career, club, idx) : applyForm(copyPlayer(playerOf(career, idx)), career.players[idx], club.human ? career.mood ?? 0 : 0);
     p.posFam = posFamOf(career, idx); // Gewöhnung je Rolle für position.js
+    const shirtNo = club.human ? numberOf(career, idx) : null; // feste Rückennummer (numbers.js), nur Anzeige
+    if (shirtNo != null) p.shirtNo = shirtNo;
     if (!helpers.includes(idx)) {
       const bonus = bonusesOf(career, idx); // verdeckte Boni (bonuses.js), nur Stärkemodell 3
       if (bonus.length) p.bonus = bonus;

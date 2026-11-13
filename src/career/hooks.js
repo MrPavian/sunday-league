@@ -19,7 +19,8 @@ import * as nationalteams from './nationalteams.js'; // Turniere der Nationaltea
 import * as clubchange from './clubchange.js';
 import * as tickets from './tickets.js'; // Dauerkarten zur neuen Saison (nach dem Vereinswechsel) // Sommerwechsel in eine andere Liga
 import * as coachrival from './coachrival.js'; // Trainer-Rivale (nach dem Vereinswechsel: Die neue Liga steht)
-export const FEATURES = [transfers, oldboys, women, scouting, teamtraining, referees, rivals, chatlife, coachload, bonuses, contracts, pressure, nationalteams, clubchange, tickets, coachrival];
+import * as numbers from './numbers.js'; // feste Rückennummern
+export const FEATURES = [transfers, oldboys, women, scouting, teamtraining, referees, rivals, chatlife, coachload, bonuses, contracts, pressure, nationalteams, clubchange, tickets, coachrival, numbers];
 
 export function runHooks(name, career, ...args) {
   for (const f of FEATURES) f[name]?.(career, ...args);

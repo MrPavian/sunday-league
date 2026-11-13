@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { toon } from '../materials.js';
-import { addLights, box, cylinder, ground, makeBench, makeFence, makeFloodlight, makeGoalFrame, makeMatchdayStaff, makeSideline, makeTree } from '../props.js';
+import { addLights, box, cylinder, ground, makeBench, makeFence, makeFloodlight, makeGoalFrame, makeMatchdayStaff, makeSideline, makeTree, STAFF_ASH } from '../props.js';
 import { crowdRow, makeSpectator } from '../spectators.js';
 import { GEO } from '../../sim/shelter.js';
 import { groundTexels, makeAshTexture, makeSignTextureWide } from '../textures.js';
@@ -28,7 +28,7 @@ export function buildAshPitch(root, pitch, rng, scene) {
 
   // Eckfahnen (Farben der übrigen Kulisse: kein zusätzlicher Draw Call).
   root.add(makeSideline(pitch, rng, { benches: false, gear: false, pole: 0xd0d0d0, flag: 0x2e8b57 }));
-  root.add(makeMatchdayStaff(pitch)); // Platzwart mit Kreidewagen, Linienrichter aus dem Verein
+  root.add(makeMatchdayStaff(pitch, STAFF_ASH)); // Platzwart mit Kreidewagen, Linienrichter aus dem Verein
 
   // Ballfangzäune hinter den Toren, niedriger Zaun hinten, Geländer vorne.
   for (const s of [-1, 1]) root.add(makeFence(s * (hl + 3.5), -16, s * (hl + 3.5), 16, 5, 0x3d6b4a));

@@ -93,7 +93,7 @@ export function endCareer(c, idx, role) {
     title = { cotrainer: 'Co-Trainer', platzwart: 'Platzwart', wirt: 'Wirt im Vereinsheim' }[role];
   } else if (role === 'betreuer') title = 'Betreuer und Zeugwart';
   c.alumni ??= [];
-  c.alumni.push({ idx, name: p.name, age: p.age, apps: (rec?.total?.apps ?? 0) + (rec?.apps ?? 0), goals: (rec?.total?.goals ?? 0) + (rec?.goals ?? 0), season: c.season, role: title });
+  c.alumni.push({ idx, name: p.name, age: p.age, apps: (rec?.total?.apps ?? 0) + (rec?.apps ?? 0), goals: (rec?.total?.goals ?? 0) + (rec?.goals ?? 0), season: c.season, role: title, number: c.numbers?.[idx] ?? null });
   if (role === 'betreuer') c.flags.betreuer = p.name;
   delete c.players[idx];
   return title;

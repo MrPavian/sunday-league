@@ -178,41 +178,46 @@ export function makeDog(x, z, color = 0x8a6a3a, rotation = 0) {
 // Spieltag im Amateurbereich (ROADMAP 11.18 Punkt 13): der Platzwart mit dem Kreidewagen und der Linienrichter aus dem eigenen
 // Verein, beide auf der Gegenseite zwischen Seitenlinie und Bande. Stehende Kastenfiguren wie der Hund – nur Farben, die die
 // Kulisse schon nutzt (mergeStatic: keine zusätzlichen Draw Calls), kein Zufall (der Rest der Szene bleibt, wie er war).
+// Auf dem Ascheplatz mit dessen Farben (STAFF_ASH): Mit eigenen Farben waren es 80 statt 76 Draw Calls. Die Dreiecke
+// (25,3 Tsd.) liegen über der alten Grenze von 25,0 Tsd.; sie wurde mit dem Nutzer auf 26,0 Tsd. angehoben (2026-11-13).
 // Abstand zur Linie 1,7 m: Spieler kommen höchstens 1,2 m über die Seitenlinie (clampPlayer), Tim steht bei 1,55 m.
 const STAFF_OUT = 1.7;
-function boxPerson(jacket, { cap = 0x3a3a3a, trousers = 0x2a2a2a } = {}) {
+// Farben je Spielort: nur solche, die dort schon vorkommen – sonst kostet jede neue Farbe einen Draw Call.
+export const STAFF_LAWN = { skin: 0xe8dcc0, dark: 0x2a2a2a, cap: 0x3a3a3a, warden: 0xc9a227, lines: 0xc0392b, metal: 0x8a9096, chalk: 0xd8e0e0, pole: 0xe8dcc0, flag: 0xc9a227 };
+export const STAFF_ASH = { skin: 0xd0d0d0, dark: 0x3d3d3d, cap: 0x3d3d3d, warden: 0x2e8b57, lines: 0x7a5a3a, metal: 0x8a9096, chalk: 0xd8e0e0, pole: 0xd0d0d0, flag: 0x2e8b57 };
+function boxPerson(jacket, c) {
   return [
-    box(0.13, 0.82, 0.16, trousers, -0.09, 0.41, 0), // Beine
-    box(0.13, 0.82, 0.16, trousers, 0.09, 0.41, 0),
+    box(0.13, 0.82, 0.16, c.dark, -0.09, 0.41, 0), // Beine
+    box(0.13, 0.82, 0.16, c.dark, 0.09, 0.41, 0),
     box(0.42, 0.6, 0.24, jacket, 0, 1.12, 0), // Jacke
-    box(0.22, 0.24, 0.22, 0xe8dcc0, 0, 1.55, 0), // Kopf
-    box(0.25, 0.07, 0.25, cap, 0, 1.7, 0), // Mütze
+    box(0.22, 0.24, 0.22, c.skin, 0, 1.55, 0), // Kopf
+    box(0.25, 0.07, 0.25, c.cap, 0, 1.7, 0), // Mütze
   ];
 }
-export function makeMatchdayStaff(pitch) {
+export function makeMatchdayStaff(pitch, c = STAFF_LAWN) {
   const { halfLength: hl, halfWidth: hw } = pitch;
   const z = -(hw + STAFF_OUT);
-  // Platzwart: gelbe Warnweste, die Hände am Kreidewagen (Trichter, zwei Räder, Griffstange).
+  // Platzwart: Warnweste bzw. Arbeitsjacke, die Hände am Kreidewagen (Trichter, zwei Räder, Griffstange).
   const warden = group(
-    ...boxPerson(0xc9a227),
-    box(0.1, 0.1, 0.5, 0xc9a227, -0.2, 1.05, 0.3), // Arme nach vorn
-    box(0.1, 0.1, 0.5, 0xc9a227, 0.2, 1.05, 0.3),
-    box(0.5, 0.05, 0.05, 0x8a9096, 0, 1.0, 0.55), // Griff
-    box(0.05, 0.6, 0.05, 0x8a9096, -0.2, 0.72, 0.68),
-    box(0.05, 0.6, 0.05, 0x8a9096, 0.2, 0.72, 0.68),
-    box(0.44, 0.34, 0.36, 0xd8e0e0, 0, 0.42, 0.85), // Trichter mit Kreide
-    box(0.06, 0.26, 0.26, 0x2a2a2a, -0.26, 0.13, 0.85), // Räder
-    box(0.06, 0.26, 0.26, 0x2a2a2a, 0.26, 0.13, 0.85),
+    ...boxPerson(c.warden, c),
+    box(0.1, 0.1, 0.5, c.warden, -0.2, 1.05, 0.3), // Arme nach vorn
+    box(0.1, 0.1, 0.5, c.warden, 0.2, 1.05, 0.3),
+    box(0.5, 0.05, 0.05, c.metal, 0, 1.0, 0.55), // Griff
+    box(0.05, 0.6, 0.05, c.metal, -0.2, 0.72, 0.68),
+    box(0.05, 0.6, 0.05, c.metal, 0.2, 0.72, 0.68),
+    box(0.44, 0.34, 0.36, c.chalk, 0, 0.42, 0.85), // Trichter mit Kreide
+    box(0.06, 0.26, 0.26, c.dark, -0.26, 0.13, 0.85), // Räder
+    box(0.06, 0.26, 0.26, c.dark, 0.26, 0.13, 0.85),
   );
   warden.position.set(-hl * 0.84, 0, z);
   warden.rotation.y = Math.PI / 2 - 0.6; // schiebt den Wagen schräg an der Linie entlang (von der Kamera aus sieht man Mann und Wagen)
-  // Linienrichter aus dem Verein: rote Trainingsjacke, die Fahne in der Rechten nach unten.
+  // Linienrichter aus dem Verein: Trainingsjacke, die Fahne in der Rechten nach unten.
   const lines = group(
-    ...boxPerson(0xc0392b, { cap: 0x2a2a2a }),
-    box(0.1, 0.5, 0.1, 0xc0392b, -0.27, 1.12, 0),
-    box(0.1, 0.5, 0.1, 0xc0392b, 0.27, 1.12, 0),
-    box(0.04, 0.6, 0.04, 0xe8dcc0, 0.3, 0.72, 0.12), // Fahnenstock
-    box(0.03, 0.3, 0.34, 0xc9a227, 0.3, 0.55, 0.3), // Fahne
+    ...boxPerson(c.lines, c),
+    box(0.1, 0.5, 0.1, c.lines, -0.27, 1.12, 0),
+    box(0.1, 0.5, 0.1, c.lines, 0.27, 1.12, 0),
+    box(0.04, 0.6, 0.04, c.pole, 0.3, 0.72, 0.12), // Fahnenstock
+    box(0.03, 0.3, 0.34, c.flag, 0.3, 0.55, 0.3), // Fahne
   );
   lines.position.set(hl * 0.7, 0, z);
   return group(warden, lines);

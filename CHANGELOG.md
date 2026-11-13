@@ -6,6 +6,30 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-13-4 – Feste Rückennummern
+
+### Neu
+- **Feste Rückennummern ab der Kreisklasse C** (vom Nutzer gewünscht): Jeder Spieler der eigenen Mannschaft behält seine Nummer, bis er geht oder du sie änderst.
+  - Vergabe beim ersten Bedarf: Torwart 1, Abwehr 2–5, Mittelfeld 6, 8, 10, Angriff 9, 7, 11, danach die kleinste freie ab 12 (Spielwert nach der klassischen Nummerierung).
+  - Anzeige auf der Spielerkarte und im 3D-Spiel auf dem Trikot. Gegner tragen weiter die Nummer nach Aufstellung.
+  - Ändern im Spielerprofil (Übersicht); eine vergebene Nummer tauscht mit ihrem Träger.
+- **Gesperrte Nummern:** vierte Ehrung für Vereinslegenden. Die Sperre läuft nach 10 Saisons von selbst ab und lässt sich im Museum ab 3 Saisons von Hand aufheben (beides Spielwerte).
+
+### Geändert
+- Prüfskript: Grenze der Dreiecke auf dem Ascheplatz von 25 000 auf 26 000 angehoben (vom Nutzer freigegeben; Platzwart und Linienrichter, gemessen 25 260).
+
+## 2026-11-13-3 – Vereinslegenden, Abschied und Leben am Platz
+
+### Neu
+- **Vereinslegenden:** Wer nach mindestens 100 Spielen oder 50 Toren für den Verein aufhört, wird zur Legende.
+  - Der Vorstand fragt nach dem Abschied: Abschiedsspiel (Einnahme 40 € je Ligastufe, Stimmung +0,05), Trikot im Vereinsheim (Stimmung +0,03) oder Blumenstrauß.
+  - Legenden stehen im Museum unter „Vereinslegenden“ und kommen in späteren Saisons einmal je Saison zum Training.
+- **Am Platz:** Platzwart mit Kreidewagen und Linienrichter aus dem Verein an der Gegengerade (Ascheplatz, Rasenplatz, Sportplatz; nicht auf dem Großfeld). Einfache stehende Figuren, ohne Wirkung aufs Spiel.
+
+### Geändert
+- **Trainerabschied:** Die Ära eines abtretenden Trainers merkt sich Aufstiege, Abstiege und die beste Platzierung; sie stehen in der Chronik und in der Trainerliste.
+- **Trainer-Rivale:** eigener Speicherplatz im Spielstand. In der noch nicht ausgelieferten Fassung teilte er sich einen Platz mit den Angstgegnern.
+
 ## 2026-11-13-2 – Trainer-Rivale
 
 ### Neu

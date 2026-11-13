@@ -135,7 +135,7 @@ export class MatchView {
     };
     for (const p of everyone) {
       // Rückennummer: Position in der Aufstellung (Torwart die 1); bleibt beim Rollenwechsel.
-      const model = this.buildModel(match, p, p.role === 'gk' ? 1 : (Number(String(p.id).split('-')[1]) || 0) + 1);
+      const model = this.buildModel(match, p, p.shirtNo ?? (p.role === 'gk' ? 1 : (Number(String(p.id).split('-')[1]) || 0) + 1)); // feste Nummer aus der Karriere (numbers.js), sonst nach Aufstellung
       this.models.set(p.id, model);
       this.root.add(model.group);
     }

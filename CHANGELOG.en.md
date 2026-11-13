@@ -6,6 +6,30 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-13-4 – Fixed shirt numbers
+
+### New
+- **Fixed shirt numbers from the third district division up** (requested by the user): every player in your own team keeps their number until they leave or you change it.
+  - Given out on first need: keeper 1, defence 2–5, midfield 6, 8, 10, attack 9, 7, 11, then the lowest free number from 12 (game value following the classic numbering).
+  - Shown on the player card and on the shirt in the 3D match. Opponents still wear numbers by line-up.
+  - Change it in the player profile (overview); a number already in use swaps with its wearer.
+- **Retired numbers:** a fourth honour for club legends. The retirement expires by itself after 10 seasons and can be lifted by hand in the museum from 3 seasons on (both game values).
+
+### Changed
+- Check script: triangle limit on the cinder pitch raised from 25,000 to 26,000 (approved by the user; groundsman and linesman, measured 25,260).
+
+## 2026-11-13-3 – Club legends, farewells and life at the ground
+
+### New
+- **Club legends:** anyone who retires after at least 100 games or 50 goals for the club becomes a legend.
+  - The board asks about the send-off: farewell match (income €40 per league tier, mood +0.05), shirt in the clubhouse (mood +0.03) or a bouquet.
+  - Legends are listed in the museum under "Club legends" and visit training once a season in later seasons.
+- **At the ground:** groundsman with line marker and a club linesman on the far touchline (cinder pitch, grass pitch, sports ground; not on the full-size pitch). Simple standing figures with no effect on the match.
+
+### Changed
+- **Manager farewell:** a departing manager's era records promotions, relegations and the best finish; they appear in the chronicle and the list of managers.
+- **Rival manager:** own slot in the save. In the not-yet-released build he shared one with the bogey players.
+
 ## 2026-11-13-2 – Rival manager
 
 ### New

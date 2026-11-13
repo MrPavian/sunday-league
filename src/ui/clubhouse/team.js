@@ -18,6 +18,7 @@ import { SWITCH_MAX, SWITCH_MINUTES, SWITCH_WHEN, whenLabel } from '../../sim/sw
 import { leagueTitle, niveauName, niveauText } from '../../career/verband.js';
 import { aboveLeague, playerTalentGuess } from '../../career/development.js';
 import { ATTR_LABELS } from '../attrLabels.js';
+import { NUMBER_MAX, numberOf, retiredNumbers } from '../../career/numbers.js';
 import { isLight, playerCard as collectorCard, trainerCard } from '../world.js';
 import { planTarget } from '../../sim/plan.js';
 import { oopInfo, oopText } from '../../sim/position.js';
@@ -169,7 +170,7 @@ export const teamScreens = {
     return collectorCard({
       id: idx,
       name: `${p.name}${marks ? ` ${marks}` : ''}`,
-      pos: `${POSITIONS[p.position]} · ${tier.name}`,
+      pos: `${numberOf(c, idx) != null ? `#${numberOf(c, idx)} · ` : ''}${POSITIONS[p.position]} · ${tier.name}`,
       rating: p.rating,
       kit: club.kit.shirt,
       badge: `${formArrow(r.form)}${fitBadge(c, idx)}`, // Fitness oben neben der Stärke – unten ist nur Platz für einen Chip
@@ -220,6 +221,7 @@ export const teamScreens = {
       body = `<div class="ui-stack tight">
           <p class="t-body">${p.age}${tr(' Jahre', ' years')} · ${jobName(p.profession)}${perk ? ` <span class="perk-tag" title="${perk.label}">${tr('Bonus', 'perk')}</span>` : ''}</p>
           ${perk ? `<p class="t-2">${perk.label}</p>` : ''}
+          ${numberBlock(c, idx)}
           ${rels ? `<p class="t-2 rel-line">${rels}</p>` : ''}
           ${r.awards?.length ? `<p class="t-2">★ ${r.awards.map(awardLabel).join(' · ')}</p>` : ''}
           ${contractBlock(c, idx)}
@@ -850,6 +852,16 @@ function fitHint(c, idx, p) {
 
 // Spielerkarte im Kader: Formkurve der letzten Noten, Stärke über die Saisons,
 // Auszeichnungen vom Kreisblatt.
+// Feste Rückennummer (numbers.js): Auswahl aus den freien Nummern; eine vergebene Nummer tauscht mit ihrem Träger.
+function numberBlock(c, idx) {
+  const n = numberOf(c, idx);
+  if (n == null) return '';
+  const gone = new Set(retiredNumbers(c).map((r) => r.n));
+  const opts = [];
+  for (let x = 1; x <= NUMBER_MAX; x++) if (!gone.has(x)) opts.push(`<option value="${x}" ${x === n ? 'selected' : ''}>${x}</option>`);
+  return `<p class="t-2 shirt-no"><label>${tr('Rückennummer', 'Shirt number')} <select data-shirtno="${idx}" data-testid="shirt-number">${opts.join('')}</select></label> <small>${tr('Trägt sie schon jemand, tauscht ihr.', 'If someone already wears it, the two swap.')}</small></p>`;
+}
+
 function playerCard(c, idx, p, r) {
   const gradeTxt = (g) => tr(g.toFixed(1).replace('.', ','), g.toFixed(1));
   const recent = r.recent ?? [];
