@@ -71,7 +71,9 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
    Einwurf (render/reactions.js setPieceGestures, tests/setpiece_gestures.test.js). Ursprünglicher Punkt: offene Punkte aus 11.1 (Torwart: Hechtsprung mit Abrollen, Fangen, Fausten) und neue für Ecken und Einwürfe.
 8. **Ereignisse in allen Bereichen:** neue Ereignisse für jede Liga und jeden Bereich (Kabine, Vorstand, Jugend, Zweite, Frauen,
    Alte Herren, Sponsoren, Fans, Presse, Privat, Nationalteam). Nach der Zählung aus Punkt 2, damit Lücken zuerst gefüllt werden.
-9. **Neue Textbausteine für alle interaktiven Bereiche:** Chat, Kneipe, Zurufe, Bank, Liveticker, Kreisblatt, Stadionsprecher,
+9. **Neue Textbausteine für alle interaktiven Bereiche.** 🔶 **Teil 1, 2026-11-13:** Seitenlinie im Liveticker (sim/touchline.js
+   vary) und Kneipe (career/pub.js say), ohne den Spielzufall. Offen: Chat, Zurufe, Bank, Kreisblatt, Stadionsprecher.
+   Ursprünglicher Punkt: Chat, Kneipe, Zurufe, Bank, Liveticker, Kreisblatt, Stadionsprecher,
    Halbzeit, Verhandlungen – mehr Vorlagen, damit sich nichts schnell wiederholt. Deutsch und Englisch.
 
 **C – Neue Ideen**
@@ -86,8 +88,8 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
     Trainer mit Namen und Bilanz, folgt in eine neue Liga, Stichelei vor und Handschlag nach dem Duell. Offen: Gesicht,
     Wirkung der „Hitze“ aufs Spiel, mehr Ereignisse (Abwerben, gemeinsamer Lehrgang). Ursprünglicher Punkt: ein gegnerischer Trainer, der über mehrere Saisons wiederkehrt, mit Vorgeschichte.
 13. **Spieltag als Erlebnis im Amateurbereich.** ✅ **Erste Lieferung 2026-11-13** (render/props.js makeMatchdayStaff): Platzwart
-    mit Kreidewagen und Vereins-Linienrichter als stehende Figuren; die Bratwurstbude gab es schon. Offen: ausgefallenes
-    Flutlicht, bewegte Figuren. Ursprünglicher Punkt: Platzwart, Bratwurststand, Linienrichter aus dem eigenen Verein, ausgefallenes
+    mit Kreidewagen und Vereins-Linienrichter als stehende Figuren; die Bratwurstbude gab es schon. Flutlichtausfall als Ereignis am Schwarzen Brett
+    (2026-11-13). Offen: bewegte Figuren, Ausfall sichtbar im 3D-Spiel. Ursprünglicher Punkt: Platzwart, Bratwurststand, Linienrichter aus dem eigenen Verein, ausgefallenes
     Flutlicht – kleine sichtbare Dinge am Platz.
 14. **Legenden des Vereins.** ✅ **Erste Lieferung 2026-11-13** (career/legends.js, tests/legends.test.js): Abschied mit drei
     Ehrungen, Tafel im Museum, Besuch beim Training. Feste Rückennummern ab der Kreisklasse C mit Sperre für Legenden (career/numbers.js,

@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-13-6',
+    de: { title: 'Mehr Abwechslung an der Linie und in der Kneipe', items: ['Liveticker an der Seitenlinie: Anpfiff, Halbzeitansprache und Gegentor haben jetzt mehrere Fassungen. Die Halbzeitfrage passt sich dem Spielstand an – Führung, Rückstand oder Gleichstand.', 'Kneipe: Runde ausgeben, Gespräche, Bierdeckel-Taktik und der Wirt erzählen nicht mehr jede Woche dasselbe.', 'Neu am Schwarzen Brett: Ein Flutlichtmast fällt beim Abschlusstraining aus. Elektriker rufen, selbst ranlassen – ein Elektriker im Kader repariert umsonst – oder im Halbdunkel weitermachen.'] },
+    en: { title: 'More variety on the touchline and in the pub', items: ['Touchline live ticker: kick-off, half-time talk and conceding now come in several versions. The half-time question follows the score – ahead, behind or level.', 'Pub: buying a round, one-to-ones, beer-mat tactics and the landlord no longer say the same thing every week.', 'New on the noticeboard: a floodlight mast fails during final training. Call the electrician, let someone have a go – an electrician in the squad fixes it for free – or carry on in the half-light.'] },
+  },
+  {
     id: '2026-11-13-5',
     de: { title: 'Gesten bei Ecke und Einwurf', items: ['Ecke: Der Schütze hebt den Arm, bevor er anläuft – das übliche Zeichen an die Mitspieler.', 'Einwurf: Bis zu zwei Mitspieler in der Nähe winken nach dem Ball, solange der Werfer ihn in den Händen hält.'] },
     en: { title: 'Gestures at corners and throw-ins', items: ['Corner: the taker raises an arm before the run-up – the usual signal to team-mates.', 'Throw-in: up to two nearby team-mates wave for the ball while the thrower holds it.'] },

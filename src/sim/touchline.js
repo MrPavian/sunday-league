@@ -9,6 +9,12 @@ import { answerCard } from './coachfeed.js';
 
 
 const surname = (p) => p.name.split(' ').slice(-1)[0];
+// Textvielfalt (ROADMAP 11.18 Punkt 9): Fragen und Antwortsätze haben mehrere Fassungen. Gewählt wird ohne den Zufall des
+// Spiels (Startwert, Frage und Minute gestreut), damit kein Spielverlauf sich ändert. Liste von tr()-Paaren.
+const vary = (tl, key, list) => {
+  const h = [...key].reduce((a, ch) => (Math.imul(a ^ ch.charCodeAt(0), 0x9e3779b1) + 0x7f4a7c15) >>> 0, ((tl.m.seed ?? 1) * 2654435761 + Math.floor(tl.m.time)) >>> 0);
+  return list[h % list.length];
+};
 
 export function createTouchline(m, team) {
   enableManager(m, team);
@@ -59,11 +65,16 @@ function startDecision(tl) {
   const opt = (value, label, line) => ({ label, line, apply: (m) => setMentality(m, value) });
   return {
     id: 'start',
-    question: tr(`Anpfiff gegen ${opp}. Wie gehen wir es an?`, `Kick-off against ${opp}. How do we approach it?`),
+    question: vary(tl, 'start', [
+      tr(`Anpfiff gegen ${opp}. Wie gehen wir es an?`, `Kick-off against ${opp}. How do we approach it?`),
+      tr(`Gleich geht's los gegen ${opp}. Was gibst du den Jungs mit?`, `About to start against ${opp}. What do you tell the lads?`),
+      tr(`${opp} steht bereit, der Schiri schaut auf die Uhr. Welche Marschroute?`, `${opp} are ready, the ref checks his watch. What's the plan?`),
+      tr(`Letzte Worte vor dem Anpfiff gegen ${opp}?`, `Last words before kick-off against ${opp}?`),
+    ]),
     options: [
-      opt('normal', tr('Ganz normal – unser Spiel', 'As usual – our game'), tr('Der Trainer lässt es laufen: „Macht euer Spiel!"', 'The manager keeps it simple: "Play your game!"')),
+      opt('normal', tr('Ganz normal – unser Spiel', 'As usual – our game'), vary(tl, 'start-n', [tr('Der Trainer lässt es laufen: „Macht euer Spiel!"', 'The manager keeps it simple: "Play your game!"'), tr('„Wie im Training, Jungs. Nicht mehr, nicht weniger."', '"Like in training, lads. No more, no less."'), tr('Der Trainer nickt nur und setzt sich auf die Bank.', 'The manager just nods and sits down on the bench.')])),
       opt('offensive', tr('Offensiv – von Anfang an drauf', 'Attacking – go for it from the start'), tr('Der Trainer schickt alle nach vorne: „Wir wollen das erste Tor!"', 'The manager sends everyone forward: "We want the first goal!"')),
-      opt('defensive', tr('Defensiv – erst mal sicher stehen', 'Defensive – stay solid first'), tr('Der Trainer mahnt: „Erst mal hinten sicher stehen."', 'The manager warns: "Stay solid at the back first."')),
+      opt('defensive', tr('Defensiv – erst mal sicher stehen', 'Defensive – stay solid first'), vary(tl, 'start-d', [tr('Der Trainer mahnt: „Erst mal hinten sicher stehen."', 'The manager warns: "Stay solid at the back first."'), tr('„Die ersten zwanzig Minuten: null hinten. Dann sehen wir weiter."', '"First twenty minutes: nothing conceded. Then we\'ll see."'), tr('Der Trainer klopft dem Innenverteidiger auf die Schulter: „Du hältst den Laden zusammen."', 'The manager pats the centre-back on the shoulder: "You hold it all together."')])),
     ],
   };
 }
@@ -72,11 +83,27 @@ function halftimeDecision(tl) {
   const opt = (value, label, line, extra) => ({ label, line, apply: (m) => (setMentality(m, value), extra?.(m)) });
   return {
     id: 'halftime',
-    question: tr(`Halbzeit, ${board(tl)}. Was sagst du in der Kabine?`, `Half-time, ${board(tl)}. What do you say in the dressing room?`),
+    question: diff(tl) > 0
+      ? vary(tl, 'ht+', [
+          tr(`Halbzeit, wir führen ${board(tl)}. Was sagst du in der Kabine?`, `Half-time, we lead ${board(tl)}. What do you say in the dressing room?`),
+          tr(`${board(tl)} zur Pause. Die Jungs grinsen – zu früh?`, `${board(tl)} at the break. The lads are grinning – too early?`),
+          tr(`Halbzeit, ${board(tl)}. In der Kabine ist gute Stimmung. Was jetzt?`, `Half-time, ${board(tl)}. Good mood in the dressing room. What now?`),
+        ])
+      : diff(tl) < 0
+        ? vary(tl, 'ht-', [
+            tr(`Halbzeit, ${board(tl)}. Was sagst du in der Kabine?`, `Half-time, ${board(tl)}. What do you say in the dressing room?`),
+            tr(`${board(tl)} zur Pause. Alle schauen auf den Boden. Deine Worte?`, `${board(tl)} at the break. Everyone stares at the floor. Your words?`),
+            tr(`Halbzeit, wir liegen ${board(tl)} hinten. Die Kabinentür ist zu – was jetzt?`, `Half-time, we trail ${board(tl)}. The door is shut – what now?`),
+          ])
+        : vary(tl, 'ht0', [
+            tr(`Halbzeit, ${board(tl)}. Was sagst du in der Kabine?`, `Half-time, ${board(tl)}. What do you say in the dressing room?`),
+            tr(`${board(tl)} zur Pause, alles offen. Was sagst du?`, `${board(tl)} at the break, all to play for. What do you say?`),
+            tr(`Halbzeit, ${board(tl)}. Der Tee ist heiß, die Köpfe auch. Deine Ansage?`, `Half-time, ${board(tl)}. The tea is hot, so are the heads. Your call?`),
+          ]),
     options: [
-      opt(tl.m.mentality, tr('Weiter so', 'Keep it up'), tr('Kabinenansprache: „Weiter so, Jungs."', 'Team talk: "Keep it up, lads."')),
-      opt('offensive', tr('Mehr nach vorne!', 'More going forward!'), tr('Kabinenansprache: „Jetzt mal Mut, raus da!"', 'Team talk: "Show some courage, get out there!"')),
-      opt('defensive', tr('Hinten dichtmachen', 'Shut up shop'), tr('Kabinenansprache: „Nichts mehr zulassen!"', 'Team talk: "Don\'t let anything in!"')),
+      opt(tl.m.mentality, tr('Weiter so', 'Keep it up'), vary(tl, 'ht-k', [tr('Kabinenansprache: „Weiter so, Jungs."', 'Team talk: "Keep it up, lads."'), tr('Kabinenansprache: „Genau so weitermachen. Keiner wird jetzt leichtsinnig."', 'Team talk: "Exactly the same again. Nobody gets careless now."'), tr('Der Trainer verteilt Tee und sagt nur: „Passt schon."', 'The manager hands out tea and just says: "That\'ll do."')])),
+      opt('offensive', tr('Mehr nach vorne!', 'More going forward!'), vary(tl, 'ht-o', [tr('Kabinenansprache: „Jetzt mal Mut, raus da!"', 'Team talk: "Show some courage, get out there!"'), tr('Kabinenansprache: „Die wackeln. Wir gehen jetzt drauf!"', 'Team talk: "They\'re wobbling. We go for them now!"'), tr('Der Trainer malt drei Pfeile nach vorne auf die Taktiktafel.', 'The manager draws three arrows pointing forward on the tactics board.')])),
+      opt('defensive', tr('Hinten dichtmachen', 'Shut up shop'), vary(tl, 'ht-d', [tr('Kabinenansprache: „Nichts mehr zulassen!"', 'Team talk: "Don\'t let anything in!"'), tr('Kabinenansprache: „Kompakt, eng, kein Risiko. Verstanden?"', 'Team talk: "Compact, tight, no risks. Understood?"'), tr('Der Trainer zeigt auf das eigene Tor: „Da kommt keiner mehr rein."', 'The manager points at our goal: "Nobody gets in there again."')])),
       opt(tl.m.mentality, tr('Anschreien (Pressing)', 'Give them a rollicking (press)'), tr('In der Kabine fliegt eine Trinkflasche. Die Jungs kommen wütend raus.', 'A water bottle flies across the dressing room. The lads come out fired up.'), call('press', 1.5)),
     ],
   };
@@ -85,9 +112,13 @@ function halftimeDecision(tl) {
 function concededDecision(tl) {
   return {
     id: 'conceded',
-    question: tr(`Gegentor, jetzt ${board(tl)}. Was rufst du rein?`, `Conceded, now ${board(tl)}. What do you shout?`),
+    question: vary(tl, 'conc', [
+      tr(`Gegentor, jetzt ${board(tl)}. Was rufst du rein?`, `Conceded, now ${board(tl)}. What do you shout?`),
+      tr(`Drin. ${board(tl)}. Die Köpfe gehen runter – was rufst du?`, `It's in. ${board(tl)}. Heads drop – what do you shout?`),
+      tr(`Der Ball liegt im eigenen Netz, ${board(tl)}. Deine Ansage von der Linie?`, `The ball is in our net, ${board(tl)}. Your call from the touchline?`),
+    ]),
     options: [
-      { label: tr('„Ruhig bleiben!"', '"Stay calm!"'), line: tr('Der Trainer klatscht in die Hände: „Ruhig bleiben, weiter!"', 'The manager claps his hands: "Stay calm, keep going!"') },
+      { label: tr('„Ruhig bleiben!"', '"Stay calm!"'), line: vary(tl, 'conc-r', [tr('Der Trainer klatscht in die Hände: „Ruhig bleiben, weiter!"', 'The manager claps his hands: "Stay calm, keep going!"'), tr('„Abhaken! Mund abputzen, weiter!"', '"Forget it! Wipe your mouths, go again!"'), tr('Der Trainer hebt beide Hände: „Ganz ruhig. Wir sind noch da."', 'The manager raises both hands: "Easy. We\'re still in this."')]) },
       { label: tr('„Rückt auf!"', '"Push up!"'), line: tr('Von der Seitenlinie: „Rückt auf!"', 'From the touchline: "Push up!"'), apply: call('forward') },
       { label: tr('„Geht drauf!"', '"Press them!"'), line: tr('Von der Seitenlinie: „Geht drauf, lasst die nicht spielen!"', 'From the touchline: "Press them, don\'t let them play!"'), apply: call('press') },
       { label: tr('„Über die Flügel!"', '"Use the wings!"'), line: tr('Von der Seitenlinie: „Über außen, über außen!"', 'From the touchline: "Out wide, out wide!"'), apply: call('wide') },

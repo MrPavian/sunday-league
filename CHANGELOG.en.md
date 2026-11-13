@@ -6,6 +6,17 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-13-6 – More variety on the touchline and in the pub
+
+### New
+- **Floodlight failure** (noticeboard, only with floodlights, once per season from matchday 3): call the electrician (€150), let someone from the team try, or carry on in the half-light (mood −0.04).
+  - If there is an electrician in the squad, he fixes it for free (mood +0.03). Otherwise it works 40% of the time, else the emergency call-out comes (€220).
+  - All amounts, chances and effects are game values.
+
+### Changed
+- **Touchline (live ticker):** kick-off, half-time and conceding with three to four versions per question and reply; the half-time question distinguishes ahead, behind and level. The choice does not use the match randomness – no match plays out differently.
+- **Pub:** round, one-to-ones (listen, encourage, straight talk), beer-mat tactics and the landlord with no news, each with three to four versions. Effects are unchanged.
+
 ## 2026-11-13-5 – Gestures at corners and throw-ins
 
 ### New

@@ -237,6 +237,32 @@ export const CLUBLIFE_EVENTS = {
     ],
   },
 
+  // Flutlicht fällt aus (ROADMAP 11.18 Punkt 13, Spieltag als Erlebnis). Kosten des Elektrikers: Spielwert.
+  flutlicht_ausfall: {
+    weight: 1.2,
+    needs: (c) => (hasFacility(c, 'flutlicht') && !once(c, 'lichtaus') && c.round >= 2 && squad(c).length >= 3 ? {} : null),
+    text: () => tr('Donnerstag, Abschlusstraining. Ein Knall, dann ist die halbe Wiese dunkel: Ein Flutlichtmast ist ausgefallen. Sonntag ist Heimspiel.', 'Thursday, final training session. A bang, then half the pitch goes dark: one floodlight mast has failed. Home game on Sunday.'),
+    options: [
+      { label: tr('Den Elektriker rufen (150 €)', 'Call the electrician (€150)'), effect: (c) => (mark(c, 'lichtaus'), book(c, tr('Elektriker Flutlicht', 'Electrician, floodlights'), -150), tr('Freitag früh steht der Elektriker am Mast: ein durchgeschmortes Kabel. Sonntag brennt wieder alles.', 'First thing Friday the electrician is up the mast: a burnt-out cable. By Sunday everything is lit again.')) },
+      {
+        label: tr('Einer aus der Mannschaft soll es richten', 'Let someone from the team fix it'),
+        effect: (c, ctx, rng) => {
+          mark(c, 'lichtaus');
+          const pro = squad(c).find((i) => /Elektriker/.test(playerOf(c, i).profession ?? ''));
+          if (pro != null) {
+            adjustMood(c, 0.03);
+            return tr(`${first(c, pro)} ist Elektriker, holt den Werkzeugkasten aus dem Kofferraum und hat den Mast in einer halben Stunde wieder an. Die Jungs applaudieren.`, `${first(c, pro)} is an electrician, fetches his toolbox from the boot and has the mast back on in half an hour. The lads applaud.`);
+          }
+          if (rng.chance(0.4)) return adjustMood(c, 0.02), tr('Keiner vom Fach, aber einer hat ein Video gesehen. Sicherung raus, Sicherung rein – und es ist wieder hell. Glück gehabt.', 'Nobody qualified, but someone has watched a video. Fuse out, fuse in – and the lights are back. Lucky.');
+          book(c, tr('Elektriker Flutlicht (Notdienst)', 'Electrician, floodlights (emergency call-out)'), -220);
+          adjustMood(c, -0.02);
+          return tr('Zwei Stunden Gefummel im Dunkeln, dann fliegt noch eine Sicherung. Am Ende kommt doch der Notdienst – teurer als vorher.', 'Two hours of fiddling in the dark, then another fuse blows. In the end the emergency electrician comes anyway – dearer than before.');
+        },
+      },
+      { label: tr('Im Halbdunkel weitertrainieren', 'Carry on training in the half-light'), effect: (c) => (mark(c, 'lichtaus'), adjustMood(c, -0.04), tr('Die Hälfte der Pässe landet im Gebüsch, einer läuft gegen den Torpfosten. Am Sonntag ist der Mast immer noch aus – angepfiffen wird trotzdem, bei Tageslicht.', 'Half the passes end up in the bushes, someone runs into a goalpost. On Sunday the mast is still dark – kick-off goes ahead anyway, in daylight.')) },
+    ],
+  },
+
   foerderverein: {
     weight: 1.4,
     needs: (c) => ((c.clubLife?.supporters ?? 0) < 12 && c.round >= 3 && !once(c, 'werben') ? {} : null),

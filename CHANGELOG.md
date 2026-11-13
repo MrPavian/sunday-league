@@ -6,6 +6,17 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-13-6 – Mehr Abwechslung an der Linie und in der Kneipe
+
+### Neu
+- **Flutlicht fällt aus** (Schwarzes Brett, nur mit Flutlicht, einmal je Saison ab dem 3. Spieltag): Elektriker rufen (150 €), einen aus der Mannschaft ranlassen oder im Halbdunkel weitertrainieren (Stimmung −0,04).
+  - Ist ein Elektriker im Kader, repariert er umsonst (Stimmung +0,03). Sonst klappt es in 40 % der Fälle, sonst kommt der Notdienst (220 €).
+  - Alle Beträge, Chancen und Wirkungen sind Spielwerte.
+
+### Geändert
+- **Seitenlinie (Liveticker):** Anpfiff, Halbzeit und Gegentor mit drei bis vier Fassungen je Frage und Antwortsatz; die Halbzeitfrage unterscheidet Führung, Rückstand und Gleichstand. Gewählt wird ohne den Spielzufall – kein Spielverlauf ändert sich.
+- **Kneipe:** Runde, Gespräche (Zuhören, Aufbauen, Klartext), Bierdeckel-Taktik und der Wirt ohne Neuigkeiten mit je drei bis vier Fassungen. Die Wirkungen bleiben gleich.
+
 ## 2026-11-13-5 – Gesten bei Ecke und Einwurf
 
 ### Neu
