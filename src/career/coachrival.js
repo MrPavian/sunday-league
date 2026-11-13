@@ -4,7 +4,8 @@
 // Bist du in eine andere Liga gewechselt oder aufgestiegen, übernimmt er in einer der nächsten Sommerpausen einen Verein deiner
 // neuen Liga. Duelle mit ihm schlagen stärker auf die Stimmung; vor dem Spiel stichelt er in der Zeitung, danach geht es um den
 // Handschlag. Alle Schwellen, Chancen und Wirkungen sind Spielwerte. Eigener Zufall (hash): kein bestehender Zufallsstrom
-// verschiebt sich.
+// verschiebt sich. Der Zustand heißt c.coachRival – c.nemesis gehört schon den Angstgegnern (memory.js: Tore einzelner Spieler
+// gegen uns).
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { FIRST_NAMES, LAST_NAMES } from '../data/names.js';
@@ -24,29 +25,29 @@ export const NEMESIS = {
 const hash = (...parts) => parts.reduce((h, p) => (Math.imul(h ^ p, 0x9e3779b1) + 0x7f4a7c15) >>> 0, 0x51ed270b);
 const rngFor = (c, salt) => createRng(hash(c.seed >>> 0, c.season ?? 1, c.round ?? 0, salt));
 
-export const nemesis = (c) => c.nemesis ?? null;
-export const nemesisHere = (c) => !!c.nemesis && !!clubById(c, c.nemesis.club) && !clubById(c, c.nemesis.club).human;
+export const nemesis = (c) => c.coachRival ?? null;
+export const nemesisHere = (c) => !!c.coachRival && !!clubById(c, c.coachRival.club) && !clubById(c, c.coachRival.club).human;
 export const facesNemesis = (c) => {
   const f = humanFixture(c);
   const me = humanClub(c).id;
-  return nemesisHere(c) && !!f && (f.home === c.nemesis.club || f.away === c.nemesis.club) && (f.home === me || f.away === me);
+  return nemesisHere(c) && !!f && (f.home === c.coachRival.club || f.away === c.coachRival.club) && (f.home === me || f.away === me);
 };
 export const record = (n) => tr(`${n.w} Siege, ${n.d} Remis, ${n.l} Niederlagen`, `${n.w} wins, ${n.d} draws, ${n.l} defeats`);
 const trust = (c, d) => {
   if (c.board) c.board.trust = Math.max(0, Math.min(100, c.board.trust + d));
 };
 const heat = (c, d) => {
-  c.nemesis.heat = Math.max(0, Math.min(NEMESIS.heatMax, (c.nemesis.heat ?? 1) + d));
+  c.coachRival.heat = Math.max(0, Math.min(NEMESIS.heatMax, (c.coachRival.heat ?? 1) + d));
 };
 const news = (c, text) => (c.pendingNews ??= []).push(text);
 const note = (c, text) => {
-  c.nemesis.notes = [...(c.nemesis.notes ?? []), { season: c.season, text }].slice(-4);
+  c.coachRival.notes = [...(c.coachRival.notes ?? []), { season: c.season, text }].slice(-4);
 };
 
 function create(c, club, gf, ga) {
   const rng = rngFor(c, 11);
   const name = `${rng.pick(FIRST_NAMES)} ${rng.pick(LAST_NAMES)}`;
-  c.nemesis = { name, club: club.id, clubName: club.name, since: c.season, w: 0, d: 0, l: 1, heat: 1, notes: [] };
+  c.coachRival = { name, club: club.id, clubName: club.name, since: c.season, w: 0, d: 0, l: 1, heat: 1, notes: [] };
   note(c, tr(`${c.season}: ${gf}:${ga} gegen ${club.name}.`, `${c.season}: ${gf}-${ga} against ${club.name}.`));
   news(c, tr(`Kreisblatt: ${name}, Trainer von ${club.name}, nach dem ${ga}:${gf}: „Gegen die spielen wir immer gern.“ Den Namen merkst du dir.`, `District Gazette: ${name}, manager of ${club.name}, after the ${ga}-${gf}: "We always enjoy playing them." You make a note of the name.`));
 }
@@ -61,7 +62,7 @@ export function finishRound(c) {
   const opp = clubById(c, oppId);
   if (!opp) return;
   const [gf, ga] = f.home === me.id ? [f.result.home, f.result.away] : [f.result.away, f.result.home];
-  const n = c.nemesis;
+  const n = c.coachRival;
   if (n && n.club === oppId) {
     if (gf > ga) (n.w++, adjustMood(c, NEMESIS.win));
     else if (gf < ga) (n.l++, adjustMood(c, NEMESIS.loss));
@@ -71,18 +72,18 @@ export function finishRound(c) {
     return;
   }
   if (n || gf >= ga) return;
-  const lost = (c.nemesisLost ??= { season: c.season, by: {} });
+  const lost = (c.coachRivalLost ??= { season: c.season, by: {} });
   if (lost.season !== c.season) Object.assign(lost, { season: c.season, by: {} });
   lost.by[oppId] = (lost.by[oppId] ?? 0) + 1;
   if (ga - gf >= NEMESIS.margin || lost.by[oppId] >= NEMESIS.twice) {
     create(c, opp, gf, ga);
-    delete c.nemesisLost;
+    delete c.coachRivalLost;
   }
 }
 
 // Sommerpause: Ist er nicht (mehr) in deiner Liga, folgt er dir vielleicht.
 export function nextSeason(c) {
-  const n = c.nemesis;
+  const n = c.coachRival;
   if (!n) return;
   n.heat = Math.max(1, (n.heat ?? 1) - 1);
   const here = clubById(c, n.club);
@@ -101,7 +102,7 @@ export function nextSeason(c) {
 export function startWeek(c) {
   const w = c.week;
   if (!w?.chat || w.breakWeek || !facesNemesis(c)) return;
-  const n = c.nemesis;
+  const n = c.coachRival;
   w.chat.push({ from: null, text: tr(`Sonntag gegen ${n.clubName} – und gegen ${n.name}. Bilanz des Trainers gegen ihn: ${record(n)}.`, `Sunday against ${n.clubName} – and against ${n.name}. The gaffer's record against him: ${record(n)}.`), time: 'Mo 07:50', nemesis: true });
 }
 
@@ -111,8 +112,8 @@ export const NEMESIS_EVENTS = {
   // Vor dem Duell stichelt er in der Zeitung.
   tr_stichelei: {
     weight: 6,
-    needs: (c) => (facesNemesis(c) && !isPresident(c) && !once(c, 'tr_stichelei') ? { name: c.nemesis.name, club: c.nemesis.clubName } : null),
-    text: (c, ctx) => tr(`${ctx.name} (${ctx.club}) vor dem Spiel in der Zeitung: „Ich weiß, wie man gegen diesen Trainer gewinnt. Das habe ich oft genug gezeigt.“ Bilanz: ${record(c.nemesis)}.`, `${ctx.name} (${ctx.club}) in the paper before the game: "I know how to beat this manager. I have shown it often enough." Record: ${record(c.nemesis)}.`),
+    needs: (c) => (facesNemesis(c) && !isPresident(c) && !once(c, 'tr_stichelei') ? { name: c.coachRival.name, club: c.coachRival.clubName } : null),
+    text: (c, ctx) => tr(`${ctx.name} (${ctx.club}) vor dem Spiel in der Zeitung: „Ich weiß, wie man gegen diesen Trainer gewinnt. Das habe ich oft genug gezeigt.“ Bilanz: ${record(c.coachRival)}.`, `${ctx.name} (${ctx.club}) in the paper before the game: "I know how to beat this manager. I have shown it often enough." Record: ${record(c.coachRival)}.`),
     options: [
       {
         label: tr('Kontern: „Am Sonntag reden wir weiter.“', 'Hit back: "We will talk on Sunday."'),
@@ -130,7 +131,7 @@ export const NEMESIS_EVENTS = {
     weight: 30,
     followUp: true,
     needs: (c) => {
-      const n = c.nemesis;
+      const n = c.coachRival;
       if (!n?.last || isPresident(c) || n.last.season !== c.season || n.last.round !== c.round || n.last.asked) return null;
       return { name: n.name, result: n.last.result, score: n.last.score };
     },
@@ -142,13 +143,13 @@ export const NEMESIS_EVENTS = {
     options: [
       {
         label: tr('Größe zeigen', 'Show class'),
-        effect: (c, ctx) => ((c.nemesis.last.asked = true), heat(c, -1), trust(c, 1), ctx.result > 0
+        effect: (c, ctx) => ((c.coachRival.last.asked = true), heat(c, -1), trust(c, 1), ctx.result > 0
           ? tr('„Jeder verliert anders.“ Mehr sagst du nicht. Der Vorstand ist stolz auf seinen Trainer.', '"Everyone loses in their own way." You say no more. The board is proud of its manager.')
           : tr('Du gratulierst, ehrlich und kurz. Das nimmt ihm den Wind aus den Segeln.', 'You congratulate him, honestly and briefly. That takes the wind out of his sails.')),
       },
       {
         label: tr('Einen Spruch zurückgeben', 'Give one back'),
-        effect: (c, ctx) => ((c.nemesis.last.asked = true), heat(c, 1), adjustMood(c, ctx.result < 0 ? 0.03 : 0.02), ctx.result > 0
+        effect: (c, ctx) => ((c.coachRival.last.asked = true), heat(c, 1), adjustMood(c, ctx.result < 0 ? 0.03 : 0.02), ctx.result > 0
           ? tr('„Den Handschlag hole ich mir im Rückspiel.“ Am Montag steht es in der Zeitung, die Jungs feiern den Satz.', '"I will collect that handshake in the return game." It is in Monday\'s paper; the lads love the line.')
           : tr('„Genieß es. Es war das letzte Mal.“ Die Kabine hat es gehört und nimmt es mit ins nächste Duell.', '"Enjoy it. It was the last time." The dressing room heard it and takes it into the next meeting.')),
       },

@@ -23,7 +23,7 @@ import { CARE, careBlock, HELPER_EFFECT, HELPER_SLOTS, LANGPACHT_FEE, LANGPACHT_
 import { arenaOf, BRANCHEN, bossOf, cancelCost, goalStatus, goalText, lineOf, relLabel, shirtSponsor, sponsorColor, sponsorDef, termChance, TERMS, termWeekly, TRAITS as SPONSOR_TRAITS, WISHES, wishCost, wishLabel } from '../../career/sponsors.js';
 import { newWish } from '../../career/sponsorwish.js';
 import { chronicleData, yearOf } from '../../career/sagas.js';
-import { coachPlaying, legacy } from '../../career/legacy.js';
+import { coachPlaying, legacy, eraSummary } from '../../career/legacy.js';
 import { childAge, coachName, familyText, isPresident, STYLES } from '../../career/personal.js';
 import { hiredAge } from '../../career/president.js';
 import { STYLES as PLAY_STYLES } from '../../sim/tactics.js';
@@ -431,7 +431,7 @@ export const clubScreens = {
       ? h ? `<li><b>${yearOf(c, h.since)}–${tr('heute', 'today')}</b> ${esc(h.name)} <small>(${hiredAge(c)}, ${PLAY_STYLES[h.style].label})</small></li>` : `<li><b>${tr('heute', 'today')}</b> ${tr('Trainerstelle vakant', 'manager post vacant')}</li>`
       : c.coach?.idx != null ? `<li><b>${yearOf(c, since)}–${tr('heute', 'today')}</b> ${playerOf(c, c.coach.idx).name}${c.coach.generation > 1 ? tr(` <small>(${c.coach.generation}. Trainer-Ära)</small>`, ` <small>(manager era no. ${c.coach.generation})</small>`) : ''}</li>` : '';
     if (!eras.length && !isPresident(c)) return '';
-    return `<h4>${tr('Trainer', 'Managers')}</h4><ul class="milestones">${eras.map((e) => `<li><b>${yearOf(c, e.from)}–${yearOf(c, e.to)}</b> ${e.name} – ${e.seasons} ${plural(e.seasons, 'Saison', 'Saisons', 'season', 'seasons')}${e.titles ? tr(`, ${e.titles}× Meister`, `, ${e.titles}× champions`) : ''}${e.how === 'extern' ? tr(`, dann Präsident – Nachfolger an der Linie: ${esc(e.successor)}`, `, then president – successor on the touchline: ${esc(e.successor)}`) : tr(', heute Ehrenpräsident', ', now honorary president')}</li>`).join('')}${now}</ul>`;
+    return `<h4>${tr('Trainer', 'Managers')}</h4><ul class="milestones">${eras.map((e) => `<li><b>${yearOf(c, e.from)}–${yearOf(c, e.to)}</b> ${e.name} – ${e.seasons} ${plural(e.seasons, 'Saison', 'Saisons', 'season', 'seasons')}${e.titles ? tr(`, ${e.titles}× Meister`, `, ${e.titles}× champions`) : ''}${eraSummary(e) ? `, ${esc(eraSummary(e))}` : ''}${e.how === 'extern' ? tr(`, dann Präsident – Nachfolger an der Linie: ${esc(e.successor)}`, `, then president – successor on the touchline: ${esc(e.successor)}`) : tr(', heute Ehrenpräsident', ', now honorary president')}</li>`).join('')}${now}</ul>`;
   },
 
   // Platz und Pacht: Zustand, Pflege (Ehrenamtliche oder Fachbetrieb) und der Vertrag mit der Gemeinde.

@@ -276,6 +276,16 @@ function coachRecord(c, { idx, first, last, style, relation, children }) {
   };
 }
 
+// Rückblick einer Ära in einem Satzteil: „2 Aufstiege, 1 Abstieg, beste Platzierung: Platz 2“ – leer, wenn nichts zu sagen ist
+// (ältere Spielstände haben die Felder nicht).
+export function eraSummary(e) {
+  const parts = [];
+  if (e.ups) parts.push(tr(`${e.ups} ${e.ups === 1 ? 'Aufstieg' : 'Aufstiege'}`, `${e.ups} ${e.ups === 1 ? 'promotion' : 'promotions'}`));
+  if (e.downs) parts.push(tr(`${e.downs} ${e.downs === 1 ? 'Abstieg' : 'Abstiege'}`, `${e.downs} ${e.downs === 1 ? 'relegation' : 'relegations'}`));
+  if (e.best && e.best < 99) parts.push(tr(`beste Platzierung: Platz ${e.best}`, `best finish: ${e.best}${e.best === 1 ? 'st' : e.best === 2 ? 'nd' : e.best === 3 ? 'rd' : 'th'}`));
+  return parts.join(', ');
+}
+
 // Die Ära endet: Chronik, Ehrenamt, und der neue Mensch an der Seitenlinie.
 export function succeed(c, cand, input = null) {
   const L = legacy(c);
@@ -285,9 +295,13 @@ export function succeed(c, cand, input = null) {
   const since = (isPresident(c) ? old?.presidentSince : null) ?? old?.since ?? 1; // Präsident: seine Präsidentenzeit (die Trainerzeit steht schon als eigene Ära)
   const tenure = (c.history ?? []).filter((h) => h.season >= since);
   const titles = tenure.filter((h) => h.pos === 1).length;
-  L.eras.push({ name: oldName, from: since, to: c.season, seasons: c.season - since + 1, titles, age: coachAge(c), successor: cand.type === 'neu' ? input ? `${input.first} ${input.last}`.trim() : '?' : cand.name, how: cand.type });
+  // Rückblick zum Abschied (ROADMAP 11.18 Punkt 10): Aufstiege, Abstiege und die beste Platzierung der Amtszeit.
+  const ups = tenure.filter((h) => h.promoted).length;
+  const downs = tenure.filter((h) => h.relegated).length;
+  const best = tenure.length ? Math.min(...tenure.map((h) => h.pos || 99)) : null;
+  L.eras.push({ name: oldName, from: since, to: c.season, seasons: c.season - since + 1, titles, ups, downs, best, age: coachAge(c), successor: cand.type === 'neu' ? input ? `${input.first} ${input.last}`.trim() : '?' : cand.name, how: cand.type });
   L.honorary.push(oldName);
-  chronicle(c, tr(`Ende einer Ära: ${oldName} tritt nach ${c.season - since + 1} Saisons${titles ? ` und ${titles} ${titles === 1 ? 'Meisterschaft' : 'Meisterschaften'}` : ''} ab und wird Ehrenpräsident.`, `End of an era: ${oldName} steps down after ${c.season - since + 1} seasons${titles ? ` and ${titles} ${titles === 1 ? 'title' : 'titles'}` : ''} and becomes honorary president.`));
+  chronicle(c, tr(`Ende einer Ära: ${oldName} tritt nach ${c.season - since + 1} Saisons${titles ? ` und ${titles} ${titles === 1 ? 'Meisterschaft' : 'Meisterschaften'}` : ''} ab und wird Ehrenpräsident.${eraSummary({ ups, downs, best }) ? ` ${eraSummary({ ups, downs, best })}.` : ''}`, `End of an era: ${oldName} steps down after ${c.season - since + 1} seasons${titles ? ` and ${titles} ${titles === 1 ? 'title' : 'titles'}` : ''} and becomes honorary president.${eraSummary({ ups, downs, best }) ? ` ${eraSummary({ ups, downs, best })}.` : ''}`));
   if (old?.idx != null && club.squad.includes(old.idx)) club.squad = club.squad.filter((x) => x !== old.idx);
   // Wer aus dem Präsidium einen Nachfolger an die Linie holt, schickt den eingestellten Trainer in den Ruhestand (ohne Abfindung).
   if (isPresident(c) && c.hired) {

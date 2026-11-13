@@ -59,17 +59,17 @@ describe('Trainer-Rivale', () => {
     const m0 = c.mood;
     play(c, 2, 0);
     expect(c.mood).toBeGreaterThan(m0);
-    expect([c.nemesis.w, c.nemesis.d, c.nemesis.l]).toEqual([1, 0, 1]);
+    expect([c.coachRival.w, c.coachRival.d, c.coachRival.l]).toEqual([1, 0, 1]);
     const other = play(c, 0, 4);
     expect(other).not.toBe(opp);
-    expect(c.nemesis.club).toBe(opp);
+    expect(c.coachRival.club).toBe(opp);
   });
 
   it('folgt in eine neue Liga: irgendwann übernimmt er einen Verein dort', () => {
     const c = createCareer({ seed: 9 });
     play(c, 0, 3);
-    const name = c.nemesis.name;
-    c.nemesis.club = 'weg'; // nicht mehr in dieser Liga
+    const name = c.coachRival.name;
+    c.coachRival.club = 'weg'; // nicht mehr in dieser Liga
     let seasons = 0;
     while (!cr.nemesisHere(c) && seasons < 12) {
       c.season++;
@@ -77,9 +77,17 @@ describe('Trainer-Rivale', () => {
       cr.nextSeason(c);
     }
     expect(cr.nemesisHere(c)).toBe(true);
-    expect(c.nemesis.name).toBe(name);
-    expect(c.clubs.find((x) => x.id === c.nemesis.club).human).toBeFalsy();
-    expect(c.pendingNews.some((t) => t.includes(name) && t.includes(c.nemesis.clubName))).toBe(true);
+    expect(c.coachRival.name).toBe(name);
+    expect(c.clubs.find((x) => x.id === c.coachRival.club).human).toBeFalsy();
+    expect(c.pendingNews.some((t) => t.includes(name) && t.includes(c.coachRival.clubName))).toBe(true);
+  });
+
+  it('lässt die Angstgegner (c.nemesis, memory.js) in Ruhe', () => {
+    const c = createCareer({ seed: 9 });
+    c.nemesis = { 5: 3 };
+    play(c, 0, 3);
+    expect(cr.nemesis(c)).not.toBe(null);
+    expect(c.nemesis).toEqual({ 5: 3 });
   });
 
   it('Ereignisse: Stichelei nur vor dem Duell, Handschlag nur direkt danach und nur einmal', () => {
@@ -92,7 +100,7 @@ describe('Trainer-Rivale', () => {
     faceNext(c, opp);
     const s = cr.NEMESIS_EVENTS.tr_stichelei;
     const ctx = s.needs(c);
-    expect(s.text(c, ctx)).toContain(c.nemesis.name);
+    expect(s.text(c, ctx)).toContain(c.coachRival.name);
     board(c).trust = 50;
     s.options[2].effect(c, ctx, createRng(1));
     expect(board(c).trust).toBe(51);
@@ -101,7 +109,7 @@ describe('Trainer-Rivale', () => {
     const hctx = h.needs(c);
     expect(hctx.result).toBe(1);
     expect(h.text(c, hctx)).toContain('1:0');
-    for (const o of h.options) expect(typeof o.effect({ ...c, nemesis: structuredClone(c.nemesis), board: { trust: 50 } }, hctx, createRng(1))).toBe('string');
+    for (const o of h.options) expect(typeof o.effect({ ...c, coachRival: structuredClone(c.coachRival), board: { trust: 50 } }, hctx, createRng(1))).toBe('string');
     h.options[0].effect(c, hctx, createRng(1));
     expect(h.needs(c)).toBe(null);
   });
