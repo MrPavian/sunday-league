@@ -6,6 +6,14 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-13-7 – Stadionsprecher, Kreisblatt und Zurufe mit Abwechslung
+
+### Geändert
+- **Stadionsprecher:** Gästetor, Eigentor, Wechsel, Halbzeit, Endstand und Zuschauerzahl mit je drei Fassungen (eigener Zufall des Sprechers, das Spiel bleibt gleich).
+- **Kreisblatt:** Schlagzeilen nach Nullnummer, Remis, knappem Sieg und hohem Sieg mit je drei Fassungen, gewählt über Startwert und Ergebnis.
+- **Zurufe:** Jeder Zuruf hat vier Fassungen in der Sprechblase des Trainers; die Knopfbeschriftung bleibt.
+- Die Tipps von der Bank habe ich nicht verändert: Sie sind schon nach der Spiellage formuliert.
+
 ## 2026-11-13-6 – Mehr Abwechslung an der Linie und in der Kneipe
 
 ### Neu

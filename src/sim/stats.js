@@ -115,9 +115,11 @@ export function playerOfTheMatch(m, grades) {
 
 const surname = (p) => p?.name.split(' ').slice(1).join(' ') ?? '';
 
-// Schlagzeile im Kreisblatt-Ton.
+// Schlagzeile im Kreisblatt-Ton. Mehrere Fassungen je Lage (ROADMAP 11.18 Punkt 9), gewählt über Startwert und Ergebnis –
+// ohne den Spielzufall.
 export function headline(m, grades) {
   const [a, b] = m.score;
+  const v = (...list) => list[(Math.imul(((m.seed ?? 1) * 31 + a * 7 + b) >>> 0, 2654435761) >>> 0) % list.length];
   const names = m.teams.map((t) => t.name);
   const winner = a > b ? 0 : b > a ? 1 : null;
   const diff = Math.abs(a - b);
@@ -131,16 +133,32 @@ export function headline(m, grades) {
 
   if (top?.tier === 'legende') return tr(`Ex-Profi ${surname(top)} zaubert – ${names[top.team]} staunt mit`, `Ex-pro ${surname(top)} works his magic – ${names[top.team]} can only watch in awe`);
   if (topGoals >= 3) return tr(`${surname(top)} schnürt den Dreierpack${winner === top.team ? ` – ${names[top.team]} siegt ${Math.max(a, b)}:${Math.min(a, b)}` : ', hilft aber nicht'}`, `Hat-trick for ${surname(top)}${winner === top.team ? ` – ${names[top.team]} win ${Math.max(a, b)}-${Math.min(a, b)}` : ', but it does not help'}`);
-  if (winner === null && a === 0) return tr(`Nullnummer: ${names[0]} und ${names[1]} ohne Tore, aber mit Leidenschaft`, `Goalless: ${names[0]} and ${names[1]} without goals, but with passion`);
-  if (winner === null) return tr(`Remis-Krimi ${a}:${b} – ${names[0]} und ${names[1]} teilen die Punkte`, `${a}-${b} thriller – ${names[0]} and ${names[1]} share the points`);
+  if (winner === null && a === 0) return v(
+    tr(`Nullnummer: ${names[0]} und ${names[1]} ohne Tore, aber mit Leidenschaft`, `Goalless: ${names[0]} and ${names[1]} without goals, but with passion`),
+    tr(`Torlos, aber nicht trostlos: ${names[0]} und ${names[1]} trennen sich 0:0`, `No goals, no shame: ${names[0]} and ${names[1]} draw 0-0`),
+    tr(`Die Abwehrreihen gewinnen – ${names[0]} gegen ${names[1]} endet 0:0`, `The defences win – ${names[0]} v ${names[1]} ends 0-0`),
+  );
+  if (winner === null) return v(
+    tr(`Remis-Krimi ${a}:${b} – ${names[0]} und ${names[1]} teilen die Punkte`, `${a}-${b} thriller – ${names[0]} and ${names[1]} share the points`),
+    tr(`${a}:${b}! ${names[0]} und ${names[1]} schenken sich nichts`, `${a}-${b}! ${names[0]} and ${names[1]} give nothing away`),
+    tr(`Punkteteilung beim ${a}:${b} zwischen ${names[0]} und ${names[1]}`, `Points shared in a ${a}-${b} between ${names[0]} and ${names[1]}`),
+  );
   const w = names[winner];
   const l = names[1 - winner];
   if (cars >= 5) return tr(`Parkplatz-Chaos: ${w} gewinnt, die Autos leiden`, `Car park chaos: ${w} win, the cars suffer`);
   const sentId = Object.entries(m.stats.players).find(([, p]) => p.red)?.[0];
   const sent = sentId && findAnyPlayer(m, sentId);
   if (sent && diff <= 2) return sent.team === winner ? tr(`${w} gewinnt trotz Platzverweis für ${surname(sent)}`, `${w} win despite the sending-off of ${surname(sent)}`) : tr(`${w} nutzt den Platzverweis gegen ${surname(sent)}`, `${w} make the most of ${surname(sent)}'s red card`);
-  if (diff >= 4) return tr(`${w} überrollt ${l} mit ${Math.max(a, b)}:${Math.min(a, b)}`, `${w} flatten ${l} ${Math.max(a, b)}-${Math.min(a, b)}`);
+  if (diff >= 4) return v(
+    tr(`${w} überrollt ${l} mit ${Math.max(a, b)}:${Math.min(a, b)}`, `${w} flatten ${l} ${Math.max(a, b)}-${Math.min(a, b)}`),
+    tr(`Schützenfest: ${w} schießt ${l} mit ${Math.max(a, b)}:${Math.min(a, b)} ab`, `Goal-fest: ${w} thrash ${l} ${Math.max(a, b)}-${Math.min(a, b)}`),
+    tr(`${Math.max(a, b)}:${Math.min(a, b)} – ein gebrauchter Tag für ${l}`, `${Math.max(a, b)}-${Math.min(a, b)} – one to forget for ${l}`),
+  );
   if (whiffs >= 8) return tr(`Luftlöcher und Leidenschaft – ${w} gewinnt das Stolperduell`, `Air shots and passion – ${w} win the stumble-fest`);
-  if (diff === 1) return tr(`${w} zittert sich zum ${Math.max(a, b)}:${Math.min(a, b)}${potm ? ` – ${surname(potm)} überragt` : ''}`, `${w} scrape a nervy ${Math.max(a, b)}-${Math.min(a, b)}${potm ? ` – ${surname(potm)} outstanding` : ''}`);
+  if (diff === 1) return v(
+    tr(`${w} zittert sich zum ${Math.max(a, b)}:${Math.min(a, b)}${potm ? ` – ${surname(potm)} überragt` : ''}`, `${w} scrape a nervy ${Math.max(a, b)}-${Math.min(a, b)}${potm ? ` – ${surname(potm)} outstanding` : ''}`),
+    tr(`Knapp, aber verdient: ${w} schlägt ${l} ${Math.max(a, b)}:${Math.min(a, b)}`, `Narrow but deserved: ${w} beat ${l} ${Math.max(a, b)}-${Math.min(a, b)}`),
+    tr(`${l} rennt an, ${w} jubelt: ${Math.max(a, b)}:${Math.min(a, b)}${potm ? ` – stark: ${surname(potm)}` : ''}`, `${l} press, ${w} celebrate: ${Math.max(a, b)}-${Math.min(a, b)}${potm ? ` – ${surname(potm)} the star` : ''}`),
+  );
   return tr(`Verdienter Sieg für ${w}${top ? ` – ${surname(top)} trifft ${topGoals === 2 ? 'doppelt' : ''}`.trimEnd() : ''}`, `Deserved win for ${w}${top ? ` – ${surname(top)} scores${topGoals === 2 ? ' twice' : ''}` : ''}`);
 }

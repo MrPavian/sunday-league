@@ -72,7 +72,8 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
 8. **Ereignisse in allen Bereichen:** neue Ereignisse für jede Liga und jeden Bereich (Kabine, Vorstand, Jugend, Zweite, Frauen,
    Alte Herren, Sponsoren, Fans, Presse, Privat, Nationalteam). Nach der Zählung aus Punkt 2, damit Lücken zuerst gefüllt werden.
 9. **Neue Textbausteine für alle interaktiven Bereiche.** 🔶 **Teil 1, 2026-11-13:** Seitenlinie im Liveticker (sim/touchline.js
-   vary) und Kneipe (career/pub.js say), ohne den Spielzufall. Offen: Chat, Zurufe, Bank, Kreisblatt, Stadionsprecher.
+   vary) und Kneipe (career/pub.js say), ohne den Spielzufall. Teil 2: Stadionsprecher, Kreisblatt-
+   Schlagzeilen, Zurufe. Bank ist schon lagebezogen formuliert. Offen: Chat (hat schon viele Sprüche, 11.17).
    Ursprünglicher Punkt: Chat, Kneipe, Zurufe, Bank, Liveticker, Kreisblatt, Stadionsprecher,
    Halbzeit, Verhandlungen – mehr Vorlagen, damit sich nichts schnell wiederholt. Deutsch und Englisch.
 

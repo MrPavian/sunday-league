@@ -7,10 +7,10 @@ import { orderOf, setOrder } from './plan.js';
 // Schnellbefehle (Knöpfe 1–4): jeder schaltet einen dauerhaften Befehl an oder aus.
 // Die Wirkung steht im Spielplan (plan.js) – hier nur Knopf und Zuordnung.
 export const SHOUTS = {
-  press: { label: tr('Geht drauf!', 'Press them!'), short: tr('Pressing', 'Press'), key: 'Digit1', order: ['press', 'hoch'] },
-  back: { label: tr('Hinten dicht!', 'Shut up shop!'), short: tr('Hinten dicht', 'Defend'), key: 'Digit2', order: ['press', 'tief'] },
-  forward: { label: tr('Rückt auf!', 'Push up!'), short: tr('Aufrücken', 'Push up'), key: 'Digit3', order: ['shape', 'aufruecken'] },
-  wide: { label: tr('Über die Flügel!', 'Use the wings!'), short: tr('Flügel', 'Wings'), key: 'Digit4', order: ['route', 'aussen'] },
+  press: { label: tr('Geht drauf!', 'Press them!'), short: tr('Pressing', 'Press'), key: 'Digit1', order: ['press', 'hoch'], calls: tr(['Geht drauf!', 'Draufgehen, Jungs!', 'Nicht stehen lassen – Druck!', 'Anlaufen, anlaufen!'], ['Press them!', 'Get at them, lads!', 'Don\'t stand off – pressure!', 'Close them down!']) },
+  back: { label: tr('Hinten dicht!', 'Shut up shop!'), short: tr('Hinten dicht', 'Defend'), key: 'Digit2', order: ['press', 'tief'], calls: tr(['Hinten dicht!', 'Alle hinter den Ball!', 'Kompakt bleiben!', 'Nichts mehr zulassen!'], ['Shut up shop!', 'Everyone behind the ball!', 'Stay compact!', 'Let nothing through!']) },
+  forward: { label: tr('Rückt auf!', 'Push up!'), short: tr('Aufrücken', 'Push up'), key: 'Digit3', order: ['shape', 'aufruecken'], calls: tr(['Rückt auf!', 'Raus da, aufrücken!', 'Abwehr, nach vorne schieben!', 'Mitgehen, mitgehen!'], ['Push up!', 'Get out, push up!', 'Back line, step up!', 'Go with it, go with it!']) },
+  wide: { label: tr('Über die Flügel!', 'Use the wings!'), short: tr('Flügel', 'Wings'), key: 'Digit4', order: ['route', 'aussen'], calls: tr(['Über die Flügel!', 'Spielt breit!', 'Über außen, über außen!', 'Die Linie nutzen!'], ['Use the wings!', 'Play it wide!', 'Out wide, out wide!', 'Use the touchline!']) },
 };
 export const SHOUT_IDS = Object.keys(SHOUTS);
 const COOLDOWN = 1.5; // Heiser wird man trotzdem

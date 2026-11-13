@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-13-7',
+    de: { title: 'Stadionsprecher, Kreisblatt und Zurufe mit Abwechslung', items: ['Stadionsprecher: Gästetore, Eigentore, Wechsel, Halbzeit, Endstand und Zuschauerzahl haben jetzt je drei Fassungen.', 'Kreisblatt: Die Schlagzeilen nach Nullnummer, Remis, knappem und hohem Sieg kommen in drei Fassungen.', 'Zurufe von der Linie: Jeder der vier Zurufe hat vier Fassungen in der Sprechblase; die Knöpfe heißen weiter wie vorher.'] },
+    en: { title: 'Announcer, gazette and touchline shouts with more variety', items: ['Stadium announcer: away goals, own goals, substitutions, half-time, full time and attendance now come in three versions each.', 'District Gazette: headlines after goalless draws, draws, narrow and big wins come in three versions.', 'Touchline shouts: each of the four shouts has four versions in the speech bubble; the buttons keep their names.'] },
+  },
+  {
     id: '2026-11-13-6',
     de: { title: 'Mehr Abwechslung an der Linie und in der Kneipe', items: ['Liveticker an der Seitenlinie: Anpfiff, Halbzeitansprache und Gegentor haben jetzt mehrere Fassungen. Die Halbzeitfrage passt sich dem Spielstand an – Führung, Rückstand oder Gleichstand.', 'Kneipe: Runde ausgeben, Gespräche, Bierdeckel-Taktik und der Wirt erzählen nicht mehr jede Woche dasselbe.', 'Neu am Schwarzen Brett: Ein Flutlichtmast fällt beim Abschlusstraining aus. Elektriker rufen, selbst ranlassen – ein Elektriker im Kader repariert umsonst – oder im Halbdunkel weitermachen.'] },
     en: { title: 'More variety on the touchline and in the pub', items: ['Touchline live ticker: kick-off, half-time talk and conceding now come in several versions. The half-time question follows the score – ahead, behind or level.', 'Pub: buying a round, one-to-ones, beer-mat tactics and the landlord no longer say the same thing every week.', 'New on the noticeboard: a floodlight mast fails during final training. Call the electrician, let someone have a go – an electrician in the squad fixes it for free – or carry on in the half-light.'] },

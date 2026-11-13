@@ -6,6 +6,14 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-13-7 – Announcer, gazette and touchline shouts with more variety
+
+### Changed
+- **Stadium announcer:** away goal, own goal, substitution, half-time, full time and attendance with three versions each (the announcer's own randomness, the match stays the same).
+- **District Gazette:** headlines after goalless draws, draws, narrow wins and big wins with three versions each, chosen by seed and score.
+- **Shouts:** each shout has four versions in the manager's speech bubble; the button labels stay.
+- Bench advice is unchanged: it is already worded according to the match situation.
+
 ## 2026-11-13-6 – More variety on the touchline and in the pub
 
 ### New

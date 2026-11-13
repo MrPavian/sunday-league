@@ -133,7 +133,9 @@ export class Hud {
     for (const e of match.events) {
       if (e.type === 'shout' || (e.type === 'order' && e.by === 'card')) {
         const b = this.$('.coach-bubble');
-        const said = e.type === 'shout' ? (e.on ? SHOUTS[e.shout].label : tr(`Schluss mit ${SHOUTS[e.shout].short}!`, `Enough ${SHOUTS[e.shout].short.toLowerCase()}!`)) : `${orderLabel(e.group, e.value)}!`;
+        // Zuruf in wechselnden Worten (sim/coach.js calls, ROADMAP 11.18 Punkt 9); der Knopf behält seine Beschriftung.
+        const calls = SHOUTS[e.shout].calls;
+        const said = e.type === 'shout' ? (e.on ? (calls?.length ? calls[(this.shoutN = (this.shoutN ?? -1) + 1) % calls.length] : SHOUTS[e.shout].label) : tr(`Schluss mit ${SHOUTS[e.shout].short}!`, `Enough ${SHOUTS[e.shout].short.toLowerCase()}!`)) : `${orderLabel(e.group, e.value)}!`;
         b.textContent = tr(`„${said}“`, `“${said}”`);
         b.hidden = false;
         b.classList.remove('pop');
