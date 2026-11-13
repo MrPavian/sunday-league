@@ -6,6 +6,16 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-13-1 – Press conference
+
+### New
+- **Press conference from the fourth tier up** (four new events):
+  - Before a top-of-the-table game (you and the opponents in the top four, from matchday 4 at the earliest, once per half-season): bold statement, understatement or no comment.
+  - A week after a bold statement the press follows up. After a win, mood and board backing rise; after a draw or defeat it costs backing or mood, depending on whether you stand by it.
+  - After three wins in a row (once per season): the question about the season's target.
+  - With an unhappy player (once per season): the question about his role.
+- All effects are game values of the same size as the other events (mood ±0.02 to 0.05, backing ±1 to 2).
+
 ## 2026-11-12-3 – Throw-ins and fewer penalties after corners
 
 ### Changed

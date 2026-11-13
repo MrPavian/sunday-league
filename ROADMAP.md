@@ -75,7 +75,9 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
 **C – Neue Ideen**
 10. **Karriereende und Vermächtnis:** Der Trainer altert; Abschied mit Rückblick und Ehrentafel, Weiterspielen mit einem Nachfolger
     im selben Verein.
-11. **Pressekonferenz ab der Regionalliga:** zwei bis drei Fragen vor oder nach wichtigen Spielen; Antworten wirken auf Kabine,
+11. **Pressekonferenz ab der Regionalliga.** ✅ **Erste Lieferung 2026-11-13** (career/presse.js, tests/presse.test.js): Spitzenspiel
+    mit Ansage und Nachfrage eine Woche später, Siegesserie, Personalfrage. Offen: Wirkung auf die Fans, Fragen nach Pokal- und
+    Abstiegsspielen, Verknüpfung mit dem Trainertyp. Ursprünglicher Punkt: zwei bis drei Fragen vor oder nach wichtigen Spielen; Antworten wirken auf Kabine,
     Vorstand und Fans (passt zu Auftreten und Trainertyp aus Punkt 17).
 12. **Rivalität zwischen Trainern:** ein gegnerischer Trainer, der über mehrere Saisons wiederkehrt, mit Vorgeschichte.
 13. **Spieltag als Erlebnis im Amateurbereich:** Platzwart, Bratwurststand, Linienrichter aus dem eigenen Verein, ausgefallenes

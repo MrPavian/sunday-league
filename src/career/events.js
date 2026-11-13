@@ -36,6 +36,7 @@ import { adjustFitness } from './fitness.js';
 import { setRelation } from './relations.js';
 import { fitsEvent } from './eventfit.js';
 import { PRO_EVENTS } from './proevents.js';
+import { PRESS_EVENTS } from './presse.js';
 
 const EVENT_CHANCE = 0.65; // pro Woche
 const NO_REPEAT = 4; // Wochen, bevor dasselbe Ereignis wiederkommen darf
@@ -644,6 +645,7 @@ const eventPacks = () => (packs ??= [
   { pack: UNREST_EVENTS, roll: true }, // Unruhe bis zum Streik (unrest.js)
   { pack: CRISES, roll: false },
   { pack: PRO_EVENTS, roll: true }, // Oberliga bis 3. Liga: Profi-Alltag (proevents.js) – hinten, damit der Zufall unten gleich bleibt
+  { pack: PRESS_EVENTS, roll: true }, // Pressekonferenz ab der Regionalliga (presse.js)
 ]);
 const rolledEntries = () => eventPacks().filter((x) => x.roll).flatMap((x) => Object.entries(x.pack));
 // Für Messungen (scripts/events-count.mjs): alle Ereignisse, die wöchentlich gezogen werden können.
@@ -675,7 +677,7 @@ export function rollWeekEvent(career) {
   // In der Derbywoche geht es um nichts anderes (bisher konnte ein Zufallsereignis dazwischenfunken).
   // Ein fälliges Folge-Ereignis einer Kette (Reportage, Rückkehr, Fanbus …) kommt in seiner Woche.
   const chosen = (derbyThisWeek(career) && candidates.find((c) => DERBY_EVENTS[c.id])) || candidates.find((c) => c.ev.followUp) || candidates.find((c) => (r -= c.ev.weight) < 0) || candidates[0];
-  const event = { id: chosen.id, ctx: chosen.ctx, members: squadRefs(career, chosen.ctx), text: chosen.ev.text(career, chosen.ctx), options: chosen.ev.options.map((o) => labelOf(o, career)), choice: null, result: null, story: STORY_STARTS[chosen.id] ? 'Neue Geschichte' : PERSONAL_EVENTS[chosen.id] || PRIVAT_EVENTS[chosen.id] ? 'Privat' : SAGA_EVENTS[chosen.id] ? 'Vereinsgeschichte' : null };
+  const event = { id: chosen.id, ctx: chosen.ctx, members: squadRefs(career, chosen.ctx), text: chosen.ev.text(career, chosen.ctx), options: chosen.ev.options.map((o) => labelOf(o, career)), choice: null, result: null, story: STORY_STARTS[chosen.id] ? 'Neue Geschichte' : PERSONAL_EVENTS[chosen.id] || PRIVAT_EVENTS[chosen.id] ? 'Privat' : SAGA_EVENTS[chosen.id] ? 'Vereinsgeschichte' : PRESS_EVENTS[chosen.id] ? 'Pressekonferenz' : null };
   career.week.event = event;
   career.eventLog.push({ id: chosen.id, season: career.season, round: career.round });
   if (career.eventLog.length > 40) career.eventLog.shift();
@@ -685,7 +687,7 @@ export function rollWeekEvent(career) {
 const eventDef = (career, id) => eventPacks().map((x) => x.pack[id]).find(Boolean) ?? storyDecision(career, id);
 
 // Feste Etiketten über dem Ereignis (Geschichten haben eigene Namen).
-const STORY_TAGS = { 'Neue Geschichte': 'New story', Privat: 'Private', Vereinsgeschichte: 'Club history', Vereinsleben: 'Club life' };
+const STORY_TAGS = { 'Neue Geschichte': 'New story', Privat: 'Private', Vereinsgeschichte: 'Club history', Vereinsleben: 'Club life', Pressekonferenz: 'Press conference' };
 export const storyTag = (t) => tr(t, STORY_TAGS[t] ?? t);
 
 // Text und Antworten eines Ereignisses in der aktuellen Sprache – so passt die Anzeige

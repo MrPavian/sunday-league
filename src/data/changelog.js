@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-13-1',
+    de: { title: 'Pressekonferenz', items: ['Ab der Regionalliga stellt die Presse Fragen. Vor einem Spitzenspiel (beide Mannschaften unter den ersten vier) kannst du eine große Ansage machen, den Gegner zum Favoriten erklären oder nichts sagen.', 'Wer den Mund voll nimmt, wird eine Woche später daran gemessen: Nach einem Sieg sind Vorstand und Kabine stolz, nach einer Niederlage wird dir dein Satz vorgelesen.', 'Nach drei Siegen in Folge kommt die Frage nach ganz oben, und bei einem unzufriedenen Spieler hakt die Presse nach, ob er noch eine Rolle spielt.'] },
+    en: { title: 'Press conference', items: ['From the fourth tier up, the press asks questions. Before a top-of-the-table game (both teams in the top four) you can make a bold statement, call the opponents favourites or say nothing.', 'If you talk big, you are measured against it a week later: after a win, board and dressing room are proud; after a defeat your own line is read back to you.', 'After three wins in a row comes the question about the very top, and when a player is unhappy the press asks whether he still has a part to play.'] },
+  },
+  {
     id: '2026-11-12-3',
     de: { title: 'Einwürfe und weniger Elfmeter nach Ecken', items: ['Einwürfe: Zwei Mitspieler bieten sich jetzt an – einer kurz im Feld, einer die Linie entlang –, und der Werfer wartet einen Moment auf sie. Vorher warf er oft ins Leere, und der Gegner hatte den Ball.', 'Elfmeter: Beim Kopfballduell im Strafraum wurde viel zu oft gepfiffen, vor allem nach Ecken. Jetzt gibt es etwa halb so viele Elfmeter, so viele wie im echten Fußball.', 'Dadurch fallen im Schnitt rund 0,2 Tore je Spiel weniger.'] },
     en: { title: 'Throw-ins and fewer penalties after corners', items: ['Throw-ins: two team-mates now offer themselves – one short infield, one down the line – and the thrower waits a moment for them. Before, the throw often went to nobody and the opponents had the ball.', 'Penalties: aerial duels in the box were whistled far too often, above all after corners. There are now about half as many penalties, as many as in real football.', 'As a result, about 0.2 fewer goals are scored per match on average.'] },

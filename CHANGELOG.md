@@ -6,6 +6,16 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-13-1 – Pressekonferenz
+
+### Neu
+- **Pressekonferenz ab der Regionalliga** (vier neue Ereignisse):
+  - Vor dem Spitzenspiel (du und der Gegner unter den ersten vier, frühestens ab dem 4. Spieltag, einmal je Halbserie): große Ansage, Understatement oder nichts sagen.
+  - Eine Woche nach der großen Ansage wird nachgefragt. Nach einem Sieg steigen Stimmung und Rückhalt im Vorstand, nach Remis oder Niederlage kostet es Rückhalt oder Stimmung, je nachdem, ob du dazu stehst.
+  - Nach drei Siegen in Folge (einmal je Saison): die Frage nach dem Saisonziel.
+  - Bei einem unzufriedenen Spieler (einmal je Saison): die Personalfrage.
+- Alle Wirkungen sind Spielwerte in der Größe der übrigen Ereignisse (Stimmung ±0,02 bis 0,05, Rückhalt ±1 bis 2).
+
 ## 2026-11-12-3 – Einwürfe und weniger Elfmeter nach Ecken
 
 ### Geändert
