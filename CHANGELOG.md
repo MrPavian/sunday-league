@@ -6,6 +6,17 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-12-3 – Einwürfe und weniger Elfmeter nach Ecken
+
+### Geändert
+- **Einwürfe:** Zwei Mitspieler bieten sich an, einer kurz im Feld und einer die Linie entlang. Der Werfer wartet bis zu 2,6 Sekunden, bis einer frei in Wurfweite steht.
+  - Gemessen (40 Spiele je Platz): Zuerst am Ball ist ein Mitspieler in 81 / 85 / 92 % der Einwürfe auf 7er-Feld / 9er-Feld / Großfeld, vorher 75 / 50 / 38 %.
+  - Ohne freien Mitspieler in Wurfweite stand der Werfer vorher in 55 / 77 / 88 % der Fälle, jetzt in 2 / 4 / 1 %.
+- **Elfmeter:** Beim Kopfballduell im Strafraum wurde viel zu oft gepfiffen, vor allem nach Ecken.
+  - Elfmeter je Spiel: 0,54 / 0,70 / 0,34 → 0,36 / 0,28 / 0,23 (100 Spiele je Platz). Zum Vergleich: Bundesliga 0,30 in der Saison 2018/19 und 0,19 in 2024/25.
+  - Tore nach Ecken: 10,4 / 12,0 / 10,3 % → 8,5 / 6,6 / 8,3 %.
+  - Folge: rund 0,2 Tore je Spiel weniger (300 Spiele: Großfeld 1,74 → 1,57, 9er-Feld 2,30 → 2,07).
+
 ## 2026-11-12-2 – Schwierigkeitsgrad und leichterer Einstieg
 
 ### Neu

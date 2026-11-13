@@ -186,7 +186,13 @@ export function updateTactics(m, dt) {
       const sp = m.setPiece;
       const cornerRun = sp && sp.type === 'corner' && sp.team === team && !sp.taken && m.time - sp.time < 6;
       const boxSpots = cornerRun ? cornerSpots(m, team) : null;
+      // Eigener Einwurf: Zwei Mitspieler bieten sich an – einer kurz, einer die Linie entlang (throwInOffers).
+      const offers = sp && sp.type === 'throwin' && sp.team === team && !sp.taken ? throwInOffers(m, team, rest) : null;
       for (const p of rest) {
+        if (offers?.has(p.id)) {
+          m.tactics[p.id] = { type: 'run', ...offers.get(p.id) };
+          continue;
+        }
         // Der Schütze selbst steht an der Fahne – er bekommt keinen Platz im Strafraum.
         if (boxSpots?.length && p.role !== 'def' && p.id !== sp.takerId) {
           const spot = boxSpots.shift();
@@ -275,6 +281,34 @@ function shoutTactics(m, team, players) {
     if (heeds(m, p, 'forward')) x += s * (p.role === 'def' ? 3 : 5);
     m.tactics[p.id] = { ...t, ...clampToPitch(pitch, x, z, 0.8) };
   }
+}
+
+// Einwurf (2026-11-12): Gemessen (40 Spiele je Platz) warf der Werfer nach 0,8 s, und in 55 / 77 / 88 % der Einwürfe (7er / 9er /
+// Großfeld) stand kein freier Mitspieler im Umkreis von 12 m – auf dem Großfeld war danach in 58 % der Fälle zuerst der Gegner am
+// Ball. Jetzt kommen die zwei nächsten Feldspieler zum Werfer: einer kurz ins Feld (leicht nach hinten versetzt, die sichere
+// Anspielstation), einer die Linie entlang nach vorn. Der Werfer wartet, bis einer von ihnen frei in Wurfweite steht, höchstens
+// aber THROWIN.wait Sekunden (Spielwerte).
+export const THROWIN = { wait: 2.6, near: 9, free: 1.5, shortBack: 1.5, shortIn: 5, lineAhead: 8, lineIn: 2.5 };
+export function throwInOffers(m, team, players) {
+  const { pitch, ball } = m;
+  const s = attackDir(m, team);
+  const inward = -Math.sign(ball.pos.z) || 1;
+  const k = clamp(pitch.halfLength / 35, 0.7, 1.3);
+  const spots = [
+    clampToPitch(pitch, ball.pos.x - s * THROWIN.shortBack * k, ball.pos.z + inward * THROWIN.shortIn * k, 0.5),
+    clampToPitch(pitch, ball.pos.x + s * THROWIN.lineAhead * k, ball.pos.z + inward * THROWIN.lineIn * k, 0.5),
+  ];
+  const out = new Map();
+  const free = players.filter((p) => p.role !== 'gk' && p.state === 'normal' && p.id !== m.setPiece?.takerId);
+  for (const spot of spots) {
+    const p = free.filter((q) => !out.has(q.id)).sort((a, b) => dist2d(a.pos, spot) - dist2d(b.pos, spot))[0];
+    if (p) out.set(p.id, spot);
+  }
+  return out;
+}
+// Steht ein Mitspieler frei in Wurfweite?
+function throwInTarget(m, p) {
+  return m.players.some((q) => q.team === p.team && q.id !== p.id && q.role !== 'gk' && q.state === 'normal' && dist2d(q.pos, p.pos) <= THROWIN.near && !m.players.some((o) => o.team !== p.team && dist2d(o.pos, q.pos) < THROWIN.free));
 }
 
 export function cornerSpots(m, team) {
@@ -565,7 +599,10 @@ export function outfieldIntent(m, p, dt) {
   if (ball.holder === p.id) {
     // Einwurf: kurz orientieren, dann werfen.
     p.holdTimer += dt;
-    if (p.holdTimer > 0.8 && !p.pending) p.pending = { type: 'pass', ttl: 0.5, cone: -0.6 };
+    // Einwurf: warten, bis sich einer anbietet (throwInOffers) – aber nicht ewig.
+    const sp = m.setPiece;
+    const wait = sp?.type === 'throwin' && sp.takerId === p.id && !sp.taken && p.holdTimer < THROWIN.wait && !throwInTarget(m, p);
+    if (p.holdTimer > 0.8 && !wait && !p.pending) p.pending = { type: 'pass', ttl: 0.5, cone: -0.6 };
     return { move: { x: 0, z: 0 }, sprint: false };
   }
   p.holdTimer = 0;

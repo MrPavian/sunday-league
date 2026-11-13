@@ -54,8 +54,18 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
    Sponsorengeld (×1,15 / 1 / 0,85) und die Familie (siehe Punkt 1). Alles Spielwerte; alte Spielstände laufen auf „normal".
 
 **B – Ausbau des Bestehenden** (Nutzerwunsch 2026-11-11)
-6. **3D-Spiel verbessern: Ecken und Einwürfe** (Abläufe, Laufwege, Varianten, Ausführung), danach weitere Standards. Mit Messung
-   (Tore aus Ecken je Spielort, siehe 11.6) und nur mit gewollten Golden-Änderungen.
+6. **3D-Spiel verbessern: Ecken und Einwürfe.** ✅ **Erste Lieferung 2026-11-12**, jeweils gemessen:
+   - **Elfmeter nach Ecken:** Beim Kopfballduell im Strafraum wurde viel zu oft gepfiffen (fouls.js FOUL.headerBox). Elfmeter je
+     Spiel 0,54 / 0,70 / 0,34 → 0,36 / 0,28 / 0,23 (7er / 9er / Großfeld, 100 Spiele; echt: Bundesliga 0,30 in 2018/19 und 0,19 in
+     2024/25); Elfmeter nach 7 / 13 / 4 % der Ecken → rund 3 %; Tore nach Ecken 10,4 / 12,0 / 10,3 % → 8,5 / 6,6 / 8,3 %.
+     Folge: rund 0,2 Tore je Spiel weniger (300 Spiele: Großfeld 1,74 → 1,57, 9er 2,30 → 2,07).
+   - **Einwürfe:** Zwei Mitspieler bieten sich an (kurz und die Linie entlang), der Werfer wartet bis zu 2,6 s auf sie
+     (ai.js throwInOffers, `scripts/throwin-check.mjs`, tests/throwin_offer.test.js). Zuerst am Ball ist ein Mitspieler in
+     81 / 85 / 92 % der Einwürfe (vorher 75 / 50 / 38 %); ohne freien Mitspieler in Wurfweite 2 / 4 / 1 % (vorher 55 / 77 / 88 %).
+   - **Verworfen (gemessen, ohne klare Wirkung):** mehr Verteidiger in Raumdeckung bei Ecken; stärker streuende Schüsse im Gedränge.
+   - Offen: Tore aus dem Spiel nach Ecken liegen noch bei 5–8 % (echt insgesamt 2,6–4,6 %); Angreifer sollen einlaufen statt
+     stehen; nach dem Einwurf ist der Ball nach 5 s nur in 43–50 % noch beim Team (Annahme unter Druck); weiter Einwurf in den
+     Strafraum; Freistoß-Varianten.
 7. **Animationen:** offene Punkte aus 11.1 (Torwart: Hechtsprung mit Abrollen, Fangen, Fausten) und neue für Ecken und Einwürfe.
 8. **Ereignisse in allen Bereichen:** neue Ereignisse für jede Liga und jeden Bereich (Kabine, Vorstand, Jugend, Zweite, Frauen,
    Alte Herren, Sponsoren, Fans, Presse, Privat, Nationalteam). Nach der Zählung aus Punkt 2, damit Lücken zuerst gefüllt werden.

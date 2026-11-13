@@ -45,6 +45,14 @@ export const FOUL = {
   // Kopfballduell mit Gegner im Nacken: Chance auf ein Foul (Schubsen, Klammern). Angreifer schubsen seltener.
   header: 0.1,
   headerAttacker: 0.45,
+  // Kopfballduell im Strafraum (2026-11-12). Vorher wurde dort öfter gepfiffen als im Mittelfeld (× Wurzel aus box × boxFactor,
+  // auf dem 9er-Feld rund × 2,4). Gemessen (100 Spiele je Platz): 0,54 / 0,70 / 0,34 Elfmeter je Spiel auf 7er / 9er / Großfeld,
+  // zwei Drittel davon nach Ecken – nach 7 / 13 / 4 % aller Ecken gab es Elfmeter. Echt: Bundesliga 91 Elfmeter in 306 Spielen
+  // 2018/19 (0,30, davon 31 Handelfmeter; DSFS-Auswertung) und 58 in 306 Spielen 2024/25 (0,19; DFB-Datencenter); in der
+  // Premier League 2025/26 ein Elfmeter nach einer Ecke alle 18 Spiele (The Analyst). Faktor per Messung eingestellt.
+  // Mit 0,1: 0,36 / 0,28 / 0,23 Elfmeter je Spiel, nach Ecken noch einer alle 7 bis 11 Spiele (die übrigen sind Halten,
+  // Ziehen und Beinstellen am Ballführenden, stepContactFouls).
+  headerBox: 0.1,
   // Im gegnerischen Strafraum greifen Verteidiger unter Druck öfter zu (gewählt: 1,7). Zusätzlich gleicht boxFactor aus, dass der
   // Strafraum der Simulation (keeperBox, höchstens 6 m tief) auf großen Plätzen viel kleiner ist als der echte (IFAB Regel 1:
   // 16,5 m × 40,32 m = 9,3 % von 105 × 68 m; Großfeld hier 1,5 %).
@@ -282,7 +290,7 @@ export function headerDuelFoul(m, p) {
   const attacking = p.pos.x * attackDir(m, p.team) > 0; // p köpft in der gegnerischen Hälfte: o verteidigt
   let chance = FOUL.header * (1.5 - 0.7 * cap1(vs(m, o, 'tackling'))) * errScale(vs(m, o, 'tackling')) * roughness(m, o);
   if (!attacking) chance *= FOUL.headerAttacker; // Stürmerfoul an dem, der klärt
-  else if (inAttackBox(m, p)) chance *= Math.sqrt(FOUL.box * boxFactor(m.pitch)); // Ecken und Flanken: dort fallen real viele Elfmeter
+  else if (inAttackBox(m, p)) chance *= FOUL.headerBox; // Gerangel beim Kopfball im Strafraum: wird selten als Elfmeter gepfiffen (siehe FOUL.headerBox)
   if (!m.referee) chance *= FOUL.noRef;
   if (!foulRng(m).chance(chance)) return false;
   return callFoul(m, o, p, { kind: 'push', sev: 0.08, offensive: !attacking, noAdvantage: true }) === 'stopped';

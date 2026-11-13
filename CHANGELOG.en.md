@@ -6,6 +6,17 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-12-3 – Throw-ins and fewer penalties after corners
+
+### Changed
+- **Throw-ins:** two team-mates offer themselves, one short infield and one down the line. The thrower waits up to 2.6 seconds until one of them is free within range.
+  - Measured (40 matches per pitch): a team-mate is first on the ball in 81 / 85 / 92% of throw-ins on the 7-a-side / 9-a-side / full pitch, previously 75 / 50 / 38%.
+  - The thrower had no free team-mate in range in 55 / 77 / 88% of cases before, now in 2 / 4 / 1%.
+- **Penalties:** aerial duels in the box were whistled far too often, above all after corners.
+  - Penalties per match: 0.54 / 0.70 / 0.34 → 0.36 / 0.28 / 0.23 (100 matches per pitch). For comparison: Bundesliga 0.30 in 2018/19 and 0.19 in 2024/25.
+  - Goals after corners: 10.4 / 12.0 / 10.3% → 8.5 / 6.6 / 8.3%.
+  - Consequence: about 0.2 fewer goals per match (300 matches: full pitch 1.74 → 1.57, 9-a-side 2.30 → 2.07).
+
 ## 2026-11-12-2 – Difficulty and an easier start
 
 ### New

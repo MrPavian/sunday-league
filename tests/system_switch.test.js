@@ -35,25 +35,36 @@ describe('Systemwechsel im Spiel', () => {
   });
 
   it('die Spieler laufen ihre neuen Positionen an (Vergleich mit demselben Spiel ohne Wechsel)', () => {
-    const make = () => {
-      const m = createMatch({ seed: 6, pitch: PITCHES.grossfeld, human: false });
-      run(m, 15);
-      return m;
-    };
-    const a = make();
-    const b = make();
-    const to = Object.keys(systemsFor(11)).find((k) => k !== a.plan[0].system);
-    setSystem(a, 0, to);
-    const homes = new Map(a.players.filter((p) => p.team === 0).map((p) => [p.id, { ...p.home }]));
-    run(a, 5);
-    run(b, 5);
-    const gap = (m) => {
-      const mine = m.players.filter((p) => p.team === 0 && p.role !== 'gk' && homes.has(p.id));
-      return mine.reduce((s, p) => s + dist2d(p.pos, homes.get(p.id)), 0) / mine.length;
-    };
-    expect(gap(a)).toBeLessThan(gap(b)); // näher an den neuen Grundpositionen als ohne Umstellung
-    while (a.phase !== 'ended') stepMatch(a, undefined, 1 / 60);
-    expect(a.score.every(Number.isFinite)).toBe(true); // läuft ohne Fehler zu Ende
+    // Gemittelt über acht Startwerte und 2 s nach dem Wechsel gemessen (2026-11-13, mit Nutzer abgestimmt):
+    // nach 5 s sind beide Spiele schon zufällig auseinandergelaufen, ein einzelner Startwert kippte
+    // bei etwa jedem zehnten Spiel.
+    let withSwitch = 0;
+    let without = 0;
+    let last = null;
+    for (let seed = 1; seed <= 8; seed++) {
+      const make = () => {
+        const m = createMatch({ seed, pitch: PITCHES.grossfeld, human: false });
+        run(m, 15);
+        return m;
+      };
+      const a = make();
+      const b = make();
+      const to = Object.keys(systemsFor(11)).find((k) => k !== a.plan[0].system);
+      setSystem(a, 0, to);
+      const homes = new Map(a.players.filter((p) => p.team === 0).map((p) => [p.id, { ...p.home }]));
+      run(a, 2);
+      run(b, 2);
+      const gap = (m) => {
+        const mine = m.players.filter((p) => p.team === 0 && p.role !== 'gk' && homes.has(p.id));
+        return mine.reduce((s, p) => s + dist2d(p.pos, homes.get(p.id)), 0) / mine.length;
+      };
+      withSwitch += gap(a);
+      without += gap(b);
+      if (seed === 6) last = a;
+    }
+    expect(withSwitch).toBeLessThan(without); // näher an den neuen Grundpositionen als ohne Umstellung
+    while (last.phase !== 'ended') stepMatch(last, undefined, 1 / 60);
+    expect(last.score.every(Number.isFinite)).toBe(true); // läuft ohne Fehler zu Ende
   }, 120000); // ein ganzes Großfeldspiel: allein rund 59 s gemessen (2026-10-29), im vollen Lauf mit allen Workern länger
 
   it('nach einem Platzverweis: weniger Spieler als Plätze, jeder bekommt trotzdem einen', () => {
