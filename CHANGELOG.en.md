@@ -6,6 +6,13 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-13-5 – Gestures at corners and throw-ins
+
+### New
+- **Corner:** the taker raises an arm, for the last good second of the pause and briefly into the run-up. Measured: 1.1 of 1.3 seconds.
+- **Throw-in:** up to two team-mates within 22 m wave for the ball. Measured: on average 1.7 of the 2.1 seconds the thrower holds it.
+- Display only; times and distances are game values.
+
 ## 2026-11-13-4 – Fixed shirt numbers
 
 ### New

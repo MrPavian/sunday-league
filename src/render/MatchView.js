@@ -2,7 +2,7 @@ import { GET_UP } from '../sim/tackles.js';
 import * as THREE from 'three';
 import { ACRO, TRICKS } from '../sim/tricks.js';
 import { len } from '../core/math.js';
-import { advantageGesture, cardGesture, catchKind, CONSOLE_AT, consolers, dribbleCarry, duelPairs, foeBearing, foulFrame, foulPlace, foulPlan, incidentPose, isAerial, isFumble, kickFoot, mateCelebration, penaltyGoal, punchStyle, refCrowd, refereePose, refereeSignal, shotReactions, SIM_STEP, subScene, throwInRun, tiredFace, walkOffStart, walkOffStep, warmupPicks, warmupSpot, warmupStep, WARMUP_AWAY, WARMUP_HOME, whistleTimes, wideStance } from './reactions.js';
+import { advantageGesture, cardGesture, catchKind, CONSOLE_AT, consolers, dribbleCarry, duelPairs, foeBearing, foulFrame, foulPlace, foulPlan, incidentPose, isAerial, isFumble, kickFoot, mateCelebration, penaltyGoal, punchStyle, refCrowd, refereePose, refereeSignal, shotReactions, SIM_STEP, subScene, throwInRun, tiredFace, walkOffStart, walkOffStep, warmupPicks, warmupSpot, warmupStep, WARMUP_AWAY, WARMUP_HOME, whistleTimes, wideStance, setPieceGestures } from './reactions.js';
 import { allPlayers, findAnyPlayer } from '../sim/squad.js';
 import { attackDir } from '../sim/players.js';
 import { BallView } from './BallView.js';
@@ -812,6 +812,7 @@ export class MatchView {
     for (const model of this.models.values()) model.group.visible = false;
     let idx = -1;
     const tin = throwInRun(match);
+    const spGest = setPieceGestures(match); // Ecke: Arm hoch, Einwurf: Mitspieler winken
     const duels = duelPairs(match);
     for (const p of match.players) {
       idx++;
@@ -1009,6 +1010,7 @@ export class MatchView {
       o.cover = ip ? ip.cover : 0;
       o.gesture = ip ? ip.gesture : null;
       if (!o.gesture && cu && cu.g && cu.g !== 'jubel') o.gesture = cu.g;
+      if (!o.gesture) o.gesture = spGest.get(p.id) ?? null;
       m.group.position.y = ip ? ip.lift : 0;
       // Nach dem Schuss: Hände an den Kopf, abwinken, Faust des Torwarts (nur Darstellung, aus Ereignissen).
       if (m.reactTime > 0) {

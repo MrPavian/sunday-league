@@ -28,6 +28,12 @@ const GESTEN = table({
     arm(bn, 'R', -1.3 + Math.sin(g * 11 + Math.PI) * 0.55, 0.8, -0.3);
     bn.spine.rotation.x += 0.15;
   },
+  // Ecke: ein Arm gestreckt nach oben, ruhig gehalten (Zeichen des Schützen).
+  eckeArm(st, g) {
+    const { bn } = st;
+    arm(bn, 'R', -3.0, 0.12, -0.05);
+    bn.head.rotation.x -= 0.08;
+  },
   call(st, g) {
     const { bn } = st;
     arm(bn, 'R', -2.8, 0.3 + Math.sin(g * 8) * 0.35, -0.2);

@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-13-5',
+    de: { title: 'Gesten bei Ecke und Einwurf', items: ['Ecke: Der Schütze hebt den Arm, bevor er anläuft – das übliche Zeichen an die Mitspieler.', 'Einwurf: Bis zu zwei Mitspieler in der Nähe winken nach dem Ball, solange der Werfer ihn in den Händen hält.'] },
+    en: { title: 'Gestures at corners and throw-ins', items: ['Corner: the taker raises an arm before the run-up – the usual signal to team-mates.', 'Throw-in: up to two nearby team-mates wave for the ball while the thrower holds it.'] },
+  },
+  {
     id: '2026-11-13-4',
     de: { title: 'Feste Rückennummern', items: ['Ab der Kreisklasse C trägt jeder Spieler deiner Mannschaft eine feste Rückennummer – auf der Spielerkarte und im 3D-Spiel auf dem Trikot. Vergeben wird klassisch nach Position (Torwart 1, Abwehr 2–5, Mittelfeld 6, 8, 10, Angriff 9, 7, 11), danach ab der 12.', 'Im Spielerprofil kannst du die Nummer ändern. Trägt sie schon jemand, tauschen die beiden.', 'Vereinslegenden: Als vierte Ehrung kann ihre Rückennummer gesperrt werden. Nach 10 Saisons wird sie von selbst wieder frei; im Museum kannst du sie ab 3 Saisons von Hand wieder vergeben.'] },
     en: { title: 'Fixed shirt numbers', items: ['From the third district division up, every player in your team wears a fixed shirt number – on the player card and on the shirt in the 3D match. Numbers are given out the classic way by position (keeper 1, defence 2–5, midfield 6, 8, 10, attack 9, 7, 11), then from 12 upwards.', 'You can change the number in the player profile. If someone already wears it, the two swap.', 'Club legends: as a fourth honour their shirt number can be retired. After 10 seasons it becomes free again by itself; in the museum you can issue it again by hand from 3 seasons on.'] },

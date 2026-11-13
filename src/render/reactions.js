@@ -719,3 +719,31 @@ export function dribbleCarry(match, p) {
   if (b.holder || b.lastTouch !== p.id || b.lastAction !== 'dribble' || b.pos.y > 0.5 || p.state !== 'normal' || p.role === 'gk') return 0;
   return Math.hypot(b.pos.x - p.pos.x, b.pos.z - p.pos.z) < 1.5 && Math.hypot(p.vel.x, p.vel.z) > 0.8 ? 1 : 0;
 }
+
+// Standards (ROADMAP 11.18 Punkt 7): Gesten, solange der Ball ruht – nur Darstellung.
+//  - Ecke: Der Schütze hebt kurz den Arm, bevor er anläuft (das übliche Zeichen an die Mitspieler).
+//  - Einwurf: Bis zu zwei Mitspieler in der Nähe, die stehen und frei sind, winken nach dem Ball (passt zu den
+//    Anspielstationen der Simulation, ai.js throwInOffers).
+// Liefert eine Map Spieler-Kennung → Geste (leer, wenn nichts ansteht). Zeiten und Abstände sind Spielwerte.
+export const SP_GESTURE = { cornerLead: 1.1, cornerAfter: 0.4, callDist: 22, callSpeed: 6, callers: 2 };
+const NO_GESTURES = new Map();
+export function setPieceGestures(match) {
+  const sp = match.setPiece;
+  if (!sp || sp.taken) return NO_GESTURES;
+  if (sp.type === 'corner') {
+    // Die Spieluhr steht, solange der Ball ruht (phaseTimer läuft herunter): Arm hoch in den letzten cornerLead Sekunden der
+    // Pause und noch kurz in den Anlauf hinein.
+    const on = match.phase === 'setpiece' ? match.phaseTimer <= SP_GESTURE.cornerLead : match.time - sp.time <= SP_GESTURE.cornerAfter;
+    return on ? new Map([[sp.takerId, 'eckeArm']]) : NO_GESTURES;
+  }
+  if (sp.type !== 'throwin') return NO_GESTURES;
+  const b = match.ball.pos;
+  const frozen = match.phase === 'setpiece'; // der Ball ruht: Die Figuren stehen, ihre letzte Geschwindigkeit zählt nicht
+  const near = match.players
+    .filter((p) => p.team === sp.team && p.id !== sp.takerId && p.role !== 'gk' && p.state === 'normal' && (frozen || Math.hypot(p.vel.x, p.vel.z) <= SP_GESTURE.callSpeed))
+    .map((p) => ({ p, d: Math.hypot(p.pos.x - b.x, p.pos.z - b.z) }))
+    .filter((x) => x.d <= SP_GESTURE.callDist)
+    .sort((a, c) => a.d - c.d)
+    .slice(0, SP_GESTURE.callers);
+  return near.length ? new Map(near.map((x) => [x.p.id, 'call'])) : NO_GESTURES;
+}

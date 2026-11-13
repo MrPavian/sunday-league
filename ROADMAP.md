@@ -66,7 +66,9 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
    - Offen: Tore aus dem Spiel nach Ecken liegen noch bei 5–8 % (echt insgesamt 2,6–4,6 %); Angreifer sollen einlaufen statt
      stehen; nach dem Einwurf ist der Ball nach 5 s nur in 43–50 % noch beim Team (Annahme unter Druck); weiter Einwurf in den
      Strafraum; Freistoß-Varianten.
-7. **Animationen:** offene Punkte aus 11.1 (Torwart: Hechtsprung mit Abrollen, Fangen, Fausten) und neue für Ecken und Einwürfe.
+7. **Animationen.** ✅ **2026-11-13:** Die Torwart-Animationen aus 11.1 gab es schon alle (render/player/keeper.js: Hechtsprung mit
+   Abrollen, Fangen in drei Höhen, Fausten, Abwurf, Abschlag, Breitmachen, Fehlgriff). Neu: Arm hoch vor der Ecke, Winken beim
+   Einwurf (render/reactions.js setPieceGestures, tests/setpiece_gestures.test.js). Ursprünglicher Punkt: offene Punkte aus 11.1 (Torwart: Hechtsprung mit Abrollen, Fangen, Fausten) und neue für Ecken und Einwürfe.
 8. **Ereignisse in allen Bereichen:** neue Ereignisse für jede Liga und jeden Bereich (Kabine, Vorstand, Jugend, Zweite, Frauen,
    Alte Herren, Sponsoren, Fans, Presse, Privat, Nationalteam). Nach der Zählung aus Punkt 2, damit Lücken zuerst gefüllt werden.
 9. **Neue Textbausteine für alle interaktiven Bereiche:** Chat, Kneipe, Zurufe, Bank, Liveticker, Kreisblatt, Stadionsprecher,
@@ -139,8 +141,6 @@ Einträge mit „(prüfen)“ könnten ebenfalls schon überholt sein.
 - Fahrtkosten der Schiedsrichter; Ausrüster-Logo auf dem Trikot (Grafik).
 
 **3D-Spiel und Darstellung**
-- Torwart-Animationen (11.1): Hechtsprung mit Abrollen, Fangen in Brust- und Kopfhöhe, Abtauchen, Fausten, Abwurf und Abschlag mit
-  Ausholen, Herauslaufen im 1 gegen 1, sichtbarer Fehlgriff. → gehört zu 11.18 Punkt 7.
 - Eckentore noch über dem echten Wert (2,6–4,6 %), vor allem Abpraller und Nachschüsse; Kopfballtore auf 7er-Feld und Großfeld
   selten (11.6, 11.9). → gehört zu 11.18 Punkt 6.
 - Vorfälle (11.1): beim Gewitter rutscht einer aus, der Schiri ist zuerst unterm Vordach; die Polizei redet mit dem Trainer.

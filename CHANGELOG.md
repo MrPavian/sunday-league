@@ -6,6 +6,13 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-13-5 – Gesten bei Ecke und Einwurf
+
+### Neu
+- **Ecke:** Der Schütze hebt den Arm, in der letzten guten Sekunde der Pause und kurz in den Anlauf hinein. Gemessen: 1,1 von 1,3 Sekunden.
+- **Einwurf:** Bis zu zwei Mitspieler im Umkreis von 22 m winken nach dem Ball. Gemessen: im Schnitt 1,7 von 2,1 Sekunden, die der Ball beim Werfer liegt.
+- Nur Darstellung; Zeiten und Abstände sind Spielwerte.
+
 ## 2026-11-13-4 – Feste Rückennummern
 
 ### Neu
