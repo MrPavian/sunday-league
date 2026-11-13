@@ -79,7 +79,9 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
     mit Ansage und Nachfrage eine Woche später, Siegesserie, Personalfrage. Offen: Wirkung auf die Fans, Fragen nach Pokal- und
     Abstiegsspielen, Verknüpfung mit dem Trainertyp. Ursprünglicher Punkt: zwei bis drei Fragen vor oder nach wichtigen Spielen; Antworten wirken auf Kabine,
     Vorstand und Fans (passt zu Auftreten und Trainertyp aus Punkt 17).
-12. **Rivalität zwischen Trainern:** ein gegnerischer Trainer, der über mehrere Saisons wiederkehrt, mit Vorgeschichte.
+12. **Rivalität zwischen Trainern.** ✅ **Erste Lieferung 2026-11-13** (career/coachrival.js, tests/coachrival.test.js): ein
+    Trainer mit Namen und Bilanz, folgt in eine neue Liga, Stichelei vor und Handschlag nach dem Duell. Offen: Gesicht,
+    Wirkung der „Hitze“ aufs Spiel, mehr Ereignisse (Abwerben, gemeinsamer Lehrgang). Ursprünglicher Punkt: ein gegnerischer Trainer, der über mehrere Saisons wiederkehrt, mit Vorgeschichte.
 13. **Spieltag als Erlebnis im Amateurbereich:** Platzwart, Bratwurststand, Linienrichter aus dem eigenen Verein, ausgefallenes
     Flutlicht – kleine sichtbare Dinge am Platz.
 14. **Legenden des Vereins:** Abschiedsspiel, Trikotnummer wird nicht mehr vergeben, Rückkehr als Co-Trainer oder im Vorstand;

@@ -6,6 +6,17 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-13-2 – Trainer-Rivale
+
+### Neu
+- **Trainer-Rivale:** höchstens ein gegnerischer Trainer mit Namen und Bilanz gegen dich.
+  - Er entsteht aus einer Niederlage mit drei oder mehr Toren Abstand oder aus zwei Niederlagen gegen denselben Verein in einer Saison.
+  - Bist du in einer anderen Liga, übernimmt er mit 50 % Chance je Sommerpause einen Verein dort.
+  - Ein Sieg gegen ihn hebt die Stimmung um 0,04, eine Niederlage drückt sie um 0,03.
+  - Zwei Ereignisse: die Stichelei in der Zeitung vor dem Duell (einmal je Saison) und der Handschlag danach.
+  - Anzeige unter Verein bei den Rivalen, dazu eine Nachricht in der Mannschaftsgruppe in der Woche des Duells.
+- Alle Schwellen, Chancen und Wirkungen sind Spielwerte.
+
 ## 2026-11-13-1 – Pressekonferenz
 
 ### Neu

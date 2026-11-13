@@ -18,7 +18,8 @@ import * as pressure from './pressure.js'; // Vorstand und Erfolgsdruck
 import * as nationalteams from './nationalteams.js'; // Turniere der Nationalteams (vor dem Vereinswechsel: erst abrechnen)
 import * as clubchange from './clubchange.js';
 import * as tickets from './tickets.js'; // Dauerkarten zur neuen Saison (nach dem Vereinswechsel) // Sommerwechsel in eine andere Liga
-export const FEATURES = [transfers, oldboys, women, scouting, teamtraining, referees, rivals, chatlife, coachload, bonuses, contracts, pressure, nationalteams, clubchange, tickets];
+import * as coachrival from './coachrival.js'; // Trainer-Rivale (nach dem Vereinswechsel: Die neue Liga steht)
+export const FEATURES = [transfers, oldboys, women, scouting, teamtraining, referees, rivals, chatlife, coachload, bonuses, contracts, pressure, nationalteams, clubchange, tickets, coachrival];
 
 export function runHooks(name, career, ...args) {
   for (const f of FEATURES) f[name]?.(career, ...args);

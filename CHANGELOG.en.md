@@ -6,6 +6,17 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-13-2 – Rival manager
+
+### New
+- **Rival manager:** at most one opposing manager with a name and a record against you.
+  - He emerges from a defeat by three or more goals, or from two defeats against the same club in one season.
+  - If you are in a different league, he takes over a club there with a 50% chance each summer.
+  - A win against him lifts the mood by 0.04, a defeat lowers it by 0.03.
+  - Two events: the needling in the paper before the game (once a season) and the handshake afterwards.
+  - Shown under Club among the rivals, plus a message in the team chat in the week of the game.
+- All thresholds, chances and effects are game values.
+
 ## 2026-11-13-1 – Press conference
 
 ### New
