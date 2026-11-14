@@ -6,6 +6,17 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-14-3 – Neue Ereignisse für Zweite Mannschaft und Frauenteam
+
+### Neu
+- **Lücken gefüllt** (ROADMAP 11.18 Punkt 8): Gezählt nach der Bedingung der ziehbaren Ereignisse gab es für die Zweite Mannschaft keines und für das Frauenteam nur die Gründung.
+- **Zweite Mannschaft** (ab drei Spieltagen): Empfehlung für die Erste (ein Spieler mit mindestens drei Einsätzen in der Zweiten), Personalnot am Sonntag (A-Jugend, Alte Herren oder Absage für 50 €), fester Trainingsabend (Hauptplatz, Flutlicht am Nebenplatz für 120 € oder nein).
+- **Frauenteam** (mit Kader und Liga): Sponsor nur für die Frauen (150 € plus 50 € je Liga), Streit um die Platzzeit (bessere Zeit: die drei Schwächsten legen zu; nein: die Beste trainiert lustlos), Einladung zur Verbandsauswahl (Eintrag in die Chronik).
+- Alle Beträge und Wirkungen sind Spielwerte.
+
+### Tests
+- Neu: `tests/teamevents.test.js` (nur mit Mannschaft, jede Antwort läuft, alle ziehbar).
+
 ## 2026-11-14-2 – Freistoßregeln je Platz und Freistoß-Varianten
 
 ### Neu

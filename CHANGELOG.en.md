@@ -6,6 +6,17 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-14-3 – New events for the reserves and the women's team
+
+### New
+- **Gaps filled** (ROADMAP 11.18 point 8): counted by the condition of the drawable events, the reserves had none and the women's team only its founding.
+- **Reserves** (from the third matchday): recommendation for the first team (a player with at least three reserve appearances), short of players on Sunday (under-19s, old boys or call it off for €50), a fixed training night (main pitch, side-pitch floodlight for €120, or no).
+- **Women's team** (with squad and league): a sponsor for the women only (€150 plus €50 per league), a row over pitch time (better slot: the three weakest improve; no: the best trains half-heartedly), invitation to the regional squad (entry in the chronicle).
+- All amounts and effects are game values.
+
+### Tests
+- New: `tests/teamevents.test.js` (only with the team, every answer runs, all drawable).
+
 ## 2026-11-14-2 – Free-kick rules per pitch and free-kick variants
 
 ### New

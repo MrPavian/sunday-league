@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-14-3',
+    de: { title: 'Neue Ereignisse für Zweite Mannschaft und Frauenteam', items: ['Zweite Mannschaft: Einer spielt sich für die Erste in den Vordergrund, am Sonntag fehlen Leute, und der Trainer der Zweiten will einen festen Trainingsabend.', 'Frauenteam: Eine Praxis aus dem Ort will nur die Frauen unterstützen, die Trainerin streitet um die Platzzeit, und eine Spielerin wird zur Verbandsauswahl eingeladen.', 'Die Ereignisse kommen nur, wenn es die Mannschaft gibt.'] },
+    en: { title: 'New events for the reserves and the women\'s team', items: ['Reserves: someone plays his way towards the first team, players are missing on Sunday, and the reserves\' coach wants a fixed training night.', 'Women\'s team: a local practice wants to back only the women, the coach fights over pitch time, and a player is invited to the regional squad.', 'These events only come up if the team exists.'] },
+  },
+  {
     id: '2026-11-14-2',
     de: { title: 'Freistoßregeln je Platz und Freistoß-Varianten', items: ['Bei Freistoß und Ecke halten die Gegner jetzt den Abstand ihres Platzes: 9,15 m auf dem Großfeld, 6 m auf dem 9er-Feld, 5 m auf dem 7er-Feld, dem Kleinfeld und in der Halle. Auf den Hobbyplätzen ohne Schiri bleibt es locker.', 'Die Mauer steht auf dem Großfeld bis rund 30 m vor dem Tor, auf kleineren Feldern entsprechend näher. Ab drei Mann in der Mauer halten Angreifer 1 m Abstand.', 'Der Schütze wählt: direkt über die Mauer, kurz ablegen oder in den Strafraum flanken – zentral eher Schuss, seitlich eher Flanke.'] },
     en: { title: 'Free-kick rules per pitch and free-kick variants', items: ['At free kicks and corners, opponents now keep the distance of their pitch: 9.15 m on the full-size pitch, 6 m on the 9-a-side pitch, 5 m on the 7-a-side pitch, the small pitch and indoors. On the hobby pitches without a referee it stays relaxed.', 'On the full-size pitch the wall stands up to about 30 m from goal, closer on smaller pitches. With three or more in the wall, attackers keep 1 m away.', 'The taker chooses: over the wall, a short lay-off or a cross into the box – central spots favour a shot, wide ones a cross.'] },
