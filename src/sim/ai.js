@@ -353,6 +353,34 @@ export function longThrowSpots(m, team, spot) {
   return [spot, { x: gx - s * 3, z: -spot.z * 0.4 }, { x: gx - s * pd, z: spot.z * 0.2 }];
 }
 export const longThrowReady = (m, p, spot) => m.players.some((q) => q.team === p.team && q.id !== p.id && q.role !== 'gk' && q.state === 'normal' && dist2d(q.pos, spot) <= LONG_THROW.mate);
+// Freistoß-Varianten der KI in Tornähe, wenn eine Mauer steht (vom Nutzer gewünscht, 2026-11-14): direkt über die Mauer,
+// kurz ablegen oder Flanke in den Strafraum. Zentral und nah wird eher geschossen, seitlich eher geflankt. Alle Anteile
+// Spielwerte (keine belastbare Quelle zu Amateur-Freistößen gefunden). shotMax: Schussdistanz auf dem Großfeld, auf
+// kleineren Feldern mit der Platzlänge kürzer; central: höchster Sinus des Winkels zur Tormitte, der noch als zentral gilt.
+// wallH: Höhe über der Mauer (hergeleitet: Kopfhöhe um 1,8 m plus Sprung; gemessen blockte die Mauer bei 2,1 m die Hälfte der
+// Schüsse, weil sie beim Schuss vorrückt); goalH: Höhe auf der Torlinie als Anteil der Torhöhe.
+export const FREE_KICK = { shotMax: 27, central: 0.45, direct: 0.65, wideShot: 0.15, short: 0.2, shortMax: 12, wallH: 2.5, goalH: [0.6, 0.95] };
+export function freeKickChoice(m, p, oppGoal) {
+  const { ball, pitch, rng } = m;
+  const d = hypot(oppGoal.x - ball.pos.x, ball.pos.z);
+  const central = Math.abs(ball.pos.z) / Math.max(d, 1) <= FREE_KICK.central;
+  const inRange = d <= Math.max(17, FREE_KICK.shotMax * (pitch.halfLength / 52.5));
+  const shotP = inRange ? (central ? FREE_KICK.direct : FREE_KICK.wideShot) : 0;
+  const r = rng.next();
+  if (r < shotP) {
+    const gw = pitch.goalHalfWidth;
+    const z = (rng.chance(0.5) ? 1 : -1) * rng.range(gw * 0.4, gw * 0.85);
+    return { type: 'shoot', overWall: true, target: { x: oppGoal.x, z }, power: 0.7, ttl: 0.5 };
+  }
+  if (r < shotP + FREE_KICK.short) {
+    const mate = m.players
+      .filter((t) => t.team === p.team && t !== p && t.role !== 'gk' && t.state === 'normal' && dist2d(t.pos, ball.pos) <= FREE_KICK.shortMax)
+      .sort((a, b) => dist2d(a.pos, ball.pos) - dist2d(b.pos, ball.pos))[0];
+    if (mate) return { type: 'pass', targetId: mate.id, cone: -1, minDist: 0.5, ttl: 0.4, fkShort: true };
+  }
+  return { type: 'pass', lofted: 'cross', cone: -0.8, ttl: 0.4 };
+}
+
 export const THROWIN = { wait: 2.6, near: 9, free: 1.5, shortBack: 1.5, shortIn: 5, lineAhead: 8, lineIn: 2.5 };
 export function throwInOffers(m, team, players) {
   const { pitch, ball } = m;
@@ -719,6 +747,10 @@ export function outfieldIntent(m, p, dt) {
       p.pending = m.setPiece?.type === 'corner' && m.setPiece.takerId === p.id
         ? r < 0.5 ? { type: 'pass', lofted: 'cross', zone: 'far', ttl: 0.4 } : r < 0.8 ? { type: 'pass', lofted: 'cross', driven: true, zone: 'near', ttl: 0.4 } : { type: 'pass', zone: 'short', ttl: 0.4 }
         : { type: 'pass', lofted: 'cross', cone: -0.8, ttl: 0.4 };
+    }
+    if (p.setPieceAction === 'freekick' && dBall < 1.3) {
+      p.setPieceAction = null;
+      p.pending = freeKickChoice(m, p, oppGoal);
     }
     const tackle = fooled(m, p) ? null : chooseTackle(m, p, dBall);
     if (tackle) return { tackle };

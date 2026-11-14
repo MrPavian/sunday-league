@@ -65,7 +65,8 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
    - **Verworfen (gemessen, ohne klare Wirkung):** mehr Verteidiger in Raumdeckung bei Ecken; stärker streuende Schüsse im Gedränge.
    - Offen: Tore aus dem Spiel nach Ecken liegen noch bei 5–8 % (echt insgesamt 2,6–4,6 %); Angreifer laufen ein ✅ (2026-11-13,
      ai.js CORNER_RUN, tests/corner_runin.test.js); nach dem Einwurf ist der Ball nach 5 s nur in 43–50 % noch beim Team (Annahme unter Druck); weiter Einwurf in den
-     Strafraum ✅ (2026-11-14, ai.js LONG_THROW, tests/longthrow.test.js); Freistoß-Varianten.
+     Strafraum ✅ (2026-11-14, ai.js LONG_THROW, tests/longthrow.test.js); Freistoß-Varianten und Abstand je Platz ✅ (2026-11-14,
+     setpieces.js FK_DISTANCE, ai.js FREE_KICK, tests/freekick_rules.test.js).
 7. **Animationen.** ✅ **2026-11-13:** Die Torwart-Animationen aus 11.1 gab es schon alle (render/player/keeper.js: Hechtsprung mit
    Abrollen, Fangen in drei Höhen, Fausten, Abwurf, Abschlag, Breitmachen, Fehlgriff). Neu: Arm hoch vor der Ecke, Winken beim
    Einwurf (render/reactions.js setPieceGestures, tests/setpiece_gestures.test.js). Ursprünglicher Punkt: offene Punkte aus 11.1 (Torwart: Hechtsprung mit Abrollen, Fangen, Fausten) und neue für Ecken und Einwürfe.

@@ -6,6 +6,19 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-14-2 – Freistoßregeln je Platz und Freistoß-Varianten
+
+### Neu
+- **Abstand bei Freistoß und Ecke je Platz** (vom Nutzer gewünscht): Großfeld 9,15 m (IFAB Regel 13), 9er-Feld 6 m (SWFV, Spielformen D-Jugend 2024), 7er-Feld und Kleinfeld 5 m (Berliner FV, Kleinfeld Erwachsene), Halle 5 m (Futsal-Regeln). Hobbyplätze ohne Schiri: wie bisher 3,5 m (Spielwert).
+- **Mauer:** steht im Regelabstand, auf dem Großfeld bis 30 m vor dem Tor, sonst entsprechend kürzer, mindestens 17 m (Spielwert). Ab drei Mann in der Mauer halten Angreifer 1 m Abstand (IFAB Regel 13).
+- **Freistoß-Varianten der KI**, wenn eine Mauer steht: zentral in Schussweite 65 % direkt, seitlich 15 %; sonst 20 % kurz ablegen, der Rest Flanke (Spielwerte).
+  - Der direkte Schuss geht über die Mauer: Flugbahn über 2,5 m Höhe an der Mauer, auf der Torlinie 60–95 % der Torhöhe. Der Torwart sieht den Ball erst über der Mauer (hergeleitet).
+  - Gemessen (`scripts/freekick-check.mjs`, 60 Spiele je Platz): Tor bis 8 s nach einem Freistoß in Schussweite vorher 6 % / 4 % / 5 % (7er / 9er / Großfeld), jetzt 9 % / 6 % / 8 %. Vorher Mauer auf dem Großfeld nie (nur bis 17 m), jetzt immer.
+  - Direkte Freistöße: rund 3 % Tore, bei den Profis rund 6 % (The Analyst, Opta). Verworfen: Schuss in 2,1 m Höhe über die Mauer, die Mauer blockte dann die Hälfte.
+
+### Tests
+- Neu: `tests/freekick_rules.test.js` (Abstände, Mauerzone, 1-m-Regel, Varianten, Flugbahn über die Mauer).
+
 ## 2026-11-14-1 – Weiter Einwurf in den Strafraum
 
 ### Neu

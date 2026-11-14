@@ -6,7 +6,7 @@ import { clamp, dist2d, hypot, len, norm, rotate } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
 import { BALL_RADIUS, ballSpeed, boardRoute, rollSpeedFor } from './ball.js';
 import { attackDir, clampWallX, distToSegment, setControlled, wallPush } from './players.js';
-import { aiSkill, keeperReaction, laneScore, WIDE_LANE, LONG_THROW } from './ai.js';
+import { aiSkill, keeperReaction, laneScore, WIDE_LANE, LONG_THROW, FREE_KICK } from './ai.js';
 
 // Bonus für den freien Mann außen bei der Passwahl der KI (Stellschraube, gemessen mit scripts/orders-audit.mjs).
 export const WIDE_OPEN = 0.55;
@@ -19,6 +19,7 @@ import { PINGPONG, STRENGTH_FX, strengthOf } from './strength.js';
 import { headerDuelFoul } from './fouls.js';
 import { STAMINA_DRAIN } from './pitch.js';
 import { secondWind } from './mentality.js';
+import { setPieceDistance } from './setpieces.js';
 
 export const REACH = 0.75;
 
@@ -184,8 +185,10 @@ function shoot(m, p, a, fatigue) {
   // Ebene 3: Wer bedrängt abzieht, streut mehr – nervöse Spieler noch mehr.
   // Direktabnahme und Schuss aus der Drehung sind schwerer zu platzieren.
   dir = rotate(dir, rng.gauss() * sigma * (a.placed ? 0.35 : pressureChaos(m, p)) * (a.first ? 1.2 : 1) * (a.turn ? 1.25 : 1) * (flat?.aimBoost ?? 1) * clutchAim(m, p));
-  const speed = (8 + 18 * power) * (0.85 + 0.15 * soft(p.attrs.shooting)) * (hammer ? 1.15 : 1) * (flat?.shotBoost ?? 1);
+  let speed = (8 + 18 * power) * (0.85 + 0.15 * soft(p.attrs.shooting)) * (hammer ? 1.15 : 1) * (flat?.shotBoost ?? 1);
   let vy = 0.8 + 5 * power * power + Math.abs(rng.gauss()) * 1.2 * (1 - cap1(vs(m, p, 'shooting'))) * power;
+  const lob = a.overWall && a.target ? overWall(m, p, a.target) : null;
+  if (lob) ({ speed, vy } = lob);
   // Halle: hoch nur vorm Tor, weiter weg bleibt der Schuss flach.
   if (flat && Math.abs(p.pos.x - attackDir(m, p.team) * m.pitch.halfLength) > flat.shotNear) vy = Math.min(vy, flat.shotVy);
   ball.vel.x = dir.x * speed;
@@ -199,6 +202,27 @@ function shoot(m, p, a, fatigue) {
   markShooter(m, p);
   m.shotTime = m.time; // Der Torwart braucht einen Moment, bis er die Richtung erkennt.
   m.shotFrom = { x: p.pos.x, z: p.pos.z }; // für die Reaktionszeit des Torwarts (keeperSaves)
+  // Über die Mauer: Der Torwart sieht den Ball erst, wenn er über die Köpfe kommt – die Flugzeit zählt ab der Mauer (hergeleitet).
+  if (lob) {
+    const d = norm(a.target.x - p.pos.x, a.target.z - p.pos.z);
+    const dw = setPieceDistance(m.pitch);
+    m.shotFrom = { x: p.pos.x + d.x * dw, z: p.pos.z + d.z * dw };
+  }
+}
+
+// Freistoß über die Mauer: Flugbahn ohne Luftwiderstand (ball.js rechnet nur die Schwerkraft), die in Höhe der Mauer
+// (FREE_KICK.wallH) über die Köpfe geht und auf der Torlinie in der gewünschten Höhe ankommt. Aus beiden Bedingungen folgen
+// Abschusswinkel und Tempo: y(x) = a·x − c·x² mit c = g/(2v²). Die Streuung trägt die Höhe am Tor (goalH, Spielwert).
+function overWall(m, p, target) {
+  const dg = dist2d(p.pos, target);
+  const dw = setPieceDistance(m.pitch);
+  if (dg <= dw + 2) return null;
+  const hg = m.pitch.goalHeight * m.rng.range(FREE_KICK.goalH[0], FREE_KICK.goalH[1]) * (1 + 0.15 * m.rng.gauss() * (1 - cap1(vs(m, p, 'shooting'))));
+  const c = (FREE_KICK.wallH * (dg / dw) - hg) / (dg * (dg - dw));
+  if (!(c > 0)) return null;
+  const a = FREE_KICK.wallH / dw + c * dw;
+  const speed = Math.sqrt(9.81 / (2 * c));
+  return { speed, vy: a * speed };
 }
 
 function cornerZone(m, p, kind) {

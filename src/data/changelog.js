@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-14-2',
+    de: { title: 'Freistoßregeln je Platz und Freistoß-Varianten', items: ['Bei Freistoß und Ecke halten die Gegner jetzt den Abstand ihres Platzes: 9,15 m auf dem Großfeld, 6 m auf dem 9er-Feld, 5 m auf dem 7er-Feld, dem Kleinfeld und in der Halle. Auf den Hobbyplätzen ohne Schiri bleibt es locker.', 'Die Mauer steht auf dem Großfeld bis rund 30 m vor dem Tor, auf kleineren Feldern entsprechend näher. Ab drei Mann in der Mauer halten Angreifer 1 m Abstand.', 'Der Schütze wählt: direkt über die Mauer, kurz ablegen oder in den Strafraum flanken – zentral eher Schuss, seitlich eher Flanke.'] },
+    en: { title: 'Free-kick rules per pitch and free-kick variants', items: ['At free kicks and corners, opponents now keep the distance of their pitch: 9.15 m on the full-size pitch, 6 m on the 9-a-side pitch, 5 m on the 7-a-side pitch, the small pitch and indoors. On the hobby pitches without a referee it stays relaxed.', 'On the full-size pitch the wall stands up to about 30 m from goal, closer on smaller pitches. With three or more in the wall, attackers keep 1 m away.', 'The taker chooses: over the wall, a short lay-off or a cross into the box – central spots favour a shot, wide ones a cross.'] },
+  },
+  {
     id: '2026-11-14-1',
     de: { title: 'Weiter Einwurf in den Strafraum', items: ['Auf dem 9er-Feld und dem Großfeld wirft ein kräftiger Werfer nah an der gegnerischen Grundlinie den Ball manchmal weit in den Strafraum – bis knapp 30 m.', 'Dann laufen drei Mitspieler in den Strafraum, der Werfer wartet auf sie, und die Abwehr stellt sich dazu wie bei einer Ecke.', 'Gemessen ist ein weiter Einwurf etwa so gefährlich wie eine Ecke; die Tore je Spiel ändern sich nicht.'] },
     en: { title: 'Long throw into the box', items: ['On the 9-a-side and full-size pitch, a strong thrower close to the opponents\' byline sometimes hurls the ball into the box – up to almost 30 m.', 'Three team-mates then run into the box, the thrower waits for them, and the defence lines up as it does for a corner.', 'Measured, a long throw is about as dangerous as a corner; goals per match do not change.'] },

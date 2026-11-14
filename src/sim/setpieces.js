@@ -15,7 +15,17 @@ export function penaltySpot(m, team) {
 }
 
 const FREEZE = { kickoff: 0.8, freekick: 1.3, throwin: 1.0, corner: 1.3, goalkick: 1.0, penalty: 1.8 };
+// Abstand der Gegner bei Freistoß und Ecke je Platz (vom Nutzer gewünscht, 2026-11-14). Quellen: IFAB Spielregeln Regel 13
+// (9,15 m, Großfeld); 9er-Feld 6 m (SWFV, Spielformen D-Jugend 2024); 7er-Feld und Kleinfeld 5 m (Berliner FV, Kleinfeld
+// Erwachsene); Halle 5 m (Futsal-Regeln, Regel 13). Hobbyplätze ohne Schiri: kein Regelabstand, die bisherigen 3,5 m (Spielwert).
 const DISTANCE = 3.5;
+export const FK_DISTANCE = { grossfeld: 9.15, sportplatz: 6, rasenplatz: 5, ascheplatz: 5, halle: 5 };
+export const setPieceDistance = (pitch) => FK_DISTANCE[pitch.base ?? pitch.id] ?? DISTANCE;
+// Ab drei Mann in der Mauer müssen Angreifer mindestens 1 m Abstand halten (IFAB Regel 13, seit 2019).
+export const WALL_GAP = 1;
+// Mauerzone: bis 30 m vor dem Tor auf dem Großfeld, auf kleineren Feldern entsprechend kürzer, mindestens 17 m (bisheriger
+// Wert). Spielwert.
+export const wallRange = (pitch) => Math.max(17, 30 * (pitch.halfLength / 52.5));
 
 export function startSetPiece(m, { type, team, spot = { x: 0, z: 0 }, takerId = null }) {
   const { ball, pitch } = m;
@@ -78,7 +88,7 @@ export function startSetPiece(m, { type, team, spot = { x: 0, z: 0 }, takerId = 
     const dz = p.pos.z - spot.z;
     const d = len(dx, dz);
     // Beim Abstoß müssen alle Gegner raus aus dem Strafraum.
-    const keep = type === 'goalkick' ? keeperZone(pitch) : DISTANCE;
+    const keep = type === 'goalkick' ? keeperZone(pitch) : type === 'freekick' || type === 'corner' ? setPieceDistance(pitch) : DISTANCE;
     if (d < keep) {
       const n = d > 0.01 ? { x: dx / d, z: dz / d } : { x: -toGoal.x, z: -toGoal.z };
       const zMax = pitch.boundary === 'lines' ? pitch.halfWidth + 1 : pitch.halfWidth - 0.3;
@@ -94,6 +104,7 @@ export function startSetPiece(m, { type, team, spot = { x: 0, z: 0 }, takerId = 
   m.setPiece = { type, team, takerId: taker.id, time: m.time, taken: false };
   m.offside = null;
   m.wallIds = type === 'freekick' ? buildWall(m, team, spot) : null;
+  if (m.wallIds && taker.setPieceAction == null) taker.setPieceAction = 'freekick'; // KI-Varianten: ai.js freeKickChoice
   if (type === 'corner') lineUpCorner(m, team, taker);
   m.events.push({ type: 'setpiece', kind: type, team, playerId: taker.id });
 }
@@ -213,11 +224,12 @@ function buildWall(m, team, spot) {
   const defending = 1 - team;
   const goalX = attackDir(m, team) * pitch.halfLength;
   const dGoal = hypot(goalX - spot.x, spot.z);
-  if (dGoal > 17 || dGoal < DISTANCE + 1.5 || pitch.format < 5) return null; // im Hinterhof stellt keiner eine Mauer
+  const dist = setPieceDistance(pitch);
+  if (dGoal > wallRange(pitch) || dGoal < dist + 1.5 || pitch.format < 5) return null; // im Hinterhof stellt keiner eine Mauer
   const size = pitch.format >= 11 ? 4 : pitch.format >= 7 ? 3 : 2;
   const dir = norm(goalX - spot.x, -spot.z);
   const side = { x: -dir.z, z: dir.x };
-  const centre = { x: spot.x + dir.x * DISTANCE, z: spot.z + dir.z * DISTANCE };
+  const centre = { x: spot.x + dir.x * dist, z: spot.z + dir.z * dist };
   const men = m.players
     .filter((p) => p.team === defending && p.role !== 'gk' && p.state === 'normal')
     .sort((a, b) => dist2d(a.pos, centre) - dist2d(b.pos, centre))
@@ -231,7 +243,24 @@ function buildWall(m, team, spot) {
     p.vel.x = p.vel.z = 0;
     p.facing = { x: -dir.x, z: -dir.z };
   });
+  if (men.length >= 3) keepOffWall(m, team, men);
   return men.map((p) => p.id);
+}
+
+// 1-m-Regel: Angreifer, die zu nah an der Mauer stehen, rücken zur Seite (weg von der Mauermitte).
+function keepOffWall(m, team, men) {
+  for (const p of m.players) {
+    if (p.team !== team || p.id === m.setPiece?.takerId || p.role === 'gk') continue;
+    for (const w of men) {
+      const dx = p.pos.x - w.pos.x;
+      const dz = p.pos.z - w.pos.z;
+      const d = len(dx, dz);
+      if (d >= WALL_GAP) continue;
+      const n = d > 0.01 ? { x: dx / d, z: dz / d } : { x: 0, z: 1 };
+      p.pos.x = w.pos.x + n.x * WALL_GAP;
+      p.pos.z = w.pos.z + n.z * WALL_GAP;
+    }
+  }
 }
 
 // Ecke: Die Mannschaften stehen im Strafraum, bevor getreten wird. Die Pause vor dem Standard ist kurz (1,3 s) und

@@ -6,6 +6,19 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-14-2 – Free-kick rules per pitch and free-kick variants
+
+### New
+- **Distance at free kicks and corners per pitch** (requested by the user): full-size pitch 9.15 m (IFAB Law 13), 9-a-side 6 m (SWFV, D-youth formats 2024), 7-a-side and small pitch 5 m (Berlin FA, small-pitch adults), indoors 5 m (futsal laws). Hobby pitches without a referee: 3.5 m as before (game value).
+- **Wall:** stands at the rule distance, on the full-size pitch up to 30 m from goal, shorter on smaller pitches, at least 17 m (game value). With three or more in the wall, attackers keep 1 m away (IFAB Law 13).
+- **AI free-kick variants** when a wall is set: central within shooting range 65% direct, wide 15%; otherwise 20% short lay-off, the rest a cross (game values).
+  - The direct shot goes over the wall: trajectory above 2.5 m at the wall, 60–95% of the goal height on the line. The keeper only sees the ball once it clears the wall (derived).
+  - Measured (`scripts/freekick-check.mjs`, 60 matches per pitch): goal within 8 s of a free kick in shooting range before 6% / 4% / 5% (7-a-side / 9-a-side / full-size), now 9% / 6% / 8%. Before, the full-size pitch never had a wall (only up to 17 m), now always.
+  - Direct free kicks: about 3% goals, professionals about 6% (The Analyst, Opta). Rejected: a shot at 2.1 m over the wall, the wall then blocked half of them.
+
+### Tests
+- New: `tests/freekick_rules.test.js` (distances, wall zone, 1 m rule, variants, trajectory over the wall).
+
 ## 2026-11-14-1 – Long throw into the box
 
 ### New
