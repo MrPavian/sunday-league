@@ -79,7 +79,7 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
    Fans 7 (meist ab Regionalliga) – je drei neu. Kabine 19, Vorstand 11, Presse 14, Sponsoren 18, Jugend 22 (vorerst genug).
 9. **Neue Textbausteine für alle interaktiven Bereiche.** 🔶 **Teil 1, 2026-11-13:** Seitenlinie im Liveticker (sim/touchline.js
    vary) und Kneipe (career/pub.js say), ohne den Spielzufall. Teil 2: Stadionsprecher, Kreisblatt-
-   Schlagzeilen, Zurufe. Bank ist schon lagebezogen formuliert. Offen: Chat (hat schon viele Sprüche, 11.17).
+   Schlagzeilen, Zurufe. Bank ist schon lagebezogen formuliert. ✅ Chat (2026-11-14): die kürzesten Listen (zwei bis vier Fassungen) auf vier bis acht.
    Ursprünglicher Punkt: Chat, Kneipe, Zurufe, Bank, Liveticker, Kreisblatt, Stadionsprecher,
    Halbzeit, Verhandlungen – mehr Vorlagen, damit sich nichts schnell wiederholt. Deutsch und Englisch.
 

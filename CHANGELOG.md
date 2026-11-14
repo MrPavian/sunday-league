@@ -6,6 +6,15 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-14-5 – Mehr Abwechslung in der Mannschaftsgruppe
+
+### Geändert
+- **Chat-Antworten** (ROADMAP 11.18 Punkt 9): Gezählt hatten die kürzesten Listen zwei bis vier Fassungen. Jetzt: verletzt 4 → 8, nachgehakt ja 3 → 7 und nein 3 → 7, neu dabei 3 → 7, Absage 3 → 6 (Legende 2 → 4, Star 2 → 4), Abschied 2 → 5.
+- Die Auswahl zieht wie bisher genau einmal aus dem Wochen-Zufall; mehr Fassungen ändern nur den Text.
+
+### Messung
+- **Einwürfe:** `scripts/throwin-check.mjs` zählte jede Unterbrechung binnen 5 s als Ballverlust, auch Fouls am eigenen Spieler. Richtig gezählt behalten die Teams den Ball in 42–52 % (Premier League 2018/19: 54 %, Stone, Smith & Barry 2021). Keine Änderung an der Simulation.
+
 ## 2026-11-14-4 – Neue Ereignisse für Nationalteam und Fans
 
 ### Neu

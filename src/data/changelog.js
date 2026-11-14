@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-14-5',
+    de: { title: 'Mehr Abwechslung in der Mannschaftsgruppe', items: ['Verletzt abgemeldet, nachgehakt, neu dazugekommen, Angebot abgelehnt, Gruppe verlassen: Diese Chat-Antworten hatten nur zwei bis vier Fassungen, jetzt vier bis acht.', 'Die Antworten ändern nur den Text, nicht wer kommt oder absagt.'] },
+    en: { title: 'More variety in the team group chat', items: ['Injured, nudged, newly joined, offer declined, left the group: these chat replies had only two to four versions, now four to eight.', 'The replies only change the text, not who comes or drops out.'] },
+  },
+  {
     id: '2026-11-14-4',
     de: { title: 'Neue Ereignisse für Nationalteam und Fans', items: ['Als Nationaltrainer im Nebenamt sorgt sich der Vorstand um den Verein – du kannst das Amt auch niederlegen.', 'Nominierte Spieler fragen, ob sie absagen sollen, und bringen getauschte Trikots mit. Abstellen muss der Verein sie trotzdem.', 'Fans von der Kreisliga bis zur Oberliga: eine Choreografie, die geklaute Zaunfahne und ein Bengalo vor dem Sportgericht.'] },
     en: { title: 'New events for the national team and the fans', items: ['As part-time national coach, the board worries about the club – you can also step down from the national job.', 'Called-up players ask whether they should withdraw and bring back swapped shirts. The club must release them all the same.', 'Fans from district level up to the fifth tier: a display, the stolen fence banner and a flare before the disciplinary court.'] },

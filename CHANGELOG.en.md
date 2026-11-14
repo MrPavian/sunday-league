@@ -6,6 +6,15 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-14-5 – More variety in the team group chat
+
+### Changed
+- **Chat replies** (ROADMAP 11.18 point 9): counted, the shortest lists had two to four versions. Now: injured 4 → 8, nudged yes 3 → 7 and no 3 → 7, newly joined 3 → 7, declined 3 → 6 (legend 2 → 4, star 2 → 4), farewell 2 → 5.
+- The choice still draws exactly once from the weekly random stream; more versions only change the text.
+
+### Measurement
+- **Throw-ins:** `scripts/throwin-check.mjs` counted every stoppage within 5 s as a loss, even fouls on your own player. Counted correctly, teams keep the ball in 42–52% (Premier League 2018/19: 54%, Stone, Smith & Barry 2021). No change to the simulation.
+
 ## 2026-11-14-4 – New events for the national team and the fans
 
 ### New

@@ -406,17 +406,17 @@ export const LATE_STRICT = tr(
 );
 
 export const INJURED = tr(
-  ['Knie ist noch offen von letzter Woche. Setze aus.', 'Das Knie… nächste Woche wieder.', 'Die Wade macht zu. Lieber eine Woche Pause.', 'Physio sagt nein. Ich sag auch nein.'],
-  ['Knee is still raw from last week. Sitting this one out.', 'The knee… back next week.', 'Calf is tight. Better take a week off.', 'Physio says no. I say no too.'],
+  ['Knie ist noch offen von letzter Woche. Setze aus.', 'Das Knie… nächste Woche wieder.', 'Die Wade macht zu. Lieber eine Woche Pause.', 'Physio sagt nein. Ich sag auch nein.', 'Rücken. Ich lieg flach, im wahrsten Sinne.', 'Der Knöchel ist dicker als mein Schienbeinschoner. Diesmal nicht.', 'Hab mir beim Umzug was gezerrt. Sorry, Leute.', 'Leiste zwickt. Ich will nicht, dass es schlimmer wird.'],
+  ['Knee is still raw from last week. Sitting this one out.', 'The knee… back next week.', 'Calf is tight. Better take a week off.', 'Physio says no. I say no too.', 'Back. I’m laid up, literally.', 'The ankle is fatter than my shin pad. Not this time.', 'Pulled something moving house. Sorry, lads.', 'Groin is twinging. I don’t want it to get worse.'],
 );
 
 export const NUDGE_YES = tr(
-  ['Na gut, ich tausch die Schicht.', 'Okay okay, ich komm. Aber nur weil du es bist.', 'Überredet. Aber ich spiel nicht hinten!'],
-  ['Fine, I’ll swap my shift.', 'Okay okay, I’ll come. But only because it’s you.', 'You’ve talked me into it. But I’m not playing at the back!'],
+  ['Na gut, ich tausch die Schicht.', 'Okay okay, ich komm. Aber nur weil du es bist.', 'Überredet. Aber ich spiel nicht hinten!', 'Mann, du gibst nie auf. Ich bin da.', 'Gut, ich frag meine Frau. … Sie sagt ja. Ich komme.', 'Na schön. Wer holt mich ab?', 'Wenn es sonst keiner macht – bin dabei.'],
+  ['Fine, I’ll swap my shift.', 'Okay okay, I’ll come. But only because it’s you.', 'You’ve talked me into it. But I’m not playing at the back!', 'Man, you never give up. I’ll be there.', 'Fine, I’ll ask my wife. … She says yes. I’m coming.', 'All right then. Who’s picking me up?', 'If nobody else will – I’m in.'],
 );
 export const NUDGE_NO = tr(
-  ['Geht echt nicht, sorry.', 'Nee, wirklich nicht. Nächste Woche!', 'Lass gut sein, ich kann nicht.'],
-  ['Really can’t, sorry.', 'No, honestly not. Next week!', 'Leave it, I can’t.'],
+  ['Geht echt nicht, sorry.', 'Nee, wirklich nicht. Nächste Woche!', 'Lass gut sein, ich kann nicht.', 'Hab meiner Mutter versprochen, beim Umzug zu helfen. Geht nicht.', 'Selbst wenn ich wollte – das Auto ist in der Werkstatt.', 'Du kannst fragen, so oft du willst. Nein.', 'Diesmal echt nicht. Ich mach es wieder gut.'],
+  ['Really can’t, sorry.', 'No, honestly not. Next week!', 'Leave it, I can’t.', 'Promised my mum I’d help her move. Can’t.', 'Even if I wanted to – the car is in the garage.', 'You can ask as often as you like. No.', 'Really not this time. I’ll make it up to you.'],
 );
 
 export function noReasons(profession) {
@@ -461,22 +461,22 @@ export const RUMOR_SOURCES = {
 };
 
 export const JOIN_TEXT = tr(
-  ['Bin dabei. Wann ist Training?', 'Okay, ich komm vorbei. Wer hat die Trikots?', 'Klingt gut. Gibt es danach Bier?'],
-  ['I’m in. When’s training?', 'Okay, I’ll come along. Who has the shirts?', 'Sounds good. Is there beer afterwards?'],
+  ['Bin dabei. Wann ist Training?', 'Okay, ich komm vorbei. Wer hat die Trikots?', 'Klingt gut. Gibt es danach Bier?', 'Ich hab schon von euch gehört. Bin dabei.', 'Endlich mal wieder richtig kicken. Ich komme.', 'Abgemacht. Welche Nummer ist noch frei?', 'Gern. Ich bring meine eigenen Schienbeinschoner mit.'],
+  ['I’m in. When’s training?', 'Okay, I’ll come along. Who has the shirts?', 'Sounds good. Is there beer afterwards?', 'I’ve heard about you lot. I’m in.', 'Finally some proper football again. I’m coming.', 'Deal. Which number is still free?', 'Gladly. I’ll bring my own shin pads.'],
 );
 export const DECLINE_TEXT = tr(
   {
-    default: ['Danke, aber ich bleib bei meinen Jungs.', 'Sonntags ist Familientag, sorry.', 'Vielleicht nächste Saison.'],
-    legende: ['Vielleicht nächste Saison. Erstmal ankommen.', 'Ich will einfach nur kicken – bei euch ist mir zu viel Trubel.'],
-    superstar: ['Nur wenn ich um 15 Uhr wieder zu Hause bin. Ach, das klappt eh nicht.', 'Ich überleg es mir. Meldet euch nächste Woche nochmal.'],
+    default: ['Danke, aber ich bleib bei meinen Jungs.', 'Sonntags ist Familientag, sorry.', 'Vielleicht nächste Saison.', 'Mein Trainer würde mich umbringen. Lieber nicht.', 'Zu weit zu fahren, sorry.', 'Ich hab gerade erst verlängert. Danke trotzdem.'],
+    legende: ['Vielleicht nächste Saison. Erstmal ankommen.', 'Ich will einfach nur kicken – bei euch ist mir zu viel Trubel.', 'Ich hab hier noch eine Rechnung offen. Ein Jahr noch.', 'Ehrt mich. Aber mein Verein braucht mich gerade.'],
+    superstar: ['Nur wenn ich um 15 Uhr wieder zu Hause bin. Ach, das klappt eh nicht.', 'Ich überleg es mir. Meldet euch nächste Woche nochmal.', 'Ruft meinen Berater an. Ich hab keinen Berater. Also: nein.', 'Schönes Angebot. Aber ich spiel nur, wo ich Kapitän bin.'],
   },
   {
-    default: ['Thanks, but I’m staying with my lads.', 'Sunday is family day, sorry.', 'Maybe next season.'],
-    legende: ['Maybe next season. Settling in first.', 'I just want to play – there’s too much fuss at your place.'],
-    superstar: ['Only if I’m home by 3pm. Oh, that won’t work anyway.', 'I’ll think about it. Get back to me next week.'],
+    default: ['Thanks, but I’m staying with my lads.', 'Sunday is family day, sorry.', 'Maybe next season.', 'My coach would kill me. Better not.', 'Too far to drive, sorry.', 'I’ve only just signed on again. Thanks anyway.'],
+    legende: ['Maybe next season. Settling in first.', 'I just want to play – there’s too much fuss at your place.', 'I still have unfinished business here. One more year.', 'I’m honoured. But my club needs me right now.'],
+    superstar: ['Only if I’m home by 3pm. Oh, that won’t work anyway.', 'I’ll think about it. Get back to me next week.', 'Call my agent. I don’t have an agent. So: no.', 'Nice offer. But I only play where I’m captain.'],
   },
 );
 export const FAREWELL = tr(
-  ['Danke für alles, Männer. Man sieht sich im Vereinsheim.', 'War schön mit euch. Ich komm zum Sommerfest!'],
-  ['Thanks for everything, lads. See you at the clubhouse.', 'It was great with you. I’ll come to the summer party!'],
+  ['Danke für alles, Männer. Man sieht sich im Vereinsheim.', 'War schön mit euch. Ich komm zum Sommerfest!', 'Macht’s gut, Jungs. Die Trikots wasche ich noch.', 'Ich bleib in der Gruppe stumm dabei. Nur zum Mitlesen.', 'Danke für die Jahre. Wer will meine Schuhe?'],
+  ['Thanks for everything, lads. See you at the clubhouse.', 'It was great with you. I’ll come to the summer party!', 'Take care, lads. I’ll still wash the shirts.', 'I’ll stay quiet in the group. Just reading along.', 'Thanks for the years. Who wants my boots?'],
 );
