@@ -6,6 +6,18 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-14-4 – Neue Ereignisse für Nationalteam und Fans
+
+### Neu
+- **Zählung** (ROADMAP 11.18 Punkt 8) nach Bedingung und Text der 216 ziehbaren Ereignisse: Nationalteam keines, Fans 7, davon die meisten erst ab der Regionalliga oder als Folge der Fanclub-Gründung.
+- **Nationalteam:** Der Vorstand sorgt sich um den Trainer im Nebenamt (Co-Trainer übernimmt, Versprechen oder Amt niederlegen). Ein nominierter Spieler (ab Stufe 9) will absagen. Der Verein muss ihn abstellen (FIFA, Reglement bezüglich Status und Transfer von Spielern, Anhang 1, Art. 1). Ein getauschtes Trikot kommt ins Vereinsheim oder in die Versteigerung (80 €).
+- **Fans** (Stufe 3 bis 8): Choreografie (60 €), die geklaute Zaunfahne (neue für 80 €), Bengalo vor dem Sportgericht (50 € je Ligastufe). Ab der Regionalliga gibt es dafür schon die Profi-Ereignisse.
+- Verworfen: ein eigener Fanbus – den gibt es schon als Folge der Fanclub-Gründung.
+- Alle Beträge und Wirkungen sind Spielwerte.
+
+### Tests
+- `tests/teamevents.test.js` erweitert (Nationalteam nur mit Amt oder Nominierung, Fans nur in ihren Ligen).
+
 ## 2026-11-14-3 – Neue Ereignisse für Zweite Mannschaft und Frauenteam
 
 ### Neu

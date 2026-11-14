@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-14-4',
+    de: { title: 'Neue Ereignisse für Nationalteam und Fans', items: ['Als Nationaltrainer im Nebenamt sorgt sich der Vorstand um den Verein – du kannst das Amt auch niederlegen.', 'Nominierte Spieler fragen, ob sie absagen sollen, und bringen getauschte Trikots mit. Abstellen muss der Verein sie trotzdem.', 'Fans von der Kreisliga bis zur Oberliga: eine Choreografie, die geklaute Zaunfahne und ein Bengalo vor dem Sportgericht.'] },
+    en: { title: 'New events for the national team and the fans', items: ['As part-time national coach, the board worries about the club – you can also step down from the national job.', 'Called-up players ask whether they should withdraw and bring back swapped shirts. The club must release them all the same.', 'Fans from district level up to the fifth tier: a display, the stolen fence banner and a flare before the disciplinary court.'] },
+  },
+  {
     id: '2026-11-14-3',
     de: { title: 'Neue Ereignisse für Zweite Mannschaft und Frauenteam', items: ['Zweite Mannschaft: Einer spielt sich für die Erste in den Vordergrund, am Sonntag fehlen Leute, und der Trainer der Zweiten will einen festen Trainingsabend.', 'Frauenteam: Eine Praxis aus dem Ort will nur die Frauen unterstützen, die Trainerin streitet um die Platzzeit, und eine Spielerin wird zur Verbandsauswahl eingeladen.', 'Die Ereignisse kommen nur, wenn es die Mannschaft gibt.'] },
     en: { title: 'New events for the reserves and the women\'s team', items: ['Reserves: someone plays his way towards the first team, players are missing on Sunday, and the reserves\' coach wants a fixed training night.', 'Women\'s team: a local practice wants to back only the women, the coach fights over pitch time, and a player is invited to the regional squad.', 'These events only come up if the team exists.'] },

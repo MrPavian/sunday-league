@@ -6,6 +6,18 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-14-4 – New events for the national team and the fans
+
+### New
+- **Count** (ROADMAP 11.18 point 8) by condition and text of the 216 drawable events: national team none, fans 7, most of them only from the fourth tier or as a follow-up to founding the supporters' club.
+- **National team:** the board worries about the part-time national coach (assistant takes over, a promise, or stepping down). A called-up player (from tier 9) wants to withdraw. The club must release him (FIFA Regulations on the Status and Transfer of Players, Annex 1, Art. 1). A swapped shirt goes up in the clubhouse or to auction (€80).
+- **Fans** (tiers 3 to 8): a display (€60), the stolen fence banner (new one for €80), a flare before the disciplinary court (€50 per tier). From the fourth tier up, the pro events already cover this.
+- Rejected: a separate fan bus – it already exists as a follow-up to founding the supporters' club.
+- All amounts and effects are game values.
+
+### Tests
+- `tests/teamevents.test.js` extended (national team only with the job or a call-up, fans only in their leagues).
+
 ## 2026-11-14-3 – New events for the reserves and the women's team
 
 ### New

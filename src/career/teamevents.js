@@ -1,6 +1,6 @@
-// Ereignisse rund um die Zweite Mannschaft und das Frauenteam (ROADMAP 11.18 Punkt 8). Die Zählung der Ereignisse je Bereich
-// (2026-11-14, ziehbare Ereignisse nach ihrer Bedingung) fand für die Zweite keines und für das Frauenteam zwei (nur die
-// Gründung). Gezogen werden sie nur, wenn es die Mannschaft gibt. Beträge und Wirkungen sind Spielwerte.
+// Ereignisse für Bereiche, in denen die Zählung (ROADMAP 11.18 Punkt 8, 2026-11-14) Lücken fand: Zweite Mannschaft (keines),
+// Frauenteam (nur die Gründung), Nationalteam (keines) und Fans (7 von 216, fast alle erst ab der Oberliga). Gezählt wurden die
+// ziehbaren Ereignisse nach Bedingung und Text. Gezogen werden sie nur, wenn es den Bereich gibt. Beträge und Wirkungen sind Spielwerte.
 // Eingetragen in events.js (eventPacks), hinten, damit der Zufall der bestehenden Pakete gleich bleibt.
 import { tr } from '../core/i18n.js';
 import { humanClub, playerOf } from './career.js';
@@ -10,12 +10,24 @@ import { outcome } from './outcomes.js';
 import { reserveOf } from './reserve.js';
 import { women } from './women.js';
 import { chronicle } from './sagas.js';
+import { natCoachOf, quitNatCoach } from './natcoach.js';
+import { natCups, nationName } from './nationalteams.js';
 
 const first = (n) => n.split(' ')[0];
 const reserveRunning = (c) => !!reserveOf(c) && (reserveOf(c).round ?? 0) >= 3;
 const womenRunning = (c) => (women(c)?.squad?.length ?? 0) >= 11 && !!women(c)?.league;
 // Spieler, die in der Zweiten Spielpraxis sammeln (mindestens drei Einsätze dort).
 const reservePlayers = (c) => humanClub(c).squad.filter((idx) => (c.players[idx]?.apps2 ?? 0) >= 3);
+// Eigene Spieler, die gerade für ihr Land nominiert sind (Turnier oder Qualifikation, nur Profiligen).
+function nominated(c) {
+  const squad = new Set(humanClub(c).squad);
+  const out = new Map();
+  for (const t of [...natCups(c).filter((x) => !x.done), ...(c.natQuali?.comps ?? [])]) for (const [nid, list] of Object.entries(t.own ?? {})) for (const idx of list) if (squad.has(idx)) out.set(idx, nid);
+  return [...out].map(([idx, nid]) => ({ idx, nid }));
+}
+const lv = (c) => c.level ?? 1;
+// Die Fan-Ereignisse sind für Amateurvereine gedacht (Beträge im Hunderter-Bereich); ab der Regionalliga gibt es eigene (fanprotest).
+const AMATEUR_MAX = 8;
 const bump = (p, d) => (p.rating = Math.max(25, Math.min(95, Math.round(p.rating + d))));
 
 export const TEAM_EVENTS = {
@@ -127,6 +139,91 @@ export const TEAM_EVENTS = {
         const p = women(c).squad.find((x) => x.id === ctx.id);
         return tr(`${first(p?.name ?? '')} fährt mit dem Zug hin und kommt mit vielen Ideen zurück.`, `${first(p?.name ?? '')} takes the train there and comes back full of ideas.`);
       } },
+    ],
+  },
+  // Nationaltrainer im Nebenamt: Der Vorstand sorgt sich um den Verein.
+  nat_doppelamt: {
+    weight: 1,
+    needs: (c) => (natCoachOf(c) ? { nid: natCoachOf(c) } : null),
+    text: (c, ctx) => tr(`Der Vorstand bittet zum Gespräch: Seit du auch ${nationName(ctx.nid)} betreust, sieht man dich dienstags kaum noch auf dem Platz.`, `The board asks for a word: since you also took charge of ${nationName(ctx.nid)}, you are hardly seen at Tuesday training.`),
+    options: [
+      { label: tr('Der Co-Trainer übernimmt dienstags', 'The assistant takes Tuesdays'), effect: (c) => (adjustMood(c, -0.01), tr('Der Vorstand nickt. Die Mannschaft merkt den Unterschied – nicht jeder findet ihn schlecht.', 'The board nods. The team notices the difference – not everyone minds.')) },
+      { label: tr('Versprechen, wieder öfter da zu sein', 'Promise to be around more'), effect: outcome([
+        { w: 2, run: () => tr('Du hältst Wort. Zwei Wochen lang bist du um sechs am Platz, bevor alle anderen da sind.', 'You keep your word. For two weeks you are at the ground at six, before anyone else.') },
+        { w: 1, run: (c) => (adjustMood(c, -0.03), tr('Dann kommt die nächste Länderspielreise. Im Vorstand fällt das Wort „Teilzeittrainer“.', 'Then comes the next international trip. On the board, the word "part-timer" is heard.')) },
+      ]) },
+      { label: tr('Das Amt beim Land niederlegen', 'Step down from the national job'), effect: (c, ctx) => (quitNatCoach(c), adjustMood(c, 0.03), tr(`Du rufst beim Verband von ${nationName(ctx.nid)} an und bedankst dich. Der Verein bekommt seinen Trainer ganz zurück.`, `You ring the ${nationName(ctx.nid)} federation and thank them. The club gets its coach back in full.`)) },
+    ],
+  },
+  // Ein nominierter Spieler will lieber im Abstiegskampf helfen. Abstellen muss der Verein trotzdem: Vereine sind verpflichtet,
+  // Spieler für Länderspiele im internationalen Spielkalender abzustellen (FIFA, Reglement bezüglich Status und Transfer von
+  // Spielern, Anhang 1, Art. 1).
+  nat_absage: {
+    weight: 1,
+    needs: (c, rng) => {
+      const list = lv(c) >= 9 ? nominated(c) : [];
+      return list.length ? rng.pick(list) : null;
+    },
+    text: (c, ctx) => tr(`${playerOf(c, ctx.idx).name} ist für ${nationName(ctx.nid)} nominiert und fragt dich leise, ob er absagen soll. „Ihr braucht mich hier doch.“`, `${playerOf(c, ctx.idx).name} has been called up by ${nationName(ctx.nid)} and quietly asks whether he should withdraw. "You need me here."`),
+    options: [
+      { label: tr('„Fahr hin – das ist eine Ehre.“', '"Go – it is an honour."'), effect: (c) => (adjustMood(c, 0.03), tr('Er fährt mit breiter Brust. In der Kabine hängt sein Foto im Nationaltrikot.', 'He goes with his chest out. His photo in the national shirt hangs in the dressing room.')) },
+      { label: tr('„Wenn du absagen willst, rede ich mit dem Verband.“', '"If you want to withdraw, I will talk to the federation."'), effect: (c) => (adjustMood(c, -0.03), tr('Der Verband erinnert dich freundlich an die Abstellungspflicht. Er fährt doch – und fragt sich, warum du ihn behalten wolltest.', 'The federation politely reminds you that clubs must release players. He goes after all – and wonders why you wanted to keep him.')) },
+    ],
+  },
+  // Nach dem Länderspiel: ein Trikot zum Tauschen.
+  nat_trikot: {
+    weight: 0.7,
+    needs: (c, rng) => {
+      const list = lv(c) >= 9 ? nominated(c) : [];
+      return list.length ? rng.pick(list) : null;
+    },
+    text: (c, ctx) => tr(`${playerOf(c, ctx.idx).name} kommt von ${nationName(ctx.nid)} zurück, mit dem getauschten Trikot des gegnerischen Kapitäns im Gepäck.`, `${playerOf(c, ctx.idx).name} returns from ${nationName(ctx.nid)} with the opposing captain's swapped shirt in his bag.`),
+    options: [
+      { label: tr('Im Vereinsheim aufhängen', 'Hang it in the clubhouse'), effect: (c) => (adjustMood(c, 0.02), tr('Es hängt jetzt über dem Tresen. Die Jugend bleibt davor stehen.', 'It now hangs above the bar. The youngsters stop to look at it.')) },
+      { label: tr('Für die Jugend versteigern', 'Auction it for the youth teams'), effect: (c) => (book(c, tr('Versteigerung Länderspieltrikot', 'International shirt auction'), 80), tr('Der Bäcker bietet am längsten mit. 80 € gehen an die Jugendabteilung.', 'The baker bids longest. €80 goes to the youth section.')) },
+    ],
+  },
+  // Fans: Choreografie zum Heimspiel.
+  fan_choreo: {
+    weight: 1,
+    needs: (c) => (lv(c) >= 3 && lv(c) <= AMATEUR_MAX ? {} : null),
+    text: () => tr('Ein paar Fans wollen zum nächsten Heimspiel eine Choreografie machen: Pappen in Vereinsfarben über die ganze Tribüne. Sie bitten um 60 € für Material.', 'Some fans want to do a display at the next home game: cards in club colours across the whole stand. They ask for €60 for materials.'),
+    options: [
+      { label: tr('Geld geben (60 €)', 'Give the money (€60)'), effect: outcome([
+        { w: 3, run: (c) => (book(c, tr('Material Fan-Choreografie', 'Fan display materials'), -60), adjustMood(c, 0.04), tr('Beim Einlaufen ist die Tribüne ein einziges Farbenmeer. Die Spieler haben Gänsehaut.', 'As the teams come out the stand is a sea of colour. The players get goosebumps.')) },
+        { w: 1, run: (c) => (book(c, tr('Material Fan-Choreografie', 'Fan display materials'), -60), tr('Der Wind nimmt die Hälfte der Pappen mit. Man erkennt trotzdem etwas – vielleicht das Wappen.', 'The wind takes half the cards. You can still make something out – perhaps the crest.')) },
+      ]) },
+      { label: tr('Sollen sie selbst sammeln', 'Let them raise it themselves'), effect: outcome([
+        { w: 1, run: () => tr('Sie sammeln am Bierstand. Die Choreo kommt zwei Spiele später, kleiner, aber mit Herz.', 'They collect at the beer stand. The display comes two games later, smaller but heartfelt.') },
+        { w: 1, run: (c) => (adjustMood(c, -0.02), tr('Die Fans sind enttäuscht. Auf der Tribüne hängt ein Laken: „Kein Geld für Pappe?“', 'The fans are disappointed. A bedsheet hangs from the stand: "No money for cardboard?"')) },
+      ]) },
+    ],
+  },
+  // Fans: Die Zaunfahne ist weg (die Busfahrt zum Auswärtsspiel gibt es schon als fanclub_bus in localevents.js).
+  fan_zaunfahne: {
+    weight: 1,
+    needs: (c) => (lv(c) >= 4 && lv(c) <= AMATEUR_MAX ? {} : null),
+    text: () => tr('Die große Zaunfahne der Fans ist über Nacht aus dem Vereinsheim verschwunden. Im Netz taucht ein Foto auf: Sie hängt beim Nachbarverein in der Kneipe – verkehrt herum.', 'The fans\' big fence banner disappeared from the clubhouse overnight. A photo turns up online: it hangs upside down in the neighbouring club\'s pub.'),
+    options: [
+      { label: tr('Beim Nachbarverein anrufen', 'Ring the neighbouring club'), effect: outcome([
+        { w: 2, run: (c) => (adjustMood(c, 0.02), tr('Deren Vorsitzender ist peinlich berührt. Die Fahne kommt am Sonntag zurück, mit einer Kiste Bier als Entschuldigung.', 'Their chairman is embarrassed. The banner comes back on Sunday with a crate of beer by way of apology.')) },
+        { w: 1, run: (c) => (adjustMood(c, -0.02), tr('„Keine Ahnung, wovon du redest.“ Die Fahne bleibt verschwunden, das nächste Duell wird hitzig.', '"No idea what you mean." The banner stays missing and the next meeting will be heated.')) },
+      ]) },
+      { label: tr('Eine neue Fahne bezahlen (80 €)', 'Pay for a new banner (€80)'), effect: (c) => (book(c, tr('Neue Zaunfahne', 'New fence banner'), -80), adjustMood(c, 0.02), tr('Die neue ist größer als die alte. Die Fans nennen sie „die Antwort“.', 'The new one is bigger than the old. The fans call it "the answer".')) },
+      { label: tr('Mit Humor nehmen', 'Take it with humour'), effect: () => tr('Der Verein postet ein Foto vom leeren Zaun: „Vermisst. Hört auf den Namen Fahne.“ Halb der Kreis lacht mit.', 'The club posts a photo of the empty fence: "Missing. Answers to the name Banner." Half the district laughs along.') },
+    ],
+  },
+  // Fans: Bengalo beim Heimspiel, das Sportgericht verhängt eine Geldstrafe.
+  fan_pyro: {
+    weight: 0.7,
+    needs: (c) => (lv(c) >= 5 && lv(c) <= AMATEUR_MAX ? { fine: 50 * lv(c) } : null),
+    text: (c, ctx) => tr(`Beim letzten Heimspiel hat einer auf der Tribüne ein Bengalo gezündet. Das Sportgericht verhängt ${ctx.fine} € Strafe gegen den Verein.`, `At the last home game someone lit a flare in the stand. The disciplinary court fines the club €${ctx.fine}.`),
+    options: [
+      { label: tr('Zahlen und den Täter mit Hausverbot belegen', 'Pay and ban the culprit'), effect: (c, ctx) => (book(c, tr('Strafe Pyrotechnik', 'Pyrotechnics fine'), -ctx.fine), tr('Der Täter ist schnell gefunden. Die anderen Fans finden das Hausverbot hart, aber gerecht.', 'The culprit is soon found. The other fans think the ban harsh but fair.')) },
+      { label: tr('Zahlen und mit den Fans reden', 'Pay and talk to the fans'), effect: outcome([
+        { w: 2, run: (c, ctx) => (book(c, tr('Strafe Pyrotechnik', 'Pyrotechnics fine'), -ctx.fine), adjustMood(c, 0.01), tr('Im Fanclub wird lange geredet. Am Ende sammeln sie die Hälfte der Strafe und geben sie dem Verein.', 'There is a long talk at the supporters\' club. In the end they collect half the fine and give it to the club.')) },
+        { w: 1, run: (c, ctx) => (book(c, tr('Strafe Pyrotechnik', 'Pyrotechnics fine'), -ctx.fine), tr('Man nickt sich zu, ändert sich aber wenig. Beim nächsten Derby riecht es wieder nach Rauch.', 'Everyone nods, but little changes. At the next derby there is the smell of smoke again.')) },
+      ]) },
     ],
   },
 };

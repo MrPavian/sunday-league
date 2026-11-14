@@ -73,7 +73,8 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
 8. **Ereignisse in allen Bereichen:** neue Ereignisse für jede Liga und jeden Bereich (Kabine, Vorstand, Jugend, Zweite, Frauen,
    Alte Herren, Sponsoren, Fans, Presse, Privat, Nationalteam). Nach der Zählung aus Punkt 2, damit Lücken zuerst gefüllt werden.
    🔶 **Teil 1, 2026-11-14** (career/teamevents.js, tests/teamevents.test.js): Zählung nach Bedingung – Zweite 0, Frauen 2 (nur
-   Gründung). Neu je drei für Zweite und Frauen. Offen: Nationalteam, Kabine, Vorstand, Fans, Presse unterhalb der Regionalliga.
+   Gründung). Neu je drei für Zweite und Frauen. 🔶 **Teil 2, 2026-11-14:** Zählung nach Bedingung und Text: Nationalteam 0,
+   Fans 7 (meist ab Regionalliga) – je drei neu. Kabine 19, Vorstand 11, Presse 14, Sponsoren 18, Jugend 22 (vorerst genug).
 9. **Neue Textbausteine für alle interaktiven Bereiche.** 🔶 **Teil 1, 2026-11-13:** Seitenlinie im Liveticker (sim/touchline.js
    vary) und Kneipe (career/pub.js say), ohne den Spielzufall. Teil 2: Stadionsprecher, Kreisblatt-
    Schlagzeilen, Zurufe. Bank ist schon lagebezogen formuliert. Offen: Chat (hat schon viele Sprüche, 11.17).
