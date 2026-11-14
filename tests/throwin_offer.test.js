@@ -23,7 +23,8 @@ const measure = (venue, games, seed0) => {
       if (pending && m.setPiece?.taken && m.ball.holder !== pending.taker) {
         const t = m.players.find((p) => p.id === pending.taker);
         const near = m.players.filter((p) => p.team === pending.team && p.id !== pending.taker && p.role !== 'gk' && Math.hypot(p.pos.x - t.pos.x, p.pos.z - t.pos.z) <= THROWIN.near + 3);
-        if (!near.length) s.alone++;
+        // Weiter Einwurf (ai.js longThrowPlan, seit 2026-11-14): Die Mitspieler laufen gewollt in den Strafraum – kein „allein“.
+        if (!near.length && !m.setPiece?.longPlan) s.alone++;
         s.wait.push(m.time - pending.t);
         track = { taker: pending.taker, team: pending.team };
         pending = null;

@@ -180,6 +180,18 @@ export function updateTactics(m, dt) {
       }
       // Hohes Pressing: In der gegnerischen Hälfte geht auch der Absichernde mit drauf.
       if (st.pressZone === 'high' && ballAdv > 0.2 && cover && pool.length >= 5 && m.tactics[cover.id]?.type === 'cover') m.tactics[cover.id] = { type: 'mark', ...clampToPitch(pitch, ball.pos.x, ball.pos.z) };
+      // Weiter Einwurf des Gegners (longThrowPlan): Wie bei der Ecke stellen sich die Nächsten torseitig in die Zonen, in die seine
+      // Angreifer laufen. Ohne Deckung fiel nach 14,7 % der weiten Einwürfe ein Tor (Sportplatz, 200 Spiele) – mehr als nach Ecken.
+      const osp = m.setPiece;
+      if (osp?.type === 'throwin' && osp.team !== team && !osp.taken && osp.longPlan) {
+        const used = new Set();
+        for (const z of longThrowSpots(m, osp.team, osp.longPlan)) {
+          const d = pool.filter((q) => q.role !== 'gk' && !used.has(q.id)).sort((a, b) => dist2d(a.pos, z) - dist2d(b.pos, z))[0];
+          if (!d) break;
+          used.add(d.id);
+          m.tactics[d.id] = { type: 'mark', ...clampToPitch(pitch, z.x + Math.sign(ownGoal.x - z.x) * 1.0, z.z) }; // einen Meter torseitig
+        }
+      }
     } else {
       // Ecke fürs eigene Team: rein in den Strafraum – erster Pfosten, langer Pfosten,
       // Elfmeterpunkt, Strafraumkante.
@@ -192,8 +204,18 @@ export function updateTactics(m, dt) {
       const cornerGo = sp && sp.type === 'corner' && sp.team === team && sp.taken && ball.lastTouch === sp.takerId && m.time - (sp.takenAt ?? -99) < CORNER_RUN.window;
       const boxSpots = cornerWait ? cornerSpots(m, team).map((q) => cornerStart(m, team, q)) : cornerGo ? cornerSpots(m, team) : null;
       // Eigener Einwurf: Zwei Mitspieler bieten sich an – einer kurz, einer die Linie entlang (throwInOffers).
-      const offers = sp && sp.type === 'throwin' && sp.team === team && !sp.taken ? throwInOffers(m, team, rest) : null;
+      const ownThrow = sp && sp.type === 'throwin' && sp.team === team && !sp.taken;
+      const longPlan = ownThrow ? longThrowPlan(m, sp) : null;
+      const offers = ownThrow && !longPlan ? throwInOffers(m, team, rest) : null;
+      // Weiter Einwurf geplant: die vordersten Nicht-Verteidiger laufen in den Strafraum (longThrowSpots).
+      const longRunners = new Set();
+      if (longPlan) {
+        const spots = longThrowSpots(m, team, longPlan);
+        const runners = rest.filter((p) => p.role !== 'def' && p.id !== sp.takerId).sort((a, b) => dist2d(a.pos, longPlan) - dist2d(b.pos, longPlan)).slice(0, spots.length);
+        runners.forEach((p, i) => (longRunners.add(p.id), (m.tactics[p.id] = { type: 'run', ...clampToPitch(pitch, spots[i].x, spots[i].z, 0.5) })));
+      }
       for (const p of rest) {
+        if (longRunners.has(p.id)) continue;
         if (offers?.has(p.id)) {
           m.tactics[p.id] = { type: 'run', ...offers.get(p.id) };
           continue;
@@ -293,6 +315,44 @@ function shoutTactics(m, team, players) {
 // Ball. Jetzt kommen die zwei nächsten Feldspieler zum Werfer: einer kurz ins Feld (leicht nach hinten versetzt, die sichere
 // Anspielstation), einer die Linie entlang nach vorn. Der Werfer wartet, bis einer von ihnen frei in Wurfweite steht, höchstens
 // aber THROWIN.wait Sekunden (Spielwerte).
+// Weiter Einwurf in den Strafraum (ROADMAP 11.18 Punkt 6): nur auf 9er-Feld und Großfeld, nur nah an der gegnerischen
+// Grundlinie (zone, m; auf dem Großfeld anderthalbmal so weit) und nur, wenn der Werfer kräftig genug ist. Reichweite
+// reach + reachK · Körper (m): 28 m bei mittlerem, 30 m bei kräftigem Körper – so weit werfen Spezialisten. Echt (Premier League 2025/26, The Analyst): rund 3 weite Einwürfe (ab 20 m) je
+// Spiel, aus 49 davon fällt ein Tor; bester Abwurfwinkel rund 30°, die Weite hängt an der Abwurfgeschwindigkeit (Linthorne &
+// Everett 2006). Schwellen, Chance und Reichweite sind Spielwerte.
+export const LONG_THROW = { minFormat: 9, zone: 22, strength: 0.5, chance: 0.6, reach: 18, reachK: 20, vmax: 19, mate: 7, scatter: 2 };
+export function longThrowTarget(m, p) {
+  const { pitch } = m;
+  if ((pitch.format ?? 7) < LONG_THROW.minFormat || pitch.flatPlay) return null;
+  const s = attackDir(m, p.team);
+  const gx = s * pitch.halfLength;
+  const k = Math.max(1, pitch.halfLength / 35);
+  if (Math.abs(gx - m.ball.pos.x) > LONG_THROW.zone * k || (p.attrs.strength ?? 0) < LONG_THROW.strength) return null; // Großfeld: 33 m
+  const side = Math.sign(m.ball.pos.z) || 1;
+  // Ziel: seitliche Kante des Fünfmeterraums (5,5 m neben dem Pfosten, IFAB Regel 1), ein Stück vor dem Tor – dort, wo weite
+  // Einwürfe auch im echten Spiel landen; auf schmalen Plätzen höchstens 40 % der halben Breite von der Mitte.
+  const spot = { x: gx - s * 4.5 * k, z: side * Math.min(pitch.goalHalfWidth + 5.5, pitch.halfWidth * 0.4) };
+  const reach = LONG_THROW.reach + LONG_THROW.reachK * (p.attrs.strength ?? 0);
+  return dist2d(m.ball.pos, spot) <= reach ? spot : null;
+}
+// Beim Ansetzen einmal entschieden (m.setPiece.longPlan): weiter Einwurf oder kurz? Dann laufen Angreifer in den Strafraum
+// (longThrowSpots) und der Werfer wartet, bis einer am Zielpunkt ist.
+export function longThrowPlan(m, sp) {
+  if (sp.longPlan !== undefined) return sp.longPlan;
+  const taker = getPlayer(m, sp.takerId);
+  const spot = taker ? longThrowTarget(m, taker) : null;
+  sp.longPlan = spot && m.rng.chance(LONG_THROW.chance) ? spot : null;
+  return sp.longPlan;
+}
+// Laufziele beim weiten Einwurf: Zielpunkt, langer Pfosten, Elfmeterpunkt (wie bei der Ecke).
+export function longThrowSpots(m, team, spot) {
+  const { pitch } = m;
+  const s = attackDir(m, team);
+  const gx = s * pitch.halfLength;
+  const pd = pitch.penaltyDistance ?? Math.min(6, pitch.halfLength * 0.3);
+  return [spot, { x: gx - s * 3, z: -spot.z * 0.4 }, { x: gx - s * pd, z: spot.z * 0.2 }];
+}
+export const longThrowReady = (m, p, spot) => m.players.some((q) => q.team === p.team && q.id !== p.id && q.role !== 'gk' && q.state === 'normal' && dist2d(q.pos, spot) <= LONG_THROW.mate);
 export const THROWIN = { wait: 2.6, near: 9, free: 1.5, shortBack: 1.5, shortIn: 5, lineAhead: 8, lineIn: 2.5 };
 export function throwInOffers(m, team, players) {
   const { pitch, ball } = m;
@@ -613,8 +673,13 @@ export function outfieldIntent(m, p, dt) {
     p.holdTimer += dt;
     // Einwurf: warten, bis sich einer anbietet (throwInOffers) – aber nicht ewig.
     const sp = m.setPiece;
-    const wait = sp?.type === 'throwin' && sp.takerId === p.id && !sp.taken && p.holdTimer < THROWIN.wait && !throwInTarget(m, p);
-    if (p.holdTimer > 0.8 && !wait && !p.pending) p.pending = { type: 'pass', ttl: 0.5, cone: -0.6 };
+    const ownSp = sp?.type === 'throwin' && sp.takerId === p.id && !sp.taken;
+    const wait = ownSp && p.holdTimer < THROWIN.wait && (sp.longPlan ? !longThrowReady(m, p, sp.longPlan) : !throwInTarget(m, p));
+    if (p.holdTimer > 0.8 && !wait && !p.pending) {
+      // Nah an der gegnerischen Grundlinie: mal weit in den Strafraum (LONG_THROW), sonst kurz zu einer Anspielstation.
+      const far = sp?.type === 'throwin' && sp.takerId === p.id && !sp.taken ? sp.longPlan ?? null : null;
+      p.pending = far ? { type: 'pass', lofted: 'cross', longThrow: far, ttl: 0.5 } : { type: 'pass', ttl: 0.5, cone: -0.6 };
+    }
     return { move: { x: 0, z: 0 }, sprint: false };
   }
   p.holdTimer = 0;

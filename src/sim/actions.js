@@ -6,7 +6,7 @@ import { clamp, dist2d, hypot, len, norm, rotate } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
 import { BALL_RADIUS, ballSpeed, boardRoute, rollSpeedFor } from './ball.js';
 import { attackDir, clampWallX, distToSegment, setControlled, wallPush } from './players.js';
-import { aiSkill, keeperReaction, laneScore, WIDE_LANE } from './ai.js';
+import { aiSkill, keeperReaction, laneScore, WIDE_LANE, LONG_THROW } from './ai.js';
 
 // Bonus für den freien Mann außen bei der Passwahl der KI (Stellschraube, gemessen mit scripts/orders-audit.mjs).
 export const WIDE_OPEN = 0.55;
@@ -250,7 +250,7 @@ function pass(m, p, a, fatigue, fromHands) {
   let plainScore = -Infinity;
   // Ecke mit Ansage: kurz, erster Pfosten oder langer Pfosten – der Mitspieler,
   // der der Zielzone am nächsten steht, wird angespielt.
-  const zone = a.zone ? cornerZone(m, p, a.zone) : null;
+  const zone = a.zone ? cornerZone(m, p, a.zone) : a.longThrow ?? null; // weiter Einwurf: Zielpunkt aus ai.js longThrowTarget
   for (const t of (a.clear ? [] : m.players)) {
     if (t.team !== p.team || t === p || t.state === 'down') continue;
     if (a.targetId && t.id !== a.targetId) continue;
@@ -338,13 +338,14 @@ function pass(m, p, a, fatigue, fromHands) {
   } else {
     // Pass in die Tiefe (lead): nicht in den Fuß, sondern in den Raum vor dem Läufer.
     // Hohe Ecke: Ziel ist die Zone, in die der Angreifer einläuft (ai.js CORNER_RUN) – nicht die Stelle, an der er noch wartet.
-    const zoneAim = zone && a.lofted ? zone : null;
+    const zoneAim = zone && a.lofted ? zone : null; // auch beim weiten Einwurf (a.longThrow)
     const lx0 = clamp(lead ? lead.x : zoneAim ? zoneAim.x : target.pos.x + target.vel.x * 0.35, -pitch.halfLength, pitch.halfLength);
     const edge = pitch.boundary === 'lines' ? 1.5 : 0.5;
     const lz0 = clamp(lead ? lead.z : zoneAim ? zoneAim.z : target.pos.z + target.vel.z * 0.35, -pitch.halfWidth + edge, pitch.halfWidth - edge);
     // Eckstoß: Die Flanke landet nicht auf den Zentimeter beim Mitspieler, sondern streut um den Zielpunkt (Standardabweichung
     // in Metern, gewählt, nicht gemessen; sonst fiel aus gut 13 % der Ecken ein Tor, real sind es 3–5 %).
-    const sc = a.zone && a.lofted ? CORNER_SCATTER * (1.4 - cap1(vs(m, p, 'passing'))) * errScale(vs(m, p, 'passing')) : 0;
+    // Weiter Einwurf (a.longThrow): mit beiden Händen über den Kopf ungenauer als eine getretene Ecke – LONG_THROW.scatter fach.
+    const sc = (a.zone || a.longThrow) && a.lofted ? CORNER_SCATTER * (1.4 - cap1(vs(m, p, 'passing'))) * errScale(vs(m, p, 'passing')) * (a.longThrow ? LONG_THROW.scatter : 1) : 0;
     // Gestreut, aber im Feld: Ohne Grenze lag der Zielpunkt einer Ecke (2–3,5 m vor der Torlinie, Streuung um 2,5 m) oft hinter
     // der Linie – der Ball flog direkt ins Toraus (gemessen, scripts/corner-check.mjs). Ohne Streuung bleibt alles wie vorher.
     const lx = sc ? clamp(lx0 + rng.gauss() * sc, -pitch.halfLength + 1, pitch.halfLength - 1) : lx0;
@@ -386,7 +387,7 @@ function pass(m, p, a, fatigue, fromHands) {
     if (p.id === m.controlledId) m.pendingSwitch = { receiver: target.id, kicker: p.id };
   }
   if (fromHands) vy = Math.max(vy, 1.5);
-  if (outfieldThrow) speed = Math.min(speed, 12);
+  if (outfieldThrow) speed = Math.min(speed, a.longThrow ? LONG_THROW.vmax : 12); // weiter Einwurf: bis 18 m/s (Spielwert)
   ball.vel.x = dir.x * speed;
   ball.vel.y = vy;
   ball.vel.z = dir.z * speed;
@@ -408,7 +409,7 @@ function pass(m, p, a, fatigue, fromHands) {
     m.combo.returned = true;
     m.events.push({ type: 'combo', kind: m.combo.kind, playerId: m.combo.runner, wallId: p.id });
   }
-  m.events.push({ type: 'pass', playerId: p.id, targetId: target?.id ?? null, lofted: !!a.lofted, cross: isCross || undefined, crossKind: isCross ? (a.low ? 'flach' : a.driven ? 'halbhoch' : 'hoch') : undefined, from: { x: p.pos.x, z: p.pos.z }, to: target ? { x: target.pos.x, z: target.pos.z } : null, through: !!(a.through && target && !a.combo && !isCross), combo: a.combo || undefined });
+  m.events.push({ type: 'pass', playerId: p.id, targetId: target?.id ?? null, lofted: !!a.lofted, ...(a.longThrow ? { longThrow: true } : null), cross: isCross || undefined, crossKind: isCross ? (a.low ? 'flach' : a.driven ? 'halbhoch' : 'hoch') : undefined, from: { x: p.pos.x, z: p.pos.z }, to: target ? { x: target.pos.x, z: target.pos.z } : null, through: !!(a.through && target && !a.combo && !isCross), combo: a.combo || undefined });
   if (board) m.events.push({ type: 'bandenpass', kind: 'pass', playerId: p.id, targetId: target.id });
 }
 

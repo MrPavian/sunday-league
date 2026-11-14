@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-14-1',
+    de: { title: 'Weiter Einwurf in den Strafraum', items: ['Auf dem 9er-Feld und dem Großfeld wirft ein kräftiger Werfer nah an der gegnerischen Grundlinie den Ball manchmal weit in den Strafraum – bis knapp 30 m.', 'Dann laufen drei Mitspieler in den Strafraum, der Werfer wartet auf sie, und die Abwehr stellt sich dazu wie bei einer Ecke.', 'Gemessen ist ein weiter Einwurf etwa so gefährlich wie eine Ecke; die Tore je Spiel ändern sich nicht.'] },
+    en: { title: 'Long throw into the box', items: ['On the 9-a-side and full-size pitch, a strong thrower close to the opponents\' byline sometimes hurls the ball into the box – up to almost 30 m.', 'Three team-mates then run into the box, the thrower waits for them, and the defence lines up as it does for a corner.', 'Measured, a long throw is about as dangerous as a corner; goals per match do not change.'] },
+  },
+  {
     id: '2026-11-13-8',
     de: { title: 'Angreifer laufen bei Ecken ein', items: ['Bei Ecken warten die Angreifer nicht mehr in ihrer Zone, sondern ein paar Meter davor, und sprinten mit dem Schuss hinein. Die Deckung steht schon in der Zone.', 'Die hohe Ecke zielt auf die Zone, in die der Angreifer einläuft. Nach dem ersten Kontakt spielt jeder wie gewohnt weiter.', 'Gemessen ändert das weder die Torzahl je Spiel noch die Tore nach Ecken spürbar.'] },
     en: { title: 'Attackers make runs at corners', items: ['At corners, attackers no longer wait in their zone but a few metres outside it, and sprint in as the kick is taken. The markers are already in the zone.', 'High corners aim at the zone the attacker runs into. After the first contact, everyone plays on as usual.', 'Measured, this changes neither the goals per match nor the goals from corners noticeably.'] },

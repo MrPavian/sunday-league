@@ -6,6 +6,20 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-14-1 – Weiter Einwurf in den Strafraum
+
+### Neu
+- **Weiter Einwurf** (9er-Feld und Großfeld): Einwurf höchstens 22 m (Großfeld 33 m) vor der gegnerischen Grundlinie, Werfer mit Körperwert ab 0,5, Ziel an der seitlichen Kante des Fünfmeterraums in Reichweite (18 m + 20 m · Körper). Dann in 60 % der Fälle weit statt kurz.
+  - Drei Mitspieler laufen ein (Fünfmeterraum, langer Pfosten, Elfmeterpunkt), der Werfer wartet bis zu 2,6 s, bis einer am Ziel ist. Die Abwehr stellt sich torseitig in diese Zonen.
+  - Der Wurf streut doppelt so stark wie eine Ecke, Höchsttempo 19 m/s.
+  - Gemessen (`scripts/longthrow-check.mjs`, 200 Spiele): 0,88 weite Einwürfe je Spiel auf dem 9er-Feld, 0,20 auf dem Großfeld. Tor bis 8 s danach in 6,9 % bzw. 10,3 % (nur 39 Würfe), Ecken 7–9 %. Tore je Spiel 2,17 statt 2,11 bzw. 1,68 statt 1,86 (im Rahmen des Zufalls).
+  - Zum Vergleich: Premier League 2025/26 rund 3 weite Einwürfe (ab 20 m) je Spiel, ein Tor aus 49 (The Analyst); bester Abwurfwinkel rund 30° (Linthorne & Everett 2006).
+  - Verworfen: ohne Deckung und mit Eckenstreuung fiel nach rund 15 % der weiten Einwürfe ein Tor.
+- Alle Schwellen, Chancen und Reichweiten sind Spielwerte.
+
+### Tests
+- `tests/throwin_offer.test.js`: Geplante weite Einwürfe zählen nicht als „Werfer allein“, die Schwelle bleibt. Dort laufen die Mitspieler gewollt in den Strafraum.
+
 ## 2026-11-13-8 – Angreifer laufen bei Ecken ein
 
 ### Geändert

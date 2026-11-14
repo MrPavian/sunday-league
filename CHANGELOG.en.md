@@ -6,6 +6,20 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-14-1 – Long throw into the box
+
+### New
+- **Long throw** (9-a-side and full-size pitch): throw-in at most 22 m (full pitch 33 m) from the opponents' byline, thrower with a body value of at least 0.5, target at the side edge of the six-yard box within reach (18 m + 20 m · body). Then 60% of the time long instead of short.
+  - Three team-mates make runs (six-yard box, far post, penalty spot), the thrower waits up to 2.6 s until one has arrived. The defence takes up goal-side positions in those zones.
+  - The throw scatters twice as much as a corner, top speed 19 m/s.
+  - Measured (`scripts/longthrow-check.mjs`, 200 matches): 0.88 long throws per match on the 9-a-side pitch, 0.20 on the full-size pitch. Goal within 8 s in 6.9% and 10.3% (only 39 throws), corners 7–9%. Goals per match 2.17 instead of 2.11 and 1.68 instead of 1.86 (within chance).
+  - For comparison: Premier League 2025/26 about 3 long throws (20 m+) per match, one goal from 49 (The Analyst); optimal release angle about 30° (Linthorne & Everett 2006).
+  - Rejected: without marking and with corner scatter, about 15% of long throws led to a goal.
+- All thresholds, chances and ranges are game values.
+
+### Tests
+- `tests/throwin_offer.test.js`: planned long throws no longer count as "thrower alone", the threshold stays. There the team-mates run into the box on purpose.
+
 ## 2026-11-13-8 – Attackers make runs at corners
 
 ### Changed
