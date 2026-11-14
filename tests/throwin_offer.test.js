@@ -64,5 +64,5 @@ describe('Einwurf mit Anspielstationen', () => {
       expect(s.alone / s.wait.length, `${venue}: Werfer allein`).toBeLessThan(0.15);
       expect(Math.max(...s.wait), `${venue}: längstes Warten`).toBeLessThan(1 + THROWIN.wait + 1.5); // Pause + Warten + Wurf
     }
-  });
+  }, 120000); // zehn ganze Spiele: im vollen Lauf mit allen Workern über 20 s (2026-11-14 an der Standardgrenze gescheitert)
 });
