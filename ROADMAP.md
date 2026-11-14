@@ -64,7 +64,9 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
      81 / 85 / 92 % der Einwürfe (vorher 75 / 50 / 38 %); ohne freien Mitspieler in Wurfweite 2 / 4 / 1 % (vorher 55 / 77 / 88 %).
    - **Verworfen (gemessen, ohne klare Wirkung):** mehr Verteidiger in Raumdeckung bei Ecken; stärker streuende Schüsse im Gedränge.
    - Offen: Tore aus dem Spiel nach Ecken liegen noch bei 5–8 % (echt insgesamt 2,6–4,6 %); Angreifer laufen ein ✅ (2026-11-13,
-     ai.js CORNER_RUN, tests/corner_runin.test.js); nach dem Einwurf ist der Ball nach 5 s nur in 43–50 % noch beim Team (Annahme unter Druck); weiter Einwurf in den
+     ai.js CORNER_RUN, tests/corner_runin.test.js); Ballbesitz nach dem Einwurf ✅ geprüft (2026-11-14): Die Messung zählte jede Unterbrechung als Verlust, auch Fouls am
+     eigenen Spieler; richtig gezählt 42–52 % nach 5 s (Premier League 2018/19: 54 %, Stone, Smith & Barry 2021) – für Amateure
+     plausibel, keine Änderung; weiter Einwurf in den
      Strafraum ✅ (2026-11-14, ai.js LONG_THROW, tests/longthrow.test.js); Freistoß-Varianten und Abstand je Platz ✅ (2026-11-14,
      setpieces.js FK_DISTANCE, ai.js FREE_KICK, tests/freekick_rules.test.js).
 7. **Animationen.** ✅ **2026-11-13:** Die Torwart-Animationen aus 11.1 gab es schon alle (render/player/keeper.js: Hechtsprung mit

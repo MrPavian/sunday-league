@@ -1,5 +1,7 @@
 // Einwürfe messen (ROADMAP 11.18 Punkt 6): Wie lange dauert es bis zum Wurf, wie weit geht er, wer ist als Nächster am Ball,
-// und wie viele Mitspieler stehen beim Wurf anspielbar in der Nähe?
+// und wie viele Mitspieler stehen beim Wurf anspielbar in der Nähe? „Ball nach 5 s noch beim Team“: zuletzt am Ball oder, wenn das Spiel
+// vorher unterbrochen wurde, den Standard bekommen (bis 2026-11-14 zählte jede Unterbrechung als Verlust, auch ein Foul am eigenen Spieler).
+// Zum Vergleich: Premier League 2018/19 behielt nach 54 % der Einwürfe den Ball (Stone, Smith & Barry 2021, 16 154 Einwürfe).
 //   node scripts/throwin-check.mjs [N=40] [Plätze=rasenplatz,sportplatz,grossfeld]
 import { createMatch, stepMatch } from '../src/sim/match.js';
 import { PITCHES } from '../src/sim/pitch.js';
@@ -16,6 +18,8 @@ for (const v of (process.argv[3] ?? 'rasenplatz,sportplatz,grossfeld').split(','
     while (m.phase !== 'ended') {
       stepMatch(m, undefined, 1 / 60);
       for (const e of m.events) {
+        // Unterbrechung binnen 5 s: zählt für das Team, das den Standard bekommt (Foul am eigenen Spieler, Einwurf für uns = behalten).
+        if (after && e.type === 'setpiece') { (e.team === after.team ? s.kept5++ : s.lost5++); after = null; }
         if (e.type === 'setpiece') pending = e.kind === 'throwin' ? { taker: e.playerId, t: m.time, team: e.team } : null;
         if (track && e.type === 'out') { s.out++; s.n++; track = null; after = null; }
       }
