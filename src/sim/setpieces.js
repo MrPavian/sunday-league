@@ -5,7 +5,7 @@ import { clamp, dist2d, hypot, len, norm } from '../core/math.js';
 import { attackDir, clampToPitch, clampWallX, getPlayer, setControlled, teamAttacking } from './players.js';
 import { processSubs } from './squad.js';
 import { styleOf } from './plan.js';
-import { cornerSpots, keeperZone } from './ai.js';
+import { cornerSpots, keeperZone, cornerStart } from './ai.js';
 import { penaltyBox } from './actions.js';
 
 // Elfmeterpunkt: im Kleinfeld näher dran als auf dem großen Platz.
@@ -256,14 +256,14 @@ function lineUpCorner(m, team, taker) {
   const zMax = pitch.boundary === 'lines' ? pitch.halfWidth - 0.5 : pitch.halfWidth - 0.3;
   const placed = [];
   attackers.forEach((p, i) => {
-    const sp = spots[i];
+    const sp = cornerStart(m, team, spots[i]); // wartet vor dem Platz und läuft mit der Ausführung ein (ai.js CORNER_RUN)
     p.pos.x = clamp(sp.x + m.rng.range(-0.15, 0.15), -pitch.wallX + 0.3, pitch.wallX - 0.3);
     p.pos.z = clamp(sp.z + m.rng.range(-0.15, 0.15), -zMax, zMax);
     p.pos.x = clampWallX(pitch, p.pos.x, p.pos.z);
     p.facing = { x: -s, z: 0 };
-    placed.push(p);
+    placed.push({ pos: { x: spots[i].x, z: spots[i].z } }); // die Deckung steht in der Zone, in die er einläuft
   });
-  // Die Verteidiger: der nächste Gegenspieler stellt sich einen Meter vor den Angreifer, Richtung eigenes Tor.
+  // Die Verteidiger: der nächste Gegenspieler stellt sich einen Meter torseitig in die Zone, in die der Angreifer einläuft.
   const taken = new Set();
   // Ein Verteidiger mehr als Angreifer: er sichert den ersten Pfosten (Raumdeckung), wie es die Abwehr bei Ecken tut.
   const spots2 = placed.concat([{ pos: { x: spots[0].x, z: spots[0].z } }]);

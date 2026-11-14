@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-13-8',
+    de: { title: 'Angreifer laufen bei Ecken ein', items: ['Bei Ecken warten die Angreifer nicht mehr in ihrer Zone, sondern ein paar Meter davor, und sprinten mit dem Schuss hinein. Die Deckung steht schon in der Zone.', 'Die hohe Ecke zielt auf die Zone, in die der Angreifer einläuft. Nach dem ersten Kontakt spielt jeder wie gewohnt weiter.', 'Gemessen ändert das weder die Torzahl je Spiel noch die Tore nach Ecken spürbar.'] },
+    en: { title: 'Attackers make runs at corners', items: ['At corners, attackers no longer wait in their zone but a few metres outside it, and sprint in as the kick is taken. The markers are already in the zone.', 'High corners aim at the zone the attacker runs into. After the first contact, everyone plays on as usual.', 'Measured, this changes neither the goals per match nor the goals from corners noticeably.'] },
+  },
+  {
     id: '2026-11-13-7',
     de: { title: 'Stadionsprecher, Kreisblatt und Zurufe mit Abwechslung', items: ['Stadionsprecher: Gästetore, Eigentore, Wechsel, Halbzeit, Endstand und Zuschauerzahl haben jetzt je drei Fassungen.', 'Kreisblatt: Die Schlagzeilen nach Nullnummer, Remis, knappem und hohem Sieg kommen in drei Fassungen.', 'Zurufe von der Linie: Jeder der vier Zurufe hat vier Fassungen in der Sprechblase; die Knöpfe heißen weiter wie vorher.'] },
     en: { title: 'Announcer, gazette and touchline shouts with more variety', items: ['Stadium announcer: away goals, own goals, substitutions, half-time, full time and attendance now come in three versions each.', 'District Gazette: headlines after goalless draws, draws, narrow and big wins come in three versions.', 'Touchline shouts: each of the four shouts has four versions in the speech bubble; the buttons keep their names.'] },

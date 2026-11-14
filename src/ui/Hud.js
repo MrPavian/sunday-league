@@ -134,7 +134,7 @@ export class Hud {
       if (e.type === 'shout' || (e.type === 'order' && e.by === 'card')) {
         const b = this.$('.coach-bubble');
         // Zuruf in wechselnden Worten (sim/coach.js calls, ROADMAP 11.18 Punkt 9); der Knopf behält seine Beschriftung.
-        const calls = SHOUTS[e.shout].calls;
+        const calls = e.type === 'shout' ? SHOUTS[e.shout]?.calls : null; // Anweisungen der Lagekarte sind keine Zurufe
         const said = e.type === 'shout' ? (e.on ? (calls?.length ? calls[(this.shoutN = (this.shoutN ?? -1) + 1) % calls.length] : SHOUTS[e.shout].label) : tr(`Schluss mit ${SHOUTS[e.shout].short}!`, `Enough ${SHOUTS[e.shout].short.toLowerCase()}!`)) : `${orderLabel(e.group, e.value)}!`;
         b.textContent = tr(`„${said}“`, `“${said}”`);
         b.hidden = false;

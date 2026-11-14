@@ -184,8 +184,13 @@ export function updateTactics(m, dt) {
       // Ecke fürs eigene Team: rein in den Strafraum – erster Pfosten, langer Pfosten,
       // Elfmeterpunkt, Strafraumkante.
       const sp = m.setPiece;
-      const cornerRun = sp && sp.type === 'corner' && sp.team === team && !sp.taken && m.time - sp.time < 6;
-      const boxSpots = cornerRun ? cornerSpots(m, team) : null;
+      // Einlaufen (ROADMAP 11.18 Punkt 6): Bis zur Ausführung warten die Angreifer ein Stück vor ihrem Platz (cornerStart), mit
+      // dem Schuss sprinten sie hinein – bis zum ersten Kontakt (höchstens CORNER_RUN.window Sekunden), danach spielt jeder wie
+      // vorher weiter. Ein fester Einlauf von 1,4 s hielt die Angreifer zu lange im Strafraum: Tore nach Ecken (Großfeld, 120 Spiele)
+      // 7,4 → 12,4 %, fast alle aus Abprallern 2–6 s nach der Ecke.
+      const cornerWait = sp && sp.type === 'corner' && sp.team === team && !sp.taken && m.time - sp.time < 6;
+      const cornerGo = sp && sp.type === 'corner' && sp.team === team && sp.taken && ball.lastTouch === sp.takerId && m.time - (sp.takenAt ?? -99) < CORNER_RUN.window;
+      const boxSpots = cornerWait ? cornerSpots(m, team).map((q) => cornerStart(m, team, q)) : cornerGo ? cornerSpots(m, team) : null;
       // Eigener Einwurf: Zwei Mitspieler bieten sich an – einer kurz, einer die Linie entlang (throwInOffers).
       const offers = sp && sp.type === 'throwin' && sp.team === team && !sp.taken ? throwInOffers(m, team, rest) : null;
       for (const p of rest) {
@@ -196,7 +201,7 @@ export function updateTactics(m, dt) {
         // Der Schütze selbst steht an der Fahne – er bekommt keinen Platz im Strafraum.
         if (boxSpots?.length && p.role !== 'def' && p.id !== sp.takerId) {
           const spot = boxSpots.shift();
-          m.tactics[p.id] = { type: 'support', ...clampToPitch(pitch, spot.x, spot.z, 0.5) };
+          m.tactics[p.id] = { type: cornerGo ? 'run' : 'support', ...clampToPitch(pitch, spot.x, spot.z, 0.5) };
           continue;
         }
         const spot = supportSpot(m, p, dt);
@@ -311,6 +316,13 @@ function throwInTarget(m, p) {
   return m.players.some((q) => q.team === p.team && q.id !== p.id && q.role !== 'gk' && q.state === 'normal' && dist2d(q.pos, p.pos) <= THROWIN.near && !m.players.some((o) => o.team !== p.team && dist2d(o.pos, q.pos) < THROWIN.free));
 }
 
+// Einlaufen bei Ecken: Startpunkt CORNER_RUN.back Meter vor dem Zielplatz (Richtung Spielfeldmitte), auf dem Großfeld mehr
+// (Spielwerte; in echten Ecken laufen die Angreifer aus dem Rückraum in die Zonen, statt dort zu warten).
+export const CORNER_RUN = { back: 3, window: 2.5 };
+export function cornerStart(m, team, spot) {
+  const k = Math.max(1, m.pitch.halfLength / 35);
+  return { x: spot.x - attackDir(m, team) * CORNER_RUN.back * k, z: spot.z * 0.85 };
+}
 export function cornerSpots(m, team) {
   const { pitch, ball } = m;
   const s = attackDir(m, team);

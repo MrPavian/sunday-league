@@ -10,7 +10,7 @@ const N = Number(process.argv[2] ?? 40);
 const venues = (process.argv[3] ?? 'ascheplatz,rasenplatz,sportplatz,park').split(',');
 for (const v of venues) {
   const pitch = PITCHES[v];
-  const s = { corners: 0, boxTouch: 0, otherTouch: 0, outSide: 0, outEnd: 0, goals: 0, landZ: [], peakY: 0 };
+  const s = { corners: 0, mate: 0, boxTouch: 0, otherTouch: 0, outSide: 0, outEnd: 0, goals: 0, landZ: [], peakY: 0 };
   for (let i = 0; i < N; i++) {
     const m = createMatch({ seed: 500 + i, pitch, human: false });
     let track = null;
@@ -40,6 +40,7 @@ for (const v of venues) {
         const p = m.players.find((q) => q.id === m.ball.lastTouch);
         const goalX = Math.sign(m.ball.pos.x) * pitch.halfLength;
         (inPenaltyBox(pitch, m.ball.pos, goalX, 0.5) ? s.boxTouch++ : s.otherTouch++);
+        if (p && p.team === kickTeam) s.mate++; // erster Kontakt beim eigenen Team
         s.landZ.push(+m.ball.pos.z.toFixed(1));
         s.corners++;
         track = null;
@@ -49,5 +50,5 @@ for (const v of venues) {
     }
   }
   const pc = (x) => `${Math.round((100 * x) / (s.corners || 1))} %`;
-  console.log(`${v}: ${s.corners} Ecken · im Strafraum berührt ${pc(s.boxTouch)} · woanders berührt ${pc(s.otherTouch)} · Seitenaus ${pc(s.outSide)} · Grundlinie ${pc(s.outEnd)} · Tore nach Ecke ${s.goals} (${(100 * s.goals / (s.corners || 1)).toFixed(1)} %)`);
+  console.log(`${v}: ${s.corners} Ecken · im Strafraum berührt ${pc(s.boxTouch)} · woanders berührt ${pc(s.otherTouch)} · Seitenaus ${pc(s.outSide)} · Grundlinie ${pc(s.outEnd)} · erster Kontakt Mitspieler ${pc(s.mate)} · Tore nach Ecke ${s.goals} (${(100 * s.goals / (s.corners || 1)).toFixed(1)} %)`);
 }

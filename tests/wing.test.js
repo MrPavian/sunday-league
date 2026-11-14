@@ -31,13 +31,15 @@ function audit(venue, n) {
 
 describe('Spiel über außen', () => {
   it('7er-Feld: deutlich weniger durch die Mitte, mehr Flanken, Tore bleiben im üblichen Rahmen', () => {
-    const r = audit('rasenplatz', 16);
+    // 48 statt 16 Spiele (mit dem Nutzer abgestimmt, 2026-11-13): Mit 16 Spielen kippte die Torschwelle bei jeder Änderung an der
+    // Simulation – Einlaufen bei Ecken: 1,81 in diesen 16 Spielen, aber 2,97 gegenüber 2,94 vorher in je 320 Spielen.
+    const r = audit('rasenplatz', 48);
     expect(r.centre).toBeLessThan(0.75); // gemessen 0,68 (48 Spiele), vorher 0,82
     expect(r.left).toBeGreaterThan(0.1);
     expect(r.right).toBeGreaterThan(0.1);
     expect(r.crosses).toBeGreaterThan(1.6); // gemessen 2,9, vorher 1,3
     expect(r.goals).toBeGreaterThan(2.2); // gemessen 2,7, vorher 2,9
-  }, 240000);
+  }, 720000);
 
   // Flankenverwertung: Der Abnehmer läuft dorthin, wo die Flanke in Kopfhöhe ankommt, und der Kopfball behält ihr
   // Tempo. Vorher (bdc0489) 0 Kopfballtore in 80 Spielen auf dem 9er-Feld, 0,25 Kopfbälle aufs Tor je Spiel.

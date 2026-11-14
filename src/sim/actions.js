@@ -133,7 +133,7 @@ export function tryExecute(m, p) {
   p.pending = null;
   p.setPieceAction = null;
   const restart = m.setPiece && m.setPiece.takerId === p.id && !m.setPiece.taken ? m.setPiece.type : null; // für die Abseitsregel
-  if (m.setPiece && m.setPiece.takerId === p.id) m.setPiece.taken = true;
+  if (m.setPiece && m.setPiece.takerId === p.id && !m.setPiece.taken) (m.setPiece.taken = true), (m.setPiece.takenAt = m.time);
   p.kickCooldown = 0.35;
   p.kickAnim = 0.3;
   const fatigue = 1 - p.stamina;
@@ -337,9 +337,11 @@ function pass(m, p, a, fatigue, fromHands) {
     vy = pitch.flatPlay ? 0.3 : a.clear ? CLEAR.vy : ownHalf ? 2 : 0.5;
   } else {
     // Pass in die Tiefe (lead): nicht in den Fuß, sondern in den Raum vor dem Läufer.
-    const lx0 = clamp(lead ? lead.x : target.pos.x + target.vel.x * 0.35, -pitch.halfLength, pitch.halfLength);
+    // Hohe Ecke: Ziel ist die Zone, in die der Angreifer einläuft (ai.js CORNER_RUN) – nicht die Stelle, an der er noch wartet.
+    const zoneAim = zone && a.lofted ? zone : null;
+    const lx0 = clamp(lead ? lead.x : zoneAim ? zoneAim.x : target.pos.x + target.vel.x * 0.35, -pitch.halfLength, pitch.halfLength);
     const edge = pitch.boundary === 'lines' ? 1.5 : 0.5;
-    const lz0 = clamp(lead ? lead.z : target.pos.z + target.vel.z * 0.35, -pitch.halfWidth + edge, pitch.halfWidth - edge);
+    const lz0 = clamp(lead ? lead.z : zoneAim ? zoneAim.z : target.pos.z + target.vel.z * 0.35, -pitch.halfWidth + edge, pitch.halfWidth - edge);
     // Eckstoß: Die Flanke landet nicht auf den Zentimeter beim Mitspieler, sondern streut um den Zielpunkt (Standardabweichung
     // in Metern, gewählt, nicht gemessen; sonst fiel aus gut 13 % der Ecken ein Tor, real sind es 3–5 %).
     const sc = a.zone && a.lofted ? CORNER_SCATTER * (1.4 - cap1(vs(m, p, 'passing'))) * errScale(vs(m, p, 'passing')) : 0;

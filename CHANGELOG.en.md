@@ -6,6 +6,16 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-13-8 – Attackers make runs at corners
+
+### Changed
+- **Corners:** attackers wait 3 m (full pitch 4.5 m) outside their zone and sprint in as the kick is taken, until the first contact. The markers stand goal-side in the zone. The high corner aims at the zone instead of the waiting player.
+  - Measured: first contact by an attacker 40–47% (before 43–48%; professionals: 52.6%, Copa América 2021). Goals from corners full pitch 9.3% instead of 8.6% (about 810 corners each), grass pitch 8.7% instead of 10.4%, sports ground 6.8% instead of 8.6%.
+  - Goals per match on the 7-a-side pitch: 2.97 instead of 2.94 (320 matches each).
+  - Rejected: a fixed 1.4 s run. It kept the attackers in the box too long; goals from corners rose to 11.6%, almost all from rebounds.
+- **Test:** `tests/wing.test.js` plays 48 instead of 16 matches on the 7-a-side pitch, the goal threshold stays (agreed with the user). With 16 matches it flipped with every change to the simulation.
+- Golden reference values regenerated (intended change to the simulation).
+
 ## 2026-11-13-7 – Announcer, gazette and touchline shouts with more variety
 
 ### Changed

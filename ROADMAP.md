@@ -63,8 +63,8 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
      (ai.js throwInOffers, `scripts/throwin-check.mjs`, tests/throwin_offer.test.js). Zuerst am Ball ist ein Mitspieler in
      81 / 85 / 92 % der Einwürfe (vorher 75 / 50 / 38 %); ohne freien Mitspieler in Wurfweite 2 / 4 / 1 % (vorher 55 / 77 / 88 %).
    - **Verworfen (gemessen, ohne klare Wirkung):** mehr Verteidiger in Raumdeckung bei Ecken; stärker streuende Schüsse im Gedränge.
-   - Offen: Tore aus dem Spiel nach Ecken liegen noch bei 5–8 % (echt insgesamt 2,6–4,6 %); Angreifer sollen einlaufen statt
-     stehen; nach dem Einwurf ist der Ball nach 5 s nur in 43–50 % noch beim Team (Annahme unter Druck); weiter Einwurf in den
+   - Offen: Tore aus dem Spiel nach Ecken liegen noch bei 5–8 % (echt insgesamt 2,6–4,6 %); Angreifer laufen ein ✅ (2026-11-13,
+     ai.js CORNER_RUN, tests/corner_runin.test.js); nach dem Einwurf ist der Ball nach 5 s nur in 43–50 % noch beim Team (Annahme unter Druck); weiter Einwurf in den
      Strafraum; Freistoß-Varianten.
 7. **Animationen.** ✅ **2026-11-13:** Die Torwart-Animationen aus 11.1 gab es schon alle (render/player/keeper.js: Hechtsprung mit
    Abrollen, Fangen in drei Höhen, Fausten, Abwurf, Abschlag, Breitmachen, Fehlgriff). Neu: Arm hoch vor der Ecke, Winken beim

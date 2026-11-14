@@ -6,6 +6,16 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-13-8 – Angreifer laufen bei Ecken ein
+
+### Geändert
+- **Ecken:** Die Angreifer warten 3 m (Großfeld 4,5 m) vor ihrer Zone und sprinten mit dem Schuss hinein, bis zum ersten Kontakt. Die Deckung steht torseitig in der Zone. Die hohe Ecke zielt auf die Zone statt auf den wartenden Spieler.
+  - Gemessen: erster Kontakt durch einen Angreifer 40–47 % (vorher 43–48 %; Profis: 52,6 %, Copa América 2021). Tore nach Ecken Großfeld 9,3 % statt 8,6 % (je rund 810 Ecken), Rasenplatz 8,7 % statt 10,4 %, Sportplatz 6,8 % statt 8,6 %.
+  - Tore je Spiel auf dem 7er-Feld: 2,97 statt 2,94 (je 320 Spiele).
+  - Verworfen: ein fester Einlauf von 1,4 s. Er hielt die Angreifer zu lange im Strafraum; Tore nach Ecken stiegen auf 11,6 %, fast alle aus Abprallern.
+- **Test:** `tests/wing.test.js` spielt auf dem 7er-Feld 48 statt 16 Spiele, die Torschwelle bleibt (mit dem Nutzer abgestimmt). Mit 16 Spielen kippte sie bei jeder Änderung an der Simulation.
+- Golden-Vergleichswerte neu erzeugt (gewollte Änderung der Simulation).
+
 ## 2026-11-13-7 – Stadionsprecher, Kreisblatt und Zurufe mit Abwechslung
 
 ### Geändert
