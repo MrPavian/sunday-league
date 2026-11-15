@@ -9,10 +9,11 @@
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { FIRST_NAMES, HAIR_COLORS, LAST_NAMES, SKIN_TONES } from '../data/names.js';
-import { clubById, humanClub, humanFixture } from './career.js';
+import { clubById, humanClub, humanFixture, playerOf } from './career.js';
 import { adjustMood } from './events.js';
 import { outcome } from './outcomes.js';
-import { isPresident } from './personal.js';
+import { isCoach, isPresident } from './personal.js';
+import { joinRival } from './outcomes.js';
 
 export const NEMESIS = {
   margin: 3, // Niederlage mit so vielen Toren Abstand: Er hat dich vorgeführt
@@ -21,7 +22,12 @@ export const NEMESIS = {
   win: 0.04, // Stimmung nach einem Sieg gegen ihn
   loss: -0.03, // … nach einer Niederlage
   heatMax: 5,
+  hot: 3, // ab dieser Hitze wird das Duell hitzig wie ein Derby (mehr Fouls und Karten, sim: m.derby) – Spielwert
+  poachHeat: 2, // ab dieser Hitze versucht er, dir einen Spieler abzuwerben
+  poachGo: 0.5, // Chance, dass der Spieler geht, wenn du es ihm freistellst (Spielwert)
 };
+// Ist das Duell dieser Woche hitzig? (career.js prepareMatch)
+export const hotDuel = (c) => facesNemesis(c) && (c.coachRival.heat ?? 0) >= NEMESIS.hot;
 const hash = (...parts) => parts.reduce((h, p) => (Math.imul(h ^ p, 0x9e3779b1) + 0x7f4a7c15) >>> 0, 0x51ed270b);
 const rngFor = (c, salt) => createRng(hash(c.seed >>> 0, c.season ?? 1, c.round ?? 0, salt));
 
@@ -164,6 +170,45 @@ export const NEMESIS_EVENTS = {
           ? tr('„Den Handschlag hole ich mir im Rückspiel.“ Am Montag steht es in der Zeitung, die Jungs feiern den Satz.', '"I will collect that handshake in the return game." It is in Monday\'s paper; the lads love the line.')
           : tr('„Genieß es. Es war das letzte Mal.“ Die Kabine hat es gehört und nimmt es mit ins nächste Duell.', '"Enjoy it. It was the last time." The dressing room heard it and takes it into the next meeting.')),
       },
+    ],
+  },
+  // Er wirbt einen deiner Spieler ab (ROADMAP 11.18 Punkt 12, 2026-11-15): einmal je Saison, ab NEMESIS.poachHeat.
+  tr_abwerben: {
+    weight: 2,
+    needs: (c, rng) => {
+      if (!nemesisHere(c) || isPresident(c) || once(c, 'tr_abwerben') || (c.coachRival.heat ?? 0) < NEMESIS.poachHeat) return null;
+      const list = humanClub(c).squad.filter((i) => !isCoach(c, i)).sort((a, b) => playerOf(c, b).rating - playerOf(c, a).rating).slice(0, 4);
+      return list.length ? { s: rng.pick(list), name: c.coachRival.name, club: c.coachRival.clubName } : null;
+    },
+    text: (c, ctx) => tr(`${playerOf(c, ctx.s).name} zeigt dir eine Nachricht von ${ctx.name}: „Bei ${ctx.club} wärst du Stammspieler. Melde dich.“ Er schaut dich an: Was soll er machen?`, `${playerOf(c, ctx.s).name} shows you a message from ${ctx.name}: "At ${ctx.club} you would be a regular. Get in touch." He looks at you: what should he do?`),
+    options: [
+      { label: tr('„Du bist hier wichtig. Bleib.“', '"You matter here. Stay."'), effect: outcome([
+        { w: 3, run: (c, ctx) => (heat(c, 1), adjustMood(c, 0.03), tr(`${playerOf(c, ctx.s).name.split(' ')[0]} löscht die Nachricht vor deinen Augen. In der Kabine spricht es sich herum.`, `${playerOf(c, ctx.s).name.split(' ')[0]} deletes the message in front of you. Word gets round the dressing room.`)) },
+        { w: 1, run: (c, ctx) => (heat(c, 1), adjustMood(c, -0.02), tr(`Er bleibt, aber er wirkt nachdenklich. Ganz aus dem Kopf ist ${ctx.club} nicht.`, `He stays, but he looks thoughtful. ${ctx.club} is not entirely out of his head.`)) },
+      ]) },
+      { label: tr('„Das entscheidest du.“', '"That is your call."'), effect: (c, ctx, rng) => {
+        heat(c, 1);
+        if (rng.chance(NEMESIS.poachGo) && joinRival(c, ctx.s, c.coachRival.club)) {
+          note(c, tr(`${c.season}: hat ${playerOf(c, ctx.s).name} abgeworben.`, `${c.season}: poached ${playerOf(c, ctx.s).name}.`));
+          return tr(`Zwei Tage später trägt ${playerOf(c, ctx.s).name} das Trikot von ${ctx.club}. ${ctx.name} grinst im Kreisblatt.`, `Two days later ${playerOf(c, ctx.s).name} is wearing the ${ctx.club} shirt. ${ctx.name} grins in the gazette.`);
+        }
+        adjustMood(c, 0.02);
+        return tr('Er überlegt eine Nacht und bleibt: „Ich spiel doch nicht für den.“', 'He sleeps on it and stays: "I am not playing for him."');
+      } },
+      { label: tr('Beim Verband über das Abwerben beschweren', 'Complain to the association about the poaching'), effect: (c) => (heat(c, 2), trust(c, -1), tr('Der Verband sieht keinen Regelverstoß. Die Geschichte macht trotzdem die Runde – und ihr seid euch jetzt endgültig nicht grün.', 'The association sees no breach of the rules. The story does the rounds anyway – and now the two of you are truly at odds.')) },
+    ],
+  },
+  // Gemeinsamer Trainerlehrgang beim Verband: einmal je Saison, wenn er im Kreis ist.
+  tr_lehrgang: {
+    weight: 1.5,
+    needs: (c) => (nemesisHere(c) && !isPresident(c) && !once(c, 'tr_lehrgang') && (c.round ?? 0) >= 4 ? { name: c.coachRival.name } : null),
+    text: (c, ctx) => tr(`Trainerlehrgang beim Verband, Samstagvormittag. Der einzige freie Platz ist neben ${ctx.name}.`, `Coaching course at the association, Saturday morning. The only free seat is next to ${ctx.name}.`),
+    options: [
+      { label: tr('Hinsetzen und ins Gespräch kommen', 'Sit down and get talking'), effect: outcome([
+        { w: 2, run: (c) => (heat(c, -1), note(c, tr(`${c.season}: Lehrgang, zusammen gesessen.`, `${c.season}: course, sat together.`)), tr('Ihr redet über Viererkette und Platzwarte. Er ist gar nicht so übel – zumindest bis Sonntag.', 'You talk about back fours and groundsmen. He is not so bad after all – at least until Sunday.')) },
+        { w: 1, run: (c) => (heat(c, 1), tr('Er erklärt dir drei Stunden lang, was du falsch machst. Du lernst trotzdem etwas – über ihn.', 'He spends three hours explaining what you do wrong. You learn something anyway – about him.')) },
+      ]) },
+      { label: tr('Lieber stehen bleiben', 'Rather stay standing'), effect: (c) => (heat(c, 1), tr('Drei Stunden an der Wand. Der Referent fragt zweimal, ob du nicht doch Platz nehmen willst.', 'Three hours against the wall. The lecturer asks twice whether you would not rather sit down.')) },
     ],
   },
 };

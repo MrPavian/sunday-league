@@ -6,6 +6,17 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-15-6 – Rival manager: heated meetings, poaching, coaching course
+
+### New
+- **Heat in the match** (ROADMAP 11.18 point 12): from heat 3 (of 5), the meeting with the rival manager counts as a derby (sim: more fouls, slide tackles, cards).
+- **Poaching** (from heat 2, once per season): one of your four best gets a message. Appeal to stay, free choice (50% he leaves, with a fee in the pro leagues) or complain to the association (heat +2, backing −1).
+- **Coaching course** (once per season): sitting together usually cools things, staying on your feet heats them up.
+- All thresholds and shares are game values.
+
+### Tests
+- `tests/coachrival.test.js`: heat threshold for the derby, poaching only from heat 2, all answers run.
+
 ## 2026-11-15-5 – Floodlight failure visible in the match
 
 ### New

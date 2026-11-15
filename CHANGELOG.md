@@ -6,6 +6,17 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-15-6 – Trainer-Rivale: hitzige Duelle, Abwerben, Lehrgang
+
+### Neu
+- **Hitze im Spiel** (ROADMAP 11.18 Punkt 12): Ab Hitze 3 (von 5) gilt das Duell mit dem Trainer-Rivalen als Derby (sim: mehr Fouls, Grätschen, Karten).
+- **Abwerben** (ab Hitze 2, einmal je Saison): einer der vier Besten bekommt eine Nachricht. Bleib-Appell, freie Wahl (50 % geht er, mit Ablöse in den Profiligen) oder Beschwerde beim Verband (Hitze +2, Rückhalt −1).
+- **Trainerlehrgang** (einmal je Saison): zusammensitzen kühlt meist ab, stehen bleiben heizt an.
+- Alle Grenzen und Anteile sind Spielwerte.
+
+### Tests
+- `tests/coachrival.test.js`: Hitzegrenze fürs Derby, Abwerben erst ab Hitze 2, alle Antworten laufen.
+
 ## 2026-11-15-5 – Flutlicht-Ausfall im Spiel zu sehen
 
 ### Neu

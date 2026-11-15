@@ -15,6 +15,7 @@ import { slotRating } from '../sim/position.js';
 import { ATTR_KEYS, ensureStrength } from '../sim/strength.js';
 import { afterMatchPositions, deliverGrumbles, famAt, migratePositions, posFamOf } from './positions.js';
 import { isRival } from './rivals.js';
+import { hotDuel } from './coachrival.js';
 import { numberOf } from './numbers.js';
 import { applyReferee, recordReferee } from './referees.js';
 import { createMatch, MATCH, stepMatch } from '../sim/match.js';
@@ -1346,6 +1347,8 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   match.coachPersona = humanIsAway ? [persona(away), persona(home)] : [persona(home), persona(away)];
   // Derby: hitziger, mehr Karten – außer man hat sich aufs faire Grillen geeinigt.
   match.derby = (isDerbyFixture(career, fixture) && !career.week?.derbyFair) || grudgeMatch(career, home.human ? away.id : home.id) || ((home.human || away.human) && isRival(career, home.human ? away.id : home.id));
+  // Trainer-Rivale (coachrival.js): Ab einer gewissen Hitze wird das Duell hitzig wie ein Derby.
+  if ((home.human || away.human) && hotDuel(career)) match.derby = true;
   if (home.human || away.human) applyReferee(career, match); // Schiri aus dem festen Stamm (referees.js)
   // Eigenes Spiel: Manchmal kommt am Spieltag etwas dazwischen.
   if (home.human || away.human) matchdaySurprise(match, humanIsAway || home.human ? 0 : 1, createRng(hashSeed(career.seed, career.season, career.round, 77)), 0.28, null, career.level ?? 1);

@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-15-6',
+    de: { title: 'Trainer-Rivale: hitzige Duelle, Abwerben, Lehrgang', items: ['Ist die Rivalität heiß genug, wird das Spiel gegen ihn hitzig wie ein Derby: mehr Fouls, mehr Karten.', 'Er versucht, dir einen deiner besten Spieler abzuwerben. Ob der Spieler bleibt, hängt an deiner Antwort.', 'Beim Trainerlehrgang des Verbands ist nur noch der Platz neben ihm frei.'] },
+    en: { title: 'Rival manager: heated meetings, poaching, coaching course', items: ['Once the rivalry is hot enough, the game against him gets as heated as a derby: more fouls, more cards.', 'He tries to poach one of your best players. Whether the player stays depends on your answer.', 'At the association\'s coaching course, the only free seat is next to him.'] },
+  },
+  {
     id: '2026-11-15-5',
     de: { title: 'Flutlicht-Ausfall im Spiel zu sehen', items: ['Lässt du den ausgefallenen Flutlichtmast unrepariert, wird das Heimspiel am Abend angepfiffen – und eine Hälfte des Platzes liegt im Halbdunkel.', 'Zur Mitte hin läuft das Halbdunkel weich aus, das Licht des anderen Masts reicht noch ein Stück herüber.'] },
     en: { title: 'Floodlight failure visible in the match', items: ['If you leave the failed floodlight mast unrepaired, the home game kicks off in the evening – and half the pitch lies in the half-light.', 'Towards the middle the half-light fades out softly; the other mast still reaches a little way across.'] },

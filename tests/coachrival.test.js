@@ -127,3 +127,38 @@ describe('Gesicht des Trainer-Rivalen', () => {
     expect(rivalLook(null)).toBe(null);
   });
 });
+
+describe('Rivalität: Hitze im Spiel, Abwerben, Lehrgang (2026-11-15)', () => {
+  const { NEMESIS, NEMESIS_EVENTS, hotDuel } = cr;
+  const withRival = (heat) => {
+    const c = createCareer({ seed: 9 });
+    const me = humanClub(c).id;
+    const f = c.fixtures[c.round].find((x) => x.home === me || x.away === me);
+    const opp = c.clubs.find((x) => x.id === (f.home === me ? f.away : f.home));
+    c.coachRival = { name: 'Ralf Brenner', club: opp.id, clubName: opp.name, since: 1, w: 0, d: 0, l: 1, heat, notes: [] };
+    return c;
+  };
+  it('ab der Hitzegrenze ist das Duell hitzig wie ein Derby, darunter nicht', () => {
+    expect(hotDuel(withRival(NEMESIS.hot - 1))).toBe(false);
+    expect(hotDuel(withRival(NEMESIS.hot))).toBe(true);
+  });
+  it('Abwerben erst ab der Hitze dafür; jede Antwort läuft und heizt an', () => {
+    expect(NEMESIS_EVENTS.tr_abwerben.needs(withRival(NEMESIS.poachHeat - 1), createRng(1))).toBe(null);
+    for (let i = 0; i < 3; i++) {
+      const c = withRival(NEMESIS.poachHeat);
+      const ctx = NEMESIS_EVENTS.tr_abwerben.needs(c, createRng(1));
+      expect(ctx).not.toBe(null);
+      expect(NEMESIS_EVENTS.tr_abwerben.options[i].effect(c, ctx, createRng(i + 2)).length).toBeGreaterThan(20);
+      expect(c.coachRival.heat).toBeGreaterThan(NEMESIS.poachHeat);
+    }
+  });
+  it('Lehrgang: jede Antwort läuft', () => {
+    for (let i = 0; i < 2; i++) {
+      const c = withRival(2);
+      c.round = 5;
+      const ctx = NEMESIS_EVENTS.tr_lehrgang.needs(c, createRng(1));
+      expect(ctx).not.toBe(null);
+      expect(NEMESIS_EVENTS.tr_lehrgang.options[i].effect(c, ctx, createRng(3)).length).toBeGreaterThan(20);
+    }
+  });
+});
