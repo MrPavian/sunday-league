@@ -41,9 +41,9 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
    - ✅ **Geprüft 2026-11-15** (tests/event_reach.test.js): Die elf nie gezählten Ereignisse scheitern an der Messung, nicht am
      Spiel. Die Zählung würfelt nie ein 0:0 (`tiger_schlaf`), lässt Spieler sich nicht entwickeln (`profivertrag` ab Stärke 68,
      `berater` ab 130 – Profikader liegen bei 141 und mehr), hat keine Jugend (`profi_scout` → `profi_rueckkehr`,
-     `mittraining_graetsche`, `pate_meint`), keine Unruhe (`grueppchen`, `mannschaftsrat`), keinen Pokal in Reichweite
-     (`elfmeter_training`). `rasenheizung` ist ein Bau, kein Ereignis. Der Test stellt für sechs davon den Zustand her und zeigt,
-     dass sie dann kommen; die Ligen 1 und 11 bleiben in der Zählung dünn besetzt.
+     `mittraining_graetsche`, `pate_meint`), keine Unruhe (`grueppchen`, `mannschaftsrat`), vermutlich keinen Pokal in Reichweite
+     (`elfmeter_training`). `rasenheizung` ist ein Bau, kein Ereignis. Der Test stellt für fünf davon (Grüppchen, Mannschaftsrat,
+     Profivertrag, Tim schläft, Profi-Scout) den Zustand her und zeigt, dass sie dann kommen; die übrigen nur nach der Bedingung im Code; die Ligen 1 und 11 bleiben in der Zählung dünn besetzt.
 3. **Einstieg für neue Spieler.** ✅ **Erster Durchgang 2026-11-12** (frische Karriere im Hochformat durchgeklickt und jede
    Seite vermessen): Überschrift der Gründungsversammlung war abgeschnitten (behoben); die Kasse war in Woche 1 5,4 Bildschirme
    lang – Ausrüster-Angebote jetzt eingeklappt; unter „Du" waren 17 von 35 Knöpfen gesperrt – der Privat-Block zeigt je Bereich
