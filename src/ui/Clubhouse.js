@@ -68,11 +68,12 @@ import { hex, dartPoints, leagueName } from './clubhouse/shared.js';
 // Bereich; data-action="tab" mit einem alten Tab-Namen funktioniert deshalb weiter.
 const AREAS = [
   { id: 'home', icon: 'home', label: () => tr('Heute', 'Today'), tabs: ['home'] },
-  { id: 'team', icon: 'team', label: () => tr('Mannschaft', 'Squad'), tabs: ['squad', 'lineup', 'tactic', 'training', 'transfers', 'teams'] },
+  { id: 'team', icon: 'team', label: () => tr('Mannschaft', 'Squad'), tabs: ['squad', 'lineup', 'training', 'teams'] },
   { id: 'season', icon: 'season', label: () => tr('Saison', 'Season'), tabs: ['table', 'fixtures', 'cup'] },
   // Menü-Aufräumen (Nutzerentscheid 2026-11-06, „flach, höchstens zwei Ebenen"): keine Unterreiter mehr im Verein; Präsidium steht
   // unter „Du", Jugend, Frauen und Alte Herren zusammen unter „Teams" (Mannschaft).
-  { id: 'club', icon: 'club', label: () => tr('Verein', 'Club'), tabs: ['cash', 'anlage', 'leben', 'kit', 'museum', 'me'] },
+  // Reiter zusammengelegt (ROADMAP 11.18 Punkt 3, vom Nutzer gewünscht 2026-11-15): je vier statt sechs, siehe MERGED.
+  { id: 'club', icon: 'club', label: () => tr('Verein', 'Club'), tabs: ['cash', 'leben', 'kit', 'me'] },
   { id: 'pub', icon: 'pub', label: () => tr('Kneipe', 'Pub'), tabs: ['pub'] },
   { id: 'phone', icon: 'phone', label: () => tr('Handy', 'Phone'), tabs: ['chat'] },
 ];
@@ -101,10 +102,16 @@ const TAB_LABELS = () => ({
   fixtures: tr('Spielplan', 'Fixtures'),
 });
 const visibleTabs = (area) => area.tabs;
+// Zusammengelegte Reiter: Ein Reiter zeigt mehrere Teile untereinander, jeder mit Überschrift. Die alten Namen (tactic, transfers,
+// anlage, museum) bleiben als Teile und als Sprungziel erhalten (resolveTab, part).
+export const MERGED = { squad: ['squad', 'transfers'], lineup: ['lineup', 'tactic'], cash: ['cash', 'anlage'], leben: ['leben', 'museum'] };
+const MERGED_LABELS = () => ({ squad: tr('Kader & Transfers', 'Squad & transfers'), lineup: tr('Aufstellung & Taktik', 'Line-up & tactics'), cash: tr('Kasse & Anlage', 'Kitty & grounds'), leben: tr('Vereinsleben & Museum', 'Club life & museum') });
+const PART_OF = Object.fromEntries(Object.entries(MERGED).flatMap(([tab, parts]) => parts.slice(1).map((p) => [p, tab])));
 // Alte Reiter-Namen (Knöpfe, Spielstände, Tests) führen auf die neuen Reiter; focus = welcher Teil oben steht.
 const CLUB_SUB_TAB = { me: 'me', anlage: 'anlage', leben: 'leben', trikot: 'kit', wappen: 'kit' };
 export function resolveTab(tab, clubSub = null) {
-  if (tab === 'club') return { tab: CLUB_SUB_TAB[clubSub] ?? 'anlage' };
+  if (tab === 'club') return resolveTab(CLUB_SUB_TAB[clubSub] ?? 'anlage');
+  if (PART_OF[tab]) return { tab: PART_OF[tab], part: tab };
   if (tab === 'office') return { tab: 'me' };
   if (tab === 'youth' || tab === 'women' || tab === 'oldboys') return { tab: 'teams', focus: tab };
   return { tab };
@@ -141,6 +148,7 @@ export class Clubhouse {
         const r = resolveTab(value, this.clubSub);
         this.tab = r.tab;
         if (r.focus) this.teamsFocus = r.focus;
+        this.partFocus = t.dataset.part ?? r.part ?? null; // Vereinsheim-Szene: Vitrine → Museum, Taktiktafel → Taktik
       }
       else if (action === 'area') {
         const area = AREAS.find((a) => a.id === value) ?? AREAS[0];
@@ -208,7 +216,9 @@ export class Clubhouse {
       } else if (action === 'kitGroup') this.kitGroup = value;
       else if (action === 'clubSub') {
         this.clubSub = value; // alte Unterseiten des Vereins: jetzt eigene Reiter (aus dem Präsidium direkt zum Ausbau)
-        this.tab = resolveTab('club', value).tab;
+        const r = resolveTab('club', value);
+        this.tab = r.tab;
+        this.partFocus = r.part ?? null;
       }
       else if (action === 'kitCollar') this.draftKit().collar = value;
       else if (action === 'kitSleeves') this.draftKit().sleeves = value;
@@ -829,7 +839,9 @@ export class Clubhouse {
         else c.tutorial.club = i + 1;
         this.openPlayer = null;
         this.pick = null;
-        this.tab = steps[Math.min(i + 1, steps.length - 1)].tab;
+        const next = steps[Math.min(i + 1, steps.length - 1)];
+        this.tab = next.tab;
+        this.partFocus = next.part ?? null;
         this.h.onChange();
         this.render();
       },
@@ -877,6 +889,13 @@ export class Clubhouse {
     this.render();
   }
 
+  // Inhalt des Reiters; zusammengelegte Reiter zeigen ihre Teile untereinander.
+  tabBody(labels) {
+    const parts = MERGED[this.tab];
+    if (!parts) return this[`tab_${this.tab}`]();
+    return parts.map((t, i) => `<section class="tab-part" data-part="${t}">${i ? `<h3 class="teams-head">${labels[t]}</h3>` : ''}${this[`tab_${t}`]()}</section>`).join('');
+  }
+
   render() {
     const c = this.career;
     const club = humanClub(c);
@@ -886,6 +905,7 @@ export class Clubhouse {
     const rt = resolveTab(this.tab, this.clubSub); // z. B. nach dem Spiel der Alten Herren: tab = 'oldboys'
     this.tab = rt.tab;
     if (rt.focus) this.teamsFocus = rt.focus;
+    if (rt.part) this.partFocus = rt.part;
     if (this.tab === 'home' || !this[`tab_${this.tab}`]) this.tab = 'home';
     const area = areaOfTab(this.tab);
     this.lastTab[area.id] = this.tab;
@@ -895,14 +915,15 @@ export class Clubhouse {
     const rail = AREAS.map(
       (a) => `<button class="rail-btn" data-action="area" data-value="${a.id}" aria-current="${a.id === area.id ? 'page' : 'false'}">${icon(a.icon, 26)}<span>${a.label()}</span>${badges[a.id] ? `<b class="ui-badge">${badges[a.id]}</b>` : ''}</button>`,
     ).join('');
-    const labels = TAB_LABELS();
+    const labels = { ...TAB_LABELS(), ...MERGED_LABELS() };
+    const partLabels = TAB_LABELS();
     // Bereich „Verein" ist die Vereinsmappe: Register statt Reiterleiste, Inhalt in der Kartonmappe.
     const folder = area.id === 'club';
     const areaTabs = visibleTabs(area);
     const sub = areaTabs.length > 1
       ? folder
-        ? `<div class="m-tabs folder-tabs${areaTabs.length > 4 ? ' tabs-grid' : ''}" role="tablist">${areaTabs.map((t) => `<button role="tab" aria-selected="${t === this.tab}" data-action="tab" data-value="${t}">${labels[t]}</button>`).join('')}</div>`
-        : uiTabs(areaTabs.map((t) => [t, labels[t]]), this.tab, 'tab').replace('class="ui-tabs"', `class="ui-tabs${areaTabs.length > 4 ? ' tabs-grid' : ''}"`)
+        ? `<div class="m-tabs folder-tabs${areaTabs.length > 3 ? ` tabs-grid${areaTabs.length === 4 ? ' grid2' : ''}` : ''}" role="tablist">${areaTabs.map((t) => `<button role="tab" aria-selected="${t === this.tab}" data-action="tab" data-value="${t}">${labels[t]}</button>`).join('')}</div>`
+        : uiTabs(areaTabs.map((t) => [t, labels[t]]), this.tab, 'tab').replace('class="ui-tabs"', `class="ui-tabs${areaTabs.length > 3 ? ` tabs-grid${areaTabs.length === 4 ? ' grid2' : ''}` : ''}"`)
       : '';
     // Kneipe: Der 3D-Raum liegt hinter der Bühne, das Vereinsheim ist dort durchsichtig.
     this.root.classList.toggle('see-through', this.tab === 'pub' && homeView() !== 'klassisch');
@@ -920,10 +941,15 @@ export class Clubhouse {
             <div class="club-tools">${this.h.onSettings ? button(icon('gear'), { kind: 'ghost icon', action: 'onSettings', 'aria-label': tr('Einstellungen', 'Settings'), title: tr('Einstellungen', 'Settings') }) : ''}${button(icon('exit'), { kind: 'ghost icon', action: 'onMenu', 'aria-label': tr('Hauptmenü', 'Main menu'), title: tr('Hauptmenü', 'Main menu') })}</div>
           </header>
           ${sub}
-          <div class="club-body ${area.id === 'home' ? 'is-home' : 'tab'}${folder ? ' in-folder' : ''}${enter ? ' enter' : ''}">${area.id === 'home' ? this.hub() : folder ? `<div class="m-folder club-folder"><div class="folder-sheet">${this[`tab_${this.tab}`]()}</div></div>` : this[`tab_${this.tab}`]()}</div>
+          <div class="club-body ${area.id === 'home' ? 'is-home' : 'tab'}${folder ? ' in-folder' : ''}${enter ? ' enter' : ''}">${area.id === 'home' ? this.hub() : folder ? `<div class="m-folder club-folder"><div class="folder-sheet">${this.tabBody(partLabels)}</div></div>` : this.tabBody(partLabels)}</div>
         </div>
       </div>`;
     if (scroll) this.restoreScroll(scroll);
+    // Sprung auf einen Teil eines zusammengelegten Reiters (z. B. „Taktik“): einmal hinscrollen.
+    if (this.partFocus) {
+      this.root.querySelector?.(`[data-part="${this.partFocus}"]`)?.scrollIntoView?.({ block: 'start' });
+      this.partFocus = null;
+    }
     this.bindLineup();
     // Chat im Handy: beim Öffnen unten anfangen (neueste Nachricht), wie im echten Messenger.
     const wa = this.root.querySelector('.phone-stage.open .wa-body');

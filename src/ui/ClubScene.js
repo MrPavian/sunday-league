@@ -21,16 +21,16 @@ const ROLE = { gk: '#e8742a', def: '#4fa3e0', mid: '#6fbf73', fwd: '#d9534f' };
 const euro = (n) => tr(`${Math.round(n).toLocaleString('de-DE')} €`, `€${Math.round(n).toLocaleString('en-GB')}`);
 
 // Ein Objekt: Knopf mit Bild (art), Beschriftung und Wert. badge: Zähler (offene Entscheidung).
-function sceneObj(cls, { action, value, art, label, info, badge = 0, aria }) {
-  return `<button class="cs-obj ${cls}" data-action="${action}"${value != null ? ` data-value="${esc(value)}"` : ''} aria-label="${esc(aria ?? `${label}: ${info}`)}">
+function sceneObj(cls, { action, value, part, art, label, info, badge = 0, aria }) {
+  return `<button class="cs-obj ${cls}" data-action="${action}"${value != null ? ` data-value="${esc(value)}"` : ''}${part ? ` data-part="${part}"` : ''} aria-label="${esc(aria ?? `${label}: ${info}`)}">
     <span class="cs-art">${art}${badge ? `<b class="ui-badge">${badge}</b>` : ''}</span>
     <span class="cs-label"><b>${label}</b><small>${info}</small></span>
   </button>`;
 }
 
 // Klassische Ansicht: dasselbe Objekt als schlichte Kachel – gleiche Aktion, gleiche Angaben.
-function tile(cls, { action, value, label, info, badge = 0, aria }) {
-  return `<button class="ui-card tap cc-tile" data-action="${action}"${value != null ? ` data-value="${esc(value)}"` : ''} aria-label="${esc(aria ?? `${label}: ${info}`)}">
+function tile(cls, { action, value, part, label, info, badge = 0, aria }) {
+  return `<button class="ui-card tap cc-tile" data-action="${action}"${value != null ? ` data-value="${esc(value)}"` : ''}${part ? ` data-part="${part}"` : ''} aria-label="${esc(aria ?? `${label}: ${info}`)}">
     <p class="t-cap">${label}${badge ? ` <b class="ui-badge">${badge}</b>` : ''}</p><p class="t-body">${info}</p>
   </button>`;
 }
@@ -151,9 +151,9 @@ export function clubScene(c, { results = null, classic = false, wall: wallKind =
   const people = (row, count) => Array.from({ length: count }, (_, k) => `<i class="${row}" style="--x:${k};--n:${count};--k:${row === 'back' && k === 0 ? keeper : shirt};--s:${shorts}"></i>`).join('');
   const photo = `<span class="cs-teamphoto"><span class="cs-shot">${people('back', backRow)}${people('front', inPhoto - backRow)}</span><small>${tr('Saison', 'Season')} ${c.season}</small></span>`;
   const wall = [
-    !classic && wallKind !== 'vitrine' ? '' : obj('cs-cabinet', { action: 'tab', value: 'museum', art: `<span class="cs-vitrine${cab.length ? '' : ' empty'}">${cabArt}</span>`, label: tr('Vitrine', 'Trophy cabinet'), info: cabInfo }),
+    !classic && wallKind !== 'vitrine' ? '' : obj('cs-cabinet', { action: 'tab', value: 'leben', part: 'museum', art: `<span class="cs-vitrine${cab.length ? '' : ' empty'}">${cabArt}</span>`, label: tr('Vitrine', 'Trophy cabinet'), info: cabInfo }),
     classic || wallKind !== 'foto' ? '' : obj('cs-photo', { action: 'tab', value: 'squad', art: photo, label: tr('Mannschaftsfoto', 'Team photo'), info: `${esc(leagueName(c))} · ${club.squad.length} ${tr('Spieler', 'players')}` }),
-    obj('cs-board', { action: 'tab', value: 'tactic', art: `<span class="cs-whiteboard">${board}</span>`, label: tr('Taktiktafel', 'Tactics board'), info: boardInfo }),
+    obj('cs-board', { action: 'tab', value: 'lineup', part: 'tactic', art: `<span class="cs-whiteboard">${board}</span>`, label: tr('Taktiktafel', 'Tactics board'), info: boardInfo }),
     obj('cs-pin', { action: 'tab', value: 'table', art: `<span class="cs-cork">${big ? slips : `<i class="cs-slip">${pos + 1}.</i><i class="cs-slip b">${me.pts} ${tr('Pkt.', 'pts')}</i>`}${notice ? '<i class="cs-slip n">!</i>' : ''}</span>`, label: tr('Pinnwand', 'Notice board'), info: `${pos + 1}. ${tr('Platz', 'place')} · ${me.pts} ${tr('Punkte', 'points')}`, badge: notice ? 1 : 0 }),
     obj('cs-cal', { action: 'tab', value: 'fixtures', art: `<span class="cs-calsheet"><i>${dates[0] ? tr(['', 'JAN', 'FEB', 'MÄR', 'APR', 'MAI', 'JUN', 'JUL', 'AUG', 'SEP', 'OKT', 'NOV', 'DEZ'][dates[0].date.month], ['', 'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'][dates[0].date.month]) : '—'}</i>${big ? calRows || '<b>✓</b>' : `<b>${dates[0] ? dates[0].date.day : '✓'}</b>`}</span>`, label: tr('Kalender', 'Calendar'), info: dates[0] ? `${dates[0].label} · ${esc(dates[0].what)}` : next ? `${dateLabel(next)}${opp ? ` · ${opp.short}` : ''}` : tr('Saison beendet', 'Season over') }),
   ].join('');
@@ -161,7 +161,7 @@ export function clubScene(c, { results = null, classic = false, wall: wallKind =
     obj('cs-stack', { action: 'tab', value: 'squad', art: `<span class="cs-cards"><i></i><i></i><i style="--k:${hex(club.kit.shirt)}"></i></span>`, label: tr('Spielerkarten', 'Player cards'), info: w ? `${club.squad.length} ${tr('Spieler', 'players')} · ${yes} ${tr('Zusagen', 'in')}` : `${club.squad.length} ${tr('Spieler', 'players')}` }),
     obj('cs-bag', { action: 'tab', value: 'lineup', art: `<span class="cs-sportbag" style="--k:${hex(club.kit.shirt)}"><i></i></span>`, label: tr('Sporttasche', 'Kit bag'), info: opp ? `${tr('Aufstellung gegen', 'Line-up v')} ${opp.short}` : tr('Aufstellung', 'Line-up') }),
     obj('cs-phone', { action: 'tab', value: 'chat', art: `<span class="cs-mobile${pending ? ' lit' : ''}"><i></i></span>`, label: tr('Handy', 'Phone'), info: phoneInfo, badge: pending }),
-    obj('cs-paper', { action: 'tab', value: 'museum', art: `<span class="cs-news"><i>KREISBLATT</i><b>${lastRes ? esc(lastRes.split(' ')[1]) : '—'}</b></span>`, label: tr('Kreisblatt', 'Gazette'), info: lastRes ? esc(lastRes) : tr('Noch kein Spiel', 'No game yet') }),
+    obj('cs-paper', { action: 'tab', value: 'leben', part: 'museum', art: `<span class="cs-news"><i>KREISBLATT</i><b>${lastRes ? esc(lastRes.split(' ')[1]) : '—'}</b></span>`, label: tr('Kreisblatt', 'Gazette'), info: lastRes ? esc(lastRes) : tr('Noch kein Spiel', 'No game yet') }),
     obj('cs-folder', { action: 'tab', value: 'cash', art: `<span class="cs-mappe">${crestSVG(crestOf(club), { size: 22, short: club.short, year: crestExtras(c).year, label: club.name })}</span>`, label: tr('Vereinsmappe', 'Club folder'), info: `${tr('Kasse', 'Kitty')} ${euro(c.cash ?? 0)}` }),
     obj('cs-beer', { action: 'tab', value: 'pub', art: `<span class="cs-coaster"><i></i></span>`, label: tr('Stammtisch', 'Regulars\' table'), info: tr('Kneipe', 'Pub') }),
     obj('cs-notebook', { action: 'onSettings', art: `<span class="cs-book"><i></i></span>`, label: tr('Notizbuch', 'Notebook'), info: tr('Einstellungen', 'Settings') }),

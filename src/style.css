@@ -1938,6 +1938,7 @@ body.manager #end { padding-bottom: 84px; }
    ab fünf Reitern ein ordentliches Raster mit drei Spalten. */
 @media (max-width: 560px) {
   .club-panel .ui-tabs.tabs-grid, .club-main .folder-tabs.tabs-grid { display: grid; grid-template-columns: repeat(3, 1fr); overflow: visible; gap: 2px 4px; }
+  .club-panel .ui-tabs.tabs-grid.grid2, .club-main .folder-tabs.tabs-grid.grid2 { grid-template-columns: repeat(2, 1fr); } /* vier Reiter: 2 × 2 */
   .club-panel .ui-tabs.tabs-grid button, .club-main .folder-tabs.tabs-grid button { padding: 2px 4px; white-space: normal; line-height: 1.1; font-size: var(--fs-secondary); }
   /* Umschalter in einer Seite (Jugend, Transfers …) ab vier Knöpfen: 2 × 2 statt seitlich abgeschnitten. */
   .club-body .ui-tabs:not(.crest-tabs):has(> button:nth-child(4)) { display: grid; grid-template-columns: repeat(2, 1fr); overflow: visible; }

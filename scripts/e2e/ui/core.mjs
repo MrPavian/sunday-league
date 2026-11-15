@@ -42,7 +42,7 @@ export async function screens(b, size) {
   await click(p, '.lp-token[data-value="2"]');
   const after = await names();
   ok(before[1] === after[2] && before[2] === after[1], 'Aufstellung: Tausch per Antippen wirkt nicht');
-  await click(p, '[data-action="tab"][data-value="tactic"]');
+  await click(p, '[data-action="tab"][data-value="lineup"]');
   await p.waitForTimeout(200);
   await click(p, '.m-tcard[data-value="pressing"]');
   ok(await p.$eval('.m-tcard[data-value="pressing"]', (e) => e.classList.contains('active')), 'Trainerkarte wird nicht aktiv');

@@ -6,6 +6,17 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-15-2 – Fewer tabs in Squad and Club
+
+### Changed
+- **Tabs merged** (ROADMAP 11.18 point 3, requested by the user): Squad has Squad & transfers, Line-up & tactics, Training, Teams; Club has Kitty & grounds, Club life & museum, Kit & crest, You. The parts are stacked with headings.
+- Old jump targets (tactics, transfers, grounds, museum) lead to the new tab and scroll to the part: trophy cabinet and gazette in the clubhouse, tactics board, tutorial, president's office.
+- On phones the four tabs sit in a 2 × 2 grid (long names used to run off the screen).
+
+### Tests
+- `tests/clubnav.test.js`: transfers, tactics, grounds and museum are now among the old names that resolveTab leads to a tab (like youth, women, old boys).
+- Browser tests: clicks on the old tabs go to the new ones (`scripts/e2e/modes.mjs`, `ui/core.mjs`, `ui/platz.mjs`, `ui/transfers.mjs`).
+
 ## 2026-11-15-1 – Press conference: relegation fight, cup and your image
 
 ### New

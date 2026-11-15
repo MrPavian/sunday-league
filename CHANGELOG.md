@@ -6,6 +6,17 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-15-2 – Weniger Reiter in Mannschaft und Verein
+
+### Geändert
+- **Reiter zusammengelegt** (ROADMAP 11.18 Punkt 3, vom Nutzer gewünscht): Mannschaft hat Kader & Transfers, Aufstellung & Taktik, Training, Teams; Verein hat Kasse & Anlage, Vereinsleben & Museum, Trikot & Wappen, Du. Die Teile stehen untereinander mit Überschrift.
+- Alte Sprungziele (Taktik, Transfers, Anlage, Museum) führen auf den neuen Reiter und scrollen zum Teil: Vitrine und Kreisblatt im Vereinsheim, Taktiktafel, Tutorial, Präsidium.
+- Am Handy stehen vier Reiter als Raster 2 × 2 (vorher liefen lange Namen aus dem Bild).
+
+### Tests
+- `tests/clubnav.test.js`: Transfers, Taktik, Anlage und Museum stehen jetzt bei den alten Namen, die über resolveTab auf einen Reiter führen (wie Jugend, Frauen, Alte Herren).
+- Browser-Tests: Klicks auf die alten Reiter gehen auf die neuen (`scripts/e2e/modes.mjs`, `ui/core.mjs`, `ui/platz.mjs`, `ui/transfers.mjs`).
+
 ## 2026-11-15-1 – Pressekonferenz: Abstiegskampf, Pokal und dein Auftreten
 
 ### Neu

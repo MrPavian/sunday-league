@@ -34,7 +34,7 @@ export async function transferMarkt(b, size, shots) {
   await click(p, '.career [data-c="continue"]');
   await p.waitForTimeout(1500);
   await click(p, '[data-action="area"][data-value="team"]');
-  await p.evaluate(() => document.querySelector('[data-action="tab"][data-value="transfers"]')?.click());
+  await p.evaluate(() => document.querySelector('[data-action="tab"][data-value="squad"]')?.click());
   await p.waitForTimeout(400);
   ok(!!(await p.$('[data-testid="tf"]')), 'Reiter Transfers fehlt');
   const subs = await p.$$eval('[data-testid="tf"] .ui-tabs [data-action="tfSub"]', (e) => e.map((x) => x.dataset.value));

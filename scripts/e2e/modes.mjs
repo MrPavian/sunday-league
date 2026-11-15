@@ -21,7 +21,8 @@ const INCIDENTS = { hund: 'park', zaun: 'hinterhof', autoalarm: 'parkplatz', pol
 // gemessen: Autoalarm 26 von 30 Seeds, alte wie neue Ballphysik). Der Browser-Test prüft den Ablauf, nicht die Rate: bis zu
 // drei Seeds, der erste mit Vorfall zählt. Die Rate prüfen die Unit-Tests.
 const INCIDENT_SEED = { autoalarm: [15, 7, 21], zaun: [11, 7, 21] };
-const TABS = [['home'], ['team', 'squad'], ['team', 'lineup'], ['team', 'tactic'], ['team', 'training'], ['team', 'teams'], ['team', 'transfers'], ['season', 'table'], ['season', 'fixtures'], ['season', 'cup'], ['club', 'cash'], ['club', 'anlage'], ['club', 'leben'], ['club', 'kit'], ['club', 'museum'], ['club', 'me'], ['pub'], ['phone', 'chat']];
+// Reiter seit 2026-11-15 zusammengelegt (Kader & Transfers, Aufstellung & Taktik, Kasse & Anlage, Vereinsleben & Museum).
+const TABS = [['home'], ['team', 'squad'], ['team', 'lineup'], ['team', 'training'], ['team', 'teams'], ['season', 'table'], ['season', 'fixtures'], ['season', 'cup'], ['club', 'cash'], ['club', 'leben'], ['club', 'kit'], ['club', 'me'], ['pub'], ['phone', 'chat']];
 
 const frame = (p) => p.evaluate(() => globalThis.__sl?.diag?.frame ?? -1);
 async function running(p) {
@@ -588,7 +589,7 @@ export async function presidentFlow(b, shots = process.env.E2E_SHOTS) {
     }
     // Taktik und Aufstellung nur lesend, Präsidium-Tab da.
     await click(p, '[data-action="area"][data-value="team"]');
-    await click(p, '[data-action="tab"][data-value="tactic"]');
+    await click(p, '[data-action="tab"][data-value="lineup"]');
     await p.waitForTimeout(300);
     ok(!!(await p.$('.coach-note')) && !(await p.$('[data-action="tacticSystem"], [data-action="tacticStyle"], .m-tcard')), `${size}: Taktik nicht lesend`);
     if (shots) await p.screenshot({ path: `${shots}/tactic-readonly-${size}.png` });
