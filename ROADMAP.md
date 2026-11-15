@@ -63,7 +63,11 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
      (ai.js throwInOffers, `scripts/throwin-check.mjs`, tests/throwin_offer.test.js). Zuerst am Ball ist ein Mitspieler in
      81 / 85 / 92 % der Einwürfe (vorher 75 / 50 / 38 %); ohne freien Mitspieler in Wurfweite 2 / 4 / 1 % (vorher 55 / 77 / 88 %).
    - **Verworfen (gemessen, ohne klare Wirkung):** mehr Verteidiger in Raumdeckung bei Ecken; stärker streuende Schüsse im Gedränge.
-   - Offen: Tore aus dem Spiel nach Ecken liegen noch bei 5–8 % (echt insgesamt 2,6–4,6 %); Angreifer laufen ein ✅ (2026-11-13,
+   - Offen: Tore nach Ecken (binnen 8 s) liegen bei 7,6–11,1 % (240 Spiele je Platz, 2026-11-15; Profis rund 3 %, Opta über The
+     Analyst; Ziel vom Nutzer rund 5 %). Geprüft und verworfen (2026-11-15, je 240 Spiele): Raumdeckung mit 1–2 Verteidigern mehr,
+     schwächere Kopfbälle im Duell (Faktor 0,6 → 0,4), Beinblock für flache Schüsse (geblockt 1–6 % → 11–15 %, Ecken kaum
+     weniger, Tore insgesamt deutlich weniger). Nach Ecken gibt es seltener einen Abschluss als bei Profis (rund 22 % statt 39 %),
+     der trifft aber aus 7–10 m viel öfter; kurze Ecken führen in 8–16 % zu einem Tor. Mit dem Nutzer vertagt; Angreifer laufen ein ✅ (2026-11-13,
      ai.js CORNER_RUN, tests/corner_runin.test.js); Ballbesitz nach dem Einwurf ✅ geprüft (2026-11-14): Die Messung zählte jede Unterbrechung als Verlust, auch Fouls am
      eigenen Spieler; richtig gezählt 42–52 % nach 5 s (Premier League 2018/19: 54 %, Stone, Smith & Barry 2021) – für Amateure
      plausibel, keine Änderung; weiter Einwurf in den
