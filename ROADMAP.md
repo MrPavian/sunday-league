@@ -112,7 +112,7 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
     (Nicht aufgenommen nach Nutzerentscheid: Saisonziele zum Selbstwählen.)
 
 **E – Seitenlinie und Spielbetrieb** (vom Nutzer gewünscht, 2026-11-15)
-16. **Trainer an der Seitenlinie mit Gesten.** In jedem Karrierespiel stehen beide Trainer in ihrer Coaching-Zone: reinrufen,
+16. **Trainer an der Seitenlinie mit Gesten.** ✅ **2026-11-15** (render/coaches.js, sim/coachclash.js, tests/coaches.test.js; Rasen- und Ascheplatz). In jedem Karrierespiel stehen beide Trainer in ihrer Coaching-Zone: reinrufen,
     Laufwege zeigen, Jubel und Ärger. Je heißer die Rivalität (coachrival.js), desto wilder; ab einer gewissen Hitze Nase an Nase,
     der Schiri trennt und kann Gelb zeigen (IFAB Regel 12: Karten auch für Teamoffizielle), im schlimmsten Fall Tribüne.
     Grafik-Budget Ascheplatz dafür auf 80 Draw Calls angehoben (Nutzerentscheid 2026-11-15).

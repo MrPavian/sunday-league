@@ -1,7 +1,8 @@
+import { coachSpots } from '../coaches.js';
 import * as THREE from 'three';
 import { tr } from '../../core/i18n.js';
 import { toon } from '../materials.js';
-import { addLights, box, cylinder, ground, makeBench, makeDog, makeFence, makeFloodlight, makeGoalFrame, makeMatchdayStaff, makeSideline, makeTree } from '../props.js';
+import { addLights, box, cylinder, ground, makeBench, makeDog, makeFence, makeFloodlight, makeGoalFrame, makeMatchdayStaff, makeTeamBenches, makeSideline, makeTree } from '../props.js';
 import { crowdRow, makeSpectator } from '../spectators.js';
 import { GEO, bandeX, BANDE_W } from '../../sim/shelter.js';
 import { groundTexels, makeLawnTexture, makeSignTextureWide } from '../textures.js';
@@ -53,6 +54,8 @@ export function buildLawn(root, pitch, rng, scene) {
 
   root.add(makeSideline(pitch, rng));
   if (hl < 50) root.add(makeMatchdayStaff(pitch)); // Platzwart mit Kreidewagen, Linienrichter aus dem Verein – nicht auf dem Großfeld
+  const coachSpotsHere = coachSpots({ pitch });
+  if (coachSpotsHere) root.add(makeTeamBenches(coachSpotsHere)); // Trainerbänke, die Trainer stehen davor (render/coaches.js)
 
   // Banden an der Gegengerade.
   const bandZ = -hw - 2.2;

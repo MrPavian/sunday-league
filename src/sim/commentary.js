@@ -182,6 +182,12 @@ export function createCommentator(m, seed = 1) {
           else add(pick(tr(['Foul von {p} an {v}. Freistoß.', '{p} erwischt {v} am Knöchel. Freistoß.', '{p} geht zu hart rein – {v} liegt.'], ['Foul by {p} on {v}. Free kick.', '{p} catches {v} on the ankle. Free kick.', '{p} goes in too hard – {v} is down.']), a), 'foul');
           break;
         }
+        case 'coachclash':
+          add(e.n > 1 ? tr('Schon wieder! Die beiden Trainer stehen Nase an Nase an der Seitenlinie. Der Schiri läuft rüber.', 'Again! The two managers are nose to nose on the touchline. The referee runs over.') : pick(tr(['An der Seitenlinie fliegen die Fetzen: Die Trainer gehen aufeinander los, der Schiri trennt sie.', 'Die beiden Trainer brüllen sich an, Nase an Nase. Der Schiri muss dazwischen.'], ['Sparks fly on the touchline: the managers go for each other and the referee separates them.', 'The two managers are screaming at each other, nose to nose. The referee has to step in.'])), 'foul');
+          break;
+        case 'coachcard':
+          add(e.color === 'red' ? tr(`Rot für den Trainer von ${team(e.team)}! Er muss auf die Tribüne, der Co-Trainer übernimmt.`, `Red for the ${team(e.team)} manager! He is sent to the stand, the assistant takes over.`) : tr(`Gelb für den Trainer von ${team(e.team)}.`, `Yellow for the ${team(e.team)} manager.`), 'foul');
+          break;
         case 'advantage': {
           const a = { p: surname(who(e.playerId)), v: surname(who(e.victimId)) };
           add(pick(tr(['Foul von {p} an {v} – aber Vorteil! Der Schiri winkt weiter.', 'Vorteil! {v} bleibt am Ball, der Schiri lässt laufen.'], ['Foul by {p} on {v} – but advantage! The ref waves play on.', 'Advantage! {v} keeps the ball, the ref lets it run.']), a), 'foul');

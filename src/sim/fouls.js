@@ -25,6 +25,7 @@
 //     Ballführenden, Kopfballduell). Die Engine kennt ≈ 80–130 solcher Begegnungen je Spiel, echt zählt die Liga 189 Zweikämpfe.
 //     Eingestellt ist die Hälfte der echten Quote (≈ 0,06 statt 0,113): Das gibt 5–8 Fouls je Spiel, ein Pfiff alle 40–60 s des
 //     Zeitraffer-Spiels. Mehr würde den Spielfluss zerhacken (gewählt, nicht gemessen; vorher 2–4,7 Fouls bei 0,15 je Grätsche/Stochern).
+import { coachFoul } from './coachclash.js';
 import { cap1, errScale, vs } from './skill.js';
 import { clamp, dist2d, len } from '../core/math.js';
 import { createRng } from '../core/rng.js';
@@ -155,6 +156,7 @@ export function callFoul(m, off, vic, o = {}) {
   }
 
   m.events.push({ type: 'foul', playerId: off.id, victimId: vic.id, kind, penalty, ...(dogso ? { dogso: true } : {}), ...(o.offensive ? { offensive: true } : {}) });
+  coachFoul(m); // Trainer an der Seitenlinie (coachclash.js), nur bei hitzigem Trainerduell
   if (hasTrait(off, 'meckerer')) off.complainNext = 'offender';
   if (card) showCard(m, off, card);
   vic.state = 'normal';

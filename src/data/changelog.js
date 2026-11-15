@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-15-8',
+    de: { title: 'Trainer an der Seitenlinie', items: ['Auf Rasen- und Ascheplatz stehen beide Trainer vor ihren Bänken an der Seitenlinie: Sie rufen rein, zeigen Laufwege, jubeln und ärgern sich.', 'Je heißer die Rivalität der Trainer, desto wilder die Gesten. Im hitzigen Duell gehen beide aufeinander los und brüllen sich Nase an Nase an – der Schiri trennt sie.', 'Beim zweiten Mal gibt es Gelb für beide, beim dritten müssen sie auf die Tribüne. Als Spielertrainer stehst du nur an der Linie, solange du nicht selbst spielst.'] },
+    en: { title: 'Managers on the touchline', items: ['On the grass and ash pitches both managers stand in front of their benches: they shout instructions, point out runs, celebrate and get angry.', 'The hotter the rivalry between the managers, the wilder the gestures. In a heated meeting they go for each other, screaming nose to nose – the referee separates them.', 'The second time both get a yellow card, the third time they are sent to the stand. As player-manager you only stand on the touchline while you are not playing yourself.'] },
+  },
+  {
     id: '2026-11-15-7',
     de: { title: 'Legende im Vorstand, feste Nummern beim Gegner', items: ['Zwei Saisons nach dem Abschied kann eine Vereinslegende anbieten, im Vorstand mitzuarbeiten. Sagst du ja, stärkt das deinen Rückhalt; im Museum steht es dabei.', 'Ab der Kreisklasse C tragen alle Vereine feste Rückennummern nach Rolle: Torwart 1, Spielmacher 10, defensiver Mittelfeldspieler 6, Mittelstürmer 9, Flügel 7 und 11 – mit etwas Abwechslung und mancher Lieblingsnummer.', 'Aushilfen bekommen Nummern ab 40, damit keine doppelt vorkommt.'] },
     en: { title: 'Legend on the board, fixed numbers for opponents', items: ['Two seasons after retiring, a club legend can offer to join the board. Say yes and your backing grows; the museum shows it.', 'From the lowest district league up, every club wears fixed shirt numbers by role: goalkeeper 1, playmaker 10, holding midfielder 6, centre-forward 9, wingers 7 and 11 – with some variety and the odd favourite number.', 'Helpers get numbers from 40 so that none appears twice.'] },

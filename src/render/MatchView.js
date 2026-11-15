@@ -7,6 +7,7 @@ import { allPlayers, findAnyPlayer } from '../sim/squad.js';
 import { attackDir } from '../sim/players.js';
 import { BallView } from './BallView.js';
 import { animatePlayer, createPlayerModel, disposeKit, IN_REL_AT, KitAtlas, setKitDirt, setKitWet } from './PlayerModel.js';
+import { COACH, coachCue, coachIdle, coachKit, coachLook, coachOnTouchline, coachSpots, coachTarget } from './coaches.js';
 import { TIGER_LOOK, TIGER_NUMBER, tigerCue, tigerKit, tigerReact, tigerSpot, tigerState, tigerStep, tigerYaw } from './tiger.js';
 import { keepAlpha, pixelTexture } from './materials.js';
 
@@ -64,6 +65,7 @@ const WARM_OUT = {};
 const WARM_RECHECK = 1; // so oft (s) wird neu gewählt, wer sich aufwärmt
 const TIGER_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture: null, face: null };
 const TIGER_OUT = {};
+const COACH_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture: null, face: null };
 const LEAVE_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture: null };
 
 const CUE = { g: null, w: 0, x: 0, z: 0, yaw: 0, s: 1, kind: null, speed: -1 };
@@ -154,6 +156,7 @@ export class MatchView {
     this.makeBlobs();
     if (match.referee) this.buildReferee(match.referee);
     this.buildTiger(match);
+    this.buildCoaches(match);
     // Ausgefallener Flutlichtmast (match.mastOut, ?mast=0 zum Ansehen): Die Hälfte auf der Seite des toten Masts liegt im Halbdunkel –
     // eine dunkle, halbdurchsichtige Fläche knapp über dem Rasen (ein Draw Call, nur in diesem Spiel). Deckkraft Spielwert.
     if (match.mastOut || (typeof location !== 'undefined' && new URLSearchParams(location.search).get('mast') === '0')) this.mastShade(match.pitch);
@@ -217,6 +220,54 @@ export class MatchView {
     this.tigerSt = tigerState(((match.seed ?? 1) % 29) * 1.1);
     if (spot.legs === false) for (const n of ['upperLegL', 'upperLegR']) this.tiger.bones[n].scale.setScalar(0.0001); // Fenster: nur der Oberkörper
     this.root.add(this.tiger.group);
+  }
+
+  // Trainer an der Seitenlinie (render/coaches.js): zwei Figuren wie Tim, ohne Schattenwurf (Grafik-Budget).
+  buildCoaches(match) {
+    this.coaches = [];
+    const q = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('coaches');
+    if (q === '0') return;
+    if (q === 'clash') match.coachHeat = 5; // zum Ansehen: hitziges Duell
+    const spots = coachSpots(match);
+    if (!spots) return;
+    for (const spot of spots) {
+      const model = createPlayerModel(coachLook(match, spot.team), coachKit(match.teams[spot.team]?.kit?.shirt), { edge: 'neutral' });
+      model.mesh.castShadow = false;
+      model.group.position.set(spot.x, 0, spot.z);
+      this.root.add(model.group);
+      this.coaches.push({ model, spot, team: spot.team, st: { t: ((match.seed ?? 1) % 17) * 1.3 + spot.team * 5, cue: null, clashT: 0, gone: false } });
+    }
+  }
+
+  coachesFrame(match, dt) {
+    const heat = match.coachHeat ?? 0;
+    for (const c of this.coaches ?? []) {
+      const { model, spot, st } = c;
+      if (st.gone && !model.group.visible) continue;
+      model.group.visible = coachOnTouchline(match, c.team); // Spielertrainer auf dem Platz: niemand an der Linie
+      if (!model.group.visible) continue;
+      st.t += dt;
+      if (st.cue && (st.cue.time -= dt) <= 0) st.cue = null;
+      if (st.clashT > 0) st.clashT -= dt;
+      const tgt = st.gone ? { x: spot.x, z: spot.z + Math.sign(spot.z) * 9 } : coachTarget(spot, c.team, st.clashT > 0); // Rot: vom Platz weg
+      const p = model.group.position;
+      const dx = tgt.x - p.x;
+      const dz = tgt.z - p.z;
+      const d = Math.hypot(dx, dz);
+      const step = Math.min(d, COACH.walk * dt);
+      if (d > 1e-3) (p.x += (dx / d) * step), (p.z += (dz / d) * step);
+      const moving = d > 0.05;
+      if (st.gone && !moving) model.group.visible = false; // Rot: auf die Tribüne
+      const other = this.coaches.find((o) => o !== c);
+      const look = st.clashT > 0 && other ? other.model.group.position : match.ball.pos;
+      model.group.rotation.y = moving ? Math.atan2(dx, dz) : Math.atan2(look.x - p.x, look.z - p.z);
+      COACH_ANIM.dt = dt;
+      COACH_ANIM.speed = moving ? COACH.walk : 0;
+      COACH_ANIM.gesture = moving && !st.cue ? null : st.cue ? st.cue.gesture : coachIdle(st.t, heat);
+      COACH_ANIM.face = st.cue?.face ?? null;
+      animatePlayer(model, COACH_ANIM);
+      this.blob(model, p.x, p.z);
+    }
   }
 
   // Tim: Position und Geste (Reaktion auf das Spiel oder Ruhe mit Dose) – nur Darstellung.
@@ -299,6 +350,17 @@ export class MatchView {
     this.effects.handle(match);
     this.ballView.handle(match);
     this.foulFx(match);
+    if (this.coaches?.length) {
+      const teamOf = (id) => findAnyPlayer(match, id)?.team;
+      for (const e of match.events) {
+        for (const c of this.coaches) {
+          const cue = coachCue(c.team, e, teamOf, match.coachHeat ?? 0);
+          if (cue && (!c.st.cue || c.st.cue.prio <= cue.prio)) c.st.cue = cue;
+          if (e.type === 'coachclash') c.st.clashT = COACH.clash;
+          if (e.type === 'coachcard' && e.team === c.team && e.color === 'red') c.st.gone = true;
+        }
+      }
+    }
     if (this.tigerSt) {
       const teamOf = (id) => findAnyPlayer(match, id)?.team;
       for (const e of match.events) tigerReact(this.tigerSt, tigerCue(this.tigerSt, match, e, teamOf));
@@ -664,6 +726,7 @@ export class MatchView {
     for (const m of this.models.values()) disposeKit(m);
     if (this.referee) disposeKit(this.referee);
     if (this.tiger) disposeKit(this.tiger);
+    for (const c of this.coaches ?? []) disposeKit(c.model);
     this.mastShadeMesh?.material.alphaMap?.dispose();
     this.mastShadeMesh?.material.dispose();
     this.blobs.geometry.dispose();
@@ -719,8 +782,8 @@ export class MatchView {
     };
     mat.customProgramCacheKey = () => 'blob';
     const geo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
-    this.blobs = new THREE.InstancedMesh(geo, mat, this.models.size + 3);
-    this.blobs.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array((this.models.size + 3) * 3).fill(1), 3);
+    this.blobs = new THREE.InstancedMesh(geo, mat, this.models.size + 5); // + Ball, Schiri, Tim, zwei Trainer
+    this.blobs.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array((this.models.size + 5) * 3).fill(1), 3);
     this.blobs.frustumCulled = false;
     this.blobs.renderOrder = -1;
     this.root.add(this.blobs);
@@ -1109,6 +1172,7 @@ export class MatchView {
     }
     this.warmup(match, dt);
     this.tigerFrame(match, dt);
+    this.coachesFrame(match, dt);
     this.staffFrame(match, dt);
     // Ausgeschlossene: Kopf schütteln, dann langsam zur Seitenlinie (reactions.js walkOffStep).
     for (const w of this.walkers) {

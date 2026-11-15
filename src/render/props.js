@@ -220,6 +220,11 @@ function bakeFigure(g) {
   out.add(mesh);
   return out;
 }
+// Mannschaftsbänke an der sichtbaren Seitenlinie, hinter den Coaching-Zonen (render/coaches.js), zum Feld gedreht. Gleiche Farben wie
+// die übrigen Bänke: verschmilzt mit der Kulisse, kein zusätzlicher Draw Call.
+export function makeTeamBenches(spots) {
+  return group(...spots.map((s) => makeBench(s.x, s.z + Math.sign(s.z) * 1.0, Math.PI)));
+}
 export function makeMatchdayStaff(pitch, c = STAFF_LAWN) {
   const { halfLength: hl, halfWidth: hw } = pitch;
   const z = -(hw + STAFF_OUT);

@@ -15,7 +15,7 @@ import { slotRating } from '../sim/position.js';
 import { ATTR_KEYS, ensureStrength } from '../sim/strength.js';
 import { afterMatchPositions, deliverGrumbles, famAt, migratePositions, posFamOf } from './positions.js';
 import { isRival } from './rivals.js';
-import { hotDuel } from './coachrival.js';
+import { facesNemesis, hotDuel } from './coachrival.js';
 import { clubNumbers, numberOf, numbersOn } from './numbers.js';
 import { applyReferee, recordReferee } from './referees.js';
 import { createMatch, MATCH, stepMatch } from '../sim/match.js';
@@ -1355,6 +1355,11 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   match.derby = (isDerbyFixture(career, fixture) && !career.week?.derbyFair) || grudgeMatch(career, home.human ? away.id : home.id) || ((home.human || away.human) && isRival(career, home.human ? away.id : home.id));
   // Trainer-Rivale (coachrival.js): Ab einer gewissen Hitze wird das Duell hitzig wie ein Derby.
   if ((home.human || away.human) && hotDuel(career)) match.derby = true;
+  // Spielertrainer (vom Nutzer, 2026-11-15): Steht er selbst auf dem Platz, ist an der Seitenlinie niemand (render/coaches.js).
+  if ((home.human || away.human) && career.coach?.idx != null && career.coach.mode !== 'coachOnly' && !isPresident(career)) {
+    match.playerCoach = { team: home.human !== humanIsAway ? 0 : 1, idx: career.coach.idx };
+  }
+  if ((home.human || away.human) && facesNemesis(career)) match.coachHeat = career.coachRival.heat ?? 0; // Trainer an der Seitenlinie (sim/coachclash.js, render/coaches.js)
   if (home.human || away.human) applyReferee(career, match); // Schiri aus dem festen Stamm (referees.js)
   // Eigenes Spiel: Manchmal kommt am Spieltag etwas dazwischen.
   if (home.human || away.human) matchdaySurprise(match, humanIsAway || home.human ? 0 : 1, createRng(hashSeed(career.seed, career.season, career.round, 77)), 0.28, null, career.level ?? 1);
