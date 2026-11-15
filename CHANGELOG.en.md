@@ -6,6 +6,16 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-15-7 – Legend on the board, fixed numbers for opponents
+
+### New
+- **Legend on the board** (ROADMAP 11.18 point 14): at the earliest two seasons after retiring, once per season, at most one legend on the board. Saying yes: backing +3, mood +0.02, note in the museum (game values).
+- **Fixed shirt numbers for every club by role** (requested by the user, numbers.js wishes/clubNumbers): goalkeeper 1 (second keeper 12 or 22), playmaker 10 (playmaker profile or best passer in midfield), holding midfielder 6, centre-forward 9 (best finisher up front), wingers 7 and 11, centre-backs 4 and 5, full-backs 2 and 3. Variety: one in five swaps his first two wishes, one in twenty wears a favourite number, other numbers fixed between 12 and 33 (game values, fixed per player). Opponents without save state, the strongest choose first. Numbers already given in your own club stay. Helpers on both sides wear numbers from 40.
+
+### Tests
+- `tests/numbers.test.js`: the test "opponents wear no fixed numbers" now checks the new behaviour (fixed, unique numbers for opponents); new case for clubNumbers.
+- `tests/legends.test.js`: new case for the legend on the board.
+
 ## 2026-11-15-6 – Rival manager: heated meetings, poaching, coaching course
 
 ### New

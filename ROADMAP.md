@@ -107,7 +107,7 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
     Flutlicht – kleine sichtbare Dinge am Platz.
 14. **Legenden des Vereins.** ✅ **Erste Lieferung 2026-11-13** (career/legends.js, tests/legends.test.js): Abschied mit drei
     Ehrungen, Tafel im Museum, Besuch beim Training. Feste Rückennummern ab der Kreisklasse C mit Sperre für Legenden (career/numbers.js,
-    tests/numbers.test.js; Ablauf nach 10 Saisons, Freigabe von Hand ab 3). Offen: Rückkehr in den Vorstand, Nummern der Gegner. Ursprünglicher Punkt: Abschiedsspiel, Trikotnummer wird nicht mehr vergeben, Rückkehr als Co-Trainer oder im Vorstand;
+    tests/numbers.test.js; Ablauf nach 10 Saisons, Freigabe von Hand ab 3). Rückkehr in den Vorstand und Nummern der Gegner ✅ (2026-11-15). Ursprünglicher Punkt: Abschiedsspiel, Trikotnummer wird nicht mehr vergeben, Rückkehr als Co-Trainer oder im Vorstand;
     verbindet Ehemalige (alumni) und Museum.
     (Nicht aufgenommen nach Nutzerentscheid: Saisonziele zum Selbstwählen.)
 

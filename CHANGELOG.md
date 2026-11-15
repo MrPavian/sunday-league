@@ -6,6 +6,16 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-15-7 – Legende im Vorstand, feste Nummern beim Gegner
+
+### Neu
+- **Legende im Vorstand** (ROADMAP 11.18 Punkt 14): frühestens zwei Saisons nach dem Abschied, einmal je Saison, höchstens eine Legende im Vorstand. Zusage: Rückhalt +3, Stimmung +0,02, Vermerk im Museum (Spielwerte).
+- **Feste Rückennummern bei allen Vereinen nach Rolle** (vom Nutzer gewünscht, numbers.js wishes/clubNumbers): Torwart 1 (zweiter Torwart 12 oder 22), Spielmacher 10 (Profil Spielmacher oder bester Passgeber im Mittelfeld), defensiver Mittelfeldspieler 6, Mittelstürmer 9 (bester Abschluss im Angriff), Flügel 7 und 11, Innenverteidiger 4 und 5, Außenverteidiger 2 und 3. Abwechslung: jeder Fünfte tauscht die ersten beiden Wünsche, jeder Zwanzigste trägt eine Lieblingsnummer, übrige Nummern fest zwischen 12 und 33 (Spielwerte, fest je Spieler). Gegner ohne Spielstand, die Stärksten wählen zuerst. Bereits vergebene Nummern im eigenen Verein bleiben. Aushilfen beider Teams tragen Nummern ab 40.
+
+### Tests
+- `tests/numbers.test.js`: Der Test „der Gegner trägt keine festen Nummern“ prüft jetzt das neue Verhalten (feste, eindeutige Nummern beim Gegner); neuer Fall für clubNumbers.
+- `tests/legends.test.js`: neuer Fall für die Legende im Vorstand.
+
 ## 2026-11-15-6 – Trainer-Rivale: hitzige Duelle, Abwerben, Lehrgang
 
 ### Neu

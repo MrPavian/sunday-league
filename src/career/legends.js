@@ -99,4 +99,27 @@ export const LEGEND_EVENTS = {
       { label: tr('Auf ein Bier nach dem Training', 'A beer after training'), effect: (c, ctx) => tr(`${ctx.name} erzählt vom Aufstiegsspiel, das mit jedem Mal knapper wird. Ein schöner Abend, mehr nicht.`, `${ctx.name} tells the story of the promotion game, which gets closer every time. A nice evening, nothing more.`) },
     ],
   },
+  // Rückkehr in den Vorstand (ROADMAP 11.18 Punkt 14, 2026-11-15): Frühestens zwei Saisons nach dem Abschied bietet eine Legende an,
+  // im Vorstand mitzuarbeiten. Wirkung auf Rückhalt und Stimmung: Spielwerte.
+  legende_vorstand: {
+    weight: 1.5,
+    needs: (c, rng) => {
+      if (once(c, 'legende_vorstand') || clubLegends(c).some((l) => l.board)) return null;
+      const old = clubLegends(c).filter((l) => c.season - l.season >= 2);
+      if (!old.length) return null;
+      const l = rng.pick(old);
+      return { name: l.name, idx: l.idx };
+    },
+    text: (c, ctx) => tr(`${ctx.name} ruft an: „Ich vermisse den Verein. Im Vorstand ist doch ein Posten frei – soll ich mich zur Wahl stellen?“`, `${ctx.name} rings: "I miss the club. There is a seat free on the board – shall I stand for election?"`),
+    options: [
+      { label: tr('Ja, wir brauchen dich', 'Yes, we need you'), effect: (c, ctx) => {
+        const l = clubLegends(c).find((x) => x.idx === ctx.idx && x.name === ctx.name);
+        if (l) l.board = c.season;
+        if (c.board) c.board.trust = Math.min(100, c.board.trust + 3);
+        adjustMood(c, 0.02);
+        return tr(`Bei der Versammlung hebt der ganze Saal die Hand. ${ctx.name} sitzt jetzt im Vorstand – und hält dir dort den Rücken frei.`, `At the meeting the whole room raises a hand. ${ctx.name} now sits on the board – and has your back there.`);
+      } },
+      { label: tr('Lieber als Ehrenmitglied', 'Rather as honorary member'), effect: (c, ctx) => (adjustMood(c, 0.01), tr(`${ctx.name} bekommt die Ehrennadel und einen festen Platz auf der Tribüne. Für den Vorstand sei er „zu ehrlich“, sagt er lachend.`, `${ctx.name} gets the honorary pin and a permanent seat in the stand. He says, laughing, that he is "too honest" for the board.`)) },
+    ],
+  },
 };

@@ -62,3 +62,23 @@ describe('Vereinslegenden', () => {
     expect(ev.needs(c, createRng(1))).toBe(null);
   });
 });
+
+describe('Legende im Vorstand (2026-11-15)', async () => {
+  const { LEGEND_EVENTS } = await import('../src/career/legends.js');
+  const { createCareer } = await import('../src/career/career.js');
+  const { createRng } = await import('../src/core/rng.js');
+  it('frühestens zwei Saisons nach dem Abschied; Zusage stärkt den Rückhalt und steht im Museum', () => {
+    const c = createCareer({ seed: 3 });
+    c.season = 3;
+    c.board = { trust: 50 };
+    c.legends = [{ idx: 7, name: 'Uwe Kampe', apps: 140, goals: 12, season: 2, honour: 'trikot' }];
+    expect(LEGEND_EVENTS.legende_vorstand.needs(c, createRng(1))).toBe(null);
+    c.season = 4;
+    const ctx = LEGEND_EVENTS.legende_vorstand.needs(c, createRng(1));
+    expect(ctx?.name).toBe('Uwe Kampe');
+    LEGEND_EVENTS.legende_vorstand.options[0].effect(c, ctx, createRng(1));
+    expect(c.board.trust).toBe(53);
+    expect(c.legends[0].board).toBe(4);
+    expect(LEGEND_EVENTS.legende_vorstand.needs(c, createRng(1))).toBe(null); // nur einer im Vorstand
+  });
+});

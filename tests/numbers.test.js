@@ -45,7 +45,8 @@ describe('Feste Rückennummern', () => {
     expect(na).not.toBe(77);
   });
 
-  it('im Spiel trägt die eigene Mannschaft ihre Nummern, der Gegner keine festen', () => {
+  // Seit 2026-11-15 hat auch der Gegner feste Nummern (numbers.js clubNumbers; vorher: keine).
+  it('im Spiel tragen beide Mannschaften ihre festen Nummern', () => {
     const c = league();
     const club = humanClub(c);
     const team = teamForMatch(c, club, 7, Object.fromEntries(club.squad.map((i) => [i, true])), createRng(1));
@@ -54,7 +55,9 @@ describe('Feste Rückennummern', () => {
     for (const p of mine) expect(p.shirtNo).toBe(nr.numberOf(c, p.poolIndex));
     const other = c.clubs.find((x) => !x.human);
     const opp = teamForMatch(c, other, 7, Object.fromEntries(other.squad.map((i) => [i, true])), createRng(1));
-    expect(opp.players.every((p) => p.shirtNo == null)).toBe(true);
+    const fixed = nr.clubNumbers(c, other);
+    for (const p of opp.players) if (other.squad.includes(p.poolIndex)) expect(p.shirtNo).toBe(fixed.get(p.poolIndex));
+    expect(new Set(opp.players.map((p) => p.shirtNo)).size).toBe(opp.players.length);
   });
 
   it('Legende: Nummer sperren, sie wird nicht mehr vergeben; Freigabe von Hand nach der Frist, von selbst nach dem Ablauf', () => {
@@ -106,5 +109,22 @@ describe('Feste Rückennummern', () => {
     ev.options[2].effect(c, ev.needs(c), createRng(1));
     expect(clubLegends(c)[0].honour).toBe('trikot');
     expect(nr.retiredNumbers(c)).toHaveLength(0);
+  });
+});
+
+describe('Rückennummern der Gegner (2026-11-15)', async () => {
+  const { clubNumbers, NUMBERS_FROM } = await import('../src/career/numbers.js');
+  const { createCareer } = await import('../src/career/career.js');
+  it('ab der Kreisklasse C fest und eindeutig je Verein, Torwart die 1; darunter keine', () => {
+    const c = createCareer({ seed: 4 });
+    const club = c.clubs.find((x) => !x.human);
+    c.level = NUMBERS_FROM - 1;
+    expect(clubNumbers(c, club).size).toBe(0);
+    c.level = NUMBERS_FROM;
+    const a = clubNumbers(c, club);
+    expect(a.size).toBe(club.squad.length);
+    expect(new Set(a.values()).size).toBe(a.size);
+    expect([...a.values()]).toContain(1);
+    expect(clubNumbers(c, club)).toEqual(a);
   });
 });

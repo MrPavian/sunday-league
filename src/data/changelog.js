@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-15-7',
+    de: { title: 'Legende im Vorstand, feste Nummern beim Gegner', items: ['Zwei Saisons nach dem Abschied kann eine Vereinslegende anbieten, im Vorstand mitzuarbeiten. Sagst du ja, stärkt das deinen Rückhalt; im Museum steht es dabei.', 'Ab der Kreisklasse C tragen alle Vereine feste Rückennummern nach Rolle: Torwart 1, Spielmacher 10, defensiver Mittelfeldspieler 6, Mittelstürmer 9, Flügel 7 und 11 – mit etwas Abwechslung und mancher Lieblingsnummer.', 'Aushilfen bekommen Nummern ab 40, damit keine doppelt vorkommt.'] },
+    en: { title: 'Legend on the board, fixed numbers for opponents', items: ['Two seasons after retiring, a club legend can offer to join the board. Say yes and your backing grows; the museum shows it.', 'From the lowest district league up, every club wears fixed shirt numbers by role: goalkeeper 1, playmaker 10, holding midfielder 6, centre-forward 9, wingers 7 and 11 – with some variety and the odd favourite number.', 'Helpers get numbers from 40 so that none appears twice.'] },
+  },
+  {
     id: '2026-11-15-6',
     de: { title: 'Trainer-Rivale: hitzige Duelle, Abwerben, Lehrgang', items: ['Ist die Rivalität heiß genug, wird das Spiel gegen ihn hitzig wie ein Derby: mehr Fouls, mehr Karten.', 'Er versucht, dir einen deiner besten Spieler abzuwerben. Ob der Spieler bleibt, hängt an deiner Antwort.', 'Beim Trainerlehrgang des Verbands ist nur noch der Platz neben ihm frei.'] },
     en: { title: 'Rival manager: heated meetings, poaching, coaching course', items: ['Once the rivalry is hot enough, the game against him gets as heated as a derby: more fouls, more cards.', 'He tries to poach one of your best players. Whether the player stays depends on your answer.', 'At the association\'s coaching course, the only free seat is next to him.'] },
