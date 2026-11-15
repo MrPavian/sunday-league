@@ -2,14 +2,9 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
-    id: '2026-11-15-10',
-    de: { title: 'Transfers besser zu finden', items: ['Transfers haben wieder einen eigenen Reiter, gleich neben dem Kader. Training und Teams teilen sich dafür einen.', 'Auf der Startseite zeigt die Kachel „Transfermarkt“ Wechselfrist, Gerüchte und Angebote – ein Tipp führt hin.', 'Ein Zähler an „Mannschaft“ meldet neue Gerüchte und offene Angebote.'] },
-    en: { title: 'Transfers easier to find', items: ['Transfers have their own tab again, right next to the squad. Training and teams share one instead.', 'On the home page the "Transfer market" card shows the window, rumours and offers – one tap takes you there.', 'A counter on "Squad" flags new rumours and open offers.'] },
-  },
-  {
     id: '2026-11-15-9',
-    de: { title: 'Startseite und Trikot-Editor aufgeräumt', items: ['Der Anpfiff-Knopf steht auf der Startseite gleich unter den Fakten zum Spiel, ohne Scrollen. „Selbst ausrichten“ beim Sommerturnier ist aufklappbar.', 'Im Trikot-Editor wählst du erst, was du färbst – Trikot, 2. Farbe, Hose, Stutzen –, dann gibt es eine Palette statt bis zu sechs.'] },
-    en: { title: 'Home page and kit editor tidied up', items: ['The kick-off button now sits on the home page right below the match facts, no scrolling. "Host it yourselves" for the summer tournament folds out.', 'In the kit editor you first choose what to colour – shirt, 2nd colour, shorts, socks – then there is one palette instead of up to six.'] },
+    de: { title: 'Startseite, Trikot-Editor und Transfers aufgeräumt', items: ['Transfers haben wieder einen eigenen Reiter neben dem Kader; die Kachel „Transfermarkt“ auf der Startseite und ein Zähler an „Mannschaft“ melden neue Gerüchte und Angebote.', 'Der Anpfiff-Knopf steht auf der Startseite gleich unter den Fakten zum Spiel, ohne Scrollen. „Selbst ausrichten“ beim Sommerturnier ist aufklappbar.', 'Im Trikot-Editor wählst du erst, was du färbst – Trikot, 2. Farbe, Hose, Stutzen –, dann gibt es eine Palette statt bis zu sechs.'] },
+    en: { title: 'Home page, kit editor and transfers tidied up', items: ['Transfers have their own tab next to the squad again; the "Transfer market" card on the home page and a counter on "Squad" flag new rumours and offers.', 'The kick-off button now sits on the home page right below the match facts, no scrolling. "Host it yourselves" for the summer tournament folds out.', 'In the kit editor you first choose what to colour – shirt, 2nd colour, shorts, socks – then there is one palette instead of up to six.'] },
   },
   {
     id: '2026-11-15-8',
