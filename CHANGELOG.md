@@ -11,11 +11,13 @@ Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**
 ### Neu
 - **Trainer an der Seitenlinie** (ROADMAP 11.18 Punkt 16, vom Nutzer gewünscht): Auf Rasen- und Ascheplatz stehen beide Trainer in ihrer Coaching-Zone vor ihrer Bank (neue Mannschaftsbänke an der sichtbaren Seitenlinie; vom Nutzer: Trainer stehen vor den Trainerbänken). Gesten: reinrufen, Laufwege zeigen, scheuchen; Jubel beim Tor, Kopfschütteln beim Gegentor, Reklamieren bei Fouls (render/coaches.js).
 - **Hitze** (coachrival.js): ab 2 wilder (abwinken, reklamieren), ab 3 Zusammenstöße (sim/coachclash.js): je heißer, desto früher (7 − Hitze Fouls, mindestens 2). Beim ersten Mal trennt der Schiri, beim zweiten Gelb für beide, beim dritten Gelb-Rot – der Trainer geht auf die Tribüne (IFAB Regel 12: Karten auch für Teamoffizielle). Liveticker-Zeilen dazu. Ohne Spielzufall, nur Zähler; Grenzen Spielwerte.
+- **Platzwart entfernt** (vom Nutzer): Er lief mit dem Kreidewagen das ganze Spiel über an der Linie auf und ab. Der Linienrichter aus dem Verein bleibt.
 - **Spielertrainer** (vom Nutzer): Steht er selbst auf dem Platz, ist an der Linie niemand; auf der Bank oder nach der Auswechslung steht er dort, vom Platz gestellt geht er ganz.
 - Auf Sportplatz und Großfeld liegt keine Seitenlinie im Bild, dort keine Trainer. Testschalter `?coaches=clash` (hitziges Duell) und `?coaches=0`.
 - Grafik-Budget mit dem Nutzer angehoben (2026-11-15): Ascheplatz 80 Draw Calls und 27.000 Dreiecke (gemessen 78 / 26,3 Tsd.), Rasenplatz 36.500 Dreiecke (gemessen 35,7 Tsd.).
 
 ### Tests
+- `tests/staff_move.test.js`: prüft nur noch den Linienrichter (Platzwart entfernt).
 - Neu: `tests/coaches.test.js` (Orte, Aussehen, Gesten, Zusammenstoß in der Simulation).
 - `scripts/e2e/modes.mjs`: Grafik-Budget Ascheplatz [76, 26000] → [80, 27000], Rasenplatz [108, 35000] → [108, 36500] (vom Nutzer freigegeben).
 

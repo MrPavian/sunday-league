@@ -228,22 +228,7 @@ export function makeTeamBenches(spots) {
 export function makeMatchdayStaff(pitch, c = STAFF_LAWN) {
   const { halfLength: hl, halfWidth: hw } = pitch;
   const z = -(hw + STAFF_OUT);
-  // Platzwart: Warnweste bzw. Arbeitsjacke, die Hände am Kreidewagen (Trichter, zwei Räder, Griffstange).
-  const warden = group(
-    ...boxPerson(c.warden, c),
-    box(0.1, 0.1, 0.5, c.warden, -0.2, 1.05, 0.3), // Arme nach vorn
-    box(0.1, 0.1, 0.5, c.warden, 0.2, 1.05, 0.3),
-    box(0.5, 0.05, 0.05, c.metal, 0, 1.0, 0.55), // Griff
-    box(0.05, 0.6, 0.05, c.metal, -0.2, 0.72, 0.68),
-    box(0.05, 0.6, 0.05, c.metal, 0.2, 0.72, 0.68),
-    box(0.44, 0.34, 0.36, c.chalk, 0, 0.42, 0.85), // Trichter mit Kreide
-    box(0.06, 0.26, 0.26, c.dark, -0.26, 0.13, 0.85), // Räder
-    box(0.06, 0.26, 0.26, c.dark, 0.26, 0.13, 0.85),
-  );
-  const wardenFig = bakeFigure(warden);
-  wardenFig.position.set(-hl * 0.84, 0, z);
-  wardenFig.rotation.y = Math.PI / 2 - 0.6; // schiebt den Wagen schräg an der Linie entlang (von der Kamera aus sieht man Mann und Wagen)
-  wardenFig.userData.staff = { kind: 'warden', from: -hl * 0.92, to: -hl * 0.62, z };
+  // Der Platzwart mit dem Kreidewagen ist entfernt (vom Nutzer, 2026-11-15: lief während des ganzen Spiels herum).
   // Linienrichter aus dem Verein: Trainingsjacke, die Fahne in der Rechten nach unten.
   const lines = group(
     ...boxPerson(c.lines, c),
@@ -255,7 +240,7 @@ export function makeMatchdayStaff(pitch, c = STAFF_LAWN) {
   const linesFig = bakeFigure(lines);
   linesFig.position.set(hl * 0.7, 0, z);
   linesFig.userData.staff = { kind: 'lines', from: hl * 0.05, to: hl * 0.95, z };
-  return group(wardenFig, linesFig);
+  return group(linesFig);
 }
 
 // Echtes Tor mit Pfosten, Latte und angedeutetem Netz (dünne Schnüre).

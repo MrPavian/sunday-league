@@ -11,11 +11,13 @@ In the game, the same highlights are under **Settings → What's new**.
 ### New
 - **Managers on the touchline** (ROADMAP 11.18 point 16, requested by the user): on the grass and ash pitches both managers stand in their technical area in front of their bench (new team benches on the visible touchline; per the user: managers stand in front of the benches). Gestures: shouting, pointing out runs, shooing; celebrating goals, shaking heads at goals conceded, protesting fouls (render/coaches.js).
 - **Heat** (coachrival.js): from 2 wilder (waving away, protesting), from 3 clashes (sim/coachclash.js): the hotter, the sooner (7 − heat fouls, at least 2). The first time the referee separates them, the second yellow for both, the third second yellow – the manager goes to the stand (IFAB Law 12: cards for team officials too). Live ticker lines for it. No game randomness, counters only; thresholds are game values.
+- **Groundsman removed** (per the user): he pushed the chalk cart up and down the line for the whole match. The club linesman stays.
 - **Player-manager** (per the user): while he is on the pitch himself, nobody stands on the touchline; on the bench or after being substituted he stands there, and if sent off he leaves for good.
 - On the 9-a-side and full-size pitches no touchline is in view, so no managers there. Test switches `?coaches=clash` (heated meeting) and `?coaches=0`.
 - Graphics budget raised with the user (2026-11-15): ash pitch 80 draw calls and 27,000 triangles (measured 78 / 26.3k), grass pitch 36,500 triangles (measured 35.7k).
 
 ### Tests
+- `tests/staff_move.test.js`: now only checks the linesman (groundsman removed).
 - New: `tests/coaches.test.js` (positions, looks, gestures, clash in the simulation).
 - `scripts/e2e/modes.mjs`: graphics budget ash pitch [76, 26000] → [80, 27000], grass pitch [108, 35000] → [108, 36500] (approved by the user).
 

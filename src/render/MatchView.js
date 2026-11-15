@@ -47,8 +47,8 @@ const ANIM = {};
 const DIVE = { t: 0, side: 1, high: 0, caught: false, rec: null };
 const FUMBLE_T = 0.55; // Abpraller: so lange klappen die Hände zurück (s, zählt erst nach dem Hechtsprung)
 const CATCH_T = 0.5; // Fangen: so lange dauert es, bis der Ball an der Brust liegt (s)
-// Platzwart und Linienrichter aus dem Verein (staffFrame): Tempo in m/s, Spielwerte (Linienrichter läuft zügig mit, Platzwart geht).
-const STAFF_MOVE = { lines: 4.5, warden: 0.6 };
+// Linienrichter aus dem Verein (staffFrame): Tempo in m/s, Spielwert.
+const STAFF_MOVE = { lines: 4.5 };
 const MAST_SHADE = 0.45; // Halbdunkel auf der Hälfte mit dem ausgefallenen Flutlichtmast (Deckkraft, Spielwert)
 const HAND = new THREE.Vector3();
 const HAND2 = new THREE.Vector3();
@@ -299,31 +299,21 @@ export class MatchView {
     this.mastShadeMesh = shade;
   }
 
-  // Linienrichter aus dem Verein läuft auf Höhe des Balls mit (in seiner Hälfte, sonst wartet er an der Mittellinie), der Platzwart
-  // schiebt den Kreidewagen langsam auf und ab. Tempo und Wippen sind Spielwerte; reine Darstellung, kein Spielzufall.
+  // Linienrichter aus dem Verein läuft auf Höhe des Balls mit (in seiner Hälfte, sonst wartet er an der Mittellinie). Tempo und
+  // Wippen sind Spielwerte; reine Darstellung, kein Spielzufall.
   staffFrame(match, dt) {
     for (const o of this.staff) {
       const st = o.userData.staff;
       const p = o.position;
-      let target;
-      let speed;
-      if (st.kind === 'lines') {
-        target = Math.min(st.to, Math.max(st.from, match.ball.pos.x));
-        speed = STAFF_MOVE.lines;
-      } else {
-        st.dir ??= 1;
-        if ((st.dir > 0 && p.x >= st.to) || (st.dir < 0 && p.x <= st.from)) st.dir = -st.dir;
-        target = st.dir > 0 ? st.to : st.from;
-        speed = STAFF_MOVE.warden;
-      }
+      const target = Math.min(st.to, Math.max(st.from, match.ball.pos.x));
+      const speed = STAFF_MOVE.lines;
       const dx = target - p.x;
       const step = Math.sign(dx) * Math.min(Math.abs(dx), speed * dt);
       p.x += step;
       const moving = Math.abs(step) > 1e-4;
       st.t = (st.t ?? 0) + (moving ? dt : 0);
       p.y = moving ? 0.03 * Math.abs(Math.sin(st.t * 9)) : 0;
-      if (st.kind === 'lines') o.rotation.y = moving ? (dx > 0 ? Math.PI / 2 : -Math.PI / 2) : 0; // sonst Blick aufs Feld
-      else o.rotation.y = st.dir > 0 ? Math.PI / 2 - 0.6 : -Math.PI / 2 + 0.6;
+      o.rotation.y = moving ? (dx > 0 ? Math.PI / 2 : -Math.PI / 2) : 0; // sonst Blick aufs Feld
     }
   }
 
