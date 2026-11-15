@@ -99,7 +99,7 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
     Wirkung auf die Fans (Förderverein). Ursprünglicher Punkt: zwei bis drei Fragen vor oder nach wichtigen Spielen; Antworten wirken auf Kabine,
     Vorstand und Fans (passt zu Auftreten und Trainertyp aus Punkt 17).
 12. **Rivalität zwischen Trainern.** ✅ **Erste Lieferung 2026-11-13** (career/coachrival.js, tests/coachrival.test.js): ein
-    Trainer mit Namen und Bilanz, folgt in eine neue Liga, Stichelei vor und Handschlag nach dem Duell. Offen: Gesicht,
+    Trainer mit Namen und Bilanz, folgt in eine neue Liga, Stichelei vor und Handschlag nach dem Duell. Gesicht ✅ (2026-11-15, rivalLook). Offen:
     Wirkung der „Hitze“ aufs Spiel, mehr Ereignisse (Abwerben, gemeinsamer Lehrgang). Ursprünglicher Punkt: ein gegnerischer Trainer, der über mehrere Saisons wiederkehrt, mit Vorgeschichte.
 13. **Spieltag als Erlebnis im Amateurbereich.** ✅ **Erste Lieferung 2026-11-13** (render/props.js makeMatchdayStaff): Platzwart
     mit Kreidewagen und Vereins-Linienrichter als stehende Figuren; die Bratwurstbude gab es schon. Flutlichtausfall als Ereignis am Schwarzen Brett

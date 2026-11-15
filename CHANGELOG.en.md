@@ -6,6 +6,14 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-15-3 – Your rival manager has a face
+
+### New
+- **Portrait of the rival manager** (ROADMAP 11.18 point 12) under Club life → Rivals, jacket in his club's shirt colour. Skin, hair, baldness and beard follow from the name (coachrival.js rivalLook), without the game's random stream; shares for baldness, beard and grey hair are game values.
+
+### Tests
+- `tests/coachrival.test.js`: face fixed per name, different between names, none without a rival.
+
 ## 2026-11-15-2 – Fewer tabs in Squad and Club
 
 ### Changed

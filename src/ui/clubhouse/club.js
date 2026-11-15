@@ -9,7 +9,7 @@ import { clubLife, FEE_NAMES, neighborText } from '../../career/clublife.js';
 import { reviewHTML } from '../review.js';
 import { button, esc, tabs as uiTabs } from '../ds.js';
 import { CREST_BAND_TEXTS, CREST_COLORS, CREST_DIVISION_GROUPS, CREST_DIVISIONS, CREST_OVERLAYS, CREST_SHAPES, CREST_SYMBOL_GROUPS, CREST_SYMBOLS, crestExtras, crestOf, crestSVG, defaultCrest, THIRD_COLOR_DIVISIONS } from '../crest.js';
-import { awayKitOf, humanClub, KIT_COLLARS, KIT_COLORS, KIT_PATTERNS, KIT_SLEEVES, kitEditable, updateCrest, setFounded, clampFounded, foundedRange, playerOf, table } from '../../career/career.js';
+import { awayKitOf, clubById, humanClub, KIT_COLLARS, KIT_COLORS, KIT_PATTERNS, KIT_SLEEVES, kitEditable, updateCrest, setFounded, clampFounded, foundedRange, playerOf, table } from '../../career/career.js';
 import { spielberichtStreng } from '../../career/spielbericht.js';
 import { leagueTitle, niveauText, VERBAND_CHOICES, verbandLeagues } from '../../career/verband.js';
 import { FINES, MEMBER_FEE, SLOTS } from '../../career/finances.js';
@@ -34,7 +34,7 @@ import { bandOf, BANDS, history, officialAssistants, pool, QUIRKS, refereeFor } 
 import { REF_TRAITS } from '../../sim/referee.js';
 import { portraitSVG } from '../portrait.js';
 import { RIVAL, rivalLabel, rivalList } from '../../career/rivals.js';
-import { nemesis, nemesisHere, record } from '../../career/coachrival.js';
+import { nemesis, nemesisHere, record, rivalLook } from '../../career/coachrival.js';
 import { HONOURS } from '../../career/legends.js';
 import { RETIRE_MAX, RETIRE_MIN } from '../../career/numbers.js';
 import { gateStats } from '../../career/attendance.js';
@@ -170,7 +170,7 @@ export const clubScreens = {
     const list = rivalList(this.career);
     const n = nemesis(this.career);
     // Trainer-Rivale (coachrival.js): Name, Verein, Bilanz.
-    const coach = n ? `<p class="t-2 nemesis-line" data-testid="nemesis-line"><b>${tr('Dein Trainer-Rivale', 'Your rival manager')}:</b> ${esc(n.name)} (${esc(n.clubName ?? '?')}${nemesisHere(this.career) ? '' : tr(', gerade woanders', ', elsewhere for now')}) · ${record(n)}${n.notes?.length ? `<br><small>${n.notes.map((x) => esc(x.text)).join(' · ')}</small>` : ''}</p>` : '';
+    const coach = n ? `<p class="t-2 nemesis-line" data-testid="nemesis-line">${portraitSVG(rivalLook(n), { size: 40, shirt: clubById(this.career, n.club)?.kit?.shirt ?? 0x1c1c1c, label: n.name })}<b>${tr('Dein Trainer-Rivale', 'Your rival manager')}:</b> ${esc(n.name)} (${esc(n.clubName ?? '?')}${nemesisHere(this.career) ? '' : tr(', gerade woanders', ', elsewhere for now')}) · ${record(n)}${n.notes?.length ? `<br><small>${n.notes.map((x) => esc(x.text)).join(' · ')}</small>` : ''}</p>` : '';
     if (!list.length && !n) return '';
     const rows = list.map((r) => `<li class="oh-row rival-row" data-testid="rival-row"><span class="oh-name">${esc(r.name ?? '?')} <b class="rival-tag${r.pts >= RIVAL ? ' hot' : ''}">${rivalLabel(r.pts)}</b><small>${r.reasons.map((x) => esc(x.text)).join(' · ')}</small></span><span class="oh-meta"><i class="rival-bar" style="--v:${r.pts * 10}%"></i><small>${r.here ? tr('in deiner Liga', 'in your league') : tr('gerade woanders', 'elsewhere for now')}</small></span></li>`);
     return `<details class="rival-block"><summary>${tr('Rivalen', 'Rivals')} (${list.length + (n ? 1 : 0)})</summary>${coach}

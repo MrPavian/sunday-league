@@ -6,6 +6,14 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-15-3 – Dein Trainer-Rivale hat ein Gesicht
+
+### Neu
+- **Porträt des Trainer-Rivalen** (ROADMAP 11.18 Punkt 12) unter Vereinsleben → Rivalen, Jacke in der Trikotfarbe seines Vereins. Haut, Haare, Glatze und Bart ergeben sich fest aus dem Namen (coachrival.js rivalLook), ohne den Spielzufall; Anteile für Glatze, Bart und graue Haare sind Spielwerte.
+
+### Tests
+- `tests/coachrival.test.js`: Gesicht fest je Name, verschieden je Name, ohne Rivalen keins.
+
 ## 2026-11-15-2 – Weniger Reiter in Mannschaft und Verein
 
 ### Geändert

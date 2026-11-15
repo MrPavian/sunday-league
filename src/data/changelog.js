@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-15-3',
+    de: { title: 'Dein Trainer-Rivale hat ein Gesicht', items: ['Unter Vereinsleben → Rivalen steht jetzt ein Porträt neben Name, Verein und Bilanz deines Trainer-Rivalen, in den Farben seines Vereins.', 'Das Gesicht bleibt fest: Es ergibt sich aus seinem Namen, auch in alten Spielständen.'] },
+    en: { title: 'Your rival manager has a face', items: ['Under Club life → Rivals there is now a portrait next to your rival manager\'s name, club and record, in his club\'s colours.', 'The face stays the same: it comes from his name, in old saves too.'] },
+  },
+  {
     id: '2026-11-15-2',
     de: { title: 'Weniger Reiter in Mannschaft und Verein', items: ['Mannschaft: Kader & Transfers, Aufstellung & Taktik, Training, Teams – vier statt sechs Reiter.', 'Verein: Kasse & Anlage, Vereinsleben & Museum, Trikot & Wappen, Du.', 'Am Handy stehen die vier Reiter als Raster. Vitrine, Taktiktafel und Tutorial springen auf den passenden Teil der Seite.'] },
     en: { title: 'Fewer tabs in Squad and Club', items: ['Squad: Squad & transfers, Line-up & tactics, Training, Teams – four tabs instead of six.', 'Club: Kitty & grounds, Club life & museum, Kit & crest, You.', 'On phones the four tabs sit in a grid. Trophy cabinet, tactics board and tutorial jump to the right part of the page.'] },

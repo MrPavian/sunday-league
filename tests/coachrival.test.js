@@ -114,3 +114,16 @@ describe('Trainer-Rivale', () => {
     expect(h.needs(c)).toBe(null);
   });
 });
+
+describe('Gesicht des Trainer-Rivalen', () => {
+  const { rivalLook } = cr;
+  it('fest aus dem Namen, mit Haut- und Haarfarbe; ohne Rivalen keins', () => {
+    const a = rivalLook({ name: 'Ralf Brenner' });
+    expect(a).toEqual(rivalLook({ name: 'Ralf Brenner' }));
+    expect(typeof a.skin).toBe('number');
+    expect(typeof a.hair).toBe('number');
+    const looks = new Set(['Ralf Brenner', 'Jens Wolter', 'Kai Lührs', 'Uwe Pohl', 'Timo Rist', 'Sven Kraus'].map((n) => JSON.stringify(rivalLook({ name: n }))));
+    expect(looks.size).toBeGreaterThan(2);
+    expect(rivalLook(null)).toBe(null);
+  });
+});

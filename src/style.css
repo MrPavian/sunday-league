@@ -2074,3 +2074,6 @@ body.manager #end { padding-bottom: 84px; }
 .priv-card .priv-row .ui-btn { font-size: 0.85em; }
 .priv-card .priv-inline { display: inline-flex; gap: var(--s1); margin-left: var(--s1); }
 .priv-card b.warn { color: #d9534f; }
+/* Gesicht des Trainer-Rivalen (2026-11-15) links neben Name und Bilanz. */
+.nemesis-line .portrait { float: left; margin: 0 var(--s2) var(--s1) 0; }
+.nemesis-line::after { content: ''; display: block; clear: both; }

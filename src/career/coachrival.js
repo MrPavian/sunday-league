@@ -8,7 +8,7 @@
 // gegen uns).
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
-import { FIRST_NAMES, LAST_NAMES } from '../data/names.js';
+import { FIRST_NAMES, HAIR_COLORS, LAST_NAMES, SKIN_TONES } from '../data/names.js';
 import { clubById, humanClub, humanFixture } from './career.js';
 import { adjustMood } from './events.js';
 import { outcome } from './outcomes.js';
@@ -43,6 +43,17 @@ const news = (c, text) => (c.pendingNews ??= []).push(text);
 const note = (c, text) => {
   c.coachRival.notes = [...(c.coachRival.notes ?? []), { season: c.season, text }].slice(-4);
 };
+
+// Gesicht des Rivalen (ROADMAP 11.18 Punkt 12, 2026-11-15): aus dem Namen abgeleitet, damit es fest bleibt und alte Spielstände
+// keins speichern müssen; zieht nichts aus dem Spielzufall. Anteile für Glatze, Bart und graue Haare sind Spielwerte.
+export function rivalLook(n) {
+  if (!n?.name) return null;
+  let h = 2166136261;
+  for (const ch of n.name) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
+  const bit = (k, m) => ((h >>> k) % m);
+  const grey = bit(3, 10) < 3;
+  return { skin: SKIN_TONES[bit(0, SKIN_TONES.length)], hair: grey ? 0x8a8a8a : HAIR_COLORS[bit(7, 5)], bald: bit(11, 10) < 3, beard: bit(15, 10) < 4 };
+}
 
 function create(c, club, gf, ga) {
   const rng = rngFor(c, 11);
