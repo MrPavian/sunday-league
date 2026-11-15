@@ -6,6 +6,15 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-15-4 – Linesman and groundsman now move
+
+### New
+- **Moving figures on matchday** (ROADMAP 11.18 point 13, requested by the user): the club linesman runs level with the ball (in his half, 4.5 m/s), the groundsman pushes the chalk cart up and down at 0.6 m/s. Speed and bobbing are game values; display only, no game randomness.
+- Each figure is now its own mesh with vertex colours (props.js bakeFigure). Graphics budget measured: ash pitch 76 draw calls (limit 76, before 72), grass pitch 104 (limit 108), triangles unchanged.
+
+### Tests
+- New: `tests/staff_move.test.js` (one mesh per figure, not mergeable, walking range behind the touchline).
+
 ## 2026-11-15-3 – Your rival manager has a face
 
 ### New

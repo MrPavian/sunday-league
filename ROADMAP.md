@@ -103,7 +103,7 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
     Wirkung der „Hitze“ aufs Spiel, mehr Ereignisse (Abwerben, gemeinsamer Lehrgang). Ursprünglicher Punkt: ein gegnerischer Trainer, der über mehrere Saisons wiederkehrt, mit Vorgeschichte.
 13. **Spieltag als Erlebnis im Amateurbereich.** ✅ **Erste Lieferung 2026-11-13** (render/props.js makeMatchdayStaff): Platzwart
     mit Kreidewagen und Vereins-Linienrichter als stehende Figuren; die Bratwurstbude gab es schon. Flutlichtausfall als Ereignis am Schwarzen Brett
-    (2026-11-13). Offen: bewegte Figuren, Ausfall sichtbar im 3D-Spiel. Ursprünglicher Punkt: Platzwart, Bratwurststand, Linienrichter aus dem eigenen Verein, ausgefallenes
+    (2026-11-13). Bewegte Figuren ✅ (2026-11-15, MatchView staffFrame). Offen: Ausfall sichtbar im 3D-Spiel. Ursprünglicher Punkt: Platzwart, Bratwurststand, Linienrichter aus dem eigenen Verein, ausgefallenes
     Flutlicht – kleine sichtbare Dinge am Platz.
 14. **Legenden des Vereins.** ✅ **Erste Lieferung 2026-11-13** (career/legends.js, tests/legends.test.js): Abschied mit drei
     Ehrungen, Tafel im Museum, Besuch beim Training. Feste Rückennummern ab der Kreisklasse C mit Sperre für Legenden (career/numbers.js,

@@ -1,7 +1,7 @@
 // Wiederverwendbare Low-Poly-Requisiten für alle Spielorte.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { emissiveToon, toon } from './materials.js';
+import { emissiveToon, toon, vertexToon } from './materials.js';
 import { shadowBias } from './lighting.js';
 import { currentQuality } from './quality.js';
 
@@ -176,8 +176,8 @@ export function makeDog(x, z, color = 0x8a6a3a, rotation = 0) {
 }
 
 // Spieltag im Amateurbereich (ROADMAP 11.18 Punkt 13): der Platzwart mit dem Kreidewagen und der Linienrichter aus dem eigenen
-// Verein, beide auf der Gegenseite zwischen Seitenlinie und Bande. Stehende Kastenfiguren wie der Hund – nur Farben, die die
-// Kulisse schon nutzt (mergeStatic: keine zusätzlichen Draw Calls), kein Zufall (der Rest der Szene bleibt, wie er war).
+// Verein, beide auf der Gegenseite zwischen Seitenlinie und Bande. Kastenfiguren wie der Hund – nur Farben, die die
+// Kulisse schon nutzt, kein Zufall (der Rest der Szene bleibt, wie er war). Seit 2026-11-15 bewegt (bakeFigure, unten).
 // Auf dem Ascheplatz mit dessen Farben (STAFF_ASH): Mit eigenen Farben waren es 80 statt 76 Draw Calls. Die Dreiecke
 // (25,3 Tsd.) liegen über der alten Grenze von 25,0 Tsd.; sie wurde mit dem Nutzer auf 26,0 Tsd. angehoben (2026-11-13).
 // Abstand zur Linie 1,7 m: Spieler kommen höchstens 1,2 m über die Seitenlinie (clampPlayer), Tim steht bei 1,55 m.
@@ -194,6 +194,32 @@ function boxPerson(jacket, c) {
     box(0.25, 0.07, 0.25, c.cap, 0, 1.7, 0), // Mütze
   ];
 }
+// Bewegte Figuren (ROADMAP 11.18 Punkt 13, vom Nutzer gewünscht 2026-11-15): Jede Figur wird zu einem Mesh mit Farben in den Ecken
+// gebacken (vertexToon) – so kann sie sich bewegen und kostet je einen Draw Call statt in der Kulisse zu verschmelzen.
+// MatchView.staffFrame bewegt sie über userData.staff.
+function bakeFigure(g) {
+  g.updateMatrixWorld(true);
+  const parts = [];
+  g.traverse((o) => {
+    if (!o.isMesh) return;
+    const geo = o.geometry.toNonIndexed();
+    geo.applyMatrix4(o.matrix);
+    const col = new THREE.Color(o.material.color);
+    const arr = new Float32Array(geo.attributes.position.count * 3);
+    for (let i = 0; i < geo.attributes.position.count; i++) col.toArray(arr, i * 3);
+    geo.setAttribute('color', new THREE.BufferAttribute(arr, 3));
+    for (const n of Object.keys(geo.attributes)) if (n !== 'position' && n !== 'normal' && n !== 'color') geo.deleteAttribute(n);
+    parts.push(geo);
+  });
+  const mesh = new THREE.Mesh(mergeGeometries(parts, false), vertexToon());
+  for (const geo of parts) geo.dispose();
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  mesh.userData.keep = true; // nicht mit der Kulisse verschmelzen
+  const out = new THREE.Group();
+  out.add(mesh);
+  return out;
+}
 export function makeMatchdayStaff(pitch, c = STAFF_LAWN) {
   const { halfLength: hl, halfWidth: hw } = pitch;
   const z = -(hw + STAFF_OUT);
@@ -209,8 +235,10 @@ export function makeMatchdayStaff(pitch, c = STAFF_LAWN) {
     box(0.06, 0.26, 0.26, c.dark, -0.26, 0.13, 0.85), // Räder
     box(0.06, 0.26, 0.26, c.dark, 0.26, 0.13, 0.85),
   );
-  warden.position.set(-hl * 0.84, 0, z);
-  warden.rotation.y = Math.PI / 2 - 0.6; // schiebt den Wagen schräg an der Linie entlang (von der Kamera aus sieht man Mann und Wagen)
+  const wardenFig = bakeFigure(warden);
+  wardenFig.position.set(-hl * 0.84, 0, z);
+  wardenFig.rotation.y = Math.PI / 2 - 0.6; // schiebt den Wagen schräg an der Linie entlang (von der Kamera aus sieht man Mann und Wagen)
+  wardenFig.userData.staff = { kind: 'warden', from: -hl * 0.92, to: -hl * 0.62, z };
   // Linienrichter aus dem Verein: Trainingsjacke, die Fahne in der Rechten nach unten.
   const lines = group(
     ...boxPerson(c.lines, c),
@@ -219,8 +247,10 @@ export function makeMatchdayStaff(pitch, c = STAFF_LAWN) {
     box(0.04, 0.6, 0.04, c.pole, 0.3, 0.72, 0.12), // Fahnenstock
     box(0.03, 0.3, 0.34, c.flag, 0.3, 0.55, 0.3), // Fahne
   );
-  lines.position.set(hl * 0.7, 0, z);
-  return group(warden, lines);
+  const linesFig = bakeFigure(lines);
+  linesFig.position.set(hl * 0.7, 0, z);
+  linesFig.userData.staff = { kind: 'lines', from: hl * 0.05, to: hl * 0.95, z };
+  return group(wardenFig, linesFig);
 }
 
 // Echtes Tor mit Pfosten, Latte und angedeutetem Netz (dünne Schnüre).

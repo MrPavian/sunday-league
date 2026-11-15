@@ -6,6 +6,15 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-15-4 – Linienrichter und Platzwart bewegen sich
+
+### Neu
+- **Bewegte Figuren am Spieltag** (ROADMAP 11.18 Punkt 13, vom Nutzer gewünscht): Der Linienrichter aus dem Verein läuft auf Höhe des Balls mit (in seiner Hälfte, 4,5 m/s), der Platzwart schiebt den Kreidewagen mit 0,6 m/s auf und ab. Tempo und Wippen sind Spielwerte; reine Darstellung, kein Spielzufall.
+- Jede Figur ist jetzt ein eigenes Mesh mit Farben in den Ecken (props.js bakeFigure). Grafik-Budget gemessen: Ascheplatz 76 Draw Calls (Grenze 76, vorher 72), Rasenplatz 104 (Grenze 108), Dreiecke unverändert.
+
+### Tests
+- Neu: `tests/staff_move.test.js` (je Figur ein Mesh, nicht verschmelzbar, Laufbereich hinter der Seitenlinie).
+
 ## 2026-11-15-3 – Dein Trainer-Rivale hat ein Gesicht
 
 ### Neu

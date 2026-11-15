@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-15-4',
+    de: { title: 'Linienrichter und Platzwart bewegen sich', items: ['Der Linienrichter aus dem eigenen Verein läuft an der Seitenlinie auf Höhe des Balls mit; ist der Ball in der anderen Hälfte, wartet er an der Mittellinie.', 'Der Platzwart schiebt seinen Kreidewagen langsam an der Linie auf und ab.', 'Auf Rasen- und Ascheplatz, wie bisher nicht auf dem Großfeld.'] },
+    en: { title: 'Linesman and groundsman now move', items: ['The club linesman runs along the touchline level with the ball; when the ball is in the other half he waits at the halfway line.', 'The groundsman slowly pushes his chalk cart up and down the line.', 'On the grass and ash pitches, still not on the full-size pitch.'] },
+  },
+  {
     id: '2026-11-15-3',
     de: { title: 'Dein Trainer-Rivale hat ein Gesicht', items: ['Unter Vereinsleben → Rivalen steht jetzt ein Porträt neben Name, Verein und Bilanz deines Trainer-Rivalen, in den Farben seines Vereins.', 'Das Gesicht bleibt fest: Es ergibt sich aus seinem Namen, auch in alten Spielständen.'] },
     en: { title: 'Your rival manager has a face', items: ['Under Club life → Rivals there is now a portrait next to your rival manager\'s name, club and record, in his club\'s colours.', 'The face stays the same: it comes from his name, in old saves too.'] },
