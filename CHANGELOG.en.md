@@ -6,6 +6,21 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-15-1 – Press conference: relegation fight, cup and your image
+
+### New
+- **Relegation fight** (from the fourth tier, last third of the season, bottom three, once per season): "We are staying up" brings fans (+2 supporters' club members) and mood or costs backing; self-criticism brings backing (+2) and costs mood; excuses cost backing and fans.
+- **Cup** (up to two weeks before the next round, once per round): stressing the cup brings fans and mood, announcing rotation brings backing and costs one fan.
+- **Image** (once per season, only bon vivant, businessman, benefactor or saver from private life): a question per type, answers affect fans and backing.
+- Fans = supporters' club members (€1 each per week). All effects are game values.
+
+### Tests
+- `tests/presse.test.js` extended (three new cases).
+
+### Measurement
+- **Corners:** goals within 8 s of a corner 11.1 / 7.6 / 9.6% (7-a-side / 9-a-side / full-size, 240 matches each; professionals about 3%). More zonal marking, weaker headers and a leg block barely changed that and were reverted.
+- **Rare events:** the eleven events never seen in the count fail because of the measurement, not the game (new test `tests/event_reach.test.js`).
+
 ## 2026-11-14-5 – More variety in the team group chat
 
 ### Changed

@@ -95,8 +95,8 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
     der Rückblick der Ära (Aufstiege, Abstiege, beste Platzierung; tests/farewell.test.js). Ursprünglicher Punkt: Der Trainer altert; Abschied mit Rückblick und Ehrentafel, Weiterspielen mit einem Nachfolger
     im selben Verein.
 11. **Pressekonferenz ab der Regionalliga.** ✅ **Erste Lieferung 2026-11-13** (career/presse.js, tests/presse.test.js): Spitzenspiel
-    mit Ansage und Nachfrage eine Woche später, Siegesserie, Personalfrage. Offen: Wirkung auf die Fans, Fragen nach Pokal- und
-    Abstiegsspielen, Verknüpfung mit dem Trainertyp. Ursprünglicher Punkt: zwei bis drei Fragen vor oder nach wichtigen Spielen; Antworten wirken auf Kabine,
+    mit Ansage und Nachfrage eine Woche später, Siegesserie, Personalfrage. ✅ **2026-11-15:** Abstiegskampf, Pokal, Auftreten je Trainertypus;
+    Wirkung auf die Fans (Förderverein). Ursprünglicher Punkt: zwei bis drei Fragen vor oder nach wichtigen Spielen; Antworten wirken auf Kabine,
     Vorstand und Fans (passt zu Auftreten und Trainertyp aus Punkt 17).
 12. **Rivalität zwischen Trainern.** ✅ **Erste Lieferung 2026-11-13** (career/coachrival.js, tests/coachrival.test.js): ein
     Trainer mit Namen und Bilanz, folgt in eine neue Liga, Stichelei vor und Handschlag nach dem Duell. Offen: Gesicht,

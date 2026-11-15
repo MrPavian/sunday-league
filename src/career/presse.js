@@ -8,6 +8,9 @@ import { clubById, humanClub, humanFixture, playerOf, table } from './career.js'
 import { adjustForm, adjustMood } from './events.js';
 import { first, outcome } from './outcomes.js';
 import { isCoach, isPresident } from './personal.js';
+import { clubLife } from './clublife.js';
+import { POKALE, pokalOf } from './pokal.js';
+import { typus } from './privat.js';
 
 export const PRESS_FROM = 9; // Regionalliga
 const level = (c) => c.level ?? 1;
@@ -17,6 +20,8 @@ const half = (c) => `${c.season}:${(c.round ?? 0) < (c.fixtures?.length ?? 0) / 
 const trust = (c, d) => {
   if (c.board) c.board.trust = Math.max(0, Math.min(100, c.board.trust + d)); // Rückhalt im Vorstand (pressure.js)
 };
+// Fans (ROADMAP 11.18 Punkt 11, 2026-11-15): Mitglieder im Förderverein, je 1 € pro Woche (clublife.js). Spielwerte ±1 … 3.
+const fans = (c, d) => (clubLife(c).supporters = Math.max(0, clubLife(c).supporters + d));
 const squad = (c) => humanClub(c).squad.filter((i) => !isCoach(c, i));
 // Ergebnisse der letzten eigenen Ligaspiele, jüngstes zuerst: 1 Sieg, 0 Remis, −1 Niederlage.
 export function recentResults(c, n = 5) {
@@ -154,6 +159,69 @@ export const PRESS_EVENTS = {
         ]),
       },
       { label: tr('„Interna bleiben intern.“', '"Internal matters stay internal."'), effect: () => tr('Die Reporterin notiert: „Trainer weicht aus.“ Mehr passiert nicht.', 'The reporter notes: "Manager dodges the question." Nothing more comes of it.') },
+    ],
+  },
+  // Abstiegskampf: im letzten Drittel der Saison auf einem der letzten drei Plätze.
+  pk_abstieg: {
+    weight: 4,
+    needs: (c) => {
+      if (!on(c) || once(c, 'pk_abstieg')) return null;
+      const n = c.fixtures?.length ?? 0;
+      if ((c.round ?? 0) < (2 * n) / 3) return null;
+      const t = table(c);
+      const pos = posOf(c, humanClub(c).id);
+      return pos > t.length - 3 ? { pos, of: t.length } : null;
+    },
+    text: (c, ctx) => tr(`Platz ${ctx.pos} von ${ctx.of}, noch eine Handvoll Spiele. Die erste Frage auf der Pressekonferenz: „Trainer, glauben Sie selbst noch an den Klassenerhalt?“`, `${ctx.pos}th of ${ctx.of}, a handful of games left. First question at the press conference: "Coach, do you still believe you can stay up?"`),
+    options: [
+      { label: tr('„Wir bleiben drin. Punkt.“', '"We are staying up. Full stop."'), effect: outcome([
+        { w: 2, run: (c) => (fans(c, 2), adjustMood(c, 0.04), tr('Die Fans hängen den Satz als Banner an den Zaun. Zwei treten in den Förderverein ein.', 'The fans hang the line on the fence as a banner. Two join the supporters\' club.')) },
+        { w: 1, run: (c) => (trust(c, -1), adjustMood(c, 0.02), tr('Im Vorstand fragt einer, ob du dir das gut überlegt hast. Die Kabine findet es stark.', 'Someone on the board asks if you have thought that through. The dressing room loves it.')) },
+      ]) },
+      { label: tr('„Jeder muss sich jetzt hinterfragen, ich zuerst.“', '"Everyone has to look at themselves now, me first."'), effect: (c) => (trust(c, 2), adjustMood(c, -0.02), tr('Der Vorstand nickt anerkennend. Ein paar Spieler fühlen sich angegriffen.', 'The board nods in approval. A few players feel targeted.')) },
+      { label: tr('„Mit etwas Glück stünden wir woanders.“', '"With a bit of luck we would be elsewhere."'), effect: (c) => (trust(c, -1), fans(c, -1), tr('Die Zeitung titelt „Pech-Trainer“. Am Zaun wird gemurrt.', 'The paper runs "The unlucky coach". There is grumbling at the fence.')) },
+    ],
+  },
+  // Pokal: Die nächste Pokalrunde steht in den nächsten Wochen an.
+  pk_pokal: {
+    weight: 3,
+    needs: (c) => {
+      if (!on(c)) return null;
+      for (const kind of ['bund', 'bezirk', 'kreis']) {
+        const cup = pokalOf(c, kind);
+        if (!cup || cup.done || cup.out) continue;
+        const at = cup.rounds?.[cup.round];
+        if (at != null && at >= c.round && at - c.round <= 2 && flag(c).pkCup !== `${c.season}:${kind}:${cup.round}`) return { kind, round: cup.round, cup: POKALE[kind].name };
+      }
+      return null;
+    },
+    text: (c, ctx) => tr(`Vor der nächsten Runde im ${ctx.cup} will ein Reporter wissen: „Pokal oder Liga – was ist Ihnen wichtiger?“`, `Before the next round of the ${ctx.cup} a reporter wants to know: "Cup or league – which matters more to you?"`),
+    options: [
+      { label: tr('„Der Pokal hat seine eigenen Gesetze. Wir wollen weiter.“', '"The cup has its own rules. We want to go through."'), effect: (c, ctx) => ((flag(c).pkCup = `${c.season}:${ctx.kind}:${ctx.round}`), fans(c, 1), adjustMood(c, 0.02), tr('Die Fans planen schon die Auswärtsfahrt zur nächsten Runde.', 'The fans are already planning the away trip to the next round.')) },
+      { label: tr('„Die Liga geht vor. Ich werde rotieren.“', '"The league comes first. I will rotate."'), effect: (c, ctx) => ((flag(c).pkCup = `${c.season}:${ctx.kind}:${ctx.round}`), trust(c, 1), fans(c, -1), tr('Der Vorstand ist einverstanden. Am Zaun sagt einer: „Pokal ist doch das Schönste.“', 'The board agrees. At the fence someone says: "But the cup is the best bit."')) },
+    ],
+  },
+  // Auftreten: Die Presse fragt nach dem Trainer selbst – je nach Trainertypus (privat.js).
+  pk_auftreten: {
+    weight: 2,
+    needs: (c) => {
+      if (!on(c) || once(c, 'pk_auftreten')) return null;
+      const t = typus(c);
+      return t === 'lebemann' || t === 'geschaeft' || t === 'wohltaeter' || t === 'sparfuchs' ? { t } : null;
+    },
+    text: (c, ctx) => ({
+      lebemann: tr('„Trainer, man sieht Sie öfter in teuren Restaurants als auf dem Trainingsplatz“, sagt ein Reporter und grinst.', '"Coach, you are seen in expensive restaurants more often than on the training pitch," says a reporter, grinning.'),
+      geschaeft: tr('„Anzug, Limousine – sind Sie Trainer oder Geschäftsführer?“, fragt ein Reporter.', '"Suit, saloon car – are you a coach or a managing director?" a reporter asks.'),
+      wohltaeter: tr('„Es heißt, Sie stecken einen Teil Ihres Gehalts in den Verein. Stimmt das?“', '"They say you put part of your salary into the club. Is that true?"'),
+      sparfuchs: tr('„Man sagt, Sie fahren noch das Auto, mit dem Sie in der Kreisliga angefangen haben?“', '"They say you still drive the car you started with in the district league?"'),
+    })[ctx.t],
+    options: [
+      { label: tr('Mit Humor antworten', 'Answer with humour'), effect: outcome([
+        { w: 2, run: (c) => (fans(c, 1), tr('Der Saal lacht. Das Zitat macht die Runde, die Fans mögen es.', 'The room laughs. The quote does the rounds and the fans like it.')) },
+        { w: 1, run: (c) => (trust(c, -1), tr('Der Witz kommt schief an. Im Vorstand findet man ihn nicht lustig.', 'The joke lands badly. The board does not find it funny.')) },
+      ]) },
+      { label: tr('„Privat ist privat.“', '"Private is private."'), effect: (c, ctx) => (ctx.t === 'wohltaeter' ? (trust(c, 1), tr('Gerade die Zurückhaltung kommt gut an. Im Vorstand weiß man es ohnehin.', 'The modesty goes down well. The board knows anyway.')) : tr('Die Reporter notieren es und fragen nach der Aufstellung.', 'The reporters note it down and ask about the line-up.')) },
+      { label: tr('„Über Fußball rede ich gern, darüber nicht.“', '"I will talk football, not that."'), effect: (c, ctx) => ((ctx.t === 'lebemann' ? fans(c, -1) : null), tr('Kurze Stille. Dann die nächste Frage zum Wochenende.', 'A brief silence. Then the next question about the weekend.')) },
     ],
   },
 };

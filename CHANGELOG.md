@@ -6,6 +6,21 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-15-1 – Pressekonferenz: Abstiegskampf, Pokal und dein Auftreten
+
+### Neu
+- **Abstiegskampf** (ab der Regionalliga, letztes Saisondrittel, letzte drei Plätze, einmal je Saison): „Wir bleiben drin“ bringt Fans (+2 im Förderverein) und Stimmung oder kostet Rückhalt; Selbstkritik bringt Rückhalt (+2), kostet Stimmung; Ausreden kosten Rückhalt und Fans.
+- **Pokal** (bis zwei Wochen vor der nächsten Runde, einmal je Runde): Pokal betonen bringt Fans und Stimmung, Rotation ankündigen bringt Rückhalt und kostet einen Fan.
+- **Auftreten** (einmal je Saison, nur Lebemann, Geschäftsmann, Wohltäter oder Sparfuchs aus dem Privatleben): Frage je Typus, Antworten wirken auf Fans und Rückhalt.
+- Fans = Mitglieder im Förderverein (je 1 € pro Woche). Alle Wirkungen sind Spielwerte.
+
+### Tests
+- `tests/presse.test.js` erweitert (drei neue Fälle).
+
+### Messung
+- **Ecken:** Tore binnen 8 s nach einer Ecke 11,1 / 7,6 / 9,6 % (7er / 9er / Großfeld, je 240 Spiele; Profis rund 3 %). Mehr Raumdeckung, schwächere Kopfbälle und ein Beinblock änderten daran kaum etwas und wurden zurückgenommen.
+- **Seltene Ereignisse:** Die elf Ereignisse, die in der Zählung nie vorkamen, scheitern an der Messung, nicht am Spiel (neuer Test `tests/event_reach.test.js`).
+
 ## 2026-11-14-5 – Mehr Abwechslung in der Mannschaftsgruppe
 
 ### Geändert

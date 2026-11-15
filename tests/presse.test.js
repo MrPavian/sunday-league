@@ -95,3 +95,34 @@ describe('Pressekonferenz', () => {
     expect(c.players[idx].grumpy).toBe(0);
   });
 });
+
+describe('Pressekonferenz: Abstiegskampf, Pokal, Auftreten (2026-11-15)', () => {
+  it('Abstiegskampf: erst im letzten Drittel auf einem der letzten drei Plätze; Ansage wirkt auf Fans oder Kabine', () => {
+    const c = pro(7);
+    const n = c.fixtures.length;
+    play(c, Array(Math.ceil(n / 3)).fill(-1));
+    expect(PRESS_EVENTS.pk_abstieg.needs(c)).toBe(null); // zu früh
+    play(c, Array(Math.ceil(n / 3) + 1).fill(-1));
+    const before = { fans: c.clubLife?.supporters ?? 0, mood: c.mood ?? 0 };
+    const { ctx } = run('pk_abstieg', c, 0);
+    expect(ctx.pos).toBeGreaterThan(table(c).length - 3);
+    expect((c.clubLife?.supporters ?? 0) > before.fans || (c.mood ?? 0) > before.mood).toBe(true);
+  });
+
+  it('Pokal: vor der nächsten Runde, einmal je Runde; Rotation kostet Fans, bringt Rückhalt', () => {
+    const c = pro(5);
+    c.clubLife = { fee: 0, supporters: 5, neighbors: 0, treasurer: null, missing: 0, done: {} };
+    c.pokale = { kreis: { season: c.season, round: 0, rounds: [(c.round ?? 0) + 1], done: false, out: false } };
+    const trust0 = board(c).trust;
+    run('pk_pokal', c, 1);
+    expect(c.clubLife.supporters).toBe(4);
+    expect(board(c).trust).toBe(trust0 + 1);
+    expect(PRESS_EVENTS.pk_pokal.needs(c)).toBe(null);
+  });
+
+  it('Auftreten: nur bei auffälligem Trainertypus, Text je Typus', () => {
+    const c = pro(5);
+    expect(PRESS_EVENTS.pk_auftreten.needs(c)).toBe(null); // bodenständig: keine Frage
+    for (const t of ['lebemann', 'geschaeft', 'wohltaeter', 'sparfuchs']) expect(PRESS_EVENTS.pk_auftreten.text(c, { t }).length).toBeGreaterThan(20);
+  });
+});

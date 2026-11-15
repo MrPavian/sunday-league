@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-15-1',
+    de: { title: 'Pressekonferenz: Abstiegskampf, Pokal und dein Auftreten', items: ['Steht ihr im letzten Saisondrittel unten drin, fragt die Presse nach dem Klassenerhalt. Eine große Ansage begeistert die Fans oder macht den Vorstand nervös.', 'Vor einer Pokalrunde: Pokal oder Liga? Wer rotiert, hat den Vorstand auf seiner Seite, aber nicht die Fans.', 'Fällt dein Auftreten auf (Lebemann, Geschäftsmann, Wohltäter, Sparfuchs), fragt die Presse auch danach. Die Antworten wirken jetzt auch auf den Förderverein.'] },
+    en: { title: 'Press conference: relegation fight, cup and your image', items: ['If you are in the bottom three in the last third of the season, the press asks about staying up. A bold claim thrills the fans or unsettles the board.', 'Before a cup round: cup or league? Rotate and the board is on your side, the fans are not.', 'If your image stands out (bon vivant, businessman, benefactor, saver), the press asks about that too. Answers now also affect the supporters\' club.'] },
+  },
+  {
     id: '2026-11-14-5',
     de: { title: 'Mehr Abwechslung in der Mannschaftsgruppe', items: ['Verletzt abgemeldet, nachgehakt, neu dazugekommen, Angebot abgelehnt, Gruppe verlassen: Diese Chat-Antworten hatten nur zwei bis vier Fassungen, jetzt vier bis acht.', 'Die Antworten ändern nur den Text, nicht wer kommt oder absagt.'] },
     en: { title: 'More variety in the team group chat', items: ['Injured, nudged, newly joined, offer declined, left the group: these chat replies had only two to four versions, now four to eight.', 'The replies only change the text, not who comes or drops out.'] },
