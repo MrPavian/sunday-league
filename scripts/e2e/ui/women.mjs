@@ -23,7 +23,7 @@ export async function frauen(b, size, shots) {
   await click(none, '.career [data-c="continue"]');
   await none.waitForTimeout(1500);
   await click(none, '[data-action="area"][data-value="team"]');
-  await none.evaluate(() => document.querySelector('[data-action="tab"][data-value="teams"]')?.click());
+  await none.evaluate(() => document.querySelector('[data-action="tab"][data-value="training"]')?.click());
   await none.waitForTimeout(300);
   ok(!(await none.$('[data-team="women"]')), 'Frauen unter Teams ohne Frauenteam');
   await none.context().close();
@@ -42,7 +42,7 @@ export async function frauen(b, size, shots) {
   await click(p, '.career [data-c="continue"]');
   await p.waitForTimeout(1500);
   await click(p, '[data-action="area"][data-value="team"]');
-  await p.evaluate(() => document.querySelector('[data-action="tab"][data-value="teams"]')?.click());
+  await p.evaluate(() => document.querySelector('[data-action="tab"][data-value="training"]')?.click());
   await p.waitForTimeout(400);
   ok(!!(await p.$('[data-testid="women"]')), 'Reiter Frauen fehlt');
   const subs = await p.$$eval('[data-testid="women"] .ui-tabs [data-action="woSub"]', (e) => e.map((x) => x.dataset.value));

@@ -6,6 +6,16 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-15-10 – Transfers easier to find
+
+### Changed
+- **Transfers** (per the user: too hidden): own tab next to the squad (Squad: Squad, Transfers, Line-up & tactics, Training & teams). "Transfer market" card on the home page (window, rumours, offers), counter on "Squad" for new rumours and open offers (transfers.js transferNews; seen once the tab has been open).
+
+### Tests
+- `tests/clubnav.test.js`: "Teams" is now among the redirected names (part of "Training & teams"), "Transfers" no longer (own tab again).
+- Browser tests: clicks on "Teams" go to "Training", the transfer test clicks "Transfers"; tab list updated.
+- New: `tests/transfernews.test.js`.
+
 ## 2026-11-15-9 – Home page and kit editor tidied up
 
 ### Changed

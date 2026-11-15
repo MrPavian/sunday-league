@@ -11,6 +11,7 @@ import { importanceLabel, trainingFee, windowLabel, FEE_BASE } from '../../caree
 import {
   acceptOffer, anyClub, approachFree, argueDeal, askAroundDeal, askClub, clubRating, counterOffer, declineOffer, EXTRA_STEPS, HANDGELD_STEPS, listPlayer, loanIn, loanOut,
   freeAgents, loansIn, loansOut, marketList, MAX_REQUESTS, playerChance, priceOf, proFee, setHandgeld, talkDeal, tstate, windowInfo,
+  markRumorsSeen,
 } from '../../career/transfers.js';
 import { banGames } from '../../career/suspensions.js';
 import { TRAITS } from '../../data/traits.js';
@@ -61,6 +62,7 @@ export const transferScreens = {
     const t = tstate(c);
     const info = windowInfo(c);
     const offers = t.offers.length;
+    markRumorsSeen(c); // Zähler an „Mannschaft“ und auf der Startseite: gesehen
     const subTabs = uiTabs([['rumors', tr('Gerüchte', 'Rumours')], ['market', tr('Suche', 'Search')], ['own', tr('Eigene', 'Ours'), offers || null], ['news', tr('Presse', 'Press')]], tf.sub, 'tfSub');
     const banner = `<p class="tf-banner ${info.open ? 'open' : 'closed'}" data-testid="tf-banner"><b>${info.open ? tr(`Wechselperiode offen: ${windowLabel(info.kind)}`, `Transfer period open: ${windowLabel(info.kind)}`) : tr('Wechselfrist geschlossen', 'Transfer period closed')}</b> · ${
       info.open

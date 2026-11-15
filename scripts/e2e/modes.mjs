@@ -21,8 +21,8 @@ const INCIDENTS = { hund: 'park', zaun: 'hinterhof', autoalarm: 'parkplatz', pol
 // gemessen: Autoalarm 26 von 30 Seeds, alte wie neue Ballphysik). Der Browser-Test prüft den Ablauf, nicht die Rate: bis zu
 // drei Seeds, der erste mit Vorfall zählt. Die Rate prüfen die Unit-Tests.
 const INCIDENT_SEED = { autoalarm: [15, 7, 21], zaun: [11, 7, 21] };
-// Reiter seit 2026-11-15 zusammengelegt (Kader & Transfers, Aufstellung & Taktik, Kasse & Anlage, Vereinsleben & Museum).
-const TABS = [['home'], ['team', 'squad'], ['team', 'lineup'], ['team', 'training'], ['team', 'teams'], ['season', 'table'], ['season', 'fixtures'], ['season', 'cup'], ['club', 'cash'], ['club', 'leben'], ['club', 'kit'], ['club', 'me'], ['pub'], ['phone', 'chat']];
+// Reiter seit 2026-11-15 zusammengelegt (Aufstellung & Taktik, Training & Teams, Kasse & Anlage, Vereinsleben & Museum); Transfers eigener Reiter.
+const TABS = [['home'], ['team', 'squad'], ['team', 'transfers'], ['team', 'lineup'], ['team', 'training'], ['season', 'table'], ['season', 'fixtures'], ['season', 'cup'], ['club', 'cash'], ['club', 'leben'], ['club', 'kit'], ['club', 'me'], ['pub'], ['phone', 'chat']];
 
 const frame = (p) => p.evaluate(() => globalThis.__sl?.diag?.frame ?? -1);
 async function running(p) {
@@ -479,7 +479,7 @@ export async function clubSetup(b) {
   // Ehrenamt: Wirt aus dem Kader, Platzwart per Aushang.
   await click(p, '[data-action="area"][data-value="team"]');
   await p.waitForTimeout(300);
-  await click(p, '[data-action="tab"][data-value="teams"]');
+  await click(p, '[data-action="tab"][data-value="training"]');
   await p.waitForTimeout(300);
   await click(p, '[data-action="youthTab"][data-value="club"]');
   await p.waitForTimeout(300);

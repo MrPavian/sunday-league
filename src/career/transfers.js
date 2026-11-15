@@ -58,6 +58,19 @@ export function tstate(c) {
   return t;
 }
 
+// Was gibt es Neues auf dem Transfermarkt? (Startseite und Zähler an „Mannschaft“, vom Nutzer: Transfers zu versteckt, 2026-11-15)
+// fresh: Angebote für eigene Spieler plus Gerüchte, die seit dem letzten Blick in den Reiter dazugekommen sind.
+export function transferNews(c) {
+  const t = tstate(c);
+  const rumors = c.week?.rumors ?? [];
+  const seen = new Set(c.week?.rumorsSeen ?? []);
+  const fresh = rumors.filter((r) => !seen.has(r.idx)).length + t.offers.length;
+  return { offers: t.offers.length, rumors: rumors.length, fresh, window: windowInfo(c) };
+}
+export function markRumorsSeen(c) {
+  if (c.week) c.week.rumorsSeen = (c.week.rumors ?? []).map((r) => r.idx);
+}
+
 // Verein (auch Nachbarliga) nach Kennung.
 export const anyClub = (c, id) => clubById(c, id) ?? tstate(c).neighbors.find((n) => n.id === id) ?? null;
 // Alle fremden Vereine, die als Quelle/Ziel in Frage kommen: eigene Liga zuerst.

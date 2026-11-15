@@ -11,8 +11,8 @@ describe('Vereinsheim-Navigation', () => {
     // Flaches Menü (2026-11-06): 17 bisherige + Anlage, Vereinsleben, Trikot & Wappen, Du, Teams. Die alten Namen (Verein,
     // Präsidium, Jugend, Frauen, Alte Herren) sind Teile neuer Reiter und führen über resolveTab dorthin.
     expect(screens.length).toBe(22);
-    // Seit 2026-11-15 zusätzlich Teile zusammengelegter Reiter (Clubhouse.js MERGED): Transfers, Taktik, Anlage, Museum.
-    const ALIASES = ['club', 'office', 'youth', 'women', 'oldboys', 'transfers', 'tactic', 'anlage', 'museum'];
+    // Seit 2026-11-15 zusätzlich Teile zusammengelegter Reiter (Clubhouse.js MERGED): Taktik, Teams, Anlage, Museum.
+    const ALIASES = ['club', 'office', 'youth', 'women', 'oldboys', 'teams', 'tactic', 'anlage', 'museum'];
     for (const t of screens) expect(CLUB_AREAS.filter((a) => a.tabs.includes(ALIASES.includes(t) ? resolveTab(t).tab : t))).toHaveLength(1);
     for (const t of ALIASES) expect(CLUB_AREAS.some((a) => a.tabs.includes(t))).toBe(false);
     for (const a of CLUB_AREAS) expect(a.tabs.length).toBeLessThanOrEqual(6); // am Handy ein Raster mit höchstens zwei Zeilen

@@ -1,5 +1,6 @@
 // HEUTE: Vereinsheim-Raum, nächstes Spiel, Ergebnisse, Saisonende und Aushang.
 // Methoden des Vereinsheims (this = Clubhouse), aus Clubhouse.js herausgelöst – Verhalten unverändert.
+import { transferNews } from '../../career/transfers.js';
 import { tr } from '../../core/i18n.js';
 import { spielberichtStreng } from '../../career/spielbericht.js';
 import { effectChips } from '../../career/consequences.js';
@@ -104,12 +105,24 @@ export const homeScreens = {
     const side = `
       <div class="ui-card"><p class="t-cap">${tr('Letzte Ergebnisse', 'Recent results')}</p>${last}</div>
       ${pending ? `<button class="ui-card tap notify hub-pending" data-action="tab" data-value="chat"><p class="t-cap">${icon('phone', 16)} ${tr('Handy', 'Phone')}</p><p class="t-body">${tr('In der Gruppe wartet eine Entscheidung auf dich.', 'A decision is waiting for you in the group chat.')}</p></button>` : ''}
+      ${over || this.results ? '' : this.transferCard()}
       ${over || this.results ? '' : this.qualiAside()}
       ${this.results ? '' : this.natCoachCard()}
       ${this.noticeCard()}`;
     // Die Szene zeigt Tabellenplatz, Termin, Taktik und Handy als Objekte im Raum (ClubScene.js).
     const classic = homeView() === 'klassisch';
     return `<div class="hub${classic ? ' classic' : ''}"><div class="hub-scene">${clubScene(c, { results: this.results, classic, wall: wallView() })}</div><section class="hub-main">${main}</section><aside class="hub-side ui-stack tight">${side}</aside></div>`;
+  },
+
+  // Transfermarkt auf der Startseite (vom Nutzer: Transfers zu versteckt, 2026-11-15): Frist, Gerüchte, Angebote – ein Tipp führt hin.
+  transferCard() {
+    const c = this.career;
+    if (!c.week) return '';
+    const n = transferNews(c);
+    const w = n.window;
+    const state = w.open ? tr('Wechselfrist offen', 'Transfer window open') : w.next ? tr(`Frist in ${w.next.weeks} Wo.`, `Window in ${w.next.weeks} wk`) : tr('Frist zu', 'Window closed');
+    const bits = [state, `${n.rumors} ${tr(n.rumors === 1 ? 'Gerücht' : 'Gerüchte', n.rumors === 1 ? 'rumour' : 'rumours')}`, ...(n.offers ? [`${n.offers} ${tr(n.offers === 1 ? 'Angebot' : 'Angebote', n.offers === 1 ? 'offer' : 'offers')}`] : [])];
+    return `<button class="ui-card tap${n.fresh ? ' notify' : ''} hub-transfers" data-action="tab" data-value="transfers" data-testid="hub-transfers"><p class="t-cap">${tr('Transfermarkt', 'Transfer market')}${n.fresh ? ` <b class="ui-badge">${n.fresh}</b>` : ''}</p><p class="t-body">${bits.join(' · ')}</p></button>`;
   },
 
   nextMatch() {

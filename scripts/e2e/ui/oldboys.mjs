@@ -43,7 +43,7 @@ export async function alteHerren(b, size, shots) {
   await click(p, '.career [data-c="continue"]');
   await p.waitForTimeout(1500);
   await click(p, '[data-action="area"][data-value="team"]');
-  await p.evaluate(() => document.querySelector('[data-action="tab"][data-value="teams"]')?.click());
+  await p.evaluate(() => document.querySelector('[data-action="tab"][data-value="training"]')?.click());
   await p.waitForTimeout(400);
   ok(!!(await p.$('[data-testid="oh"]')), 'Reiter Alte Herren fehlt');
   ok(!!(await p.$('[data-testid="oh-found"]')), 'Gründungsknopf fehlt');
@@ -84,7 +84,7 @@ export async function alteHerrenTicker(b, shots) {
   await click(p, '.career [data-c="continue"]');
   await p.waitForTimeout(1500);
   await click(p, '[data-action="area"][data-value="team"]');
-  await p.evaluate(() => document.querySelector('[data-action="tab"][data-value="teams"]')?.click());
+  await p.evaluate(() => document.querySelector('[data-action="tab"][data-value="training"]')?.click());
   await p.waitForTimeout(400);
   ok(!!(await p.$('[data-testid="oh-ticker"]')), 'Liveticker-Knopf fehlt (Spiel dieser Woche)');
   if (shots) await p.screenshot({ path: `${shots}/altherren-naechstes-land.png` });

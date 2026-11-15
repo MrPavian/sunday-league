@@ -1,3 +1,4 @@
+import { transferNews } from '../career/transfers.js';
 import { setDifficulty } from '../career/difficulty.js';
 import { tr } from '../core/i18n.js';
 import { museum } from '../career/museum.js';
@@ -68,7 +69,7 @@ import { hex, dartPoints, leagueName } from './clubhouse/shared.js';
 // Bereich; data-action="tab" mit einem alten Tab-Namen funktioniert deshalb weiter.
 const AREAS = [
   { id: 'home', icon: 'home', label: () => tr('Heute', 'Today'), tabs: ['home'] },
-  { id: 'team', icon: 'team', label: () => tr('Mannschaft', 'Squad'), tabs: ['squad', 'lineup', 'training', 'teams'] },
+  { id: 'team', icon: 'team', label: () => tr('Mannschaft', 'Squad'), tabs: ['squad', 'transfers', 'lineup', 'training'] }, // Transfers als eigener Reiter (vom Nutzer: zu versteckt, 2026-11-15)
   { id: 'season', icon: 'season', label: () => tr('Saison', 'Season'), tabs: ['table', 'fixtures', 'cup'] },
   // Menü-Aufräumen (Nutzerentscheid 2026-11-06, „flach, höchstens zwei Ebenen"): keine Unterreiter mehr im Verein; Präsidium steht
   // unter „Du", Jugend, Frauen und Alte Herren zusammen unter „Teams" (Mannschaft).
@@ -104,8 +105,8 @@ const TAB_LABELS = () => ({
 const visibleTabs = (area) => area.tabs;
 // Zusammengelegte Reiter: Ein Reiter zeigt mehrere Teile untereinander, jeder mit Überschrift. Die alten Namen (tactic, transfers,
 // anlage, museum) bleiben als Teile und als Sprungziel erhalten (resolveTab, part).
-export const MERGED = { squad: ['squad', 'transfers'], lineup: ['lineup', 'tactic'], cash: ['cash', 'anlage'], leben: ['leben', 'museum'] };
-const MERGED_LABELS = () => ({ squad: tr('Kader & Transfers', 'Squad & transfers'), lineup: tr('Aufstellung & Taktik', 'Line-up & tactics'), cash: tr('Kasse & Anlage', 'Kitty & grounds'), leben: tr('Vereinsleben & Museum', 'Club life & museum') });
+export const MERGED = { lineup: ['lineup', 'tactic'], training: ['training', 'teams'], cash: ['cash', 'anlage'], leben: ['leben', 'museum'] };
+const MERGED_LABELS = () => ({ training: tr('Training & Teams', 'Training & teams'), lineup: tr('Aufstellung & Taktik', 'Line-up & tactics'), cash: tr('Kasse & Anlage', 'Kitty & grounds'), leben: tr('Vereinsleben & Museum', 'Club life & museum') });
 const PART_OF = Object.fromEntries(Object.entries(MERGED).flatMap(([tab, parts]) => parts.slice(1).map((p) => [p, tab])));
 // Alte Reiter-Namen (Knöpfe, Spielstände, Tests) führen auf die neuen Reiter; focus = welcher Teil oben steht.
 const CLUB_SUB_TAB = { me: 'me', anlage: 'anlage', leben: 'leben', trikot: 'kit', wappen: 'kit' };
@@ -113,7 +114,7 @@ export function resolveTab(tab, clubSub = null) {
   if (tab === 'club') return resolveTab(CLUB_SUB_TAB[clubSub] ?? 'anlage');
   if (PART_OF[tab]) return { tab: PART_OF[tab], part: tab };
   if (tab === 'office') return { tab: 'me' };
-  if (tab === 'youth' || tab === 'women' || tab === 'oldboys') return { tab: 'teams', focus: tab };
+  if (tab === 'youth' || tab === 'women' || tab === 'oldboys') return { tab: 'training', part: 'teams', focus: tab };
   return { tab };
 }
 export const areaOfTab = (tab) => AREAS.find((a) => a.tabs.includes(resolveTab(tab).tab)) ?? AREAS[0];
@@ -912,7 +913,7 @@ export class Clubhouse {
     this.lastTab[area.id] = this.tab;
     const w = c.week;
     // Offene Entscheidungen als Zähler: Gruppe (Handy), Aushang (Heute).
-    const badges = { phone: w?.event && w.event.choice === null && !this.results ? 1 : 0, home: w?.notice && w.notice.choice === null && !this.results && area.id !== 'home' ? 1 : 0 };
+    const badges = { team: !this.results && area.id !== 'team' ? transferNews(c).fresh : 0, phone: w?.event && w.event.choice === null && !this.results ? 1 : 0, home: w?.notice && w.notice.choice === null && !this.results && area.id !== 'home' ? 1 : 0 };
     const rail = AREAS.map(
       (a) => `<button class="rail-btn" data-action="area" data-value="${a.id}" aria-current="${a.id === area.id ? 'page' : 'false'}">${icon(a.icon, 26)}<span>${a.label()}</span>${badges[a.id] ? `<b class="ui-badge">${badges[a.id]}</b>` : ''}</button>`,
     ).join('');

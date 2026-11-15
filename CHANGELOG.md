@@ -6,6 +6,16 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-15-10 – Transfers besser zu finden
+
+### Geändert
+- **Transfers** (vom Nutzer: zu versteckt): eigener Reiter neben dem Kader (Mannschaft: Kader, Transfers, Aufstellung & Taktik, Training & Teams). Kachel „Transfermarkt“ auf der Startseite (Frist, Gerüchte, Angebote), Zähler an „Mannschaft“ für neue Gerüchte und offene Angebote (transfers.js transferNews; gesehen, sobald der Reiter offen war).
+
+### Tests
+- `tests/clubnav.test.js`: „Teams“ steht jetzt bei den umgeleiteten Namen (Teil von „Training & Teams“), „Transfers“ nicht mehr (wieder eigener Reiter).
+- Browser-Tests: Klicks auf „Teams“ gehen auf „Training“, der Transfer-Test klickt auf „Transfers“; Reiterliste angepasst.
+- Neu: `tests/transfernews.test.js`.
+
 ## 2026-11-15-9 – Startseite und Trikot-Editor aufgeräumt
 
 ### Geändert
