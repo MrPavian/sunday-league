@@ -111,6 +111,16 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
     verbindet Ehemalige (alumni) und Museum.
     (Nicht aufgenommen nach Nutzerentscheid: Saisonziele zum Selbstwählen.)
 
+**E – Seitenlinie und Spielbetrieb** (vom Nutzer gewünscht, 2026-11-15)
+16. **Trainer an der Seitenlinie mit Gesten.** In jedem Karrierespiel stehen beide Trainer in ihrer Coaching-Zone: reinrufen,
+    Laufwege zeigen, Jubel und Ärger. Je heißer die Rivalität (coachrival.js), desto wilder; ab einer gewissen Hitze Nase an Nase,
+    der Schiri trennt und kann Gelb zeigen (IFAB Regel 12: Karten auch für Teamoffizielle), im schlimmsten Fall Tribüne.
+    Grafik-Budget Ascheplatz dafür auf 80 Draw Calls angehoben (Nutzerentscheid 2026-11-15).
+17. **Betreuerstab an der Bank.** Co-Trainer, Masseur, Teamarzt, Zeugwart usw. als eigene Anstellungen; wer angestellt ist, sitzt
+    im Spiel sichtbar auf oder an der Trainerbank (Trainerteam aus 11.17 Punkt 5 und Ehrenämter aus staff.js einbeziehen).
+18. **Profibereich am Spielfeldrand.** Vierter Offizieller mit Auswechseltafel (Rückennummern raus/rein) und Anzeige der
+    Nachspielzeit. Dafür die Nachspielzeit in die Simulation einbauen (Unterbrechungen, Wechsel, Tore zählen; Regel 7).
+
 **D – Zum Schluss**
 15. **Test auf einem echten Android-Gerät** (durch den Nutzer): Bildrate, Akku, Touch-Ziele, Ton und Sprachausgabe; Mängelliste
     abarbeiten.
