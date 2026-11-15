@@ -1355,6 +1355,8 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   match.crowd = Math.round(fans * (match.derby ? 1.8 : 1) * (home.human ? fansMul(career) : 1));
   if (home.human) match.crowd = Math.min(match.crowd, capacity(career)); // Fassungsvermögen (facilities.js)
   match.homeTeam = humanIsAway ? 1 : 0;
+  // Flutlichtmast ausgefallen und nicht repariert (clublife.js flutlicht_ausfall): Heimspiel am Abend, eine Hälfte im Halbdunkel.
+  if (home.human && career.flags?.mastOut === `${career.season}:${career.round}`) match.mastOut = true;
   return { match, humanIsAway, pitch, home, away, helpers: [...teamHome.helpers, ...teamAway.helpers] };
 }
 

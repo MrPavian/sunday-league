@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-15-5',
+    de: { title: 'Flutlicht-Ausfall im Spiel zu sehen', items: ['Lässt du den ausgefallenen Flutlichtmast unrepariert, wird das Heimspiel am Abend angepfiffen – und eine Hälfte des Platzes liegt im Halbdunkel.', 'Zur Mitte hin läuft das Halbdunkel weich aus, das Licht des anderen Masts reicht noch ein Stück herüber.'] },
+    en: { title: 'Floodlight failure visible in the match', items: ['If you leave the failed floodlight mast unrepaired, the home game kicks off in the evening – and half the pitch lies in the half-light.', 'Towards the middle the half-light fades out softly; the other mast still reaches a little way across.'] },
+  },
+  {
     id: '2026-11-15-4',
     de: { title: 'Linienrichter und Platzwart bewegen sich', items: ['Der Linienrichter aus dem eigenen Verein läuft an der Seitenlinie auf Höhe des Balls mit; ist der Ball in der anderen Hälfte, wartet er an der Mittellinie.', 'Der Platzwart schiebt seinen Kreidewagen langsam an der Linie auf und ab.', 'Auf Rasen- und Ascheplatz, wie bisher nicht auf dem Großfeld.'] },
     en: { title: 'Linesman and groundsman now move', items: ['The club linesman runs along the touchline level with the ball; when the ball is in the other half he waits at the halfway line.', 'The groundsman slowly pushes his chalk cart up and down the line.', 'On the grass and ash pitches, still not on the full-size pitch.'] },

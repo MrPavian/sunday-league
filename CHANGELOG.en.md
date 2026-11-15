@@ -6,6 +6,14 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-15-5 – Floodlight failure visible in the match
+
+### New
+- **Floodlight failure visible** (ROADMAP 11.18 point 13): if you carry on training in the half-light at the "floodlight fails" event, this week's home game is played in the evening and the half on the dead mast's side lies in half-light. Towards the middle it fades out softly over the last quarter. Opacity 0.45 (game value). Test switch `?mast=0`.
+
+### Tests
+- `tests/floodlight_failure.test.js`: half-light only at this week's home game and only without a repair.
+
 ## 2026-11-15-4 – Linesman and groundsman now move
 
 ### New

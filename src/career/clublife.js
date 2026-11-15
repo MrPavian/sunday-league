@@ -259,7 +259,9 @@ export const CLUBLIFE_EVENTS = {
           return tr('Zwei Stunden Gefummel im Dunkeln, dann fliegt noch eine Sicherung. Am Ende kommt doch der Notdienst – teurer als vorher.', 'Two hours of fiddling in the dark, then another fuse blows. In the end the emergency electrician comes anyway – dearer than before.');
         },
       },
-      { label: tr('Im Halbdunkel weitertrainieren', 'Carry on training in the half-light'), effect: (c) => (mark(c, 'lichtaus'), adjustMood(c, -0.04), tr('Die Hälfte der Pässe landet im Gebüsch, einer läuft gegen den Torpfosten. Am Sonntag ist der Mast immer noch aus – angepfiffen wird trotzdem, bei Tageslicht.', 'Half the passes end up in the bushes, someone runs into a goalpost. On Sunday the mast is still dark – kick-off goes ahead anyway, in daylight.')) },
+      // Lässt man ihn aus, liegt am Sonntag eine Hälfte des Platzes im Halbdunkel (Anstoß am Abend, career.js prepareMatch → match.mastOut,
+      // render/MatchView.js mastShade) – nur beim Heimspiel dieser Woche.
+      { label: tr('Im Halbdunkel weitertrainieren', 'Carry on training in the half-light'), effect: (c) => (mark(c, 'lichtaus'), ((c.flags ??= {}).mastOut = `${c.season}:${c.round}`), adjustMood(c, -0.04), tr('Die Hälfte der Pässe landet im Gebüsch, einer läuft gegen den Torpfosten. Am Sonntag ist der Mast immer noch aus – Anstoß ist am Abend, eine Hälfte des Platzes bleibt im Halbdunkel.', 'Half the passes end up in the bushes, someone runs into a goalpost. On Sunday the mast is still dark – kick-off is in the evening, and half the pitch stays in the half-light.')) },
     ],
   },
 

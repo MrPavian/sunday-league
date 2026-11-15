@@ -46,3 +46,21 @@ describe('Flutlicht fällt aus', () => {
     expect(c.mood).toBeGreaterThan(mood);
   });
 });
+
+describe('Flutlicht aus beim Heimspiel (2026-11-15)', async () => {
+  const { currentFixtures, prepareMatch } = await import('../src/career/career.js');
+  it('Halbdunkel nur beim Heimspiel dieser Woche, wenn der Mast nicht repariert wurde', () => {
+    const c = withLight();
+    const me = humanClub(c).id;
+    // Spieltag mit Heimspiel suchen
+    while (!currentFixtures(c).some((f) => f.home === me) && c.round < c.fixtures.length - 1) c.round++;
+    const f = currentFixtures(c).find((x) => x.home === me);
+    expect(f, 'kein Heimspiel gefunden').toBeTruthy();
+    expect(prepareMatch(c, f, { human: true }).match.mastOut).toBeUndefined();
+    ev.options[2].effect(c, {}, createRng(1)); // im Halbdunkel weitertrainieren
+    expect(prepareMatch(c, f, { human: true }).match.mastOut).toBe(true);
+    c.round++; // eine Woche später ist er repariert
+    const g = currentFixtures(c).find((x) => x.home === me || x.away === me);
+    if (g) expect(prepareMatch(c, g, { human: true }).match.mastOut).toBeUndefined();
+  });
+});

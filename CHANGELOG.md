@@ -6,6 +6,14 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-15-5 – Flutlicht-Ausfall im Spiel zu sehen
+
+### Neu
+- **Flutlicht-Ausfall sichtbar** (ROADMAP 11.18 Punkt 13): Wer beim Ereignis „Flutlicht fällt aus“ im Halbdunkel weitertrainiert, spielt das Heimspiel dieser Woche am Abend, und die Hälfte auf der Seite des toten Masts liegt im Halbdunkel. Zur Mitte hin läuft es über das letzte Viertel weich aus. Deckkraft 0,45 (Spielwert). Testschalter `?mast=0`.
+
+### Tests
+- `tests/floodlight_failure.test.js`: Halbdunkel nur beim Heimspiel dieser Woche und nur ohne Reparatur.
+
 ## 2026-11-15-4 – Linienrichter und Platzwart bewegen sich
 
 ### Neu

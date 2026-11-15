@@ -322,7 +322,7 @@ const TIME_PARAM = { morgen: 'MORNING', mittag: 'DAY', tag: 'DAY', nachmittag: '
 function updateLighting() {
   if (!venue || !venueRoot) return;
   const mood = moodOf(match);
-  const time = TIME_PARAM ?? (match.midweek ? 'EVENING' : pickTimeOfDay(match.seed, venue.id, mood)); // Pokal: Mittwochabend unter Flutlicht
+  const time = TIME_PARAM ?? (match.midweek || match.mastOut ? 'EVENING' : pickTimeOfDay(match.seed, venue.id, mood)); // Mast aus: Anstoß am Abend // Pokal: Mittwochabend unter Flutlicht
   const key = `${venue.id}|${mood}|${time}|${pixel.qualityId}|${venueRoot.uuid}`;
   if (key === lightMood) return;
   lightMood = key;

@@ -48,6 +48,7 @@ const FUMBLE_T = 0.55; // Abpraller: so lange klappen die Hände zurück (s, zä
 const CATCH_T = 0.5; // Fangen: so lange dauert es, bis der Ball an der Brust liegt (s)
 // Platzwart und Linienrichter aus dem Verein (staffFrame): Tempo in m/s, Spielwerte (Linienrichter läuft zügig mit, Platzwart geht).
 const STAFF_MOVE = { lines: 4.5, warden: 0.6 };
+const MAST_SHADE = 0.45; // Halbdunkel auf der Hälfte mit dem ausgefallenen Flutlichtmast (Deckkraft, Spielwert)
 const HAND = new THREE.Vector3();
 const HAND2 = new THREE.Vector3();
 const DIVE_REC = 0.8; // Abrollen und Aufstehen nach dem Hechtsprung (s, nur Darstellung)
@@ -153,6 +154,9 @@ export class MatchView {
     this.makeBlobs();
     if (match.referee) this.buildReferee(match.referee);
     this.buildTiger(match);
+    // Ausgefallener Flutlichtmast (match.mastOut, ?mast=0 zum Ansehen): Die Hälfte auf der Seite des toten Masts liegt im Halbdunkel –
+    // eine dunkle, halbdurchsichtige Fläche knapp über dem Rasen (ein Draw Call, nur in diesem Spiel). Deckkraft Spielwert.
+    if (match.mastOut || (typeof location !== 'undefined' && new URLSearchParams(location.search).get('mast') === '0')) this.mastShade(match.pitch);
     // Platzwart und Linienrichter aus dem Verein (props.js makeMatchdayStaff): bewegen sich, siehe staffFrame.
     this.staff = [];
     scene.traverse?.((o) => o.userData?.staff && this.staff.push(o));
@@ -216,6 +220,34 @@ export class MatchView {
   }
 
   // Tim: Position und Geste (Reaktion auf das Spiel oder Ruhe mit Dose) – nur Darstellung.
+  mastShade(pitch) {
+    const w = pitch.halfLength + 4;
+    const d = pitch.halfWidth * 2 + 8;
+    const geo = new THREE.PlaneGeometry(w, d);
+    geo.rotateX(-Math.PI / 2);
+    // Weicher Übergang zur Mitte hin: Das Licht des anderen Masts reicht noch ein Stück herüber (Verlauf über das letzte Viertel).
+    let alphaMap = null;
+    if (typeof document !== 'undefined') {
+      const cv = document.createElement('canvas');
+      cv.width = 64;
+      cv.height = 1;
+      const g = cv.getContext('2d');
+      const grad = g.createLinearGradient(0, 0, 64, 0);
+      grad.addColorStop(0, '#fff');
+      grad.addColorStop(0.72, '#fff');
+      grad.addColorStop(1, '#000');
+      g.fillStyle = grad;
+      g.fillRect(0, 0, 64, 1);
+      alphaMap = new THREE.CanvasTexture(cv);
+    }
+    const shade = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0x000008, transparent: true, opacity: MAST_SHADE, depthWrite: false, alphaMap }));
+    shade.position.set(-w / 2, 0.03, 0);
+    shade.renderOrder = 1;
+    shade.userData.keep = true;
+    this.root.add(shade);
+    this.mastShadeMesh = shade;
+  }
+
   // Linienrichter aus dem Verein läuft auf Höhe des Balls mit (in seiner Hälfte, sonst wartet er an der Mittellinie), der Platzwart
   // schiebt den Kreidewagen langsam auf und ab. Tempo und Wippen sind Spielwerte; reine Darstellung, kein Spielzufall.
   staffFrame(match, dt) {
@@ -632,6 +664,8 @@ export class MatchView {
     for (const m of this.models.values()) disposeKit(m);
     if (this.referee) disposeKit(this.referee);
     if (this.tiger) disposeKit(this.tiger);
+    this.mastShadeMesh?.material.alphaMap?.dispose();
+    this.mastShadeMesh?.material.dispose();
     this.blobs.geometry.dispose();
     // Schattenflecken: eigene Maske und eigenes Material je Spielansicht.
     this.blobs.material.alphaMap?.dispose();
