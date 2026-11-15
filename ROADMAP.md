@@ -47,8 +47,8 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
 3. **Einstieg für neue Spieler.** ✅ **Erster Durchgang 2026-11-12** (frische Karriere im Hochformat durchgeklickt und jede
    Seite vermessen): Überschrift der Gründungsversammlung war abgeschnitten (behoben); die Kasse war in Woche 1 5,4 Bildschirme
    lang – Ausrüster-Angebote jetzt eingeklappt; unter „Du" waren 17 von 35 Knöpfen gesperrt – der Privat-Block zeigt je Bereich
-   nur noch die nächste Stufe. Reiter zusammengelegt ✅ (2026-11-15: je vier, Clubhouse.js MERGED). Offen: Startseite (2,9 Bildschirme),
-   Trikot-Editor (150 Knöpfe), ein zweiter Durchgang im Querformat und mit einem echten Neuling.
+   nur noch die nächste Stufe. Reiter zusammengelegt ✅ (2026-11-15: je vier, Clubhouse.js MERGED). Startseite (Anpfiff auf dem ersten Bildschirm) und Trikot-Editor (81 statt 136 Knöpfe) ✅ (2026-11-15). Offen:
+   ein zweiter Durchgang im Querformat und mit einem echten Neuling.
 4. **Spielstände absichern.** ✅ **2026-11-12** (career.js saveCareer/restoreBackup, tests/savebackup.test.js): je Speicherplatz
    eine Sicherung vom Ende der letzten Saison, unter „Spielstände" mit „Dorthin zurück". Export und Import als Datei gab es schon.
    Eine Sicherung je Platz, weil der Browser-Speicher knapp ist (ein Stand hat 100–230 KB, gemessen).

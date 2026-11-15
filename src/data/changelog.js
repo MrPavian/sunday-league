@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-15-9',
+    de: { title: 'Startseite und Trikot-Editor aufgeräumt', items: ['Der Anpfiff-Knopf steht auf der Startseite gleich unter den Fakten zum Spiel, ohne Scrollen. „Selbst ausrichten“ beim Sommerturnier ist aufklappbar.', 'Im Trikot-Editor wählst du erst, was du färbst – Trikot, 2. Farbe, Hose, Stutzen –, dann gibt es eine Palette statt bis zu sechs.'] },
+    en: { title: 'Home page and kit editor tidied up', items: ['The kick-off button now sits on the home page right below the match facts, no scrolling. "Host it yourselves" for the summer tournament folds out.', 'In the kit editor you first choose what to colour – shirt, 2nd colour, shorts, socks – then there is one palette instead of up to six.'] },
+  },
+  {
     id: '2026-11-15-8',
     de: { title: 'Trainer an der Seitenlinie', items: ['Auf Rasen- und Ascheplatz stehen beide Trainer vor ihren Bänken an der Seitenlinie: Sie rufen rein, zeigen Laufwege, jubeln und ärgern sich. Der Platzwart mit dem Kreidewagen läuft dafür nicht mehr während des Spiels herum.', 'Je heißer die Rivalität der Trainer, desto wilder die Gesten. Im hitzigen Duell gehen beide aufeinander los und brüllen sich Nase an Nase an – der Schiri trennt sie.', 'Beim zweiten Mal gibt es Gelb für beide, beim dritten müssen sie auf die Tribüne. Als Spielertrainer stehst du nur an der Linie, solange du nicht selbst spielst.'] },
     en: { title: 'Managers on the touchline', items: ['On the grass and ash pitches both managers stand in front of their benches: they shout instructions, point out runs, celebrate and get angry. The groundsman with the chalk cart no longer wanders about during the match.', 'The hotter the rivalry between the managers, the wilder the gestures. In a heated meeting they go for each other, screaming nose to nose – the referee separates them.', 'The second time both get a yellow card, the third time they are sent to the stand. As player-manager you only stand on the touchline while you are not playing yourself.'] },

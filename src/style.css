@@ -2077,3 +2077,7 @@ body.manager #end { padding-bottom: 84px; }
 /* Gesicht des Trainer-Rivalen (2026-11-15) links neben Name und Bilanz. */
 .nemesis-line .portrait { float: left; margin: 0 var(--s2) var(--s1) 0; }
 .nemesis-line::after { content: ''; display: block; clear: both; }
+/* Trikot-Editor (2026-11-15): Teil wählen, dann eine Palette. */
+.kit-parts { flex-wrap: wrap; gap: var(--s1); }
+.kit-parts .kit-part { display: inline-flex; align-items: center; gap: 6px; }
+.kit-parts .kit-part .dot { width: 12px; height: 12px; border: 1px solid rgba(0, 0, 0, 0.5); display: inline-block; }

@@ -6,6 +6,15 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-15-9 – Startseite und Trikot-Editor aufgeräumt
+
+### Geändert
+- **Startseite** (ROADMAP 11.18 Punkt 3): Anpfiff direkt unter den Fakten zum Spiel – im Hochformat jetzt auf dem ersten Bildschirm (vorher nach rund zwei Bildschirmen). Beim Sommerturnier ist „Selbst ausrichten“ aufklappbar.
+- **Trikot-Editor**: erst den Teil wählen (Trikot, 2.–4. Farbe, Hose, Stutzen), dann eine Palette. Gezählt bei einer neuen Karriere: 81 statt 136 Knöpfe, Seite 2.125 statt 2.793 Pixel hoch.
+
+### Tests
+- `scripts/e2e/modes.mjs` (Gründung): tippt vor der Farbwahl auf „Stutzen“ bzw. „Trikot“; geprüft wird weiter, dass die Scrollposition bleibt und das Auswärtstrikot gespeichert wird.
+
 ## 2026-11-15-8 – Trainer an der Seitenlinie
 
 ### Neu

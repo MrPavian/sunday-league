@@ -429,6 +429,7 @@ export async function clubSetup(b) {
   await p.fill('#club input[data-field="short"]', 'FCT');
   // Trikotfarbe und Wappensymbol (Reiter „Symbol“ im Wappen-Editor): Scrollposition bleibt.
   await click(p, '[data-action="crestTab"][data-value="symbol"]');
+  await click(p, '[data-action="kitPart"][data-value="socks"]'); // eine Palette je Teil (2026-11-15): erst „Stutzen“ wählen
   await p.waitForTimeout(200);
   for (const sel of ['[data-action="kitColor"][data-value^="socks"]', '.crest-grid [data-action="crestSymbol"]']) {
     const kept = await p.evaluate((s) => {
@@ -451,6 +452,7 @@ export async function clubSetup(b) {
   // Auswärtstrikot: umschalten, Trikotfarbe wählen – das Heimtrikot bleibt, wie es war.
   const homeShirt = await p.evaluate(() => JSON.parse(localStorage.getItem('sunday-league:career')).clubs.find((c) => c.human).kit.shirt);
   await click(p, '[data-action="kitSide"][data-value="away"]');
+  await click(p, '[data-action="kitPart"][data-value="shirt"]');
   await p.waitForTimeout(200);
   const awayPick = await p.evaluate(() => {
     const all = [...document.querySelectorAll('#club [data-action="kitColor"][data-value^="shirt:"]')];

@@ -71,7 +71,8 @@ export const festivalScreens = {
     const host = [4, 6, 8].map((n) => button(tr(`Selbst ausrichten · ${n} Teams · ${euro(o.hostCosts[n])}`, `Host it yourselves · ${n} teams · ${euro(o.hostCosts[n])}`), { action: 'onSummerStart', value: `host:${n}`, disabled: c.cash < o.hostCosts[n] })).join('');
     return `<div class="winter-cup summer-cup" data-testid="summer-invite"><p class="label">${tr('Vor der Saison', 'Before the season')}</p>
       <p>${tr(`Einladung zum <b>${cfg.name}</b>${o.neighbour ? ` bei <b>${esc(o.neighbour.name)}</b>` : ''}: ${o.inviteSize} Teams, Gruppenphase und K.-o., kurze Spiele. Preisgeld bis ${cfg.prizes.winner} €. Oder richtet es selbst aus: Theke und Startgelder, aber auch Kosten.`, `Invitation to the <b>${cfg.name}</b>${o.neighbour ? ` at <b>${esc(o.neighbour.name)}</b>` : ''}: ${o.inviteSize} teams, group stage and knockout, short matches. Prize money up to €${cfg.prizes.winner}. Or host it yourselves: bar income and entry fees, but costs too.`)}</p>
-      <div class="summer-actions">${button(tr('Einladung annehmen', 'Accept the invitation'), { kind: 'primary', action: 'onSummerStart', value: 'invite' })}${host}${button(tr('Diesmal nicht', 'Not this time'), { action: 'onCupSkip', value: 'sommer' })}</div></div>`;
+      <div class="summer-actions">${button(tr('Einladung annehmen', 'Accept the invitation'), { kind: 'primary', action: 'onSummerStart', value: 'invite' })}${button(tr('Diesmal nicht', 'Not this time'), { action: 'onCupSkip', value: 'sommer' })}</div>
+      <details class="fac-group summer-host" data-keep="summerHost"${this.keepOpen?.summerHost ? ' open' : ''}><summary>${tr('Selbst ausrichten', 'Host it yourselves')}</summary><div class="summer-actions">${host}</div></details></div>`; // Startseite kürzer (ROADMAP 11.18 Punkt 3): Ausrichten aufklappbar
   },
 
   festAction(action, value) {

@@ -214,6 +214,7 @@ export class Clubhouse {
         k.third ??= 0x1d2b44; // dritte Farbe für Retro-Muster: Dunkelblau als Start
         k.fourth ??= 0xe0b020; // vierte Farbe (4-farbige Vorlagen): Gelb als Start
       } else if (action === 'kitGroup') this.kitGroup = value;
+      else if (action === 'kitPart') this.kitPart = value; // Trikot-Editor: welche Farbe gerade gewählt wird
       else if (action === 'clubSub') {
         this.clubSub = value; // alte Unterseiten des Vereins: jetzt eigene Reiter (aus dem Präsidium direkt zum Ausbau)
         const r = resolveTab('club', value);

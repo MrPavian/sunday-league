@@ -172,13 +172,13 @@ export const homeScreens = {
         ${c.goal?.season === c.season ? `<p class="t-2 goal-line">${tr('Saisonziel', 'Season target')}: <b>${GOALS[c.goal.type].name}</b> · ${tr('jetzt', 'now')} ${place}. ${tr('Platz', 'place')} <small>(${tr('Ziel', 'target')}: ${tr('bis Platz', 'top')} ${c.goal.target})</small></p>` : ''}
         ${notes.length ? `<ul class="hub-notes">${notes.map((n) => `<li>${n}</li>`).join('')}</ul>` : ''}
         ${stories.length ? `<ul class="stories">${stories.map((x) => `<li>${x}</li>`).join('')}</ul>` : ''}
+        <div class="hub-actions">${actions}</div>
         ${this.oppCheck(opp, venue.format)}
         ${this.meBars()}
         ${summerCupDue(c) || summerCupRunning(c) ? this.summerCard() : ''}
         ${winterCupDue(c) ? `<div class="winter-cup"><p class="label">${tr('Winterpause', 'Winter break')}</p><p>${tr(`Am Wochenende: <b>${CUPS.halle.name}</b> in der ${CUPS.halle.place}. Acht Teams, Bande, Handballtore – ${CUPS.halle.prizes.winner} € für den Sieger.`, `This weekend: <b>${CUPS.halle.name}</b> at ${CUPS.halle.place}. Eight teams, boards, handball goals – €${CUPS.halle.prizes.winner} for the winner.`)}</p>
           <div class="ui-row">${button(tr('Anmelden', 'Enter'), { kind: 'primary', action: 'onCupStart', value: 'halle' })}${button(tr('Diesmal nicht', 'Not this time'), { action: 'onCupSkip', value: 'halle' })}</div></div>` : ''}
-        <div class="hub-actions">${actions}</div>
-      </article>`;
+      </article>`; // Anpfiff steht oben, direkt unter den Fakten zum Spiel (Startseite kürzer, ROADMAP 11.18 Punkt 3)
   },
 
   // Gegner-Check (opponentscout.js): was man über den nächsten Gegner weiß – genauer, je besser man ihn beobachtet hat.

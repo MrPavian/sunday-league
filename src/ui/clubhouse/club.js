@@ -253,12 +253,13 @@ export const clubScreens = {
               .join('')}</div>
           </section>
           <section class="kit-sec"><h5>${tr('Farben', 'Colours')}</h5>
-            ${swatches('shirt', tr('Trikot', 'Shirt'))}
-            ${patternColors(d.kit.pattern) >= 2 || d.kit.sleeves === 'second' ? swatches('second', tr('2. Farbe', '2nd colour')) : ''}
-            ${patternColors(d.kit.pattern) >= 3 ? swatches('third', tr('3. Farbe', '3rd colour')) : ''}
-            ${patternColors(d.kit.pattern) >= 4 ? swatches('fourth', tr('4. Farbe', '4th colour')) : ''}
-            ${swatches('shorts', tr('Hose', 'Shorts'))}
-            ${swatches('socks', tr('Stutzen', 'Socks'))}
+            ${(() => {
+              // Eine Palette statt bis zu sechs (Trikot-Editor übersichtlicher, ROADMAP 11.18 Punkt 3): erst wählen, was gefärbt wird.
+              const parts = [['shirt', tr('Trikot', 'Shirt')], ...(patternColors(d.kit.pattern) >= 2 || d.kit.sleeves === 'second' ? [['second', tr('2. Farbe', '2nd colour')]] : []), ...(patternColors(d.kit.pattern) >= 3 ? [['third', tr('3. Farbe', '3rd colour')]] : []), ...(patternColors(d.kit.pattern) >= 4 ? [['fourth', tr('4. Farbe', '4th colour')]] : []), ['shorts', tr('Hose', 'Shorts')], ['socks', tr('Stutzen', 'Socks')]];
+              const part = parts.some(([id]) => id === this.kitPart) ? this.kitPart : 'shirt';
+              const chips = parts.map(([id, label]) => `<button class="kit-part${id === part ? ' active' : ''}" data-action="kitPart" data-value="${id}" aria-pressed="${id === part}"><i class="dot" style="background:${hex(d.kit[id] ?? d.kit.shirt)}"></i>${label}</button>`).join('');
+              return `<div class="swatch-row kit-parts">${chips}</div>${swatches(part, parts.find(([id]) => id === part)[1])}`;
+            })()}
           </section>
           ${this.clubNote ? `<p class="warn">${this.clubNote}</p>` : ''}
           ${founding ? '' : editable

@@ -6,6 +6,15 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-15-9 – Home page and kit editor tidied up
+
+### Changed
+- **Home page** (ROADMAP 11.18 point 3): kick-off directly below the match facts – in portrait now on the first screen (before: after about two screens). For the summer tournament, "Host it yourselves" folds out.
+- **Kit editor**: first choose the part (shirt, 2nd–4th colour, shorts, socks), then one palette. Counted in a new career: 81 instead of 136 buttons, page 2,125 instead of 2,793 pixels tall.
+
+### Tests
+- `scripts/e2e/modes.mjs` (founding): taps "Socks" or "Shirt" before picking a colour; it still checks that the scroll position stays and the away kit is saved.
+
 ## 2026-11-15-8 – Managers on the touchline
 
 ### New
