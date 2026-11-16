@@ -121,6 +121,22 @@ Android-Gerät steht nach Nutzerentscheid ganz am Ende.
 18. **Profibereich am Spielfeldrand.** Vierter Offizieller mit Auswechseltafel (Rückennummern raus/rein) und Anzeige der
     Nachspielzeit. Dafür die Nachspielzeit in die Simulation einbauen (Unterbrechungen, Wechsel, Tore zählen; Regel 7).
 
+**F – Gameplay 2.0** (vom Nutzer festgelegt, 2026-11-16). Kein Neubau, sondern Schicht für Schicht: jede Schicht neu, per Schalter
+umschaltbar, mit 240 Spielen je Spielform gegen die alte gemessen (scripts/match-audit.mjs und eigene Messskripte); was nicht besser
+ist, fliegt raus. Rückmeldung des Nutzers, was beim Zuschauen stört: dumme Pässe, zu viel Gewühl, Abpraller werden nicht
+antizipiert, Richtungswechsel sehen aus wie auf Glatteis, kein Freilaufen, sehr viele Einzelaktionen.
+19. **Entscheidungen der KI** (gegen dumme Pässe und zu viele Einzelaktionen): Statt vieler Einzelregeln bewertet der Ballführer jede
+    Möglichkeit – Pass, Schuss, Dribbling, Flanke, Halten – nach Erfolgschance, Raumgewinn und Risiko (Passweg frei? Gegner im
+    Laufweg? Mitspieler in besserer Lage?). Dribbling nur, wenn es sich lohnt.
+20. **Freilaufen und Raumverhalten** (gegen fehlendes Freilaufen und Gewühl): Mitspieler bieten sich in freien Räumen und Passwegen
+    an, halten Abstände und Breite, Linien verschieben gemeinsam; im Strafraum nicht alle zum Ball, sondern Räume besetzen.
+21. **Abpraller und zweite Bälle antizipieren**: Spieler sagen voraus, wohin ein Abpraller, eine Kopfballabwehr oder ein geblockter
+    Schuss fliegt, und laufen dorthin statt zum Ball; Absicherung am Strafraumrand.
+22. **Bewegung der Spieler** (gegen „Glatteis“): Beschleunigen, Abbremsen und Richtungswechsel mit Körperträgheit (Abbremsschritt,
+    Drehen über den Stand), mit Ball langsamer und ungenauer; Animation passend dazu.
+23. **Ballphysik**: Luftwiderstand und Effet (Bananenflanke, angeschnittener Freistoß, flatternder Fernschuss), realistischer Absprung.
+    Reihenfolge: 19 → 20 → 21 → 22 → 23 (die ersten beiden wirken am stärksten auf das, was stört). Danach Ecken und Kopfbälle neu messen.
+
 **D – Zum Schluss**
 15. **Test auf einem echten Android-Gerät** (durch den Nutzer): Bildrate, Akku, Touch-Ziele, Ton und Sprachausgabe; Mängelliste
     abarbeiten.
