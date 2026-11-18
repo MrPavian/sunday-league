@@ -6,6 +6,13 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-16-1 – Sauberere Kopfbälle nach Flanken
+
+### Geändert
+- **Kopfbälle** (Gameplay-Check, ROADMAP 11.18 Punkt 6): Die Chance auf einen sauber getroffenen Kopfball steigt von 0,35 + 0,4 · Können auf 0,5 + 0,4 · Können (actions.js HEAD_CLEAN, Spielwert); Bedrängnis zählt weiter. Vorher wurden 40–64 % der Kopfbälle nahe am Tor nur gestreift.
+- Gemessen (scripts/match-audit.mjs, 60 Spiele je Form, gleich starke Teams): Kopfballtore an allen Toren 3 / 5 / 6 % → 4 / 7 / 7 % (7er / 9er / Großfeld; Premier League 13–21 %). Tore, Torschüsse und Unentschieden praktisch unverändert.
+- Verworfen nach Rücksprache: Großfeld torreicher machen (Ziel 2,5 Tore). Der Regler für mehr Zug zum Tor wirkte dort nicht, eine längere Halbzeit wollte der Nutzer nicht.
+
 ## 2026-11-15-9 – Startseite, Trikot-Editor und Transfers aufgeräumt
 
 ### Geändert

@@ -6,6 +6,13 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-16-1 – Cleaner headers from crosses
+
+### Changed
+- **Headers** (gameplay check, ROADMAP 11.18 point 6): the chance of a cleanly struck header rises from 0.35 + 0.4 · skill to 0.5 + 0.4 · skill (actions.js HEAD_CLEAN, game value); pressure still counts. Before, 40–64% of headers near goal were only grazed.
+- Measured (scripts/match-audit.mjs, 60 matches per format, evenly matched teams): headed goals as a share of all goals 3 / 5 / 6% → 4 / 7 / 7% (7-a-side / 9-a-side / full-size; Premier League 13–21%). Goals, shots on target and draws practically unchanged.
+- Dropped after discussion: making the full-size pitch higher-scoring (target 2.5 goals). The more-direct-play knob had no effect there, and the user did not want longer halves.
+
 ## 2026-11-15-9 – Home page, kit editor and transfers tidied up
 
 ### Changed

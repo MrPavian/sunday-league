@@ -2,6 +2,11 @@
 // Muss zu CHANGELOG.md / CHANGELOG.en.md passen (tests/whatsnew.test.js prüft die Überschriften).
 export const CHANGELOG = [
   {
+    id: '2026-11-16-1',
+    de: { title: 'Sauberere Kopfbälle nach Flanken', items: ['Kopfbälle nach Flanken und Ecken werden öfter sauber getroffen statt nur gestreift – es gibt mehr echte Kopfballchancen aufs Tor.', 'Die Torzahl insgesamt bleibt gleich; Kopfballtore sind etwas häufiger.'] },
+    en: { title: 'Cleaner headers from crosses', items: ['Headers from crosses and corners are struck cleanly more often instead of just grazed – more real headed chances on goal.', 'Total goals stay the same; headed goals are a little more frequent.'] },
+  },
+  {
     id: '2026-11-15-9',
     de: { title: 'Startseite, Trikot-Editor und Transfers aufgeräumt', items: ['Transfers haben wieder einen eigenen Reiter neben dem Kader; die Kachel „Transfermarkt“ auf der Startseite und ein Zähler an „Mannschaft“ melden neue Gerüchte und Angebote.', 'Der Anpfiff-Knopf steht auf der Startseite gleich unter den Fakten zum Spiel, ohne Scrollen. „Selbst ausrichten“ beim Sommerturnier ist aufklappbar.', 'Im Trikot-Editor wählst du erst, was du färbst – Trikot, 2. Farbe, Hose, Stutzen –, dann gibt es eine Palette statt bis zu sechs.'] },
     en: { title: 'Home page, kit editor and transfers tidied up', items: ['Transfers have their own tab next to the squad again; the "Transfer market" card on the home page and a counter on "Squad" flag new rumours and offers.', 'The kick-off button now sits on the home page right below the match facts, no scrolling. "Host it yourselves" for the summer tournament folds out.', 'In the kit editor you first choose what to colour – shirt, 2nd colour, shorts, socks – then there is one palette instead of up to six.'] },

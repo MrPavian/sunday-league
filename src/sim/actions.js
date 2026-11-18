@@ -665,6 +665,7 @@ export const HEAD_KEEP = 0.75; // Anteil des Flankentempos, der beim Kopfball au
 export const HEAD_PLACE = 2.0; // weiteste Platzierung eines Kopfballs neben der Tormitte (m, Spielwert; 1,6 → 2,0 am 2026-10-31: Mit der
 // Fehlerrechnung gegen den Gegner fielen 15 % mehr Tore, die Kopfballtore nicht – Großfeld: jeder vierte Kopfball aufs Tor gefangen, nur 13 % Tore)
 export const HEAD_CLEAR = { speed: 8, vy: [3, 5] }; // Klärender Kopfball am eigenen Tor: Tempo ab 8 m/s (+5 · Kopfball), Steigung (Spielwert)
+export const HEAD_CLEAN = { base: 0.5, skill: 0.4 }; // sauber getroffener Kopfball (vorher fest 0,35 + 0,4 · Können; Spielwert, siehe Gameplay-Check 2026-11-15)
 export const HEAD_GRAZE = 0.7; // Anteil der nicht sauber getroffenen Kopfbälle, die den Ball noch streifen (Spielwert)
 // Zielstreuung eines Kopfballs aufs Tor (Bogenmaß, zusätzlich zur Streuung durch die Kopfballstärke): real kommen nur rund 34 % der
 // Kopfbälle aufs Tor (StatsBomb); der Wert 0,3 ist gewählt, nicht gemessen.
@@ -718,7 +719,7 @@ export function headerTouch(m) {
     const f = clamp(HEAD_DUEL.factor + STRENGTH_FX.head * (strengthOf(p) - strengthOf(o)), 0.2, 1);
     duel = Math.min(duel, f);
   }
-  if (!rng.chance(sure((0.35 + 0.4 * skill) * duel, vs(m, p, 'heading')))) {
+  if (!rng.chance(sure((HEAD_CLEAN.base + HEAD_CLEAN.skill * skill) * duel, vs(m, p, 'heading')))) {
     // Nicht sauber getroffen: Meist streift er ihn noch (Kopf, Schulter, Hinterkopf) – der Ball wird abgefälscht und verliert
     // Tempo. Ganz verpasst wird er selten. Vorher flog jeder verpasste Kopfball unberührt weiter, gemessen ging so bei Ecken
     // jeder dritte Ball trotz Spieler in Reichweite ins Aus (scripts/corner-check.mjs). Anteil HEAD_GRAZE gewählt, nicht gemessen.
