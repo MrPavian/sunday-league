@@ -37,9 +37,12 @@ export function shotOn(m, p, oppGoal, minFacing = -0.3) {
 }
 
 // Rücken zum Tor, Gegenspieler dicht dahinter (zwischen ihm und dem Tor).
+// Gegner im Nacken: so nah (m) hinter dem Ballführenden. 1,8 → 2,2 mit der Trägheit (actions.js INERTIA): Verteidiger kleben
+// nicht mehr so eng, der Druck im Rücken ist aber derselbe (Spielwert).
+const BACK_MARK = 2.2;
 export function backToGoal(m, p, toG) {
   if (p.facing.x * toG.x + p.facing.z * toG.z > -0.1) return false;
-  return opponents(m, p.team).some((o) => dist2d(o.pos, p.pos) < 1.8 && (o.pos.x - p.pos.x) * toG.x + (o.pos.z - p.pos.z) * toG.z > 0.2);
+  return opponents(m, p.team).some((o) => dist2d(o.pos, p.pos) < BACK_MARK && (o.pos.x - p.pos.x) * toG.x + (o.pos.z - p.pos.z) * toG.z > 0.2);
 }
 
 // Ablage: kurz zurück oder quer zu einem freien Mitspieler, der aufs Tor schauen kann.
@@ -99,7 +102,7 @@ export function considerCombo(m, keeperDepth) {
   const { pitch, rng } = m;
   const s = attackDir(m, a.team);
   const limit = runLimit(m, keeperDepth);
-  const layoff = m.layoffBy?.id === a.id && m.time - m.layoffBy.time < 0.6;
+  const layoff = m.layoffBy?.id === a.id && m.time - m.layoffBy.time < 0.8; // 0,8 s: LAYOFF_TTL (ai.js) 0,5 s plus Ausführung
   if (layoff) {
     // Ablegen und abdrehen: am Gegenspieler vorbei in die Tiefe. Ohne Befehl etwa zwei von drei Malen,
     // mit „Kombinieren" fast immer (sonst startet jeder nach jeder Ablage – gemessen kein Unterschied mehr).
@@ -116,7 +119,9 @@ export function considerCombo(m, keeperDepth) {
   // Gegner noch weiter weg steht.
   const eager = styleOf(m, a.team).combo > 1.2;
   const d = dist2d(a.pos, b.pos);
-  if (d < 3 || d > (eager ? 15 : 11) || a.pos.x * s < -pitch.halfLength * 0.1 || a.stamina < 0.3) return;
+  // Mit „Kombinieren“ auch schon kurz vor der Mittellinie (-0,25 statt -0,1 der halben Länge): Mit der Trägheit (actions.js INERTIA)
+  // gab es insgesamt weniger Doppelpässe, und der Befehl hob sie nur noch auf das 1,6-Fache (gemessen 40 Spiele Parkplatz).
+  if (d < 3 || d > (eager ? 15 : 11) || a.pos.x * s < -pitch.halfLength * (eager ? 0.25 : 0.1) || a.stamina < 0.3) return;
   const beat = opponents(m, a.team).some((o) => {
     const rel = (o.pos.x - a.pos.x) * s;
     return rel > 0 && rel < (eager ? 8 : 5) && Math.abs(o.pos.z - a.pos.z) < (eager ? 4.5 : 3);
@@ -135,7 +140,8 @@ export function considerCombo(m, keeperDepth) {
 
 // Die Wand: direkt in den Lauf zurück, wenn die Bahn frei ist. 'wait' = Ball kurz
 // behaupten, bis der Läufer so weit ist.
-export function comboReturn(m, p) {
+const RETURN_LEAD = 5; // Spielwert
+export function comboReturn(m, p, direct = false) {
   const c = m.combo;
   if (!c || c.wall !== p.id || c.returned) return null;
   const r = getPlayer(m, c.runner);
@@ -147,10 +153,15 @@ export function comboReturn(m, p) {
   const fresh = m.time - c.time < RETURN_WAIT + (eager ? 0.15 : 0.5);
   // In den Lauf spielen: ein Stück vor den Läufer Richtung Zielpunkt.
   const to = norm(c.spot.x - r.pos.x, c.spot.z - r.pos.z);
-  const ahead = Math.min(2.5, dist2d(r.pos, c.spot) + 1);
+  // Mit der Trägheit (actions.js INERTIA) kommt der Läufer langsamer in Fahrt: weiter in den Lauf spielen (2,5 → RETURN_LEAD),
+  // sonst wartete die Wand, bis der Läufer vorn war, und verlor dabei den Ball (gemessen 52 % der Doppelpässe).
+  const ahead = Math.min(RETURN_LEAD, dist2d(r.pos, c.spot) + 1);
   const point = clampToPitch(m.pitch, r.pos.x + to.x * ahead + r.vel.x * 0.2, r.pos.z + to.z * ahead + r.vel.z * 0.2, 1.2);
   // Der Rückpass geht nach vorn in den Raum – nicht zurück zum Läufer, der noch hinten ist.
-  if ((point.x - p.pos.x) * s < 1.5 || dist2d(point, p.pos) < 2 || !laneFree(m, p, point, eager ? 0.85 : 1.1)) {
+  // Direkt (der Ball kommt gerade an): Der Gegner hat keine Zeit mehr zu reagieren – engere Lücke und knapper vor der Wand
+  // reichen. Wer den Ball erst annimmt und dann wartet, verlor ihn mit der Trägheit oft (gemessen 34 % der Doppelpässe).
+  const tight = direct || eager;
+  if ((point.x - p.pos.x) * s < (direct ? 1 : 1.5) || dist2d(point, p.pos) < 2 || !laneFree(m, p, point, tight ? 0.85 : 1.1)) {
     if (fresh) return 'wait';
     m.combo = null;
     return null;

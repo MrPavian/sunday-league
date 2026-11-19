@@ -5,7 +5,7 @@
 //   laneBad     – Anteil Pässe (flach, keine Flanke), bei denen beim Abspiel schon ein Gegner höchstens 1,3 m neben der Passlinie stand
 //   laneBadOk   – Ankommquote genau dieser Pässe
 //   betterOpen  – Anteil Pässe, bei denen ein freier Mitspieler mindestens 6 m weiter vorn stand als der Angespielte
-//   carry       – mittlere Ballführzeit je Ballbesitz eines Spielers (s); carryLong: Anteil über 3 s
+//   carry       – mittlere Ballführzeit je Ballbesitz eines Spielers bis Abspiel/Schuss/Verlust (s); carryLong: Anteil über 3 s
 //   lossDribble – Anteil der Einzelballbesitze, die mit Ballverlust am Fuß enden (Gegner nimmt ihn ab, ohne Pass/Schuss)
 //   lossOpen    – Anteil dieser Ballverluste, bei denen in dem Moment ein Mitspieler frei anspielbar war
 //   crowd       – mittlere Zahl Feldspieler (beide Teams) im Umkreis 6 m um den Ball; crowdHeavy: Anteil Proben mit ≥ 6
@@ -25,6 +25,8 @@ const { TEAM_PRESETS } = await load('src/data/teams.js');
 const { createRng } = await load('src/core/rng.js');
 // Schalter für Vorher/Nachher-Vergleiche: OFF=PASS_SAFETY,… schaltet die genannten Neuerungen ab.
 const mods = [await load('src/sim/actions.js'), await load('src/sim/ai.js')];
+// SET=INERTIA.acc=8,ANTICIPATE.react=0.3 setzt einzelne Werte (nur Zahlen).
+for (const kv of (process.env.SET ?? '').split(',').filter(Boolean)) { const [path, v] = kv.split('='); const [k, f] = path.split('.'); const o = mods.map((x) => x[k]).find(Boolean); if (!o || !(f in o)) throw new Error(`unbekannter Wert ${path}`); o[f] = +v; }
 for (const k of (process.env.OFF ?? '').split(',').filter(Boolean)) { const o = mods.map((x) => x[k]).find(Boolean); if (o && 'on' in o) o.on = false; else throw new Error(`unbekannter Schalter ${k}`); }
 
 const pitch = venue === 'stadion' ? STADIUM : PITCHES[venue];
@@ -84,10 +86,10 @@ for (let i = 0; i < N; i++) {
           if (lane) z.laneBad++;
           if (better) z.betterOpen++;
         }
-        if (cur && cur.id === e.playerId) cur.ended = 'pass';
+        if (cur && cur.id === e.playerId) { cur.ended = 'pass'; cur.tEnd ??= m.time; }
         if (poss) poss.passes++;
       }
-      if ((e.type === 'shot' || (e.type === 'header' && e.onGoal)) && cur && cur.id === e.playerId) cur.ended = 'shot';
+      if ((e.type === 'shot' || (e.type === 'header' && e.onGoal)) && cur && cur.id === e.playerId) { cur.ended = 'shot'; cur.tEnd ??= m.time; }
       if (e.type === 'goal') z.goals++;
       if (e.type === 'shot') z.shots++;
       if (e.type === 'out' && pend) pend = null; // Aus: Pass verloren (nicht als ok gezählt)
@@ -102,7 +104,7 @@ for (let i = 0; i < N; i++) {
     // Einzelballbesitz (Ballführen) eines Spielers
     if (toucher && toucher.role !== 'gk' && (!cur || cur.id !== toucher.id)) {
       if (cur) {
-        const dt = m.time - cur.t0;
+        const dt = (cur.tEnd ?? m.time) - cur.t0; // bis zum Abspiel/Schuss, ohne Flugzeit des Balls
         z.carries++; z.carryT += dt; if (dt > 3) z.carryLong++;
         if (!cur.ended && toucher.team !== cur.team && cur.lastDribble) { z.lossDribble++; if (cur.openAtLoss) z.lossOpen++; }
       }
@@ -128,4 +130,4 @@ for (let i = 0; i < N; i++) {
   }
 }
 const pct = (a, b) => (b ? Math.round((1000 * a) / b) / 10 : 0);
-console.log(JSON.stringify({ venue, N, off: process.env.OFF ?? '', goals: +(z.goals / N).toFixed(2), shots: +(z.shots / N).toFixed(1), passesPerGame: +(z.passes / N).toFixed(1), passOk: pct(z.passOk, z.passes), laneBad: pct(z.laneBad, z.passes), laneBadOk: pct(z.laneBadOk, z.laneBad), betterOpen: pct(z.betterOpen, z.passes), carry: +(z.carryT / z.carries).toFixed(2), carryLong: pct(z.carryLong, z.carries), lossDribble: pct(z.lossDribble, z.carries), lossOpen: pct(z.lossOpen, z.lossDribble), crowd: +(z.crowdSum / z.samples).toFixed(2), crowdHeavy: pct(z.crowdHeavy, z.samples), openAhead: +(z.openAheadSum / z.openSamples).toFixed(2), changes: +(z.poss / N).toFixed(1), passPerPoss: +(z.possPasses / z.poss).toFixed(2), possSec: +(z.possT / z.poss).toFixed(1) }));
+console.log(JSON.stringify({ venue, N, off: process.env.OFF ?? '', set: process.env.SET ?? '', goals: +(z.goals / N).toFixed(2), shots: +(z.shots / N).toFixed(1), passesPerGame: +(z.passes / N).toFixed(1), passOk: pct(z.passOk, z.passes), laneBad: pct(z.laneBad, z.passes), laneBadOk: pct(z.laneBadOk, z.laneBad), betterOpen: pct(z.betterOpen, z.passes), carry: +(z.carryT / z.carries).toFixed(2), carryLong: pct(z.carryLong, z.carries), lossDribble: pct(z.lossDribble, z.carries), lossOpen: pct(z.lossOpen, z.lossDribble), crowd: +(z.crowdSum / z.samples).toFixed(2), crowdHeavy: pct(z.crowdHeavy, z.samples), openAhead: +(z.openAheadSum / z.openSamples).toFixed(2), changes: +(z.poss / N).toFixed(1), passPerPoss: +(z.possPasses / z.poss).toFixed(2), possSec: +(z.possT / z.poss).toFixed(1) }));

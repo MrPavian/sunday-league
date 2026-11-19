@@ -217,6 +217,7 @@ function step(m, input, dt) {
     return;
   }
   if (m.phase === 'halftime') {
+    stepLeftovers(m, dt); // Taube & Co. fliegen auch in der Pause weg (hing sonst bis zum Anpfiff in der Luft, Park Seed 3)
     if ((m.phaseTimer -= dt) > 0) return;
     // Seitenwechsel, kurz durchschnaufen, die andere Mannschaft stößt an.
     swapSides(m);

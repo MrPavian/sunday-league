@@ -23,6 +23,14 @@ import { setPieceDistance } from './setpieces.js';
 
 export const REACH = 0.75;
 
+// Trägheit (Punkt 22). acc – Antritt aus dem Stand (m/s²), fällt linear bis 0 bei Spitzentempo (Kraft-Geschwindigkeits-Profil
+// nach Samozino; Startkraft F0 bei Nachwuchs-Nationalspielern 6,0–6,7 N/kg, PubMed 33331801); accMin – Rest, damit Traben
+// nicht ewig dauert (Spielwert). brake – Bremsen bis −6 … −9 m/s² (Harper et al. 2019, Sports Med 49), oberes Ende: mit 8 liefen
+// Empfänger über den Treffpunkt (Großfeld 60 Spiele: Pässe angekommen 65,1 % → 67,1 % mit 9). latTop – Kurvenlauf im
+// Vollsprint: 10 % langsamer im 17-m-Radius (Diaz et al. 2024, J Exp Biol; PMC11093109), 9 m/s → v²/r ≈ 4,7 m/s² (hergeleitet);
+// latLow – enge Haken aus dem Traben (Spielwert). turnLow/turnTop – Körperdrehung (rad/s) im Stand/im Lauf (Spielwerte).
+export const INERTIA = { on: true, acc: 6.5, accMin: 1.5, brake: 9, latLow: 9, latTop: 4.7, turnLow: 14, turnTop: 6 };
+
 export function movePlayer(m, p, intent, dt, leaders) {
   const { pitch } = m;
   const mv = intent.move;
@@ -65,16 +73,48 @@ export function movePlayer(m, p, intent, dt, leaders) {
   let dvx = tvx - p.vel.x;
   let dvz = tvz - p.vel.z;
   const dv = len(dvx, dvz);
-  const maxDv = (moving ? 18 : 12) * dt;
-  if (dv > maxDv) {
-    dvx *= maxDv / dv;
-    dvz *= maxDv / dv;
+  if (INERTIA.on) {
+    // Trägheit (Gameplay 2.0, Punkt 22): Antritt, Bremsen und Kurvenlauf getrennt begrenzt – wer schnell ist, muss
+    // erst abbremsen, bevor er scharf abbiegt.
+    const vTop = (4.6 + 2.6 * p.attrs.pace + (hasTrait(p, 'schnell') ? 0.6 : 0)) * 1.28;
+    const r = Math.min(1, speed / vTop);
+    if (speed > 0.3) {
+      const ux = p.vel.x / speed, uz = p.vel.z / speed;
+      let al = dvx * ux + dvz * uz;
+      let lx = dvx - al * ux, lz = dvz - al * uz;
+      al = al > 0 ? Math.min(al, Math.max(INERTIA.accMin, INERTIA.acc * (1 - r)) * dt) : Math.max(al, -INERTIA.brake * dt);
+      const lat = len(lx, lz), latMax = (INERTIA.latLow + (INERTIA.latTop - INERTIA.latLow) * r) * dt;
+      if (lat > latMax) { lx *= latMax / lat; lz *= latMax / lat; }
+      dvx = al * ux + lx;
+      dvz = al * uz + lz;
+    } else {
+      const lim = (moving ? INERTIA.acc : INERTIA.brake) * dt;
+      if (dv > lim) { dvx *= lim / dv; dvz *= lim / dv; }
+    }
+  } else {
+    const maxDv = (moving ? 18 : 12) * dt;
+    if (dv > maxDv) {
+      dvx *= maxDv / dv;
+      dvz *= maxDv / dv;
+    }
   }
   p.vel.x += dvx;
   p.vel.z += dvz;
   clampPlayer(pitch, p, p.pos.x + p.vel.x * dt, p.pos.z + p.vel.z * dt);
 
-  if (moving && m.ball.holder !== p.id) p.facing = dir;
+  if (moving && m.ball.holder !== p.id) {
+    if (INERTIA.on) {
+      // Der Körper dreht mit begrenztem Tempo zum neuen Ziel, im Lauf langsamer als im Stand (kein Umspringen mehr).
+      // In Laufrichtung statt zum Ziel zu schauen, kostete Doppelpässe und das Halten mit dem Rücken zum Tor.
+      const v = len(p.vel.x, p.vel.z);
+      const want = dir;
+      const a0 = Math.atan2(p.facing.x, p.facing.z), a1 = Math.atan2(want.x, want.z);
+      const d = Math.atan2(Math.sin(a1 - a0), Math.cos(a1 - a0));
+      const step = (INERTIA.turnLow + (INERTIA.turnTop - INERTIA.turnLow) * Math.min(1, v / 8)) * dt;
+      const a = a0 + clamp(d, -step, step);
+      p.facing = { x: Math.sin(a), z: Math.cos(a) };
+    } else p.facing = dir;
+  }
 }
 
 export function clampPlayer(pitch, p, x, z) {
@@ -429,7 +469,11 @@ function pass(m, p, a, fatigue, fromHands) {
       vy = d > 16 && !pitch.flatPlay ? 3.5 : 0.2;
     }
     const sigma = ((0.02 + 0.12 * (1 - cap1(vs(m, p, 'passing')))) * errScale(vs(m, p, 'passing')) + 0.05 * STAMINA.skill * fatigue) * (eye ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.6 : 1) * (hasProfile(p, 'spielmacher') ? 0.85 : 1) * pressureChaos(m, p) * clutchAim(m, p);
+    const fwd = dir;
     dir = rotate(dir, rng.gauss() * sigma);
+    // Rückpass beim Doppelpass: Die Streuung geht höchstens bis quer, nie nach hinten (fast quer gespielt und nach hinten
+    // gestreut: ascheplatz Seed 22 – gegen den Sinn des Doppelpasses, in den Lauf zu spielen). Dann halb so weit gestreut.
+    if (a.combo && lead && dir.x * attackDir(m, p.team) < 0.1 && fwd.x * attackDir(m, p.team) > 0.1) dir = norm(fwd.x + dir.x, fwd.z + dir.z);
     speed *= 1 + rng.gauss() * 0.08 * (1 - cap1(vs(m, p, 'passing')));
     if (p.id === m.controlledId) m.pendingSwitch = { receiver: target.id, kicker: p.id };
   }
@@ -1006,7 +1050,10 @@ export function dribbleTouch(m) {
   }
 
   const speed = len(p.vel.x, p.vel.z);
-  if (speed < 0.6) {
+  // Annahme im Entgegenlaufen (Trägheit, INERTIA): Wer dem Ball entgegenkommt, aber Richtung Tor weiter will, lässt ihn
+  // abtropfen, statt ihn in die eigene Laufrichtung – zurück zum Passgeber und dem Gegner in die Füße – mitzunehmen.
+  const meet = INERTIA.on && !own && p.dribbleDir && p.dribbleDir.x * p.facing.x + p.dribbleDir.z * p.facing.z < 0;
+  if (speed < 0.6 || meet) {
     ball.vel.x *= 0.15;
     ball.vel.z *= 0.15;
     ball.vel.y = 0;

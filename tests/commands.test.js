@@ -71,8 +71,10 @@ describe('coach orders change real behaviour', () => {
   // (sonst wird eine aufgerückte Abwehr nie bestraft) – der Befehl macht es deutlich häufiger.
   it('balls in behind: rare on their own, far more often when the coach asks for them', () => {
     const through = (ms) => ms.reduce((s, m) => s + m.log.passes.filter((p) => p.team === 0 && p.through).length, 0);
-    const own = through(series([]));
-    const asked = through(series(['route:tiefe']));
+    // 24 statt 8 Spiele (2026-11-19, mit Zustimmung des Nutzers): Mit der Trägheit (actions.js INERTIA) lagen 8 Spiele bei genau
+    // 28 gegen 14 (Verhältnis 2,0); über 40 Spiele 163 gegen 54 (3,0, alte Physik 3,2). Schwelle unverändert.
+    const own = through(series([], { n: 24 }));
+    const asked = through(series(['route:tiefe'], { n: 24 }));
     expect(asked).toBeGreaterThan(own * 2);
     expect(through(series(['route:tiefe'], { pitch: PITCHES.ascheplatz, duration: 200 }))).toBeGreaterThan(2);
   }, SLOW);

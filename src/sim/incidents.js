@@ -345,7 +345,8 @@ function beginIncident(m, type, info = {}) {
     // Zwei Spieler laufen zum Schiri, die anderen schauen hin.
     // Helfer nach dem Abstand in einer halben Sekunde (Laufrichtung mitgedacht): Wer gerade vom Schiri wegsprintet, ist nicht der Nächste.
     const soon = (p) => dist2d({ x: p.pos.x + p.vel.x * 0.5, z: p.pos.z + p.vel.z * 0.5 }, m.referee.pos);
-    inc.helpers = m.players.filter((p) => p.role !== 'gk').sort((a, b) => soon(a) - soon(b)).slice(0, 2).map((p) => p.id);
+    // Nur wer gerade normal läuft – nicht mitten im Zweikampf (Sportplatz Seed 6: Helfer in der Grätsche bremste ruckartig).
+    inc.helpers = m.players.filter((p) => p.role !== 'gk' && p.state === 'normal').sort((a, b) => soon(a) - soon(b)).slice(0, 2).map((p) => p.id);
     // Mit Bandentür (Halle): Der Schiri humpelt durch die Tür zur Bank, ein Zuschauer kommt von draußen durch dieselbe Tür.
     const door = shelterFor(pitch).door;
     if (door) {

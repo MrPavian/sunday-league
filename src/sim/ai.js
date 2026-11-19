@@ -6,7 +6,7 @@ import { hasTrait } from '../data/traits.js';
 import { BALL_RADIUS, BOARD_BOUNCE, ballSpeed, rollDistance } from './ball.js';
 import { attackDir, clampToPitch, distToSegment, getPlayer, wallPush } from './players.js';
 import { heeds } from './coach.js';
-import { HAND_ZONE, inHandZone, keeperBox, shortGame } from './actions.js';
+import { HAND_ZONE, INERTIA, inHandZone, keeperBox, shortGame } from './actions.js';
 import { adherence, commitment, styleOf } from './plan.js';
 import { fooled } from './tricks.js';
 import { hasProfile } from './profiles.js';
@@ -57,6 +57,9 @@ export function updateTactics(m, dt) {
   if (possession != null && m.lastPossession != null && possession !== m.lastPossession) (m.lostAt ??= [-9, -9])[m.lastPossession] = m.time;
   m.lastPossession = possession;
   m.tactics = Object.create(null);
+  m.looseSpot = [null, null];
+  // Wie lange führt der aktuelle Ballführende den Ball schon? (CARRY_PASS)
+  if (!m.carry || m.carry.id !== ball.lastTouch) m.carry = { id: ball.lastTouch, t0: m.time };
   considerCombo(m, keeperBox(pitch).depth);
   // Letzte Linie je Team (x des hintersten Feldspielers) – für Läufe in die Tiefe.
   m.defLine = [0, 1].map((t) => {
@@ -98,6 +101,17 @@ export function updateTactics(m, dt) {
     // Pass in die Tiefe des Gegners: Die Abwehr braucht einen Moment, bis sie umschaltet.
     if (m.pass?.through && m.pass.team !== team && m.time - m.pass.time < m.pass.react) chaser = null;
     // Im eigenen Team läuft die KI nur an, wenn der gesteuerte Spieler weit weg ist.
+    // Abpraller antizipieren (Gameplay 2.0, Punkt 21): Nach Block, Abwehr, Grätsche oder Kopfball geht hin, wer den
+    // freien Ball zuerst erreicht – und zwar dorthin, wo er ihn erreicht, statt dem Ball hinterherzulaufen.
+    if (ANTICIPATE.on && chaser && chaser !== owner && !receiver && !ball.holder && LOOSE_ACTIONS.has(ball.lastAction)
+      && (ballSpeed(ball) > ANTICIPATE.minSpeed || ball.pos.y > 0.5)) {
+      let best = null;
+      for (const q of pool.slice(0, ANTICIPATE.pool)) {
+        const r = reachSpot(m, q, ANTICIPATE.react);
+        if (!best || r.t < best.t) best = { q, ...r };
+      }
+      if (best) { chaser = best.q; m.looseSpot[team] = best.spot; }
+    }
     if (human && team === m.humanTeam && chaser && !(dist2d(chaser.pos, target) < dist2d(human.pos, target) - 2.5)) chaser = null;
     if (holder && holder.team === team) chaser = null;
     m.chasers[team] = chaser?.id ?? null;
@@ -443,6 +457,46 @@ function incomingPass(m, team) {
 
 // Wo erreicht der Adressat den rollenden Ball am frühesten? Der Ball wird mit
 // dem Bodenmodell aus ball.js (Rollwiderstand + Luftwiderstand ∝ v²) vorausberechnet; der Spieler läuft zum ersten erreichbaren Punkt.
+// Abpraller (Punkt 21): Spielwerte. react – Reaktionszeit (s), bis der Spieler losläuft (hergeleitet: einfache
+// Reaktionszeit auf visuelle Reize ~0,2 s); pool – so viele der Nächsten werden geprüft; minSpeed – darunter rollt der Ball aus.
+export const ANTICIPATE = { on: true, react: 0.2, pool: 4, minSpeed: 2.5 };
+const LOOSE_ACTIONS = new Set(['block', 'save', 'tackle', 'header']);
+// Wo und wann erreicht p den freien Ball frühestens? Flug ballistisch (fast ungebremst), am Boden Rollmodell aus ball.js.
+// Ohne Bande und Abpraller am Pfosten; erreichbar heißt: am Boden oder im Fallen unter Kopfhöhe.
+function reachSpot(m, p, react) {
+  const { ball, pitch } = m;
+  const speed = 4.6 + 2.6 * p.attrs.pace;
+  const top = 1.75 * p.look.height + 0.35;
+  const at = (spot, t) => ({ spot: clampToPitch(pitch, spot.x, spot.z, 0.3), t });
+  let x = ball.pos.x, z = ball.pos.z, t0 = 0;
+  let vx = ball.vel.x, vz = ball.vel.z;
+  if (ball.pos.y > 0.3 || ball.vel.y > 1) {
+    for (let t = 0.05; t <= 2.5; t += 0.05) {
+      const y = ball.pos.y + ball.vel.y * t - 4.905 * t * t;
+      const s = { x: ball.pos.x + ball.vel.x * t, z: ball.pos.z + ball.vel.z * t };
+      if (y < top && ball.vel.y - 9.81 * t < 0 && dist2d(p.pos, s) <= speed * Math.max(0, t - react) + 0.4) return at(s, t);
+      if (y <= 0.3) { x = s.x; z = s.z; t0 = t; vx *= 0.88; vz *= 0.88; break; }
+    }
+  }
+  const v0 = hypot(vx, vz);
+  let s = { x, z };
+  for (let t = 0; t <= 2.5; t += 0.1) {
+    const f = v0 > 1e-6 ? rollDistance(v0, t, pitch.surface) / v0 : 0;
+    s = { x: x + vx * f, z: z + vz * f };
+    if (dist2d(p.pos, s) <= speed * Math.max(0, t0 + t - react) + 0.4) return at(s, t0 + t);
+  }
+  return at(s, t0 + 2.5 + dist2d(p.pos, s) / speed);
+}
+
+// Anteil des Lauftempos, mit dem p auf d Meter noch ankommt, ohne zu überlaufen: v = √(2 · a · d), a mit etwas Reserve
+// (ARRIVE_BRAKE der Bremskraft), geteilt durch das Trabtempo – unter 1 wird nicht mehr gesprintet.
+const ARRIVE_BRAKE = 0.75;
+function arriveScale(p, d) {
+  const jog = (4.6 + 2.6 * p.attrs.pace) * (0.72 + 0.28 * p.stamina);
+  const v = Math.sqrt(2 * INERTIA.brake * ARRIVE_BRAKE * Math.max(0, d - 0.3));
+  return v >= jog * 1.28 ? 1 : Math.max(0.15, v / jog);
+}
+
 function receiveSpot(m, p) {
   const { ball, pitch } = m;
   const speed = 4.6 + 2.6 * p.attrs.pace;
@@ -790,6 +844,11 @@ export function outfieldIntent(m, p, dt) {
     // Anlaufen: Auf „locker" trabt der Gegner eher hin, auf „hart" sprintet er früh.
     const k = aiSkill(m, p);
     const intensity = k < 1 ? 0.8 : 1;
+    const ls = m.looseSpot?.[p.team];
+    if (ls && dBall > 1.2) {
+      const dl = dist2d(p.pos, ls), k = INERTIA.on ? arriveScale(p, dl) : 1, n = norm(ls.x - p.pos.x, ls.z - p.pos.z);
+      return { move: { x: n.x * k, z: n.z * k }, sprint: k >= 1 && dl > 1 && p.stamina > 0.25 };
+    }
     const mv = norm(ax - p.pos.x, az - p.pos.z);
     const press = fst.pressZone === 'high';
     return { move: { x: mv.x * intensity, z: mv.z * intensity }, sprint: dBall > (press ? 1.2 : k > 1 ? 2 : k < 1 ? 5 : 3) && p.stamina > (press ? 0.32 : 0.3) };
@@ -811,7 +870,7 @@ export function outfieldIntent(m, p, dt) {
     p.dribbleDir = norm(oppGoal.x - p.pos.x, -p.pos.z * 0.3);
     // Wand beim Doppelpass: direkt zurück in den Lauf, ohne den Ball erst anzunehmen.
     if (!p.pending && m.combo?.wall === p.id && dist2d(p.pos, ball.pos) < 1.8 && ball.pos.y < 1.1) {
-      const back = comboReturn(m, p);
+      const back = comboReturn(m, p, true);
       if (back && back !== 'wait') p.pending = back;
     }
     // Direktabnahme: Kommt der Pass in guter Lage an, wird gleich abgezogen – wer die
@@ -823,7 +882,11 @@ export function outfieldIntent(m, p, dt) {
         p.pending = { type: 'shoot', power: clamp(0.35 + dist2d(p.pos, oppGoal) / 20, 0.4, 0.9), target: { x: oppGoal.x, z: (m.rng.chance(0.5) ? 1 : -1) * m.rng.range(gw * 0.4, gw * 1.0) }, ttl: 0.35, first: true };
       }
     }
-    return { move: d < 0.3 ? { x: 0, z: 0 } : norm(dx, dz), sprint: d > 3 && p.stamina > 0.25 };
+    if (d < 0.3) return { move: { x: 0, z: 0 }, sprint: false };
+    // Trägheit: rechtzeitig abbremsen, sonst läuft er über den Treffpunkt hinaus (Bremsweg v² / 2a).
+    const arrive = INERTIA.on ? arriveScale(p, d) : 1;
+    const n2 = norm(dx, dz);
+    return { move: { x: n2.x * arrive, z: n2.z * arrive }, sprint: arrive >= 1 && d > 3 && p.stamina > 0.25 };
   }
   // Engagiert nach vorn: Läufe nach vorn (Anbieten vor dem Ball) werden gesprintet – mehr
   // Leute vor dem Ball, dafür fehlen sie beim Ballverlust hinten, und es kostet Kraft.
@@ -933,6 +996,13 @@ function crossInto(m, p, oppGoal) {
 // Gameplay 2.0 (Punkt 19): Bedrängt darf auch zurück oder quer zum freien Mann gespielt werden. Vorher nur bis rund 100° neben der
 // Blickrichtung (cone −0,2) – der Ausweg nach hinten fehlte, gemessen ging fast jeder zweite Pass unter Druck in eine zugestellte Linie.
 // cone −0,8: bis rund 145° (Spielwert); welcher Mitspieler es wird, entscheidet die Passwahl samt Passsicherheit (actions.js).
+// Ablage (Trägheit): Der Ball ist beim Festmachen nicht immer sofort in Reichweite – der Auftrag gilt etwas länger als
+// der normale Pass (0,3 s), sonst verfiel er oft, bevor der Ball rausging (Spielwert, gemessen mit Kennzahlen aus combos.test).
+const LAYOFF_TTL = 0.5;
+// Lange am Ball (Spielwerte): after – ab so vielen Sekunden Ballführen; k – Zuwachs der Abspielneigung je weitere Sekunde;
+// back – so viele Meter darf die Anspielstation dann auch hinter Ballhöhe stehen (ahead-Schwelle 3 m wird um back verschoben).
+// Nicht für den Stürmer, der den Ball gerade festmacht (holdUp): Der legt über die Ablage ab (combos.js).
+export const CARRY_PASS = { on: true, after: 1.2, k: 0.8, back: 5 };
 export const PRESS_OUT = { on: true, cone: -0.8 };
 
 function aiDecide(m, p, oppGoal) {
@@ -953,7 +1023,7 @@ function aiDecide(m, p, oppGoal) {
   if (p.role !== 'def' && p.pos.x * sd > -pitch.halfLength * 0.2 && backToGoal(m, p, toG)) {
     const mate = layoffMate(m, p);
     if (mate && rng.chance(Math.min(0.95, (0.45 + 0.35 * soft(p.attrs.passing)) * comboK(m, p)))) {
-      p.pending = { type: 'pass', targetId: mate.id, ttl: 0.3, cone: -1 };
+      p.pending = { type: 'pass', targetId: mate.id, ttl: LAYOFF_TTL, cone: -1 };
       m.layoffBy = { id: p.id, time: m.time };
       m.events.push({ type: 'combo', kind: 'layoff_pass', playerId: p.id, wallId: mate.id });
       return;
@@ -1115,16 +1185,18 @@ function aiDecide(m, p, oppGoal) {
   // Ein Mitspieler steht weiter vorn frei? Dann den Ball laufen lassen, statt allein
   // durch drei Leute zu dribbeln – wie oft, hängt vom Passspiel ab.
   const s = attackDir(m, p.team);
+  // Lange am Ball (CARRY_PASS): Wer schon eine Weile dribbelt, sucht zunehmend die Anspielstation – auch quer oder zurück.
+  const held = CARRY_PASS.on && m.carry?.id === p.id && m.time - (p.holdUp ?? -9) > 1.5 ? Math.max(0, m.time - m.carry.t0 - CARRY_PASS.after) : 0;
   const open = m.players.find((t) => {
     if (t.team !== p.team || t === p || t.role === 'gk' || t.state !== 'normal') return false;
-    const ahead = (t.pos.x - p.pos.x) * s;
+    const ahead = (t.pos.x - p.pos.x) * s + (held > 0 ? CARRY_PASS.back : 0);
     const d = dist2d(t.pos, p.pos);
     // Vorne frei – oder außen frei auf gleicher Höhe (Spiel über die Flügel).
     const wideLevel = ahead > -2 && Math.abs(t.pos.z) > pitch.halfWidth * WIDE_LANE && Math.abs(t.pos.z - p.pos.z) > 4 && st.channel !== 'centre';
     if ((ahead < 3 && !wideLevel) || d > 16) return false;
     return !m.players.some((o) => o.team !== p.team && (dist2d(o.pos, t.pos) < 2.5 || distToSegment(o.pos, p.pos, t.pos) < 1.3));
   });
-  if (open && rng.chance(Math.min(0.92, (0.25 + 0.35 * soft(p.attrs.passing)) * aiSkill(m, p) * st.passRate * selfish))) p.pending = { type: 'pass', ttl: 0.3, cone: -0.3, optional: true };
+  if (open && rng.chance(Math.min(0.92, (0.25 + 0.35 * soft(p.attrs.passing)) * aiSkill(m, p) * st.passRate * selfish * (1 + CARRY_PASS.k * held)))) p.pending = { type: 'pass', ttl: 0.3, cone: -0.3, optional: true };
 }
 
 // Raum hinter der Abwehr: Welcher Mitspieler kommt vor den Verteidigern an den Ball,
