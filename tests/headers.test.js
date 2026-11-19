@@ -40,7 +40,9 @@ describe('Kopfballtore', () => {
   it('Großfeld: Kopfballtore mindestens 3 % der Tore', () => {
     // 64 statt 16 Spiele (gleiche Schwelle als Anteil): Mit 16 Spielen sind es nur ~1–2 Kopfballtore, jede Änderung am
     // Zufallsverlauf (z. B. mehr Elfmeter durch den echten 16er) kippte den Anteil; vorher und nachher mit 64 Spielen bestanden.
-    const r = heads('grossfeld', 64);
+    // 128 statt 64 (2026-11-19, mit Zustimmung des Nutzers): Gameplay 2.0 änderte den Zufallsverlauf, auf den 64 Seeds 3 statt 4
+    // Kopfballtore (2,6 %); über 360 andere Spiele 30 mit und 31 ohne die Änderung, also kein echter Unterschied.
+    const r = heads('grossfeld', 128);
     expect(r.onGoalPerGame).toBeGreaterThan(0.4); // gemessen 0,78, vorher 0,07
     expect(r.share).toBeGreaterThan(0.03); // gemessen 5 %, vorher 1 %
   }, 2400000);

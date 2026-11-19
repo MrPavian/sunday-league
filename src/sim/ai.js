@@ -622,6 +622,12 @@ function staysBack(m, p, st) {
   return defs.indexOf(p) < st.rest;
 }
 
+// Gameplay 2.0 (Punkt 20, Freilaufen): Gemessen stand im Schnitt nur 0,1–0,3 Mitspieler frei anspielbar vor dem Ballführenden
+// (scripts/play-audit.mjs, openAhead). Neu: auch 5 m weiter weg nach freiem Raum suchen (ring), zugestellte Plätze nach `recheck` s
+// neu wählen, Abstand `near` m zum Ball halten und zügig hinlaufen (Sprint ab `sprint` m Rückstand). Spielwerte.
+export const SUPPORT_FREE = { on: true, ring: 5, recheck: 0.3, near: 4, sprint: 5 };
+const SUPPORT_RING = [[1, 0], [-1, 0], [0, 1], [0, -1], [0.7, 0.7], [0.7, -0.7], [-0.7, 0.7], [-0.7, -0.7]].map(([x, z]) => [x * SUPPORT_FREE.ring, z * SUPPORT_FREE.ring]);
+
 function supportSpot(m, p, dt) {
   const { ball, pitch, rng } = m;
   p.supportTimer = (p.supportTimer ?? 0) - dt;
@@ -629,6 +635,13 @@ function supportSpot(m, p, dt) {
   if (boxNow !== !!p.boxState) {
     p.boxState = boxNow;
     p.supportTimer = 0; // Ball kommt nach außen (oder wieder weg): sofort neu entscheiden
+  }
+  // Freilaufen (Gameplay 2.0, Punkt 20): Ist der gewählte Platz inzwischen zugestellt (Gegner in der Passlinie oder dicht dran),
+  // wird gleich neu gesucht statt bis zu 1,4 s weiter dorthin zu laufen.
+  if (p.supportSpot && p.supportTimer > 0 && SUPPORT_FREE.on && !p.supportSpot.box && m.time - (p.supportCheck ?? -9) >= SUPPORT_FREE.recheck) {
+    p.supportCheck = m.time;
+    const sp = p.supportSpot;
+    if (m.players.some((o) => o.team !== p.team && o.state === 'normal' && (dist2d(o.pos, sp) < 2 || distToSegment(o.pos, ball.pos, sp) < 1.2))) p.supportTimer = 0;
   }
   if (p.supportSpot && p.supportTimer > 0) return { ...p.supportSpot };
 
@@ -649,13 +662,15 @@ function supportSpot(m, p, dt) {
   const drops = p.role === 'fwd' && dropK(st) >= 0.5;
   const deep = p.role === 'fwd' ? (drops ? [[-2.5, 0], [-2.5, 2.5], [-2.5, -2.5]] : [[4, 0], [4, 2.5], [4, -2.5]]) : [];
   const back = p.role === 'def';
-  const offsets = [[0, 0], [3, 0], [-3, 0], [0, 3], [0, -3], [2.5, 2.5], [2.5, -2.5], [-2.5, 2.5], [-2.5, -2.5], ...deep];
+  const offsets = [[0, 0], [3, 0], [-3, 0], [0, 3], [0, -3], [2.5, 2.5], [2.5, -2.5], [-2.5, 2.5], [-2.5, -2.5], ...deep, ...(SUPPORT_FREE.on ? SUPPORT_RING : [])];
   let best = base;
   let bestScore = -Infinity;
   for (const [ox, oz] of offsets) {
     const c = clampToPitch(pitch, base.x + ox * s, base.z + oz, margin);
     let score = (back || drops ? 0 : s * c.x * 0.05) - len(c.x - base.x, c.z - base.z) * 0.16;
     if (!back && (st.focus || st.channel)) score += laneScore(m, p, st, c) * 0.9;
+    // Nicht auf den Ballführenden drauflaufen: Anspielstation heißt Abstand (Spielwert), sonst Gewühle am Ball.
+    if (SUPPORT_FREE.on && !back) score -= Math.max(0, SUPPORT_FREE.near - dist2d(c, ball.pos)) * 0.5;
     if (demands) for (const o of m.players) if (o.team !== p.team && dist2d(o.pos, c) < 3) score -= 0.4; // Spielmacher sucht sich freie Räume
     for (const o of m.players) {
       if (o.team === p.team) continue;
@@ -813,8 +828,11 @@ export function outfieldIntent(m, p, dt) {
   // Engagiert nach vorn: Läufe nach vorn (Anbieten vor dem Ball) werden gesprintet – mehr
   // Leute vor dem Ball, dafür fehlen sie beim Ballverlust hinten, und es kostet Kraft.
   const run = t.type === 'support' && dx * attackDir(m, p.team) > 1.5 && commitment(m, p.team) > 0.3;
-  const k = urgent || run ? Math.min(1, d / 2) : Math.min(1, d / 3) * 0.75;
-  return { move: { x: n.x * k, z: n.z * k }, sprint: d > (urgent ? 5 : run ? 3 : 9) && p.stamina > 0.35 };
+  // Freilaufen (Punkt 20): Wer sich anbietet, läuft zügig in den freien Raum – vorher Trab (75 %) und Sprint erst ab 9 m Rückstand;
+  // gemessen lagen die Anbietenden im Schnitt 7 m hinter ihrem Laufziel und kamen nie an (Rasenplatz, 20 Spiele).
+  const offer = SUPPORT_FREE.on && t.type === 'support' && p.role !== 'def';
+  const k = urgent || run ? Math.min(1, d / 2) : offer ? Math.min(1, d / 2) : Math.min(1, d / 3) * 0.75;
+  return { move: { x: n.x * k, z: n.z * k }, sprint: d > (urgent ? 5 : run ? 3 : offer ? SUPPORT_FREE.sprint : 9) && p.stamina > 0.35 };
 }
 
 // Dribbeln: Richtung Tor (leicht versetzt auf die Zielseite), Gegnern vor sich
@@ -911,6 +929,11 @@ function crossInto(m, p, oppGoal) {
   if (small || halfSpace) return { ...base, lofted: 'cross', driven: true };
   return { ...base, lofted: 'cross' };
 }
+
+// Gameplay 2.0 (Punkt 19): Bedrängt darf auch zurück oder quer zum freien Mann gespielt werden. Vorher nur bis rund 100° neben der
+// Blickrichtung (cone −0,2) – der Ausweg nach hinten fehlte, gemessen ging fast jeder zweite Pass unter Druck in eine zugestellte Linie.
+// cone −0,8: bis rund 145° (Spielwert); welcher Mitspieler es wird, entscheidet die Passwahl samt Passsicherheit (actions.js).
+export const PRESS_OUT = { on: true, cone: -0.8 };
 
 function aiDecide(m, p, oppGoal) {
   const { rng, pitch } = m;
@@ -1082,7 +1105,7 @@ function aiDecide(m, p, oppGoal) {
     return;
   }
   if (underPressure && rng.chance(Math.min(0.95, (0.45 + 0.4 * soft(p.attrs.passing)) * aiSkill(m, p) * st.passRate * (1 - 0.2 * st.risk) * selfish))) {
-    p.pending = { type: 'pass', ttl: 0.3, cone: -0.2 };
+    p.pending = { type: 'pass', ttl: 0.3, cone: PRESS_OUT.on ? PRESS_OUT.cone : -0.2 };
     return;
   }
   if (rng.chance(0.05 * st.passRate)) {

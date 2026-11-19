@@ -258,6 +258,28 @@ export function markShooter(m, p) {
 export const CORNER_SCATTER = 2.5;
 // Befreiungsschlag: Tempo (m/s) und Steigung (m/s) – gewählt, nicht gemessen.
 export const CLEAR = { speed: 15, vy: 5 };
+// Passsicherheit (Gameplay 2.0, Punkt 19): Kommt ein Gegner an die Passlinie, bevor der Ball dort ist? Statt nur zu prüfen, wie nah
+// er an der Linie steht (vorher: Abzug bis 0,9 bei unter 1,4 m), wird das Wettrennen gerechnet: Ball (Tempo des flachen Passes)
+// gegen Gegner (Reaktion, Laufweg minus Reichweite). Spielwerte: Reaktion 0,25 s, Antritt 5,5 m/s, Reichweite 0,9 m.
+export const PASS_SAFETY = { on: true, react: 0.25, run: 5.5, reach: 0.9, k: 1.4 };
+export function passRisk(m, p, to, speed) {
+  const vx = to.x - p.pos.x, vz = to.z - p.pos.z;
+  const d = len(vx, vz) || 1;
+  const ux = vx / d, uz = vz / d;
+  let worst = 0;
+  for (const o of m.players) {
+    if (o.team === p.team || o.state !== 'normal') continue;
+    const rx = o.pos.x - p.pos.x, rz = o.pos.z - p.pos.z;
+    const along = rx * ux + rz * uz;
+    if (along < 0.3 || along > d + 0.5) continue;
+    const lateral = Math.abs(rx * -uz + rz * ux);
+    const tBall = Math.min(along, d) / (speed * 0.85);
+    const tOpp = PASS_SAFETY.react + Math.max(0, lateral - PASS_SAFETY.reach) / PASS_SAFETY.run;
+    worst = Math.max(worst, clamp(0.5 + (tBall - tOpp) / 0.3, 0, 1));
+  }
+  return worst;
+}
+
 export const CROSS_VMAX = { driven: 24, high: 27 };
 // Ankunftshöhe einer Flanke am Zielpunkt (m): im Kopfballbereich von headerTouch (1,35–2,4 m). Gewählt, nicht gemessen.
 export const CROSS_ARRIVE = { driven: 1.55, high: 1.4 };
@@ -314,11 +336,12 @@ function pass(m, p, a, fatigue, fromHands) {
     for (const o of m.players) {
       if (o.team === p.team) continue;
       const lane = distToSegment(o.pos, p.pos, t.pos);
-      if (!a.lofted && lane < 1.4) score -= (0.9 - lane * 0.3) * riskK;
+      if (!a.lofted && lane < 1.4 && !(ai && PASS_SAFETY.on)) score -= (0.9 - lane * 0.3) * riskK;
       // Wer eng gedeckt ist, bekommt den Ball ungern – vor allem nicht vom Torwart.
       const near = dist2d(o.pos, t.pos);
       if (near < 2.5) score -= (2.5 - near) * (p.role === 'gk' ? 0.5 : 0.2) * riskK;
     }
+    if (ai && PASS_SAFETY.on && !a.lofted) score -= PASS_SAFETY.k * passRisk(m, p, t.pos, clamp(3.5 + d * 0.75, 5.5, 16)) * riskK;
     if (score > plainScore) {
       plainScore = score;
       plainBest = t;
@@ -618,6 +641,7 @@ export function keeperSaves(m) {
       ball.lastTouch = p.id;
       ball.lastAction = 'save';
       m.lastTouchTeam = p.team;
+      m.punchAt = m.time; // im selben Schritt köpft keiner mehr dazwischen (headerTouch)
       m.events.push({ type: 'save', playerId: p.id, punch: true });
     } else {
       // Zur Seite abwehren, flach und zügig – nicht zurück vors eigene Tor und
@@ -672,6 +696,9 @@ export const HEAD_GRAZE = 0.7; // Anteil der nicht sauber getroffenen Kopfbälle
 export const HEAD_AIM = 0.3;
 // Kopfball: hohe Bälle in Reichweite. Vorne aufs Tor, hinten weg vom Tor.
 export function headerTouch(m) {
+  // Gerade gefaustet (selber Schritt): Der Ball ist eben erst von der Faust weg – vorher köpfte ein Angreifer an derselben Stelle
+  // im selben Schritt und der weggefaustete Ball ging ins Tor (tests/sim.test.js, Seed 8).
+  if (m.punchAt === m.time) return;
   const { ball, rng, pitch } = m;
   if (ball.holder || ball.pos.y < 1.35 || ball.pos.y > 2.4) return;
   let p = null;
@@ -817,6 +844,10 @@ export function bodyBlock(m) {
 // Ball am Fuß: Wer gerade dribbelt und dicht dran ist, behält den Ball. Ein Gegner,
 // der nur hinläuft (oder blind draufhält), kommt selten dran – dafür gibt es
 // Stochern und Grätsche. Gibt true zurück, wenn der Gegner leer ausgeht.
+// Gameplay 2.0 (Punkt 19): Wer nur an den geführten Ball heranläuft, nimmt ihn seltener im Vorbeigehen mit – gemessen waren 29 % aller
+// Ballbesitzwechsel solche Berührungen ohne Zweikampf („Gewühle“). Den Ball holt man sich mit Stochern oder Grätsche (tackles.js).
+// mul: Faktor auf die Klauchance, retry: Sperre nach einem Fehlversuch (vorher 0,35 s). Spielwerte.
+export const STEAL_CALM = { on: true, mul: 0.5, retry: 0.5 };
 function shielded(m, p) {
   const { ball, rng } = m;
   if (ball.lastAction !== 'dribble' || ball.lastTouch === p.id) return false;
@@ -828,8 +859,9 @@ function shielded(m, p) {
   // Ping-Pong-Bremse B (docs/agent/pingpong-audit-2026-10.md, Mechanismus 1): Wer den Ball gerade per Berührung gewonnen hat,
   // ist kurz geschützt – die Klauchance halbiert sich. Ohne Schutz nahm der Ex-Ballführer ihn im 0,35-s-Takt zurück.
   if (carrier.protectUntil > m.time) steal *= PINGPONG.protectedStealMul;
+  if (STEAL_CALM.on && !carrier.shielding) steal *= STEAL_CALM.mul; // Abschirmen im Stand hat sein eigenes Körpermodell (STRENGTH_FX)
   if (rng.chance(steal)) return false;
-  p.kickCooldown = 0.35;
+  p.kickCooldown = STEAL_CALM.on ? STEAL_CALM.retry : 0.35;
   return true;
 }
 

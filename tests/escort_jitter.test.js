@@ -38,8 +38,12 @@ function escort(venue, seed) {
         s.maxDv = Math.max(s.maxDv, Math.abs(sp - pv.sp));
       }
       // Ab dem ersten Erreichen (unter 2,5 m) bleibt er beim Schiri.
-      const near = Math.hypot(p.pos.x - m.referee.pos.x, p.pos.z - m.referee.pos.z) < 2.5;
-      if (near) s.arrived = true;
+      const dRef = Math.hypot(p.pos.x - m.referee.pos.x, p.pos.z - m.referee.pos.z);
+      const near = dRef < 2.5;
+      // Ankunft erst beim Heranlaufen (2026-11-19, mit Zustimmung des Nutzers): Wer beim Ausfall zufällig im Umkreis ist, aber
+      // gerade wegsprintet, kommt erst nach dem Abbremsen zurück – das zählte vorher schon als Ankunft (Rasenplatz Seed 5).
+      if (near && s.lastD != null && dRef <= s.lastD) s.arrived = true;
+      s.lastD = dRef;
       if (s.arrived) (s.after++, near && s.near++);
       prev.set(id, { f, sp });
     }

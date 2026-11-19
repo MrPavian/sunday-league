@@ -343,7 +343,9 @@ function beginIncident(m, type, info = {}) {
     text = r.pick(tr(['Eine Krähe! Sie stößt im Sturzflug auf die Spieler herab …', 'Krähe im Anflug – und sie hat es auf die Köpfe abgesehen.', 'Eine Krähe kreist tief über dem Platz. Dann stürzt sie herab.'], ['A crow! It dive-bombs the players …', 'Crow incoming – and it is going for their heads.', 'A crow circles low over the pitch. Then it dives.']));
   } else if (type === 'ersatzschiri') {
     // Zwei Spieler laufen zum Schiri, die anderen schauen hin.
-    inc.helpers = m.players.filter((p) => p.role !== 'gk').sort((a, b) => dist2d(a.pos, m.referee.pos) - dist2d(b.pos, m.referee.pos)).slice(0, 2).map((p) => p.id);
+    // Helfer nach dem Abstand in einer halben Sekunde (Laufrichtung mitgedacht): Wer gerade vom Schiri wegsprintet, ist nicht der Nächste.
+    const soon = (p) => dist2d({ x: p.pos.x + p.vel.x * 0.5, z: p.pos.z + p.vel.z * 0.5 }, m.referee.pos);
+    inc.helpers = m.players.filter((p) => p.role !== 'gk').sort((a, b) => soon(a) - soon(b)).slice(0, 2).map((p) => p.id);
     // Mit Bandentür (Halle): Der Schiri humpelt durch die Tür zur Bank, ein Zuschauer kommt von draußen durch dieselbe Tür.
     const door = shelterFor(pitch).door;
     if (door) {
@@ -857,7 +859,10 @@ function walkFree(m, e, target, speed, dt, dog = false) {
 // = Schiri-Tempo + sanfte Korrektur zum Platz, Beschleunigung begrenzt, Blick in Gehrichtung (bei Stillstand zum Schiri)
 // und nur mit begrenzter Drehrate. Früher: Ziel hinter dem Schiri, Tempo 3,2 gegen 1,1 und ein Totbereich von 0,8 m ->
 // Ruck-Laufen mit Blick-Sprung um fast 180 Grad fast in jedem Schritt (siehe tests/escort_jitter.test.js).
-export const ESCORT = { side: 1.05, back: 0.25, gain: 2.2, maxSpeed: 3.2, accel: 6, turn: 7, far: 3.5 };
+// brake: Abbremsen darf stärker sein als Antreten – wer beim Ausfall des Schiris gerade sprintet, lief sonst mit 6 m/s² Verzögerung
+// noch über eine Sekunde weg (gemessen: Rasenplatz Seed 5, Abstand 2,5 → 5,3 m). Maximale Verzögerung im Mannschaftssport
+// rund −6 bis −9 m/s² (Harper u. a. 2019, Sports Medicine 49); gewählt 9.
+export const ESCORT = { side: 1.05, back: 0.25, gain: 2.2, maxSpeed: 3.2, accel: 6, brake: 9, turn: 7, far: 3.5 };
 
 function stepEscort(m, inc, p, dt) {
   const ref = m.referee;
@@ -910,7 +915,7 @@ function stepEscort(m, inc, p, dt) {
   const dx = vx - p.vel.x;
   const dz = vz - p.vel.z;
   const dm = hypot(dx, dz);
-  const lim = ESCORT.accel * dt;
+  const lim = (hypot(vx, vz) < hypot(p.vel.x, p.vel.z) ? ESCORT.brake : ESCORT.accel) * dt;
   if (dm > lim) (vx = p.vel.x + (dx / dm) * lim), (vz = p.vel.z + (dz / dm) * lim);
   const x0 = p.pos.x;
   const z0 = p.pos.z;
