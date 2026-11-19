@@ -499,7 +499,15 @@ function pass(m, p, a, fatigue, fromHands) {
       // Bananenflanke: angeschnitten, mal nach innen, mal nach außen drehend; vorgehalten, damit sie am Ziel ankommt.
       if (BALL_AIR.on && a.lofted === 'cross') {
         spin = (rng.chance(0.5) ? 1 : -1) * CURL.cross * (0.6 + 0.4 * cap1(vs(m, p, 'passing')));
-        dir = rotate(dir, curlAim(d, speed, vy, spin));
+        // Von der Grundlinie (Ecke, Flanke von ganz außen): Der Vorhalt darf nicht hinter die Linie zeigen – sonst ist der Ball
+        // im Aus, bevor er zurückdreht (Ecken gingen zu 28 % direkt ins Aus statt 17 %). Dann andersherum anschneiden.
+        // Der Bogen wölbt sich zur Seite des Vorhalts: Er muss ins Feld zeigen, nicht über die Linie.
+        let aim = curlAim(d, speed, vy, spin);
+        if (Math.abs(p.pos.x) > pitch.halfLength - 3 && (rotate(dir, aim).x - dir.x) * Math.sign(p.pos.x) > 0) {
+          spin = -spin;
+          aim = curlAim(d, speed, vy, spin);
+        }
+        dir = rotate(dir, aim);
       }
     } else if (lead) {
       // In den Lauf: so dosiert, dass er kurz (2,5 m) hinter dem Zielpunkt ausrollt (Bodenmodell aus ball.js).
@@ -516,6 +524,8 @@ function pass(m, p, a, fatigue, fromHands) {
     const sigma = ((0.02 + 0.12 * (1 - cap1(vs(m, p, 'passing')))) * errScale(vs(m, p, 'passing')) + 0.05 * STAMINA.skill * fatigue) * (eye ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.6 : 1) * (hasProfile(p, 'spielmacher') ? 0.85 : 1) * pressureChaos(m, p) * clutchAim(m, p);
     const fwd = dir;
     dir = rotate(dir, rng.gauss() * sigma);
+    // Hoher Ball von der Grundlinie (Ecke): Die Streuung darf ihn nicht direkt hinter die Linie schicken.
+    if (a.lofted && Math.abs(p.pos.x) > pitch.halfLength - 3 && dir.x * Math.sign(p.pos.x) > -0.05) dir = norm(-0.05 * Math.sign(p.pos.x), dir.z);
     // Rückpass beim Doppelpass: Die Streuung geht höchstens bis quer, nie nach hinten (fast quer gespielt und nach hinten
     // gestreut: ascheplatz Seed 22 – gegen den Sinn des Doppelpasses, in den Lauf zu spielen). Dann halb so weit gestreut.
     if (a.combo && lead && dir.x * attackDir(m, p.team) < 0.1 && fwd.x * attackDir(m, p.team) > 0.1) dir = norm(fwd.x + dir.x, fwd.z + dir.z);
