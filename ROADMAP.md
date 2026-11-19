@@ -137,6 +137,55 @@ antizipiert, Richtungswechsel sehen aus wie auf Glatteis, kein Freilaufen, sehr 
 23. **Ballphysik**: Luftwiderstand und Effet (Bananenflanke, angeschnittener Freistoß, flatternder Fernschuss), realistischer Absprung.
     Reihenfolge: 19 → 20 → 21 → 22 → 23 (die ersten beiden wirken am stärksten auf das, was stört). Danach Ecken und Kopfbälle neu messen.
 
+**G – Gameplay 2.0, zweite Stufe** (vom Nutzer ausgewählt, 2026-11-19; Reihenfolge und Gewicht von Claude). Gleiche Regeln wie F:
+Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S) klein, (M) mittel, (L) groß.
+24. **Absprung und Untergrund** (S): Ascheplatz springt unberechenbar, tiefer Rasen bremst Flachpässe, Pfützen bei Regen stoppen
+    den Ball; Absprunghöhen nach Quelle (FIFA-Rasenprüfung: Rücksprung 0,6–0,85 m aus 2 m). Rest aus Punkt 23.
+25. **Mannschaftsteile, die zusammenhängen** (L): Viererkette verschiebt gemeinsam und stellt Abseits, Pressing-Auslöser
+    (Rückpass, schlechte Annahme, Ball an der Seitenlinie). Wer schlecht zusammenspielt, reißt sichtbar Lücken.
+26. **Zweikämpfe mit Körper** (L): Schulter an Schulter, Ball abschirmen, Grätsche mit echtem Risiko; Kraft und Größe zählen.
+27. **Weitere Animationen der Spieler** (M), zusammen mit 26: Schulterduell, Grätsche mit Rutschen, Kopfballduell mit Sprung,
+    Ballannahme mit Brust und Oberschenkel, Seit- und Fallrückzieher, Stolpern, am Boden liegen und Behandlung, Reklamieren,
+    Abklatschen beim Wechsel, Schuh binden, Trinken an der Linie, Mauer springt hoch und dreht sich weg.
+28. **Spielfluss und Endphase** (M): ab der 75. Minute größere Abstände und mehr Hin und Her; wer hinten liegt, wirft Leute nach
+    vorne; in der Schlussminute geht der Torwart bei der letzten Ecke mit.
+29. **Spielerpersönlichkeit auf dem Platz** (L): zwei, drei Gewohnheiten je Spieler (zieht nach innen, nur rechter Fuß, sucht den
+    Abschluss, reklamiert jeden Pfiff). Man erkennt die eigenen Leute am Spiel.
+30. **Taktische Muster des Gegners** (M): Gegnertrainer haben eine Handschrift (lange Bälle auf den Großen, hohes Pressing, Mauern);
+    das Scouting vor dem Spiel zeigt sie, man kann darauf reagieren.
+31. **Fehler, die menschlich wirken** (S): Ball springt über den Fuß, Stürmer nach vergebener Großchance verunsichert, Torwart patzt
+    nach einem Fehler eher noch einmal.
+
+**H – Kurzweil im 3D-Spiel und im Textmodus** (vom Nutzer ausgewählt, 2026-11-19)
+32. **Schlüsselszenen-Modus** (M): Zeitraffer zwischen den spannenden Momenten, bei Chancen, Standards und Kontern normales Tempo
+    zum Eingreifen. Ein Spiel in 4–5 Minuten, ohne dass etwas Wichtiges fehlt.
+33. **Momente mit Stimmung** (S): Zuschauer in den letzten Minuten lauter, Stille beim Elfmeter, Raunen und Jubel, die Kamera geht
+    auf den Schützen.
+34. **Kleine Geschichten im Spiel** (S): Laufschrift mit Anlässen („erstes Spiel gegen den alten Verein“, „seit drei Spielen ohne
+    Tor“), die der Erzähler aufgreift.
+35. **Wechsel als Gespräch** (M): Der Co-Trainer schlägt vor („X ist platt, Y brennt, Gegner stellt um“), ein Tipp zum Annehmen;
+    Regelverstöße werden vorher erklärt. Schließt den kleinen Punkt „Wechsel auf dem Platz statt in Listen“ (Abschnitt 2) ein.
+36. **Entscheidungsmomente im Textmodus** (M): Der Ticker hält kurz an: Wer schießt den Elfmeter? Freistoß direkt oder flanken?
+    Gelb-Rot droht, runter nehmen?
+37. **Halbzeitansprache mit Wirkung** (S): ruhig, laut, einzeln loben; Spieler reagieren je nach Persönlichkeit, sichtbar in der
+    zweiten Halbzeit.
+38. **Liveticker mit Bild** (M): kleine 2D-Draufsicht der gefährlichen Szenen (Punkte und Pfeile) und eine Druck-Leiste über das
+    Spiel (Chancen, xG).
+
+**I – Bindung an die Mannschaft und Langzeitmotivation** (vom Nutzer ausgewählt, 2026-11-19)
+39. **Vereinsrekorde zum Jagen** (S): Rekordtorschütze, längste Serie, höchster Sieg, meiste Zuschauer; Meldung, sobald einer fällt.
+40. **Mannschaftsfoto jede Saison** (S): Eine Wand im Vereinsheim füllt sich Jahr für Jahr; ein Tipp zeigt die Tabelle von damals.
+41. **Kapitän mit Gewicht** (M): spricht in Krisen für die Mannschaft, Binde sichtbar, Kapitänswahl kann zum Thema werden.
+42. **Freundschaften und Grüppchen in der Kabine** (M): Freunde spielen sich lieber an (sichtbar auf dem Platz); wer Freunde trennt,
+    spürt es in der Stimmung. Baut auf 29 auf.
+43. **Vereinskrisen und -chancen als kleine Geschichten** (M): Sponsor springt ab, Platz muss saniert werden, Talent aus dem
+    Nachbardorf will kommen; über mehrere Wochen mit verschiedenen Ausgängen.
+
+Reihenfolge G–I: 24 → 32 → 35 → 25 → 26 + 27 → 33 → 34 → 28 → 29 → 42 → 41 → 36 → 37 → 30 → 31 → 38 → 39 → 40 → 43.
+Begründung: Zuerst der kleine Rest der Ballphysik (24), dann zwei schnell spürbare Verbesserungen (32, 35). Danach die großen
+Spielschichten (25–27), zwischendurch kleine Würze (33, 34). Persönlichkeit (29) vor Freundschaften und Kapitän (42, 41), weil
+diese darauf aufbauen. Textmodus und die übrigen Punkte zum Schluss.
+
 **D – Zum Schluss**
 15. **Test auf einem echten Android-Gerät** (durch den Nutzer): Bildrate, Akku, Touch-Ziele, Ton und Sprachausgabe; Mängelliste
     abarbeiten.
