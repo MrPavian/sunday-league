@@ -37,13 +37,57 @@ export function ballSpeed(ball) {
 //   { type: 'out', line: 'side'|'end', x, z }
 //   { type: 'car', x, z }             – hart gegen ein parkendes Auto
 //   { type: 'post' } / { type: 'bar' }
+// Ballflug (Gameplay 2.0, Punkt 23). Luftwiderstand F = ½ ρ A c_D v² mit ρ 1,2 kg/m³, A 0,0375 m², m 0,424 kg und c_D ≈ 0,2 nach dem
+// Strömungsumschlag (Goff & Carré 2009, Am. J. Phys. 77, 1020: c_D 0,17–0,2 aus Flugbahnen) – beta = ρ A / 2m ≈ 0,053 1/m (hergeleitet).
+// Effet (Magnus): Seitkraft ½ ρ A c_L v², c_L wächst mit dem Spinparameter Sp = r ω / v (ebd., Abb. 8: |c_L| ≈ 0,1 bei Sp 0,1,
+// ≈ 0,25–0,3 bei Sp 0,3): c_L ≈ clK · Sp bis clMax (hergeleitet). Ein Freistoß mit etwa 10 Umdrehungen/s (Goff 2010, Physics Today 63/7:
+// Gerrard ≈ 600 U/min) und 25 m/s biegt so rund 3–4 m ab. spinDecay – Abnahme des Drehens je Sekunde (Spielwert).
+// Flatterball: Schuss fast ohne Drehung, wechselnde Seitkraft (flutter.a m/s², flutter.f Hz) – Spielwerte.
+export const BALL_AIR = { on: true, beta: 0.053, cd: 0.2, clK: 0.9, clMax: 0.3, spinDecay: 0.15 };
+
+// Effet und Flattern gelten nur für den Ball, den der Schuss/Pass gerade so losgeschickt hat: Ändert jemand anders vel (Kopfball,
+// Block, Annahme), ist beides weg. Wer Effet gibt, setzt ball.spinFresh.
+function airForces(ball, dt) {
+  const { vel } = ball;
+  const v = hypot3(vel.x, vel.y, vel.z);
+  if (v < 0.1) return;
+  const kd = BALL_AIR.beta * BALL_AIR.cd * v;
+  const vx = vel.x, vz = vel.z;
+  vel.x -= kd * vx * dt;
+  vel.y -= kd * vel.y * dt;
+  vel.z -= kd * vz * dt;
+  const h = hypot(vx, vz);
+  if (h < 0.5) return;
+  let side = 0; // Seitbeschleunigung, positiv = nach links (gegen den Uhrzeigersinn von oben)
+  if (ball.spin) {
+    const cl = Math.min(BALL_AIR.clMax, BALL_AIR.clK * Math.abs(ball.spin) * BALL_RADIUS / v);
+    side += Math.sign(ball.spin) * BALL_AIR.beta * cl * v * v;
+    ball.spin *= 1 - BALL_AIR.spinDecay * dt;
+  }
+  if (ball.flutter) {
+    const f = ball.flutter;
+    f.t += dt;
+    side += f.a * Math.sin(2 * Math.PI * f.f * f.t + f.ph);
+  }
+  if (side) {
+    vel.x += (-vz / h) * side * dt;
+    vel.z += (vx / h) * side * dt;
+  }
+}
+
 export function stepBall(ball, pitch, dt) {
   if (ball.holder) return null;
   const { pos, vel } = ball;
   const { surface } = pitch;
   const prevX = pos.x;
+  if (ball.spin || ball.flutter) {
+    const v0 = ball.lastVel;
+    if (!ball.spinFresh && (!v0 || v0.x !== vel.x || v0.y !== vel.y || v0.z !== vel.z)) ball.spin = ball.flutter = null;
+    ball.spinFresh = false;
+  }
 
   vel.y -= G * dt;
+  if (BALL_AIR.on && pos.y > BALL_RADIUS + 1e-3) airForces(ball, dt);
   // Wind drückt hohe Bälle ab. HERGELEITET: Sturmböen um 60 km/h (17 m/s) auf einen ruhenden Ball, F = ½ ρ c_w A v² mit
   // ρ 1,2 kg/m³, c_w 0,25, A 0,038 m² ≈ 1,65 N; bei 0,43 kg ≈ 3,8 m/s². WEATHER.wind 3,2 × WIND_ACCEL 1,2 ≈ 3,8 (vorher 0,6:
   // in weather-audit nicht messbar).
@@ -57,6 +101,7 @@ export function stepBall(ball, pitch, dt) {
 
   if (pos.y <= BALL_RADIUS) {
     pos.y = BALL_RADIUS;
+    ball.spin = ball.flutter = null; // Aufsetzen: Effet und Flattern sind weg (der Ball springt geradeaus weiter)
     if (vel.y < -1.0) {
       vel.y = -vel.y * surface.bounce;
       vel.x *= 0.88;
@@ -73,7 +118,7 @@ export function stepBall(ball, pitch, dt) {
     if (onGround) {
       next = Math.max(0, h - (surface.rollDecel + ROLL_DRAG * h * h) * dt);
     } else {
-      next = h * (1 - 0.04 * dt);
+      next = BALL_AIR.on ? h : h * (1 - 0.04 * dt); // mit BALL_AIR bremst airForces
     }
     if (next < 0.05) next = 0;
     const k = next / h;
@@ -123,6 +168,7 @@ export function stepBall(ball, pitch, dt) {
     pos.x = Math.sign(pos.x) * xMax;
     vel.x = -vel.x * 0.5;
   }
+  if (ball.spin || ball.flutter) ball.lastVel = { x: vel.x, y: vel.y, z: vel.z };
   return event;
 }
 
@@ -247,4 +293,111 @@ export function boardRoute(pitch, from, to, side) {
   const f = d1 / (d1 + d2 / BOARD_BOUNCE);
   const bounce = { x: from.x + (to.x - from.x) * f, z: zw };
   return { bounce, aim: { x: to.x, z: aimZ }, len: hypot(bounce.x - from.x, d1) + hypot(to.x - bounce.x, d2) };
+}
+
+// ---- Flugbahn voraus (Punkt 23): dieselbe Physik wie stepBall (Luftwiderstand, Effet, Aufsetzen, Rollen, Wände), ohne Flattern
+// (das ist gerade das Unvorhersehbare). path.at(i) liefert die Probe i (Zeit (i+1)·dt, bis T): { t, x, y, z, vy }, sonst null.
+// Gerechnet wird nur so weit, wie jemand fragt, und je Simulationsschritt nur einmal. Der Merker liegt außerhalb des Spielstands
+// (WeakMap): Spiele werden an Hintergrund-Worker übergeben und dürfen keine Funktionen enthalten (tests/bgsim.test.js).
+const FLIGHT_MEMO = new WeakMap();
+export function flightPath(m, T = 2.5, dt = 1 / 30) {
+  const b = m.ball;
+  const memo = FLIGHT_MEMO.get(m);
+  if (memo && memo.time === m.time && memo.vx === b.vel.x && memo.vy === b.vel.y && memo.vz === b.vel.z && memo.px === b.pos.x) return memo.path;
+  const c = { pos: { ...b.pos }, vel: { ...b.vel }, spin: b.spin ?? null, flutter: null, holder: null, lastVel: null, spinFresh: true };
+  const pts = [];
+  const n = Math.floor(T / dt + 1e-9);
+  const path = {
+    n,
+    at(i) {
+      if (i >= n) return null;
+      while (pts.length <= i) {
+        c.spinFresh = true;
+        stepBall(c, m.pitch, dt);
+        pts.push({ t: (pts.length + 1) * dt, x: c.pos.x, y: c.pos.y, z: c.pos.z, vy: c.vel.y });
+      }
+      return pts[i];
+    },
+  };
+  FLIGHT_MEMO.set(m, { time: m.time, vx: b.vel.x, vy: b.vel.y, vz: b.vel.z, px: b.pos.x, path });
+  return path;
+}
+
+// Flug in der Ebene des Schusses/Passes (u längs, w seitlich nach links, y Höhe) für die Abschussrechnung: bis der Ball im Fallen
+// unter `arrive` kommt oder `maxU` überschreitet. Ohne Wind, Boden und Flattern. Liefert die Punkte { u, w, y, t }.
+function flyLocal(speed, vy, spin, arrive, maxU = Infinity) {
+  const dt = 1 / 120;
+  let u = 0, w = 0, y = BALL_RADIUS, vu = speed, vw = 0, vyy = vy, sp = spin, t = 0;
+  const pts = [];
+  while (t < 6) {
+    vyy -= G * dt;
+    const v = Math.sqrt(vu * vu + vw * vw + vyy * vyy);
+    const kd = BALL_AIR.beta * BALL_AIR.cd * v;
+    const ou = vu, ow = vw;
+    vu -= kd * ou * dt; vw -= kd * ow * dt; vyy -= kd * vyy * dt;
+    const h = Math.hypot(ou, ow);
+    if (sp && h > 0.5) {
+      const cl = Math.min(BALL_AIR.clMax, BALL_AIR.clK * Math.abs(sp) * BALL_RADIUS / v);
+      const side = Math.sign(sp) * BALL_AIR.beta * cl * v * v;
+      vu += (-ow / h) * side * dt; vw += (ou / h) * side * dt;
+      sp *= 1 - BALL_AIR.spinDecay * dt;
+    }
+    u += vu * dt; w += vw * dt; y += vyy * dt; t += dt;
+    pts.push({ u, w, y, t });
+    if ((vyy < 0 && y <= arrive) || u >= maxU || y < BALL_RADIUS) break;
+  }
+  return pts;
+}
+
+// Hoher Ball über d Meter, der im Fallen in Höhe `arrive` ankommt: Tempo längs so anheben, dass er trotz Luftwiderstand ankommt
+// (vy bleibt, die Rechnung ohne Widerstand ist der Startwert). vmax deckelt; dann wie in pass() mit steilerem Bogen.
+export function loftFor(d, speed, vy, arrive, vmax = Infinity) {
+  if (!BALL_AIR.on) return { speed, vy };
+  let s = speed;
+  for (let i = 0; i < 5; i++) {
+    const pts = flyLocal(s, vy, 0, arrive);
+    const range = pts[pts.length - 1].u;
+    if (Math.abs(range - d) < 0.1) break;
+    s *= d / Math.max(0.5, range);
+    if (s > vmax) {
+      s = vmax;
+      // Schneller geht nicht: Bogen steiler, damit er länger fliegt (vy anheben, bis die Weite reicht).
+      for (let j = 0; j < 12 && flyLocal(s, vy, 0, arrive).at(-1).u < d; j++) vy *= 1.08;
+      break;
+    }
+  }
+  return { speed: s, vy };
+}
+
+// Bogen über die Mauer: gleicher Abschusswinkel, Tempo so weit hoch, dass er nach dg Metern wieder auf der Höhe hg ist wie ohne
+// Luftwiderstand (sonst senkt er sich zu früh und bleibt in der Mauer oder fällt vor das Tor).
+export function lobFor(dg, speed, vy, hg) {
+  if (!BALL_AIR.on) return { speed, vy };
+  const heightAt = (k) => { const pts = flyLocal(speed * k, vy * k, 0, -1, dg); const p = pts.at(-1); return p.u >= dg ? p.y : -1; };
+  let lo = 1, hi = 1.6;
+  if (heightAt(hi) < hg) return { speed: speed * hi, vy: vy * hi };
+  for (let i = 0; i < 14; i++) { const mid = (lo + hi) / 2; if (heightAt(mid) < hg) lo = mid; else hi = mid; }
+  return { speed: speed * hi, vy: vy * hi };
+}
+
+// Effet: Um welchen Winkel muss man daneben zielen, damit der angeschnittene Ball nach d Metern am Ziel ist? Liefert den Winkel
+// (rad, positiv = nach links drehen). Gemessen am Versatz bei d (oder wo er vorher aufsetzt).
+export function curlAim(d, speed, vy, spin) {
+  if (!BALL_AIR.on || !spin) return 0;
+  const p = flyLocal(speed, vy, spin, -1, d).at(-1);
+  return -Math.atan2(p.w, Math.max(1, p.u));
+}
+
+// Schuss: Die Abschusshöhe (vy) ist ein Spielwert, geeicht ohne Luftwiderstand. Mit BALL_AIR so anheben, dass der Ball nach dT Metern
+// in derselben Höhe ist wie ohne Widerstand (sonst kamen Schüsse tiefer an: Parkplatz 1,25 → 0,86 Fausten je Spiel).
+export function shotFor(dT, speed, vy) {
+  if (!BALL_AIR.on || dT < 1) return vy;
+  const t = dT / speed;
+  const want = BALL_RADIUS + vy * t - 0.5 * G * t * t;
+  if (want < BALL_RADIUS) return vy; // wäre ohnehin vorher aufgesetzt
+  const heightAt = (v) => { const p = flyLocal(speed, v, 0, -1, dT).at(-1); return p.u >= dT - 0.05 ? p.y : -1; };
+  let lo = vy, hi = vy * 1.6 + 1;
+  if (heightAt(hi) < want) return hi;
+  for (let i = 0; i < 12; i++) { const mid = (lo + hi) / 2; if (heightAt(mid) < want) lo = mid; else hi = mid; }
+  return hi;
 }

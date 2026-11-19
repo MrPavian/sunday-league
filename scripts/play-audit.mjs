@@ -24,7 +24,7 @@ const { normalizeTactic, systemFormation } = await load('src/sim/tactics.js');
 const { TEAM_PRESETS } = await load('src/data/teams.js');
 const { createRng } = await load('src/core/rng.js');
 // Schalter für Vorher/Nachher-Vergleiche: OFF=PASS_SAFETY,… schaltet die genannten Neuerungen ab.
-const mods = [await load('src/sim/actions.js'), await load('src/sim/ai.js')];
+const mods = [await load('src/sim/actions.js'), await load('src/sim/ai.js'), await load('src/sim/ball.js')];
 // SET=INERTIA.acc=8,ANTICIPATE.react=0.3 setzt einzelne Werte (nur Zahlen).
 for (const kv of (process.env.SET ?? '').split(',').filter(Boolean)) { const [path, v] = kv.split('='); const [k, f] = path.split('.'); const o = mods.map((x) => x[k]).find(Boolean); if (!o || !(f in o)) throw new Error(`unbekannter Wert ${path}`); o[f] = +v; }
 for (const k of (process.env.OFF ?? '').split(',').filter(Boolean)) { const o = mods.map((x) => x[k]).find(Boolean); if (o && 'on' in o) o.on = false; else throw new Error(`unbekannter Schalter ${k}`); }

@@ -126,7 +126,9 @@ describe('offence: combinations', () => {
     expect(returns).toBeGreaterThan(15 * (matches / 20));
     expect(forward).toBe(returns);
     // Die meisten Rückpässe kommen beim Läufer an.
-    expect(done.onetwo / made.onetwo).toBeGreaterThan(0.6);
+    // 0,55 statt 0,6 (2026-11-19, mit Zustimmung des Nutzers): Mit der Trägheit (actions.js INERTIA) verliert die Wand den Ball öfter,
+    // bevor der Läufer vorbei ist – vorher ~66 %, jetzt 59–63 % über 4 × 240 Spiele (Seeds 21–212). 0,6 lag genau auf dem Mittelwert.
+    expect(done.onetwo / made.onetwo).toBeGreaterThan(0.55);
     expect(done.layoff / made.layoff).toBeGreaterThan(0.5);
   }, 900000);
 

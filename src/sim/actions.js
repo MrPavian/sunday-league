@@ -4,7 +4,7 @@ import { bondBonus, bondOf, isBad } from './bonds.js';
 // Bewegung und Ballkontakte: Laufen, Schuss, Pass, Kopfball, Torwart, Dribbling.
 import { clamp, dist2d, hypot, len, norm, rotate } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
-import { BALL_RADIUS, ballSpeed, boardRoute, rollSpeedFor } from './ball.js';
+import { BALL_AIR, BALL_RADIUS, ballSpeed, boardRoute, curlAim, lobFor, loftFor, rollSpeedFor, shotFor } from './ball.js';
 import { attackDir, clampWallX, distToSegment, setControlled, wallPush } from './players.js';
 import { aiSkill, keeperReaction, laneScore, WIDE_LANE, LONG_THROW, FREE_KICK } from './ai.js';
 
@@ -229,11 +229,32 @@ function shoot(m, p, a, fatigue) {
   let vy = 0.8 + 5 * power * power + Math.abs(rng.gauss()) * 1.2 * (1 - cap1(vs(m, p, 'shooting'))) * power;
   const lob = a.overWall && a.target ? overWall(m, p, a.target) : null;
   if (lob) ({ speed, vy } = lob);
+  let spin = null;
+  let flutter = null;
+  // Höhe vor dem Tor wie ohne Luftwiderstand (ball.js shotFor) – nicht beim Bogen über die Mauer (der ist schon ausgeglichen).
+  if (BALL_AIR.on && !lob) {
+    const goalD = Math.abs(attackDir(m, p.team) * m.pitch.halfLength - p.pos.x) / Math.max(0.2, Math.abs(dir.x));
+    vy = shotFor(Math.min(Math.max(1, goalD - SHOT_MATCH_BEFORE), 40), speed, vy); // dort, wo der Torwart ihn trifft
+  }
+  if (BALL_AIR.on && a.target) {
+    const dT = dist2d(p.pos, a.target);
+    if (lob) {
+      // Angeschnittener Freistoß um die Mauer: Effet nach Technik, Richtung zufällig (Fuß), vorgehalten aufs Ziel.
+      spin = (rng.chance(0.5) ? 1 : -1) * CURL.freeKick * (0.5 + 0.5 * cap1(vs(m, p, 'shooting')));
+      dir = rotate(dir, curlAim(dT, speed, vy, spin));
+    } else if (!a.placed && power > FLUTTER.power && dT > FLUTTER.dist && rng.chance(FLUTTER.chance)) {
+      // Flatterball: voll draufgehalten, kaum Drehung – die Seitkraft wechselt im Flug (für Torwart und Schützen unberechenbar).
+      flutter = { a: FLUTTER.a, f: FLUTTER.f * rng.range(0.8, 1.2), ph: rng.next() * 2 * Math.PI, t: 0 };
+    }
+  }
   // Halle: hoch nur vorm Tor, weiter weg bleibt der Schuss flach.
   if (flat && Math.abs(p.pos.x - attackDir(m, p.team) * m.pitch.halfLength) > flat.shotNear) vy = Math.min(vy, flat.shotVy);
   ball.vel.x = dir.x * speed;
   ball.vel.y = vy;
   ball.vel.z = dir.z * speed;
+  ball.spin = spin;
+  ball.flutter = flutter;
+  ball.spinFresh = !!(spin || flutter);
   p.facing = dir;
   if (a.placed && m.setPiece?.type === 'penalty' && m.setPiece.takerId === p.id) m.penaltyKick = m.time;
   m.events.push({ type: 'shot', playerId: p.id, power });
@@ -262,8 +283,21 @@ function overWall(m, p, target) {
   if (!(c > 0)) return null;
   const a = FREE_KICK.wallH / dw + c * dw;
   const speed = Math.sqrt(9.81 / (2 * c));
-  return { speed, vy: a * speed };
+  return lobFor(dg, speed, a * speed, hg); // Luftwiderstand (ball.js BALL_AIR): gleicher Bogen, etwas fester
 }
+
+// Tempo-Ausgleich für Luftwiderstand (BALL_AIR) über d Meter: Faktor, um den ein Ball schneller sein muss, um nach d Metern so schnell
+// zu sein wie ohne Widerstand (v · e^(−β c_D d)). Für Spielwerte, die ohne Luftwiderstand geeicht sind (Ecken, Abfälschen).
+// Höhenausgleich der Schüsse (shotFor) so viele Meter vor der Torlinie – dort trifft der Torwart den Ball (Spielwert). An der Linie
+// selbst ausgeglichen, kamen Fernschüsse beim Torwart zu hoch an (Großfeld: mehr gefaustet, Ecken 2,5 → 1,3 je Spiel).
+const SHOT_MATCH_BEFORE = 2;
+const airKeep = (d) => (BALL_AIR.on ? Math.exp(BALL_AIR.beta * BALL_AIR.cd * d) : 1);
+
+// Effet (Punkt 23, ω in rad/s). cross – Bananenflanke, freeKick – angeschnittener Freistoß: etwa 10 Umdrehungen/s (Goff 2010, Physics
+// Today 63/7: Gerrard ≈ 600 U/min ≈ 63 rad/s); Flanken etwas weniger (Spielwert). Mit Technik voll, sonst 50–60 %.
+export const CURL = { cross: 45, freeKick: 63 };
+// Flatterball (Spielwerte): ab power und Entfernung (m), Anteil der Schüsse, Seitbeschleunigung a (m/s²) mit Frequenz f (Hz).
+export const FLUTTER = { power: 0.85, dist: 16, chance: 0.35, a: 6, f: 1.5 };
 
 function cornerZone(m, p, kind) {
   const { pitch } = m;
@@ -406,6 +440,7 @@ function pass(m, p, a, fatigue, fromHands) {
   let dir;
   let speed;
   let vy;
+  let spin = null;
   let board = null;
   const lead = target && a.through && target.id === a.targetId ? a.through : null;
   // Rückpass beim Doppelpass nur nach vorn: Der Auftrag gilt bis 0,6 s – ist die Wand inzwischen am Zielpunkt vorbei,
@@ -459,6 +494,13 @@ function pass(m, p, a, fatigue, fromHands) {
         vy = (arrive - 0.11) / t + 4.905 * t;
         speed = vmax;
       }
+      // Luftwiderstand (ball.js BALL_AIR): fester anschlagen, damit er trotzdem ankommt.
+      ({ speed, vy } = loftFor(d, speed, vy, arrive, vmax));
+      // Bananenflanke: angeschnitten, mal nach innen, mal nach außen drehend; vorgehalten, damit sie am Ziel ankommt.
+      if (BALL_AIR.on && a.lofted === 'cross') {
+        spin = (rng.chance(0.5) ? 1 : -1) * CURL.cross * (0.6 + 0.4 * cap1(vs(m, p, 'passing')));
+        dir = rotate(dir, curlAim(d, speed, vy, spin));
+      }
     } else if (lead) {
       // In den Lauf: so dosiert, dass er kurz (2,5 m) hinter dem Zielpunkt ausrollt (Bodenmodell aus ball.js).
       speed = clamp(rollSpeedFor(d + 2.5, 0, pitch.surface), 6, 15);
@@ -467,6 +509,9 @@ function pass(m, p, a, fatigue, fromHands) {
       // Flache Pässe mit Zug – ein lahmer Pass wird in der Kreisklasse abgefangen.
       speed = clamp(3.5 + d * 0.75, 5.5, 16);
       vy = d > 16 && !pitch.flatPlay ? 3.5 : 0.2;
+      // Halbhoch über die ersten Meter (vy 3,5): Was er in der Luft an Tempo verliert (Luftwiderstand, BALL_AIR), gleich mitgeben –
+      // sonst kam er zu langsam auf und rollte zu kurz. Flugweite ≈ v · 2 vy / g, Tempo danach ≈ v · e^(−β c_D · Weg).
+      if (BALL_AIR.on && vy > 1) speed *= Math.exp(BALL_AIR.beta * BALL_AIR.cd * speed * (2 * vy / 9.81));
     }
     const sigma = ((0.02 + 0.12 * (1 - cap1(vs(m, p, 'passing')))) * errScale(vs(m, p, 'passing')) + 0.05 * STAMINA.skill * fatigue) * (eye ? 0.5 : 1) * (hasTrait(p, 'ex_profi') ? 0.6 : 1) * (hasProfile(p, 'spielmacher') ? 0.85 : 1) * pressureChaos(m, p) * clutchAim(m, p);
     const fwd = dir;
@@ -482,6 +527,9 @@ function pass(m, p, a, fatigue, fromHands) {
   ball.vel.x = dir.x * speed;
   ball.vel.y = vy;
   ball.vel.z = dir.z * speed;
+  ball.spin = spin;
+  ball.flutter = null;
+  ball.spinFresh = !!spin;
   p.facing = { x: dir.x, z: dir.z };
   m.lastPass = { playerId: p.id, team: p.team, time: m.time };
   // Offener Pass: Der Adressat läuft dem Ball entgegen (siehe ai.js, receiveSpot).
@@ -602,6 +650,11 @@ export function keeperSaves(m) {
     if (dist2d(p.pos, ball.pos) > reach || ball.pos.y > (hands ? (oppCross ? KEEPER_CLAIM_Y : 2.3) : 1)) continue;
 
     const bs = ballSpeed(ball);
+    // Die Torwartwerte (Fangen, Geschlagen, Flugzeit) sind auf Bälle ohne Luftwiderstand geeicht (Tore je Platz, Opta-Vergleiche).
+    // Mit BALL_AIR (Punkt 23) kommt ein Schuss langsamer an: Für diese Werte zählt das Tempo, das er ohne Luftwiderstand hätte –
+    // so bleibt die Torquote (vom Nutzer so entschieden, 2026-11-19); der Flug selbst (Senken, Effet, Flattern) ist echt.
+    const shotD = m.shotFrom && m.time - (m.shotTime ?? -9) < 3 ? Math.hypot(-s * pitch.halfLength - m.shotFrom.x, m.shotFrom.z) : 0;
+    const bsK = BALL_AIR.on && shotD > 0 ? bs * Math.exp(BALL_AIR.beta * BALL_AIR.cd * shotD) : bs;
     const towardGoal = ball.vel.x * -s > 0;
     if (bs >= 4 && !towardGoal && !oppCross) continue;
     // Langsamer Ball außerhalb des Torraums: kein Abwehren – er nimmt ihn mit dem Fuß an.
@@ -644,9 +697,9 @@ export function keeperSaves(m) {
       // gingen 21 % bzw. 32 % der Schüsse aus dem Strafraum rein (real 13–16 %, Opta).
       const brisk = spotKick(m) ? 0 : (shortGame(m) - 1) * 0.1 * Math.min(BRISK_PITCH_MAX, 1 + Math.max(0, pitch.halfLength - 20) / 12) * (m.goalPace ?? 1) * near;
       // Lange Flugzeit: Der Torwart sieht den Ball kommen und steht richtig (KEEPER_TIME).
-      const tFly = fromD > 0 ? fromD / Math.max(bs, 1) : 0;
+      const tFly = fromD > 0 ? fromD / Math.max(bsK, 1) : 0;
       const early = spotKick(m) ? 0 : clamp((tFly - KEEPER_TIME.from) * KEEPER_TIME.per, 0, KEEPER_TIME.max);
-      const beaten = clamp((bs - 8) * 0.02 + corner * 0.85 + pointBlank + postShot + brisk - early - 0.3 * cap1(p.attrs.keeping) - 0.3 * kEdge - (dist2d(p.pos, ball.pos) < 0.45 ? 0.15 : 0), 0.02, 0.7);
+      const beaten = clamp((bsK - 8) * 0.02 + corner * 0.85 + pointBlank + postShot + brisk - early - 0.3 * cap1(p.attrs.keeping) - 0.3 * kEdge - (dist2d(p.pos, ball.pos) < 0.45 ? 0.15 : 0), 0.02, 0.7);
       if (rng.chance(beaten)) {
         p.catchCooldown = 0.7; // zu spät – der Ball ist vorbei
         if (hands && ball.pos.y > 1.5) p.jumpAnim = 0.5; // hoch: springt vergeblich hoch
@@ -666,7 +719,7 @@ export function keeperSaves(m) {
       p.diveAnim = 0.5;
       p.diveSide = Math.sign(ball.pos.z - p.pos.z) || 1;
     }
-    const pCatch = (!hands ? 0 : bs < 4 ? 0.97 : tilt(clamp(0.3 + 0.6 * cap1(p.attrs.keeping) - (bs - 8) * 0.03, 0.08, 0.95), kEdge)) * (pressed ? 0.45 : 1);
+    const pCatch = (!hands ? 0 : bs < 4 ? 0.97 : tilt(clamp(0.3 + 0.6 * cap1(p.attrs.keeping) - (bsK - 8) * 0.03, 0.08, 0.95), kEdge)) * (pressed ? 0.45 : 1);
     if (pCatch > 0 && rng.chance(pCatch)) {
       ball.holder = p.id;
       ball.vel.x = ball.vel.y = ball.vel.z = 0;
@@ -694,7 +747,7 @@ export function keeperSaves(m) {
       // Harte Schüsse lenkt er über die Latte oder ums Tor – dann gibt es Ecke. Vorher 0,35–1,05 Ecken je Spiel (40 Spiele
       // je Platz): nur 12 von 77 Paraden wurden gelenkt, jeder dritte gelenkte Ball blieb vor der Linie liegen.
       // Bezug: 3,1–3,5 Ecken je Tor (Bundesliga 10,9, Premier League 9,4 Ecken bei je rund 27 Schüssen; soccerstats.com).
-      const tip = hands && pitch.boundary === 'lines' && m.phase !== 'shootout' && rng.chance(clamp(0.3 + (bs - 10) * 0.05, 0.2, 0.9));
+      const tip = hands && pitch.boundary === 'lines' && m.phase !== 'shootout' && rng.chance(clamp(0.3 + (bsK - 10) * 0.05, 0.2, 0.9));
       if (tip) {
         const over = Math.abs(ball.pos.z) < pitch.goalHalfWidth * 0.6 || rng.chance(0.5); // mittig nur drüber, nie ins eigene Netz
         ball.pos.y = Math.min(ball.pos.y, 1.2);
@@ -704,7 +757,8 @@ export function keeperSaves(m) {
         ball.vel.y = over ? Math.max(clearBar, rng.range(4.5, 6)) : rng.range(0.5, 1.5);
         // Der Ball muss die Linie auch erreichen: Weg bis hinter die Linie, über den Scheitel bzw. in 0,35 s.
         const toLine = pitch.halfLength + BALL_RADIUS + 0.3 - Math.abs(ball.pos.x);
-        ball.vel.x = -s * Math.max(toLine / (over ? ball.vel.y / 9.81 : 0.35), 1.5);
+        ball.vel.x = -s * Math.max(toLine / (over ? ball.vel.y / 9.81 : 0.35), 1.5) * airKeep(toLine);
+        ball.vel.y *= airKeep(1.5); // Luftwiderstand (BALL_AIR) auf dem Weg nach oben: etwas mehr Schwung, damit er über die Latte geht
         ball.vel.z = (over ? side : Math.sign(ball.pos.z) || side) * (over ? rng.range(1, 2.5) : rng.range(5, 7)); // ums Tor: nach außen, nie zur Tormitte
       } else {
         ball.vel.x = s * rng.range(3, 5);
@@ -983,7 +1037,11 @@ function deflect(m, p, prevTeam) {
   let d = cosOf(dPos) > cosOf(dNeg) ? dPos : dNeg;
   if (rng.chance(0.3)) d = d === dPos ? dNeg : dPos; // auch die andere Seite kommt vor
   if (cosOf(d) < 0.09) d = norm(inc.x + d.x * 0.5, inc.z + d.z * 0.5);
-  const h = hypot(ball.vel.x, ball.vel.z) * keep;
+  // Mit Luftwiderstand (BALL_AIR) kommt der Schuss langsamer an und der abgefälschte Ball verhungert vor der Linie: wie beim Torwart
+  // (bsK) mit dem Tempo ohne Widerstand rechnen und den Weg bis zur Linie mitgeben (vorher 7er-Rasen 1,25 → 0,92 Ecken nach Block).
+  const sinceShot = m.time - (m.shotTime ?? -9);
+  const inK = m.shotFrom && sinceShot < 3 ? airKeep(dist2d(m.shotFrom, p.pos)) : 1;
+  const h = hypot(ball.vel.x, ball.vel.z) * keep * inK * airKeep(Math.abs(gx - p.pos.x));
   ball.vel.x = d.x * h;
   ball.vel.z = d.z * h;
   ball.vel.y = (1 + rng.next() * 3) * (m.pitch.flatPlay ? 0.4 : 1); // vom Schienbein oder Fuß auch mal hoch (Halle: kaum)

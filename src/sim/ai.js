@@ -3,7 +3,7 @@ import { BONUS_SIM, hasBonus } from './bonus.js';
 import { cap1, errScale, soft, sure, vs } from './skill.js';
 import { clamp, dist2d, hypot, len, norm } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
-import { BALL_RADIUS, BOARD_BOUNCE, ballSpeed, rollDistance } from './ball.js';
+import { BALL_AIR, BALL_RADIUS, BOARD_BOUNCE, ballSpeed, flightPath, rollDistance } from './ball.js';
 import { attackDir, clampToPitch, distToSegment, getPlayer, wallPush } from './players.js';
 import { heeds } from './coach.js';
 import { HAND_ZONE, INERTIA, inHandZone, keeperBox, shortGame } from './actions.js';
@@ -468,6 +468,16 @@ function reachSpot(m, p, react) {
   const speed = 4.6 + 2.6 * p.attrs.pace;
   const top = 1.75 * p.look.height + 0.35;
   const at = (spot, t) => ({ spot: clampToPitch(pitch, spot.x, spot.z, 0.3), t });
+  // Mit der Ballphysik aus Punkt 23 (Luftwiderstand, Effet, Aufsetzen): Bahn aus ball.js flightPath, Flug und Rollen in einem.
+  if (BALL_AIR.on) {
+    let last = null;
+    const path = flightPath(m);
+    for (let i = 0, q; (q = path.at(i)); i++) {
+      last = q;
+      if ((q.y <= 0.3 || (q.y < top && q.vy < 0)) && dist2d(p.pos, q) <= speed * Math.max(0, q.t - react) + 0.4) return at(q, q.t);
+    }
+    return at(last, last.t + dist2d(p.pos, last) / speed);
+  }
   let x = ball.pos.x, z = ball.pos.z, t0 = 0;
   let vx = ball.vel.x, vz = ball.vel.z;
   if (ball.pos.y > 0.3 || ball.vel.y > 1) {
@@ -507,11 +517,15 @@ function receiveSpot(m, p) {
   if (ball.pos.y > 0.5 || ball.vel.y > 1) {
     const cross = !!m.pass?.cross;
     const top = 1.75 * p.look.height + 0.35;
-    for (let t = 0.05; t <= 2.5; t += 0.05) {
-      const y = ball.pos.y + ball.vel.y * t - 4.905 * t * t;
-      spot = { x: ball.pos.x + ball.vel.x * t, z: ball.pos.z + ball.vel.z * t };
-      const head = cross && y > 1.35 && y < top && ball.vel.y - 9.81 * t < 0; // im Fallen in Kopfhöhe
-      if ((head || y <= 0.3) && dist2d(p.pos, spot) <= speed * t + 0.4) break;
+    // Mit BALL_AIR aus der vorausberechneten Bahn (Luftwiderstand, Effet), sonst Wurfparabel.
+    const path = BALL_AIR.on ? flightPath(m) : null;
+    for (let i = 0, t = 0.05; path ? i < path.n : t <= 2.5; i++, t += 0.05) {
+      const q = path?.at(i);
+      const tt = q ? q.t : t;
+      const y = q ? q.y : ball.pos.y + ball.vel.y * t - 4.905 * t * t;
+      spot = q ? { x: q.x, z: q.z } : { x: ball.pos.x + ball.vel.x * t, z: ball.pos.z + ball.vel.z * t };
+      const head = cross && y > 1.35 && y < top && (q ? q.vy : ball.vel.y - 9.81 * t) < 0; // im Fallen in Kopfhöhe
+      if ((head || y <= 0.3) && dist2d(p.pos, spot) <= speed * tt + 0.4) break;
       if (y <= 0.3) break;
     }
     return clampToPitch(pitch, spot.x, spot.z, 0.3);
@@ -1394,11 +1408,14 @@ export function keeperIntent(m, p, dt) {
   // WM 2022 / Copa América 2021). Mit KEEPER_CLAIM 8 % – dafür weniger Kopfballtore (vom Nutzer so entschieden, 2026-10-29).
   if (crossing && sweep?.handsInBox) {
     const g = 9.81;
-    for (let t = 0.05; t <= 2.5; t += 0.05) {
-      const y = ball.pos.y + ball.vel.y * t - 0.5 * g * t * t;
-      if (ball.vel.y - g * t > 0 || y > KEEPER_CLAIM.height) continue;
-      const sx = ball.pos.x + ball.vel.x * t;
-      const sz = ball.pos.z + ball.vel.z * t;
+    const path = BALL_AIR.on ? flightPath(m) : null; // Bahn mit Luftwiderstand und Effet (Punkt 23)
+    for (let i = 0, t = 0.05; path ? i < path.n : t <= 2.5; i++, t += 0.05) {
+      const q = path?.at(i);
+      if (q) t = q.t;
+      const y = q ? q.y : ball.pos.y + ball.vel.y * t - 0.5 * g * t * t;
+      if ((q ? q.vy : ball.vel.y - g * t) > 0 || y > KEEPER_CLAIM.height) continue;
+      const sx = q ? q.x : ball.pos.x + ball.vel.x * t;
+      const sz = q ? q.z : ball.pos.z + ball.vel.z * t;
       if (Math.abs(sx - goalX) < KEEPER_CLAIM.depth && Math.abs(sz) < gw + 2 && dist2d(p.pos, { x: sx, z: sz }) <= KEEPER_CLAIM.speed * t + 0.6) {
         tx = sx;
         tz = sz;
