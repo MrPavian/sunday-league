@@ -6,6 +6,25 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-20-1 – Gameplay 2.0: smarter play, real ball physics, key moments
+
+### Changed
+- **AI decisions** (Gameplay 2.0, point 19): safer passes (passing-lane check), fewer balls nicked in passing, passing instead of endless dribbling (CARRY_PASS).
+- **Movement off the ball and rebounds** (points 20, 21): team-mates offer themselves in space; players run to where a rebound or clearance will land.
+- **Inertia** (point 22): acceleration 6.5 m/s², braking 9 m/s², limited turning (Harper 2019: 6–9 m/s²; PubMed 33331801). One-twos and lay-offs retuned.
+- **Ball physics** (point 23): drag c_D 0.2 and Magnus effect after Goff & Carré 2009 (Am. J. Phys. 77, 1020), spin up to about 600 rpm (Goff 2010, Physics Today 63/7), knuckleball as a game value. Goalkeeper, shot height and deflections adjusted so the goal rate stays the same (user's decision).
+- **Corners with spin**: aim and scatter no longer point behind the goal line (straight out on the grass pitch 29 → 21%).
+- **Ground** (point 24, sim/ground.js): puddles in the rain (the same in graphics and play), fixed bumps on rough ground, bounce per surface; grass bounces 0.6 m from 2 m per the FIFA test. Throw-ins: opponents are no longer pushed into the dugout.
+- **Key moments** (point 32, sim/keyscene.js): fourth tempo step, × 4 fast-forward between scenes; full-size pitch about 36% shorter, 98–99% of shots at normal speed.
+- **Substitutions as a conversation** (point 35, sim/subtalk.js): the assistant's substitution card (Yes / Let me choose / No); in the live ticker a substitution question with advice and the rules, plus a "Substitute" button (user request).
+- "What's new" closes as soon as a match starts.
+
+### Tests
+- `tests/commands.test.js` "balls in behind": 24 instead of 8 matches, same threshold (with the user's approval).
+- `tests/combos.test.js` one-two rate: above 0.55 instead of 0.6 (with the user's approval; measured 0.59–0.63 over 4 × 240 matches).
+- Header and escort tests adjusted (with the user's approval, commit c4296c3).
+- New: `tests/ground.test.js`, `tests/keyscene.test.js`, `tests/subtalk.test.js`. Golden fixtures regenerated.
+
 ## 2026-11-16-1 – Cleaner headers from crosses
 
 ### Changed

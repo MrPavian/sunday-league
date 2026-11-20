@@ -6,6 +6,25 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-20-1 – Gameplay 2.0: klügeres Spiel, echte Ballphysik, Schlüsselszenen
+
+### Geändert
+- **Entscheidungen der KI** (Gameplay 2.0, Punkt 19): sicherere Pässe (Passweg-Prüfung), weniger Ballklau im Vorbeigehen, Abspiel statt endlosem Dribbeln (CARRY_PASS).
+- **Freilaufen und Abpraller** (Punkte 20, 21): Mitspieler bieten sich in freien Räumen an; Spieler laufen dorthin, wo ein Abpraller oder geklärter Ball hinkommt.
+- **Trägheit** (Punkt 22): Beschleunigen 6,5 m/s², Bremsen 9 m/s², Drehen begrenzt (Harper 2019: 6–9 m/s²; PubMed 33331801). Doppelpässe und Ablagen nachjustiert.
+- **Ballphysik** (Punkt 23): Luftwiderstand c_D 0,2 und Magnus-Effekt nach Goff & Carré 2009 (Am. J. Phys. 77, 1020), Effet bis rund 600 U/min (Goff 2010, Physics Today 63/7), Flatterball als Spielwert. Torwart, Schusshöhe und Abfälscher angepasst, damit die Torquote bleibt (Nutzerentscheid).
+- **Ecken mit Effet**: Vorhalt und Streuung nicht mehr hinter die Grundlinie (direkt ins Aus auf dem Rasenplatz 29 → 21 %).
+- **Untergrund** (Punkt 24, sim/ground.js): Pfützen bei Regen (dieselben in Grafik und Spiel), feste Buckel auf holprigen Böden, Absprung je Boden; Rasen springt nach FIFA-Prüfung 0,6 m aus 2 m. Einwurf: Gegner werden nicht mehr in die Trainerbank geschoben.
+- **Schlüsselszenen** (Punkt 32, sim/keyscene.js): vierte Tempostufe, Zeitraffer × 4 zwischen den Szenen; Großfeld rund 36 % kürzer, 98–99 % der Schüsse in normalem Tempo.
+- **Wechsel als Gespräch** (Punkt 35, sim/subtalk.js): Wechselkarte des Co-Trainers (Ja / Selbst aussuchen / Nein); im Liveticker Wechselfrage mit Rat und Regeln und Knopf „Wechseln“ (Nutzerwunsch).
+- „Was ist neu“ schließt sich, sobald ein Spiel beginnt.
+
+### Tests
+- `tests/commands.test.js` „balls in behind“: 24 statt 8 Spiele, Schwelle unverändert (mit Zustimmung des Nutzers).
+- `tests/combos.test.js` Doppelpass-Quote: über 0,55 statt 0,6 (mit Zustimmung des Nutzers; gemessen 0,59–0,63 über 4 × 240 Spiele).
+- Kopfball- und Begleit-Tests angepasst (mit Zustimmung des Nutzers, Commit c4296c3).
+- Neu: `tests/ground.test.js`, `tests/keyscene.test.js`, `tests/subtalk.test.js`. Golden-Fixtures neu erzeugt.
+
 ## 2026-11-16-1 – Sauberere Kopfbälle nach Flanken
 
 ### Geändert
