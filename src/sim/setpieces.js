@@ -92,8 +92,12 @@ export function startSetPiece(m, { type, team, spot = { x: 0, z: 0 }, takerId = 
     if (d < keep) {
       const n = d > 0.01 ? { x: dx / d, z: dz / d } : { x: -toGoal.x, z: -toGoal.z };
       const zMax = pitch.boundary === 'lines' ? pitch.halfWidth + 1 : pitch.halfWidth - 0.3;
+      // Nicht nach draußen schieben (dort stehen Bänke und Zaun – ein Verteidiger landete beim Einwurf in der Trainerbank):
+      // Läge der Platz neben dem Feld, auf der Feldseite gleich weit weg.
+      let tz = spot.z + n.z * keep;
+      if (Math.abs(tz) > pitch.halfWidth - 0.3 && Math.abs(spot.z - n.z * keep) < Math.abs(tz)) tz = spot.z - n.z * keep;
       p.pos.x = clamp(spot.x + n.x * keep, -pitch.wallX + 0.3, pitch.wallX - 0.3);
-      p.pos.z = clamp(spot.z + n.z * keep, -zMax, zMax);
+      p.pos.z = clamp(tz, -zMax, zMax);
       p.pos.x = clampWallX(pitch, p.pos.x, p.pos.z);
     }
   }

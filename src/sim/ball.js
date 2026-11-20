@@ -1,6 +1,7 @@
 import { hypot, hypot3 } from '../core/math.js';
 import { SURFACES } from './surfaces.js';
 import { endWallX } from './players.js';
+import { gamePuddles, groundNoise, inPuddle, roughness, TURF } from './ground.js';
 export const WIND_ACCEL = 1.2;
 
 export const BALL_RADIUS = 0.11;
@@ -87,7 +88,7 @@ export function stepBall(ball, pitch, dt) {
   }
 
   vel.y -= G * dt;
-  if (BALL_AIR.on && pos.y > BALL_RADIUS + 1e-3) airForces(ball, dt);
+  if (BALL_AIR.on && pos.y > BALL_RADIUS + 1e-3 && !ball.hop) airForces(ball, dt); // Hüpfer über Buckel: bremst wie am Boden
   // Wind drückt hohe Bälle ab. HERGELEITET: Sturmböen um 60 km/h (17 m/s) auf einen ruhenden Ball, F = ½ ρ c_w A v² mit
   // ρ 1,2 kg/m³, c_w 0,25, A 0,038 m² ≈ 1,65 N; bei 0,43 kg ≈ 3,8 m/s². WEATHER.wind 3,2 × WIND_ACCEL 1,2 ≈ 3,8 (vorher 0,6:
   // in weather-audit nicht messbar).
@@ -99,13 +100,41 @@ export function stepBall(ball, pitch, dt) {
   pos.y += vel.y * dt;
   pos.z += vel.z * dt;
 
+  const puddles = TURF.on ? gamePuddles(pitch) : null;
+  const wetSpot = puddles?.length ? inPuddle(puddles, pos.x, pos.z) : false;
   if (pos.y <= BALL_RADIUS) {
     pos.y = BALL_RADIUS;
+    ball.hop = false;
     ball.spin = ball.flutter = null; // Aufsetzen: Effet und Flattern sind weg (der Ball springt geradeaus weiter)
     if (vel.y < -1.0) {
-      vel.y = -vel.y * surface.bounce;
-      vel.x *= 0.88;
-      vel.z *= 0.88;
+      if (TURF.on) {
+        // Absprung je Boden (Punkt 24): nass rutscht er weiter, tief bleibt er stecken, in der Pfütze bleibt er fast liegen.
+        // Auf holprigem Boden springt er an jeder Stelle anders ab – fest je Ort, aber für die Spieler nicht vorhersehbar
+        // (flightPath rechnet ohne Buckel, ball.noBumps).
+        let e = surface.bounce;
+        let keep = 0.88 * (surface.deep ? 0.85 : surface.wet ? 1.07 : 1);
+        if (wetSpot) {
+          e *= TURF.puddleBounce;
+          keep *= TURF.puddleSkid;
+        }
+        const r = ball.noBumps || wetSpot ? 0 : roughness(surface);
+        if (r > 0) {
+          e *= 1 + (groundNoise(pos.x, pos.z, 1) - 0.5) * 2 * TURF.bumpBounce * r;
+          const a = (groundNoise(pos.x, pos.z, 2) - 0.5) * 2 * TURF.bumpAngle * r;
+          const c = Math.cos(a);
+          const s = Math.sin(a);
+          const vx = vel.x;
+          vel.x = vx * c - vel.z * s;
+          vel.z = vx * s + vel.z * c;
+        }
+        vel.y = -vel.y * e;
+        vel.x *= keep;
+        vel.z *= keep;
+      } else {
+        vel.y = -vel.y * surface.bounce;
+        vel.x *= 0.88;
+        vel.z *= 0.88;
+      }
     } else {
       vel.y = 0;
     }
@@ -115,8 +144,24 @@ export function stepBall(ball, pitch, dt) {
   const h = hypot(vel.x, vel.z);
   if (h > 0) {
     let next;
-    if (onGround) {
-      next = Math.max(0, h - (surface.rollDecel + ROLL_DRAG * h * h) * dt);
+    if (onGround || ball.hop) {
+      next = Math.max(0, h - (surface.rollDecel + (wetSpot ? TURF.puddleDecel : 0) + ROLL_DRAG * h * h) * dt);
+      // Buckel (Punkt 24): Auf holprigem Boden liegen feste Buckel; ein schneller Ball hüpft darüber und verspringt etwas.
+      if (TURF.on && !ball.noBumps && h > TURF.hopMin) {
+        const r = roughness(surface);
+        const cx = Math.floor(pos.x / TURF.hopCell);
+        const cz = Math.floor(pos.z / TURF.hopCell);
+        const cell = cx * 4096 + cz;
+        if (r > 0 && cell !== ball.hopCell) {
+          ball.hopCell = cell;
+          // Nur ein flacher Hüpfer (unter 1 m/s setzt er ohne Aufprall wieder auf), Richtung und Bremsweg bleiben – sonst stimmen
+          // die Pass-Rechnungen (rollSpeedFor) nicht mehr. Verspringen am Fuß regelt bumpiness bei der Ballmitnahme (actions.js).
+          if (groundNoise(cx, cz, 3) < TURF.hopShare * r) {
+            vel.y = Math.min(TURF.hopMax, h * TURF.hopUp);
+            ball.hop = true;
+          }
+        }
+      }
     } else {
       next = BALL_AIR.on ? h : h * (1 - 0.04 * dt); // mit BALL_AIR bremst airForces
     }
@@ -304,7 +349,7 @@ export function flightPath(m, T = 2.5, dt = 1 / 30) {
   const b = m.ball;
   const memo = FLIGHT_MEMO.get(m);
   if (memo && memo.time === m.time && memo.vx === b.vel.x && memo.vy === b.vel.y && memo.vz === b.vel.z && memo.px === b.pos.x) return memo.path;
-  const c = { pos: { ...b.pos }, vel: { ...b.vel }, spin: b.spin ?? null, flutter: null, holder: null, lastVel: null, spinFresh: true };
+  const c = { pos: { ...b.pos }, vel: { ...b.vel }, spin: b.spin ?? null, flutter: null, holder: null, lastVel: null, spinFresh: true, noBumps: true };
   const pts = [];
   const n = Math.floor(T / dt + 1e-9);
   const path = {

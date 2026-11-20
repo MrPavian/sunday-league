@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { createRng } from '../core/rng.js';
+import { gamePuddles, puddleLayout } from '../sim/ground.js';
 import { MOODS, moodOf, VENUES } from './lighting.js';
 import { toon } from './materials.js';
 import { currentQuality } from './quality.js';
@@ -47,35 +48,8 @@ const smooth = (a, b, x) => {
   return t * t * (3 - 2 * t);
 };
 
-// Pfützen: deterministisch aus Spielort + Wetter. Bevorzugt dort, wo auf Amateurplätzen
-// das Wasser steht – im Torraum, am Mittelkreis, an der Seitenlinie.
-export function puddleLayout(venueId, weatherId, pitch, count) {
-  const rng = createRng(hashStr(`${venueId}|${weatherId ?? 'none'}`));
-  const hl = pitch.halfLength ?? 20;
-  const hw = pitch.halfWidth ?? 12;
-  const out = [];
-  for (let tries = 0; out.length < count && tries < count * 12; tries++) {
-    const zone = rng.next();
-    let x;
-    let z;
-    if (zone < 0.45) {
-      x = (rng.chance(0.5) ? 1 : -1) * (hl - rng.range(1.2, 5.5));
-      z = rng.range(-3.5, 3.5);
-    } else if (zone < 0.7) {
-      x = rng.range(-3.5, 3.5);
-      z = rng.range(-hw * 0.6, hw * 0.6);
-    } else {
-      x = rng.range(-hl * 0.9, hl * 0.9);
-      z = (rng.chance(0.5) ? 1 : -1) * (hw - rng.range(0.4, 2.2));
-    }
-    const sx = rng.range(0.9, 2.1);
-    const sz = sx * rng.range(0.5, 0.9);
-    const rot = rng.range(0, Math.PI);
-    if (out.some((p) => Math.hypot(p.x - x, p.z - z) < (p.sx + sx) * 0.85)) continue;
-    out.push({ x, z, sx, sz, rot });
-  }
-  return out;
-}
+// Pfützen-Anordnung: sim/ground.js (dieselben Pfützen, die das Spiel beeinflussen).
+export { puddleLayout };
 
 // Pfützen-Geometrie: flache, unregelmäßige Scheibe (Radius ≈ 1) mit Randring (aRim 0…1).
 function puddleGeometry() {
@@ -283,7 +257,12 @@ export class WeatherFx {
   buildPuddles(root, match) {
     const n = this.indoor ? 0 : Math.round((this.q.puddles ?? 0) * (this.profile.puddles ?? 0));
     this.stats.puddleMax = n;
-    this.puddles = puddleLayout(this.venueId, match.weather, this.pitch, n);
+    // Zuerst die Pfützen aus dem Spiel (sim/ground.js, stoppen den Ball) – immer sichtbar, unabhängig von der Grafikstufe;
+    // dahinter die zusätzlichen der Grafikstufe als kleinere, flache Lachen (die halten den Ball nicht auf).
+    const game = this.indoor ? [] : gamePuddles(match.pitch);
+    this.gameCount = game.length;
+    this.stats.gamePuddles = game.length;
+    this.puddles = game.length ? [...game, ...puddleLayout(this.venueId, match.weather, this.pitch, game.length + n).slice(game.length)] : puddleLayout(this.venueId, match.weather, this.pitch, n);
     if (!this.puddles.length) return;
     this.puddleMesh = new THREE.InstancedMesh(puddleGeometry(), puddleMaterial(this.shared), this.puddles.length);
     this.puddleMesh.receiveShadow = true;
@@ -301,23 +280,25 @@ export class WeatherFx {
     this.puddleLevel = level;
     const m = this._m;
     this.puddles.forEach((p, i) => {
+      const k = i < this.gameCount ? 1 : this.gameCount ? level * 0.55 : level;
       this._e.set(0, p.rot, 0);
       this._q.setFromEuler(this._e);
-      this._s.set(p.sx * level, 1, p.sz * level);
+      this._s.set(p.sx * k, 1, p.sz * k);
       this._p.set(p.x, 0.005, p.z);
       m.compose(this._p, this._q, this._s);
       this.puddleMesh.setMatrixAt(i, m);
     });
     this.puddleMesh.instanceMatrix.needsUpdate = true;
-    this.puddleMesh.visible = level > 0.02;
-    this.stats.puddles = level > 0.02 ? this.puddles.length : 0;
+    this.puddleMesh.visible = level > 0.02 || this.gameCount > 0;
+    this.stats.puddles = level > 0.02 ? this.puddles.length : this.gameCount;
   }
 
   // Liegt (x, z) in einer Pfütze? Für größere Spritzer.
   inPuddle(x, z) {
     if (!this.puddleMesh?.visible) return false;
-    const k = this.puddleLevel;
-    for (const p of this.puddles) {
+    for (let i = 0; i < this.puddles.length; i++) {
+      const p = this.puddles[i];
+      const k = i < this.gameCount ? 1 : this.gameCount ? this.puddleLevel * 0.55 : this.puddleLevel;
       const dx = x - p.x;
       const dz = z - p.z;
       const r = Math.max(p.sx, p.sz) * k * 0.9;

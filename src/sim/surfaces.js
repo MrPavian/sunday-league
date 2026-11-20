@@ -48,7 +48,10 @@ export const SURFACES = {
     name: tr('Rasen', 'grass'),
     hard: false,
     rollDecel: 2.55, // Rollwiderstand m/s² (plus Luftwiderstand ∝ v², ball.js ROLL_DRAG)
-    bounce: 0.5,
+    // Vorher 0,5 (rund 0,5 m aus 2 m). FIFA-Prüfung für Fußballrasen: Ball aus 2 m springt 0,60–1,00 m hoch (FIFA Quality;
+    // Quality Pro 0,60–0,85 m) – FIFA Quality Programme for Football Turf, Handbook of Test Methods. Amateurrasen ist eher weich,
+    // darum die untere Grenze: e ≈ √(0,6 / 2) ≈ 0,55 (hergeleitet).
+    bounce: 0.55,
     bumpiness: 0.07,
     slideDamp: 2.5,
     scrapeChance: 0,
