@@ -157,7 +157,7 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
     nach einem Fehler eher noch einmal.
 
 **H – Kurzweil im 3D-Spiel und im Textmodus** (vom Nutzer ausgewählt, 2026-11-19)
-32. **Schlüsselszenen-Modus** (M): Zeitraffer zwischen den spannenden Momenten, bei Chancen, Standards und Kontern normales Tempo
+32. **Schlüsselszenen-Modus** (M): ✅ **2026-11-20** (sim/keyscene.js, tests/keyscene.test.js; vierte Stufe der Taste C, nur an der Seitenlinie; Großfeld rund 36 % kürzer, Sport-/Rasenplatz 15–19 %, kleine Plätze kaum – dort spielt fast alles vor dem Tor). Zeitraffer zwischen den spannenden Momenten, bei Chancen, Standards und Kontern normales Tempo
     zum Eingreifen. Ein Spiel in 4–5 Minuten, ohne dass etwas Wichtiges fehlt.
 33. **Momente mit Stimmung** (S): Zuschauer in den letzten Minuten lauter, Stille beim Elfmeter, Raunen und Jubel, die Kamera geht
     auf den Schützen.

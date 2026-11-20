@@ -81,6 +81,7 @@ html, body {
 }
 .scoreboard .score { display: flex; align-items: center; gap: 2px; }
 .scoreboard { max-width: calc(100vw - 16px); }
+.scoreboard .clock.ff::after { content: attr(data-ff); color: var(--accent); } /* Schlüsselszenen: Zeitraffer */
 .scoreboard .board { max-width: 100%; }
 .scoreboard .team { min-width: 0; }
 .scoreboard .team span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }

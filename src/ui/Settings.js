@@ -83,7 +83,7 @@ export class Settings {
       spiel: `
         <h4>${tr('Spieltempo', 'Match tempo')}</h4>
         <div class="choice">${s.tempos.map((t, i) => `<button class="${s.tempo === i ? 'active' : ''}" data-action="tempo" data-value="${i}">${t.label.split(': ')[1] ?? t.label}</button>`).join('')}</div>
-        <p class="hint">${tr('Im Spiel: Taste C.', 'In a match: key C.')}</p>
+        <p class="hint">${tr('Im Spiel: Taste C. Schlüsselszenen: Chancen, Standards vor dem Tor, Konter, Fouls und Tore laufen normal, alles dazwischen im Zeitraffer (Hinweis an der Uhr). Nur an der Seitenlinie – wer selbst spielt, hat normales Tempo.', 'In a match: key C. Key moments: chances, set pieces near goal, counters, fouls and goals run at normal speed, everything in between fast-forwards (shown by the clock). Touchline only – when you control a player the tempo is normal.')}</p>
         <h4>${tr('Spieldauer', 'Match length')}</h4>
         <div class="choice">${[['kurz', tr('Kurz', 'Short')], ['mittel', tr('Mittel', 'Medium')], ['lang', tr('Lang', 'Long')]].map(([id, label]) => `<button class="${s.length === id ? 'active' : ''}" data-action="length" data-value="${id}">${label}</button>`).join('')}${s.length === 'custom' ? `<button class="active" disabled>${tr('Eigene', 'Custom')}</button>` : ''}</div>
         <p class="hint">${tr('Halbzeit je Platz – mit − und + in Viertelminuten anpassen (0:45 bis 10:00). Eine Voreinstellung oben setzt alle Plätze zurück.', 'Half length per pitch – adjust in quarter minutes with − and + (0:45 to 10:00). Picking a preset above resets every pitch.')}</p>

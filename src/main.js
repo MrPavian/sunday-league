@@ -1,3 +1,4 @@
+import { KEY_SCENE, keySceneApplies, keySceneHot } from './sim/keyscene.js';
 import { tr } from './core/i18n.js';
 import * as THREE from 'three';
 import '@fontsource/pixelify-sans/400.css';
@@ -56,7 +57,11 @@ const TEMPOS = [
   { id: 'ruhig', label: tr('Tempo: ruhig', 'Tempo: calm'), factor: 0.72 },
   { id: 'normal', label: tr('Tempo: normal', 'Tempo: normal'), factor: 0.86 },
   { id: 'schnell', label: tr('Tempo: schnell', 'Tempo: fast'), factor: 1 },
+  // Schlüsselszenen (Gameplay 2.0, Punkt 32, sim/keyscene.js): normal bei Chancen, Standards, Kontern; dazwischen Zeitraffer.
+  // Nur an der Seitenlinie – wer selbst einen Spieler steuert, spielt in „normal“.
+  { id: 'szenen', label: tr('Tempo: Schlüsselszenen', 'Tempo: key moments'), factor: 0.86, key: true },
 ];
+const keyMemo = { match: null, memo: {}, hot: true, factor: 0.86 };
 let tempo = 0;
 try {
   tempo = Math.max(0, TEMPOS.findIndex((t) => t.id === localStorage.getItem('sunday-league:tempo')));
@@ -446,7 +451,15 @@ function frame(now) {
   gfx.update((now - last) / 1000);
   if (gfx.active) gfx.begin(performance.now());
   last = now;
-  acc += dt * (mode === 'play' ? TEMPOS[tempo].factor : 1);
+  let speed = mode === 'play' ? TEMPOS[tempo].factor : 1;
+  if (mode === 'play' && TEMPOS[tempo].key && keySceneApplies(match)) {
+    // Weich zwischen normal und Zeitraffer wechseln (KEY_SCENE.ramp je Sekunde), nicht ruckartig.
+    const target = keyMemo.hot ? TEMPOS[tempo].factor : KEY_SCENE.fast;
+    keyMemo.factor += (target - keyMemo.factor) * Math.min(1, dt * KEY_SCENE.ramp);
+    speed = keyMemo.factor;
+  } else keyMemo.factor = TEMPOS[tempo].factor;
+  hud.setFastForward(mode === 'play' && speed > 1.5);
+  acc += dt * speed;
   if (drainInput) {
     input.poll();
     drainInput = false;
@@ -508,6 +521,8 @@ function frame(now) {
     }
     if (DIAG) (DIAG.sys = 'stepMatch'), DIAG.simStep++;
     stepMatch(match, intent, STEP);
+    if (keyMemo.match !== match) Object.assign(keyMemo, { match, memo: {}, hot: true });
+    keyMemo.hot = keySceneHot(match, keyMemo.memo, match.events);
     if (DIAG) DIAG.sys = 'handleEvents';
     hud.handleEvents(match);
     view.handleEvents(match);

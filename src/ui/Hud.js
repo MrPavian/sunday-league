@@ -101,6 +101,15 @@ export class Hud {
   }
 
   // Wichtige Meldungen (Tor) werden nicht von Kleinkram überschrieben.
+  // Schlüsselszenen-Modus: Zeitraffer läuft („· Zeitraffer“ an der Uhr).
+  setFastForward(on) {
+    if (on === this.ff) return;
+    this.ff = on;
+    const c = this.$('.clock');
+    c.dataset.ff = ` · ${tr('Zeitraffer', 'fast-forward')}`;
+    c.classList.toggle('ff', on);
+  }
+
   toast(text, seconds = 2, priority = 1) {
     if (this.toastTimer > 0 && priority < this.toastPriority) return;
     this.toastPriority = priority;
