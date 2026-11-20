@@ -139,7 +139,7 @@ antizipiert, Richtungswechsel sehen aus wie auf Glatteis, kein Freilaufen, sehr 
 
 **G – Gameplay 2.0, zweite Stufe** (vom Nutzer ausgewählt, 2026-11-19; Reihenfolge und Gewicht von Claude). Gleiche Regeln wie F:
 Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S) klein, (M) mittel, (L) groß.
-24. **Absprung und Untergrund** (S): Ascheplatz springt unberechenbar, tiefer Rasen bremst Flachpässe, Pfützen bei Regen stoppen
+24. **Absprung und Untergrund** (S): ✅ **2026-11-20** (sim/ground.js, tests/ground.test.js, Schalter TURF). Ascheplatz springt unberechenbar, tiefer Rasen bremst Flachpässe, Pfützen bei Regen stoppen
     den Ball; Absprunghöhen nach Quelle (FIFA-Rasenprüfung: Rücksprung 0,6–0,85 m aus 2 m). Rest aus Punkt 23.
 25. **Mannschaftsteile, die zusammenhängen** (L): Viererkette verschiebt gemeinsam und stellt Abseits, Pressing-Auslöser
     (Rückpass, schlechte Annahme, Ball an der Seitenlinie). Wer schlecht zusammenspielt, reißt sichtbar Lücken.
