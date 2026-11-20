@@ -6,6 +6,8 @@ import { tr } from '../core/i18n.js';
 import { orderLabel } from './commands.js';
 import { orderOf, setOrder } from './plan.js';
 import { detectSituations, windowOf } from './situations.js';
+import { planSubs } from './squad.js';
+import { SUB_TALK, subCard, subProposal } from './subtalk.js';
 
 const laneName = (lane) => (lane === 'left' ? tr('links', 'the left') : tr('rechts', 'the right'));
 const LaneName = (lane) => (lane === 'left' ? tr('Links', 'Left') : tr('Rechts', 'Right'));
@@ -94,6 +96,27 @@ export function stepCoachFeed(m, team) {
   // Alte Karte läuft ab.
   if (m.coachCard && m.time - m.coachCard.t > Math.max(14, m.duration * 0.07)) m.coachCard = null;
   checkFollowUps(m, team, f);
+  // Hat der Gegner gewechselt? (für „Drüben haben sie gerade frische Leute gebracht“)
+  const oppSubs = m.subsUsed?.[1 - team] ?? 0;
+  if (oppSubs > (f.oppSubs ?? 0)) {
+    f.oppSubs = oppSubs;
+    f.oppSubAt = m.time;
+  }
+  // Wechselvorschlag (Punkt 35): geht vor der Lagekarte, mit denselben Abständen und zusammen höchstens drei Karten je Halbzeit
+  // (keine Dauer-Popups); im Liveticker fragt der Ticker selbst nach Wechseln (touchline.js).
+  const halfCards = f.shown.filter((c) => c.half === m.half);
+  const calm = !m.coachCard && m.time >= m.duration * 0.12 && m.time - f.lastCard >= gapOf(m) && halfCards.length < 3;
+  if (calm && !m.ticker && halfCards.filter((c) => c.type === 'SUB').length < SUB_TALK.perHalf) {
+    const prop = subProposal(m, team, f);
+    if (prop) {
+      const card = subCard(m, team, prop);
+      m.coachCard = card;
+      f.lastCard = m.time;
+      f.shown.push({ type: 'SUB', lane: null, t: m.time, half: m.half });
+      m.events.push({ type: 'coach_card', team, situation: 'SUB' });
+      return card;
+    }
+  }
   if (m.coachCard || m.time < m.duration * 0.12 || m.time - f.lastCard < gapOf(m)) return null;
   const perHalf = f.shown.filter((c) => c.half === m.half).length;
   if (perHalf >= 3) return null;
@@ -124,8 +147,16 @@ export function answerCard(m, team, index) {
   if (!card) return null;
   m.coachCard = null;
   const opt = index == null ? null : card.options[index];
-  if (opt) setOrder(m, team, opt.group, opt.value, { by: 'card' });
   const f = (m.feed ??= { shown: [], followUps: [], lastCard: -99, nextCheck: 0 });
+  if (card.type === 'SUB') {
+    // Wechselvorschlag: annehmen (beim nächsten Stopp), selbst aussuchen (Wechseltafel mit dem Vorschlag), oder nein.
+    if (opt?.sub) planSubs(m, team, [opt.sub]);
+    else if (opt?.openSubs) m.subHint = card.options[0].sub;
+    else if (opt?.decline != null || !opt) (f.subDeclined ??= {})[card.options[2].decline] = m.time;
+    m.events.push({ type: 'coach_answer', team, situation: 'SUB', choice: opt?.label ?? null });
+    return opt;
+  }
+  if (opt) setOrder(m, team, opt.group, opt.value, { by: 'card' });
   // Nachhalten: Ist die Lage in einer Weile besser?
   f.followUps.push({ type: card.type, lane: card.lane, decidedAt: m.time, choice: opt ? `${opt.group}:${opt.value}` : null, label: opt?.label ?? null, severity: card.severity, done: false });
   m.events.push({ type: 'coach_answer', team, situation: card.type, choice: opt?.label ?? null });

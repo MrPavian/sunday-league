@@ -220,6 +220,8 @@ export function createMenus(ctx) {
     const firstRun = !langChosen() && !params.get('lang');
     // „Was ist neu": einmal nach einem Update, nie beim allerersten Start, nie im Spiel (hier ist immer das Menü offen).
     const whatsNew = new Sheet({ id: 'whatsnew-sheet', onClose: () => setTimeout(() => (ctx.menu.paused = settings.root.hidden ? false : true), 0) });
+    // Ein Spiel beginnt (3D oder Liveticker): „Was ist neu" darf nicht davor stehen bleiben.
+    document.addEventListener('sl:match-start', () => whatsNew.close());
     whatsNew.el.addEventListener('click', (e) => {
       if (!e.target.closest('[data-action="wn-all"]')) return;
       whatsNew.close();

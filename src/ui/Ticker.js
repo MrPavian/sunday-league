@@ -2,7 +2,7 @@ import { tr } from '../core/i18n.js';
 import { halfLabel } from './Hud.js';
 import { stepMatch } from '../sim/match.js';
 import { createCommentator, tickerMinute } from '../sim/commentary.js';
-import { answer, checkDecision, createTouchline, mentalityLabel } from '../sim/touchline.js';
+import { answer, canManualSub, checkDecision, createTouchline, manualSubDecision, mentalityLabel } from '../sim/touchline.js';
 import { shout, SHOUTS } from '../sim/coach.js';
 import { systemsFor, tacticLabel } from '../sim/tactics.js';
 import { setSystem } from '../sim/plan.js';
@@ -26,10 +26,11 @@ export class Ticker {
       else if (t.dataset.action === 'decide') this.decide(Number(t.dataset.value));
       else if (t.dataset.action === 'shout') this.call(t.dataset.value);
       else if (t.dataset.action === 'system') this.reshape(t.dataset.value);
+      else if (t.dataset.action === 'subs') this.subs();
     });
     window.addEventListener('keydown', (e) => {
       if (this.root.hidden) return;
-      if (this.tl?.open && /^Digit[1-4]$/.test(e.code)) {
+      if (this.tl?.open && /^Digit[1-9]$/.test(e.code)) {
         e.preventDefault();
         this.decide(Number(e.code.slice(5)) - 1);
         return;
@@ -48,6 +49,7 @@ export class Ticker {
   // prepared: { match, home, away } aus prepareMatch; onDone wird nach „Weiter" gerufen.
   // coachTeam: Index der eigenen Mannschaft – dann fragt der Ticker zwischendurch nach Entscheidungen.
   show(prepared, { title = '', onDone, coachTeam = null }) {
+    document.dispatchEvent(new Event('sl:match-start')); // offene Blätter wie „Was ist neu" schließen
     this.match = prepared.match;
     this.tl = coachTeam === null ? null : createTouchline(prepared.match, coachTeam);
     this.onDone = onDone;
@@ -77,10 +79,12 @@ export class Ticker {
   // Offene Entscheidungen bekommen die erste Antwort („so weiter").
   skip() {
     const m = this.match;
-    if (this.tl?.open) this.decide(0, false);
+    // Offene Wechselauswahl (selbst wechseln) wird abgebrochen, nicht mit der ersten Wahl ausgeführt.
+    const first = () => (this.tl.open.id.startsWith('manual-sub') ? this.tl.open.options.length - 1 : 0);
+    while (this.tl?.open) this.decide(first(), false);
     while (m.phase !== 'ended') {
       this.step();
-      if (this.tl?.open) this.decide(0, false);
+      while (this.tl?.open) this.decide(first(), false);
     }
     this.update();
   }
@@ -103,6 +107,12 @@ export class Ticker {
     this.commentator.lines.push({ minute: tickerMinute(m), text: tr(`Von der Seitenlinie: Umstellung auf ${label}`, `From the touchline: switching to ${label}`), kind: 'coach' });
     this.root.querySelector('.plans').textContent = m.teams.map((t, i) => `${t.short ?? t.name}: ${tacticLabel(m.plan?.[i], m.pitch.format)}`).join(' – ');
     this.update();
+    this.updateControls();
+  }
+
+  // Selbst wechseln: Der Ticker hält an, bis gewählt ist (wie bei einer Entscheidung).
+  subs() {
+    if (!this.tl || this.tl.open || !manualSubDecision(this.tl)) return;
     this.updateControls();
   }
 
@@ -221,7 +231,8 @@ export class Ticker {
     const systems = this.tl
       ? `<div class="calls systems"><span>${tr('System', 'System')}:</span>${Object.entries(systemsFor(m.pitch.format)).map(([id, s]) => `<button data-action="system" data-value="${id}" aria-pressed="${cur === id}" class="${cur === id ? 'active' : ''}">${s.label}</button>`).join('')}</div>`
       : '';
-    foot.innerHTML = `${calls}${systems}
+    const subBtn = this.tl ? `<button data-action="subs" ${canManualSub(this.tl) ? '' : 'disabled'}>${tr('Wechseln', 'Substitute')}</button>` : '';
+    foot.innerHTML = `${calls}${systems}${subBtn}
       <button data-action="speed">${tr('Tempo', 'Speed')}: ${SPEEDS[this.speed]}× <small>(${tr('Leertaste', 'Space')})</small></button>
       <button data-action="skip">${tr('Zum Ergebnis (Enter)', 'Skip to result (Enter)')}</button>`;
   }

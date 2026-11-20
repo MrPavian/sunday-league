@@ -84,7 +84,8 @@ export class ShoutBar {
   answer(index) {
     const m = this.match;
     if (!m?.coachCard) return;
-    answerCard(m, m.coachTeam, index);
+    const opt = answerCard(m, m.coachTeam, index);
+    if (opt?.openSubs) this.input.tap('sub'); // Wechselvorschlag: „Selbst aussuchen“ öffnet die Wechseltafel
   }
 
   // INFO: alles, was man nachschauen, aber nicht dauernd sehen muss. Wird beim Öffnen und

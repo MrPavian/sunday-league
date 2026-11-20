@@ -194,6 +194,14 @@ export class SubPanel {
     this.outId = (outs.find((p) => p.role !== 'gk') ?? outs[0])?.id ?? null;
     this.inList();
     this.inId = this.bestIn;
+    // Vom Co-Trainer vorgeschlagen („Selbst aussuchen“): genau dieses Paar vorauswählen.
+    const hint = match.subHint;
+    match.subHint = null;
+    if (hint && outs.some((p) => p.id === hint.outId) && this.inList().some((p) => p.id === hint.inId)) {
+      this.outId = hint.outId;
+      this.inList();
+      this.inId = hint.inId;
+    }
     this.root.hidden = false;
     this.render();
   }

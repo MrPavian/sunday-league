@@ -4,7 +4,9 @@
 import { tr } from '../core/i18n.js';
 import { matchMinutes, minute90 } from './minute.js';
 import { enableManager, MENTALITIES, setMentality, shout } from './coach.js';
-import { canSubNow, substitute, subsLeft, usableBench } from './squad.js';
+import { canSubNow, substitute, usableBench } from './squad.js';
+import { ruleLine } from './subtalk.js';
+import { benchAdvice, outAdvice } from './subadvice.js';
 import { answerCard } from './coachfeed.js';
 
 
@@ -18,6 +20,7 @@ const vary = (tl, key, list) => {
 
 export function createTouchline(m, team) {
   enableManager(m, team);
+  m.ticker = true; // Wechsel fragt der Ticker selbst (subDecision), keine Wechselkarten des Co-Trainers (coachfeed.js)
   return { m, team, asked: new Set(), goalsSeen: 0, lastAsk: -99, open: null };
 }
 
@@ -126,25 +129,77 @@ function concededDecision(tl) {
   };
 }
 
+// Wechsel (Punkt 35: als Gespräch): wer platt ist, was der Co-Trainer rät und warum, was die Regeln noch erlauben.
+// Gewechselt wird sofort (der Ticker zeigt keine Unterbrechung an).
 function subDecision(tl) {
   const { m, team } = tl;
   const onPitch = m.players.filter((p) => p.team === team && p.role !== 'gk');
   const tired = onPitch.reduce((x, y) => (y.stamina < x.stamina ? y : x), onPitch[0]);
-  const bench = subsLeft(m, team) > 0 ? usableBench(m, team).slice(0, 3) : [];
+  const bench = canSubNow(m, team) ? usableBench(m, team).slice(0, 3) : [];
   if (!tired || tired.stamina > 0.45 || !bench.length) return null;
   tl.asked.add(tl.asked.has('sub1') ? 'sub2' : 'sub1');
+  const best = benchAdvice(m, team, tired)[0];
+  if (best && !bench.includes(best.player)) bench[bench.length - 1] = best.player;
+  const tip = best ? tr(` Der Co-Trainer würde ${best.player.name} bringen${best.reasons.length ? ` – ${best.reasons.join(', ')}` : ''}.`, ` Your assistant would bring on ${best.player.name}${best.reasons.length ? ` – ${best.reasons.join(', ')}` : ''}.`) : '';
   return {
     id: 'sub',
-    question: tr(`${tired.name} pfeift aus dem letzten Loch. Wechseln?`, `${tired.name} is running on empty. Make a change?`),
+    question: tr(`${tired.name} pfeift aus dem letzten Loch. Wechseln?`, `${tired.name} is running on empty. Make a change?`) + tip + ` ${ruleLine(m, team)}`,
     options: [
       { label: tr('Nein, der beißt sich durch', 'No, he\'ll grit his teeth'), line: tr(`${surname(tired)} bleibt drin. Er winkt ab: „Geht schon."`, `${surname(tired)} stays on. He waves it off: "I'm fine."`) },
       ...bench.map((b) => ({
-        label: tr(`${b.name} bringen`, `Bring on ${b.name}`),
+        label: b === best?.player ? tr(`${b.name} bringen (Tipp)`, `Bring on ${b.name} (tip)`) : tr(`${b.name} bringen`, `Bring on ${b.name}`),
         line: tr(`Wechsel: ${b.name} kommt für ${surname(tired)}.`, `Substitution: ${b.name} replaces ${surname(tired)}.`),
         apply: (mm) => {
           if (mm.players.includes(tired) && usableBench(mm, team).includes(b) && canSubNow(mm, team)) substitute(mm, tired, b);
         },
       })),
+    ],
+  };
+}
+
+// Selbst wechseln im Liveticker (vom Nutzer gewünscht 2026-11-20): jederzeit über den Knopf „Wechseln“. Zwei Schritte – wer raus,
+// wer rein –, jeweils mit Kraft und dem Rat des Co-Trainers; die Regeln stehen dabei. Gewechselt wird sofort, wie bei der Wechselfrage.
+const pct = (p) => `${Math.round(Math.max(0, Math.min(1, p.stamina)) * 100)} %`;
+export function canManualSub(tl) {
+  return !!tl && tl.m.phase !== 'ended' && tl.m.phase !== 'shootout' && canSubNow(tl.m, tl.team) && usableBench(tl.m, tl.team).length > 0;
+}
+export function manualSubDecision(tl) {
+  const { m, team } = tl;
+  if (!canManualSub(tl)) return null;
+  const outs = outAdvice(m, team).slice(0, 6);
+  const cancel = { label: tr('Abbrechen', 'Cancel'), line: null };
+  const d = {
+    id: 'manual-sub-out',
+    question: tr(`Wen rausnehmen? ${ruleLine(m, team)}`, `Who comes off? ${ruleLine(m, team)}`),
+    options: [
+      ...outs.map((a) => ({
+        label: `${a.player.name} · ${pct(a.player)}${a.reasons.length ? ` · ${a.reasons.join(', ')}` : ''}`,
+        line: null,
+        apply: () => {
+          tl.open = manualInDecision(tl, a.player);
+        },
+      })),
+      cancel,
+    ],
+  };
+  tl.open = d;
+  return d;
+}
+function manualInDecision(tl, out) {
+  const { m, team } = tl;
+  const ins = benchAdvice(m, team, out).slice(0, 6);
+  return {
+    id: 'manual-sub-in',
+    question: tr(`Wer kommt für ${out.name}?`, `Who replaces ${out.name}?`),
+    options: [
+      ...ins.map((a, i) => ({
+        label: `${a.player.name}${i === 0 ? tr(' (Tipp)', ' (tip)') : ''} · ${pct(a.player)}${a.reasons.length ? ` · ${a.reasons.join(', ')}` : ''}`,
+        line: tr(`Wechsel: ${a.player.name} kommt für ${surname(out)}.`, `Substitution: ${a.player.name} replaces ${surname(out)}.`),
+        apply: (mm) => {
+          if (mm.players.includes(out) && usableBench(mm, team).includes(a.player) && canSubNow(mm, team)) substitute(mm, out, a.player);
+        },
+      })),
+      { label: tr('Zurück', 'Back'), line: null, apply: () => manualSubDecision(tl) },
     ],
   };
 }

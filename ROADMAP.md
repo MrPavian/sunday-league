@@ -163,7 +163,7 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
     auf den Schützen.
 34. **Kleine Geschichten im Spiel** (S): Laufschrift mit Anlässen („erstes Spiel gegen den alten Verein“, „seit drei Spielen ohne
     Tor“), die der Erzähler aufgreift.
-35. **Wechsel als Gespräch** (M): Der Co-Trainer schlägt vor („X ist platt, Y brennt, Gegner stellt um“), ein Tipp zum Annehmen;
+35. **Wechsel als Gespräch** (M): ✅ **2026-11-20** (sim/subtalk.js, tests/subtalk.test.js; Co-Trainer-Karte „X raus, Y rein“ mit Grund und Regeln; im Liveticker Wechselfrage mit Rat und Knopf „Wechseln“ zum Selbstwechseln, Nutzerwunsch). Der Co-Trainer schlägt vor („X ist platt, Y brennt, Gegner stellt um“), ein Tipp zum Annehmen;
     Regelverstöße werden vorher erklärt. Schließt den kleinen Punkt „Wechsel auf dem Platz statt in Listen“ (Abschnitt 2) ein.
 36. **Entscheidungsmomente im Textmodus** (M): Der Ticker hält kurz an: Wer schießt den Elfmeter? Freistoß direkt oder flanken?
     Gelb-Rot droht, runter nehmen?

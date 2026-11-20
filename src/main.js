@@ -294,6 +294,7 @@ function startMatch(human) {
 
 function setMode(next) {
   mode = next;
+  if (next === 'play') document.dispatchEvent(new Event('sl:match-start')); // offene Blätter wie „Was ist neu" schließen
   if (next === 'play') music.leave();
   else music.theme(); // Vereinsheim und Menü: ruhiges Thema (audio/Music.js)
   if (next !== 'play') shoutBar.hide();
