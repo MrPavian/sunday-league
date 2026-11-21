@@ -1392,6 +1392,21 @@ export function keeperIntent(m, p, dt) {
     return { move: { x: 0, z: Math.abs(dz) < 0.05 ? 0 : Math.sign(dz) }, sprint: true };
   }
 
+  // Mit nach vorn bei der letzten Ecke (setpieces.js keeperUp): bleibt im gegnerischen Strafraum, bis die Ecke getreten ist und
+  // der Ball kurz unterwegs war, dann im Sprint zurück.
+  if (p.upFront) {
+    const up = p.upFront;
+    const cs = m.setPiece;
+    if (up.until == null && !(cs?.type === 'corner' && cs.team === p.team && !cs.taken)) up.until = m.time + 2.5;
+    if ((up.until == null || m.time < up.until) && ball.pos.x * s > 0 && !(ball.holder != null && m.players.find((o) => o.id === ball.holder)?.team !== p.team)) {
+      const spot = { x: s * (pitch.halfLength - Math.min(9, pitch.halfLength * 0.38) + 1.5), z: clamp(ball.pos.z * 0.3, -3, 3) };
+      const d = { x: spot.x - p.pos.x, z: spot.z - p.pos.z };
+      const l = Math.hypot(d.x, d.z);
+      return { move: l < 0.4 ? { x: 0, z: 0 } : { x: d.x / l, z: d.z / l }, sprint: false };
+    }
+    p.upFront = null;
+  }
+
   let tx = goalX + s * 0.8;
   let tz = clamp(ball.pos.z * 0.4, -gw - 0.2, gw + 0.2);
   // Reaktionszeit: Erst nach einem Moment erkennt der Keeper die Schussrichtung –

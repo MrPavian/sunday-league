@@ -215,6 +215,15 @@ export function planMods(m, team) {
   return mods;
 }
 
+// Schlussphase (Gameplay 2.0, Punkt 28): In der letzten Minute geht bei einer Ecke der Torwart mit nach vorn, wenn seine Mannschaft
+// mit einem Tor hinten liegt (setpieces.js keeperUp, ai.js keeperIntent). gkUp – Anteil der Spielzeit vor dem Ende. Spielwert.
+// Gemessen und verworfen (2026-11-21, je 60 Spiele Rasenplatz und 30 Großfeld): offener spielen bei engem Spielstand und Aufrücken der
+// zurückliegenden Mannschaft – Ausgleich nach einem Tor Rückstand 7/25 → 3/25 (Rasenplatz) und 2/16 → 0/16 (Großfeld).
+export const LATE = { on: true, gkUp: 0.03 };
+
+// Rückstand der Mannschaft (0, wenn sie nicht hinten liegt).
+export const deficit = (m, team) => Math.max(0, (m.score?.[1 - team] ?? 0) - (m.score?.[team] ?? 0));
+
 export const styleOf = planMods;
 
 // Nur zum Anzeigen (Taktiktafel): Zielwerte aus Stil und Befehlen, ohne Umsetzung und ohne den

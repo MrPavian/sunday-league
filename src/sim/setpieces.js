@@ -4,7 +4,7 @@
 import { clamp, dist2d, hypot, len, norm } from '../core/math.js';
 import { attackDir, clampToPitch, clampWallX, getPlayer, setControlled, teamAttacking } from './players.js';
 import { processSubs } from './squad.js';
-import { styleOf } from './plan.js';
+import { deficit, LATE, styleOf } from './plan.js';
 import { cornerSpots, keeperZone, cornerStart } from './ai.js';
 import { penaltyBox } from './actions.js';
 
@@ -273,7 +273,25 @@ function keepOffWall(m, team, men) {
 // Mauer (buildWall) werden die Spieler deshalb hingestellt. Anzahl der Angreifer gewählt, nicht gemessen: 7er 2, 9er 2,
 // Großfeld 3 (im Profifußball stehen rund vier bis sechs Angreifer im Strafraum); jedem steht ein Verteidiger gegenüber.
 export const CORNER_ATTACKERS = { 5: 1, 7: 2, 9: 2, 11: 3 };
+// Letzte Minute, ein Tor hinten: Der Torwart geht bei der Ecke mit nach vorn (plan.js LATE.gkUp). Nicht, wenn der Mensch den
+// Torwart steuern könnte (nur Trainer- oder Zuschauermodus bzw. KI-Mannschaft). Er stellt sich an die Elfmeterpunkt-Höhe und läuft
+// zurück, sobald der Ball weg ist (ai.js keeperIntent, p.upFront).
+function keeperUp(m, team) {
+  if (!LATE.on || deficit(m, team) !== 1 || m.extra || m.time < m.duration * (1 - LATE.gkUp)) return;
+  if (m.humanTeam === team && !m.manager) return;
+  const gk = m.players.find((p) => p.team === team && p.role === 'gk' && p.state === 'normal');
+  if (!gk) return;
+  const s = attackDir(m, team);
+  gk.pos.x = penaltySpot(m, team).x + s * 1.5;
+  gk.pos.z = m.rng.range(-1, 1);
+  gk.vel.x = gk.vel.z = 0;
+  gk.facing = { x: s, z: 0 };
+  gk.upFront = { until: null };
+  m.events.push({ type: 'keeper_up', team, playerId: gk.id });
+}
+
 function lineUpCorner(m, team, taker) {
+  keeperUp(m, team);
   const { pitch } = m;
   const n = CORNER_ATTACKERS[pitch.format] ?? 0;
   if (!n) return;

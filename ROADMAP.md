@@ -151,7 +151,12 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
     sich weg, Schuh binden bei Freistoß/Abstoß (tests/duels27.test.js); die übrigen gab es schon. Ursprünglich, zusammen mit 26: Schulterduell, Grätsche mit Rutschen, Kopfballduell mit Sprung,
     Ballannahme mit Brust und Oberschenkel, Seit- und Fallrückzieher, Stolpern, am Boden liegen und Behandlung, Reklamieren,
     Abklatschen beim Wechsel, Schuh binden, Trinken an der Linie, Mauer springt hoch und dreht sich weg.
-28. **Spielfluss und Endphase** (M): ab der 75. Minute größere Abstände und mehr Hin und Her; wer hinten liegt, wirft Leute nach
+28. **Spielfluss und Endphase** (M): ⚠️ **2026-11-21** teils gebaut. Torwart geht in der letzten Minute bei einer Ecke mit nach vorn
+    (nur bei einem Tor Rückstand, läuft danach zurück; sim/plan.js LATE, tests/late.test.js – auf Wunsch als seltener Show-Moment
+    behalten). Gemessen und verworfen (je 60 Spiele Rasenplatz, 30 Großfeld): offener ab der 75. Minute bei engem Spielstand
+    (Nutzerwunsch) und Aufrücken der zurückliegenden Mannschaft – Ausgleich nach einem Tor Rückstand 7/25 → 3/25 bzw. 2/16 → 0/16;
+    ohne Aufrücken ebenfalls 3/25 und 0/16. Offen: Tore ab der 75. Minute sind bei uns 11–12 %, in der Premier League 22–26 %.
+    Ursprünglich: ab der 75. Minute größere Abstände und mehr Hin und Her; wer hinten liegt, wirft Leute nach
     vorne; in der Schlussminute geht der Torwart bei der letzten Ecke mit.
 29. **Spielerpersönlichkeit auf dem Platz** (L): zwei, drei Gewohnheiten je Spieler (zieht nach innen, nur rechter Fuß, sucht den
     Abschluss, reklamiert jeden Pfiff). Man erkennt die eigenen Leute am Spiel.
