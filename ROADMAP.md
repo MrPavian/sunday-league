@@ -141,7 +141,7 @@ antizipiert, Richtungswechsel sehen aus wie auf Glatteis, kein Freilaufen, sehr 
 Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S) klein, (M) mittel, (L) groß.
 24. **Absprung und Untergrund** (S): ✅ **2026-11-20** (sim/ground.js, tests/ground.test.js, Schalter TURF). Ascheplatz springt unberechenbar, tiefer Rasen bremst Flachpässe, Pfützen bei Regen stoppen
     den Ball; Absprunghöhen nach Quelle (FIFA-Rasenprüfung: Rücksprung 0,6–0,85 m aus 2 m). Rest aus Punkt 23.
-25. **Mannschaftsteile, die zusammenhängen** (L): Viererkette verschiebt gemeinsam und stellt Abseits, Pressing-Auslöser
+25. **Mannschaftsteile, die zusammenhängen** (L): ✅ **2026-11-21** Abwehrkette auf einer Linie mit Abseits (ai.js LINES, tests/lines.test.js; Großfeld: Abstand vorderster–hinterster Verteidiger 6,0 → 4,7 m, Abseits 4,6 → 5,0 je Spiel, Bundesliga rund 4–5). Pressing-Auslöser gebaut und gemessen – ohne Wirkung (Ballgewinne in der gegnerischen Hälfte gleich), wieder entfernt. Viererkette verschiebt gemeinsam und stellt Abseits, Pressing-Auslöser
     (Rückpass, schlechte Annahme, Ball an der Seitenlinie). Wer schlecht zusammenspielt, reißt sichtbar Lücken.
 26. **Zweikämpfe mit Körper** (L): Schulter an Schulter, Ball abschirmen, Grätsche mit echtem Risiko; Kraft und Größe zählen.
 27. **Weitere Animationen der Spieler** (M), zusammen mit 26: Schulterduell, Grätsche mit Rutschen, Kopfballduell mit Sprung,

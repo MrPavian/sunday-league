@@ -29,6 +29,39 @@ export const ACUTE_Z = 3;
 export const BOX_RUN_FROM = 0.2;
 const LURK_GAP = 8; // m Platz hinter der gegnerischen Abwehr, ab dem der Stürmer vorne lauert
 const CAUGHT_TIME = 0.7; // s: so lange ist nach dem Ballverlust raus, wer vor dem Ball stand
+
+// Mannschaftsteile (Gameplay 2.0, Punkt 25). LINES: Die Abwehrkette hält eine gemeinsame Linie (nur mit Abseits, pitch.offside) –
+// Höhe = Mittel ihrer Zonen, aber hinter dem Ball: gapPressed Meter, wenn der Ballführende unter Druck ist (ein eigener Spieler
+// näher als pressDist), sonst gapFree (ungestört mit Blick nach vorn: Linie fällt). Nach einem Rückpass des Gegners rückt sie
+// step Meter auf (für stepTime s). Im eigenen Drittel (deep, Anteil der halben Länge) wird normal gedeckt.
+// Pressing-Auslöser (Rückpass, verspringende Annahme, Seitenlinie: zweiter und dritter Mann drauf) wurden gebaut und gemessen
+// (2026-11-20, 60 Spiele je Platz): Ballgewinne in der gegnerischen Hälfte unverändert (Rasenplatz 15,5 / 15,5) – wieder entfernt.
+export const LINES = { on: true, gapPressed: 2, gapFree: 7, pressDist: 3.5, step: 3, stepTime: 1.5, deep: 0.45 };
+
+// Rückpass des Gegners (für LINES): einmal je Pass merken, wann und für wen.
+function noteBackPass(m) {
+  const pass = m.pass;
+  if (!pass || pass.seenBack || m.time - pass.time > 0.1) return;
+  pass.seenBack = true;
+  const s = attackDir(m, pass.team);
+  if (m.ball.vel.x * s < -2) (m.backPass ??= [-9, -9])[pass.team] = m.time;
+}
+
+// Gemeinsame Abwehrlinie (LINES): setzt die x-Werte der Verteidiger-Aufträge (zone/mark) auf eine Linie.
+function holdLine(m, team, s, skip) {
+  const { pitch, ball } = m;
+  if (!LINES.on || !pitch.offside) return;
+  const bx = ball.pos.x * s;
+  if (bx < -pitch.halfLength * LINES.deep) return; // vor dem eigenen Tor: normal decken
+  const defs = m.players.filter((p) => p.team === team && p.role === 'def' && !skip.has(p.id) && (m.tactics[p.id]?.type === 'zone' || m.tactics[p.id]?.type === 'mark'));
+  if (defs.length < 2) return;
+  let L = defs.reduce((a, p) => a + m.tactics[p.id].x * s, 0) / defs.length;
+  if (m.time < (m.lineStep?.[team] ?? -9)) L += LINES.step;
+  const pressured = m.players.some((p) => p.team === team && dist2d(p.pos, ball.pos) < LINES.pressDist);
+  L = Math.min(L, bx - (pressured ? LINES.gapPressed : LINES.gapFree));
+  L = Math.max(L, -pitch.halfLength * 0.74);
+  for (const p of defs) m.tactics[p.id].x = L * s;
+}
 const BIG_PITCH_HL = 30; // halbe Länge (m), ab der die Schussreichweite gedeckelt wird (Sportplatz, Großfeld, Stadion)
 const BIG_RANGE_CAP = 30; // m: größte Schussreichweite auf großen Plätzen (gemessen, 40 Spiele Großfeld: Median ~24 m, p90 ~28 m)
 const BIG_LONG_EXTRA = 0; // m: Distanzschuss-Band über der Reichweite – dort 0 (die Reichweite selbst ist schon der Fernschuss)
@@ -69,6 +102,7 @@ export function updateTactics(m, dt) {
     return Number.isFinite(min) ? min * ts : 0;
   });
 
+  noteBackPass(m);
   for (let team = 0; team < 2; team++) {
     const s = attackDir(m, team);
     const ownGoal = { x: -s * pitch.halfLength, z: 0 };
@@ -151,12 +185,16 @@ export function updateTactics(m, dt) {
       const ballAdv = (ball.pos.x * s) / pitch.halfLength;
       const pressHere = !st.pressZone || st.pressZone === 'high' || ballAdv < 1 / 3;
       // Einer bleibt immer hinten: im 4 gegen 4 geht der Absichernde nicht mit.
+      const pressers = new Set();
+      // Rückpass des Gegners: Die Abwehrlinie rückt auf (LINES).
+      if (LINES.on && m.time - (m.backPass?.[1 - team] ?? -9) < 0.1 && !(m.lineStep?.[team] > m.time)) (m.lineStep ??= [-9, -9])[team] = m.time + LINES.stepTime;
       if (st.press && pressHere && rest.length > (st.pressZone === 'high' && pool.length >= 4 ? 1 : 2)) {
         const second = rest.reduce((a, b) => (dist2d(b.pos, ball.pos) < dist2d(a.pos, ball.pos) ? b : a));
         if (dist2d(second.pos, ball.pos) < (st.pressZone === 'high' ? 14 : st.pressZone === 'mid' ? 11 : 9)) {
           // Nach außen lenken: auch der zweite Mann stellt den Weg nach innen zu.
           const sIn = st.funnel === 'wide' && Math.abs(ball.pos.z) > 1.5 ? -Math.sign(ball.pos.z) * funnelOf(pitch).inside * pitch.halfWidth * funnelFade(pitch, ball.pos, ownGoal) : 0;
           m.tactics[second.id] = { type: 'mark', ...clampToPitch(pitch, ball.pos.x, ball.pos.z + sIn) };
+          pressers.add(second.id);
           rest.splice(rest.indexOf(second), 1);
         }
       }
@@ -194,6 +232,8 @@ export function updateTactics(m, dt) {
       }
       // Hohes Pressing: In der gegnerischen Hälfte geht auch der Absichernde mit drauf.
       if (st.pressZone === 'high' && ballAdv > 0.2 && cover && pool.length >= 5 && m.tactics[cover.id]?.type === 'cover') m.tactics[cover.id] = { type: 'mark', ...clampToPitch(pitch, ball.pos.x, ball.pos.z) };
+      // Abwehrkette auf eine Linie (nicht der Ballnächste, nicht der Absichernde, nicht der zweite Presser).
+      holdLine(m, team, s, new Set([chaser?.id, cover?.id, ...pressers]));
       // Weiter Einwurf des Gegners (longThrowPlan): Wie bei der Ecke stellen sich die Nächsten torseitig in die Zonen, in die seine
       // Angreifer laufen. Ohne Deckung fiel nach 14,7 % der weiten Einwürfe ein Tor (Sportplatz, 200 Spiele) – mehr als nach Ecken.
       const osp = m.setPiece;

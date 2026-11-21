@@ -9,8 +9,9 @@ import { attackDir } from './players.js';
 // des Gegners (mindestens einer) noch zwischen Ball und Tor; hold – so lange (Spielsekunden) bleibt es nach einer Szene normal; settle – erst nach so
 // langer Ruhe (Spielsekunden) geht der Zeitraffer an (sonst springt das Tempo hin und her); scramble – Gewühl: Ball so nah an
 // einer Torlinie (m) zählt immer, egal wer ihn hat; range/lane – Schussweite: zentral (|z| unter lane × halbe Breite, mindestens
-// 8 m) bis range Meter vor dem Tor wird oft geschossen (gemessen: verpasste Schüsse kamen aus 19–30 m). Alles Spielwerte.
-export const KEY_SCENE = { fast: 4, ramp: 3, near: 0.5, nearMin: 10, scramble: 7, range: 30, lane: 0.35, freeKick: 30, counter: 0.2, hold: 2.5, settle: 1.5 };
+// 8 m) bis range Meter vor dem Tor wird oft geschossen (gemessen: verpasste Schüsse kamen aus 19–30 m); press – Gegner so nah (m)
+// am Ball vor dem Tor der Verteidiger: Ballgewinn und schneller Abschluss drohen. Alles Spielwerte.
+export const KEY_SCENE = { fast: 4, ramp: 3, near: 0.5, nearMin: 10, scramble: 7, range: 30, lane: 0.35, freeKick: 30, counter: 0.2, press: 3, hold: 2.5, settle: 1.5 };
 
 const HOT_EVENTS = new Set(['shot', 'save', 'goal', 'foul', 'card', 'penalty', 'post', 'bar', 'incident', 'injury', 'sub']);
 const CALM_SETPIECES = new Set(['throwin', 'goalkick', 'kickoff']);
@@ -41,6 +42,12 @@ export function keySceneHot(m, memo, events = m.events) {
     const holder = m.ball.holder != null ? m.players.find((p) => p.id === m.ball.holder) : null;
     // Gewühl vor einem Tor: zählt immer (Abpraller, Klärungsversuche).
     if (pitch.halfLength - Math.abs(b.x) < KEY_SCENE.scramble && Math.abs(b.z) < pitch.halfWidth * 0.6 && holder?.role !== 'gk') hot = true;
+    // Ballgewinn droht vor dem Tor: Die Verteidiger haben den Ball nah am eigenen Tor, ein Gegner steht dran (Pressing, Fehlpass).
+    if (!hot && team != null && holder?.role !== 'gk') {
+      const own = -attackDir(m, team) * pitch.halfLength;
+      const near = Math.max(KEY_SCENE.nearMin, pitch.halfLength * KEY_SCENE.near);
+      if (Math.abs(own - b.x) < near && m.players.some((p) => p.team !== team && p.role !== 'gk' && Math.hypot(p.pos.x - b.x, p.pos.z - b.z) < KEY_SCENE.press)) hot = true;
+    }
     if (!hot && team != null && holder?.role !== 'gk') {
       const s = attackDir(m, team);
       const near = Math.max(KEY_SCENE.nearMin, pitch.halfLength * KEY_SCENE.near);
