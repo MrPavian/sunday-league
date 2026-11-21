@@ -118,6 +118,43 @@ function headerLayer(st) {
   }
 }
 
+// Ballannahme (Gameplay 2.0, Punkt 27): hoher Ball mit der Brust (Oberkörper zurück, Arme seitlich) oder dem Oberschenkel
+// (Knie hoch, Arme zum Ausbalancieren). ctrl = { kind: 'brust'|'schenkel', t 0…1 }. Winkel gewählt, Vorzeichen wie bei den Gesten
+// (spine.rotation.x < 0 = zurück, upperLeg.rotation.x < 0 = nach vorn).
+function controlLayer(st) {
+  const { bn, ctrl } = st;
+  if (!ctrl || ctrl.t >= 1) return;
+  const k = Math.sin(Math.PI * Math.min(1, ctrl.t * 1.25));
+  if (ctrl.kind === 'brust') {
+    bn.spine.rotation.x -= 0.38 * k;
+    bn.head.rotation.x += 0.3 * k;
+    armTo(bn, 'L', -0.55, 0.95, -0.45, k);
+    armTo(bn, 'R', -0.55, 0.95, -0.45, k);
+  } else {
+    const s = ctrl.side > 0 ? 'R' : 'L';
+    legTo(bn, s, -1.35, 1.25, 0.35, k);
+    armTo(bn, 'L', -0.3, 0.85, -0.35, k);
+    armTo(bn, 'R', -0.3, 0.85, -0.35, k);
+    bn.spine.rotation.x += 0.15 * k;
+    bn.head.rotation.x += 0.35 * k;
+  }
+}
+
+// Mauer beim Freistoß (Punkt 27): Mit dem Schuss springt sie hoch und dreht sich weg, Hände schützend vor dem Körper.
+// wallJump 0…1 (Anteil der Sprungzeit).
+function wallLayer(st) {
+  const { bn, wallJump } = st;
+  if (!(wallJump > 0) || wallJump >= 1) return;
+  const k = Math.sin(Math.PI * wallJump);
+  bn.hips.position.y += 0.3 * k;
+  bn.hips.rotation.y += 1.1 * Math.min(1, wallJump * 2.5) * (1 - wallJump * 0.3);
+  legTo(bn, 'L', -0.5, 1.0, 0.3, k);
+  legTo(bn, 'R', -0.35, 0.85, 0.3, k);
+  armTo(bn, 'L', -1.35, 0.15, -1.7, k);
+  armTo(bn, 'R', -0.6, 0.25, -1.5, k);
+  bn.spine.rotation.x += 0.2 * k;
+}
+
 function trickLayer(st) {
   const { bn, state, kickAnim, trick, trickT, trickSide } = st;
   if (trick && state === 'normal' && kickAnim <= 0) {
@@ -314,6 +351,8 @@ const LAYERS = [
   keeperJumpLayer, // Torwart: Absprung zum hohen Ball
   keeperPunchLayer, // Torwart: Fausten
   headerLayer, // Kopfball
+  controlLayer, // Ballannahme mit Brust oder Oberschenkel
+  wallLayer, // Mauer springt hoch und dreht sich weg
   trickLayer, // Trick am Ball
   fooledLayer, // ausgetrickst
   duelLayer, // Zweikampf, Abschirmen
@@ -350,7 +389,7 @@ const st = {};
 // nach rechts), duelShield 0…1 (Ball abschirmen: Rücken zum Gegner) und duelPush 0…1 (Kontakt: kurzer Stoß).
 // Fouls: act (Name der Pose, ACTS), actT (Sekunden seit dem Foul), actS (Seite ±1), actVr (Variation 0…1, nie Zufall), actW (Überblendung 0…1);
 // carry 0…1 – Ballführung (kurze Schritte, Blick zum Ball); slideT 0…1 – Fortschritt der Grätsche (weich hineinrutschen).
-export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot', headPrep = 0, headJump = 1, hit = null, duck = 0, face: faceHint = null, tired = false, kickPrep = 0, trick = null, trickT = 0, trickSide = 1, acro = null, acroT = 0, fooled = 0, ready = 0, throwT = 0, jump = 0, punch = 0, getUp = null, cover = 0, gesture = null, catchKind = null, catchT = 0, punchStyle = 'beide', wide = 0, fumble = 0, drop = 0, kickTail = 0, kickFoot = 1, tinRun = 0, tinT = 0, duel = 0, duelDir = 0, duelShield = 0, duelPush = 0, act = null, actT = 0, actS = 1, actVr = 0, actW = 1, carry = 0, slideT = -1 }) {
+export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, state, injured, dive, celebrate, sad, kick = 'shot', headPrep = 0, headJump = 1, hit = null, duck = 0, face: faceHint = null, tired = false, kickPrep = 0, trick = null, trickT = 0, trickSide = 1, acro = null, acroT = 0, fooled = 0, ready = 0, throwT = 0, jump = 0, punch = 0, getUp = null, cover = 0, gesture = null, catchKind = null, catchT = 0, punchStyle = 'beide', wide = 0, fumble = 0, drop = 0, kickTail = 0, kickFoot = 1, tinRun = 0, tinT = 0, duel = 0, duelDir = 0, duelShield = 0, duelPush = 0, act = null, actT = 0, actS = 1, actVr = 0, actW = 1, carry = 0, slideT = -1, ctrl = null, wallJump = 0 }) {
   const bn = model.bones;
   resetPose(model);
   model.bones.hood.scale.setScalar(HIDDEN);
@@ -388,6 +427,8 @@ export function animatePlayer(model, { speed, dt, kickAnim, headAnim, holding, s
   st.ready = ready;
   st.throwT = throwT;
   st.jump = jump;
+  st.ctrl = ctrl;
+  st.wallJump = wallJump;
   st.punch = punch;
   st.getUp = getUp;
   st.cover = cover;

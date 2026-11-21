@@ -143,8 +143,12 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
     den Ball; Absprunghöhen nach Quelle (FIFA-Rasenprüfung: Rücksprung 0,6–0,85 m aus 2 m). Rest aus Punkt 23.
 25. **Mannschaftsteile, die zusammenhängen** (L): ✅ **2026-11-21** Abwehrkette auf einer Linie mit Abseits (ai.js LINES, tests/lines.test.js; Großfeld: Abstand vorderster–hinterster Verteidiger 6,0 → 4,7 m, Abseits 4,6 → 5,0 je Spiel, Bundesliga rund 4–5). Pressing-Auslöser gebaut und gemessen – ohne Wirkung (Ballgewinne in der gegnerischen Hälfte gleich), wieder entfernt. Viererkette verschiebt gemeinsam und stellt Abseits, Pressing-Auslöser
     (Rückpass, schlechte Annahme, Ball an der Seitenlinie). Wer schlecht zusammenspielt, reißt sichtbar Lücken.
-26. **Zweikämpfe mit Körper** (L): Schulter an Schulter, Ball abschirmen, Grätsche mit echtem Risiko; Kraft und Größe zählen.
-27. **Weitere Animationen der Spieler** (M), zusammen mit 26: Schulterduell, Grätsche mit Rutschen, Kopfballduell mit Sprung,
+26. **Zweikämpfe mit Körper** (L): ⚠️ **2026-11-21** Schulter an Schulter gebaut und gemessen – nicht besser, wieder entfernt:
+    Ballführer behielten den Ball 4–5 Punkte seltener (rasenplatz, 100 Spiele), Ecken 3,23 → 3,00 und Fausten 1,41 → 1,22 je Spiel;
+    nur ums Leder beschränkt verschwand der Kraftunterschied ganz (65,7 / 65,1 / 65,3 %). Abschirmen und Grätsche zählen Kraft schon
+    (strength.js). Ursprünglich: Schulter an Schulter, Ball abschirmen, Grätsche mit echtem Risiko; Kraft und Größe zählen.
+27. **Weitere Animationen der Spieler** (M): ✅ **2026-11-21** neu Ballannahme mit Brust und Oberschenkel, Mauer springt und dreht
+    sich weg, Schuh binden bei Freistoß/Abstoß (tests/duels27.test.js); die übrigen gab es schon. Ursprünglich, zusammen mit 26: Schulterduell, Grätsche mit Rutschen, Kopfballduell mit Sprung,
     Ballannahme mit Brust und Oberschenkel, Seit- und Fallrückzieher, Stolpern, am Boden liegen und Behandlung, Reklamieren,
     Abklatschen beim Wechsel, Schuh binden, Trinken an der Linie, Mauer springt hoch und dreht sich weg.
 28. **Spielfluss und Endphase** (M): ab der 75. Minute größere Abstände und mehr Hin und Her; wer hinten liegt, wirft Leute nach

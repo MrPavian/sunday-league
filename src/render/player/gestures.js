@@ -1,4 +1,4 @@
-import { arm, armTo, BUCH_L, BUCH_R, CLIMB_HIGH, CLIMB_MID, DEHNEN, DOSE, FIST_HIGH, FIST_LOW, KARTE, leg, mix3, PUNKT, REKLAMIEREN, SHRUG, smooth, TROESTEN, TRINKEN, UNSCHULD, VORTEIL } from './poses.js';
+import { arm, armTo, legTo, BUCH_L, BUCH_R, CLIMB_HIGH, CLIMB_MID, DEHNEN, DOSE, FIST_HIGH, FIST_LOW, KARTE, leg, mix3, PUNKT, REKLAMIEREN, SHRUG, smooth, TROESTEN, TRINKEN, UNSCHULD, VORTEIL } from './poses.js';
 import { HIDDEN } from './bones.js';
 
 // --- Gesten und Torjubel --------------------------------------------------------------
@@ -112,6 +112,20 @@ const GESTEN = table({
     leg(bn, 'L', -1.0 * w - 0.15, 1.1 * w, 0.2);
     bn.head.rotation.x -= 0.3;
     st.face = 'effort';
+  },
+  // Schuh binden in der Pause (Punkt 27): ein Knie am Boden, das andere Bein vorn aufgestellt, beide Hände am vorderen Schuh,
+  // der Kopf schaut runter. Hüfthöhe und Winkel gewählt (Vorzeichen wie bei der Zerrung: Oberschenkel nach vorn < 0).
+  schuh(st, g) {
+    const { bn } = st;
+    const k = Math.min(1, g / 0.4);
+    bn.hips.position.y -= 0.42 * k;
+    legTo(bn, 'R', -1.45, 1.45, 0.1, k); // vorn aufgestellt
+    legTo(bn, 'L', 0.15, 1.75, 0.6, k); // Knie am Boden
+    bn.spine.rotation.x += 0.75 * k;
+    bn.head.rotation.x += 0.35 * k;
+    const tie = Math.sin(g * 9) * 0.12;
+    armTo(bn, 'R', -0.55 + tie, 0.08, -0.55, k);
+    armTo(bn, 'L', -0.55 - tie, -0.05, -0.55, k);
   },
   dehnenL(st, g) {
     const { bn, gesture } = st;

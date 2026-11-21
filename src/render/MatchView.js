@@ -2,7 +2,7 @@ import { GET_UP } from '../sim/tackles.js';
 import * as THREE from 'three';
 import { ACRO, TRICKS } from '../sim/tricks.js';
 import { len } from '../core/math.js';
-import { advantageGesture, cardGesture, catchKind, CONSOLE_AT, consolers, dribbleCarry, duelPairs, foeBearing, foulFrame, foulPlace, foulPlan, incidentPose, isAerial, isFumble, kickFoot, mateCelebration, penaltyGoal, punchStyle, refCrowd, refereePose, refereeSignal, shotReactions, SIM_STEP, subScene, throwInRun, tiredFace, walkOffStart, walkOffStep, warmupPicks, warmupSpot, warmupStep, WARMUP_AWAY, WARMUP_HOME, whistleTimes, wideStance, setPieceGestures } from './reactions.js';
+import { advantageGesture, cardGesture, catchKind, CONSOLE_AT, consolers, dribbleCarry, duelPairs, foeBearing, foulFrame, foulPlace, foulPlan, incidentPose, isAerial, isFumble, kickFoot, mateCelebration, penaltyGoal, punchStyle, refCrowd, refereePose, refereeSignal, shotReactions, SIM_STEP, subScene, throwInRun, tiredFace, variation, walkOffStart, walkOffStep, warmupPicks, warmupSpot, warmupStep, WARMUP_AWAY, WARMUP_HOME, whistleTimes, wideStance, setPieceGestures } from './reactions.js';
 import { allPlayers, findAnyPlayer } from '../sim/squad.js';
 import { attackDir } from '../sim/players.js';
 import { BallView } from './BallView.js';
@@ -59,6 +59,13 @@ const DUEL_ON = 8; // Zweikampf: wie schnell das Anlehnen ein- und ausgeblendet 
 const DUEL_OFF = 5;
 const DUEL_BURST = 0.45; // Kontakt (Zweikampf gewonnen, Festhalten, Block): so lange der Stoß nachwirkt (s)
 const INC_POSE = { gesture: null, cover: 0, lift: 0 };
+// Ballannahme (Punkt 27): Ballhöhe (m) bei der Berührung – Oberschenkel ab CTRL_LOW, Brust ab CTRL_CHEST, darüber Kopf;
+// CTRL_T Sekunden Bewegung. Mauer: WALL_T Sekunden Sprung. Gewählt, nicht gemessen.
+const CTRL_LOW = 0.55;
+const CTRL_CHEST = 1.0;
+const CTRL_HIGH = 1.6;
+const CTRL_T = 0.45;
+const WALL_T = 0.6;
 const REF_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal' };
 const WARM_ANIM = { speed: 0, dt: 0, kickAnim: 0, headAnim: 0, holding: null, state: 'normal', gesture: null };
 const WARM_OUT = {};
@@ -364,6 +371,13 @@ export class MatchView {
         if (inc && this.models.has(e.outId)) this.leaving.push({ id: e.outId, x: inc.pos.x, z: inc.pos.z, t: 0 });
         const mi = this.models.get(e.inId);
         if (mi) Object.assign(mi, { reactGesture: 'abklatschen', reactTime: 0.6, gestT: 0 });
+      }
+      // Ballannahme mit Brust oder Oberschenkel (Punkt 27): Ballhöhe im Moment der Berührung.
+      if (e.type === 'touch') {
+        const mt = this.models.get(e.playerId);
+        const y = match.ball.pos.y;
+        const tp = mt && match.players.find((q) => q.id === e.playerId);
+        if (tp && tp.role !== 'gk' && y > CTRL_LOW && y < CTRL_HIGH) mt.ctrl = { kind: y > CTRL_CHEST ? 'brust' : 'schenkel', t: 0, side: variation(e.playerId, match.time) < 0.5 ? -1 : 1 };
       }
       if (e.type === 'slide' || e.type === 'scrape') this.soil(e.playerId, 0.12);
       else if (e.type === 'tackle' || e.type === 'poke_won') this.soil(e.playerId, 0.03);
@@ -1052,6 +1066,11 @@ export class MatchView {
       o.catchKind = null;
       o.catchT = 0;
       o.jump = p.jumpAnim > 0 ? 1 - p.jumpAnim / 0.5 : 0;
+      // Ballannahme läuft (CTRL_T Sekunden), Mauer springt mit dem Freistoß (WALL_T Sekunden).
+      if (m.ctrl && (m.ctrl.t += dt / CTRL_T) >= 1) m.ctrl = null;
+      o.ctrl = p.state === 'normal' ? m.ctrl : null;
+      const wsp = match.setPiece;
+      o.wallJump = wsp?.type === 'freekick' && wsp.taken && match.wallIds?.includes(p.id) && wsp.takenAt != null ? Math.max(0, (match.time - wsp.takenAt) / WALL_T) : 0;
       o.punch = p.punchAnim > 0 ? 1 - p.punchAnim / 0.35 : 0;
       o.punchStyle = m.punchStyle ?? 'beide';
       if (p.role === 'gk') {

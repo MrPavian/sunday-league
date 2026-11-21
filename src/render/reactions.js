@@ -725,7 +725,8 @@ export function dribbleCarry(match, p) {
 //  - Einwurf: Bis zu zwei Mitspieler in der Nähe, die stehen und frei sind, winken nach dem Ball (passt zu den
 //    Anspielstationen der Simulation, ai.js throwInOffers).
 // Liefert eine Map Spieler-Kennung → Geste (leer, wenn nichts ansteht). Zeiten und Abstände sind Spielwerte.
-export const SP_GESTURE = { cornerLead: 1.1, cornerAfter: 0.4, callDist: 22, callSpeed: 6, callers: 2 };
+// shoe – Anteil der Freistöße und Abstöße, in denen sich einer den Schuh bindet; shoeDist – so weit (m) vom Ball steht er. Gewählt.
+export const SP_GESTURE = { cornerLead: 1.1, cornerAfter: 0.4, callDist: 22, callSpeed: 6, callers: 2, shoe: 0.25, shoeDist: 15 };
 const NO_GESTURES = new Map();
 export function setPieceGestures(match) {
   const sp = match.setPiece;
@@ -735,6 +736,15 @@ export function setPieceGestures(match) {
     // Pause und noch kurz in den Anlauf hinein.
     const on = match.phase === 'setpiece' ? match.phaseTimer <= SP_GESTURE.cornerLead : match.time - sp.time <= SP_GESTURE.cornerAfter;
     return on ? new Map([[sp.takerId, 'eckeArm']]) : NO_GESTURES;
+  }
+  // Längere Pause (Freistoß, Abstoß): Einer weit weg vom Ball bindet sich den Schuh (Punkt 27) – fest aus Kennungen, kein Zufall.
+  if ((sp.type === 'freekick' || sp.type === 'goalkick') && match.phase === 'setpiece') {
+    const b = match.ball.pos;
+    if (variation('schuh', sp.time) > SP_GESTURE.shoe) return NO_GESTURES;
+    const far = match.players.filter((p) => p.role !== 'gk' && p.state === 'normal' && Math.hypot(p.pos.x - b.x, p.pos.z - b.z) > SP_GESTURE.shoeDist);
+    if (!far.length) return NO_GESTURES;
+    const who = far[Math.floor(variation('schuhWer', sp.time) * far.length)];
+    return new Map([[who.id, 'schuh']]);
   }
   if (sp.type !== 'throwin') return NO_GESTURES;
   const b = match.ball.pos;
