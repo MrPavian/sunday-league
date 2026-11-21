@@ -44,6 +44,7 @@ export class CameraRig {
     }
     Object.assign(this.camera, { left: -h * aspect, right: h * aspect, top: bottom + 2 * h, bottom });
     this.base = { left: -h * aspect, right: h * aspect, top: bottom + 2 * h, bottom };
+    this.zoomApplied = null; // neuer Ausschnitt: Zoom beim nächsten Bild wieder anwenden
     this.camera.updateProjectionMatrix();
   }
 
@@ -67,10 +68,30 @@ export class CameraRig {
     return it.lookZ * w;
   }
 
+  // Näher heran (f < 1) oder zurück (f = 1), weich mit rate (1/s) – z. B. beim Elfmeter auf den Schützen (render/mood.js).
+  setZoom(f = 1, rate = 2.5) {
+    this.zoomWant = f;
+    this.zoomRate = rate;
+  }
+
+  stepZoom(dt) {
+    if (this.intro || !this.base) return;
+    const want = this.zoomWant ?? 1;
+    const now = this.zoomNow ?? 1;
+    if (Math.abs(want - now) < 1e-4 && this.zoomApplied === now) return;
+    const z = Math.abs(want - now) < 1e-3 ? want : now + (want - now) * (1 - Math.exp(-dt * (this.zoomRate ?? 2.5)));
+    this.zoomNow = z;
+    this.zoomApplied = z;
+    const b = this.base;
+    Object.assign(this.camera, { left: b.left * z, right: b.right * z, top: b.top * z, bottom: b.bottom * z });
+    this.camera.updateProjectionMatrix();
+  }
+
   // ahead: Spielrichtung des Ballbesitzers (+1/-1, 0 = Richtung beibehalten), lead: Anteil der halben Bildbreite, um den der
   // Ball hinter der Bildmitte liegt (Vorausschau, nur Großfeld/Stadion; langsam geglättet, damit ein Ballverlust nicht ruckt).
   follow(x, z, dt, bounds, ahead = 0, lead = 0, vx = 0) {
     const look = this.stepIntro(dt);
+    this.stepZoom(dt);
     const halfW = this.camera.right;
     if (ahead) this.aheadDir = ahead;
     const wantLead = (this.aheadDir ?? 0) * lead * halfW;

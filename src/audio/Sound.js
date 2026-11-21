@@ -7,6 +7,8 @@
 const STORAGE_KEY = 'sunday-league:muted';
 const VOLUME_KEY = 'sunday-league:volume';
 
+import { crowdMood, nearMiss } from '../render/mood.js';
+
 export class Sound {
   constructor() {
     this.ctx = null;
@@ -451,9 +453,11 @@ export class Sound {
       this.ensureCrowdBed();
       const hl = match.pitch.halfLength;
       const nearGoal = match.phase === 'play' ? Math.max(0, 1 - (hl - Math.abs(match.ball.pos.x)) / (hl * 0.35)) : 0;
-      const target = match.phase === 'goal' ? 1 : match.phase === 'ended' ? 0.2 : nearGoal;
+      // Stimmung (Punkt 33): zum Schluss eines knappen Spiels lauter, vor dem Elfmeter still.
+      const mood = crowdMood(match);
+      const target = match.phase === 'goal' ? 1 : match.phase === 'ended' ? 0.2 : Math.max(nearGoal, mood.tension);
       this.tension += (target - this.tension) * Math.min(1, dt * 1.5);
-      const level = this.crowdLevel * (0.07 + 0.16 * this.tension);
+      const level = this.crowdLevel * (0.07 + 0.16 * this.tension) * mood.hush;
       this.crowdBed.gain.gain.setTargetAtTime(level, this.ctx.currentTime, 0.2);
       this.crowdBed.filter.frequency.setTargetAtTime(480 + 400 * this.tension, this.ctx.currentTime, 0.3);
     } else if (this.crowdBed) this.crowdBed.gain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.3);
@@ -487,6 +491,9 @@ export class Sound {
     const pan = (match.ball.pos.x - cameraX) / 14;
 
     const hard = match.pitch.surface.hard;
+    // Knapp vorbei: Die Menge raunt (Punkt 33).
+    if (this.missMatch !== match) (this.missMatch = match), (this.missMemo = {});
+    if (nearMiss(match, this.missMemo)) this.oooh();
     for (const e of match.events) {
       switch (e.type) {
         case 'shot':

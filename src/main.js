@@ -1,4 +1,5 @@
 import { KEY_SCENE, keySceneApplies, keySceneHot } from './sim/keyscene.js';
+import { crowdMood, MOOD } from './render/mood.js';
 import { tr } from './core/i18n.js';
 import * as THREE from 'three';
 import '@fontsource/pixelify-sans/400.css';
@@ -554,7 +555,11 @@ function frame(now) {
   sound.update(dt, mode === 'play' ? match : null);
   crowd?.update(dt);
   const touchTeam = match.ball.lastTouch != null ? getPlayer(match, match.ball.lastTouch)?.team : null;
-  rig.follow(match.ball.pos.x, match.ball.pos.z, dt, venueInfo.bounds, touchTeam != null ? attackDir(match, touchTeam) : 0, venueInfo.lead ?? 0, match.ball.vel.x);
+  // Elfmeter: Die Kamera geht nah an den Schützen (render/mood.js, Punkt 33).
+  const focus = mode === 'play' ? crowdMood(match).focus : null;
+  rig.setZoom(focus?.zoom ?? 1, MOOD.zoomRate);
+  if (focus) rig.follow(focus.x, focus.z, dt, venueInfo.bounds, 0, 0, 0);
+  else rig.follow(match.ball.pos.x, match.ball.pos.z, dt, venueInfo.bounds, touchTeam != null ? attackDir(match, touchTeam) : 0, venueInfo.lead ?? 0, match.ball.vel.x);
   // Ball 2.0: bei Tor oder hartem Pfostentreffer zuckt das Bild um genau ein internes Pixel
   // (nur Darstellung; die Kameraführung selbst bleibt, wie sie ist).
   const shake = view.ballView?.shakeOffset(dt) ?? 0;

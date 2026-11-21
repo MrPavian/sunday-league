@@ -163,7 +163,10 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
 **H – Kurzweil im 3D-Spiel und im Textmodus** (vom Nutzer ausgewählt, 2026-11-19)
 32. **Schlüsselszenen-Modus** (M): ✅ **2026-11-20** (sim/keyscene.js, tests/keyscene.test.js; vierte Stufe der Taste C, nur an der Seitenlinie; Großfeld rund 36 % kürzer, Sport-/Rasenplatz 15–19 %, kleine Plätze kaum – dort spielt fast alles vor dem Tor). Zeitraffer zwischen den spannenden Momenten, bei Chancen, Standards und Kontern normales Tempo
     zum Eingreifen. Ein Spiel in 4–5 Minuten, ohne dass etwas Wichtiges fehlt.
-33. **Momente mit Stimmung** (S): Zuschauer in den letzten Minuten lauter, Stille beim Elfmeter, Raunen und Jubel, die Kamera geht
+33. **Momente mit Stimmung** (S): ✅ **2026-11-21** (render/mood.js, tests/mood.test.js; nur Ton und Bild, Spiel unverändert):
+    knappes Spiel (höchstens ein Tor Abstand) in den letzten 15 % lauter bis zum Abpfiff; vor dem Elfmeter (auch im Elfmeterschießen)
+    still und die Kamera nah an Schütze, Ball und Torwart; Raunen bei knapp vorbei (bis 1,5 m neben dem Pfosten oder 1 m über die
+    Latte, auch auf Plätzen mit Wänden) – gemessen 0,8 (Großfeld) bis 4,2 (Rasenplatz) je Spiel. Ursprünglich: Zuschauer in den letzten Minuten lauter, Stille beim Elfmeter, Raunen und Jubel, die Kamera geht
     auf den Schützen.
 34. **Kleine Geschichten im Spiel** (S): Laufschrift mit Anlässen („erstes Spiel gegen den alten Verein“, „seit drei Spielen ohne
     Tor“), die der Erzähler aufgreift.
