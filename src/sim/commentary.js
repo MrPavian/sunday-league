@@ -48,6 +48,18 @@ const pools = {
   ),
 };
 
+// Zusatz für den Torjubel (Punkt 34, Anlässe aus career/storylines.js): Was macht dieses Tor besonders? n – Tore des Spielers in diesem Spiel (mit diesem).
+// Nur beim ersten Tor im Spiel; leer, wenn nichts. Ohne Zustand, damit Liveticker und Sprecher dasselbe sagen können.
+export function goalStoryLine(p, n = 1) {
+  const s = p?.story;
+  if (!s || n !== 1) return '';
+  if (s.debut) return tr(' Tor beim Debüt!', ' A goal on his debut!');
+  if (s.dry) return tr(` Endlich! Nach ${s.dry} Spielen ohne Tor.`, ` At last! After ${s.dry} games without a goal.`);
+  if (s.goalMark) return tr(` Sein ${s.goalMark}. Tor für den Verein!`, ` His ${s.goalMark}th goal for the club!`);
+  if (s.run) return tr(` Die Serie hält: ${s.run + 1} Spiele in Folge mit Tor.`, ` The run goes on: ${s.run + 1} games in a row with a goal.`);
+  return '';
+}
+
 export function createCommentator(m, seed = 1) {
   const rng = createRng(seed * 7919 + 17);
   const lines = [];
@@ -99,6 +111,7 @@ export function createCommentator(m, seed = 1) {
       const where = m.pitch?.name ? tr(` – ${m.pitch.name}`, ` – ${m.pitch.name}`) : '';
       add(tr(`Anpfiff! ${m.teams[0].name} gegen ${m.teams[1].name}${where}.`, `Kick-off! ${m.teams[0].name} v ${m.teams[1].name}${where}.`), 'whistle');
       if (m.surprise) add(m.surprise.text, 'info');
+      for (const st of m.stories ?? []) add(st.text, 'info'); // Anlässe dieser Partie (career/storylines.js)
     }
     for (const e of events) {
       switch (e.type) {
@@ -154,6 +167,7 @@ export function createCommentator(m, seed = 1) {
             if (p?.story?.former) text += tr(' Ausgerechnet der Ex! Er jubelt demonstrativ vor der alten Bank.', ' The old boy, of all people! He celebrates right in front of his old bench.');
             else if (p?.story?.nemesis) text += tr(` Schon wieder ${name} – das ${p.story.nemesis + 1}. Tor gegen dieses Team.`, ` ${name} again – his goal number ${p.story.nemesis + 1} against this lot.`);
             else if (p?.story?.exClub) text += tr(' Gegen den Ex-Verein! Er hält sich den Finger vor den Mund.', ' Against his old club! Finger to the lips.');
+            text += goalStoryLine(p, m.stats?.players?.[e.scorerId ?? e.playerId]?.goals ?? 1); // Debüt, Flaute, Jubiläum, Serie (Punkt 34)
           }
           add(text, 'goal');
           break;

@@ -68,6 +68,7 @@ import { coachOf, afterMatchVoice, deliverNews, grudgeMatch, preMatchVoice } fro
 import { midSeasonReport, seasonGoalVerdict, setSeasonGoal } from './board.js';
 import { relsMap } from '../sim/bonds.js';
 import { memoryAfterMatch, placeFormers, preMatchMemories, rememberArrival, rememberDeparture, tagStories } from './memory.js';
+import { matchStories, trackScoring } from './storylines.js';
 import { defaultCrest } from '../ui/crest.js';
 import { clubTactic, normalizeTactic, systemFormation } from '../sim/tactics.js';
 import { shirtSponsor, sleeveSponsor, sponsorColor, SPONSORS } from './sponsors.js';
@@ -1369,6 +1370,8 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   match.crowd = Math.round(fans * (match.derby ? 1.8 : 1) * (home.human ? fansMul(career) : 1));
   if (home.human) match.crowd = Math.min(match.crowd, capacity(career)); // Fassungsvermögen (facilities.js)
   match.homeTeam = humanIsAway ? 1 : 0;
+  // Kleine Geschichten (storylines.js, Punkt 34): Anlässe für Laufschrift, Ticker und Kommentar – nur Text.
+  if (home.human || away.human) match.stories = matchStories(career, match, match.teams.findIndex((t) => t.name === (home.human ? home : away).name), home.human ? away.id : home.id);
   // Flutlichtmast ausgefallen und nicht repariert (clublife.js flutlicht_ausfall): Heimspiel am Abend, eine Hälfte im Halbdunkel.
   if (home.human && career.flags?.mastOut === `${career.season}:${career.round}`) match.mastOut = true;
   return { match, humanIsAway, pitch, home, away, helpers: [...teamHome.helpers, ...teamAway.helpers] };
@@ -1413,6 +1416,7 @@ export function recordResult(career, fixture, prepared) {
     afterMatchFitness(career, p.poolIndex, share);
     rec.playShare = Math.round(((rec.playShare ?? 0) + share) * 100) / 100; // Spielzeit in ganzen Spielen (Saison)
     rec.goals += st.goals;
+    trackScoring(rec, st.goals); // Flaute und Serie (storylines.js)
     rec.assists += st.assists;
     if (grades[p.id] !== undefined) {
       rec.gradeSum += grades[p.id];

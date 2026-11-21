@@ -168,7 +168,11 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
     still und die Kamera nah an Schütze, Ball und Torwart; Raunen bei knapp vorbei (bis 1,5 m neben dem Pfosten oder 1 m über die
     Latte, auch auf Plätzen mit Wänden) – gemessen 0,8 (Großfeld) bis 4,2 (Rasenplatz) je Spiel. Ursprünglich: Zuschauer in den letzten Minuten lauter, Stille beim Elfmeter, Raunen und Jubel, die Kamera geht
     auf den Schützen.
-34. **Kleine Geschichten im Spiel** (S): Laufschrift mit Anlässen („erstes Spiel gegen den alten Verein“, „seit drei Spielen ohne
+34. **Kleine Geschichten im Spiel** (S): ✅ **2026-11-21** (career/storylines.js, tests/storylines.test.js; nur Text, Spiel unverändert):
+    vor dem Anpfiff bis zu drei Anlässe – Debüt, rundes Spiel/Tor für den Verein, Torflaute (ab 3 Spielen), Torserie (ab 2), Ex-Verein,
+    Wiedersehen mit einem Ehemaligen, Angstgegner, Sieges- und Sieglos-Serie, Hinspiel/Revanche. Laufschrift beim Anpfiff, Zeilen im
+    Liveticker, der Kommentar greift sie beim Tor auf („Endlich! Nach 4 Spielen ohne Tor.“). Gemessen: 38 von 44 eigenen Spielen mit
+    Anlass (2 Karrieren, je 2 Saisons). Ursprünglich: Laufschrift mit Anlässen („erstes Spiel gegen den alten Verein“, „seit drei Spielen ohne
     Tor“), die der Erzähler aufgreift.
 35. **Wechsel als Gespräch** (M): ✅ **2026-11-20** (sim/subtalk.js, tests/subtalk.test.js; Co-Trainer-Karte „X raus, Y rein“ mit Grund und Regeln; im Liveticker Wechselfrage mit Rat und Knopf „Wechseln“ zum Selbstwechseln, Nutzerwunsch). Der Co-Trainer schlägt vor („X ist platt, Y brennt, Gegner stellt um“), ein Tipp zum Annehmen;
     Regelverstöße werden vorher erklärt. Schließt den kleinen Punkt „Wechsel auf dem Platz statt in Listen“ (Abschnitt 2) ein.

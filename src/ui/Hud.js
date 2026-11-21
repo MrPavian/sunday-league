@@ -30,6 +30,7 @@ export class Hud {
         <span class="clock"></span>
       </div>
       <div class="venue"></div>
+      <div class="storyline" hidden><span></span></div>
       <div class="toast" hidden></div>
       <div class="coach-bubble" hidden></div>
       <div class="flash"></div>
@@ -59,6 +60,13 @@ export class Hud {
       el.style.setProperty('--kit', hex(t.kit.shirt));
     });
     this.$('.venue').innerHTML = `${match.pitch.name} · ${match.pitch.surface.name}${r ? ` · ${tr('Schiri', 'Referee')}: ${r.name}` : ''}<br><small>${match.teams.map((t, i) => `${t.short ?? t.name}: ${tacticLabel(match.plan?.[i], match.pitch.format)}`).join(' – ')}</small>`;
+    // Laufschrift mit den Anlässen dieser Partie (career/storylines.js, Punkt 34): läuft zum Anpfiff einige Male durch, dann weg.
+    const stories = match.stories ?? [];
+    const line = this.$('.storyline');
+    line.hidden = !stories.length;
+    line.querySelector('span').textContent = stories.map((x) => x.text).join('   ·   ');
+    line.style.setProperty('--story-dur', `${Math.max(10, stories.reduce((n, x) => n + x.text.length, 0) * 0.16).toFixed(1)}s`);
+    this.storyTimer = stories.length ? STORY_SECONDS : 0;
     this.toastQueue = [];
     this.hideToast();
     this.refName = r?.name ?? null;
@@ -254,8 +262,11 @@ export class Hud {
 
     if (this.toastTimer > 0 && (this.toastTimer -= dt) <= 0) this.hideToast();
     if (this.helpTimer > 0 && (this.helpTimer -= dt) <= 0) this.$('.help').classList.add('hidden');
+    if (this.storyTimer > 0 && (this.storyTimer -= dt) <= 0) this.$('.storyline').hidden = true;
   }
 }
+
+export const STORY_SECONDS = 24; // so lange läuft die Laufschrift nach dem Anpfiff (Spielzeit am Bildschirm, Spielwert)
 
 export const HELP_SECONDS = 8; // so lange steht die Tastenhilfe nach dem Anpfiff (Spielwert)
 
