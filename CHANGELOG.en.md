@@ -6,6 +6,18 @@ What has changed in Sunday League – newest delivery first, in plain player lan
 The most recent weeks are covered in detail, the early days of the game (25 September to 6 October) briefly.
 In the game, the same highlights are under **Settings → What's new**.
 
+## 2026-11-22-1 – Gameplay 2.0: character on the pitch, captain, atmosphere
+
+### Changed
+- **Back line on one line** (point 25, sim/ai.js LINES): full-size pitch with offside, gap between deepest and highest defender 6.0 → 4.7 m.
+- **New moves** (point 27): chest/thigh control, the wall jumps, tying a boot. Shoulder-to-shoulder built, measured and dropped (point 26).
+- **Keeper up for the last corner** (point 28): goes forward in the last minute when one goal down. A more open final phase was measured and dropped (fewer equalisers).
+- **Player personality** (point 29, sim/habits.js): stronger foot (21 % left-footed, Carey et al. 2001), "cuts inside", "Playing style" on the player card. 7-a-side corner test now 48 games (user decision).
+- **Atmosphere** (point 33, render/mood.js): louder late on, silence and close-up at penalties, groans at near misses.
+- **Little stories** (point 34, career/storylines.js): ticker strip at kick-off, lines in the live ticker, the occasion in the goal commentary.
+- **Decision moments in the live ticker** (point 36): penalty taker, free-kick option, second yellow looming (careful: fouls 1.7 → 0.3 per game).
+- **Captain** (point 41, career/captain.js) and **friendships/cliques** (point 42, career/friends.js).
+
 ## 2026-11-20-1 – Gameplay 2.0: smarter play, real ball physics, key moments
 
 ### Changed

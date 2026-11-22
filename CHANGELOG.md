@@ -6,6 +6,18 @@ Was sich in Sunday League geändert hat – neueste Lieferung oben, in normaler 
 Die jüngsten Wochen stehen ausführlich da, die frühen Tage des Spiels (25. September bis 6. Oktober) kompakt.
 Im Spiel findest du dieselben Highlights unter **Einstellungen → Was ist neu**.
 
+## 2026-11-22-1 – Gameplay 2.0: Charakter auf dem Platz, Kapitän, Stimmung im Spiel
+
+### Geändert
+- **Abwehrkette auf einer Linie** (Punkt 25, sim/ai.js LINES): Großfeld mit Abseits, Abstand vorderster–hinterster Verteidiger 6,0 → 4,7 m.
+- **Neue Bewegungen** (Punkt 27): Ballannahme Brust/Oberschenkel, Mauer springt, Schuh binden. Schulter an Schulter gebaut, gemessen und verworfen (Punkt 26).
+- **Torwart bei der letzten Ecke** (Punkt 28): geht in der letzten Minute bei einem Tor Rückstand mit nach vorn. Offenere Schlussphase gemessen und verworfen (Ausgleich seltener).
+- **Spielerpersönlichkeit** (Punkt 29, sim/habits.js): starker Fuß (21 % Linksfüße, Carey u. a. 2001), „zieht nach innen“, Block „Spielweise“ auf der Spielerkarte. Ecken-Test 7er-Feld auf 48 Spiele (Nutzerentscheid).
+- **Momente mit Stimmung** (Punkt 33, render/mood.js): Schlussphase lauter, Stille und Nahaufnahme beim Elfmeter, Raunen bei knapp vorbei.
+- **Kleine Geschichten** (Punkt 34, career/storylines.js): Laufschrift zum Anpfiff, Zeilen im Ticker, Anlass im Torkommentar.
+- **Entscheidungsmomente im Liveticker** (Punkt 36): Elfmeterschütze, Freistoß-Variante, Gelb-Rot droht (vorsichtig: Fouls 1,7 → 0,3 je Spiel).
+- **Kapitän** (Punkt 41, career/captain.js) und **Freundschaften/Grüppchen** (Punkt 42, career/friends.js).
+
 ## 2026-11-20-1 – Gameplay 2.0: klügeres Spiel, echte Ballphysik, Schlüsselszenen
 
 ### Geändert
