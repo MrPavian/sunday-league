@@ -247,6 +247,9 @@ export const sizeFactor = (pitch) => clamp(Math.sqrt(pitch.halfLength / 26), FOU
 const inAttackBox = (m, p) => inPenaltyBox(m.pitch, p.pos, attackDir(m, p.team) * m.pitch.halfLength, 0.3);
 
 // Der Ballführende wird gehalten, gezogen, geschubst oder gelegt. Die Chance wächst, wenn er am Verteidiger vorbei ist.
+// Vorsichtig nach Gelb (Liveticker, Punkt 36): so viel seltener hält, schubst oder legt er (Spielwert; ohne gab es dafür
+// doppelt so viel Trikotziehen, weil er nicht mehr in den Zweikampf ging).
+export const CAUTIOUS_CONTACT = 0.35;
 export function stepContactFouls(m, dt) {
   if (m.phase !== 'play') return false;
   const { ball } = m;
@@ -267,6 +270,7 @@ export function stepContactFouls(m, dt) {
     const kind = rel < -0.3 ? 'shirt' : rel > 0.4 ? 'trip' : 'push';
     let rate = FOUL.contactPerSec * sizeFactor(m.pitch) * (1.6 - 0.9 * cap1(vs(m, o, 'tackling'))) * errScale(vs(m, o, 'tackling')) * clamp(speed / 5, 0.5, 1.5) * (beaten ? FOUL.beaten : 1) * roughness(m, o);
     if (carrier.shielding) rate *= 0.7;
+    if (o.cautious) rate *= CAUTIOUS_CONTACT; // Ansage nach Gelb (touchline.js): Hände weg, kein Ziehen und Schubsen
     if (inAttackBox(m, carrier)) rate *= FOUL.box * boxFactor(m.pitch);
     if (!m.referee) rate *= FOUL.noRef;
     if (!ball.holder && dist2d(o.pos, ball.pos) < 0.7) rate *= 0.4; // am Ball: eher sauberer Zweikampf (der Stochern-Pfad regelt das)

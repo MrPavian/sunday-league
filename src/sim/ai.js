@@ -417,6 +417,18 @@ export const longThrowReady = (m, p, spot) => m.players.some((q) => q.team === p
 export const FREE_KICK = { shotMax: 27, central: 0.45, direct: 0.65, wideShot: 0.15, short: 0.2, shortMax: 12, wallH: 2.5, goalH: [0.6, 0.95] };
 export function freeKickChoice(m, p, oppGoal) {
   const { ball, pitch, rng } = m;
+  // Ansage von der Bank (Liveticker, touchline.js Punkt 36): gilt für diesen Freistoß.
+  const plan = m.fkPlan?.[p.team];
+  if (plan) {
+    m.fkPlan[p.team] = null;
+    const gw = pitch.goalHalfWidth;
+    if (plan === 'direkt') return { type: 'shoot', overWall: true, target: { x: oppGoal.x, z: (rng.chance(0.5) ? 1 : -1) * rng.range(gw * 0.4, gw * 0.85) }, power: 0.7, ttl: 0.5 };
+    if (plan === 'kurz') {
+      const mate = m.players.filter((t) => t.team === p.team && t !== p && t.role !== 'gk' && t.state === 'normal').sort((a, b) => dist2d(a.pos, ball.pos) - dist2d(b.pos, ball.pos))[0];
+      if (mate) return { type: 'pass', targetId: mate.id, cone: -1, minDist: 0.5, ttl: 0.4, fkShort: true };
+    }
+    return { type: 'pass', lofted: 'cross', cone: -0.8, ttl: 0.4 };
+  }
   const d = hypot(oppGoal.x - ball.pos.x, ball.pos.z);
   const central = Math.abs(ball.pos.z) / Math.max(d, 1) <= FREE_KICK.central;
   const inRange = d <= Math.max(17, FREE_KICK.shotMax * (pitch.halfLength / 52.5));
@@ -1314,8 +1326,9 @@ function chooseTackle(m, p, dBall) {
   let slideChance = surface.hard ? (p.injury ? 0 : tough ? 0.2 : 0.03) : 0.06 + 0.14 * soft(p.attrs.tackling);
   if (m.derby) slideChance *= 1.4; // im Derby geht man dazwischen
   if (p.yellow) slideChance *= 0.3; // mit Gelb vorbelastet lieber vorsichtig
+  if (p.cautious) slideChance = 0; // Ansage von der Bank nach Gelb (touchline.js): keine Grätsche mehr
   if (dBall > 0.9 && rng.chance(slideChance)) return 'slide';
-  if (dBall < 1.4 && rng.chance((0.15 + 0.25 * soft(p.attrs.tackling)) * aiSkill(m, p))) return 'poke';
+  if (dBall < 1.4 && rng.chance((0.15 + 0.25 * soft(p.attrs.tackling)) * aiSkill(m, p) * (p.cautious ? 0.5 : 1))) return 'poke';
   return null;
 }
 

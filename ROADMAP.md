@@ -186,7 +186,10 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
     Tor“), die der Erzähler aufgreift.
 35. **Wechsel als Gespräch** (M): ✅ **2026-11-20** (sim/subtalk.js, tests/subtalk.test.js; Co-Trainer-Karte „X raus, Y rein“ mit Grund und Regeln; im Liveticker Wechselfrage mit Rat und Knopf „Wechseln“ zum Selbstwechseln, Nutzerwunsch). Der Co-Trainer schlägt vor („X ist platt, Y brennt, Gegner stellt um“), ein Tipp zum Annehmen;
     Regelverstöße werden vorher erklärt. Schließt den kleinen Punkt „Wechsel auf dem Platz statt in Listen“ (Abschnitt 2) ein.
-36. **Entscheidungsmomente im Textmodus** (M): Der Ticker hält kurz an: Wer schießt den Elfmeter? Freistoß direkt oder flanken?
+36. **Entscheidungsmomente im Textmodus** (M): ✅ **2026-11-22** (sim/touchline.js, tests/decisions36.test.js): Elfmeter – wer
+    schießt (drei Kandidaten mit Schusswert, nervös/eiskalt/Kapitän); Freistoß vor dem Tor – selbst entscheiden, direkt, Flanke oder
+    kurz; Gelb – weiter, vorsichtig (keine Grätsche, kaum noch Ziehen und Schubsen: Fouls 1,7 → 0,3 je Spiel, Karten gleich) oder
+    runter. Die erste Antwort ändert nichts (Überspringen). Ursprünglich: Der Ticker hält kurz an: Wer schießt den Elfmeter? Freistoß direkt oder flanken?
     Gelb-Rot droht, runter nehmen?
 37. **Halbzeitansprache mit Wirkung** (S): ruhig, laut, einzeln loben; Spieler reagieren je nach Persönlichkeit, sichtbar in der
     zweiten Halbzeit.

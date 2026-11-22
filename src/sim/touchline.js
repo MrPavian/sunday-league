@@ -8,6 +8,7 @@ import { canSubNow, substitute, usableBench } from './squad.js';
 import { ruleLine } from './subtalk.js';
 import { benchAdvice, outAdvice } from './subadvice.js';
 import { answerCard } from './coachfeed.js';
+import { profilesOf } from './profiles.js';
 
 
 const surname = (p) => p.name.split(' ').slice(-1)[0];
@@ -38,7 +39,14 @@ export function checkDecision(tl, events) {
   const recent = m.time - tl.lastAsk < m.duration * 0.08;
   let d = null;
 
-  if (minute >= 2 && once('start')) d = startDecision(tl);
+  // Entscheidungsmomente (Gameplay 2.0, Punkt 36): Elfmeter, Freistoß vor dem Tor, Gelb – sofort, vor allem anderen.
+  const pen = events.some((e) => e.type === 'setpiece' && e.kind === 'penalty' && e.team === team) && m.setPiece?.type === 'penalty' && !m.setPiece.taken;
+  const fk = events.some((e) => e.type === 'setpiece' && e.kind === 'freekick' && e.team === team) && m.setPiece?.type === 'freekick' && !m.setPiece.taken && m.wallIds?.length;
+  const booked = events.map((e) => (e.type === 'card' && e.color === 'yellow' ? m.players.find((p) => p.id === e.playerId && p.team === team && p.state !== 'off') : null)).find(Boolean);
+  if (pen) d = penaltyDecision(tl);
+  else if (fk) d = freeKickDecision(tl);
+  else if (booked) d = yellowDecision(tl, booked);
+  else if (minute >= 2 && once('start')) d = startDecision(tl);
   else if (events.some((e) => e.type === 'halftime') && once('halftime')) d = halftimeDecision(tl);
   else if (events.some((e) => e.type === 'goal' && e.team !== team) && !recent) d = concededDecision(tl);
   else if (minute >= 55 && !recent && !tl.asked.has('sub2')) d = subDecision(tl);
@@ -62,6 +70,82 @@ export function answer(tl, choice = 0) {
 }
 
 const call = (type) => (m) => shout(m, type, { force: true });
+
+// --- Entscheidungsmomente (Punkt 36) ---------------------------------------------------------------------------------------
+// Elfmeter: Wer schießt? Die drei besten Schützen auf dem Platz (wie setpieces.js pickTaker), dazu, wer nervös ist.
+const penScore = (p) => p.attrs.shooting + p.attrs.technique * 0.5;
+function penaltyDecision(tl) {
+  const { m, team } = tl;
+  // Der vorgesehene Schütze zuerst (Überspringen nimmt die erste Antwort und ändert dann nichts), dann die besten anderen.
+  const cur = m.players.find((p) => p.id === m.setPiece.takerId);
+  const rest = m.players.filter((p) => p !== cur && p.team === team && p.role !== 'gk' && p.state === 'normal').sort((a, b) => penScore(b) - penScore(a) || (a.id < b.id ? -1 : 1));
+  const takers = [cur, ...rest].filter(Boolean).slice(0, 3);
+  const note = (p) => {
+    const bits = [`${tr('Schuss', 'shooting')} ${Math.round(p.attrs.shooting * 100)}`];
+    if (profilesOf(p).includes('nervoes')) bits.push(tr('nervös', 'nervy'));
+    if (profilesOf(p).includes('ruhepol')) bits.push(tr('eiskalt', 'ice-cold'));
+    if (p.captain) bits.push(tr('Kapitän', 'captain'));
+    return bits.join(', ');
+  };
+  return {
+    id: 'penalty',
+    question: vary(tl, 'pen', [tr('ELFMETER für uns! Wer schießt?', 'PENALTY to us! Who takes it?'), tr('Strafstoß! Der Ball liegt auf dem Punkt – wen schickst du hin?', 'Spot kick! The ball is on the spot – who do you send?')]),
+    options: takers.map((p) => ({
+      label: `${surname(p)} (${note(p)})`,
+      line: tr(`Der Trainer zeigt auf ${surname(p)}. Er nimmt sich den Ball.`, `The manager points at ${surname(p)}. He picks up the ball.`),
+      apply: (mm) => setPenaltyTaker(mm, p),
+    })),
+  };
+}
+
+// Schützen tauschen: Der Gewählte stellt sich an den Ball, der bisherige geht auf seinen Platz.
+export function setPenaltyTaker(m, p) {
+  const sp = m.setPiece;
+  if (!sp || sp.type !== 'penalty' || sp.taken || !m.players.includes(p)) return false;
+  const old = m.players.find((q) => q.id === sp.takerId);
+  if (!old || old === p) return true;
+  const a = { ...old.pos };
+  old.pos = { ...p.pos };
+  p.pos = a;
+  p.facing = { ...old.facing };
+  old.setPieceAction = null;
+  p.setPieceAction = 'penalty';
+  sp.takerId = p.id;
+  return true;
+}
+
+// Freistoß vor dem Tor (mit Mauer): direkt, Flanke oder kurz – ai.js freeKickChoice hält sich an m.fkPlan.
+function freeKickDecision(tl) {
+  const { m, team } = tl;
+  const taker = m.players.find((p) => p.id === m.setPiece.takerId);
+  const plan = (v) => (mm) => ((mm.fkPlan ??= [null, null])[team] = v);
+  const who = taker ? surname(taker) : tr('Der Schütze', 'The taker');
+  return {
+    id: 'freekick',
+    question: vary(tl, 'fk', [tr(`Freistoß vor dem Tor, ${who} steht am Ball. Was machen wir?`, `Free kick near goal, ${who} is over the ball. What do we do?`), tr(`Die Mauer steht. ${who} schaut rüber zur Bank – direkt oder rein damit?`, `The wall is set. ${who} looks over to the bench – shoot or put it in?`)]),
+    options: [
+      { label: tr(`${who} soll selbst entscheiden`, `Let ${who} decide`), line: tr('Der Trainer nickt nur – der Schütze weiß, was er tut.', 'The manager just nods – the taker knows what to do.') },
+      { label: tr('Direkt aufs Tor', 'Shoot'), line: tr(`„Hau drauf!“ ${who} legt sich den Ball zurecht.`, `"Hit it!" ${who} sets the ball down.`), apply: plan('direkt') },
+      { label: tr('Flanke in den Strafraum', 'Cross it in'), line: tr('Die Großen gehen mit nach vorne – der Ball kommt hoch rein.', 'The big lads go forward – the ball is coming in high.'), apply: plan('flanke') },
+      { label: tr('Kurz ausführen', 'Play it short'), line: tr('Ein kurzer Pfiff, ein kurzer Pass – mal sehen, ob die Mauer schläft.', 'A quick whistle, a short pass – let us see if the wall is asleep.'), apply: plan('kurz') },
+    ],
+  };
+}
+
+// Gelb: Gelb-Rot droht. Runter nehmen, zurückhaltender spielen lassen oder weiter wie bisher.
+function yellowDecision(tl, p) {
+  const { m, team } = tl;
+  // Erste Antwort = so weiter (Überspringen nimmt die erste).
+  const opts = [{ label: tr('Weiterspielen wie bisher', 'Carry on as before'), line: tr(`${surname(p)} winkt ab. Er weiß, was er tut – hoffentlich.`, `${surname(p)} waves it off. He knows what he is doing – hopefully.`) }];
+  opts.push({ label: tr('Drinlassen, aber vorsichtig', 'Keep him on, but careful'), line: tr(`Der Trainer zu ${surname(p)}: „Keine Grätsche mehr!“`, `The manager to ${surname(p)}: "No more slide tackles!"`), apply: () => (p.cautious = true) });
+  const inP = canSubNow(m, team) ? benchAdvice(m, team, p)[0]?.player ?? usableBench(m, team)[0] : null;
+  if (inP) opts.push({ label: tr(`Runter nehmen – ${surname(inP)} kommt`, `Take him off – ${surname(inP)} comes on`), line: tr(`${surname(p)} muss runter, bevor Gelb-Rot kommt. ${surname(inP)} ist drin.`, `${surname(p)} comes off before a second yellow. ${surname(inP)} is on.`), apply: (mm) => mm.players.includes(p) && usableBench(mm, team).includes(inP) && canSubNow(mm, team) && substitute(mm, p, inP) });
+  return {
+    id: `yellow:${p.id}`,
+    question: vary(tl, 'gelb', [tr(`Gelb für ${surname(p)}. Gelb-Rot droht – was machst du?`, `Yellow for ${surname(p)}. A second yellow is looming – what do you do?`), tr(`${surname(p)} ist verwarnt. Noch ein Foul, und wir sind einer weniger.`, `${surname(p)} is on a booking. One more foul and we are a man down.`)]),
+    options: opts,
+  };
+}
 
 function startDecision(tl) {
   const opp = tl.m.teams[1 - tl.team].name;
