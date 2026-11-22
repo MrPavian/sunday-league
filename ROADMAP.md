@@ -196,7 +196,12 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
 **I – Bindung an die Mannschaft und Langzeitmotivation** (vom Nutzer ausgewählt, 2026-11-19)
 39. **Vereinsrekorde zum Jagen** (S): Rekordtorschütze, längste Serie, höchster Sieg, meiste Zuschauer; Meldung, sobald einer fällt.
 40. **Mannschaftsfoto jede Saison** (S): Eine Wand im Vereinsheim füllt sich Jahr für Jahr; ein Tipp zeigt die Tabelle von damals.
-41. **Kapitän mit Gewicht** (M): spricht in Krisen für die Mannschaft, Binde sichtbar, Kapitänswahl kann zum Thema werden.
+41. **Kapitän mit Gewicht** (M): ✅ **2026-11-22** (career/captain.js, tests/captain.test.js; Spielwerte): fester Kapitän, sonst der
+    mit der größten Führungsstärke (Alter, Spiele, Anführer/Ex-Profi/Ruhepol, Meckerer zieht ab); „Zum Kapitän machen“ auf der
+    Spielerkarte, K im Kader. Binde am linken Oberarm (gelb, auf hellem Trikot schwarz), je Mannschaft einer auf dem Platz.
+    In der Krise (3 Niederlagen oder miese Stimmung) eine Ansprache – je nach Führungsstärke wirkt sie oder verpufft; Kapitän
+    zweimal auf der Bank oder Binde abgenommen: Gerede, er ist angefressen. Gemessen 60 Spiele: 6 Ansprachen, 6× Bank-Gerede.
+    Die Binde geht bei der Auswechslung nicht weiter (bleibt beim Ausgewechselten). Ursprünglich: spricht in Krisen für die Mannschaft, Binde sichtbar, Kapitänswahl kann zum Thema werden.
 42. **Freundschaften und Grüppchen in der Kabine** (M): ✅ **2026-11-22** (career/friends.js, tests/friends.test.js; Spielwerte):
     Grüppchen = drei oder mehr, alle miteinander eng (Kumpel, Schulfreund, Schwager, Pate). Die Aufstellung zeigt, wen sie trennt;
     nach dem Spiel ist ein Freund, der da war und nicht spielte, während sein Kumpel spielte, manchmal angefressen (gemessen etwa
@@ -205,8 +210,12 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
     spürt es in der Stimmung. Baut auf 29 auf.
 43. **Vereinskrisen und -chancen als kleine Geschichten** (M): Sponsor springt ab, Platz muss saniert werden, Talent aus dem
     Nachbardorf will kommen; über mehrere Wochen mit verschiedenen Ausgängen.
+44. **Spielerrat und Ersatzkapitän** (M, Nutzerwunsch 2026-11-22): Ein Spielerrat (drei, vier Spieler) spricht für die Mannschaft
+    mit dem Trainer und kann den Kapitän wählen; ein fester Ersatzkapitän übernimmt die Binde, wenn der Kapitän fehlt oder ausgewechselt
+    wird. Alternativ als einstellbare Regel: Die Binde übernimmt der Dienstälteste im Verein oder der mit den meisten Spielen.
+    Baut auf 41 auf.
 
-Reihenfolge G–I: 24 → 32 → 35 → 25 → 26 + 27 → 33 → 34 → 28 → 29 → 42 → 41 → 36 → 37 → 30 → 31 → 38 → 39 → 40 → 43.
+Reihenfolge G–I: 24 → 32 → 35 → 25 → 26 + 27 → 33 → 34 → 28 → 29 → 42 → 41 → 36 → 37 → 30 → 31 → 38 → 39 → 40 → 43 → 44.
 Begründung: Zuerst der kleine Rest der Ballphysik (24), dann zwei schnell spürbare Verbesserungen (32, 35). Danach die großen
 Spielschichten (25–27), zwischendurch kleine Würze (33, 34). Persönlichkeit (29) vor Freundschaften und Kapitän (42, 41), weil
 diese darauf aufbauen. Textmodus und die übrigen Punkte zum Schluss.

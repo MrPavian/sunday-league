@@ -905,7 +905,7 @@ export class MatchView {
   buildModel(match, p, number) {
     const team = match.teams[p.team];
     const keeper = p.role === 'gk';
-    const model = createPlayerModel(p.look, keeper ? team.keeperKit : team.kit, { number, keeper, sponsor: team.sponsor ?? null, sleeve: team.sleeve ?? null, atlas: typeof document !== 'undefined' ? this.atlasFor(p.team, keeper) : null });
+    const model = createPlayerModel(p.look, keeper ? team.keeperKit : team.kit, { number, keeper, sponsor: team.sponsor ?? null, sleeve: team.sleeve ?? null, atlas: typeof document !== 'undefined' ? this.atlasFor(p.team, keeper) : null, captain: !!p.captain });
     model.number = number;
     model.keeperKit = keeper;
     model.celebration = celebrationFor(p.id);

@@ -70,6 +70,7 @@ import { relsMap } from '../sim/bonds.js';
 import { memoryAfterMatch, placeFormers, preMatchMemories, rememberArrival, rememberDeparture, tagStories } from './memory.js';
 import { matchStories, trackScoring } from './storylines.js';
 import { afterMatchFriends } from './friends.js';
+import { afterMatchCaptain, armbandFor, fixArmband } from './captain.js';
 import { defaultCrest } from '../ui/crest.js';
 import { clubTactic, normalizeTactic, systemFormation } from '../sim/tactics.js';
 import { shirtSponsor, sleeveSponsor, sponsorColor, SPONSORS } from './sponsors.js';
@@ -1286,6 +1287,9 @@ export function teamForMatch(career, club, format, availability, rng) {
     for (const p of players) if (p.shirtNo == null) p.shirtNo = free++;
   }
   applyPubToTeam(career, club, players); // Bierdeckel-Taktik bzw. Tipp vom Wirt
+  // Kapitänsbinde (captain.js, Punkt 41): nur Anzeige im Spiel.
+  const band = armbandFor(career, club, lineup.filter((idx) => !helpers.includes(idx) && !late.includes(idx))); // wer später kommt, steht anfangs nicht auf dem Platz
+  for (const p of players) if (p.poolIndex === band) p.captain = true;
   tagStories(career, club, players); // Ehemalige, Angstgegner
   if (club.human) applyChemistry(career, lineup.filter((idx) => !helpers.includes(idx)), players); // Kumpels & Rivalen
   // Beziehungen und Form fürs Spiel: Kumpels spielen sich an, wer in Form ist, brennt.
@@ -1365,6 +1369,7 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   if (home.human || away.human) applyReferee(career, match); // Schiri aus dem festen Stamm (referees.js)
   // Eigenes Spiel: Manchmal kommt am Spieltag etwas dazwischen.
   if (home.human || away.human) matchdaySurprise(match, humanIsAway || home.human ? 0 : 1, createRng(hashSeed(career.seed, career.season, career.round, 77)), 0.28, null, career.level ?? 1);
+  if (home.human || away.human) fixArmband(career, match); // Binde auf dem Platz (captain.js)
   // Zuschauer am Zaun – für die Geräuschkulisse (die Kasse zählt nach dem Spiel selbst).
   const level = career.level ?? 1;
   const fans = level > 5 ? rng.int(...UPPER_FANS[Math.min(12, level)]) : level > 4 ? rng.int(80, 200) : level > 3 ? rng.int(45, 90) : level > 2 ? rng.int(30, 60) : level > 1 ? rng.int(18, 40) : rng.int(5, 14);
@@ -1433,6 +1438,7 @@ export function recordResult(career, fixture, prepared) {
     applyCards(career, prepared); // Sperren aus Rot, Gelb-Rot, fünf Gelben
     memoryAfterMatch(career, prepared); // „ausgerechnet der Ex"
     afterMatchFriends(career, prepared); // Freunde getrennt (friends.js, Punkt 42)
+    afterMatchCaptain(career, prepared); // Kapitän: Bank-Gerede, Ansprache in der Krise (captain.js, Punkt 41)
     heirMoments(career); // erstes Tor des Juniors
     matchAchievements(career, m, allPlayers(m)); // Erfolge (achievements.js)
     afterMatchPositions(career, m, humanClub(career).squad); // Gewöhnung & Murren (positions.js)

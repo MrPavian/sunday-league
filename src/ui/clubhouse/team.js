@@ -2,6 +2,7 @@
 // Methoden des Vereinsheims (this = Clubhouse), aus Clubhouse.js herausgelöst – Verhalten unverändert.
 import { footLabel, HABIT_INFO, habitsOf } from '../../sim/habits.js';
 import { separations } from '../../career/friends.js';
+import { captainOf, leadership } from '../../career/captain.js';
 import { PROFILES, profilesOf } from '../../sim/profiles.js';
 import { BONUS_DESC, BONUS_NAMES, knownBonuses } from '../../career/bonuses.js';
 import { tr } from '../../core/i18n.js';
@@ -119,7 +120,7 @@ export const teamScreens = {
   // Kleine Marker hinter dem Namen: Du, Auszeichnungen, Titel, Form, Launen.
   nameMarks(idx, p, r) {
     const c = this.career;
-    return `${r.awards?.length ? ` <span class="award" title="${r.awards.map(awardLabel).join(' · ')}">★${r.awards.length > 1 ? r.awards.length : ''}</span>` : ''}${isCoach(c, idx) ? ` <span class="me-tag">${tr('Du', 'You')}</span>` : ''}${p.title ? ` <em>${p.title}</em>` : ''}${formArrow(r.form)}${r.absenceMul > 1.2 ? tr(' <span class="grumpy" title="hat gerade wenig Zeit – sagt öfter ab">selten da</span>', ' <span class="grumpy" title="short of time at the moment – drops out more often">rarely around</span>') : ''}${r.grumpy ? tr(' <span class="grumpy" title="angefressen – sagt öfter ab">grummelt</span>', ' <span class="grumpy" title="sulking – drops out more often">sulking</span>') : ''}`;
+    return `${r.awards?.length ? ` <span class="award" title="${r.awards.map(awardLabel).join(' · ')}">★${r.awards.length > 1 ? r.awards.length : ''}</span>` : ''}${isCoach(c, idx) ? ` <span class="me-tag">${tr('Du', 'You')}</span>` : ''}${idx === captainOf(c) ? ` <span class="me-tag captain-tag" title="${tr('Kapitän – trägt die Binde', 'Captain – wears the armband')}">${tr('K', 'C')}</span>` : ''}${p.title ? ` <em>${p.title}</em>` : ''}${formArrow(r.form)}${r.absenceMul > 1.2 ? tr(' <span class="grumpy" title="hat gerade wenig Zeit – sagt öfter ab">selten da</span>', ' <span class="grumpy" title="short of time at the moment – drops out more often">rarely around</span>') : ''}${r.grumpy ? tr(' <span class="grumpy" title="angefressen – sagt öfter ab">grummelt</span>', ' <span class="grumpy" title="sulking – drops out more often">sulking</span>') : ''}`;
   },
 
   tab_squad() {
@@ -253,6 +254,7 @@ export const teamScreens = {
         </div>
         ${uiTabs([['overview', tr('Übersicht', 'Overview')], ['attrs', tr('Attribute', 'Attributes')], ['stats', tr('Statistik', 'Stats')]], tab, 'profileTab')}
         <div class="profile-body">${body}</div>
+        ${idx !== captainOf(c) && !isCoach(c, idx) ? `<div class="profile-foot">${button(tr('Zum Kapitän machen', 'Make captain'), { kind: 'ghost', action: 'makeCaptain', value: idx, title: tr(`Führungsstärke ${Math.round(leadership(c, idx) * 100)} – der bisherige Kapitän ${shortName(c, captainOf(c))} wäre angefressen.`, `Leadership ${Math.round(leadership(c, idx) * 100)} – the current captain ${shortName(c, captainOf(c))} would sulk.`) })}</div>` : ''}
         ${canRelease ? `<div class="profile-foot">${this.confirmRelease === idx ? button(releaseCost(c, idx) ? tr(`Wirklich auflösen? Abfindung ${eur(releaseCost(c, idx))} €`, `Really end his contract? Severance €${eur(releaseCost(c, idx))}`) : tr('Wirklich verabschieden?', 'Really release him?'), { kind: 'danger', action: 'release', value: idx }) : button(tr('Verabschieden', 'Release'), { kind: 'ghost', action: 'release', value: idx })}</div>` : ''}
       </div>`;
   },

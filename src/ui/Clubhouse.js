@@ -20,6 +20,7 @@ import { buy, buyLux, donate, sellLux, setHeavy, setPartnerSex, takeTrip, moveHo
 import { setSquadExtra, setVerband, argueRumor, askRumor, currentLineup, humanClub, updateClub, updateCrest, setFounded, clampFounded, foundedRange, setClubTactic, setClubPlan, maxSquad, recruit, releasePlayer, scoutRumor, talkRumor, nudge, playerOf, resetLineup, setLineupSlot, seasonOver, table } from '../career/career.js';
 import { verbandLeagues } from '../career/verband.js';
 import { extend as extendContract, releaseWithPay } from '../career/contracts.js';
+import { setCaptain } from '../career/captain.js';
 import { setWaive } from '../career/license.js';
 import { setSummerMove, takeOver } from '../career/clubchange.js';
 import { CLUB_STEPS, OFFER_STEP, startTutorial, stopTutorial, tutorialActive, TutorialBubble } from './Tutorial.js';
@@ -511,6 +512,9 @@ export class Clubhouse {
         this.h.onChange();
       } else if (action === 'waiveUp') {
         setWaive(this.career, Number(value) === 1); // Aufstiegsverzicht (license.js)
+        this.h.onChange();
+      } else if (action === 'makeCaptain') {
+        setCaptain(this.career, Number(value)); // Kapitän bestimmen (career/captain.js, Punkt 41)
         this.h.onChange();
       } else if (action === 'extendContract') {
         const [idx, years] = String(value).split(':').map(Number);

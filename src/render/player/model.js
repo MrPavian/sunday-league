@@ -20,8 +20,9 @@ export const SHADE = { under: 0.72, grad: 0.14 };
 // Aussehen; Frisur, Schulterbreite, Beinlänge und Kopfgröße leiten sich daraus ab.
 // atlas: gemeinsamer Team-Atlas (sonst bekommt die Figur einen eigenen).
 // edge: Kantenkennung für den Post-Shader (nur Spieler und Schiri).
-export function createPlayerModel(look, kit, { number = null, keeper = false, sponsor = null, sleeve = null, textured = true, atlas = null, edge = null, referee = false } = {}) {
+export function createPlayerModel(look, kit, { number = null, keeper = false, sponsor = null, sleeve = null, textured = true, atlas = null, edge = null, referee = false, captain = false } = {}) {
   const d = designPlayer(look, kit, { number, keeper, sponsor, sleeve, textured, atlas, edge, referee });
+  d.captain = captain;
   const b = new Builder();
   buildLegs(b, d);
   buildTorso(b, d);
@@ -200,6 +201,9 @@ function buildTorso(b, d) {
   b.box('spine', 0.1, 0.08, 0.1, skin, [0, torsoH + 0.03, 0]); // Hals
 }
 
+// Farbe der Kapitänsbinde: gelb, auf hellem Trikot schwarz.
+const bandColor = (shirt) => (luminance(shirt) > 0.55 ? 0x1a1a1a : 0xf2c230);
+
 function buildArms(b, d) {
   const { useAtlas, atlas, keeper, shirt, skin, bulk, glove, gloveCuff, pad, accent, sweat, sweatSide, tapeHand } = d;
   // Arme: Ärmel über der Schulter, Oberarm, Ellbogen, Unterarm, Hand.
@@ -211,6 +215,8 @@ function buildArms(b, d) {
     b.add(`upperArm${s}`, prism(0.115 * bulk, 0.11 * bulk, 0.12, 0.12 * bulk, 0.115 * bulk), keeper ? shirt : skin, { at: [out, -0.205, 0] });
     b.add(`lowerArm${s}`, prism(0.11 * bulk, 0.095 * bulk, 0.2, 0.11 * bulk, 0.1 * bulk), keeper ? shirt : skin, { at: [out, -0.1, 0] });
     b.box(`lowerArm${s}`, 0.1, 0.09, 0.115, keeper ? glove : skin, [out, -0.24, 0.005]);
+    // Kapitänsbinde am linken Oberarm (career/captain.js): helles Band, bei hellem Trikot dunkel.
+    if (d.captain && s === 'L') b.box('upperArmL', 0.185, 0.075, 0.19, bandColor(shirt), [out, -0.1, 0]); // über dem Ärmel, etwas breiter
     if (sweat && (sweat === 2 || s === sweatSide)) b.box(`lowerArm${s}`, 0.122 * Math.min(1, bulk), 0.05, 0.122 * Math.min(1, bulk), accent, [out, -0.18, 0]); // Schweißband
     if (tapeHand === s) b.box(`lowerArm${s}`, 0.108, 0.03, 0.122, 0xf4f1e8, [out, -0.265, 0.005]); // Tape um die Handfläche
     if (keeper) {
