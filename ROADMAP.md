@@ -191,7 +191,10 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
     kurz; Gelb – weiter, vorsichtig (keine Grätsche, kaum noch Ziehen und Schubsen: Fouls 1,7 → 0,3 je Spiel, Karten gleich) oder
     runter. Die erste Antwort ändert nichts (Überspringen). Ursprünglich: Der Ticker hält kurz an: Wer schießt den Elfmeter? Freistoß direkt oder flanken?
     Gelb-Rot droht, runter nehmen?
-37. **Halbzeitansprache mit Wirkung** (S): ruhig, laut, einzeln loben; Spieler reagieren je nach Persönlichkeit, sichtbar in der
+37. **Halbzeitansprache mit Wirkung** (S): ✅ **2026-11-22** (sim/halftalk.js, tests/halftalk.test.js; Spielwerte): ruhig reden, laut
+    werden oder einen der zwei Besten loben – in der 3D-Halbzeittafel und im Liveticker (nach der Ausrichtung). Nervöse +5 % bei Ruhe,
+    −5 % bei Gebrüll; Kämpfer +5 % laut, aber ruhig bei Rückstand −2 %; Gelobter +5 % (Nervöse +7 %). Die Reaktion steht in der
+    Tafel, im Ticker und zum Wiederanpfiff. Auf das Ergebnis über 80 Spiele nicht messbar (kleine Wirkung, gewollt). Ursprünglich: ruhig, laut, einzeln loben; Spieler reagieren je nach Persönlichkeit, sichtbar in der
     zweiten Halbzeit.
 38. **Liveticker mit Bild** (M): kleine 2D-Draufsicht der gefährlichen Szenen (Punkte und Pfeile) und eine Druck-Leiste über das
     Spiel (Chancen, xG).

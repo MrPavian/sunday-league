@@ -1,6 +1,7 @@
 // Liveticker: macht aus den Spielereignissen kurze Kommentarzeilen – für simulierte
 // Partien, die man nicht selbst spielt. Nutzt einen eigenen Zufall, damit der
 // Ticker das Ergebnis nicht verändert.
+import { talkLines } from './halftalk.js';
 import { hypot } from '../core/math.js';
 import { TRICKS } from './tricks.js';
 import { MATCH_INJURIES } from './knocks.js';
@@ -105,7 +106,13 @@ export function createCommentator(m, seed = 1) {
     else if (outcome === 'wide' && (s.dist < 9 || rng.chance(0.2))) add(`${shotLine(s)} ${pick(pools.wide, {})}`, 'chance');
   };
 
+  let talkShown = false;
   function feed(events) {
+    // Halbzeitansprache (halftalk.js, Punkt 37): Wer reagiert wie – zu Beginn der zweiten Halbzeit.
+    if (!talkShown && m.talk && m.half === 2 && m.phase === 'play') {
+      talkShown = true;
+      for (const t of [0, 1]) for (const line of talkLines(m, t)) add(line, 'info');
+    }
     if (!started) {
       started = true;
       const where = m.pitch?.name ? tr(` – ${m.pitch.name}`, ` – ${m.pitch.name}`) : '';

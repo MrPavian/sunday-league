@@ -1,5 +1,6 @@
 // Spielablauf: Karrierespiele, Pokale, Turniere, Relegation (an der Seitenlinie oder im Liveticker),
 // Abpfiff werten, Halbzeit. Den gemeinsamen Zustand (career, match, careerMatch …) liefert das Kontextobjekt aus main.js.
+import { talkLines } from '../sim/halftalk.js';
 import { tr } from '../core/i18n.js';
 import {
   clubById,
@@ -43,6 +44,8 @@ export function createMatchflow(ctx) {
       },
       onClose: () => {
         ctx.drainInput = true;
+        const said = talkLines(ctx.match, team); // Reaktion auf die Ansprache (sim/halftalk.js) – kurz zum Wiederanpfiff
+        if (said.length) hud.toast(said[0], 3, 2);
         if (ctx.match.phase === 'halftime') ctx.match.phaseTimer = Math.min(ctx.match.phaseTimer, 0.5); // die Pause war schon lang genug
       },
     });

@@ -9,6 +9,7 @@ import { ruleLine } from './subtalk.js';
 import { benchAdvice, outAdvice } from './subadvice.js';
 import { answerCard } from './coachfeed.js';
 import { profilesOf } from './profiles.js';
+import { halftimeTalk, praiseCandidates } from './halftalk.js';
 
 
 const surname = (p) => p.name.split(' ').slice(-1)[0];
@@ -167,7 +168,8 @@ function startDecision(tl) {
 }
 
 function halftimeDecision(tl) {
-  const opt = (value, label, line, extra) => ({ label, line, apply: (m) => (setMentality(m, value), extra?.(m)) });
+  // Danach fragt der Ticker nach dem Ton in der Kabine (Punkt 37, halftalk.js).
+  const opt = (value, label, line, extra) => ({ label, line, apply: (m) => (setMentality(m, value), extra?.(m), (tl.open = talkDecision(tl))) });
   return {
     id: 'halftime',
     question: diff(tl) > 0
@@ -192,6 +194,23 @@ function halftimeDecision(tl) {
       opt('offensive', tr('Mehr nach vorne!', 'More going forward!'), vary(tl, 'ht-o', [tr('Kabinenansprache: „Jetzt mal Mut, raus da!"', 'Team talk: "Show some courage, get out there!"'), tr('Kabinenansprache: „Die wackeln. Wir gehen jetzt drauf!"', 'Team talk: "They\'re wobbling. We go for them now!"'), tr('Der Trainer malt drei Pfeile nach vorne auf die Taktiktafel.', 'The manager draws three arrows pointing forward on the tactics board.')])),
       opt('defensive', tr('Hinten dichtmachen', 'Shut up shop'), vary(tl, 'ht-d', [tr('Kabinenansprache: „Nichts mehr zulassen!"', 'Team talk: "Don\'t let anything in!"'), tr('Kabinenansprache: „Kompakt, eng, kein Risiko. Verstanden?"', 'Team talk: "Compact, tight, no risks. Understood?"'), tr('Der Trainer zeigt auf das eigene Tor: „Da kommt keiner mehr rein."', 'The manager points at our goal: "Nobody gets in there again."')])),
       opt(tl.m.mentality, tr('Anschreien (Pressing)', 'Give them a rollicking (press)'), tr('In der Kabine fliegt eine Trinkflasche. Die Jungs kommen wütend raus.', 'A water bottle flies across the dressing room. The lads come out fired up.'), call('press', 1.5)),
+    ],
+  };
+}
+
+// Halbzeitansprache (Punkt 37): ruhig, laut oder einen loben – die erste Antwort sagt nichts weiter (Überspringen).
+function talkDecision(tl) {
+  const { m, team } = tl;
+  const say = (kind, id, label, line) => ({ label, line, apply: (mm) => { const lines = halftimeTalk(mm, team, kind, id); tl.talkLines = lines; } });
+  const praise = praiseCandidates(m, team).map((p) => say('praise', p.id, tr(`${surname(p)} vor allen loben`, `Praise ${surname(p)} in front of everyone`), tr(`„${surname(p)}, so will ich das sehen!“ Die anderen nicken.`, `"${surname(p)}, that is what I want to see!" The others nod.`)));
+  return {
+    id: 'talk',
+    question: vary(tl, 'talk', [tr('Und der Ton in der Kabine?', 'And the tone in the dressing room?'), tr('Wie sagst du es ihnen?', 'How do you tell them?')]),
+    options: [
+      { label: tr('Nichts weiter – Tee trinken', 'Nothing more – drink your tea'), line: tr('Der Trainer lässt die Jungs in Ruhe.', 'The manager leaves the lads alone.') },
+      say('calm', null, tr('Ruhig reden', 'Talk calmly'), tr('Der Trainer spricht leise, einer nach dem anderen hört zu.', 'The manager speaks quietly; one by one they listen.')),
+      say('loud', null, tr('Laut werden', 'Raise your voice'), tr('Die Kabinentür bebt. Draußen hört man jedes Wort.', 'The dressing-room door shakes. Every word can be heard outside.')),
+      ...praise,
     ],
   };
 }

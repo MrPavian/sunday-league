@@ -3,6 +3,7 @@ import { orderLabel } from '../sim/commands.js';
 import { matchupHint, report } from '../sim/report.js';
 import { matchMinute } from './Hud.js';
 import { esc } from './ds.js';
+import { halftimeTalk, praiseCandidates, talkLines } from '../sim/halftalk.js';
 
 // Halbzeit: der wichtigste Trainermoment. Das Spiel steht. Was sehe ich – was läuft,
 // was nicht, was macht der Gegner – und was mache ich jetzt: Plan, Wechsel, weiter.
@@ -16,6 +17,10 @@ export class HalftimePanel {
       if (a === 'plan') this.h.onPlan?.();
       else if (a === 'sub') this.h.onSub?.();
       else if (a === 'go') this.close();
+      else if (a === 'talk' && !this.match.talk?.[this.team]) {
+        halftimeTalk(this.match, this.team, b.dataset.kind, b.dataset.id ?? null); // Halbzeitansprache (sim/halftalk.js, Punkt 37)
+        this.render();
+      }
     });
     window.addEventListener('keydown', (e) => {
       if (!this.isOpen || e.code !== 'Enter') return;
@@ -58,6 +63,20 @@ export class HalftimePanel {
     done?.();
   }
 
+  // Kabinenansprache: ruhig, laut oder einen loben. Einmal je Pause; danach steht die Reaktion da.
+  talkBlock() {
+    const m = this.match;
+    const team = this.team;
+    const done = m.talk?.[team];
+    if (done) {
+      const lines = talkLines(m, team);
+      const label = { calm: tr('Ruhig geredet', 'Talked calmly'), loud: tr('Laut geworden', 'Raised your voice'), praise: tr('Gelobt', 'Praised') }[done.kind];
+      return `<section class="talk"><h4>${tr('Kabinenansprache', 'Team talk')}: ${label}</h4><ul>${lines.length ? lines.map((l) => `<li>${esc(l)}</li>`).join('') : `<li class="none">${tr('Die Jungs nicken. Mal sehen.', 'The lads nod. We will see.')}</li>`}</ul></section>`;
+    }
+    const praise = praiseCandidates(m, team).map((p) => `<button data-action="talk" data-kind="praise" data-id="${esc(p.id)}">${tr(`${esc(p.name.split(' ').slice(-1)[0])} loben`, `Praise ${esc(p.name.split(' ').slice(-1)[0])}`)}</button>`).join('');
+    return `<section class="talk"><h4>${tr('Kabinenansprache', 'Team talk')}</h4><p class="t-2">${tr('Nervöse brauchen Ruhe, Kämpfer eine laute Ansage, ein Lob tut jedem gut.', 'Nervy players need calm, battlers a loud word, praise does everyone good.')}</p><div class="ui-row"><button data-action="talk" data-kind="calm">${tr('Ruhig reden', 'Talk calmly')}</button><button data-action="talk" data-kind="loud">${tr('Laut werden', 'Raise your voice')}</button>${praise}</div></section>`;
+  }
+
   render() {
     const m = this.match;
     const team = this.team;
@@ -78,6 +97,7 @@ export class HalftimePanel {
         ${hint ? `<p class="hint-line">💡 ${esc(hint)}.</p>` : ''}
         ${decisions ? `<section><h4>${tr('Deine Entscheidungen', 'Your decisions')}</h4><ul>${decisions}</ul></section>` : ''}
         <p class="plan-line">${tr('Aktueller Plan', 'Current plan')}: <b>${orders.length ? esc(orders.join(' · ')) : tr('Grundstil ohne Zusatz', 'Base style, no extras')}</b></p>
+        ${this.talkBlock()}
         <footer>
           <button data-action="plan">${tr('Taktik ändern', 'Change tactics')}</button>
           <button data-action="sub">${tr('Wechseln', 'Substitute')}</button>
