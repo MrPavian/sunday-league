@@ -413,11 +413,13 @@ export function throwInRun(match) {
   return { id: p.id, u, dir, off: back * (1 - u) ** 1.5, speed: ((back * 1.5) / THROW_RUN) * (1 - u) ** 0.5, turn: smoothstep(0.6, 1, u) };
 }
 
-// Mit welchem Fuß geschossen wird: liegt der Ball deutlich rechts (links) neben der Blickrichtung, mit
-// diesem Fuß, sonst bleibt es beim bisherigen (prev ±1). Standbein steht dann neben dem Ball.
-export function kickFoot(p, ball, prev = 1) {
-  const lateral = (ball.pos.x - p.pos.x) * p.facing.z - (ball.pos.z - p.pos.z) * p.facing.x;
-  return lateral > 0.12 ? 1 : lateral < -0.12 ? -1 : prev;
+// Mit welchem Fuß geschossen wird: mit dem starken (pref ±1, sim/habits.js footOf) – nur wenn der Ball deutlich auf der anderen
+// Seite liegt (WEAK_FOOT m neben der Blickrichtung), mit dem schwachen. Profis nehmen den schwachen Fuß selten (Carey u. a. 2001,
+// WM 1998: rund vier von fünf Kontakten mit dem starken). Standbein steht dann neben dem Ball.
+export const WEAK_FOOT = 0.3;
+export function kickFoot(p, ball, pref = 1) {
+  const lateral = (ball.pos.x - p.pos.x) * p.facing.z - (ball.pos.z - p.pos.z) * p.facing.x; // > 0: Ball rechts
+  return lateral * pref < -WEAK_FOOT ? -pref : pref;
 }
 
 // Zweikampf um den Ball: Der Ballführende (letzter Kontakt war Dribbling, Ball am Fuß) und der nächste Gegner, wenn sie

@@ -7,6 +7,7 @@ import { BALL_AIR, BALL_RADIUS, BOARD_BOUNCE, ballSpeed, flightPath, rollDistanc
 import { attackDir, clampToPitch, distToSegment, getPlayer, wallPush } from './players.js';
 import { heeds } from './coach.js';
 import { HAND_ZONE, INERTIA, inHandZone, keeperBox, shortGame } from './actions.js';
+import { cutsInside, HABITS } from './habits.js';
 import { adherence, commitment, styleOf } from './plan.js';
 import { fooled } from './tricks.js';
 import { hasProfile } from './profiles.js';
@@ -967,10 +968,13 @@ function carryIntent(m, p, oppGoal, wall) {
   const s1 = attackDir(m, p.team);
   const flankFree = Math.abs(p.pos.z) > pitch.halfWidth * WIDE_LANE && !m.players.some((o) => o.team !== p.team && o.role !== 'gk' && (o.pos.x - p.pos.x) * s1 > -0.5 && (o.pos.x - p.pos.x) * s1 < 5 && Math.abs(o.pos.z - p.pos.z) < 3);
   const byline = !onWing && !keepWide && st.channel !== 'centre' && flankFree && Math.abs(p.pos.x - oppGoal.x) > pitch.halfLength * 0.12;
-  let aimZ = onWing || keepWide || byline ? p.pos.z * 0.95 : clamp(p.aimZ ?? 0, -pitch.halfWidth * 0.5, pitch.halfWidth * 0.5);
+  // Zieht nach innen (habits.js, Punkt 29): Außen auf der Seite seines schwachen Fußes geht er im letzten Drittel zur Mitte –
+  // außer der Trainer hat ausdrücklich Flügelspiel angesagt (onWing).
+  const inside = !onWing && cutsInside(m, p, s1, oppGoal.x, WIDE_LANE);
+  let aimZ = inside ? p.pos.z * HABITS.insideAim : onWing || keepWide || byline ? p.pos.z * 0.95 : clamp(p.aimZ ?? 0, -pitch.halfWidth * 0.5, pitch.halfWidth * 0.5);
   if (!onWing && st.channel === 'centre') aimZ *= 0.4;
   // Mitte zu: Stehen vorn im Korridor zwei Gegner, geht es schräg auf die freiere Seite.
-  if (!onWing && !keepWide && !byline && st.channel !== 'centre' && Math.abs(p.pos.x - oppGoal.x) > pitch.halfLength * 0.4) {
+  if (!inside && !onWing && !keepWide && !byline && st.channel !== 'centre' && Math.abs(p.pos.x - oppGoal.x) > pitch.halfLength * 0.4) {
     const s0 = attackDir(m, p.team);
     const inLane = (side) => m.players.filter((o) => o.team !== p.team && o.role !== 'gk' && (o.pos.x - p.pos.x) * s0 > 0 && (o.pos.x - p.pos.x) * s0 < 12 && (side === 0 ? Math.abs(o.pos.z - p.pos.z) < 3 : Math.sign(o.pos.z - p.pos.z) === side && Math.abs(o.pos.z - p.pos.z) < 9)).length;
     if (inLane(0) >= 2) {

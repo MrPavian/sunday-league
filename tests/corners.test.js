@@ -27,8 +27,10 @@ describe('Ecken', () => {
   }, 240000);
   // Ecken aus dem Spiel (Block, Abfälschen, Klärung unter Druck, Mannschaften im Strafraum): vorher 2,2 / 1,65 / 0,51 je Spiel.
   it('7er-Feld: über 3 Ecken je Spiel', () => {
-    expect(corners('rasenplatz', 16)).toBeGreaterThan(3); // gemessen 4,4 (80 Spiele)
-  }, 240000);
+    // 48 statt 16 Spiele (gleiche Schwelle je Spiel, vom Nutzer bestätigt 2026-11-22): Mit 16 Spielen kippte der Wert zufällig
+    // (2,81 mit „zieht nach innen“); über 96 Spiele 3,13 ohne und 3,25 mit der Gewohnheit.
+    expect(corners('rasenplatz', 48)).toBeGreaterThan(3); // gemessen 3,23 (48 Spiele, Seeds 900–947)
+  }, 720000);
   it('Großfeld: über 1,5 Ecken je Spiel (vorher 0,5)', () => {
     // 24 statt 12 Spiele (gleiche Schwelle je Spiel): Seit die Flanken in Kopfhöhe ankommen (2026-10-23) lagen die 12 Spiele
     // genau auf 1,5; über 40 Spiele unverändert 1,95 → 1,88 je Spiel.

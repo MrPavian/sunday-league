@@ -1,5 +1,7 @@
 // MANNSCHAFT: Kader (Karten), Spielerprofil, Aufstellung (Magnettafel), Taktik, Training, Jugend, Transfers.
 // Methoden des Vereinsheims (this = Clubhouse), aus Clubhouse.js herausgelöst – Verhalten unverändert.
+import { footLabel, HABIT_INFO, habitsOf } from '../../sim/habits.js';
+import { PROFILES, profilesOf } from '../../sim/profiles.js';
 import { BONUS_DESC, BONUS_NAMES, knownBonuses } from '../../career/bonuses.js';
 import { tr } from '../../core/i18n.js';
 import { spielberichtStreng, statusFor } from '../../career/spielbericht.js';
@@ -207,6 +209,7 @@ export const teamScreens = {
           return `<div class="attr-row"><span>${label}</span><i style="--v:${v}%"></i><b>${v}</b></div>`;
         })
         .join('')}</div>
+        ${styleChips(p)}
         ${bonusChips(c, idx)}
         ${p.traits?.length ? `<p class="ui-section-title">${tr('Eigenheiten', 'Traits')}</p><div class="ui-chips">${p.traits.filter((t) => TRAITS[t]).map((t) => `<span class="ui-chip plain" title="${TRAITS[t].desc}">${TRAITS[t].name}</span>`).join('')}</div>` : ''}`;
     } else if (tab === 'stats') {
@@ -886,4 +889,12 @@ function playerCard(c, idx, p, r) {
     ${awards ? `<div><h4>${tr('Auszeichnungen', 'Awards')}</h4><ul class="awards">${awards}</ul></div>` : ''}
     ${jobPerk(p.profession) ? `<div><h4>${tr('Beruf', 'Job')}: ${jobName(p.profession)}</h4><p class="hint">${jobPerk(p.profession).label}</p></div>` : ''}
   </div>`;
+}
+
+// Spielweise auf dem Platz (Gameplay 2.0, Punkt 29): starker Fuß, Profil und Gewohnheiten – daran erkennt man ihn im Spiel.
+function styleChips(p) {
+  const chips = [`<span class="ui-chip plain">${footLabel(p)}</span>`];
+  if (p.position !== 'gk') for (const id of profilesOf(p)) chips.push(`<span class="ui-chip plain" title="${PROFILES[id].desc}">${PROFILES[id].label}</span>`);
+  for (const id of habitsOf(p)) chips.push(`<span class="ui-chip plain" title="${HABIT_INFO[id].desc}">${HABIT_INFO[id].label}</span>`);
+  return `<p class="ui-section-title">${tr('Spielweise', 'Playing style')}</p><div class="ui-chips">${chips.join('')}</div>`;
 }

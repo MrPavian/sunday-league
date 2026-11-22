@@ -158,7 +158,12 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
     ohne Aufrücken ebenfalls 3/25 und 0/16. Offen: Tore ab der 75. Minute sind bei uns 11–12 %, in der Premier League 22–26 %.
     Ursprünglich: ab der 75. Minute größere Abstände und mehr Hin und Her; wer hinten liegt, wirft Leute nach
     vorne; in der Schlussminute geht der Torwart bei der letzten Ecke mit.
-29. **Spielerpersönlichkeit auf dem Platz** (L): zwei, drei Gewohnheiten je Spieler (zieht nach innen, nur rechter Fuß, sucht den
+29. **Spielerpersönlichkeit auf dem Platz** (L): ✅ **2026-11-21** (sim/habits.js, tests/habits.test.js): starker Fuß fest je Spieler
+    (21 % Linksfüße, Carey u. a. 2001), die Figur schießt mit ihm; „zieht nach innen“ – Außen auf der Seite des schwachen Fußes dribbelt
+    im letzten Drittel meist zur Mitte (je Anlauf 60 %; Rasenplatz 50 → 80 %, Großfeld 43 → 68–95 %; immer nach innen nahm die Flanken:
+    Kopfballtore Großfeld 2,7 % statt 5–8 %). Tore 3,51 → 3,15 (Rasenplatz) bzw. 1,90 → 1,94 (Großfeld), 120/60 Spiele;
+    „reklamiert jeden Pfiff“ ist der Meckerer. Spielerkarte: Block „Spielweise“ (Fuß, Profil, Gewohnheiten), auch im Wechselmenü.
+    „Sucht den Abschluss“ gebaut und verworfen (kaum zu erkennen: +10 % / −6 % Schüsse). Ursprünglich: zwei, drei Gewohnheiten je Spieler (zieht nach innen, nur rechter Fuß, sucht den
     Abschluss, reklamiert jeden Pfiff). Man erkennt die eigenen Leute am Spiel.
 30. **Taktische Muster des Gegners** (M): Gegnertrainer haben eine Handschrift (lange Bälle auf den Großen, hohes Pressing, Mauern);
     das Scouting vor dem Spiel zeigt sie, man kann darauf reagieren.

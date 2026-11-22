@@ -1,3 +1,4 @@
+import { footOf } from '../sim/habits.js';
 import { GET_UP } from '../sim/tackles.js';
 import * as THREE from 'three';
 import { ACRO, TRICKS } from '../sim/tricks.js';
@@ -92,13 +93,6 @@ function celebrationFor(id) {
   let h = 0;
   for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
   return CELEBRATIONS[h % CELEBRATIONS.length];
-}
-
-// Schussfuß, wenn der Ball mittig liegt: fest an der ID (jeder fünfte ist Linksfuß).
-function footFor(id) {
-  let h = 7;
-  for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return h % 5 === 0 ? -1 : 1;
 }
 
 // Winkel a nach b auf kürzestem Weg überblenden (t 0 → 1).
@@ -915,7 +909,7 @@ export class MatchView {
     model.number = number;
     model.keeperKit = keeper;
     model.celebration = celebrationFor(p.id);
-    model.footPref = footFor(p.id);
+    model.footPref = footOf(p); // starker Fuß, fest je Spieler (sim/habits.js)
     if (p.hot) {
       // In Form: eine kleine Pixelflamme über dem Kopf.
       model.flame = new THREE.Sprite(keepAlpha(new THREE.SpriteMaterial({ map: flameTexture(), transparent: true, depthWrite: false })));

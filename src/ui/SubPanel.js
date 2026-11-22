@@ -3,6 +3,7 @@ import { MATCH_INJURIES } from '../sim/knocks.js';
 import { POSITIONS } from '../sim/generator.js';
 import { oopInfo, oopText } from '../sim/position.js';
 import { PROFILES, profilesOf } from '../sim/profiles.js';
+import { footLabel, HABIT_INFO, habitsOf } from '../sim/habits.js';
 import { trickLine } from '../sim/tricks.js';
 import { planSubs, plannedSubs, requestSub, subsLeft, windowsLeft } from '../sim/squad.js';
 import { benchAdvice, outAdvice } from '../sim/subadvice.js';
@@ -244,7 +245,7 @@ export class SubPanel {
     const row = (p, kind, selected) => {
       const knock = p.knock ? ` <em class="sub-knock">✚ ${esc(MATCH_INJURIES[p.knock.kind]?.label ?? '')}</em>` : '';
       const role = POSITIONS[kind === 'out' ? p.role : p.position] ?? '';
-      const prof = [...profilesOf(p).map((id) => PROFILES[id].label), trickLine(p)].filter(Boolean).join(' · ');
+      const prof = [footLabel(p), ...profilesOf(p).map((id) => PROFILES[id].label), ...habitsOf(p).map((id) => HABIT_INFO[id].label), trickLine(p)].filter(Boolean).join(' · ');
       // Positionsfremd: draußen gilt die aktuelle Rolle, auf der Bank die Rolle des Ausgewählten.
       const target = kind === 'out' ? p.role : swapOutRole;
       const info = kind === 'out' ? p.oop : target ? oopInfo(p, target, p.posFam?.[target] ?? 0) : null;
