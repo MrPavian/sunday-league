@@ -1,6 +1,7 @@
 // Reaktionen der Figuren auf Schüsse und Tore – nur Darstellung, aus den Ereignissen der Simulation.
 // Ohne three.js und DOM, damit es sich mit der Simulation allein prüfen lässt (tests/reactions.test.js).
 
+import { bondOf, isBad, isGood } from '../sim/bonds.js';
 import { attackDir } from '../sim/players.js';
 import { CLIMB, FAN_CLIMB } from '../sim/incidents.js';
 import { GEO } from '../sim/shelter.js';
@@ -32,11 +33,16 @@ export function shotReactions(state, match) {
 
 // Jubel der Mitspieler: am Torschützen in die Traube, auf dem Weg dorthin mit erhobenem Arm,
 // sonst der eigene Jubel.
+export const FRIEND_HUG = 2.6; // Kumpels umarmen ab diesem Abstand (m, Spielwert), sonst 1,6 m
 export function mateCelebration(match, p, own) {
   if (p.mood !== 'celebrate' || p.role === 'gk') return own;
   const sc = match.players.find((q) => q.id === match.lastGoal?.scorerId);
   if (!sc || sc === p) return own;
-  if (Math.hypot(sc.pos.x - p.pos.x, sc.pos.z - p.pos.z) < 1.6) return 'umarmen';
+  // Freunde und Rivalen (sim/bonds.js, Punkt 42): Kumpels fallen sich schon von weiter weg in die Arme, ein Rivale des Torschützen
+  // jubelt nicht mit, er trottet allein zurück.
+  const bond = bondOf(match, p, sc);
+  if (isBad(bond)) return null;
+  if (Math.hypot(sc.pos.x - p.pos.x, sc.pos.z - p.pos.z) < (isGood(bond) ? FRIEND_HUG : 1.6)) return 'umarmen';
   return Math.hypot(p.vel.x, p.vel.z) > 2.5 ? 'hinterher' : own;
 }
 

@@ -69,6 +69,7 @@ import { midSeasonReport, seasonGoalVerdict, setSeasonGoal } from './board.js';
 import { relsMap } from '../sim/bonds.js';
 import { memoryAfterMatch, placeFormers, preMatchMemories, rememberArrival, rememberDeparture, tagStories } from './memory.js';
 import { matchStories, trackScoring } from './storylines.js';
+import { afterMatchFriends } from './friends.js';
 import { defaultCrest } from '../ui/crest.js';
 import { clubTactic, normalizeTactic, systemFormation } from '../sim/tactics.js';
 import { shirtSponsor, sleeveSponsor, sponsorColor, SPONSORS } from './sponsors.js';
@@ -1431,6 +1432,7 @@ export function recordResult(career, fixture, prepared) {
     rollInjuries(career, prepared); // Zerrung bis Kreuzband
     applyCards(career, prepared); // Sperren aus Rot, Gelb-Rot, fünf Gelben
     memoryAfterMatch(career, prepared); // „ausgerechnet der Ex"
+    afterMatchFriends(career, prepared); // Freunde getrennt (friends.js, Punkt 42)
     heirMoments(career); // erstes Tor des Juniors
     matchAchievements(career, m, allPlayers(m)); // Erfolge (achievements.js)
     afterMatchPositions(career, m, humanClub(career).squad); // Gewöhnung & Murren (positions.js)

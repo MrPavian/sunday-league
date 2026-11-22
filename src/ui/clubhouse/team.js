@@ -1,6 +1,7 @@
 // MANNSCHAFT: Kader (Karten), Spielerprofil, Aufstellung (Magnettafel), Taktik, Training, Jugend, Transfers.
 // Methoden des Vereinsheims (this = Clubhouse), aus Clubhouse.js herausgelöst – Verhalten unverändert.
 import { footLabel, HABIT_INFO, habitsOf } from '../../sim/habits.js';
+import { separations } from '../../career/friends.js';
 import { PROFILES, profilesOf } from '../../sim/profiles.js';
 import { BONUS_DESC, BONUS_NAMES, knownBonuses } from '../../career/bonuses.js';
 import { tr } from '../../core/i18n.js';
@@ -445,6 +446,11 @@ export const teamScreens = {
     const chemLine = chem.pairs.length
       ? `<p class="chem ${chem.score < 0 ? 'bad' : 'good'}">${tr('Teamchemie', 'Chemistry')} ${chem.score > 0 ? '+' : ''}${chem.score}: ${chem.pairs.map((pr) => `${shortName(c, pr.a)} & ${shortName(c, pr.b)} (${REL[pr.type].plural})`).join(' · ')}</p>`
       : `<p class="chem">${tr('Teamchemie: In dieser Aufstellung kennt sich keiner näher.', 'Chemistry: nobody in this line-up knows each other well.')}</p>`;
+    // Wen trennt diese Aufstellung? (career/friends.js, Punkt 42) – Freunde, die da sind, aber nicht in der Startelf stehen.
+    const sep = separations(c, lineup.filter((idx) => idx != null), humanClub(c).squad.filter((idx) => c.week?.availability?.[idx] === 'yes'));
+    const sepLine = sep.pairs.length || sep.split.length
+      ? `<p class="chem bad lp-split">${tr('Trennt Freunde', 'Splits friends')}: ${[...sep.split.map((g) => tr(`Grüppchen ${g.map((i) => shortName(c, i)).join(', ')}`, `clique ${g.map((i) => shortName(c, i)).join(', ')}`)), ...sep.pairs.filter((pr) => !sep.split.some((g) => g.includes(pr.out) && g.includes(pr.in))).map((pr) => tr(`${shortName(c, pr.out)} draußen, Kumpel ${shortName(c, pr.in)} spielt`, `${shortName(c, pr.out)} out, mate ${shortName(c, pr.in)} plays`))].join(' · ')}</p>`
+      : '';
     const hint = pick
       ? pick.slot != null
         ? tr('Jetzt eine andere Position zum Tauschen antippen – oder einen Spieler von der Bank.', 'Now tap another position to swap – or a player from the bench.')
@@ -465,6 +471,7 @@ export const teamScreens = {
         ${keeperNote}
         ${oopNote}
         ${chemLine}
+        ${sepLine}
       </div>`;
   },
 

@@ -197,7 +197,11 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
 39. **Vereinsrekorde zum Jagen** (S): Rekordtorschütze, längste Serie, höchster Sieg, meiste Zuschauer; Meldung, sobald einer fällt.
 40. **Mannschaftsfoto jede Saison** (S): Eine Wand im Vereinsheim füllt sich Jahr für Jahr; ein Tipp zeigt die Tabelle von damals.
 41. **Kapitän mit Gewicht** (M): spricht in Krisen für die Mannschaft, Binde sichtbar, Kapitänswahl kann zum Thema werden.
-42. **Freundschaften und Grüppchen in der Kabine** (M): Freunde spielen sich lieber an (sichtbar auf dem Platz); wer Freunde trennt,
+42. **Freundschaften und Grüppchen in der Kabine** (M): ✅ **2026-11-22** (career/friends.js, tests/friends.test.js; Spielwerte):
+    Grüppchen = drei oder mehr, alle miteinander eng (Kumpel, Schulfreund, Schwager, Pate). Die Aufstellung zeigt, wen sie trennt;
+    nach dem Spiel ist ein Freund, der da war und nicht spielte, während sein Kumpel spielte, manchmal angefressen (gemessen etwa
+    jedes vierte Spiel), ein getrenntes Grüppchen kostet etwas Stimmung. Torjubel: Kumpels umarmen den Schützen schon aus 2,6 m,
+    ein Rivale jubelt nicht mit. Freunde spielen sich schon lieber an (sim/bonds.js). Ursprünglich: Freunde spielen sich lieber an (sichtbar auf dem Platz); wer Freunde trennt,
     spürt es in der Stimmung. Baut auf 29 auf.
 43. **Vereinskrisen und -chancen als kleine Geschichten** (M): Sponsor springt ab, Platz muss saniert werden, Talent aus dem
     Nachbardorf will kommen; über mehrere Wochen mit verschiedenen Ausgängen.
