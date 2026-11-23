@@ -264,6 +264,10 @@ export class Clubhouse {
       } else if (action === 'pachtRenew' || action === 'pachtLong' || action === 'pachtBuy') {
         (action === 'pachtRenew' ? renew : action === 'pachtLong' ? longLease : buyGround)(this.career);
         this.h.onChange();
+      } else if (action === 'oppCounter') {
+        const [g, v] = String(value).split(':'); // Gegenmittel gegen die Handschrift des Gegners (career/patterns.js, Punkt 30)
+        setClubPlan(this.career, g, v);
+        this.h.onChange();
       } else if (action === 'oppWatch') {
         const club = this.career.clubs.find((x) => x.id === value);
         this.oppNote = (club && watchClub(this.career, club)) || '';

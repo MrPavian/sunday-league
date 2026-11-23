@@ -70,6 +70,7 @@ import { relsMap } from '../sim/bonds.js';
 import { memoryAfterMatch, placeFormers, preMatchMemories, rememberArrival, rememberDeparture, tagStories } from './memory.js';
 import { matchStories, trackScoring } from './storylines.js';
 import { afterMatchFriends } from './friends.js';
+import { patternOrders } from './patterns.js';
 import { afterMatchCaptain, armbandFor, fixArmband } from './captain.js';
 import { defaultCrest } from '../ui/crest.js';
 import { clubTactic, normalizeTactic, systemFormation } from '../sim/tactics.js';
@@ -772,7 +773,7 @@ export function nudge(career, idx) {
 // Taktik eines Vereins für ein Format: Der eigene Verein wählt selbst (System je
 // Format, ein Spielstil), die anderen haben ihre feste Handschrift.
 export function tacticOf(club, format) {
-  if (!club.human) return normalizeTactic(club.tactic ?? clubTactic(club.id, format), format);
+  if (!club.human) return { ...normalizeTactic(club.tactic ?? clubTactic(club.id, format), format), orders: patternOrders(club) }; // Handschrift des Trainers (patterns.js, Punkt 30)
   return { ...normalizeTactic({ style: club.tactic?.style, system: club.tactic?.systems?.[format] }, format), orders: { ...(club.tactic?.orders ?? {}) } };
 }
 

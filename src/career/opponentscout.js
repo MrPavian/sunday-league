@@ -7,6 +7,7 @@ import { tr } from '../core/i18n.js';
 import { STYLES } from '../sim/tactics.js';
 import { playerOf, table, tacticOf } from './career.js';
 import { estimate, estimateText, knowledge, SPREAD } from './scouting.js';
+import { PATTERNS, patternOf } from './patterns.js';
 
 const FIELD_ATTRS = ['pace', 'stamina', 'technique', 'passing', 'shooting', 'tackling', 'heading'];
 const hash = (...parts) => parts.reduce((h, p) => (Math.imul(h ^ p, 0x9e3779b1) + 0x7f4a7c15) >>> 0, 0x1b873593);
@@ -48,8 +49,11 @@ export function scoutReport(c, club, format = 11) {
 
   const rows = table(c);
   const place = rows.findIndex((r) => r.club.id === club.id) + 1 || null;
-  const out = { level, strength, form: formOf(c, club.id), place, style: null, system: null, strengths: [], weakness: null, danger: null };
+  const out = { level, strength, form: formOf(c, club.id), place, style: null, system: null, strengths: [], weakness: null, danger: null, pattern: null };
   if (level >= 1) {
+    // Handschrift des Trainers (patterns.js, Punkt 30) samt Gegenmittel, wo eines gemessen hilft.
+    const pat = patternOf(club);
+    if (pat) out.pattern = { id: pat, label: PATTERNS[pat].label, hint: PATTERNS[pat].hint, counter: PATTERNS[pat].counter };
     const t = tacticOf(club, format);
     out.style = STYLES[t.style]?.label ?? t.style;
     if (level >= 2) out.system = t.system ?? null;

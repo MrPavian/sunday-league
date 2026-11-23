@@ -21,6 +21,7 @@ import { NAT, nationName, natRunning, nextOwnMatch, reachLabel, recentNat, stepL
 import { candidates, coachSquad, natCoachLine } from '../../career/natcoach.js';
 import { windowView } from '../../career/natquali.js';
 import { leagueTitle } from '../../career/verband.js';
+import { orderLabel } from '../../sim/commands.js';
 import { clubById, humanClub, kitChoice, leagueOf, humanFixture, playerOf, seasonOver, table } from '../../career/career.js';
 import { DESTINATIONS, tripChoose, tripStage, tripState, tripVerdict } from '../../career/trip.js';
 import { eventView, moodLabel, moodText } from '../../career/events.js';
@@ -204,14 +205,19 @@ export const homeScreens = {
       `${tr('Tabelle', 'Table')}: ${r.place ? `${r.place}.` : '–'} · ${tr('Stärke', 'Strength')}: <b>${r.level ? (r.strength.exact ? r.strength.lo : `${r.strength.lo}–${r.strength.hi}`) : '?'}</b>`,
       r.style ? `${tr('Spielweise', 'Style')}: <b>${esc(r.style)}</b>${r.system ? ` · ${tr('System', 'System')} <b>${esc(r.system)}</b>` : ''}` : '',
       r.strengths.length ? `${tr('Stark in', 'Strong at')}: <b>${r.strengths.map((k) => ATTR_LABELS[k]).join(', ')}</b>${r.weakness ? ` · ${tr('schwach in', 'weak at')}: <b>${ATTR_LABELS[r.weakness]}</b>` : ''}` : '',
+      r.pattern ? `${tr('Handschrift des Trainers', 'Manager\'s trademark')}: <b>${esc(r.pattern.label)}</b> – ${tr('Co-Trainer', 'Assistant')}: „${esc(r.pattern.hint)}“` : '',
       r.danger ? `${tr('Aufpassen auf', 'Watch out for')}: <b>${esc(r.danger.name)}</b> (${r.danger.goals} ${tr('Tore', 'goals')}, ${tr('Stärke', 'rating')} ${r.danger.rating})` : '',
     ].filter(Boolean);
+    // Gegenmittel in den Spielplan übernehmen (patterns.js: nur wo es gemessen hilft).
+    const ctr = r.pattern?.counter;
+    const has = ctr && humanClub(c).tactic?.orders?.[ctr.group] === ctr.value;
+    const counter = ctr ? (has ? `<p class="t-2">✓ ${tr('Gegenmittel im Spielplan', 'Counter in the game plan')}: <b>${esc(orderLabel(ctr.group, ctr.value))}</b></p>` : button(tr(`Gegenmittel übernehmen: ${orderLabel(ctr.group, ctr.value)}`, `Use the counter: ${orderLabel(ctr.group, ctr.value)}`), { action: 'oppCounter', value: `${ctr.group}:${ctr.value}` })) : '';
     const watch = canWatch(c, opp) ? button(tr('Gegner beobachten (1 Aktion)', 'Watch the opponent (1 action)'), { action: 'oppWatch', value: opp.id }) : '';
     return `<details class="opp-check" data-testid="opp-check"${this.oppNote ? ' open' : ''}><summary>${tr('Gegner-Check', 'Opponent check')} <small>${'●'.repeat(r.level)}${'○'.repeat(3 - r.level)}</small></summary>
       <div class="ui-chips">${tr('Form', 'Form')}: ${form}</div>
       ${lines.map((l) => `<p class="t-2">${l}</p>`).join('')}
       <p class="t-2"><i>${LEVEL_TEXT()[r.level]}</i></p>
-      ${this.oppNote ? `<p class="t-2">${esc(this.oppNote)}</p>` : ''}${watch}</details>`;
+      ${this.oppNote ? `<p class="t-2">${esc(this.oppNote)}</p>` : ''}${counter}${watch}</details>`;
   },
 
   // Gleich nach dem gewonnenen Finale: Sieg-Meldung ganz oben, nicht erst im Pokal-Reiter.
