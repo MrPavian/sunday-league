@@ -224,8 +224,14 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
     mit dem Trainer und kann den Kapitän wählen; ein fester Ersatzkapitän übernimmt die Binde, wenn der Kapitän fehlt oder ausgewechselt
     wird. Alternativ als einstellbare Regel: Die Binde übernimmt der Dienstälteste im Verein oder der mit den meisten Spielen.
     Baut auf 41 auf.
+45. **Trainer-Editor zum Start** (M, Nutzerwunsch 2026-11-23): Statt nur Haut-, Haarfarbe und Bart ein kleiner Editor für das
+    eigene Alter Ego: Frisuren, Bart, Haarfarbe, Größe, Gewicht und mehr, mit Vorschau der Figur. Für den Spielertrainer verschiedene
+    Spielertypen (z. B. Knipser, Arbeiter, Techniker, Abwehrchef), die die Fähigkeitspunkte verteilen – oder selbst verteilen.
+46. **Fußballschuhe** (S, Nutzerwunsch 2026-11-23): verschiedene Schuhmodelle und Farben für die Spieler – angelehnt an aktuelle
+    und klassische Formen (schlichter schwarzer Klassiker, knallige Neonfarben, hoher Schaft, Retro mit weißen Streifen), ohne
+    echte Marken, Namen oder Logos.
 
-Reihenfolge G–I: 24 → 32 → 35 → 25 → 26 + 27 → 33 → 34 → 28 → 29 → 42 → 41 → 36 → 37 → 30 → 31 → 38 → 39 → 40 → 43 → 44.
+Reihenfolge G–I: 24 → 32 → 35 → 25 → 26 + 27 → 33 → 34 → 28 → 29 → 42 → 41 → 36 → 37 → 30 → 31 → 38 → 39 → 40 → 43 → 44 → 45 → 46.
 Begründung: Zuerst der kleine Rest der Ballphysik (24), dann zwei schnell spürbare Verbesserungen (32, 35). Danach die großen
 Spielschichten (25–27), zwischendurch kleine Würze (33, 34). Persönlichkeit (29) vor Freundschaften und Kapitän (42, 41), weil
 diese darauf aufbauen. Textmodus und die übrigen Punkte zum Schluss.
