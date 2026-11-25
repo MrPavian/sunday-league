@@ -204,8 +204,14 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
     −5 % bei Gebrüll; Kämpfer +5 % laut, aber ruhig bei Rückstand −2 %; Gelobter +5 % (Nervöse +7 %). Die Reaktion steht in der
     Tafel, im Ticker und zum Wiederanpfiff. Auf das Ergebnis über 80 Spiele nicht messbar (kleine Wirkung, gewollt). Ursprünglich: ruhig, laut, einzeln loben; Spieler reagieren je nach Persönlichkeit, sichtbar in der
     zweiten Halbzeit.
-38. **Liveticker mit Bild** (M): kleine 2D-Draufsicht der gefährlichen Szenen (Punkte und Pfeile) und eine Druck-Leiste über das
-    Spiel (Chancen, xG).
+38. **Liveticker mit Bild** (M): ✅ **2026-11-25** (sim/chances.js, ui/tickerPicture.js, tests/xg38.test.js): Über dem Ticker eine
+    Draufsicht jeder gefährlichen Szene (ab 0,15 xG oder Tor; Spieler als Punkte, Vorlage gestrichelt, Schuss als Pfeil, zum
+    Blättern) und eine Druck-Leiste über das Spiel (18 Abschnitte: Anteil der Zeit mit Ball im letzten Drittel; Abschlüsse als
+    Kreise nach xG, Tore gefüllt); xG im Kopf und in der Schlussstatistik. xG hergeleitet aus 160 Simulationsspielen (3512
+    Abschlüsse, 429 Tore): Öffnungswinkel, Abstand, Kopfball, Verteidiger in der Schussbahn, Torwart neben der Bahn; Elfmeter 0,66
+    (1019 von 1536 im Elfmeterschießen). Auffällig dabei: Im Spiel gehen Schüsse aus 2 m kaum öfter rein als aus 14 m (11,6 % gegen
+    10,3 %) – frei vor dem Tor 27 %, mit Verteidiger in der Bahn 17 %. Liest nur, das Spiel bleibt gleich. Ursprünglich: kleine
+    2D-Draufsicht der gefährlichen Szenen (Punkte und Pfeile) und eine Druck-Leiste über das Spiel (Chancen, xG).
 
 **I – Bindung an die Mannschaft und Langzeitmotivation** (vom Nutzer ausgewählt, 2026-11-19)
 39. **Vereinsrekorde zum Jagen** (S): Rekordtorschütze, längste Serie, höchster Sieg, meiste Zuschauer; Meldung, sobald einer fällt.
@@ -287,7 +293,9 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
   Stellungsspiel) einführen; „leicht“ dämpft die KI; Beratung: höchstens ein Wochenhinweis ab 5 Spielen, gleicher Hinweis frühestens
   nach 4 Wochen, Gegnerhinweis nur bei klarem Profil, Nachfassen nach 3 Spielen, Startseite statt Popup, Einstellung an/selten/aus.
   Neue Phasen 5b (Nachbarligen-Kader, Messspiele) und 6b (neue Fähigkeitswerte). Reihenfolge: 1 → 3 → 4 → 5 → 7 → 12 → 6 → 6b → 8 →
-  5b → 9 → 10 → 2 (je Schicht) → 11 → 13. Offen vor Phase 1: Bericht 00 Abschnitt 10 (Speicher- und Rechenzeitbudget, Punkt 38).
+  5b → 9 → 10 → 2 (je Schicht) → 11 → 13. Offen vor Phase 1: Bericht 00 Abschnitt 10 (Speicher- und Rechenzeitbudget, Punkt 38).- **Budget bestätigt (2026-11-25):** Kennzahlen im Spielstand höchstens 20 KB nach 5 Saisons; Mitschrift höchstens +10 % Rechenzeit je
+  Spiel. Punkt 38 (xG im Ticker) bleibt und gehört zu Phase 4.
+
 Reihenfolge G–I: 24 → 32 → 35 → 25 → 26 + 27 → 33 → 34 → 28 → 29 → 42 → 41 → 36 → 37 → 30 → 31 → 38 → 39 → 40 → 43 → 44 → 45 → 46 → 47.
 Begründung: Zuerst der kleine Rest der Ballphysik (24), dann zwei schnell spürbare Verbesserungen (32, 35). Danach die großen
 Spielschichten (25–27), zwischendurch kleine Würze (33, 34). Persönlichkeit (29) vor Freundschaften und Kapitän (42, 41), weil

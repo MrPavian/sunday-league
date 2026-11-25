@@ -2105,3 +2105,26 @@ body.manager #end { padding-bottom: 84px; }
 .kit-parts { flex-wrap: wrap; gap: var(--s1); }
 .kit-parts .kit-part { display: inline-flex; align-items: center; gap: 6px; }
 .kit-parts .kit-part .dot { width: 12px; height: 12px; border: 1px solid rgba(0, 0, 0, 0.5); display: inline-block; }
+
+/* Liveticker mit Bild (Punkt 38): Druck-Leiste und Szene */
+.ticker-panel .picture { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; height: clamp(96px, 24vh, 190px); flex-shrink: 0; }
+.ticker-panel .picture > div { background: var(--panel); border: 2px solid #000; padding: 4px 6px; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.ticker-panel .picture .press { flex: 1; min-height: 0; }
+.ticker-panel .picture svg { width: 100%; height: 100%; display: block; }
+.ticker-panel .pressbox small { text-align: center; font-size: 11px; opacity: 0.7; }
+.ticker-panel .press .mid { stroke: #f6f1e4; stroke-width: 0.6; }
+.ticker-panel .press .half { stroke: #f6f1e4; stroke-width: 0.4; stroke-dasharray: 2 2; opacity: 0.6; }
+.ticker-panel .press rect { stroke: #000; stroke-width: 0.5; }
+.ticker-panel .scene .empty { margin: auto; opacity: 0.7; text-align: center; }
+.ticker-panel .scene-svg { flex: 1; min-height: 0; }
+.ticker-panel .scene-svg .turf { fill: #2e6b34; stroke: #f6f1e4; stroke-width: var(--sw); }
+.ticker-panel .scene-svg .ln { fill: none; stroke: #f6f1e4; stroke-width: var(--sw); opacity: 0.7; }
+.ticker-panel .scene-svg .goal { stroke: #fff; stroke-width: calc(var(--sw) * 4); }
+.ticker-panel .scene-svg .shot { stroke-width: calc(var(--sw) * 3); }
+.ticker-panel .scene-svg .pass { stroke: #cfd8dc; stroke-width: calc(var(--sw) * 2); stroke-dasharray: calc(var(--sw) * 6) calc(var(--sw) * 4); }
+.ticker-panel .scene .cap { display: flex; align-items: center; gap: 6px; font-size: 12px; line-height: 1.2; }
+.ticker-panel .scene .cap span { flex: 1; text-align: center; }
+.ticker-panel .scene .cap button { font: inherit; color: var(--ink); background: var(--panel); border: 2px solid #000; padding: 0 8px; cursor: pointer; }
+.ticker-panel .scene .cap button:disabled { opacity: 0.35; cursor: default; }
+@media (max-width: 600px) { .ticker-panel .picture { grid-template-columns: 1fr; height: auto; } .ticker-panel .picture .press { height: 56px; flex: none; } .ticker-panel .picture .scene-svg { height: 120px; flex: none; } }
+@media (max-height: 500px) and (min-width: 601px) { .ticker-panel .picture { height: 118px; } .ticker-panel .pressbox small { display: none; } .ticker-panel .scene .cap { font-size: 11px; } }

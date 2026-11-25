@@ -7,6 +7,8 @@ import { shout, SHOUTS } from '../sim/coach.js';
 import { systemsFor, tacticLabel } from '../sim/tactics.js';
 import { setSystem } from '../sim/plan.js';
 import { coachReviewHtml } from './coachReview.js';
+import { createChanceLog, feedChances, XG } from '../sim/chances.js';
+import { pressureSvg, sceneCaption, sceneSvg, xgText } from './tickerPicture.js';
 
 const hex = (n) => `#${(n ?? 0x888888).toString(16).padStart(6, '0')}`;
 // Tempo: Spielsekunden pro echter Sekunde (1× ≈ eine Minute für das ganze Spiel).
@@ -27,6 +29,7 @@ export class Ticker {
       else if (t.dataset.action === 'shout') this.call(t.dataset.value);
       else if (t.dataset.action === 'system') this.reshape(t.dataset.value);
       else if (t.dataset.action === 'subs') this.subs();
+      else if (t.dataset.action === 'scene') this.browse(Number(t.dataset.value));
     });
     window.addEventListener('keydown', (e) => {
       if (this.root.hidden) return;
@@ -57,6 +60,9 @@ export class Ticker {
     this.speed = 0;
     this.acc = 0;
     this.shown = 0;
+    this.chances = createChanceLog(this.match);
+    this.sceneIdx = null; // null: immer die neueste Szene
+    this.scenesShown = -1;
     this.commentator = createCommentator(this.match, (Math.random() * 1e6) | 0); // nicht m.rng – das Ergebnis bleibt unverändert
     this.root.hidden = false;
     this.render();
@@ -136,9 +142,21 @@ export class Ticker {
     done?.();
   }
 
+  // Ältere oder neuere Szene im Bild zeigen; bei der neuesten folgt das Bild wieder dem Spiel.
+  browse(delta) {
+    const n = this.chances.scenes.length;
+    if (!n) return;
+    const cur = this.sceneIdx ?? n - 1;
+    const next = Math.max(0, Math.min(n - 1, cur + delta));
+    this.sceneIdx = next === n - 1 ? null : next;
+    this.scenesShown = -1;
+    this.updatePicture();
+  }
+
   step() {
     const m = this.match;
     stepMatch(m, undefined, 1 / 60);
+    feedChances(this.chances, m, m.events, tickerMinute(m));
     this.commentator.feed(m.events);
     if (this.tl) checkDecision(this.tl, m.events);
     m.events.length = 0;
@@ -173,8 +191,13 @@ export class Ticker {
           <small>${this.title}</small>
           <div class="board">${side(0)}<b class="score">0 : 0</b>${side(1)}</div>
           <div class="clock"></div>
+          <small class="xg"></small>
           <small class="plans">${m.teams.map((t, i) => `${t.short ?? t.name}: ${tacticLabel(m.plan?.[i], m.pitch.format)}`).join(' – ')}</small>
         </header>
+        ${XG.on ? `<section class="picture">
+          <div class="pressbox" title="${tr('Druck: Anteil der Zeit mit Ball im letzten Drittel; Kreise: Abschlüsse, Größe nach xG, gefüllt = Tor', 'Pressure: share of time on the ball in the final third; circles: shots, size by xG, filled = goal')}"><div class="press"></div><small>${tr('Druck und Chancen', 'Pressure and chances')}</small></div>
+          <div class="scene"><p class="empty">${tr('Noch keine gefährliche Szene.', 'No dangerous moment yet.')}</p></div>
+        </section>` : ''}
         <ol class="lines" aria-live="polite"></ol>
         <footer></footer>
       </div>`;
@@ -195,9 +218,38 @@ export class Ticker {
       list.prepend(li);
     }
     this.root.querySelector('.score').textContent = `${m.score[0]} : ${m.score[1]}`;
+    this.updatePicture();
     const clock = m.phase === 'ended' ? tr('Abpfiff', 'Full time') : m.phase === 'halftime' ? (m.extra ? tr('Pause · Verlängerung', 'Break · extra time') : tr('Halbzeit', 'Half-time')) : `${halfLabel(m)} · ${tickerMinute(m)}'`;
     this.root.querySelector('.clock').textContent = this.tl ? `${clock} · ${tr('Ausrichtung', 'Approach')}: ${mentalityLabel(m)}` : clock;
     if (m.phase === 'ended' && !this.endShown) this.updateControls();
+  }
+
+  updatePicture() {
+    if (!XG.on) return;
+    const m = this.match;
+    const log = this.chances;
+    const xg = this.root.querySelector('.xg');
+    if (xg) xg.textContent = `xG ${xgText(log.xg[0])} : ${xgText(log.xg[1])}`;
+    // Druck-Leiste: höchstens zweimal je Sekunde Spielzeit neu zeichnen.
+    const tick = Math.floor(m.time * 2);
+    if (tick !== this.pressTick || m.phase === 'ended') {
+      this.pressTick = tick;
+      const p = this.root.querySelector('.picture .press');
+      if (p) p.innerHTML = pressureSvg(m, log);
+    }
+    const n = log.scenes.length;
+    const box = this.root.querySelector('.picture .scene');
+    if (!box || !n) return;
+    const i = this.sceneIdx ?? n - 1;
+    const s = log.scenes[i];
+    // Neu zeichnen bei neuer Szene oder wenn der Ausgang feststeht (Tor, Parade kommen kurz nach dem Schuss).
+    const key = `${n}:${i}:${s.result}`;
+    if (key === this.scenesShown) return;
+    this.scenesShown = key;
+    box.innerHTML = `${sceneSvg(m, s)}
+      <div class="cap"><button data-action="scene" data-value="-1" ${i ? '' : 'disabled'} aria-label="${tr('Vorige Szene', 'Previous scene')}">‹</button>
+      <span>${sceneCaption(s)} <small>(${i + 1}/${n})</small></span>
+      <button data-action="scene" data-value="1" ${i < n - 1 ? '' : 'disabled'} aria-label="${tr('Nächste Szene', 'Next scene')}">›</button></div>`;
   }
 
   updateControls() {
@@ -209,7 +261,7 @@ export class Ticker {
       const st = m.stats.teams;
       const poss = st[0].possession + st[1].possession || 1;
       foot.innerHTML = `
-        <p class="stats">${tr('Schüsse', 'Shots')} ${st[0].shots}:${st[1].shots} · ${tr('Ballbesitz', 'Possession')} ${Math.round((st[0].possession / poss) * 100)}:${Math.round((st[1].possession / poss) * 100)} % · ${tr('Fouls', 'Fouls')} ${st[0].fouls}:${st[1].fouls}</p>
+        <p class="stats">${tr('Schüsse', 'Shots')} ${st[0].shots}:${st[1].shots} · ${tr('Ballbesitz', 'Possession')} ${Math.round((st[0].possession / poss) * 100)}:${Math.round((st[1].possession / poss) * 100)} % · ${tr('Fouls', 'Fouls')} ${st[0].fouls}:${st[1].fouls}${XG.on ? ` · xG ${xgText(this.chances.xg[0])}:${xgText(this.chances.xg[1])}` : ''}</p>
         ${this.tl ? coachReviewHtml(m, this.tl.team) : ''}
         <button class="go" data-action="done">${tr('Weiter (Enter)', 'Continue (Enter)')}</button>`;
       return;
