@@ -293,8 +293,18 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
   Stellungsspiel) einführen; „leicht“ dämpft die KI; Beratung: höchstens ein Wochenhinweis ab 5 Spielen, gleicher Hinweis frühestens
   nach 4 Wochen, Gegnerhinweis nur bei klarem Profil, Nachfassen nach 3 Spielen, Startseite statt Popup, Einstellung an/selten/aus.
   Neue Phasen 5b (Nachbarligen-Kader, Messspiele) und 6b (neue Fähigkeitswerte). Reihenfolge: 1 → 3 → 4 → 5 → 7 → 12 → 6 → 6b → 8 →
-  5b → 9 → 10 → 2 (je Schicht) → 11 → 13. Offen vor Phase 1: Bericht 00 Abschnitt 10 (Speicher- und Rechenzeitbudget, Punkt 38).- **Budget bestätigt (2026-11-25):** Kennzahlen im Spielstand höchstens 20 KB nach 5 Saisons; Mitschrift höchstens +10 % Rechenzeit je
+  5b → 9 → 10 → 2 (je Schicht) → 11 → 13. Offen vor Phase 1: Bericht 00 Abschnitt 10 (Speicher- und Rechenzeitbudget, Punkt 38).
+- **Budget bestätigt (2026-11-25):** Kennzahlen im Spielstand höchstens 20 KB nach 5 Saisons; Mitschrift höchstens +10 % Rechenzeit je
   Spiel. Punkt 38 (xG im Ticker) bleibt und gehört zu Phase 4.
+- **Phase 1, Schritt 1+2 ✅ 2026-11-25** – Spieldaten (`sim/analytics.js`, Schalter `AN.on`) und Saisonsummen
+  (`career/seasonstats.js`). Je Spieler und Verein: Pässe, angekommen, unter Druck (Druckmodell der Engine), überspielte Gegner
+  (Packing) und Mannschaftsteile, Zweikämpfe am Boden mit Gewinner und Verlierer, Kopfballduelle, zweite Bälle, Abschlüsse, xG, xA;
+  je Verein Ballbesitz je Drittel (Field Tilt). Jede Kennzahl trägt ihre Herkunft (`FIELDS[].src`). Liest nur: Golden unverändert,
+  gleicher Seed mit und ohne Mitschrift gleiches Spiel; Summen stimmen mit Spielprotokoll und Ticker überein. Gemessen: Mitschrift
+  +0,6 % (Großfeld) bis +1,7 % (Hinterhof) Rechenzeit je Spiel (je 4 Spiele, Seeds 500–503); Spielstand nach 5 Saisons (8 Vereine,
+  Seed 11) höchstens 5,6 KB zusätzlich, davon 2,3 KB dauerhaft (Chronik der Kaderspieler, 5 Saisons Vereinsbilanz). Nur
+  Ligaspiele mit voller Simulation zählen; Pokal, Turniere, Relegation noch nicht. Schwellen (Zweikampf 1,0 m wie `tackles.js`,
+  Kopfballduell 1,5 m, zweiter Ball 3 s) sind Spielwerte. Nächster Schritt: Phase 3 (Validierung).
 
 Reihenfolge G–I: 24 → 32 → 35 → 25 → 26 + 27 → 33 → 34 → 28 → 29 → 42 → 41 → 36 → 37 → 30 → 31 → 38 → 39 → 40 → 43 → 44 → 45 → 46 → 47.
 Begründung: Zuerst der kleine Rest der Ballphysik (24), dann zwei schnell spürbare Verbesserungen (32, 35). Danach die großen

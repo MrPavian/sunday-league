@@ -81,6 +81,7 @@ import { euroSeasonEnd } from './europa.js';
 import { bundVenueEvent } from './bundevents.js';
 import { initTiger, tigerWeek } from './tiger.js';
 import { bonusesOf } from './bonuses.js';
+import { closeSeasonAnalytics, recordSeasonAnalytics } from './seasonstats.js';
 import { matchTactic } from './tacticpresets.js';
 import { keeperGrowthMul, weeklyTeam } from './coachteam.js';
 import { reserveMatchday, reserveSeasonEnd } from './reserve.js';
@@ -392,6 +393,7 @@ export function nextSeason(career) {
   const bestOfSeason = seasonAward(career, awardDeps(career));
   const coachOfSeason = seasonCoachAward(career, table(career), (idx) => playerOf(career, idx).rating, coachName(career));
   for (const idx of humanClub(career).squad) logSeason(career, idx, playerOf(career, idx).rating);
+  closeSeasonAnalytics(career, humanClub(career).squad, humanClub(career).id); // Spieldaten der Saison (seasonstats.js, AFS Phase 1)
 
   // Entwicklung zuerst – die Einsätze dieser Saison zählen als Spielpraxis.
   const development = developPlayers(career);
@@ -1433,6 +1435,7 @@ export function recordResult(career, fixture, prepared) {
     // Schürfwunden ab ×2 brauchen eine Woche.
     if (p.injury && p.injury.severity >= 2) rec.injuryWeeks = Math.max(rec.injuryWeeks, 1);
   }
+  recordSeasonAnalytics(career, fixture, prepared); // Spieldaten je Spieler und Verein (seasonstats.js, AFS Phase 1)
   const humanId = humanClub(career).id;
   if (fixture.home === humanId || fixture.away === humanId) {
     rollInjuries(career, prepared); // Zerrung bis Kreuzband

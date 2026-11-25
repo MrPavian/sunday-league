@@ -32,6 +32,7 @@ import { startShootout, stepShootout } from './shootout.js';
 import { stepKnocks } from './knocks.js';
 import { acrobaticTouch, humanTrick } from './tricks.js';
 import { stepLog } from './matchlog.js';
+import { stepAnalytics } from './analytics.js';
 import { stepSituations } from './situations.js';
 import { answerCard, stepCoachFeed } from './coachfeed.js';
 import { aiCoachHalftime, stepAiCoach } from './aicoach.js';
@@ -176,6 +177,7 @@ export function stepMatch(m, input = NO_INPUT, dt) {
   trackStep(m, dt);
   trackNerves(m); // vergebene Großchance, Torwartpatzer (nerves.js, Punkt 31)
   stepLog(m);
+  stepAnalytics(m, dt); // AFS Phase 1: Spieldaten (liest nur)
   stepSituations(m);
   if (m.manager) stepCoachFeed(m, m.coachTeam);
   stepSwitches(m, 0);
