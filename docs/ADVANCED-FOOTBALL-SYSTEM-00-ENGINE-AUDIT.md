@@ -415,3 +415,11 @@ Kennzahlen aus den vorhandenen Daten tragen; Erweiterungen dann nur für nachgew
    führen?
 10. **Feinrollen (B1):** gewünscht? Sie sind die Voraussetzung für Positionsflexibilität und Spieler-Eignung, verändern aber die
     Balance am stärksten.
+
+---
+
+## 11. Fortsetzung
+
+Ergänzung 02 (Advanced Football Intelligence) baut auf diesem Bericht auf: `docs/ADVANCED-FOOTBALL-SYSTEM-02-INTELLIGENCE.md`.
+Dort steht die **gemeinsame Roadmap** beider Aufträge (Abschnitt 9); die Phasen 5–8 dieses Berichts gehen in den Phasen 7–13
+der Ergänzung auf, dazu kommen Phase 5 (Profile) und Phase 6 (Philosophien).

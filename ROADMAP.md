@@ -273,6 +273,14 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
 - Empfehlung: Szenario 1 sofort, Szenario 2 schrittweise, Szenario 3 (volle räumliche Engine) nicht. Offene Entscheidungen:
   Bericht Abschnitt 10.
 
+- **Ergänzung 02 – Advanced Football Intelligence** (Nutzerauftrag 2026-11-25, nur Konzept): `docs/ADVANCED-FOOTBALL-SYSTEM-02-INTELLIGENCE.md`.
+  Bestand: Lageerkennung (`sim/situations.js`, 12 Lagen), KI-Trainer im Spiel (`sim/aicoach.js`, 4 Trainertypen), Co-Trainer-Karten
+  mit Wirkungskontrolle (`sim/coachfeed.js`) sind die Live-Ebene; es fehlen Profile über viele Spiele und Entscheider außerhalb
+  des Spiels. Gemeinsame Phasen (Nummern aus Ergänzung 02 bleiben): 0 ✅ · 1 Datenmodell · 3 Validierung · 4 Analytics ·
+  2 Engine-Erweiterungen · **5 Profile** · **6 Philosophien** · 7 AFI-Kern · 8 KI-Trainer · 9 Smart Scouting & Tactical Fit ·
+  10 Transfer-KI · 11 Spielerentwicklung · 12 Manager-Beratung · 13 Liga Intelligence. Empfohlene Reihenfolge:
+  1 → 3 → 4 → 5 → 7 → 12 → 6 → 8 → 9 → 10 → 2 (je Schicht) → 11 → 13. Offene Entscheidungen: Bericht 00 Abschnitt 10, Ergänzung 02
+  Abschnitt 10 (E1–E8).
 Reihenfolge G–I: 24 → 32 → 35 → 25 → 26 + 27 → 33 → 34 → 28 → 29 → 42 → 41 → 36 → 37 → 30 → 31 → 38 → 39 → 40 → 43 → 44 → 45 → 46 → 47.
 Begründung: Zuerst der kleine Rest der Ballphysik (24), dann zwei schnell spürbare Verbesserungen (32, 35). Danach die großen
 Spielschichten (25–27), zwischendurch kleine Würze (33, 34). Persönlichkeit (29) vor Freundschaften und Kapitän (42, 41), weil
