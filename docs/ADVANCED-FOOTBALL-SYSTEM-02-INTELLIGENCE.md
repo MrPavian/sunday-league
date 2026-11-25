@@ -305,3 +305,49 @@ diesem Projekttempo, 8–13 weitere 2–3 Monate. Schätzung, kein Messwert.
   Werten bleiben und Training darauf abbilden (Empfehlung für den Anfang)?
 - **E7 Schwierigkeit:** soll die Stufe „leicht“ die CPU-Intelligenz dämpfen (wie heute `aicoach.js DIFFICULTY`)?
 - **E8 Häufigkeit der Beratung:** Vorschlag oben (1 je Woche + 1 vor dem Spiel) bestätigen.
+
+---
+
+## 11. Entscheidungen des Nutzers (2026-11-25)
+
+| Nr. | Frage | Entscheidung | Folge |
+|---|---|---|---|
+| E1 | Reihenfolge (Beratung vor Transfer-KI) | **ja** | Roadmap-Reihenfolge Abschnitt 9 gilt |
+| E2 | Profile nur für die eigene Liga | **nein** | Vereine anderer Ligen haben heute **keinen festen Kader** (`pyramid.js ensureLeagues` „ohne Kader“, Tabelle in einem Zug per Poisson `simTable`); Nachbarvereine des Transfermarkts werden je Saison neu gezogen (`transfers.js genNeighbors`). Profile außerhalb der eigenen Liga brauchen daher erst feste Kader und eine Datenquelle – **gewählt: Variante a + b** (11.1) |
+| E3 | CPU-Wechselzahl wie bisher, nur klüger auswählen | **ja** | `cpuTransfers` behält die Obergrenze je Fenster |
+| E4 | Ballbesitz-Philosophie | **neuer fünfter Trainertyp** | `opponents.js TYPES`, `aicoach.js PERSONAS`, `patterns.js BY_TYPE` erweitern; Verteilung der Typen auf die Vereine ändert sich (Golden/Balance messen) |
+| E5 | CPU-Scouting nach denselben Kenntnisregeln | **ja** | CPU-Vereine brauchen eigene Kenntnisstände (`scouting.js` heute nur für den Menschen) – Speicher beachten |
+| E6 | Neue Fähigkeitswerte (Antizipation, Übersicht, Stellungsspiel) | **einführen** | Engine-Änderung: neue Werte in `generator.js ROLL_ATTRS`, Wirkung in `ai.js`/`actions.js`, Entwicklung/Training, Stärke (`ratePlayer`), alte Spielstände migrieren; Balance neu messen. Eigene Phase vor 11, als schaltbare Schicht mit Vorher/Nachher-Messung |
+| E7 | Stufe „leicht“ dämpft die KI | **ja** | wie heute `aicoach.js DIFFICULTY`, auf alle AFI-Entscheider ausgeweitet |
+| E8 | Häufigkeit der Beratung | **Vorschlag 11.2 übernommen** | Zahlen sind Spielwerte, nach ersten Messläufen prüfen |
+
+### 11.1 Varianten für E2 (Profile außerhalb der eigenen Liga)
+
+| Variante | Inhalt | Speicher | Rechenzeit | Herkunft |
+|---|---|---|---|---|
+| a) Nachbarligen mit Stichprobenspielen | Eine Liga darüber und darunter bekommen feste Kader; je Spieltag laufen dort wenige Spiele mit voller Engine nur zum Messen (Ergebnis zählt nicht, Tabelle bleibt Poisson) | mittel (2 Ligen Kader) | + einige Spiele je Woche im Hintergrund | MEASURED aus Stichprobe, kleineres n |
+| b) Werte-Profile für alle anderen | Aus den Werten der Spieler geschätzt, ohne Spiele | gering | gering | MODELED, so gekennzeichnet |
+| c) Alle Ligen voll | feste Kader und volle Spiele für die ganze Pyramide | sehr hoch (übersteigt den Browser-Speicher von 100–230 KB je Stand um ein Vielfaches) | sehr hoch | MEASURED |
+
+Empfehlung: **a + b** (Nachbarligen gemessen, Rest geschätzt und gekennzeichnet); c nicht.
+
+### 11.2 Vorschlag Beratung (E8)
+
+- **Im Spiel:** wie heute (Co-Trainer-Karten, höchstens drei je Halbzeit).
+- **Wochenhinweis:** höchstens **einer je Woche** zu Saison, Kader oder Taktik – erst ab **5 Spielen** Datengrundlage, nur bei
+  sicherem Befund; derselbe Hinweis frühestens nach **4 Wochen** wieder.
+- **Vor dem Spiel:** ein Hinweis zum Gegner **nur, wenn er ein klares Profil hat** – nicht jede Woche.
+- **Nachfassen:** drei Spiele nach einem befolgten Hinweis „hat geholfen / noch nicht“ (wie `coachfeed.js`).
+- **Ort:** im Postfach/auf der Startseite, keine Aufpopper; Einstellung **Beratung: an / selten / aus**.
+- Alle Zahlen sind Spielwerte, nach den ersten Messläufen zu prüfen.
+
+### 11.3 Folgen für die Roadmap
+
+- **Neue Phase 5b – Feste Kader der Nachbarligen und Messspiele** (E2 a): nach Phase 5, vor Phase 9/10. Speicher und Rechenzeit
+  messen (Budget aus Bericht 00, Entscheidung E2 dort noch offen).
+- **Werte-Profile** für alle übrigen Ligen (E2 b) in Phase 5, gekennzeichnet MODELED.
+- **Neue Phase 6b – Neue Fähigkeitswerte** (E6): Antizipation, Übersicht, Stellungsspiel als Engine-Schicht mit Schalter,
+  Migration alter Stände; vor Phase 9 (TFS braucht sie) und 11 (Training).
+- **Fünfter Trainertyp „Ballbesitz“** (E4) in Phase 6.
+- **CPU-Scouting-Kenntnis** (E5) in Phase 9.
+- Reihenfolge damit: 1 → 3 → 4 → 5 → 7 → 12 → 6 → 6b → 8 → 5b → 9 → 10 → 2 (je Schicht) → 11 → 13.

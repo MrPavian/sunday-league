@@ -281,6 +281,13 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
   10 Transfer-KI · 11 Spielerentwicklung · 12 Manager-Beratung · 13 Liga Intelligence. Empfohlene Reihenfolge:
   1 → 3 → 4 → 5 → 7 → 12 → 6 → 8 → 9 → 10 → 2 (je Schicht) → 11 → 13. Offene Entscheidungen: Bericht 00 Abschnitt 10, Ergänzung 02
   Abschnitt 10 (E1–E8).
+- **Entscheidungen 2026-11-25** (Ergänzung 02, Abschnitt 11): Reihenfolge ja; Profile auch außerhalb der eigenen Liga –
+  Nachbarligen mit festen Kadern und Messspielen, übrige Ligen geschätzt (MODELED); CPU-Wechselzahl bleibt, Auswahl klüger; fünfter
+  Trainertyp „Ballbesitz“; CPU-Scouting nach denselben Kenntnisregeln; neue Fähigkeitswerte (Antizipation, Übersicht,
+  Stellungsspiel) einführen; „leicht“ dämpft die KI; Beratung: höchstens ein Wochenhinweis ab 5 Spielen, gleicher Hinweis frühestens
+  nach 4 Wochen, Gegnerhinweis nur bei klarem Profil, Nachfassen nach 3 Spielen, Startseite statt Popup, Einstellung an/selten/aus.
+  Neue Phasen 5b (Nachbarligen-Kader, Messspiele) und 6b (neue Fähigkeitswerte). Reihenfolge: 1 → 3 → 4 → 5 → 7 → 12 → 6 → 6b → 8 →
+  5b → 9 → 10 → 2 (je Schicht) → 11 → 13. Offen vor Phase 1: Bericht 00 Abschnitt 10 (Speicher- und Rechenzeitbudget, Punkt 38).
 Reihenfolge G–I: 24 → 32 → 35 → 25 → 26 + 27 → 33 → 34 → 28 → 29 → 42 → 41 → 36 → 37 → 30 → 31 → 38 → 39 → 40 → 43 → 44 → 45 → 46 → 47.
 Begründung: Zuerst der kleine Rest der Ballphysik (24), dann zwei schnell spürbare Verbesserungen (32, 35). Danach die großen
 Spielschichten (25–27), zwischendurch kleine Würze (33, 34). Persönlichkeit (29) vor Freundschaften und Kapitän (42, 41), weil
