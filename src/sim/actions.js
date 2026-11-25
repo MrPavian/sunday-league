@@ -1,4 +1,6 @@
 import { styleOf } from './plan.js';
+import { HUMAN, isShaken } from './nerves.js';
+import { roughness } from './ground.js';
 import { cap1, contest, errScale, over, soft, sure, tilt, vs } from './skill.js';
 import { bondBonus, bondOf, isBad } from './bonds.js';
 // Bewegung und Ballkontakte: Laufen, Schuss, Pass, Kopfball, Torwart, Dribbling.
@@ -224,7 +226,7 @@ function shoot(m, p, a, fatigue) {
   // Elfmeter: in Ruhe platziert, ohne Gegner am Fuß – deutlich weniger Streuung.
   // Ebene 3: Wer bedrängt abzieht, streut mehr – nervöse Spieler noch mehr.
   // Direktabnahme und Schuss aus der Drehung sind schwerer zu platzieren.
-  dir = rotate(dir, rng.gauss() * sigma * (a.placed ? 0.35 : pressureChaos(m, p)) * (a.first ? 1.2 : 1) * (a.turn ? 1.25 : 1) * (flat?.aimBoost ?? 1) * clutchAim(m, p));
+  dir = rotate(dir, rng.gauss() * sigma * (isShaken(m, p) ? HUMAN.shakenAim : 1) * (a.placed ? 0.35 : pressureChaos(m, p)) * (a.first ? 1.2 : 1) * (a.turn ? 1.25 : 1) * (flat?.aimBoost ?? 1) * clutchAim(m, p));
   let speed = (8 + 18 * power) * (0.85 + 0.15 * soft(p.attrs.shooting)) * (hammer ? 1.15 : 1) * (flat?.shotBoost ?? 1);
   let vy = 0.8 + 5 * power * power + Math.abs(rng.gauss()) * 1.2 * (1 - cap1(vs(m, p, 'shooting'))) * power;
   const lob = a.overWall && a.target ? overWall(m, p, a.target) : null;
@@ -709,7 +711,7 @@ export function keeperSaves(m) {
       // Lange Flugzeit: Der Torwart sieht den Ball kommen und steht richtig (KEEPER_TIME).
       const tFly = fromD > 0 ? fromD / Math.max(bsK, 1) : 0;
       const early = spotKick(m) ? 0 : clamp((tFly - KEEPER_TIME.from) * KEEPER_TIME.per, 0, KEEPER_TIME.max);
-      const beaten = clamp((bsK - 8) * 0.02 + corner * 0.85 + pointBlank + postShot + brisk - early - 0.3 * cap1(p.attrs.keeping) - 0.3 * kEdge - (dist2d(p.pos, ball.pos) < 0.45 ? 0.15 : 0), 0.02, 0.7);
+      const beaten = clamp((bsK - 8) * 0.02 + corner * 0.85 + pointBlank + postShot + brisk + (isShaken(m, p) ? HUMAN.keeperBeaten : 0) - early - 0.3 * cap1(p.attrs.keeping) - 0.3 * kEdge - (dist2d(p.pos, ball.pos) < 0.45 ? 0.15 : 0), 0.02, 0.7);
       if (rng.chance(beaten)) {
         p.catchCooldown = 0.7; // zu spät – der Ball ist vorbei
         if (hands && ball.pos.y > 1.5) p.jumpAnim = 0.5; // hoch: springt vergeblich hoch
@@ -1092,6 +1094,15 @@ export function dribbleTouch(m) {
   const bs = ballSpeed(ball);
   const prevTeam = m.lastTouchTeam;
   p.kickCooldown = 0.2 + rng.next() * 0.12;
+  // Über den Fuß gesprungen (nerves.js, Punkt 31): Auf holprigem Boden rutscht ein rollender Pass unter dem Fuß durch.
+  const rough = HUMAN.on && !own && ball.pos.y < 0.2 && bs > 2.5 && bs < 12 && roughness(pitch.surface) >= HUMAN.roughMin ? roughness(pitch.surface) : 0; // nur auf schlechtem Boden (Asche, Wiese)
+  if (rough > 0 && rng.chance(HUMAN.underFoot * rough * (1.1 - cap1(tech)) * calm)) {
+    p.kickCooldown = 0.5;
+    ball.vel.x *= 0.9;
+    ball.vel.z *= 0.9;
+    m.events.push({ type: 'miscontrol', playerId: p.id, kind: 'unterfuss' });
+    return;
+  }
   // Ping-Pong-Bremse A + B (docs/agent/pingpong-audit-2026-10.md, Mechanismus 1, Varianten „losslock“ und „winlock“):
   // Wer den Ball per Berührung vom Gegner holt, ist kurz geschützt (B, siehe shielded); der Verlierer darf ihn
   // PINGPONG.loserLock lang nicht per Berührung zurückholen (A). Rein zeitliche Sperren, kein Zufallsstrom.

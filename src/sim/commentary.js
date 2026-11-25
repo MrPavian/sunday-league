@@ -290,6 +290,16 @@ export function createCommentator(m, seed = 1) {
           else if (e.kind === 'pass' && rng.chance(0.5)) add(pick(tr(['{a} spielt über die Bande auf {w} – der Gegner schaut zu.', 'Bandenpass von {a}: {w} wird freigespielt.', '{a} nimmt die Bande als Mitspieler und findet {w}.'], ['{a} plays it off the boards to {w} – the marker is left standing.', 'Board pass from {a}: {w} is found.', '{a} uses the boards as a team-mate and finds {w}.']), { a, w }), 'chance');
           break;
         }
+        case 'miscontrol':
+          // Über den Fuß gesprungen (nerves.js, Punkt 31)
+          if (e.kind === 'unterfuss' && rng.chance(0.5)) add(tr(`Der Ball springt ${surname(who(e.playerId))} über den Fuß – der Platz ist schuld, sagt er.`, `The ball bobbles over ${surname(who(e.playerId))}'s foot – the pitch's fault, he says.`));
+          break;
+        case 'shaken': {
+          // Verunsichert nach vergebener Großchance bzw. Torwartpatzer (nerves.js, Punkt 31)
+          const n = surname(who(e.playerId));
+          add(e.keeper ? tr(`${n} schaut lange auf den Boden. Der Ball war haltbar – das weiß er.`, `${n} stares at the ground for a while. That one was saveable – and he knows it.`) : tr(`${n} schlägt die Hände vors Gesicht. Die muss er machen – jetzt zittert der Fuß.`, `${n} buries his face in his hands. He has to score that – now his foot is shaking.`));
+          break;
+        }
         case 'whiff':
           if (rng.chance(0.5)) add(tr(`Luftloch von ${surname(who(e.playerId))}! Der Ball bleibt einfach liegen.`, `Air shot from ${surname(who(e.playerId))}! The ball just sits there.`));
           break;

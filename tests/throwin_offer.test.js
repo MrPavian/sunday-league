@@ -59,11 +59,11 @@ describe('Einwurf mit Anspielstationen', () => {
 
   it('nach dem Wurf ist meist ein Mitspieler zuerst am Ball, und der Werfer wartet nicht ewig', () => {
     for (const [venue, seed] of [['sportplatz', 700], ['grossfeld', 700]]) {
-      const s = measure(venue, 5, seed);
+      const s = measure(venue, 15, seed); // 15 statt 5 Spiele (2026-11-25): bei 5 Spielen lag Großfeld schon ohne Änderung knapp an der Grenze
       expect(s.n, venue).toBeGreaterThan(8);
       expect(s.mate / s.n, `${venue}: Mitspieler zuerst am Ball`).toBeGreaterThan(0.65);
       expect(s.alone / s.wait.length, `${venue}: Werfer allein`).toBeLessThan(0.15);
       expect(Math.max(...s.wait), `${venue}: längstes Warten`).toBeLessThan(1 + THROWIN.wait + 1.5); // Pause + Warten + Wurf
     }
-  }, 120000); // zehn ganze Spiele: im vollen Lauf mit allen Workern über 20 s (2026-11-14 an der Standardgrenze gescheitert)
+  }, 360000); // 30 ganze Spiele (vorher zehn): im vollen Lauf mit allen Workern über 20 s (2026-11-14 an der Standardgrenze gescheitert)
 });

@@ -171,7 +171,11 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
     Torverhältnis ohne → mit): Pressing −0,08 → +0,24 (lang spielen), lange Bälle −0,28 → +0,04 (tief stehen), Konter −0,17 → +0,05
     (ruhiges Tempo); gegen Mauern half nichts. Karriere: 1,10 Punkte je Spiel mit und ohne Handschrift (60 Spiele). Ursprünglich: Gegnertrainer haben eine Handschrift (lange Bälle auf den Großen, hohes Pressing, Mauern);
     das Scouting vor dem Spiel zeigt sie, man kann darauf reagieren.
-31. **Fehler, die menschlich wirken** (S): Ball springt über den Fuß, Stürmer nach vergebener Großchance verunsichert, Torwart patzt
+31. **Fehler, die menschlich wirken** (S): ✅ **2026-11-25** (sim/nerves.js HUMAN, tests/nerves.test.js; Spielwerte): Ball springt
+    auf Asche und Wiese über den Fuß (Asche 1,6 je Spiel); vergebene Großchance (je nach Platz bis 9 m) – Schütze eine Weile
+    verunsichert (mehr Streuung); Tor aus 18 m und mehr – Torwart wackelt (öfter geschlagen); Kommentar zu allem. Gemessen je 120
+    Spiele: Rasen 3,24 → 3,37, Asche 3,93 → 3,68, Parkplatz 2,51 → 2,53 Tore. Auf Rasen kostete „über den Fuß“ 9 % der Tore – dort
+    abgeschaltet. Ursprünglich: Ball springt über den Fuß, Stürmer nach vergebener Großchance verunsichert, Torwart patzt
     nach einem Fehler eher noch einmal.
 
 **H – Kurzweil im 3D-Spiel und im Textmodus** (vom Nutzer ausgewählt, 2026-11-19)

@@ -76,7 +76,8 @@ describe('match', () => {
       expect(p.stamina).toBeGreaterThanOrEqual(0);
     }
     // Liegt gerade ein Anstoß an (Tor kurz vorher), erst ausführen lassen – sonst liegt der Ball zufällig auf dem Mittelpunkt.
-    for (let i = 0; i < 600 && m.phase === 'setpiece'; i++) stepMatch(m, undefined, DT);
+    // Auch in der Phase 'play' kann ein Standard noch warten (setPiece nicht ausgeführt, 2026-11-25).
+    for (let i = 0; i < 600 && (m.phase === 'setpiece' || (m.setPiece && !m.setPiece.taken)); i++) stepMatch(m, undefined, DT);
     for (let i = 0; i < 60; i++) stepMatch(m, undefined, DT);
     expect(Math.abs(m.ball.pos.x) + Math.abs(m.ball.pos.z)).toBeGreaterThan(0);
   });

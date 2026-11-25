@@ -1,5 +1,6 @@
 // Deterministische Match-Simulation. Kennt kein three.js – dieselbe Logik soll
 // später auch ungespielte Partien simulieren und online laufen können.
+import { trackNerves } from './nerves.js';
 import { createRng } from '../core/rng.js';
 import { dist2d, hypot, norm } from '../core/math.js';
 import { hasTrait } from '../data/traits.js';
@@ -173,6 +174,7 @@ export function stepMatch(m, input = NO_INPUT, dt) {
   settleAdvantage(m);
   if (m.phase === 'play' || m.phase === 'setpiece') stepReferee(m, dt);
   trackStep(m, dt);
+  trackNerves(m); // vergebene Großchance, Torwartpatzer (nerves.js, Punkt 31)
   stepLog(m);
   stepSituations(m);
   if (m.manager) stepCoachFeed(m, m.coachTeam);
