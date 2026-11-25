@@ -235,7 +235,45 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
     und klassische Formen (schlichter schwarzer Klassiker, knallige Neonfarben, hoher Schaft, Retro mit weißen Streifen), ohne
     echte Marken, Namen oder Logos.
 
-Reihenfolge G–I: 24 → 32 → 35 → 25 → 26 + 27 → 33 → 34 → 28 → 29 → 42 → 41 → 36 → 37 → 30 → 31 → 38 → 39 → 40 → 43 → 44 → 45 → 46.
+47. **Moderne Statistiken** (L, Nutzerwunsch 2026-11-25): Kennzahlen aus der Profi-Analyse, im Spiel gemessen (sim liest nur mit,
+    wie chances.js), mit kurzer Erklärung beim Antippen. Quellen: Packing (de.wikipedia „Packing (Fußball)“; Impect, gegründet von
+    Stefan Reinartz und Jens Hegeler), xGOT, xT, PPDA, progressive Pässe, Field Tilt (Sky Sports „advanced stats explained“, FBref-
+    Definition progressiver Pässe, Hudl zu xT). Einen eigenen Statistik-Beitrag von Christoph Kramer habe ich nicht gefunden – er
+    ist als TV-Experte bekannt; Packing stammt von Impect.
+    - **Spiel:** xG (Punkt 38) plus xGOT für Torhüter (Schuss aufs Tor: wohin er kam); Packing je Pass/Dribbling = überspielte
+      Gegenspieler, „Impect“ = überspielte Verteidiger (die letzten sechs inkl. Torwart); Field Tilt (Anteil Ballkontakte im
+      letzten Drittel); PPDA (gegnerische Pässe je eigener Abwehraktion in deren Hälfte). Im Ticker-Ende und im Spielbericht.
+    - **Spieler:** je Spiel und Saison Packing, Impect, progressive Pässe (≥ 10 m näher ans Tor bzw. in den Strafraum), xG und
+      xA (xG der Schüsse nach seinem Pass), Tore minus xG („trifft über/unter Erwartung“), gewonnene Zweikämpfe, Ballgewinne im
+      letzten Drittel. Auf der Spielerkarte als kleine Balken gegen den Mannschaftsschnitt; fließt in die Noten (gradePlayers)
+      und in Scouting/Transfers („überspielt viele Gegner“ als Merkmal statt nur Tore).
+    - **Verein/Saison:** xG-Tabelle (Punkte nach xG gegen echte Punkte: Glück oder Pech), xG für/gegen, PPDA und Field Tilt im
+      Schnitt, Packing der Mannschaft; im Saisonrückblick und in der Tabelle als umschaltbare Spalte.
+    - **Taktik:** Wirkung der Anweisungen sichtbar machen: Pressing → PPDA sinkt, „direkt“ → mehr Packing pro Pass, Flügelspiel →
+      Field Tilt außen; Gegner-Scouting (Punkt 30) zeigt dessen Werte („presst hoch: PPDA 6“). Der Co-Trainer erklärt in der
+      Halbzeit einen auffälligen Wert („Wir überspielen kaum jemanden – mehr in die Tiefe“).
+    - **Maßstab:** Alle Werte aus dem eigenen Spiel hergeleitet (wie xG in Punkt 38), Vergleichswerte aus vielen Simulations-
+      spielen je Platz und Liga; keine echten Spieler- oder Vereinsdaten. Erst Spielbericht, dann Spieler, dann Saison.
+
+**J – ADVANCED FOOTBALL SYSTEM** (Nutzerauftrag 00, 2026-11-25; hat Vorrang vor Punkt 47 und allen Analytics-Ideen). Bericht:
+`docs/ADVANCED-FOOTBALL-SYSTEM-00-ENGINE-AUDIT.md`. Umsetzung erst nach Freigabe des Nutzers.
+- **Phase 0 – Match Engine Audit & Data Reality Check:** ✅ **2026-11-25** (nur Analyse). Ergebnis: Engine zeitschrittbasiert
+  (1/60 s), echte 3D-Ballphysik und Positionen aller Spieler; Spielprotokoll mit Ballbesitzphasen, Pässen, Ballverlusten, Schüssen
+  vorhanden (`sim/matchlog.js`); Druck nur über den nächsten Gegner; nur 4 Grundrollen; Detaildaten nur für Spiele der eigenen
+  Liga, Turniere, Relegation (sonst Poisson). Matrix: Territorium A, Angriffskontinuität A, Zweite Bälle B/C, Pressingresistenz
+  B/C, Team-Index B, Taktik-Eignung B/C, Positionsflexibilität C, Raumschaffung C.
+- **Phase 1 – Datenmodell und Ereigniserfassung** (Herkunft MEASURED/DERIVED/MODELED/ESTIMATED/UNAVAILABLE, Mitschrift ergänzen,
+  verdichtete Saisonwerte).
+- **Phase 3 – Validierung** (vorgezogen vor Phase 2): jede Kennzahl auf Stabilität, Taktikreaktion und Mindeststichprobe prüfen.
+- **Phase 4 – Advanced Football Analytics** (Szenario 1: nur geprüfte Kennzahlen).
+- **Phase 2 – gezielte Engine-Erweiterungen** (Szenario 2, je als Schicht mit Schalter): Druckmodell mit mehreren Gegnern →
+  Zweite-Ball-Staffelung → Feinrollen Außen/Zentrum → Raumkontrolle als Stichprobe.
+- **Phase 5 – Advanced Football Intelligence**, **Phase 6 – KI-Trainer, Scouting, Transfers**, **Phase 7 – Spielerentwicklung
+  und Beratung**, **Phase 8 – Liga- und Saisonanalyse**.
+- Empfehlung: Szenario 1 sofort, Szenario 2 schrittweise, Szenario 3 (volle räumliche Engine) nicht. Offene Entscheidungen:
+  Bericht Abschnitt 10.
+
+Reihenfolge G–I: 24 → 32 → 35 → 25 → 26 + 27 → 33 → 34 → 28 → 29 → 42 → 41 → 36 → 37 → 30 → 31 → 38 → 39 → 40 → 43 → 44 → 45 → 46 → 47.
 Begründung: Zuerst der kleine Rest der Ballphysik (24), dann zwei schnell spürbare Verbesserungen (32, 35). Danach die großen
 Spielschichten (25–27), zwischendurch kleine Würze (33, 34). Persönlichkeit (29) vor Freundschaften und Kapitän (42, 41), weil
 diese darauf aufbauen. Textmodus und die übrigen Punkte zum Schluss.
