@@ -76,3 +76,22 @@ export function setAnnouncerMode(v) {
     // egal
   }
 }
+
+// Manager-Beratung (intel/advice.js, AFS Phase 12): 'an' (höchstens ein Hinweis je Woche), 'selten' (je zwei Wochen), 'aus'.
+const ADVICE_KEY = 'sunday-league:advice';
+export function adviceMode() {
+  try {
+    const v = localStorage.getItem(ADVICE_KEY);
+    return v === 'selten' || v === 'aus' ? v : 'an';
+  } catch {
+    return 'an';
+  }
+}
+
+export function setAdviceMode(v) {
+  try {
+    localStorage.setItem(ADVICE_KEY, v === 'selten' || v === 'aus' ? v : 'an');
+  } catch {
+    // egal
+  }
+}

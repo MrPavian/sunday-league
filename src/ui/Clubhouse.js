@@ -6,7 +6,8 @@ import { seasonReview } from '../career/review.js';
 import { shareReview } from './review.js';
 import { shareReviewPage } from './reviewpage.js';
 import { GROUP_LABELS, SIMPLE } from '../sim/commands.js';
-import { coachLevel, homeView, setCoachLevel, setWallView } from './prefs.js';
+import { adviceMode, coachLevel, homeView, setCoachLevel, setWallView } from './prefs.js';
+import { applyAdvice, weekAdvice } from '../intel/advice.js';
 import { button, haptic, icon, tabs as uiTabs } from './ds.js';
 import { TacticBoard } from './TacticBoard.js';
 import { bindFlips, phone } from './world.js';
@@ -263,6 +264,9 @@ export class Clubhouse {
         this.h.onChange();
       } else if (action === 'pachtRenew' || action === 'pachtLong' || action === 'pachtBuy') {
         (action === 'pachtRenew' ? renew : action === 'pachtLong' ? longLease : buyGround)(this.career);
+        this.h.onChange();
+      } else if (action === 'adviceApply') {
+        applyAdvice(this.career, weekAdvice(this.career, adviceMode())); // Co-Trainer-Hinweis (intel/advice.js, AFS Phase 12)
         this.h.onChange();
       } else if (action === 'oppCounter') {
         const [g, v] = String(value).split(':'); // Gegenmittel gegen die Handschrift des Gegners (career/patterns.js, Punkt 30)

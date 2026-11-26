@@ -37,6 +37,7 @@ const METRICS = {
   passPct: { good: 1, min: LEVELS.passPctMin, ref: (rows) => avgOf(rows, 'passPct'), sd: () => LEVELS.sdPassPct },
 };
 export const METRIC_KEYS = Object.keys(METRICS);
+export const goodOf = (metric) => METRICS[metric].good; // +1: mehr ist besser
 
 // Befunde: { type: 'xg:low', metric, kind: 'problem' | 'strength', club, z, evidence: { value, ref, n, src } }, stärkster zuerst.
 export function diagnose(career, id) {

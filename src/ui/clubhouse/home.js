@@ -10,7 +10,8 @@ import { GOALS } from '../../career/board.js';
 import { button, esc, icon } from '../ds.js';
 import { clubScene } from '../ClubScene.js';
 import { phone } from '../world.js';
-import { homeView, wallView } from '../prefs.js';
+import { adviceMode, homeView, wallView } from '../prefs.js';
+import { adviceTaken, evidenceText, findingText, followText, followUp, hurtsText, opponentHint, weekAdvice } from '../../intel/advice.js';
 import { crestExtras, crestOf, crestSVG } from '../crest.js';
 import { relegationNeeded, relegationOf } from '../../career/relegation.js';
 import { LEAGUES, MAX_LEVEL, maxLevel } from '../../career/clubs.js';
@@ -187,6 +188,7 @@ export const homeScreens = {
         ${notes.length ? `<ul class="hub-notes">${notes.map((n) => `<li>${n}</li>`).join('')}</ul>` : ''}
         ${stories.length ? `<ul class="stories">${stories.map((x) => `<li>${x}</li>`).join('')}</ul>` : ''}
         <div class="hub-actions">${actions}</div>
+        ${this.adviceCard()}
         ${this.oppCheck(opp, venue.format)}
         ${this.meBars()}
         ${summerCupDue(c) || summerCupRunning(c) ? this.summerCard() : ''}
@@ -199,6 +201,7 @@ export const homeScreens = {
   oppCheck(opp, format) {
     const c = this.career;
     const r = scoutReport(c, opp, format);
+    const oppHint = opponentHint(c, opp.id, adviceMode()); // Beratung vor dem Spiel (intel/advice.js)
     const FORM = { w: ['S', 'W', '#5cc46a'], d: ['U', 'D', '#e0b020'], l: ['N', 'L', '#d9534f'] };
     const form = r.form.length ? r.form.map((x) => `<span class="ui-chip" style="--c:${FORM[x][2]}">${tr(FORM[x][0], FORM[x][1])}</span>`).join('') : `<span class="t-2">${tr('noch keine Spiele', 'no games yet')}</span>`;
     const lines = [
@@ -206,6 +209,7 @@ export const homeScreens = {
       r.style ? `${tr('Spielweise', 'Style')}: <b>${esc(r.style)}</b>${r.system ? ` · ${tr('System', 'System')} <b>${esc(r.system)}</b>` : ''}` : '',
       r.strengths.length ? `${tr('Stark in', 'Strong at')}: <b>${r.strengths.map((k) => ATTR_LABELS[k]).join(', ')}</b>${r.weakness ? ` · ${tr('schwach in', 'weak at')}: <b>${ATTR_LABELS[r.weakness]}</b>` : ''}` : '',
       r.pattern ? `${tr('Handschrift des Trainers', 'Manager\'s trademark')}: <b>${esc(r.pattern.label)}</b> – ${tr('Co-Trainer', 'Assistant')}: „${esc(r.pattern.hint)}“` : '',
+      oppHint ? `${tr('Auffällig', 'Stands out')}: <b>${esc(findingText(oppHint, 'they'))}</b> <small>(${esc(evidenceText(oppHint))})</small>` : '',
       r.danger ? `${tr('Aufpassen auf', 'Watch out for')}: <b>${esc(r.danger.name)}</b> (${r.danger.goals} ${tr('Tore', 'goals')}, ${tr('Stärke', 'rating')} ${r.danger.rating})` : '',
     ].filter(Boolean);
     // Gegenmittel in den Spielplan übernehmen (patterns.js: nur wo es gemessen hilft).
@@ -218,6 +222,20 @@ export const homeScreens = {
       ${lines.map((l) => `<p class="t-2">${l}</p>`).join('')}
       <p class="t-2"><i>${LEVEL_TEXT()[r.level]}</i></p>
       ${this.oppNote ? `<p class="t-2">${esc(this.oppNote)}</p>` : ''}${counter}${watch}</details>`;
+  },
+
+  // Co-Trainer-Hinweis der Woche (intel/advice.js, AFS Phase 12): Beleg und genau eine Handlung; Nachfassen nach drei Spielen.
+  adviceCard() {
+    const c = this.career;
+    const mode = adviceMode();
+    const fu = followUp(c, mode);
+    const hint = weekAdvice(c, mode);
+    if (!fu && !hint) return '';
+    const taken = adviceTaken(c, hint);
+    const act = hint ? (taken ? `<p class="t-2">✓ ${tr('Im Spielplan', 'In the game plan')}: <b>${esc(orderLabel(hint.action.group, hint.action.value))}</b></p>` : button(tr(`Übernehmen: ${orderLabel(hint.action.group, hint.action.value)}`, `Take it: ${orderLabel(hint.action.group, hint.action.value)}`), { action: 'adviceApply', value: hint.action.key })) : '';
+    return `<div class="advice-card" data-testid="advice-card"><p class="label">${tr('Co-Trainer', 'Assistant')}</p>
+      ${fu ? `<p class="t-2" data-testid="advice-follow">${esc(followText(fu))}</p>` : ''}
+      ${hint ? `<p class="t-body">${esc(findingText(hint))} <small>(${esc(evidenceText(hint))})</small></p>${hurtsText(hint) ? `<p class="t-2">${esc(hurtsText(hint))}</p>` : ''}${act}` : ''}</div>`;
   },
 
   // Gleich nach dem gewonnenen Finale: Sieg-Meldung ganz oben, nicht erst im Pokal-Reiter.

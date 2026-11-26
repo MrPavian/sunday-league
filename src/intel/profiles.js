@@ -76,7 +76,10 @@ export const playerProfile = (career, idx) => playerProfiles(career)[idx] ?? nul
 
 // Vereinsprofil der laufenden Saison (eigene Liga, volle Engine). Raten je Spiel bzw. je Pass; Stufen bildet die Anzeige.
 export function teamProfile(career, id) {
-  const c = career.an?.clubs?.[id];
+  return clubProfile(career.an?.clubs?.[id]);
+}
+// Dasselbe aus einem Vereinsdatensatz (career.an.clubs[id] oder ein Ausschnitt daraus, etwa „seit dem Hinweis“).
+export function clubProfile(c) {
   if (!c?.s || !c.n) return null;
   const r = seasonRow(c.s);
   const ratio = (a, b) => (b > 0 ? a / b : null);

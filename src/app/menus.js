@@ -8,7 +8,7 @@ import { checkWhatsNew, whatsNewLatestHtml } from '../ui/whatsnew.js';
 import { activeSlot, createCareer, deleteCareer, exportCareer, humanClub, importCareer, loadCareer, restoreBackup, saveCareer, setActiveSlot, slotSummaries } from '../career/career.js';
 import { HALF_MAX, HALF_MIN, MATCH, MATCH_LENGTHS, matchDuration } from '../sim/match.js';
 import { PITCHES } from '../sim/pitch.js';
-import { announcerMode, coachLevel, homeView, setAnnouncerMode, setCoachLevel, setHomeView, setWallView, wallView } from '../ui/prefs.js';
+import { adviceMode, announcerMode, coachLevel, setAdviceMode, homeView, setAnnouncerMode, setCoachLevel, setHomeView, setWallView, wallView } from '../ui/prefs.js';
 import { startTutorial, tutorialActive } from '../ui/Tutorial.js';
 
 export function remember(key, value) {
@@ -52,7 +52,7 @@ export function createMenus(ctx) {
     onSettings() {
       ctx.menu.paused = true;
       settings.show({
-        state: () => ({ muted: sound.muted, effects: pixel.effects, tempo: ctx.tempo, tempos: ctx.TEMPOS, volume: sound.volume, music: ctx.music?.on ?? true, announcer: announcerMode(), safeKits: ctx.colorSafe, length: MATCH.halves ? 'custom' : MATCH.length, cupShort: MATCH.cupShare < 1, pokalExtra: MATCH.pokalExtra, subs: MATCH.subs, coachLevel: coachLevel(), homeView: homeView(), wallView: wallView(), haptics: hapticsOn(), leagueSize: ctx.career ? ctx.career.nextLeagueSize ?? ctx.career.leagueSize ?? 6 : ctx.leagueSize, leagueSizeNow: ctx.career?.leagueSize ?? null, tutorial: ctx.career && !ctx.career.founding ? (tutorialActive(ctx.career, 'club') ? 'running' : 'off') : null }),
+        state: () => ({ muted: sound.muted, effects: pixel.effects, tempo: ctx.tempo, tempos: ctx.TEMPOS, volume: sound.volume, music: ctx.music?.on ?? true, announcer: announcerMode(), safeKits: ctx.colorSafe, length: MATCH.halves ? 'custom' : MATCH.length, cupShort: MATCH.cupShare < 1, pokalExtra: MATCH.pokalExtra, subs: MATCH.subs, coachLevel: coachLevel(), advice: adviceMode(), homeView: homeView(), wallView: wallView(), haptics: hapticsOn(), leagueSize: ctx.career ? ctx.career.nextLeagueSize ?? ctx.career.leagueSize ?? 6 : ctx.leagueSize, leagueSizeNow: ctx.career?.leagueSize ?? null, tutorial: ctx.career && !ctx.career.founding ? (tutorialActive(ctx.career, 'club') ? 'running' : 'off') : null }),
         onLang: switchLanguage,
         onChange(key, value) {
           if (key === 'sound' && sound.muted !== (value === 'off')) sound.toggleMute();
@@ -107,6 +107,7 @@ export function createMenus(ctx) {
             if (ctx.clubhouse) ctx.clubhouse.tab = 'home'; // Rundgang beginnt auf „Heute“
           }
           if (key === 'coachlevel') setCoachLevel(value);
+          if (key === 'advice') setAdviceMode(value);
           if (key === 'homeview') setHomeView(value);
           if (key === 'wallview') setWallView(value);
           if (key === 'subs') {

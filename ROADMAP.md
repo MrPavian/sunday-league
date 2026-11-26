@@ -332,6 +332,11 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
   gemessener Wirkung: `build:direkt`, `style:mauern`, `route:mitte`, `style:offensiv`; für xG-Probleme keine. Rangfolge mit
   Nebenwirkungen und Philosophie (`like` × 1,5 als Spielwert, `avoid`). In echten Saisons: Befund bei 38–50 % der Verein-Spieltage,
   erster Vorschlag meist `style:mauern`; unter 0,5 ms je Spieltag.
+- **Phase 12 – Manager-Beratung ✅ 2026-11-26** (`intel/advice.js`, `docs/ADVANCED-FOOTBALL-SYSTEM-12-ADVICE.md`,
+  `scripts/afs-advice.mjs`). Co-Trainer-Hinweis auf der Startseite: ab 5 Spielen, höchstens einer je Woche (selten: je zwei),
+  derselbe Befund frühestens nach 4 Wochen, Beleg und genau ein Spielplan-Befehl, nie ein Stilwechsel (Nutzerentscheidung).
+  Nachfassen nach 3 Spielen. Im Gegner-Check der stärkste Befund des Gegners. Einstellung an / selten / aus. Gemessen (6 Seeds,
+  8 Vereine): 1–3 Hinweise je Saison, alle „wenig überspielte Gegner → Direkt spielen“; ohne Übernehmen Tabelle gleich wie „aus“.
 
 Reihenfolge G–I: 24 → 32 → 35 → 25 → 26 + 27 → 33 → 34 → 28 → 29 → 42 → 41 → 36 → 37 → 30 → 31 → 38 → 39 → 40 → 43 → 44 → 45 → 46 → 47.
 Begründung: Zuerst der kleine Rest der Ballphysik (24), dann zwei schnell spürbare Verbesserungen (32, 35). Danach die großen
