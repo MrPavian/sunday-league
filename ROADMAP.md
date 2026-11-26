@@ -305,6 +305,13 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
   Seed 11) höchstens 5,6 KB zusätzlich, davon 2,3 KB dauerhaft (Chronik der Kaderspieler, 5 Saisons Vereinsbilanz). Nur
   Ligaspiele mit voller Simulation zählen; Pokal, Turniere, Relegation noch nicht. Schwellen (Zweikampf 1,0 m wie `tackles.js`,
   Kopfballduell 1,5 m, zweiter Ball 3 s) sind Spielwerte. Nächster Schritt: Phase 3 (Validierung).
+- **Phase 3 – Validierung ✅ 2026-11-26** (`docs/ADVANCED-FOOTBALL-SYSTEM-03-VALIDATION.md`, `scripts/afs-validate.mjs`; 1600 Spiele,
+  Rasenplatz und Großfeld, feste Paarungen). Frei für Phase 4: Pässe, Passquote (Mannschaft), Packing (Mannschaft, als Stufe),
+  Zweikämpfe als Zählung, xG (Mannschaft als Stufe, Spieler ab einer Saison), xA (Saisonsumme), Field Tilt (als Stufe). Nicht
+  frei: Druck-Kennzahlen (keine Reaktion auf Pressing, doppeln die Passquote), Zweikampfquote (hängt kaum an Tackling/Technik),
+  Kopfballduelle (zu selten), Mannschaftsteile (doppeln Packing). Offen: xG je Platz eichen (Tore/xG 0,86 Rasenplatz, 1,12
+  Großfeld), Taktikprobe für zweite Bälle. Engine-Befunde für Phase 2: Pressing stört den Gegner kaum, `build:kurz` erhöht die
+  Passzahl nicht, Mauern erzeugt so viel xG wie Offensiv.
 
 Reihenfolge G–I: 24 → 32 → 35 → 25 → 26 + 27 → 33 → 34 → 28 → 29 → 42 → 41 → 36 → 37 → 30 → 31 → 38 → 39 → 40 → 43 → 44 → 45 → 46 → 47.
 Begründung: Zuerst der kleine Rest der Ballphysik (24), dann zwei schnell spürbare Verbesserungen (32, 35). Danach die großen
