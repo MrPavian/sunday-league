@@ -313,6 +313,13 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
   Platz geeicht (`chances.js XG.pitch`: Hinterhof −0,37, Park −0,36, Großfeld +0,30; Gegenprobe auf neuen Seeds: alle acht Plätze
   im Intervall). Engine-Befunde für Phase 2: Pressing stört den Gegner kaum, `build:kurz` erhöht die
   Passzahl nicht, Mauern erzeugt so viel xG wie Offensiv.
+- **Phase 4 – Anzeige ✅ 2026-11-26** (`ui/analyticsView.js`). Nur freigegebene Kennzahlen. Spielbericht: Pässe (angekommen,
+  Quote), überspielte Gegner, xG, Feldvorteil – beschreibend, mit Erklärzeile. Spielerkarte: Saison-Pässe, Zweikämpfe, Abschlüsse,
+  xG, xG-Spalte in der Chronik; „trifft wie erwartet / öfter / seltener“ erst ab 14 Einsätzen (Band 1,96·√xG, hergeleitet).
+  Tabellenzeile des Vereins: xG für : gegen je Spiel, Passquote ab 8 Spielen, ab 3 Spielen Stufen (deutlich mehr / im Schnitt /
+  deutlich weniger, z ≥ 1,96 mit den Streuungen je Spiel aus Phase 3) für Packing je Pass und xG gegen den Liga-Schnitt,
+  Feldvorteil gegen die eigenen Gegner (Saisonsumme `attA`). Geprüft im Browser bei 360×780, 320×568 und quer: kein
+  waagerechtes Scrollen, keine Fehler. Golden unverändert.
 
 Reihenfolge G–I: 24 → 32 → 35 → 25 → 26 + 27 → 33 → 34 → 28 → 29 → 42 → 41 → 36 → 37 → 30 → 31 → 38 → 39 → 40 → 43 → 44 → 45 → 46 → 47.
 Begründung: Zuerst der kleine Rest der Ballphysik (24), dann zwei schnell spürbare Verbesserungen (32, 35). Danach die großen

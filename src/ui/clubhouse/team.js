@@ -38,6 +38,7 @@ import { roleName, STAFF_ROLES } from '../../career/youth.js';
 import { phaseName, u19Cost, u19Of, u19Table } from '../../career/u19.js';
 import { canRegister, RESERVE_FROM, reserveCap, reserveCost, reserveOf, RESERVE_ROUNDS, reserveTable } from '../../career/reserve.js';
 import { currentSalary, teamCandidates, teamOf, teamOpen, TEAM_FROM, TEAM_ROLE_IDS, TEAM_ROLES } from '../../career/coachteam.js';
+import { playerLine, seasonXg, xgShort } from '../analyticsView.js';
 import { canAffordOutside, EHRENAMT_MONTH, feeOf, holderOf, outsideCandidate, ROLES as STAFF_ROLE_IDS, squadCandidates, STAFF_MIN_AGE, UEBUNGSLEITER_MONTH } from '../../career/staff.js';
 import { personaTags } from '../../career/kidpersona.js';
 import { MAX_UP, PATE_AGE, pateCandidates, pateOf, REIFE_WEEKS, reifeOf, trainingUp } from '../../career/bridge.js';
@@ -886,7 +887,8 @@ function playerCard(c, idx, p, r) {
     .map((x, i) => {
       const prev = seasons[i - 1]?.rating;
       const delta = prev == null ? '' : x.rating > prev ? ` <span class="up">+${x.rating - prev}</span>` : x.rating < prev ? ` <span class="down">${x.rating - prev}</span>` : '';
-      return `<tr><td>${x.now ? tr('jetzt', 'now') : `S${x.season}`}</td><td class="num">${x.rating}${delta}</td><td class="num">${x.apps}</td><td class="num">${x.goals}</td><td class="num">${x.assists}</td><td class="num">${x.avg != null ? gradeTxt(x.avg) : '–'}</td></tr>`;
+      const xg = x.now ? seasonXg({ an: r.an }) : seasonXg(x);
+      return `<tr><td>${x.now ? tr('jetzt', 'now') : `S${x.season}`}</td><td class="num">${x.rating}${delta}</td><td class="num">${x.apps}</td><td class="num">${x.goals}</td><td class="num">${xg != null ? xgShort(xg) : '–'}</td><td class="num">${x.assists}</td><td class="num">${x.avg != null ? gradeTxt(x.avg) : '–'}</td></tr>`;
     })
     .join('');
   const awards = (r.awards ?? []).map((a) => `<li>★ ${awardLabel(a)}</li>`).join('');
@@ -894,7 +896,7 @@ function playerCard(c, idx, p, r) {
   return `<div class="card-grid">
     <div><h4>${tr('Formkurve', 'Form')} <small>${tr('letzte Noten', 'recent grades')}</small></h4>${bars}</div>
     <div><h4>${tr('Fitness', 'Fitness')} ${fitnessPct(fitnessOf(c, idx))} %</h4><p class="hint">${fitHint(c, idx, p)}</p></div>
-    <div><h4>${tr('Verlauf', 'History')}</h4><table class="mini"><thead><tr><th></th><th>${tr('Stärke', 'Rating')}</th><th>${tr('Sp.', 'Apps')}</th><th>${tr('Tore', 'Goals')}</th><th>${tr('Vorl.', 'Ast.')}</th><th>Ø</th></tr></thead><tbody>${rows}</tbody></table><p class="hint">${total}</p></div>
+    <div><h4>${tr('Verlauf', 'History')}</h4><table class="mini"><thead><tr><th></th><th>${tr('Stärke', 'Rating')}</th><th>${tr('Sp.', 'Apps')}</th><th>${tr('Tore', 'Goals')}</th><th>xG</th><th>${tr('Vorl.', 'Ast.')}</th><th>Ø</th></tr></thead><tbody>${rows}</tbody></table>${playerLine(r)}<p class="hint">${total}</p></div>
     ${awards ? `<div><h4>${tr('Auszeichnungen', 'Awards')}</h4><ul class="awards">${awards}</ul></div>` : ''}
     ${jobPerk(p.profession) ? `<div><h4>${tr('Beruf', 'Job')}: ${jobName(p.profession)}</h4><p class="hint">${jobPerk(p.profession).label}</p></div>` : ''}
   </div>`;

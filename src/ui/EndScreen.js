@@ -6,6 +6,7 @@ import { matchMinute } from './Hud.js';
 import { chanceStats } from '../sim/report.js';
 import { shootoutScore } from '../sim/shootout.js';
 import { coachReviewHtml } from './coachReview.js';
+import { matchNote, matchRows } from './analyticsView.js';
 
 const surname = (p) => p.name.split(' ').slice(1).join(' ');
 const gradeText = (g) => tr(g.toFixed(1).replace('.', ','), g.toFixed(1));
@@ -21,6 +22,7 @@ export function newsPages(m) {
   const st = m.stats;
   const poss = st.teams[0].possession + st.teams[1].possession || 1;
   const ch = m.log ? [chanceStats(m, 0), chanceStats(m, 1)] : null;
+  const afs = matchRows(m); // Spieldaten (AFS Phase 4): nur geprüfte Kennzahlen
   const goals = st.goals
     .map((g) => {
       const scorer = g.scorerId && findAnyPlayer(m, g.scorerId);
@@ -79,7 +81,9 @@ export function newsPages(m) {
           ${m.pitch.boundary === 'lines' ? row(tr('Ecken', 'Corners'), st.teams[0].corners, st.teams[1].corners) : ''}
           ${m.pitch.carRule ? row(tr('Ans Auto', 'Off a car'), st.teams[0].cars, st.teams[1].cars) : ''}
           ${m.referee ? row(tr('Karten', 'Cards'), cards(0), cards(1)) : ''}
+          ${afs.map(([label, a, b]) => row(label, a, b)).join('')}
         </table>
+        ${afs.length ? `<p class="afs-note">${matchNote()}</p>` : ''}
         <h3 class="page-title">${tr('Noten', 'Ratings')}</h3>
         <div class="lineups">
           <div><h3>${t0.short}</h3><ol>${lineup(0)}</ol></div>

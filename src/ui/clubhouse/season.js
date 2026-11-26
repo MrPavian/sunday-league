@@ -14,6 +14,7 @@ import { countryName, EURO_NAMES, EURO_PRIZES, euroMoney, euroOf, euroTable, slo
 import { MAX_LEVEL } from '../../career/clubs.js';
 import { MATCH } from '../../sim/match.js';
 import { first, leagueName } from './shared.js';
+import { clubLine } from '../analyticsView.js';
 
 const bundVenueLine = (cup) => {
   const tie = cup.ties.at(-1);
@@ -190,7 +191,7 @@ export const seasonScreens = {
     };
     const form = played.slice(-5).map(mark).join('');
     const nx = next ? `${tr('Spieltag', 'Matchday')} ${next.i + 1} (${next.i === c.round && c.week?.postponed ? `${nachholLabel(c)} – ${tr('Nachholspiel nach Platzsperre', 'replay after pitch closure')}` : dateLabel(matchDate(c, next.i))}): ${next.f.home === id ? tr('gegen', 'v') : tr('bei', 'at')} ${clubById(c, next.f.home === id ? next.f.away : next.f.home).name}` : tr('Kein Spiel mehr in dieser Saison.', 'No more matches this season.');
-    return `<ul class="tbl-form">${form || `<li class="none">${tr('noch kein Spiel', 'no games yet')}</li>`}</ul><p class="t-2">${nx}</p>`;
+    return `<ul class="tbl-form">${form || `<li class="none">${tr('noch kein Spiel', 'no games yet')}</li>`}</ul><p class="t-2">${nx}</p>${clubLine(c, id)}`; // Spieldaten der Saison (AFS Phase 4)
   },
 
   // Plakat der Stadtmeisterschaften: welches Turnier als Nächstes kommt, wo, was es zu gewinnen gibt.

@@ -1,7 +1,8 @@
 // Saisonsummen der Spieldaten (AFS Phase 1): Ligaspiele (recordResult) addieren die Spielzusammenfassung aus sim/analytics.js
 // je Spieler (career.players[idx].an) und je Verein (career.an.clubs[id]). Zum Saisonende bekommt der eigene Kader seine Zeile
-// in die Saisonchronik (rec.seasons[].an), der Verein seine in career.an.history (höchstens HISTORY Saisons); danach beginnt
-// alles bei null. Nur volle Simulation hat diese Daten: Spiele anderer Ligen (Poisson) tragen nichts bei (Audit, Regel 9).
+// in die Saisonchronik (rec.seasons[].an), der Verein seine in career.an.history (höchstens SEASON_AN.history Saisons; xgA
+// und attA = xG und Sekunden im letzten Drittel der Gegner); danach beginnt alles bei null. Nur volle Simulation hat diese Daten: Spiele anderer Ligen
+// (Poisson) tragen nichts bei (Audit, Regel 9).
 // xG und xA werden als Hundertstel gespeichert (ganze Zahlen, kleiner Spielstand).
 import { KEYS } from '../sim/analytics.js';
 import { allPlayers } from '../sim/squad.js';
@@ -25,10 +26,12 @@ export function recordSeasonAnalytics(career, fixture, prepared) {
   const an = (career.an ??= { v: 1, keys: KEYS, clubs: {}, history: [] });
   m.an.teams.forEach((t, i) => {
     const id = clubOf(i);
-    const c = (an.clubs[id] ??= { n: 0, s: null, third: [0, 0, 0] });
+    const c = (an.clubs[id] ??= { n: 0, s: null, third: [0, 0, 0], xgA: 0, attA: 0 });
     c.n++;
     c.s = addRow(c.s, t);
+    c.xgA = (c.xgA ?? 0) + Math.round(m.an.teams[1 - i].xg * 100); // xG des Gegners (Hundertstel)
     c.third = c.third.map((x, j) => x + Math.round(t.third[j]));
+    c.attA = (c.attA ?? 0) + Math.round(m.an.teams[1 - i].third[2]); // Sekunden des Gegners im letzten Drittel (Feldvorteil)
   });
 }
 

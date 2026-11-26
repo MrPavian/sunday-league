@@ -2128,3 +2128,10 @@ body.manager #end { padding-bottom: 84px; }
 .ticker-panel .scene .cap button:disabled { opacity: 0.35; cursor: default; }
 @media (max-width: 600px) { .ticker-panel .picture { grid-template-columns: 1fr; height: auto; } .ticker-panel .picture .press { height: 56px; flex: none; } .ticker-panel .picture .scene-svg { height: 120px; flex: none; } }
 @media (max-height: 500px) and (min-width: 601px) { .ticker-panel .picture { height: 118px; } .ticker-panel .pressbox small { display: none; } .ticker-panel .scene .cap { font-size: 11px; } }
+
+/* Spieldaten (AFS Phase 4): Herkunftszeile im Spielbericht, Saisonzeile auf Spielerkarte und in der Tabelle */
+#end .afs-note { font-size: 11px; opacity: 0.7; margin: 0 auto 10px; max-width: 34em; text-align: center; }
+.afs-line { font-size: 13px; margin: 4px 0 0; }
+.afs-club { margin-top: 4px; }
+.afs-levels { font-size: 12px; opacity: 0.85; margin: 2px 0 0; }
+.afs-levels li { margin: 1px 0; }
