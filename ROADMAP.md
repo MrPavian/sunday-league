@@ -326,6 +326,12 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
   xG für/gegen, Feldvorteil. Trainer (CPU): KI-Befehle je Spiel und Gruppe. Andere Ligen: Werte-Profil (Stärke, Rang, Trainertyp),
   MODELED. Neu gespeichert nur Spielanteil je Spieler und Befehle je Verein: nach 5 Saisons höchstens 7,2 KB, 3,1 KB dauerhaft.
   Befund: xG je Spieler auf Großfeld nicht besser als das Rollenmittel.
+- **Phase 7 – AFI-Kern ✅ 2026-11-26** (`intel/core.js`, `intel/levels.js`, `docs/ADVANCED-FOOTBALL-SYSTEM-07-CORE.md`,
+  `scripts/afs-effects.mjs`). `diagnose → options → rank` ohne Zufall. Befunde: xG, Gegner-xG, Feldvorteil, überspielte Gegner,
+  Passquote als Stufe gegen den Liga-Schnitt (z ≥ 1,96, Mindest-n), mit Belegen und Herkunft. Optionen nur mit auf beiden Plätzen
+  gemessener Wirkung: `build:direkt`, `style:mauern`, `route:mitte`, `style:offensiv`; für xG-Probleme keine. Rangfolge mit
+  Nebenwirkungen und Philosophie (`like` × 1,5 als Spielwert, `avoid`). In echten Saisons: Befund bei 38–50 % der Verein-Spieltage,
+  erster Vorschlag meist `style:mauern`; unter 0,5 ms je Spieltag.
 
 Reihenfolge G–I: 24 → 32 → 35 → 25 → 26 + 27 → 33 → 34 → 28 → 29 → 42 → 41 → 36 → 37 → 30 → 31 → 38 → 39 → 40 → 43 → 44 → 45 → 46 → 47.
 Begründung: Zuerst der kleine Rest der Ballphysik (24), dann zwei schnell spürbare Verbesserungen (32, 35). Danach die großen

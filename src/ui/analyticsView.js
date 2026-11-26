@@ -4,26 +4,16 @@
 import { getLang, tr } from '../core/i18n.js';
 import { seasonRow } from '../career/seasonstats.js';
 import { teamProfile } from '../intel/profiles.js';
+import { LEVELS, level } from '../intel/levels.js';
 
-// Mindeststichproben und Streuung je Spiel (Spielwerte aus Phase 3: Basis-SD, Rasenplatz und Großfeld gemittelt):
-//   passPct – Passquote einer Mannschaft, ab 8 Spielen; SD 0,065 je Spiel
-//   packing – überspielte Gegner je angekommenem Pass, Streuung relativ zum Mittel 0,2 je Spiel
-//   xg      – xG einer Mannschaft je Spiel, Streuung relativ 0,45 je Spiel
-//   tilt    – Feldvorteil (Anteil am Ballbesitz im letzten Drittel), SD 0,12 je Spiel
-//   clubMin – vorher zeigt die Tabellenzeile keine Stufen; playerXgMin – ab so vielen Einsätzen „trifft wie erwartet“
-export const AFS_VIEW = { passPctMin: 8, sdPassPct: 0.065, relPacking: 0.2, relXg: 0.45, sdTilt: 0.12, clubMin: 3, playerXgMin: 14, z: 1.96 };
+// Streuungen und Mindest-n der Stufen: intel/levels.js. playerXgMin – ab so vielen Einsätzen „trifft wie erwartet“ (Spielwert).
+export const AFS_VIEW = { ...LEVELS, playerXgMin: 14 };
+export { level };
 
 const de = () => getLang() === 'de';
 const dec = (v, d = 1) => (de() ? v.toFixed(d).replace('.', ',') : v.toFixed(d));
 const pct = (v) => `${Math.round(v * 100)} %`;
 
-// Stufe gegen einen Vergleichswert: deutlich mehr / im Schnitt / deutlich weniger, je nach Streuung und Zahl der Spiele.
-export function level(value, ref, sdPerMatch, n) {
-  if (value == null || ref == null || !(n > 0)) return null;
-  const se = sdPerMatch / Math.sqrt(n);
-  const z = (value - ref) / se;
-  return z >= AFS_VIEW.z ? 'more' : z <= -AFS_VIEW.z ? 'less' : 'avg';
-}
 const LEVEL_TEXT = {
   more: () => tr('deutlich mehr als der Liga-Schnitt', 'clearly above the league average'),
   avg: () => tr('im Liga-Schnitt', 'around the league average'),
