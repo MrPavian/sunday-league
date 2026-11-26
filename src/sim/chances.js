@@ -12,12 +12,17 @@
 // Szene (Spielwert); outcome – so lange (Spielsekunden) nach dem Schuss zählt ein Tor oder eine Parade noch dazu (Spielwert);
 // assist – ein Pass höchstens so lange vor dem Schuss gilt als Vorlage (Spielwert); segments – so viele Abschnitte hat die
 // Druck-Leiste über das ganze Spiel (Spielwert). Druck = Anteil der Zeit, in der die Mannschaft den Ball im letzten Drittel hat.
+// pitch – Verschiebung je Platz (Logit), AFS Phase 3 (docs/ADVANCED-FOOTBALL-SYSTEM-03-VALIDATION.md, 2026-11-26): je Platz 60
+// Spiele (Seeds 8200–8259) so verschoben, dass die Summe der xG den Toren aus Abschlüssen entspricht; nur übernommen, wo die
+// Abweichung größer als ihr 95-%-Intervall war (Hinterhof −0,37 ± 0,15, Park −0,36 ± 0,18, Großfeld +0,30 ± 0,21; die übrigen
+// fünf Plätze lagen innerhalb). Gilt auch für Stadion und Tribüne (Grundplatz `base`). Elfmeter bleiben fest.
 import { attackDir } from './players.js';
 
 export const XG = {
   on: true,
   base: -1.53, angle: 0.77, dist: -0.6, head: -0.89, block: -0.65, blockLane: 1.2, blockMax: 3, keeperOff: 0.36, keeperOffMax: 2,
   penalty: 0.66, scene: 0.15, outcome: 4, assist: 4, segments: 18,
+  pitch: { hinterhof: -0.37, park: -0.36, grossfeld: 0.3 },
 };
 
 const sig = (x) => 1 / (1 + Math.exp(-x));
@@ -46,7 +51,7 @@ export function shotXg(m, p, { head = false, penalty = false } = {}) {
     if (q.role === 'gk') keeper = Math.min(XG.keeperOffMax, s.d);
     else if (s.t >= 0 && s.t <= 1 && s.d < XG.blockLane) block++;
   }
-  const x = XG.base + XG.angle * angle + XG.dist * (dist / 10) + (head ? XG.head : 0) + XG.block * Math.min(block, XG.blockMax) + XG.keeperOff * keeper;
+  const x = (XG.pitch[m.pitch.base ?? m.pitch.id] ?? 0) + XG.base + XG.angle * angle + XG.dist * (dist / 10) + (head ? XG.head : 0) + XG.block * Math.min(block, XG.blockMax) + XG.keeperOff * keeper;
   return sig(x);
 }
 

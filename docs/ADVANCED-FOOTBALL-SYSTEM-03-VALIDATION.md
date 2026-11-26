@@ -105,17 +105,46 @@ Saison; Pässe je Spielanteil 26–33 Einsätze.
 | Zweikämpfe (Anzahl) | **frei** als Zählung | **frei** als Zählung | MEASURED/DERIVED; reagiert auf Pressing |
 | Zweikampfquote | nicht frei | nicht frei | fähigkeitsunabhängig, Spielerwert Zufall |
 | Kopfballduelle | nicht frei | nicht frei | zu selten (Mindest-n > 400), keine Taktikreaktion |
-| zweite Bälle | offen | nicht frei | stabil (n 12–13), Taktikreaktion nicht geprüft |
-| xG | **frei** als Stufe; Saisonsumme | **frei** ab einer Saison (≈ 14 Einsätze) | reagiert auf `route`; Spielerwert zuverlässig; Eichung je Platz offen |
+| zweite Bälle | nicht frei | nicht frei | stabil (n 12–13), aber keine Taktikreaktion (Abschnitt 7.2) – wartet auf D1 |
+| xG | **frei** als Stufe; Saisonsumme | **frei** ab einer Saison (≈ 14 Einsätze) | reagiert auf `route`; Spielerwert zuverlässig; je Platz geeicht (7.1) |
 | xA | **frei** als Saisonsumme | nicht frei | Spielerwert nur auf Rasenplatz zuverlässig |
 | Field Tilt | **frei** als Stufe ab 25 Spielen | – | reagiert auf Pressing und Stil |
 
 „Frei“ heißt: darf in Phase 4 angezeigt werden, mit Herkunft und Mindest-n; „als Stufe“ heißt ohne Nachkommastellen (deutlich
 mehr / ähnlich / deutlich weniger als der Platz-Schnitt).
 
-## 7. Offene Punkte
+## 7. Nachträge (2026-11-26)
 
-1. **xG je Platz eichen** (Spielwert-Konstante je Platz oder Spielformat): ändert nur Zahlen im Ticker, nicht das Spiel; vor Phase 4.
-2. **Zweite Bälle:** Taktikhypothese nachholen (z. B. `shape:kompakt` oder `mauern` → mehr zweite Bälle in der eigenen Hälfte).
-3. Nur zwei Plätze gemessen (Rasenplatz 7er, Großfeld 11er); Hinterhof, Halle, Asche und Park nicht.
+### 7.1 xG je Platz geeicht
+
+Je Platz 60 Spiele (Seeds 8200–8259, ohne feste Paarungen, wie die ursprüngliche Eichung), nur Abschlüsse ohne Elfmeter; je Platz
+die Verschiebung (Logit) gesucht, bei der die Summe der xG den Toren aus Abschlüssen entspricht.
+
+| Platz | Abschlüsse | Tore | xG vorher | Tore/xG vorher | Verschiebung ± 95 % | übernommen | Gegenprobe Tore/xG (Seeds 8300–8339) |
+|---|---|---|---|---|---|---|---|
+| Parkplatz | 1434 | 151 | 160,1 | 0,94 | −0,07 ± 0,17 | nein | 0,91 |
+| Hinterhof | 2473 | 189 | 261,2 | 0,72 | −0,37 ± 0,15 | **ja** | 1,01 |
+| Park | 1559 | 126 | 173,1 | 0,73 | −0,36 ± 0,18 | **ja** | 1,12 |
+| Ascheplatz | 1615 | 225 | 226,4 | 0,99 | −0,01 ± 0,14 | nein | 1,06 |
+| Rasenplatz | 1459 | 189 | 189,8 | 1,00 | 0,00 ± 0,16 | nein | 1,08 |
+| Sportplatz | 1233 | 133 | 145,8 | 0,91 | −0,11 ± 0,19 | nein | 0,81 |
+| Großfeld | 862 | 108 | 84,1 | 1,28 | +0,30 ± 0,21 | **ja** | 0,98 |
+| Halle | 1446 | 141 | 155,6 | 0,91 | −0,11 ± 0,18 | nein | 0,96 |
+
+Übernommen nur, wo die Abweichung größer als ihr Intervall war (`chances.js XG.pitch`). In der Gegenprobe liegen alle acht Plätze
+innerhalb ihres Intervalls. Die 0,86 auf dem Rasenplatz in Abschnitt 5 stammen aus den zwei festen Paarungen mit allen Toren
+(auch Eigentoren und Abprallern) – das ist kein Eichfehler des Platzes.
+
+### 7.2 Zweite Bälle und Taktik
+
+Hypothese vorab: `shape:kompakt` gewinnt mehr zweite Bälle als `shape:aufruecken`. Je Platz 2 Paarungen × 40 Spiele: Rasenplatz
+0,49 / 0,51 (t −1,3), Großfeld 0,49 / 0,50 (t −0,4) – **nicht erfüllt**. Über alle elf Befehle und Stile aus Abschnitt 3 und diesem
+Nachtrag liegt der Anteil zwischen 0,48 und 0,52. Wer den freien Ball holt, hängt in der Engine nicht an der Taktik; die Kennzahl
+bleibt gesperrt, bis Erweiterung D1 (Zweite-Ball-Staffelung) es gibt.
+
+## 8. Offene Punkte
+
+1. ~~xG je Platz eichen~~ erledigt (7.1).
+2. ~~Zweite Bälle: Taktikprobe~~ erledigt, nicht bestanden (7.2).
+3. Taktik und Zuverlässigkeit nur auf zwei Plätzen gemessen (Rasenplatz, Großfeld); die xG-Eichung auf allen acht.
 4. Die Engine-Befunde aus Abschnitt 3 gehören in Phase 2 (Druckmodell C1, Kopfballduell D2) und gegebenenfalls in die Balance.

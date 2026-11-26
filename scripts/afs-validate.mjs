@@ -1,6 +1,6 @@
 // AFS Phase 3 – Validierung der Spieldaten (sim/analytics.js): Streuung, Mindeststichprobe, Reaktion auf Taktik, Zuverlässigkeit
 // der Spielerwerte, Abhängigkeit der Kennzahlen, Zusammenhang mit Toren. Feste Mannschaften je Platz; nur Seed und Befehl wechseln.
-//   node scripts/afs-validate.mjs [N=40] [Plätze=rasenplatz,grossfeld] [Basis-Spiele=80]   (4 Worker-Threads)
+//   node scripts/afs-validate.mjs [N=40] [Plätze=rasenplatz,grossfeld] [Basis-Spiele=80] [Befehle=alle, Komma-Liste]   (4 Worker-Threads)
 // Ergebnis: Tabellen auf stdout, Rohdaten nach $AFS_OUT (wenn gesetzt).
 import { isMainThread, parentPort, Worker, workerData } from 'node:worker_threads';
 import { writeFileSync } from 'node:fs';
@@ -14,6 +14,8 @@ const CONDS = {
   'build:direkt': [['build', 'direkt']],
   'route:aussen': [['route', 'aussen']],
   'route:mitte': [['route', 'mitte']],
+  'shape:kompakt': [['shape', 'kompakt']],
+  'shape:aufruecken': [['shape', 'aufruecken']],
   'style:offensiv': 'offensiv',
   'style:mauern': 'mauern',
 };
@@ -99,7 +101,7 @@ function analyze(results, venues, N) {
     console.log('\n| Bedingung | ' + Object.keys(TEAM_METRICS).join(' | ') + ' |');
     console.log('|---|' + Object.keys(TEAM_METRICS).map(() => '---').join('|') + '|');
     const cmp = {};
-    for (const cond of Object.keys(CONDS)) {
+    for (const cond of Object.keys(CONDS).filter((c) => R.some((r) => r.cond === c))) {
       const rows = R.filter((r) => r.cond === cond && r.seed < 20000 + N); // Basis: dieselben Seeds wie die Befehle
       cmp[cond] = Object.fromEntries(Object.keys(TEAM_METRICS).map((k) => [k, rows.map((r) => teamVal(r, 0, k)).filter((x) => x != null)]));
       console.log(`| ${cond} | ` + Object.keys(TEAM_METRICS).map((k) => f(mean(cmp[cond][k]))).join(' | ') + ' |');
@@ -109,7 +111,8 @@ function analyze(results, venues, N) {
       ['build:kurz', 'build:direkt', 'passes', +1], ['build:kurz', 'build:direkt', 'passPct', +1], ['build:kurz', 'build:direkt', 'packingPerPass', -1],
       ['style:mauern', 'style:offensiv', 'tilt', -1], ['style:mauern', 'style:offensiv', 'xg', -1],
       ['route:aussen', 'route:mitte', 'aerials', +1],
-    ];
+      ['shape:kompakt', 'shape:aufruecken', 'looseShare', +1],
+    ].filter(([a, b]) => cmp[a] && cmp[b]);
     console.log('\n| Hypothese | A | B | Differenz | t | erfüllt |');
     console.log('|---|---|---|---|---|---|');
     for (const [a, b, k, dir] of H) {
@@ -177,10 +180,11 @@ if (!isMainThread) {
   const N = Number(process.argv[2] ?? 40);
   const venues = (process.argv[3] ?? 'rasenplatz,grossfeld').split(',');
   const NB = Number(process.argv[4] ?? 80);
+  const only = process.argv[5] ? new Set(['base', ...process.argv[5].split(',')]) : null;
   const jobs = [];
   for (const venue of venues)
     for (const pair of PAIRS)
-      for (const cond of Object.keys(CONDS)) {
+      for (const cond of Object.keys(CONDS).filter((c) => !only || only.has(c))) {
         const n = cond === 'base' ? NB : N;
         for (let i = 0; i < n; i++) jobs.push({ venue, cond, pair, seed: 20000 + i });
       }
