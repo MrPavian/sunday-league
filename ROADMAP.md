@@ -320,6 +320,12 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
   deutlich weniger, z ≥ 1,96 mit den Streuungen je Spiel aus Phase 3) für Packing je Pass und xG gegen den Liga-Schnitt,
   Feldvorteil gegen die eigenen Gegner (Saisonsumme `attA`). Geprüft im Browser bei 360×780, 320×568 und quer: kein
   waagerechtes Scrollen, keine Fehler. Golden unverändert.
+- **Phase 5 – Profile ✅ 2026-11-26** (`intel/profiles.js`, `docs/ADVANCED-FOOTBALL-SYSTEM-05-PROFILES.md`,
+  `scripts/afs-profiles.mjs`). Spieler der eigenen Liga: Pässe, xG, Zweikämpfe je Spiel, zum Positionsmittel geschrumpft
+  (k gemessen per Kreuzvalidierung auf den Phase-3-Spielen: 6,5 / 12,5 / 12), Perzentil je Position. Verein: Passquote, Packing,
+  xG für/gegen, Feldvorteil. Trainer (CPU): KI-Befehle je Spiel und Gruppe. Andere Ligen: Werte-Profil (Stärke, Rang, Trainertyp),
+  MODELED. Neu gespeichert nur Spielanteil je Spieler und Befehle je Verein: nach 5 Saisons höchstens 7,2 KB, 3,1 KB dauerhaft.
+  Befund: xG je Spieler auf Großfeld nicht besser als das Rollenmittel.
 
 Reihenfolge G–I: 24 → 32 → 35 → 25 → 26 + 27 → 33 → 34 → 28 → 29 → 42 → 41 → 36 → 37 → 30 → 31 → 38 → 39 → 40 → 43 → 44 → 45 → 46 → 47.
 Begründung: Zuerst der kleine Rest der Ballphysik (24), dann zwei schnell spürbare Verbesserungen (32, 35). Danach die großen

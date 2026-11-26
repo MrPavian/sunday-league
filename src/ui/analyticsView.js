@@ -3,6 +3,7 @@
 // Spielbericht (ein Spiel, beschreibend), Spielerkarte (Saison), Tabellenzeile eines Vereins (Saison gegen den Liga-Schnitt).
 import { getLang, tr } from '../core/i18n.js';
 import { seasonRow } from '../career/seasonstats.js';
+import { teamProfile } from '../intel/profiles.js';
 
 // Mindeststichproben und Streuung je Spiel (Spielwerte aus Phase 3: Basis-SD, Rasenplatz und Großfeld gemittelt):
 //   passPct – Passquote einer Mannschaft, ab 8 Spielen; SD 0,065 je Spiel
@@ -15,7 +16,6 @@ export const AFS_VIEW = { passPctMin: 8, sdPassPct: 0.065, relPacking: 0.2, relX
 const de = () => getLang() === 'de';
 const dec = (v, d = 1) => (de() ? v.toFixed(d).replace('.', ',') : v.toFixed(d));
 const pct = (v) => `${Math.round(v * 100)} %`;
-const ratio = (a, b) => (b > 0 ? a / b : null);
 
 // Stufe gegen einen Vergleichswert: deutlich mehr / im Schnitt / deutlich weniger, je nach Streuung und Zahl der Spiele.
 export function level(value, ref, sdPerMatch, n) {
@@ -77,32 +77,26 @@ export function playerLine(rec) {
 export const xgShort = (v) => dec(v);
 export const seasonXg = (season) => (season?.an ? seasonRow(season.an).xg : null);
 
-// --- Tabellenzeile eines Vereins: Saisonwerte gegen den Liga-Schnitt (alle Vereine dieser Liga mit Daten).
-function clubRatios(c) {
-  const r = seasonRow(c.s);
-  return { r, passPct: ratio(r.passOk, r.pass), packing: ratio(r.packing, r.passOk), xg: r.xg / c.n, xgA: (c.xgA ?? 0) / 100 / c.n, tilt: ratio(c.third[2], c.third[2] + (c.attA ?? 0)) };
-}
+// --- Tabellenzeile eines Vereins: Saisonwerte gegen den Liga-Schnitt (alle Vereine dieser Liga mit Daten; intel/profiles.js).
 export function clubLine(career, id) {
-  const an = career.an;
-  const c = an?.clubs?.[id];
-  if (!c || !c.s || !c.n) return '';
-  const me = clubRatios(c);
-  const others = Object.values(an.clubs).filter((x) => x.s && x.n).map(clubRatios);
+  const me = teamProfile(career, id);
+  if (!me) return '';
+  const others = Object.keys(career.an.clubs).map((x) => teamProfile(career, x)).filter(Boolean);
   const avg = (k) => {
     const v = others.map((o) => o[k]).filter((x) => x != null);
     return v.length ? v.reduce((s, x) => s + x, 0) / v.length : null;
   };
   const parts = [`xG ${dec(me.xg)} : ${dec(me.xgA)} ${tr('je Spiel', 'per match')}`];
-  if (c.n >= AFS_VIEW.passPctMin && me.passPct != null) parts.push(`${tr('Passquote', 'pass completion')} ${pct(me.passPct)}`);
+  if (me.n >= AFS_VIEW.passPctMin && me.passPct != null) parts.push(`${tr('Passquote', 'pass completion')} ${pct(me.passPct)}`);
   const lines = [];
-  if (c.n >= AFS_VIEW.clubMin) {
+  if (me.n >= AFS_VIEW.clubMin) {
     const ap = avg('packing');
-    const lp = level(me.packing, ap, (ap ?? 0) * AFS_VIEW.relPacking, c.n);
+    const lp = level(me.packing, ap, (ap ?? 0) * AFS_VIEW.relPacking, me.n);
     if (lp) lines.push(`${tr('Überspielte Gegner je Pass', 'Opponents bypassed per pass')}: ${LEVEL_TEXT[lp]()}`);
-    const lt = level(me.tilt, 0.5, AFS_VIEW.sdTilt, c.n); // Feldvorteil gegen die eigenen Gegner; ausgeglichen = 0,5
+    const lt = level(me.tilt, 0.5, AFS_VIEW.sdTilt, me.n); // Feldvorteil gegen die eigenen Gegner; ausgeglichen = 0,5
     if (lt) lines.push(`${tr('Feldvorteil', 'Field tilt')}: ${TILT_TEXT[lt]()}`);
     const ax = avg('xg');
-    const lx = level(me.xg, ax, (ax ?? 0) * AFS_VIEW.relXg, c.n);
+    const lx = level(me.xg, ax, (ax ?? 0) * AFS_VIEW.relXg, me.n);
     if (lx) lines.push(`${tr('Chancen (xG)', 'Chances (xG)')}: ${LEVEL_TEXT[lx]()}`);
   } else lines.push(tr(`Vergleich mit der Liga ab ${AFS_VIEW.clubMin} Spielen`, `league comparison from ${AFS_VIEW.clubMin} matches`));
   return `<div class="afs-club"><p class="afs-line">${parts.join(' · ')}</p><ul class="plain afs-levels">${lines.map((l) => `<li>${l}</li>`).join('')}</ul></div>`;

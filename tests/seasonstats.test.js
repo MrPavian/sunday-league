@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { createCareer, currentFixtures, finishRound, humanClub, loadCareer, nextSeason, prepareMatch, recordResult, saveCareer, seasonOver, simulateSync } from '../src/career/career.js';
 import { KEYS } from '../src/sim/analytics.js';
-import { seasonRow } from '../src/career/seasonstats.js';
+import { PKEYS, seasonRow } from '../src/career/seasonstats.js';
 
 const memoryStorage = () => {
   const data = {};
@@ -49,7 +49,7 @@ describe('Saisonsummen (AFS Phase 1)', () => {
       const rec = c.players[idx];
       if (!rec) continue; // Karriereende
       expect(rec.seasons.at(-1).season).toBe(season);
-      expect(rec.seasons.at(-1).an).toHaveLength(KEYS.length);
+      expect(rec.seasons.at(-1).an).toHaveLength(PKEYS.length); // Phase 5: Spielerzeile mit Spielanteil
     }
   }, 300000);
 });
