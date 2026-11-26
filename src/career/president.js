@@ -22,6 +22,7 @@ import { humanClub, maxSquad, nudge, playerOf, recruit, seasonOver } from './car
 import { adjustMood } from './events.js';
 import { book } from './finances.js';
 import { coachPlaying, hangUpBoots, legacy } from './legacy.js';
+import { COACH5 } from './opponents.js';
 import { isPresident } from './personal.js';
 import { chronicle } from './sagas.js';
 import { promoteProspect } from './youth.js';
@@ -32,7 +33,7 @@ export { isPresident };
 const SALARY_BASE = [0, 12, 20, 30, 42, 56, 87, 118, 148, 547, 3848, 11554, 15796]; // Stufen 6–12: 56 × upperScale (finances.js), hergeleitet
 export const SEVERANCE_WEEKS = 6; // Abfindung bei Entlassung: sechs Wochenlöhne (Spielwert)
 export const HIRE_FEE_WEEKS = 2; // Handgeld ab der zweiten Einstellung: zwei Wochenlöhne (Spielwert)
-const PERSONAS = ['stratege', 'oldschool', 'grossmaul', 'kumpeltyp']; // wie bei den Trainern der Gegner (opponents.js)
+const PERSONAS = ['stratege', 'oldschool', 'grossmaul', 'kumpeltyp', 'ballbesitz']; // wie bei den Trainern der Gegner (opponents.js)
 const FORMATS = [4, 5, 7, 9, 11];
 
 const hash = (...parts) => parts.reduce((h, p) => (Math.imul(h ^ (p | 0), 0x9e3779b1) + 0x7f4a7c15) >>> 0, 0x2c1b3c6d);
@@ -99,7 +100,10 @@ export function coachApplicants(c) {
     const quality = Math.round(rng.range(a.quality[0], a.quality[1]) * 100) / 100;
     const reputation = Math.round(rng.range(a.rep[0], a.rep[1]));
     const style = rng.pick(a.styles.filter((s) => STYLES[s]));
-    const persona = Array.isArray(a.persona) ? rng.pick(a.persona) : a.persona;
+    const picked = Array.isArray(a.persona) ? rng.pick(a.persona) : a.persona;
+    // Ballbesitz-Trainer (AFS Phase 6, Nutzerentscheidung 2026-11-26): wer Kurzpass als Stil mitbringt, ist einer. Ohne
+    // eigenen Zufallswurf, damit die übrigen Bewerberwerte gleich bleiben.
+    const persona = COACH5.on && style === 'kurzpass' && arch !== 'routinier' ? 'ballbesitz' : picked;
     // Aussehen wie bei den Spielern (generator.js makeLook): Haut und Haar passend zur Herkunft des Namens, grau ab etwa 40
     // (origins.js hairIndex). Vorher eigene Würfel: grau erst ab 56 und nur zu 60 % – ein 65-Jähriger hatte oft volles braunes Haar.
     const look = {

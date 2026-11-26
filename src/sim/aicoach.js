@@ -5,15 +5,19 @@
 //   Alte Schule – reagiert selten, mag Pressing, Kompaktheit, lange Bälle
 //   Großmaul  – will immer mehr: Risiko, Aufrücken, Pressing
 //   Kumpeltyp – lässt die Jungs meistens machen
+//   Ballbesitz – hält den Ball, geht wenig Risiko
 // Eigener Zufall (m.coachRng), damit das Spiel selbst nicht aus dem Takt gerät.
 import { createRng } from '../core/rng.js';
 import { setOrder } from './plan.js';
 
-const PERSONAS = {
+export const PERSONAS = {
   stratege: { react: 0.85, like: ['route:kombi'], avoid: [] },
   oldschool: { react: 0.4, like: ['press:hoch', 'shape:kompakt', 'build:direkt', 'press:tief', 'route:konter'], avoid: ['build:kurz', 'build:halten', 'tempo:ruhig'] },
   grossmaul: { react: 0.6, like: ['risk:aggressiv', 'shape:aufruecken', 'press:hoch', 'route:tiefe'], avoid: ['press:tief', 'build:halten'] },
   kumpeltyp: { react: 0.35, like: [], avoid: [] },
+  // Ballbesitz (AFS Phase 6): mag, was gemessen den Ballbesitz hebt (build:halten +2,2–3,2, risk:sicher +1,1–2,1 Prozentpunkte
+  // auf Rasenplatz und Großfeld, scripts/afs-effects.mjs), meidet lange und schnelle Wege. react wie normal (Spielwert).
+  ballbesitz: { react: 0.55, like: ['build:halten', 'risk:sicher'], avoid: ['build:direkt', 'route:konter', 'route:tiefe', 'risk:aggressiv'] },
   normal: { react: 0.55, like: [], avoid: [] },
 };
 const DIFFICULTY = { easy: 0.5, normal: 1, hard: 1.35 };

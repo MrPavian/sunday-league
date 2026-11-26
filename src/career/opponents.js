@@ -13,7 +13,12 @@ const TYPES = {
   stratege: { name: tr('Stratege', 'Tactician') },
   oldschool: { name: tr('Alte Schule', 'Old school') },
   kumpeltyp: { name: tr('Kumpeltyp', 'Good bloke') },
+  ballbesitz: { name: tr('Ballbesitz', 'Possession') },
 };
+// Fünfter Trainertyp „Ballbesitz“ (AFS Phase 6, Entscheidung E4; Nutzerentscheidung 2026-11-26: etwa die Hälfte der bisherigen
+// Kumpeltypen). Alle anderen Vereine behalten Typ, Name und Handschrift. Schalter für den Vergleich mit dem alten Stand.
+export const COACH5 = { on: true };
+const BASE_TYPES = ['grossmaul', 'stratege', 'oldschool', 'kumpeltyp']; // Reihenfolge bestimmt die Verteilung – nicht ändern
 
 function hash(s) {
   let h = 2166136261;
@@ -23,8 +28,9 @@ function hash(s) {
 
 export function coachOf(club) {
   const h = hash(club.id);
-  const types = Object.keys(TYPES);
-  return { name: personName(createRng(h), 42 + (h % 20)), type: types[(h >>> 16) % types.length] };
+  let type = BASE_TYPES[(h >>> 16) % BASE_TYPES.length];
+  if (type === 'kumpeltyp' && COACH5.on && (h >>> 8) & 1) type = 'ballbesitz'; // Bit 8 ist unabhängig von den Bits 16–17
+  return { name: personName(createRng(h), 42 + (h % 20)), type };
 }
 
 const feudOf = (c, id) => c.feuds?.[id] ?? 0;
@@ -48,6 +54,7 @@ export function preMatchVoice(c, opponent, chat) {
   else if (coach.type === 'grossmaul') quote = ours > theirs ? tr('Die stehen hinter uns, und da gehören sie auch hin.', 'They are below us and that is where they belong.') : tr('Tabelle lügt. Sonntag sieht man, wer kicken kann.', 'The table lies. Sunday will show who can play.');
   else if (coach.type === 'stratege') quote = tr('Wir haben sie dreimal auf Video angeschaut. Also das eine Video, das es gibt.', 'We watched them three times on video. Well, the one video there is.');
   else if (coach.type === 'oldschool') quote = tr('Grätschen, laufen, Mund halten. So haben wir das früher gemacht.', 'Tackle, run, keep your mouth shut. That is how we used to do it.');
+  else if (coach.type === 'ballbesitz') quote = tr('Wer den Ball hat, muss nicht hinterherlaufen. Sonntag haben wir ihn.', 'Whoever has the ball does not have to chase it. On Sunday we will have it.');
   else quote = tr('Hauptsache, hinterher gibt es ein Bier mit denen.', 'As long as we have a beer with them afterwards.');
   chat.push({ from: null, text: tr(`Kreisblatt: Trainer ${coach.name} (${opponent.short}): „${quote}“`, `District Gazette: ${opponent.short} manager ${coach.name}: “${quote}”`), time: 'Do 06:30', press: true });
 }

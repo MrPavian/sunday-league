@@ -332,6 +332,12 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
   gemessener Wirkung: `build:direkt`, `style:mauern`, `route:mitte`, `style:offensiv`; für xG-Probleme keine. Rangfolge mit
   Nebenwirkungen und Philosophie (`like` × 1,5 als Spielwert, `avoid`). In echten Saisons: Befund bei 38–50 % der Verein-Spieltage,
   erster Vorschlag meist `style:mauern`; unter 0,5 ms je Spieltag.
+- **Phase 6 – Philosophien und Trainertyp „Ballbesitz“ ✅ 2026-11-26** (`intel/philosophy.js`, `opponents.js COACH5`,
+  `docs/ADVANCED-FOOTBALL-SYSTEM-06-PHILOSOPHY.md`, `scripts/afs-philosophy.mjs`). Fünfter Typ aus etwa der Hälfte der
+  Kumpeltypen (Schalter `COACH5`), auch im Präsidium (Bewerber mit Kurzpass). Handschrift `build:halten`: gemessen +2,2–3,2
+  Prozentpunkte Ballbesitz, weniger eigene xG. Philosophie je Typ: like/avoid wie im Spiel plus Gewichte je Befund (Spielwert),
+  in `rank`. Gleiche Befunde → in 80 % der Fälle verschiedene erste Vorschläge je Typ. Ballbesitz-Vereine −2,0 Punkte je Saison
+  (t −1,4, 12 Saisons).
 - **Phase 12 – Manager-Beratung ✅ 2026-11-26** (`intel/advice.js`, `docs/ADVANCED-FOOTBALL-SYSTEM-12-ADVICE.md`,
   `scripts/afs-advice.mjs`). Co-Trainer-Hinweis auf der Startseite: ab 5 Spielen, höchstens einer je Woche (selten: je zwei),
   derselbe Befund frühestens nach 4 Wochen, Beleg und genau ein Spielplan-Befehl, nie ein Stilwechsel (Nutzerentscheidung).

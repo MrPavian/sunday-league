@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 const R = JSON.parse(readFileSync(process.argv[2]));
 const M = {
   xg: (t) => t.xg, xgA: (t, o) => o.xg, tilt: (t, o) => t.third[2] / (t.third[2] + o.third[2] || 1),
-  passPct: (t) => t.passOk / (t.pass || 1), packing: (t) => t.packing / (t.passOk || 1),
+  poss: (t, o) => (t.poss == null ? NaN : t.poss / (t.poss + o.poss || 1)), passes: (t) => t.pass, passPct: (t) => t.passOk / (t.pass || 1), packing: (t) => t.packing / (t.passOk || 1),
 };
 const mean = (a) => a.reduce((s, x) => s + x, 0) / a.length;
 const vr = (a) => { const m = mean(a); return a.reduce((s, x) => s + (x - m) ** 2, 0) / (a.length - 1); };

@@ -67,7 +67,8 @@ export function options(finding) {
 
 // Rangfolge über alle Probleme: Nutzen = Summe der gemessenen Wirkungen auf die Problemwerte (Nebenwirkungen auf andere Probleme
 // zählen negativ), × INTEL.like für bevorzugte Befehle. Gemiedene und schon aktive Befehle fallen weg, ebenso Nutzen ≤ 0.
-// current: { style, orders } wie career.js tacticOf; philosophy: { like: [], avoid: [] } wie aicoach.js PERSONAS.
+// current: { style, orders } wie career.js tacticOf; philosophy: { like: [], avoid: [], weights: { metric: Faktor } }
+// (intel/philosophy.js).
 export function rank(findings, { philosophy = {}, current = {} } = {}) {
   const problems = findings.filter((f) => f.kind === 'problem');
   const keys = new Set(problems.flatMap((f) => options(f).map((o) => o.key)));
@@ -84,7 +85,7 @@ export function rank(findings, { philosophy = {}, current = {} } = {}) {
     for (const f of problems) {
       const e = (eff[f.metric] ?? 0) * METRICS[f.metric].good;
       if (!e) continue;
-      score += e;
+      score += e * (philosophy.weights?.[f.metric] ?? 1); // Gewicht der Philosophie: was den Trainer zuerst stört (Spielwert)
       (e > 0 ? helps : hurts).push(f.type);
     }
     const liked = !!philosophy.like?.includes(key);

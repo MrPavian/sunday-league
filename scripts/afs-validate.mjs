@@ -16,6 +16,10 @@ const CONDS = {
   'route:mitte': [['route', 'mitte']],
   'shape:kompakt': [['shape', 'kompakt']],
   'shape:aufruecken': [['shape', 'aufruecken']],
+  'build:halten': [['build', 'halten']], // Phase 6: Befehle eines Ballbesitz-Trainers
+  'tempo:ruhig': [['tempo', 'ruhig']],
+  'route:kombi': [['route', 'kombi']],
+  'risk:sicher': [['risk', 'sicher']],
   'style:offensiv': 'offensiv',
   'style:mauern': 'mauern',
 };
@@ -40,9 +44,11 @@ async function runJob({ venue, cond, seed, pair }) {
     m.plan[0] = { ...m.plan[0], style: c };
     m.modsCache = null;
   } else for (const [g, v] of c) setOrder(m, 0, g, v);
+  const poss = [0, 0]; // Ballbesitz in Sekunden (letzte Mannschaft am Ball, sim/ai.js m.lastPossession), nur gemessen, nicht im Spiel
   while (m.phase !== 'ended') {
     stepMatch(m, undefined, 1 / 60);
     m.events.length = 0;
+    if (m.phase === 'play' && m.lastPossession != null) poss[m.lastPossession] += 1 / 60;
   }
   const an = m.an;
   const players = [];
@@ -52,7 +58,7 @@ async function runJob({ venue, cond, seed, pair }) {
     if (!r || !st || st.seconds <= 0) continue;
     players.push({ key: `${venue}:${pair}:${p.team}:${p.name}`, role: p.role, share: st.seconds / m.duration, ...r });
   }
-  return { venue, cond, seed, pair, score: m.score, teams: an.teams, players };
+  return { venue, cond, seed, pair, score: m.score, teams: an.teams.map((t, i) => ({ ...t, poss: poss[i] })), players };
 }
 
 

@@ -33,10 +33,18 @@ export const PATTERNS = {
     counter: { group: 'tempo', value: 'ruhig' },
     hint: tr('Die warten auf unsere Fehler. Ruhig aufbauen, den Ball nicht leichtfertig verlieren.', 'They are waiting for our mistakes. Build up calmly, do not give the ball away cheaply.'),
   },
+  // AFS Phase 6: Ballbesitz-Trainer. Gemessen (scripts/afs-effects.mjs): Ball halten hebt den eigenen Ballbesitz um 2–3
+  // Prozentpunkte und senkt die eigenen xG (−0,20 bis −0,44 je Spiel). Ein Gegenmittel ist nicht gemessen.
+  ballbesitz: {
+    label: tr('Ballbesitz', 'Possession'),
+    orders: { build: 'halten' },
+    counter: null,
+    hint: tr('Die lassen den Ball laufen und gehen wenig Risiko. Nicht nervös werden – gefährlich werden die selten.', 'They keep the ball and take few risks. Do not get nervous – they rarely carve you open.'),
+  },
 };
 
 // Welche Handschriften passen zu welchem Trainertyp? (Kumpeltyp: keine feste.)
-const BY_TYPE = { grossmaul: ['pressing'], oldschool: ['lang', 'mauern'], stratege: ['konter', 'pressing'], kumpeltyp: [] };
+const BY_TYPE = { grossmaul: ['pressing'], oldschool: ['lang', 'mauern'], stratege: ['konter', 'pressing'], kumpeltyp: [], ballbesitz: ['ballbesitz'] };
 
 const hash = (s) => [...String(s)].reduce((h, ch) => (Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0), 2166136261);
 

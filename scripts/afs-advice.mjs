@@ -37,7 +37,7 @@ function run(seed, mode, take) {
     }
     finishRound(c);
   }
-  out.table = table(c).map((r) => `${r.id}:${r.pts}`).join(' ');
+  out.table = table(c).map((r) => `${r.club.id}:${r.pts}`).join(' ');
   out.ms = +(out.ms / out.weeks).toFixed(2);
   return out;
 }
