@@ -358,6 +358,14 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
   Poisson). Spielerprofile daraus im Transfermarkt (Perzentil unter derselben Position der Nachbarliga, mit Zahl der Messspiele).
   Daten gelten eine Saison; Schalter `SAMPLE`. 3 Seeds × 5 Saisons: Tabellen gleich, Messdaten höchstens 3,1 KB während der
   Saison, danach 0; rund 0,5–0,9 s Rechenzeit je Spieltag (Node).
+- **Balancing & Simulation QA** (Nutzerauftrag 2026-11-27, Wortlaut `docs/BALANCING-QA-AUFTRAG.md`). Eingeordnet nach 5b, vor 9:
+  Phase 9 soll ihre Rollengewichte aus Attributversuchen ableiten, Phase 10 braucht einen Ausgangsstand für „Liga-Balance wie
+  vorher“, Phase 2 das Regressionssystem. Neue Reihenfolge: … 8 → 5b → **QA Abschnitt A** (Audit, Simulationen, Berichte; keine
+  Spielwerte ändern) → Freigabe → **QA Abschnitt B** (je Änderung ein Parameter, Vergleich gleicher Seeds) → 9 → 10 → 2 → 11 → 13.
+  Anpassungen an den Bestand: vorhandene Skripte (`balance-audit`, `longrun`, `tactics-matrix`, `strength-*`, `golden`,
+  `determinism`, `afs-validate`) und Berichte 00/03 werden weiterverwendet; Systeme je Format statt der 7 genannten (3-4-3, 5-3-2,
+  4-1-4-1 gibt es nicht – ob sie kommen, ist eine Frage für B); Vergleichswerte echter Ligen nur recherchiert und gekennzeichnet;
+  Saisonzahl nach gemessener Rechenzeit. AFS-Fragen aus Abschnitt 12 nur mit vorhandenen Kennzahlen.
 - **Phase 12 – Manager-Beratung ✅ 2026-11-26** (`intel/advice.js`, `docs/ADVANCED-FOOTBALL-SYSTEM-12-ADVICE.md`,
   `scripts/afs-advice.mjs`). Co-Trainer-Hinweis auf der Startseite: ab 5 Spielen, höchstens einer je Woche (selten: je zwei),
   derselbe Befund frühestens nach 4 Wochen, Beleg und genau ein Spielplan-Befehl, nie ein Stilwechsel (Nutzerentscheidung).
