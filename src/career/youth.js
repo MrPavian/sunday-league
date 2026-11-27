@@ -3,6 +3,7 @@
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
 import { hasTrait } from '../data/traits.js';
+import { MIND_KEYS } from '../sim/mind.js';
 import { ATTR_KEYS } from '../sim/strength.js';
 import { niveauFits } from './career.js';
 import { onPromote } from './bridge.js';
@@ -63,7 +64,7 @@ export function developYouth(career, factor = () => 1) {
     const rec = career.players[idx];
     rec.delta ??= {};
     const f = factor(idx);
-    for (const k of ATTR_KEYS) {
+    for (const k of [...ATTR_KEYS, ...MIND_KEYS]) { // Spielintelligenz (Phase 6b) wächst in der Jugend mit
       rec.delta[k] = (rec.delta[k] ?? 0) + 0.035 * (0.6 + q) * f;
     }
   }

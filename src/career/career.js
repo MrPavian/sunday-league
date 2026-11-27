@@ -12,6 +12,7 @@ import { applyPlatz, ensureVertrag, nachholAbsence, platz, platzNewSeason, sperr
 import { createRng } from '../core/rng.js';
 import { createPlayerPool, ratePlayer } from '../sim/generator.js';
 import { slotRating } from '../sim/position.js';
+import { ensureMind, MIND, MIND_KEYS } from '../sim/mind.js';
 import { ATTR_KEYS, ensureStrength } from '../sim/strength.js';
 import { afterMatchPositions, deliverGrumbles, famAt, migratePositions, posFamOf } from './positions.js';
 import { isRival } from './rivals.js';
@@ -134,6 +135,7 @@ export function registerCustomPlayers(career) {
   // ohne Zufallsstrom, also immer derselbe Wert). Pool-Spieler haben ihn von Haus aus.
   for (const [k, p] of Object.entries(career.custom ?? {})) {
     ensureStrength(p);
+    ensureMind(p); // Spielintelligenz (Phase 6b) ebenso nachtragen
     CUSTOM.set(Number(k), p);
   }
 }
@@ -142,6 +144,7 @@ export function addCustomPlayer(career, player) {
   const idx = CUSTOM_BASE + Object.keys(career.custom).length;
   const p = { ...player, poolIndex: idx };
   ensureStrength(p);
+  ensureMind(p);
   career.custom[idx] = p;
   CUSTOM.set(idx, p);
   return idx;
@@ -172,6 +175,7 @@ export function playerOf(career, idx) {
   const attrs = { ...base.attrs };
   const model = career.strength ?? 1; // Stärkemodell 2: Technikwerte über 1, Stärke ohne Deckel (sim/skill.js attrMax)
   if (delta) for (const k of ATTR_KEYS) if (attrs[k] != null) attrs[k] = Math.max(0.05, Math.min(attrMax(k, model), attrs[k] + (delta[k] ?? 0)));
+  if (delta) for (const k of MIND_KEYS) if (attrs[k] != null && delta[k]) attrs[k] = Math.max(0.05, Math.min(attrMax(k, model), attrs[k] + delta[k]));
   const age = base.age + years;
   // Aus Schülern werden mit der Zeit Studenten oder Azubis.
   const job = career.players[idx]?.job; // Jobwechsel aus einer Lebensgeschichte
@@ -188,6 +192,7 @@ export function developPlayers(career) {
   const club = humanClub(career);
   const rng = createRng(hashSeed(career.seed, career.season, 17));
   const strRng = createRng(hashSeed(career.seed, career.season, 18));
+  const mindRng = createRng(hashSeed(career.seed, career.season, 19));
   const report = [];
   for (const idx of club.squad) {
     const rec = career.players[idx];
@@ -209,6 +214,9 @@ export function developPlayers(career) {
       if (age >= onset + 3 && k !== 'pace' && k !== 'stamina' && k !== 'strength') d -= 0.008 * eloScale(career); // Modell 3: Abbau in Spielstärke
       rec.delta[k] = (rec.delta[k] ?? 0) + d;
     }
+    // Spielintelligenz (Phase 6b): wächst mit dem Zuwachs wie die übrigen Werte, aus einem eigenen Strom (sonst verschöbe sich die
+    // Entwicklung alter Spielstände), ohne Trainingsschwerpunkt (kommt mit Phase 11) und ohne Abbau im Alter (Spielwert).
+    if (MIND.on) for (const k of MIND_KEYS) rec.delta[k] = (rec.delta[k] ?? 0) + Math.max(0, (gain / 100) * (0.5 + mindRng.next()));
     rec.devSeen = career.season;
     report.push({ idx, before: before.rating, event });
   }

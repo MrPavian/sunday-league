@@ -5,6 +5,7 @@
 // Ziele, Aufschläge und Anteile sind Spielwerte (unten kleinere Abstände, Nutzerentscheid 2026-10-29/30).
 import { createRng } from '../core/rng.js';
 import { RATING_WEIGHTS, ratePlayer } from './generator.js';
+import { MIND_SET } from './mind.js';
 import { PHYS_ATTRS } from './skill.js';
 
 export const NIVEAU_TARGET = [51, 57, 64, 73, 84, 97, 111, 126]; // Ligamittel der besten n je Niveau 1–8
@@ -46,7 +47,7 @@ const techShare = (pos) => Object.entries(RATING_WEIGHTS[pos] ?? RATING_WEIGHTS.
 // Welche Werte der Aufschlag hebt: Feldspieler alle Technikwerte außer dem Torwartspiel (sonst stellte die Aufstellung einen
 // Verteidiger ins Tor, position.test), Torhüter nur ihre eigenen (Torwartspiel, Passen, Technik).
 const GK_LIFT = new Set(['keeping', 'passing', 'technique']);
-const liftsAttr = (pos, k) => !PHYS_ATTRS.has(k) && (pos === 'gk' ? GK_LIFT.has(k) : k !== 'keeping');
+const liftsAttr = (pos, k) => !PHYS_ATTRS.has(k) && !MIND_SET.has(k) && (pos === 'gk' ? GK_LIFT.has(k) : k !== 'keeping');
 
 // Spieler im neuen Modell: Technikwerte um den Aufschlag seines Niveaus angehoben, Stärke ohne Deckel. Pool-Spieler sind fest –
 // das Ergebnis wird je Spieler zwischengespeichert (playerOf ruft es sehr oft; ohne Speicher liefen Tests in Zeitüberschreitung).

@@ -7,6 +7,7 @@ import { createRng } from '../core/rng.js';
 import { book } from './finances.js';
 import { addCustomPlayer, getPool, humanClub, maxSquad, niveauFits, playerOf, youthNiveau } from './career.js';
 import { generatePlayer, ratePlayer } from '../sim/generator.js';
+import { withMind } from '../sim/mind.js';
 import { deriveStrength } from '../sim/strength.js';
 import { adjustMood } from './events.js';
 import { lateOr, statusFor } from './spielbericht.js';
@@ -117,7 +118,7 @@ export function createCoachPlayer(input, seed = 1) {
     custom: 'coach',
   };
   // Körper: aus Alter/Aussehen/Position des fertigen Avatars (nicht des gewürfelten Rohlings), dazu der Spielertyp.
-  player.attrs = { ...player.attrs, strength: clampAttr(deriveStrength(player) + (style.mods.strength ?? 0)) };
+  player.attrs = { ...withMind(player), strength: clampAttr(deriveStrength(player) + (style.mods.strength ?? 0)) }; // Spielintelligenz ebenso (mind.js)
   player.rating = ratePlayer(player);
   return player;
 }
@@ -139,7 +140,7 @@ function createKidPlayer(child, coach, parent, age, seed) {
     look: { ...p.look, skin: parent.look.skin, hair: rng.chance(0.6) ? parent.look.hair : p.look.hair, bald: false, beard: false },
     custom: 'kid',
   };
-  player.attrs = { ...player.attrs, strength: deriveStrength(player) }; // Alter/Aussehen wurden oben überschrieben
+  player.attrs = { ...withMind(player), strength: deriveStrength(player) }; // Alter/Aussehen wurden oben überschrieben
   player.rating = ratePlayer(player);
   return player;
 }

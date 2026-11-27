@@ -7,6 +7,7 @@ import { HAIR_COLORS, NAME_EDITIONS, PROFESSIONS, SKIN_TONES } from '../data/nam
 import { hairIndex, personIdentity, regionalize, skinIndex } from '../data/origins.js';
 import { RANDOM_TRAIT_IDS } from '../data/traits.js';
 import { rollTier, tierById } from '../data/tiers.js';
+import { deriveMind } from './mind.js';
 import { deriveStrength } from './strength.js';
 
 export const POSITIONS = tr({ gk: 'Torwart', def: 'Abwehr', mid: 'Mittelfeld', fwd: 'Sturm', fan: 'Zuschauer' }, { gk: 'Goalkeeper', def: 'Defence', mid: 'Midfield', fwd: 'Attack', fan: 'Spectator' });
@@ -119,6 +120,7 @@ function generateLegend(rng, role, names) {
   };
   // Körper: Archetyp-Wert, sonst aus dem Aussehen (kein weiterer Zufallswurf, siehe ROLL_ATTRS).
   legend.attrs.strength = arch.attrs.strength ?? deriveStrength(legend);
+  Object.assign(legend.attrs, deriveMind(legend)); // Spielintelligenz (mind.js), ebenfalls ohne Zufallsstrom
   return legend;
 }
 
@@ -154,6 +156,7 @@ export function generatePlayer(rng, { role = 'mid', tier = null, tierWeights = n
     };
     // Körper aus Größe, Bauch, Alter und Position (ohne Zufallsstrom): siehe strength.js.
     player.attrs.strength = deriveStrength(player);
+    Object.assign(player.attrs, deriveMind(player)); // Antizipation, Übersicht, Stellungsspiel (mind.js), ohne Zufallsstrom
   }
   player.rating = ratePlayer(player);
   return player;

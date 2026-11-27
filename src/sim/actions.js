@@ -22,6 +22,7 @@ import { headerDuelFoul } from './fouls.js';
 import { STAMINA_DRAIN } from './pitch.js';
 import { secondWind } from './mentality.js';
 import { setPieceDistance } from './setpieces.js';
+import { MIND, MIND_FX, mindWeak } from './mind.js';
 
 export const REACH = 0.75;
 
@@ -554,6 +555,8 @@ function pass(m, p, a, fatigue, fromHands) {
     const read = defs.length ? defs.reduce((s2, o) => s2 + o.attrs.tackling, 0) / defs.length : 0.5;
     m.pass.through = true;
     m.pass.react = 0.55 - 0.3 * cap1(read) - contest(read, p.attrs.passing, 0.3); // über 1: Lesen der Abwehr gegen den Passgeber
+    // Antizipation der Abwehr (mind.js, Fehler-Modell): wer den Steilpass schlecht kommen sieht, schaltet später um.
+    if (MIND.on && defs.length) m.pass.react += MIND_FX.read * (defs.reduce((s2, o) => s2 + mindWeak(o, 'anticipation'), 0) / defs.length);
   }
   // Rückpass beim Doppelpass: in den Lauf gespielt, aber kein Ball hinter die Abwehrlinie.
   if (a.combo && m.combo?.wall === p.id && !m.combo.returned) {

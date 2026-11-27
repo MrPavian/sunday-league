@@ -338,6 +338,13 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
   Prozentpunkte Ballbesitz, weniger eigene xG. Philosophie je Typ: like/avoid wie im Spiel plus Gewichte je Befund (Spielwert),
   in `rank`. Gleiche Befunde → in 80 % der Fälle verschiedene erste Vorschläge je Typ. Ballbesitz-Vereine −2,0 Punkte je Saison
   (t −1,4, 12 Saisons).
+- **Phase 6b – Spielintelligenz: Antizipation, Übersicht, Stellungsspiel ✅ 2026-11-27, Wirkung aus** (`sim/mind.js`,
+  `docs/ADVANCED-FOOTBALL-SYSTEM-06B-MIND.md`, `scripts/afs-mind.mjs`). Drei neue Werte, hergeleitet ohne Zufallsstrom (verwandte
+  Werte, Erfahrung, stabiler Zufall; Pool-Mittel 0,50, SD 0,105), Migration alter Stände, Entwicklung aus eigenem Strom, Anzeige auf
+  Spielerkarte und Profil, nicht in der Stärke, nicht mit dem Niveau. Engine-Wirkung als Schalter `MIND` gebaut und dreimal gemessen
+  (um die Mitte, verdoppelt, Fehler-Modell; je 480 Spiele je Platz): kein Vorteil für bessere Werte. Nutzerentscheid: Schalter aus,
+  Spiel exakt wie vorher. **Offen:** Zonendeckung der Engine zu passiv (zum Ball gezogene Verteidiger verteidigen besser), vor
+  Phase 11 untersuchen; danach Wirkung neu aufsetzen.
 - **Phase 12 – Manager-Beratung ✅ 2026-11-26** (`intel/advice.js`, `docs/ADVANCED-FOOTBALL-SYSTEM-12-ADVICE.md`,
   `scripts/afs-advice.mjs`). Co-Trainer-Hinweis auf der Startseite: ab 5 Spielen, höchstens einer je Woche (selten: je zwei),
   derselbe Befund frühestens nach 4 Wochen, Beleg und genau ein Spielplan-Befehl, nie ein Stilwechsel (Nutzerentscheidung).

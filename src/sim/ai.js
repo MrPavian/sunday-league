@@ -12,6 +12,7 @@ import { adherence, commitment, styleOf } from './plan.js';
 import { fooled } from './tricks.js';
 import { hasProfile } from './profiles.js';
 import { backToGoal, comboK, comboReturn, comboRun, considerCombo, cutbackMate, layoffMate, shotOn } from './combos.js';
+import { MIND, MIND_FX, mindWeak } from './mind.js';
 
 // „Stürmer lässt sich fallen": wie weit die Spitze entgegenkommt (0 … 1). Gleitend statt einer harten
 // Schwelle – die Umsetzung sinkt mit der Kraft (fwdDrop 0,51 → 0,48 nach wenigen Minuten). Kombinieren
@@ -110,7 +111,8 @@ export function updateTactics(m, dt) {
     // Umschaltmoment: Kurz nach dem Ballverlust sind die, die vor dem Ball standen, noch
     // auf dem Rückweg. Wer sich nach vorn reingeworfen hat, hat davon mehr.
     const lost = m.lostAt?.[team] ?? -9;
-    const caughtUp = (p) => m.time - lost < CAUGHT_TIME && (p.pos.x - ball.pos.x) * s > 1.5;
+    // Stellungsspiel (mind.js, Fehler-Modell): wer schwach steht, braucht länger zurück in die Position.
+    const caughtUp = (p) => m.time - lost < (MIND.on ? CAUGHT_TIME * (1 + MIND_FX.caught * mindWeak(p, 'positioning')) : CAUGHT_TIME) && (p.pos.x - ball.pos.x) * s > 1.5;
     const pool = m.players
       .filter((p) => p.team === team && p.role !== 'gk' && p.id !== m.controlledId && !caughtUp(p))
       .sort((a, b) => dist2d(a.pos, target) - dist2d(b.pos, target));
@@ -142,7 +144,7 @@ export function updateTactics(m, dt) {
       && (ballSpeed(ball) > ANTICIPATE.minSpeed || ball.pos.y > 0.5)) {
       let best = null;
       for (const q of pool.slice(0, ANTICIPATE.pool)) {
-        const r = reachSpot(m, q, ANTICIPATE.react);
+        const r = reachSpot(m, q, ANTICIPATE.react + (MIND.on ? MIND_FX.react * mindWeak(q, 'anticipation') : 0)); // Antizipation: wer schwach liest, startet später (mind.js)
         if (!best || r.t < best.t) best = { q, ...r };
       }
       if (best) { chaser = best.q; m.looseSpot[team] = best.spot; }
@@ -235,6 +237,14 @@ export function updateTactics(m, dt) {
       if (st.pressZone === 'high' && ballAdv > 0.2 && cover && pool.length >= 5 && m.tactics[cover.id]?.type === 'cover') m.tactics[cover.id] = { type: 'mark', ...clampToPitch(pitch, ball.pos.x, ball.pos.z) };
       // Abwehrkette auf eine Linie (nicht der Ballnächste, nicht der Absichernde, nicht der zweite Presser).
       holdLine(m, team, s, new Set([chaser?.id, cover?.id, ...pressers]));
+      // Stellungsspiel (mind.js, Fehler-Modell): Wer schwach steht, schaut zum Ball und wird von ihm angezogen – er verlässt seinen
+      // Raum bzw. seinen Mann um den Anteil pull · Schwäche des Wegs zum Ball. Wer gut steht, bleibt auf dem Punkt von oben.
+      if (MIND.on) for (const p of order) {
+        const t = m.tactics[p.id];
+        const w = mindWeak(p, 'positioning');
+        if (!w || (t?.type !== 'zone' && t?.type !== 'mark')) continue;
+        Object.assign(t, clampToPitch(pitch, t.x + (ball.pos.x - t.x) * MIND_FX.pull * w, t.z + (ball.pos.z - t.z) * MIND_FX.pull * w));
+      }
       // Weiter Einwurf des Gegners (longThrowPlan): Wie bei der Ecke stellen sich die Nächsten torseitig in die Zonen, in die seine
       // Angreifer laufen. Ohne Deckung fiel nach 14,7 % der weiten Einwürfe ein Tor (Sportplatz, 200 Spiele) – mehr als nach Ecken.
       const osp = m.setPiece;
@@ -1210,7 +1220,7 @@ function aiDecide(m, p, oppGoal) {
   const tb = throughTarget(m, p);
   if (tb) {
     // Je Entscheidung – der Ballführende entscheidet jetzt öfter selbst, daher etwas seltener.
-    const seen = tb.margin > 0.4 ? 0.08 + 0.2 * soft(p.attrs.passing) : 0;
+    const seen = tb.margin > 0.4 ? (0.08 + 0.2 * soft(p.attrs.passing)) * (1 - (MIND.on ? MIND_FX.see * mindWeak(p, 'vision') : 0)) : 0; // Übersicht: wer schwach ist, übersieht ihn öfter (mind.js)
     if (rng.chance(Math.min(0.9, st.through * 0.55 * adherence(m, p) + seen))) {
       p.pending = { type: 'pass', through: tb.point, targetId: tb.target.id, lofted: tb.lofted || undefined, ttl: 0.4, cone: -0.6 };
       return;
@@ -1266,7 +1276,8 @@ function aiDecide(m, p, oppGoal) {
     if ((ahead < 3 && !wideLevel) || d > 16) return false;
     return !m.players.some((o) => o.team !== p.team && (dist2d(o.pos, t.pos) < 2.5 || distToSegment(o.pos, p.pos, t.pos) < 1.3));
   });
-  if (open && rng.chance(Math.min(0.92, (0.25 + 0.35 * soft(p.attrs.passing)) * aiSkill(m, p) * st.passRate * selfish * (1 + CARRY_PASS.k * held)))) p.pending = { type: 'pass', ttl: 0.3, cone: -0.3, optional: true };
+  const sees = MIND.on ? 1 - MIND_FX.open * mindWeak(p, 'vision') : 1; // Übersicht: wer schwach ist, übersieht den Freien öfter (mind.js)
+  if (open && rng.chance(Math.min(0.92, (0.25 + 0.35 * soft(p.attrs.passing)) * aiSkill(m, p) * st.passRate * selfish * (1 + CARRY_PASS.k * held) * sees))) p.pending = { type: 'pass', ttl: 0.3, cone: -0.3, optional: true };
 }
 
 // Raum hinter der Abwehr: Welcher Mitspieler kommt vor den Verteidigern an den Ball,

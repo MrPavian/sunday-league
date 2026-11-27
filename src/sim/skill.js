@@ -1,3 +1,4 @@
+import { MIND_SET } from './mind.js';
 // Werte über 1 (docs/KONZEPT-SPIELERSTAERKE.md 12, Weg A, vom Nutzer gewählt 2026-10-31): Höhere Ligen bekommen Technikwerte über 1.
 // Jede Formel rechnet bis 1 genau wie bisher (Werte lagen immer bei höchstens 0,98 – Golden bleibt gleich). Darüber wird ein Spieler
 // weiter besser, mit abnehmendem Ertrag statt gegen eine feste Grenze:
@@ -11,7 +12,8 @@ export const SKILL = { soft: 0.3, floor: 0.25 };
 // Tempo, Ausdauer und Körper bleiben bei 0,98 (die Laufgeschwindigkeit bleibt in echten m/s). Modell 1 (alte Spielstände): alles 0,98.
 export const PHYS_ATTRS = new Set(['pace', 'stamina', 'strength']);
 export const TECH_MAX = 3;
-export const attrMax = (k, model = 1) => (model >= 2 && !PHYS_ATTRS.has(k) ? TECH_MAX : 0.98);
+// Spielintelligenz (mind.js) bleibt wie Tempo und Körper bei 0,98: ihre Wirkung ist um 0,5 gebaut, nicht für Werte über 1.
+export const attrMax = (k, model = 1) => (model >= 2 && !PHYS_ATTRS.has(k) && !MIND_SET.has(k) ? TECH_MAX : 0.98);
 
 export const cap1 = (x) => (x > 1 ? 1 : x);
 export const over = (x) => (x > 1 ? x - 1 : 0);
