@@ -352,6 +352,12 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
   nur „lang spielen gegen Pressing“ belegt; „tief stehen gegen lange Bälle“ und „ruhiges Tempo gegen Konter“ entfernt (auch beim
   Menschen). Keine Notiz nach dem Spiel, Aufstellung nach Rollenpassung mit Phase 9. 12 Saisons an/aus: Punkte ohne gesicherte
   Änderung (|t| ≤ 1,7), Tore je Spiel gleich.
+- **Phase 5b – Messspiele der Nachbarligen ✅ 2026-11-27** (`intel/sample.js`, `docs/ADVANCED-FOOTBALL-SYSTEM-05B-SAMPLE.md`,
+  `scripts/afs-sample.mjs`; E2 a). Die Nachbarn aus dem Transfermarkt (je Nachbarliga 3 Vereine mit Saisonkader) bestreiten je
+  Spieltag ein Messspiel mit voller Engine, abwechselnd Liga darunter und darüber; das Ergebnis zählt nirgends (Tabellen bleiben
+  Poisson). Spielerprofile daraus im Transfermarkt (Perzentil unter derselben Position der Nachbarliga, mit Zahl der Messspiele).
+  Daten gelten eine Saison; Schalter `SAMPLE`. 3 Seeds × 5 Saisons: Tabellen gleich, Messdaten höchstens 3,1 KB während der
+  Saison, danach 0; rund 0,5–0,9 s Rechenzeit je Spieltag (Node).
 - **Phase 12 – Manager-Beratung ✅ 2026-11-26** (`intel/advice.js`, `docs/ADVANCED-FOOTBALL-SYSTEM-12-ADVICE.md`,
   `scripts/afs-advice.mjs`). Co-Trainer-Hinweis auf der Startseite: ab 5 Spielen, höchstens einer je Woche (selten: je zwei),
   derselbe Befund frühestens nach 4 Wochen, Beleg und genau ein Spielplan-Befehl, nie ein Stilwechsel (Nutzerentscheidung).

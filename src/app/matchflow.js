@@ -25,6 +25,7 @@ import { finishMidweek, humanTie, POKALE, pokalOf, pokalWhen, preparePokalMatch,
 import { pendingGame, playDue, prepareOldBoysMatch, recordOldBoysResult } from '../career/oldboys.js';
 import { coachLevel } from '../ui/prefs.js';
 import { runFixtures, warmWorkers } from '../career/bgsim.js';
+import { playSample } from '../intel/sample.js';
 import { finishAll as finishNat, nextOwnMatch, prepareNatMatch, quickOwnMatch, recordNatMatch, stepLabel, tournamentName } from '../career/nationalteams.js';
 
 export function createMatchflow(ctx) {
@@ -179,6 +180,7 @@ export function createMatchflow(ctx) {
     ctx.clubhouse.setBusy(tr('Spieltag läuft … die anderen Plätze melden sich gleich.', 'Matchday under way … the other grounds will report in shortly.'));
     // Die übrigen Spiele parallel in Web Workern (bgsim.js), sonst wie bisher nacheinander – dasselbe Ergebnis.
     await runFixtures(ctx.career, currentFixtures(ctx.career).filter((f) => f !== playedFixture && !f.result), { duration: testDuration });
+    await playSample(ctx.career, (prepared) => simulate(prepared), { duration: testDuration }); // Messspiel einer Nachbarliga (AFS Phase 5b): zählt nirgends, nur Spielerdaten
     await playDue(ctx.career, (prepared) => simulate(prepared), true); // Alte Herren: das Freitagsspiel, falls niemand zugeschaut hat
     saveCareer(ctx.career);
     resuming = false;

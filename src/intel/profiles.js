@@ -12,11 +12,14 @@
 //
 // Vereine anderer Ligen spielen nicht mit voller Engine (Tabelle per Poisson, pyramid.js simTable) und haben keine Kader: für sie
 // gibt es nur ein Werte-Profil (Stärke, Rang der Stärke in ihrer Liga, Trainertyp), Herkunft MODELED (Entscheidung E2 b).
+// Ausnahme (E2 a, Phase 5b): die Nachbarn aus dem Transfermarkt bekommen Spielerprofile aus Messspielen (samplePlayerProfiles).
 import { seasonRow, PKEYS } from '../career/seasonstats.js';
 import { getPool, playerOf } from '../career/career.js';
 import { defStrength, membersOf } from '../career/pyramid.js';
 import { coachOf } from '../career/opponents.js';
 import { TOP_NIVEAU } from '../sim/niveau.js';
+import { tstate } from '../career/transfers.js';
+import { sampleStore } from './sample.js';
 
 export const PROFILE = {
   k: { pass: 6.5, xg: 12.5, duel: 12 }, // gemessen, siehe oben
@@ -34,10 +37,9 @@ function rowOf(rec) {
 
 // Positionsmittel der Liga: Summe aller Werte / Summe aller Spielanteile der Spieler dieser Position (je Wert). Nur Spieler,
 // die jetzt in einem Kader der eigenen Liga stehen (Abgänge in andere Ligen zählen nicht mehr mit).
-function positionMeans(career) {
+function positionMeans(career, entries = (career.clubs ?? []).flatMap((c) => c.squad ?? []).map((idx) => [idx, rowOf(career.players?.[idx])])) {
   const acc = {};
-  for (const idx of (career.clubs ?? []).flatMap((c) => c.squad ?? [])) {
-    const r = rowOf(career.players?.[idx]);
+  for (const [idx, r] of entries) {
     if (!r) continue;
     const pos = playerOf(career, idx)?.position;
     const a = (acc[pos] ??= { share: 0, players: [], ...Object.fromEntries(PROFILE_KEYS.map((k) => [k, 0])) });
@@ -52,9 +54,9 @@ const shrink = (sum, share, mu, k) => (sum + k * mu) / (share + k);
 
 // Profile aller Spieler der eigenen Liga mit Daten: { idx: { position, share, values: { k: { v, raw, pct } }, src } }.
 // pct = Anteil der Spieler derselben Position mit kleinerem Wert (0 … 1), bei Gleichstand halb gezählt.
-export function playerProfiles(career) {
+export function playerProfiles(career, entries) {
   const out = {};
-  for (const [pos, a] of Object.entries(positionMeans(career))) {
+  for (const [pos, a] of Object.entries(positionMeans(career, entries))) {
     const mu = Object.fromEntries(PROFILE_KEYS.map((k) => [k, a[k] / a.share]));
     const rows = a.players.map(([idx, r]) => ({
       idx,
@@ -73,6 +75,19 @@ export function playerProfiles(career) {
   return out;
 }
 export const playerProfile = (career, idx) => playerProfiles(career)[idx] ?? null;
+
+// Spieler der Nachbarn einer Nachbarliga aus den Messspielen (AFS Phase 5b, intel/sample.js): gleiche Rechnung, Mittel und
+// Perzentil aber nur unter den gemessenen Spielern dieser Liga (anderes Format, andere Stärke). sample = Messspiele des Vereins.
+export function samplePlayerProfiles(career, level) {
+  const nb = sampleStore(career);
+  if (!nb) return {};
+  const clubs = (tstate(career).neighbors ?? []).filter((n) => n.level === level);
+  const games = Object.fromEntries(clubs.flatMap((n) => n.squad.map((idx) => [idx, nb.n[n.id] ?? 0])));
+  const entries = clubs.flatMap((n) => n.squad).map((idx) => [idx, rowOf({ an: nb.p[idx] })]);
+  const out = playerProfiles(career, entries);
+  for (const [idx, p] of Object.entries(out)) Object.assign(p, { level, sample: games[idx] });
+  return out;
+}
 
 // Vereinsprofil der laufenden Saison (eigene Liga, volle Engine). Raten je Spiel bzw. je Pass; Stufen bildet die Anzeige.
 export function teamProfile(career, id) {

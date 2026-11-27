@@ -18,9 +18,20 @@ import { TRAITS } from '../../data/traits.js';
 import { jobName } from '../../data/names.js';
 import { tierById } from '../../data/tiers.js';
 import { POSITIONS } from '../../sim/generator.js';
-import { niveauText } from '../../career/verband.js';
+import { leagueTitle, niveauText } from '../../career/verband.js';
 import { isPro, salaryDemand } from '../../career/contracts.js';
+import { samplePlayerProfiles } from '../../intel/profiles.js';
 import { bolzplatz, canBolz, canWatch, estimate, estimateText, LEVEL_NAMES, watchClub } from '../../career/scouting.js';
+
+// Messspiele der Nachbarliga (AFS Phase 5b, intel/sample.js): Perzentil unter den gemessenen Spielern derselben Position dort.
+function sampleLine(c, row, idx) {
+  if (!row.neighbor) return '';
+  const pf = samplePlayerProfiles(c, row.club.level)[idx];
+  if (!pf) return '';
+  const pct = (k) => (pf.values[k].pct == null ? '–' : Math.round(pf.values[k].pct * 100));
+  const lg = leagueTitle(c, pf.level);
+  return `<p class="t-2" data-testid="tf-sample">${tr(`${pf.sample} Messspiel${pf.sample === 1 ? '' : 'e'} (${lg}) · Perzentil unter seiner Position dort: Pässe ${pct('pass')} · xG ${pct('xg')} · Zweikämpfe ${pct('duel')}`, `${pf.sample} sample match${pf.sample === 1 ? '' : 'es'} (${lg}) · percentile within his position there: passes ${pct('pass')} · xG ${pct('xg')} · duels ${pct('duel')}`)}</p>`;
+}
 
 const SUBS = ['rumors', 'market', 'own', 'news'];
 const POS_ABBR = () => ({ all: tr('Alle', 'All'), gk: tr('TW', 'GK'), def: tr('ABW', 'DEF'), mid: tr('MF', 'MID'), fwd: tr('ST', 'FWD') });
@@ -159,7 +170,7 @@ export const transferScreens = {
       <p class="who">${est.traits ? tierBadge(p) : ''} <b>${p.name}</b>${p.title ? ` <em>${p.title}</em>` : ''}</p>
       <p class="t-2">${POSITIONS[p.position]} · ${p.age}${tr(' J.', ' yrs')} · ${jobName(p.profession)} · ${tr('Stärke', 'Rating')} <b>${estimateText(est)}</b> <small>(${LEVEL_NAMES()[est.level]})</small>${niveauText(c, est.mid, !est.exact)}</p>
       <p class="t-2">${club.name} (${row.neighbor ? tr('Nachbarliga', 'neighbouring league') : tr('deine Liga', 'your league')}) · ${tr('Vereinsstärke', 'club strength')} ${Math.round(clubRating(c, club))} · ${importanceLabel(row.importance)}${row.clubId === c.flags?.derbyRival ? ` · <b>${tr('Derby-Rivale', 'derby rival')}</b>` : ''}</p>
-      ${traits}${p.backstory ? `<p class="story">${p.backstory}</p>` : ''}${est.exact ? '' : `<p>${watch}</p>`}</div>`;
+      ${traits}${sampleLine(c, row, idx)}${p.backstory ? `<p class="story">${p.backstory}</p>` : ''}${est.exact ? '' : `<p>${watch}</p>`}</div>`;
     // Schritt 1: Verein
     let step1;
     if (d) {

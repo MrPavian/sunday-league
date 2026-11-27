@@ -14,7 +14,7 @@ export const SEASON_AN = { history: 5 }; // Spielwert: so viele Saisons Vereinsb
 export const PKEYS = [...KEYS, 'share']; // Spielerzeile
 const HUNDREDTHS = new Set(['xg', 'xa', 'share']);
 const toInt = (k, v) => (HUNDREDTHS.has(k) ? Math.round(v * 100) : v);
-const addRow = (dst, r, keys = KEYS) => keys.map((k, i) => (dst?.[i] ?? 0) + toInt(k, r[k]));
+export const addRow = (dst, r, keys = KEYS) => keys.map((k, i) => (dst?.[i] ?? 0) + toInt(k, r[k]));
 
 // Nach einem Ligaspiel (career.js recordResult). Team 0 ist der eigene Verein, wenn er auswärts spielt.
 export function recordSeasonAnalytics(career, fixture, prepared) {
@@ -55,6 +55,7 @@ export function closeSeasonAnalytics(career, squad, humanId) {
   const own = an.clubs[humanId];
   if (own) an.history = [...an.history, { season: career.season, ...own }].slice(-SEASON_AN.history);
   an.clubs = {};
+  delete an.nb; // Messspiele der Nachbarligen (intel/sample.js, AFS Phase 5b): gelten eine Saison
 }
 
 // Saisonzeile als Objekt (xG/xA wieder in Toren).
