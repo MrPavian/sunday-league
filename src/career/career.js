@@ -72,6 +72,7 @@ import { memoryAfterMatch, placeFormers, preMatchMemories, rememberArrival, reme
 import { matchStories, trackScoring } from './storylines.js';
 import { afterMatchFriends } from './friends.js';
 import { patternOrders } from './patterns.js';
+import { matchPlan } from '../intel/matchplan.js';
 import { afterMatchCaptain, armbandFor, fixArmband } from './captain.js';
 import { defaultCrest } from '../ui/crest.js';
 import { clubTactic, normalizeTactic, systemFormation } from '../sim/tactics.js';
@@ -1359,6 +1360,11 @@ export function prepareMatch(career, fixture, { human = false, duration } = {}) 
   const kits = resolveKits(home, away);
   const teamHome = teamForMatch(career, kits.home, pitch.format, avail(home), rng);
   const teamAway = teamForMatch(career, kits.away, pitch.format, avail(away), rng);
+  // Matchplan der CPU (AFS Phase 8, intel/matchplan.js): Gegenmittel gegen die erkannte Handschrift des Gegners. Kein Zufallsstrom.
+  for (const [club, opp, team] of [[home, away, teamHome], [away, home, teamAway]]) {
+    const plan = matchPlan(career, club, opp);
+    if (plan) team.tactic = { ...team.tactic, orders: { ...(team.tactic.orders ?? {}), [plan.group]: plan.value } };
+  }
   // Der menschliche Verein ist in der Simulation immer Team 0.
   const humanIsAway = human && away.human;
   const teams = humanIsAway ? [teamAway, teamHome] : [teamHome, teamAway];
@@ -1422,6 +1428,8 @@ export function recordResult(career, fixture, prepared) {
   const m = prepared.match;
   const [s0, s1] = m.score;
   fixture.result = prepared.humanIsAway ? { home: s1, away: s0 } : { home: s0, away: s1 };
+  // Womit der Mensch aufgelaufen ist – das sieht der nächste CPU-Gegner (AFS Phase 8, intel/matchplan.js seenPattern).
+  if (prepared.home?.human || prepared.away?.human) career.seenPlan = { ...(humanClub(career).tactic?.orders ?? {}) };
   const grades = gradePlayers(m);
   for (const p of allPlayers(m)) {
     const rec = career.players[p.poolIndex];

@@ -7,6 +7,11 @@ import { coachOf } from './opponents.js';
 // Gemessen (sportplatz, je 120 Spiele, Torverhältnis aus unserer Sicht ohne → mit Gegenmittel): Pressing −0,08 → +0,24 (lang
 // spielen); lange Bälle −0,28 → +0,04 (tief stehen); Konter −0,17 → +0,05 (ruhiges Tempo; tief stehen nur −0,13); Mauern +0,08 –
 // Kombinationsspiel +0,06, Aufrücken −0,21, über außen −0,12 (60 Spiele): kein Gegenmittel.
+// Neu gemessen (AFS Phase 8, 2026-11-27, scripts/afs-plan.mjs, heutige Engine, 4 Paarungen, gepaarte Seeds, Δ Tordifferenz / Δ xG-
+// Differenz für die Mannschaft mit Gegenmittel): Pressing → lang spielen: Sportplatz +0,21 (t 2,1) / +0,15 (t 2,7), Hinterhof
+// +0,09 / +0,16 (t 2,5), Rasenplatz und Großfeld xG +0,10 / +0,13 (nicht gesichert) – bleibt. Lange Bälle → tief stehen und
+// Konter → ruhiges Tempo: auf keinem der vier Plätze belegt (Tore −0,24 … +0,11, |t| ≤ 1,6) – kein Gegenmittel mehr
+// (Nutzerentscheid 2026-11-27). Die CPU nutzt dieselben Gegenmittel (intel/matchplan.js).
 // orders – Befehle des Gegners; counter – Gegenmittel als Befehl für uns (null: keins, das messbar hilft); hint – Satz des Co-Trainers.
 export const PATTERNS = {
   pressing: {
@@ -18,8 +23,8 @@ export const PATTERNS = {
   lang: {
     label: tr('Lange Bälle auf die Spitze', 'Long balls up front'),
     orders: { build: 'direkt' },
-    counter: { group: 'press', value: 'tief' },
-    hint: tr('Die schlagen alles lang. Tief stehen, dann landet der Ball bei uns.', 'They hit everything long. Sit deep and the ball lands with us.'),
+    counter: null,
+    hint: tr('Die schlagen alles lang. Auf die zweiten Bälle achten – ein Patentrezept gibt es nicht.', 'They hit everything long. Watch the second balls – there is no magic formula.'),
   },
   mauern: {
     label: tr('Mauern', 'Park the bus'),
@@ -30,8 +35,8 @@ export const PATTERNS = {
   konter: {
     label: tr('Lauern auf Konter', 'Waiting to counter'),
     orders: { route: 'konter' },
-    counter: { group: 'tempo', value: 'ruhig' },
-    hint: tr('Die warten auf unsere Fehler. Ruhig aufbauen, den Ball nicht leichtfertig verlieren.', 'They are waiting for our mistakes. Build up calmly, do not give the ball away cheaply.'),
+    counter: null,
+    hint: tr('Die warten auf unsere Fehler. Den Ball nicht leichtfertig verlieren – ein Patentrezept gibt es nicht.', 'They are waiting for our mistakes. Do not give the ball away cheaply – there is no magic formula.'),
   },
   // AFS Phase 6: Ballbesitz-Trainer. Gemessen (scripts/afs-effects.mjs): Ball halten hebt den eigenen Ballbesitz um 2–3
   // Prozentpunkte und senkt die eigenen xG (−0,20 bis −0,44 je Spiel). Ein Gegenmittel ist nicht gemessen.

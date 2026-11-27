@@ -345,6 +345,13 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
   (um die Mitte, verdoppelt, Fehler-Modell; je 480 Spiele je Platz): kein Vorteil für bessere Werte. Nutzerentscheid: Schalter aus,
   Spiel exakt wie vorher. **Offen:** Zonendeckung der Engine zu passiv (zum Ball gezogene Verteidiger verteidigen besser), vor
   Phase 11 untersuchen; danach Wirkung neu aufsetzen.
+- **Phase 8 – KI-Trainer vor dem Spiel (Matchplan) ✅ 2026-11-27** (`intel/matchplan.js`, `docs/ADVANCED-FOOTBALL-SYSTEM-08-MATCHPLAN.md`,
+  `scripts/afs-plan.mjs`, `scripts/afs-plan-season.mjs`). CPU-Trainer setzen gegen die erkannte Handschrift des Gegners das
+  gemessene Gegenmittel, wenn es zu ihrer Philosophie passt; gegen den Menschen nur nach dessen Plan im letzten Spiel (E5); Häufigkeit
+  nach Reaktionsfreude und Schwierigkeit (E7); kein Zufallsstrom, Schalter `PLAN`. Neumessung der Gegenmittel in der heutigen Engine:
+  nur „lang spielen gegen Pressing“ belegt; „tief stehen gegen lange Bälle“ und „ruhiges Tempo gegen Konter“ entfernt (auch beim
+  Menschen). Keine Notiz nach dem Spiel, Aufstellung nach Rollenpassung mit Phase 9. 12 Saisons an/aus: Punkte ohne gesicherte
+  Änderung (|t| ≤ 1,7), Tore je Spiel gleich.
 - **Phase 12 – Manager-Beratung ✅ 2026-11-26** (`intel/advice.js`, `docs/ADVANCED-FOOTBALL-SYSTEM-12-ADVICE.md`,
   `scripts/afs-advice.mjs`). Co-Trainer-Hinweis auf der Startseite: ab 5 Spielen, höchstens einer je Woche (selten: je zwei),
   derselbe Befund frühestens nach 4 Wochen, Beleg und genau ein Spielplan-Befehl, nie ein Stilwechsel (Nutzerentscheidung).

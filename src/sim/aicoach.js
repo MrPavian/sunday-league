@@ -20,7 +20,7 @@ export const PERSONAS = {
   ballbesitz: { react: 0.55, like: ['build:halten', 'risk:sicher'], avoid: ['build:direkt', 'route:konter', 'route:tiefe', 'risk:aggressiv'] },
   normal: { react: 0.55, like: [], avoid: [] },
 };
-const DIFFICULTY = { easy: 0.5, normal: 1, hard: 1.35 };
+export const DIFFICULTY = { easy: 0.5, normal: 1, hard: 1.35 };
 const MAX_CHANGES = 4;
 
 const personaOf = (m, team) => PERSONAS[m.coachPersona?.[team]] ?? PERSONAS.normal;
