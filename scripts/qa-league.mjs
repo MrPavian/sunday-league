@@ -15,10 +15,14 @@ import { SAMPLE } from '../src/intel/sample.js';
 import { createChanceLog, feedChances } from '../src/sim/chances.js';
 import { footballMinute } from '../src/sim/minute.js';
 import { stepMatch } from '../src/sim/match.js';
+import { ATTR_KEYS } from '../src/sim/strength.js';
 import { findAnyPlayer } from '../src/sim/squad.js';
 
 const pos = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const [out, seasonsArg, sizeArg, seedArg] = pos;
+// --noform (nur Diagnose): vor jedem Spieltag Stimmung und Form des eigenen Vereins auf 0 – dann greift die Kappung in
+// career/events.js applyForm nicht (docs/BALANCING-QA-04-ATTRIBUTES.md). Ändert den Spielcode nicht.
+const NOFORM = process.argv.includes('--noform');
 const START = Number(process.argv.find((a) => a.startsWith('--start='))?.split('=')[1]) || 1;
 if (!out) throw new Error('Aufruf: node scripts/qa-league.mjs <out.jsonl> [Saisons] [Ligagröße] [seed]');
 const SEASONS = Number(seasonsArg) || 10, SIZE = Number(sizeArg) || 8, SEED = Number(seedArg) || 11;
@@ -33,8 +37,23 @@ const strength = (c, club, n) => {
   return r.reduce((s, x) => s + x, 0) / Math.max(1, r.length);
 };
 
+// Startelf beim Anpfiff (Team 0 = Heim, prepareMatch ohne Menschen): je Mannschaft und Rolle das Mittel jedes Werts
+// (Reihenfolge ATTR_KEYS) und der Schnitt von rating. Für die Auswertung der Wertwirkung (scripts/qa-attr.mjs).
+function lineup(m) {
+  return [0, 1].map((t) => {
+    const ps = m.players.filter((p) => p.team === t);
+    const roles = {};
+    for (const r of ['gk', 'def', 'mid', 'fwd']) {
+      const g = ps.filter((p) => p.role === r);
+      if (g.length) roles[r] = ATTR_KEYS.map((k) => Math.round((g.reduce((s, p) => s + (p.attrs?.[k] ?? 0), 0) / g.length) * 1000) / 1000);
+    }
+    return { n: ps.length, rating: r2(ps.reduce((s, p) => s + (p.rating ?? 0), 0) / Math.max(1, ps.length)), roles };
+  });
+}
+
 function play(c, f) {
   const p = prepareMatch(c, f);
+  const xi = lineup(p.match);
   const m = p.match;
   const log = createChanceLog(m);
   const goals = [], cards = [];
@@ -48,10 +67,10 @@ function play(c, f) {
     m.events.length = 0;
   }
   recordResult(c, f, p);
-  return { p, m, log, goals, cards };
+  return { p, m, log, goals, cards, xi };
 }
 
-function record(c, f, { m, log, goals, cards }) {
+function record(c, f, { m, log, goals, cards, xi }) {
   const home = c.clubs.find((x) => x.id === f.home), away = c.clubs.find((x) => x.id === f.away);
   const n = m.pitch.format ?? 11;
   fmt = n;
@@ -72,7 +91,7 @@ function record(c, f, { m, log, goals, cards }) {
     pass: t('pass'), passOk: t('passOk'), pp: t('pressPass'), ppOk: t('pressPassOk'), pack: t('packing'),
     dW: t('duelWon'), dL: t('duelLost'), aW: t('aerialWon'), aL: t('aerialLost'), loose: t('loose'), sot: t('shots'),
     third: an ? an.map((x) => x.third.map((v) => Math.round(v))) : null,
-    goals, cards, shots,
+    goals, cards, shots, xi,
   });
 }
 
@@ -106,6 +125,7 @@ if (START > 1) { liftTo(c, START); if (c.level !== START) throw new Error(`Liga 
 let matches = 0, fmt = 11;
 for (let s = 0; s < SEASONS; s++) {
   while (!seasonOver(c)) {
+    if (NOFORM) { c.mood = 0; for (const idx of humanClub(c).squad) if (c.players[idx]) c.players[idx].form = 0; }
     for (const f of currentFixtures(c)) { record(c, f, play(c, f)); matches++; }
     finishRound(c);
   }

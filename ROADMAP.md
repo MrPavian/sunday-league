@@ -370,6 +370,10 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
     `scripts/qa-league.mjs`, `scripts/qa-report.mjs`). 13 680 Spiele, 228 Saisontabellen, Vergleich mit 5 echten Ligen. Schwerster
     Befund: Großfeld – Kaderstärke entscheidet kaum (r −0,29 … 0,10), sehr wenige Tore; dazu kein Heimvorteil in der Engine,
     Führungen zu sicher. Offen in A: Werte und Spielertypen, Systeme und Stile, Extremfälle, Wirtschaft, Diagramme, Regression.
+  - **A2 Teil 1 ✅ 2026-11-28** Ursache des Großfeld-Befunds (`docs/BALANCING-QA-04-ATTRIBUTES.md`, `scripts/qa-attr.mjs`): **Fehler
+    B1** – sechs Stellen kappen Werte auf 0,98 (vor Stärkemodell 3 geschrieben), Technik über 1 geht verloren; eigener Verein in
+    jedem Spiel, CPU über Berufsboni. Gleiche Mannschaft verliert dadurch 0,24 / 0,98 / 1,97 Tore je Spiel (Liga 5 / 7 / 9).
+    Korrektur wartet auf Freigabe.
 - **Phase 12 – Manager-Beratung ✅ 2026-11-26** (`intel/advice.js`, `docs/ADVANCED-FOOTBALL-SYSTEM-12-ADVICE.md`,
   `scripts/afs-advice.mjs`). Co-Trainer-Hinweis auf der Startseite: ab 5 Spielen, höchstens einer je Woche (selten: je zwei),
   derselbe Befund frühestens nach 4 Wochen, Beleg und genau ein Spielplan-Befehl, nie ein Stilwechsel (Nutzerentscheidung).
