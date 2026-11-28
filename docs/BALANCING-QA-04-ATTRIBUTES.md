@@ -196,3 +196,64 @@ Wirkung im Spiel (Code): Spielmacher werden als Passziel bevorzugt (`sim/actions
 × 0,85); Kämpfer +0,08 im Zweikampf (`sim/tackles.js`); Ruhepol beruhigt Mitspieler (`sim/profiles.js`). In höheren Ligen wird so
 fast jeder Spieler zum Spielmacher – das Profil unterscheidet nicht mehr, und Teamplayer, Einzelkämpfer und Ballmagnet verschwinden.
 Problemliste I13.
+
+## 7. Diagnose Spielintelligenz (Nutzer: „Ja“ 2026-11-28, nur Messung)
+
+Frage: Warum brachten Antizipation, Übersicht und Stellungsspiel in drei Messungen keinen Vorteil
+(`docs/ADVANCED-FOOTBALL-SYSTEM-06B-MIND.md` Abschnitt 4)? Skript `scripts/qa-mind-diag.mjs` (neu). Schalter `MIND.on` und die
+Stellschrauben `MIND_FX` werden nur im Messprozess gesetzt, der Spielcode bleibt unverändert (Schicht im Spiel weiter aus).
+
+**Aufbau:** Grundkader wie Abschnitt 6, beide Mannschaften mit allen drei Werten auf 0,75 (`MIND_FX.hi`, fehlerfrei); die
+Testmannschaft bekommt in einer Variante einen Wert auf 0,15 (`MIND_FX.lo`, volle Schwäche). Gleicher Kader und Seed in allen
+Varianten, Seiten im Wechsel; Unterschied zur Kontrolle gepaart (± Standardfehler). Je Platz 160 Kader × 7 Varianten × 2 Seiten =
+2 240 Spiele, zusammen **4 480 Spiele**. Steilpass-Folge: xG der eigenen Schüsse bis 8 s nach einem eigenen Steilpass (Messwert).
+
+### 7.1 Ergebnisse (Testmannschaft mit voller Schwäche gegen die Kontrolle)
+
+Großfeld Niveau 5 (Kontrolle: xG 0,97 je Mannschaft, 7,2 Schüsse, 15,0 zweite Bälle, 7,5 Steilpässe mit 0,28 xG Folge):
+
+| Variante | Tordifferenz | xG für | xG gegen | Schüsse gegen | zweite Bälle Gegner | Steilpässe | xG nach Steilpass |
+|---|---|---|---|---|---|---|---|
+| Antizipation schwach | −0,07 ± 0,10 | +0,01 ± 0,04 | +0,06 ± 0,04 | +0,16 ± 0,21 | **+0,81 ± 0,28** | +0,15 ± 0,23 | +0,02 ± 0,02 |
+| Übersicht schwach | −0,08 ± 0,09 | −0,00 ± 0,04 | +0,06 ± 0,04 | +0,28 ± 0,20 | **+0,94 ± 0,27** | **−3,13 ± 0,19** | **−0,08 ± 0,02** |
+| Stellungsspiel schwach (beides) | **+0,44 ± 0,10** | **+0,23 ± 0,04** | **−0,27 ± 0,04** | **−2,25 ± 0,21** | **+1,59 ± 0,30** | −0,43 ± 0,23 | +0,08 ± 0,02 |
+| – nur Zug zum Ball | **+0,44 ± 0,10** | **+0,14 ± 0,04** | **−0,33 ± 0,03** | **−2,56 ± 0,20** | **+1,21 ± 0,28** | **−0,88 ± 0,23** | +0,07 ± 0,02 |
+| – nur längerer Rückweg | −0,09 ± 0,10 | +0,03 ± 0,04 | +0,09 ± 0,04 | **+0,52 ± 0,21** | +0,34 ± 0,29 | +0,25 ± 0,21 | +0,05 ± 0,02 |
+| – Zug zum Ball doppelt | **+0,44 ± 0,10** | **+0,34 ± 0,04** | **−0,25 ± 0,03** | **−2,31 ± 0,20** | **+1,50 ± 0,30** | **−1,61 ± 0,21** | +0,06 ± 0,02 |
+
+Rasenplatz 7er Niveau 1 (Kontrolle: xG 1,55, 12,1 Schüsse, 17,1 zweite Bälle, 1,9 Steilpässe mit 0,16 xG Folge):
+
+| Variante | Tordifferenz | xG für | xG gegen | Schüsse gegen | Steilpässe | xG nach Steilpass |
+|---|---|---|---|---|---|---|
+| Antizipation schwach | −0,17 ± 0,13 | −0,01 ± 0,04 | +0,07 ± 0,04 | +0,37 ± 0,26 | +0,00 ± 0,11 | +0,01 ± 0,02 |
+| Übersicht schwach | −0,13 ± 0,12 | +0,02 ± 0,04 | +0,05 ± 0,04 | +0,23 ± 0,25 | **−1,03 ± 0,10** | **−0,08 ± 0,01** |
+| Stellungsspiel schwach (beides) | **+0,60 ± 0,14** | **+0,24 ± 0,04** | **−0,40 ± 0,04** | **−2,90 ± 0,27** | −0,28 ± 0,11 | −0,01 ± 0,02 |
+| – nur Zug zum Ball | **+0,48 ± 0,14** | **+0,19 ± 0,04** | **−0,38 ± 0,04** | **−2,56 ± 0,27** | −0,38 ± 0,11 | −0,02 ± 0,02 |
+| – nur längerer Rückweg | +0,02 ± 0,14 | +0,05 ± 0,04 | +0,00 ± 0,04 | +0,03 ± 0,25 | −0,09 ± 0,12 | −0,01 ± 0,02 |
+| – Zug zum Ball doppelt | **+0,73 ± 0,14** | **+0,48 ± 0,05** | **−0,32 ± 0,04** | **−2,70 ± 0,26** | −0,31 ± 0,11 | +0,02 ± 0,02 |
+
+### 7.2 Befund je Wert
+
+- **Stellungsspiel – Ursache in der Grundaufstellung belegt:** Der „Fehler“ (Ziel rückt 0,3 · Schwäche des Wegs zum Ball,
+  `sim/ai.js` updateTactics) lässt **ein Viertel bis ein Drittel weniger Schüsse zu** (−2,3 von 7,2 bzw. −2,9 von 12,1) und bringt
+  +0,44 / +0,60 Tore je Spiel. Doppelter Zug hilft im Angriff noch mehr (mehr Ballgewinne nah am Ball), in der Abwehr nicht weiter.
+  Die Wirkung kommt aus dem Zug, nicht aus dem Rückweg (der wirkt richtig herum, aber klein: Großfeld +0,5 Schüsse gegen).
+  Folgerung: Die Zonendeckung ohne Ball (`sim/ai.js` anchor: Tiefe `adv · 0,22`, Breite `ball.z · 0,32`) verschiebt zu wenig zum
+  Ball. Solange das so ist, ist ein Spieler, der zum Ball gezogen wird, im Vorteil – jede Fehler-Wirkung von Stellungsspiel muss
+  daran scheitern. Problemliste I15.
+- **Antizipation – wirkt richtig herum, aber zu klein:** Gegner gewinnt +0,8 zweite Bälle (+5 %), sonst alles im Rauschen. Die
+  Strafe (+0,25 s Reaktionszeit bei Abprallern, +0,3 s beim Steilpass) verschiebt das Spiel kaum.
+- **Übersicht – Verhalten ändert sich, das Ergebnis nicht:** Schwache Übersicht spielt 42 % (Großfeld) bzw. 55 % (7er) weniger
+  Steilpässe, die xG danach sinken um 0,08 – aber die **gesamten xG bleiben gleich** (−0,00 / +0,02). Was stattdessen gespielt wird,
+  bringt in dieser Engine genauso viel. Ein Steilpass ist im Mittel nur 0,04 (Großfeld) bzw. 0,09 (7er) xG wert. Solange er nicht
+  mehr wert ist als die Alternative, kann Übersicht nichts bewirken.
+
+### 7.3 Weg zur funktionierenden Spielintelligenz (Vorschlag, Umsetzung erst nach Freigabe in Abschnitt B)
+
+1. **Zonendeckung zuerst (I15):** ballorientiertes Verschieben ohne Ball als Grundverhalten für alle, eigene Schicht mit Schalter,
+   gemessen gegen heute (Schüsse gegen, Tore, Ballbesitz, Tore je Spiel I2). Danach Stellungsspiel als Abweichung vom richtigen
+   Verschieben neu aufsetzen (zu spät, zu wenig, Raum offen) statt als Zug zum Ball.
+2. **Übersicht:** erst den Wert des Steilpasses gegenüber der Alternative untersuchen (Phase 4, Stile und Angriffsmuster). Erst wenn
+   ein gesehener Steilpass mehr bringt, kann Übersicht wirken.
+3. **Antizipation:** nach Schritt 1 neu messen; die Größe der Strafe ist ein Spielwert ohne Quelle.
+4. Danach Schicht an, Regression mit Zufallsverschiebungen (wie Abschnitt 6, ≥ 2 000 Spiele), erst dann Gewicht in der Stärke.

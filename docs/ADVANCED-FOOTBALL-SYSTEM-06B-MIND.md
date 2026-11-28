@@ -71,3 +71,5 @@ aus der Entwicklung, nur die Werte eigener Spieler.
   Stellungsspiel neu aufsetzen, Antizipation und Übersicht neu messen.
 - Gewichte in der Stärke erst, wenn eine Wirkung gemessen ist.
 - Entwicklung der Werte ruht bei ausgeschalteter Schicht; Training (Phase 11) baut darauf auf.
+- **Diagnose 2026-11-28** (`docs/BALANCING-QA-04-ATTRIBUTES.md` Abschnitt 7): Zonendeckung zu passiv belegt (I15); Übersicht ändert das
+  Verhalten, aber der Steilpass bringt nicht mehr als die Alternative; Antizipation wirkt richtig herum, aber klein.
