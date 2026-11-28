@@ -1,6 +1,6 @@
 # Balancing & Simulation QA – 3. BALANCING ISSUE LIST
 
-Stand 2026-11-28 (nach Schritt A1 und A2 Teil 1). Sortiert nach Schweregrad. Belege: Testbericht `docs/BALANCING-QA-02-TESTS.md` (T),
+Stand 2026-11-28 (nach Schritt A1 und A2 Teil 1 und 2). Sortiert nach Schweregrad. Belege: Testbericht `docs/BALANCING-QA-02-TESTS.md` (T),
 Audit `docs/BALANCING-QA-01-AUDIT.md` (A). **Ursachen sind Hypothesen**, solange „Prüfung“ nicht erledigt ist. Nichts geändert.
 
 Schweregrad: **S1** widerspricht einem Kernziel des Auftrags · **S2** deutlich unrealistisch · **S3** auffällig · **S4** Hinweis.
@@ -17,7 +17,9 @@ Schweregrad: **S1** widerspricht einem Kernziel des Auftrags · **S2** deutlich 
 | I7 | S3 | Kopfball-Abschlüsse selten (0,3–1,2 je Spiel) | T 3 | Format und Flankenzahl; echte Großfeld-Ligen haben deutlich mehr – Vergleichswert noch zu recherchieren | Phase 4 (Flügelspiel), Quelle suchen |
 | I8 | S3 | Tore je xG 0,70–0,87 auf 7er bis 11er: xG-Modell überschätzt | T 3 | Messmodell (`chances.js` XG), wirkt nicht aufs Spiel; nur Anzeige betroffen | Neu eichen, falls AFS-Kennzahlen darauf bauen |
 | I9 | S3 | Müdigkeit wirkt fünffach, Derby sechsfach, Zweikampfwert in der Foulrate doppelt | A3, A4, A6 | Stapelung möglicher Überwirkungen | Phase 6 (geringere Fitness, Derby) |
-| I10 | S4 | Anzeige-Stärke und Wirkung auseinander (V1 vs. V2) | A2 | Grundlage auch für Transfers, Poisson-Ligen, Prognosen | mit I1 |
+| I10 | S3 | Anzeige-Stärke und Wirkung auseinander (V1 vs. V2). A2 Teil 2: Bei gleicher Stärke verliert der Spielmacher (Großfeld −0,17, 7er −0,37 Tore je Spiel), der defensive Mittelfeldspieler gewinnt (+0,10 / +0,38); Technik im Sturm, Kopfball und (Großfeld) Körper wirken kaum, Tempo stark | A2; Bericht 04 Abschnitt 6 | Grundlage auch für Transfers, Poisson-Ligen, Prognosen; Technik über 1 gedämpft (`sim/skill.js` soft), Tempo nicht | Gewichte (V2 oder neu) in B; Großfeld-Wirkung jetzt gemessen |
+| I13 | S3 | Profile sättigen: ab Niveau 5 sind 82–87 % aller Spieler „Spielmacher“, Teamplayer/Einzelkämpfer/Ballmagnet verschwinden | Bericht 04 Abschnitt 6.4 | feste Schwellen in `sim/profiles.js` profilesOf, angehobene Technikwerte (Stärkemodell 3) | Schwellen relativ zum Niveau (B); Wirkung der Profile messen |
+| I14 | S4 | Kopfball ohne messbare Wirkung auf allen Stufen, Zielspieler-Typ bringt nichts | Bericht 04 Abschnitt 6 | wenige Flanken und Kopfballabschlüsse (I7) | mit I7 |
 | I11 | S4 | Ohne Eingriffe bleibt der Verein in Liga 1 (94 %): CPU-Kader der Liga gleich stark wie der Start | T 1 | gewollt? | Phase 5 mit Bot (`longrun --bot`) |
 | I12 | S4 | Messwerkzeug: Start in Liga 11 nicht möglich, liftTo erzeugt einen künstlich schwachen Verein | T 1 | betrifft nur Messung | eigener Startweg für Profiligen |
 

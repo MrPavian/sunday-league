@@ -113,3 +113,86 @@ ersten Saison laufen die Karrieren auseinander, die Ligen sind deshalb nicht gen
 | 0:0 % | 23,2 | 20,8 | 4–8 |
 
 I1 ist damit behoben. Die Torarmut auf dem Großfeld (I2) bleibt fast unverändert und ist ein eigenes Thema.
+
+## 6. A2 Teil 2: Wirkung der Werte und Spielertypen in gezielten Versuchen (2026-11-28, Code-Stand `c401052`)
+
+Nur gemessen, nichts am Spielcode geändert. Skript `scripts/qa-attr-exp.mjs` (neu). Grundkader wie `scripts/strength-regression.mjs`
+(`generateTeam` aus `TEAM_PRESETS[0]`), angehoben wie im Spiel (`sim/niveau.js` lifted, Stärkemodell 3), beide Mannschaften aus
+demselben Grundkader, volle Engine (`createMatch`, ohne Menschen).
+
+**Durchgeführte Spiele:** Regression 2 × 2 000 (Großfeld Niveau 5 und 8) · Spielertypen 2 × 3 840 (Großfeld Niveau 5, Rasenplatz 7er
+Niveau 1; 12 Varianten × 160 Kader × 2 Seiten). Zusammen **11 680 Spiele**.
+
+### 6.1 Regression: Wirkung je +0,1 Unterschied (Tore je Spiel, ± Standardfehler; * = |t| ≥ 2)
+
+Je Spiel bekommen beide Mannschaften unabhängig zufällige Verschiebungen ±0,25 je Rolle und Wert (Untergrenze 0,05, keine Obergrenze).
+Tore je Spiel: Niveau 5 1,71, Niveau 8 2,03.
+
+| Wert | Tor | Abwehr N5 / N8 | Mittelfeld N5 / N8 | Sturm N5 / N8 |
+|---|---|---|---|---|
+| Torwartspiel | **0,082* / 0,109*** | – | – | – |
+| Tempo | −0,018 / 0,000 | **0,049* / 0,070*** | **0,043* / 0,044*** | **0,071* / 0,081*** |
+| Ausdauer | – | 0,031* / −0,006 | 0,005 / 0,020 | 0,007 / 0,023 |
+| Technik | 0,016 / 0,011 | 0,022 / 0,034* | **0,042* / 0,037*** | 0,024 / 0,026 |
+| Passen | 0,004 / −0,019 | 0,019 / −0,008 | 0,027 / −0,001 | 0,024 / −0,002 |
+| Abschluss | – | 0,030* / −0,005 | 0,031* / 0,002 | **0,115* / 0,118*** |
+| Zweikampf | – | **0,047* / 0,034*** | 0,016 / **0,044*** | 0,039* / 0,012 |
+| Kopfball | – | −0,002 / 0,023 | −0,015 / 0,002 | 0,003 / 0,010 |
+| Körper | 0,004 / 0,007 | 0,026 / 0,011 | 0,010 / 0,015 | −0,001 / −0,020 |
+
+Standardfehler 0,014–0,016. Vergleich: Anzeige-Gewichte V1 (`sim/generator.js` RATING_WEIGHTS) je +0,1 = Gewicht × 10 Stärkepunkte.
+
+### 6.2 Spielertypen bei gleicher Anzeige-Stärke
+
+Typ für **alle Spieler der Rolle**, Stärke V1 gleich gehalten (die nicht berührten V1-Werte gleichen gemeinsam aus, Spalte „netto“).
+Gegner: derselbe Kader ohne Typ. Aufschläge sind Versuchswerte (gewählt). Tordifferenz je Spiel ± Standardfehler (ungepaart gerechnet,
+also eher zu groß); Kontrolle = 0.
+
+| Typ | netto (je Spieler der Rolle) | Großfeld N5 | 7er N1 |
+|---|---|---|---|
+| Sturm schnell, technisch schwach | Tempo +0,2, Technik −0,2 | +0,07 ± 0,07 | +0,06 ± 0,09 |
+| Sturm langsam, Techniker | Tempo −0,2, Technik +0,2 | −0,02 ± 0,07 | +0,03 ± 0,10 |
+| Kopfballstarker Zielspieler | Kopfball +0,3, Körper +0,2, Tempo −0,15 | −0,04 ± 0,08 | +0,03 ± 0,10 |
+| Pressingstürmer | Ausdauer +0,2, Zweikampf +0,2, Tempo +0,1, übrige −0,06 | −0,11 ± 0,08 | **+0,22 ± 0,09** |
+| Kreativer Spielmacher | Passen +0,2, Technik +0,15, Ausdauer/Zweikampf/Abschluss/Tempo −0,175 | **−0,17 ± 0,07** | **−0,37 ± 0,10** |
+| Defensiver Mittelfeldspieler | Zweikampf +0,25, Körper +0,15, Ausdauer +0,1, übrige −0,06 | +0,10 ± 0,07 | **+0,38 ± 0,10** |
+| Zweikampfstarker Innenverteidiger | Zweikampf +0,2, Kopfball +0,15, Körper +0,15, Tempo/Passen/Ausdauer/Technik −0,15 | **−0,15 ± 0,07** | +0,15 ± 0,08 |
+| Spielstarker Innenverteidiger | Passen +0,2, Technik +0,2, übrige −0,07 | +0,07 ± 0,07 | +0,17 ± 0,10 |
+| Schneller Außenverteidiger | Tempo +0,25, Ausdauer +0,1, übrige −0,075 | +0,06 ± 0,07 | −0,01 ± 0,10 |
+| Klassischer Torwart | Torwartspiel +0,1, Körper +0,15, Passen/Tempo/Technik/Ausdauer −0,15 | +0,09 ± 0,07 | +0,14 ± 0,09 |
+| Mitspielender Torwart | Passen +0,25, Technik +0,25, Tempo +0,1, Torwartspiel/Ausdauer −0,086 | −0,11 ± 0,07 | −0,18 ± 0,10 |
+
+Grenzen: Der Typ gilt für die ganze Reihe (ein einzelner Spieler wäre mit dieser Spielzahl nicht messbar); „Innen-“ und
+„Außenverteidiger“ unterscheiden sich im Versuch nur durch die Werte, nicht durch die Position.
+
+### 6.3 Antworten auf die Fragen aus Phase 3
+
+| Frage | Befund | Beleg |
+|---|---|---|
+| Ist Tempo zu mächtig? | Tempo ist in jeder Feldreihe einer der stärksten Werte (0,04–0,08) und auf Niveau 8 etwa doppelt so wirksam wie Technik. Ob „zu mächtig“, ist eine Balancing-Frage; auffällig ist der Abstand zu Technik in höheren Ligen. Vermutung (nicht geprüft): Technikwerte liegen ab Niveau 5 über 1 und sind dort gedämpft (`sim/skill.js` soft), Tempo bleibt unter 1 und wirkt voll. | 6.1 |
+| Wird Technik ausreichend berücksichtigt? | Im Mittelfeld ja (0,04), im Sturm und in der Abwehr schwach (0,02–0,03). V1 gewichtet Technik im Sturm mit 0,2 – die Engine gibt ihr weniger als ein Viertel der Abschlusswirkung. | 6.1 |
+| Übersicht, Antizipation, Stellungsspiel | **Keine Wirkung im Spiel:** Schicht ausgeschaltet (`sim/mind.js` MIND.on = false, Nutzerentscheid 2026-11-27). Nicht neu gemessen. | `docs/ADVANCED-FOOTBALL-SYSTEM-06B-MIND.md` |
+| Stellungsspiel und Defensivverhalten | Zweikampf wirkt in der Abwehr (0,03–0,05), Kopfball und Körper in der Abwehr kaum. | 6.1 |
+| Sind Körperwerte überbewertet? | Körper (`strength`) wirkt auf dem Großfeld in keiner Reihe signifikant (−0,02 … 0,03). Auf 7er/9er maß Konzept 11.6 deutlich mehr (Mittelfeld 0,077, Abwehr 0,070 je +0,1). Tempo dagegen stark (s. o.). | 6.1; `docs/KONZEPT-SPIELERSTAERKE.md` 11.6 |
+| Mentale Werte | Mentalität und Ergebnisdruck (`sim/mentality.js`) sind kein Spielerwert; Spielintelligenz aus (s. o.). | Code |
+| Ist Ausdauer relevant? | Kaum: 0,005–0,03, nur einmal signifikant. Großfeld hat den geringsten Kraftverbrauch (`sim/pitch.js` STAMINA_DRAIN grossfeld 0,15 gegen 0,29 Rasenplatz). | 6.1 |
+| Torwartwerte sinnvoll gewichtet? | Torwartspiel ist der zweitstärkste Einzelwert (0,08–0,11); Passen, Technik, Tempo des Torwarts ohne messbare Wirkung. Der mitspielende Torwart verliert bei gleicher Stärke (−0,11 / −0,18), der klassische gewinnt. | 6.1, 6.2 |
+| Spielertypen | Bei gleicher Anzeige-Stärke verliert der kreative Spielmacher deutlich (Großfeld −0,17, 7er −0,37), der defensive Mittelfeldspieler gewinnt (+0,10 / +0,38). V1 gewichtet im Mittelfeld Passen und Technik mit je 0,25 – mehr, als die Engine ihnen gibt. Zweikampfstarke Innenverteidiger: 7er +0,15, Großfeld −0,15 (dort fehlt das abgegebene Tempo). | 6.2 |
+| Kopfball | Auf allen Stufen ohne messbare Wirkung, auch auf dem Großfeld (vgl. I7: wenige Kopfball-Abschlüsse). Der Zielspieler bringt nichts. | 6.1, 6.2 |
+
+### 6.4 Nebenbefund: Profile sättigen in höheren Ligen
+
+`sim/profiles.js` profilesOf leitet Profile mit festen Schwellen aus den Werten ab, z. B. Spielmacher ab (Passen + Technik) / 2 > 0,64.
+Die angehobenen Technikwerte überschreiten die Schwellen ab Niveau 3 immer öfter (300 Kader × 11 Spieler je Niveau):
+
+| Niveau | Spielmacher | Ruhepol | Kämpfer | Teamplayer | Einzelkämpfer | Ballmagnet |
+|---|---|---|---|---|---|---|
+| 1 | 11 % | 12 % | 11 % | 16 % | 17 % | 14 % |
+| 3 | 38 % | 31 % | 14 % | 14 % | 13 % | 9 % |
+| 5 | 82 % | 46 % | 28 % | 6 % | 3 % | 2 % |
+| 8 | 87 % | 48 % | 43 % | 0 % | 0 % | 0 % |
+
+Wirkung im Spiel (Code): Spielmacher werden als Passziel bevorzugt (`sim/actions.js` +0,65 im Zielwert) und passen genauer (Streuung
+× 0,85); Kämpfer +0,08 im Zweikampf (`sim/tackles.js`); Ruhepol beruhigt Mitspieler (`sim/profiles.js`). In höheren Ligen wird so
+fast jeder Spieler zum Spielmacher – das Profil unterscheidet nicht mehr, und Teamplayer, Einzelkämpfer und Ballmagnet verschwinden.
+Problemliste I13.
