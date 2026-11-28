@@ -2,6 +2,7 @@
 // doppelt vergeben … Höchstens eine pro Spiel, nur bei eigenen Partien.
 import { tr } from '../core/i18n.js';
 import { setControlled } from '../sim/players.js';
+import { BONUS_CAP } from '../sim/skill.js';
 import { spielberichtStreng } from './spielbericht.js';
 
 // Wer von der Bank startet für einen Ausfall? Nicht verletzt, nicht schon benutzt, nicht selbst noch unterwegs;
@@ -66,7 +67,7 @@ const SURPRISES = [
     w: 0.9,
     run: (m, team, rng) => {
       const p = rng.pick(m.players.filter((q) => q.team === team));
-      for (const k of Object.keys(p.attrs)) p.attrs[k] = Math.min(0.98, p.attrs[k] + 0.03);
+      for (const k of Object.keys(p.attrs)) p.attrs[k] = p.attrs[k] > 0.98 && BONUS_CAP.keepLift ? p.attrs[k] + 0.03 : Math.min(0.98, p.attrs[k] + 0.03);
       return tr(`Die Oma von ${p.name} steht mit Kuchen am Zaun. Er will heute glänzen.`, `${p.name}’s gran is at the fence with cake. He wants to shine today.`);
     },
   },

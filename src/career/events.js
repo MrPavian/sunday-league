@@ -2,6 +2,7 @@
 // Teamstimmung, Tagesform und mehrwöchige Geschichten.
 import { tr } from '../core/i18n.js';
 import { createRng } from '../core/rng.js';
+import { bonusAttr } from '../sim/skill.js';
 import { book } from './finances.js';
 import { arrivalTiers, getPool, humanClub, joinSquad, niveauFits, playerOf, takenIndices } from './career.js';
 import { advanceStories, arcsOf, STORY_STARTS, storyDecision } from './stories.js';
@@ -72,7 +73,7 @@ export function adjustForm(career, idx, d) {
 export function applyForm(p, rec, teamMood = 0) {
   const f = (rec?.form ?? 0) + teamMood * 0.3;
   if (!f) return p;
-  for (const k of ['pace', 'stamina', 'technique', 'passing', 'shooting', 'tackling']) p.attrs[k] = Math.max(0.05, Math.min(0.98, p.attrs[k] * (1 + 0.08 * f)));
+  for (const k of ['pace', 'stamina', 'technique', 'passing', 'shooting', 'tackling']) p.attrs[k] = bonusAttr(p.attrs[k], p.attrs[k] * (1 + 0.08 * f));
   return p;
 }
 

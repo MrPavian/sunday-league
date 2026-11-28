@@ -3,6 +3,7 @@
 // Geschichten der Leute), Taktik auf dem Bierdeckel, den Wirt ausfragen oder
 // eine Runde Dart um die nächste Runde.
 import { createRng } from '../core/rng.js';
+import { bonusAttr } from '../sim/skill.js';
 import { DOSSIER, DOSSIER_ORDER, dossierFacts, dossierIndex, DREAM_SUPPORT, HEINZ, INTEL } from '../data/backstories.js';
 import { originOf } from '../data/origins.js';
 import { book } from './finances.js';
@@ -197,6 +198,6 @@ export function applyPubToTeam(c, club, players) {
   if (club.human && pub.tactic) mods = TACTICS[pub.tactic].mods;
   else if (!club.human && pub.intel?.club === club.id) mods = pub.intel.mods;
   if (!mods) return players;
-  for (const p of players) for (const [k, v] of Object.entries(mods)) p.attrs[k] = Math.max(0.05, Math.min(0.98, p.attrs[k] + v));
+  for (const p of players) for (const [k, v] of Object.entries(mods)) p.attrs[k] = bonusAttr(p.attrs[k], p.attrs[k] + v);
   return players;
 }

@@ -4,6 +4,7 @@
 //   team:  gilt für alle Mitspieler im Spiel (gleiche Sorte zählt nur einmal)
 //   medic: Verletzte im Kader sind schneller wieder da
 import { tr } from '../core/i18n.js';
+import { bonusAttr } from '../sim/skill.js';
 
 const P = (label, perk) => ({ ...perk, label });
 
@@ -62,7 +63,6 @@ export const JOB_PERKS = {
 
 export const jobPerk = (job) => JOB_PERKS[job] ?? null;
 
-const clampAttr = (v) => Math.max(0.05, Math.min(0.98, v));
 
 // Boni aufs Spiel anwenden: eigener Beruf plus die Team-Boni der Mitspieler.
 // Gibt neue Spielerobjekte zurück, der Pool bleibt unverändert.
@@ -74,7 +74,7 @@ export function applyJobPerks(players) {
     const own = jobPerk(p.profession)?.attrs;
     if (!own && !bonuses.length) return p;
     const attrs = { ...p.attrs };
-    for (const b of [own ?? {}, ...bonuses]) for (const [k, v] of Object.entries(b)) if (attrs[k] != null) attrs[k] = clampAttr(attrs[k] + v);
+    for (const b of [own ?? {}, ...bonuses]) for (const [k, v] of Object.entries(b)) if (attrs[k] != null) attrs[k] = bonusAttr(attrs[k], attrs[k] + v);
     return { ...p, attrs };
   });
 }

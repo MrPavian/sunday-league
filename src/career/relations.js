@@ -4,6 +4,7 @@
 // durch Ereignisse ändern (career.relations speichert nur die Änderungen).
 import { humanClub, playerOf } from './career.js';
 import { tr } from '../core/i18n.js';
+import { bonusAttr } from '../sim/skill.js';
 
 export const REL = {
   kumpel: { name: tr('Kumpel', 'Mate'), plural: tr('Kumpels', 'Mates'), mods: { passing: 0.02, technique: 0.01 } },
@@ -84,7 +85,7 @@ export function applyChemistry(c, lineup, players) {
   for (const p of players) {
     const m = mods[p.poolIndex];
     if (!m) continue;
-    for (const [k, v] of Object.entries(m)) p.attrs[k] = Math.max(0.05, Math.min(0.98, p.attrs[k] + v));
+    for (const [k, v] of Object.entries(m)) p.attrs[k] = bonusAttr(p.attrs[k], p.attrs[k] + v);
   }
   return players;
 }

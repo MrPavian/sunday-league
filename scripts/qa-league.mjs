@@ -15,6 +15,7 @@ import { SAMPLE } from '../src/intel/sample.js';
 import { createChanceLog, feedChances } from '../src/sim/chances.js';
 import { footballMinute } from '../src/sim/minute.js';
 import { stepMatch } from '../src/sim/match.js';
+import { BONUS_CAP } from '../src/sim/skill.js';
 import { ATTR_KEYS } from '../src/sim/strength.js';
 import { findAnyPlayer } from '../src/sim/squad.js';
 
@@ -23,6 +24,8 @@ const [out, seasonsArg, sizeArg, seedArg] = pos;
 // --noform (nur Diagnose): vor jedem Spieltag Stimmung und Form des eigenen Vereins auf 0 – dann greift die Kappung in
 // career/events.js applyForm nicht (docs/BALANCING-QA-04-ATTRIBUTES.md). Ändert den Spielcode nicht.
 const NOFORM = process.argv.includes('--noform');
+// --oldcap: Schalter BONUS_CAP.keepLift aus (sim/skill.js) – alter Deckel 0,98 bei Boni, zum Vergleich vor/nach Fehler B1.
+if (process.argv.includes('--oldcap')) BONUS_CAP.keepLift = false;
 const START = Number(process.argv.find((a) => a.startsWith('--start='))?.split('=')[1]) || 1;
 if (!out) throw new Error('Aufruf: node scripts/qa-league.mjs <out.jsonl> [Saisons] [Ligagröße] [seed]');
 const SEASONS = Number(seasonsArg) || 10, SIZE = Number(sizeArg) || 8, SEED = Number(seedArg) || 11;

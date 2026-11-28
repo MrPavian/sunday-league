@@ -5,6 +5,7 @@
 import { tr } from '../core/i18n.js';
 import { hasTrait } from '../data/traits.js';
 import { profilesOf } from './profiles.js';
+import { bonusAttr } from './skill.js';
 import { gradePlayers } from './stats.js';
 
 // calm – ruhig: Nervöse fangen sich (calmNervous), alle anderen ein wenig (calmAll) – liegt man hinten, ist es den Kämpfern
@@ -51,7 +52,7 @@ export function halftimeTalk(m, team, kind, praisedId = null) {
     if (p.team !== team) continue;
     const k = reaction(m, team, p, kind, praisedId);
     if (!k) continue;
-    for (const a of KEYS) p.attrs[a] = Math.max(0.05, Math.min(0.98, p.attrs[a] * (1 + k)));
+    for (const a of KEYS) p.attrs[a] = bonusAttr(p.attrs[a], p.attrs[a] * (1 + k));
     effects.push({ id: p.id, k });
   }
   (m.talk ??= [null, null])[team] = { kind, praisedId, effects };

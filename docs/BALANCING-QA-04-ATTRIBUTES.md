@@ -87,3 +87,29 @@ Aufschlag ab. `sim/fit.js` (Zeile ~63) löst es bereits richtig („Deckel nur f
 Torwartspiel in jeder Liga (Liga 2: +0,20 Tore, Liga 4: +0,08, Liga 8: +0,09). Sonst je Liga verschieden und meist knapp
 über der Schwelle (z. B. Liga 3: Tempo und Technik im Mittelfeld; Liga 5: Abschluss im Sturm, Zweikampf im Mittelfeld).
 Aussagen über einzelne Werte folgen in A2 Teil 2 mit gezielten Versuchen statt natürlicher Streuung.
+
+## 5. Korrektur B1 (vom Nutzer vorgezogen, 2026-11-28)
+
+**Freigabe:** Nutzerentscheid 2026-11-28 „Jetzt beheben“ (vor Abschnitt B, weil es ein Fehler ist und spätere Großfeld-Messungen
+sonst nicht mehr gelten).
+
+- `sim/skill.js`: neu `bonusAttr(vorher, neu)` – Deckel 0,98 nur, wenn der Wert vorher höchstens 0,98 war (wie `sim/fit.js`);
+  Schalter `BONUS_CAP.keepLift` (aus = alter Deckel für alle).
+- Eingesetzt an den sechs Stellen aus 2.3: `career/events.js` applyForm, `data/jobs.js` applyJobPerks, `career/relations.js`
+  applyChemistry, `career/pub.js`, `sim/halftalk.js`, `career/matchday.js` („oma_kuchen“).
+- Werte bis 0,98 rechnen exakt wie vorher: Liga 1, 2 Saisons, Seed 11 – Messdatei mit und ohne Korrektur bitgleich; alle
+  1 666 Tests einschließlich Golden unverändert grün. Neuer Test `tests/bonusCap.test.js` (4 Tests).
+
+**Messung an / aus** (Start Liga 5, 7, 9 × Seeds 11, 23, 37, 41 × 3 Saisons, erste Saison ausgelassen, je 1 440 Spiele; nach der
+ersten Saison laufen die Karrieren auseinander, die Ligen sind deshalb nicht genau gleich verteilt):
+
+| | Schalter aus (vorher) | an (nachher) | Echte Ligen |
+|---|---|---|---|
+| r (Stärkeabstand, Tordifferenz), alle Spiele | 0,13 | **0,39** | 0,25–0,47 |
+| CPU gegen CPU | 0,29 | 0,34 | |
+| Spiele des Menschen | 0,01 | **0,46** | |
+| Favorit ≥ 10 Stärkepunkte S / U / N % | 40 / 33 / 27 | **55 / 31 / 14** | 58–72 / 13–28 / 10–15 |
+| Tore je Spiel | 1,57 | 1,64 | 2,6–3,2 |
+| 0:0 % | 23,2 | 20,8 | 4–8 |
+
+I1 ist damit behoben. Die Torarmut auf dem Großfeld (I2) bleibt fast unverändert und ist ein eigenes Thema.

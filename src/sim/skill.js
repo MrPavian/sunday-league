@@ -15,6 +15,12 @@ export const TECH_MAX = 3;
 // Spielintelligenz (mind.js) bleibt wie Tempo und Körper bei 0,98: ihre Wirkung ist um 0,5 gebaut, nicht für Werte über 1.
 export const attrMax = (k, model = 1) => (model >= 2 && !PHYS_ATTRS.has(k) && !MIND_SET.has(k) ? TECH_MAX : 0.98);
 
+// Bonus oder Malus auf einen Wert (Form, Beruf, Chemie, Kneipe, Halbzeit, Spieltagsereignis): Deckel 0,98 nur, wenn der Wert vorher
+// darunter lag – Werte über 1 (Stärkemodell 3, höhere Ligen) bleiben erhalten, wie sim/fit.js. Fehler B1 der Balancing-QA
+// (docs/BALANCING-QA-04-ATTRIBUTES.md): der alte Deckel schnitt den Aufschlag ab. Schalter keepLift aus = alter Deckel für alle.
+export const BONUS_CAP = { keepLift: true };
+export const bonusAttr = (before, v) => Math.max(0.05, BONUS_CAP.keepLift && before > 0.98 ? v : Math.min(0.98, v));
+
 export const cap1 = (x) => (x > 1 ? 1 : x);
 export const over = (x) => (x > 1 ? x - 1 : 0);
 export const soft = (x) => (x <= 1 ? x : 1 + SKILL.soft * (1 - Math.exp(-(x - 1) / SKILL.soft)));
