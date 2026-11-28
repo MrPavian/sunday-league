@@ -366,6 +366,10 @@ Schicht für Schicht, per Schalter, gegen den alten Stand gemessen. Gewicht: (S)
   `determinism`, `afs-validate`) und Berichte 00/03 werden weiterverwendet; Systeme je Format statt der 7 genannten (3-4-3, 5-3-2,
   4-1-4-1 gibt es nicht – ob sie kommen, ist eine Frage für B); Vergleichswerte echter Ligen nur recherchiert und gekennzeichnet;
   Saisonzahl nach gemessener Rechenzeit. AFS-Fragen aus Abschnitt 12 nur mit vorhandenen Kennzahlen.
+  - **A1 ✅ 2026-11-28** Audit, Engine-Test, Tabellen (`docs/BALANCING-QA-01-AUDIT.md`, `-02-TESTS.md`, `-03-ISSUES.md`;
+    `scripts/qa-league.mjs`, `scripts/qa-report.mjs`). 13 680 Spiele, 228 Saisontabellen, Vergleich mit 5 echten Ligen. Schwerster
+    Befund: Großfeld – Kaderstärke entscheidet kaum (r −0,29 … 0,10), sehr wenige Tore; dazu kein Heimvorteil in der Engine,
+    Führungen zu sicher. Offen in A: Werte und Spielertypen, Systeme und Stile, Extremfälle, Wirtschaft, Diagramme, Regression.
 - **Phase 12 – Manager-Beratung ✅ 2026-11-26** (`intel/advice.js`, `docs/ADVANCED-FOOTBALL-SYSTEM-12-ADVICE.md`,
   `scripts/afs-advice.mjs`). Co-Trainer-Hinweis auf der Startseite: ab 5 Spielen, höchstens einer je Woche (selten: je zwei),
   derselbe Befund frühestens nach 4 Wochen, Beleg und genau ein Spielplan-Befehl, nie ein Stilwechsel (Nutzerentscheidung).
